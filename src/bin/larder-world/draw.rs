@@ -129,6 +129,22 @@ pub(super) fn stance_name(s: Stance) -> &'static str {
     }
 }
 
+/// A round's map for the window's title and opening alert: a generated
+/// planet by its own name ("Vesk, a canyon planet (planet 3)"), any other
+/// map as `title_case` says it.
+pub(super) fn map_title(name: &str, seed: u64) -> String {
+    match slime_mould::mould::levelgen::spec_planet(name, seed) {
+        Some(Ok(p)) => format!("{}, a {} planet (planet {})", p.name, p.biome.name(), p.depth),
+        _ => title_case(name),
+    }
+}
+
+/// A map's name as part of a file name: no folders, and no colons
+/// (`planet:3:42`), which Windows refuses.
+pub(super) fn file_part(name: &str) -> String {
+    name.replace(['/', '\\'], "_").replace(':', "-")
+}
+
 pub(super) fn title_case(s: &str) -> String {
     let s = s.rsplit('/').next().unwrap_or(s);
     let mut c = s.chars();

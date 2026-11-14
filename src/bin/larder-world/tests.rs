@@ -788,7 +788,8 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     a.run = Some(Run::new(1));
     let mut app = offscreen(a, (1280, 720), &device, &queue).unwrap();
     app.base = Some((base.clone(), true));
-    assert_eq!(app.name, "flats");
+    // Planet 1 of the run's seed, the level generator's (#277).
+    assert_eq!(app.name, "planet:1:1");
     app.prepare();
     let m = app.model(None, None);
     assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Beat the slime")), "{:?}", m.objective);
@@ -819,7 +820,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(!app.in_menu());
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
-    assert_ne!(app.name, "flats");
+    assert_eq!(app.name, "planet:2:1");
     // A lost level ends the run.
     app.mission.as_mut().unwrap().verdict = Some(Verdict { stars: 0, cause: Cause::SquadWiped, ..win });
     assert_eq!(app.model(None, None).carry_on.as_deref(), Some("End the run"));

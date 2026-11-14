@@ -120,6 +120,8 @@ pub enum StartEvent {
     NextLevel,
     /// Give the run up.
     EndRun,
+    /// A round on a new generated planet (`mould::levelgen`).
+    RandomPlanet,
     Quit,
 }
 
@@ -145,6 +147,7 @@ enum Hit {
     Options,
     Keys,
     EditMaps,
+    RandomPlanet,
     Quit,
     Back,
     Mission(usize),
@@ -163,6 +166,8 @@ pub struct StartMenu {
     pub page: Page,
     /// The main page offers "Edit maps" (the game has an editor to start).
     pub edit_maps: bool,
+    /// The main page offers "Random planet" (the game makes planets).
+    pub planets: bool,
     /// A line the game wants shown on the main page (such as why the map
     /// editor did not start).
     pub notice: Option<String>,
@@ -181,7 +186,7 @@ pub struct StartMenu {
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, notice: None, shop: None, run_live: false, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
     }
 
     /// The option named `key`.
@@ -205,7 +210,7 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign, Hit::Options, Hit::Keys].into_iter().chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -243,6 +248,7 @@ impl StartMenu {
             Hit::Keys => self.show(Page::Keys),
             Hit::Quit => return Some(StartEvent::Quit),
             Hit::EditMaps => return Some(StartEvent::EditMaps),
+            Hit::RandomPlanet => return Some(StartEvent::RandomPlanet),
             Hit::Back => self.back(),
             Hit::Mission(i) => return Some(StartEvent::Mission(i)),
             Hit::Turn(i, by) => self.options[i].turn(by),
@@ -432,9 +438,15 @@ impl StartMenu {
             ("Sandbox", sandbox, Hit::Sandbox, true),
             (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, false),
             ("Campaign", campaign, Hit::Campaign, false),
+        ];
+        if self.planets {
+            let depth = self.option("planet").map_or("1", |o| o.value());
+            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false));
+        }
+        items.extend([
             ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
             ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
-        ];
+        ]);
         if self.edit_maps {
             items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false));
         }
@@ -734,6 +746,51 @@ mod tests {
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(0)]);
         m.key(KeyCode::Escape, true);
         assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Run));
+    }
+
+    /// The main page with every row (Run, Random planet, Edit maps: eight)
+    /// stays on screen at every size and UI scale, with the game's eleven
+    /// options (whose page sets the scale for every page).
+    #[test]
+    fn the_full_main_page_fits() {
+        for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
+            for user in crate::world::settings::STEPS {
+                let mut m = menu();
+                while m.options.len() < 11 {
+                    let k = format!("o{}", m.options.len());
+                    m.options.push(Opt::new(&k, &k, &["0", "1"], "0", "0", ""));
+                }
+                (m.planets, m.edit_maps, m.run_live) = (true, true, true);
+                let mut c = Canvas::new(screen);
+                c.ui.user = user;
+                m.draw(&mut c);
+                for h in m.rows() {
+                    let r = m.rect_of(h).unwrap_or_else(|| panic!("{h:?} not drawn"));
+                    assert!(r.bottom() <= screen.1 as f32 - 30.0, "{screen:?} at {user}: {h:?} {r:?} reaches the hint line");
+                }
+            }
+        }
+    }
+
+    /// "Random planet" (the roguelike's planets, 2026-11-14) shows only
+    /// when the game makes planets, after the campaign, and the keyboard
+    /// walks to it in the order drawn.
+    #[test]
+    fn random_planet_shows_only_when_the_game_makes_planets() {
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::RandomPlanet).is_none());
+        m.planets = true;
+        assert_eq!(click(&mut m, &mut c, Hit::RandomPlanet), vec![StartEvent::RandomPlanet]);
+        assert_eq!(m.rows()[3], Hit::RandomPlanet, "after Sandbox, Run and Campaign");
+        let y = |m: &StartMenu, h: Hit| m.rect_of(h).unwrap().y;
+        assert!(y(&m, Hit::Campaign) < y(&m, Hit::RandomPlanet) && y(&m, Hit::RandomPlanet) < y(&m, Hit::Options));
+        m.focus = 0;
+        for _ in 0..3 {
+            m.key(KeyCode::ArrowDown, true);
+        }
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::RandomPlanet]);
     }
 
     #[test]

@@ -360,9 +360,14 @@ impl App {
             KeyCode::Tab => self.fast = !self.fast,
             KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
             KeyCode::KeyN => {
-                let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
-                self.args.map = Some(MAPS[next].to_string());
-                self.name = MAPS[next].to_string();
+                // On a generated planet, N rolls a new one at the same depth.
+                if self.args.map.as_deref().is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some()) {
+                    self.args.seed = fresh_seed();
+                } else {
+                    let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
+                    self.args.map = Some(MAPS[next].to_string());
+                    self.name = MAPS[next].to_string();
+                }
                 if let Err(e) = self.start() {
                     self.fail(event_loop, e);
                 }

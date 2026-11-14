@@ -11,8 +11,9 @@
 //! **What is this module's and what is not.** The level's geometry (ground,
 //! crystals, mould starts, landing, walls, the map's size) is the level
 //! generator's (`levelgen::level(seed, depth) -> Map`, its own thread,
-//! agreed 2026-11-14 15:25Z); until it lands a level plays one of the
-//! hand-made maps (`Ground::Named`). Everything else about a level is here:
+//! agreed 2026-11-14 15:25Z, #277): a level is planet `depth` of the run's
+//! seed (`Ground::Planet`), its mission's map `planet:DEPTH:SEED` as the
+//! window's `map=` reads it. Everything else about a level is here:
 //! the tier, the walker count, the goal and the rules the upgrades set.
 //! Like `campaign`, a level is a `Mission` over the shared game, so the
 //! window plays it with the mission tracker and its end screen; nothing in
@@ -28,6 +29,7 @@
 use super::campaign::{Bonus, Goal, Mission};
 use super::kit::KitRules;
 use super::larder_world::Rules;
+use super::levelgen::{self, Planet};
 use super::map::Map;
 use super::rounds::{self, Card, Kind};
 use super::tiers::Tier;
@@ -36,14 +38,26 @@ use super::tiers::Tier;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Ground {
     /// A hand-made map by name (`Reports/larder-maps-2026-11-11/maps`).
+    /// The first build cycled the five (Flats first) until the generator
+    /// landed (#277, 2026-11-14); kept for designed planets.
     Named(String),
-    /// A generated map (the level generator's, once it lands).
+    /// A generated planet: `levelgen::level(seed, depth)`, built when the
+    /// window starts the level (about 55 ms), not when the shop shows it.
+    Planet { seed: u64, depth: u32 },
+    /// A map already made.
     Made(Map),
 }
 
-/// The hand-made maps a run cycles through until the generator lands,
-/// the open one first.
-pub const MAPS: [&str; 5] = ["flats", "fork", "rim", "nest", "passes"];
+impl Ground {
+    /// The map, built or loaded (`dir`: the hand-made maps' folder).
+    pub fn map(&self, dir: &std::path::Path) -> Result<Map, String> {
+        match self {
+            Ground::Named(n) => Map::load(dir, n),
+            Ground::Planet { seed, depth } => Ok(levelgen::level(*seed, *depth)),
+            Ground::Made(m) => Ok(m.clone()),
+        }
+    }
+}
 
 /// The slime by depth: the campaign's ladder, gentlest first. Past its
 /// end the hardest three take turns. The Grudge joins once the GPU engine
@@ -270,27 +284,28 @@ impl Run {
         self.level_of(key) > 0
     }
 
+    /// The planet card for the current depth (name, biome, size), with no
+    /// map built.
+    pub fn planet(&self) -> Planet {
+        levelgen::planet(self.seed, self.depth)
+    }
+
     /// The level at the current depth.
     pub fn level(&self) -> Level {
         let d = self.depth;
         let seed = mix(self.seed ^ u64::from(d).wrapping_mul(0x5851_F42D));
-        // The hand-made maps in an order this run keeps (flats first, as
-        // the open map to learn on), until the generator lands.
-        let mut order: Vec<&str> = MAPS[1..].to_vec();
-        let mut z = mix(self.seed);
-        for i in (1..order.len()).rev() {
-            z = mix(z);
-            order.swap(i, (z % (i as u64 + 1)) as usize);
-        }
-        order.insert(0, MAPS[0]);
-        let map = order[(d as usize - 1) % order.len()].to_string();
+        // The planet the level generator makes for this run and depth
+        // (its name and biome come with it); `map` as `map=` names it, so
+        // the window's title and alert read its name.
+        let planet = self.planet();
+        let map = format!("planet:{d}:{}", self.seed);
         let tier = match LADDER.get(d as usize - 1) {
             Some(&t) => t,
             None => LADDER[LADDER.len() - 3 + (mix(seed) % 3) as usize],
         };
         let shrink = shrink_goal(d);
         let mission = Mission {
-            name: format!("Planet {d} of {PLANETS}"),
+            name: format!("Planet {d} of {PLANETS}, {}", planet.name),
             says: format!("Beat the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
             map: map.clone(),
             tier: Some(tier.name().to_string()),
@@ -302,7 +317,7 @@ impl Run {
             rules: vec![("drain".into(), Rules::default().drain)],
             own: false,
         };
-        Level { depth: d, seed, ground: Ground::Named(map), tier, walkers: 1.0 + WALKERS_PER_DEPTH * (d - 1) as f32, mission }
+        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: 1.0 + WALKERS_PER_DEPTH * (d - 1) as f32, mission }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -531,13 +546,13 @@ mod tests {
             assert!(shrink_goal(d) <= goals);
             (walkers, goals) = (l.walkers, shrink_goal(d));
             assert_eq!(l, Run { depth: d, ..Run::new(7) }.level());
-            assert!(matches!(&l.ground, Ground::Named(m) if MAPS.contains(&m.as_str())));
+            assert_eq!(l.ground, Ground::Planet { seed: 7, depth: d });
+            assert_eq!(levelgen::spec_planet(&l.mission.map, 0), Some(Ok(levelgen::planet(7, d))), "the window reads the planet back from the mission's map");
         }
         r.depth = 1;
-        assert_eq!((r.level().tier, r.level().ground), (Tier::Drifter, Ground::Named("flats".into())));
-        // The first five planets play every hand-made map once.
-        let maps: std::collections::HashSet<String> = (1..=5).map(|d| Run { depth: d, ..Run::new(3) }.level().mission.map).collect();
-        assert_eq!(maps.len(), 5);
+        assert_eq!(r.level().tier, Tier::Drifter);
+        // The level generator's core world is the run's last planet.
+        assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
 
     #[test]

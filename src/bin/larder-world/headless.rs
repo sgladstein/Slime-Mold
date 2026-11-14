@@ -296,7 +296,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             queue.submit([enc.finish()]);
             // Whole seconds keep their old names; a time between (a frame
             // sequence) is named in milliseconds.
-            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", app.name.replace('/', "_"), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", app.name.replace('/', "_"), (t * 1000.0) as u32) };
+            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", file_part(&app.name), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", file_part(&app.name), (t * 1000.0) as u32) };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }

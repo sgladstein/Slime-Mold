@@ -69,6 +69,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let num = |v: f32| format!("{v}");
     let mut o = vec![
         Opt::new("map", "Sandbox map", &maps, "fork", &map_now, "The sandbox's map (noise: the censuses' race world)"),
+        Opt::new("planet", "Planet", &["1", "2", "3", "4", "5", "6", "7", "8"], "1", &planet_now(base), "Which planet of a run Random planet lands on: its biome and nests (8 is the core world)"),
         Opt::new("own", "Your own mould", &["off", "on"], "off", if base.own { "on" } else { "off" }, "A green mould the squad sows and feeds; sandbox on the race world"),
         Opt::new("mode", "Control", &["rts", "squads"], "rts", if base.squads { "squads" } else { "rts" }, "Squads: steer one squad with WASD, fire at the cursor, split and merge; no larder (guard or drain crystals)"),
         Opt::new("rounds", "Rounds", &loadouts, LOADOUTS[0].0, LOADOUTS[base.round].0, "The squad's loadout at the start (H cycles it in play)"),
@@ -160,6 +161,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
         .collect();
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
+    menu.planets = true;
     menu
 }
 
@@ -182,9 +184,10 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
 /// The shop page's contents for run `r`.
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
+    let p = r.planet();
     let gun = r.gun_text();
     let mut lines = vec![
-        format!("{}. Next: {} on {}, {:.1} times the first planet's walkers", r.line(), title_case(l.tier.name()), title_case(&l.mission.map), l.walkers),
+        format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers),
         format!("Gun: {} (budget {} of {})", if gun == "none" { "plain shots".to_string() } else { gun }, slime_mould::mould::rounds::cost(&r.gun()), r.budget()),
     ];
     if r.depth == run::PLANETS {
@@ -227,6 +230,14 @@ pub(super) fn round_args(base: &Args, chosen: bool, menu: &StartMenu, pick: &Sta
             a.own = false;
             // The missions are written for the larder.
             a.squads = false;
+        }
+        // A generated planet from `seed=` (`menu_event` gives the round a
+        // fresh seed), at the Planet option's depth.
+        StartEvent::RandomPlanet => {
+            a.mission = None;
+            a.map = Some(format!("planet:{}", val("planet").unwrap_or_else(|| "1".into())));
+            a.own = false;
+            a.squads = val("mode").as_deref() == Some("squads");
         }
         _ => {
             a.mission = None;
@@ -373,6 +384,9 @@ impl App {
             pick => {
                 let (Some((base, chosen)), Some(menu)) = (self.base.clone(), self.menu.take()) else { return Ok(false) };
                 self.args = round_args(&base, chosen, &menu, &pick);
+                if pick == StartEvent::RandomPlanet {
+                    self.args.seed = fresh_seed();
+                }
                 self.round = self.args.round;
                 self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
                 // Kept for Main menu, on the page it was left on.
@@ -446,6 +460,19 @@ impl App {
         }
         self.open_menu()
     }
+}
+
+/// The Planet option's value for the command line's map: its depth when
+/// the map is a planet, else the first.
+fn planet_now(base: &Args) -> String {
+    base.map.as_deref().and_then(|m| slime_mould::mould::levelgen::spec_planet(m, base.seed)).and_then(Result::ok).map_or("1".into(), |p| p.depth.min(8).to_string())
+}
+
+/// A seed for a new planet: the clock's, kept to six digits so the title's
+/// "seed 482913" can be typed back as `seed=` to play the planet again.
+pub(super) fn fresh_seed() -> u64 {
+    let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64);
+    t % 1_000_000
 }
 
 /// Starts the map editor (`larder-edit`, #209) beside this binary.

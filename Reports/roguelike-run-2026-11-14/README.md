@@ -31,11 +31,14 @@ towards the core slime world". Level generation is its own thread (15:22Z,
   planet 1, 3 points less a planet, 10% from planet 6. The mission tracker's
   stars, stuck and cap rules apply unchanged. Free play's bite (`drain` 2),
   not the missions' 1.
-- **Ground**: until the level generator lands
-  (`levelgen::level(seed, depth) -> Map`, agreed with its thread 15:25Z), a
-  planet plays a hand-made map, Flats first, then the other four in an order
-  the run's seed keeps (`Ground::Named`). `Ground::Made(Map)` is wired in the
-  window already (`GpuWorld::with_map`).
+- **Ground**: planet `depth` of the run's seed from the level generator
+  (`levelgen::level(seed, depth)`, #277, merged while this was built):
+  biomes in the generator's set order, the core world at planet 8
+  (`levelgen::CORE_DEPTH` = `PLANETS`, a test holds them equal). A level's
+  mission names its map `planet:DEPTH:SEED`, which the window's `map=`
+  reads, so the title and alert give the planet's name; the shop shows the
+  next planet's name and biome from `levelgen::planet` without building it.
+  The first build cycled the five hand-made maps (`Ground::Named`, kept).
 - **Points**: a won planet pays `reward(depth, stars)` = 150 + 50 x depth +
   50 x (stars - 1): 200 for planet 1 at one star, one unlock.
 - **The shop** (`ITEMS`): squad (armour +25% hp, heavier shots +20% strike,
@@ -65,7 +68,7 @@ towards the core slime world". Level generation is its own thread (15:22Z,
 
 ## Pictures
 
-[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the start menu, planet 1 at 1:30 (farm hand: 14 soldiers, 3,771 food, the slime 5,017 walkers at the start and 2,135 at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
+[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
 
 ## Checks
 
@@ -85,8 +88,7 @@ towards the core slime world". Level generation is its own thread (15:22Z,
 
 ## Next
 
-- Planet names and biomes from `levelgen::planet(seed, depth)` on the shop
-  and the start alert; the generated maps (sizes 60% to 6x by depth).
+- Bigger planets deeper (the generator's next PR: 60% to 6x by depth).
 - Mortar or artillery: no such building exists yet; the shop sells it once
   one is built.
 - Rescue planets (base ruins, stranded soldiers; owner 15:33Z): a rescue

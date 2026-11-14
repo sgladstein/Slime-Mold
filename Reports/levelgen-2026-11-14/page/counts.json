@@ -1,0 +1,1490 @@
+{
+ "planet-1-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25031,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25176,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 24812,
+   "shots": 5,
+   "killed": 6,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 21485,
+   "shots": 18,
+   "killed": 20,
+   "left": 0.994
+  },
+  {
+   "t": 50,
+   "mould": 19938,
+   "shots": 28,
+   "killed": 33,
+   "left": 0.992
+  },
+  {
+   "t": 60,
+   "mould": 19167,
+   "shots": 28,
+   "killed": 33,
+   "left": 0.99
+  },
+  {
+   "t": 70,
+   "mould": 18522,
+   "shots": 28,
+   "killed": 33,
+   "left": 0.988
+  },
+  {
+   "t": 80,
+   "mould": 17086,
+   "shots": 36,
+   "killed": 40,
+   "left": 0.986
+  },
+  {
+   "t": 90,
+   "mould": 16458,
+   "shots": 57,
+   "killed": 71,
+   "left": 0.984
+  },
+  {
+   "t": 100,
+   "mould": 16573,
+   "shots": 84,
+   "killed": 108,
+   "left": 0.982
+  },
+  {
+   "t": 110,
+   "mould": 16521,
+   "shots": 100,
+   "killed": 138,
+   "left": 0.98
+  },
+  {
+   "t": 120,
+   "mould": 16853,
+   "shots": 110,
+   "killed": 146,
+   "left": 0.978
+  }
+ ],
+ "planet-1-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25083,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25362,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 30,
+   "mould": 25796,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 26304,
+   "shots": 4,
+   "killed": 4,
+   "left": 0.995
+  },
+  {
+   "t": 50,
+   "mould": 26525,
+   "shots": 13,
+   "killed": 14,
+   "left": 0.993
+  },
+  {
+   "t": 60,
+   "mould": 26566,
+   "shots": 21,
+   "killed": 20,
+   "left": 0.991
+  },
+  {
+   "t": 70,
+   "mould": 26585,
+   "shots": 38,
+   "killed": 39,
+   "left": 0.989
+  },
+  {
+   "t": 80,
+   "mould": 26898,
+   "shots": 54,
+   "killed": 54,
+   "left": 0.986
+  },
+  {
+   "t": 90,
+   "mould": 26005,
+   "shots": 71,
+   "killed": 84,
+   "left": 0.984
+  },
+  {
+   "t": 100,
+   "mould": 26159,
+   "shots": 91,
+   "killed": 115,
+   "left": 0.981
+  },
+  {
+   "t": 110,
+   "mould": 26776,
+   "shots": 119,
+   "killed": 165,
+   "left": 0.978
+  },
+  {
+   "t": 120,
+   "mould": 27798,
+   "shots": 139,
+   "killed": 209,
+   "left": 0.975
+  }
+ ],
+ "planet-2-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25029,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25094,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25255,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 25606,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 26306,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.99
+  },
+  {
+   "t": 60,
+   "mould": 27436,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.988
+  },
+  {
+   "t": 70,
+   "mould": 28809,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.985
+  },
+  {
+   "t": 80,
+   "mould": 30232,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.982
+  },
+  {
+   "t": 90,
+   "mould": 31342,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.978
+  },
+  {
+   "t": 100,
+   "mould": 32351,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.975
+  },
+  {
+   "t": 110,
+   "mould": 33561,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.971
+  },
+  {
+   "t": 120,
+   "mould": 34892,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.968
+  }
+ ],
+ "planet-2-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25007,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25062,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25256,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 25572,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 26066,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.991
+  },
+  {
+   "t": 60,
+   "mould": 26553,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 27072,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.987
+  },
+  {
+   "t": 80,
+   "mould": 27637,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.985
+  },
+  {
+   "t": 90,
+   "mould": 28014,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.982
+  },
+  {
+   "t": 100,
+   "mould": 27662,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.98
+  },
+  {
+   "t": 110,
+   "mould": 27886,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.977
+  },
+  {
+   "t": 120,
+   "mould": 28498,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.975
+  }
+ ],
+ "planet-3-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25057,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25332,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25804,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 26445,
+   "shots": 2,
+   "killed": 1,
+   "left": 0.994
+  },
+  {
+   "t": 50,
+   "mould": 27089,
+   "shots": 23,
+   "killed": 21,
+   "left": 0.992
+  },
+  {
+   "t": 60,
+   "mould": 27814,
+   "shots": 46,
+   "killed": 49,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 28658,
+   "shots": 70,
+   "killed": 82,
+   "left": 0.987
+  },
+  {
+   "t": 80,
+   "mould": 29622,
+   "shots": 95,
+   "killed": 120,
+   "left": 0.984
+  },
+  {
+   "t": 90,
+   "mould": 26453,
+   "shots": 118,
+   "killed": 153,
+   "left": 0.982
+  },
+  {
+   "t": 100,
+   "mould": 25120,
+   "shots": 143,
+   "killed": 195,
+   "left": 0.979
+  },
+  {
+   "t": 110,
+   "mould": 25396,
+   "shots": 165,
+   "killed": 241,
+   "left": 0.976
+  },
+  {
+   "t": 120,
+   "mould": 26059,
+   "shots": 193,
+   "killed": 294,
+   "left": 0.974
+  }
+ ],
+ "planet-3-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25115,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25424,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 26001,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 27069,
+   "shots": 1,
+   "killed": 1,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 28400,
+   "shots": 1,
+   "killed": 1,
+   "left": 0.991
+  },
+  {
+   "t": 60,
+   "mould": 29842,
+   "shots": 2,
+   "killed": 1,
+   "left": 0.988
+  },
+  {
+   "t": 70,
+   "mould": 31524,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.985
+  },
+  {
+   "t": 80,
+   "mould": 33349,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.981
+  },
+  {
+   "t": 90,
+   "mould": 32358,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.978
+  },
+  {
+   "t": 100,
+   "mould": 33457,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.974
+  },
+  {
+   "t": 110,
+   "mould": 35182,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.97
+  },
+  {
+   "t": 120,
+   "mould": 36818,
+   "shots": 3,
+   "killed": 2,
+   "left": 0.966
+  }
+ ],
+ "planet-4-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25075,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25424,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25985,
+   "shots": 2,
+   "killed": 1,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 26718,
+   "shots": 15,
+   "killed": 8,
+   "left": 0.992
+  },
+  {
+   "t": 50,
+   "mould": 27492,
+   "shots": 36,
+   "killed": 50,
+   "left": 0.99
+  },
+  {
+   "t": 60,
+   "mould": 28311,
+   "shots": 54,
+   "killed": 68,
+   "left": 0.987
+  },
+  {
+   "t": 70,
+   "mould": 29195,
+   "shots": 64,
+   "killed": 79,
+   "left": 0.985
+  },
+  {
+   "t": 80,
+   "mould": 30215,
+   "shots": 73,
+   "killed": 84,
+   "left": 0.983
+  },
+  {
+   "t": 90,
+   "mould": 31462,
+   "shots": 77,
+   "killed": 87,
+   "left": 0.98
+  },
+  {
+   "t": 100,
+   "mould": 32974,
+   "shots": 93,
+   "killed": 101,
+   "left": 0.977
+  },
+  {
+   "t": 110,
+   "mould": 34788,
+   "shots": 108,
+   "killed": 117,
+   "left": 0.974
+  },
+  {
+   "t": 120,
+   "mould": 36768,
+   "shots": 131,
+   "killed": 161,
+   "left": 0.971
+  }
+ ],
+ "planet-4-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25188,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25819,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 30,
+   "mould": 26828,
+   "shots": 2,
+   "killed": 1,
+   "left": 0.994
+  },
+  {
+   "t": 40,
+   "mould": 28037,
+   "shots": 7,
+   "killed": 4,
+   "left": 0.991
+  },
+  {
+   "t": 50,
+   "mould": 29353,
+   "shots": 13,
+   "killed": 15,
+   "left": 0.988
+  },
+  {
+   "t": 60,
+   "mould": 30718,
+   "shots": 24,
+   "killed": 23,
+   "left": 0.985
+  },
+  {
+   "t": 70,
+   "mould": 32209,
+   "shots": 38,
+   "killed": 35,
+   "left": 0.982
+  },
+  {
+   "t": 80,
+   "mould": 33741,
+   "shots": 47,
+   "killed": 44,
+   "left": 0.979
+  },
+  {
+   "t": 90,
+   "mould": 35398,
+   "shots": 57,
+   "killed": 58,
+   "left": 0.976
+  },
+  {
+   "t": 100,
+   "mould": 37160,
+   "shots": 74,
+   "killed": 72,
+   "left": 0.972
+  },
+  {
+   "t": 110,
+   "mould": 38964,
+   "shots": 85,
+   "killed": 86,
+   "left": 0.969
+  },
+  {
+   "t": 120,
+   "mould": 40773,
+   "shots": 94,
+   "killed": 93,
+   "left": 0.966
+  }
+ ],
+ "planet-5-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25178,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25529,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25912,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 26348,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 50,
+   "mould": 26848,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 60,
+   "mould": 27452,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.992
+  },
+  {
+   "t": 70,
+   "mould": 28322,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.99
+  },
+  {
+   "t": 80,
+   "mould": 29356,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.988
+  },
+  {
+   "t": 90,
+   "mould": 30024,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.986
+  },
+  {
+   "t": 100,
+   "mould": 31515,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.984
+  },
+  {
+   "t": 110,
+   "mould": 33199,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.981
+  },
+  {
+   "t": 120,
+   "mould": 34973,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.978
+  }
+ ],
+ "planet-5-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25239,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25810,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 30,
+   "mould": 26354,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 26873,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 27333,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.991
+  },
+  {
+   "t": 60,
+   "mould": 27800,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 28305,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.987
+  },
+  {
+   "t": 80,
+   "mould": 28787,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.985
+  },
+  {
+   "t": 90,
+   "mould": 29145,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.983
+  },
+  {
+   "t": 100,
+   "mould": 29522,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.982
+  },
+  {
+   "t": 110,
+   "mould": 29995,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.98
+  },
+  {
+   "t": 120,
+   "mould": 30411,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.978
+  }
+ ],
+ "planet-6-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25241,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25963,
+   "shots": 5,
+   "killed": 3,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 26716,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 27521,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.992
+  },
+  {
+   "t": 50,
+   "mould": 28313,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.99
+  },
+  {
+   "t": 60,
+   "mould": 29156,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.988
+  },
+  {
+   "t": 70,
+   "mould": 30069,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.985
+  },
+  {
+   "t": 80,
+   "mould": 31344,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.983
+  },
+  {
+   "t": 90,
+   "mould": 29997,
+   "shots": 8,
+   "killed": 5,
+   "left": 0.98
+  },
+  {
+   "t": 100,
+   "mould": 30807,
+   "shots": 21,
+   "killed": 34,
+   "left": 0.977
+  },
+  {
+   "t": 110,
+   "mould": 32212,
+   "shots": 49,
+   "killed": 107,
+   "left": 0.974
+  },
+  {
+   "t": 120,
+   "mould": 33841,
+   "shots": 71,
+   "killed": 171,
+   "left": 0.971
+  }
+ ],
+ "planet-6-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25020,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25194,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25585,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 26301,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.994
+  },
+  {
+   "t": 50,
+   "mould": 27229,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.992
+  },
+  {
+   "t": 60,
+   "mould": 28172,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 29088,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.987
+  },
+  {
+   "t": 80,
+   "mould": 30158,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.985
+  },
+  {
+   "t": 90,
+   "mould": 26347,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.982
+  },
+  {
+   "t": 100,
+   "mould": 26278,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.98
+  },
+  {
+   "t": 110,
+   "mould": 27597,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.977
+  },
+  {
+   "t": 120,
+   "mould": 29151,
+   "shots": 1,
+   "killed": 3,
+   "left": 0.974
+  }
+ ],
+ "planet-7-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25048,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25173,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25401,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.996
+  },
+  {
+   "t": 40,
+   "mould": 25924,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.994
+  },
+  {
+   "t": 50,
+   "mould": 26953,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.992
+  },
+  {
+   "t": 60,
+   "mould": 28563,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 30673,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.986
+  },
+  {
+   "t": 80,
+   "mould": 33088,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.983
+  },
+  {
+   "t": 90,
+   "mould": 35604,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.98
+  },
+  {
+   "t": 100,
+   "mould": 38166,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.976
+  },
+  {
+   "t": 110,
+   "mould": 40808,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.973
+  },
+  {
+   "t": 120,
+   "mould": 43386,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.969
+  }
+ ],
+ "planet-7-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25108,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25446,
+   "shots": 6,
+   "killed": 3,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 26004,
+   "shots": 13,
+   "killed": 6,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 26753,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 27667,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.991
+  },
+  {
+   "t": 60,
+   "mould": 28597,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.988
+  },
+  {
+   "t": 70,
+   "mould": 29456,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.986
+  },
+  {
+   "t": 80,
+   "mould": 30297,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.984
+  },
+  {
+   "t": 90,
+   "mould": 30808,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.981
+  },
+  {
+   "t": 100,
+   "mould": 31331,
+   "shots": 22,
+   "killed": 10,
+   "left": 0.979
+  },
+  {
+   "t": 110,
+   "mould": 32026,
+   "shots": 24,
+   "killed": 12,
+   "left": 0.976
+  },
+  {
+   "t": 120,
+   "mould": 32714,
+   "shots": 35,
+   "killed": 23,
+   "left": 0.974
+  }
+ ],
+ "planet-8-1": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 24991,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.999
+  },
+  {
+   "t": 20,
+   "mould": 25178,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 25797,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 26939,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 28449,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.991
+  },
+  {
+   "t": 60,
+   "mould": 30222,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.989
+  },
+  {
+   "t": 70,
+   "mould": 32234,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.986
+  },
+  {
+   "t": 80,
+   "mould": 34395,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.984
+  },
+  {
+   "t": 90,
+   "mould": 35222,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.981
+  },
+  {
+   "t": 100,
+   "mould": 37143,
+   "shots": 1,
+   "killed": 0,
+   "left": 0.978
+  },
+  {
+   "t": 110,
+   "mould": 39339,
+   "shots": 13,
+   "killed": 24,
+   "left": 0.975
+  },
+  {
+   "t": 120,
+   "mould": 41552,
+   "shots": 37,
+   "killed": 84,
+   "left": 0.972
+  }
+ ],
+ "planet-8-2": [
+  {
+   "t": 1,
+   "mould": 25000,
+   "shots": 0,
+   "killed": 0,
+   "left": 1.0
+  },
+  {
+   "t": 10,
+   "mould": 25122,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.998
+  },
+  {
+   "t": 20,
+   "mould": 25491,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.997
+  },
+  {
+   "t": 30,
+   "mould": 26173,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.995
+  },
+  {
+   "t": 40,
+   "mould": 27159,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.993
+  },
+  {
+   "t": 50,
+   "mould": 28347,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.99
+  },
+  {
+   "t": 60,
+   "mould": 29809,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.988
+  },
+  {
+   "t": 70,
+   "mould": 31630,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.985
+  },
+  {
+   "t": 80,
+   "mould": 33950,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.982
+  },
+  {
+   "t": 90,
+   "mould": 36153,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.98
+  },
+  {
+   "t": 100,
+   "mould": 38534,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.976
+  },
+  {
+   "t": 110,
+   "mould": 40992,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.973
+  },
+  {
+   "t": 120,
+   "mould": 43369,
+   "shots": 0,
+   "killed": 0,
+   "left": 0.97
+  }
+ ]
+}

@@ -30,8 +30,7 @@ won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells gun cards that get
 better deeper (by `Card::tier`, into a gun whose card budget grows from 5); a lost planet ends the run. Locked buildings and tools show
 locked on the command card. Dev mode adds rows to jump planets, add points
-and redraw cards. Planets play the hand-made maps until the level
-generator's `levelgen::level(seed, depth)` lands. Not yet played by the
+and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 
 ## Owner's word
