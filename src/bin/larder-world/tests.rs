@@ -290,7 +290,7 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
     let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let s = *g.soldiers.last().unwrap();
-    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0, by: Some(g.soldiers.len() - 1), fired: true, cast: 0 }];
+    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0, by: Some(g.soldiers.len() - 1), fired: true, cast: 0, r: 2.0 }];
     app.looks.clear();
     shot_marks(app.game.as_ref().unwrap(), &mut app.tracers, &mut app.looks, None);
     assert_eq!(app.looks.len(), app.game.as_ref().unwrap().soldiers.len());
@@ -702,7 +702,7 @@ fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
     assert!(g.build(Kind::Turret, at));
     let k = g.buildings.len() - 1;
     (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
-    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: at, to: (at.0, at.1 + 5.0), hit: None, killed: 0, by: None, fired: true, cast: 0 }];
+    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: at, to: (at.0, at.1 + 5.0), hit: None, killed: 0, by: None, fired: true, cast: 0, r: 2.0 }];
     app.blooks.clear();
     turret_fired(app.game.as_ref().unwrap(), &mut app.blooks);
     let t = app.blooks[k];

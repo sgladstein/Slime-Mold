@@ -410,7 +410,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
         let from = s.from;
-        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0, r: s.r });
         if !s.fired {
             continue;
         }
