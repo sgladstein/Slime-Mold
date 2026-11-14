@@ -200,6 +200,9 @@ pub struct Model {
     /// The player's buildings, for whoever draws them (the window draws
     /// plain marks now; the graphics thread's sprites read this).
     pub buildings: Vec<Site>,
+    /// The game has a start menu: the menu and the end screen offer "Main
+    /// menu" (`MenuItem::MainMenu`).
+    pub main_menu: bool,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -226,6 +229,8 @@ pub enum MenuItem {
     Opened,
     Resume,
     Restart,
+    /// Back to the start menu (`Model::main_menu`).
+    MainMenu,
     Quit,
 }
 
@@ -297,6 +302,9 @@ pub struct Hud {
     pressed: Option<Hit>,
     targeting: Option<Targeting>,
     menu: Option<MenuPage>,
+    /// The controls page was opened straight from play (F1 or ?), so Esc,
+    /// Back or F1 again closes it rather than going to the main menu page.
+    help_direct: bool,
     alerts: Vec<Alert>,
     /// The commands as last drawn (hotkeys and targeting read them).
     commands: Vec<Command>,
@@ -329,7 +337,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, started: Instant::now() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, started: Instant::now() }
     }
 
     /// The menu is open (the game should pause).
@@ -482,7 +490,14 @@ impl Hud {
                         self.menu = None;
                         out.push(HudEvent::Menu(m));
                     }
-                    Some(Hit::Help) => self.menu = Some(MenuPage::Help),
+                    Some(Hit::Help) => {
+                        self.menu = Some(MenuPage::Help);
+                        self.help_direct = false;
+                    }
+                    Some(Hit::Back) if self.help_direct => {
+                        self.menu = None;
+                        out.push(HudEvent::Menu(MenuItem::Resume));
+                    }
                     Some(Hit::Back) => self.menu = Some(MenuPage::Main),
                     _ => {}
                 }
@@ -562,11 +577,38 @@ impl Hud {
         if self.end {
             return (true, out);
         }
+        // F1 or ? (the Slash key) is the key card from play or the menu
+        // (cloud plan 2026-11-14, C2); again, or Esc, puts it away.
+        if matches!(code, KeyCode::F1 | KeyCode::Slash) && !ctrl {
+            self.targeting = None;
+            match self.menu {
+                Some(MenuPage::Help) => {
+                    self.menu = if self.help_direct { None } else { Some(MenuPage::Main) };
+                    if self.help_direct {
+                        out.push(HudEvent::Menu(MenuItem::Resume));
+                    }
+                }
+                Some(MenuPage::Main) => {
+                    self.menu = Some(MenuPage::Help);
+                    self.help_direct = false;
+                }
+                None => {
+                    self.menu = Some(MenuPage::Help);
+                    self.help_direct = true;
+                    out.push(HudEvent::Menu(MenuItem::Opened));
+                }
+            }
+            return (true, out);
+        }
         if code == KeyCode::Escape {
             if self.targeting.take().is_some() {
                 return (true, out);
             }
             match self.menu {
+                Some(MenuPage::Help) if self.help_direct => {
+                    self.menu = None;
+                    out.push(HudEvent::Menu(MenuItem::Resume));
+                }
                 Some(MenuPage::Help) => self.menu = Some(MenuPage::Main),
                 Some(MenuPage::Main) => {
                     self.menu = None;
@@ -676,7 +718,7 @@ impl Hud {
         }
         self.end = m.end.is_some();
         if let Some((title, lines)) = &m.end {
-            self.end_screen(title, lines, c, s);
+            self.end_screen(title, lines, m.main_menu, c, s);
         } else if let Some(page) = self.menu {
             self.menu_draw(page, m, c, s);
         }
@@ -1159,7 +1201,11 @@ impl Hud {
             MenuPage::Main => {
                 let w = 340.0 * s;
                 let bh = 42.0 * s;
-                let items: [(&str, Hit, bool); 4] = [("Resume", Hit::Menu(MenuItem::Resume), true), ("Controls", Hit::Help, false), ("Restart", Hit::Menu(MenuItem::Restart), false), ("Quit", Hit::Menu(MenuItem::Quit), false)];
+                let mut items: Vec<(&str, Hit, bool)> = vec![("Resume", Hit::Menu(MenuItem::Resume), true), ("Controls", Hit::Help, false), ("Restart", Hit::Menu(MenuItem::Restart), false)];
+                if m.main_menu {
+                    items.push(("Main menu", Hit::Menu(MenuItem::MainMenu), false));
+                }
+                items.push(("Quit", Hit::Menu(MenuItem::Quit), false));
                 let h = 84.0 * s + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
@@ -1180,6 +1226,7 @@ impl Hud {
                     ("Minimap".into(), "Click to look there; right click to send".into()),
                     ("Space".into(), "Look at the newest alert".into()),
                     ("Esc".into(), "Cancel placing, or this menu".into()),
+                    ("F1 or ?".into(), "This key card".into()),
                 ];
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
@@ -1203,10 +1250,11 @@ impl Hud {
         }
     }
 
-    fn end_screen(&mut self, title: &str, lines: &[String], c: &mut Canvas, s: f32) {
+    fn end_screen(&mut self, title: &str, lines: &[String], main_menu: bool, c: &mut Canvas, s: f32) {
         let w = 420.0 * s;
         let bh = 42.0 * s;
-        let h = 96.0 * s + lines.len() as f32 * 22.0 * s + 2.0 * (bh + 10.0 * s) + 20.0 * s;
+        let buttons = if main_menu { 3.0 } else { 2.0 };
+        let h = 96.0 * s + lines.len() as f32 * 22.0 * s + buttons * (bh + 10.0 * s) + 20.0 * s;
         let r = self.modal(w, h, c, s);
         c.text(Weight::SemiBold, 24.0 * s, (r.x + w / 2.0, r.y + 50.0 * s), Align::Centre, title, TEXT);
         let mut y = r.y + 84.0 * s;
@@ -1216,7 +1264,12 @@ impl Hud {
         }
         y += 10.0 * s;
         self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s);
-        self.wide_button(Rect::new(r.x + 24.0 * s, y + bh + 10.0 * s, w - 48.0 * s, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
+        let mut y = y + bh + 10.0 * s;
+        if main_menu {
+            self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
+            y += bh + 10.0 * s;
+        }
+        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
     }
 
     /// Where a command's button was last drawn.
@@ -1228,6 +1281,7 @@ impl Hud {
     /// Opens the menu on its controls page.
     pub fn show_help(&mut self) {
         self.menu = Some(MenuPage::Help);
+        self.help_direct = false;
     }
 
     /// Seconds since the HUD was made (for UI animations).
@@ -1421,6 +1475,47 @@ mod tests {
         // With the menu open, hotkeys do nothing.
         r.key(KeyCode::Escape);
         assert_eq!(r.key(KeyCode::KeyS), (true, vec![]));
+    }
+
+    #[test]
+    fn f1_or_question_mark_is_the_key_card_from_play() {
+        for k in [KeyCode::F1, KeyCode::Slash] {
+            let mut r = Rig::new((1920, 1080));
+            assert_eq!(r.key(k), (true, vec![HudEvent::Menu(MenuItem::Opened)]), "{k:?} pauses");
+            assert!(r.hud.menu_open());
+            // Again, or Esc, goes straight back to play (not the main page).
+            assert_eq!(r.key(k).1, vec![HudEvent::Menu(MenuItem::Resume)]);
+            assert!(!r.hud.menu_open());
+            r.key(k);
+            assert_eq!(r.key(KeyCode::Escape).1, vec![HudEvent::Menu(MenuItem::Resume)]);
+            assert!(!r.hud.menu_open());
+            // From the paused menu it is the menu's controls page, and Esc
+            // goes back to the menu.
+            r.key(KeyCode::Escape);
+            assert_eq!(r.key(k).1, vec![]);
+            assert_eq!(r.key(KeyCode::Escape).1, vec![]);
+            assert!(r.hud.menu_open());
+        }
+    }
+
+    #[test]
+    fn the_main_menu_button_shows_only_when_the_game_has_one() {
+        for on in [false, true] {
+            let mut r = Rig::new((1920, 1080));
+            r.m.main_menu = on;
+            r.key(KeyCode::Escape);
+            r.draw();
+            assert_eq!(r.hud.hits.iter().any(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)), on);
+            r.m.end = Some(("Over".into(), vec![]));
+            r.draw();
+            let b = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)).map(|(b, _)| *b);
+            assert_eq!(b.is_some(), on, "end screen");
+            if let Some(b) = b {
+                r.at((b.x + 4.0, b.y + 4.0));
+                r.click(Button::Left, true);
+                assert_eq!(r.click(Button::Left, false).1, vec![HudEvent::Menu(MenuItem::MainMenu)]);
+            }
+        }
     }
 
     #[test]

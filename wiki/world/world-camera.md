@@ -2,7 +2,7 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/shot-damage-2026-11-12.md
@@ -31,6 +31,7 @@ code:
   - Order::Fight
   - SPRITES
   - Squad::model
+  - StartMenu
   - UiCommand
   - View::record
   - View::set_alive
@@ -68,7 +69,11 @@ Over it sits a game UI with no game rules
 (`CanvasPass`) and a HUD the game fills with a `Model` each frame, handing
 back `HudEvent`s (top bar, alerts, groups, selection, a command card, a
 placement ghost, hover cards, pause and end screens); about 0.1 ms of GPU
-and of CPU a frame on the 1070. The game itself is `cargo run --release
+and of CPU a frame on the 1070. F1 or ? opens the key card from play (it
+pauses; again, or Esc, goes back to play). A start menu (`StartMenu`,
+`world::start`, 2026-11-14) draws on the same canvas down the left of the
+screen, over a live dish: sandbox, the campaign's missions, an options
+page with each switch's default beside it, and the key card. The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
