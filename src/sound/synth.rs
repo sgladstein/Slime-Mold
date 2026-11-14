@@ -288,6 +288,54 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
             freq_end: 0.8,
             ..base
         },
+        // A bullet flying past: a thin band of noise sweeping down, the
+        // flyby.
+        GrainKind::Zip => Spec { len: 0.11, attack: 0.03, noise: 0.35, noise_tau: 0.05, band: rng.range(3000.0, 4200.0), q: 2.5, band_end: 0.45, ..base },
+        // A piece's tell: a low rough growl that rises, the lean before
+        // the charge.
+        GrainKind::Snarl => Spec {
+            len: 0.7,
+            attack: 0.25,
+            noise: 0.4,
+            noise_tau: 0.35,
+            band: rng.range(260.0, 340.0),
+            q: 1.6,
+            band_end: 2.2,
+            rough: 0.9,
+            sine: 0.35,
+            sine_tau: 0.3,
+            freq: rng.range(70.0, 85.0),
+            freq_end: 1.8,
+            ..base
+        },
+        // The mould torn in two: a ripping, rough noise that tears upward.
+        GrainKind::Tear => Spec {
+            len: 0.35,
+            attack: 0.01,
+            noise: 0.55,
+            noise_tau: 0.12,
+            band: rng.range(500.0, 800.0),
+            q: 0.9,
+            band_end: 3.0,
+            rough: 1.0,
+            sine: 0.3,
+            sine_tau: 0.05,
+            freq: rng.range(90.0, 110.0),
+            freq_end: 0.6,
+            drop: 1.0,
+        },
+        // Withering: a soft dry fizz, duller than starving's crackle.
+        GrainKind::Wilt => Spec {
+            len: rng.range(0.03, 0.06),
+            attack: 0.004,
+            noise: 0.3,
+            noise_tau: rng.range(0.01, 0.02),
+            band: rng.range(1200.0, 2200.0),
+            q: 1.2,
+            band_end: 0.6,
+            rough: 0.6,
+            ..base
+        },
         // A soldier hurt: a short, rough, falling mid groan.
         GrainKind::Hurt => Spec {
             len: 0.16,
@@ -383,7 +431,11 @@ struct Texture {
     last_level: f32,
 }
 
-/// The mould's voice (`SoundCmd::Body`).
+/// The mould's voices: the main body and up to three cut-off pieces
+/// (`SoundCmd::Body`'s slot).
+pub const BODY_VOICES: usize = 4;
+
+/// One of the mould's voices (`SoundCmd::Body`).
 #[derive(Clone, Copy)]
 struct BodyVoice {
     level: Smoothed,
@@ -517,7 +569,7 @@ pub struct VoiceBank {
     room_am: f32,
     lamp: Smoothed,
     lamp_pan: f32,
-    body: BodyVoice,
+    body: [BodyVoice; BODY_VOICES],
     hush: Smoothed,
     master: Smoothed,
     k_fast: f32,
@@ -566,7 +618,7 @@ impl VoiceBank {
             room_am: 0.0,
             lamp: Smoothed::default(),
             lamp_pan: 0.0,
-            body: BodyVoice::default(),
+            body: [BodyVoice::default(); BODY_VOICES],
             hush: Smoothed { value: 1.0, target: 1.0 },
             master: Smoothed { value: DEFAULT_MASTER * DEFAULT_MASTER, target: DEFAULT_MASTER * DEFAULT_MASTER },
             k_fast: coef(0.05, sr),
@@ -607,11 +659,13 @@ impl VoiceBank {
             SoundCmd::Alert { kind, weight, pan } => self.alert(kind, weight, pan),
             SoundCmd::Impact { weight, pan, gain, delay } => {
                 self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight));
-                // A heavy hit ducks the mould's voice so it still punches.
-                self.body.duck = self.body.duck.min(1.0 - 0.6 * weight.clamp(0.0, 1.0));
+                // A heavy hit ducks the mould's voices so it still punches.
+                for b in self.body.iter_mut() {
+                    b.duck = b.duck.min(1.0 - 0.6 * weight.clamp(0.0, 1.0));
+                }
             }
-            SoundCmd::Body { level, pitch, breath, rough, bright, pan } => {
-                let b = &mut self.body;
+            SoundCmd::Body { slot, level, pitch, breath, rough, bright, pan } => {
+                let Some(b) = self.body.get_mut(slot as usize) else { return };
                 b.level.target = level.clamp(0.0, 1.0);
                 b.pitch.target = pitch.clamp(20.0, 400.0);
                 b.breath.target = breath.clamp(0.02, 3.0);
@@ -712,7 +766,7 @@ impl VoiceBank {
         let marimba = [(1.0, 1.0, 0.35), (3.93, 0.25, 0.08), (9.2, 0.08, 0.03), (0.0, 0.0, 0.1), (0.0, 0.0, 0.1)];
         let bell = [(1.0, 1.0, 0.9), (2.0, 0.5, 0.6), (2.76, 0.35, 0.4), (5.4, 0.15, 0.2), (0.5, 0.3, 1.2)];
         // (frequency, delay seconds, gain, bell?)
-        let mut notes: [(f32, f32, f32, bool); 3] = [(0.0, 0.0, 0.0, false); 3];
+        let mut notes: [(f32, f32, f32, bool); 4] = [(0.0, 0.0, 0.0, false); 4];
         // C major pentatonic from C5, climbing with how much food is joined.
         const PENTA: [f32; 6] = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
         match kind {
@@ -726,6 +780,14 @@ impl VoiceBank {
                 let n = (w * 3.0).round() as usize;
                 for (j, f) in [392.0, 493.88, 587.33].iter().enumerate().take(n.max(1)) {
                     notes[j] = (*f, 0.18 * j as f32, if n == 0 { 0.08 } else { 0.18 }, true);
+                }
+            }
+            // A siren: a two-tone wail, high-low-high-low, plain sines
+            // (marimba partials with long decays would ring; these are
+            // short, so the call reads as a call).
+            AlertKind::Siren => {
+                for (j, f) in [740.0, 554.37, 740.0, 554.37].iter().enumerate() {
+                    notes[j] = (*f, 0.28 * j as f32, 0.10, false);
                 }
             }
             AlertKind::Fallen => {
@@ -909,9 +971,9 @@ impl VoiceBank {
 
             // The mould's voice: a sub tone and its two partials under a band
             // of noise, swelling with its breath, roughened by strain.
-            {
+            for bi in 0..BODY_VOICES {
                 let (k_slow, k_mid) = (self.k_slow, self.k_mid);
-                let b = &mut self.body;
+                let b = &mut self.body[bi];
                 let level = b.level.step(k_slow, k_slow);
                 if level > 1e-4 || b.level.target > 0.0 {
                     let pitch = b.pitch.step(k_slow, k_slow);
@@ -935,7 +997,7 @@ impl VoiceBank {
                     b.rough_lp += (self.rng.unit() - b.rough_lp) * 0.004;
                     n *= 1.0 - rough + rough * 2.0 * b.rough_lp;
                     let y = (0.55 * tone * (1.0 - 0.5 * rough) + (0.25 + 0.35 * bright + 0.3 * rough) * n * 0.25) * swell * level * b.duck * hush;
-                    let (gl, gr) = pan_gains(pan * 0.5);
+                    let (gl, gr) = pan_gains(pan);
                     l += y * gl;
                     r += y * gr;
                 }
@@ -1106,7 +1168,7 @@ mod tests {
     /// breath rate), and a heavy hit ducks it.
     #[test]
     fn the_mould_voice_breathes_and_ducks_under_a_heavy_hit() {
-        let body = SoundCmd::Body { level: 0.3, pitch: 50.0, breath: 0.5, rough: 0.2, bright: 0.0, pan: 0.0 };
+        let body = SoundCmd::Body { slot: 0, level: 0.3, pitch: 50.0, breath: 0.5, rough: 0.2, bright: 0.0, pan: 0.0 };
         let mut b = VoiceBank::new(8_000, 21);
         b.apply(body);
         let x = render(&mut b, 6.0);
@@ -1118,9 +1180,9 @@ mod tests {
         let room = rms(&render(&mut quiet, 1.0));
         assert!(rms(&x) > room * 3.0, "voice {} vs room {room}", rms(&x));
         b.apply(SoundCmd::Impact { weight: 1.0, pan: 0.0, gain: 0.0, delay: 0.0 });
-        assert!(b.body.duck < 0.5, "a heavy hit did not duck the voice");
+        assert!(b.body[0].duck < 0.5, "a heavy hit did not duck the voice");
         render(&mut b, 1.5);
-        assert!(b.body.duck > 0.95, "the duck did not recover: {}", b.body.duck);
+        assert!(b.body[0].duck > 0.95, "the duck did not recover: {}", b.body[0].duck);
     }
 
     #[test]
@@ -1132,7 +1194,7 @@ mod tests {
             assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{kind:?}");
             assert!(rms(&x) > 0.0005, "{kind:?} made no sound");
         }
-        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen] {
+        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen, AlertKind::Siren] {
             for w in [0.0, 0.5, 1.0] {
                 let mut b = VoiceBank::new(48_000, 12);
                 b.apply(SoundCmd::Alert { kind, weight: w, pan: 0.0 });
