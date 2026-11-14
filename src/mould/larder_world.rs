@@ -77,6 +77,7 @@ use super::big::{BigDish, BigParams, LIFE_DEAD};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
 pub use super::guns::Gun;
+pub use super::rounds::Deck;
 
 pub use super::larder::{End, Order, Stance};
 
@@ -444,7 +445,28 @@ impl<W: World> Game<W> {
     /// burn line's stand-off and the squad mode's volleys all read this;
     /// building reach and turrets keep `Rules::range` and `turret_range`.
     pub fn gun_range(&self, q: usize) -> f32 {
-        self.gun(q).range * (1.0 + self.rules.range_card * self.bullet_mods.reach as f32)
+        self.gun(q).range * (1.0 + self.rules.range_card * self.mods(q).reach as f32)
+    }
+
+    /// What squad `q`'s bullets carry (`rounds::flight`): from its own
+    /// cards (`Squad::deck`) if it has them, else the army's
+    /// (`bullet_mods`, set by `Rounds::arm` from the H loadout).
+    pub fn mods(&self, q: usize) -> BulletMods {
+        match self.squads.get(q).and_then(|s| s.deck) {
+            Some(d) => super::rounds::flight(&d.cards()),
+            None => self.bullet_mods,
+        }
+    }
+
+    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's.
+    pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
+        match self.squads.get_mut(q) {
+            Some(s) => {
+                s.deck = deck;
+                true
+            }
+            None => false,
+        }
     }
 
     /// The farthest any live squad fires (`gun_range`), or the standard

@@ -22,8 +22,14 @@
 //! **Rolls** (`Gun::roll`): range, rate, spread and budget are each the
 //! kind's average times `exp(sigma z)`, `z` a standard normal draw, so a
 //! gun is as often 10% better as 10% worse and rarely far off; slots move
-//! one either way a fifth of the time each. One gun in `LUCKY_IN` is lucky:
-//! every draw lands at least one sigma on the good side. Deeper planets
+//! one either way a fifth of the time each. Luck is in each roll (owner,
+//! 17:32Z: "A lucky gun happens due to each individual random roll"): every
+//! draw, one stat at a time, is a lucky one with chance 1 in
+//! `LUCKY_DRAW_IN`, landing at least `LUCKY_LIFT` sigma on the good side
+//! (a slot more; a scattergun's 5 or 6 bullets). A great gun is one whose
+//! draws came up well, and `Gun::lucky` marks the ones that grade
+//! `LUCKY_GRADE` or better (about 1 in 12). Until 17:40Z one roll a gun
+//! (1 in 12) made every draw good at once. Deeper planets
 //! (`depth`, from 1, as `levelgen::level`) raise the averages: the budget
 //! by `DEPTH_BUDGET` a planet up to `DEPTH_BUDGET_MAX` times, range and
 //! rate by `DEPTH_STAT` up to `DEPTH_STAT_MAX`, spread down by as much, and
@@ -39,8 +45,13 @@ pub const SLOTS_MAX: u32 = 6;
 pub const SLOTS_MIN: u32 = 2;
 /// Most bullets a shot.
 pub const SHOTS_MAX: u32 = 6;
-/// One gun in this many rolls lucky.
-pub const LUCKY_IN: u32 = 12;
+/// Each draw (a stat) is a lucky one with chance 1 in this many, and then
+/// lands at least `LUCKY_LIFT` sigma on its good side.
+pub const LUCKY_DRAW_IN: u32 = 6;
+pub const LUCKY_LIFT: f32 = 1.5;
+/// A gun grading this or better (`Gun::grade`) is called lucky: about 1
+/// in 12.
+pub const LUCKY_GRADE: f32 = 1.15;
 /// Budget a planet deeper, as a fraction of the kind's (and the cap).
 pub const DEPTH_BUDGET: f32 = 0.12;
 pub const DEPTH_BUDGET_MAX: f32 = 2.5;
@@ -133,7 +144,7 @@ pub struct Gun {
     pub budget: u32,
     /// Cards it holds.
     pub slots: u32,
-    /// Rolled lucky (every draw on the good side).
+    /// Its draws came up well: graded `LUCKY_GRADE` or better.
     pub lucky: bool,
     /// The roll against its kind's average at its depth: the geometric
     /// mean of range, rate, budget, slots and (where it has any) spread,
@@ -266,41 +277,44 @@ fn normal(r: &mut Rng) -> f32 {
 
 fn roll_with(kind: GunKind, depth: u32, r: &mut Rng) -> Gun {
     let a = kind.average_at(depth);
-    let lucky = r.below(LUCKY_IN) == 0;
-    // Each draw on its good side: +z for range, rate, budget and slots,
-    // -z for spread. A lucky gun's every draw is at least one sigma good.
+    // Each draw on its good side: +z for range, rate and budget, -z for
+    // spread. Each is lucky on its own (`LUCKY_DRAW_IN`).
+    //
+    // The lucky draws would lift the mean by `shift` sigma (|z| averages
+    // sqrt(2 / pi)), so every draw is moved down by as much: the kind's
+    // numbers stay its average (owner: "those are the average per gun
+    // type"), and a gun with no lucky draw is a little under it.
+    let shift = ((2.0 / std::f32::consts::PI).sqrt() + LUCKY_LIFT) / LUCKY_DRAW_IN as f32;
     let mut good = || {
         let z = normal(r);
-        if lucky {
-            z.abs() + 1.0
-        } else {
-            z
-        }
+        let z = if r.below(LUCKY_DRAW_IN) == 0 { z.abs() + LUCKY_LIFT } else { z };
+        z - shift
     };
     let (zr, zt, zs, zb) = (good(), good(), good(), good());
     let range = a.range * (SIGMA[0] * zr).exp();
     let rate = a.rate * (SIGMA[1] * zt).exp();
     let spread = a.spread * (-SIGMA[2] * zs).exp();
     let budget = ((a.budget as f32 * (SIGMA[3] * zb).exp()).round() as u32).max(2);
-    // Slots: one fewer or one more a fifth of the time each, more often
-    // more the deeper (a tenth more a planet, to half); lucky never fewer.
+    // Slots: a lucky draw is one more; else one more a fifth of the time
+    // (more often the deeper: a tenth more a planet, to half) and one
+    // fewer two fifths, so at depth 1 a third of guns have one more and a
+    // third one fewer, and the kind's slots stay its average.
     let d = (depth.max(1) - 1) as f32;
     let up = (0.2 + 0.1 * d).min(0.5);
     let x = r.f32();
-    let step: i32 = if x < up {
+    let step: i32 = if r.below(LUCKY_DRAW_IN) == 0 || x < up {
         1
-    } else if !lucky && x > 0.8 {
+    } else if x > 0.6 {
         -1
     } else {
         0
     };
     let slots = (a.slots as i32 + step).clamp(SLOTS_MIN as i32, SLOTS_MAX as i32) as u32;
     let shots = if kind == GunKind::Scatter {
-        let n = 2 + r.below(SHOTS_MAX - 1);
-        if lucky {
-            n.max(4)
+        if r.below(LUCKY_DRAW_IN) == 0 {
+            SHOTS_MAX - 1 + r.below(2)
         } else {
-            n
+            2 + r.below(SHOTS_MAX - 1)
         }
     } else {
         1
@@ -313,7 +327,7 @@ fn roll_with(kind: GunKind, depth: u32, r: &mut Rng) -> Gun {
         parts.push(shots as f32 / a.shots as f32);
     }
     let grade = (parts.iter().map(|p| p.ln()).sum::<f32>() / parts.len() as f32).exp();
-    Gun { kind, depth: a.depth, range, rate, spread, shots, budget, slots, lucky, grade }
+    Gun { kind, depth: a.depth, range, rate, spread, shots, budget, slots, lucky: grade >= LUCKY_GRADE, grade }
 }
 
 #[cfg(test)]
@@ -366,15 +380,20 @@ mod tests {
     }
 
     #[test]
-    fn about_one_gun_in_twelve_is_lucky_and_better_than_the_rest() {
+    fn luck_is_in_each_roll_and_about_one_gun_in_twelve_comes_out_lucky() {
         let gs = many(None, 1, 6000);
+        // Grades over 6,000 rolls at depth 1 (17:40Z): median 0.99, 90%
+        // 1.14, 92% 1.15, 99% 1.28.
         let lucky: Vec<&Gun> = gs.iter().filter(|g| g.lucky).collect();
         let f = lucky.len() as f32 / gs.len() as f32;
-        assert!((f - 1.0 / LUCKY_IN as f32).abs() < 0.015, "{f}");
-        assert!(lucky.iter().all(|g| g.grade > 1.1), "a lucky gun is every way better than average");
-        let plain = gs.iter().filter(|g| !g.lucky).map(|g| g.grade).sum::<f32>() / (gs.len() - lucky.len()) as f32;
-        assert!((plain - 1.0).abs() < 0.05, "an unlucky gun is average on average: {plain}");
-        assert!(gs.iter().filter(|g| !g.lucky).any(|g| g.grade > 1.25), "and now and then a good one anyway");
+        assert!((f - 1.0 / 12.0).abs() < 0.03, "{f}");
+        assert!(lucky.iter().all(|g| g.grade >= LUCKY_GRADE));
+        let mean = gs.iter().map(|g| g.grade).sum::<f32>() / gs.len() as f32;
+        assert!((mean - 1.0).abs() < 0.04, "the kind's numbers stay the average: {mean}");
+        // Luck is a stat at a time: some guns have one great number and
+        // others average, so a lucky range turns up on unlucky guns too.
+        let long = GunKind::Long.average();
+        assert!(gs.iter().any(|g| !g.lucky && g.kind == GunKind::Long && g.range > long.range * 1.25), "a great range on an ordinary gun");
     }
 
     #[test]

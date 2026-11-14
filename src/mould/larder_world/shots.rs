@@ -36,7 +36,7 @@ impl<W: World> Game<W> {
             }
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
-            let m = if b.is_some() { self.bullet_mods } else { BulletMods::default() };
+            let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
             self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split });
         }
         let leg = r.bullet_speed * self.s() * dt;

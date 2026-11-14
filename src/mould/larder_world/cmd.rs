@@ -64,6 +64,8 @@ pub enum Cmd {
     /// Squad `q` takes a gun (`Game::arm`; owner 11-14 16:46Z, "The squad
     /// owns the gun"); None gives back the standard rifle.
     Arm(u8, Option<Gun>),
+    /// Squad `q` takes its own cards (`Game::load`); None the army's.
+    Load(u8, Option<Deck>),
 }
 
 impl Cmd {
@@ -96,6 +98,8 @@ impl Cmd {
             Cmd::Cover(q, c) => format!("cover {q} {}", c.name()),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
+            Cmd::Load(q, None) => format!("load {q} army"),
+            Cmd::Load(q, Some(d)) => format!("load {q} {}", super::super::rounds::name(&d.cards())),
         }
     }
 
@@ -121,6 +125,8 @@ impl Cmd {
             "cover" => return Some(Cmd::Cover(w.get(1)?.parse().ok()?, Cover::parse(w.get(2)?)?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
+            "load" if w.get(2) == Some(&"army") => return Some(Cmd::Load(w.get(1)?.parse().ok()?, None)),
+            "load" => return Some(Cmd::Load(w.get(1)?.parse().ok()?, Some(Deck::new(&super::super::rounds::parse(w.get(2)?)?)))),
             v @ ("sorder" | "squeue") => {
                 let q: u8 = w.get(1)?.parse().ok()?;
                 let rest = w[2..].join(" ");
@@ -212,6 +218,7 @@ impl<W: World> Game<W> {
                 true
             }
             Cmd::Arm(q, g) => self.arm(q as usize, g),
+            Cmd::Load(q, d) => self.load(q as usize, d),
             Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) => self.squad_cmd(c),
             _ => false,
         }

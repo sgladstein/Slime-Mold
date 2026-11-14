@@ -185,6 +185,10 @@ pub struct Squad {
     /// the standard rifle (`Gun::standard`), so a game that hands out no
     /// guns plays as before. Read it through `Game::gun`.
     pub gun: Option<Gun>,
+    /// Its own cards (`Cmd::Load`); None fires the army's round (the H
+    /// loadout, `Rounds::round`). Read it through `Game::mods` and
+    /// `Rounds::cards_of`.
+    pub deck: Option<Deck>,
 }
 
 /// Orders a squad holds queued.
@@ -209,16 +213,19 @@ impl Default for Squad {
             queued: 0,
             link: NO_LINK,
             gun: None,
+            deck: None,
         }
     }
 }
 
 impl Squad {
     /// A new squad made from this one (a split, a soldier joining a free
-    /// id): its formation, settings and gun (each half of a split fires
-    /// what it fired), nothing it was doing, no link.
+    /// id): its formation and settings, nothing it was doing, no link, and
+    /// the standard rifle with the army's round: a gun is loot, so a split
+    /// does not copy a lucky one (17:40Z; the gun thread's default while
+    /// the owner decides). `Cmd::Merge` hands a gun back.
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, ..Squad::default() }
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, ..Squad::default() }
     }
 }
 
@@ -629,7 +636,7 @@ impl<W: World> Game<W> {
     pub(super) fn shot_gap(&self, q: usize) -> u64 {
         let every = self.gun(q).every() / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
         // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
-        let every = every / (1.0 + self.rules.rate_card * self.bullet_mods.rate as f32).max(0.01);
+        let every = every / (1.0 + self.rules.rate_card * self.mods(q).rate as f32).max(0.01);
         self.secs(every).max(1)
     }
 
@@ -821,6 +828,11 @@ impl<W: World> Game<W> {
                 for k in ms {
                     self.soldiers[k].squad = a;
                 }
+                // A gun and cards are not lost to a merge: a squad with
+                // none of its own takes the joining squad's.
+                let (ga, gb) = (self.squads[a as usize], self.squads[b as usize]);
+                self.squads[a as usize].gun = ga.gun.or(gb.gun);
+                self.squads[a as usize].deck = ga.deck.or(gb.deck);
                 if self.active == Some(b as usize) {
                     self.active = Some(a as usize);
                 }

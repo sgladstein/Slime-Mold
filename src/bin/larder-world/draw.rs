@@ -456,7 +456,7 @@ impl App {
                 rounds::Card::Germ => g.world.has_germ(),
                 _ => true,
             };
-            let cast = b.by.and_then(|k| self.rounds.next_cast(k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
+            let cast = b.by.and_then(|k| self.rounds.next_cast(g, k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
             let look = card_look(cast.map(|c| c.payload));
             let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32);
             let quiet = cast.is_some_and(|c| c.quiet);
@@ -937,37 +937,42 @@ impl App {
     /// alive) lit at the cast its next hit fires.
     fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
         let rd = &self.rounds;
-        let rech = rounds::recharge(&rd.round, &rd.rules);
         let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
         let lead = scope.first().copied();
+        // The squad owns the gun and its cards (owner 11-14 16:46Z): the
+        // controlled squad's, else the lead soldier's.
+        let q = g.active.or(lead.map(|k| g.soldiers[k].squad as usize)).unwrap_or(0);
+        let gun = g.gun(q);
+        let round = rd.cards_of(g, q);
+        let rech = rounds::recharge(&round, &rd.rules);
         let tick = g.world.ticks();
         let ticks = (rech * g.rules.tps as f32).max(1.0);
-        let left = |k: usize| rd.gun(k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
-        let next = lead.and_then(|k| rd.gun(k)).map(|(cast, _)| cast);
-        let cards = gun_cards(&rd.round, &rd.rules, &g.rules, next, |c| match c {
+        let left = |k: usize| rd.gun(g, k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
+        let next = lead.and_then(|k| rd.gun(g, k)).map(|(cast, _)| cast);
+        let cards = gun_cards(&round, &rd.rules, &g.rules, next, |c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
             _ => true,
         });
-        let (lname, lcards) = LOADOUTS[self.round];
-        let name = if rounds::parse(lcards).unwrap_or_default() == rd.round { lname.to_string() } else { rounds::name(&rd.round) };
+        let name = match LOADOUTS.iter().find(|(_, c)| rounds::parse(c).unwrap_or_default() == round) {
+            Some((n, _)) => n.to_string(),
+            None => rounds::name(&round),
+        };
         let whose = match (sel.len(), lead) {
             (_, None) => "no soldiers".to_string(),
             (1, Some(k)) => format!("Soldier {}", k + 1),
             (0, Some(k)) => format!("Soldier {} (squad)", k + 1),
             (n, Some(k)) => format!("Soldier {} (of {n})", k + 1),
         };
-        let casting = !rounds::casts(&rd.round, &rd.rules).is_empty();
+        let own = g.squads.get(q).is_some_and(|s| s.deck.is_some());
+        let whose = if own { format!("{whose}, squad {}'s own cards", q + 1) } else { whose };
+        let casting = !rounds::casts(&round, &rd.rules).is_empty();
         let note = (casting && scope.len() > 1).then(|| {
             let ready = scope.iter().filter(|&&k| left(k) <= 0.0).count();
             format!("{ready} of {} guns ready, recharge {rech:.1} s", scope.len())
         });
-        // The gun the squad owns (owner 11-14 16:46Z): the controlled
-        // squad's, else the lead soldier's.
-        let q = g.active.or(lead.map(|k| g.soldiers[k].squad as usize)).unwrap_or(0);
-        let gun = g.gun(q);
         Loadout {
-            name: if rd.round.is_empty() { "Plain".into() } else { capital(&name) },
+            name: if round.is_empty() { "Plain".into() } else { capital(&name) },
             whose,
             cards,
             slots: (gun.slots as usize).max(1),
@@ -975,10 +980,10 @@ impl App {
             recharge: rech,
             charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
             // The budget (owner's card, 11-14 15:34Z) under the cards.
-            note: if rd.round.is_empty() {
+            note: if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
-                let spent = format!("Cost {} of {}", rounds::cost(&rd.round), gun.budget);
+                let spent = format!("Cost {} of {}", rounds::cost(&round), gun.budget);
                 Some(note.map_or(spent.clone(), |n| format!("{spent} · {n}")))
             },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),

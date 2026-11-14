@@ -2310,10 +2310,11 @@ fn an_unarmed_squad_fires_the_standard_rifle_of_its_rules() {
     assert_eq!(g.shot_gap(0), g.secs(0.5).max(1));
 }
 
-/// Each squad fires its own gun: range, rate, spread and bullets a shot;
-/// a split half keeps the gun, and `Cmd::Arm` gives it back.
+/// Each squad fires its own gun: range, rate, spread and bullets a shot.
+/// A split half starts with the standard rifle (a gun is loot, not
+/// copied); merging hands a gun back; `Cmd::Arm` None returns the rifle.
 #[test]
-fn each_squad_fires_its_own_gun_and_a_split_half_keeps_it() {
+fn each_squad_fires_its_own_gun_and_a_split_does_not_copy_it() {
     use crate::mould::guns::GunKind;
     let mut g = squads(2);
     for _ in 0..3 {
@@ -2325,7 +2326,8 @@ fn each_squad_fires_its_own_gun_and_a_split_half_keeps_it() {
     assert_eq!((g.gun(0), g.gun_range(0)), (carbine, 15.0));
     let m = g.middle(0).unwrap();
     let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
-    assert_eq!(g.gun(b), carbine, "the split half carries the gun it had");
+    assert_eq!(g.gun(0), carbine, "the half left behind keeps the gun");
+    assert_eq!(g.gun(b), Gun::standard(&g.rules), "the new half takes the standard rifle");
     g.apply(Cmd::Arm(b as u8, Some(long)));
     assert_eq!(g.gun_range(b), 40.0);
     assert!(g.shot_gap(0) * 4 <= g.shot_gap(b), "the carbine fires 4.4 times as often as the long gun: {} against {}", g.shot_gap(0), g.shot_gap(b));
@@ -2333,6 +2335,11 @@ fn each_squad_fires_its_own_gun_and_a_split_half_keeps_it() {
     g.apply(Cmd::Arm(b as u8, None));
     assert_eq!(g.gun(b), Gun::standard(&g.rules));
     assert!(!g.apply(Cmd::Arm(SQUADS_MAX as u8, Some(long))), "no squad there");
+    // Merging: a squad with no gun of its own takes the joining one's.
+    g.apply(Cmd::Arm(0, None));
+    g.apply(Cmd::Arm(b as u8, Some(long)));
+    assert!(g.apply(Cmd::Merge(0, b as u8)));
+    assert_eq!(g.gun(0), long, "the long gun is not lost to the merge");
 }
 
 /// The scattergun fires its `shots` bullets a shot, fanned by its spread:

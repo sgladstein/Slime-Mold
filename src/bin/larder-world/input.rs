@@ -26,8 +26,22 @@ impl App {
         }
         self.round = i;
         let (name, cards) = LOADOUTS[i];
-        self.rounds = Rounds::new(rounds::parse(cards).unwrap_or_default(), RoundRules::default());
-        let what = if cards == "none" { "Round: plain shots".to_string() } else { format!("Round: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&self.rounds.round, &self.rounds.rules)) };
+        let round = rounds::parse(cards).unwrap_or_default();
+        // The squad owns the gun and its cards (owner 11-14 16:46Z): in the
+        // squad mode H loads the controlled squad's own (`Cmd::Load`); in
+        // the RTS round, the army's round as before.
+        let squad = self.game.as_ref().filter(|g| g.rules.squads).and_then(|g| g.active);
+        let whose = match (squad, self.game.as_mut()) {
+            (Some(q), Some(g)) => {
+                g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&round))));
+                format!("Squad {} round", q + 1)
+            }
+            _ => {
+                self.rounds = Rounds::new(round.clone(), RoundRules::default());
+                "Round".to_string()
+            }
+        };
+        let what = if cards == "none" { format!("{whose}: plain shots") } else { format!("{whose}: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&round, &self.rounds.rules)) };
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
