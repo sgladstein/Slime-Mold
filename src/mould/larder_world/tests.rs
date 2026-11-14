@@ -883,7 +883,9 @@ fn the_campaign_switches_do_what_they_say() {
 fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
     let mut g = small(1);
     let n = g.alive() as f32;
-    assert!(n >= 1.0 && g.rules.ration == 1.0 && g.rules.hunger == 1.0);
+    // Off by default since 2026-11-14 (the owner's playtest); the rule
+    // still works when `ration=` turns it on.
+    assert!(n >= 1.0 && g.rules.ration == 0.0 && g.rules.hunger == 1.0);
     g.rules.ration = 2.0;
     let hp = g.soldiers[0].hp;
     // Paid in full: the bank pays, nobody hungers.
@@ -927,7 +929,8 @@ fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
 fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
     let sent = |hunger: f32| {
         let mut g = small(7);
-        (g.rules.hunger, g.rules.overrun, g.bank) = (hunger, 0.0, 0.0);
+        // Rations on (off by default since 2026-11-14): this tests them.
+        (g.rules.ration, g.rules.hunger, g.rules.overrun, g.bank) = (1.0, hunger, 0.0, 0.0);
         let target = g.seek(0, None).expect("a crystal with charge");
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
@@ -954,7 +957,7 @@ fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
     // The reserve: a wiped squad on an empty bank gets a recruit at full
     // health, who harvests and pays its own ration.
     let mut g = small(7);
-    (g.rules.reserve, g.rules.overrun, g.bank) = (10.0, 0.0, 0.0);
+    (g.rules.ration, g.rules.reserve, g.rules.overrun, g.bank) = (1.0, 10.0, 0.0, 0.0);
     for s in g.soldiers.iter_mut() {
         (s.alive, s.hp) = (false, 0.0);
     }
