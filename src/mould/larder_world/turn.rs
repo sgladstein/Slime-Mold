@@ -106,7 +106,7 @@ impl<W: World> Game<W> {
                 if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
-                    let reach = r.range * sc;
+                    let reach = self.gun_range() * sc;
                     if volley.is_some() || d <= reach + 4.0 {
                         let (mut ux, mut uy) = (dx / d, dy / d);
                         if r.spread > 0.0 {
@@ -128,7 +128,7 @@ impl<W: World> Game<W> {
                 x: s.x,
                 y: s.y,
                 touch: r.touch * sc,
-                sight: r.range * sc,
+                sight: self.gun_range() * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
@@ -279,10 +279,19 @@ impl<W: World> Game<W> {
             self.guard_pay();
             self.count_stuck();
             self.check_broken();
+            self.keep_panic_reach();
         }
         self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
+    }
+
+    /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
+    /// at the start and once a game second, so a range card moves it.
+    pub(super) fn keep_panic_reach(&mut self) {
+        if self.rules.panic_margin >= 0.0 {
+            self.world.set_panic_r(self.rules.range + self.rules.panic_margin);
+        }
     }
 
     /// Once a game second, at the count: the broken mould (`Rules::broken`).

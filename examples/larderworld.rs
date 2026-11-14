@@ -378,6 +378,9 @@ fn main() {
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
             "strike" => rules.strike = v.parse().unwrap(),
+            // A scared piece's reach past the gun (`Rules::panic_margin`;
+            // negative keeps the world's `panic_r`).
+            "panic_margin" => rules.panic_margin = v.parse().unwrap(),
             "shot_every" => rules.shot_every = v.parse().unwrap(),
             // `spread=C`: aim spread, dish cells at the target (`Rules::spread`).
             "spread" => rules.spread = v.parse().unwrap(),

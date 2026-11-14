@@ -376,11 +376,11 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
-const GEM_STUB: f32 = 0.15;
+const GEM_STUB: f32 = 0.1;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
-const GEM_FILM: f32 = 0.75;
+const GEM_FILM: f32 = 0.92;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -557,7 +557,12 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // piece loses the push with its colour (`cut`). Every weight is a
     // smooth function of `th`, so no line is drawn where the film ends.
     let lum = dot(hue, vec3<f32>(0.299, 0.587, 0.114));
-    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut));
+    // The push eases off where the body is thickest (art director, 11-14
+    // 08:15Z: the soldiers and the bullet light must still win the value
+    // order), and the gel adds a little of the hue's own light, so a thin
+    // film stays above the darker ground (crystals thread, 11-14) in grey.
+    let thick = smoothstep(0.6, 1.0, th);
+    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
     // Condensed mould (11-14, the condense thread): where its walkers have
     // condensed (`dense`, the share of the mass round the cell) the body
     // turns deep bronze and holds near-full gloss, a harder, denser body,
@@ -565,9 +570,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // show. The share is the fade, as the ash's is. It is mixed after the
     // gold's saturation push: mixed into the hue before it, the push turned
     // the bronze orange, the panic's colour.
-    let thick = 0.95 + 0.3 * smoothstep(0.3, 1.0, th);
-    let body_c = mix(vivid * thick, DENSE_RGB * thick, dense * (1.0 - cut));
-    let gel = soil * (0.55 + 0.7 * vivid / 255.0);
+    let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
+    let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
+    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
     let film = 1.0 - exp(-14.0 * th);
     let opaque = smoothstep(0.08, 0.55, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
@@ -758,7 +763,12 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // rim), and stands up to a half taller (`th_h`, the height only). Taking
     // more of the sharp count instead made the inside lumpy and glittering.
     let th = mix(th0, smoothstep(0.04, 0.3, th0), 0.45 * dense_share);
-    let th_h = th * (1.0 + 0.5 * dense_share);
+    // The height's thickness comes in with the wide count (art director,
+    // 11-14 08:15Z: the thin frontier read as bubble wrap, each lone walker
+    // a dome with a cast shadow and a glint). A walker alone (wide about
+    // 0.4) is a point of light (its speck) on a flat film; the height
+    // rises as walkers gather, full in the body (wide 0.6 and up).
+    let th_h = th * smoothstep(0.3, 0.6, wide) * (1.0 + 0.5 * dense_share);
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
@@ -866,7 +876,18 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // A wet sheet: the glossier (thicker) the mould, the tighter and
     // brighter its highlight, so a raised vein carries a sharp white glint
     // along its lit flank and a thin film only a faint sheen.
-    let spec = pow(max(dot(n, half_v), 0.0), 16.0 + 64.0 * m.gloss) * m.gloss * (0.5 + 0.9 * m.gloss);
+    // The highlight takes its normal from the height sampled wider than
+    // the shading's (bilinear, four cheap samples) and a broad lobe (art director,
+    // 11-14 08:15Z: at the fine slope and exponent 16-80 the dense body
+    // glittered like crumpled gold foil): wet sheens along the veins, not
+    // one glint a walker clump.
+    // The spacing is some 9 screen pixels (1.5 cells at zoom 6, 0.75 at
+    // 12): a fixed 1.5 cells made zoom 12 read soft again.
+    let so = clamp(9.0 / P.zoom, 0.6, 1.5);
+    let sx = cells_height_lin(x + so, y) - cells_height_lin(x - so, y);
+    let sy = cells_height_lin(x, y + so) - cells_height_lin(x, y - so);
+    let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
+    let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
@@ -900,15 +921,29 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
+            // Spent, it is worn stone (art director, 11-14: a dry crystal
+            // "reads like a UI block"): darker than the rock round it, matte,
+            // and stepped in three hexagonal terraces from its depth field,
+            // each step's riser (two pixels) tilted out so the light catches
+            // one side and shades the other, as a worn step pyramid. The
+            // steps come in as the charge goes, so a live crystal is clean
+            // glass. Before: a flat (84,88,92) grey, steps tried as dark
+            // seams alone read as a target.
+            let spent = 1.0 - v;
+            let tf = fract(depth * 3.0 + 0.5);
+            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
+            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient.
-            let s = 9.0 * gem_tall(v) / a;
+            // slope is 9 tall(v) / a along the distance's gradient; a riser
+            // adds a steep outward tilt.
+            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
             let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte grey
-            // rock (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
-            var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
+            // Charged, it is glassy cyan lit from inside; spent, matte stone
+            // (the only cyan in the world is charge).
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
+            let worn = 0.6 + 0.3 * depth;
+            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(30.0, 120.0, 140.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -925,21 +960,21 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
             let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
-            let film = GEM_FILM * (1.0 - exp(-25.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
-            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.35 * hot, 0.0, 0.35));
-            let on = fed * clamp(0.3 + 0.7 * gs, 0.3, 1.5);
+            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.2 * hot, 0.0, 0.2));
+            let on = fed * clamp(0.5 + 0.5 * gs, 0.4, 1.4);
             // The silhouette stays crisp under the film: a dark line a pixel
             // and a half wide inside the hexagon's edge, where the faces
             // meet the ground (a hard shape's edge, art direction rule 4).
             let rim = 0.72 + 0.28 * smoothstep(0.0, 1.5, gi.x * P.zoom);
             // The charge's light comes up through the film, brightest deep in a
             // full crystal, so a covered crystal still glows cyan.
-            let through = glow * (1.0 - 0.3 * film) + vec3<f32>(20.0, 95.0, 115.0) * v * depth * film;
-            let gc = (mix(rock, on, film) + through) * rim;
+            let through = glow * (1.0 - 0.8 * film) + vec3<f32>(8.0, 40.0, 50.0) * v * depth * film;
+            let gc = mix(rock * rim, on, film) + through;
             c = mix(c, gc, cover);
         }
         if (cover < 1.0 && hot > 0.0) {

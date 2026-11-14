@@ -9,7 +9,10 @@
 //! their own; 1-9 or the wheel switch, X splits, a box pulls soldiers out, G
 //! merges; the controlled squad fires faster and hits harder; a tight blob
 //! facing the cursor by default, other formations to choose; bought
-//! soldiers join the controlled squad.
+//! soldiers join the controlled squad. (After the owner's playtest, 08:01Z,
+//! split and merge moved to Y and J and switching to Ctrl + wheel, so the
+//! command card's G and X and the wheel's zoom work: `squadmode`, bug
+//! sweep 2026-11-14.)
 //!
 //! **Game state, not window state.** Every soldier belongs to one squad
 //! (`Soldier::squad`) and every squad command is a `Cmd`, so a replay gives

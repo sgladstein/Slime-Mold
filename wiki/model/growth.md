@@ -151,7 +151,9 @@ the tubes between crystals broke into beads
   2 in the window's shape C**, the owner's "act more like a scared animal
   ... It should be more reckless", no stronger attack): a walker with no
   news of food for the lag heads straight for the nearest squad unit
-  within `panic_r` (20 dish cells), else the nearest crystal with food,
+  within `panic_r` (in the game 5 dish cells past the gun's range,
+  `Rules::panic_margin`, so 29 at 24 and moved by a range card; 20 when
+  the range was 15), else the nearest crystal with food,
   creeping at `panic_creep` (0.5) of its pace for `panic_lean` (1.5 s,
   the tell) and then at twice it; it calms once it hears news. The creep
   came from the game designer's review of the last stand: a walker

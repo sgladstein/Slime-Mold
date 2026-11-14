@@ -757,6 +757,11 @@ impl World for GpuWorld {
         self.s.upkeep = up;
     }
 
+    /// Written to the GPU with the next step's params (`panic_r2`).
+    fn set_panic_r(&mut self, r: f32) {
+        self.s.panic_r = r;
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }
@@ -806,6 +811,18 @@ mod tests {
     use crate::mould::larder_world::{Cmd, Game, Order, Rules};
     use crate::mould::tiers::Tier;
 
+    /// Whether the tests run on a real card, not software Vulkan (llvmpipe in
+    /// CI). Short twins that match exactly on llvmpipe are the bug detectors
+    /// there and keep their exact bound; a card orders atomics and float
+    /// sums its own way (the GTX 1070, 2026-11-14, HANDOFF decision 6), so
+    /// it gets the slack it measured (technical lead, #261).
+    static ON_CARD: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    /// `exact` on software Vulkan, `card` on a real GPU (`ON_CARD`).
+    fn tol<T>(exact: T, card: T) -> T {
+        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) { card } else { exact }
+    }
+
     /// A GPU, or None (the test passes, saying so) where there is none; CI
     /// sets `MOULDGPU_TEST_GPU=1` (Mesa's software Vulkan), so there a
     /// missing GPU fails. As `mouldgpu`'s `test_gpu`.
@@ -820,6 +837,8 @@ mod tests {
                 return None;
             }
         };
+        let info = adapter.get_info();
+        ON_CARD.store(info.device_type != wgpu::DeviceType::Cpu, std::sync::atomic::Ordering::Relaxed);
         let desc = wgpu::DeviceDescriptor { label: Some("readout"), required_limits: adapter.limits(), ..Default::default() };
         Some(block_on(adapter.request_device(&desc)).expect("device"))
     }
@@ -916,6 +935,9 @@ mod tests {
         }
         fn set_upkeep(&mut self, up: f32) {
             self.g.set_upkeep(up)
+        }
+        fn set_panic_r(&mut self, r: f32) {
+            self.g.set_panic_r(r)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()
@@ -1236,13 +1258,14 @@ mod tests {
             for _ in 0..20 {
                 let _ = gpu.frame(&f, 15);
                 let _ = cpu.frame(&f, 15);
-                // Each side within 1% and the whole within 1%, not exact: on the
+                // Exact on llvmpipe; on a card (`tol`) each side and the whole within
+                // 1% (+2): on the
                 // GTX 1070 (11-14, 004b7cb) the sides came out (988, 1068)
                 // against the CPU's (992, 1064), the same 2,056 walkers with
                 // four on the other side, where llvmpipe matched exactly; the
                 // births race on the card's atomics in another order.
                 let (g, c) = (gpu.counts_by_side(), cpu.counts_by_side());
-                let near = |a: usize, b: usize| a.abs_diff(b) <= b / 100 + 2;
+                let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 100 + 2);
                 assert!(near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1), "the engines part: {g:?} on the GPU, {c:?} on the CPU");
                 most = most.max(gpu.counts_by_side().1);
             }

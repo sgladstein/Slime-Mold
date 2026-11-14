@@ -310,6 +310,10 @@ pub struct Model {
     pub end: Option<(String, Vec<String>)>,
     /// Extra lines for the controls page (key, what it does).
     pub help: Vec<(String, String)>,
+    /// The rows that open the key card in place of the RTS controls' own
+    /// (selecting, groups, the wheel...), for a game whose mouse and keys
+    /// mean something else (the squad mode).
+    pub help_base: Option<Vec<(String, String)>>,
     /// The player's buildings, for whoever draws them (the window draws
     /// plain marks now; the graphics thread's sprites read this).
     pub buildings: Vec<Site>,
@@ -1539,7 +1543,9 @@ impl Hud {
                 }
             }
             MenuPage::Help => {
-                let mut rows: Vec<(String, String)> = vec![
+                let mut rows: Vec<(String, String)> = if let Some(base) = &m.help_base {
+                    base.clone()
+                } else { vec![
                     ("Left click / drag".into(), "Select soldiers".into()),
                     ("Right click".into(), "Move, or work the crystal or mould clicked".into()),
                     ("Shift".into(), "Add to the selection, or keep placing".into()),
@@ -1547,10 +1553,11 @@ impl Hud {
                     ("Wheel, middle drag".into(), "Zoom, pan; the screen's edge scrolls".into()),
                     ("Minimap".into(), "Click to look there; right click to send".into()),
                     ("Space".into(), "Look at the newest alert".into()),
-                    ("Esc".into(), "Cancel placing, or this menu".into()),
-                    ("F1 or ?".into(), "This key card".into()),
-                    ("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()),
-                ];
+                ] };
+                // Every game's card ends the same.
+                rows.push(("Esc".into(), "Cancel placing, or this menu".into()));
+                rows.push(("F1 or ?".into(), "This key card".into()));
+                rows.push(("Ctrl + / Ctrl -".into(), "Bigger or smaller UI and text".into()));
                 for cmd in &m.commands {
                     if let Some(k) = key_name(cmd.key) {
                         rows.push((k, cmd.name.clone()));

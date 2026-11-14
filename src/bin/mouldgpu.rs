@@ -2227,6 +2227,18 @@ mod tests {
         assert_eq!(thousands(32_000), "32,000");
     }
 
+    /// Whether the tests run on a real card, not software Vulkan (llvmpipe in
+    /// CI). Short twins that match exactly on llvmpipe are the bug detectors
+    /// there and keep their exact bound; a card orders atomics and float
+    /// sums its own way (the GTX 1070, 2026-11-14, HANDOFF decision 6), so
+    /// it gets the slack it measured (technical lead, #261).
+    static ON_CARD: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    /// `exact` on software Vulkan, `card` on a real GPU (`ON_CARD`).
+    fn tol<T>(exact: T, card: T) -> T {
+        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) { card } else { exact }
+    }
+
     /// A GPU for the twin tests, or `None` (the test then passes, saying it
     /// was skipped) on a machine with none. CI installs Mesa's software
     /// Vulkan (lavapipe) and sets `MOULDGPU_TEST_GPU=1`, so there a missing
@@ -2244,6 +2256,7 @@ mod tests {
         };
         let info = adapter.get_info();
         eprintln!("adapter: {} ({:?})", info.name, info.backend);
+        ON_CARD.store(info.device_type != wgpu::DeviceType::Cpu, std::sync::atomic::Ordering::Relaxed);
         let desc = wgpu::DeviceDescriptor { label: Some("twin"), required_limits: adapter.limits(), ..Default::default() };
         Some(block_on(adapter.request_device(&desc)).expect("device"))
     }
@@ -3001,12 +3014,12 @@ mod tests {
                 let marks_off = e.flung_of().iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
                 worst = worst.max(off);
                 if gpu_speed == s.fling_speed {
-                    // A walker or two and 1e-5 of trail, not 1 in 1,000 and 1e-6:
-                    // on the GTX 1070 (11-14, 004b7cb) one walker of the plain
+                    // On a card (`tol`), a walker or two and 1e-5 of trail, not 1 in
+                    // 1,000 and 1e-6 as on llvmpipe: on the GTX 1070 (11-14, 004b7cb) one walker of the plain
                     // blast's flight went its own way at tick 3 (trail L1
                     // 7.7e-6), float order on the card, where llvmpipe matched.
-                    let few = (n / 1000).max(2);
-                    assert!(off <= few && life_off <= few && marks_off <= few && lt <= 1e-5, "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
+                    let few = tol(n / 1000, (n / 1000).max(2));
+                    assert!(off <= few && life_off <= few && marks_off <= few && lt <= tol(1e-6, 1e-5), "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
                 }
             }
             if gpu_speed == s.fling_speed {
@@ -4689,7 +4702,7 @@ mod tests {
         let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
             let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
-            let mods = BulletMods { pierce: 1, split: 1 };
+            let mods = BulletMods { pierce: 1, split: 1, reach: 0 };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
             for k in 0..cpu.soldiers.len() {
