@@ -33,7 +33,7 @@ from math import comb
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TIERS = ['none', 'sporer', 'sleeper', 'swarmer', 'drifter', 'sprawler', 'trunk', 'grudge']
-WORLD_HANDS = ['idle', 'random', 'farm', 'boom', 'claim', 'fort', 'strike']
+WORLD_HANDS = ['idle', 'random', 'farm', 'boom', 'claim', 'fort', 'strike', 'cut']
 KIT_HANDS = ['randkit', 'loud', 'quiet', 'plague', 'siege']
 CONTROLS = ['idle', 'random', 'randkit']
 WORLD_ROW = re.compile(r'^\s*(\w+) seed\s+(\d+):\s+(.*?) at\s+(\d+) s, score ([+-][\d.]+); soldiers\s+(\d+), mould\s+(\d+)')
