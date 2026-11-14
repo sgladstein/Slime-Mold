@@ -22,11 +22,13 @@ struct Params {
     am_e: f32, tm_a: f32, tm_e: f32, sm_a: f32,
     sm_e: f32, sfloor: f32, wander: f32, catch_at: f32,
     // Contagion: off while `sick_steps` is 0. `infect` makes every walker
-    // within `ir` of (`ix`, `iy`) sick at the tick's start.
+    // within `ir` of (`ix`, `iy`) sick at the tick's start. A sick walker
+    // pays `sick_up` times the upkeep (`BigParams::sick_upkeep`, the
+    // toolkit's germ; claimed 2026-11-14 from the spare `_p1`).
     sick_steps: u32, immune: u32, infect: u32, _p0: u32,
     sick_dep: f32, sick_keep: f32, sick_speed: f32, sick_trail: f32,
     sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
-    ir: f32, _p1: f32, _p2: f32, _p3: f32,
+    ir: f32, sick_up: f32, _p2: f32, _p3: f32,
     // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
     // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
     // species, explorers (`explore` steps), blocked walkers' deposit share
@@ -102,9 +104,11 @@ struct Params {
     // A strike (`Engine::strike`, the CPU's `BigDish::strike`), in fine
     // cells: its centre, kill radius, alarm and alarm radius; with a
     // toolkit burst (`Engine::burst`) also its crater's radius and fine
-    // steps (the CPU's `BigDish::scorch_disc`; 0 lays none).
+    // steps (the CPU's `BigDish::scorch_disc`; 0 lays none), and the
+    // germ's radius (`kir`, the CPU's `BigDish::infect`; 0 infects none;
+    // claimed 2026-11-14 from the spare `_l5`).
     kx: f32, ky: f32, kr: f32, kalarm: f32,
-    kar: f32, kcr: f32, kcs: f32, _l5: f32,
+    kar: f32, kcr: f32, kcs: f32, kir: f32,
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
     // spread, and on barren ground upkeep is x `barren_up`. The row's last
@@ -843,6 +847,9 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Barren ground costs `barren_up` times the upkeep (WM3).
     var up = P.upkeep;
     if (soil(i) == SOIL_BARREN) { up = P.upkeep * P.barren_up; }
+    // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
+    // ground's factor as there): the toolkit's germ kills by hunger.
+    if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
     let e = (energy[k] + g + share[i]) - up;
     if (e > 0.0) { energy[k] = e; return; }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
@@ -2566,15 +2573,19 @@ fn hit(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n || P.kr <= 0.0) { return; }
+    if (k >= P.n || (P.kr <= 0.0 && P.kir <= 0.0)) { return; }
     if (P.upkeep > 0.0 && energy[k] < 0.0) { return; }
     let w = spec[k];
     let st = (w >> 9u) & 3u;
-    if (st == L_SPORE || st == L_DEAD) { return; }
+    if (st == L_DEAD) { return; }
     let wk = walkers[k];
     let dx = wk.x - P.kx;
     let dy = wk.y - P.ky;
-    if (sqrt(dx * dx + dy * dy) > P.kr) { return; }
+    let d = sqrt(dx * dx + dy * dy);
+    // The germ (`kir`): every living walker in reach falls sick, immune or
+    // not, a spore too, as the CPU's `infect` takes every living slot.
+    if (P.kir > 0.0 && P.sick_steps > 0u && d <= P.kir) { sick[k] = P.sick_steps + P.immune; }
+    if (st == L_SPORE || P.kr <= 0.0 || d > P.kr) { return; }
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
