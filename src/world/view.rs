@@ -27,13 +27,13 @@ pub const SHADER: &str = include_str!("view.wgsl");
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (20 words).
-const PARAMS_BYTES: usize = 96;
+const PARAMS_BYTES: usize = 112;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
 /// The bindings after the first fifteen, in `bind`'s order: 23 the terrain
-/// cells (`tcell`; 15-22 are other threads' work in flight, 2026-11-14).
+/// cells (`tcell`; 18-22 are other threads' work in flight, 2026-11-14).
 const BINDINGS_AFTER: [u32; 1] = [23];
 
 /// The minimap's longest side, in pixels, and its margin from the corner.
@@ -91,6 +91,16 @@ pub struct View {
     /// below 0 is empty or dead and draws no speck.
     alive: wgpu::Buffer,
     lives: bool,
+    /// Food's news (`set_news`): the engine's news (the step each walker
+    /// last heard of food) and state (the step now) buffers, the cut-off
+    /// walkers a world cell (cleared each frame), and the engine's lag
+    /// and lean in steps.
+    news: wgpu::Buffer,
+    state: wgpu::Buffer,
+    cut: wgpu::Buffer,
+    news_on: bool,
+    lag: u32,
+    lean: u32,
     /// Living walkers a cell for the look's body (0: the calibration's).
     body_density: f32,
     /// The soldier sprites (`SPRITES`), RGBA a texel.
@@ -138,7 +148,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(23, rw)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(23, rw)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -154,7 +164,8 @@ impl View {
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &tcell]);
+        let (news, state, cut) = (storage(device, "news", 16), storage(device, "state", 16), storage(device, "cut off", 16));
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &cut, &tcell]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -171,6 +182,12 @@ impl View {
             specks,
             alive,
             lives: false,
+            news,
+            state,
+            cut,
+            news_on: false,
+            lag: 0,
+            lean: 0,
             body_density: 0.0,
             atlas,
             hcell,
@@ -217,15 +234,15 @@ impl View {
         (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8), storage(dev, "cell terrain", n * 4))
     }
 
-    /// The bind group: `bufs` in binding order, 0-14 then `BINDINGS_AFTER`.
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 16]) -> wgpu::BindGroup {
-        let binding = |i: usize| if i < 15 { i as u32 } else { BINDINGS_AFTER[i - 15] };
+    /// The bind group: `bufs` in binding order, 0-17 then `BINDINGS_AFTER`.
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 19]) -> wgpu::BindGroup {
+        let binding = |i: usize| if i < 18 { i as u32 } else { BINDINGS_AFTER[i - 18] };
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.tcell]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.cut, &self.tcell]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -236,6 +253,7 @@ impl View {
             self.set_visibility(None);
         }
         self.clear_look();
+        self.clear_news();
         self.rebind();
     }
 
@@ -262,6 +280,33 @@ impl View {
             None => (storage(&self.device, "alive", 16), false),
         };
         self.rebind();
+    }
+
+    /// Shows each walker's news of food (plan C8, 2026-11-14): the engine's
+    /// `news` (binding 48: the step each walker last heard of food, its
+    /// first `n_walk` words) and `state` (word 0 the step now) buffers, and
+    /// its `wither_lag` and `panic_lean` in steps. A walker whose news is
+    /// older than the lag is cut off: its speck turns amber while it leans
+    /// and red once it bolts (the phases the engine's `panic_to` steers
+    /// by), and the mould round a cell fades to ash by the share of its
+    /// walkers cut off, so a piece cut from food greys as it starves and
+    /// withers. `None` turns it off; a restart (`set_world`) drops it.
+    pub fn set_news(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, lag: u32, lean: u32) {
+        match news {
+            Some((n, s)) => {
+                (self.news, self.state, self.news_on, self.lag, self.lean) = (n.clone(), s.clone(), true, lag, lean);
+                self.cut = storage(&self.device, "cut off", (self.world.0 * self.world.1 * 4) as u64);
+            }
+            None => self.clear_news(),
+        }
+        self.rebind();
+    }
+
+    fn clear_news(&mut self) {
+        if self.news_on {
+            (self.news, self.state, self.cut) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16), storage(&self.device, "cut off", 16));
+            self.news_on = false;
+        }
     }
 
     /// The world's living walkers a cell (living walkers over its cells),
@@ -378,9 +423,16 @@ impl View {
         b.extend(oy.to_le_bytes());
         b.extend(rw.to_le_bytes());
         b.extend(rh.to_le_bytes());
+        for v in [self.news_on as u32, self.lag, self.lean, 0] {
+            b.extend(v.to_le_bytes());
+        }
         self.queue.write_buffer(&self.params, 0, &b);
         let (gx, gy) = (self.screen.0.div_ceil(16), self.screen.1.div_ceil(16));
         let mut passes: Vec<(usize, (u32, u32))> = Vec::new();
+        let news = self.news_on && self.shade && cam.zoom >= 1.0;
+        if news {
+            enc.clear_buffer(&self.cut, 0, None);
+        }
         if self.shade && self.n_walk > 0 && cam.zoom >= 1.0 {
             passes.push((3, (self.n_walk.div_ceil(256), 1)));
         }
@@ -516,5 +568,75 @@ mod tests {
         let c = cam.centre();
         let dot = pic.get_pixel(mx + (c.0 * s) as u32, my + (c.1 * s) as u32).0;
         assert_eq!(dot, [255, 255, 255, 255]);
+    }
+
+    /// Plan C8 (2026-11-14): a walker's news of food is on screen. A calm
+    /// piece keeps its colour; a piece whose walkers are cut off (news older
+    /// than the lag) greys, and its specks show the phase, amber while one
+    /// leans and red once it bolts.
+    #[test]
+    fn cut_off_walkers_show_their_phase_and_their_piece_greys() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [200u8, 160, 60, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        // Two pieces of 25 walkers, a walker a cell: A (16, 20) calm, B
+        // (48, 20) cut off long ago; one leaning walker alone at (32, 10).
+        let (now, lag, lean) = (1000u32, 150u32, 45u32);
+        let (mut look, mut walk, mut news) = (vec![0u32; w * h], Vec::new(), Vec::new());
+        for (cx, heard) in [(16usize, now), (48, now + 1 - 300)] {
+            for dy in 0..5 {
+                for dx in 0..5 {
+                    let (x, y) = (cx + dx - 2, 20 + dy - 2);
+                    look[y * w + x] = 255 | (1 << 8);
+                    walk.extend([x as f32 + 0.5, y as f32 + 0.5, 0.0, 0.0]);
+                    news.push(heard);
+                }
+            }
+        }
+        walk.extend([32.5f32, 10.5, 0.0, 0.0]);
+        news.push(now + 1 - 170);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &look.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let news_b = buf("news", &news.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let state = buf("state", &[now, 0, 0, 0].iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, news.len() as u32);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((32.0, 20.0));
+        let shot = |view: &View| {
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let at = |pic: &image::RgbaImage, wx: f32, wy: f32| {
+            let (sx, sy) = cam.to_screen((wx, wy));
+            pic.get_pixel(sx as u32, sy as u32).0
+        };
+        // Between specks: a cell's corner.
+        let sat = |p: [u8; 4]| p[0].max(p[1]).max(p[2]) as i32 - p[0].min(p[1]).min(p[2]) as i32;
+        let off = shot(&view);
+        view.set_news(Some((&news_b, &state)), lag, lean);
+        let on = shot(&view);
+        let (a_off, a_on) = (at(&off, 16.1, 20.1), at(&on, 16.1, 20.1));
+        let (b_off, b_on) = (at(&off, 48.1, 20.1), at(&on, 48.1, 20.1));
+        assert!((sat(a_on) - sat(a_off)).abs() <= 2, "the calm piece keeps its colour: {a_off:?} {a_on:?}");
+        assert!(sat(b_on) + 30 < sat(b_off), "the cut-off piece greys: {b_off:?} {b_on:?}");
+        let bolt = at(&on, 48.5, 20.5);
+        assert!(bolt[0] as i32 > bolt[1] as i32 + 100, "a bolting walker is red: {bolt:?}");
+        let leaning = at(&on, 32.5, 10.5);
+        assert!(leaning[0] > 200 && leaning[1] > 120 && (leaning[2] as i32) < leaning[1] as i32 - 60, "a leaning walker is amber: {leaning:?}");
+        let calm = at(&on, 16.5, 20.5);
+        assert!((calm[0] as i32) < calm[1] as i32 + 100, "a calm walker is not red: {calm:?}");
     }
 }
