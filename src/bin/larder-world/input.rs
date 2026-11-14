@@ -253,6 +253,23 @@ impl App {
                         self.order_all(&sel, |_| o);
                     }
                 }
+                HudEvent::Point { id: CANCEL_BUILD, at } => {
+                    if let Some(g) = self.game.as_mut() {
+                        match g.ghost_at(at) {
+                            Some(b) => {
+                                let what = match g.buildings[b].kind {
+                                    Kind::Wall { .. } => "wall",
+                                    k => k.name(),
+                                };
+                                if g.apply(Cmd::Unbuild(b)) {
+                                    let back = g.build_price(g.buildings[b].kind, g.buildings[b].at);
+                                    self.hud.alert(&format!("Called off the {what}: {back:.0} food back"), Some(g.buildings[b].at), theme::GOOD);
+                                }
+                            }
+                            None => self.hud.alert("No unfinished building there", None, theme::WARN),
+                        }
+                    }
+                }
                 HudEvent::Point { id, at } if build_kind(id).is_some() => {
                     if let Some(g) = self.game.as_mut() {
                         let kind = build_kind(id).unwrap();

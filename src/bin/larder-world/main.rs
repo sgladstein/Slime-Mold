@@ -223,6 +223,9 @@ commands! {
     SIREN = 27,
     // The loadout panel's swap button (2026-11-14): the next loadout, as H.
     NEXT_ROUND = 28,
+    // The build page's cancel (2026-11-14, the build-flow thread): click a
+    // ghost to call it off for its whole price back (`Cmd::Unbuild`).
+    CANCEL_BUILD = 29,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -1099,6 +1102,15 @@ impl App {
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+        // Placing a building: a faint ring where its builders will stand and
+        // raise it from (`BuildRules::reach`; 2026-11-14, the build-flow
+        // thread), so a turret by the slime can be placed with that ring
+        // on the near side of the ground the squad holds.
+        if let (Some((id, at, _)), Some(g)) = (ghost, self.game.as_ref()) {
+            if build_kind(id).is_some() {
+                self.marks.ring(at, g.rules.build.reach * g.world.scale(), [235, 220, 180, 110]);
+            }
+        }
         let model = self.model(hover, ghost);
         if let (Some(c), Some(menu)) = (self.canvas.as_mut(), self.menu.as_mut()) {
             // The start menu instead of the HUD, over the whole map.
