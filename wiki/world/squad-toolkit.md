@@ -113,6 +113,9 @@ walls, and puts to sleep any walker on a cell over 0.2; the window shows it as a
 Step 5 is built ([report](../../Reports/trail-cards-2026-11-14.md)): the flight cards scorch,
 alarm and mist lay crater, alarm or a thin gas cloud along every soldier bullet's flight,
 through `World::burst` on both engines.
+The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
+reach by `Rules::range_card` (0.5 of `Rules::range`) a copy, through `Game::gun_range`:
+36 cells with one, 48 with two; building reach and turrets keep their own ranges.
 **Bomb rounds** (11-14, the owner's "Do we have explosions yet"): the
 `bomb` payload kills a small core (4 dish cells) and throws the live mould
 out to 2.5 times that straight outward, as real walkers in flight

@@ -106,7 +106,7 @@ impl<W: World> Game<W> {
                 if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
-                    let reach = r.range * sc;
+                    let reach = self.gun_range() * sc;
                     if volley.is_some() || d <= reach + 4.0 {
                         let (mut ux, mut uy) = (dx / d, dy / d);
                         if r.spread > 0.0 {
@@ -128,7 +128,7 @@ impl<W: World> Game<W> {
                 x: s.x,
                 y: s.y,
                 touch: r.touch * sc,
-                sight: r.range * sc,
+                sight: self.gun_range() * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
