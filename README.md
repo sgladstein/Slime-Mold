@@ -56,7 +56,9 @@ code at build time.
 | `src/world/` | the world view: camera, minimap, marks, controls; the game UI (`ui.rs` HUD, `canvas.rs`/`canvas.wgsl` its GPU pass, `icons.rs`) and the stand-in squad that drives it (`demo.rs`) |
 | `assets/fonts/` | Inter Medium and SemiBold (SIL OFL, `OFL.txt`; from the Debian fonts-inter package), embedded by `canvas.rs` |
 | `src/bin/mould.rs`, `src/bin/organ.rs` | the windows (winit + pixels only) |
-| `src/bin/mouldgpu.rs`, `src/bin/larder.rs`, `src/bin/larder-world.rs` | the GPU sandbox's window, panel and presets; the Larder window (M3's small dish); the Larder World game on the GPU world and a map |
+| `src/bin/mouldgpu.rs`, `src/bin/larder.rs`, `src/bin/larder-world/` | the GPU sandbox's window, panel and presets; the Larder window (M3's small dish); the Larder World game on the GPU world and a map (`main.rs` the app, plus `args`, `input`, `draw`, `events`, `headless`, `bench`, `hands`) |
+| `src/mould/larder_world.rs`, `src/mould/larder_world/` | the Larder World rules: the root holds `Game`, `Soldier`, `Shot`; `world`, `rules`, `paths`, `cmd`, `raising`, `shots`, `turn`, `score` one subsystem each |
+| `scripts/pc-batch.ps1` | every queued GTX 1070 job in one run for the PC runner: twins always, timing only with `-Timing` after the owner's go |
 | `src/bin/larder-edit.rs`, `src/mould/map_edit.rs` | the Larder World map editor (WM5): its window, and the editing it does, tested without one |
 | `src/hud.rs`, `src/hud_crisp.rs`, `src/wav.rs` | copied from Pixel_Physics: font and WAV writer |
 | `examples/` | the tools, below |
