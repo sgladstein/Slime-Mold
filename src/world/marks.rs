@@ -21,6 +21,7 @@ pub const MAX_MARKS: usize = 2048;
 #[repr(u32)]
 pub enum Shape {
     Disc = 0,
+    /// A ring, `fill` pixels wide (1.5 when `fill` is 0).
     Ring = 1,
     Rect = 2,
     /// A rectangle's outline, one pixel wide.
@@ -38,9 +39,9 @@ pub enum Shape {
     /// flash (0-255), bit 8 dead. Drawn and lit in the view's shader.
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
-    /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren),
-    /// `extra` bits 0-7 how built (0-255), 8-15 its health share, bit 16
-    /// working (its lamp lit). The sprite atlas's tiles 4-13.
+    /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren,
+    /// 5 larder), `extra` bits 0-7 how built (0-255), 8-15 its health share,
+    /// bit 16 working (its lamp lit). The sprite atlas's tiles 4-15.
     Building = 8,
 }
 
@@ -81,7 +82,16 @@ fn rgba(c: Rgba) -> u32 {
 /// sky blue, rose and lime. Mould species have their own colours in the
 /// world frame; these are only for marks.
 pub const TEAMS: [Rgba; 4] = [[245, 245, 240, 255], [110, 180, 255, 255], [255, 120, 150, 255], [170, 235, 110, 255]];
-pub const SELECTED: Rgba = [255, 230, 80, 255];
+/// The selection ring and drag box: cream, the team's own colour (art
+/// direction rule 3), over a dark ring (`Marks::selected`). Heavy yellow
+/// rings 1.5 pixels wide hid a soldier on gold slime (art review
+/// 2026-11-14) and were the slime's own hue.
+pub const SELECTED: Rgba = [250, 246, 228, 255];
+/// The dark under-ring that keeps a selection ring readable on bright slime.
+pub const SELECTED_INK: Rgba = [14, 13, 10, 200];
+/// A health bar's fill and its empty part.
+pub const HEALTH: Rgba = [110, 226, 120, 255];
+pub const HEALTH_GONE: Rgba = [24, 22, 20, 230];
 
 pub fn team_colour(team: u8) -> Rgba {
     TEAMS[team as usize % TEAMS.len()]
@@ -127,6 +137,34 @@ impl Marks {
     /// any zoom).
     pub fn ring_px(&mut self, at: (f32, f32), r: f32, colour: Rgba) {
         self.push(Mark::new(Shape::Ring, at, (r, r), colour));
+    }
+
+    /// A ring `r` screen pixels out and `wide` pixels wide.
+    pub fn ring_thin(&mut self, at: (f32, f32), r: f32, wide: f32, colour: Rgba) {
+        self.push(Mark { fill: wide, ..Mark::new(Shape::Ring, at, (r, r), colour) });
+    }
+
+    /// A unit's selection: a thin cream ring `r` screen pixels out on a
+    /// dark one just inside it, so it reads on the slime and the ground
+    /// alike without hiding the figure (art review 2026-11-14: a heavy
+    /// yellow ring hid a soldier at zoom 6).
+    pub fn selected(&mut self, at: (f32, f32), r: f32) {
+        self.ring_thin(at, r - 1.0, 1.0, SELECTED_INK);
+        self.ring_thin(at, r, 1.0, SELECTED);
+    }
+
+    /// A unit's health, shown only when it is hurt (`hp` under 0.95, so a
+    /// nick from one walker doesn't put bars on a whole squad; art
+    /// direction rule 6): an 18 x 3 pixel bar `below` pixels under the
+    /// anchor in a dark frame, green, amber under 60%, red under 30%. Whole health draws nothing.
+    pub fn health(&mut self, at: (f32, f32), below: f32, hp: f32) {
+        if hp >= 0.95 {
+            return;
+        }
+        // Green, then amber under 60%, red (the warning colour) under 30%.
+        let colour = if hp > 0.6 { HEALTH } else if hp > 0.3 { [240, 190, 70, 255] } else { [235, 80, 70, 255] };
+        self.bar(at, below, (10.0, 2.5), 1.0, HEALTH_GONE, HEALTH_GONE);
+        self.bar(at, below, (9.0, 1.5), hp, colour, HEALTH_GONE);
     }
 
     /// A filled square or rectangle, half-extents in world cells (a
@@ -187,7 +225,7 @@ impl Marks {
         self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
-    /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren) at
+    /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren, 5 larder) at
     /// `at`, footprint radius `r` world cells: `built` and `health` 0-1,
     /// `working` lights its lamp. Everything it shows is the game's state:
     /// it rises from its foot as it is built, darkens as it is hurt.
@@ -244,5 +282,16 @@ mod tests {
             m.disc((k as f32, 0.0), 1.0, [255; 4], false);
         }
         assert_eq!(m.len(), MAX_MARKS);
+    }
+
+    #[test]
+    fn health_shows_only_when_hurt() {
+        let mut m = Marks::default();
+        m.health((0.0, 0.0), 6.0, 1.0);
+        m.health((0.0, 0.0), 6.0, 0.97);
+        assert!(m.is_empty(), "whole health, or a nick, draws nothing");
+        m.health((0.0, 0.0), 6.0, 0.4);
+        assert_eq!(m.len(), 2, "a frame and the bar");
+        assert_eq!(m.list[1].fill, 0.4);
     }
 }
