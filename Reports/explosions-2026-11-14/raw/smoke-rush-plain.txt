@@ -1,0 +1,3 @@
+  t 30 s: mould 24713, soldiers 0, bank 1510, harvested 0, shots 47, killed 1135, took 0%, crystals left 0.997
+  t 60 s: mould 30187, soldiers 0, bank 847, harvested 0, shots 47, killed 1135, took 0%, crystals left 0.990
+  t 80 s: mould 34746, soldiers 0, bank 399, harvested 0, shots 47, killed 1135, took 0%, crystals left 0.983, ended: squad wiped

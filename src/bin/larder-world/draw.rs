@@ -327,7 +327,10 @@ impl App {
             let f = 1.0 - age / BURST_LIGHT;
             let look = card_look(Some(p.payload));
             let at = (p.burst.at.0 * sc, p.burst.at.1 * sc);
-            self.lights.push(Light { at, reach: 3.0 * p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.6 + (p.killed as f32 / 120.0).min(2.0)) });
+            // A bomb's light reaches its throw ring and grows with the walkers
+            // thrown, so the flash and the spray read as one (#225).
+            let thrown = (p.flung as f32 / 400.0).min(1.0);
+            self.lights.push(Light { at, reach: 3.0 * p.burst.fling.max(p.burst.r) * sc, lift: 4.0, colour: look.light, strength: f * f * (1.6 + (p.killed as f32 / 120.0).min(2.0) + thrown) });
         }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
@@ -753,6 +756,7 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
         C::Blast => (Icon::Blast, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells, leaves a crater the mould shuns, and lays alarm.", k.blast_r)),
         C::Gas => (Icon::Gas, CardKind::Payload, format!("Where the shot hits: the walkers within {:.0} cells fall asleep where they are. Spares the squad.", k.gas_r)),
         C::Germ => (Icon::Germ, CardKind::Payload, format!("Where the shot hits: infects the walkers within {:.0} cells; the sickness spreads through the body.", k.germ_r)),
+        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells and throws the living mould out to {:.0} cells straight outward; it lands and lives on.", r.bomb_r, r.bomb_r * r.bomb_ring)),
         C::Wide => (Icon::Wide, CardKind::Modifier, format!("The next payload is {:.1} times as wide.", r.wide)),
         C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("The next payload goes off as {} smaller bursts round the hit.", r.scatter_n)),
         C::Quiet => (Icon::Quiet, CardKind::Modifier, "The next payload lays no alarm: a sleeper is not woken, a skittish mould is not warned.".into()),
@@ -769,18 +773,18 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
 /// cards ride every bullet, so they are never idle.
 pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
     use rounds::Card as C;
-    let payloads = round.iter().filter(|c| matches!(c, C::Blast | C::Gas | C::Germ)).count();
+    let payloads = round.iter().filter(|c| c.kind() == rounds::Kind::Payload).count();
     let mut cast = 0;
     let mut out = Vec::new();
     // Each card's cast: the payload it goes with.
     let mut runs = Vec::new();
     for &c in round {
         runs.push(cast);
-        if matches!(c, C::Blast | C::Gas | C::Germ) {
+        if c.kind() == rounds::Kind::Payload {
             cast += 1;
         }
     }
-    let payload_of = |j: usize| round.iter().filter(|c| matches!(c, C::Blast | C::Gas | C::Germ)).nth(j).copied();
+    let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, split_n);
         let flight = kind == CardKind::Flight;
@@ -795,6 +799,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, 
             C::Blast => Some(r.kit.blast_price),
             C::Gas => Some(r.kit.gas_price),
             C::Germ => Some(r.kit.germ_price),
+            C::Bomb => Some(r.bomb_price),
             _ => None,
         };
         if kind == CardKind::Payload && !castable(c) {
@@ -833,6 +838,8 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         Some(rounds::Card::Blast) => ([255, 120, 40], [255, 236, 190], [255.0, 160.0, 80.0]),
         Some(rounds::Card::Gas) => ([165, 110, 255], [236, 222, 255], [180.0, 140.0, 255.0]),
         Some(rounds::Card::Germ) => ([110, 255, 70], [226, 255, 196], [140.0, 255.0, 110.0]),
+        // A bomb burns redder and hotter than a blast (#225).
+        Some(rounds::Card::Bomb) => ([255, 90, 30], [255, 228, 170], [255.0, 130.0, 60.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }

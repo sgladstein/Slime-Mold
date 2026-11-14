@@ -72,7 +72,9 @@
 //! second (does a part cut off from its crystals wither, or panic?);
 //! `cutsquad=X,Y[,T[,N]]` after it sets N of the squad (all; bought first
 //! if the squad is short) down there at game second T (the cut's) and
-//! keeps them there.
+//! keeps them there. `boom=T,X,Y` sets the squad's round off at (X, Y)
+//! at game second T, free, as a staged scene (the explosion films); repeat
+//! it for more.
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
 //! then holds fire and steps back (`volley`); `hand=edge` stands in the
 //! same place on free fire instead. `hand=hold` buys four more soldiers
@@ -276,7 +278,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 17] = [
+const LOADOUTS: [(&str, &str); 20] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -295,6 +297,12 @@ const LOADOUTS: [(&str, &str); 17] = [
     ("germ", "germ"),
     ("plague", "germ+delay+blast"),
     ("ambush", "quiet+delay+wide+blast"),
+    // Explosions (11-14, the owner's "Do we have explosions yet"): a bomb
+    // kills a small core and throws the live mould round it outward, where
+    // it lands and lives on (`rounds::Card::Bomb`).
+    ("bomb", "bomb"),
+    ("cluster", "scatter+bomb"),
+    ("blowout", "wide+bomb"),
 ];
 
 #[derive(Clone)]
@@ -1038,6 +1046,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut hover = None;
     let mut select = true;
     let mut cut = None;
+    let mut booms: Vec<(f32, f32, f32)> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -1128,6 +1137,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let squad = cut.and_then(|c: Cut| c.squad);
                 cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
             }
+            "boom" => {
+                // `boom=T,X,Y` (11-14, the explosion films): at game second
+                // T the squad's round goes off at (X, Y), world units as
+                // `centre=`, free (`Rounds::cast_at`); repeat for more.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y] = w.as_slice() else { return Err("boom=T,X,Y".into()) };
+                booms.push((*t, *x, *y));
+            }
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)
                 // are set down there at T (the cut's time) and stay.
@@ -1162,7 +1179,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, page, hover, select)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, page, hover, select)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
