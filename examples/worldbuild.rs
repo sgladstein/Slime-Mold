@@ -79,7 +79,7 @@ fn main() {
                     near.push(n);
                 }
             }
-            println!("  seed {seed} {} {}: near it every 10 s {near:?}; burnt {:.0} food; calls {}; mould {}", kind.name(), if on { "on " } else { "off" }, g.lured, g.sirens, g.world.living());
+            println!("  seed {seed} {} {}: near it every 10 s {near:?}; calls {}; mould {}", kind.name(), if on { "on " } else { "off" }, g.sirens, g.world.living());
             row.push(*near.last().unwrap());
         }
         if row[0] > row[1] {

@@ -585,20 +585,14 @@ impl App {
         let took = g.take_share();
         let mut m = Model {
             resources: vec![
-                // The rate is the bank's net change, so it counts the squad's rations
-                // (PR 4); when it is falling and the bank would be dry within a
-                // minute it says when (the design review, 11-12 21:51Z: show the
-                // drain before soldiers start losing health).
+                // The rate is the bank's net change; when it is falling and the
+                // bank would be dry within a minute it says when (the design
+                // review, 11-12 21:51Z). Nothing costs food to keep (owner,
+                // 11-14), so a fall is spending, healing or the mould eating.
                 Resource {
                     icon: Icon::Crystal,
                     colour: theme::ENERGY,
-                    // Rations off by default since 2026-11-14 (owner): then the
-                    // label leaves out the squad's keep.
-                    label: if r.ration > 0.0 {
-                        format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32)
-                    } else {
-                        "Food: crystal charge carried home. Soldiers, walls and buildings cost it".to_string()
-                    },
+                    label: "Food: crystal charge carried home. Soldiers, walls and buildings cost it once".to_string(),
                     value: format!("{:.0}", g.bank),
                     rate: rate.map(|v| match g.bank / -v {
                         dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
@@ -815,7 +809,7 @@ impl App {
             };
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
-                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, if b.lure_burn > 0.0 { format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn) } else { "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string() }),
+                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
                 place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),

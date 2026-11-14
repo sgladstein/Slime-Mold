@@ -378,9 +378,7 @@ fn a_clearing_soldier_carries_charge_home() {
     assert!(g.harvested >= g.rules.carry, "banked {} in 30 s", g.harvested);
     // Equal to f32 rounding (with `Rules::home_dry` a carrier banks
     // part loads).
-    // Rations come off the bank every step, so the f32 rounding is
-    // a few hundredths over 30 s (0.03; 0.01 held before them).
-    let books = g.rules.start_bank + g.harvested - g.spent - g.stolen - g.eaten;
+    let books = g.rules.start_bank + g.harvested - g.spent - g.stolen;
     assert!((g.bank - books).abs() < 0.1, "bank {} books {books}", g.bank);
     // From the cells: the pile's total is summed a tick late (the next
     // tick's eating), and the frame's last take is after the ticks.
@@ -660,7 +658,7 @@ fn walkers_count_whole_on_soldiers_and_by_mass_on_the_larder_and_buildings() {
     let n = 10u32;
     let run = |mass: f32, touch: u32| {
         let mut g = later(1);
-        (g.rules.mass, g.rules.ration, g.rules.overrun) = (mass, 0.0, 0.0);
+        (g.rules.mass, g.rules.overrun) = (mass, 0.0);
         let open = |g: &Game<Later>, p: (f32, f32)| {
             (0..40 * 16)
                 .map(|i| {
@@ -872,8 +870,6 @@ fn a_replay_is_the_same_game_at_any_frame_rate() {
 #[test]
 fn stuck_seconds_count_a_squad_that_can_do_nothing() {
     let mut g = small(1);
-    // Rations off: they would eat the bank this test buys with.
-    g.rules.ration = 0.0;
     g.bank = 0.0;
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Stance(k, Stance::HoldFire));
@@ -935,85 +931,40 @@ fn the_campaign_switches_do_what_they_say() {
     assert!(matches!(g.end, Some(End::SquadWiped(_))));
 }
 
+/// No upkeep (owner, 2026-11-14: soldiers must not need feeding, 01:49Z;
+/// "There should be no maintenance costs in this game", 04:53Z): a squad
+/// standing idle for 20 s spends nothing and keeps its health, so the
+/// bank moves only by what the mould eats from the larder. Rations and
+/// hunger (`Rules::ration`, `Rules::hunger`) were removed for this.
 #[test]
-fn rations_feed_the_squad_and_an_empty_bank_starves_it_until_food_comes() {
-    let mut g = small(1);
-    let n = g.alive() as f32;
-    // Off by default since 2026-11-14 (the owner's playtest); the rule
-    // still works when `ration=` turns it on.
-    assert!(n >= 1.0 && g.rules.ration == 0.0 && g.rules.hunger == 1.0);
-    g.rules.ration = 2.0;
-    let hp = g.soldiers[0].hp;
-    // Paid in full: the bank pays, nobody hungers.
-    g.bank = 3.0 * n;
-    g.feed(1.0);
-    assert!((g.bank - n).abs() < 1e-4 && (g.eaten - 2.0 * n).abs() < 1e-4 && !g.hungry);
-    assert_eq!(g.soldiers[0].hp, hp);
-    // Half paid: the bank empties and each soldier loses half of a
-    // second's hunger.
-    g.feed(1.0);
-    assert!(g.bank.abs() < 1e-4 && g.hungry);
-    assert!((g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4, "{}", g.soldiers[0].hp);
-    // A carrier banks: the squad eats again (no spiral: hunger costs
-    // only hit points, so harvesters keep their speed).
-    g.bank = 300.0;
-    g.feed(1.0);
-    assert!(!g.hungry && (g.soldiers[0].hp - (hp - 0.5)).abs() < 1e-4);
-    // Starved long enough, a soldier dies, and the need falls with the
-    // squad.
-    g.bank = 0.0;
-    g.feed(hp);
-    assert_eq!(g.alive(), 0);
-    assert!(!g.soldiers[0].alive && g.soldiers[0].carry == 0.0);
-    g.feed(1.0);
-    assert!(!g.hungry, "nobody left to feed");
-    // Off at 0.
-    let mut g = small(1);
-    g.rules.ration = 0.0;
-    g.bank = 0.0;
-    g.feed(10.0);
-    assert!(!g.hungry && g.eaten == 0.0);
+fn soldiers_cost_nothing_to_keep() {
+    let mut g = small(7);
+    g.rules.overrun = 0.0;
+    for k in 0..g.soldiers.len() {
+        g.apply(Cmd::Stance(k, Stance::HoldFire));
+    }
+    let (bank, n) = (g.bank, g.alive());
+    let mut bitten = vec![false; g.soldiers.len()];
+    // 20 s: the mould reaches the larder later than that on this seed.
+    for _ in 0..(g.rules.tps * 20) {
+        g.step();
+        for (b, s) in bitten.iter_mut().zip(&g.soldiers) {
+            *b |= s.touching > 0;
+        }
+    }
+    assert_eq!((g.spent, g.harvested), (0.0, 0.0), "nothing bought, nothing banked");
+    assert!((g.bank - (bank - g.stolen)).abs() < 0.1, "bank {} from {bank}, the mould ate {}", g.bank, g.stolen);
+    assert_eq!(g.alive(), n, "the squad lived");
+    // Health goes only to the mould's bite.
+    let unbitten: Vec<f32> = g.soldiers.iter().zip(&bitten).filter(|(_, &b)| !b).map(|(s, _)| s.hp).collect();
+    assert!(!unbitten.is_empty() && unbitten.iter().all(|&hp| hp == g.rules.hp), "unbitten soldiers' health {unbitten:?}");
 }
 
-/// A starving squad can feed itself (the design review, 11-12 21:51Z:
-/// a squad that slowly dies on an empty bank and can do nothing about
-/// it is the playtest's soft lock again). Hunger costs only hit points,
-/// so starving harvesters walk and take step for step as fed ones do,
-/// and a carrier's trip home pays the rations again. A reserve recruit
-/// on an empty bank comes in whole and can do the same.
+/// A reserve recruit on an empty bank comes in whole and can harvest.
 #[test]
-fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
-    let sent = |hunger: f32| {
-        let mut g = small(7);
-        // Rations on (off by default since 2026-11-14): this tests them.
-        (g.rules.ration, g.rules.hunger, g.rules.overrun, g.bank) = (1.0, hunger, 0.0, 0.0);
-        let target = g.seek(0, None).expect("a crystal with charge");
-        for k in 0..g.soldiers.len() {
-            g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
-        }
-        g
-    };
-    // Same rations, so the same bank; only the hunger differs.
-    let (mut fed, mut starving) = (sent(0.0), sent(1.0));
-    let at = |g: &Game<BigDish>| g.soldiers.iter().map(|s| (s.x, s.y, s.carry)).collect::<Vec<_>>();
-    let (mut hungry, mut ate_again) = (false, false);
-    for _ in 0..(starving.rules.tps * 60) {
-        fed.step();
-        starving.step();
-        if fed.alive() != starving.alive() {
-            break;
-        }
-        assert_eq!(at(&fed), at(&starving), "at {:.1} s", starving.time());
-        assert_eq!(fed.harvested, starving.harvested);
-        hungry |= starving.hungry;
-        ate_again |= hungry && !starving.hungry;
-    }
-    assert!(hungry && ate_again && starving.harvested > 0.0, "it starved, banked a load and ate again");
-    assert!(starving.soldiers.iter().zip(&fed.soldiers).any(|(s, f)| s.alive && s.hp < f.hp), "and the hunger showed on its health");
-    // The reserve: a wiped squad on an empty bank gets a recruit at full
-    // health, who harvests and pays its own ration.
+fn a_reserve_recruit_comes_whole_and_harvests() {
     let mut g = small(7);
-    (g.rules.ration, g.rules.reserve, g.rules.overrun, g.bank) = (1.0, 10.0, 0.0, 0.0);
+    (g.rules.reserve, g.rules.overrun, g.bank) = (10.0, 0.0, 0.0);
     for s in g.soldiers.iter_mut() {
         (s.alive, s.hp) = (false, 0.0);
     }
@@ -1026,12 +977,10 @@ fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
     let target = g.seek(k, None).expect("a crystal with charge");
     g.apply(Cmd::Order(k, Order::Clear(target.0, target.1)));
     let t0 = g.time();
-    let mut fed_itself = false;
-    while g.time() < t0 + 60.0 && g.soldiers[k].alive {
+    while g.time() < t0 + 60.0 && g.soldiers[k].alive && g.bank <= 0.0 {
         g.step();
-        fed_itself |= g.bank > 0.0 && !g.hungry;
     }
-    assert!(fed_itself && g.soldiers[k].alive, "the recruit banked food and ate");
+    assert!(g.bank > 0.0 && g.soldiers[k].alive, "the recruit banked food");
 }
 
 #[test]
