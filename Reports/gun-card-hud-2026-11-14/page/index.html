@@ -34,7 +34,7 @@ li + li { margin-top: 4px; }
 <main>
   <header>
     <h1>Gun card panel</h1>
-    <p class="lede">Larder World's HUD now shows the squad's gun cards as a one-row strip on the selection panel's top edge, 50 pixels high at 1080 lines (the art director's review asked for a strip of card icons, not a tall box). Every picture is the real window, rendered without a screen on the cloud's software Vulkan (llvmpipe), on Fork at 1920 x 1080, with four soldiers standing their ground (<code>hand=stand bank=5000</code>).</p>
+    <p class="lede">Larder World's HUD now shows the squad's gun cards, and its bottom bar is smaller as a one-row strip on the selection panel's top edge, 50 pixels high at 1080 lines (the art director's review asked for a strip of card icons, not a tall box). Every picture is the real window, rendered without a screen on the cloud's software Vulkan (llvmpipe), on Fork at 1920 x 1080, with four soldiers standing their ground (<code>hand=stand bank=5000</code>).</p>
   </header>
 
   <section>
@@ -98,6 +98,37 @@ li + li { margin-top: 4px; }
       <figure>
         <img src="plain.png" alt="Plain shots: four empty slots" loading="lazy">
         <figcaption><b>Plain</b>: no cards, four empty slots and a pointer to Swap, so the loadouts can be found. 217 walkers killed by shots.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The HUD layout pass</h2>
+    <p>The art director's second ask: in play the HUD should cover about 15% of the screen at most, collapse when nothing is selected, and the opening camera should frame the squad above the bar. The command card's buttons went from 58 to 42 units. The bottom panels now take <b>120 of 800</b> pixels (was 160, 20%) and <b>160 of 1080</b> (was 214, 19.8%). All at 9 s on Fork with four soldiers standing, plain shots.</p>
+    <div class="pair">
+      <figure>
+        <img src="layout-b8.jpg" alt="Before: 1280 by 800 with the old 160-pixel bottom bar" loading="lazy">
+        <figcaption><b>Before</b>, main at 1280 x 800: bottom bar 160 px, 20%.</figcaption>
+      </figure>
+      <figure>
+        <img src="layout-a8.jpg" alt="After: 1280 by 800 with the 120-pixel bottom bar and the loadout strip" loading="lazy">
+        <figcaption><b>After</b>, 1280 x 800, four selected: 120 px, 15%.</figcaption>
+      </figure>
+      <figure>
+        <img src="layout-e8.jpg" alt="After: 1280 by 800 with nothing selected, the selection panel collapsed" loading="lazy">
+        <figcaption><b>After</b>, 1280 x 800, nothing selected: the selection panel is a 30-pixel strip, with the loadout beside it.</figcaption>
+      </figure>
+      <figure>
+        <img src="layout-b10.jpg" alt="Before: 1920 by 1080" loading="lazy">
+        <figcaption><b>Before</b>, main at 1920 x 1080: 214 px, 19.8%.</figcaption>
+      </figure>
+      <figure>
+        <img src="layout-a10.jpg" alt="After: 1920 by 1080, four selected" loading="lazy">
+        <figcaption><b>After</b>, 1920 x 1080, four selected: 160 px, 14.8%.</figcaption>
+      </figure>
+      <figure>
+        <img src="layout-e10.jpg" alt="After: 1920 by 1080, nothing selected" loading="lazy">
+        <figcaption><b>After</b>, 1920 x 1080, nothing selected.</figcaption>
       </figure>
     </div>
   </section>

@@ -1,4 +1,4 @@
-# The loadout panel: gun cards in the HUD (2026-11-14)
+# The loadout panel and a smaller HUD (2026-11-14)
 
 The owner's playtest, 2026-11-14 01:49Z: "I also have no way to see what
 the gun cards are in the interface." This is step 6 of the rounds' look plan
@@ -69,9 +69,32 @@ from `Rounds` each frame (`App::loadout`, `gun_cards` in the window's
   `hand=rush rounds=trap at=15`, 1280x800; measured on the first cut, the
   strip draws less), about 0.01 ms.
 
-## Next
+## The HUD layout pass
 
-The art director also asked (11-14 02:34Z) for a HUD layout pass after this
-lands: in play the HUD covers about 15% of the screen at most, collapses
-when nothing is selected, and the opening camera frames the squad above
-the bar. This thread takes it next.
+The art director's second ask (11-14 02:34Z, and 02:41Z: check 1280x800
+as well as 1080p, "that's where the bar was 20% of the screen"):
+
+- The command card's buttons, gaps and padding went from 58, 6 and 10 UI
+  units to 42, 5 and 8 (`CELL`, `CELL_GAP`, `CARD_PAD` in `world::ui`).
+  The bottom panels (selection, command card, minimap, one height) now
+  take 160 of 1080 pixels (14.8%; was 214, 19.8%) and 120 of 800 (15.0%;
+  was 160, 20%). Glyphs and hotkeys shrank with them (icon 28 to 22,
+  hotkey 11.5 to 10 units).
+- With nothing selected and no detail card the selection panel collapses
+  to a 40-unit strip along the bottom ("Nothing selected", click or drag
+  to select), with the loadout strip beside it on the same row.
+- `Camera::centre_on` centres a point in the band between the HUD's
+  insets, not the screen's middle, and a new game's camera takes the
+  insets from `Hud::insets` before the HUD has first drawn, so the larder
+  opens in that band.
+- `select=0` films the no-window pictures with nobody selected.
+
+Checks: `world::ui` test `the_bottom_panels_cover_at_most_about_15_percent_and_collapse_when_empty`
+(1920x1080, 1280x800, 2560x1440: at most 15.2%, `Hud::insets` matches the
+drawn layout, the selection panel collapses); `world::camera`
+`centre_on_puts_the_point_in_the_band_above_the_panels`; `larder-world`
+`the_opening_camera_frames_the_larder_above_the_bottom_panels` (at
+1280x800 and 1920x1080 the larder opens at y 261 and 353, inside the
+band). Before and after pictures at both sizes, selected and not, are on
+the page.
+

@@ -83,7 +83,10 @@ window opens on it when run with no arguments
 loadout strip (`ui::Loadout`, 2026-11-14) on the selection panel's top
 edge shows the squad's gun cards in their four slots, framed by kind, with
 the cast the shown soldier's next hit fires lit, the recharge, a tooltip
-per card and a swap button (H, `NEXT_ROUND`) ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
+per card and a swap button (H, `NEXT_ROUND`); the same change cut the
+bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
+800), collapses the selection panel when nothing is selected, and opens
+the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
