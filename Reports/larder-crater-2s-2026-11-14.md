@@ -70,7 +70,7 @@ In the next PR, a burn point out of the soldier's reach (the shot's own test: ra
 | Before | 0 | 1,235 | 24 s |
 | After | 22 | 1,813 | 25 s, about 20 cells deeper |
 
-The squad still dies. It has been starving since 1 s (the hand spends the whole bank on soldiers) and is at health 39 when it reaches the slime.
+The squad still dies. In this build it had been starving since 1 s (the hand spends the whole bank on soldiers, and rations were on) and was at health 39 when it reached the slime. Rations have been off by default since #220, from the owner's 11-14 01:49Z playtest.
 
 **Smoke games.** Only the census's random hand orders burn lines, so only it was rerun. It ran on seeds 5-12 with C's keys and the 600 s cap, using one binary built from each side ([before](larder-crater-2s-2026-11-14/raw/smoke-random-before.txt), [after](larder-crater-2s-2026-11-14/raw/smoke-random-after.txt)):
 
