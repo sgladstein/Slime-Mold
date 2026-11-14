@@ -9,8 +9,9 @@
 //! live sandbox round; `menu=1` opens it with the command line's values
 //! preset. Any other command line starts its round at once, as before:
 //! `cargo run --release --bin larder-world [-- map=fork seed=1]`
-//! (`map=` rim, fork, flats, nest, passes, or `noise` for the race world
-//! the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
+//! (`map=` rim, fork, flats, nest, passes, `planet:DEPTH[:SEED]` for a
+//! generated planet (`mould::levelgen`, the roguelike run's levels), or
+//! `noise` for the race world the censuses measured; `walkers=` and `scale=` as `larderworld`'s;
 //! `mission=1-landfall` plays a campaign mission: its map, rules and goal,
 //! `mould::campaign`, design `Reports/larder-campaign-2026-11-12.md`; any
 //! other key is an engine setting over the race world's (and the
@@ -698,7 +699,12 @@ impl App {
                     Some((d, n)) => (PathBuf::from(d), n.to_string()),
                     None => (dir, name.clone()),
                 };
-                let m = Map::load(&dir, &name)?;
+                // `planet`, `planet:DEPTH` or `planet:DEPTH:SEED`: a
+                // generated planet (`mould::levelgen`), from `seed=`.
+                let m = match slime_mould::mould::levelgen::spec(&name, a.seed) {
+                    Some(made) => made?.1,
+                    None => Map::load(&dir, &name)?,
+                };
                 if own {
                     // `walkers=` a side, as on the noise world.
                     walkers = 2 * slime_mould::mould::own_mould::garden_map_on(&m, a.walkers)?.1;
@@ -831,11 +837,11 @@ impl App {
             self.name = tr.mission.map.clone();
         }
         if let Some(w) = &self.window {
-            w.set_title(&format!("Larder World: {} (seed {})", title_case(&self.name), self.args.seed));
+            w.set_title(&format!("Larder World: {} (seed {})", map_title(&self.name, self.args.seed), self.args.seed));
         }
         match &self.mission {
             Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
-            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", title_case(&self.name)), None, theme::ACCENT),
+            None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())
     }
@@ -843,7 +849,7 @@ impl App {
     /// The round's commands, to replay it (`Game::replay`).
     fn save_replay(&mut self) {
         let Some(g) = self.game.as_ref().filter(|g| !g.log.is_empty() && !self.saved) else { return };
-        let path = format!("larder-world-replay-{}-{}.txt", self.name.replace('/', "_"), self.args.seed);
+        let path = format!("larder-world-replay-{}-{}.txt", file_part(&self.name), self.args.seed);
         match std::fs::write(&path, g.replay_text(self.args.seed)) {
             Ok(()) => println!("larder-world: saved {path}"),
             Err(e) => eprintln!("larder-world: {path}: {e}"),

@@ -24,6 +24,7 @@ persistent world on the GPU big dish, with energy crystals that drain
 (owner, 11-11 14:06Z: "Put everything into the world version").
 
 - [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; W0 [growth and starving](wiki/model/growth.md) is built on the CPU and the GPU (PR #73, after #63); next W1b, those fields on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
+- [Planets](wiki/world/planets.md): the roguelike run's levels, generated from a seed and a depth (`mould::levelgen`), eight biomes in a set order to the core world; all at today's map size until maps carry their own.
 - [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
 - [The player's own mould](wiki/world/own-mould.md): gardeners (owner, 11-12): soldiers grow a second species that fights the enemy by conversion; a probe found forms trade eating for fighting; the CPU build (`own_mould.rs`, `examples/garden.rs`) grows it by sowing but it does not yet shrink the enemy; contact is next.
 - [The squad toolkit](wiki/world/squad-toolkit.md): blast and its crater, mine, det cord, germ, sleep gas, smell, on the CPU world; each tool shows in the mould; plans beat idle and random; with tools carried from the larder the best plan changes by tier (blasts on some, the germ on others).

@@ -66,6 +66,7 @@ pub mod kit;
 pub mod larder_world_ai;
 pub mod lesson;
 pub mod level;
+pub mod levelgen;
 pub mod look;
 pub mod map;
 pub mod map_edit;

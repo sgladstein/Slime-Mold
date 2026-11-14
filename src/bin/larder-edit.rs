@@ -6,7 +6,8 @@
 //!
 //! - `map=` opens a designed map (fork, nest, rim, flats, passes), a saved
 //!   one (`map=DIR/NAME`), `noise` (the race world from `seed=`, as a map to
-//!   edit), or nothing for a blank map.
+//!   edit), a generated planet (`planet:DEPTH` from `seed=`, or
+//!   `planet:DEPTH:SEED`; `mould::levelgen`), or nothing for a blank map.
 //! - `name=` is the saved map's name (default the opened map's, or `new`)
 //!   and `dir=` its folder (default `maps/` in the repo). The designed maps
 //!   in `Reports/larder-maps-2026-11-11/maps/` are never written unless
@@ -61,6 +62,10 @@ fn open(spec: &str, seed: u64) -> Result<Map, String> {
         // The race world the censuses measured, at scale 2 (its own map
         // cells as `Map::of_dish` takes them).
         return Ok(Map::of_dish(&race_world(seed, 2, 5000)));
+    }
+    // A generated planet (`mould::levelgen::spec`), to look at or edit.
+    if let Some(made) = slime_mould::mould::levelgen::spec(spec, seed) {
+        return made.map(|(_, m)| m);
     }
     let (dir, name) = match spec.rsplit_once(['/', '\\']) {
         Some((d, n)) => (PathBuf::from(d), n.to_string()),
@@ -507,7 +512,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(s) => open(s, seed)?,
         None => Editor::blank(),
     };
-    let name = name.unwrap_or_else(|| spec.as_deref().map(|s| s.rsplit(['/', '\\']).next().unwrap_or(s).to_string()).unwrap_or_else(|| "new".into()));
+    // A planet's spec has colons (`planet:3:42`), which Windows refuses in
+    // a file name: saved as `planet-3-42`.
+    let name = name.unwrap_or_else(|| spec.as_deref().map(|s| s.rsplit(['/', '\\']).next().unwrap_or(s).replace(':', "-")).unwrap_or_else(|| "new".into()));
     let dir = dir.unwrap_or_else(|| repo().join("maps"));
     assert_eq!(map.ground.len(), MAP_W * MAP_H);
     let ed = Editor::new(map);
