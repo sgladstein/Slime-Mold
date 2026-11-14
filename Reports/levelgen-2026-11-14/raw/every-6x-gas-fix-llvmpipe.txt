@@ -1,0 +1,12 @@
+larder-world machine at the start: RAM 15.0 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:8:1:6 seed 1, 1256 x 784 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand every, 10 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 286.9 MB for 1256 x 784 cells (291 bytes a cell), the biggest 51.8 MB
+  600 frames, 150 game steps; 0.88 read-backs a step, 0.01 waits a step (1.09 ms a step waiting); steps finished once in 149, when the next was due 0
+  every frame (600 of them), ms: frame p50 154.05 p95 322.86 max 418.40; step  p50 0.30 p95 1.25 max 17.39; prepare  p50 0.24 p95 0.49 max 3.36; record  p50 0.17 p95 166.01 max 219.26; GPU tail  p50 144.50 p95 179.57 max 210.48
+  frames with a step (150 of them), ms: frame p50 297.99 p95 348.94 max 418.40; step  p50 0.89 p95 6.23 max 10.67; prepare  p50 0.24 p95 0.72 max 3.36; record  p50 150.72 p95 182.46 max 219.26; GPU tail  p50 145.25 p95 174.61 max 210.48
+  after the first game second (540 frames), ms: frame max 418.40; step max 17.39; prepare max 3.36
+  ground refresh: 9 of them, ms: mean 1.93 max 2.58, of which the read-back at most 1.28; 38735 live cells
+  GPU (timestamps, median of 150 steps): the step's ticks 138.14 ms, its drawing 11.50 ms
+  t 10 s: mould 24975, soldiers 5, buildings 4, harvested 0, shots 19, killed 0
+  machine at the end: RAM 14.5 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs

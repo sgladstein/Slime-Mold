@@ -603,6 +603,11 @@ and 9.1 ms. Each is a pass over every dish cell (laying the cloud, the
 crater), which is slow on software Vulkan. A 1070 run of this build decides
 `GROW_CAP`.
 
+The same hand for 10 game seconds after the fix (`bench=10`,
+`raw/every-6x-gas-fix-llvmpipe.txt`): a step's p95 over every frame
+1.25 ms, max 17.39 ms (the same two presses); in frames that finish a step,
+max 10.67 ms.
+
 ## The core world's arenas (23:00-23:40Z)
 
 The graphics lead found the core world too busy to read the way to each
