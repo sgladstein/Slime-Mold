@@ -237,6 +237,13 @@ pub struct Rules {
     /// 4). At 2 idle starves by 340-350 s, but strike starves its 30
     /// soldiers on 3 of 4 and fort on 1: an army costing 4.5 times its
     /// price over a game was too steep for a first default.
+    ///
+    /// **0, off, since 2026-11-14** (owner, after a playtest, 01:49Z: "I
+    /// don't know when it was decided that I have to keep my solider fed or
+    /// they die, but that is bad. The whole game is just trying to harvest
+    /// crystals then I am have no time to attack the slime."). Food buys
+    /// soldiers, walls and buildings; it no longer keeps soldiers alive.
+    /// `ration=1` (window and census) plays the PR 4 economy.
     pub ration: f32,
     /// Hit points a game second every soldier loses while the bank can't
     /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
@@ -404,7 +411,7 @@ impl Default for Rules {
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
-            ration: 1.0,
+            ration: 0.0,
             hunger: 1.0,
             seek: true,
             crater: 4.5,
