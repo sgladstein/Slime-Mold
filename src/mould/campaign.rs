@@ -1114,14 +1114,15 @@ mod tests {
         let rounds = std::thread::scope(|sc| {
             let play = &play;
             [
-                // Census v13 seed 1: Goal at 4:44.
-                sc.spawn(move || ("Cut the cord, cut+strike", play("4-cut-the-cord", "cut", "strike:strike_at=180+strike_army=10+buy_to=14", 420.0))),
-                // 5:28.
+                // Census v15 seed 1 (after elbow room, #227): Goal at 5:33.
+                sc.spawn(move || ("Cut the cord, cut+strike", play("4-cut-the-cord", "cut", "strike:strike_at=180+strike_army=14+buy_to=18", 420.0))),
+                // 6:09 (v15).
                 sc.spawn(move || ("Kill zone, zone+claim", play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0))),
-                // 6:16.
-                sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=8+buy_to=12", 540.0))),
-                // 5:47 (turrets by the farmed crystals; plain boom 5:50).
-                sc.spawn(move || ("Spore season, guard+boom", play("7-spore-season", "guard", "boom:buy_to=8", 420.0))),
+                // 3:40 (v15).
+                sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=12+buy_to=16", 360.0))),
+                // 3:46 (census v15 after elbow room: keep the spores off
+                // the two home crystals for a minute; pumps and turrets).
+                sc.spawn(move || ("Spore season, turtle+boom", play("7-spore-season", "turtle", "boom:buy_to=8", 300.0))),
             ]
             .map(|h| h.join().unwrap())
         });

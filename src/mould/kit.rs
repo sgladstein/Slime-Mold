@@ -77,6 +77,16 @@ pub struct KitRules {
     pub gas_secs: f32,
     pub gas_death: f32,
     pub gas_price: f32,
+    /// The gas cloud (`BigParams::gas_keep`, 11-14): a gas burst also lays
+    /// `gas_dose` of cloud over its disc, which spreads through the agar,
+    /// halves every `gas_half` game seconds besides (0: no cloud), and
+    /// puts to sleep every walker on a cell over `gas_sleep`, gassed
+    /// `gas_linger` seconds more. A cloud you can see and walk the mould
+    /// into, after Noita's mists (Reports/noita-spell-look-2026-11-14.md).
+    pub gas_half: f32,
+    pub gas_dose: f32,
+    pub gas_sleep: f32,
+    pub gas_linger: f32,
     pub reek: f32,
     /// Tools a soldier can hold (0: no carry rule, tools come from the bank
     /// wherever a soldier stands). With it on, a soldier takes tools at the
@@ -102,6 +112,15 @@ pub struct KitRules {
     /// over seeds 1-36 at scale 2 and 5,000 walkers (so the
     /// trigger is 38 to 42 by seed there, where it was 40 on every seed).
     pub mine_density: f32,
+}
+
+impl KitRules {
+    /// The cloud's keep a fine step (0: no cloud) and its linger in fine
+    /// steps, with `fine` fine steps a game second.
+    pub fn gas_cloud(&self, fine: f32) -> (f32, u16) {
+        let keep = if self.gas_half > 0.0 { 0.5f32.powf(1.0 / (self.gas_half * fine)) } else { 0.0 };
+        (keep, (self.gas_linger * fine).round().clamp(0.0, u16::MAX as f32) as u16)
+    }
 }
 
 impl Default for KitRules {
@@ -132,14 +151,24 @@ impl Default for KitRules {
             gas_secs: 20.0,
             gas_death: 0.0,
             gas_price: 150.0,
+            gas_half: 4.0,
+            gas_dose: 1.0,
+            gas_sleep: 0.2,
+            gas_linger: 3.0,
             reek: 4.0,
             // Round 2 (2026-11-12): the runner holds 5 at 50 each. At 2 the
             // loud plan fell to the farm hand's level on every tier (+0.18
             // to +0.27) and plague led all of them; weight 100 or 50 made
             // no difference (the cost is the trips home, not the carry).
+            // Weight 0 since 2026-11-14: in the window a soldier selected at
+            // the larder took 5 tools (250 of its 300 carry) without a
+            // sign, so it went home after 50 food and walked straight back
+            // to the larder when sent to harvest. The owner read it as
+            // soldiers refusing a harvest order. `tool_weight=50` (kitplans)
+            // plays the old rule.
             carry_max: 5,
             carry_each: 1,
-            tool_weight: 50.0,
+            tool_weight: 0.0,
             restock_r: 6.0,
             alarm_keep: 0.95,
             mine_density: MINE_DENSITY,
@@ -333,9 +362,14 @@ impl Kit {
         let r = &self.rules;
         let fine = self.fine_tps(g);
         let sick_steps = (r.sick_secs * fine).round().max(1.0) as u16;
+        let (gas_keep, gas_linger) = r.gas_cloud(fine);
         BurstRules {
             alarm_keep: r.alarm_keep,
             gas_death: r.gas_death,
+            gas_keep,
+            gas_dose: r.gas_dose,
+            gas_sleep: r.gas_sleep,
+            gas_linger,
             sick_steps,
             immune_steps: (r.immune_secs * fine).round().min(u16::MAX as f32 - sick_steps as f32) as u16,
             sick_upkeep: r.sick_upkeep,

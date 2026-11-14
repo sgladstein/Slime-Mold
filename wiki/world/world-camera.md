@@ -4,9 +4,12 @@ kind: mechanism
 status: current
 updated: 2026-11-14
 sources:
+  - Reports/gun-card-hud-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/panic-look-2026-11-14/README.md
+  - Reports/sharp-slime-2026-11-14/README.md
   - Reports/shot-damage-2026-11-12.md
+  - Reports/slime-material-2026-11-14/README.md
   - Reports/soldier-controls-2026-11-12.md
   - Reports/start-menu-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
@@ -28,6 +31,7 @@ code:
   - Hud::aim
   - Hud::draw
   - HudEvent
+  - Loadout
   - MAX_HITS
   - MAX_MARKS
   - MAX_ZOOM
@@ -37,14 +41,17 @@ code:
   - Marks::label
   - Marks::selected
   - Marks::soldier
+  - NEXT_ROUND
   - Order::Fight
   - SPRITES
   - Squad::model
   - StartMenu
   - UiCommand
+  - View::fine
   - View::record
   - View::set_alive
   - View::set_body_density
+  - View::set_crystals
   - View::set_look
   - View::set_news
   - first_hit
@@ -85,8 +92,16 @@ pauses; again, or Esc, goes back to play). A start menu (`StartMenu`,
 `world::start`, 2026-11-14) draws on the same canvas down the left of the
 screen, over a live dish: sandbox, the campaign's missions, an options
 page with each switch's default beside it, and the key card; the
-window opens on it when run with no arguments
-([report](../../Reports/start-menu-2026-11-14/README.md)). The game itself is `cargo run --release
+window opens on it when run with no arguments, and turning its map
+switches the dish behind it
+([report](../../Reports/start-menu-2026-11-14/README.md)). A one-row
+loadout strip (`ui::Loadout`, 2026-11-14) on the selection panel's top
+edge shows the squad's gun cards in their four slots, framed by kind, with
+the cast the shown soldier's next hit fires lit, the recharge, a tooltip
+per card and a swap button (H, `NEXT_ROUND`); the same change cut the
+bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
+800), collapses the selection panel when nothing is selected, and opens
+the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
@@ -104,7 +119,7 @@ blind A/B: "Neither. Both of those look like stamps"): the drawn
 thickness counts the living walkers near each cell (`BODY_N`), so a hit
 shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
-empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
+empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Since 2026-11-14 (the owner's playtest: "the slime looks very blurry", "the crystals are pixelated") the body is worked out below the cell: walkers are counted where they are on fine cells (`View::fine`, two a cell from zoom 6), with a sharp Gaussian at the frontier and a wide one in the body, a B-spline height, and Gaussian trail and colour, so a straight edge at zoom 12 rises over about a cell (2.58 before); crystals are their exact hexagons (`View::set_crystals`), antialiased to a pixel; llvmpipe frame +18% ([sharp slime](../../Reports/sharp-slime-2026-11-14/README.md)). After the owner's playtest of it ("the middle still looks blurry", "single individual walkers should be brighter") every speck grows with the zoom and a calm walker's light falls with the square of the walkers a cell round it, so a lone explorer is a bright point and the body a calm grain; the body keeps 40% of the sharp count; the slope is capped at 0.7; the slime is vivid wet gold with tight glints over a gel film; grey, amber and red ramp with each walker's news age; llvmpipe frame +4% ([slime material](../../Reports/slime-material-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
 crystals are hexagons. Since 11-14 every soldier can be counted at zoom 6
 (elbow room `Rules::elbow`, outlined figures, `Marks::selected` with one
@@ -123,6 +138,7 @@ as lines.
 - 2026-11-11 17:37Z: "from looking at the gif/video it doesn't always look like that" (shots stopping at the first slime): the stand-in counted only thick tubes; now anything that looks like slime (26/255) stops a shot.
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 20:16Z: "We need to know about solider health, numbers, ways to control them, eventually we will have different weapons, upgrades, build walls (and probably other things in the future), menus, enemy info"; "make it look modern and professional."
+- 2026-11-14 01:49Z: "I also have no way to see what the gun cards are in the interface."
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."
 
 ## Open
@@ -137,3 +153,4 @@ as lines.
 
 - [World camera and UI](../../Reports/world-camera-2026-11-11.md).
 - [The game UI over the Larder world](../../Reports/world-ui-2026-11-11.md).
+- [The loadout panel](../../Reports/gun-card-hud-2026-11-14/README.md).

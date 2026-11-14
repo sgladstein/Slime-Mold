@@ -1,0 +1,24 @@
+mission 6-the-nest (The nest): "Break the nest: cut the Sleeper to half its size", map nest, tier sleeper , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  strike:strike_at=120+strike_army=12+buy_to=16 s1: Goal 220s 3*
+  strike:strike_at=120+strike_army=12+buy_to=16 s2: Goal 240s 3*
+  strike:strike_at=120+strike_army=12+buy_to=16 s3: Goal 269s 3*
+  strike:strike_at=120+strike_army=12+buy_to=16 s4: Goal 266s 3*
+  guard+strike:strike_at=120+strike_army=12+buy_to=16 s2: Goal 246s 3*
+  guard+strike:strike_at=120+strike_army=12+buy_to=16 s1: Goal 297s 3*
+  guard+strike:strike_at=120+strike_army=12+buy_to=16 s3: Goal 270s 3*
+  guard+strike:strike_at=120+strike_army=12+buy_to=16 s4: Goal 260s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+guard+strike:strike_at=120+strike_army=12+buy_to=16    1  Goal         297      3 1.00     1%     3%    0%    0%    0%                             1    0   14      296     16      5100  28659  inf/-inf  0/0/0 0  [0, 1]
+guard+strike:strike_at=120+strike_army=12+buy_to=16    2  Goal         246      3 1.00     3%     7%    0%    0%    0%                             3    0   14      245     16      4800  22868  inf/-inf  0/0/0 0  [0, 1]
+guard+strike:strike_at=120+strike_army=12+buy_to=16    3  Goal         270      3 1.00     4%     8%    0%    0%    0%                             5    0   14      269     16      4800  25044  inf/-inf  0/0/0 0  [0, 1]
+guard+strike:strike_at=120+strike_army=12+buy_to=16    4  Goal         260      3 1.00     1%     3%    0%    0%    0%                             2    0   14      259     16      5100  24167  inf/-inf  0/0/0 0  [0, 1, 4]
+strike:strike_at=120+strike_army=12+buy_to=16    1  Goal         220      3 1.00     1%     3%    0%    0%    0%                             1    0   14      219     16      5400  20667  inf/-inf  0/0/0 0  [0, 1]
+strike:strike_at=120+strike_army=12+buy_to=16    2  Goal         240      3 1.00     0%     1%    0%    0%    0%                             1    0   14      239     16      5400  22000  inf/-inf  0/0/0 0  [0, 1]
+strike:strike_at=120+strike_army=12+buy_to=16    3  Goal         269      3 1.00     0%     0%    0%    0%    0%                             0    0   14      268     16      5100  25883  inf/-inf  0/0/0 0  [0, 1]
+strike:strike_at=120+strike_army=12+buy_to=16    4  Goal         266      3 1.00     1%     2%    0%    0%    0%                             1    0   14      265     16      5700  25739  inf/-inf  0/0/0 0  [0, 1, 4]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  guard+strike:strike_at=120+strike_army=12+buy_to=16 4/4  stars 3  best 1.00  dead 2%  stuck 0 s  stall 14 s
+  strike:strike_at=120+strike_army=12+buy_to=16 4/4  stars 3  best 1.00  dead 1%  stuck 0 s  stall 14 s

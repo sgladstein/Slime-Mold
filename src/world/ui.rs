@@ -61,6 +61,23 @@ pub mod theme {
 }
 use theme::*;
 
+/// The command card's buttons and its padding, UI units (pixels at 1080
+/// lines). Until the art director's layout pass (11-14 02:34Z: "the
+/// bottom HUD bar is 160 of 800 px high") 58, 6 and 10, a 214-pixel bar
+/// at 1080 lines (20%); now 42, 5 and 8, 160 pixels (15%).
+const CELL: f32 = 42.0;
+const CELL_GAP: f32 = 5.0;
+const CARD_PAD: f32 = 8.0;
+/// The selection panel's height with nothing selected.
+const COLLAPSED: f32 = 40.0;
+
+/// Pixels a UI unit for a screen this tall: 1 at 1080 lines, in steps of
+/// 0.05, so a window dragged through every size rasterizes a few sets of
+/// glyph sizes, not one a pixel.
+fn ui_scale(sh: f32) -> f32 {
+    ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0
+}
+
 /// Health's colour: green, then amber below 60%, red below 30%.
 pub fn health_colour(f: f32) -> Rgba {
     if f > 0.6 {
@@ -169,6 +186,83 @@ pub struct Info {
     pub note: Option<String>,
 }
 
+/// What a gun card does, which sets its frame (a spell deck's card types:
+/// the shot, what changes it, what sets it off).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum CardKind {
+    /// Casts where the shot hit (blast, gas, germ).
+    #[default]
+    Payload,
+    /// Changes the next payload (wide, scatter, quiet).
+    Modifier,
+    /// Decides when the next payload goes off (delay, thick).
+    Trigger,
+    /// Changes every bullet in flight (pierce, split).
+    Flight,
+}
+
+impl CardKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            CardKind::Payload => "Payload",
+            CardKind::Modifier => "Modifier",
+            CardKind::Trigger => "Trigger",
+            CardKind::Flight => "Flight",
+        }
+    }
+
+    /// The frame's colour: a payload's frame is its own colour.
+    pub fn colour(self, own: Rgba) -> Rgba {
+        match self {
+            CardKind::Payload => own,
+            CardKind::Modifier => [108, 156, 255, 255],
+            CardKind::Trigger => [242, 192, 84, 255],
+            CardKind::Flight => [96, 214, 214, 255],
+        }
+    }
+}
+
+/// One card in a loadout (`Loadout::cards`), left to right.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct GunCard {
+    pub icon: Option<Icon>,
+    pub name: String,
+    pub kind: CardKind,
+    /// The glyph's colour: the colour of the payload it goes with, as its
+    /// bullets fly.
+    pub colour: Rgba,
+    /// What it does, for its tooltip.
+    pub about: String,
+    /// A payload's price a cast ("40").
+    pub cost: Option<String>,
+    /// In the cast the gun's next hit fires: lit.
+    pub next: bool,
+    /// After the last payload: it weighs on the recharge and casts nothing.
+    pub idle: bool,
+}
+
+/// A gun's loadout, as a spell deck shows it (the owner, 11-14 01:49Z:
+/// "I also have no way to see what the gun cards are in the interface").
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Loadout {
+    /// "Trap".
+    pub name: String,
+    /// Whose gun: "Soldier 3", "Squad (5)".
+    pub whose: String,
+    pub cards: Vec<GunCard>,
+    /// Slots the gun has (empty ones are drawn empty).
+    pub slots: usize,
+    /// The recharge after the last cast, seconds.
+    pub recharge: f32,
+    /// How much of it is still to go, 0 (ready) to 1 (just spent).
+    pub charging: f32,
+    /// A line under the cards ("3 of 5 guns ready"); the game's words.
+    pub note: Option<String>,
+    /// The command that swaps the loadout, and its key: the panel's
+    /// button sends `HudEvent::Command` with it.
+    pub cycle: Option<(u32, KeyCode)>,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -203,6 +297,8 @@ pub struct Model {
     /// The game has a start menu: the menu and the end screen offer "Main
     /// menu" (`MenuItem::MainMenu`).
     pub main_menu: bool,
+    /// The gun's cards, drawn as a strip on the selection panel's top edge.
+    pub loadout: Option<Loadout>,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -265,6 +361,8 @@ enum Hit {
     Menu(MenuItem),
     Help,
     Back,
+    /// The loadout panel's swap button.
+    Cycle,
 }
 
 #[derive(Clone, Debug)]
@@ -326,6 +424,8 @@ pub struct Hud {
     /// The model's `ghost_ok` and `ghost_note`, as last drawn.
     ghost_ok: bool,
     ghost_note: Option<String>,
+    /// The loadout's swap command, as last drawn.
+    cycle: Option<u32>,
     started: Instant,
 }
 
@@ -337,7 +437,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, started: Instant::now() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now() }
     }
 
     /// The menu is open (the game should pause).
@@ -558,6 +658,7 @@ impl Hud {
             Hit::Card(id) => out.push(if shift { HudEvent::Deselect(id) } else { HudEvent::SelectOnly(id) }),
             Hit::Group(g) => out.push(HudEvent::Group(g)),
             Hit::Idle => out.push(HudEvent::Idle),
+            Hit::Cycle => out.extend(self.cycle.map(|id| HudEvent::Command { id })),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
                 out.push(HudEvent::Menu(MenuItem::Opened));
@@ -649,9 +750,7 @@ impl Hud {
     /// view).
     pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        // In steps of 0.05, so a window dragged through every size
-        // rasterizes a few sets of glyph sizes, not one a pixel.
-        let s = ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0;
+        let s = ui_scale(sh);
         self.scale = s;
         self.world = cam.world;
         self.hits.clear();
@@ -668,14 +767,15 @@ impl Hud {
         }
         let now = Instant::now();
         self.alerts.retain(|a| now.duration_since(a.when) < ALERT_LIFE);
-        let pad = 10.0 * s;
+        let pad = CARD_PAD * s;
 
         // The minimap's frame (bottom right), the command card left of it,
         // the selection panel left of that, all one height.
-        let cell = 58.0 * s;
-        let gap = 6.0 * s;
+        let cell = CELL * s;
+        let gap = CELL_GAP * s;
         let card_w = 4.0 * cell + 3.0 * gap + 2.0 * pad;
-        let panel_h = 3.0 * cell + 2.0 * gap + 2.0 * pad;
+        let (_, inset_bottom) = Hud::insets(c.screen);
+        let panel_h = inset_bottom - 8.0 * s;
         let base = sh - 8.0 * s;
         let top_of = base - panel_h;
         self.bottom = top_of;
@@ -707,10 +807,25 @@ impl Hud {
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
         let sel_w = (600.0 * s).min(card.x - 16.0 * s);
         let sel = Rect::new(card.x - 8.0 * s - sel_w, top_of, sel_w, panel_h);
+        // With nothing selected the selection panel collapses to a strip
+        // along the bottom (the art director, 11-14 02:34Z: a full-height
+        // panel that only said "Nothing selected").
+        let empty = m.info.is_none() && m.selection.is_empty();
+        // The loadout strip (about 312 units wide) takes the rest of the row.
+        let sel_drawn = if empty { Rect::new(sel.x, base - COLLAPSED * s, (sel.w - 320.0 * s).clamp(150.0 * s, 330.0 * s).min(sel.w), COLLAPSED * s) } else { sel };
 
         self.top_bar(m, c, s);
-        self.selection_panel(m, controls, sel, c, s);
+        self.selection_panel(m, controls, sel_drawn, c, s);
+        // Before the command card, so the card's tooltips cover it; its
+        // own card tooltip after.
+        self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, sel, empty, card, c, s));
         self.command_card(m, card, c, s);
+        match (&m.loadout, tip) {
+            (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
+            (Some(l), Some((k, r))) => self.loadout_tip(l, r, k == usize::MAX - 1, c, s),
+            _ => {}
+        }
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
         if let (Some(h), Some(p), None) = (&m.hover, self.hover, self.targeting) {
@@ -811,7 +926,7 @@ impl Hud {
         }
         let radius = 12.0 * s;
         self.glass(r, radius, c, s);
-        let pad = 14.0 * s;
+        let pad = 12.0 * s;
         // Groups and the idle button ride on the panel's top edge.
         let chip_h = 24.0 * s;
         let mut x = r.x;
@@ -857,10 +972,11 @@ impl Hud {
             return;
         }
         if m.selection.is_empty() {
-            let base = inner.y + inner.h / 2.0;
-            c.icon(Icon::Soldier, (inner.x, base - 22.0 * s), 28.0 * s, FAINT);
-            c.text(Weight::SemiBold, 15.0 * s, (inner.x + 40.0 * s, base - 4.0 * s), Align::Left, "Nothing selected", MUTED);
-            c.text(Weight::Medium, 12.5 * s, (inner.x + 40.0 * s, base + 14.0 * s), Align::Left, "Click a soldier, or drag a box round several", FAINT);
+            // The collapsed strip: one line.
+            let mid = r.y + r.h / 2.0;
+            c.icon(Icon::Soldier, (r.x + 14.0 * s, mid - 9.0 * s), 18.0 * s, FAINT);
+            let tw = c.text(Weight::SemiBold, 13.0 * s, (r.x + 40.0 * s, mid + 4.5 * s), Align::Left, "Nothing selected", MUTED);
+            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 48.0 * s + tw, mid + 4.5 * s), Align::Left, "click or drag to select", r.w - 62.0 * s - tw, FAINT);
             return;
         }
         // Every selected unit as a card.
@@ -965,9 +1081,9 @@ impl Hud {
 
     fn command_card(&mut self, m: &Model, r: Rect, c: &mut Canvas, s: f32) {
         self.glass(r, 12.0 * s, c, s);
-        let pad = 10.0 * s;
-        let cell = 58.0 * s;
-        let gap = 6.0 * s;
+        let pad = CARD_PAD * s;
+        let cell = CELL * s;
+        let gap = CELL_GAP * s;
         let x0 = r.x + pad;
         let y0 = r.bottom() - pad - 3.0 * cell - 2.0 * gap;
         // Empty slots, faintly, so the grid reads as a grid.
@@ -995,17 +1111,17 @@ impl Hud {
             let edge = if aiming || cmd.on { alpha(ACCENT, 0.9) } else { [255, 255, 255, 30] };
             c.panel(b, 10.0 * s, t, bt, if cmd.on || aiming { 1.5 * s } else { 1.0 }, edge);
             let dim = if cmd.ready { 1.0 } else { 0.38 };
-            let ic = 28.0 * s;
+            let ic = 22.0 * s;
             c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, alpha(if cmd.on { ACCENT } else { TEXT }, dim));
             // The hotkey, top left.
             if let Some(k) = key_name(cmd.key) {
-                c.text(Weight::SemiBold, 11.5 * s, (b.x + 6.0 * s, b.y + 14.0 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
+                c.text(Weight::SemiBold, 10.0 * s, (b.x + 4.5 * s, b.y + 11.5 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
             }
             if let Some(cost) = &cmd.cost {
-                let cw = c.atlas.measure(Weight::SemiBold, 10.5 * s, cost);
-                let cx = b.right() - 5.0 * s - cw;
-                c.text(Weight::SemiBold, 10.5 * s, (cx, b.bottom() - 5.0 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
-                c.icon(cmd.cost_icon, (cx - 12.0 * s, b.bottom() - 15.0 * s), 10.0 * s, alpha(ENERGY, dim.max(0.6)));
+                let cw = c.atlas.measure(Weight::SemiBold, 9.5 * s, cost);
+                let cx = b.right() - 4.0 * s - cw;
+                c.text(Weight::SemiBold, 9.5 * s, (cx, b.bottom() - 3.5 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
+                c.icon(cmd.cost_icon, (cx - 10.0 * s, b.bottom() - 12.0 * s), 8.5 * s, alpha(ENERGY, dim.max(0.6)));
             }
             if cmd.cooldown > 0.0 {
                 // A dark wipe over the part still to go (a ring round the
@@ -1022,6 +1138,178 @@ impl Hud {
         }
         if let Some((k, b)) = tip {
             self.tooltip(&m.commands[k], b, r, c, s);
+        }
+    }
+
+    /// The loadout strip: the gun's cards as a row of glyphs in its slots,
+    /// left to right, the cast its next hit fires lit, the recharge as a
+    /// thin bar under them, the loadout's name and state, and Swap. It sits
+    /// on the selection panel's top edge at the right (the art director,
+    /// 11-14 02:34Z: a strip of card icons next to the selection, not a
+    /// tall box; the details in a tooltip). Before that review it was a
+    /// 140-pixel box over the command card with each card's name under its
+    /// glyph. Returns the hovered card (or `usize::MAX` for the name and
+    /// state, whose tooltip is the whole loadout) and its rectangle.
+    fn loadout_draw(&mut self, l: &Loadout, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+        let pad = 6.0 * s;
+        let cell = 34.0 * s;
+        let gap = 4.0 * s;
+        let slots = l.slots.max(l.cards.len()).max(1);
+        let info_w = 112.0 * s;
+        let swap = 26.0 * s;
+        let w = 2.0 * pad + slots as f32 * cell + (slots - 1) as f32 * gap + 8.0 * s + info_w + if l.cycle.is_some() { swap + 6.0 * s } else { 0.0 };
+        let h = 2.0 * pad + cell + 5.0 * s;
+        // On the selection panel's top edge at its right; where the window
+        // is too narrow for one, on the command card's.
+        // With the selection panel collapsed, at the bottom of its place,
+        // right of the collapsed strip.
+        let r = if collapsed && sel.w >= w + 158.0 * s {
+            Rect::new(sel.right() - w, sel.bottom() - h, w, h)
+        } else {
+            let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s { sel } else { card };
+            Rect::new((on.right() - w).max(8.0 * s), on.y - 6.0 * s - h, w, h)
+        };
+        if r.y < self.top + 8.0 * s {
+            return None;
+        }
+        self.glass(r, 10.0 * s, c, s);
+        let mut tip = None;
+        let y = r.y + pad;
+        for i in 0..slots {
+            let b = Rect::new(r.x + pad + i as f32 * (cell + gap), y, cell, cell);
+            let Some(k) = l.cards.get(i) else {
+                c.rrect(b, 7.0 * s, [255, 255, 255, 8]);
+                c.outline(b, 7.0 * s, 1.0, [255, 255, 255, 18]);
+                continue;
+            };
+            let frame = k.kind.colour(k.colour);
+            let dim = if k.idle { 0.4 } else { 1.0 };
+            if k.next {
+                c.shadow(b, 7.0 * s, 10.0 * s, 0.0, alpha(k.colour, 0.5));
+            }
+            let shade = |a: Rgba, f: f32| -> Rgba { [(a[0] as f32 * f) as u8, (a[1] as f32 * f) as u8, (a[2] as f32 * f) as u8, 255] };
+            let edge = if k.next { k.colour } else { alpha(frame, 0.55 * dim) };
+            c.panel(b, 7.0 * s, shade(frame, 0.30 * dim), shade(frame, 0.12 * dim), if k.next { 2.0 * s } else { 1.0 * s }, edge);
+            // The kind's stripe along the top, as a card's frame.
+            c.rrect(Rect::new(b.x + 5.0 * s, b.y + 3.0 * s, b.w - 10.0 * s, 2.0 * s), 1.0 * s, alpha(frame, 0.9 * dim));
+            let ic = 20.0 * s;
+            if let Some(icon) = k.icon {
+                c.icon(icon, (b.x + (b.w - ic) / 2.0, b.y + (b.h - ic) / 2.0 + 1.5 * s), ic, alpha(k.colour, dim));
+            }
+            if k.next {
+                // A notch above the lit cast.
+                let nx = b.x + b.w / 2.0;
+                c.rrect(Rect::new(nx - 5.0 * s, b.y - 4.0 * s, 10.0 * s, 2.5 * s), 1.25 * s, k.colour);
+            }
+            if self.hover.is_some_and(|p| b.contains(p)) {
+                tip = Some((i, b));
+            }
+        }
+        // The recharge: a thin bar under the cards that fills back up.
+        let cards_w = slots as f32 * cell + (slots - 1) as f32 * gap;
+        let ready = l.charging <= 0.0;
+        if !l.cards.is_empty() {
+            c.bar(Rect::new(r.x + pad, y + cell + 3.0 * s, cards_w, 2.5 * s), (1.0 - l.charging).clamp(0.0, 1.0), if ready { GOOD } else { WARN }, TRACK);
+        }
+        // The name and the state.
+        let tx = r.x + pad + cards_w + 8.0 * s;
+        c.text_fit(Weight::SemiBold, 13.0 * s, (tx, y + 14.0 * s), Align::Left, &l.name, info_w, TEXT);
+        let (state, col) = if l.cards.is_empty() {
+            ("Plain shots".to_string(), MUTED)
+        } else if ready {
+            ("Ready".to_string(), GOOD)
+        } else {
+            (format!("Recharging {:.1} s", l.charging * l.recharge), WARN)
+        };
+        c.text_fit(Weight::Medium, 11.0 * s, (tx, y + 30.0 * s), Align::Left, &state, info_w, col);
+        let words = Rect::new(tx - 4.0 * s, r.y, info_w + 4.0 * s, r.h);
+        if tip.is_none() && self.hover.is_some_and(|p| words.contains(p)) {
+            tip = Some((usize::MAX, words));
+        }
+        if let Some((_, key)) = l.cycle {
+            let b = Rect::new(r.right() - pad - swap, y + (cell - swap) / 2.0, swap, swap);
+            let hot = self.hover.is_some_and(|p| b.contains(p));
+            let (t, bt) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(b, 6.0 * s, t, bt, 1.0, [255, 255, 255, 30]);
+            let k = key_name(key).unwrap_or_else(|| "~".into());
+            c.text(Weight::SemiBold, 12.0 * s, (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s), Align::Centre, &k, TEXT);
+            self.hits.push((b, Hit::Cycle));
+            if hot {
+                tip = Some((usize::MAX - 1, b));
+            }
+        }
+        tip
+    }
+
+    /// The loadout's own tooltip (over its name, or Swap): whose gun, the
+    /// guns ready, the recharge, and how to swap.
+    fn loadout_tip(&mut self, l: &Loadout, b: Rect, swap: bool, c: &mut Canvas, s: f32) {
+        let mut lines = vec![l.whose.clone()];
+        if let Some(n) = &l.note {
+            lines.push(n.clone());
+        } else if !l.cards.is_empty() {
+            lines.push(format!("Recharge {:.1} s after the last cast", l.recharge));
+        }
+        if let Some((_, key)) = l.cycle {
+            lines.push(match key_name(key) {
+                Some(k) if swap => format!("Click or press {k}: the next loadout"),
+                Some(k) => format!("{k} or the button: the next loadout"),
+                None => "The button: the next loadout".into(),
+            });
+        }
+        let w = 260.0 * s;
+        let h = 40.0 * s + lines.len() as f32 * 18.0 * s;
+        let sw = c.screen.0 as f32;
+        let x = (b.x + b.w / 2.0 - w / 2.0).min(sw - 8.0 * s - w).max(8.0 * s);
+        let r = Rect::new(x, (b.y - 14.0 * s - h).max(8.0 * s), w, h);
+        c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
+        c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, EDGE);
+        let mut y = r.y + 26.0 * s;
+        c.icon(Icon::Rifle, (r.x + 14.0 * s, y - 14.0 * s), 16.0 * s, MUTED);
+        c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &l.name, TEXT);
+        y += 22.0 * s;
+        for t in &lines {
+            c.text_fit(Weight::Medium, 12.5 * s, (r.x + 14.0 * s, y), Align::Left, t, w - 28.0 * s, MUTED);
+            y += 18.0 * s;
+        }
+    }
+
+    /// A gun card's tooltip, above the loadout strip.
+    fn card_tip(&mut self, k: &GunCard, b: Rect, c: &mut Canvas, s: f32) {
+        let w = 290.0 * s;
+        let px = 12.5 * s;
+        let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &k.about);
+        let extra = if k.idle { 22.0 * s } else { 0.0 };
+        let h = 18.0 * s + 22.0 * s + lines.len() as f32 * 18.0 * s + 10.0 * s + extra;
+        let sw = c.screen.0 as f32;
+        let x = (b.x + b.w / 2.0 - w / 2.0).min(sw - 8.0 * s - w).max(8.0 * s);
+        let r = Rect::new(x, (b.y - 14.0 * s - h).max(8.0 * s), w, h);
+        let frame = k.kind.colour(k.colour);
+        c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
+        c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, alpha(frame, 0.6));
+        let mut y = r.y + 26.0 * s;
+        if let Some(icon) = k.icon {
+            c.icon(icon, (r.x + 14.0 * s, y - 15.0 * s), 18.0 * s, k.colour);
+        }
+        c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &k.name, TEXT);
+        let kind = k.kind.label().to_uppercase();
+        let kw = c.atlas.measure(Weight::SemiBold, 10.5 * s, &kind) + 12.0 * s;
+        let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
+        c.rrect(kr, 5.0 * s, alpha(frame, 0.18));
+        c.text(Weight::SemiBold, 10.5 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &kind, frame);
+        if let Some(cost) = &k.cost {
+            let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
+            let cx = kr.x - 10.0 * s - cw;
+            c.icon(Icon::Crystal, (cx - 16.0 * s, y - 12.0 * s), 13.0 * s, ENERGY);
+            c.text(Weight::SemiBold, 12.0 * s, (cx, y - 1.0 * s), Align::Left, cost, ENERGY);
+        }
+        y += 22.0 * s;
+        for l in &lines {
+            c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
+            y += 18.0 * s;
+        }
+        if k.idle {
+            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it only slows the recharge", w - 28.0 * s, WARN);
         }
     }
 
@@ -1278,6 +1566,16 @@ impl Hud {
         self.hits.iter().find(|(_, h)| *h == Hit::Command(k)).map(|(r, _)| *r)
     }
 
+    /// The HUD's insets on a screen this size, top and bottom pixels (the
+    /// top bar; the bottom panels' height), as `draw` lays them out: for a
+    /// camera made before the HUD has drawn, so it can centre in the band
+    /// the panels leave (the opening view on the squad).
+    pub fn insets(screen: (u32, u32)) -> (f32, f32) {
+        let s = ui_scale(screen.1 as f32);
+        let panel_h = 3.0 * CELL * s + 2.0 * CELL_GAP * s + 2.0 * CARD_PAD * s;
+        (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
+    }
+
     /// Opens the menu on its controls page.
     pub fn show_help(&mut self) {
         self.menu = Some(MenuPage::Help);
@@ -1387,6 +1685,75 @@ mod tests {
     }
 
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
+
+    fn loadout() -> Loadout {
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), cost: (kind == CardKind::Payload).then(|| "60".into()), next, idle };
+        Loadout {
+            name: "Lull".into(),
+            whose: "Soldier 1".into(),
+            cards: vec![card("Quiet", CardKind::Modifier, false, false), card("Gas", CardKind::Payload, false, false), card("Quiet", CardKind::Modifier, true, false), card("Blast", CardKind::Payload, true, false)],
+            slots: 4,
+            recharge: 5.0,
+            charging: 0.4,
+            note: None,
+            cycle: Some((NOW + 10, KeyCode::KeyH)),
+        }
+    }
+
+    #[test]
+    fn the_loadout_swap_button_gives_its_command_and_a_card_takes_the_click() {
+        let mut r = Rig::new((1920, 1080));
+        r.m.loadout = Some(loadout());
+        r.draw();
+        let swap = r.hud.hits.iter().find(|(_, h)| *h == Hit::Cycle).map(|(b, _)| *b).expect("a swap button");
+        r.at((swap.x + swap.w / 2.0, swap.y + swap.h / 2.0));
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW + 10 }]));
+        // A card is the panel's: hovered it draws its tooltip, a click on
+        // it is not a click on the world.
+        let strip = r.hud.hits.iter().find(|(b, h)| *h == Hit::Panel && b.contains((swap.x, swap.y))).map(|(b, _)| *b).expect("the strip");
+        r.at((strip.x + 20.0 * r.hud.scale, swap.y + swap.h / 2.0));
+        let before = r.c.len();
+        r.draw();
+        assert!(r.c.len() > before, "the card's tooltip adds to the canvas");
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![]));
+    }
+
+    #[test]
+    fn the_bottom_panels_cover_at_most_about_15_percent_and_collapse_when_empty() {
+        for screen in [(1920, 1080), (1280, 800), (2560, 1440)] {
+            let mut r = Rig::new(screen);
+            r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }];
+            r.draw();
+            let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
+            assert!(share <= 0.152, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
+            assert!((Hud::insets(r.c.screen).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
+            // With nothing selected, no panel reaches above the collapsed
+            // strip except the command card and minimap.
+            let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            r.m.selection.clear();
+            r.draw();
+            let empty = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            assert_eq!(empty + 1, full, "{screen:?}: the selection panel collapses");
+        }
+    }
+
+    #[test]
+    fn a_loadout_draws_in_any_window_and_with_no_cards() {
+        for screen in [(1920, 1080), (640, 360), (200, 120), (3840, 2160)] {
+            let mut r = Rig::new(screen);
+            r.m.loadout = Some(loadout());
+            r.draw();
+            r.m.loadout = Some(Loadout { cards: vec![], cycle: None, ..loadout() });
+            r.draw();
+            // More cards than slots still draws every card.
+            let mut l = loadout();
+            l.cards.extend(l.cards.clone());
+            r.m.loadout = Some(l);
+            r.draw();
+        }
+    }
 
     #[test]
     fn a_drag_or_pan_that_ends_over_a_panel_still_ends_in_the_controls() {
