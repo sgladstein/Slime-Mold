@@ -78,7 +78,7 @@ shot, blast, withering or starving breaks it first); births stop while the
 mass (a condensed walker counting two) fills the slots, so the freed
 ground does not refill. Both engines, twins exact. In the window (Fork,
 seed 1, farm) C has 26,904 walkers at 5:00 against 44,806 off and holds
-its crystals in copper lobes instead of covering the map; at a crowd of 16
+its crystals in bronze lobes instead of covering the map; at a crowd of 16
 the tubes between crystals broke into beads
 ([condense](../../Reports/condense-2026-11-14/README.md)).
 

@@ -80,7 +80,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // Dense slime condenses (11-14, `BigParams::condense`): off by
         // default for the owner's playtest; the steps a crowded or feeding
         // walker takes to condense (300 is 10 game seconds).
-        ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (copper); 0 is off"),
+        ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off"),
     ];
     for (k, label, choices, note) in notes {
         let d = c_default(k);

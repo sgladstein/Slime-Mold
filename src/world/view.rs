@@ -107,6 +107,9 @@ pub struct View {
     look: wgpu::Buffer,
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
+    /// Two screens of words: the walkers' specks (`draw_specks`), then the
+    /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
+    /// their own so the specks' calm/lean/bolt fields keep their room.
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -208,7 +211,7 @@ impl View {
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
-        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 4);
+        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 8);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
@@ -304,9 +307,15 @@ impl View {
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
     /// rectangle is the screen over the zoom and a margin, `fine` (at most
     /// a third of the zoom) cells each way.
+    /// Two grids of `fine_half` words: the walkers a fine cell (and the
+    /// cut-off ones), then the condensing weights (`set_dense`: condensed
+    /// and ripening in the low 16 bits, fresh absorptions above).
     fn fine_buffer(dev: &wgpu::Device, screen: (u32, u32)) -> wgpu::Buffer {
-        let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        storage(dev, "fine walkers", n * 4)
+        storage(dev, "fine walkers", Self::fine_half(screen) as u64 * 8)
+    }
+
+    fn fine_half(screen: (u32, u32)) -> u32 {
+        (screen.0 + 2 * MARGIN + 2) * (screen.1 + 2 * MARGIN + 2)
     }
 
     /// Fine cells a cell each way at zoom `zoom` (`prep`; 2026-11-14): one
@@ -460,9 +469,6 @@ impl View {
         }
     }
 
-    /// The game's time in seconds, each frame (the crystals' `drain`
-    /// measures how fast charge goes in game time, so a paused or fast game
-    /// reads the same).
     /// Shows which walkers have condensed (`BigParams::condense`, 11-14):
     /// the engine's `news` and `state` (as `set_news` takes them; bind them
     /// here too when the world does not wither) and the word each walker's
@@ -485,6 +491,9 @@ impl View {
         self.rebind();
     }
 
+    /// The game's time in seconds, each frame (the crystals' `drain`
+    /// measures how fast charge goes in game time, so a paused or fast game
+    /// reads the same).
     pub fn set_time(&mut self, t: f32) {
         self.game_t = t;
     }
@@ -523,7 +532,7 @@ impl View {
     pub fn resize(&mut self, screen: (u32, u32)) {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
-        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 4);
+        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 8);
         (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;
@@ -634,7 +643,7 @@ impl View {
         for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.dense_at, self.ripe_at, 0, 0] {
+        for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {

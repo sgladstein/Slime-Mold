@@ -66,13 +66,40 @@ Frame cost on the 1070 not measured (no PC jobs, owner 11-14 00:28Z);
 
 ## The look
 
-The view reads each walker's word (`View::set_dense`). A condensed walker
-counts twice in the body and the body round it turns deep copper with more
-gloss by the share of its mass condensed; a ripening walker warms toward the
-copper as its ripeness climbs (about half way at the moment it turns), so a
-body heats before it condenses and cools if it stops being ripe; for 2 s
-after it condenses a walker's speck flares, so the survivors spark as the
-absorbed vanish. All of it is the walkers' own state; nothing is painted.
+Reworked after the art director's review (11-14 08:47Z): the first copper
+(215, 88, 30) sat between the panic's amber and the bolt's red, and the turn
+was a fast dark crackle that read as damage. Now, all from the walkers' own
+state (`View::set_dense`):
+
+- **Ripening** warms the body toward the bronze by ripeness squared (about
+  half way at the turn), and cools if it stops being ripe.
+- **The turn is an implosion.** An absorbed walker's slot keeps
+  `ABSORBED` and the steps since for `ABSORB_STEPS` (15, 0.5 s; both
+  engines, nothing in the simulation reads it, a birth clears it). The view
+  draws it as a warm-white streak from where it died toward the centre of
+  the condensed walkers in the 9 x 9 cells round it (the engine's per-cell
+  condensed count), accelerating and dimming. The streaks have their own
+  half of the specks buffer, so the specks' calm/lean/bolt fields keep
+  their room (the slime-look thread's ask).
+- **Light from the data.** Absorptions in the last 0.3 s light their cells
+  warm-white by how many (the fine grid's second half, above bit 16), so a
+  big condensation flares and a trickle glints, then it cools into the
+  bronze. A survivor's speck flares for 0.4 s (2 s read as noise).
+- **Condensed** mould is a deep bronze-brown (92, 58, 34) mixed into the
+  body after the gold's saturation push (mixed into the hue before it, the
+  push turned it orange), with gloss near full, a steeper thickness curve
+  (a fuller body with a short edge) and up to half again the height. Taking
+  more of the sharp count instead made it lumpy and glittering.
+- **Value check** (`page/grey-strip.png`, mean luma of real frames): gold
+  body 138, ripening 121, condensed 84; the panic amber speck 185, the bolt
+  red 105.
+- **Frame cost** (llvmpipe, `bench=40 hand=farm screen=960x600`,
+  `bench-off.txt`, `bench-on.txt`): frame p50 63.6 ms off, 64.8 on (+1.9%),
+  p95 83.0 and 86.0. The 1070 is not measured.
+
+The zoom 12 clips (`page/turn-z12-1x.mp4`, `page/turn-z12-half.mp4`,
+`clip-z12.txt`): one patch by the home crystal from 9.0 to 11.8 s, every
+game step.
 
 ## In the window
 
@@ -86,7 +113,7 @@ Fork, seed 1, `hand=farm`, shape C (the default), software Vulkan,
 | `condense=300 condense_crowd=20` | 17,147 | 17,434 | 24,072 | 27,613 | 26,904 | 3 (19 lost) |
 
 Off, C covers most of the open ground by 5:00; on, it holds its crystals in
-copper lobes joined by thin tubes, about 60% of the walkers. One seed and
+bronze lobes joined by thin tubes, about 60% of the walkers. One seed and
 one hand, so the squad's line is no balance reading. At `condense_crowd` 16
 (the first try) the tubes between crystals ripened and broke into beads by
 2:00; 20 keeps them whole.
@@ -94,8 +121,7 @@ one hand, so the squad's line is no balance reading. At `condense_crowd` 16
 The transformation clip (`page/transform.mp4`, `clip-on.txt`): the start
 blob on the home crystal, 6 to 30 s every half second at zoom 7. The blob
 warms from the crystal outward, turns at 10 s (24,871 walkers at 6 s,
-18,773 at 10 s), crackles dark and sparks, then pulls in to a bright copper
-body smaller than the blob.
+18,773 at 10 s), streams in and sits as a darker, raised bronze body.
 
 Page: [Dense slime condenses](https://claude.ai/artifact/7L9QoQxqnk9Cazt1qyFpvR) (source
 `page/`).

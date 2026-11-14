@@ -63,6 +63,13 @@ const DRAW_CONDENSE: u32 = 405;
 /// `dense_word` is the same.
 pub const RIPE: u32 = 0xFFFF;
 pub const DENSE: u32 = 0x1_0000;
+/// An absorbed walker's slot (`BigParams::condense`, the art director's
+/// review 11-14): dead, it keeps `ABSORBED` and the steps since in its
+/// word for `ABSORB_STEPS` steps, so the view can draw it streaming into
+/// the condensed walkers round it. Nothing in the simulation reads it; a
+/// birth into the slot clears it.
+pub const ABSORBED: u32 = 0x2_0000;
+pub const ABSORB_STEPS: u32 = 15;
 /// A panicking walker (`BigParams::panic`) runs for a crystal only while
 /// it has more than this share of its charge left, so a part cut off on a
 /// crystal that has run dry runs for another. The GPU's `PANIC_LEFT` is the
@@ -3035,6 +3042,12 @@ impl BigDish {
             }
             let r = p.condense_r.max(1) as i64;
             for k in 0..n {
+                // An absorbed walker's word ages out (`ABSORBED`).
+                if self.dense[k] & ABSORBED != 0 {
+                    let age = (self.dense[k] & RIPE) + 1;
+                    self.dense[k] = if age >= ABSORB_STEPS { 0 } else { ABSORBED | age };
+                    continue;
+                }
                 if !self.active(k) {
                     continue;
                 }
@@ -3084,7 +3097,7 @@ impl BigDish {
                     self.occ[i] -= 1;
                     self.alive[k] = false;
                     self.energy[k] = 0.0;
-                    self.dense[k] = 0;
+                    self.dense[k] = ABSORBED;
                     self.absorbed += 1;
                     continue;
                 }

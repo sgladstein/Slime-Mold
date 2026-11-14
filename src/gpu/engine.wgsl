@@ -314,6 +314,10 @@ fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
 const DENSE_HEAD: u32 = 4u;
 const RIPE_BITS: u32 = 0xFFFFu;
 const DENSE_BIT: u32 = 0x10000u;
+// An absorbed walker's slot keeps this and the steps since for
+// `ABSORB_STEPS` (the CPU's `ABSORBED`): only the view reads it.
+const ABSORB_BIT: u32 = 0x20000u;
+const ABSORB_STEPS: u32 = 15u;
 fn condenses() -> bool { return growth() && P.condense > 0u; }
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
@@ -917,7 +921,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
             atomicSub(&occ[i], 1u);
             atomicStore(&claim[i], NONE);
             energy[k] = -1.0;
-            set_dense(k, 0u);
+            set_dense(k, ABSORB_BIT);
             return;
         }
         set_dense(k, DENSE_BIT);
@@ -2979,8 +2983,15 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n || !ordinary(k)) { return; }
+    if (k >= P.n) { return; }
     let wd = dense_word(k);
+    // An absorbed walker's word ages out (`ABSORB_BIT`).
+    if ((wd & ABSORB_BIT) != 0u) {
+        let age = (wd & RIPE_BITS) + 1u;
+        set_dense(k, select(ABSORB_BIT | age, 0u, age >= ABSORB_STEPS));
+        return;
+    }
+    if (!ordinary(k)) { return; }
     // A condensed walker's low bits count the steps since it condensed
     // (the look's fresh glow).
     if ((wd & DENSE_BIT) != 0u) { set_dense(k, DENSE_BIT | min((wd & RIPE_BITS) + 1u, RIPE_BITS)); return; }

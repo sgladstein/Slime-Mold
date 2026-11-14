@@ -5,7 +5,7 @@
 /* Layout: one dark column, the clip first, then off/on pairs with counts beside each picture */
 :root {
   --bg: #0f1210; --panel: #171c19; --fg: #e6ebe7; --muted: #9aa69f;
-  --copper: #d7581e; --line: #2a322d;
+  --copper: #c08a5a; --line: #2a322d;
   --display: "Space Grotesk", system-ui, sans-serif;
   --body: "Inter", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
@@ -38,13 +38,28 @@ th:first-child, td:first-child { text-align: left; }
 <main>
   <header style="display:grid;gap:10px">
     <h1>Dense slime <span>condenses</span></h1>
-    <p class="lead">Where the slime packs tight or keeps feeding on a crystal for 10 seconds, half of it is absorbed and the rest turns copper: each copper walker takes two hits, bites twice and costs twice the upkeep. Fork map, seed 1, farm hand, shape C, software Vulkan. Everything shown is the walkers' own state.</p>
+    <p class="lead">Where the slime packs tight or keeps feeding on a crystal for 10 seconds, half of it is absorbed into the rest, which turns a deep bronze: each bronze walker takes two hits, bites twice and costs twice the upkeep. Fork map, seed 1, farm hand, shape C, software Vulkan. Everything shown is the walkers' own state.</p>
   </header>
 
   <section>
-    <h2>The transformation, up close</h2>
+    <h2>One patch turning, zoom 12</h2>
+    <div class="pair">
+      <figure><video src="turn-z12-1x.mp4" controls muted loop playsinline autoplay></video><figcaption>Normal speed · 9.0 to 11.8 s, every game step · <b>24,759 walkers at 9 s, 18,773 at 10 s</b></figcaption></figure>
+      <figure class="on"><video src="turn-z12-half.mp4" controls muted loop playsinline autoplay></video><figcaption>Half speed · the same frames</figcaption></figure>
+    </div>
+    <p>The body warms as it ripens, then turns in one step at about 10 s. For half a second each absorbed walker is a warm-white streak pulled toward the condensed walkers round it, and the cells where many were absorbed in the last 0.3 s glow warm-white. Then it cools into the bronze. A survivor's speck flares for 0.4 s.</p>
+  </section>
+
+  <section>
+    <h2>Value check</h2>
+    <img src="grey-strip.png" alt="Patches of gold, ripening and condensed slime and the panic colours, in colour and in grey">
+    <p class="lead">Mean luma from real frames: gold body 138, ripening 121, condensed 84. The panic amber speck is 185 and the bolt red is 105. Condensed slime is told from panic by value and shine, not hue.</p>
+  </section>
+
+  <section>
+    <h2>The whole start blob, zoom 7</h2>
     <video src="transform.mp4" controls muted loop playsinline autoplay></video>
-    <p>The start blob on the home crystal, 6 to 30 s of game time, a frame every half second at zoom 7. It warms from the crystal outward as walkers ripen, turns at about 10 s (24,871 walkers at 6 s, 18,773 at 10 s), crackles dark while the absorbed vanish and the survivors spark, then pulls in to a bright copper body smaller than the blob.</p>
+    <p>The start blob on the home crystal, 6 to 30 s of game time, a frame every half second at zoom 7 (3x speed). It warms from the crystal outward as walkers ripen, turns at about 10 s (24,871 walkers at 6 s, 18,773 at 10 s), then sits as a darker, raised bronze body.</p>
   </section>
 
   <section>
@@ -59,7 +74,7 @@ th:first-child, td:first-child { text-align: left; }
     <h2>Five minutes in</h2>
     <div class="pair">
       <figure><img src="c0-300s.jpg" alt="Whole map at 5:00 with condensing off"><figcaption>Off · <b>44,806 walkers</b> · squad of 1 · covers most open ground</figcaption></figure>
-      <figure class="on"><img src="c300k20-300s.jpg" alt="Whole map at 5:00 with condensing on"><figcaption>On · <b>26,904 walkers</b> · squad of 3 · copper lobes on the crystals, thin tubes between</figcaption></figure>
+      <figure class="on"><img src="c300k20-300s.jpg" alt="Whole map at 5:00 with condensing on"><figcaption>On · <b>26,904 walkers</b> · squad of 3 · bronze lobes on the crystals, thin tubes between</figcaption></figure>
     </div>
   </section>
 
@@ -76,9 +91,10 @@ th:first-child, td:first-child { text-align: left; }
   <section>
     <h2>How it reads on screen</h2>
     <ul>
-      <li>A ripening walker warms toward copper as its ripeness climbs, so a body heats before it turns and cools again if it stops being ripe.</li>
-      <li>For 2 s after it condenses, a survivor's speck flares while the absorbed walkers disappear.</li>
-      <li>A condensed body is deep copper with more gloss, by the share of its mass condensed. A broken walker (shot, blast, withered, starved) goes back to the ordinary colour.</li>
+      <li>A ripening walker warms toward the bronze as its ripeness climbs, so a body heats before it turns and cools again if it stops being ripe.</li>
+      <li>An absorbed walker's slot keeps where it died for 0.5 s. The view draws it as a streak toward the centre of the condensed walkers in the 9 x 9 cells round it. Fresh absorptions light their cells warm-white for 0.3 s.</li>
+      <li>A condensed body is deep bronze-brown with near-full gloss, a steeper and taller edge, by the share of its mass condensed. A broken walker (shot, blast, withered, starved) goes back to the ordinary colour.</li>
+      <li>Frame cost on llvmpipe, 40 game seconds of the farm hand: frame p50 63.6 ms off, 64.8 ms on (+1.9%). The 1070 is not measured.</li>
     </ul>
     <p class="lead">Off by default; <code>condense=300</code> or the start menu's Condense option turns it on. Branch <code>claude/project-thread-p9ctba</code>.</p>
   </section>

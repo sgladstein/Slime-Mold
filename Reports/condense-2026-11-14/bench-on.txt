@@ -1,0 +1,6 @@
+  2400 frames, 600 game steps; 0.07 read-backs a step, 0.00 waits a step (0.09 ms a step waiting); steps finished once in 599, when the next was due 0
+  every frame (2400 of them), ms: frame p50 64.78 p95 85.95 max 115.66; step  p50 0.18 p95 1.11 max 46.60; prepare  p50 0.25 p95 0.52 max 8.83; record  p50 1.47 p95 26.91 max 42.02; GPU tail  p50 52.92 p95 61.47 max 81.80
+  frames with a step (600 of them), ms: frame p50 76.12 p95 91.29 max 115.66; step  p50 0.98 p95 6.09 max 46.60; prepare  p50 0.23 p95 0.33 max 2.75; record  p50 21.32 p95 26.14 max 40.82; GPU tail  p50 52.87 p95 61.38 max 69.18
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 40 s: mould 15867, soldiers 16, buildings 0, harvested 3965, shots 301, killed 1273
+  machine at the end: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
