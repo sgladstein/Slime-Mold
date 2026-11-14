@@ -2868,6 +2868,9 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(fire(&d.char));
     // Block 7: moisture (`plants::moisture`).
     w.extend(fire(&d.moist));
+    // Block 8: how fresh each cell's fire is (engine.wgsl's `PB_FRESH`,
+    // for the view's advancing edge; the CPU keeps no copy).
+    w.extend(std::iter::repeat_n(0u32, c));
     w
 }
 
