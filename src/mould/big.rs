@@ -756,6 +756,19 @@ pub struct BigParams {
     /// A gassed walker (`BigDish::gas`, the squad toolkit's sleep gas)
     /// dies with this chance each step while its gas lasts (0 the default).
     pub gas_death: f32,
+    /// **The gas cloud** (off while `gas_keep` is 0; 11-14, after Noita's
+    /// mists, which are real clouds that stain what they cover:
+    /// Reports/noita-spell-look-2026-11-14.md). A gas burst also lays
+    /// `gas_dose` on the agar within its radius (`lay_gas`). Each fine step
+    /// the cloud gets one 3x3 mean over the agar times `gas_keep`, as the
+    /// alarm does, so walls hold it and it spreads and thins; then every
+    /// living walker or sleeper on a cell with more than `gas_sleep` falls
+    /// (or stays) asleep, timer 0, gassed for at least `gas_linger` more
+    /// steps. So a walker that wanders into the cloud sleeps, and the
+    /// sleepers inside it stay asleep until it thins.
+    pub gas_keep: f32,
+    pub gas_sleep: f32,
+    pub gas_linger: u16,
     /// **Alarm** (off when `alarm_keep` is 0): a field on the fine grid that
     /// a strike lays (`BigDish::strike`) and a waking walker relays. Each
     /// fine step it gets one 3x3 mean over the agar times `alarm_keep`, as
@@ -1057,6 +1070,9 @@ impl BigParams {
             sleep_rest: 0,
             sleep_death: 0.0,
             gas_death: 0.0,
+            gas_keep: 0.0,
+            gas_sleep: 0.2,
+            gas_linger: 90,
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
@@ -1222,6 +1238,8 @@ pub struct BigDish {
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
     /// dormant walker is not woken by scent, only by alarm.
     pub gassed: Vec<u16>,
+    /// The gas cloud (`gas_keep`) a fine cell, else empty.
+    pub gas_cloud: Vec<f32>,
     /// Walls the player built (`build_wall`), a fine cell; empty until the
     /// first. A wall is ground the mould cannot enter, the same channel as
     /// the rim and rock.
@@ -1427,6 +1445,7 @@ impl BigDish {
             soil: Vec::new(),
             scorch: Vec::new(),
             gassed: Vec::new(),
+            gas_cloud: Vec::new(),
             wall: Vec::new(),
             wall_health: Vec::new(),
             broken: 0,
@@ -3467,6 +3486,11 @@ impl BigDish {
                     }
                 }
             }
+            if !self.gas_cloud.is_empty() {
+                spread(&self.agar, &self.gas_cloud, &mut self.scratch, self.w, self.h, self.p.gas_keep, self.threads);
+                std::mem::swap(&mut self.gas_cloud, &mut self.scratch);
+                self.gas_sleepers();
+            }
             if !self.p.scent_coarse {
                 self.scent_step();
             }
@@ -3671,6 +3695,9 @@ impl BigDish {
         for &c in self.scorch.iter().chain(&self.gassed) {
             eat(c as u32);
         }
+        for v in &self.gas_cloud {
+            eat(v.to_bits());
+        }
         h
     }
 
@@ -3753,6 +3780,52 @@ impl BigDish {
             }
         }
         n
+    }
+
+    /// Lays `dose` of gas cloud on the agar cells within `r` of (`x`, `y`)
+    /// (fine cells), at whole-cell offsets from the centre's cell as the
+    /// strike's cells are (the engine's `gaslay`). Turns the cloud on.
+    pub fn lay_gas(&mut self, x: f32, y: f32, r: f32, dose: f32) {
+        self.enable_life();
+        if self.gassed.is_empty() {
+            self.gassed = vec![0; self.walkers.len()];
+        }
+        if self.gas_cloud.is_empty() {
+            self.gas_cloud = vec![0.0; self.w * self.h];
+        }
+        let (cx, cy) = (x as i64, y as i64);
+        let n = r.max(0.0).ceil() as i64;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                let (px, py) = (cx + dx, cy + dy);
+                if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
+                    continue;
+                }
+                let i = py as usize * self.w + px as usize;
+                if ((dx * dx + dy * dy) as f32) <= r * r && self.agar[i] {
+                    self.gas_cloud[i] += dose;
+                }
+            }
+        }
+    }
+
+    /// Every living walker or sleeper on a cell with more cloud than
+    /// `gas_sleep` sleeps (timer 0), gassed at least `gas_linger` more
+    /// steps (the engine's `gasp`).
+    fn gas_sleepers(&mut self) {
+        let (thr, linger) = (self.p.gas_sleep, self.p.gas_linger);
+        for k in 0..self.walkers.len() {
+            if !self.lives(k) || !matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT) {
+                continue;
+            }
+            let (x, y, _) = self.walkers[k];
+            let Some(i) = self.cell(x, y) else { continue };
+            if self.gas_cloud[i] > thr {
+                self.life[k] = LIFE_DORMANT;
+                self.life_t[k] = 0;
+                self.gassed[k] = self.gassed[k].max(linger);
+            }
+        }
     }
 
     /// For each point (fine cells), the gassed dormant walkers within `r`
