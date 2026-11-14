@@ -141,8 +141,19 @@ planet, points, redraw) sets the depth the same way.
 `larder-world map=planet:D:S seed=S look=DIR hand=idle at=1,10,...,120
 screen=1280x800` on llvmpipe, planets 1-8, seeds 1 and 2: the whole map
 (zoom 1) and the view near the squad, every 10 game seconds for two minutes
-with nobody playing, so the ground's effect on the slime shows. Page and
-counts: [`pages.md`](pages.md), `levelgen-2026-11-14/page/`.
+with nobody playing, so the ground's effect on the slime shows, and two
+close clips near the squad (planets 3 and 6, 40-46 s). Page:
+https://claude.ai/artifact/RYfaQD8SGMSMSuaKZtaD5P (copy in
+`levelgen-2026-11-14/page/`, listed in [`pages.md`](pages.md); scripts and
+logs in `raw/`).
+
+Mould walkers at 120 s, seed 1 / seed 2 (thousands; the start blob is 25):
+barrens 17 / 28, marsh 35 / 28, canyon 26 / 37, dunes 37 / 41, claypan
+35 / 30, thicket 34 / 29, spires 43 / 33, core 42 / 43. Barren ground
+visibly thins the slime into tubes; sand lets it spread. The squad at
+the landing shot slime in 10 of the 16 films inside two minutes with
+nobody playing: the shape C slime's explorers reach a long way, which is
+the slime's tuning, not the map's.
 
 ## Next
 
