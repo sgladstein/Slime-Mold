@@ -1093,6 +1093,12 @@ struct Bench {
     squad1: bool,
     /// `spread=0`: each step's ticks all on the step's frame (`App::spread`).
     spread: bool,
+    /// `centre=X,Y[,ZOOM]`: the camera's place and zoom for the timed run
+    /// (11-14, the technical lead): the view's cost is a screen pixel's
+    /// shading plus `prep`'s fine cells, which grow with the zoom (two a
+    /// cell each way from zoom 6), so the draw is timed at the opening zoom
+    /// and at `MAX_ZOOM` (24) over the body, not only where the window opens.
+    view: Option<(f32, f32, f32)>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1240,7 +1246,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(secs) = bench_secs {
         println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread }, &device, &queue)?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
         return Ok(());
     }

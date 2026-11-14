@@ -148,6 +148,18 @@ if ($Timing) {
                 Time "r7-$tag-20k-$i" "$bins\lw-$tag.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30"
             }
         }
+        # The draw (technical lead, 11-14 07:42Z): the view shaders cost about
+        # 6 ms a frame on llvmpipe after #228, #230 and #241, which says
+        # nothing of the 1070. bench draws every frame as the window does
+        # (view and canvas, GPU waited for; with timestamps "its drawing" ms
+        # beside the step's ticks), here at the window's opening view and,
+        # with centre=, over C's body at zoom 6 and at full zoom-in (24 px a
+        # cell, where prep's fine cells are most). Twice each, interleaved.
+        foreach ($i in 1, 2) {
+            Time "time-view-open-$i" "$lw bench=30 hand=farm"
+            Time "time-view-z6-$i" "$lw bench=30 hand=farm centre=175,215,6"
+            Time "time-view-z24-$i" "$lw bench=30 hand=farm centre=175,215,24"
+        }
         # Panic and withering on shape C (slime-enemy thread).
         Time "time-c-default" "$lw bench=30 hand=farm"
         Time "time-c-panic0" "$lw panic=0 bench=30 hand=farm"
@@ -168,7 +180,7 @@ $sum = Join-Path $dir "summary.txt"
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
     "--- $($_.BaseName)" | Add-Content $sum
-    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s" | ForEach-Object { $_.Line } | Add-Content $sum
+    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view:" | ForEach-Object { $_.Line } | Add-Content $sum
     Get-Content $_.FullName -Tail 3 | Add-Content $sum
 }
 # The worktrees go; the shared target and the exes stay for a rerun (delete
