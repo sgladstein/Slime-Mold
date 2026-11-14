@@ -127,10 +127,12 @@ fn the_window_plays_the_real_game() {
     // the tools page's (E).
     assert_eq!(m.commands.len(), 12);
     assert!(m.end.is_none());
-    // The build page: turret, lure, pump, outpost, the lures' switch, back.
+    // The build page: turret, lure, pump, outpost, siren, cancel (none to
+    // cancel yet), the lures' switch, back.
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Siren", "Lures, sirens on/off", "Back"]);
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Siren", "Cancel a build", "Lures, sirens on/off", "Back"]);
+    assert!(!m.commands[5].ready, "nothing being built");
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take

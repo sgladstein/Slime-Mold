@@ -713,6 +713,7 @@ impl App {
             let b = r.build;
             let lures = g.buildings.iter().filter(|q| q.alive && matches!(q.kind, Kind::Lure | Kind::Siren)).count();
             let room = g.standing() < b.max;
+            let ghosts = g.buildings.iter().filter(|q| q.alive && !q.up()).count();
             let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
                 target: Target::Point { radius: b.touch * sc },
                 cost: Some(format!("{cost:.0}")),
@@ -727,6 +728,13 @@ impl App {
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
                 place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
+                Command {
+                    target: Target::Point { radius: b.touch * sc },
+                    ready: ghosts > 0,
+                    why_not: Some("Nothing being built".into()),
+                    about: "Click a building that is not finished yet to call it off. Its whole price comes back, and its builders go on to their next order.".into(),
+                    ..Command::new(CANCEL_BUILD, (2, 0), Icon::Close, "Cancel a build", KeyCode::KeyC)
+                },
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];

@@ -260,6 +260,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         };
         app.hud.moved(hover);
         app.controls.cursor = hover;
+        // `hand=buildq` with `hover=`: the turret is being placed under the
+        // cursor (Q, then T), so the picture shows the placing ghost and its
+        // reach ring (2026-11-14, the build-flow thread).
+        if hand == "buildq" && hover.is_some() && app.hud.targeting().is_none() {
+            app.build_page = true;
+            app.prepare();
+            let _ = app.hud.key(KeyCode::KeyT, true, false, &mut app.camera);
+            app.controls.cursor = hover;
+        }
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
         // past the world's edges (fit with no insets).

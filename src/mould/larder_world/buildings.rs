@@ -369,6 +369,40 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Call off ghost `b` (`Cmd::Unbuild`): it is gone and its whole price
+    /// goes back to the bank, however far it had risen (owner, 2026-11-14:
+    /// "There should be no maintenance costs in this game", so a change of
+    /// mind costs only the builders' time). Its builders take their next
+    /// order (`build_turn`). The food returned, or None if `b` is not a
+    /// ghost (a standing building is not sold back).
+    pub fn unbuild(&mut self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).copied().filter(|bd| bd.alive && bd.built < 1.0)?;
+        let price = self.build_price(bd.kind, bd.at);
+        self.buildings[b].alive = false;
+        self.bank += price;
+        self.spent -= price;
+        Some(price)
+    }
+
+    /// The ghost nearest `p` within its footprint and a cell, if any (the
+    /// window's cancel click; a wall by its line).
+    pub fn ghost_at(&self, p: (f32, f32)) -> Option<usize> {
+        let r = (self.rules.build.touch + 1.0) * self.s();
+        let d = |bd: &Building| {
+            let q = match bd.kind {
+                Kind::Wall { to } => super::paths::nearest_on(bd.at, to, p),
+                _ => bd.at,
+            };
+            (q.0 - p.0).hypot(q.1 - p.1)
+        };
+        (0..self.buildings.len())
+            .filter(|&b| self.buildings[b].alive && self.buildings[b].built < 1.0)
+            .map(|b| (b, d(&self.buildings[b])))
+            .filter(|&(_, x)| x <= r)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(b, _)| b)
+    }
+
     /// Switch lure or siren `k` on or off. True if it is one.
     pub fn toggle(&mut self, k: usize) -> bool {
         match self.buildings.get_mut(k) {
