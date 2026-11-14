@@ -878,3 +878,36 @@ fn every_test_loadout_fits_the_default_budget() {
         assert!(rounds::cost(&r) <= b, "{name} costs {} of {b}", rounds::cost(&r));
     }
 }
+
+/// **The squad's order lines** (owner's playtest, 2026-11-14 20:12Z and
+/// 20:15Z: "there should be a line showing where the selected squad is
+/// moving ... same with attack move and other commands ... if I set up
+/// three moves, I should see the full path"). A move then two Shift-queued
+/// orders draw one chain from the squad's middle through all three points;
+/// before, a squad sent anywhere drew no line at all.
+#[test]
+fn a_squads_orders_and_queue_draw_as_one_path() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.squad_frame(1.0 / 60.0);
+    let g = app.game.as_mut().unwrap();
+    let q = g.active.unwrap();
+    let m = g.middle(q).unwrap();
+    let pts = [(m.0 + 40.0, m.1), (m.0 + 40.0, m.1 + 40.0), (m.0, m.1 + 40.0)];
+    assert!(g.apply(Cmd::SquadOrder(q as u8, Order::Move(pts[0].0, pts[0].1))));
+    assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Fight(pts[1].0, pts[1].1))));
+    assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Move(pts[2].0, pts[2].1))));
+    app.marks();
+    let lines: Vec<_> = app.marks.list.iter().filter(|k| k.shape == slime_mould::world::Shape::Line).map(|k| (k.at, k.half, k.colour)).collect();
+    let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1) < 0.5;
+    let from = [m, pts[0], pts[1]];
+    for (i, (&a, &b)) in from.iter().zip(&pts).enumerate() {
+        let l = lines.iter().find(|l| near(l.0, a) && near(l.1, b));
+        assert!(l.is_some(), "leg {i} ({a:?} -> {b:?}) not drawn: {lines:?}");
+        // The attack-move leg is red, the moves white.
+        assert_eq!(l.unwrap().2[1] < 200, i == 1, "leg {i}'s colour {:?}", l.unwrap().2);
+    }
+    // One chain for the squad, not one per soldier.
+    let n = app.game.as_ref().unwrap().members(q).len();
+    assert!(n > 1 && lines.iter().filter(|l| near(l.1, pts[0])).count() == 1, "{n} soldiers drew {} lines to the first point", lines.iter().filter(|l| near(l.1, pts[0])).count());
+}

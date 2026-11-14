@@ -3,7 +3,8 @@
 //! round plays as before). The controlled squad is the one you play:
 //!
 //! - **WASD** steers it; the camera follows it while you do. Pan away
-//!   freely (middle drag, arrows); **Space** brings the camera back.
+//!   freely (middle drag, arrows; WASD while paused); **Space** brings the
+//!   camera back.
 //! - **Hold the left button**: every soldier in it fires at the cursor on
 //!   the same beat. It faces the cursor.
 //! - **Right click** sends it there as a squad; on a crystal it stands by
@@ -95,7 +96,7 @@ pub(super) fn squad_card_key(id: u32, key: KeyCode) -> Option<KeyCode> {
 pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
-        ("WASD".to_string(), "Steer your squad; the camera follows it".to_string()),
+        ("WASD".to_string(), "Steer your squad; the camera follows it (paused: pan the camera)".to_string()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
