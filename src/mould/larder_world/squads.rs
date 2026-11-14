@@ -543,6 +543,8 @@ impl<W: World> Game<W> {
     /// `LeadRules::rate` times as often.
     pub(super) fn shot_gap(&self, q: usize) -> u64 {
         let every = self.rules.shot_every / if Some(q) == self.active { self.rules.lead.rate.max(0.01) } else { 1.0 };
+        // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
+        let every = every / (1.0 + self.rules.rate_card * self.bullet_mods.rate as f32).max(0.01);
         self.secs(every).max(1)
     }
 

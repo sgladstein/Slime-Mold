@@ -295,7 +295,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 27] = [
+const LOADOUTS: [(&str, &str); 30] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -327,6 +327,10 @@ const LOADOUTS: [(&str, &str); 27] = [
     // a scent line every mould follows, here into a burning line.
     ("bait", "bait"),
     ("killzone", "bait+scorch"),
+    // The owner's notes (11-14 15:06Z): rate of fire, cost cut, scent.
+    ("rapid", "rate+rate+blast"),
+    ("thrift", "thrift+bomb+thrift+bomb"),
+    ("smother", "smother+smother"),
     ("mist", "mist"),
     ("firewall", "scorch+blast"),
     // Range (owner, 11-14 08:39Z: "there should be a range modifer card

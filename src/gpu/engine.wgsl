@@ -2939,7 +2939,9 @@ fn baitlay(@builtin(global_invocation_id) gid: vec3<u32>) {
     let dx = i32(i % P.w) - i32(P.kx);
     let dy = i32(i / P.w) - i32(P.ky);
     if (f32(dx * dx + dy * dy) > P.kr * P.kr) { return; }
-    scent_in[i] = scent_in[i] + P.kalarm;
+    // x the row's `kar` (the keep: 0 is the `Smother` trail's wipe, 1
+    // the bait's add; `lay_scent` writes its own row).
+    scent_in[i] = scent_in[i] * P.kar + P.kalarm;
 }
 
 // **Sleep in the cloud** (the CPU's `gas_sleepers`, at the end of a tick

@@ -91,8 +91,13 @@ pub struct Rules {
     /// How far a soldier sees and fires, dish cells.
     pub range: f32,
     /// What each `Range` gun card adds, as a fraction of `range`
-    /// (`Game::gun_range`): 0.5 makes one card 36 cells, two 48.
+    /// (`Game::gun_range`). 1 since 2026-11-14 15:40Z (the owner's notes:
+    /// "2-4x distance or rate of fire"): one card 48 cells, two 72, three
+    /// 96; 0.5 before (36, 48).
     pub range_card: f32,
+    /// What each `Rate` gun card adds to how often a soldier fires: 1 is
+    /// twice as often with one card, three times with two.
+    pub rate_card: f32,
     /// Radius of a shot's strike, dish cells (at most `squad::R_MAX` fine).
     pub strike: f32,
     /// Game seconds between one soldier's shots.
@@ -454,7 +459,8 @@ impl Default for Rules {
             // should be increased"); 15 before. Soldiers' sight and every
             // shot's reach, mouse-aimed volleys included.
             range: 24.0,
-            range_card: 0.5,
+            range_card: 1.0,
+            rate_card: 1.0,
             strike: 2.5,
             shot_every: 1.0,
             bullet_speed: 45.0,

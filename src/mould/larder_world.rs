@@ -183,6 +183,9 @@ pub struct BulletMods {
     /// and reach by `Rules::range_card` of `Rules::range`
     /// (`Game::gun_range`).
     pub reach: u8,
+    /// Copies of the `Rate` card: each fires every soldier's gun
+    /// `Rules::rate_card` more times as often (`Game::shot_gap`).
+    pub rate: u8,
 }
 
 pub struct Game<W: World> {

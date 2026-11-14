@@ -179,6 +179,11 @@ pub struct Burst {
     /// field crystals, soldiers and lures smell of, so every mould follows
     /// it while it lasts. 0: none.
     pub bait: f32,
+    /// **Smother** (the rounds' `Smother` trail, owner's notes 11-14
+    /// 15:06Z: "disrupt scent"): the food scent within `r` is wiped before
+    /// any `bait` is added, so the mould there loses the way to its food
+    /// until the scent spreads back.
+    pub smother: bool,
 }
 
 impl Burst {
@@ -255,8 +260,8 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         (d.p.gas_keep, d.p.gas_sleep, d.p.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
         d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, b.cloud);
     }
-    if b.bait > 0.0 {
-        d.lay_bait(b.at.0 * s, b.at.1 * s, b.r * s, b.bait);
+    if b.bait > 0.0 || b.smother {
+        d.lay_bait(b.at.0 * s, b.at.1 * s, b.r * s, if b.smother { 0.0 } else { 1.0 }, b.bait);
     }
     if b.germ {
         if d.sick.is_empty() {
