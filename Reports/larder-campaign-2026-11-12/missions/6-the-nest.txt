@@ -1,0 +1,7 @@
+name The nest
+says Break the nest: cut the Sleeper to a third of its size
+map nest
+tier sleeper
+verbs move harvest buy stance fire wall cut turret strike
+bonus lose 4
+goal shrink 0.33

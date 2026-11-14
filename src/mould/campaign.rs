@@ -179,6 +179,29 @@ impl Mission {
         })
     }
 
+    /// Every mission in `dir` (the campaign's `missions` folder), as (file
+    /// stem, mission), in campaign order: by the stem's leading number, then
+    /// by name. A file that does not parse is left out (the start menu lists
+    /// what it can play; `the_campaign_files_parse` keeps the shipped ones
+    /// whole). The start-menu thread's mission list reads this (2026-11-14).
+    pub fn list(dir: &std::path::Path) -> Vec<(String, Mission)> {
+        let mut out: Vec<(u32, String, Mission)> = std::fs::read_dir(dir)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|x| x == "txt"))
+            .filter_map(|p| {
+                let stem = p.file_stem()?.to_str()?.to_string();
+                let m = Mission::parse(&std::fs::read_to_string(&p).ok()?).ok()?;
+                let n = stem.split(|c: char| !c.is_ascii_digit()).next().and_then(|d| d.parse().ok()).unwrap_or(u32::MAX);
+                Some((n, stem, m))
+            })
+            .collect();
+        out.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        out.into_iter().map(|(_, s, m)| (s, m)).collect()
+    }
+
     /// The game's rules with this mission's keys set.
     pub fn rules(&self, mut r: Rules) -> Rules {
         // No soft lock (design, owner's pick 04:44Z), now the Game's own
@@ -697,7 +720,7 @@ mod tests {
     fn the_campaign_files_parse() {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-campaign-2026-11-12/missions");
         let mut n = 0;
-        for e in std::fs::read_dir(dir).unwrap() {
+        for e in std::fs::read_dir(&dir).unwrap() {
             let p = e.unwrap().path();
             if p.extension().is_some_and(|x| x == "txt") {
                 Mission::parse(&std::fs::read_to_string(&p).unwrap()).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
@@ -705,6 +728,12 @@ mod tests {
             }
         }
         assert!(n >= 3);
+        // The start menu's list: every file, in campaign order (10 after 9).
+        let list = Mission::list(&dir);
+        assert_eq!(list.len(), n, "every shipped mission parses, so all are listed");
+        let nums: Vec<u32> = list.iter().map(|(s, _)| s.split('-').next().unwrap().parse().unwrap()).collect();
+        assert!(nums.windows(2).all(|w| w[0] <= w[1]), "in order: {nums:?}");
+        assert_eq!(list[0].0, "1-landfall");
     }
 
     /// An idle squad on the race world: the squad goal never fills, the

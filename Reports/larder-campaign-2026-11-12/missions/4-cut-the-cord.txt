@@ -1,0 +1,7 @@
+name Cut the cord
+says Starve the Trunk: cut its cords until it is a fifth of its size
+map fork
+tier trunk
+verbs move harvest buy stance fire wall cut
+bonus lose 4
+goal shrink 0.2

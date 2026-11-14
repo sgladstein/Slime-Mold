@@ -1,0 +1,7 @@
+name Spore season
+says Hold 6 of the 8 outer crystals clear for a minute
+map rim
+tier sporer
+verbs move harvest buy stance fire wall cut turret strike pump
+bonus stolen 0
+goal retake 6 60 3 4 5 6 7 8 9 10

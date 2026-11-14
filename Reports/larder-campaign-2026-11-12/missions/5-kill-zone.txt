@@ -1,0 +1,7 @@
+name Kill zone
+says Drive the swarm off the three middle crystals for a minute
+map flats
+tier swarmer
+verbs move harvest buy stance fire wall cut turret
+bonus lose 4
+goal retake 3 60 1 2 3
