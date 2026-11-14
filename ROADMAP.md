@@ -420,7 +420,13 @@ species' birth cap, garden only), the player's own mould thread's cap PR
 thread's sleep gas port (11-14, C5); then 228 `sick_up` (f32, a sick
 walker's upkeep factor) and 828 `kir` (f32, a burst's germ radius), the
 squad toolkit thread's germ port (11-14, C5, #216). Still spare: **188**,
-**236** (two).
+**236** (two). The fling row (896-911, the explosion cards' #225) left
+900/904/908 spare; the condense thread claimed them (11-14): 900
+`condense` (u32), 904 `ccrowd` (u32, crowd | r << 16), 908 `s_condense`
+(u32, the split's stream). Its state sits in binding 48 after the sleep
+gas's slots (`Engine::dense_at`: a 4-word header with the mass, a word a
+slot, a word a cell), and it appends passes 55-59 (`ripen`, `massclear`,
+`masscount`, `dclear`, `dcount`).
 
 ## Keeping this page true
 
