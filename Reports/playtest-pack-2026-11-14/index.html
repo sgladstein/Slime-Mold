@@ -64,16 +64,17 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outlin
   <h1>Larder World playtest pack</h1>
   <p class="lede">Everything that changed in the window since your last playtest (11-12), how to reach each change, a 15-minute route through it, and the questions only your hands can answer.</p>
   <div class="build">
-    <span>Build: <b>main at 1e96f11</b> (11-14, after the file split, which changes no behaviour)</span>
+    <span>Build: <b>main at fb3de33</b> (11-14 03:55Z, with the start menu, map editor, missions 4-7 and the new sounds)</span>
     <span>Run: <code>cargo run --release --bin larder-world</code></span>
     <span>Made 2026-11-14</span>
   </div>
 
   <h2>What you get with no keys</h2>
-  <p>A plain start plays the Fork map against <b>shape C</b>: about 25,000 walkers grown from home into a sheet with trunks. Every change below is on by default. A key in the table turns one off, or picks another value, so you can feel the difference. Put keys after <code>--</code>, for example <code>cargo run --release --bin larder-world -- panic=0</code>.</p>
+  <p><code>cargo run --release --bin larder-world</code> with no keys now opens the <b>start menu</b> over a live sandbox (shape C on the Fork). Its pages are Sandbox, Missions (the campaign list, 1-7), Options (map, own mould, rounds, bullet speed, panic, wither, shared food, gas loadouts), Keys, and Edit maps. A sandbox round from the menu plays the Fork map against <b>shape C</b>: about 25,000 walkers grown from home into a sheet with trunks. Every change below is on by default.</p>
+  <p>Any key on the command line skips the menu and starts the round straight away, for example <code>cargo run --release --bin larder-world -- panic=0</code>. Add <code>menu=1</code> to open the menu with those keys preset, or <code>menu=0</code> to never show it.</p>
 
   <h2>Since 11-12</h2>
-  <p class="opts">★ marks the three changes you asked for yourself.</p>
+  <p class="opts">★ marks the changes you asked for yourself. Rows marked <b>new</b> landed since this page first went up.</p>
   <div class="tbl"><table>
     <thead><tr><th>What changed</th><th>How to see it, or turn it off</th><th>PR</th></tr></thead>
     <tbody>
@@ -91,21 +92,26 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outlin
       <tr><td>Build anywhere: a soldier walks out to a far ghost, with a bar and the seconds left</td><td>Build page <kbd>Q</kbd></td><td>#169</td></tr>
       <tr><td>The siren, a building that calls the mould with the alarm</td><td>Build page <kbd>Q</kbd></td><td>#160 #161</td></tr>
       <tr><td><span class="star" title="You asked for this">★</span> Soldiers no longer need feeding (your playtest, 01:49Z). Food buys soldiers, walls and buildings, and the mould can still overrun an empty larder</td><td><code>ration=1</code> plays the old rations</td><td>#170 #220</td></tr>
-      <tr><td>Campaign missions, re-tuned after the changes above</td><td><code>mission=1-landfall</code>, <code>mission=2-first-contact</code>, <code>mission=3-the-gaps</code></td><td>#171 #175 #185 #187</td></tr>
+      <tr><td><b>New:</b> the start menu: sandbox, missions, options, keys, and Edit maps</td><td><code>cargo run --release --bin larder-world</code> (no keys)</td><td>#207</td></tr>
+      <tr><td><b>New:</b> the map editor. Paint plain, sand, clay, barren, rock and wet ground; place crystals, the mould's starts, your landing and walls; mirror; undo and redo. <kbd>Enter</kbd> saves to <code>maps/NAME</code> and starts the game on it, and the editor stays open for the next try</td><td><code>cargo run --release --bin larder-edit</code> (blank), <code>cargo run --release --bin larder-edit -- map=fork name=my-fork</code> (edit a designed map; also nest, rim, flats, passes). Play a saved one with <code>cargo run --release --bin larder-world -- map=maps/my-fork</code>. Also "Edit maps" in the menu</td><td>#209</td></tr>
+      <tr><td>Campaign missions 1-3, re-tuned after the changes above</td><td>Missions page in the menu, or <code>mission=1-landfall</code>, <code>mission=2-first-contact</code>, <code>mission=3-the-gaps</code></td><td>#171 #175 #185 #187</td></tr>
+      <tr><td><b>New:</b> missions 4-7. 4 Cut the cord: the Trunk on the Fork, with rations on (the one mission that teaches feeding), shrink it to 0.2. 5 Kill zone: the Swarmer on the Flats, hold the three middle crystals clear for 60 s. 6 The nest: the Sleeper in its walled nest, shrink it by half. 7 Spore season: the Sporer on the Rim, bite halved, take more of the food than the mould does</td><td>Missions page, or <code>mission=4-cut-the-cord</code>, <code>mission=5-kill-zone</code>, <code>mission=6-the-nest</code>, <code>mission=7-spore-season</code></td><td>#226</td></tr>
       <tr><td>The Drifter tier leaves home unprovoked; the core grows back</td><td><code>tier=drifter</code></td><td>#180 #163</td></tr>
       <tr><td>Sound: shots weigh their kills; the mould has a voice</td><td><kbd>O</kbd> all sound, <kbd>K</kbd> the voice</td><td>11-12</td></tr>
+      <tr><td><b>New:</b> more sounds. Bullets zip, the siren wails, blasts boom, and a cut-off piece tears, withers, snarls when it panics, and sounds when it rejoins</td><td>On by default; cut a piece off (6:00 on the route) to hear its set. <kbd>O</kbd> mutes</td><td>#217</td></tr>
+      <tr><td><b>New:</b> sleep gas works on the big GPU world, and the gas loadouts are in the menu</td><td>Options page in the menu</td><td>#211</td></tr>
     </tbody>
   </table></div>
 
   <h2>A 15-minute route</h2>
   <ol class="script">
-    <li><span class="t">0:00</span><div><b>Plain start.</b> Harvest the nearest crystal and buy soldiers as food allows.<p class="look">Look for: C's body thickening round the crystals it holds, and the sheet joining crystals with trunks.</p></div></li>
+    <li><span class="t">0:00</span><div><b>Start from the menu</b> (<code>cargo run --release --bin larder-world</code>), take a look round its pages, then start a Sandbox round. Harvest the nearest crystal and buy soldiers as food allows.<p class="look">Look for: C's body thickening round the crystals it holds, and the sheet joining crystals with trunks.</p></div></li>
     <li><span class="t">3:00</span><div><b>Once you have about eight soldiers,</b> walk four straight into C's thickest part. Stand the other four at range and fire.<p class="look">Look for: the wading slowdown, the bite, shots sinking in, and the craters. Does walking in feel very deadly, as you asked?</p></div></li>
     <li><span class="t">6:00</span><div><b>Cut a piece of C off its crystals.</b> Find a trunk whose far end holds no crystal (or only one you've harvested dry), and lay a short wall across it (<kbd>V</kbd>, 20 food a cell, so a 10-cell wall costs 200). Watch the piece thin. When it leans toward your squad, pull back. Next time, stand still instead.<p class="look">Look for: the lean, the charge, and whether pulling back in time gets you clear. Does it read as a scared animal? An arm that still holds a fed crystal won't wither, because it's still eating. If you can't find an unfed arm, the two films below show a full cut.</p></div></li>
     <li><span class="t">9:00</span><div><b>Press <kbd>H</kbd></b> a few times and fire each round into the body.<p class="look">Look for: which rounds you can tell apart by eye.</p></div></li>
     <li><span class="t">11:00</span><div><b>Restart with <code>tier=grudge</code>.</b> Fire from one spot for 30 s, then move.<p class="look">Look for: the Grudge's long-lasting alarm and scars, which make it come back to where it was hurt, and whether moving shakes it off.</p></div></li>
     <li><span class="t">13:00</span><div><b>Restart with <code>own=1</code>.</b> Sow a patch and lay a road toward the enemy.<p class="look">Look for: whether your mould feels like yours and does something you can see.</p></div></li>
-    <li><span class="t">15:00</span><div><b>If there's time:</b> play two minutes of <code>mission=2-first-contact</code>, or replay 6:00 once with <code>panic=0</code> and once with <code>wither=0</code>.</div></li>
+    <li><span class="t">15:00</span><div><b>If there's time:</b> try a mission from 4-7 (each is new), spend two minutes in <code>larder-edit</code> and press <kbd>Enter</kbd> to play what you drew, or replay 6:00 once with <code>panic=0</code> and once with <code>wither=0</code>.</div></li>
   </ol>
 
   <h2>Films, made on this build</h2>
