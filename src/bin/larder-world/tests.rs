@@ -335,7 +335,7 @@ fn the_menu_plays_the_command_lines_rounds() {
 #[test]
 fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     let r = RoundRules::default();
-    let cards = |s: &str, next| gun_cards(&rounds::parse(s).unwrap(), &r, 3, next, |c| c != rounds::Card::Germ);
+    let cards = |s: &str, next| gun_cards(&rounds::parse(s).unwrap(), &r, &Rules::default(), next, |c| c != rounds::Card::Germ);
     let lit = |v: &[GunCard]| v.iter().map(|c| c.next).collect::<Vec<_>>();
     // Two casts: quiet+gas, then quiet+blast; the second is next.
     let lull = cards("quiet+gas+quiet+blast", Some(1));

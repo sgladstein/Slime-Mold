@@ -289,7 +289,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 24] = [
+const LOADOUTS: [(&str, &str); 26] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -320,6 +320,10 @@ const LOADOUTS: [(&str, &str); 24] = [
     ("fence", "alarm"),
     ("mist", "mist"),
     ("firewall", "scorch+blast"),
+    // Range (owner, 11-14 08:39Z: "there should be a range modifer card
+    // too"): every soldier sees and shoots half as far again a card.
+    ("long", "range+blast"),
+    ("sniper", "range+range+pierce"),
 ];
 
 #[derive(Clone)]

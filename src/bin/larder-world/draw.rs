@@ -501,7 +501,7 @@ impl App {
                 stats: vec![
                     ("Carrying".into(), format!("{:.0} / {:.0}", s.carry, r.carry)),
                     ("Stance".into(), stance_name(s.stance).into()),
-                    ("Range".into(), format!("{:.0} cells", r.range)),
+                    ("Range".into(), format!("{:.0} cells", g.gun_range())),
                     ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", r.shot_every) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
                     ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
@@ -562,7 +562,7 @@ impl App {
             Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
             Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
             Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
-            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", r.range, if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", g.gun_range(), if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
@@ -732,7 +732,7 @@ impl App {
         let ticks = (rech * g.rules.tps as f32).max(1.0);
         let left = |k: usize| rd.gun(k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
         let next = lead.and_then(|k| rd.gun(k)).map(|(cast, _)| cast);
-        let cards = gun_cards(&rd.round, &rd.rules, g.rules.split_n as usize, next, |c| match c {
+        let cards = gun_cards(&rd.round, &rd.rules, &g.rules, next, |c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
             _ => true,
@@ -772,7 +772,8 @@ fn payload_colour(c: rounds::Card) -> [u8; 4] {
 
 /// A card's glyph, frame and words for the loadout panel, with the round's
 /// own numbers.
-fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind, String) {
+fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
+    let split_n = w.split_n;
     use rounds::Card as C;
     let k = &r.kit;
     match c {
@@ -791,6 +792,8 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
         C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of crater along its flight for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
         C::Alarm => (Icon::Alert, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of alarm along its flight: a fence the mould flees.", 2.0 * r.trail_r)),
         C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
+        // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
+        C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
     }
 }
 
@@ -798,7 +801,7 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
 /// makes the cast `next` lit (a cast is the modifiers and trigger before a
 /// payload, and the payload), cards after the last payload idle. Flight
 /// cards ride every bullet, so they are never idle.
-pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
+pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
     use rounds::Card as C;
     let payloads = round.iter().filter(|c| c.kind() == rounds::Kind::Payload).count();
     let mut cast = 0;
@@ -813,7 +816,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, 
     }
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
-        let (icon, kind, mut about) = card_face(c, r, split_n);
+        let (icon, kind, mut about) = card_face(c, r, w);
         let flight = kind == CardKind::Flight;
         let idle = !flight && runs[i] >= payloads;
         let goes_with = if flight { None } else { payload_of(runs[i]) };

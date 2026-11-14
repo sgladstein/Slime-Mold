@@ -83,6 +83,7 @@ pub enum Card {
     Scorch,
     Alarm,
     Mist,
+    Range,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -94,14 +95,14 @@ pub enum Kind {
 }
 
 impl Card {
-    pub const ALL: [Card; 14] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Alarm, Card::Mist];
+    pub const ALL: [Card; 15] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Alarm, Card::Mist, Card::Range];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
             Card::Delay | Card::Thick => Kind::Trigger,
-            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist | Card::Range => Kind::Flight,
         }
     }
 
@@ -121,6 +122,7 @@ impl Card {
             Card::Scorch => "scorch",
             Card::Alarm => "alarm",
             Card::Mist => "mist",
+            Card::Range => "range",
         }
     }
 
@@ -141,6 +143,7 @@ impl Card {
             Card::Scorch => "Trail: every bullet leaves a line of crater the mould shuns",
             Card::Alarm => "Trail: every bullet leaves a line of alarm the mould flees",
             Card::Mist => "Trail: every bullet leaves a thin gas cloud that puts the mould to sleep",
+            Card::Range => "Flight: every soldier sees and shoots half as far again",
         }
     }
 
@@ -278,7 +281,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
             Card::Quiet => quiet = true,
             Card::Delay | Card::Thick => trigger = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Alarm | Card::Mist | Card::Range => {}
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let price = match c {
                     Card::Blast => r.kit.blast_price,
@@ -299,7 +302,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
 /// generation of pieces.
 pub fn flight(round: &[Card]) -> BulletMods {
     let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
-    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split) }
+    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range) }
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
@@ -676,13 +679,17 @@ mod tests {
     fn flight_cards_ride_every_bullet_and_cast_nothing() {
         let r = RoundRules::default();
         let round = parse("pierce+split+split+blast").unwrap();
-        assert_eq!(flight(&round), BulletMods { pierce: 1, split: 2 });
+        assert_eq!(flight(&round), BulletMods { pierce: 1, split: 2, reach: 0 });
+        assert_eq!(flight(&parse("range+range+pierce").unwrap()), BulletMods { pierce: 1, split: 0, reach: 2 });
         assert_eq!(casts(&round, &r).len(), 1);
         assert_eq!(casts(&parse("split").unwrap(), &r), vec![]);
         assert!((recharge(&parse("pierce").unwrap(), &r) - (r.recharge + r.card_weight)).abs() < 1e-6);
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
-        assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2 });
+        assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0 });
+        assert_eq!(g.gun_range(), g.rules.range);
+        Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
+        assert!((g.gun_range() - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
     }
 
     #[test]

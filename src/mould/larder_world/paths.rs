@@ -297,7 +297,7 @@ impl<W: World> Game<W> {
                 let m = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
                 let (dx, dy) = (s.x - m.0, s.y - m.1);
                 let d = dx.hypot(dy);
-                let keep = 0.6 * self.rules.range * sc;
+                let keep = 0.6 * self.gun_range() * sc;
                 if d <= keep {
                     None
                 } else {
@@ -493,7 +493,7 @@ impl<W: World> Game<W> {
         let s = self.soldiers[k];
         let Order::Fight(..) = s.order else { return false };
         let Some(aim) = s.aim else { return false };
-        s.dense >= self.rules.aim_min && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.rules.range * self.s() && self.clear_line((s.x, s.y), aim)
+        s.dense >= self.rules.aim_min && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.gun_range() * self.s() && self.clear_line((s.x, s.y), aim)
     }
 
     /// The depot a carrier at `p` walks home to: the nearest of the larder
