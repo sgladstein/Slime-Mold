@@ -289,8 +289,22 @@ const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 const SAND_RGB: vec3<f32> = vec3<f32>(50.0, 48.0, 42.0);
 const CLAY_RGB: vec3<f32> = vec3<f32>(38.0, 28.0, 26.0);
 const BARREN_RGB: vec3<f32> = vec3<f32>(55.0, 55.0, 53.0);
-// Standing water: deep and dark (`cell_mat_c`, `soil_detail`).
-const WET_RGB: vec3<f32> = vec3<f32>(10.0, 24.0, 34.0);
+// Standing water: a clear step darker than any ground, so it reads as a
+// hollow in a grey thumbnail (art lead 11-14 18:56Z: wet was the ground's
+// value at (10,24,34), and Fen read as one flat field); its lit shore and
+// gloss say it is wet (`cell_mat_c`, `soil_detail`).
+const WET_RGB: vec3<f32> = vec3<f32>(5.0, 14.0, 22.0);
+// Deep water (soil 4 with the wet bit, #285): darker still at its middle;
+// a bridge (soil 5) is a plank deck. The owner (11-14 18:01Z) on the
+// first river: "just a blue curved line on the map. It doesn't look
+// professional."
+const SOIL_DEEP: u32 = 4u;
+const SOIL_BRIDGE: u32 = 5u;
+const DEEP_RGB: vec3<f32> = vec3<f32>(1.0, 6.0, 14.0);
+// Weathered grey-brown, its value between rock and soft rock: gold is
+// the slime's hue (rule 3), and the first orange planks read as slime
+// beside its front at zoom 6 (art lead, 11-14 19:23Z).
+const WOOD_RGB: vec3<f32> = vec3<f32>(98.0, 90.0, 80.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // Condensed mould's colour (`cell_mat_c`'s `dense`): a deep bronze-brown,
@@ -700,6 +714,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     if (kind == WET) {
         // Standing water over the soil: dark blue-green, glossy (darker
         // since 2026-11-14 with the ground); mould in it keeps its own colour.
+        // Deep water's darkness is drawn at the pixel (`soil_detail`): a
+        // darker cell colour here showed the cells' bilinear blend as a
+        // stair inside the water.
         // Reeds (or any plant) on the water lie over it by their cover.
         let water = mix(WET_RGB, prgb, pc) + tint * 0.4;
         m.albedo = mix(water, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
@@ -1012,10 +1029,11 @@ fn vnoise(p: vec2<f32>) -> f32 {
 // The share of sand, clay, barren and wet ground at (x, y), a cubic
 // B-spline over the 4 x 4 cells round (no cell stair in a patch's edge),
 // and the wet share's gradient (per cell), for the water's crisp edge.
-struct Soil { w: vec4<f32>, wg: vec2<f32> };
+struct Soil { w: vec4<f32>, wg: vec2<f32>, deep: f32, bridge: f32, bg: vec2<f32> };
 fn soil_share(x: f32, y: f32) -> Soil {
     var o: Soil;
     o.w = vec4<f32>(0.0); o.wg = vec2<f32>(0.0);
+    o.deep = 0.0; o.bridge = 0.0; o.bg = vec2<f32>(0.0);
     let ux = x - 0.5; let uy = y - 0.5;
     let ix = i32(floor(ux)); let iy = i32(floor(uy));
     let fx = ux - floor(ux); let fy = uy - floor(uy);
@@ -1030,20 +1048,51 @@ fn soil_share(x: f32, y: f32) -> Soil {
             var e = vec4<f32>(0.0);
             if (k == WET) { e.w = 1.0; }
             else if (sk == 1u) { e.x = 1.0; } else if (sk == 2u) { e.y = 1.0; } else if (sk == 3u) { e.z = 1.0; }
-            o.w += e * wx[i] * wy[j];
-            o.wg += e.w * vec2<f32>(dx[i] * wy[j], wx[i] * dy[j]);
+            let wt = wx[i] * wy[j];
+            let dw = vec2<f32>(dx[i] * wy[j], wx[i] * dy[j]);
+            o.w += e * wt;
+            o.wg += e.w * dw;
+            // Deep water (soil 4 with the wet bit) and bridges (soil 5;
+            // ground kinds thread, #285).
+            if (k == WET && sk == SOIL_DEEP) { o.deep += wt; }
+            if (k != WET && sk == SOIL_BRIDGE) { o.bridge += wt; o.bg += dw; }
         }
     }
     return o;
 }
 
+// Is cell (ix, iy) deep water?
+fn deep_at(ix: i32, iy: i32) -> f32 {
+    let g = ground[cidx(clamp(ix, 0, i32(P.ww) - 1), clamp(iy, 0, i32(P.wh) - 1))];
+    return select(0.0, 1.0, (g & 15u) == WET && ((g >> 4u) & 7u) == SOIL_DEEP);
+}
+
+// How far into deep water (x, y) is, 0 at its edge to 1 about five cells
+// in: the share of deep cells on two rings round it (4 points at 2 cells,
+// 8 at 5). The river reads as deepening toward its middle, not one flat
+// band. Its cost on llvmpipe (River, 1280 x 800): three rings of 8 points
+// worked out with sin and cos about 7 ms a frame; these 12 constants less
+// (Reports/river-look-2026-11-14).
+const DEEP_RING: array<vec2<f32>, 12> = array<vec2<f32>, 12>(vec2<f32>(1.84, 0.78), vec2<f32>(-0.78, 1.84), vec2<f32>(-1.84, -0.78), vec2<f32>(0.78, -1.84), vec2<f32>(5.00, 0.00), vec2<f32>(3.54, 3.54), vec2<f32>(0.00, 5.00), vec2<f32>(-3.54, 3.54), vec2<f32>(-5.00, 0.00), vec2<f32>(-3.54, -3.54), vec2<f32>(-0.00, -5.00), vec2<f32>(3.54, -3.54));
+fn deep_depth(x: f32, y: f32) -> f32 {
+    var n = 0.0;
+    for (var k = 0; k < 12; k++) {
+        let q = vec2<f32>(x, y) + DEEP_RING[k];
+        n += deep_at(i32(floor(q.x)), i32(floor(q.y)));
+    }
+    return n / 12.0;
+}
+
 // What each soil does to the ground's albedo at (x, y), `bare` the share
 // not under mould: (multiplier, added light).
 fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
-    if (bare <= 0.01) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    // Under slime thick enough that the texture has faded out (most of a
+    // big body), nothing to do (art lead 11-14: early-outs; cost both ways
+    // in Reports/river-look-2026-11-14).
+    if (bare <= 0.03) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
     let so = soil_share(x, y);
     let w = so.w;
-    if (dot(w, vec4<f32>(1.0)) <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    if (dot(w, vec4<f32>(1.0)) + so.bridge <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
     var mul = 1.0;
     var add = vec3<f32>(0.0);
     // Sand: wind ripples about 1.6 cells apart, the flank toward the
@@ -1070,7 +1119,8 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     }
     // Clay: dried into plates about 3 cells across, dark cracks between,
     // a pixel or so wide (the second-nearest minus nearest jittered point).
-    if (w.y > 0.0) {
+    // (Its cracks and plates are flat below zoom 1: skipped there.)
+    if (w.y > 0.0 && P.zoom > 1.0) {
         let p = vec2<f32>(x, y) / 3.0;
         let pi = floor(p);
         var d1 = 9.0; var d2 = 9.0;
@@ -1090,7 +1140,8 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // Barren: dry ash, its grains soft and about a cell across, in clumps
     // a few cells wide with bare ash between (art lead, 11-14: a hashed
     // speckle half a cell across read as TV static at zoom 6).
-    if (w.z > 0.0) {
+    // (Its grains are flat below zoom 2: skipped there.)
+    if (w.z > 0.0 && P.zoom > 2.0) {
         let p = vec2<f32>(x, y);
         let n = vnoise(p * 1.3 + 5.0);
         let clump = smoothstep(0.4, 0.7, vnoise(p / 3.5 + 11.0));
@@ -1098,20 +1149,99 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         let fade = smoothstep(2.0, 4.0, P.zoom);
         mul *= 1.0 + sp * w.z * fade * bare;
     }
+    // What the cells' material already gives here (`cell_mat_c`, blended
+    // between cells), and what this pixel should be: the water and the
+    // bridge are drawn as a correction to it.
+    let plain = max(1.0 - w.x - w.y - w.z - w.w, 0.0);
+    let land_w = max(1.0 - w.w, 1e-3);
+    let land = (SAND_RGB * w.x + CLAY_RGB * w.y + BARREN_RGB * w.z + mix(SOIL_LOW, SOIL_HIGH, 0.5) * plain) / land_w;
+    let est = land * (1.0 - w.w) + WET_RGB * w.w;
+    var want = est;
     // Wet: the water's edge is where the smooth wet share crosses one
     // half, worked out at the pixel (one pixel antialiased, as rock's), so
-    // a pond is a curve, not the cells' stair the material's blend drew;
-    // the land just outside it is a lighter shore about half a cell wide.
-    if (w.w > 0.001 && w.w < 0.999) {
+    // a pond is a curve, not the cells' stair the material's blend drew.
+    // Out from it: a thin light waterline, then damp dark ground about a
+    // cell wide. In from it: a shallow margin where the bed shows through,
+    // then (deep water) darkening toward the middle, and a glitter of the
+    // key light in streaks across its direction.
+    if (w.w > 0.001) {
         let gl = max(length(so.wg), 1e-3);
-        let d = (w.w - 0.5) / gl;
+        let d = select((w.w - 0.5) / gl, 9.0, w.w >= 0.999);
         let cw = clamp(0.5 + d * P.zoom, 0.0, 1.0);
-        let land_w = max(1.0 - w.w, 1e-3);
-        let plain = max(1.0 - w.x - w.y - w.z - w.w, 0.0);
-        let land = (SAND_RGB * w.x + CLAY_RGB * w.y + BARREN_RGB * w.z + mix(SOIL_LOW, SOIL_HIGH, 0.5) * plain) / land_w;
-        add += (cw - w.w) * (WET_RGB - land) * bare;
-        add += vec3<f32>(22.0, 34.0, 38.0) * exp(min(d, 0.0) / 0.35) * (1.0 - cw) * bare;
+        var water = WET_RGB;
+        var depth = 0.0;
+        if (so.deep > 0.001) {
+            depth = clamp(so.deep, 0.0, 1.0) * (0.35 + 0.65 * deep_depth(x, y));
+            water = mix(WET_RGB, DEEP_RGB, smoothstep(0.0, 0.8, depth));
+        }
+        // The surface: a slow swell in the darkness, so open water isn't
+        // flat. (Tried and dropped: streaks of glitter across the key light
+        // read as rain at zoom 6 and 12; thresholded noise as angular chips
+        // and square blobs.)
+        let p = vec2<f32>(x, y);
+        water *= 1.0 + 0.3 * (vnoise(p / 8.0 + 9.0) - 0.5) * (0.3 + 0.7 * depth);
+        if (w.w >= 0.999) {
+            want = water;
+        } else {
+            // The shallow margin: the bed (the land's colour, wet-dark)
+            // through a little water, about a cell in.
+            let shallow = mix(land * 0.7, vec3<f32>(30.0, 52.0, 56.0), 0.55);
+            water = mix(water, shallow, exp(-max(d, 0.0) / 0.9) * 0.8);
+            // The bank: damp darker ground out to about a cell, and a light
+            // waterline right at the edge.
+            let out_d = max(-d, 0.0);
+            let bank = land * (1.0 - 0.4 * exp(-out_d / 0.9)) + vec3<f32>(30.0, 40.0, 42.0) * exp(-abs(d) / 0.12);
+            want = mix(bank, water, cw);
+        }
     }
+    // A bridge: a plank deck across the water, planks laid across the way
+    // over (the axis along which the deck meets no deep water), a seam
+    // between planks, each plank its own shade, and a darker rail along
+    // both edges with posts. Its edge is crisp like the water's.
+    if (so.bridge > 0.001) {
+        let gl = max(length(so.bg), 1e-3);
+        let d = select((so.bridge - 0.5) / gl, 9.0, so.bridge >= 0.999);
+        let cb = clamp(0.5 + d * P.zoom, 0.0, 1.0);
+        if (cb > 0.0) {
+            var sx = 0.0; var sy = 0.0;
+            for (var k = 1; k <= 3; k++) {
+                let r = f32(k) * 5.0;
+                sx += deep_at(i32(floor(x + r)), i32(floor(y))) + deep_at(i32(floor(x - r)), i32(floor(y)));
+                sy += deep_at(i32(floor(x)), i32(floor(y + r))) + deep_at(i32(floor(x)), i32(floor(y - r)));
+            }
+            let along = select(vec2<f32>(1.0, 0.0), vec2<f32>(0.0, 1.0), sx >= sy);
+            let u = dot(vec2<f32>(x, y), along);
+            let v = dot(vec2<f32>(x, y), vec2<f32>(along.y, along.x));
+            let pw = 0.8;
+            let f = fract(u / pw);
+            let px = 1.0 / P.zoom;
+            let seam = 1.0 - smoothstep(0.5 * px, 1.5 * px, min(f, 1.0 - f) * pw);
+            let plank = floor(u / pw);
+            let tint = 0.82 + 0.3 * hash2(vec2<f32>(plank, 3.0));
+            let grain = 1.0 + 0.07 * sin(v * 5.0 + 9.0 * hash2(vec2<f32>(plank, 7.0)));
+            var wood = WOOD_RGB * tint * grain * (1.0 - 0.6 * seam * smoothstep(3.0, 6.0, P.zoom));
+            // The rails: a beam about 0.5 cell wide along each edge, a post
+            // every 3 cells standing lighter.
+            let rail = 1.0 - smoothstep(0.45, 0.45 + px, d);
+            let post = rail * (1.0 - smoothstep(0.35, 0.35 + px, abs(fract(u / 3.0) - 0.5) * 3.0 - 1.05));
+            // The deck's edge as a bevel: the rail facing the key light
+            // lit, the far one shaded. (A deck height in `cell_height` was
+            // tried: the shading reads height as mould, so the soil
+            // texture faded off the deck.)
+            let outn = -so.bg / gl;
+            let facing = dot(outn, normalize(-LIGHT.xy));
+            wood = mix(wood, vec3<f32>(58.0, 53.0, 47.0), rail);
+            wood = mix(wood, vec3<f32>(118.0, 110.0, 99.0), post);
+            wood *= 1.0 + 0.25 * facing * rail;
+            want = mix(want, wood, cb);
+        }
+        // Its shadow on the water, on the side away from the key light,
+        // about half a cell wide.
+        let outn = -so.bg / gl;
+        let away = max(dot(outn, normalize(LIGHT.xy)), 0.0);
+        want *= 1.0 - 0.55 * away * exp(min(d, 0.0) / 0.5) * (1.0 - cb);
+    }
+    add += (want - est) * bare;
     return vec4<f32>(mul, add);
 }
 
@@ -1373,7 +1503,10 @@ fn ter_cell(p: u32) -> vec4<f32> {
     let h = byte(p, 1u) * 4.0;
     if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(92.0, 94.0, 98.0), vec3<f32>(138.0, 136.0, 130.0), v), h); }
     // Health is the wall's brightness as well as its height.
-    if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(70.0, 58.0, 48.0), vec3<f32>(168.0, 156.0, 132.0), v), h); }
+    // Soft rock at full health is a warm mid-grey just above rock, below
+    // thin slime (rule 2; art lead 11-14 18:56Z: its pale beige 168 read
+    // as bright as thin slime and competed with it on Jungle).
+    if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(58.0, 50.0, 42.0), vec3<f32>(128.0, 118.0, 104.0), v), h); }
     if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(92.0, 82.0, 70.0) * (0.7 + 0.3 * v), h); }
     return vec4<f32>(0.0);
 }
