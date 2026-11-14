@@ -307,6 +307,26 @@ fn a_broken_mould_starves_until_it_grows_back() {
     assert_eq!((off.broken, off.world.upkeep()), (None, up));
 }
 
+/// A scared piece's reach follows the guns (`Rules::panic_margin`): set
+/// when the game starts and kept once a game second, so a longer range
+/// moves it; a negative margin leaves the world's own.
+#[test]
+fn a_scared_piece_sees_past_the_guns() {
+    let mut g = small(1);
+    assert_eq!(g.world.p.panic_r, g.rules.range + g.rules.panic_margin);
+    assert!(g.world.p.panic_r > g.rules.range);
+    g.rules.range = 36.0;
+    let t = g.world.ticks();
+    while g.world.ticks() < t + g.rules.tps as u64 {
+        g.step();
+    }
+    assert_eq!(g.world.p.panic_r, 36.0 + g.rules.panic_margin, "a range card moves it at the next count");
+    let mut keep = race_world(1, 1, 1_000);
+    keep.p.panic_r = 7.0;
+    let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
+    assert_eq!(g.world.p.panic_r, 7.0);
+}
+
 /// No king by default (owner, 11-12 20:21Z): a squad holding the plain
 /// mould's home stops nothing, and births go on.
 #[test]
@@ -595,6 +615,9 @@ impl World for Later {
     }
     fn set_upkeep(&mut self, up: f32) {
         World::set_upkeep(&mut self.d, up)
+    }
+    fn set_panic_r(&mut self, r: f32) {
+        World::set_panic_r(&mut self.d, r)
     }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)

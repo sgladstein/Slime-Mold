@@ -242,8 +242,10 @@ the bit). The owner's 22:06Z playtest found a squad standing in one spot
 standing still on free fire now kills 20.3 a shot (12.6 before), walking
 in 47.9 (42.0), so the gap is 2.4 times, down from 3.3.
 Since 11-13 a part of shape C cut off from its crystals panics (`panic`
-2): it charges a soldier or building within 20 dish cells, or runs for a
-crystal. Bits a squad's own shots knock off charge it too, and are shot
+2): it charges a soldier or building within 5 dish cells past the gun's
+range (29 at today's 24; `Rules::panic_margin`, since the game designer's
+review of the range change, so a squad at full range is still in reach),
+or runs for a crystal. Bits a squad's own shots knock off charge it too, and are shot
 as they come: in the window the farm squad has 30 soldiers at 2:30
 against 33 without. Those bits are mostly lone walkers and make 4-6% of
 the squad's bites (CPU, 2 seeds; losses 26 and 24 against 25 and 25), so
