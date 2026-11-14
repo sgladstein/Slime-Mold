@@ -79,3 +79,18 @@ page they appear on (`page/index.html`, https://claude.ai/artifact/6FHfyB88A8Mtk
 | Explosion cards | blasts |
 | Gun card HUD | card panel, then 6 |
 | new: units and buildings | 5 |
+
+## After (11-14 ~08:30Z, main at 68870d0)
+
+The review's shots re-rendered with the same commands (`after/`, page
+`after/index.html`, https://claude.ai/artifact/RuF8Qyn3518CMbBdyUbsqk):
+fixed are 1 (sharp slime, #241), 2 (terrain edges, #228), 4 (bullets as
+light, #219), 5 (9 of 9 soldiers show at zoom 6, group rings; #227, #232),
+6 (bottom bar 160 to 120 px at 800 lines, collapses when empty; #233), 9;
+landed: bombs (#225), harvest look (#238). Still open: 3 partly (the thin
+frontier reads as pebbles, a dome and cast shadow a lone walker; the dense
+body's highlights read as crumpled foil), 7 (flat ground, engine tints as
+flat discs), spent crystals as flat grey hexagons, and 10 (the map editor,
+not yet reviewed). The owner's playtest of the sharp slime (04:50-04:58Z:
+blurry middle, dim lone walkers, harvesting) went to the slime, crystals
+and units threads and is in #241, #228 and #238.
