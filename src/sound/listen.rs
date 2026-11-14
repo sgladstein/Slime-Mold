@@ -121,11 +121,7 @@ impl Listener {
         self.phase = d.phase;
         self.warned = d.storm_line.is_some();
         self.alive = !d.walkers.is_empty();
-        self.ending = if d.phase == Phase::Over {
-            Ending::Ended
-        } else {
-            Ending::Playing
-        };
+        self.ending = if d.phase == Phase::Over { Ending::Ended } else { Ending::Playing };
         self.births_rate = 0.0;
         self.starve_rate = 0.0;
         self.burn_rate = 0.0;
@@ -142,10 +138,7 @@ impl Listener {
         let c = &d.counts;
         // A different dish, or this one restarted: start over, silently.
         // (Not the event lists' lengths: `snaps` is pruned as its flashes fade.)
-        let went_back = d.t < self.t
-            || c.births < self.counts.births
-            || c.oats_placed < self.counts.oats_placed
-            || c.snaps < self.counts.snaps;
+        let went_back = d.t < self.t || c.births < self.counts.births || c.oats_placed < self.counts.oats_placed || c.snaps < self.counts.snaps;
         if d.seed != self.seed || went_back {
             self.rebaseline(d);
         }
@@ -161,21 +154,12 @@ impl Listener {
         self.starve_rate += (starving - self.starve_rate) * k;
         // Where the mould is: the walkers' mean x and spread.
         let n = d.walkers.len().max(1) as f32;
-        let (sx, sxx) = d
-            .walkers
-            .iter()
-            .fold((0.0f32, 0.0f32), |(a, b), w| (a + w.x, b + w.x * w.x));
+        let (sx, sxx) = d.walkers.iter().fold((0.0f32, 0.0f32), |(a, b), w| (a + w.x, b + w.x * w.x));
         let mx = sx / n;
         let spread = ((sxx / n - mx * mx).max(0.0).sqrt() / W as f32 * 2.0).min(1.0);
         let pan = pan_of(mx);
         let (creep_rate, creep_level) = density(self.births_rate, 1.0, 60.0, 0.22);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Creep,
-            rate: creep_rate,
-            level: creep_level,
-            pan,
-            spread,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Creep, rate: creep_rate, level: creep_level, pan, spread });
         // Feeding, panned to the eaten piles.
         let (mut eaters, mut ex) = (0u32, 0.0f32);
         for pile in &d.piles {
@@ -185,31 +169,16 @@ impl Listener {
         }
         let feed_pan = if eaters > 0 { pan_of(ex / eaters as f32) } else { pan };
         let (feed_rate, feed_level) = density(eaters as f32, 0.12, 100.0, 0.14);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Feed,
-            rate: feed_rate,
-            level: feed_level,
-            pan: feed_pan,
-            spread: 0.3,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Feed, rate: feed_rate, level: feed_level, pan: feed_pan, spread: 0.3 });
         let (starve_rate, starve_level) = density(self.starve_rate, 1.0, 30.0, 0.35);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Starve,
-            rate: starve_rate,
-            level: starve_level,
-            pan,
-            spread,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Starve, rate: starve_rate, level: starve_level, pan, spread });
         self.stats.births_per_sec = self.births_rate;
         self.stats.eaters = eaters;
         self.stats.starving_per_sec = self.starve_rate;
 
         // --- the lamp ---------------------------------------------------
         let lamp_pan = d.lamp.map(|(x, _)| pan_of(x)).unwrap_or(0.0);
-        out.push(SoundCmd::Lamp {
-            on: d.lamp.is_some(),
-            pan: lamp_pan,
-        });
+        out.push(SoundCmd::Lamp { on: d.lamp.is_some(), pan: lamp_pan });
         let burned = c.burned - p.burned;
         if burned > 0 {
             self.stats.burned += burned;
@@ -219,75 +188,33 @@ impl Listener {
         // so often rather than one burst per frame.
         if self.burn_rate >= 3.0 || (self.burn_rate > 0.0 && d.lamp.is_none()) {
             let (rate, _) = density(self.burn_rate / dt.max(0.1), 1.0, 30.0, 0.3);
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Sizzle,
-                rate: rate.max(20.0),
-                secs: 0.12,
-                pan: lamp_pan,
-                spread: 0.1,
-                gain: (0.2 * (self.burn_rate / 3.0).powf(LOUDNESS_LAW)).min(0.6),
-            });
+            out.push(SoundCmd::Burst { kind: GrainKind::Sizzle, rate: rate.max(20.0), secs: 0.12, pan: lamp_pan, spread: 0.1, gain: (0.2 * (self.burn_rate / 3.0).powf(LOUDNESS_LAW)).min(0.6) });
             self.burn_rate = 0.0;
         }
 
         // --- the tools: each one a tally that moved --------------------
         if c.oats_placed > p.oats_placed {
-            let at = d
-                .piles
-                .iter()
-                .rev()
-                .find(|q| q.oats)
-                .map(|q| pan_of(q.x))
-                .unwrap_or(0.0);
+            let at = d.piles.iter().rev().find(|q| q.oats).map(|q| pan_of(q.x)).unwrap_or(0.0);
             self.stats.oats += c.oats_placed - p.oats_placed;
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Thunk,
-                pan: at,
-                gain: 0.7,
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan: at, gain: 0.7, delay: 0.0 });
         }
         if c.salt_cells > p.salt_cells {
             let cells = (c.salt_cells - p.salt_cells) as f32;
             self.stats.salt += c.salt_cells - p.salt_cells;
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Grit,
-                rate: (cells * 8.0).clamp(30.0, 160.0),
-                secs: 0.08,
-                pan,
-                spread: 0.3,
-                gain: 0.35,
-            });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: (cells * 8.0).clamp(30.0, 160.0), secs: 0.08, pan, spread: 0.3, gain: 0.35 });
         }
         for &(x, _, _) in d.snip_marks.iter().filter(|e| e.2 >= self.t) {
             self.stats.snips += 1;
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Knock,
-                pan: pan_of(x),
-                gain: 0.35,
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan: pan_of(x), gain: 0.35, delay: 0.0 });
         }
         let snipped = (c.snipped + c.salted) - (p.snipped + p.salted);
         if snipped > 0 {
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Crackle,
-                rate: (snipped as f32 * 4.0).clamp(20.0, 120.0),
-                secs: 0.1,
-                pan,
-                spread: 0.2,
-                gain: 0.25,
-            });
+            out.push(SoundCmd::Burst { kind: GrainKind::Crackle, rate: (snipped as f32 * 4.0).clamp(20.0, 120.0), secs: 0.1, pan, spread: 0.2, gain: 0.25 });
         }
         if c.water_drops > p.water_drops {
             self.stats.drops += c.water_drops - p.water_drops;
             for i in 0..(c.water_drops - p.water_drops).min(3) {
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Drip,
-                    pan,
-                    gain: 0.5,
-                    delay: i as f32 * 0.07,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Drip, pan, gain: 0.5, delay: i as f32 * 0.07 });
             }
         }
         // The seam with the wild mould fights a few walkers most frames
@@ -300,14 +227,7 @@ impl Listener {
         if self.fight_acc > 0.0 && self.fight_wait <= 0.0 {
             let (rate, _) = density(self.fight_acc / FIGHT_GATHER, 1.0, 20.0, 0.2);
             let gain = (0.12 * (self.fight_acc / 5.0).powf(LOUDNESS_LAW)).min(0.3);
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Grit,
-                rate: rate.max(10.0),
-                secs: 0.12,
-                pan: feed_pan,
-                spread: 0.2,
-                gain,
-            });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: rate.max(10.0), secs: 0.12, pan: feed_pan, spread: 0.2, gain });
             self.fight_acc = 0.0;
             self.fight_wait = FIGHT_GATHER;
         }
@@ -315,45 +235,23 @@ impl Listener {
         // --- the dish's own events --------------------------------------
         for &(x, _, _) in d.arrived.iter().filter(|e| e.2 >= self.t) {
             self.stats.arrivals += 1;
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Knock,
-                pan: pan_of(x),
-                gain: 0.25,
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan: pan_of(x), gain: 0.25, delay: 0.0 });
         }
         for &(x, _, _) in d.snaps.iter().filter(|e| e.2 >= self.t) {
             self.stats.joins += 1;
             let weight = (c.snaps as f32 / 5.0).min(1.0);
-            out.push(SoundCmd::Alert {
-                kind: AlertKind::Joined,
-                weight,
-                pan: pan_of(x),
-            });
+            out.push(SoundCmd::Alert { kind: AlertKind::Joined, weight, pan: pan_of(x) });
         }
         if d.storm_line.is_some() && !self.warned {
             self.warned = true;
             self.stats.warnings += 1;
-            let at = d
-                .storm_line
-                .map(|((x0, _), (x1, _))| pan_of((x0 + x1) * 0.5))
-                .unwrap_or(0.0);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Whoosh,
-                pan: at,
-                gain: 0.5,
-                delay: 0.0,
-            });
+            let at = d.storm_line.map(|((x0, _), (x1, _))| pan_of((x0 + x1) * 0.5)).unwrap_or(0.0);
+            out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan: at, gain: 0.5, delay: 0.0 });
         }
         if let Phase::Storm(_) = d.phase {
             if !matches!(self.phase, Phase::Storm(_)) {
                 self.stats.storms += 1;
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Thud,
-                    pan: 0.0,
-                    gain: 0.9,
-                    delay: 0.0,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan: 0.0, gain: 0.9, delay: 0.0 });
             }
         }
         if d.storm_line.is_none() {
@@ -362,26 +260,14 @@ impl Listener {
         let alive = !d.walkers.is_empty();
         if self.alive && !alive {
             self.stats.deaths += 1;
-            out.push(SoundCmd::Alert {
-                kind: AlertKind::Died,
-                weight: 1.0,
-                pan,
-            });
+            out.push(SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan });
         }
         if d.phase == Phase::Over && self.ending == Ending::Playing {
             self.ending = Ending::Ended;
             if alive {
                 self.stats.bells += 1;
-                let weight = d
-                    .score
-                    .as_ref()
-                    .map(|s| s.after as f32 / s.piles.max(1) as f32)
-                    .unwrap_or(0.0);
-                out.push(SoundCmd::Alert {
-                    kind: AlertKind::Bell,
-                    weight,
-                    pan: 0.0,
-                });
+                let weight = d.score.as_ref().map(|s| s.after as f32 / s.piles.max(1) as f32).unwrap_or(0.0);
+                out.push(SoundCmd::Alert { kind: AlertKind::Bell, weight, pan: 0.0 });
             }
         }
 
@@ -447,12 +333,6 @@ mod tests {
         let fresh = Dish::new(2);
         let cmds = l.hear(&fresh, 1.0 / 60.0, false);
         assert_eq!(l.stats.rebaselines, 1);
-        assert!(
-            !cmds.iter().any(|c| matches!(
-                c,
-                SoundCmd::Grain { .. } | SoundCmd::Burst { .. } | SoundCmd::Alert { .. }
-            )),
-            "{cmds:?}"
-        );
+        assert!(!cmds.iter().any(|c| matches!(c, SoundCmd::Grain { .. } | SoundCmd::Burst { .. } | SoundCmd::Alert { .. })), "{cmds:?}");
     }
 }

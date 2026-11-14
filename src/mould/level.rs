@@ -255,10 +255,7 @@ pub static DISHES: [Level; 5] = [
     Level {
         key: "alive",
         name: "KEEP IT ALIVE",
-        goal: [
-            "KEEP THE MOULD ALIVE AS LONG AS YOU CAN.",
-            "THE FOOD RUNS OUT. MORE LANDS FURTHER ON.",
-        ],
+        goal: ["KEEP THE MOULD ALIVE AS LONG AS YOU CAN.", "THE FOOD RUNS OUT. MORE LANDS FURTHER ON."],
         twist: "NO BELL. IT ENDS WHEN THE MOULD DIES.",
         // Running Dry's start: home and two small piles beside it. The rest
         // of the food is laid by `Dish::from_level_with` from the seed.
@@ -372,17 +369,8 @@ impl Level {
             Win::JoinAll { by } => format!("STARS: REACH IT. BY {}. BY {}", clock(by[0]), clock(by[1])),
             Win::UnderRuler { bars } => format!("STARS: JOIN ALL 3. {:.2}X RULER. {:.2}X", bars[0], bars[1]),
             Win::AliveAtBell { bars } => format!("STARS: {}, {} AND {} MOULD AT THE BELL", bars[0], bars[1], bars[2]),
-            Win::Endless { bars, .. } => format!(
-                "STARS: ALIVE AT {}, {} AND {}",
-                clock(bars[0]),
-                clock(bars[1]),
-                clock(bars[2])
-            ),
-            Win::Rival { bars } => format!(
-                "STARS: EAT {}% OF THE FOOD. {}%. NONE OF IT LEFT",
-                pct(bars[0]),
-                pct(bars[1])
-            ),
+            Win::Endless { bars, .. } => format!("STARS: ALIVE AT {}, {} AND {}", clock(bars[0]), clock(bars[1]), clock(bars[2])),
+            Win::Rival { bars } => format!("STARS: EAT {}% OF THE FOOD. {}%. NONE OF IT LEFT", pct(bars[0]), pct(bars[1])),
         }
     }
 
@@ -475,11 +463,7 @@ impl Dish {
     /// (`Dish::ate`, `Dish::wild_ate`); a half before either has eaten.
     pub fn food_share(&self) -> f32 {
         let all = self.ate + self.wild_ate;
-        if all <= 0.0 {
-            0.5
-        } else {
-            self.ate / all
-        }
+        if all <= 0.0 { 0.5 } else { self.ate / all }
     }
 }
 
@@ -931,12 +915,7 @@ impl Dish {
         } else if stars == 3 {
             "A LONG LIFE: IT KEPT MOVING HOUSE".to_string()
         } else {
-            format!(
-                "{} STAR{} AT {}: MOVE ON SOONER",
-                stars + 1,
-                if stars == 0 { "" } else { "S" },
-                clock(bars[stars as usize])
-            )
+            format!("{} STAR{} AT {}: MOVE ON SOONER", stars + 1, if stars == 0 { "" } else { "S" }, clock(bars[stars as usize]))
         };
         self.finish(s, stars, amount, why);
     }
@@ -989,13 +968,7 @@ impl Dish {
 /// most `GAP_MAX`, on agar with a 10-cell margin, off every earlier pile
 /// and 30 cells clear of the last three; where no such spot exists at that distance, a little
 /// nearer. From the seed, so a dish replays.
-fn endless_food(
-    ground: &[super::Ground],
-    level: &Level,
-    every: u32,
-    gap: [f32; 2],
-    rng: &mut super::Rng,
-) -> Vec<(u32, f32, f32)> {
+fn endless_food(ground: &[super::Ground], level: &Level, every: u32, gap: [f32; 2], rng: &mut super::Rng) -> Vec<(u32, f32, f32)> {
     let agar = |x: f32, y: f32| {
         super::disc(10.0).all(|(ox, oy)| super::cell(x + ox, y + oy).is_some_and(|i| ground[i] == super::Ground::Agar))
     };
@@ -1109,10 +1082,7 @@ impl Progress {
         // Keep It Alive and The Wild One are open from the start: modes,
         // not the next puzzle, and the owner is to play them before any
         // star bar.
-        let endless = e >= 1
-            && DISHES
-                .get(e - 1)
-                .is_some_and(|l| matches!(l.win, Win::Endless { .. } | Win::Rival { .. }));
+        let endless = e >= 1 && DISHES.get(e - 1).is_some_and(|l| matches!(l.win, Win::Endless { .. } | Win::Rival { .. }));
         e == 0 || endless || (FREE..ENTRIES).contains(&e) || self.best.get(e - 1).is_some_and(|&b| b >= 1)
     }
 
@@ -1144,25 +1114,14 @@ mod tests {
         let l = &DISHES[k];
         assert!(l.params_for().wet, "Keep It Alive should be wet");
         let mut wet = Dish::from_level(l, 3);
-        let mut dry = Dish::from_level_with(
-            l,
-            3,
-            crate::mould::Params {
-                wet: false,
-                ..l.params_for()
-            },
-        );
+        let mut dry = Dish::from_level_with(l, 3, crate::mould::Params { wet: false, ..l.params_for() });
         for _ in 0..40 * crate::mould::STEPS_PER_SECOND {
             wet.step();
             dry.step();
         }
         assert_eq!(wet.counts.slept, 0);
         assert_eq!(wet.walkers.len(), dry.walkers.len());
-        assert!(wet
-            .walkers
-            .iter()
-            .zip(&dry.walkers)
-            .all(|(a, b)| a.x == b.x && a.y == b.y));
+        assert!(wet.walkers.iter().zip(&dry.walkers).all(|(a, b)| a.x == b.x && a.y == b.y));
     }
 
     /// The lamp dries the ground and the mould under it falls asleep; a
@@ -1183,12 +1142,7 @@ mod tests {
         d.set_lamp(None);
         // Sleepers within the drop's reach (the lamp dries a wider patch).
         let r = d.params.water_r * 0.8;
-        let asleep = |d: &Dish| {
-            d.walkers
-                .iter()
-                .filter(|w| w.asleep() && (w.x - at.0).hypot(w.y - at.1) < r)
-                .count()
-        };
+        let asleep = |d: &Dish| d.walkers.iter().filter(|w| w.asleep() && (w.x - at.0).hypot(w.y - at.1) < r).count();
         let before = asleep(&d);
         assert!(before > 20, "the lamp should put mould to sleep: {before} asleep");
         assert_eq!(d.counts.woke, 0);
@@ -1197,11 +1151,7 @@ mod tests {
             d.step();
         }
         assert!(d.counts.woke > 10, "water should wake it: {} woke", d.counts.woke);
-        assert!(
-            asleep(&d) * 4 < before,
-            "asleep {} under the drop after water, {before} before",
-            asleep(&d)
-        );
+        assert!(asleep(&d) * 4 < before, "asleep {} under the drop after water, {before} before", asleep(&d));
     }
 
     fn play(level: usize, seed: u64, hand: &mut dyn Player) -> Dish {
@@ -1229,25 +1179,10 @@ mod tests {
         }
         let r = d.rival.as_ref().unwrap();
         let mine: std::collections::HashSet<usize> = d.walkers.iter().filter_map(|w| cell(w.x, w.y)).collect();
-        let both = r
-            .walkers
-            .iter()
-            .filter_map(|w| cell(w.x, w.y))
-            .filter(|i| mine.contains(i))
-            .count();
+        let both = r.walkers.iter().filter_map(|w| cell(w.x, w.y)).filter(|i| mine.contains(i)).count();
         assert_eq!(both, 0, "cells held by both moulds");
-        assert!(
-            d.walkers.len() > 200 && r.walkers.len() > 200,
-            "both alive: {} and {}",
-            d.walkers.len(),
-            r.walkers.len()
-        );
-        assert!(
-            d.counts.fought > 0 && r.counts.fought > 0,
-            "fights: {} and {}",
-            d.counts.fought,
-            r.counts.fought
-        );
+        assert!(d.walkers.len() > 200 && r.walkers.len() > 200, "both alive: {} and {}", d.walkers.len(), r.walkers.len());
+        assert!(d.counts.fought > 0 && r.counts.fought > 0, "fights: {} and {}", d.counts.fought, r.counts.fought);
         // The wild mould's piles are the player's: the same food left.
         let left = |d: &Dish| d.piles.iter().map(|p| p.food).collect::<Vec<_>>();
         assert_eq!(left(&d), left(r));
@@ -1350,12 +1285,7 @@ mod tests {
     #[ignore = "two whole dishes, about 17 s in release: run with --ignored"]
     fn the_intended_hand_takes_three_stars_on_the_others() {
         // Keep It Alive is not on the three-star bar yet (2026-11-10).
-        for (k, l) in DISHES
-            .iter()
-            .enumerate()
-            .skip(1)
-            .filter(|(_, l)| !matches!(l.win, Win::Endless { .. } | Win::Rival { .. }))
-        {
+        for (k, l) in DISHES.iter().enumerate().skip(1).filter(|(_, l)| !matches!(l.win, Win::Endless { .. } | Win::Rival { .. })) {
             let c = score(k, 1, &mut Route::for_level(k));
             assert_eq!(c.stars, 3, "{}: {} / {}", l.name, c.amount, c.why);
         }
@@ -1394,18 +1324,9 @@ mod tests {
     #[test]
     fn a_dish_that_ends_has_no_food_still_coming() {
         let d = Dish::from_level(&DISHES[2], 1);
-        assert_eq!(
-            d.pending.len(),
-            5,
-            "the control: Running Dry starts with five piles due"
-        );
+        assert_eq!(d.pending.len(), 5, "the control: Running Dry starts with five piles due");
         let d = dead_running_dry();
-        assert!(
-            d.pending.is_empty(),
-            "ended at {} s with {} piles still due",
-            d.t / SPS,
-            d.pending.len()
-        );
+        assert!(d.pending.is_empty(), "ended at {} s with {} piles still due", d.t / SPS, d.pending.len());
     }
 
     /// Review 2, finding L5: both foods eaten by separate pieces, not
@@ -1469,10 +1390,7 @@ mod tests {
             let at = middle_walker(&e);
             let alive = e.walkers.len();
             assert!(alive > 100, "the scene: mould still alive at +{late} s ({alive})");
-            assert!(
-                oats_eaten(e, at),
-                "+{late} s: oats on {alive} starving mould never eaten"
-            );
+            assert!(oats_eaten(e, at), "+{late} s: oats on {alive} starving mould never eaten");
         }
     }
 
@@ -1500,10 +1418,7 @@ mod tests {
                     continue;
                 }
                 let (at, alive) = (middle_walker(&e), e.walkers.len());
-                row.push(format!(
-                    "+{late}s {} ({alive})",
-                    if oats_eaten(e, at) { "eaten" } else { "NEVER" }
-                ));
+                row.push(format!("+{late}s {} ({alive})", if oats_eaten(e, at) { "eaten" } else { "NEVER" }));
             }
             println!("seed {seed}, dry from {} s: {}", dry / SPS, row.join(" | "));
         }
@@ -1552,10 +1467,6 @@ mod tests {
             e.step();
             eaten |= e.piles.iter().any(|p| p.oats && p.reached());
         }
-        assert!(
-            eaten,
-            "seed 4 at {} s: an oat on a just-starved branch never eaten",
-            d.t / SPS
-        );
+        assert!(eaten, "seed 4 at {} s: an oat on a just-starved branch never eaten", d.t / SPS);
     }
 }

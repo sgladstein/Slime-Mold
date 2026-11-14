@@ -98,10 +98,7 @@ pub fn full_kill<W: World>(g: &Game<W>) -> f32 {
     let (w, h) = g.world.size();
     let sc = g.world.scale().max(1.0);
     let dish_cells = (w as f32 / sc) * (h as f32 / sc);
-    FULL_KILL
-        * (g.start_mould as f32 / dish_cells.max(1.0) / REF_DENSITY)
-            .max(1e-3)
-            .powf(DENSITY_LAW)
+    FULL_KILL * (g.start_mould as f32 / dish_cells.max(1.0) / REF_DENSITY).max(1e-3).powf(DENSITY_LAW)
 }
 
 /// Where the listener stands: the camera's view, fine cells (the world's
@@ -317,11 +314,7 @@ impl WorldListener {
         let mut out = Vec::with_capacity(16);
         self.stats.hears += 1;
         let ticks = g.world.ticks();
-        if ticks < self.ticks
-            || g.soldiers.len() < self.hp.len()
-            || g.harvested < self.harvested
-            || g.walls < self.walls
-        {
+        if ticks < self.ticks || g.soldiers.len() < self.hp.len() || g.harvested < self.harvested || g.walls < self.walls {
             self.rebaseline(g);
         }
         out.push(SoundCmd::Hush(hushed));
@@ -346,11 +339,7 @@ impl WorldListener {
         order.sort_by_key(|&i| std::cmp::Reverse(shots[i].killed));
         let voiced = order.len().min(SHOTS_VOICED);
         // Spread over the frame so a volley is a rattle, not one flam.
-        let gap = if voiced > 1 {
-            (dt / voiced as f32).min(0.03)
-        } else {
-            0.0
-        };
+        let gap = if voiced > 1 { (dt / voiced as f32).min(0.03) } else { 0.0 };
         let mut zips = 0;
         for (j, &i) in order.iter().take(voiced).enumerate() {
             let s = shots[i];
@@ -361,27 +350,16 @@ impl WorldListener {
                 // player orders, or a kill zone is a wall of cracks (design
                 // review of #96).
                 let own = if s.by.is_some() { 1.0 } else { TURRET };
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Crack,
-                    pan,
-                    gain: 0.4 * gain * own,
-                    delay,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain * own, delay });
                 self.stats.voiced += 1;
                 // A bullet in flight (`Rules::bullet_speed`) whizzes past
                 // halfway, where and when it is halfway.
                 if g.rules.bullet_speed > 0.0 && zips < ZIPS_VOICED {
                     let end = s.hit.unwrap_or(s.to);
                     let mid = ((s.from.0 + end.0) * 0.5, (s.from.1 + end.1) * 0.5);
-                    let half = (end.0 - s.from.0).hypot(end.1 - s.from.1) * 0.5
-                        / (g.rules.bullet_speed * g.world.scale()).max(1.0);
+                    let half = (end.0 - s.from.0).hypot(end.1 - s.from.1) * 0.5 / (g.rules.bullet_speed * g.world.scale()).max(1.0);
                     let (pan, gain) = ear.place(mid);
-                    out.push(SoundCmd::Grain {
-                        kind: GrainKind::Zip,
-                        pan,
-                        gain: 0.22 * gain * own,
-                        delay: delay + half,
-                    });
+                    out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.22 * gain * own, delay: delay + half });
                     zips += 1;
                     self.stats.zips += 1;
                 }
@@ -394,12 +372,7 @@ impl WorldListener {
                 // the crack and the slap as two sounds, from and to).
                 let flight = ((h.0 - s.from.0).hypot(h.1 - s.from.1) / ear.half.0.max(1.0) * 0.04).min(0.05);
                 let level = if s.killed > 0 { 0.28 + 0.37 * w } else { 0.12 };
-                out.push(SoundCmd::Impact {
-                    weight: w,
-                    pan,
-                    gain: level * gain,
-                    delay: delay + 0.012 + flight,
-                });
+                out.push(SoundCmd::Impact { weight: w, pan, gain: level * gain, delay: delay + 0.012 + flight });
                 self.stats.impacts += 1;
                 match w {
                     w if w < 1.0 / 3.0 => self.stats.light += 1,
@@ -415,13 +388,7 @@ impl WorldListener {
         }
         let (kill_pan, kill_gain) = ear.place(self.kill_at);
         let (rate, level) = density(self.kill_rate, 1.0, 60.0, 0.22);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Starve,
-            rate,
-            level: level * kill_gain,
-            pan: kill_pan,
-            spread: 0.25,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Starve, rate, level: level * kill_gain, pan: kill_pan, spread: 0.25 });
         self.stats.kills_per_sec = self.kill_rate;
 
         // --- the mould closing in --------------------------------------
@@ -438,46 +405,27 @@ impl WorldListener {
             let near = if s.touching > 0 {
                 1.0
             } else {
-                s.aim.map_or(0.0, |a| {
-                    (1.0 - (a.0 - s.x).hypot(a.1 - s.y) / reach.max(1.0)).clamp(0.0, 1.0)
-                })
+                s.aim.map_or(0.0, |a| (1.0 - (a.0 - s.x).hypot(a.1 - s.y) / reach.max(1.0)).clamp(0.0, 1.0))
             };
             danger = danger.max(near * ear.place((s.x, s.y)).1);
             // Hurt: health lost, in chunks.
-            if let (Some(hp), Some(acc), Some(wait)) =
-                (self.hp.get_mut(i), self.hurt.get_mut(i), self.hurt_wait.get_mut(i))
-            {
+            if let (Some(hp), Some(acc), Some(wait)) = (self.hp.get_mut(i), self.hurt.get_mut(i), self.hurt_wait.get_mut(i)) {
                 *acc += (*hp - s.hp).max(0.0);
                 *hp = s.hp;
                 *wait -= dt;
                 if *acc >= HURT_EVERY && *wait <= 0.0 {
                     let (pan, gain) = ear.place((s.x, s.y));
-                    out.push(SoundCmd::Grain {
-                        kind: GrainKind::Hurt,
-                        pan,
-                        gain: 0.35 * gain,
-                        delay: 0.0,
-                    });
+                    out.push(SoundCmd::Grain { kind: GrainKind::Hurt, pan, gain: 0.35 * gain, delay: 0.0 });
                     self.stats.hurts += 1;
                     (*acc, *wait) = (0.0, HURT_GAP);
                 }
             }
         }
-        let touch_at = if touching > 0 {
-            (tx / touching as f32, ty / touching as f32)
-        } else {
-            ear.centre
-        };
+        let touch_at = if touching > 0 { (tx / touching as f32, ty / touching as f32) } else { ear.centre };
         let (touch_pan, touch_gain) = ear.place(touch_at);
         // Whole walkers, as the bite (`Rules::drain`): the creep is as loud as the harm, at any mass.
         let (rate, level) = density(touching as f32, 2.0, 20.0, 0.25);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Creep,
-            rate,
-            level: level * touch_gain,
-            pan: touch_pan,
-            spread: 0.3,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Creep, rate, level: level * touch_gain, pan: touch_pan, spread: 0.3 });
         self.stats.touching = touching;
         self.stats.danger = danger;
         // The pulse is the squad's, so it sits in the middle; the beat's
@@ -487,18 +435,8 @@ impl WorldListener {
             if self.beat >= 1.0 {
                 self.beat -= self.beat.floor();
                 let gain = 0.15 + 0.4 * danger;
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Heart,
-                    pan: 0.0,
-                    gain,
-                    delay: 0.0,
-                });
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Heart,
-                    pan: 0.0,
-                    gain: gain * 0.6,
-                    delay: 0.19,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Heart, pan: 0.0, gain, delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Heart, pan: 0.0, gain: gain * 0.6, delay: 0.19 });
                 self.stats.beats += 1;
             }
         } else {
@@ -514,22 +452,13 @@ impl WorldListener {
                 self.hurt.push(0.0);
                 self.hurt_wait.push(0.0);
                 let (pan, gain) = ear.place((s.x, s.y));
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Thunk,
-                    pan,
-                    gain: 0.5 * gain,
-                    delay: 0.0,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan, gain: 0.5 * gain, delay: 0.0 });
                 self.stats.bought += 1;
                 continue;
             }
             if self.alive[i] && !s.alive {
                 let (pan, _) = ear.place((s.x, s.y));
-                out.push(SoundCmd::Alert {
-                    kind: AlertKind::Fallen,
-                    weight: 1.0,
-                    pan,
-                });
+                out.push(SoundCmd::Alert { kind: AlertKind::Fallen, weight: 1.0, pan });
                 self.stats.fallen += 1;
             }
             self.alive[i] = s.alive;
@@ -545,13 +474,7 @@ impl WorldListener {
         let (larder_pan, larder_gain) = ear.place(g.larder);
         let larder_gain = larder_gain.max(ALERT_FLOOR);
         let (rate, level) = density(self.steal_rate, 0.6, 30.0, 0.2);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Feed,
-            rate,
-            level: level * larder_gain,
-            pan: larder_pan,
-            spread: 0.15,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Feed, rate, level: level * larder_gain, pan: larder_pan, spread: 0.15 });
         self.stats.stolen_per_sec = self.steal_rate;
         // Food banked: a chime, gathered to one a second, that climbs as the
         // bank fills toward a soldier's price several times over.
@@ -560,79 +483,37 @@ impl WorldListener {
         self.bank_wait -= dt;
         if self.banked > 0.0 && self.bank_wait <= 0.0 {
             let weight = (g.bank / (g.rules.soldier_cost * 4.0)).clamp(0.0, 1.0);
-            out.push(SoundCmd::Alert {
-                kind: AlertKind::Joined,
-                weight,
-                pan: larder_pan,
-            });
+            out.push(SoundCmd::Alert { kind: AlertKind::Joined, weight, pan: larder_pan });
             self.stats.banked += 1;
             (self.banked, self.bank_wait) = (0.0, BANK_GAP);
         }
         if g.walls > self.walls {
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Thunk,
-                pan: 0.0,
-                gain: 0.45,
-                delay: 0.0,
-            });
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Grit,
-                rate: 90.0,
-                secs: 0.15,
-                pan: 0.0,
-                spread: 0.3,
-                gain: 0.25,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan: 0.0, gain: 0.45, delay: 0.0 });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 90.0, secs: 0.15, pan: 0.0, spread: 0.3, gain: 0.25 });
             self.stats.walls += g.walls - self.walls;
         }
         self.walls = g.walls;
         for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
             if i < self.dry.len() && !self.dry[i] && charge <= 0.0 {
                 let (pan, gain) = ear.place(c);
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Knock,
-                    pan,
-                    gain: 0.4 * gain.max(ALERT_FLOOR),
-                    delay: 0.0,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: 0.4 * gain.max(ALERT_FLOOR), delay: 0.0 });
                 self.stats.dry += 1;
                 self.dry[i] = true;
             }
         }
         if g.core_down.is_some() && !self.core_down {
             let (pan, _) = ear.place(g.core);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Thud,
-                pan,
-                gain: 0.8,
-                delay: 0.0,
-            });
-            out.push(SoundCmd::Alert {
-                kind: AlertKind::Bell,
-                weight: 2.0 / 3.0,
-                pan,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8, delay: 0.0 });
+            out.push(SoundCmd::Alert { kind: AlertKind::Bell, weight: 2.0 / 3.0, pan });
             self.stats.cores += 1;
         }
         self.core_down = g.core_down.is_some();
         if let (Some(end), false) = (g.end, self.ended) {
             self.stats.endings += 1;
             out.push(match end {
-                End::MouldWiped(_) => SoundCmd::Alert {
-                    kind: AlertKind::Bell,
-                    weight: 1.0,
-                    pan: 0.0,
-                },
-                End::Cap(share) => SoundCmd::Alert {
-                    kind: AlertKind::Bell,
-                    weight: share.clamp(0.0, 1.0),
-                    pan: 0.0,
-                },
-                End::SquadWiped(_) | End::Overrun(_) => SoundCmd::Alert {
-                    kind: AlertKind::Died,
-                    weight: 1.0,
-                    pan: 0.0,
-                },
+                End::MouldWiped(_) => SoundCmd::Alert { kind: AlertKind::Bell, weight: 1.0, pan: 0.0 },
+                End::Cap(share) => SoundCmd::Alert { kind: AlertKind::Bell, weight: share.clamp(0.0, 1.0), pan: 0.0 },
+                End::SquadWiped(_) | End::Overrun(_) => SoundCmd::Alert { kind: AlertKind::Died, weight: 1.0, pan: 0.0 },
             });
         }
         self.ended = g.end.is_some();
@@ -700,12 +581,7 @@ impl WorldListener {
         let share = self.kill_rate / mould.max(100.0);
         if killed > 0 && share > FLINCH_AT && self.inhale_wait <= 0.0 && self.voice && g.end.is_none() {
             let (pan, _) = ear.place(g.core);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Whoosh,
-                pan: pan * 0.5,
-                gain: (0.25 + 0.25 * (share / FLINCH_AT / 4.0).min(1.0)),
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Whoosh, pan: pan * 0.5, gain: (0.25 + 0.25 * (share / FLINCH_AT / 4.0).min(1.0)), delay: 0.0 });
             self.stats.inhales += 1;
             self.inhale_wait = 2.5;
             self.flinch = 1.0;
@@ -715,24 +591,12 @@ impl WorldListener {
         let eating = (self.eat_rate / FULL_EAT).clamp(0.0, 1.0);
         (self.stats.hunger, self.stats.growth, self.stats.eating) = (hunger, self.natural, self.eat_rate);
         let alive = g.mould > 0 && g.end.is_none();
-        let level = if self.voice && alive {
-            0.18 * ((1.0 + mould / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4)
-        } else {
-            0.0
-        };
+        let level = if self.voice && alive { 0.18 * ((1.0 + mould / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) } else { 0.0 };
         let pitch = PITCH * (1.0 + 0.12 * growth - 0.22 * hunger + 0.08 * self.flinch);
         let breath = BREATH * (1.0 - 0.4 * hunger + 1.4 * self.flinch);
         let rough = (0.15 + 0.7 * hunger + 0.3 * self.flinch).min(1.0);
         let (pan, _) = ear.place(g.core);
-        out.push(SoundCmd::Body {
-            slot: 0,
-            level,
-            pitch,
-            breath,
-            rough,
-            bright: eating,
-            pan: pan * 0.5,
-        });
+        out.push(SoundCmd::Body { slot: 0, level, pitch, breath, rough, bright: eating, pan: pan * 0.5 });
     }
 }
 
@@ -797,17 +661,9 @@ impl WorldListener {
     fn news<W: World>(&mut self, g: &Game<W>, ear: Ear, out: &mut Vec<SoundCmd>) {
         // A siren's call: the wail where the siren that called stands.
         if g.sirens > self.sirens {
-            let at = g
-                .buildings
-                .iter()
-                .find(|b| b.alive && b.working && matches!(b.kind, Kind::Siren))
-                .map_or(g.larder, |b| b.at);
+            let at = g.buildings.iter().find(|b| b.alive && b.working && matches!(b.kind, Kind::Siren)).map_or(g.larder, |b| b.at);
             let (pan, _) = ear.place(at);
-            out.push(SoundCmd::Alert {
-                kind: AlertKind::Siren,
-                weight: 1.0,
-                pan,
-            });
+            out.push(SoundCmd::Alert { kind: AlertKind::Siren, weight: 1.0, pan });
             self.stats.sirens += g.sirens - self.sirens;
         }
         self.sirens = g.sirens;
@@ -817,26 +673,9 @@ impl WorldListener {
             let (pan, gain) = ear.place(b.at);
             let gain = gain.max(0.5);
             let w = kill_weight(b.killed as u32, self.full);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Thud,
-                pan,
-                gain: 0.8 * gain,
-                delay: 0.0,
-            });
-            out.push(SoundCmd::Impact {
-                weight: w.max(0.5),
-                pan,
-                gain: (0.4 + 0.3 * w) * gain,
-                delay: 0.02,
-            });
-            out.push(SoundCmd::Burst {
-                kind: GrainKind::Grit,
-                rate: 120.0,
-                secs: 0.25,
-                pan,
-                spread: 0.3,
-                gain: 0.3 * gain,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * gain, delay: 0.0 });
+            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: 0.02 });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan, spread: 0.3, gain: 0.3 * gain });
             self.stats.blasts += 1;
         }
         // The pieces, from the mould grid, and only when it is new: the
@@ -846,15 +685,7 @@ impl WorldListener {
         if g.end.is_some() {
             self.held.clear();
             for slot in 1..4 {
-                out.push(SoundCmd::Body {
-                    slot,
-                    level: 0.0,
-                    pitch: PITCH * 1.5,
-                    breath: BREATH * 2.0,
-                    rough: 0.3,
-                    bright: 0.0,
-                    pan: 0.0,
-                });
+                out.push(SoundCmd::Body { slot, level: 0.0, pitch: PITCH * 1.5, breath: BREATH * 2.0, rough: 0.3, bright: 0.0, pan: 0.0 });
             }
             return;
         }
@@ -886,56 +717,27 @@ impl WorldListener {
         let cols = g.world.size().0.div_ceil(bin);
         let min = ((g.start_mould as f32 * PIECE_MIN) as u32).max(20);
         let soldiers: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
-        let ev = self
-            .pieces
-            .update(&blobs(&grid, cols, bin, LINK), min, PIECE_SHARE, secs, &soldiers);
+        let ev = self.pieces.update(&blobs(&grid, cols, bin, LINK), min, PIECE_SHARE, secs, &soldiers);
         for at in &ev.torn {
             let (pan, gain) = ear.place(*at);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Tear,
-                pan,
-                gain: 0.5 * gain.max(0.5),
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Tear, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
             self.stats.torn += 1;
         }
         // A scared piece's charge: it breaks up running at a soldier.
         for at in &ev.scattered {
             let (pan, gain) = ear.place(*at);
-            out.push(SoundCmd::Grain {
-                kind: GrainKind::Snarl,
-                pan,
-                gain: 0.5 * gain.max(0.6),
-                delay: 0.0,
-            });
+            out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.5 * gain.max(0.6), delay: 0.0 });
             self.stats.tells += 1;
             self.stats.charges += 1;
         }
         for &(at, rejoined) in &ev.gone {
             let (pan, gain) = ear.place(at);
             if rejoined {
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Squelch,
-                    pan,
-                    gain: 0.5 * gain.max(0.5),
-                    delay: 0.0,
-                });
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Squelch,
-                    pan,
-                    gain: 0.35 * gain.max(0.5),
-                    delay: 0.08,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Squelch, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Squelch, pan, gain: 0.35 * gain.max(0.5), delay: 0.08 });
                 self.stats.rejoined += 1;
             } else {
-                out.push(SoundCmd::Burst {
-                    kind: GrainKind::Wilt,
-                    rate: 60.0,
-                    secs: 0.4,
-                    pan,
-                    spread: 0.1,
-                    gain: 0.25 * gain.max(0.5),
-                });
+                out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 60.0, secs: 0.4, pan, spread: 0.1, gain: 0.25 * gain.max(0.5) });
                 self.stats.withered += 1;
             }
         }
@@ -952,12 +754,7 @@ impl WorldListener {
             let approach = p.approach / sc;
             if approach > TELL_AT && p.since_tell > TELL_GAP {
                 let (pan, gain) = ear.place(p.at);
-                out.push(SoundCmd::Grain {
-                    kind: GrainKind::Snarl,
-                    pan,
-                    gain: 0.45 * gain.max(0.6),
-                    delay: 0.0,
-                });
+                out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.45 * gain.max(0.6), delay: 0.0 });
                 p.since_tell = 0.0;
                 self.stats.tells += 1;
             }
@@ -969,54 +766,25 @@ impl WorldListener {
             // as it withers, quick and rising as it charges.
             let charge = (approach / CHARGE_AT).clamp(0.0, 1.0);
             let wither = (-p.change / 0.05).clamp(0.0, 1.0);
-            let level = 0.6
-                * 0.18
-                * ((1.0 + p.walkers as f32 / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4)
-                * (1.0 + 0.6 * charge);
+            let level = 0.6 * 0.18 * ((1.0 + p.walkers as f32 / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) * (1.0 + 0.6 * charge);
             let pitch = PITCH * (1.5 + 0.12 * p.slot as f32) * (1.0 - 0.15 * wither + 0.5 * charge);
             let breath = BREATH * 2.0 * (1.0 - 0.3 * wither + 3.0 * charge);
             let rough = (0.25 + 0.65 * wither + 0.3 * charge).min(1.0);
             let (pan, _) = ear.place(p.at);
-            out.push(SoundCmd::Body {
-                slot: p.slot,
-                level,
-                pitch,
-                breath,
-                rough,
-                bright: 0.0,
-                pan,
-            });
+            out.push(SoundCmd::Body { slot: p.slot, level, pitch, breath, rough, bright: 0.0, pan });
         }
         for (slot, v) in voiced.iter().enumerate().skip(1) {
             if !v {
-                out.push(SoundCmd::Body {
-                    slot: slot as u8,
-                    level: 0.0,
-                    pitch: PITCH * 1.5,
-                    breath: BREATH * 2.0,
-                    rough: 0.3,
-                    bright: 0.0,
-                    pan: 0.0,
-                });
+                out.push(SoundCmd::Body { slot: slot as u8, level: 0.0, pitch: PITCH * 1.5, breath: BREATH * 2.0, rough: 0.3, bright: 0.0, pan: 0.0 });
             }
         }
         let at = if lost > 0.0 { (lx / lost, ly / lost) } else { ear.centre };
         let (pan, gain) = ear.place(at);
         let (rate, level) = density(lost, 1.0, 40.0, 0.18);
-        out.push(SoundCmd::Texture {
-            kind: TextureKind::Wither,
-            rate,
-            level: level * gain.max(0.5),
-            pan,
-            spread: 0.2,
-        });
+        out.push(SoundCmd::Texture { kind: TextureKind::Wither, rate, level: level * gain.max(0.5), pan, spread: 0.2 });
         self.stats.pieces = self.pieces.pieces.iter().filter(|p| p.heard()).count() as u32;
         self.stats.withering = lost;
-        self.held = out[held_from..]
-            .iter()
-            .filter(|c| matches!(c, SoundCmd::Body { .. } | SoundCmd::Texture { .. }))
-            .copied()
-            .collect();
+        self.held = out[held_from..].iter().filter(|c| matches!(c, SoundCmd::Body { .. } | SoundCmd::Texture { .. })).copied().collect();
         self.last_grid = grid;
     }
 }
@@ -1037,11 +805,7 @@ mod tests {
         let mut dense = small(1);
         dense.start_mould *= 10;
         let ratio = full_kill(&dense) / base;
-        assert!(
-            (ratio - 10f32.powf(DENSITY_LAW)).abs() < 1e-3,
-            "{base} vs {}",
-            full_kill(&dense)
-        );
+        assert!((ratio - 10f32.powf(DENSITY_LAW)).abs() < 1e-3, "{base} vs {}", full_kill(&dense));
     }
 
     fn small(seed: u64) -> Game<crate::mould::big::BigDish> {
@@ -1050,20 +814,14 @@ mod tests {
 
     fn whole(g: &Game<crate::mould::big::BigDish>) -> Ear {
         let (w, h) = g.world.size();
-        Ear {
-            centre: (w as f32 / 2.0, h as f32 / 2.0),
-            half: (w as f32 / 2.0, h as f32 / 2.0),
-        }
+        Ear { centre: (w as f32 / 2.0, h as f32 / 2.0), half: (w as f32 / 2.0, h as f32 / 2.0) }
     }
 
     #[test]
     fn a_heavier_kill_weighs_more_and_a_full_vein_is_full() {
         assert_eq!(kill_weight_ref(0), 0.0);
         assert!(kill_weight_ref(1) > 0.1 && kill_weight_ref(1) < kill_weight_ref(8));
-        assert!(
-            kill_weight_ref(37) > 0.6 && kill_weight_ref(37) < 0.75,
-            "the rush's median shot sits in the upper middle"
-        );
+        assert!(kill_weight_ref(37) > 0.6 && kill_weight_ref(37) < 0.75, "the rush's median shot sits in the upper middle");
         assert!(kill_weight_ref(8) < kill_weight_ref(20));
         assert_eq!(kill_weight_ref(FULL_KILL as u32), 1.0);
         assert_eq!(kill_weight_ref(500), 1.0);
@@ -1071,10 +829,7 @@ mod tests {
 
     #[test]
     fn the_ear_pans_on_screen_and_fades_off_it() {
-        let ear = Ear {
-            centre: (100.0, 100.0),
-            half: (50.0, 30.0),
-        };
+        let ear = Ear { centre: (100.0, 100.0), half: (50.0, 30.0) };
         assert_eq!(ear.place((100.0, 100.0)), (0.0, 1.0));
         assert_eq!(ear.place((150.0, 129.0)), (1.0, 1.0));
         assert_eq!(ear.place((50.0, 100.0)).0, -1.0);
@@ -1121,17 +876,7 @@ mod tests {
     /// and K (`voice = false`) silences it and nothing else.
     #[test]
     fn the_mould_has_a_voice_and_k_turns_it_off() {
-        let body = |cmds: &[SoundCmd]| {
-            cmds.iter()
-                .find_map(|c| {
-                    if let SoundCmd::Body { level, .. } = c {
-                        Some(*level)
-                    } else {
-                        None
-                    }
-                })
-                .unwrap()
-        };
+        let body = |cmds: &[SoundCmd]| cmds.iter().find_map(|c| if let SoundCmd::Body { level, .. } = c { Some(*level) } else { None }).unwrap();
         let mut g = small(2);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
@@ -1153,32 +898,15 @@ mod tests {
         assert!(g.rules.bullet_speed > 0.0);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shot = Shot {
-            from: (10.0, 10.0),
-            to: (90.0, 10.0),
-            hit: Some((80.0, 10.0)),
-            killed: 0,
-            by: Some(0),
-            fired: true,
-        };
-        let zip = |cmds: Vec<SoundCmd>| {
-            cmds.into_iter().find_map(|c| match c {
-                SoundCmd::Grain {
-                    kind: GrainKind::Zip,
-                    gain,
-                    delay,
-                    ..
-                } => Some((gain, delay)),
-                _ => None,
-            })
-        };
+        let shot = Shot { from: (10.0, 10.0), to: (90.0, 10.0), hit: Some((80.0, 10.0)), killed: 0, by: Some(0), fired: true };
+        let zip = |cmds: Vec<SoundCmd>| cmds.into_iter().find_map(|c| match c {
+            SoundCmd::Grain { kind: GrainKind::Zip, gain, delay, .. } => Some((gain, delay)),
+            _ => None,
+        });
         l.shots(&[shot]);
         let (own, delay) = zip(l.hear(&g, ear, 1.0 / 60.0, false)).expect("a zip");
         let flight = 35.0 / (g.rules.bullet_speed * g.world.scale());
-        assert!(
-            (delay - flight).abs() < 1e-4,
-            "halfway at {delay} s, flight half {flight}"
-        );
+        assert!((delay - flight).abs() < 1e-4, "halfway at {delay} s, flight half {flight}");
         l.shots(&[Shot { by: None, ..shot }]);
         let (turret, _) = zip(l.hear(&g, ear, 1.0 / 60.0, false)).unwrap();
         assert!(turret < own, "turret {turret} vs soldier {own}");
@@ -1191,50 +919,17 @@ mod tests {
         let mut g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let sirens = |c: &[SoundCmd]| {
-            c.iter()
-                .filter(|c| {
-                    matches!(
-                        c,
-                        SoundCmd::Alert {
-                            kind: AlertKind::Siren,
-                            ..
-                        }
-                    )
-                })
-                .count()
-        };
-        let thuds = |c: &[SoundCmd]| {
-            c.iter()
-                .filter(|c| {
-                    matches!(
-                        c,
-                        SoundCmd::Grain {
-                            kind: GrainKind::Thud,
-                            ..
-                        }
-                    )
-                })
-                .count()
-        };
+        let sirens = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Alert { kind: AlertKind::Siren, .. })).count();
+        let thuds = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Thud, .. })).count();
         assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 0);
         g.sirens += 1;
         assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
         assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 0, "once per call");
-        let bang = Bang {
-            at: (40.0, 40.0),
-            r: 6.0,
-            tick: 5,
-            killed: 30,
-        };
+        let bang = Bang { at: (40.0, 40.0), r: 6.0, tick: 5, killed: 30 };
         l.bangs(&[bang]);
         assert_eq!(thuds(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
         l.bangs(&[bang]);
-        assert_eq!(
-            thuds(&l.hear(&g, ear, 1.0 / 60.0, false)),
-            0,
-            "the same blast again is not new"
-        );
+        assert_eq!(thuds(&l.hear(&g, ear, 1.0 / 60.0, false)), 0, "the same blast again is not new");
         assert_eq!((l.stats.sirens, l.stats.blasts), (1, 1));
     }
 
@@ -1243,14 +938,7 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shot = |killed| Shot {
-            from: (10.0, 10.0),
-            to: (20.0, 10.0),
-            hit: Some((18.0, 10.0)),
-            killed,
-            by: None,
-            fired: true,
-        };
+        let shot = |killed| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed, by: None, fired: true };
         let impact = |cmds: Vec<SoundCmd>| {
             cmds.into_iter().find_map(|c| match c {
                 SoundCmd::Impact { weight, gain, .. } => Some((weight, gain)),
@@ -1263,20 +951,10 @@ mod tests {
         let (w2, g2) = impact(l.hear(&g, ear, 1.0 / 60.0, false)).unwrap();
         assert!(w2 > w1 * 2.0 && g2 > g1, "1 kill {w1} {g1}, 25 kills {w2} {g2}");
         // A shot a wall stopped cracks but strikes nothing.
-        l.shots(&[Shot {
-            hit: None,
-            killed: 0,
-            ..shot(0)
-        }]);
+        l.shots(&[Shot { hit: None, killed: 0, ..shot(0) }]);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
         assert!(impact(cmds.clone()).is_none());
-        assert!(cmds.iter().any(|c| matches!(
-            c,
-            SoundCmd::Grain {
-                kind: GrainKind::Crack,
-                ..
-            }
-        )));
+        assert!(cmds.iter().any(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })));
     }
 
     #[test]
@@ -1284,45 +962,13 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shots: Vec<Shot> = (0..20)
-            .map(|k| Shot {
-                from: (10.0, 10.0),
-                to: (20.0, 10.0),
-                hit: Some((18.0, 10.0)),
-                killed: k,
-                by: None,
-                fired: true,
-            })
-            .collect();
+        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k, by: None, fired: true }).collect();
         l.shots(&shots);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
-        let cracks = cmds
-            .iter()
-            .filter(|c| {
-                matches!(
-                    c,
-                    SoundCmd::Grain {
-                        kind: GrainKind::Crack,
-                        ..
-                    }
-                )
-            })
-            .count();
+        let cracks = cmds.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })).count();
         assert_eq!(cracks, SHOTS_VOICED);
-        let least = cmds
-            .iter()
-            .filter_map(|c| {
-                if let SoundCmd::Impact { weight, .. } = c {
-                    Some(*weight)
-                } else {
-                    None
-                }
-            })
-            .fold(1.0f32, f32::min);
-        assert!(
-            least >= kill_weight_ref(20 - SHOTS_VOICED as u32),
-            "a light shot was voiced over a heavy one: {least}"
-        );
+        let least = cmds.iter().filter_map(|c| if let SoundCmd::Impact { weight, .. } = c { Some(*weight) } else { None }).fold(1.0f32, f32::min);
+        assert!(least >= kill_weight_ref(20 - SHOTS_VOICED as u32), "a light shot was voiced over a heavy one: {least}");
         assert_eq!(l.stats.kills, (0..20).sum::<u64>(), "every kill counts in the crackle");
     }
 
@@ -1339,12 +985,6 @@ mod tests {
         let fresh = small(4);
         let cmds = l.hear(&fresh, whole(&fresh), 1.0 / 60.0, false);
         assert_eq!(l.stats.rebaselines, 1);
-        assert!(
-            !cmds.iter().any(|c| matches!(
-                c,
-                SoundCmd::Alert { .. } | SoundCmd::Burst { .. } | SoundCmd::Impact { .. }
-            )),
-            "{cmds:?}"
-        );
+        assert!(!cmds.iter().any(|c| matches!(c, SoundCmd::Alert { .. } | SoundCmd::Burst { .. } | SoundCmd::Impact { .. })), "{cmds:?}");
     }
 }

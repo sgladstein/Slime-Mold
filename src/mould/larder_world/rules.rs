@@ -74,11 +74,7 @@ impl Core {
     /// The core of a mould with no tier of its own: headless, so taking
     /// its home stops nothing; it still pulls (`Core::pull`).
     pub fn of(r: &Rules) -> Core {
-        Core {
-            kind: CoreKind::Headless,
-            secs: r.core_secs,
-            pull: r.core_pull,
-        }
+        Core { kind: CoreKind::Headless, secs: r.core_secs, pull: r.core_pull }
     }
 }
 

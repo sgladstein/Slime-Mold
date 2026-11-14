@@ -31,8 +31,8 @@
 
 use std::f32::consts::TAU;
 
-use super::map::{self, Map, G_ROCK, G_WET, MAP_SCALE};
 use super::{keyed, unit, H, STEPS_PER_SECOND, W};
+use super::map::{self, Map, G_ROCK, G_WET, MAP_SCALE};
 
 /// What a keyed draw is for here (`keyed`): its own streams, apart from the
 /// game's.
@@ -1009,7 +1009,12 @@ pub struct BigParams {
     /// with them: `fire_heat`, `fire_eat`, `fire_catch`, `fire_fuel` and
     /// `fire_damp` as `plants::Fire`'s (rates a plant step); a walker on a
     /// cell at `fire_kill` heat or more dies. Nothing burns until
-    /// something lights it.
+    /// something lights it. Why these numbers (`examples/plantprobe.rs`,
+    /// planet 2 seed 1, eight lights 25 dish cells round the slime at 40
+    /// s): `fire_catch` 0.2 went out in 4 s; `fire_damp` 1 left the body
+    /// unburnt (trail under walkers p10 1.52; 2 killed in 50 s); at 3 the
+    /// fire took 501 walkers in 80 s while the slime grew 5,405 to 7,669,
+    /// its thin edge and stragglers, not its body (owner 11-14 17:29Z).
     pub fire_heat: f32,
     pub fire_eat: f32,
     pub fire_catch: f32,
@@ -1435,12 +1440,10 @@ pub fn fling_timer(steps: u16, left: f32, inv: f32) -> u16 {
 
 fn rect(w: usize, h: usize, margin: f32) -> Vec<bool> {
     let m = margin as usize;
-    (0..w * h)
-        .map(|i| {
-            let (x, y) = (i % w, i / w);
-            x >= m && y >= m && x + m < w && y + m < h
-        })
-        .collect()
+    (0..w * h).map(|i| {
+        let (x, y) = (i % w, i / w);
+        x >= m && y >= m && x + m < w && y + m < h
+    }).collect()
 }
 
 /// The terrain's noise (`place_terrain`'s channels: 0 rock, 1 wet), for
@@ -1566,11 +1569,7 @@ impl BigDish {
         let ground = |w: usize, h: usize, m: f32| if p.rect { rect(w, h, m) } else { ellipse(w, h, m) };
         let agar = ground(w, h, 3.0 * s);
         let (sw, sh) = if p.scent_coarse { (W, H) } else { (w, h) };
-        let scent_agar = if p.scent_coarse {
-            ground(W, H, 3.0)
-        } else {
-            agar.clone()
-        };
+        let scent_agar = if p.scent_coarse { ground(W, H, 3.0) } else { agar.clone() };
         let mut d = BigDish {
             w,
             h,
@@ -1678,9 +1677,7 @@ impl BigDish {
         }
         if d.p.mix_share > 0.0 {
             let (seed, share) = (d.p.seed, d.p.mix_share);
-            d.kind = (0..d.walkers.len())
-                .map(|k| u8::from(unit(keyed(seed, 0, DRAW_MIX, k as u32)) < share))
-                .collect();
+            d.kind = (0..d.walkers.len()).map(|k| u8::from(unit(keyed(seed, 0, DRAW_MIX, k as u32)) < share)).collect();
         }
         if d.p.explore_steps > 0 || d.p.species_sets.iter().any(|s| s.explore_steps > 0) {
             d.age = vec![0; d.walkers.len()];
@@ -1736,15 +1733,7 @@ impl BigDish {
             })
             .collect();
         self.plant_kind = start.iter().map(|&(k, _)| k).collect();
-        let g = pl::Ground {
-            w,
-            h: self.h,
-            cap: &self.plant_cap,
-            agar: &self.agar,
-            pile_of: &self.pile_of,
-            wet: &self.wet,
-            scorch: &[],
-        };
+        let g = pl::Ground { w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &[] };
         let r = self.plant_rates();
         self.plant = (0..n)
             .map(|i| {
@@ -1760,13 +1749,7 @@ impl BigDish {
 
     fn plant_rates(&self) -> crate::mould::plants::Rates {
         let k = self.p.plant_every.max(1) as f32;
-        crate::mould::plants::Rates {
-            grow: self.p.plant_grow * k,
-            spread: self.p.plant_spread * k,
-            wet: self.p.plant_wet,
-            scorch: (self.p.plant_scorch * k).min(1.0),
-            kinds: self.p.plant_kinds,
-        }
+        crate::mould::plants::Rates { grow: self.p.plant_grow * k, spread: self.p.plant_spread * k, wet: self.p.plant_wet, scorch: (self.p.plant_scorch * k).min(1.0), kinds: self.p.plant_kinds }
     }
 
     /// One tick of the plants (`plants::step`), where they are on.
@@ -1774,15 +1757,7 @@ impl BigDish {
         if self.plant.is_empty() || !self.ticks.is_multiple_of(self.p.plant_every.max(1) as u64) {
             return;
         }
-        let g = crate::mould::plants::Ground {
-            w: self.w,
-            h: self.h,
-            cap: &self.plant_cap,
-            agar: &self.agar,
-            pile_of: &self.pile_of,
-            wet: &self.wet,
-            scorch: &self.scorch,
-        };
+        let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let r = self.plant_rates();
         crate::mould::plants::step(&g, r, &self.plant, &mut self.scratch, &mut self.plant_kind);
         std::mem::swap(&mut self.plant, &mut self.scratch);
@@ -1792,38 +1767,15 @@ impl BigDish {
     }
 
     fn fire_rates(&self) -> crate::mould::plants::Fire {
-        crate::mould::plants::Fire {
-            heat: self.p.fire_heat,
-            eat: self.p.fire_eat,
-            catch: self.p.fire_catch,
-            fuel: self.p.fire_fuel,
-            damp: self.p.fire_damp,
-        }
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, catch: self.p.fire_catch, fuel: self.p.fire_fuel, damp: self.p.fire_damp }
     }
 
     /// Fire's step, after the plants' (they grow, then burn), then the
     /// walkers on cells hot enough die (as `strike` kills them).
     fn fire_tick(&mut self) {
-        let g = crate::mould::plants::Ground {
-            w: self.w,
-            h: self.h,
-            cap: &self.plant_cap,
-            agar: &self.agar,
-            pile_of: &self.pile_of,
-            wet: &self.wet,
-            scorch: &self.scorch,
-        };
+        let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let (r, f) = (self.plant_rates(), self.fire_rates());
-        self.burning = crate::mould::plants::fire_step(
-            &g,
-            &r,
-            &f,
-            &self.trail,
-            &self.plant_kind,
-            &mut self.plant,
-            &self.fire,
-            &mut self.fire_next,
-        );
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &self.fire, &mut self.fire_next);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
         let kill = self.p.fire_kill;
         for k in 0..self.walkers.len() {
@@ -1872,9 +1824,7 @@ impl BigDish {
                 if (dx * dx + dy * dy) as f32 > rr * rr {
                     continue;
                 }
-                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else {
-                    continue;
-                };
+                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
                 if self.agar[i] && self.plant[i] >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) {
                     self.fire[i] = 1.0;
                     lit += 1;
@@ -1953,10 +1903,7 @@ impl BigDish {
     /// The mould's mass for births (`BigParams::condense`): living walkers,
     /// a condensed one counting twice.
     pub fn mass(&self) -> usize {
-        (0..self.walkers.len())
-            .filter(|&k| self.lives(k))
-            .map(|k| 1 + self.is_dense(k) as usize)
-            .sum()
+        (0..self.walkers.len()).filter(|&k| self.lives(k)).map(|k| 1 + self.is_dense(k) as usize).sum()
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -1973,20 +1920,11 @@ impl BigDish {
     fn place_piles(&mut self) {
         let seed = self.p.seed;
         let r = self.p.pile_r;
-        let (cx, cy, rx, ry) = (
-            W as f32 / 2.0,
-            H as f32 / 2.0,
-            W as f32 / 2.0 - 3.0,
-            H as f32 / 2.0 - 3.0,
-        );
+        let (cx, cy, rx, ry) = (W as f32 / 2.0, H as f32 / 2.0, W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
         let square = self.p.rect;
         let inside = |x: f32, y: f32| {
             let (dx, dy) = ((x - cx) / (rx - r - 4.0), (y - cy) / (ry - r - 4.0));
-            if square {
-                dx.abs() <= 1.0 && dy.abs() <= 1.0
-            } else {
-                dx * dx + dy * dy <= 1.0
-            }
+            if square { dx.abs() <= 1.0 && dy.abs() <= 1.0 } else { dx * dx + dy * dy <= 1.0 }
         };
         self.piles.push((W as f32 * 0.22, H as f32 * 0.5));
         let mut k = 0u32;
@@ -2013,24 +1951,15 @@ impl BigDish {
         assert!(!cs.is_empty(), "a map needs a crystal");
         let start = m.items.moulds.first().copied().unwrap_or((cs[0].x, cs[0].y));
         let d2 = |c: &map::Crystal| (c.x - start.0).hypot(c.y - start.1);
-        let near = (0..cs.len())
-            .min_by(|&a, &b| d2(&cs[a]).total_cmp(&d2(&cs[b])))
-            .unwrap();
+        let near = (0..cs.len()).min_by(|&a, &b| d2(&cs[a]).total_cmp(&d2(&cs[b]))).unwrap();
         let first = cs.remove(near);
         cs.insert(0, first);
         self.piles = cs.iter().map(|c| Map::dish((c.x, c.y))).collect();
         self.pile_rs = cs.iter().map(|c| c.r / MAP_SCALE).collect();
-        self.pile_fill = cs
-            .iter()
-            .map(|c| if self.p.crystal_charge > 0.0 { c.charge } else { 0.0 })
-            .collect();
+        self.pile_fill = cs.iter().map(|c| if self.p.crystal_charge > 0.0 { c.charge } else { 0.0 }).collect();
         self.reached = vec![false; self.piles.len()];
         self.reached[0] = true;
-        self.homes = if m.items.moulds.is_empty() {
-            vec![Map::dish(start)]
-        } else {
-            m.items.moulds.iter().map(|&p| Map::dish(p)).collect()
-        };
+        self.homes = if m.items.moulds.is_empty() { vec![Map::dish(start)] } else { m.items.moulds.iter().map(|&p| Map::dish(p)).collect() };
         self.landing = m.items.landing.map(Map::dish);
     }
 
@@ -2073,16 +2002,9 @@ impl BigDish {
             return;
         }
         let (seed, cell, s) = (self.p.seed, self.p.terrain_blob.max(1.0), self.p.scale as f32);
-        let piles: Vec<(f32, f32, f32)> = self
-            .piles
-            .iter()
-            .zip(&self.pile_rs)
-            .map(|(&(x, y), &r)| (x, y, r + 4.0))
-            .collect();
+        let piles: Vec<(f32, f32, f32)> = self.piles.iter().zip(&self.pile_rs).map(|(&(x, y), &r)| (x, y, r + 4.0)).collect();
         let is_rock = |x: f32, y: f32| {
-            rock_t > 0.0
-                && noise(seed, 0, x, y, cell) < rock_t
-                && piles.iter().all(|&(px, py, clear)| (px - x).hypot(py - y) > clear)
+            rock_t > 0.0 && noise(seed, 0, x, y, cell) < rock_t && piles.iter().all(|&(px, py, clear)| (px - x).hypot(py - y) > clear)
         };
         let (w, h) = (self.w, self.h);
         self.rock = vec![false; w * h];
@@ -2132,14 +2054,8 @@ impl BigDish {
             let t = (((x - ax) * dx + (y - ay) * dy) / len2).clamp(0.0, 1.0);
             (x - ax - t * dx).hypot(y - ay - t * dy) <= r
         };
-        let (x0, x1) = (
-            (ax.min(bx) - r).floor().max(0.0) as usize,
-            ((ax.max(bx) + r).ceil() as usize).min(w - 1),
-        );
-        let (y0, y1) = (
-            (ay.min(by) - r).floor().max(0.0) as usize,
-            ((ay.max(by) + r).ceil() as usize).min(h - 1),
-        );
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
         let mut cells = Vec::new();
         for y in y0..=y1 {
             for x in x0..=x1 {
@@ -2172,10 +2088,7 @@ impl BigDish {
         // The scent grid: a scent cell is walled when its centre is.
         let k = if self.p.scent_coarse { 1.0 } else { s };
         for i in 0..self.sw * self.sh {
-            let (x, y) = (
-                ((i % self.sw) as f32 + 0.5) / k * s,
-                ((i / self.sw) as f32 + 0.5) / k * s,
-            );
+            let (x, y) = (((i % self.sw) as f32 + 0.5) / k * s, ((i / self.sw) as f32 + 0.5) / k * s);
             if self.scent_agar[i] && near(x, y) {
                 if self.p.wall_scent > 0.0 {
                     if self.scent_wall.is_empty() {
@@ -2445,11 +2358,7 @@ impl BigDish {
     /// Crystal charge left over all piles, as a share of the start.
     pub fn crystals_left(&self) -> f32 {
         let full: f32 = self.pile_full.iter().sum();
-        if full <= 0.0 {
-            1.0
-        } else {
-            self.pile_charge.iter().sum::<f32>().max(0.0) / full
-        }
+        if full <= 0.0 { 1.0 } else { self.pile_charge.iter().sum::<f32>().max(0.0) / full }
     }
 
     /// Eating (`crystal_charge`): the n walkers on a cell take equal shares.
@@ -2545,11 +2454,7 @@ impl BigDish {
             let target = self.walkers.len() + share;
             // A blob as dense as today's inoculum: about 0.9 of the cells in it.
             let r = (share as f32 / (0.9 * std::f32::consts::PI)).sqrt();
-            let (hx, hy, mut r) = if self.p.blob_r > 0.0 {
-                (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s)
-            } else {
-                (x * s, y * s, r)
-            };
+            let (hx, hy, mut r) = if self.p.blob_r > 0.0 { (self.w as f32 / 2.0, self.h as f32 / 2.0, self.p.blob_r * s) } else { (x * s, y * s, r) };
             let mut budget = k + 50 * share as u32 + 1000;
             // A blob that cannot fit (a map's start near the rim or rock:
             // the Fork's, 12 dish cells from the edge, took 3,752 of 5,000)
@@ -2593,11 +2498,7 @@ impl BigDish {
             };
             let Some(i) = self.cell(x, y) else { continue };
             // The crowd limit of the species this walker will be.
-            let crowd = if self.p.species_sets.is_empty() {
-                self.p.crowd
-            } else {
-                self.p.species_sets[self.species_of(self.walkers.len())].crowd
-            };
+            let crowd = if self.p.species_sets.is_empty() { self.p.crowd } else { self.p.species_sets[self.species_of(self.walkers.len())].crowd };
             if !self.agar[i] || (crowd > 0 && self.occ[i] >= crowd as u16) {
                 continue;
             }
@@ -2625,18 +2526,7 @@ impl BigDish {
     /// square sums of walkers as the step began (`body_pull`), with `bw`
     /// their weight.
     #[allow(clippy::too_many_arguments)]
-    fn sense(
-        &self,
-        (x, y): (f32, f32),
-        a: f32,
-        so: f32,
-        sso: f32,
-        sp: usize,
-        gw: f32,
-        sw: f32,
-        body: &[u32],
-        bw: f32,
-    ) -> f32 {
+    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32, body: &[u32], bw: f32) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
@@ -2668,13 +2558,8 @@ impl BigDish {
                 let a = self.p.species_avoid_of.get(sp).copied().unwrap_or(self.p.species_avoid);
                 let n = self.species_trail.len();
                 if self.p.species_cycle && n >= 3 {
-                    let (own, next, prev) = (
-                        self.species_trail[sp][j],
-                        self.species_trail[(sp + 1) % n][j],
-                        self.species_trail[(sp + n - 1) % n][j],
-                    );
-                    own + self.p.species_next * next + self.p.species_prev * prev
-                        - a * (self.trail[j] - own - next - prev)
+                    let (own, next, prev) = (self.species_trail[sp][j], self.species_trail[(sp + 1) % n][j], self.species_trail[(sp + n - 1) % n][j]);
+                    own + self.p.species_next * next + self.p.species_prev * prev - a * (self.trail[j] - own - next - prev)
                 } else {
                     (1.0 + a) * self.species_trail[sp][j] - a * self.trail[j]
                 }
@@ -2709,11 +2594,7 @@ impl BigDish {
     }
 
     fn lay(&mut self, k: usize, j: usize, amount: f32) {
-        let amount = if !self.kind.is_empty() && self.kind[k] == 1 {
-            amount * self.p.mix_deposit
-        } else {
-            amount
-        };
+        let amount = if !self.kind.is_empty() && self.kind[k] == 1 { amount * self.p.mix_deposit } else { amount };
         self.trail[j] += amount;
         if !self.species_trail.is_empty() {
             let sp = self.spec[k] as usize;
@@ -2745,11 +2626,7 @@ impl BigDish {
     /// One fine step of the walkers: sense, turn, claim, move, deposit.
     fn move_walkers(&mut self) {
         let p = self.p.clone();
-        let nsets = if p.species_sets.is_empty() {
-            1
-        } else {
-            p.species_sets.len()
-        };
+        let nsets = if p.species_sets.is_empty() { 1 } else { p.species_sets.len() };
         let sets: Vec<SpeciesSet> = (0..nsets).map(|s| self.set_of(s)).collect();
         let per = sets.len() > 1;
         // Any species with a crowd limit makes claims this step.
@@ -2771,11 +2648,7 @@ impl BigDish {
         let life_on = !self.life.is_empty();
         let (mut flying, mut sleeping, mut fruit, mut doze) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
         // Body pull: walkers in each cell's square, as the step began.
-        let body = if (p.body_pull > 0.0 && look) || p.lone_step > 0.0 {
-            self.body_counts(p.body_r as usize)
-        } else {
-            Vec::new()
-        };
+        let body = if (p.body_pull > 0.0 && look) || p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
         // Tether's holders (`tether_hold`): who stays this step, and how
         // many stay on each cell.
         self.holds_n.clear();
@@ -2814,11 +2687,7 @@ impl BigDish {
                 }
                 if self.life_t[k] == 0 {
                     let alarm = if self.alarm.is_empty() { 0.0 } else { self.alarm[here] };
-                    let mut c = if self.scent_at(x, y) > p.spore_scent {
-                        p.spore_rate
-                    } else {
-                        0.0
-                    };
+                    let mut c = if self.scent_at(x, y) > p.spore_scent { p.spore_rate } else { 0.0 };
                     if p.spore_burst > 0.0 && alarm > p.spore_alarm {
                         c += p.spore_burst;
                     }
@@ -2826,11 +2695,7 @@ impl BigDish {
                         fruit.push(k);
                         continue;
                     }
-                    if p.sleep_rate > 0.0
-                        && self.scent_at(x, y) < p.wake_scent
-                        && alarm < p.wake_alarm
-                        && unit(keyed(seed, t, DRAW_SLEEP, k as u32)) < p.sleep_rate
-                    {
+                    if p.sleep_rate > 0.0 && self.scent_at(x, y) < p.wake_scent && alarm < p.wake_alarm && unit(keyed(seed, t, DRAW_SLEEP, k as u32)) < p.sleep_rate {
                         doze.push(k);
                         continue;
                     }
@@ -2841,11 +2706,7 @@ impl BigDish {
             }
             // Trail-dependent settings (`sense_scale`), read where it stands.
             let (mut so, mut sa, mut ra, mut st) = (set.sensor_offset, set.sensor_angle, set.rotate_angle, set.step);
-            let mut sso = if p.scent_offset > 0.0 {
-                p.scent_offset
-            } else {
-                set.sensor_offset
-            };
+            let mut sso = if p.scent_offset > 0.0 { p.scent_offset } else { set.sensor_offset };
             if p.hunger_reach > 0.0 {
                 let g = self.hunger(k);
                 if g >= p.hunt_at {
@@ -2889,11 +2750,7 @@ impl BigDish {
             // A cut-off walker panics (`panic`): it runs for its target, by
             // how far each sensor points toward it, `panic` times as fast.
             let haste = self.panic_haste(k);
-            let mut scared = if haste > 0.0 {
-                self.panic_target(x.floor() as i64, y.floor() as i64)
-            } else {
-                None
-            };
+            let mut scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
             // A breakaway (`roam`) runs for its crystal the same way, at
             // its own pace.
             if let Some(j) = self.roam_of(k) {
@@ -2914,11 +2771,7 @@ impl BigDish {
                 let (f, fl, fr) = (read(h), read(h - sa), read(h + sa));
                 if f > fl && f > fr {
                 } else if f < fl && f < fr {
-                    h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 {
-                        ra
-                    } else {
-                        -ra
-                    };
+                    h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
                 } else if fl < fr {
                     h += ra;
                 } else if fr < fl {
@@ -2954,28 +2807,17 @@ impl BigDish {
                 if p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
                     h = unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x4000_0000)) * TAU;
                 } else if p.sense_floor > 0.0 && f.max(fl).max(fr) < p.sense_floor {
-                    h += if keyed(seed, t, DRAW_WANDER, k as u32) & 1 == 0 {
-                        ra
-                    } else {
-                        -ra
-                    };
+                    h += if keyed(seed, t, DRAW_WANDER, k as u32) & 1 == 0 { ra } else { -ra };
                 } else if p.chance_exp > 0.0 {
                     let left = keyed(seed, t, DRAW_CHANCE, k as u32) & 1 == 0;
-                    let (fe, ge) = (
-                        f.max(0.0).powf(p.chance_exp),
-                        (if left { fl } else { fr }).max(0.0).powf(p.chance_exp),
-                    );
+                    let (fe, ge) = (f.max(0.0).powf(p.chance_exp), (if left { fl } else { fr }).max(0.0).powf(p.chance_exp));
                     let turn = if fe + ge > 0.0 { ge / (fe + ge) } else { 0.5 };
                     if unit(keyed(seed, t, DRAW_CHANCE, k as u32 | 0x8000_0000)) < turn {
                         h += if left { -ra } else { ra };
                     }
                 } else if f > fl && f > fr {
                 } else if f < fl && f < fr {
-                    h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 {
-                        ra
-                    } else {
-                        -ra
-                    };
+                    h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
                 } else if fl < fr {
                     h += ra;
                 } else if fr < fl {
@@ -2988,12 +2830,7 @@ impl BigDish {
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
-                Some(there)
-                    if there == here
-                        || (self.agar[there]
-                            && (crowd == 0 || self.occ[there] < crowd as u16)
-                            && self.tethered(k, here, there)) =>
-                {
+                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(k, here, there)) => {
                     if there != here && crowd > 0 {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
@@ -3039,12 +2876,7 @@ impl BigDish {
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
                 match self.cell(nx, ny) {
-                    Some(there)
-                        if there != here
-                            && self.agar[there]
-                            && self.occ[there] < crowd as u16
-                            && self.tethered(k as usize, here, there) =>
-                    {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(k as usize, here, there) => {
                         let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
                         self.claim[there] = self.claim[there].min(key);
                         tries.push((k, here as u32, there as u32, nx, ny, h, st));
@@ -3086,11 +2918,7 @@ impl BigDish {
                 }
                 let (x, y, _) = self.walkers[k as usize];
                 let i = self.cell(x, y).expect("walker inside the dish");
-                self.lay(
-                    k as usize,
-                    i,
-                    set.deposit * set.blocked_deposit * self.explore_share(k as usize),
-                );
+                self.lay(k as usize, i, set.deposit * set.blocked_deposit * self.explore_share(k as usize));
             }
         }
         if !self.wall_health.is_empty() {
@@ -3098,11 +2926,7 @@ impl BigDish {
         }
         for &(k, h, _) in &blocked {
             let keep = p.blocked_keep && unit(keyed(seed, t, DRAW_KEEP, k)) >= p.blocked_reset;
-            self.walkers[k as usize].2 = if keep {
-                h
-            } else {
-                unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU
-            };
+            self.walkers[k as usize].2 = if keep { h } else { unit(keyed(seed, t, DRAW_BLOCKED, k)) * TAU };
         }
         if life_on {
             self.life_step(&flying, &sleeping, &fruit, &doze);
@@ -3147,10 +2971,7 @@ impl BigDish {
             // (`species_sets`; without sets, everyone, as grass exists only
             // when grazing is on).
             let growth_grazes = p.upkeep > 0.0 && p.crystal_charge <= 0.0;
-            let eats = |d: &Self, k: usize| {
-                d.active(k)
-                    && (growth_grazes || p.species_sets.is_empty() || p.species_sets[d.sp_of(k)].graze_weight != 0.0)
-            };
+            let eats = |d: &Self, k: usize| d.active(k) && (growth_grazes || p.species_sets.is_empty() || p.species_sets[d.sp_of(k)].graze_weight != 0.0);
             if !self.energy.is_empty() {
                 // Each walker's equal share of what its cell loses below:
                 // min(grass, n x eat) over the n walkers on it. (With
@@ -3216,15 +3037,7 @@ impl BigDish {
                 Vec::new()
             };
             // Each species' weight a unit of trail (`species_convert_per`).
-            let per: Vec<f64> = (0..n)
-                .map(|s| {
-                    if p.species_convert_per {
-                        1.0 / (self.set_of(s).deposit as f64).max(1e-9)
-                    } else {
-                        1.0
-                    }
-                })
-                .collect();
+            let per: Vec<f64> = (0..n).map(|s| if p.species_convert_per { 1.0 / (self.set_of(s).deposit as f64).max(1e-9) } else { 1.0 }).collect();
             let weigh = |s: usize, cx: usize, cy: usize, i: usize| -> f64 {
                 if r == 0 {
                     return self.species_trail[s][i] as f64 * per[s];
@@ -3289,11 +3102,7 @@ impl BigDish {
                     continue;
                 }
                 let j = (ny * w + nx) as usize;
-                n += if self.holds_n.is_empty() {
-                    self.occ[j] as u32 - (j == here) as u32
-                } else {
-                    self.holds_n[j] as u32
-                };
+                n += if self.holds_n.is_empty() { self.occ[j] as u32 - (j == here) as u32 } else { self.holds_n[j] as u32 };
             }
         }
         n
@@ -3328,11 +3137,7 @@ impl BigDish {
     fn tethered(&self, k: usize, here: usize, there: usize) -> bool {
         // With `hunt_at` over 0 only hunting walkers are tethered: a fed
         // body spreads as today, a starving hunk keeps together.
-        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at {
-            0
-        } else {
-            self.p.tether as u32
-        };
+        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at { 0 } else { self.p.tether as u32 };
         t == 0 || self.others_round(there, here) >= t.min(self.others_round(here, here))
     }
 
@@ -3353,8 +3158,7 @@ impl BigDish {
             let (y0, y1) = (y.saturating_sub(r), (y + r + 1).min(h));
             for x in 0..w {
                 let (x0, x1) = (x.saturating_sub(r), (x + r + 1).min(w));
-                out[y * w + x] =
-                    t[y1 * (w + 1) + x1] + t[y0 * (w + 1) + x0] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0];
+                out[y * w + x] = t[y1 * (w + 1) + x1] + t[y0 * (w + 1) + x0] - t[y0 * (w + 1) + x1] - t[y1 * (w + 1) + x0];
             }
         }
         out
@@ -3407,16 +3211,7 @@ impl BigDish {
             for &i in &self.heard_cells {
                 let (x, y) = ((i % w) as i64, (i / w) as i64);
                 let mut best = self.heard_was[i];
-                for (dx, dy) in [
-                    (1i64, 0i64),
-                    (1, 1),
-                    (0, 1),
-                    (-1, 1),
-                    (-1, 0),
-                    (-1, -1),
-                    (0, -1),
-                    (1, -1),
-                ] {
+                for (dx, dy) in [(1i64, 0i64), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)] {
                     let (nx, ny) = (x + dx, y + dy);
                     if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
                         continue;
@@ -3465,16 +3260,7 @@ impl BigDish {
                     continue;
                 }
                 let mut f = 0.0;
-                for (dx, dy) in [
-                    (1i64, 0i64),
-                    (1, 1),
-                    (0, 1),
-                    (-1, 1),
-                    (-1, 0),
-                    (-1, -1),
-                    (0, -1),
-                    (1, -1),
-                ] {
+                for (dx, dy) in [(1i64, 0i64), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)] {
                     let (nx, ny) = (x as i64 + dx, y as i64 + dy);
                     if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
                         continue;
@@ -3512,13 +3298,7 @@ impl BigDish {
         let p = self.p.clone();
         let (seed, t) = (p.seed, self.steps);
         // A parent's crowd limit is its species' (`species_sets`) if set.
-        let crowd_of = |d: &Self, k: usize| {
-            if p.species_sets.is_empty() {
-                p.crowd
-            } else {
-                p.species_sets[d.sp_of(k)].crowd
-            }
-        };
+        let crowd_of = |d: &Self, k: usize| if p.species_sets.is_empty() { p.crowd } else { p.species_sets[d.sp_of(k)].crowd };
         let n = self.walkers.len();
         let check = p.wither > 0.0 && !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
         // Dense slime condenses (`condense`): every ordinary walker's
@@ -3573,11 +3353,7 @@ impl BigDish {
                 let i = self.cell(x, y).expect("walker inside the dish");
                 let ripe = (!self.took.is_empty() && self.took[k] > 0.0) || self.occ_round(i, r) >= p.condense_crowd;
                 let was = self.dense[k] & RIPE;
-                self.dense[k] = if ripe {
-                    (was + 1).min(RIPE)
-                } else {
-                    was.saturating_sub(1)
-                };
+                self.dense[k] = if ripe { (was + 1).min(RIPE) } else { was.saturating_sub(1) };
             }
         }
         for k in 0..n {
@@ -3629,11 +3405,7 @@ impl BigDish {
             } else {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
-                if self.soil[i] == SOIL_BARREN {
-                    p.upkeep * p.barren_upkeep
-                } else {
-                    p.upkeep
-                }
+                if self.soil[i] == SOIL_BARREN { p.upkeep * p.barren_upkeep } else { p.upkeep }
             };
             if p.lone_upkeep != 1.0 {
                 let (x, y, _) = self.walkers[k];
@@ -3642,11 +3414,7 @@ impl BigDish {
                     up *= p.lone_upkeep;
                 }
             }
-            let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps {
-                up * p.sick_upkeep
-            } else {
-                up
-            };
+            let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep } else { up };
             // A condensed walker is two walkers' worth and pays for both.
             let up = if self.is_dense(k) { up * 2.0 } else { up };
             let e = self.energy[k] + took - up;
@@ -3673,16 +3441,7 @@ impl BigDish {
         // at or over n.
         let mask = n.max(2).next_power_of_two() - 1;
         let m = keyed(seed, t, DRAW_BIRTH, u32::MAX) as usize & mask;
-        const NEXT: [(f32, f32); 8] = [
-            (1.0, 0.0),
-            (1.0, 1.0),
-            (0.0, 1.0),
-            (-1.0, 1.0),
-            (-1.0, 0.0),
-            (-1.0, -1.0),
-            (0.0, -1.0),
-            (1.0, -1.0),
-        ];
+        const NEXT: [(f32, f32); 8] = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (-1.0, 1.0), (-1.0, 0.0), (-1.0, -1.0), (0.0, -1.0), (1.0, -1.0)];
         // (parent, child slot, cell, x, y)
         let mut tries: Vec<(u32, u32, u32, f32, f32)> = Vec::new();
         // Each species' living walkers as the pass begins (`species_cap`).
@@ -3719,10 +3478,7 @@ impl BigDish {
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
             let crowd = self.fed_crowd(crowd_of(self, k), k);
-            if !self.agar[j]
-                || (crowd > 0 && self.occ[j] >= crowd as u16)
-                || (!self.soil.is_empty() && self.soil[j] == SOIL_BARREN)
-            {
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && self.soil[j] == SOIL_BARREN) {
                 continue;
             }
             if crowd > 0 {
@@ -3819,11 +3575,7 @@ impl BigDish {
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
             let gas = !self.gassed.is_empty() && self.gassed[k] > 0;
-            let death = if gas {
-                p.gas_death.max(p.sleep_death)
-            } else {
-                p.sleep_death
-            };
+            let death = if gas { p.gas_death.max(p.sleep_death) } else { p.sleep_death };
             if death > 0.0 && unit(keyed(seed, t, DRAW_SLEEP_DIE, k as u32)) < death {
                 self.occ[i] -= 1;
                 self.life[k] = LIFE_DEAD;
@@ -3873,11 +3625,7 @@ impl BigDish {
                 let (f, fl, fr) = (read(h), read(h - sa), read(h + sa));
                 if f > fl && f > fr {
                 } else if f < fl && f < fr {
-                    h += if keyed(seed, t, DRAW_SPORE_H, k as u32 | 0x8000_0000) & 1 == 0 {
-                        ra
-                    } else {
-                        -ra
-                    };
+                    h += if keyed(seed, t, DRAW_SPORE_H, k as u32 | 0x8000_0000) & 1 == 0 { ra } else { -ra };
                 } else if fl < fr {
                     h += ra;
                 } else if fr < fl {
@@ -3899,11 +3647,7 @@ impl BigDish {
             let lands = self.life_t[k] == 0 || (homing && p.spore_land > 0.0 && self.scent_at(x, y) > p.spore_land);
             // The crowd limit is the spore's own species' (`species_sets`),
             // and a cell a wall has taken since it flew there is no landing.
-            let crowd = if p.species_sets.is_empty() {
-                crowd
-            } else {
-                p.species_sets[self.sp_of(k)].crowd
-            };
+            let crowd = if p.species_sets.is_empty() { crowd } else { p.species_sets[self.sp_of(k)].crowd };
             if lands && self.agar[i] && (crowd == 0 || self.occ[i] < crowd as u16) {
                 self.claim[i] = self.claim[i].min(keyed(seed, t, CLAIM_LAND, k as u32));
                 landing.push((k, i, crowd));
@@ -3946,9 +3690,7 @@ impl BigDish {
         for dy in -n..=n {
             for dx in -n..=n {
                 let d2 = (dx * dx + dy * dy) as f32;
-                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else {
-                    continue;
-                };
+                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
                 if rr > 0.0 && d2 <= rr * rr {
                     self.trail[i] = 0.0;
                     for f in self.species_trail.iter_mut() {
@@ -3963,11 +3705,7 @@ impl BigDish {
         let mut killed = 0;
         for k in 0..self.walkers.len() {
             let (wx, wy, _) = self.walkers[k];
-            if !self.lives(k)
-                || rr <= 0.0
-                || (wx - cx).hypot(wy - cy) > rr
-                || matches!(self.life[k], LIFE_SPORE | LIFE_DEAD)
-            {
+            if !self.lives(k) || rr <= 0.0 || (wx - cx).hypot(wy - cy) > rr || matches!(self.life[k], LIFE_SPORE | LIFE_DEAD) {
                 continue;
             }
             killed += 1;
@@ -4024,11 +3762,7 @@ impl BigDish {
         if self.age.is_empty() {
             return false;
         }
-        let mut n = if self.p.species_sets.is_empty() {
-            self.p.explore_steps
-        } else {
-            self.p.species_sets[self.sp_of(k)].explore_steps
-        } as f32;
+        let mut n = if self.p.species_sets.is_empty() { self.p.explore_steps } else { self.p.species_sets[self.sp_of(k)].explore_steps } as f32;
         if self.p.explore_spread > 0.0 {
             let u = unit(keyed(self.p.seed, 0, DRAW_SIZE, k as u32 | 0x8000_0000));
             n *= 1.0 + self.p.explore_spread * (2.0 * u - 1.0);
@@ -4081,8 +3815,7 @@ impl BigDish {
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
             let r = self.pile_rs[pi] * k;
             let n = r.ceil() as i32;
-            let strength =
-                self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
+            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
@@ -4104,15 +3837,7 @@ impl BigDish {
 
     fn scent_step(&mut self) {
         self.lay_scent();
-        spread(
-            &self.scent_agar,
-            &self.scent,
-            &mut self.scent_scratch,
-            self.sw,
-            self.sh,
-            self.p.scent_keep,
-            self.threads,
-        );
+        spread(&self.scent_agar, &self.scent, &mut self.scent_scratch, self.sw, self.sh, self.p.scent_keep, self.threads);
         std::mem::swap(&mut self.scent, &mut self.scent_scratch);
         if !self.scent_wall.is_empty() {
             let keep = self.p.wall_scent;
@@ -4133,8 +3858,7 @@ impl BigDish {
         for (pi, &(px, py)) in self.piles.iter().enumerate() {
             let r = self.pile_rs[pi] * k;
             let n = r.ceil() as i32;
-            let strength =
-                self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
+            let strength = self.p.food_deposit * if self.reached[pi] { self.p.fed_scent } else { 1.0 } * self.crystal_left(pi);
             let (cx, cy) = (px * k, py * k);
             for dy in -n..=n {
                 for dx in -n..=n {
@@ -4189,15 +3913,7 @@ impl BigDish {
             if self.species_trail.is_empty() {
                 for pass in 0..self.p.trail_passes.max(1) {
                     let keep = if pass == 0 { self.p.keep } else { 1.0 };
-                    spread(
-                        &self.agar,
-                        &self.trail,
-                        &mut self.scratch,
-                        self.w,
-                        self.h,
-                        keep,
-                        self.threads,
-                    );
+                    spread(&self.agar, &self.trail, &mut self.scratch, self.w, self.h, keep, self.threads);
                     std::mem::swap(&mut self.trail, &mut self.scratch);
                 }
             } else {
@@ -4205,22 +3921,10 @@ impl BigDish {
                 // is their sum (the spread is linear, so the same field).
                 for sp in 0..self.species_trail.len() {
                     // Each species' own keep (`species_sets`), else the global.
-                    let own = if self.p.species_sets.is_empty() {
-                        self.p.keep
-                    } else {
-                        self.p.species_sets[sp].keep
-                    };
+                    let own = if self.p.species_sets.is_empty() { self.p.keep } else { self.p.species_sets[sp].keep };
                     for pass in 0..self.p.trail_passes.max(1) {
                         let keep = if pass == 0 { own } else { 1.0 };
-                        spread(
-                            &self.agar,
-                            &self.species_trail[sp],
-                            &mut self.scratch,
-                            self.w,
-                            self.h,
-                            keep,
-                            self.threads,
-                        );
+                        spread(&self.agar, &self.species_trail[sp], &mut self.scratch, self.w, self.h, keep, self.threads);
                         std::mem::swap(&mut self.species_trail[sp], &mut self.scratch);
                     }
                 }
@@ -4256,27 +3960,11 @@ impl BigDish {
                 }
             }
             if !self.germ.is_empty() {
-                spread(
-                    &self.agar,
-                    &self.germ,
-                    &mut self.scratch,
-                    self.w,
-                    self.h,
-                    self.p.sick_keep,
-                    self.threads,
-                );
+                spread(&self.agar, &self.germ, &mut self.scratch, self.w, self.h, self.p.sick_keep, self.threads);
                 std::mem::swap(&mut self.germ, &mut self.scratch);
             }
             if !self.alarm.is_empty() {
-                spread(
-                    &self.agar,
-                    &self.alarm,
-                    &mut self.scratch,
-                    self.w,
-                    self.h,
-                    self.p.alarm_keep,
-                    self.threads,
-                );
+                spread(&self.agar, &self.alarm, &mut self.scratch, self.w, self.h, self.p.alarm_keep, self.threads);
                 std::mem::swap(&mut self.alarm, &mut self.scratch);
                 if !self.scar.is_empty() {
                     let (keep, gain) = (self.p.scar_keep, self.p.scar_gain);
@@ -4288,15 +3976,7 @@ impl BigDish {
                 }
             }
             if !self.gas_cloud.is_empty() {
-                spread(
-                    &self.agar,
-                    &self.gas_cloud,
-                    &mut self.scratch,
-                    self.w,
-                    self.h,
-                    self.p.gas_keep,
-                    self.threads,
-                );
+                spread(&self.agar, &self.gas_cloud, &mut self.scratch, self.w, self.h, self.p.gas_keep, self.threads);
                 std::mem::swap(&mut self.gas_cloud, &mut self.scratch);
                 self.gas_sleepers();
             }
@@ -4320,12 +4000,7 @@ impl BigDish {
     pub fn measure(&self) -> BigMeasure {
         let (w, h) = (self.w, self.h);
         let s = self.p.scale as f32;
-        let tube: Vec<bool> = self
-            .trail
-            .iter()
-            .zip(&self.agar)
-            .map(|(&v, &a)| a && v > self.p.tube)
-            .collect();
+        let tube: Vec<bool> = self.trail.iter().zip(&self.agar).map(|(&v, &a)| a && v > self.p.tube).collect();
         let area = tube.iter().filter(|&&t| t).count();
         // Edge: tube cells beside a cell that is not tube.
         let mut edge = 0usize;
@@ -4359,12 +4034,7 @@ impl BigDish {
             while let Some(i) = stack.pop() {
                 size += 1;
                 let (x, y) = (i % w, i / w);
-                for (ok, j) in [
-                    (x > 0, i.wrapping_sub(1)),
-                    (x + 1 < w, i + 1),
-                    (y > 0, i.wrapping_sub(w)),
-                    (y + 1 < h, i + w),
-                ] {
+                for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < w, i + 1), (y > 0, i.wrapping_sub(w)), (y + 1 < h, i + w)] {
                     if !ok {
                         open = true;
                         continue;
@@ -4386,30 +4056,15 @@ impl BigDish {
         let living = |k: usize| self.lives(k) && (self.life.is_empty() || self.life[k] != LIFE_DEAD);
         let strays = (0..self.walkers.len())
             .filter(|&k| living(k))
-            .filter(|&k| {
-                self.cell(self.walkers[k].0, self.walkers[k].1)
-                    .is_some_and(|i| self.trail[i] <= self.p.tube)
-            })
+            .filter(|&k| self.cell(self.walkers[k].0, self.walkers[k].1).is_some_and(|i| self.trail[i] <= self.p.tube))
             .count();
         let alive = (0..self.walkers.len()).filter(|&k| living(k)).count();
-        let energy = if self.energy.is_empty() {
-            0.0
-        } else {
-            (0..self.walkers.len())
-                .filter(|&k| living(k))
-                .map(|k| self.energy[k])
-                .sum::<f32>()
-                / alive.max(1) as f32
-        };
+        let energy = if self.energy.is_empty() { 0.0 } else { (0..self.walkers.len()).filter(|&k| living(k)).map(|k| self.energy[k]).sum::<f32>() / alive.max(1) as f32 };
         BigMeasure {
             seconds: self.seconds(),
             tube_area: area as f32 / (s * s),
             loops,
-            width: if edge > 0 {
-                2.0 * area as f32 / edge as f32 / s
-            } else {
-                0.0
-            },
+            width: if edge > 0 { 2.0 * area as f32 / edge as f32 / s } else { 0.0 },
             reach: reach / s,
             reached: self.reached.iter().filter(|&&r| r).count(),
             strays: strays as f32 / alive.max(1) as f32,
@@ -4428,8 +4083,7 @@ impl BigDish {
         let mut img = image::RgbaImage::new(iw, ih);
         for py in 0..ih {
             for px in 0..iw {
-                let (mut v, mut inside, mut ch, mut rock, mut wet, mut wall) =
-                    (0.0f32, false, 0.0f32, false, false, false);
+                let (mut v, mut inside, mut ch, mut rock, mut wet, mut wall) = (0.0f32, false, 0.0f32, false, false, false);
                 let mut wall_left = 1.0f32;
                 for dy in 0..down {
                     for dx in 0..down {
@@ -4459,11 +4113,7 @@ impl BigDish {
                     if wall {
                         // A worn wall dims toward the rock colour.
                         let a = 0.25 + 0.75 * wall_left.max(0.0);
-                        [
-                            (34.0 + 116.0 * a) as u8,
-                            (30.0 + 120.0 * a) as u8,
-                            (28.0 + 130.0 * a) as u8,
-                        ]
+                        [(34.0 + 116.0 * a) as u8, (30.0 + 120.0 * a) as u8, (28.0 + 130.0 * a) as u8]
                     } else if rock {
                         [34, 30, 28]
                     } else {
@@ -4511,19 +4161,7 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self
-            .trail
-            .iter()
-            .chain(&self.scent)
-            .chain(&self.germ)
-            .chain(&self.scar)
-            .chain(&self.grass)
-            .chain(&self.charge)
-            .chain(&self.wall_health)
-            .chain(&self.plant)
-            .chain(&self.fire)
-            .chain(self.species_trail.iter().flatten())
-        {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(&self.plant).chain(&self.fire).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
         for &c in self.spec.iter().chain(&self.kind).chain(&self.plant_kind) {
@@ -4601,9 +4239,7 @@ impl BigDish {
                 if (dx * dx + dy * dy) as f32 > r * r {
                     continue;
                 }
-                let Some(i) = self.cell(x + dx as f32, y + dy as f32) else {
-                    continue;
-                };
+                let Some(i) = self.cell(x + dx as f32, y + dy as f32) else { continue };
                 if self.agar[i] {
                     self.scorch[i] = self.scorch[i].max(steps);
                     c += 1;
@@ -4824,17 +4460,11 @@ mod tests {
                 let mut b = vec![2.0; w * h];
                 spread_rows_reference(&agar, &from, &mut a, w, h, keep, 0);
                 spread_rows(&agar, &from, &mut b, w, h, keep, 0);
-                assert!(
-                    a.iter().zip(&b).all(|(x, y)| x.to_bits() == y.to_bits()),
-                    "{w}x{h} keep {keep}"
-                );
+                assert!(a.iter().zip(&b).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}");
                 for threads in [2, 3, 7] {
                     let mut c = vec![3.0; w * h];
                     spread(&agar, &from, &mut c, w, h, keep, threads);
-                    assert!(
-                        a.iter().zip(&c).all(|(x, y)| x.to_bits() == y.to_bits()),
-                        "{w}x{h} keep {keep}, {threads} threads"
-                    );
+                    assert!(a.iter().zip(&c).all(|(x, y)| x.to_bits() == y.to_bits()), "{w}x{h} keep {keep}, {threads} threads");
                 }
             }
         }
@@ -4842,11 +4472,7 @@ mod tests {
 
     #[test]
     fn respawn_keeps_walkers_and_the_crowd_rule() {
-        let mut d = BigDish::new(BigParams {
-            respawn: 0.2,
-            blob: false,
-            ..small(1, 1)
-        });
+        let mut d = BigDish::new(BigParams { respawn: 0.2, blob: false, ..small(1, 1) });
         let n = d.walkers.len();
         let before = d.walkers.clone();
         for _ in 0..5 {
@@ -4862,23 +4488,12 @@ mod tests {
         assert!(occ.iter().all(|&c| c <= 1));
         assert_eq!(occ, d.occ);
         // About a fifth of them jump each step: most end far from their start.
-        let far = d
-            .walkers
-            .iter()
-            .zip(&before)
-            .filter(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > 20.0)
-            .count();
+        let far = d.walkers.iter().zip(&before).filter(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > 20.0).count();
         assert!(far > n / 2, "{far} of {n} moved far");
     }
 
     fn small(scale: usize, substeps: usize) -> BigParams {
-        BigParams {
-            scale,
-            substeps,
-            walkers: 600 * scale * scale,
-            seed: 3,
-            ..BigParams::today()
-        }
+        BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }
     }
 
     /// The scar (habituation): struck again and again at one spot, a mould
@@ -4890,20 +4505,9 @@ mod tests {
         // Struck at the home pile (where the plain mould feeds) or at the
         // dish centre (where it does not go).
         let near = |home: bool, scar_keep: f32, scar_weight: f32| {
-            let p = BigParams {
-                alarm_keep: 0.95,
-                scar_keep,
-                scar_gain: 0.05,
-                scar_weight,
-                piles: 1,
-                ..small(1, 1)
-            };
+            let p = BigParams { alarm_keep: 0.95, scar_keep, scar_gain: 0.05, scar_weight, piles: 1, ..small(1, 1) };
             let mut d = BigDish::new(p);
-            let (cx, cy) = if home {
-                d.piles[0]
-            } else {
-                (d.w as f32 / 2.0, d.h as f32 / 2.0)
-            };
+            let (cx, cy) = if home { d.piles[0] } else { (d.w as f32 / 2.0, d.h as f32 / 2.0) };
             for t in 0..400 {
                 if t % 20 == 0 && t < 200 {
                     d.strike(cx, cy, 4.0, 50.0, 8.0);
@@ -4912,9 +4516,7 @@ mod tests {
             }
             assert_eq!(d.scar.is_empty(), scar_keep == 0.0);
             assert!(d.alarm.iter().cloned().fold(0.0, f32::max) < 1.0, "the alarm has faded");
-            (0..d.walkers.len())
-                .filter(|&k| d.lives(k) && (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy) <= 12.0)
-                .count()
+            (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy) <= 12.0).count()
         };
         let (plain, wary) = (near(true, 0.0, 0.0), near(true, 0.9999, -2.0));
         assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
@@ -4964,12 +4566,7 @@ mod tests {
     /// The scaling options keep the dish deterministic whatever the threads.
     #[test]
     fn scaling_options_ignore_threads() {
-        let p = BigParams {
-            trail_passes: 2,
-            sense_every: 2,
-            scent_offset: 18.0,
-            ..small(2, 2)
-        };
+        let p = BigParams { trail_passes: 2, sense_every: 2, scent_offset: 18.0, ..small(2, 2) };
         let mut a = BigDish::new(p);
         let mut b = a.clone();
         b.threads = 3;
@@ -4985,10 +4582,7 @@ mod tests {
     fn scent_offset_zero_is_the_sensor_offset() {
         let p = small(2, 2);
         let mut a = BigDish::new(p.clone());
-        let mut b = BigDish::new(BigParams {
-            scent_offset: p.sensor_offset,
-            ..p
-        });
+        let mut b = BigDish::new(BigParams { scent_offset: p.sensor_offset, ..p });
         for _ in 0..30 {
             a.tick();
             b.tick();
@@ -5001,11 +4595,7 @@ mod tests {
     #[test]
     fn walkers_walk_straight_between_looks() {
         // Spread start: a packed blob leaves most walkers blocked.
-        let mut d = BigDish::new(BigParams {
-            sense_every: 2,
-            blob: false,
-            ..small(2, 2)
-        });
+        let mut d = BigDish::new(BigParams { sense_every: 2, blob: false, ..small(2, 2) });
         for _ in 0..20 {
             d.tick();
         }
@@ -5080,39 +4670,14 @@ mod tests {
     #[test]
     fn species_sets_equal_to_globals_change_nothing() {
         for p in [
-            BigParams {
-                species: 2,
-                species_zones: true,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                species_convert: 1.2,
-                graze_weight: 10.0,
-                explore_steps: 30,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                blocked_keep: true,
-                blocked_retry: 2,
-                blocked_deposit: 1.0,
-                keep: 0.93,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                crowd: 0,
-                deposit_cap: 4,
-                ..small(2, 1)
-            },
+            BigParams { species: 2, species_zones: true, ..small(2, 1) },
+            BigParams { species: 2, species_convert: 1.2, graze_weight: 10.0, explore_steps: 30, ..small(2, 1) },
+            BigParams { species: 2, blocked_keep: true, blocked_retry: 2, blocked_deposit: 1.0, keep: 0.93, ..small(2, 1) },
+            BigParams { species: 2, crowd: 0, deposit_cap: 4, ..small(2, 1) },
         ] {
             let same = SpeciesSet::from_params(&p);
             let mut a = BigDish::new(p.clone());
-            let mut b = BigDish::new(BigParams {
-                species_sets: vec![same; 2],
-                ..p
-            });
+            let mut b = BigDish::new(BigParams { species_sets: vec![same; 2], ..p });
             for _ in 0..40 {
                 a.tick();
                 b.tick();
@@ -5126,33 +4691,10 @@ mod tests {
     /// species eats grass, and only grazers' cells lose it.
     #[test]
     fn species_sets_differ_by_species() {
-        let base = BigParams {
-            species: 2,
-            species_zones: true,
-            ..small(2, 1)
-        };
-        let drop = SpeciesSet {
-            crowd: 1,
-            sensor_angle: 1.5,
-            rotate_angle: 0.8,
-            deposit: 5.0,
-            keep: 0.93,
-            blocked_deposit: 1.0,
-            graze_weight: 10.0,
-            explore_steps: 0,
-            ..SpeciesSet::from_params(&base)
-        };
-        let net = SpeciesSet {
-            crowd: 0,
-            keep: 0.6,
-            graze_weight: 0.0,
-            explore_steps: 20,
-            ..SpeciesSet::from_params(&base)
-        };
-        let mut d = BigDish::new(BigParams {
-            species_sets: vec![drop, net],
-            ..base
-        });
+        let base = BigParams { species: 2, species_zones: true, ..small(2, 1) };
+        let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, rotate_angle: 0.8, deposit: 5.0, keep: 0.93, blocked_deposit: 1.0, graze_weight: 10.0, explore_steps: 0, ..SpeciesSet::from_params(&base) };
+        let net = SpeciesSet { crowd: 0, keep: 0.6, graze_weight: 0.0, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+        let mut d = BigDish::new(BigParams { species_sets: vec![drop, net], ..base });
         assert!(!d.grass.is_empty() && !d.age.is_empty());
         let mut been = vec![false; d.w * d.h];
         for _ in 0..30 {
@@ -5179,21 +4721,10 @@ mod tests {
     /// Each species' field decays at its own keep.
     #[test]
     fn species_keep_is_per_species() {
-        let base = BigParams {
-            species: 2,
-            ..small(2, 1)
-        };
-        let a = SpeciesSet {
-            deposit: 0.0,
-            keep: 0.9,
-            ..SpeciesSet::from_params(&base)
-        };
+        let base = BigParams { species: 2, ..small(2, 1) };
+        let a = SpeciesSet { deposit: 0.0, keep: 0.9, ..SpeciesSet::from_params(&base) };
         let b = SpeciesSet { keep: 0.5, ..a };
-        let mut d = BigDish::new(BigParams {
-            species_sets: vec![a, b],
-            respawn: 0.0,
-            ..base
-        });
+        let mut d = BigDish::new(BigParams { species_sets: vec![a, b], respawn: 0.0, ..base });
         for i in 0..d.w * d.h {
             if d.agar[i] {
                 d.species_trail[0][i] = 1.0;
@@ -5214,22 +4745,9 @@ mod tests {
     #[test]
     fn conversion_per_deposit_counts_presence() {
         let ones = |per: bool| {
-            let base = BigParams {
-                species: 2,
-                species_convert: 1.2,
-                species_convert_r: 2,
-                species_avoid: 0.0,
-                ..small(2, 1)
-            };
-            let heavy = SpeciesSet {
-                deposit: 3.0 * base.deposit,
-                ..SpeciesSet::from_params(&base)
-            };
-            let p = BigParams {
-                species_sets: vec![heavy, SpeciesSet::from_params(&base)],
-                species_convert_per: per,
-                ..base
-            };
+            let base = BigParams { species: 2, species_convert: 1.2, species_convert_r: 2, species_avoid: 0.0, ..small(2, 1) };
+            let heavy = SpeciesSet { deposit: 3.0 * base.deposit, ..SpeciesSet::from_params(&base) };
+            let p = BigParams { species_sets: vec![heavy, SpeciesSet::from_params(&base)], species_convert_per: per, ..base };
             let mut d = BigDish::new(p);
             for i in 0..d.w * d.h {
                 if d.agar[i] {
@@ -5253,46 +4771,24 @@ mod tests {
     /// on, and a cap of 0 stops that species' births.
     #[test]
     fn species_cap_holds_one_side() {
-        let grow = BigParams {
-            walkers: 200,
-            upkeep: 0.01,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            species: 2,
-            species_avoid: 0.0,
-            ..small(2, 1)
-        };
+        let grow = BigParams { walkers: 200, upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, species: 2, species_avoid: 0.0, ..small(2, 1) };
         let run = |cap: Vec<usize>| {
-            let mut d = BigDish::new(BigParams {
-                species_cap: cap,
-                ..grow.clone()
-            });
-            let start: Vec<usize> = (0..2)
-                .map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count())
-                .collect();
+            let mut d = BigDish::new(BigParams { species_cap: cap, ..grow.clone() });
+            let start: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
             for _ in 0..200 {
                 d.tick();
             }
-            let end: Vec<usize> = (0..2)
-                .map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count())
-                .collect();
+            let end: Vec<usize> = (0..2).map(|s| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == s).count()).collect();
             (start, end, d.births)
         };
         let (start, free, _) = run(Vec::new());
-        assert!(
-            free[0] > start[0] + 20 && free[1] > start[1] + 20,
-            "both grow uncapped: {start:?} -> {free:?}"
-        );
+        assert!(free[0] > start[0] + 20 && free[1] > start[1] + 20, "both grow uncapped: {start:?} -> {free:?}");
         let cap = start[0] + 10;
         let (_, capped, _) = run(vec![cap, usize::MAX]);
         assert!(capped[0] <= cap + 10, "species 0 held near {cap}: {capped:?}");
         assert!(capped[1] > start[1] + 20, "species 1 grows on: {capped:?}");
         let (_, stopped, _) = run(vec![0, 0]);
-        assert!(
-            stopped[0] <= start[0] && stopped[1] <= start[1],
-            "a cap of 0 stops births: {start:?} -> {stopped:?}"
-        );
+        assert!(stopped[0] <= start[0] && stopped[1] <= start[1], "a cap of 0 stops births: {start:?} -> {stopped:?}");
     }
 
     /// The outside rules (2026-11-11) are keyed draws too: threads change
@@ -5300,86 +4796,19 @@ mod tests {
     #[test]
     fn outside_rules_ignore_threads() {
         for p in [
-            BigParams {
-                sensor_r: 1,
-                chance_exp: 4.0,
-                size_spread: 0.6,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                species_zones: true,
-                explore_steps: 30,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 3,
-                species_cycle: true,
-                species_convert: 1.0,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                species_convert: 1.5,
-                species_boost: 1.5,
-                graze_weight: 10.0,
-                ..small(2, 1)
-            },
-            BigParams {
-                species: 2,
-                species_zones: true,
-                species_convert: 1.2,
-                species_convert_r: 3,
-                species_share: 0.6,
-                ..small(2, 1)
-            },
-            BigParams {
-                mix_share: 0.3,
-                mix_reach: 3.0,
-                mix_angle: 0.5,
-                mix_turn: 2.0,
-                mix_step: 1.5,
-                mix_deposit: 0.5,
-                ..small(2, 1)
-            },
-            BigParams {
-                blocked_keep: true,
-                blocked_reset: 0.1,
-                blocked_retry: 3,
-                blocked_deposit: 1.0,
-                ..small(2, 1)
-            },
-            BigParams {
-                explore_steps: 30,
-                explore_spread: 1.0,
-                ..small(2, 1)
-            },
+            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
+            BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
+            BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },
+            BigParams { species: 2, species_zones: true, species_convert: 1.2, species_convert_r: 3, species_share: 0.6, ..small(2, 1) },
+            BigParams { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..small(2, 1) },
+            BigParams { blocked_keep: true, blocked_reset: 0.1, blocked_retry: 3, blocked_deposit: 1.0, ..small(2, 1) },
+            BigParams { explore_steps: 30, explore_spread: 1.0, ..small(2, 1) },
             {
-                let base = BigParams {
-                    species: 2,
-                    species_zones: true,
-                    species_convert: 1.2,
-                    ..small(2, 1)
-                };
-                let drop = SpeciesSet {
-                    crowd: 1,
-                    sensor_angle: 1.5,
-                    deposit: 5.0,
-                    blocked_deposit: 1.0,
-                    graze_weight: 10.0,
-                    ..SpeciesSet::from_params(&base)
-                };
-                let net = SpeciesSet {
-                    crowd: 0,
-                    keep: 0.8,
-                    explore_steps: 20,
-                    ..SpeciesSet::from_params(&base)
-                };
-                BigParams {
-                    species_sets: vec![drop, net],
-                    blocked_retry: 2,
-                    ..base
-                }
+                let base = BigParams { species: 2, species_zones: true, species_convert: 1.2, ..small(2, 1) };
+                let drop = SpeciesSet { crowd: 1, sensor_angle: 1.5, deposit: 5.0, blocked_deposit: 1.0, graze_weight: 10.0, ..SpeciesSet::from_params(&base) };
+                let net = SpeciesSet { crowd: 0, keep: 0.8, explore_steps: 20, ..SpeciesSet::from_params(&base) };
+                BigParams { species_sets: vec![drop, net], blocked_retry: 2, ..base }
             },
         ] {
             let mut a = BigDish::new(p);
@@ -5407,13 +4836,7 @@ mod tests {
     /// start, with none it eats the dish bare and dies down.
     #[test]
     fn growth_follows_food() {
-        let grow = |regrow: f32| BigParams {
-            upkeep: 0.01,
-            capacity: 4 * 600,
-            graze_weight: 10.0,
-            graze_regrow: regrow,
-            ..small(1, 1)
-        };
+        let grow = |regrow: f32| BigParams { upkeep: 0.01, capacity: 4 * 600, graze_weight: 10.0, graze_regrow: regrow, ..small(1, 1) };
         let mut a = BigDish::new(grow(0.002));
         let mut b = a.clone();
         b.threads = 3;
@@ -5438,10 +4861,7 @@ mod tests {
         assert!(occ.iter().all(|&c| c <= 1));
         assert_eq!(occ, a.occ);
         let fed = a.measure().alive;
-        assert!(
-            a.births > 0 && a.starved > 0 && fed > 2 * start,
-            "fed: {fed} alive of {start}, peak {peak}"
-        );
+        assert!(a.births > 0 && a.starved > 0 && fed > 2 * start, "fed: {fed} alive of {start}, peak {peak}");
         // The dish holds about 30,000 grass; 2,400 walkers burn 24 a step.
         let mut c = BigDish::new(grow(0.0));
         for _ in 0..3000 {
@@ -5458,15 +4878,7 @@ mod tests {
     #[test]
     fn growth_eats_crystals() {
         let upkeep = 1e-4;
-        let p = BigParams {
-            crystal_charge: 2.0,
-            crystal_eat: 0.05,
-            upkeep,
-            birth_energy: 1e9,
-            starve: 0.0,
-            capacity: 1200,
-            ..small(1, 1)
-        };
+        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.05, upkeep, birth_energy: 1e9, starve: 0.0, capacity: 1200, ..small(1, 1) };
         let mut d = BigDish::new(p.clone());
         assert!(d.grass.is_empty(), "no grass with crystals");
         // Park the empty slots on the home crystal, where a share is there
@@ -5482,20 +4894,11 @@ mod tests {
             d.tick();
             let e1: f64 = d.energy.iter().map(|&e| e as f64).sum();
             let want = (d.eaten - eaten0) - upkeep as f64 * alive as f64;
-            assert!(
-                (e1 - e0 - want).abs() < 1e-3,
-                "gained {} against eaten less upkeep {want}",
-                e1 - e0
-            );
+            assert!((e1 - e0 - want).abs() < 1e-3, "gained {} against eaten less upkeep {want}", e1 - e0);
             assert!((600..1200).all(|k| d.took[k] == 0.0), "an empty slot took a share");
         }
         assert!(d.eaten > 0.0, "the home crystal fed the mould");
-        assert!(!BigDish::new(BigParams {
-            graze_weight: 10.0,
-            ..p
-        })
-        .grass
-        .is_empty());
+        assert!(!BigDish::new(BigParams { graze_weight: 10.0, ..p }).grass.is_empty());
     }
 
     /// `energy_flow` keeps energy (pairs give what they take), evens it out
@@ -5507,13 +4910,7 @@ mod tests {
     /// 8 the step after (from 7's news), and 10 never.
     #[test]
     fn food_news_travels_through_the_body_and_not_across_a_gap() {
-        let p = BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            wither: 0.5,
-            wither_reach: 2,
-            ..small(1, 1)
-        };
+        let p = BigParams { upkeep: 0.01, capacity: 1200, wither: 0.5, wither_reach: 2, ..small(1, 1) };
         let mut d = BigDish::new(p);
         let n = d.walkers.len();
         for k in 0..n {
@@ -5532,11 +4929,7 @@ mod tests {
         assert_eq!(&d.news[..5], &[now, now, now, 1, 1], "two cells a step");
         d.took[0] = 0.0;
         d.hear_food();
-        assert_eq!(
-            &d.news[..5],
-            &[now, now, now, now, 1],
-            "carried on, and not across the gap"
-        );
+        assert_eq!(&d.news[..5], &[now, now, now, now, 1], "carried on, and not across the gap");
         // The cells hold news only where walkers stand.
         let held = d.heard.iter().filter(|&&v| v > 0).count();
         assert_eq!(held, 5, "five cells hold walkers");
@@ -5546,13 +4939,7 @@ mod tests {
     /// mould whose news has gone stale while one fed now keeps its walkers.
     #[test]
     fn a_walker_without_news_withers() {
-        let grow = BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            ..small(2, 1)
-        };
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
         let run = |p: BigParams, stale: bool| {
             let mut d = BigDish::new(p);
             for _ in 0..40 {
@@ -5568,40 +4955,12 @@ mod tests {
             (before, d.alive.iter().filter(|&&a| a).count(), d.hash())
         };
         let base = run(grow.clone(), false);
-        let off = run(
-            BigParams {
-                wither: 0.0,
-                wither_lag: 5,
-                ..grow.clone()
-            },
-            false,
-        );
+        let off = run(BigParams { wither: 0.0, wither_lag: 5, ..grow.clone() }, false);
         assert_eq!(base.2, off.2, "wither 0 changes nothing");
-        let fresh = run(
-            BigParams {
-                wither: 0.2,
-                wither_every: 1,
-                wither_lag: 10_000,
-                ..grow.clone()
-            },
-            false,
-        );
-        let stale = run(
-            BigParams {
-                wither: 0.2,
-                wither_every: 1,
-                wither_lag: 10,
-                ..grow.clone()
-            },
-            true,
-        );
+        let fresh = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10_000, ..grow.clone() }, false);
+        let stale = run(BigParams { wither: 0.2, wither_every: 1, wither_lag: 10, ..grow.clone() }, true);
         assert_eq!(fresh.2, base.2, "news that never goes stale kills no one");
-        assert!(
-            stale.1 * 3 < fresh.1 * 2,
-            "a mould whose news is stale withers: {} walkers left against {}",
-            stale.1,
-            fresh.1
-        );
+        assert!(stale.1 * 3 < fresh.1 * 2, "a mould whose news is stale withers: {} walkers left against {}", stale.1, fresh.1);
     }
 
     /// Dense slime condenses (`condense`, 2026-11-14): off it changes
@@ -5611,13 +4970,7 @@ mod tests {
     /// stays within the slots.
     #[test]
     fn dense_slime_condenses_to_half_its_walkers_at_its_mass() {
-        let grow = BigParams {
-            upkeep: 0.002,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            ..small(2, 1)
-        };
+        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
         let run = |p: BigParams| {
             let mut d = BigDish::new(p);
             let mut peak = 0;
@@ -5627,56 +4980,19 @@ mod tests {
             }
             let living = (0..d.walkers.len()).filter(|&k| d.lives(k)).count();
             let dense = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.is_dense(k)).count();
-            (
-                living,
-                dense,
-                d.mass(),
-                peak,
-                d.absorbed,
-                d.condensed,
-                d.hash(),
-                d.walkers.len(),
-            )
+            (living, dense, d.mass(), peak, d.absorbed, d.condensed, d.hash(), d.walkers.len())
         };
         let base = run(grow.clone());
-        let off = run(BigParams {
-            condense: 0,
-            condense_crowd: 3,
-            condense_r: 1,
-            ..grow.clone()
-        });
+        let off = run(BigParams { condense: 0, condense_crowd: 3, condense_r: 1, ..grow.clone() });
         assert_eq!(base.6, off.6, "condense 0 changes nothing");
-        let on = run(BigParams {
-            condense: 30,
-            condense_crowd: 10,
-            condense_r: 2,
-            ..grow.clone()
-        });
-        eprintln!(
-            "off: {} walkers; on: {} walkers, {} condensed, mass {} (peak {}), {} absorbed, {} condensed in all",
-            base.0, on.0, on.1, on.2, on.3, on.4, on.5
-        );
+        let on = run(BigParams { condense: 30, condense_crowd: 10, condense_r: 2, ..grow.clone() });
+        eprintln!("off: {} walkers; on: {} walkers, {} condensed, mass {} (peak {}), {} absorbed, {} condensed in all", base.0, on.0, on.1, on.2, on.3, on.4, on.5);
         assert!(on.5 > 50 && on.4 > 50, "walkers ripen and condense");
         // A fair split: absorbed and condensed within a quarter of each other.
-        assert!(
-            on.4 * 4 > on.5 * 3 && on.5 * 4 > on.4 * 3,
-            "half absorbed, half condensed: {} and {}",
-            on.4,
-            on.5
-        );
-        assert!(
-            on.1 > 0 && on.0 < base.0,
-            "fewer walkers, some condensed: {} against {}",
-            on.0,
-            base.0
-        );
+        assert!(on.4 * 4 > on.5 * 3 && on.5 * 4 > on.4 * 3, "half absorbed, half condensed: {} and {}", on.4, on.5);
+        assert!(on.1 > 0 && on.0 < base.0, "fewer walkers, some condensed: {} against {}", on.0, base.0);
         // Births stop at the slots' mass: past it by at most a step's births.
-        assert!(
-            on.3 <= on.7 + on.7 / 20,
-            "mass within the {} slots: peak {}",
-            on.7,
-            on.3
-        );
+        assert!(on.3 <= on.7 + on.7 / 20, "mass within the {} slots: peak {}", on.7, on.3);
     }
 
     /// Condensed slime breaks away (`roam`, 2026-11-14): off (0) changes
@@ -5684,16 +5000,7 @@ mod tests {
     /// far enough away, stay condensed on the way, and land at it.
     #[test]
     fn condensed_slime_breaks_away_for_a_far_crystal() {
-        let grow = BigParams {
-            upkeep: 0.002,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            condense: 30,
-            condense_crowd: 10,
-            condense_r: 2,
-            ..small(2, 1)
-        };
+        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, condense: 30, condense_crowd: 10, condense_r: 2, ..small(2, 1) };
         let run = |p: BigParams| {
             let mut d = BigDish::new(p);
             let (mut left, mut landed, mut most) = (0usize, 0usize, 0usize);
@@ -5726,23 +5033,10 @@ mod tests {
             (left, landed, most, d.hash(), d.piles.len())
         };
         let base = run(grow.clone());
-        let off = run(BigParams {
-            roam: 0,
-            roam_far: 5.0,
-            roam_share: 1.0,
-            ..grow.clone()
-        });
+        let off = run(BigParams { roam: 0, roam_far: 5.0, roam_share: 1.0, ..grow.clone() });
         assert_eq!(base.3, off.3, "roam 0 changes nothing");
-        let on = run(BigParams {
-            roam: 60,
-            roam_far: 10.0,
-            roam_share: 1.0,
-            ..grow.clone()
-        });
-        eprintln!(
-            "breakaway: {} left, {} landed, at most {} on the way at once, {} crystals",
-            on.0, on.1, on.2, on.4
-        );
+        let on = run(BigParams { roam: 60, roam_far: 10.0, roam_share: 1.0, ..grow.clone() });
+        eprintln!("breakaway: {} left, {} landed, at most {} on the way at once, {} crystals", on.0, on.1, on.2, on.4);
         assert!(on.0 > 20, "condensed walkers break away: {}", on.0);
         assert!(on.2 > 10, "they leave together: at most {} at once", on.2);
         assert!(on.1 > 0, "breakaways land at their crystal");
@@ -5753,22 +5047,13 @@ mod tests {
     /// ordinary walker, and only the next one kills it; a child is ordinary.
     #[test]
     fn a_condensed_walker_has_two_lives() {
-        let p = BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            condense: 30,
-            ..small(1, 1)
-        };
+        let p = BigParams { upkeep: 0.01, capacity: 1200, condense: 30, ..small(1, 1) };
         let mut d = BigDish::new(p);
         d.tick();
         assert_eq!(d.dense.len(), d.walkers.len(), "condensing made its words");
         let k = (0..d.walkers.len()).find(|&k| d.lives(k)).unwrap();
         d.dense[k] = DENSE;
-        assert_eq!(
-            d.mass(),
-            (0..d.walkers.len()).filter(|&q| d.lives(q)).count() + 1,
-            "a condensed walker is two walkers' mass"
-        );
+        assert_eq!(d.mass(), (0..d.walkers.len()).filter(|&q| d.lives(q)).count() + 1, "a condensed walker is two walkers' mass");
         assert!(!d.hit(k) && d.lives(k) && !d.is_dense(k), "a shot breaks it");
         assert!(d.hit(k) && !d.lives(k), "the second kills it");
         // A blast: counted as a kill, and it lives on, ordinary.
@@ -5776,20 +5061,9 @@ mod tests {
         d.dense[q] = DENSE;
         let (x, y, _) = d.walkers[q];
         let killed = d.strike(x, y, 0.4, 0.0, 0.0);
-        assert!(
-            killed >= 1 && d.lives(q) && !d.is_dense(q),
-            "a blast breaks it: {killed} killed"
-        );
+        assert!(killed >= 1 && d.lives(q) && !d.is_dense(q), "a blast breaks it: {killed} killed");
         // Withering: news stale, chance 1, every step.
-        let mut w = BigDish::new(BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            condense: 30,
-            wither: 1.0,
-            wither_every: 1,
-            wither_lag: 1,
-            ..small(1, 1)
-        });
+        let mut w = BigDish::new(BigParams { upkeep: 0.01, capacity: 1200, condense: 30, wither: 1.0, wither_every: 1, wither_lag: 1, ..small(1, 1) });
         for _ in 0..10 {
             w.tick();
         }
@@ -5799,28 +5073,15 @@ mod tests {
             w.dense[k] = DENSE;
         }
         w.tick();
-        let (kept, broke) = (
-            living.iter().filter(|&&k| w.lives(k)).count(),
-            living.iter().filter(|&&k| w.lives(k) && !w.is_dense(k)).count(),
-        );
-        assert!(
-            kept == living.len() && broke == kept,
-            "withering breaks every condensed walker first: {kept} of {} live, {broke} broken",
-            living.len()
-        );
+        let (kept, broke) = (living.iter().filter(|&&k| w.lives(k)).count(), living.iter().filter(|&&k| w.lives(k) && !w.is_dense(k)).count());
+        assert!(kept == living.len() && broke == kept, "withering breaks every condensed walker first: {kept} of {} live, {broke} broken", living.len());
         w.tick();
         assert!(living.iter().all(|&k| !w.lives(k)), "and then kills them");
     }
 
     #[test]
     fn a_cut_off_walker_runs_for_a_crystal_or_a_unit() {
-        let grow = BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            ..small(2, 1)
-        };
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
         // From a grown mould, its home crystal eaten bare (so a crystal to
         // run for lies away from the packed mould), 30 ticks with every
         // walker's news held stale (`stale`); the mean distance of the
@@ -5838,9 +5099,7 @@ mod tests {
             d.pile_charge[0] = 0.0;
             d.threats = threat.into_iter().collect();
             let who: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
-            let mean = |d: &BigDish| {
-                who.iter().map(|&k| to(d, d.walkers[k].0, d.walkers[k].1)).sum::<f32>() / who.len() as f32
-            };
+            let mean = |d: &BigDish| who.iter().map(|&k| to(d, d.walkers[k].0, d.walkers[k].1)).sum::<f32>() / who.len() as f32;
             let before = mean(&d);
             for _ in 0..30 {
                 if stale && !d.news.is_empty() {
@@ -5861,167 +5120,50 @@ mod tests {
         };
         // Joined to its food, no walker panics: panic changes nothing.
         let base = run(grow.clone(), false, None, &nearest);
-        let calm = run(
-            BigParams {
-                panic: 2.0,
-                ..grow.clone()
-            },
-            false,
-            None,
-            &nearest,
-        );
+        let calm = run(BigParams { panic: 2.0, ..grow.clone() }, false, None, &nearest);
         assert_eq!(base.2, calm.2, "a body that hears of food never panics");
         // Cut off, it runs for the nearest crystal with food, and with a
         // unit in reach for the unit instead.
-        let stale = BigParams {
-            wither_lag: 5,
-            ..grow.clone()
-        };
+        let stale = BigParams { wither_lag: 5, ..grow.clone() };
         let still = run(stale.clone(), true, None, &nearest);
-        let runs = run(
-            BigParams {
-                panic: 2.0,
-                ..stale.clone()
-            },
-            true,
-            None,
-            &nearest,
-        );
-        eprintln!(
-            "to a crystal: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not",
-            runs.0, runs.1, still.0, still.1
-        );
-        assert!(
-            runs.1 < runs.0 - 4.0 && runs.1 < still.1 - 4.0,
-            "a cut-off walker runs for a crystal"
-        );
+        let runs = run(BigParams { panic: 2.0, ..stale.clone() }, true, None, &nearest);
+        eprintln!("to a crystal: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not", runs.0, runs.1, still.0, still.1);
+        assert!(runs.1 < runs.0 - 4.0 && runs.1 < still.1 - 4.0, "a cut-off walker runs for a crystal");
         let d0 = BigDish::new(grow.clone());
         let at = (d0.w as i64 / 2, d0.h as i64 / 4);
         let to_unit = move |_: &BigDish, x: f32, y: f32| (at.0 as f32 + 0.5 - x).hypot(at.1 as f32 + 0.5 - y);
-        let wide = BigParams {
-            panic: 2.0,
-            panic_r: 1_000.0,
-            ..stale.clone()
-        };
-        let stay = run(
-            BigParams {
-                panic: 0.0,
-                ..wide.clone()
-            },
-            true,
-            Some(at),
-            &to_unit,
-        );
+        let wide = BigParams { panic: 2.0, panic_r: 1_000.0, ..stale.clone() };
+        let stay = run(BigParams { panic: 0.0, ..wide.clone() }, true, Some(at), &to_unit);
         let charge = run(wide.clone(), true, Some(at), &to_unit);
-        eprintln!(
-            "to the unit: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not",
-            charge.0, charge.1, stay.0, stay.1
-        );
-        assert!(
-            charge.1 < charge.0 - 4.0 && charge.1 < stay.1 - 4.0,
-            "a cut-off walker in reach charges the unit"
-        );
+        eprintln!("to the unit: {:.1} -> {:.1} panicking, {:.1} -> {:.1} not", charge.0, charge.1, stay.0, stay.1);
+        assert!(charge.1 < charge.0 - 4.0 && charge.1 < stay.1 - 4.0, "a cut-off walker in reach charges the unit");
         // Out of reach, the unit is ignored.
-        let far = run(
-            BigParams {
-                panic_r: 0.5,
-                ..wide.clone()
-            },
-            true,
-            Some(at),
-            &nearest,
-        );
+        let far = run(BigParams { panic_r: 0.5, ..wide.clone() }, true, Some(at), &nearest);
         eprintln!("unit out of reach, to a crystal: {:.1} -> {:.1}", far.0, far.1);
         assert!(far.1 < far.0 - 4.0, "with the unit out of reach it runs for a crystal");
         // The lean's pace (`panic_creep`): with a lean longer than the 30
         // ticks, walkers creep at a quarter of their pace for all of them,
         // and close on the crystal, but less than at their own pace.
-        let leaning = BigParams {
-            panic: 2.0,
-            panic_lean: PANIC_LEAN_MAX,
-            ..stale.clone()
-        };
-        let own = run(
-            BigParams {
-                panic_creep: 1.0,
-                ..leaning.clone()
-            },
-            true,
-            None,
-            &nearest,
-        );
-        let creep = run(
-            BigParams {
-                panic_creep: 0.25,
-                ..leaning
-            },
-            true,
-            None,
-            &nearest,
-        );
-        eprintln!(
-            "leaning to a crystal: {:.1} -> {:.1} at its own pace, {:.1} -> {:.1} at a quarter",
-            own.0, own.1, creep.0, creep.1
-        );
-        assert!(
-            creep.1 < creep.0 - 1.0 && creep.1 > own.1 + 2.0,
-            "a creeping walker closes on its crystal, slower"
-        );
+        let leaning = BigParams { panic: 2.0, panic_lean: PANIC_LEAN_MAX, ..stale.clone() };
+        let own = run(BigParams { panic_creep: 1.0, ..leaning.clone() }, true, None, &nearest);
+        let creep = run(BigParams { panic_creep: 0.25, ..leaning }, true, None, &nearest);
+        eprintln!("leaning to a crystal: {:.1} -> {:.1} at its own pace, {:.1} -> {:.1} at a quarter", own.0, own.1, creep.0, creep.1);
+        assert!(creep.1 < creep.0 - 1.0 && creep.1 > own.1 + 2.0, "a creeping walker closes on its crystal, slower");
         // The dash (`panic_dash`): charging the unit, a walker whose dash
         // has run out creeps; one whose charge never gives up keeps the
         // bolt. A run for a crystal keeps the bolt either way.
-        let charging = BigParams {
-            panic_lean: 0,
-            panic_creep: 0.25,
-            ..wide.clone()
-        };
-        let bolt = run(
-            BigParams {
-                panic_dash: 0,
-                ..charging.clone()
-            },
-            true,
-            Some(at),
-            &to_unit,
-        );
-        let gives_up = run(
-            BigParams {
-                panic_dash: 1,
-                ..charging.clone()
-            },
-            true,
-            Some(at),
-            &to_unit,
-        );
-        eprintln!(
-            "to the unit: {:.1} -> {:.1} never giving up, {:.1} -> {:.1} giving up after a step",
-            bolt.0, bolt.1, gives_up.0, gives_up.1
-        );
-        assert!(
-            gives_up.1 < gives_up.0 - 1.0 && gives_up.1 > bolt.1 + 2.0,
-            "a charge that gives up creeps on, slower"
-        );
-        let to_crystal = run(
-            BigParams {
-                panic_dash: 1,
-                panic_r: 0.5,
-                ..charging
-            },
-            true,
-            Some(at),
-            &nearest,
-        );
+        let charging = BigParams { panic_lean: 0, panic_creep: 0.25, ..wide.clone() };
+        let bolt = run(BigParams { panic_dash: 0, ..charging.clone() }, true, Some(at), &to_unit);
+        let gives_up = run(BigParams { panic_dash: 1, ..charging.clone() }, true, Some(at), &to_unit);
+        eprintln!("to the unit: {:.1} -> {:.1} never giving up, {:.1} -> {:.1} giving up after a step", bolt.0, bolt.1, gives_up.0, gives_up.1);
+        assert!(gives_up.1 < gives_up.0 - 1.0 && gives_up.1 > bolt.1 + 2.0, "a charge that gives up creeps on, slower");
+        let to_crystal = run(BigParams { panic_dash: 1, panic_r: 0.5, ..charging }, true, Some(at), &nearest);
         assert!(to_crystal.1 < to_crystal.0 - 4.0, "a run for a crystal keeps its bolt");
     }
 
     #[test]
     fn energy_flow_keeps_and_evens() {
-        let p = BigParams {
-            upkeep: 0.01,
-            energy_flow: 0.1,
-            capacity: 1200,
-            ..small(1, 1)
-        };
+        let p = BigParams { upkeep: 0.01, energy_flow: 0.1, capacity: 1200, ..small(1, 1) };
         let mut d = BigDish::new(p);
         for _ in 0..30 {
             d.tick();
@@ -6031,15 +5173,9 @@ mod tests {
                 d.energy[k] = (k % 7) as f32 * 0.3;
             }
         }
-        let empty: Vec<f32> = (0..d.walkers.len())
-            .filter(|&k| !d.lives(k))
-            .map(|k| d.energy[k])
-            .collect();
+        let empty: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
         let spread = |d: &BigDish| {
-            let e: Vec<f64> = (0..d.walkers.len())
-                .filter(|&k| d.lives(k))
-                .map(|k| d.energy[k] as f64)
-                .collect();
+            let e: Vec<f64> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| d.energy[k] as f64).collect();
             let m = e.iter().sum::<f64>() / e.len() as f64;
             (e.iter().sum::<f64>(), e.iter().map(|x| (x - m) * (x - m)).sum::<f64>())
         };
@@ -6048,10 +5184,7 @@ mod tests {
         let (sum1, var1) = spread(&d);
         assert!((sum1 - sum0).abs() < 1e-3, "energy kept: {sum0} -> {sum1}");
         assert!(var1 < 0.9 * var0, "energy evens out: {var0} -> {var1}");
-        let after: Vec<f32> = (0..d.walkers.len())
-            .filter(|&k| !d.lives(k))
-            .map(|k| d.energy[k])
-            .collect();
+        let after: Vec<f32> = (0..d.walkers.len()).filter(|&k| !d.lives(k)).map(|k| d.energy[k]).collect();
         assert_eq!(empty, after, "empty slots untouched");
     }
 
@@ -6060,13 +5193,7 @@ mod tests {
     /// (so it is wired in), while left at its default it changes nothing.
     #[test]
     fn one_body_rules_ignore_threads_and_act() {
-        let grow = BigParams {
-            upkeep: 0.01,
-            capacity: 1200,
-            crystal_charge: 64.0,
-            crystal_eat: 0.02,
-            ..small(2, 1)
-        };
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
         let base_hash = {
             let mut d = BigDish::new(grow.clone());
             for _ in 0..40 {
@@ -6075,38 +5202,12 @@ mod tests {
             d.hash()
         };
         for p in [
-            BigParams {
-                hunger_scent: 6.0,
-                hunger_at: 1.0,
-                energy_flow: 0.05,
-                ..grow.clone()
-            },
-            BigParams {
-                body_pull: 3.0,
-                body_r: 2,
-                body_lone: 6.0,
-                ..grow.clone()
-            },
-            BigParams {
-                tether: 2,
-                ..grow.clone()
-            },
-            BigParams {
-                tether: 1,
-                tether_hold: 0.3,
-                ..grow.clone()
-            },
-            BigParams {
-                lone_upkeep: 5.0,
-                lone_r: 2,
-                ..grow.clone()
-            },
-            BigParams {
-                hunger_reach: 3.0,
-                hunt_at: 0.3,
-                tether: 1,
-                ..grow.clone()
-            },
+            BigParams { hunger_scent: 6.0, hunger_at: 1.0, energy_flow: 0.05, ..grow.clone() },
+            BigParams { body_pull: 3.0, body_r: 2, body_lone: 6.0, ..grow.clone() },
+            BigParams { tether: 2, ..grow.clone() },
+            BigParams { tether: 1, tether_hold: 0.3, ..grow.clone() },
+            BigParams { lone_upkeep: 5.0, lone_r: 2, ..grow.clone() },
+            BigParams { hunger_reach: 3.0, hunt_at: 0.3, tether: 1, ..grow.clone() },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();
@@ -6116,12 +5217,7 @@ mod tests {
                 b.tick();
             }
             assert_eq!(a.hash(), b.hash());
-            assert_ne!(
-                a.hash(),
-                base_hash,
-                "the rule changes the dish: {:?}",
-                (a.p.hunger_scent, a.p.body_pull, a.p.tether, a.p.lone_upkeep)
-            );
+            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.body_pull, a.p.tether, a.p.lone_upkeep));
             for (i, &n) in a.occupancy().iter().enumerate() {
                 assert!(n <= 1, "cell {i} holds {n}");
             }
@@ -6134,12 +5230,7 @@ mod tests {
     #[test]
     fn tether_keeps_contact() {
         let lost = |tether: u8| {
-            let mut d = BigDish::new(BigParams {
-                tether,
-                tether_hold: 0.5,
-                walkers: 600,
-                ..small(2, 1)
-            });
+            let mut d = BigDish::new(BigParams { tether, tether_hold: 0.5, walkers: 600, ..small(2, 1) });
             for _ in 0..20 {
                 d.tick();
             }
@@ -6181,35 +5272,9 @@ mod tests {
         let d = BigDish::new(small(2, 1));
         assert!(d.life.is_empty() && d.life_t.is_empty() && d.alarm.is_empty());
         for p in [
-            BigParams {
-                spore_rate: 0.01,
-                spore_scent: -1.0,
-                spore_steps: 20,
-                spore_reach: 8.0,
-                spore_land: 1.0,
-                spore_deposit: 0.2,
-                spore_rest: 10,
-                ..small(2, 1)
-            },
-            BigParams {
-                sleep_rate: 0.05,
-                wake_scent: 50.0,
-                alarm_keep: 0.95,
-                alarm_relay: 20.0,
-                wake_alarm: 1.0,
-                alarm_weight: 2.0,
-                sleep_rest: 10,
-                wake_steps: 10,
-                ..small(2, 1)
-            },
-            BigParams {
-                spore_burst: 0.5,
-                spore_alarm: 1.0,
-                spore_steps: 20,
-                alarm_keep: 0.98,
-                alarm_weight: -5.0,
-                ..small(2, 1)
-            },
+            BigParams { spore_rate: 0.01, spore_scent: -1.0, spore_steps: 20, spore_reach: 8.0, spore_land: 1.0, spore_deposit: 0.2, spore_rest: 10, ..small(2, 1) },
+            BigParams { sleep_rate: 0.05, wake_scent: 50.0, alarm_keep: 0.95, alarm_relay: 20.0, wake_alarm: 1.0, alarm_weight: 2.0, sleep_rest: 10, wake_steps: 10, ..small(2, 1) },
+            BigParams { spore_burst: 0.5, spore_alarm: 1.0, spore_steps: 20, alarm_keep: 0.98, alarm_weight: -5.0, ..small(2, 1) },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();
@@ -6230,11 +5295,7 @@ mod tests {
                 b.tick();
                 for k in 0..a.walkers.len() {
                     if before[k] == LIFE_DORMANT && a.life[k] == LIFE_DORMANT {
-                        assert_eq!(
-                            (pos[k].0, pos[k].1),
-                            (a.walkers[k].0, a.walkers[k].1),
-                            "a dormant walker moved"
-                        );
+                        assert_eq!((pos[k].0, pos[k].1), (a.walkers[k].0, a.walkers[k].1), "a dormant walker moved");
                     }
                     if before[k] == LIFE_DEAD {
                         assert_eq!(a.life[k], LIFE_DEAD, "the dead came back");
@@ -6329,11 +5390,7 @@ mod tests {
         assert_eq!(a.hash(), b.hash());
         assert_eq!(a.life_counts()[3], 0);
         assert!(paused > 0, "no spore or sleeper was seen");
-        assert!(
-            a.births > births_after && reused > 0,
-            "{} births after the strike, {reused} struck slots reused",
-            a.births - births_after
-        );
+        assert!(a.births > births_after && reused > 0, "{} births after the strike, {reused} struck slots reused", a.births - births_after);
     }
 
     /// The life cycle with Larder World's crystals and walls (merged
@@ -6397,11 +5454,7 @@ mod tests {
     /// changes nothing.
     #[test]
     fn soil_kinds_act_on_their_terms() {
-        let p = BigParams {
-            upkeep: 0.001,
-            capacity: 1200,
-            ..small(1, 1)
-        };
+        let p = BigParams { upkeep: 0.001, capacity: 1200, ..small(1, 1) };
         let run = |kind: u8| {
             let mut d = BigDish::new(p.clone());
             if kind > 0 {
@@ -6410,11 +5463,7 @@ mod tests {
             for _ in 0..30 {
                 d.tick();
             }
-            (
-                d.trail.iter().sum::<f32>(),
-                d.alive.iter().filter(|&&a| a).count(),
-                d.hash(),
-            )
+            (d.trail.iter().sum::<f32>(), d.alive.iter().filter(|&&a| a).count(), d.hash())
         };
         let (plain, sand, clay, barren) = (run(0), run(SOIL_SAND), run(SOIL_CLAY), run(SOIL_BARREN));
         assert!(sand.0 < plain.0 * 0.5, "sand {} plain {}", sand.0, plain.0);
@@ -6431,14 +5480,7 @@ mod tests {
 
     #[test]
     fn crystals_run_dry_and_terrain_pairs() {
-        let p = BigParams {
-            crystal_charge: 2.0,
-            crystal_eat: 0.2,
-            terrain_rock: 0.3,
-            terrain_wet: 0.3,
-            rect: true,
-            ..small(2, 2)
-        };
+        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.2, terrain_rock: 0.3, terrain_wet: 0.3, rect: true, ..small(2, 2) };
         let mut d = BigDish::new(p.clone());
         let full: f32 = d.pile_full.iter().sum();
         assert!(full > 0.0 && d.crystals_left() == 1.0);
@@ -6462,14 +5504,7 @@ mod tests {
         }
         assert_eq!(t.hash(), e.hash(), "threads change nothing");
         // The terrain map pairs across scales: rock at the same dish cells.
-        let (a, b) = (
-            BigDish::new(BigParams {
-                scale: 1,
-                substeps: 1,
-                ..p.clone()
-            }),
-            BigDish::new(BigParams { scale: 2, ..p.clone() }),
-        );
+        let (a, b) = (BigDish::new(BigParams { scale: 1, substeps: 1, ..p.clone() }), BigDish::new(BigParams { scale: 2, ..p.clone() }));
         let mut same = 0;
         for y in 0..a.h {
             for x in 0..a.w {
@@ -6481,10 +5516,7 @@ mod tests {
         assert!(same as f32 > 0.97 * (a.w * a.h) as f32);
         assert!(a.rock.iter().any(|&r| r) && a.wet.iter().any(|&w| w));
         // Crystals that refill end fuller than ones that run dry.
-        let mut r = BigDish::new(BigParams {
-            crystal_regrow: 0.05,
-            ..p.clone()
-        });
+        let mut r = BigDish::new(BigParams { crystal_regrow: 0.05, ..p.clone() });
         let mut n = BigDish::new(p.clone());
         for _ in 0..60 {
             r.tick();
@@ -6492,13 +5524,7 @@ mod tests {
         }
         assert!(r.crystals_left() > n.crystals_left());
         // A wall leaves the agar, clears its trail and moves walkers out.
-        let mut d = BigDish::new(BigParams {
-            crystal_charge: 0.0,
-            terrain_rock: 0.0,
-            terrain_wet: 0.0,
-            wall_hp: 0.0,
-            ..p.clone()
-        });
+        let mut d = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 0.0, ..p.clone() });
         for _ in 0..20 {
             d.tick();
         }
@@ -6510,11 +5536,7 @@ mod tests {
                 assert!(!d.agar[i] && d.trail[i] == 0.0);
             }
         }
-        let inside = d
-            .walkers
-            .iter()
-            .filter(|&&(x, y, _)| d.wall[y as usize * d.w + x as usize])
-            .count();
+        let inside = d.walkers.iter().filter(|&&(x, y, _)| d.wall[y as usize * d.w + x as usize]).count();
         assert!(inside < 5, "{inside} walkers left inside the wall");
         for _ in 0..30 {
             d.tick();
@@ -6526,14 +5548,7 @@ mod tests {
         }
         assert_eq!(d.broken, 0, "walls without health never break");
         // With health, the crowd pressing on a wall wears it through.
-        let mut b = BigDish::new(BigParams {
-            crystal_charge: 0.0,
-            terrain_rock: 0.0,
-            terrain_wet: 0.0,
-            wall_hp: 2.0,
-            wall_bite: 1.0,
-            ..p.clone()
-        });
+        let mut b = BigDish::new(BigParams { crystal_charge: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, wall_hp: 2.0, wall_bite: 1.0, ..p.clone() });
         for _ in 0..20 {
             b.tick();
         }
@@ -6559,31 +5574,14 @@ mod tests {
         // Pile 1 with half its cells emptied by hand, and no eating: without
         // flow it stays half empty, with flow the cells even out and still
         // add up to the pile's charge.
-        let p = BigParams {
-            crystal_charge: 2.0,
-            crystal_eat: 0.0,
-            crystal_flow: 0.0,
-            ..small(2, 2)
-        };
+        let p = BigParams { crystal_charge: 2.0, crystal_eat: 0.0, crystal_flow: 0.0, ..small(2, 2) };
         let spread = |d: &BigDish| {
-            let cells: Vec<f32> = d
-                .pile_cells
-                .iter()
-                .filter(|&&i| d.pile_of[i as usize] == 2)
-                .map(|&i| d.charge[i as usize])
-                .collect();
-            let (lo, hi) = cells
-                .iter()
-                .fold((f32::MAX, f32::MIN), |(lo, hi), &c| (lo.min(c), hi.max(c)));
+            let cells: Vec<f32> = d.pile_cells.iter().filter(|&&i| d.pile_of[i as usize] == 2).map(|&i| d.charge[i as usize]).collect();
+            let (lo, hi) = cells.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &c| (lo.min(c), hi.max(c)));
             (hi - lo, cells.iter().sum::<f32>())
         };
         let half = |d: &mut BigDish| {
-            let cells: Vec<u32> = d
-                .pile_cells
-                .iter()
-                .copied()
-                .filter(|&i| d.pile_of[i as usize] == 2)
-                .collect();
+            let cells: Vec<u32> = d.pile_cells.iter().copied().filter(|&i| d.pile_of[i as usize] == 2).collect();
             for &i in &cells[..cells.len() / 2] {
                 d.pile_charge[1] -= d.charge[i as usize];
                 d.charge[i as usize] = 0.0;
@@ -6600,10 +5598,7 @@ mod tests {
         let ((s0, _), (s1, sum1)) = (spread(&still), spread(&flow));
         assert!(s0 > 1.9, "without flow the disc stays uneven ({s0})");
         assert!(s1 < 0.01, "flow evens it ({s1})");
-        assert!(
-            (sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1],
-            "the total is kept"
-        );
+        assert!((sum1 - flow.pile_charge[1]).abs() < 1e-3 * flow.pile_full[1], "the total is kept");
         assert!((flow.crystal_left(1) - 0.5).abs() < 0.05);
     }
 
@@ -6612,27 +5607,17 @@ mod tests {
         // Pointy-top, circumradius pile_r: the top vertex is in, the same
         // distance out sideways is not (a flat side is at 0.87 r), and the
         // area is the hexagon's, not the disc's.
-        let d = BigDish::new(BigParams {
-            crystal_charge: 1.0,
-            terrain_rock: 0.0,
-            ..small(2, 2)
-        });
+        let d = BigDish::new(BigParams { crystal_charge: 1.0, terrain_rock: 0.0, ..small(2, 2) });
         let s = d.p.scale as f32;
         let r = d.p.pile_r * s;
         let (cx, cy) = (d.piles[1].0 * s, d.piles[1].1 * s);
         let at = |x: f32, y: f32| d.pile_of[d.cell(x, y).unwrap()] == 2;
         assert!(at(cx, cy - r + 1.0) && at(cx, cy + r - 1.0), "top and bottom vertices");
-        assert!(
-            !at(cx + 0.95 * r, cy) && !at(cx - 0.95 * r, cy),
-            "outside the flat sides"
-        );
+        assert!(!at(cx + 0.95 * r, cy) && !at(cx - 0.95 * r, cy), "outside the flat sides");
         assert!(at(cx + 0.8 * r, cy));
         let cells = d.pile_of.iter().filter(|&&p| p == 2).count() as f32;
         let hex = 2.598 * r * r;
-        assert!(
-            (cells - hex).abs() < 0.1 * hex,
-            "{cells} cells against a hexagon's {hex}"
-        );
+        assert!((cells - hex).abs() < 0.1 * hex, "{cells} cells against a hexagon's {hex}");
     }
 
     #[test]
@@ -6640,11 +5625,7 @@ mod tests {
         // Charge 512 a cell: a pile holds far more than a bite's f32 step,
         // and its total must still fall as the walkers eat (a running f32
         // total stood still here).
-        let mut d = BigDish::new(BigParams {
-            crystal_charge: 512.0,
-            crystal_eat: 0.005,
-            ..small(2, 2)
-        });
+        let mut d = BigDish::new(BigParams { crystal_charge: 512.0, crystal_eat: 0.005, ..small(2, 2) });
         let full: f64 = d.pile_full.iter().map(|&v| v as f64).sum();
         for _ in 0..60 {
             d.tick();
@@ -6660,30 +5641,15 @@ mod tests {
         // Outside it, 3 cells past the ring on the far side from home, a
         // sealed ring leaves less scent than a leaky one, and the leaky
         // one less than no ring.
-        let p = BigParams {
-            walkers: 50,
-            ..small(2, 2)
-        };
+        let p = BigParams { walkers: 50, ..small(2, 2) };
         let at = |ring: Option<f32>| {
-            let mut d = BigDish::new(BigParams {
-                wall_scent: ring.unwrap_or(0.0),
-                ..p.clone()
-            });
+            let mut d = BigDish::new(BigParams { wall_scent: ring.unwrap_or(0.0), ..p.clone() });
             let ((hx, hy), (cx, cy)) = (d.piles[0], d.piles[1]);
             let r = d.p.pile_r + 3.0;
             if ring.is_some() {
                 for q in 0..24 {
-                    let (a0, a1) = (
-                        q as f32 / 24.0 * std::f32::consts::TAU,
-                        (q + 1) as f32 / 24.0 * std::f32::consts::TAU,
-                    );
-                    d.build_wall(
-                        cx + r * a0.cos(),
-                        cy + r * a0.sin(),
-                        cx + r * a1.cos(),
-                        cy + r * a1.sin(),
-                        2.0,
-                    );
+                    let (a0, a1) = (q as f32 / 24.0 * std::f32::consts::TAU, (q + 1) as f32 / 24.0 * std::f32::consts::TAU);
+                    d.build_wall(cx + r * a0.cos(), cy + r * a0.sin(), cx + r * a1.cos(), cy + r * a1.sin(), 2.0);
                 }
             }
             for _ in 0..200 {
@@ -6694,10 +5660,7 @@ mod tests {
             d.scent[y as usize * d.sw + x as usize]
         };
         let (open, leaky, sealed) = (at(None), at(Some(0.3)), at(Some(0.0)));
-        assert!(
-            sealed < leaky && leaky < open,
-            "sealed {sealed} leaky {leaky} open {open}"
-        );
+        assert!(sealed < leaky && leaky < open, "sealed {sealed} leaky {leaky} open {open}");
     }
 
     #[test]
@@ -6711,10 +5674,7 @@ mod tests {
     /// On today's grid the network grows out from home and reaches food.
     #[test]
     fn the_mould_spreads_and_finds_food() {
-        let mut d = BigDish::new(BigParams {
-            seed: 2,
-            ..BigParams::today()
-        });
+        let mut d = BigDish::new(BigParams { seed: 2, ..BigParams::today() });
         for _ in 0..30 * STEPS_PER_SECOND {
             d.tick();
         }

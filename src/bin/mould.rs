@@ -46,7 +46,6 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use slime_mould::mould::lesson::{Lesson, Step};
 use slime_mould::mould::level::{Progress, DISHES, ENTRIES, FREE, WANDER};
 use slime_mould::mould::look::{self, Style};
@@ -54,6 +53,7 @@ use slime_mould::mould::render::{self, Banner, Menu, QuitArm, View};
 use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
 use slime_mould::mould::{tune, Dish, Params, Phase, Tool, H, STEPS_PER_FRAME, W};
 use slime_mould::sound::{self, listen::Listener};
+use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::{ElementState, MouseButton, WindowEvent};
@@ -388,7 +388,9 @@ impl Handler {
         }
         let stars = match (self.entry, &self.lesson) {
             (Entry::Lesson, Some(l)) if l.step == Step::Done => 1,
-            (Entry::Dish(_), _) if self.dish.phase == Phase::Over => self.dish.card.as_ref().map_or(0, |c| c.stars),
+            (Entry::Dish(_), _) if self.dish.phase == Phase::Over => {
+                self.dish.card.as_ref().map_or(0, |c| c.stars)
+            }
             _ => return,
         };
         self.recorded = true;
@@ -400,9 +402,7 @@ impl Handler {
     /// N in the Wanderer: on to the next dish with what arrived, or, after
     /// she died, a new journey from the first dish.
     fn next_stretch(&mut self) {
-        let (Some(j), Entry::Wander(seed)) = (self.journey, self.entry) else {
-            return;
-        };
+        let (Some(j), Entry::Wander(seed)) = (self.journey, self.entry) else { return };
         let arrived = match self.dish.wander_state().and_then(|w| w.outcome) {
             Some(Outcome::Arrived { n, .. }) => Some(n),
             Some(Outcome::Lost { .. }) => None,
@@ -550,15 +550,7 @@ impl Handler {
                     eprintln!("could not save {}: {e}", tune::TUNE_FILE);
                 }
             }
-            if matches!(
-                code,
-                KeyCode::ArrowUp
-                    | KeyCode::ArrowDown
-                    | KeyCode::ArrowLeft
-                    | KeyCode::ArrowRight
-                    | KeyCode::Enter
-                    | KeyCode::Backspace
-            ) {
+            if matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::Enter | KeyCode::Backspace) {
                 return;
             }
         }
@@ -580,18 +572,8 @@ impl Handler {
             .position(|&k| k == code);
             match code {
                 KeyCode::KeyM | KeyCode::Escape => self.view.menu = None,
-                KeyCode::ArrowUp => {
-                    self.view.menu = Some(Menu {
-                        cursor: m.cursor.saturating_sub(1),
-                        ..m
-                    })
-                }
-                KeyCode::ArrowDown => {
-                    self.view.menu = Some(Menu {
-                        cursor: (m.cursor + 1).min(ENTRIES - 1),
-                        ..m
-                    })
-                }
+                KeyCode::ArrowUp => self.view.menu = Some(Menu { cursor: m.cursor.saturating_sub(1), ..m }),
+                KeyCode::ArrowDown => self.view.menu = Some(Menu { cursor: (m.cursor + 1).min(ENTRIES - 1), ..m }),
                 KeyCode::Enter | KeyCode::Space => self.pick(m.cursor),
                 _ => {
                     if let Some(e) = digit {
@@ -605,15 +587,7 @@ impl Handler {
             self.open_menu();
             return;
         }
-        if self.view.brief
-            && code != KeyCode::Escape
-            && code != KeyCode::F2
-            && code != KeyCode::F3
-            && code != KeyCode::F4
-            && code != KeyCode::F5
-            && code != KeyCode::F6
-            && code != KeyCode::F7
-        {
+        if self.view.brief && code != KeyCode::Escape && code != KeyCode::F2 && code != KeyCode::F3 && code != KeyCode::F4 && code != KeyCode::F5 && code != KeyCode::F6 && code != KeyCode::F7 {
             self.view.brief = false;
             self.let_go();
             return;
@@ -652,11 +626,7 @@ impl Handler {
             KeyCode::KeyS => {
                 self.sound_on = !self.sound_on;
                 if let Some(sp) = self.speaker.as_mut() {
-                    sp.send([sound::SoundCmd::Master(if self.sound_on {
-                        sound::synth::DEFAULT_MASTER
-                    } else {
-                        0.0
-                    })]);
+                    sp.send([sound::SoundCmd::Master(if self.sound_on { sound::synth::DEFAULT_MASTER } else { 0.0 })]);
                 }
                 if let Some(w) = &self.window {
                     let state = match (self.speaker.is_some(), self.sound_on) {
@@ -679,10 +649,7 @@ impl Handler {
                 let n = (look::STARVE_LOOK.load(Relaxed) + 1) % look::STARVE_LOOKS.len() as u8;
                 look::STARVE_LOOK.store(n, Relaxed);
                 if let Some(w) = &self.window {
-                    w.set_title(&format!(
-                        "Mould: starving mould drawn as {} (F3)",
-                        look::STARVE_LOOKS[n as usize]
-                    ));
+                    w.set_title(&format!("Mould: starving mould drawn as {} (F3)", look::STARVE_LOOKS[n as usize]));
                 }
             }
             // How the walkers are drawn (`look::WALKER_LOOK`): off, grains,
@@ -692,10 +659,7 @@ impl Handler {
                 let n = (look::WALKER_LOOK.load(Relaxed) + 1) % look::WALKER_LOOKS.len() as u8;
                 look::WALKER_LOOK.store(n, Relaxed);
                 if let Some(w) = &self.window {
-                    w.set_title(&format!(
-                        "Mould: walkers drawn as {} (F4)",
-                        look::WALKER_LOOKS[n as usize]
-                    ));
+                    w.set_title(&format!("Mould: walkers drawn as {} (F4)", look::WALKER_LOOKS[n as usize]));
                 }
             }
             // The anti-pixel pass (`look::SMOOTH`), on or off. Render-only.
@@ -721,10 +685,7 @@ impl Handler {
                 let on = !look::FIELD.load(Relaxed);
                 look::FIELD.store(on, Relaxed);
                 if let Some(w) = &self.window {
-                    w.set_title(&format!(
-                        "Mould: {} (F7)",
-                        if on { "drawn from the simulation" } else { "tube look" }
-                    ));
+                    w.set_title(&format!("Mould: {} (F7)", if on { "drawn from the simulation" } else { "tube look" }));
                 }
             }
             // Go: only while fed mould is in the crack (the dish refuses
@@ -890,10 +851,7 @@ impl ApplicationHandler for Handler {
                 if let PhysicalKey::Code(code) = event.physical_key {
                     // Held arrows repeat in the tuning panel only.
                     let repeat_ok = self.view.tune.is_some()
-                        && matches!(
-                            code,
-                            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown
-                        );
+                        && matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown);
                     if event.state == ElementState::Pressed && (!event.repeat || repeat_ok) {
                         self.key(code, event_loop);
                     }

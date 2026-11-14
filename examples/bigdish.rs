@@ -117,12 +117,7 @@ use slime_mould::mould::{H, STEPS_PER_SECOND, W};
 
 fn preset(name: &str) -> BigParams {
     let t = BigParams::today();
-    let naive = BigParams {
-        scale: 4,
-        walkers: 32_000,
-        scent_coarse: false,
-        ..t.clone()
-    };
+    let naive = BigParams { scale: 4, walkers: 32_000, scent_coarse: false, ..t.clone() };
     let steps = BigParams {
         substeps: 4,
         deposit: t.deposit / 4.0,
@@ -131,50 +126,25 @@ fn preset(name: &str) -> BigParams {
         scent_keep: t.scent_keep.powf(0.25),
         ..naive.clone()
     };
-    let smell = BigParams {
-        scent_coarse: true,
-        food_deposit: t.food_deposit,
-        scent_keep: t.scent_keep,
-        ..steps.clone()
-    };
-    let reach = BigParams {
-        sensor_offset: t.sensor_offset * 4.0,
-        ..smell.clone()
-    };
+    let smell = BigParams { scent_coarse: true, food_deposit: t.food_deposit, scent_keep: t.scent_keep, ..steps.clone() };
+    let reach = BigParams { sensor_offset: t.sensor_offset * 4.0, ..smell.clone() };
     match name {
         "today" => t,
         "naive" => naive.clone(),
-        "nose" => BigParams {
-            scent_offset: t.sensor_offset * 4.0,
-            ..naive
-        },
+        "nose" => BigParams { scent_offset: t.sensor_offset * 4.0, ..naive },
         "steps" => steps,
         "smell" => smell,
-        "spread" => BigParams {
-            trail_passes: 4,
-            ..reach.clone()
-        },
-        "turn" => BigParams {
-            trail_passes: 4,
-            sense_every: 4,
-            ..reach
-        },
+        "spread" => BigParams { trail_passes: 4, ..reach.clone() },
+        "turn" => BigParams { trail_passes: 4, sense_every: 4, ..reach },
         "reach" => reach.clone(),
-        "dense" => BigParams {
-            walkers: 100_000,
-            scent_offset: t.sensor_offset * 4.0,
-            ..naive
-        },
+        "dense" => BigParams { walkers: 100_000, scent_offset: t.sensor_offset * 4.0, ..naive },
         _ => panic!("unknown preset {name}: today, naive, steps, smell, reach, spread, turn, nose, dense"),
     }
 }
 
 fn write_gif(path: &str, shots: Vec<image::RgbaImage>, ms: u32) {
     let delay = image::Delay::from_numer_denom_ms(ms, 1);
-    let frames: Vec<image::Frame> = shots
-        .into_iter()
-        .map(|img| image::Frame::from_parts(img, 0, 0, delay))
-        .collect();
+    let frames: Vec<image::Frame> = shots.into_iter().map(|img| image::Frame::from_parts(img, 0, 0, delay)).collect();
     let file = std::fs::File::create(path).expect("gif file");
     let mut enc = image::codecs::gif::GifEncoder::new_with_speed(file, 10);
     enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();
@@ -260,11 +230,7 @@ fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
     let refv = pct(&d.trail, 0.999).max(1e-6);
     let down = down.max(1);
     let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
-    let mut c = [
-        vec![0.0f32; (iw * ih) as usize],
-        vec![0.0f32; (iw * ih) as usize],
-        vec![0.0f32; (iw * ih) as usize],
-    ];
+    let mut c = [vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize], vec![0.0f32; (iw * ih) as usize]];
     let mut living = 0usize;
     for (k, &(x, y, _)) in d.walkers.iter().enumerate() {
         let l = if d.life.is_empty() { 0 } else { d.life[k] };
@@ -308,18 +274,8 @@ fn life_picture(d: &BigDish, down: usize) -> image::RgbaImage {
             let i = (py * iw + px) as usize;
             let [a, b, sp] = [0, 1, 2].map(|s| 1.0 - (-c[s][i] / (2.0 * mean)).exp());
             let r = (al / aref).clamp(0.0, 1.0).sqrt();
-            let col =
-                |ca: f32, cb: f32, cs: f32, cr: f32| (255.0 * g + ca * a + cb * b + cs * sp + cr * r).min(255.0) as u8;
-            img.put_pixel(
-                px,
-                py,
-                image::Rgba([
-                    col(255.0, 140.0, 255.0, 200.0),
-                    col(170.0, 90.0, 255.0, 0.0),
-                    (col(60.0, 255.0, 255.0, 0.0) as f32 + 140.0 * sb).min(255.0) as u8,
-                    255,
-                ]),
-            );
+            let col = |ca: f32, cb: f32, cs: f32, cr: f32| (255.0 * g + ca * a + cb * b + cs * sp + cr * r).min(255.0) as u8;
+            img.put_pixel(px, py, image::Rgba([col(255.0, 140.0, 255.0, 200.0), col(170.0, 90.0, 255.0, 0.0), (col(60.0, 255.0, 255.0, 0.0) as f32 + 140.0 * sb).min(255.0) as u8, 255]));
         }
     }
     img
@@ -343,12 +299,7 @@ fn bodies(d: &BigDish, min: usize) -> (usize, usize) {
         while let Some(i) = stack.pop() {
             size += 1;
             let (x, y) = (i % w, i / w);
-            for (ok, j) in [
-                (x > 0, i.wrapping_sub(1)),
-                (x + 1 < w, i + 1),
-                (y > 0, i.wrapping_sub(w)),
-                (y + 1 < h, i + w),
-            ] {
+            for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < w, i + 1), (y > 0, i.wrapping_sub(w)), (y + 1 < h, i + w)] {
                 if ok && tube[j] && !seen[j] {
                     seen[j] = true;
                     stack.push(j);
@@ -386,12 +337,7 @@ fn joined(d: &BigDish) -> (Vec<usize>, usize) {
         while let Some(i) = stack.pop() {
             size += 1;
             let (x, y) = (i % w, i / w);
-            for (ok, j) in [
-                (x > 0, i.wrapping_sub(1)),
-                (x + 1 < w, i + 1),
-                (y > 0, i.wrapping_sub(w)),
-                (y + 1 < h, i + w),
-            ] {
+            for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < w, i + 1), (y > 0, i.wrapping_sub(w)), (y + 1 < h, i + w)] {
                 if ok && tube[j] && label[j] == 0 {
                     label[j] = next;
                     stack.push(j);
@@ -459,11 +405,7 @@ fn kinds_picture(d: &BigDish, down: usize) -> image::RgbaImage {
             let a = 1.0 - (-c[0][i] / (2.0 * mean[0])).exp();
             let b = 1.0 - (-c[1][i] / (2.0 * mean[1])).exp();
             let col = |ca: f32, cb: f32| (255.0 * g + ca * a + cb * b).min(255.0) as u8;
-            img.put_pixel(
-                px,
-                py,
-                image::Rgba([col(255.0, 60.0), col(170.0, 200.0), col(60.0, 220.0), 255]),
-            );
+            img.put_pixel(px, py, image::Rgba([col(255.0, 60.0), col(170.0, 200.0), col(60.0, 220.0), 255]));
         }
     }
     img
@@ -472,12 +414,7 @@ fn kinds_picture(d: &BigDish, down: usize) -> image::RgbaImage {
 /// Each species' trail in its own colour (amber, teal, violet, green), on
 /// the soft curve over the total trail's 99.9th percentile; colours add.
 fn species_picture(d: &BigDish, down: usize) -> image::RgbaImage {
-    const COL: [[f32; 3]; 4] = [
-        [255.0, 170.0, 60.0],
-        [60.0, 200.0, 220.0],
-        [190.0, 110.0, 255.0],
-        [120.0, 230.0, 90.0],
-    ];
+    const COL: [[f32; 3]; 4] = [[255.0, 170.0, 60.0], [60.0, 200.0, 220.0], [190.0, 110.0, 255.0], [120.0, 230.0, 90.0]];
     let refv = pct(&d.trail, 0.999).max(1e-6);
     let down = down.max(1);
     let (iw, ih) = ((d.w / down) as u32, (d.h / down) as u32);
@@ -497,16 +434,7 @@ fn species_picture(d: &BigDish, down: usize) -> image::RgbaImage {
                     rgb[c] += COL[sp % 4][c] * g;
                 }
             }
-            img.put_pixel(
-                px,
-                py,
-                image::Rgba([
-                    rgb[0].min(255.0) as u8,
-                    rgb[1].min(255.0) as u8,
-                    rgb[2].min(255.0) as u8,
-                    255,
-                ]),
-            );
+            img.put_pixel(px, py, image::Rgba([rgb[0].min(255.0) as u8, rgb[1].min(255.0) as u8, rgb[2].min(255.0) as u8, 255]));
         }
     }
     img
@@ -545,14 +473,7 @@ fn main() {
     // shoots where the mould feeds).
     let (mut strike_pile, mut bait_pile) = (None::<usize>, None::<usize>);
     // Alarm reaches `strike_alarm_r` dish cells (0: twice `strike_r`).
-    let (mut strike, mut strike_x, mut strike_y, mut strike_r, mut strike_alarm, mut strike_alarm_r) = (
-        Vec::<f32>::new(),
-        W as f32 / 2.0,
-        H as f32 / 2.0,
-        10.0f32,
-        50.0f32,
-        0.0f32,
-    );
+    let (mut strike, mut strike_x, mut strike_y, mut strike_r, mut strike_alarm, mut strike_alarm_r) = (Vec::<f32>::new(), W as f32 / 2.0, H as f32 / 2.0, 10.0f32, 50.0f32, 0.0f32);
     // Print the life line (below) even with the life cycle off, for controls.
     let mut lifeline = false;
     // Print the joined line (see `joined`).
@@ -563,9 +484,7 @@ fn main() {
     let mut tier = None::<Tier>;
     let mut overrides: Vec<(String, String)> = Vec::new();
     for arg in std::env::args().skip(1) {
-        let (k, v) = arg
-            .split_once('=')
-            .unwrap_or_else(|| panic!("expected key=value, got {arg}"));
+        let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
         match k {
             "preset" => name = v.into(),
             "tag" => tag = Some(v.into()),
@@ -599,12 +518,7 @@ fn main() {
             "bait_r" => bait_r = v.parse().unwrap(),
             "at" => at = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "lifeline" => lifeline = v != "0",
-            "tier" => {
-                tier = Some(
-                    Tier::from_name(v)
-                        .unwrap_or_else(|| panic!("tier={v}: one of {}", Tier::ALL.map(|t| t.name()).join(", "))),
-                )
-            }
+            "tier" => tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("tier={v}: one of {}", Tier::ALL.map(|t| t.name()).join(", ")))),
             "strike_pile" => strike_pile = Some(v.parse().unwrap()),
             "bait_pile" => bait_pile = Some(v.parse().unwrap()),
             _ => overrides.push((k.into(), v.into())),
@@ -620,11 +534,7 @@ fn main() {
     let mut per_species: Vec<(usize, String, f32)> = Vec::new();
     for (k, v) in &overrides {
         let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}: not a number"));
-        if let Some((sp, field)) = k
-            .strip_prefix('s')
-            .and_then(|r| r.split_once('_'))
-            .and_then(|(n, fld)| Some((n.parse::<usize>().ok()?, fld)))
-        {
+        if let Some((sp, field)) = k.strip_prefix('s').and_then(|r| r.split_once('_')).and_then(|(n, fld)| Some((n.parse::<usize>().ok()?, fld))) {
             per_species.push((sp, field.into(), f()));
             continue;
         }
@@ -755,12 +665,7 @@ fn main() {
         }
     }
     if !per_species.is_empty() {
-        let n = per_species
-            .iter()
-            .map(|&(sp, ..)| sp + 1)
-            .max()
-            .unwrap()
-            .max(p.species as usize);
+        let n = per_species.iter().map(|&(sp, ..)| sp + 1).max().unwrap().max(p.species as usize);
         p.species_sets = vec![SpeciesSet::from_params(&p); n];
         for (sp, field, v) in &per_species {
             let s = &mut p.species_sets[*sp];
@@ -790,40 +695,21 @@ fn main() {
     for &seed in &seeds {
         let mut d = BigDish::new(BigParams { seed, ..p.clone() });
         d.threads = threads;
-        println!(
-            "== seed {seed}: {} x {}, {} walkers, {} piles",
-            d.w,
-            d.h,
-            d.walkers.len(),
-            d.piles.len()
-        );
+        println!("== seed {seed}: {} x {}, {} walkers, {} piles", d.w, d.h, d.walkers.len(), d.piles.len());
         // Piles by distance from home (pile 0), so `strike_pile=1` is the
         // nearest crystal to the start on every seed.
         let mut by_home: Vec<(f32, f32)> = d.piles.clone();
         let home = d.piles[0];
-        by_home.sort_by(|a, b| {
-            (a.0 - home.0)
-                .hypot(a.1 - home.1)
-                .total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))
-        });
+        by_home.sort_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1)));
         let (strike_x, strike_y) = strike_pile.map_or((strike_x, strike_y), |n| by_home[n]);
         let (bait_x, bait_y) = bait_pile.map_or((bait_x, bait_y), |n| by_home[n]);
         let mut shots = Vec::new();
         let mut spent = 0.0f64;
-        let to_tick = |t: f32| {
-            if t < 0.0 {
-                u64::MAX
-            } else {
-                (t * STEPS_PER_SECOND as f32).round() as u64
-            }
-        };
+        let to_tick = |t: f32| if t < 0.0 { u64::MAX } else { (t * STEPS_PER_SECOND as f32).round() as u64 };
         let (infect_tick, cut_tick) = (to_tick(infect), to_tick(cut));
         let mut ever = vec![false; d.walkers.len()];
         let mut prev_lead: Vec<u8> = Vec::new();
-        let mut stills: Vec<u64> = at
-            .iter()
-            .map(|s| (s * STEPS_PER_SECOND as f32).round() as u64)
-            .collect();
+        let mut stills: Vec<u64> = at.iter().map(|s| (s * STEPS_PER_SECOND as f32).round() as u64).collect();
         stills.sort_unstable();
         // When each pile was first reached (tube on it), dish seconds; 0 for
         // piles reached at the start (pile 0), -1 for never.
@@ -842,30 +728,17 @@ fn main() {
             }
             if bait.iter().any(|&t| to_tick(t) == d.ticks) {
                 d.strike(bait_x, bait_y, 0.0, strike_alarm, bait_r);
-                println!(
-                    "seed {seed} {name} t {:5.1}s  bait at {bait_x},{bait_y} r {bait_r}",
-                    d.seconds()
-                );
+                println!("seed {seed} {name} t {:5.1}s  bait at {bait_x},{bait_y} r {bait_r}", d.seconds());
             }
             if strike.iter().any(|&t| to_tick(t) == d.ticks) {
-                let ar = if strike_alarm_r > 0.0 {
-                    strike_alarm_r
-                } else {
-                    2.0 * strike_r
-                };
+                let ar = if strike_alarm_r > 0.0 { strike_alarm_r } else { 2.0 * strike_r };
                 let killed = d.strike(strike_x, strike_y, strike_r, strike_alarm, ar);
-                println!(
-                    "seed {seed} {name} t {:5.1}s  strike at {strike_x},{strike_y} r {strike_r}: killed {killed}",
-                    d.seconds()
-                );
+                println!("seed {seed} {name} t {:5.1}s  strike at {strike_x},{strike_y} r {strike_r}: killed {killed}", d.seconds());
             }
             if d.ticks == cut_tick {
                 // The knife: clear trail and germ in a band across the dish.
                 let s = d.p.scale as f32;
-                let (x0, x1) = (
-                    ((cut_x - cut_w / 2.0) * s) as usize,
-                    ((cut_x + cut_w / 2.0) * s) as usize,
-                );
+                let (x0, x1) = (((cut_x - cut_w / 2.0) * s) as usize, ((cut_x + cut_w / 2.0) * s) as usize);
                 for y in 0..d.h {
                     for x in x0..x1.min(d.w) {
                         d.trail[y * d.w + x] = 0.0;
@@ -883,9 +756,7 @@ fn main() {
             }
             if let Some(dir) = &frames {
                 if d.ticks.is_multiple_of(every) {
-                    picture(&d, style.split(',').next().unwrap(), knee, 1)
-                        .save(format!("{dir}/{name}-s{seed}-{:04}.png", d.ticks / every))
-                        .unwrap();
+                    picture(&d, style.split(',').next().unwrap(), knee, 1).save(format!("{dir}/{name}-s{seed}-{:04}.png", d.ticks / every)).unwrap();
                 }
             }
             if let Some(dir) = &look {
@@ -893,11 +764,7 @@ fn main() {
                     // One still a style when several are listed (style=amber,grey).
                     let secs = d.ticks / STEPS_PER_SECOND as u64;
                     // Whole seconds as 005s; a still between seconds by its tick.
-                    let secs = if d.ticks.is_multiple_of(STEPS_PER_SECOND as u64) {
-                        format!("{secs:03}s")
-                    } else {
-                        format!("t{:06}", d.ticks)
-                    };
+                    let secs = if d.ticks.is_multiple_of(STEPS_PER_SECOND as u64) { format!("{secs:03}s") } else { format!("t{:06}", d.ticks) };
                     for st in style.split(',') {
                         if st == "raw" {
                             // The trail and walkers a cell as f32 little-endian, w x h each,
@@ -943,16 +810,7 @@ fn main() {
                     let (on, body) = joined(&d);
                     let list: Vec<String> = on.iter().map(|i| i.to_string()).collect();
                     let s2 = (d.p.scale * d.p.scale) as f32;
-                    println!(
-                        "seed {seed} {name} t {:5.1}s  joined {} body {:.1}",
-                        m.seconds,
-                        if list.is_empty() {
-                            "-".to_string()
-                        } else {
-                            list.join(",")
-                        },
-                        body as f32 / s2
-                    );
+                    println!("seed {seed} {name} t {:5.1}s  joined {} body {:.1}", m.seconds, if list.is_empty() { "-".to_string() } else { list.join(",") }, body as f32 / s2);
                 }
                 if !d.energy.is_empty() {
                     // Growth: living walkers, their mean energy, births and
@@ -972,11 +830,7 @@ fn main() {
                         let n = tube.len();
                         let p99 = *tube.select_nth_unstable_by(n * 99 / 100, |a, b| a.total_cmp(b)).1;
                         let p50 = *tube.select_nth_unstable_by(n / 2, |a, b| a.total_cmp(b)).1;
-                        println!(
-                            "seed {seed} {name} t {:5.1}s  contrast {:.2}",
-                            m.seconds,
-                            p99 / p50.max(1e-9)
-                        );
+                        println!("seed {seed} {name} t {:5.1}s  contrast {:.2}", m.seconds, p99 / p50.max(1e-9));
                     }
                 }
                 if !d.species_trail.is_empty() {
@@ -1002,10 +856,7 @@ fn main() {
                     // Species 0's trail in the left half (territories), and
                     // the share of tube cells whose leading species changed
                     // since the last report (motion).
-                    let left: f64 = (0..d.w * d.h)
-                        .filter(|i| i % d.w < d.w / 2)
-                        .map(|i| d.species_trail[0][i] as f64)
-                        .sum();
+                    let left: f64 = (0..d.w * d.h).filter(|i| i % d.w < d.w / 2).map(|i| d.species_trail[0][i] as f64).sum();
                     let lead: Vec<u8> = (0..d.w * d.h)
                         .map(|i| {
                             if d.trail[i] <= d.p.tube {
@@ -1055,11 +906,7 @@ fn main() {
                         let s2 = (d.p.scale * d.p.scale) as f32;
                         let mut parts = Vec::new();
                         for (sp, f) in d.species_trail.iter().enumerate() {
-                            let cut = if d.p.species_sets.is_empty() {
-                                d.p.tube
-                            } else {
-                                d.p.tube * d.p.species_sets[sp].deposit / d.p.deposit.max(1e-9)
-                            };
+                            let cut = if d.p.species_sets.is_empty() { d.p.tube } else { d.p.tube * d.p.species_sets[sp].deposit / d.p.deposit.max(1e-9) };
                             let on: Vec<bool> = f.iter().map(|&v| v > cut).collect();
                             let area = on.iter().filter(|&&b| b).count();
                             let mut seen = vec![false; on.len()];
@@ -1098,12 +945,7 @@ fn main() {
                                     pieces += 1;
                                 }
                             }
-                            parts.push(format!(
-                                "s{sp} walkers {} area {:.1} pieces {}",
-                                walkers[sp],
-                                area as f32 / s2,
-                                pieces
-                            ));
+                            parts.push(format!("s{sp} walkers {} area {:.1} pieces {}", walkers[sp], area as f32 / s2, pieces));
                         }
                         println!("seed {seed} {name} t {:5.1}s  own {}", m.seconds, parts.join("  "));
                     }
@@ -1114,34 +956,18 @@ fn main() {
                         for &sp in &d.spec {
                             c[sp as usize] += 1;
                         }
-                        let w: Vec<String> = c
-                            .iter()
-                            .map(|&v| format!("{:.3}", v as f32 / d.spec.len().max(1) as f32))
-                            .collect();
+                        let w: Vec<String> = c.iter().map(|&v| format!("{:.3}", v as f32 / d.spec.len().max(1) as f32)).collect();
                         println!("seed {seed} {name} t {:5.1}s  walkers {}", m.seconds, w.join(","));
                     }
                 }
                 if d.p.blob {
                     // Spread from one spot: the median and 90th-percentile
                     // walker distance from the start centre, in fine cells.
-                    let (cx, cy) = if d.p.blob_r > 0.0 {
-                        (d.w as f32 / 2.0, d.h as f32 / 2.0)
-                    } else {
-                        (d.piles[0].0 * d.p.scale as f32, d.piles[0].1 * d.p.scale as f32)
-                    };
+                    let (cx, cy) = if d.p.blob_r > 0.0 { (d.w as f32 / 2.0, d.h as f32 / 2.0) } else { (d.piles[0].0 * d.p.scale as f32, d.piles[0].1 * d.p.scale as f32) };
                     let mut dist: Vec<f32> = d.walkers.iter().map(|&(x, y, _)| (x - cx).hypot(y - cy)).collect();
                     dist.sort_by(|a, b| a.total_cmp(b));
-                    let at = |q: f32| {
-                        dist.get(((dist.len() as f32 * q) as usize).min(dist.len().saturating_sub(1)))
-                            .copied()
-                            .unwrap_or(0.0)
-                    };
-                    println!(
-                        "seed {seed} {name} t {:5.1}s  extent r50 {:.1} r90 {:.1}",
-                        m.seconds,
-                        at(0.5),
-                        at(0.9)
-                    );
+                    let at = |q: f32| dist.get(((dist.len() as f32 * q) as usize).min(dist.len().saturating_sub(1))).copied().unwrap_or(0.0);
+                    println!("seed {seed} {name} t {:5.1}s  extent r50 {:.1} r90 {:.1}", m.seconds, at(0.5), at(0.9));
                 }
                 if !d.life.is_empty() || lifeline {
                     // Life cycle: walkers in each state; piles held (piles
@@ -1174,11 +1000,7 @@ fn main() {
                         .walkers
                         .iter()
                         .enumerate()
-                        .filter(|&(k, &(x, y, _))| {
-                            d.lives(k)
-                                && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD))
-                                && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r
-                        })
+                        .filter(|&(k, &(x, y, _))| d.lives(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (x / s - strike_x).hypot(y / s - strike_y) <= 2.0 * strike_r)
                         .count();
                     // `rim`: the share of them within 2 and within 10 dish
                     // cells of the agar's edge along a row or column (the
@@ -1186,9 +1008,7 @@ fn main() {
                     // the wall). The wall reads as a wall to sensors 9 dish
                     // cells out, so a start spread to the edge leaves the
                     // 2-cell band in 0.2 s; a rider would sit within 10.
-                    let off = |x: i64, y: i64| {
-                        x < 0 || y < 0 || x >= d.w as i64 || y >= d.h as i64 || !d.agar[y as usize * d.w + x as usize]
-                    };
+                    let off = |x: i64, y: i64| x < 0 || y < 0 || x >= d.w as i64 || y >= d.h as i64 || !d.agar[y as usize * d.w + x as usize];
                     let rim = |cells: i64| {
                         let edge = cells * d.p.scale as i64;
                         d.walkers
@@ -1196,9 +1016,7 @@ fn main() {
                             .enumerate()
                             .filter(|&(k, &(x, y, _))| {
                                 let (x, y) = (x as i64, y as i64);
-                                d.lives(k)
-                                    && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD))
-                                    && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
+                                d.lives(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) && (off(x - edge, y) || off(x + edge, y) || off(x, y - edge) || off(x, y + edge))
                             })
                             .count()
                     };
@@ -1218,19 +1036,8 @@ fn main() {
                     if !d.scar.is_empty() {
                         // Habituation: the scar's peak, and its sum within
                         // twice strike_r of the strike point.
-                        let sum: f32 = (0..d.h)
-                            .flat_map(|y| (0..d.w).map(move |x| (x, y)))
-                            .filter(|&(x, y)| {
-                                (x as f32 / s - strike_x).hypot(y as f32 / s - strike_y) <= 2.0 * strike_r
-                            })
-                            .map(|(x, y)| d.scar[y * d.w + x])
-                            .sum();
-                        println!(
-                            "seed {seed} {name} t {:5.1}s  scar max {:.2} near {:.0}",
-                            m.seconds,
-                            d.scar.iter().cloned().fold(0.0, f32::max),
-                            sum
-                        );
+                        let sum: f32 = (0..d.h).flat_map(|y| (0..d.w).map(move |x| (x, y))).filter(|&(x, y)| (x as f32 / s - strike_x).hypot(y as f32 / s - strike_y) <= 2.0 * strike_r).map(|(x, y)| d.scar[y * d.w + x]).sum();
+                        println!("seed {seed} {name} t {:5.1}s  scar max {:.2} near {:.0}", m.seconds, d.scar.iter().cloned().fold(0.0, f32::max), sum);
                     }
                 }
                 if !d.kind.is_empty() {
@@ -1253,12 +1060,7 @@ fn main() {
                         }
                         dist.sort_by(|a, b| a.total_cmp(b));
                         let n = dist.len().max(1);
-                        parts.push(format!(
-                            "k{kd} n {} on {:.3} r {:.1}",
-                            dist.len(),
-                            on as f32 / n as f32,
-                            dist.get(n / 2).copied().unwrap_or(0.0)
-                        ));
+                        parts.push(format!("k{kd} n {} on {:.3} r {:.1}", dist.len(), on as f32 / n as f32, dist.get(n / 2).copied().unwrap_or(0.0)));
                     }
                     println!("seed {seed} {name} t {:5.1}s  kinds {}", m.seconds, parts.join("  "));
                 }
@@ -1279,13 +1081,7 @@ fn main() {
                         let k = ((dist.len() - 1) as f32 * 0.9) as usize;
                         *dist.select_nth_unstable_by(k, |a, b| a.total_cmp(b)).1
                     };
-                    let beyond: Vec<bool> = d
-                        .walkers
-                        .iter()
-                        .zip(&ever)
-                        .filter(|(w, _)| w.0 / s > cut_x + cut_w / 2.0)
-                        .map(|(_, &e)| e)
-                        .collect();
+                    let beyond: Vec<bool> = d.walkers.iter().zip(&ever).filter(|(w, _)| w.0 / s > cut_x + cut_w / 2.0).map(|(_, &e)| e).collect();
                     let far = beyond.iter().filter(|&&e| e).count() as f32 / beyond.len().max(1) as f32;
                     println!(
                         "seed {seed} {name} t {:5.1}s  sick {:.3}  ever {:.3}  front {:6.1}  far {:.3}",
@@ -1303,11 +1099,7 @@ fn main() {
             // `blob_r`, else pile 0) in dish cells, how far out it sits
             // (0 at the centre, 1 at the dish wall: the ellipse's radius
             // fraction), and when it was first reached.
-            let (cx, cy) = if d.p.blob_r > 0.0 {
-                (W as f32 / 2.0, H as f32 / 2.0)
-            } else {
-                d.piles[0]
-            };
+            let (cx, cy) = if d.p.blob_r > 0.0 { (W as f32 / 2.0, H as f32 / 2.0) } else { d.piles[0] };
             let (rx, ry) = (W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
             let parts: Vec<String> = d
                 .piles

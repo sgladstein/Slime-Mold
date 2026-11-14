@@ -8,13 +8,9 @@ impl ApplicationHandler for App {
         if self.window.is_some() {
             return;
         }
-        let room = event_loop
-            .primary_monitor()
-            .map_or((1600, 900), |m| (m.size().width * 9 / 10, m.size().height * 9 / 10));
+        let room = event_loop.primary_monitor().map_or((1600, 900), |m| (m.size().width * 9 / 10, m.size().height * 9 / 10));
         let first = PhysicalSize::new(room.0.clamp(640, 1600), room.1.clamp(480, 1000));
-        let attributes = Window::default_attributes()
-            .with_title("Larder World")
-            .with_inner_size(first);
+        let attributes = Window::default_attributes().with_title("Larder World").with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),
@@ -22,30 +18,15 @@ impl ApplicationHandler for App {
         // The engine binds 46 buffers in a pass: ask for the adapter's own
         // limits, not wgpu's defaults (8 storage buffers a stage).
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-        let options = wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            compatible_surface: None,
-            force_fallback_adapter: false,
-        };
-        let Ok(adapter) = block_on(instance.request_adapter(&options)) else {
-            return self.fail(event_loop, "no GPU adapter".into());
-        };
+        let options = wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, compatible_surface: None, force_fallback_adapter: false };
+        let Ok(adapter) = block_on(instance.request_adapter(&options)) else { return self.fail(event_loop, "no GPU adapter".into()) };
         let size = window.inner_size();
         let (w, h) = (size.width.max(1), size.height.max(1));
-        let desc = wgpu::DeviceDescriptor {
-            label: Some("larder-world"),
-            required_limits: adapter.limits(),
-            ..Default::default()
+        let desc = wgpu::DeviceDescriptor { label: Some("larder-world"), required_limits: adapter.limits(), ..Default::default() };
+        let mut pixels = match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options).device_descriptor(desc).build() {
+            Ok(p) => p,
+            Err(err) => return self.fail(event_loop, format!("pixels init failed: {err}")),
         };
-        let mut pixels =
-            match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window)))
-                .request_adapter_options(options)
-                .device_descriptor(desc)
-                .build()
-            {
-                Ok(p) => p,
-                Err(err) => return self.fail(event_loop, format!("pixels init failed: {err}")),
-            };
         pixels.set_scaling_mode(ScalingMode::PixelPerfect);
         // pixels 0.17 works out its scale only on a resize (mouldgpu).
         if let Err(err) = pixels.resize_surface(size.width, size.height) {
@@ -54,19 +35,11 @@ impl ApplicationHandler for App {
         let info = pixels.adapter().get_info();
         println!("larder-world: {} ({:?})", info.name, info.backend);
         // A placeholder world frame until the round starts.
-        let frame = pixels.device().create_buffer(&wgpu::BufferDescriptor {
-            label: Some("no world"),
-            size: 16,
-            usage: wgpu::BufferUsages::STORAGE,
-            mapped_at_creation: false,
-        });
+        let frame = pixels.device().create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
         self.view = Some(View::new(pixels.device(), pixels.queue(), &frame, (1, 1), (w, h)));
         // The UI size: the saved or `ui=` size over the window's DPI scale.
         let mut canvas = Canvas::new((w, h));
-        canvas.ui = UiSize {
-            user: ui_user(),
-            dpi: window.scale_factor() as f32,
-        };
+        canvas.ui = UiSize { user: ui_user(), dpi: window.scale_factor() as f32 };
         self.canvas = Some(canvas);
         self.canvas_pass = Some(CanvasPass::new(pixels.device(), pixels.queue()));
         self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
@@ -94,10 +67,7 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(size) => {
                 if size.width > 0 && size.height > 0 {
                     if let Some(p) = self.pixels.as_mut() {
-                        let res = p
-                            .resize_buffer(size.width, size.height)
-                            .map_err(|e| e.to_string())
-                            .and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
                         if let Err(err) = res {
                             return self.fail(event_loop, format!("resize failed: {err}"));
                         }
@@ -126,9 +96,7 @@ impl ApplicationHandler for App {
                 (self.controls.shift, self.controls.ctrl) = (self.shift, self.ctrl);
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                let PhysicalKey::Code(code) = event.physical_key else {
-                    return;
-                };
+                let PhysicalKey::Code(code) = event.physical_key else { return };
                 let pressed = event.state == ElementState::Pressed;
                 // Ctrl + and Ctrl - size the UI, in play and on the menu.
                 if pressed && self.ctrl && self.ui_key(code) {

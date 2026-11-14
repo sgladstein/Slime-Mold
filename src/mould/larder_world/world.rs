@@ -157,11 +157,7 @@ impl World for BigDish {
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
         let s = self.p.scale as f32;
-        self.piles
-            .iter()
-            .enumerate()
-            .map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0)))
-            .collect()
+        self.piles.iter().enumerate().map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0))).collect()
     }
 
     fn crystal_r(&self, c: usize) -> f32 {
@@ -174,11 +170,7 @@ impl World for BigDish {
     }
 
     fn open(&self, x: f32, y: f32) -> bool {
-        x >= 0.0
-            && y >= 0.0
-            && (x as usize) < self.w
-            && (y as usize) < self.h
-            && self.agar[y as usize * self.w + x as usize]
+        x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h && self.agar[y as usize * self.w + x as usize]
     }
 
     fn stop_births(&mut self) {

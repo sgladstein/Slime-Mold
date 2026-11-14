@@ -76,14 +76,7 @@ enum Plan {
     Reader,
 }
 
-const WORKING: [Plan; 6] = [
-    Plan::Fortress,
-    Plan::Farmer,
-    Plan::Hunter,
-    Plan::Baiter,
-    Plan::Striker,
-    Plan::Reader,
-];
+const WORKING: [Plan; 6] = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker, Plan::Reader];
 
 impl Plan {
     fn name(self) -> &'static str {
@@ -99,19 +92,10 @@ impl Plan {
         }
     }
     fn parse(s: &str) -> Plan {
-        [
-            Plan::Idle,
-            Plan::Random(0.5),
-            Plan::Fortress,
-            Plan::Farmer,
-            Plan::Hunter,
-            Plan::Baiter,
-            Plan::Striker,
-            Plan::Reader,
-        ]
-        .into_iter()
-        .find(|p| p.name() == s)
-        .expect("plan")
+        [Plan::Idle, Plan::Random(0.5), Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker, Plan::Reader]
+            .into_iter()
+            .find(|p| p.name() == s)
+            .expect("plan")
     }
 }
 
@@ -135,8 +119,7 @@ struct Out {
 }
 
 fn arg<'a>(args: &'a [String], k: &str) -> Option<&'a str> {
-    args.iter()
-        .find_map(|a| a.strip_prefix(k).and_then(|r| r.strip_prefix('=')))
+    args.iter().find_map(|a| a.strip_prefix(k).and_then(|r| r.strip_prefix('=')))
 }
 
 fn seeds(s: Option<&str>) -> Vec<u64> {
@@ -209,10 +192,7 @@ fn hunt_step(g: &mut Game) {
     }
     // Keep the pile being cleared while it has food.
     let keep = squad.iter().find_map(|&k| match g.soldiers[k].order {
-        Order::Clear(x, y) => g
-            .pile_at((x, y))
-            .filter(|&i| g.dish.piles[i].food > 0.0 && g.dish.piles[i].eaters > 0)
-            .map(|_| (x, y)),
+        Order::Clear(x, y) => g.pile_at((x, y)).filter(|&i| g.dish.piles[i].food > 0.0 && g.dish.piles[i].eaters > 0).map(|_| (x, y)),
         _ => None,
     });
     let target = keep.or_else(|| {
@@ -319,12 +299,7 @@ fn each_second(g: &mut Game, plan: Plan) {
                 .iter()
                 .filter(|w| (w.x - g.larder.0).hypot(w.y - g.larder.1) < BAIT_NEAR)
                 .fold((0.0, 0.0, 0usize), |a, w| (a.0 + w.x, a.1 + w.y, a.2 + 1));
-            let uneaten = g
-                .dish
-                .piles
-                .iter()
-                .skip(23)
-                .any(|p| p.food > 0.0 && p.eaters == 0 && p.full == BAIT_FOOD);
+            let uneaten = g.dish.piles.iter().skip(23).any(|p| p.food > 0.0 && p.eaters == 0 && p.full == BAIT_FOOD);
             if near.2 > 20 && !uneaten {
                 let c = (near.0 / near.2 as f32, near.1 / near.2 as f32);
                 let (dx, dy) = (c.0 - g.larder.0, c.1 - g.larder.1);
@@ -396,37 +371,15 @@ fn run(seed: u64, plan: Plan, rules: Rules, lean: bool, look: Option<&str>) -> O
             }
             if let Some(dir) = look {
                 if g.dish.t.is_multiple_of(60 * GAME_SECOND) {
-                    println!(
-                        "  {:3} s: walkers {:5}  hunger {:.2}  soldiers {:2}  bank {:6.0}",
-                        g.dish.t / GAME_SECOND,
-                        g.dish.walkers.len(),
-                        g.hunger,
-                        g.alive(),
-                        g.bank
-                    );
-                    save(
-                        &g,
-                        &format!(
-                            "{dir}/m2-s{seed}-{}-{}-{:03}.png",
-                            if lean { "lean" } else { "fed" },
-                            plan.name(),
-                            g.dish.t / GAME_SECOND
-                        ),
-                    );
+                    println!("  {:3} s: walkers {:5}  hunger {:.2}  soldiers {:2}  bank {:6.0}", g.dish.t / GAME_SECOND, g.dish.walkers.len(), g.hunger, g.alive(), g.bank);
+                    save(&g, &format!("{dir}/m2-s{seed}-{}-{}-{:03}.png", if lean { "lean" } else { "fed" }, plan.name(), g.dish.t / GAME_SECOND));
                 }
             }
         }
         g.step();
     }
     if let Some(dir) = look {
-        save(
-            &g,
-            &format!(
-                "{dir}/m2-s{seed}-{}-{}-end.png",
-                if lean { "lean" } else { "fed" },
-                plan.name()
-            ),
-        );
+        save(&g, &format!("{dir}/m2-s{seed}-{}-{}-end.png", if lean { "lean" } else { "fed" }, plan.name()));
     }
     let end = g.end.unwrap();
     o.score = g.score().unwrap();
@@ -473,21 +426,9 @@ fn save(g: &Game, path: &str) {
         stamp(t.x, t.y, 3, [90, 170, 255, 255]);
     }
     for s in &g.soldiers {
-        stamp(
-            s.x,
-            s.y,
-            2,
-            if s.alive {
-                [255, 255, 255, 255]
-            } else {
-                [140, 20, 20, 255]
-            },
-        );
+        stamp(s.x, s.y, 2, if s.alive { [255, 255, 255, 255] } else { [140, 20, 20, 255] });
     }
-    image::RgbaImage::from_raw(w, h, buf)
-        .expect("frame")
-        .save(path)
-        .expect("save png");
+    image::RgbaImage::from_raw(w, h, buf).expect("frame").save(path).expect("save png");
 }
 
 fn sign_p(wins: usize, n: usize) -> f64 {
@@ -550,11 +491,7 @@ fn wins(a: &[Out], b: &[Out]) -> (usize, usize) {
 type Results = Vec<(Plan, Vec<Out>)>;
 
 fn condition(seeds: &[u64], rules: Rules, lean: bool) -> Results {
-    let mut results: Results = [Plan::Idle]
-        .iter()
-        .chain(WORKING.iter())
-        .map(|&p| (p, par(seeds, |s| run(s, p, rules, lean, None))))
-        .collect();
+    let mut results: Results = [Plan::Idle].iter().chain(WORKING.iter()).map(|&p| (p, par(seeds, |s| run(s, p, rules, lean, None)))).collect();
     let rates: Vec<f32> = (0..seeds.len())
         .map(|i| {
             let per: Vec<f32> = results[1..]
@@ -654,23 +591,14 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
     // reader against each fixed plan and the two controls in each
     // condition. Holm over all of them.
     let fixed = [Plan::Fortress, Plan::Farmer, Plan::Hunter, Plan::Baiter, Plan::Striker];
-    let get = |r: &Results, p: Plan| {
-        r.iter()
-            .find(|(q, _)| q.name() == p.name())
-            .map(|x| x.1.clone())
-            .unwrap()
-    };
+    let get = |r: &Results, p: Plan| r.iter().find(|(q, _)| q.name() == p.name()).map(|x| x.1.clone()).unwrap();
     let mut tests: Vec<(String, usize, usize, f64, bool)> = Vec::new();
     for (cname, r) in [("fed", &fed), ("lean", &lean)] {
         for (i, &a) in fixed.iter().enumerate() {
             for &b in &fixed[i + 1..] {
                 let (w, n) = wins(&get(r, a), &get(r, b));
                 // Two-sided: report as the winner's count.
-                let (name, ww) = if 2 * w >= n {
-                    (format!("{cname}: {} > {}", a.name(), b.name()), w)
-                } else {
-                    (format!("{cname}: {} > {}", b.name(), a.name()), n - w)
-                };
+                let (name, ww) = if 2 * w >= n { (format!("{cname}: {} > {}", a.name(), b.name()), w) } else { (format!("{cname}: {} > {}", b.name(), a.name()), n - w) };
                 tests.push((name, ww, n, sign_p(w, n), false));
             }
         }
@@ -680,15 +608,9 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
         }
     }
     holm(&mut tests);
-    println!(
-        "\nComparisons (paired by seed, ties dropped; Holm over {}):",
-        tests.len()
-    );
+    println!("\nComparisons (paired by seed, ties dropped; Holm over {}):", tests.len());
     for (name, w, n, p, ok) in &tests {
-        println!(
-            "  {name:32} {w:2} of {n:2}  p {p:.5}  {}",
-            if *ok { "survives Holm" } else { "-" }
-        );
+        println!("  {name:32} {w:2} of {n:2}  p {p:.5}  {}", if *ok { "survives Holm" } else { "-" });
     }
     // The crossover: a pair whose winner flips between the conditions,
     // each way on 15+ seeds and surviving Holm.
@@ -696,31 +618,14 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
     let mut any = false;
     for (i, &a) in fixed.iter().enumerate() {
         for &b in &fixed[i + 1..] {
-            let f = tests.iter().find(|t| {
-                t.0.starts_with("fed: ")
-                    && (t.0.ends_with(&format!("{} > {}", a.name(), b.name()))
-                        || t.0.ends_with(&format!("{} > {}", b.name(), a.name())))
-            });
-            let l = tests.iter().find(|t| {
-                t.0.starts_with("lean: ")
-                    && (t.0.ends_with(&format!("{} > {}", a.name(), b.name()))
-                        || t.0.ends_with(&format!("{} > {}", b.name(), a.name())))
-            });
+            let f = tests.iter().find(|t| t.0.starts_with("fed: ") && (t.0.ends_with(&format!("{} > {}", a.name(), b.name())) || t.0.ends_with(&format!("{} > {}", b.name(), a.name()))));
+            let l = tests.iter().find(|t| t.0.starts_with("lean: ") && (t.0.ends_with(&format!("{} > {}", a.name(), b.name())) || t.0.ends_with(&format!("{} > {}", b.name(), a.name()))));
             if let (Some(f), Some(l)) = (f, l) {
                 let flipped = f.0[5..] != l.0[6..];
                 if flipped {
                     let pass = f.1 >= 15 && l.1 >= 15 && f.4 && l.4;
                     any = true;
-                    println!(
-                        "  {} ({} of {}) / {} ({} of {}): {}",
-                        f.0,
-                        f.1,
-                        f.2,
-                        l.0,
-                        l.1,
-                        l.2,
-                        if pass { "PASS" } else { "flips, not significant" }
-                    );
+                    println!("  {} ({} of {}) / {} ({} of {}): {}", f.0, f.1, f.2, l.0, l.1, l.2, if pass { "PASS" } else { "flips, not significant" });
                 }
             }
         }
@@ -728,14 +633,8 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
     if !any {
         println!("  none: no pair of fixed plans changes winner between fed and lean");
     }
-    let reader_ok = tests
-        .iter()
-        .filter(|t| t.0.contains("reader >"))
-        .all(|t| t.1 >= 15 && t.4);
-    println!(
-        "Reader beats every fixed plan and both controls in both conditions (15+ of 16, Holm): {}",
-        if reader_ok { "PASS" } else { "FAIL" }
-    );
+    let reader_ok = tests.iter().filter(|t| t.0.contains("reader >")).all(|t| t.1 >= 15 && t.4);
+    println!("Reader beats every fixed plan and both controls in both conditions (15+ of 16, Holm): {}", if reader_ok { "PASS" } else { "FAIL" });
 }
 
 /// The game layer's cost a step with every M2 answer on (hoard smell,
@@ -743,11 +642,7 @@ fn census(seeds: &[u64], rules: Rules, label: &str) {
 /// bare dish step on the same seed (the M1 method, `larderm1 cost`).
 fn cost(rules: Rules) {
     for n in [4usize, 40] {
-        let rules = Rules {
-            squad: n,
-            start_bank: 1e9,
-            ..rules
-        };
+        let rules = Rules { squad: n, start_bank: 1e9, ..rules };
         let steps = 120 * GAME_SECOND;
         let mut g = game(1, rules, false);
         (0..n).for_each(|k| g.stance(k, Stance::Free));

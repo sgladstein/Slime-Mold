@@ -49,29 +49,29 @@
 //! ticks.
 
 mod buildings;
-mod cmd;
-mod cover;
-mod paths;
-mod raising;
+mod world;
 mod rules;
+mod paths;
+mod cmd;
+mod raising;
+mod shots;
+mod turn;
 mod score;
 mod shapes;
-mod shots;
 mod squads;
-mod turn;
-mod world;
+mod cover;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
-use buildings::Who;
-pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
 pub use cmd::*;
-pub use cover::{Cover, CoverRules, HealRules};
 pub use paths::*;
 pub use raising::*;
 pub use rules::*;
+pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
-pub use world::*;
+pub use cover::{Cover, CoverRules, HealRules};
+pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
+use buildings::Who;
 
 use super::big::{BigDish, BigParams, LIFE_DEAD};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
@@ -339,14 +339,7 @@ struct Flight {
 pub fn far_crystal(world: &impl World) -> (f32, f32) {
     let cs = world.crystals();
     let home = cs[0].0;
-    cs.iter()
-        .map(|c| c.0)
-        .max_by(|a, b| {
-            (a.0 - home.0)
-                .hypot(a.1 - home.1)
-                .total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))
-        })
-        .unwrap_or(home)
+    cs.iter().map(|c| c.0).max_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))).unwrap_or(home)
 }
 
 impl<W: World> Game<W> {
@@ -357,9 +350,7 @@ impl<W: World> Game<W> {
         let core = world.crystals()[0].0;
         let mould = world.living();
         let (w, h) = world.size();
-        let open = (0..w * h)
-            .filter(|&i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5))
-            .count();
+        let open = (0..w * h).filter(|&i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).count();
         let density = mould as f32 / open.max(1) as f32;
         let start_charge: Vec<f32> = world.crystals().iter().map(|c| c.1).collect();
         let taken = vec![0.0; start_charge.len()];
@@ -514,6 +505,7 @@ impl<W: World> Game<W> {
     pub fn alive(&self) -> usize {
         self.soldiers.iter().filter(|s| s.alive).count()
     }
+
 }
 
 #[cfg(test)]

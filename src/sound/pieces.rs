@@ -68,11 +68,7 @@ pub fn blobs(grid: &[u32], cols: usize, bin: usize, floor: u32) -> Vec<Blob> {
                 push(i + cols);
             }
         }
-        out.push(Blob {
-            walkers: n.min(u32::MAX as u64) as u32,
-            at: ((sx / n as f64) as f32, (sy / n as f64) as f32),
-            squares: sq,
-        });
+        out.push(Blob { walkers: n.min(u32::MAX as u64) as u32, at: ((sx / n as f64) as f32, (sy / n as f64) as f32), squares: sq });
     }
     out.sort_by(|a, b| b.walkers.cmp(&a.walkers).then(a.at.0.total_cmp(&b.at.0)));
     out
@@ -187,11 +183,7 @@ impl Pieces {
         let first = self.body.is_none();
         let total: u32 = blobs.iter().map(|b| b.walkers).sum();
         let max = (total as f32 * share) as u32;
-        let candidates: Vec<Blob> = rest
-            .iter()
-            .copied()
-            .filter(|b| b.walkers >= min && b.walkers < max)
-            .collect();
+        let candidates: Vec<Blob> = rest.iter().copied().filter(|b| b.walkers >= min && b.walkers < max).collect();
         let parts: Vec<Blob> = blobs.iter().copied().filter(|b| b.walkers >= max).collect();
         let mut taken = vec![false; candidates.len()];
         let mut kept = Vec::with_capacity(self.pieces.len());
@@ -203,13 +195,7 @@ impl Pieces {
         old.sort_by_key(|p| std::cmp::Reverse(p.walkers));
         for p in old {
             let reach = (p.squares as f32).sqrt().max(3.0) * self.bin * 1.5;
-            let best = candidates
-                .iter()
-                .enumerate()
-                .filter(|(i, c)| !taken[*i] && c.walkers * 3 >= p.walkers && c.walkers <= p.walkers.saturating_mul(3))
-                .map(|(i, c)| (i, (c.at.0 - p.at.0).hypot(c.at.1 - p.at.1)))
-                .filter(|&(_, d)| d <= reach)
-                .min_by(|a, b| a.1.total_cmp(&b.1));
+            let best = candidates.iter().enumerate().filter(|(i, c)| !taken[*i] && c.walkers * 3 >= p.walkers && c.walkers <= p.walkers.saturating_mul(3)).map(|(i, c)| (i, (c.at.0 - p.at.0).hypot(c.at.1 - p.at.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1));
             match best {
                 Some((i, _)) => {
                     taken[i] = true;
@@ -224,41 +210,19 @@ impl Pieces {
                     });
                     let ka = 1.0 - (-dt / APPROACH_SMOOTH).exp();
                     let approach = p.approach + (toward - p.approach) * ka;
-                    kept.push(Piece {
-                        walkers: c.walkers,
-                        at: c.at,
-                        squares: c.squares,
-                        age: p.age + dt,
-                        change,
-                        losing,
-                        approach,
-                        since_tell: p.since_tell + dt,
-                        missing: 0.0,
-                        ..p
-                    });
+                    kept.push(Piece { walkers: c.walkers, at: c.at, squares: c.squares, age: p.age + dt, change, losing, approach, since_tell: p.since_tell + dt, missing: 0.0, ..p });
                 }
                 None if p.missing + dt < GHOST => {
-                    if p.missing == 0.0
-                        && p.announced
-                        && p.age >= SETTLE
-                        && nearest(soldiers, p.at).is_some_and(|s| (s.0 - p.at.0).hypot(s.1 - p.at.1) <= self.near)
-                    {
+                    if p.missing == 0.0 && p.announced && p.age >= SETTLE && nearest(soldiers, p.at).is_some_and(|s| (s.0 - p.at.0).hypot(s.1 - p.at.1) <= self.near) {
                         ev.scattered.push(p.at);
                     }
-                    kept.push(Piece {
-                        age: p.age + dt,
-                        since_tell: p.since_tell + dt,
-                        missing: p.missing + dt,
-                        ..p
-                    });
+                    kept.push(Piece { age: p.age + dt, since_tell: p.since_tell + dt, missing: p.missing + dt, ..p });
                 }
                 None => {
                     if p.announced {
                         // Gone next to the body and not dwindling: it
                         // rejoined; else it withered out.
-                        let near = parts.iter().any(|b| {
-                            (b.at.0 - p.at.0).hypot(b.at.1 - p.at.1) <= (b.squares as f32).sqrt() * self.bin * 1.2
-                        });
+                        let near = parts.iter().any(|b| (b.at.0 - p.at.0).hypot(b.at.1 - p.at.1) <= (b.squares as f32).sqrt() * self.bin * 1.2);
                         let dwindled = p.walkers < min.saturating_mul(3) / 4 || p.change < -0.05;
                         ev.gone.push((p.at, near && !dwindled));
                     }
@@ -271,20 +235,7 @@ impl Pieces {
                 self.next += 1;
                 // The pieces already there at the first look are not cuts.
                 let age = if first { SETTLE } else { 0.0 };
-                kept.push(Piece {
-                    id: self.next,
-                    walkers: c.walkers,
-                    at: c.at,
-                    squares: c.squares,
-                    age,
-                    announced: first,
-                    change: 0.0,
-                    losing: 0.0,
-                    approach: 0.0,
-                    slot: 0,
-                    since_tell: f32::MAX / 2.0,
-                    missing: 0.0,
-                });
+                kept.push(Piece { id: self.next, walkers: c.walkers, at: c.at, squares: c.squares, age, announced: first, change: 0.0, losing: 0.0, approach: 0.0, slot: 0, since_tell: f32::MAX / 2.0, missing: 0.0 });
             }
         }
         for p in kept.iter_mut() {
@@ -315,22 +266,12 @@ impl Pieces {
 
     /// `bin` the grid's square and `scale` fine cells a dish cell.
     pub fn new(bin: usize, scale: f32) -> Self {
-        Pieces {
-            pieces: Vec::new(),
-            body: None,
-            next: 0,
-            bin: bin as f32,
-            near: NEAR_DISH * scale,
-        }
+        Pieces { pieces: Vec::new(), body: None, next: 0, bin: bin as f32, near: NEAR_DISH * scale }
     }
 }
 
 fn nearest(points: &[(f32, f32)], at: (f32, f32)) -> Option<(f32, f32)> {
-    points.iter().copied().min_by(|a, b| {
-        (a.0 - at.0)
-            .hypot(a.1 - at.1)
-            .total_cmp(&(b.0 - at.0).hypot(b.1 - at.1))
-    })
+    points.iter().copied().min_by(|a, b| (a.0 - at.0).hypot(a.1 - at.1).total_cmp(&(b.0 - at.0).hypot(b.1 - at.1)))
 }
 
 #[cfg(test)]
@@ -359,11 +300,7 @@ mod tests {
         let b = blobs(&g, cols, 4, 1);
         assert_eq!(b.len(), 2);
         assert_eq!((b[0].walkers, b[1].walkers), (360, 90));
-        assert!(
-            (b[1].at.0 - 34.0).abs() < 1e-3,
-            "the piece's centre, fine cells: {:?}",
-            b[1].at
-        );
+        assert!((b[1].at.0 - 34.0).abs() < 1e-3, "the piece's centre, fine cells: {:?}", b[1].at);
         // Grow the body into the gap's top square, which touches the
         // piece's square (7, 1) only at a corner: still two groups.
         for y in [0, 2, 3, 4, 5] {
@@ -380,16 +317,9 @@ mod tests {
         let (g, cols) = grid();
         let mut p = Pieces::new(4, 1.0);
         let dt = 1.0 / 15.0;
-        let body_only: Vec<u32> = g
-            .iter()
-            .enumerate()
-            .map(|(i, &v)| if i % cols < 6 { v } else { 0 })
-            .collect();
+        let body_only: Vec<u32> = g.iter().enumerate().map(|(i, &v)| if i % cols < 6 { v } else { 0 }).collect();
         // A piece there at the first look is not a cut: start whole.
-        assert!(p
-            .update(&blobs(&body_only, cols, 4, 1), 50, 0.5, dt, &[])
-            .torn
-            .is_empty());
+        assert!(p.update(&blobs(&body_only, cols, 4, 1), 50, 0.5, dt, &[]).torn.is_empty());
         let mut torn = 0;
         for _ in 0..60 {
             torn += p.update(&blobs(&g, cols, 4, 1), 50, 0.5, dt, &[]).torn.len();
@@ -407,11 +337,7 @@ mod tests {
             }
             p.update(&blobs(&w, cols, 4, 1), 10, 0.5, dt, &[]);
         }
-        assert!(
-            p.pieces[0].change < 0.0 && p.pieces[0].losing > 0.0,
-            "{:?}",
-            p.pieces[0]
-        );
+        assert!(p.pieces[0].change < 0.0 && p.pieces[0].losing > 0.0, "{:?}", p.pieces[0]);
         // Missing for under `GHOST` it is still the same piece, unheard.
         let ev = p.update(&blobs(&body_only, cols, 4, 1), 10, 0.5, dt, &[]);
         assert!(ev.gone.is_empty() && !p.pieces[0].heard());
@@ -451,11 +377,7 @@ mod tests {
     #[test]
     fn a_piece_that_breaks_up_by_a_soldier_charged() {
         let (g, cols) = grid();
-        let body_only: Vec<u32> = g
-            .iter()
-            .enumerate()
-            .map(|(i, &v)| if i % cols < 6 { v } else { 0 })
-            .collect();
+        let body_only: Vec<u32> = g.iter().enumerate().map(|(i, &v)| if i % cols < 6 { v } else { 0 }).collect();
         for (soldier, charges) in [((40.0, 12.0), 1), ((400.0, 12.0), 0)] {
             let mut p = Pieces::new(4, 1.0);
             p.update(&blobs(&body_only, cols, 4, 1), 50, 0.5, 0.25, &[soldier]);
