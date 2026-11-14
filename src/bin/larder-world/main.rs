@@ -63,6 +63,8 @@
 //! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
+//! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
+//! that tooltip (a loadout card's, 2026-11-14).
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
 //! out round (X, Y), out of the ground at game second T and holds it (for
 //! HOLD seconds, then puts it back), and prints the walkers inside each
@@ -136,7 +138,7 @@ use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
-use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
+use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -211,6 +213,8 @@ commands! {
     ROAD = 26,
     // The build page's siren (#160).
     SIREN = 27,
+    // The loadout panel's swap button (2026-11-14): the next loadout, as H.
+    NEXT_ROUND = 28,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -992,6 +996,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
     let mut centre = None;
+    let mut hover = None;
     let mut cut = None;
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
@@ -1056,6 +1061,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "squad1" => squad1 = v != "0",
             "spread" => spread = v != "0",
             "holes" => holes = v != "0",
+            "hover" => {
+                // `hover=X,Y`: the no-window pictures' cursor, screen
+                // pixels (a tooltip in the picture: the loadout's cards).
+                let (x, y) = v.split_once(',').ok_or("hover=X,Y")?;
+                hover = Some((x.parse()?, y.parse()?));
+            }
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
@@ -1085,7 +1096,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut, hover; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1104,7 +1115,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, page)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, page, hover)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

@@ -8,6 +8,28 @@ impl App {
         self.game.as_ref().map(|g| g.soldiers.iter().enumerate().map(|(id, s)| Unit { id, team: 0, x: s.x, y: s.y, alive: s.alive }).collect()).unwrap_or_default()
     }
 
+    /// The next loadout this world can cast (the GPU world has no germ
+    /// yet), kept for the next game too: H, or the loadout panel's Swap.
+    pub(super) fn next_round(&mut self) {
+        let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
+            rounds::Card::Gas => g.world.has_gas(),
+            rounds::Card::Germ => g.world.has_germ(),
+            _ => true,
+        }));
+        let mut i = self.round;
+        for _ in 0..LOADOUTS.len() {
+            i = (i + 1) % LOADOUTS.len();
+            if ok(LOADOUTS[i].1) {
+                break;
+            }
+        }
+        self.round = i;
+        let (name, cards) = LOADOUTS[i];
+        self.rounds = Rounds::new(rounds::parse(cards).unwrap_or_default(), RoundRules::default());
+        let what = if cards == "none" { "Round: plain shots".to_string() } else { format!("Round: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&self.rounds.round, &self.rounds.rules)) };
+        self.hud.alert(&what, None, theme::ACCENT);
+    }
+
     pub(super) fn living(&self, ids: &[usize]) -> Vec<usize> {
         let Some(g) = &self.game else { return Vec::new() };
         ids.iter().copied().filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive)).collect()
@@ -130,6 +152,7 @@ impl App {
                     return Ok(true);
                 }
                 HudEvent::Command { id } => match id {
+                    NEXT_ROUND => self.next_round(),
                     STOP => self.order_all(&sel, |_| Order::Hold),
                     HOLD_FIRE | DEFEND | FREE => {
                         let st = match id {
@@ -278,27 +301,7 @@ impl App {
                     self.fail(event_loop, e);
                 }
             }
-            KeyCode::KeyH => {
-                // The next loadout this world can cast (the GPU world has
-                // no germ yet), kept for the next game too.
-                let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
-                    rounds::Card::Gas => g.world.has_gas(),
-                    rounds::Card::Germ => g.world.has_germ(),
-                    _ => true,
-                }));
-                let mut i = self.round;
-                for _ in 0..LOADOUTS.len() {
-                    i = (i + 1) % LOADOUTS.len();
-                    if ok(LOADOUTS[i].1) {
-                        break;
-                    }
-                }
-                self.round = i;
-                let (name, cards) = LOADOUTS[i];
-                self.rounds = Rounds::new(rounds::parse(cards).unwrap_or_default(), RoundRules::default());
-                let what = if cards == "none" { "Round: plain shots".to_string() } else { format!("Round: {name} ({}), recharge {:.1} s", cards.replace('+', ", "), rounds::recharge(&self.rounds.round, &self.rounds.rules)) };
-                self.hud.alert(&what, None, theme::ACCENT);
-            }
+            KeyCode::KeyH => self.next_round(),
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
                     v.minimap = !v.minimap;

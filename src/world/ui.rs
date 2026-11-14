@@ -169,6 +169,83 @@ pub struct Info {
     pub note: Option<String>,
 }
 
+/// What a gun card does, which sets its frame (a spell deck's card types:
+/// the shot, what changes it, what sets it off).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum CardKind {
+    /// Casts where the shot hit (blast, gas, germ).
+    #[default]
+    Payload,
+    /// Changes the next payload (wide, scatter, quiet).
+    Modifier,
+    /// Decides when the next payload goes off (delay, thick).
+    Trigger,
+    /// Changes every bullet in flight (pierce, split).
+    Flight,
+}
+
+impl CardKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            CardKind::Payload => "Payload",
+            CardKind::Modifier => "Modifier",
+            CardKind::Trigger => "Trigger",
+            CardKind::Flight => "Flight",
+        }
+    }
+
+    /// The frame's colour: a payload's frame is its own colour.
+    pub fn colour(self, own: Rgba) -> Rgba {
+        match self {
+            CardKind::Payload => own,
+            CardKind::Modifier => [108, 156, 255, 255],
+            CardKind::Trigger => [242, 192, 84, 255],
+            CardKind::Flight => [96, 214, 214, 255],
+        }
+    }
+}
+
+/// One card in a loadout (`Loadout::cards`), left to right.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct GunCard {
+    pub icon: Option<Icon>,
+    pub name: String,
+    pub kind: CardKind,
+    /// The glyph's colour: the colour of the payload it goes with, as its
+    /// bullets fly.
+    pub colour: Rgba,
+    /// What it does, for its tooltip.
+    pub about: String,
+    /// A payload's price a cast ("40").
+    pub cost: Option<String>,
+    /// In the cast the gun's next hit fires: lit.
+    pub next: bool,
+    /// After the last payload: it weighs on the recharge and casts nothing.
+    pub idle: bool,
+}
+
+/// A gun's loadout, as a spell deck shows it (the owner, 11-14 01:49Z:
+/// "I also have no way to see what the gun cards are in the interface").
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Loadout {
+    /// "Trap".
+    pub name: String,
+    /// Whose gun: "Soldier 3", "Squad (5)".
+    pub whose: String,
+    pub cards: Vec<GunCard>,
+    /// Slots the gun has (empty ones are drawn empty).
+    pub slots: usize,
+    /// The recharge after the last cast, seconds.
+    pub recharge: f32,
+    /// How much of it is still to go, 0 (ready) to 1 (just spent).
+    pub charging: f32,
+    /// A line under the cards ("3 of 5 guns ready"); the game's words.
+    pub note: Option<String>,
+    /// The command that swaps the loadout, and its key: the panel's
+    /// button sends `HudEvent::Command` with it.
+    pub cycle: Option<(u32, KeyCode)>,
+}
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {
@@ -203,6 +280,8 @@ pub struct Model {
     /// The game has a start menu: the menu and the end screen offer "Main
     /// menu" (`MenuItem::MainMenu`).
     pub main_menu: bool,
+    /// The gun's cards, drawn above the command card.
+    pub loadout: Option<Loadout>,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -265,6 +344,8 @@ enum Hit {
     Menu(MenuItem),
     Help,
     Back,
+    /// The loadout panel's swap button.
+    Cycle,
 }
 
 #[derive(Clone, Debug)]
@@ -326,6 +407,8 @@ pub struct Hud {
     /// The model's `ghost_ok` and `ghost_note`, as last drawn.
     ghost_ok: bool,
     ghost_note: Option<String>,
+    /// The loadout's swap command, as last drawn.
+    cycle: Option<u32>,
     started: Instant,
 }
 
@@ -337,7 +420,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, started: Instant::now() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now() }
     }
 
     /// The menu is open (the game should pause).
@@ -558,6 +641,7 @@ impl Hud {
             Hit::Card(id) => out.push(if shift { HudEvent::Deselect(id) } else { HudEvent::SelectOnly(id) }),
             Hit::Group(g) => out.push(HudEvent::Group(g)),
             Hit::Idle => out.push(HudEvent::Idle),
+            Hit::Cycle => out.extend(self.cycle.map(|id| HudEvent::Command { id })),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
                 out.push(HudEvent::Menu(MenuItem::Opened));
@@ -710,7 +794,14 @@ impl Hud {
 
         self.top_bar(m, c, s);
         self.selection_panel(m, controls, sel, c, s);
+        // Before the command card, so the card's tooltips cover it; its
+        // own card tooltip after.
+        self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, card, c, s));
         self.command_card(m, card, c, s);
+        if let (Some(l), Some((k, r))) = (&m.loadout, tip) {
+            self.card_tip(&l.cards[k], r, c, s);
+        }
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
         if let (Some(h), Some(p), None) = (&m.hover, self.hover, self.targeting) {
@@ -1022,6 +1113,150 @@ impl Hud {
         }
         if let Some((k, b)) = tip {
             self.tooltip(&m.commands[k], b, r, c, s);
+        }
+    }
+
+    /// The loadout panel: the gun's cards in slots left to right, the cast
+    /// its next hit fires lit, and the recharge. Sits on the command card's
+    /// top edge. Returns the hovered card and its slot, for its tooltip.
+    fn loadout_draw(&mut self, l: &Loadout, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+        let pad = 10.0 * s;
+        let gap = 8.0 * s;
+        let slots = l.slots.max(l.cards.len()).max(1);
+        let w = card.w;
+        let sw = ((w - 2.0 * pad - (slots - 1) as f32 * gap) / slots as f32).max(10.0 * s);
+        let sh = 66.0 * s;
+        let head = 28.0 * s;
+        let foot = 26.0 * s;
+        let h = pad + head + sh + foot + 4.0 * s;
+        let r = Rect::new(card.right() - w, card.y - 8.0 * s - h, w, h);
+        if r.y < self.top + 8.0 * s {
+            return None;
+        }
+        self.glass(r, 12.0 * s, c, s);
+        // The header: the gun, the loadout's name, whose, the swap button.
+        let base = r.y + pad + 14.0 * s;
+        c.icon(Icon::Rifle, (r.x + pad, base - 13.0 * s), 16.0 * s, MUTED);
+        let nx = r.x + pad + 22.0 * s;
+        let nw = c.text(Weight::SemiBold, 14.0 * s, (nx, base), Align::Left, &l.name, TEXT);
+        let mut right = r.right() - pad;
+        if let Some((_, key)) = l.cycle {
+            let label = match key_name(key) {
+                Some(k) => format!("{k}  Swap"),
+                None => "Swap".into(),
+            };
+            let bw = c.atlas.measure(Weight::SemiBold, 11.5 * s, &label) + 16.0 * s;
+            let b = Rect::new(right - bw, base - 16.0 * s, bw, 22.0 * s);
+            let hot = self.hover.is_some_and(|p| b.contains(p));
+            let (t, bt) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            c.panel(b, 6.0 * s, t, bt, 1.0, [255, 255, 255, 30]);
+            c.text(Weight::SemiBold, 11.5 * s, (b.x + bw / 2.0, base - 1.0 * s), Align::Centre, &label, TEXT);
+            self.hits.push((b, Hit::Cycle));
+            right = b.x - 8.0 * s;
+        }
+        c.text_fit(Weight::Medium, 12.0 * s, (nx + nw + 8.0 * s, base), Align::Left, &l.whose, right - (nx + nw + 8.0 * s), MUTED);
+        // The slots.
+        let y = r.y + pad + head;
+        let mut tip = None;
+        for i in 0..slots {
+            let b = Rect::new(r.x + pad + i as f32 * (sw + gap), y, sw, sh);
+            if i > 0 {
+                // The order: each card hands on to the next, left to right.
+                let cx = b.x - gap / 2.0;
+                c.rrect(Rect::new(cx - 1.5 * s, y + sh / 2.0 - 1.5 * s, 3.0 * s, 3.0 * s), 1.5 * s, FAINT);
+            }
+            let Some(k) = l.cards.get(i) else {
+                c.rrect(b, 8.0 * s, [255, 255, 255, 8]);
+                c.outline(b, 8.0 * s, 1.0, [255, 255, 255, 18]);
+                continue;
+            };
+            let frame = k.kind.colour(k.colour);
+            let dim = if k.idle { 0.4 } else { 1.0 };
+            if k.next {
+                c.shadow(b, 8.0 * s, 14.0 * s, 0.0, alpha(k.colour, 0.55));
+            }
+            let shade = |a: Rgba, f: f32| -> Rgba { [(a[0] as f32 * f) as u8, (a[1] as f32 * f) as u8, (a[2] as f32 * f) as u8, 255] };
+            let edge = if k.next { k.colour } else { alpha(frame, 0.55 * dim) };
+            c.panel(b, 8.0 * s, shade(frame, 0.30 * dim), shade(frame, 0.12 * dim), if k.next { 2.0 * s } else { 1.0 * s }, edge);
+            // The kind's stripe along the top, as a card's frame.
+            c.rrect(Rect::new(b.x + 6.0 * s, b.y + 4.0 * s, b.w - 12.0 * s, 3.0 * s), 1.5 * s, alpha(frame, 0.9 * dim));
+            let ic = 26.0 * s;
+            if let Some(icon) = k.icon {
+                c.icon(icon, (b.x + (b.w - ic) / 2.0, b.y + 12.0 * s), ic, alpha(k.colour, dim));
+            }
+            c.text_fit(Weight::SemiBold, 10.5 * s, (b.x + b.w / 2.0, b.bottom() - 8.0 * s), Align::Centre, &k.name, b.w - 6.0 * s, alpha(TEXT, 0.9 * dim));
+            if let Some(cost) = &k.cost {
+                c.text(Weight::SemiBold, 9.5 * s, (b.right() - 4.0 * s, b.y + 18.0 * s), Align::Right, cost, alpha(ENERGY, dim));
+            }
+            if k.next {
+                // A notch above the lit cast.
+                let nx = b.x + b.w / 2.0;
+                c.rrect(Rect::new(nx - 6.0 * s, b.y - 6.0 * s, 12.0 * s, 3.0 * s), 1.5 * s, k.colour);
+            }
+            if self.hover.is_some_and(|p| b.contains(p)) {
+                tip = Some((i, b));
+            }
+        }
+        // The recharge: a bar that fills back up, and its words.
+        let fy = y + sh + 10.0 * s;
+        let bar = Rect::new(r.x + pad, fy, w - 2.0 * pad, 3.0 * s);
+        let ready = l.charging <= 0.0;
+        c.bar(bar, (1.0 - l.charging).clamp(0.0, 1.0), if ready { GOOD } else { WARN }, TRACK);
+        let ty = fy + 16.0 * s;
+        let state = if l.cards.is_empty() {
+            "Plain shots".to_string()
+        } else if ready {
+            "Ready".to_string()
+        } else {
+            format!("Recharging {:.1} s", l.charging * l.recharge)
+        };
+        let col = if l.cards.is_empty() { MUTED } else if ready { GOOD } else { WARN };
+        let lw = c.text(Weight::SemiBold, 11.5 * s, (r.x + pad, ty), Align::Left, &state, col);
+        let note = match &l.note {
+            Some(n) => n.clone(),
+            None if l.cards.is_empty() => String::new(),
+            None => format!("recharge {:.1} s", l.recharge),
+        };
+        c.text_fit(Weight::Medium, 11.0 * s, (r.right() - pad, ty), Align::Right, &note, w - 2.0 * pad - lw - 10.0 * s, MUTED);
+        tip
+    }
+
+    /// A gun card's tooltip, above the loadout panel.
+    fn card_tip(&mut self, k: &GunCard, b: Rect, c: &mut Canvas, s: f32) {
+        let w = 290.0 * s;
+        let px = 12.5 * s;
+        let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &k.about);
+        let extra = if k.idle { 22.0 * s } else { 0.0 };
+        let h = 18.0 * s + 22.0 * s + lines.len() as f32 * 18.0 * s + 10.0 * s + extra;
+        let sw = c.screen.0 as f32;
+        let x = (b.x + b.w / 2.0 - w / 2.0).min(sw - 8.0 * s - w).max(8.0 * s);
+        let r = Rect::new(x, (b.y - 48.0 * s - h).max(8.0 * s), w, h);
+        let frame = k.kind.colour(k.colour);
+        c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
+        c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, alpha(frame, 0.6));
+        let mut y = r.y + 26.0 * s;
+        if let Some(icon) = k.icon {
+            c.icon(icon, (r.x + 14.0 * s, y - 15.0 * s), 18.0 * s, k.colour);
+        }
+        c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &k.name, TEXT);
+        let kind = k.kind.label().to_uppercase();
+        let kw = c.atlas.measure(Weight::SemiBold, 10.5 * s, &kind) + 12.0 * s;
+        let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
+        c.rrect(kr, 5.0 * s, alpha(frame, 0.18));
+        c.text(Weight::SemiBold, 10.5 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &kind, frame);
+        if let Some(cost) = &k.cost {
+            let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
+            let cx = kr.x - 10.0 * s - cw;
+            c.icon(Icon::Crystal, (cx - 16.0 * s, y - 12.0 * s), 13.0 * s, ENERGY);
+            c.text(Weight::SemiBold, 12.0 * s, (cx, y - 1.0 * s), Align::Left, cost, ENERGY);
+        }
+        y += 22.0 * s;
+        for l in &lines {
+            c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
+            y += 18.0 * s;
+        }
+        if k.idle {
+            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it only slows the recharge", w - 28.0 * s, WARN);
         }
     }
 
@@ -1387,6 +1622,56 @@ mod tests {
     }
 
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
+
+    fn loadout() -> Loadout {
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), cost: (kind == CardKind::Payload).then(|| "60".into()), next, idle };
+        Loadout {
+            name: "Lull".into(),
+            whose: "Soldier 1".into(),
+            cards: vec![card("Quiet", CardKind::Modifier, false, false), card("Gas", CardKind::Payload, false, false), card("Quiet", CardKind::Modifier, true, false), card("Blast", CardKind::Payload, true, false)],
+            slots: 4,
+            recharge: 5.0,
+            charging: 0.4,
+            note: None,
+            cycle: Some((NOW + 10, KeyCode::KeyH)),
+        }
+    }
+
+    #[test]
+    fn the_loadout_swap_button_gives_its_command_and_a_card_takes_the_click() {
+        let mut r = Rig::new((1920, 1080));
+        r.m.loadout = Some(loadout());
+        r.draw();
+        let swap = r.hud.hits.iter().find(|(_, h)| *h == Hit::Cycle).map(|(b, _)| *b).expect("a swap button");
+        r.at((swap.x + swap.w / 2.0, swap.y + swap.h / 2.0));
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW + 10 }]));
+        // A card is the panel's: hovered it draws its tooltip, a click on
+        // it is not a click on the world.
+        let swap_y = swap.bottom() + 30.0 * r.hud.scale;
+        r.at((swap.x - 120.0 * r.hud.scale, swap_y));
+        let before = r.c.len();
+        r.draw();
+        assert!(r.c.len() > before, "the card's tooltip adds to the canvas");
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![]));
+    }
+
+    #[test]
+    fn a_loadout_draws_in_any_window_and_with_no_cards() {
+        for screen in [(1920, 1080), (640, 360), (200, 120), (3840, 2160)] {
+            let mut r = Rig::new(screen);
+            r.m.loadout = Some(loadout());
+            r.draw();
+            r.m.loadout = Some(Loadout { cards: vec![], cycle: None, ..loadout() });
+            r.draw();
+            // More cards than slots still draws every card.
+            let mut l = loadout();
+            l.cards.extend(l.cards.clone());
+            r.m.loadout = Some(l);
+            r.draw();
+        }
+    }
 
     #[test]
     fn a_drag_or_pan_that_ends_over_a_panel_still_ends_in_the_controls() {
