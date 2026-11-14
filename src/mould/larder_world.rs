@@ -57,6 +57,7 @@ mod raising;
 mod shots;
 mod turn;
 mod score;
+mod shapes;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -64,6 +65,7 @@ pub use paths::*;
 pub use raising::*;
 pub use rules::*;
 pub use world::*;
+pub use shapes::shape_keys;
 pub use buildings::{BuildRules, Building, Kind};
 use buildings::Who;
 

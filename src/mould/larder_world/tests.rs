@@ -1232,4 +1232,43 @@ fn stacked_soldiers_step_apart_onto_open_ground() {
         assert!(near >= 1.6 * 0.95, "sent {send}: nearest pair {near} touch radii apart");
     }
     assert!(spread(0.0, false) < 0.01, "off, the stack stays");
+
+/// A burning soldier fires along its line once the line is in reach, and
+/// while it still walks there it shoots what reaches it, by its own aim
+/// and stance (2026-11-14: on shape C the `volley` squad, short of its
+/// line, fired nothing for 2 s with up to 17 walkers on each soldier and
+/// died). Defend still holds fire at slime that is neither on it nor near.
+#[test]
+fn a_soldier_walking_to_a_burn_line_shoots_what_reaches_it() {
+    let mut g = small(1);
+    let sc = g.s();
+    let reach = g.rules.range * sc;
+    let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+    let near = (x + 2.0 * sc, y);
+    assert!(g.clear_line((x, y), near), "open ground by the larder");
+    let set = |g: &mut Game<BigDish>, line: f32, touching: u32, aim: (f32, f32)| {
+        let s = &mut g.soldiers[0];
+        s.order = Order::Burn((x + line, y - sc), (x + line, y + sc));
+        s.stance = Stance::Defend;
+        s.touching = touching;
+        s.aim = Some(aim);
+        s.dense = 10;
+    };
+    // A line in reach: its points, whatever touches the soldier.
+    set(&mut g, 0.5 * reach, 3, near);
+    for _ in 0..5 {
+        let p = g.target(0).expect("a line in reach is fired at");
+        assert!((p.0 - (x + 0.5 * reach)).abs() < 1e-3, "{p:?}");
+    }
+    // A line far out of reach, walkers on the soldier: its own aim.
+    set(&mut g, 4.0 * reach, 3, near);
+    for _ in 0..5 {
+        assert_eq!(g.target(0), Some(near), "a soldier on its way shoots what reaches it");
+    }
+    // Far line, nothing on it and its densest slime far off: Defend holds.
+    let far = (x + 0.9 * reach, y);
+    if g.clear_line((x, y), far) {
+        set(&mut g, 4.0 * reach, 0, far);
+        assert!(g.target(0).is_none(), "Defend does not fire at far slime on the way");
+    }
 }
