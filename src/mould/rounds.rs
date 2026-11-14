@@ -147,6 +147,31 @@ impl Card {
         }
     }
 
+    /// What the card takes of a gun's budget (`RoundRules::budget`; the
+    /// owner's notes, 11-14 15:06Z: "Each card should have a cost and guns
+    /// have x amount of bank to spend", and their card at 15:34Z: the
+    /// budget is a capacity checked when the gun is loaded, and equipped
+    /// cards fire on the recharge as before). A payload is the most, a
+    /// card that changes every bullet next, a tweak least.
+    pub fn cost(self) -> u32 {
+        match self {
+            Card::Bomb | Card::Germ => 4,
+            Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range => 2,
+            Card::Quiet | Card::Delay | Card::Thick => 1,
+        }
+    }
+
+    /// How rare the card is: 1 common, 2 uncommon, 3 rare. A run hands
+    /// out higher tiers deeper in (the roguelike thread's rewards).
+    pub fn tier(self) -> u8 {
+        match self {
+            Card::Bomb | Card::Germ => 3,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist => 2,
+            _ => 1,
+        }
+    }
+
     pub fn from_name(s: &str) -> Option<Card> {
         Card::ALL.into_iter().find(|c| c.name() == s)
     }
@@ -168,6 +193,31 @@ pub fn parse(s: &str) -> Option<Vec<Card>> {
     }
     let v: Option<Vec<Card>> = s.split('+').map(Card::from_name).collect();
     v.filter(|v| v.len() <= SLOTS)
+}
+
+/// A round's cost against a gun's budget (`Card::cost`).
+pub fn cost(round: &[Card]) -> u32 {
+    round.iter().map(|c| c.cost()).sum()
+}
+
+/// A set of cards that does not fit a gun: what it costs, the budget, and
+/// how many cards against `SLOTS`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Over {
+    pub cost: u32,
+    pub budget: u32,
+    pub cards: usize,
+}
+
+/// The cards, if they fit a gun of `budget`: their cost within it and at
+/// most `SLOTS` of them.
+pub fn fit(round: Vec<Card>, budget: u32) -> Result<Vec<Card>, Over> {
+    let c = cost(&round);
+    if c <= budget && round.len() <= SLOTS {
+        Ok(round)
+    } else {
+        Err(Over { cost: c, budget, cards: round.len() })
+    }
 }
 
 pub fn name(round: &[Card]) -> String {
@@ -233,6 +283,10 @@ pub struct RoundRules {
     /// and alarm different. It just makes a virtual wall for the slime?").
     /// Off, scorch is the crater wall alone, as #244 built it.
     pub trail_burn: bool,
+    /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
+    /// every test loadout the window's H cycles (the dearest, shock, is
+    /// 10). A run may grow it (the roguelike thread).
+    pub budget: u32,
     /// The toolkit's numbers for the payloads (radii, prices, crater).
     pub kit: KitRules,
 }
@@ -264,6 +318,7 @@ impl Default for RoundRules {
             trail_bait: 40.0,
             trail_cloud: 0.4,
             trail_burn: true,
+            budget: 10,
             kit: KitRules::default(),
         }
     }
@@ -483,9 +538,16 @@ fn slot(p: Card) -> usize {
 }
 
 impl Rounds {
+    /// A gun with these cards, unchecked (the window's test loadouts).
     pub fn new(round: Vec<Card>, rules: RoundRules) -> Self {
         let casts = casts(&round, &rules);
         Rounds { rules, round, casts, ..Default::default() }
+    }
+
+    /// A gun with these cards if they fit `rules.budget` (`fit`): how a
+    /// run equips the cards a player owns.
+    pub fn build(round: Vec<Card>, rules: RoundRules) -> Result<Self, Over> {
+        fit(round, rules.budget).map(|r| Rounds::new(r, rules))
     }
 
     /// Puts the round's flight cards on the game's soldier bullets (also
@@ -659,6 +721,23 @@ impl Rounds {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The budget (owner's card, 11-14 15:34Z: capacity at loadout): a set
+    /// that costs more than the gun's budget, or has more than `SLOTS`
+    /// cards, is refused and says by how much; one that fits builds.
+    #[test]
+    fn a_gun_takes_only_the_cards_its_budget_holds() {
+        let r = RoundRules::default();
+        let ok = parse("scatter+blast+wide+blast").unwrap();
+        assert_eq!(cost(&ok), 10);
+        assert!(Rounds::build(ok, r).is_ok(), "10 fits a 10 budget");
+        let dear = vec![Card::Bomb, Card::Germ, Card::Blast];
+        assert_eq!(Rounds::build(dear.clone(), r).err(), Some(Over { cost: 11, budget: 10, cards: 3 }));
+        assert!(Rounds::build(dear, RoundRules { budget: 11, ..r }).is_ok(), "a bigger gun takes it");
+        let five = vec![Card::Quiet; 5];
+        assert_eq!(fit(five, 99).err().map(|o| o.cards), Some(5), "at most SLOTS cards");
+        assert!(Card::ALL.iter().all(|c| c.cost() >= 1 && (1..=3).contains(&c.tier())));
+    }
 
     #[test]
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
