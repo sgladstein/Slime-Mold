@@ -10,8 +10,8 @@ sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/larder-world-tiers-2026-11-12.md
   - Reports/plan-matrix-2026-11-12.md
-  - Reports/plan-matrix-tiers-2026-11-14.md
   - Reports/plan-matrix-take-2026-11-14.md
+  - Reports/plan-matrix-tiers-2026-11-14.md
 code:
   - Brain
   - Game::apply
