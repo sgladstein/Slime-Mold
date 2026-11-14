@@ -49,7 +49,8 @@ impl ApplicationHandler for App {
                 None
             }
         };
-        if let Err(e) = self.start() {
+        let opened = if self.in_menu() { self.open_menu() } else { self.start() };
+        if let Err(e) = opened {
             self.fail(event_loop, e);
         }
     }
@@ -75,6 +76,9 @@ impl ApplicationHandler for App {
                     if let Some(c) = self.canvas.as_mut() {
                         c.screen = (size.width, size.height);
                     }
+                    if self.in_menu() {
+                        self.menu_camera();
+                    }
                 }
             }
             WindowEvent::ModifiersChanged(m) => {
@@ -85,6 +89,12 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput { event, .. } => {
                 let PhysicalKey::Code(code) = event.physical_key else { return };
                 let pressed = event.state == ElementState::Pressed;
+                // The start menu takes every key while it is up.
+                if let Some(m) = self.menu.as_mut() {
+                    let picks = if event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown) { Vec::new() } else { m.key(code, pressed) };
+                    self.menu_events(picks, event_loop);
+                    return;
+                }
                 // The game UI first: its command keys, Esc for its menu,
                 // Space for the newest alert.
                 if !event.repeat {
@@ -104,11 +114,18 @@ impl ApplicationHandler for App {
             }
             WindowEvent::CursorMoved { position, .. } => {
                 let at = (position.x as f32, position.y as f32);
+                if let Some(m) = self.menu.as_mut() {
+                    m.moved(Some(at));
+                    return;
+                }
                 let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
                 self.hud.moved(Some(at));
                 self.controls.moved(Some(at), &mut self.camera, mm);
             }
             WindowEvent::CursorLeft { .. } => {
+                if let Some(m) = self.menu.as_mut() {
+                    m.moved(None);
+                }
                 self.hud.moved(None);
                 self.controls.moved(None, &mut self.camera, None);
             }
@@ -123,6 +140,9 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::LineDelta(_, y) => y.signum() as i32,
                     MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
                 };
+                if self.in_menu() {
+                    return;
+                }
                 self.controls.wheel(notches, &mut self.camera);
             }
             WindowEvent::MouseInput { state, button, .. } => {
@@ -133,6 +153,11 @@ impl ApplicationHandler for App {
                     MouseButton::Middle => Button::Middle,
                     _ => return,
                 };
+                if let Some(m) = self.menu.as_mut() {
+                    let picks = m.button(b, down);
+                    self.menu_events(picks, event_loop);
+                    return;
+                }
                 let (took, events) = self.hud.button(b, down, &self.camera, self.shift);
                 self.hud_events(events, event_loop);
                 if took {

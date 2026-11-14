@@ -293,3 +293,40 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
     assert_eq!(app.looks.len(), app.game.as_ref().unwrap().soldiers.len());
     assert!(app.looks.last().unwrap().flash > 0.0, "the shot's flash on its soldier");
 }
+
+/// The start menu's Sandbox, untouched, plays the round the bare command
+/// line plays (shape C on Fork), and its options only add what was moved.
+#[test]
+fn the_menu_plays_the_command_lines_rounds() {
+    use slime_mould::world::start::StartEvent;
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None };
+    let mut cli = bare.clone();
+    default_shape(&mut cli);
+    let mut menu = start_menu(&bare);
+    assert!(menu.options.iter().all(|o| o.is_default()), "a bare command line presets nothing");
+    let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
+    assert_eq!((a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own), (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false));
+    // A mission keeps its own mould: no shape C keys, no map.
+    assert!(menu.missions.len() >= 3, "the campaign's missions are listed");
+    assert_eq!(menu.missions[0].stem, "1-landfall");
+    let m = round_args(&bare, false, &menu, &StartEvent::Mission(1));
+    assert_eq!((m.mission.as_deref(), m.walkers, m.keys.len()), (Some(menu.missions[1].stem.as_str()), 5000, 0));
+    // Options moved: they land as the command line's keys would.
+    for o in &mut menu.options {
+        o.at = o.choices.iter().position(|c| c == match o.key.as_str() { "panic" => "0", "bullet" => "0", "map" => "rim", "rounds" => "split", _ => o.value() }).unwrap();
+    }
+    let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
+    assert_eq!((a.map.as_deref(), a.bullet, LOADOUTS[a.round].0), (Some("rim"), Some(0.0), "split"));
+    assert_eq!(a.keys.last(), Some(&("panic".to_string(), "0".to_string())));
+    let m = round_args(&bare, false, &menu, &StartEvent::Mission(0));
+    assert_eq!(m.keys, vec![("panic".to_string(), "0".to_string())]);
+    // A command line's own value is the preset, and the page's value wins.
+    let mut given = bare.clone();
+    given.keys.push(("wither".into(), "0".into()));
+    let mut menu = start_menu(&given);
+    assert_eq!(menu.changed("wither"), Some("0"));
+    let w = menu.options.iter_mut().find(|o| o.key == "wither").unwrap();
+    w.at = w.default;
+    let a = round_args(&given, false, &menu, &StartEvent::Sandbox);
+    assert_eq!(a.keys.iter().filter(|k| k.0 == "wither").map(|k| k.1.as_str()).collect::<Vec<_>>(), vec!["0.01"], "reset to C's own");
+}

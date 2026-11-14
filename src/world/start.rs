@@ -83,6 +83,8 @@ pub enum StartEvent {
     Sandbox,
     /// The index into `missions`.
     Mission(usize),
+    /// Open the map editor (`larder-edit`, #209).
+    EditMaps,
     Quit,
 }
 
@@ -101,6 +103,7 @@ enum Hit {
     Campaign,
     Options,
     Keys,
+    EditMaps,
     Quit,
     Back,
     Mission(usize),
@@ -117,6 +120,11 @@ pub struct StartMenu {
     /// The key card's rows: key, what it does.
     pub keys: Vec<(String, String)>,
     pub page: Page,
+    /// The main page offers "Edit maps" (the game has an editor to start).
+    pub edit_maps: bool,
+    /// A line the game wants shown on the main page (such as why the map
+    /// editor did not start).
+    pub notice: Option<String>,
     /// Which row the keyboard is on, on this page.
     pub focus: usize,
     /// The page the key card goes back to.
@@ -128,7 +136,7 @@ pub struct StartMenu {
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, notice: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, hits: Vec::new() }
     }
 
     /// The option named `key`.
@@ -152,7 +160,7 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => vec![Hit::Sandbox, Hit::Campaign, Hit::Options, Hit::Keys, Hit::Quit],
+            Page::Main => [Hit::Sandbox, Hit::Campaign, Hit::Options, Hit::Keys].into_iter().chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -165,12 +173,13 @@ impl StartMenu {
         self.show(to);
         // Back on the main page, on the row that led away.
         if to == Page::Main {
-            self.focus = match from {
-                Page::Missions => 1,
-                Page::Options => 2,
-                Page::Keys => 3,
-                Page::Main => 0,
+            let led = match from {
+                Page::Missions => Hit::Campaign,
+                Page::Options => Hit::Options,
+                Page::Keys => Hit::Keys,
+                Page::Main => Hit::Sandbox,
             };
+            self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
         }
     }
 
@@ -182,6 +191,7 @@ impl StartMenu {
             Hit::Options => self.show(Page::Options),
             Hit::Keys => self.show(Page::Keys),
             Hit::Quit => return Some(StartEvent::Quit),
+            Hit::EditMaps => return Some(StartEvent::EditMaps),
             Hit::Back => self.back(),
             Hit::Mission(i) => return Some(StartEvent::Mission(i)),
             Hit::Turn(i, by) => self.options[i].turn(by),
@@ -292,9 +302,10 @@ impl StartMenu {
         self.hits.clear();
         // A shade down the left, fading out, so the panel reads over the dish.
         let shade_w = (720.0 * s).min(sw);
-        for k in 0..12 {
-            let f = k as f32 / 12.0;
-            c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (24.0 * (1.0 - f)) as u8 + 6]);
+        // (Forty thin steps: twelve showed as bands on the 1600-wide shot.)
+        for k in 0..40 {
+            let f = k as f32 / 40.0;
+            c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
         }
         let x = 48.0 * s;
         let w = (560.0 * s).min(sw - 2.0 * x);
@@ -359,18 +370,24 @@ impl StartMenu {
         let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default()).map(|o| format!("{} {}", o.key, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
-        let items: [(&str, String, Hit, bool); 5] = [
+        let mut items: Vec<(&str, String, Hit, bool)> = vec![
             ("Sandbox", sandbox, Hit::Sandbox, true),
             ("Campaign", campaign, Hit::Campaign, false),
             ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
             ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
-            ("Quit", String::new(), Hit::Quit, false),
         ];
+        if self.edit_maps {
+            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false));
+        }
+        items.push(("Quit", String::new(), Hit::Quit, false));
         let mut y = top + 12.0 * s;
         for (label, sub, hit, primary) in items {
             let h = if sub.is_empty() { 48.0 * s } else { 62.0 * s };
             self.item(Rect::new(x, y, w.min(420.0 * s), h), label, &sub, hit, primary, focus == Some(hit), c, s);
             y += h + 12.0 * s;
+        }
+        if let Some(n) = self.notice.clone() {
+            c.text_fit(Weight::Medium, 13.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
         }
     }
 
@@ -436,7 +453,9 @@ impl StartMenu {
             c.text_fit(Weight::Medium, 11.5 * s, (prev.right() + vw / 2.0, row.y + 48.0 * s), Align::Centre, &d, vw + 2.0 * aw, if o.is_default() { FAINT } else { MUTED });
             y += rh;
         }
-        let by = panel.bottom() + 16.0 * s;
+        // The defaults move as the game is tuned (D5: "applies to this build").
+        c.text_fit(Weight::Medium, 12.0 * s, (x, panel.bottom() + 20.0 * s), Align::Left, "Defaults are this build's; they move as the game is tuned", w, FAINT);
+        let by = panel.bottom() + 34.0 * s;
         self.item(Rect::new(x, by, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, focus == Some(Hit::Back), c, s);
         self.item(Rect::new(x + 152.0 * s, by, 200.0 * s, 42.0 * s), "All to defaults", "", Hit::ResetAll, false, focus == Some(Hit::ResetAll), c, s);
     }
@@ -449,7 +468,7 @@ impl StartMenu {
         let room = sh - top - 130.0 * s;
         let per = ((room - 24.0 * s) / lh).floor().max(1.0) as usize;
         let cols = if rows.len() > per { 2 } else { 1 };
-        let col_w = (w * 1.6).min(c.screen.0 as f32 - 2.0 * x) / cols as f32;
+        let col_w = if cols == 1 { w } else { (w * 1.6).min(c.screen.0 as f32 - 2.0 * x) / 2.0 };
         let per = rows.len().div_ceil(cols);
         let panel = Rect::new(x, top + 12.0 * s, col_w * cols as f32, per as f32 * lh + 30.0 * s);
         self.glass(panel, c, s);
@@ -527,6 +546,22 @@ mod tests {
         m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit], "up from the top wraps to quit");
+    }
+
+    #[test]
+    fn edit_maps_shows_only_when_the_game_has_an_editor() {
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::EditMaps).is_none());
+        m.edit_maps = true;
+        assert_eq!(click(&mut m, &mut c, Hit::EditMaps), vec![StartEvent::EditMaps]);
+        // Quit is still last, and Esc from the key card lands on Keys.
+        m.key(KeyCode::ArrowUp, true);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit]);
+        m.show(Page::Keys);
+        m.key(KeyCode::Escape, true);
+        assert_eq!(m.rows()[m.focus], Hit::Keys);
     }
 
     #[test]

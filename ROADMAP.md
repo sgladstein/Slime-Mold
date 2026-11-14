@@ -356,7 +356,11 @@ Settled by the technical lead, the game designer and the integration thread
 - **D5, the start menu (C2):** menu, mission list, options with today's
   defaults, the key card; plus restart and mission select from pause, a key
   card showing only the verbs the mission has unlocked, and an "applies to
-  this build" line. Saves later.
+  this build" line. Saves later. **Built 11-14** ([report](Reports/start-menu-2026-11-14/README.md),
+  #207 and its follow-up): menu over a live sandbox dish, missions read from
+  their files, options with defaults and the build line, F1/? key card,
+  Main menu from pause and the end screen (mission select from there),
+  Edit maps. Left: a key card trimmed to the mission's verbs.
 - **D6, the file split (C9):** first, before C2 and C10 branch. Prepared on
   the integration branch, then a freeze of under 45 minutes on
   `larder_world.rs` and `larder-world.rs` (freeze held from 11-14 00:36Z).

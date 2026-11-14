@@ -585,6 +585,7 @@ impl App {
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
             ("E".into(), "Tools page: blast, det cord, mine (germ and gas not on the GPU yet); E again goes back".into()),
         ];
+        m.main_menu = self.base.is_some();
         m
     }
 }

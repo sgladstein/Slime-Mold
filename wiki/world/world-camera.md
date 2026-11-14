@@ -7,6 +7,7 @@ sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/shot-damage-2026-11-12.md
   - Reports/soldier-controls-2026-11-12.md
+  - Reports/start-menu-2026-11-14/README.md
   - Reports/world-camera-2026-11-11.md
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
@@ -73,7 +74,9 @@ and of CPU a frame on the 1070. F1 or ? opens the key card from play (it
 pauses; again, or Esc, goes back to play). A start menu (`StartMenu`,
 `world::start`, 2026-11-14) draws on the same canvas down the left of the
 screen, over a live dish: sandbox, the campaign's missions, an options
-page with each switch's default beside it, and the key card. The game itself is `cargo run --release
+page with each switch's default beside it, and the key card; the
+window opens on it when run with no arguments
+([report](../../Reports/start-menu-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's

@@ -124,6 +124,7 @@ impl App {
                     self.start()?;
                     self.paused = false;
                 }
+                HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
                     return Ok(true);
