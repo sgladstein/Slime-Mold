@@ -3241,9 +3241,9 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         pset(PB_B, i, p - eat);
         ate = eat;
         let top = 1.0 - pf(15u) * m;
-        if (p - eat < pf(7u)) { to = heat * 0.5; }
+        if (p - eat < pf(7u)) { to = heat * pf(47u); }
         else if (dice < pf(13u) * (m * m)) { to = 0.0; }
-        else { to = min(heat + pf(4u), top); }
+        else { to = min(heat + pf(4u), top) * (1.0 - pf(46u) * dice); }
         if (to < 0.01) { to = 0.0; }
     } else {
         let x = i % P.w; let y = i / P.w;

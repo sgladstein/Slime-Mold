@@ -224,6 +224,14 @@ pub struct Fire {
     /// ... and cooler: its heat tops out at 1 - `cool` x moisture, so a
     /// damp fire glows dim, spreads less and (under `fire_kill`) kills less.
     pub cool: f32,
+    /// A burning cell's heat a step is its rise x (1 - `flicker` x its
+    /// chance), so flames flicker cell by cell and step by step (owner
+    /// 11-14 19:26Z: "The fire should also look better"); the picture is
+    /// the heat field, so the flicker is the fire's own.
+    pub flicker: f32,
+    /// Out of fuel, a cell's heat is kept x `ember` a step: a glowing tail
+    /// of embers behind the front. Was 0.5 (gone in a few steps).
+    pub ember: f32,
     /// Below this many plants a burning cell dies down (heat halves a step)
     /// and a cell can't catch.
     pub fuel: f32,
@@ -285,11 +293,11 @@ pub fn fire_step(
                 ate = eat;
                 let top = 1.0 - f.cool * m;
                 to[i] = if p - eat < f.fuel {
-                    heat * 0.5
+                    heat * f.ember
                 } else if dice < f.out * (m * m) {
                     0.0
                 } else {
-                    (heat + f.heat).min(top)
+                    (heat + f.heat).min(top) * (1.0 - f.flicker * dice)
                 };
                 if to[i] < 0.01 {
                     to[i] = 0.0;
@@ -379,7 +387,7 @@ pub fn moisture(w: usize, h: usize, water: &[bool], kind: &[u8], seed: u32, base
             if d[i] == 0 || kind[i] == REEDS {
                 return 1.0;
             }
-            let n = 0.6 * noise(x, y, 40, seed ^ 0x5EED_0001) + 0.4 * noise(x, y, 12, seed ^ 0x5EED_0002);
+            let n = 0.5 * noise(x, y, 40, seed ^ 0x5EED_0001) + 0.3 * noise(x, y, 12, seed ^ 0x5EED_0002) + 0.2 * noise(x, y, 4, seed ^ 0x5EED_0003);
             // The noise's middle half spans about 0.4-0.6, so x 2 x 2: a
             // spread of 0.3 gives patches some 0.25 drier and wetter.
             let mut m = base + spread * 4.0 * (n - 0.5);
@@ -628,11 +636,13 @@ mod tests {
 
     const F: Fire = Fire {
         heat: 0.15,
-        eat: 0.02,
+        eat: 0.012,
         spread: 0.3,
         out: 0.05,
         smoulder: 0.75,
         cool: 0.4,
+        flicker: 0.35,
+        ember: 0.9,
         fuel: 0.05,
         damp: 1.0,
         char_gain: 1.0,

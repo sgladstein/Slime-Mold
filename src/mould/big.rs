@@ -1028,6 +1028,11 @@ pub struct BigParams {
     pub fire_out: f32,
     pub fire_smoulder: f32,
     pub fire_cool: f32,
+    /// Flames flicker (`plants::Fire::flicker`) and leave embers
+    /// (`plants::Fire::ember`), owner 11-14 19:26Z: "The fire should also
+    /// look better".
+    pub fire_flicker: f32,
+    pub fire_ember: f32,
     pub fire_fuel: f32,
     pub fire_damp: f32,
     pub fire_kill: f32,
@@ -1253,11 +1258,13 @@ impl BigParams {
             plant_fill: 0.0,
             plant_every: 8,
             fire_heat: 0.15,
-            fire_eat: 0.02,
+            fire_eat: 0.012,
             fire_spread: 0.3,
             fire_out: 0.05,
             fire_smoulder: 0.75,
             fire_cool: 0.4,
+            fire_flicker: 0.35,
+            fire_ember: 0.9,
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
@@ -1817,7 +1824,7 @@ impl BigDish {
     }
 
     fn fire_rates(&self) -> crate::mould::plants::Fire {
-        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, spread: self.p.fire_spread, out: self.p.fire_out, smoulder: self.p.fire_smoulder, cool: self.p.fire_cool, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, spread: self.p.fire_spread, out: self.p.fire_out, smoulder: self.p.fire_smoulder, cool: self.p.fire_cool, flicker: self.p.fire_flicker, ember: self.p.fire_ember, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
     }
 
     /// Fire's step, after the plants' (they grow, then burn), then the

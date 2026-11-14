@@ -721,8 +721,17 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         m.gem = 1.0;
     }
     // Fire: its heat glows (an emissive, so it lights the dark).
+    // The halo's colour, with the cell's own heat over it: the flames'
+    // flicker and embers (`plants::Fire::flicker`, `ember`) show cell by
+    // cell inside the glow (owner 11-14 19:26Z, "The fire should also look
+    // better": with the halo alone a front read as a soft orange smear).
     let fh = pl.heat;
-    if (fh > 0.0) { m.glow = max(m.glow, flame(fh)); m.albedo = mix(m.albedo, flame(fh), 0.35 * fh); }
+    let hc = plant_heat(i);
+    if (fh > 0.0 || hc > 0.0) {
+        let f = max(flame(hc), 0.75 * flame(fh));
+        m.glow = max(m.glow, f);
+        m.albedo = mix(m.albedo, f, 0.35 * max(fh, hc));
+    }
     return m;
 }
 

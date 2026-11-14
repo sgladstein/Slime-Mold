@@ -2845,6 +2845,8 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // Word 45: fire steps run (`BigDish::fire_steps`), which keys each
     // cell's chance; the `firekill` pass counts it on.
     w[45] = d.fire_steps;
+    // Words 46-47: fire's flicker and ember keep.
+    (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
