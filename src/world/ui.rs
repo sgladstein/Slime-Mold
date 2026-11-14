@@ -68,6 +68,23 @@ use theme::*;
 const CELL: f32 = 42.0;
 const CELL_GAP: f32 = 5.0;
 const CARD_PAD: f32 = 8.0;
+/// The command card's grid. 4 x 3 until the owner's ask of 11-14 08:33Z
+/// ("re-arrange the bottom menu to be one row for the squad and two rows
+/// for the other buttons so the whole thing is wider but shorter"): 6 x 2,
+/// the 4 x 3 slots read in order (`card_slot`), so the bar went from 160
+/// to 113 units at 1080 lines (15% to 10% of the screen).
+const CARD_COLS: u8 = 6;
+const CARD_ROWS: u8 = 2;
+/// The minimap keeps the bar's old height (152 units) in the corner,
+/// standing above the shorter bar, so it does not shrink with it.
+const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
+
+/// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
+/// the twelve slots in reading order, wrapped at six.
+fn card_slot(slot: (u8, u8)) -> (u8, u8) {
+    let k = slot.0.min(2) * 4 + slot.1.min(3);
+    (k / CARD_COLS, k % CARD_COLS)
+}
 /// The selection panel's height with nothing selected.
 const COLLAPSED: f32 = 40.0;
 
@@ -769,7 +786,7 @@ impl Hud {
         // the selection panel left of that, all one height.
         let cell = CELL * s;
         let gap = CELL_GAP * s;
-        let card_w = 4.0 * cell + 3.0 * gap + 2.0 * pad;
+        let card_w = CARD_COLS as f32 * cell + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
         let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
         let panel_h = inset_bottom - 8.0 * s;
         let base = sh - 8.0 * s;
@@ -780,10 +797,11 @@ impl Hud {
         self.minimap_box = None;
         self.minimap = None;
         if minimap {
-            let ih = panel_h - 2.0 * pad;
+            let mm_h = (MINIMAP_H * s).max(panel_h);
+            let ih = mm_h - 2.0 * pad;
             // (min then max, not `clamp`, which panics in a narrow window.)
             let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
-            let f = Rect::new(right - iw - 2.0 * pad, top_of, iw + 2.0 * pad, panel_h);
+            let f = Rect::new(right - iw - 2.0 * pad, base - mm_h, iw + 2.0 * pad, mm_h);
             let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
             self.minimap_box = Some(bx);
@@ -801,7 +819,8 @@ impl Hud {
             right = f.x - 8.0 * s;
         }
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
-        let sel_w = (600.0 * s).min(card.x - 16.0 * s);
+        // Wide and one card row tall (owner, 08:33Z).
+        let sel_w = (900.0 * s).min(card.x - 16.0 * s);
         let sel = Rect::new(card.x - 8.0 * s - sel_w, top_of, sel_w, panel_h);
         // With nothing selected the selection panel collapses to a strip
         // along the bottom (the art director, 11-14 02:34Z: a full-height
@@ -1081,17 +1100,18 @@ impl Hud {
         let cell = CELL * s;
         let gap = CELL_GAP * s;
         let x0 = r.x + pad;
-        let y0 = r.bottom() - pad - 3.0 * cell - 2.0 * gap;
+        let y0 = r.bottom() - pad - CARD_ROWS as f32 * cell - (CARD_ROWS - 1) as f32 * gap;
         // Empty slots, faintly, so the grid reads as a grid.
-        for j in 0..3 {
-            for i in 0..4 {
+        for j in 0..CARD_ROWS {
+            for i in 0..CARD_COLS {
                 let b = Rect::new(x0 + i as f32 * (cell + gap), y0 + j as f32 * (cell + gap), cell, cell);
                 c.rrect(b, 10.0 * s, [255, 255, 255, 8]);
             }
         }
         let mut tip = None;
         for (k, cmd) in m.commands.iter().enumerate() {
-            let (row, col) = (cmd.slot.0.min(2) as f32, cmd.slot.1.min(3) as f32);
+            let (row, col) = card_slot(cmd.slot);
+            let (row, col) = (row as f32, col as f32);
             let b = Rect::new(x0 + col * (cell + gap), y0 + row * (cell + gap), cell, cell);
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let down = hot && self.pressed == Some(Hit::Command(k));
@@ -1569,7 +1589,7 @@ impl Hud {
     /// the panels leave (the opening view on the squad).
     pub fn insets(screen: (u32, u32), ui: UiSize) -> (f32, f32) {
         let s = ui.px(screen);
-        let panel_h = 3.0 * CELL * s + 2.0 * CELL_GAP * s + 2.0 * CARD_PAD * s;
+        let panel_h = CARD_ROWS as f32 * CELL * s + (CARD_ROWS - 1) as f32 * CELL_GAP * s + 2.0 * CARD_PAD * s;
         (8.0 * s + 38.0 * s, panel_h + 8.0 * s)
     }
 
@@ -1717,6 +1737,21 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
+    /// The 4 x 3 slots land on twelve different places of the 6 x 2 card,
+    /// in reading order.
+    #[test]
+    fn the_command_card_is_six_by_two_in_reading_order() {
+        let places: Vec<(u8, u8)> = (0..3).flat_map(|r| (0..4).map(move |c| card_slot((r, c)))).collect();
+        assert_eq!(places[0], (0, 0));
+        assert_eq!(places[5], (0, 5));
+        assert_eq!(places[6], (1, 0));
+        assert_eq!(places[11], (1, 5));
+        let mut sorted = places.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), 12);
+    }
+
     /// The UI size (owner, 11-14 08:07Z): at every step on every screen the
     /// HUD's panels and buttons stay on the screen, and it grows with the
     /// size until `UiSize::px`'s cap.
@@ -1749,7 +1784,9 @@ mod tests {
             r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }];
             r.draw();
             let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
-            assert!(share <= 0.152, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
+            // 15% before the owner's 08:33Z ask (one squad row, two command
+            // rows); 10.5% after.
+            assert!(share <= 0.11, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
             assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.

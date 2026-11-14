@@ -42,6 +42,16 @@ map editor at 100% and 150%. Rendered on the cloud's llvmpipe.
   drawn at exactly 2x, to Inter (`hud::draw_text_inter`, the game UI's
   face, glyphs cached a size), laid out on the same rows.
 
+## Wider, shorter bottom bar (08:33Z)
+
+The owner, 08:33Z: "re-arrange the bottom menu to be one row for the squad
+and two rows for the other buttons so the whole thing is wider but
+shorter". The command card is 6 x 2 (the 4 x 3 slots in reading order,
+`card_slot`), the selection panel one row of cards and up to 900 units wide
+(600 before), and the bar 113 units at 1080 lines instead of 160 (10.5% of
+the screen, 15% before). The minimap keeps the old 152-unit height in the
+corner. Pictures: the page's *Wider, shorter bottom bar*.
+
 ## Cost
 
 The HUD's draw is unchanged in shape count; a bigger size only rasterizes
