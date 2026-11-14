@@ -357,6 +357,16 @@ Each biome reads apart at a glance on the sheet: meadow streams, barren
 bands, fen lakes, the valley's river, the jungle's hedges and rings, the
 highlands' rooms on cracked clay, the caverns, the core's mix.
 
+**After the graphics lead's review (18:56Z).** Round 3 accepted; the
+river and the streams too thin to read at zoom 1. Rivers now at least 40
+map cells across (half-width 22-28, edge noise ±10%; were 34 at the
+least), streams at least 16 (half-width 9-12; were 8). Width across each
+water's own course, medians on seeds 1-3 (`raw/medial.py`): river valley
+37-47 cells before, 39-49 after; streams 13-17 before, 19-25 after. The
+checks are unchanged (400 planets: the same 354 first, all within four;
+water never blocks a walk). The films and sheets above are from before the
+change. Water's value against the ground is the ground thread's.
+
 ## Next
 
 1. **Deep water, plants and new ground in the maps** as the ground and

@@ -1174,7 +1174,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         let k = rc.rivers;
         for j in 0..k {
             let s = span * (0.5 + (j as f32 - (k as f32 - 1.0) / 2.0) * 0.18 + r.range(-0.03, 0.03));
-            let half = r.range(20.0, 28.0);
+            // At least 40 map cells across (about 10 px in a 266 px grey
+            // thumbnail): at 34 the river read as a thin line at zoom 1
+            // (graphics lead, 2026-11-14 18:56Z).
+            let half = r.range(22.0, 28.0);
             let room: Vec<f32> = (-300..300).map(|i| i as f32 * 8.0).filter(|&u| {
                 let q = at_line(s, u);
                 q.0 > 60.0 && q.1 > 60.0 && q.0 < wf - 60.0 && q.1 < hf - 60.0
@@ -1196,11 +1199,13 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         for _ in 0..rc.rivers {
             let from = (r.range(0.2, 0.8) * wf, r.range(0.2, 0.8) * hf);
             let dir = bend(perp, r.range(-0.6, 0.6));
-            let half = r.range(5.0, 9.0);
+            // At least 16 map cells across (4 px in a grey thumbnail); 8-12
+            // was too thin to read (graphics lead, 18:56Z).
+            let half = r.range(9.0, 12.0);
             for d in [dir, (-dir.0, -dir.1)] {
                 let pts = wander(&mut r, wf, hf, from, d, 24.0, 0.25);
                 along_line(w, h, &pts, half * 1.3, |i, _, dd| {
-                    if dd < half * (0.8 + 0.4 * fine.at(i % w, i / w)) {
+                    if dd < half * (0.9 + 0.2 * fine.at(i % w, i / w)) {
                         stream[i] = true;
                     }
                 });
@@ -1331,7 +1336,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 Water::Rivers => {
                     let (sa, u) = (along(at) + warp_x.at(x, y) * 1.6, across(at));
                     for rv in &rivers {
-                        let off = (sa - rv.s).abs() - rv.half * (0.85 + 0.3 * rough.at(x, y));
+                        let off = (sa - rv.s).abs() - rv.half * (0.9 + 0.2 * rough.at(x, y));
                         if off < 0.0 {
                             let ford = rv.fords.iter().any(|&(fu, fr)| (u - fu).abs() < fr);
                             water = water.max(if off < -8.0 && !ford { 2 } else { 1 });
@@ -2000,7 +2005,7 @@ mod tests {
     // Round 3 (dials and the new biome order, 2026-11-14). Round 2's
     // depths 3-8 had kept their pins through the tiled region scan, which
     // finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0x95622705d4ab33f8, 0x8da237e6cb422583, 0x4dd1c750aa5db361, 0x2b249b76d96c3549, 0x81c6025cdcbc047f, 0x2299b3edb8c0642b, 0xf7ac30b4ab64805c, 0x44fa62d961f17019];
+    const PINNED: [u64; 8] = [0xb0f80481dc0520b3, 0x8da237e6cb422583, 0x4dd1c750aa5db361, 0x26bcc8136fa9d748, 0x81c6025cdcbc047f, 0x2299b3edb8c0642b, 0xf7ac30b4ab64805c, 0x44fa62d961f17019];
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.
