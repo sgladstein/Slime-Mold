@@ -38,3 +38,11 @@ it and covers it: before (main) and after at zoom 6, and after at zoom 12.
 
 A few ALU ops a crystal pixel and none elsewhere; not measurable on
 llvmpipe.
+
+## Second pass (owner 08:55Z: "This still looks like the slime is under it (under the crystal)")
+
+- The film covers up to 0.92 (it was 0.75), on a curve of `1 - e^(-40 th)` (it was 25). Thin mould on crystal cells is thin in the data, so the steeper curve lets it show.
+- The crystal's 1.5 px edge line is drawn under the film, not over it, so thick mould crosses the edge unbroken.
+- The face tilt on the film goes from 0.3-1.5 x to 0.4-1.4 x.
+- The light coming through the film drops to 20% of the glow plus a faint deep cyan (it was 70% plus twice as much). The cyan cast while draining goes from 0.35 to 0.2.
+- Clips: `after2-z6.gif`, `after2-z12.gif`.

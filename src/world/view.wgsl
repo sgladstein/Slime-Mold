@@ -356,11 +356,11 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
-const GEM_STUB: f32 = 0.15;
+const GEM_STUB: f32 = 0.1;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
-const GEM_FILM: f32 = 0.75;
+const GEM_FILM: f32 = 0.92;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -842,15 +842,29 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
+            // Spent, it is worn stone (art director, 11-14: a dry crystal
+            // "reads like a UI block"): darker than the rock round it, matte,
+            // and stepped in three hexagonal terraces from its depth field,
+            // each step's riser (two pixels) tilted out so the light catches
+            // one side and shades the other, as a worn step pyramid. The
+            // steps come in as the charge goes, so a live crystal is clean
+            // glass. Before: a flat (84,88,92) grey, steps tried as dark
+            // seams alone read as a target.
+            let spent = 1.0 - v;
+            let tf = fract(depth * 3.0 + 0.5);
+            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
+            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient.
-            let s = 9.0 * gem_tall(v) / a;
+            // slope is 9 tall(v) / a along the distance's gradient; a riser
+            // adds a steep outward tilt.
+            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
             let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte grey
-            // rock (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
-            var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
+            // Charged, it is glassy cyan lit from inside; spent, matte stone
+            // (the only cyan in the world is charge).
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
+            let worn = 0.6 + 0.3 * depth;
+            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(30.0, 120.0, 140.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -867,21 +881,21 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
             let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
-            let film = GEM_FILM * (1.0 - exp(-25.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
-            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.35 * hot, 0.0, 0.35));
-            let on = fed * clamp(0.3 + 0.7 * gs, 0.3, 1.5);
+            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.2 * hot, 0.0, 0.2));
+            let on = fed * clamp(0.5 + 0.5 * gs, 0.4, 1.4);
             // The silhouette stays crisp under the film: a dark line a pixel
             // and a half wide inside the hexagon's edge, where the faces
             // meet the ground (a hard shape's edge, art direction rule 4).
             let rim = 0.72 + 0.28 * smoothstep(0.0, 1.5, gi.x * P.zoom);
             // The charge's light comes up through the film, brightest deep in a
             // full crystal, so a covered crystal still glows cyan.
-            let through = glow * (1.0 - 0.3 * film) + vec3<f32>(20.0, 95.0, 115.0) * v * depth * film;
-            let gc = (mix(rock, on, film) + through) * rim;
+            let through = glow * (1.0 - 0.8 * film) + vec3<f32>(8.0, 40.0, 50.0) * v * depth * film;
+            let gc = mix(rock * rim, on, film) + through;
             c = mix(c, gc, cover);
         }
         if (cover < 1.0 && hot > 0.0) {
