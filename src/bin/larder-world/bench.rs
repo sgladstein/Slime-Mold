@@ -23,7 +23,8 @@ use super::*;
 /// stamped alone and waited for, printed as a table: the GPU ms a step of
 /// each pass (all its runs in the step), median over the N steps. Returns
 /// the last line of the timed run (the round at its end), for the smoke
-/// test.
+/// test. `centre=X,Y[,ZOOM]` puts the camera there for the run (the draw
+/// timed at a zoom; the window opens fitted).
 pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<String, String> {
     let (secs, hand, fps, screen, grid) = (b.secs, b.hand.as_str(), b.fps, b.screen, b.grid);
     let mut app = offscreen(args, screen, device, queue)?;
@@ -37,6 +38,13 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     app.fast = b.fast;
     app.spread = b.spread;
     app.game.as_mut().unwrap().world.e.squad_one = b.squad1;
+    if let Some((x, y, zoom)) = b.view {
+        // The HUD sets the camera's insets as it draws (as `headless`).
+        app.prepare();
+        app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
+        app.camera.centre_on((x, y));
+        println!("  view: zoom {} at {x:.0},{y:.0}", app.camera.zoom);
+    }
     let mut ai = match hand {
         "rush" | "farm" | "every" => None,
         _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
