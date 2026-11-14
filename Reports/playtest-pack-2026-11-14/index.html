@@ -64,8 +64,8 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outlin
   <h1>Larder World playtest pack</h1>
   <p class="lede">Everything that changed in the window since your last playtest (11-12), how to reach each change, a 15-minute route through it, and the questions only your hands can answer.</p>
   <div class="build">
-    <span>Build: <b>main at fb3de33</b> (11-14 03:55Z, with the start menu, map editor, missions 4-7 and the new sounds)</span>
-    <span>Run: <code>cargo run --release --bin larder-world</code></span>
+    <span>Build: <b>branch <code>claude/project-thread-pu1x88</code> at 8cb7472</b> (main with #212, plus #219, #225, #227 and #230 before they merge)</span>
+    <span>Get it: <code>git fetch origin claude/project-thread-pu1x88</code>, then <code>git checkout -B playtest origin/claude/project-thread-pu1x88</code>, then <code>cargo run --release --bin larder-world</code></span>
     <span>Made 2026-11-14</span>
   </div>
 
@@ -78,6 +78,11 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outlin
   <div class="tbl"><table>
     <thead><tr><th>What changed</th><th>How to see it, or turn it off</th><th>PR</th></tr></thead>
     <tbody>
+      <tr><td><span class="star" title="You asked for this">★</span> <b>New:</b> a sharp slime and true hexagon crystals, with no blur or pixel steps (your playtest, 01:49Z)</td><td>Zoom in on any crystal</td><td>#230</td></tr>
+      <tr><td><span class="star" title="You asked for this">★</span> <b>New:</b> bullets follow Noita: each bullet is a streak in its payload's colour and a light that moves over the real slime, and a burst lights its area for a tenth of a second. The simulation is unchanged</td><td>Zoom in and fire any round into the body</td><td>#219</td></tr>
+      <tr><td><b>New:</b> bombs. A bomb kills a small core and throws the live mould round it outward, as real walkers flying through the air that land and live on. One shot into C kills about 170 and throws about 680</td><td><code>rounds=bomb</code>, <code>rounds=cluster</code>, <code>rounds=blowout</code>, or <kbd>H</kbd> in play</td><td>#225</td></tr>
+      <tr><td><b>New:</b> soldiers you can count: elbow room between them, outlined figures, a health bar only when hurt, a dead pose; buildings and the larder show their state in the sprite</td><td>Zoom 6 on a squad</td><td>#227</td></tr>
+      <tr><td><b>New:</b> the slime's colours: a cut-off piece reads orange as it leans and red as it bolts</td><td>Cut a piece off (6:00 on the route)</td><td>#212</td></tr>
       <tr><td><span class="star" title="You asked for this">★</span> Shape C is the default slime, and it bites: each walker touching a soldier takes 2 health a second, out of 100, so ten walkers kill a soldier in 5 s</td><td><code>shape=a</code> plays the old 5,000 walkers; <code>shape=b|d|e</code> the other films</td><td>#174</td></tr>
       <tr><td><span class="star" title="You asked for this">★</span> Soldiers wade: every walker on a soldier slows it, so walking into thick slime is slow and deadly</td><td>Walk straight in; <code>wade=0</code> off</td><td>#143 #197</td></tr>
       <tr><td>Shots sink into the slime instead of stopping at its edge</td><td><code>sink=0</code> stops at the edge</td><td>#181</td></tr>
@@ -108,7 +113,7 @@ a:focus-visible, summary:focus-visible { outline: 2px solid var(--slime); outlin
     <li><span class="t">0:00</span><div><b>Start from the menu</b> (<code>cargo run --release --bin larder-world</code>), take a look round its pages, then start a Sandbox round. Harvest the nearest crystal and buy soldiers as food allows.<p class="look">Look for: C's body thickening round the crystals it holds, and the sheet joining crystals with trunks.</p></div></li>
     <li><span class="t">3:00</span><div><b>Once you have about eight soldiers,</b> walk four straight into C's thickest part. Stand the other four at range and fire.<p class="look">Look for: the wading slowdown, the bite, shots sinking in, and the craters. Does walking in feel very deadly, as you asked?</p></div></li>
     <li><span class="t">6:00</span><div><b>Cut a piece of C off its crystals.</b> Find a trunk whose far end holds no crystal (or only one you've harvested dry), and lay a short wall across it (<kbd>V</kbd>, 20 food a cell, so a 10-cell wall costs 200). Watch the piece thin. When it leans toward your squad, pull back. Next time, stand still instead.<p class="look">Look for: the lean, the charge, and whether pulling back in time gets you clear. Does it read as a scared animal? An arm that still holds a fed crystal won't wither, because it's still eating. If you can't find an unfed arm, the two films below show a full cut.</p></div></li>
-    <li><span class="t">9:00</span><div><b>Press <kbd>H</kbd></b> a few times and fire each round into the body.<p class="look">Look for: which rounds you can tell apart by eye.</p></div></li>
+    <li><span class="t">9:00</span><div><b>Press <kbd>H</kbd></b> a few times and fire each round into the body, then restart with <code>rounds=bomb</code> and fire into the thickest part.<p class="look">Look for: which rounds you can tell apart by eye, whether the bullets and their light now look good, and the bomb throwing the mould.</p></div></li>
     <li><span class="t">11:00</span><div><b>Restart with <code>tier=grudge</code>.</b> Fire from one spot for 30 s, then move.<p class="look">Look for: the Grudge's long-lasting alarm and scars, which make it come back to where it was hurt, and whether moving shakes it off.</p></div></li>
     <li><span class="t">13:00</span><div><b>Restart with <code>own=1</code>.</b> Sow a patch and lay a road toward the enemy.<p class="look">Look for: whether your mould feels like yours and does something you can see.</p></div></li>
     <li><span class="t">15:00</span><div><b>If there's time:</b> try a mission from 4-7 (each is new), spend two minutes in <code>larder-edit</code> and press <kbd>Enter</kbd> to play what you drew, or replay 6:00 once with <code>panic=0</code> and once with <code>wither=0</code>.</div></li>
