@@ -374,6 +374,7 @@ fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
         let y = app.camera.to_screen(g.larder).1;
         assert!(y > top + 40.0 && y < screen.1 as f32 - bottom - 40.0, "{screen:?}: the larder at y {y:.0}, the band {top:.0}..{:.0}", screen.1 as f32 - bottom);
     }
+}
 
 /// Turning the sandbox map (or the own mould) on the start menu starts the
 /// dish behind it again on that map (owner, 11-14 05:04Z); turning another
