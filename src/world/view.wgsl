@@ -774,7 +774,12 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // a dome with a cast shadow and a glint). A walker alone (wide about
     // 0.4) is a point of light (its speck) on a flat film; the height
     // rises as walkers gather, full in the body (wide 0.6 and up).
-    let th_h = th * smoothstep(0.3, 0.6, wide) * (1.0 + 0.5 * dense_share);
+    // Settled condensed mould keeps its veins (art director, 11-14
+    // follow-up: the plateau read as a flat plate): its height takes the
+    // raw thickness `th0`, veins and all, raised by up to 0.6, so the broad
+    // sheen runs over it as over dense wet metal; only its colour takes the
+    // plateau. The first cut fed the plateau to the height too.
+    let th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {

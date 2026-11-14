@@ -80,7 +80,9 @@ ground does not refill. Both engines, twins exact. In the window (Fork,
 seed 1, farm) C has 26,904 walkers at 5:00 against 44,806 off and holds
 its crystals in bronze lobes instead of covering the map; at a crowd of 16
 the tubes between crystals broke into beads
-([condense](../../Reports/condense-2026-11-14/README.md)).
+([condense](../../Reports/condense-2026-11-14/README.md)). The settled
+bronze keeps its veins under the sheen (luma 99; keep it at or under the
+bolt red's 105).
 
 ## Owner's word
 
