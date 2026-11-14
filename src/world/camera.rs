@@ -114,10 +114,15 @@ impl Camera {
         }
     }
 
+    /// Puts `w` in the middle of the band between the UI's insets (the
+    /// screen's middle with none), so a point centred on is not under the
+    /// bottom panels (the art director, 11-14: the squad opened under the
+    /// bar).
     pub fn centre_on(&mut self, w: (f32, f32)) {
-        let (sw, sh) = self.span();
+        let (sw, _) = self.span();
+        let band_mid = (self.inset.0 + (self.screen.1 - self.inset.0 - self.inset.1) / 2.0) / self.zoom;
         self.x = w.0 - sw / 2.0;
-        self.y = w.1 - sh / 2.0;
+        self.y = w.1 - band_mid;
         self.clamp();
     }
 
@@ -255,6 +260,16 @@ mod tests {
             c.wheel(-1, (640.0, 400.0));
         }
         assert!((c.zoom - c.fit()).abs() < 1e-6 && c.sees_all(), "zoomed out to {}", c.zoom);
+    }
+
+    #[test]
+    fn centre_on_puts_the_point_in_the_band_above_the_panels() {
+        let mut c = Camera::new((2048, 1280), (1280, 800));
+        c.zoom_to(6.0, (640.0, 400.0));
+        c.set_inset(46.0, 160.0);
+        c.centre_on((1000.0, 600.0));
+        let p = c.to_screen((1000.0, 600.0));
+        assert!((p.0 - 640.0).abs() < 0.01 && (p.1 - (46.0 + (800.0 - 46.0 - 160.0) / 2.0)).abs() < 0.01, "{p:?}");
     }
 
     #[test]

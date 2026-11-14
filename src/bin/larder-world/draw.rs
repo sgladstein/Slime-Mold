@@ -107,6 +107,12 @@ pub(super) fn title_case(s: &str) -> String {
     }
 }
 
+/// "trap" as "Trap".
+fn capital(s: &str) -> String {
+    let mut c = s.chars();
+    c.next().map_or(String::new(), |f| f.to_uppercase().chain(c).collect())
+}
+
 pub(super) fn thousands(n: usize) -> String {
     if n >= 10_000 {
         format!("{:.1}k", n as f32 / 1000.0)
@@ -685,9 +691,130 @@ impl App {
             ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
         ];
         m.main_menu = self.base.is_some();
+        m.loadout = Some(self.loadout(g, &sel));
         m
     }
+
+    /// The loadout panel (`ui::Loadout`): the squad's round, with the gun
+    /// of the one selected soldier (or the first selected, or the first
+    /// alive) lit at the cast its next hit fires.
+    fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
+        let rd = &self.rounds;
+        let rech = rounds::recharge(&rd.round, &rd.rules);
+        let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
+        let lead = scope.first().copied();
+        let tick = g.world.ticks();
+        let ticks = (rech * g.rules.tps as f32).max(1.0);
+        let left = |k: usize| rd.gun(k).map_or(0.0, |(_, ready)| ready.saturating_sub(tick) as f32 / ticks);
+        let next = lead.and_then(|k| rd.gun(k)).map(|(cast, _)| cast);
+        let cards = gun_cards(&rd.round, &rd.rules, g.rules.split_n as usize, next, |c| match c {
+            rounds::Card::Gas => g.world.has_gas(),
+            rounds::Card::Germ => g.world.has_germ(),
+            _ => true,
+        });
+        let (lname, lcards) = LOADOUTS[self.round];
+        let name = if rounds::parse(lcards).unwrap_or_default() == rd.round { lname.to_string() } else { rounds::name(&rd.round) };
+        let whose = match (sel.len(), lead) {
+            (_, None) => "no soldiers".to_string(),
+            (1, Some(k)) => format!("Soldier {}", k + 1),
+            (0, Some(k)) => format!("Soldier {} (squad)", k + 1),
+            (n, Some(k)) => format!("Soldier {} (of {n})", k + 1),
+        };
+        let casting = !rounds::casts(&rd.round, &rd.rules).is_empty();
+        let note = (casting && scope.len() > 1).then(|| {
+            let ready = scope.iter().filter(|&&k| left(k) <= 0.0).count();
+            format!("{ready} of {} guns ready, recharge {rech:.1} s", scope.len())
+        });
+        Loadout {
+            name: if rd.round.is_empty() { "Plain".into() } else { capital(&name) },
+            whose,
+            cards,
+            slots: rounds::SLOTS,
+            recharge: rech,
+            charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
+            note: if rd.round.is_empty() { Some("No cards: H or the button for a loadout".into()) } else { note },
+            cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
+        }
+    }
 }
+
+/// A payload's colour in the panel: its bullets' glow (`card_look`), so a
+/// card and its shot in the world match.
+fn payload_colour(c: rounds::Card) -> [u8; 4] {
+    let g = card_look(Some(c)).glow;
+    [g[0], g[1], g[2], 255]
+}
+
+/// A card's glyph, frame and words for the loadout panel, with the round's
+/// own numbers.
+fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind, String) {
+    use rounds::Card as C;
+    let k = &r.kit;
+    match c {
+        C::Blast => (Icon::Blast, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells, leaves a crater the mould shuns, and lays alarm.", k.blast_r)),
+        C::Gas => (Icon::Gas, CardKind::Payload, format!("Where the shot hits: the walkers within {:.0} cells fall asleep where they are. Spares the squad.", k.gas_r)),
+        C::Germ => (Icon::Germ, CardKind::Payload, format!("Where the shot hits: infects the walkers within {:.0} cells; the sickness spreads through the body.", k.germ_r)),
+        C::Wide => (Icon::Wide, CardKind::Modifier, format!("The next payload is {:.1} times as wide.", r.wide)),
+        C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("The next payload goes off as {} smaller bursts round the hit.", r.scatter_n)),
+        C::Quiet => (Icon::Quiet, CardKind::Modifier, "The next payload lays no alarm: a sleeper is not woken, a skittish mould is not warned.".into()),
+        C::Delay => (Icon::Delay, CardKind::Trigger, format!("The next payload lodges and goes off {:.0} s later, once the mould has flowed back over the hole.", r.delay_secs)),
+        C::Thick => (Icon::Thick, CardKind::Trigger, format!("The next payload lodges and waits until {} walkers crowd within {:.0} cells (at most {:.0} s): the mould sets off its own trap.", r.thick_n, r.thick_r, r.thick_secs)),
+        C::Pierce => (Icon::Pierce, CardKind::Flight, "Every bullet flies on through one more slime hit, striking each.".into()),
+        C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
+    }
+}
+
+/// The loadout panel's cards: each card in order, the run of cards that
+/// makes the cast `next` lit (a cast is the modifiers and trigger before a
+/// payload, and the payload), cards after the last payload idle. Flight
+/// cards ride every bullet, so they are never idle.
+pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, split_n: usize, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
+    use rounds::Card as C;
+    let payloads = round.iter().filter(|c| matches!(c, C::Blast | C::Gas | C::Germ)).count();
+    let mut cast = 0;
+    let mut out = Vec::new();
+    // Each card's cast: the payload it goes with.
+    let mut runs = Vec::new();
+    for &c in round {
+        runs.push(cast);
+        if matches!(c, C::Blast | C::Gas | C::Germ) {
+            cast += 1;
+        }
+    }
+    let payload_of = |j: usize| round.iter().filter(|c| matches!(c, C::Blast | C::Gas | C::Germ)).nth(j).copied();
+    for (i, &c) in round.iter().enumerate() {
+        let (icon, kind, mut about) = card_face(c, r, split_n);
+        let flight = kind == CardKind::Flight;
+        let idle = !flight && runs[i] >= payloads;
+        let goes_with = if flight { None } else { payload_of(runs[i]) };
+        let colour = match (kind, goes_with) {
+            (CardKind::Flight, _) => [96, 214, 214, 255],
+            (_, Some(p)) => payload_colour(p),
+            (_, None) => [146, 156, 168, 255],
+        };
+        let price = match c {
+            C::Blast => Some(r.kit.blast_price),
+            C::Gas => Some(r.kit.gas_price),
+            C::Germ => Some(r.kit.germ_price),
+            _ => None,
+        };
+        if kind == CardKind::Payload && !castable(c) {
+            about.push_str(" Not on this world yet: it casts nothing here.");
+        }
+        out.push(GunCard {
+            icon: Some(icon),
+            name: capital(c.name()),
+            kind,
+            colour,
+            about,
+            cost: price.map(|p| format!("{p:.0}")),
+            next: !flight && !idle && next == Some(runs[i]),
+            idle,
+        });
+    }
+    out
+}
+
 
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;

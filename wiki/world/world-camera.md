@@ -6,6 +6,7 @@ updated: 2026-11-14
 sources:
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
+  - Reports/gun-card-hud-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/panic-look-2026-11-14/README.md
   - Reports/sharp-slime-2026-11-14/README.md
@@ -31,6 +32,7 @@ code:
   - Hud::aim
   - Hud::draw
   - HudEvent
+  - Loadout
   - MAX_HITS
   - MAX_MARKS
   - MAX_ZOOM
@@ -40,6 +42,7 @@ code:
   - Marks::label
   - Marks::selected
   - Marks::soldier
+  - NEXT_ROUND
   - Order::Fight
   - SPRITES
   - Squad::model
@@ -93,7 +96,14 @@ screen, over a live dish: sandbox, the campaign's missions, an options
 page with each switch's default beside it, and the key card; the
 window opens on it when run with no arguments, and turning its map
 switches the dish behind it
-([report](../../Reports/start-menu-2026-11-14/README.md)). The game itself is `cargo run --release
+([report](../../Reports/start-menu-2026-11-14/README.md)). A one-row
+loadout strip (`ui::Loadout`, 2026-11-14) on the selection panel's top
+edge shows the squad's gun cards in their four slots, framed by kind, with
+the cast the shown soldier's next hit fires lit, the recharge, a tooltip
+per card and a swap button (H, `NEXT_ROUND`); the same change cut the
+bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
+800), collapses the selection panel when nothing is selected, and opens
+the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
@@ -130,6 +140,7 @@ as lines.
 - 2026-11-11 17:37Z: "from looking at the gif/video it doesn't always look like that" (shots stopping at the first slime): the stand-in counted only thick tubes; now anything that looks like slime (26/255) stops a shot.
 - 2026-11-11 14:06Z: "We should do a camera UI thread too as you suggested".
 - 2026-11-11 20:16Z: "We need to know about solider health, numbers, ways to control them, eventually we will have different weapons, upgrades, build walls (and probably other things in the future), menus, enemy info"; "make it look modern and professional."
+- 2026-11-14 01:49Z: "I also have no way to see what the gun cards are in the interface."
 - 2026-11-11 14:06Z: "A longer persistent world. Maybe a campaign. Crystal should run out which forces you to expand."
 
 ## Open
@@ -144,3 +155,4 @@ as lines.
 
 - [World camera and UI](../../Reports/world-camera-2026-11-11.md).
 - [The game UI over the Larder world](../../Reports/world-ui-2026-11-11.md).
+- [The loadout panel](../../Reports/gun-card-hud-2026-11-14/README.md).
