@@ -69,3 +69,24 @@ so all three are paid. Counts per frame in `t-lines-before.txt` and
 No census: this is a controls change (CLAUDE.md, build first). The player
 AI and the census hands send builders the same way, so a building plan's
 numbers may shift a little.
+
+## PR 2: cancel a build, and the build range while placing
+
+- **Cancel a build** (build page, C, "Cancel a build"; `Cmd::Unbuild`,
+  `Game::unbuild`, `Game::ghost_at`): click a building that is not finished
+  to call it off. Its whole price comes back, whatever it had risen to,
+  since nothing in this game costs upkeep (owner, 04:53Z); a standing
+  building is not sold back. Its builders take their next queued order.
+  Test `a_ghost_called_off_pays_back_its_price_and_its_builders_move_on`:
+  a part-built turret called off returns 500 to the bank, and its builder
+  turns to the second ghost in its queue the next step.
+- **The build range while placing**: a faint ring of `BuildRules::reach`
+  round the ghost under the cursor, where its builders will stand and raise
+  it from, so a turret by the slime can be put with the ring on the squad's
+  side. `page/placing.png`: `larder-world look=DIR hand=buildq
+  centre=256,178,6 at=5 screen=960x600 hover=600,240 bank=5000` (the
+  `buildq` hand with `hover=` arms the turret under the cursor), cropped
+  500x230 at 300,100.
+- Not done: numbers on queued ghosts. The selected soldiers' order lines
+  already chain through each queued ghost with a ring at each (draw.rs),
+  in squad mode too, since the squad is the selection.

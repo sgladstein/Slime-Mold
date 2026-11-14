@@ -2008,3 +2008,39 @@ fn a_squad_sent_off_keeps_a_build_queued_for_when_it_gets_there() {
     }
     assert!(g.buildings[1].up(), "the squad turned to the build");
 }
+
+#[test]
+fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
+    let mut g = small(18);
+    g.bank = 5_000.0;
+    g.rules.build.raise = 20.0;
+    let sc = g.s();
+    let (x, y) = g.larder;
+    let a = room_near(&g, (x + 12.0 * sc, y));
+    assert!(g.apply(Cmd::Build(Kind::Turret, a)));
+    let b = room_near(&g, (x - 12.0 * sc, y));
+    assert!(g.apply(Cmd::Build(Kind::Turret, b)));
+    assert!(g.apply(Cmd::Queue(0, Order::Build(0))));
+    assert!(g.apply(Cmd::Queue(0, Order::Build(1))));
+    for _ in 0..frames(&g, 6.0) {
+        g.step();
+    }
+    assert!(g.buildings[0].built > 0.0 && !g.buildings[0].up(), "half up: {}", g.buildings[0].built);
+    let before = g.bank;
+    assert_eq!(g.ghost_at((a.0 + 0.5 * sc, a.1)), Some(0));
+    assert!(g.apply(Cmd::Unbuild(0)));
+    assert_eq!(g.bank, before + g.rules.build.turret_cost, "the whole price back");
+    assert!(!g.buildings[0].alive);
+    assert_eq!(g.ghost_at(a), None, "gone");
+    assert!(!g.apply(Cmd::Unbuild(0)), "only once");
+    g.step();
+    assert_eq!(g.soldiers[0].order, Order::Build(1), "its builder goes on down its queue");
+    assert_eq!(Cmd::parse(&Cmd::Unbuild(3).to_line()), Some(Cmd::Unbuild(3)));
+    // A standing building is not sold back.
+    g.rules.build.raise = 0.0;
+    let c = room_near(&g, (x, y + 12.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, c)));
+    let n = g.buildings.len() - 1;
+    assert!(g.buildings[n].up());
+    assert!(!g.apply(Cmd::Unbuild(n)));
+}
