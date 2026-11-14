@@ -1,0 +1,36 @@
+== card before: 1936 MHz, 4006 MHz, 64, 48.19 W
+== r7-c25k-farm-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=farm passes=30) started 2026-11-14T03:13:27.7819909-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1084 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  1200 frames, 300 game steps; 0.06 read-backs a step, 0.01 waits a step (0.01 ms a step waiting); steps finished once in 299, when the next was due 0
+  every frame (1200 of them), ms: frame p50 1.82 p95 2.24 max 19.51; step  p50 0.04 p95 0.61 max 17.87; prepare  p50 0.12 p95 0.16 max 3.89; record  p50 0.10 p95 0.15 max 1.51; GPU tail  p50 1.33 p95 1.72 max 1.96
+  frames with a step (300 of them), ms: frame p50 2.11 p95 2.62 max 19.51; step  p50 0.56 p95 0.69 max 17.87; prepare  p50 0.12 p95 0.16 max 0.76; record  p50 0.12 p95 0.15 max 1.39; GPU tail  p50 1.30 p95 1.36 max 1.51
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 20 s: mould 24453, soldiers 10, buildings 0, harvested 1464, shots 113, killed 769
+  GPU a step, every pass timed alone (median of 30 steps): 0.732 ms in all
+    shots        1 a step    0.008 ms a step    0.010 ms a run    1.0%, on 15 of 30 steps
+    strike       1 a step    0.006 ms a step    0.007 ms a run    0.9%, on 15 of 30 steps
+    cut          1 a step    0.002 ms a step    0.005 ms a run    0.2%, on 15 of 30 steps
+    smell        1 a step    0.013 ms a step    0.013 ms a run    1.8%
+    sense        2 a step    0.067 ms a step    0.033 ms a run    9.1%
+    walk         2 a step    0.024 ms a step    0.012 ms a run    3.3%
+    eat          2 a step    0.008 ms a step    0.004 ms a run    1.1%
+    pilesum      4 a step    0.021 ms a step    0.005 ms a run    2.9%
+    flow         2 a step    0.006 ms a step    0.003 ms a run    0.8%
+    ngather      2 a step    0.017 ms a step    0.009 ms a run    2.4%
+    nspread      2 a step    0.029 ms a step    0.014 ms a run    4.0%
+    nab          2 a step    0.025 ms a step    0.013 ms a run    3.4%
+    nhear        2 a step    0.019 ms a step    0.010 ms a run    2.6%
+    esum         2 a step    0.018 ms a step    0.009 ms a run    2.5%
+    egain        2 a step    0.058 ms a step    0.029 ms a run    8.0%
+    life         2 a step    0.031 ms a step    0.016 ms a run    4.3%
+    breed        2 a step    0.012 ms a step    0.006 ms a run    1.6%
+    born         2 a step    0.008 ms a step    0.003 ms a run    1.0%
+    trail        2 a step    0.130 ms a step    0.065 ms a run   17.8%
+    scent        2 a step    0.119 ms a step    0.060 ms a run   16.3%
+    units        1 a step    0.050 ms a step    0.050 ms a run    6.8%
+    harvest      1 a step    0.037 ms a step    0.037 ms a run    5.1%
+    draw         1 a step    0.033 ms a step    0.033 ms a run    4.5%
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1276 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-c25k-farm-run exit 0 at 2026-11-14T03:13:31.9462814-06:00

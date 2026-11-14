@@ -1,0 +1,12 @@
+== card before: 1974 MHz, 4006 MHz, 43, 44.31 W
+== time-shape-c-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe shape=c bench=120) started 2026-11-14T03:08:36.1664837-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1101 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 83 game s at 60 frames a second, screen 1280x800
+  4978 frames, 1244 game steps; 0.07 read-backs a step, 0.00 waits a step (0.00 ms a step waiting); steps finished once in 1244, when the next was due 0
+  every frame (4978 of them), ms: frame p50 1.71 p95 2.13 max 37.32; step  p50 0.04 p95 0.58 max 35.63; prepare  p50 0.11 p95 0.14 max 4.38; record  p50 0.10 p95 0.14 max 1.48; GPU tail  p50 1.26 p95 1.52 max 2.08
+  frames with a step (1244 of them), ms: frame p50 2.03 p95 2.21 max 37.32; step  p50 0.55 p95 0.64 max 35.63; prepare  p50 0.11 p95 0.14 max 0.61; record  p50 0.12 p95 0.15 max 1.48; GPU tail  p50 1.24 p95 1.32 max 1.57
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 83 s: mould 34750, soldiers 0, buildings 0, harvested 0, shots 45, killed 1104, ended: squad wiped
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1302 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-c-run exit 0 at 2026-11-14T03:08:47.1530397-06:00

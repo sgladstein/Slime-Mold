@@ -1,0 +1,516 @@
+batch 20261114-025208, timing True, dry run False
+shas: batch main 004b7cb5; r7-before a56f644a; r7-after e8d9501c
+driver: NVIDIA GeForce GTX 1070, 582.66
+--- build
+== build (cargo build --release --locked --bins) started 2026-11-14T02:52:21.8111146-06:00
+== build exit 0 at 2026-11-14T02:57:40.3870592-06:00
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-batch)
+    Finished `release` profile [optimized] target(s) in 5m 17s
+== build exit 0 at 2026-11-14T02:57:40.3870592-06:00
+--- machine
+== machine (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=farm) started 2026-11-14T02:57:40.4050881-06:00
+larder-world machine at the start: RAM 2.4 GB free of 8.0; GPU memory 1230 MB in use of 8192, 3% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 1.88 p95 3.16 max 20.74; step  p50 0.04 p95 0.65 max 19.22; prepare  p50 0.12 p95 0.31 max 4.35; record  p50 0.10 p95 0.19 max 1.38; GPU tail  p50 1.33 p95 2.32 max 3.99
+  frames with a step (300 of them), ms: frame p50 2.16 p95 3.62 max 20.74; step  p50 0.59 p95 1.25 max 19.22; prepare  p50 0.12 p95 0.20 max 0.93; record  p50 0.12 p95 0.19 max 1.27; GPU tail  p50 1.29 p95 2.43 max 3.32
+  t 20 s: mould 24453, soldiers 10, buildings 0, harvested 1464, shots 113, killed 769
+  machine at the end: RAM 2.3 GB free of 8.0; GPU memory 1253 MB in use of 8192, 3% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== machine exit 0 at 2026-11-14T02:57:48.5676604-06:00
+  t 20 s: mould 24453, soldiers 10, buildings 0, harvested 1464, shots 113, killed 769
+  machine at the end: RAM 2.3 GB free of 8.0; GPU memory 1253 MB in use of 8192, 3% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== machine exit 0 at 2026-11-14T02:57:48.5676604-06:00
+--- r7-after-100k-1
+== card before: 1949 MHz, 4006 MHz, 57, 46.54 W
+== r7-after-100k-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-after.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30) started 2026-11-14T03:10:10.0956962-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1097 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, one walker a cell, scale 8 walkers 100000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.73 p95 19.55 max 791.61; step  p50 0.06 p95 1.28 max 772.79; prepare  p50 0.09 p95 0.12 max 32.10; record  p50 0.09 p95 0.12 max 1.35; GPU tail  p50 0.51 p95 17.93 max 18.79
+  frames with a step (900 of them), ms: frame p50 19.25 p95 20.07 max 791.61; step  p50 1.25 p95 1.35 max 772.79; prepare  p50 0.09 p95 0.11 max 0.62; record  p50 0.09 p95 0.10 max 0.30; GPU tail  p50 17.81 p95 18.58 max 18.79
+  GPU (timestamps, median of 900 steps): the step's ticks 16.63 ms, its drawing 0.62 ms
+  t 60 s: mould 15489, soldiers 23, buildings 0, harvested 6000, shots 0, killed 0
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1357 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-100k-1-run exit 0 at 2026-11-14T03:10:40.7509101-06:00
+    draw         1 a step    0.456 ms a step    0.456 ms a run    2.7%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1357 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-100k-1-run exit 0 at 2026-11-14T03:10:40.7509101-06:00
+--- r7-after-100k-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.43 W
+== r7-after-100k-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-after.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30) started 2026-11-14T03:11:59.0493587-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1094 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, one walker a cell, scale 8 walkers 100000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.74 p95 19.69 max 795.19; step  p50 0.07 p95 1.35 max 776.36; prepare  p50 0.09 p95 0.13 max 43.27; record  p50 0.09 p95 0.13 max 1.38; GPU tail  p50 0.51 p95 18.01 max 19.70
+  frames with a step (900 of them), ms: frame p50 19.34 p95 20.22 max 795.19; step  p50 1.32 p95 1.43 max 776.36; prepare  p50 0.09 p95 0.12 max 0.63; record  p50 0.09 p95 0.10 max 0.36; GPU tail  p50 17.85 p95 18.63 max 19.70
+  GPU (timestamps, median of 900 steps): the step's ticks 16.66 ms, its drawing 0.62 ms
+  t 60 s: mould 15489, soldiers 23, buildings 0, harvested 6000, shots 0, killed 0
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1358 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-100k-2-run exit 0 at 2026-11-14T03:12:27.9028636-06:00
+    draw         1 a step    0.457 ms a step    0.457 ms a run    2.7%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1358 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-100k-2-run exit 0 at 2026-11-14T03:12:27.9028636-06:00
+--- r7-after-20k-1
+== card before: 1936 MHz, 4006 MHz, 61, 47.61 W
+== r7-after-20k-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-after.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30) started 2026-11-14T03:10:40.8179441-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, one walker a cell, scale 4 walkers 20000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.62 p95 3.76 max 224.70; step  p50 0.02 p95 0.69 max 221.59; prepare  p50 0.10 p95 0.11 max 8.38; record  p50 0.08 p95 0.10 max 1.36; GPU tail  p50 0.43 p95 2.89 max 3.38
+  frames with a step (900 of them), ms: frame p50 3.70 p95 3.81 max 224.70; step  p50 0.65 p95 0.73 max 221.59; prepare  p50 0.10 p95 0.11 max 0.61; record  p50 0.08 p95 0.09 max 0.30; GPU tail  p50 2.87 p95 2.93 max 3.38
+  GPU (timestamps, median of 900 steps): the step's ticks 2.31 ms, its drawing 0.21 ms
+  t 60 s: mould 4597, soldiers 25, buildings 0, harvested 6900, shots 3, killed 3
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-20k-1-run exit 0 at 2026-11-14T03:10:49.1926165-06:00
+    draw         1 a step    0.119 ms a step    0.119 ms a run    4.8%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-20k-1-run exit 0 at 2026-11-14T03:10:49.1926165-06:00
+--- r7-after-20k-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.77 W
+== r7-after-20k-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-after.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30) started 2026-11-14T03:12:27.9779367-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1091 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, one walker a cell, scale 4 walkers 20000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.63 p95 3.79 max 227.77; step  p50 0.02 p95 0.72 max 224.62; prepare  p50 0.10 p95 0.11 max 8.75; record  p50 0.08 p95 0.10 max 1.35; GPU tail  p50 0.43 p95 2.89 max 3.50
+  frames with a step (900 of them), ms: frame p50 3.74 p95 3.86 max 227.77; step  p50 0.69 p95 0.76 max 224.62; prepare  p50 0.10 p95 0.11 max 0.69; record  p50 0.08 p95 0.10 max 0.28; GPU tail  p50 2.87 p95 2.93 max 3.50
+  GPU (timestamps, median of 900 steps): the step's ticks 2.31 ms, its drawing 0.21 ms
+  t 60 s: mould 4597, soldiers 25, buildings 0, harvested 6900, shots 3, killed 3
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1294 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-20k-2-run exit 0 at 2026-11-14T03:12:36.4556413-06:00
+    draw         1 a step    0.118 ms a step    0.118 ms a run    4.8%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1294 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-after-20k-2-run exit 0 at 2026-11-14T03:12:36.4556413-06:00
+--- r7-after-build
+== r7-after-build (cargo build --release --locked --bin larder-world) started 2026-11-14T03:05:47.2287135-06:00
+== r7-after-build exit 0 at 2026-11-14T03:06:45.8972132-06:00
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-batch-after)
+    Finished `release` profile [optimized] target(s) in 58.52s
+== r7-after-build exit 0 at 2026-11-14T03:06:45.8972132-06:00
+--- r7-before-100k-1
+== card before: 1961 MHz, 4006 MHz, 52, 45.93 W
+== r7-before-100k-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-before.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30) started 2026-11-14T03:09:30.6900049-06:00
+larder-world machine at the start: RAM 2.6 GB free of 8.0; GPU memory 1103 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.73 p95 19.61 max 791.33; step  p50 0.06 p95 1.32 max 772.57; prepare  p50 0.09 p95 0.12 max 31.07; record  p50 0.09 p95 0.12 max 2.94; GPU tail  p50 0.51 p95 17.94 max 20.26
+  frames with a step (900 of them), ms: frame p50 19.31 p95 20.07 max 791.33; step  p50 1.29 p95 1.40 max 772.57; prepare  p50 0.09 p95 0.11 max 0.60; record  p50 0.09 p95 0.10 max 0.31; GPU tail  p50 17.83 p95 18.54 max 20.26
+  GPU (timestamps, median of 900 steps): the step's ticks 16.69 ms, its drawing 0.62 ms
+  t 60 s: mould 15489, soldiers 23, buildings 0, harvested 6000, shots 0, killed 0
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1364 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-100k-1-run exit 0 at 2026-11-14T03:10:01.4991839-06:00
+    draw         1 a step    0.456 ms a step    0.456 ms a run    2.6%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1364 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-100k-1-run exit 0 at 2026-11-14T03:10:01.4991839-06:00
+--- r7-before-100k-2
+== card before: 1936 MHz, 4006 MHz, 64, 47.99 W
+== r7-before-100k-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-before.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30) started 2026-11-14T03:11:21.4768568-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.74 p95 19.74 max 792.22; step  p50 0.06 p95 1.32 max 773.27; prepare  p50 0.09 p95 0.12 max 38.91; record  p50 0.09 p95 0.13 max 1.35; GPU tail  p50 0.51 p95 18.06 max 19.97
+  frames with a step (900 of them), ms: frame p50 19.41 p95 20.29 max 792.22; step  p50 1.29 p95 1.40 max 773.27; prepare  p50 0.09 p95 0.11 max 0.62; record  p50 0.09 p95 0.10 max 0.28; GPU tail  p50 17.94 p95 18.72 max 19.97
+  GPU (timestamps, median of 900 steps): the step's ticks 16.74 ms, its drawing 0.62 ms
+  t 60 s: mould 15489, soldiers 23, buildings 0, harvested 6000, shots 0, killed 0
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1356 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-100k-2-run exit 0 at 2026-11-14T03:11:50.2982193-06:00
+    draw         1 a step    0.456 ms a step    0.456 ms a run    2.6%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1356 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-100k-2-run exit 0 at 2026-11-14T03:11:50.2982193-06:00
+--- r7-before-20k-1
+== card before: 1949 MHz, 4006 MHz, 56, 46.30 W
+== r7-before-20k-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-before.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30) started 2026-11-14T03:10:01.5682090-06:00
+larder-world machine at the start: RAM 2.6 GB free of 8.0; GPU memory 1097 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.62 p95 3.80 max 226.75; step  p50 0.02 p95 0.70 max 223.64; prepare  p50 0.10 p95 0.13 max 20.15; record  p50 0.08 p95 0.12 max 1.36; GPU tail  p50 0.43 p95 2.90 max 3.27
+  frames with a step (900 of them), ms: frame p50 3.71 p95 3.89 max 226.75; step  p50 0.65 p95 0.80 max 223.64; prepare  p50 0.10 p95 0.13 max 0.61; record  p50 0.08 p95 0.10 max 0.31; GPU tail  p50 2.87 p95 2.93 max 3.27
+  GPU (timestamps, median of 900 steps): the step's ticks 2.31 ms, its drawing 0.21 ms
+  t 60 s: mould 4597, soldiers 25, buildings 0, harvested 6900, shots 3, killed 3
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1300 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-20k-1-run exit 0 at 2026-11-14T03:10:10.0266629-06:00
+    draw         1 a step    0.119 ms a step    0.119 ms a run    4.8%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1300 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-20k-1-run exit 0 at 2026-11-14T03:10:10.0266629-06:00
+--- r7-before-20k-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.43 W
+== r7-before-20k-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-before.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30) started 2026-11-14T03:11:50.3663103-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 1024 x 640 cells, 200000 slots, scale 4 walkers 20000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  every frame (3600 of them), ms: frame p50 0.63 p95 3.83 max 226.56; step  p50 0.02 p95 0.70 max 223.45; prepare  p50 0.10 p95 0.13 max 9.13; record  p50 0.08 p95 0.12 max 1.72; GPU tail  p50 0.44 p95 2.91 max 32.66
+  frames with a step (900 of them), ms: frame p50 3.71 p95 3.95 max 226.56; step  p50 0.66 p95 0.79 max 223.45; prepare  p50 0.10 p95 0.13 max 0.65; record  p50 0.08 p95 0.10 max 0.24; GPU tail  p50 2.88 p95 2.96 max 32.61
+  GPU (timestamps, median of 900 steps): the step's ticks 2.32 ms, its drawing 0.21 ms
+  t 60 s: mould 4597, soldiers 25, buildings 0, harvested 6900, shots 3, killed 3
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1297 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-20k-2-run exit 0 at 2026-11-14T03:11:58.9802626-06:00
+    draw         1 a step    0.118 ms a step    0.118 ms a run    4.7%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1297 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-20k-2-run exit 0 at 2026-11-14T03:11:58.9802626-06:00
+--- r7-before-build
+== r7-before-build (cargo build --release --locked --bin larder-world) started 2026-11-14T03:04:40.1987193-06:00
+== r7-before-build exit 0 at 2026-11-14T03:05:41.6551711-06:00
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-batch-before)
+    Finished `release` profile [optimized] target(s) in 1m 01s
+== r7-before-build exit 0 at 2026-11-14T03:05:41.6551711-06:00
+--- r7-c25k-farm
+== card before: 1936 MHz, 4006 MHz, 64, 48.19 W
+== r7-c25k-farm-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=farm passes=30) started 2026-11-14T03:13:27.7819909-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1084 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 1.82 p95 2.24 max 19.51; step  p50 0.04 p95 0.61 max 17.87; prepare  p50 0.12 p95 0.16 max 3.89; record  p50 0.10 p95 0.15 max 1.51; GPU tail  p50 1.33 p95 1.72 max 1.96
+  frames with a step (300 of them), ms: frame p50 2.11 p95 2.62 max 19.51; step  p50 0.56 p95 0.69 max 17.87; prepare  p50 0.12 p95 0.16 max 0.76; record  p50 0.12 p95 0.15 max 1.39; GPU tail  p50 1.30 p95 1.36 max 1.51
+  t 20 s: mould 24453, soldiers 10, buildings 0, harvested 1464, shots 113, killed 769
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1276 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-c25k-farm-run exit 0 at 2026-11-14T03:13:31.9462814-06:00
+    draw         1 a step    0.033 ms a step    0.033 ms a run    4.5%
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1276 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-c25k-farm-run exit 0 at 2026-11-14T03:13:31.9462814-06:00
+--- r7-c25k-idle
+== card before: 1936 MHz, 4006 MHz, 65, 48.53 W
+== r7-c25k-idle-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=20 hand=idle spread=0 passes=30) started 2026-11-14T03:13:23.6016555-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1084 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand idle, 20 game s at 60 frames a second, screen 1280x800
+  every frame (1200 of them), ms: frame p50 1.60 p95 2.80 max 5.40; step  p50 0.01 p95 0.59 max 1.56; prepare  p50 0.11 p95 0.15 max 3.89; record  p50 0.10 p95 0.14 max 1.38; GPU tail  p50 1.37 p95 1.98 max 2.07
+  frames with a step (300 of them), ms: frame p50 2.74 p95 2.86 max 3.63; step  p50 0.56 p95 0.64 max 1.56; prepare  p50 0.11 p95 0.14 max 0.55; record  p50 0.11 p95 0.13 max 1.37; GPU tail  p50 1.95 p95 2.03 max 2.07
+  GPU (timestamps, median of 300 steps): the step's ticks 0.64 ms, its drawing 0.10 ms
+  t 20 s: mould 24557, soldiers 3, buildings 0, harvested 0, shots 73, killed 654
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-c25k-idle-run exit 0 at 2026-11-14T03:13:27.7119311-06:00
+    cut          1 a step    0.000 ms a step    0.005 ms a run    0.0%, on 4 of 30 steps
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-c25k-idle-run exit 0 at 2026-11-14T03:13:27.7119311-06:00
+--- time-bullet-0-1
+== card before: 1961 MHz, 4006 MHz, 51, 45.73 W
+== time-bullet-0-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bullet=0 bench=30 hand=farm) started 2026-11-14T03:09:25.1381472-06:00
+larder-world machine at the start: RAM 2.6 GB free of 8.0; GPU memory 1103 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.81 p95 2.19 max 33.30; step  p50 0.04 p95 0.58 max 31.68; prepare  p50 0.12 p95 0.14 max 3.86; record  p50 0.10 p95 0.14 max 1.41; GPU tail  p50 1.32 p95 1.70 max 1.95
+  frames with a step (450 of them), ms: frame p50 2.07 p95 17.61 max 33.30; step  p50 0.55 p95 16.04 max 31.68; prepare  p50 0.12 p95 0.14 max 0.62; record  p50 0.12 p95 0.15 max 1.23; GPU tail  p50 1.29 p95 1.36 max 1.47
+  t 30 s: mould 24695, soldiers 11, buildings 0, harvested 1769, shots 193, killed 1077
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-0-1-run exit 0 at 2026-11-14T03:09:30.6194672-06:00
+  t 30 s: mould 24695, soldiers 11, buildings 0, harvested 1769, shots 193, killed 1077
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-0-1-run exit 0 at 2026-11-14T03:09:30.6194672-06:00
+--- time-bullet-0-2
+== card before: 1936 MHz, 4006 MHz, 63, 48.04 W
+== time-bullet-0-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bullet=0 bench=30 hand=farm) started 2026-11-14T03:11:15.8874790-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.83 p95 2.19 max 36.20; step  p50 0.04 p95 0.57 max 34.59; prepare  p50 0.12 p95 0.14 max 3.94; record  p50 0.09 p95 0.13 max 1.41; GPU tail  p50 1.34 p95 1.72 max 1.91
+  frames with a step (450 of them), ms: frame p50 2.08 p95 18.74 max 36.20; step  p50 0.54 p95 17.15 max 34.59; prepare  p50 0.12 p95 0.14 max 0.68; record  p50 0.11 p95 0.14 max 1.24; GPU tail  p50 1.31 p95 1.38 max 1.68
+  t 30 s: mould 24695, soldiers 11, buildings 0, harvested 1769, shots 193, killed 1077
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-0-2-run exit 0 at 2026-11-14T03:11:21.4093196-06:00
+  t 30 s: mould 24695, soldiers 11, buildings 0, harvested 1769, shots 193, killed 1077
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-0-2-run exit 0 at 2026-11-14T03:11:21.4093196-06:00
+--- time-bullet-45-1
+== card before: 1961 MHz, 4006 MHz, 50, 45.81 W
+== time-bullet-45-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bullet=45 bench=30 hand=farm) started 2026-11-14T03:09:19.7178256-06:00
+larder-world machine at the start: RAM 2.6 GB free of 8.0; GPU memory 1103 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.81 p95 2.22 max 19.17; step  p50 0.04 p95 0.60 max 17.65; prepare  p50 0.12 p95 0.16 max 5.85; record  p50 0.10 p95 0.15 max 1.42; GPU tail  p50 1.33 p95 1.73 max 1.98
+  frames with a step (450 of them), ms: frame p50 2.11 p95 2.61 max 19.17; step  p50 0.56 p95 0.71 max 17.65; prepare  p50 0.12 p95 0.16 max 1.56; record  p50 0.12 p95 0.16 max 1.42; GPU tail  p50 1.29 p95 1.37 max 1.47
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-45-1-run exit 0 at 2026-11-14T03:09:25.0666161-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-45-1-run exit 0 at 2026-11-14T03:09:25.0666161-06:00
+--- time-bullet-45-2
+== card before: 1936 MHz, 4006 MHz, 61, 48.13 W
+== time-bullet-45-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bullet=45 bench=30 hand=farm) started 2026-11-14T03:11:10.5036447-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.83 p95 2.21 max 19.54; step  p50 0.04 p95 0.57 max 17.97; prepare  p50 0.12 p95 0.14 max 4.09; record  p50 0.09 p95 0.13 max 1.49; GPU tail  p50 1.34 p95 1.75 max 2.19
+  frames with a step (450 of them), ms: frame p50 2.09 p95 2.61 max 19.54; step  p50 0.54 p95 0.65 max 17.97; prepare  p50 0.12 p95 0.15 max 0.76; record  p50 0.11 p95 0.14 max 1.30; GPU tail  p50 1.31 p95 1.38 max 1.55
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-45-2-run exit 0 at 2026-11-14T03:11:15.8190009-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-bullet-45-2-run exit 0 at 2026-11-14T03:11:15.8190009-06:00
+--- time-c-default
+== card before: 1936 MHz, 4006 MHz, 64, 48.44 W
+== time-c-default-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm) started 2026-11-14T03:13:07.0423792-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.84 p95 2.28 max 19.37; step  p50 0.04 p95 0.61 max 17.82; prepare  p50 0.12 p95 0.17 max 4.03; record  p50 0.10 p95 0.15 max 2.03; GPU tail  p50 1.35 p95 1.76 max 3.28
+  frames with a step (450 of them), ms: frame p50 2.11 p95 2.64 max 19.37; step  p50 0.55 p95 0.78 max 17.82; prepare  p50 0.12 p95 0.16 max 0.63; record  p50 0.11 p95 0.15 max 1.22; GPU tail  p50 1.31 p95 1.40 max 3.28
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-default-run exit 0 at 2026-11-14T03:13:12.3752051-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-default-run exit 0 at 2026-11-14T03:13:12.3752051-06:00
+--- time-c-panic0
+== card before: 1936 MHz, 4006 MHz, 64, 48.43 W
+== time-c-panic0-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe panic=0 bench=30 hand=farm) started 2026-11-14T03:13:12.4432523-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1084 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 panic=0; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.84 p95 2.29 max 19.80; step  p50 0.04 p95 0.62 max 18.20; prepare  p50 0.12 p95 0.16 max 4.00; record  p50 0.10 p95 0.15 max 1.51; GPU tail  p50 1.35 p95 1.73 max 1.91
+  frames with a step (450 of them), ms: frame p50 2.15 p95 2.66 max 19.80; step  p50 0.58 p95 0.93 max 18.20; prepare  p50 0.12 p95 0.17 max 0.58; record  p50 0.12 p95 0.16 max 1.46; GPU tail  p50 1.31 p95 1.39 max 1.43
+  t 30 s: mould 24737, soldiers 11, buildings 0, harvested 2131, shots 197, killed 1036
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-panic0-run exit 0 at 2026-11-14T03:13:18.0861761-06:00
+  t 30 s: mould 24737, soldiers 11, buildings 0, harvested 2131, shots 197, killed 1036
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-panic0-run exit 0 at 2026-11-14T03:13:18.0861761-06:00
+--- time-c-wither0
+== card before: 1936 MHz, 4006 MHz, 64, 48.38 W
+== time-c-wither0-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe wither=0 bench=30 hand=farm) started 2026-11-14T03:13:18.1562711-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1084 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 wither=0; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.84 p95 2.27 max 20.18; step  p50 0.04 p95 0.62 max 18.50; prepare  p50 0.12 p95 0.16 max 4.32; record  p50 0.10 p95 0.15 max 1.40; GPU tail  p50 1.34 p95 1.75 max 4.07
+  frames with a step (450 of them), ms: frame p50 2.15 p95 2.63 max 20.18; step  p50 0.58 p95 0.72 max 18.50; prepare  p50 0.12 p95 0.17 max 0.68; record  p50 0.12 p95 0.15 max 1.33; GPU tail  p50 1.31 p95 1.40 max 1.91
+  t 30 s: mould 24779, soldiers 11, buildings 0, harvested 2364, shots 190, killed 979
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-wither0-run exit 0 at 2026-11-14T03:13:23.5296203-06:00
+  t 30 s: mould 24779, soldiers 11, buildings 0, harvested 2364, shots 190, killed 979
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1286 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-c-wither0-run exit 0 at 2026-11-14T03:13:23.5296203-06:00
+--- time-own-20k-off-1
+== card before: 1961 MHz, 4006 MHz, 49, 44.89 W
+== time-own-20k-off-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=20000 bench=30) started 2026-11-14T03:09:08.6678590-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1102 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 200000 slots, one walker a cell, scale 2 walkers 20000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.62 p95 2.07 max 37.01; step  p50 0.04 p95 0.47 max 35.39; prepare  p50 0.11 p95 0.15 max 4.11; record  p50 0.10 p95 0.14 max 1.43; GPU tail  p50 1.28 p95 1.46 max 1.84
+  frames with a step (450 of them), ms: frame p50 1.93 p95 2.21 max 37.01; step  p50 0.42 p95 0.58 max 35.39; prepare  p50 0.12 p95 0.16 max 0.60; record  p50 0.12 p95 0.15 max 1.34; GPU tail  p50 1.26 p95 1.34 max 1.84
+  t 30 s: mould 2531, soldiers 0, buildings 0, harvested 0, shots 45, killed 951
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-off-1-run exit 0 at 2026-11-14T03:09:13.8430282-06:00
+  t 30 s: mould 2531, soldiers 0, buildings 0, harvested 0, shots 45, killed 951
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-off-1-run exit 0 at 2026-11-14T03:09:13.8430282-06:00
+--- time-own-20k-off-2
+== card before: 1936 MHz, 4006 MHz, 63, 47.75 W
+== time-own-20k-off-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=20000 bench=30) started 2026-11-14T03:10:59.6519533-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 200000 slots, one walker a cell, scale 2 walkers 20000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.63 p95 2.02 max 36.94; step  p50 0.04 p95 0.43 max 35.15; prepare  p50 0.11 p95 0.14 max 4.17; record  p50 0.10 p95 0.13 max 1.41; GPU tail  p50 1.29 p95 1.48 max 1.83
+  frames with a step (450 of them), ms: frame p50 1.88 p95 2.21 max 36.94; step  p50 0.39 p95 0.55 max 35.15; prepare  p50 0.11 p95 0.14 max 0.59; record  p50 0.11 p95 0.13 max 1.34; GPU tail  p50 1.26 p95 1.37 max 1.71
+  t 30 s: mould 2531, soldiers 0, buildings 0, harvested 0, shots 45, killed 951
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-off-2-run exit 0 at 2026-11-14T03:11:04.8043605-06:00
+  t 30 s: mould 2531, soldiers 0, buildings 0, harvested 0, shots 45, killed 951
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-off-2-run exit 0 at 2026-11-14T03:11:04.8043605-06:00
+--- time-own-20k-on-1
+== card before: 1961 MHz, 4006 MHz, 50, 45.00 W
+== time-own-20k-on-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=20000 own=1 bench=30) started 2026-11-14T03:09:13.9171011-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1102 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: noise seed 1, 512 x 320 cells, 400000 slots, one walker a cell, scale 2 walkers 20000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 2.16 p95 2.58 max 55.18; step  p50 0.04 p95 0.64 max 53.20; prepare  p50 0.11 p95 0.15 max 4.00; record  p50 0.10 p95 0.15 max 1.38; GPU tail  p50 1.48 p95 2.04 max 32.41
+  frames with a step (450 of them), ms: frame p50 2.49 p95 2.64 max 55.18; step  p50 0.59 p95 0.72 max 53.20; prepare  p50 0.11 p95 0.14 max 0.58; record  p50 0.11 p95 0.14 max 0.46; GPU tail  p50 1.68 p95 1.77 max 31.21
+  t 30 s: mould 6570, soldiers 0, buildings 0, harvested 0, shots 64, killed 1172
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-on-1-run exit 0 at 2026-11-14T03:09:19.6497850-06:00
+  t 30 s: mould 6570, soldiers 0, buildings 0, harvested 0, shots 64, killed 1172
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1306 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-on-1-run exit 0 at 2026-11-14T03:09:19.6497850-06:00
+--- time-own-20k-on-2
+== card before: 1936 MHz, 4006 MHz, 63, 47.99 W
+== time-own-20k-on-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=20000 own=1 bench=30) started 2026-11-14T03:11:04.8709660-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: noise seed 1, 512 x 320 cells, 400000 slots, one walker a cell, scale 2 walkers 20000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 2.16 p95 2.58 max 55.22; step  p50 0.04 p95 0.62 max 53.25; prepare  p50 0.11 p95 0.14 max 4.43; record  p50 0.10 p95 0.14 max 1.39; GPU tail  p50 1.44 p95 2.06 max 2.38
+  frames with a step (450 of them), ms: frame p50 2.49 p95 2.64 max 55.22; step  p50 0.58 p95 0.70 max 53.25; prepare  p50 0.11 p95 0.14 max 0.63; record  p50 0.10 p95 0.14 max 0.43; GPU tail  p50 1.72 p95 1.78 max 1.93
+  t 30 s: mould 6570, soldiers 0, buildings 0, harvested 0, shots 64, killed 1172
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-on-2-run exit 0 at 2026-11-14T03:11:10.4281765-06:00
+  t 30 s: mould 6570, soldiers 0, buildings 0, harvested 0, shots 64, killed 1172
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-20k-on-2-run exit 0 at 2026-11-14T03:11:10.4281765-06:00
+--- time-own-5k-off-1
+== card before: 1961 MHz, 4006 MHz, 47, 44.51 W
+== time-own-5k-off-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=5000 bench=30) started 2026-11-14T03:08:58.1907878-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1109 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 5000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.58 p95 2.01 max 36.76; step  p50 0.04 p95 0.46 max 35.06; prepare  p50 0.11 p95 0.15 max 4.52; record  p50 0.10 p95 0.14 max 1.41; GPU tail  p50 1.27 p95 1.40 max 1.72
+  frames with a step (450 of them), ms: frame p50 1.89 p95 2.37 max 36.76; step  p50 0.41 p95 0.54 max 35.06; prepare  p50 0.11 p95 0.15 max 0.66; record  p50 0.12 p95 0.15 max 1.30; GPU tail  p50 1.25 p95 1.29 max 1.72
+  t 30 s: mould 1588, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-off-1-run exit 0 at 2026-11-14T03:09:03.2494750-06:00
+  t 30 s: mould 1588, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-off-1-run exit 0 at 2026-11-14T03:09:03.2494750-06:00
+--- time-own-5k-off-2
+== card before: 1936 MHz, 4006 MHz, 62, 47.61 W
+== time-own-5k-off-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=5000 bench=30) started 2026-11-14T03:10:49.2600584-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 5000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.59 p95 1.95 max 36.18; step  p50 0.04 p95 0.42 max 34.66; prepare  p50 0.11 p95 0.13 max 4.19; record  p50 0.09 p95 0.13 max 1.42; GPU tail  p50 1.27 p95 1.41 max 1.84
+  frames with a step (450 of them), ms: frame p50 1.86 p95 2.12 max 36.18; step  p50 0.38 p95 0.49 max 34.66; prepare  p50 0.11 p95 0.12 max 0.65; record  p50 0.11 p95 0.13 max 1.29; GPU tail  p50 1.26 p95 1.30 max 1.37
+  t 30 s: mould 1588, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-off-2-run exit 0 at 2026-11-14T03:10:54.2817446-06:00
+  t 30 s: mould 1588, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-off-2-run exit 0 at 2026-11-14T03:10:54.2817446-06:00
+--- time-own-5k-on-1
+== card before: 1961 MHz, 4006 MHz, 48, 44.60 W
+== time-own-5k-on-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=5000 own=1 bench=30) started 2026-11-14T03:09:03.3185611-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1102 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: noise seed 1, 512 x 320 cells, 100000 slots, one walker a cell, scale 2 walkers 5000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.98 p95 2.37 max 54.62; step  p50 0.04 p95 0.66 max 52.77; prepare  p50 0.11 p95 0.15 max 4.22; record  p50 0.10 p95 0.16 max 1.59; GPU tail  p50 1.40 p95 1.81 max 2.25
+  frames with a step (450 of them), ms: frame p50 2.29 p95 2.44 max 54.62; step  p50 0.61 p95 0.71 max 52.77; prepare  p50 0.11 p95 0.15 max 0.62; record  p50 0.11 p95 0.14 max 0.37; GPU tail  p50 1.46 p95 1.53 max 1.90
+  t 30 s: mould 1183, soldiers 1, buildings 0, harvested 0, shots 54, killed 936
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-on-1-run exit 0 at 2026-11-14T03:09:08.5997738-06:00
+  t 30 s: mould 1183, soldiers 1, buildings 0, harvested 0, shots 54, killed 936
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1305 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-on-1-run exit 0 at 2026-11-14T03:09:08.5997738-06:00
+--- time-own-5k-on-2
+== card before: 1936 MHz, 4006 MHz, 63, 47.75 W
+== time-own-5k-on-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe walkers=5000 own=1 bench=30) started 2026-11-14T03:10:54.3502967-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: noise seed 1, 512 x 320 cells, 100000 slots, one walker a cell, scale 2 walkers 5000; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.99 p95 2.35 max 54.66; step  p50 0.04 p95 0.61 max 52.80; prepare  p50 0.10 p95 0.14 max 4.23; record  p50 0.09 p95 0.13 max 1.57; GPU tail  p50 1.40 p95 1.83 max 2.23
+  frames with a step (450 of them), ms: frame p50 2.27 p95 2.43 max 54.66; step  p50 0.56 p95 0.66 max 52.80; prepare  p50 0.10 p95 0.14 max 0.64; record  p50 0.10 p95 0.12 max 0.36; GPU tail  p50 1.51 p95 1.57 max 1.85
+  t 30 s: mould 1183, soldiers 1, buildings 0, harvested 0, shots 54, killed 936
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-on-2-run exit 0 at 2026-11-14T03:10:59.5834612-06:00
+  t 30 s: mould 1183, soldiers 1, buildings 0, harvested 0, shots 54, killed 936
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1293 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-own-5k-on-2-run exit 0 at 2026-11-14T03:10:59.5834612-06:00
+--- time-shape-a
+== card before: 822 MHz, 810 MHz, 37, 7.97 W
+== time-shape-a-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe shape=a bench=120) started 2026-11-14T03:08:21.3130652-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1101 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 5000; hand rush, 120 game s at 60 frames a second, screen 1280x800
+  every frame (7200 of them), ms: frame p50 1.57 p95 1.98 max 75.56; step  p50 0.04 p95 0.43 max 49.88; prepare  p50 0.11 p95 0.14 max 4.25; record  p50 0.10 p95 0.14 max 1.49; GPU tail  p50 1.25 p95 1.49 max 25.80
+  frames with a step (1800 of them), ms: frame p50 1.86 p95 2.15 max 75.56; step  p50 0.40 p95 0.49 max 49.88; prepare  p50 0.11 p95 0.14 max 0.83; record  p50 0.11 p95 0.14 max 1.42; GPU tail  p50 1.23 p95 1.45 max 25.39
+  t 120 s: mould 3513, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1303 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-a-run exit 0 at 2026-11-14T03:08:36.0854923-06:00
+  t 120 s: mould 3513, soldiers 0, buildings 0, harvested 0, shots 31, killed 721
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1303 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-a-run exit 0 at 2026-11-14T03:08:36.0854923-06:00
+--- time-shape-c
+== card before: 1974 MHz, 4006 MHz, 43, 44.31 W
+== time-shape-c-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe shape=c bench=120) started 2026-11-14T03:08:36.1664837-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1101 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 83 game s at 60 frames a second, screen 1280x800
+  every frame (4978 of them), ms: frame p50 1.71 p95 2.13 max 37.32; step  p50 0.04 p95 0.58 max 35.63; prepare  p50 0.11 p95 0.14 max 4.38; record  p50 0.10 p95 0.14 max 1.48; GPU tail  p50 1.26 p95 1.52 max 2.08
+  frames with a step (1244 of them), ms: frame p50 2.03 p95 2.21 max 37.32; step  p50 0.55 p95 0.64 max 35.63; prepare  p50 0.11 p95 0.14 max 0.61; record  p50 0.12 p95 0.15 max 1.48; GPU tail  p50 1.24 p95 1.32 max 1.57
+  t 83 s: mould 34750, soldiers 0, buildings 0, harvested 0, shots 45, killed 1104, ended: squad wiped
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1302 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-c-run exit 0 at 2026-11-14T03:08:47.1530397-06:00
+  t 83 s: mould 34750, soldiers 0, buildings 0, harvested 0, shots 45, killed 1104, ended: squad wiped
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1302 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-c-run exit 0 at 2026-11-14T03:08:47.1530397-06:00
+--- time-shape-d
+== card before: 1961 MHz, 4006 MHz, 45, 44.26 W
+== time-shape-d-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe shape=d bench=120) started 2026-11-14T03:08:47.2220760-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1099 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 sensor_angle=22.5 sensor_offset=5; hand rush, 83 game s at 60 frames a second, screen 1280x800
+  every frame (4978 of them), ms: frame p50 1.62 p95 2.02 max 37.28; step  p50 0.04 p95 0.44 max 35.38; prepare  p50 0.11 p95 0.15 max 4.21; record  p50 0.10 p95 0.15 max 1.45; GPU tail  p50 1.27 p95 1.41 max 32.81
+  frames with a step (1244 of them), ms: frame p50 1.88 p95 2.13 max 37.28; step  p50 0.40 p95 0.52 max 35.38; prepare  p50 0.11 p95 0.15 max 1.66; record  p50 0.12 p95 0.15 max 1.24; GPU tail  p50 1.25 p95 1.33 max 31.32
+  t 83 s: mould 33878, soldiers 0, buildings 0, harvested 0, shots 43, killed 969, ended: squad wiped
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1312 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-d-run exit 0 at 2026-11-14T03:08:58.1197645-06:00
+  t 83 s: mould 33878, soldiers 0, buildings 0, harvested 0, shots 43, killed 969, ended: squad wiped
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1312 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-shape-d-run exit 0 at 2026-11-14T03:08:58.1197645-06:00
+--- time-view-open-1
+== card before: 1936 MHz, 4006 MHz, 65, 48.43 W
+== time-view-open-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm) started 2026-11-14T03:12:36.5256742-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1091 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.83 p95 2.25 max 19.32; step  p50 0.04 p95 0.60 max 17.67; prepare  p50 0.12 p95 0.16 max 4.05; record  p50 0.10 p95 0.14 max 1.43; GPU tail  p50 1.34 p95 1.75 max 2.04
+  frames with a step (450 of them), ms: frame p50 2.11 p95 2.60 max 19.32; step  p50 0.55 p95 0.73 max 17.67; prepare  p50 0.12 p95 0.16 max 0.67; record  p50 0.12 p95 0.15 max 1.41; GPU tail  p50 1.31 p95 1.38 max 1.47
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1290 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-open-1-run exit 0 at 2026-11-14T03:12:41.8349309-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1290 MB in use of 8192, 1% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-open-1-run exit 0 at 2026-11-14T03:12:41.8349309-06:00
+--- time-view-open-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.47 W
+== time-view-open-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm) started 2026-11-14T03:12:51.7830658-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.83 p95 2.25 max 19.54; step  p50 0.04 p95 0.59 max 17.93; prepare  p50 0.12 p95 0.16 max 4.07; record  p50 0.09 p95 0.14 max 1.68; GPU tail  p50 1.35 p95 1.76 max 2.23
+  frames with a step (450 of them), ms: frame p50 2.09 p95 2.57 max 19.54; step  p50 0.55 p95 0.74 max 17.93; prepare  p50 0.12 p95 0.16 max 0.65; record  p50 0.11 p95 0.15 max 1.32; GPU tail  p50 1.31 p95 1.38 max 1.49
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-open-2-run exit 0 at 2026-11-14T03:12:57.0801009-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-open-2-run exit 0 at 2026-11-14T03:12:57.0801009-06:00
+--- time-view-z24-1
+== card before: 1936 MHz, 4006 MHz, 65, 48.47 W
+== time-view-z24-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm centre=175,215,24) started 2026-11-14T03:12:47.4362250-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+  view: zoom 24 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.28 p95 1.63 max 18.26; step  p50 0.04 p95 0.57 max 17.23; prepare  p50 0.12 p95 0.14 max 4.11; record  p50 0.09 p95 0.13 max 1.46; GPU tail  p50 0.77 p95 1.19 max 1.33
+  frames with a step (450 of them), ms: frame p50 1.53 p95 1.95 max 18.26; step  p50 0.54 p95 0.66 max 17.23; prepare  p50 0.12 p95 0.14 max 0.62; record  p50 0.11 p95 0.14 max 1.25; GPU tail  p50 0.75 p95 0.80 max 0.89
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z24-1-run exit 0 at 2026-11-14T03:12:51.7140218-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z24-1-run exit 0 at 2026-11-14T03:12:51.7140218-06:00
+--- time-view-z24-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.43 W
+== time-view-z24-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm centre=175,215,24) started 2026-11-14T03:13:02.6868259-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+  view: zoom 24 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.28 p95 1.64 max 18.52; step  p50 0.04 p95 0.57 max 17.54; prepare  p50 0.12 p95 0.14 max 4.11; record  p50 0.09 p95 0.13 max 1.45; GPU tail  p50 0.77 p95 1.18 max 1.33
+  frames with a step (450 of them), ms: frame p50 1.53 p95 1.99 max 18.52; step  p50 0.55 p95 0.69 max 17.54; prepare  p50 0.12 p95 0.15 max 0.62; record  p50 0.12 p95 0.14 max 1.37; GPU tail  p50 0.75 p95 0.80 max 0.89
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z24-2-run exit 0 at 2026-11-14T03:13:06.9633064-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z24-2-run exit 0 at 2026-11-14T03:13:06.9633064-06:00
+--- time-view-z6-1
+== card before: 1936 MHz, 4006 MHz, 65, 48.53 W
+== time-view-z6-1-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm centre=175,215,6) started 2026-11-14T03:12:41.9110053-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+  view: zoom 6 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.93 p95 2.31 max 19.91; step  p50 0.04 p95 0.60 max 18.21; prepare  p50 0.12 p95 0.15 max 4.03; record  p50 0.10 p95 0.13 max 1.40; GPU tail  p50 1.42 p95 1.83 max 2.19
+  frames with a step (450 of them), ms: frame p50 2.19 p95 2.70 max 19.91; step  p50 0.55 p95 0.69 max 18.21; prepare  p50 0.12 p95 0.15 max 0.71; record  p50 0.11 p95 0.14 max 0.98; GPU tail  p50 1.40 p95 1.45 max 1.59
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z6-1-run exit 0 at 2026-11-14T03:12:47.3671812-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z6-1-run exit 0 at 2026-11-14T03:12:47.3671812-06:00
+--- time-view-z6-2
+== card before: 1936 MHz, 4006 MHz, 65, 48.44 W
+== time-view-z6-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-main.exe bench=30 hand=farm centre=175,215,6) started 2026-11-14T03:12:57.1492136-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1087 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+  view: zoom 6 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  every frame (1800 of them), ms: frame p50 1.93 p95 2.31 max 20.04; step  p50 0.04 p95 0.59 max 18.40; prepare  p50 0.12 p95 0.15 max 3.95; record  p50 0.10 p95 0.13 max 1.40; GPU tail  p50 1.42 p95 1.84 max 5.62
+  frames with a step (450 of them), ms: frame p50 2.19 p95 2.73 max 20.04; step  p50 0.55 p95 0.70 max 18.40; prepare  p50 0.12 p95 0.15 max 0.67; record  p50 0.11 p95 0.14 max 1.22; GPU tail  p50 1.40 p95 1.45 max 1.54
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z6-2-run exit 0 at 2026-11-14T03:13:02.6177762-06:00
+  t 30 s: mould 24785, soldiers 11, buildings 0, harvested 2364, shots 189, killed 975
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1290 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== time-view-z6-2-run exit 0 at 2026-11-14T03:13:02.6177762-06:00
+--- twins-all
+== twins-all (cargo test --release --locked --no-fail-fast) started 2026-11-14T02:57:48.5697108-06:00
+test gpu::larder_world::tests::gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu ... FAILED
+thread 'gpu::larder_world::tests::gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu' (16108) panicked at src\gpu\larder_world.rs:1181:17:
+assertion `left == right` failed: the engines part
+test result: FAILED. 361 passed; 1 failed; 6 ignored; 0 measured; 0 filtered out; finished in 142.74s
+error: test failed, to rerun pass `--lib`
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.44s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test tests::a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu ... FAILED
+test tests::an_explosion_flings_the_same_walkers_as_the_cpu ... FAILED
+test tests::a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu ... FAILED
+test tests::the_life_cycle_matches_the_cpu_for_four_ticks ... FAILED
+thread 'tests::a_squad_at_the_core_draws_the_mould_on_the_engine_as_on_the_cpu' (9388) panicked at src\bin\mouldgpu.rs:4863:13:
+thread 'tests::an_explosion_flings_the_same_walkers_as_the_cpu' (27380) panicked at src\bin\mouldgpu.rs:3004:21:
+thread 'tests::a_squad_laying_craters_plays_on_the_engine_as_on_the_cpu' (25352) panicked at src\bin\mouldgpu.rs:4728:13:
+thread 'tests::the_life_cycle_matches_the_cpu_for_four_ticks' (19528) panicked at src\bin\mouldgpu.rs:3235:13:
+test result: FAILED. 35 passed; 4 failed; 3 ignored; 0 measured; 0 filtered out; finished in 72.99s
+error: test failed, to rerun pass `--bin mouldgpu`
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+error: 2 targets failed:
+== twins-all exit 101 at 2026-11-14T03:04:32.9382207-06:00
+    `--lib`
+    `--bin mouldgpu`
+== twins-all exit 101 at 2026-11-14T03:04:32.9382207-06:00

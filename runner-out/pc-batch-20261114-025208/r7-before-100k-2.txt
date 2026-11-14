@@ -1,0 +1,27 @@
+== card before: 1936 MHz, 4006 MHz, 64, 47.99 W
+== r7-before-100k-2-run (C:\Users\Scott\Code\sm-batch-bins\lw-before.exe bench=60 hand=strike scale=8 walkers=100000 spread=0 passes=30) started 2026-11-14T03:11:21.4768568-06:00
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1090 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: fork seed 1, 2048 x 1280 cells, 1000000 slots, scale 8 walkers 100000; hand strike, 60 game s at 60 frames a second, screen 1280x800
+  3600 frames, 900 game steps; 0.07 read-backs a step, 0.00 waits a step (0.02 ms a step waiting); steps finished once in 899, when the next was due 0
+  every frame (3600 of them), ms: frame p50 0.74 p95 19.74 max 792.22; step  p50 0.06 p95 1.32 max 773.27; prepare  p50 0.09 p95 0.12 max 38.91; record  p50 0.09 p95 0.13 max 1.35; GPU tail  p50 0.51 p95 18.06 max 19.97
+  frames with a step (900 of them), ms: frame p50 19.41 p95 20.29 max 792.22; step  p50 1.29 p95 1.40 max 773.27; prepare  p50 0.09 p95 0.11 max 0.62; record  p50 0.09 p95 0.10 max 0.28; GPU tail  p50 17.94 p95 18.72 max 19.97
+  GPU (timestamps, median of 900 steps): the step's ticks 16.74 ms, its drawing 0.62 ms
+  t 60 s: mould 15489, soldiers 23, buildings 0, harvested 6000, shots 0, killed 0
+  GPU a step, every pass timed alone (median of 30 steps): 17.276 ms in all
+    smell        1 a step    0.089 ms a step    0.089 ms a run    0.5%
+    sense        8 a step    0.764 ms a step    0.096 ms a run    4.4%
+    walk         8 a step    0.337 ms a step    0.042 ms a run    2.0%
+    eat          8 a step    0.076 ms a step    0.010 ms a run    0.4%
+    pilesum     16 a step    0.675 ms a step    0.050 ms a run    3.9%
+    flow         8 a step    0.044 ms a step    0.005 ms a run    0.3%
+    life         8 a step    0.343 ms a step    0.043 ms a run    2.0%
+    breed        8 a step    0.443 ms a step    0.056 ms a run    2.6%
+    born         8 a step    0.201 ms a step    0.025 ms a run    1.2%
+    trail        8 a step    7.250 ms a step    0.906 ms a run   42.0%
+    scent        8 a step    6.431 ms a step    0.804 ms a run   37.2%
+    units        1 a step    0.076 ms a step    0.076 ms a run    0.4%
+    harvest      1 a step    0.092 ms a step    0.092 ms a run    0.5%
+    draw         1 a step    0.456 ms a step    0.456 ms a run    2.6%
+  machine at the end: RAM 2.5 GB free of 8.0; GPU memory 1356 MB in use of 8192, 0% busy; on the GPU too: claude.exe, logioptionsplus_agent.exe, explorer.exe, TextInputHost.exe, Malwarebytes.exe, StartMenuExperienceHost.exe, Video.UI.exe, SearchApp.exe, ShellExperienceHost.exe, LockApp.exe, ProtonDrive.exe, msedgewebview2.exe
+== r7-before-100k-2-run exit 0 at 2026-11-14T03:11:50.2982193-06:00
