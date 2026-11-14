@@ -1232,6 +1232,7 @@ fn stacked_soldiers_step_apart_onto_open_ground() {
         assert!(near >= 1.6 * 0.95, "sent {send}: nearest pair {near} touch radii apart");
     }
     assert!(spread(0.0, false) < 0.01, "off, the stack stays");
+}
 
 /// A burning soldier fires along its line once the line is in reach, and
 /// while it still walks there it shoots what reaches it, by its own aim

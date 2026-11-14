@@ -80,7 +80,7 @@ impl<W: World> Game<W> {
     pub(super) fn at_site(&self, k: usize, b: usize) -> bool {
         let Some(p) = self.site(k, b) else { return false };
         let s = self.soldiers[k];
-        let o = slot(k);
+        let o = self.slot(k);
         let elbow = self.rules.elbow.max(0.0) * self.rules.touch;
         (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + (o.0.hypot(o.1) + elbow) * self.s()
     }

@@ -19,7 +19,7 @@ llvmpipe, Fork, seed 1, shape C, 1280 x 800 cropped:
   than that each step half the overlap apart, at most a walk step at
   max(wade, 0.5) of full speed, onto standable ground only, pushes taken
   from positions before the pass (order-free). The sunflower slots widen
-  to 2.5 dish cells a ring (was 1.5) so a squad at rest sits at the
+  to 2.52 dish cells a ring (was 1.5; 1.5 again with elbow room off) so a squad at rest sits at the
   separation; builders get the separation added to their reach (without it
   two builders raised a turret in 56 ticks against one's 61). Agreed with
   the integration thread, which reviews. At 1.3 a five-soldier knot still
@@ -56,3 +56,13 @@ both came out black; a ghost's cream line only showed after the fix.
 llvmpipe, `bench=30 hand=volley`, 1280 x 800, squad on screen: GPU tail
 p50 37.6 -> 40.2 ms, frame p50 47.0 -> 49.9 ms. No 1070 timing (the PC is
 busy). Elbow room is O(n²): 780 pairs at 40 soldiers.
+
+## Engine twins
+
+Two GPU-against-CPU twins in `mouldgpu` (seed 3) left their bound with the
+new walk: the crater twin 896 against 1014 walkers at 30 s (with elbow
+room), the core-pull twin 1647 against 1516 at 25 s (from the wider slots
+alone; with 1.5 slots it passed). Both turn elbow room off, as they turn
+off solid crystals: a game-layer rule the same on both engines that moves
+where soldiers stand, so seed 3's chaos parts the moulds. Slots are 1.5
+with elbow room off, so those twins play as before.

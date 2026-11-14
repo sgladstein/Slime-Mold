@@ -82,20 +82,29 @@ pub(super) fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f
 }
 
 /// Soldier `k`'s place round the point it was sent to, dish cells (M3's
-/// sunflower: a squad sent to one point spreads instead of stacking).
-/// 2.5 a ring since 2026-11-14 (was 1.5): the nearest two slots (0 and 1)
-/// sit as far apart as elbow room asks (`Rules::elbow` 1.6 x touch 1.5 =
-/// 2.4), so separation never pushes a squad at rest off its slots.
-pub(super) fn slot(k: usize) -> (f32, f32) {
+/// sunflower: a squad sent to one point spreads instead of stacking),
+/// `ring` dish cells a ring (`Game::slot`).
+pub(super) fn slot(k: usize, ring: f32) -> (f32, f32) {
     if k == 0 {
         return (0.0, 0.0);
     }
-    let r = 2.5 * (k as f32).sqrt();
+    let r = ring * (k as f32).sqrt();
     let a = k as f32 * 2.399_963;
     (r * a.cos(), r * a.sin())
 }
 
 impl<W: World> Game<W> {
+    /// Soldier `k`'s sunflower slot (`slot`), dish cells. The ring is 1.5,
+    /// or with elbow room (`Rules::elbow`, 2026-11-14) a little over the
+    /// separation (1.6 x touch 1.5 = 2.4, so 2.52), so the nearest two
+    /// slots (0 and 1) sit as far apart as elbow room asks and it never
+    /// pushes a squad at rest off its slots. With elbow room off the slots
+    /// are as before, so the engine twins (which turn it off) play as they
+    /// did: 2.5 there moved seed 3's core twin 8.6% apart at 25 s.
+    pub(super) fn slot(&self, k: usize) -> (f32, f32) {
+        slot(k, (self.rules.elbow * self.rules.touch * 1.05).max(1.5))
+    }
+
     /// Where soldier `k` is walking to now, fine cells, if anywhere.
     pub(super) fn goal(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
@@ -161,7 +170,7 @@ impl<W: World> Game<W> {
         let s = self.soldiers[k];
         let sc = self.s();
         let off = |p: (f32, f32)| {
-            let o = slot(k);
+            let o = self.slot(k);
             (p.0 + o.0 * sc, p.1 + o.1 * sc)
         };
         match s.order {

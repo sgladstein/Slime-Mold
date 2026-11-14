@@ -252,7 +252,7 @@ census, no forced rerun.
 
 **Baseline break, 11-14: elbow room** ([units read](Reports/units-read-2026-11-14/README.md)).
 Soldiers keep `Rules::elbow` 1.6 touch radii apart and the sunflower slots
-are 2.5 dish cells a ring (was 1.5), so a squad's drain spreads over more
+are 2.52 dish cells a ring (was 1.5), so a squad's drain spreads over more
 ground: wading, bite and crater stacking move. Census rows from either side
 don't compare; threads re-baseline at their next census.
 

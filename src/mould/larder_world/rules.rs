@@ -149,9 +149,9 @@ pub struct Rules {
     /// 2026-11-14, rule 6: every soldier countable at zoom 6). At 1.3 the
     /// window's figures (1.15 touch radii, shoulders 0.8 of that) still
     /// overlapped in a five-soldier knot at zoom 6; 1.6 shows each one.
-    /// It goes with the wider sunflower slots (`paths::slot`, 2.5 dish
-    /// cells a ring, was 1.5), so a squad at rest is not pushed off its
-    /// slots. It spreads a squad's drain over more ground, so it is a
+    /// It goes with wider sunflower slots (`Game::slot`, 2.52 dish cells a
+    /// ring at 1.6, 1.5 with elbow room off), so a squad at rest is not
+    /// pushed off its slots. It spreads a squad's drain over more ground, so it is a
     /// census baseline break, not a balance call.
     pub elbow: f32,
     /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
