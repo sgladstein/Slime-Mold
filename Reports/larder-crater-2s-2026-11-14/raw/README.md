@@ -19,3 +19,11 @@ the cloud's llvmpipe Vulkan (look files) or the CPU (smoke files). The
   keys=capacity:50000+energy_flow:0.05
   hands=idle,random,farm,strike,rush cap=600 threads=4 crater=4.5|2`, the
   smoke games, with `time`'s lines at the end.
+- `burn-volley-2-before.txt`, `burn-volley-2-after.txt`: the next PR's
+  check. `larder-world look=DIR map=fork hand=volley at=22,23,24,25,26,28`
+  at the default 2 s, built from the crater PR's head (181b308) and from
+  the burn fix on top of it (c86fb80).
+- `smoke-random-before.txt`, `smoke-random-after.txt`: `larderworld census
+  seeds=5-12 walkers=25000 upkeep=0.0002
+  keys=capacity:50000+energy_flow:0.05 hands=random cap=600 threads=2`,
+  from the same two builds.

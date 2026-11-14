@@ -57,4 +57,25 @@ The `volley` hand was written for the 5,000-walker mould (11-12). It walks the s
 
 A burning soldier aims only at the line's five points. Those points were 66 to 76 cells away, out of its reach of 34, so no soldier fired at all from 22 s. The shot count stayed at 170 while the walkers on each soldier went from 1 to 17, and the squad was gone by 24 s. The `edge` hand stands the squad on free fire instead, and it fired 19 more shots and lived one second longer.
 
-In the window the same thing happens to a player who orders a burn line far away: the soldiers walk to it and don't shoot the slime that reaches them on the way. That goes against the owner's 11-13 16:15Z ruling that a soldier rushed while standing still must be able to shoot what reaches it. The fix is the next PR, since the census's random hand orders burn lines and needs smoke games of its own: a burn point out of reach falls back to the soldier's own aim. The `volley` hand also needs its walk retuned for C before it can film the ring again.
+In the window the same thing happens to a player who orders a burn line far away: the soldiers walk to it and don't shoot the slime that reaches them on the way. That goes against the owner's 11-13 16:15Z ruling that a soldier rushed while standing still must be able to shoot what reaches it. The fix went in as the next PR, because the census's random hand orders burn lines and so needed smoke games of its own. The `volley` hand also needs its walk retuned for C before it can film the ring again.
+
+## A burning soldier shoots what reaches it on the way
+
+In the next PR, a burn point out of the soldier's reach (the shot's own test: range plus 4 fine cells) falls through to the soldier's own aim and stance (`Game::target`). A point in reach is fired at as before. On the default Defend stance, the soldier then shoots walkers that are on it or near it, and holds fire at slime that is far off. The test is `a_soldier_walking_to_a_burn_line_shoots_what_reaches_it`, and it fails without the fix.
+
+**The volley squad at 2 s craters** (C, the Fork, seed 1; [before](larder-crater-2s-2026-11-14/raw/burn-volley-2-before.txt), [after](larder-crater-2s-2026-11-14/raw/burn-volley-2-after.txt)):
+
+| | Shots after 22 s | Kills by the wipe | Wiped |
+|---|---|---|---|
+| Before | 0 | 1,235 | 24 s |
+| After | 22 | 1,813 | 25 s, about 20 cells deeper |
+
+The squad still dies. In this build it had been starving since 1 s (the hand spends the whole bank on soldiers, and rations were on) and was at health 39 when it reached the slime. Rations have been off by default since #220, from the owner's 11-14 01:49Z playtest.
+
+**Smoke games.** Only the census's random hand orders burn lines, so only it was rerun. It ran on seeds 5-12 with C's keys and the 600 s cap, using one binary built from each side ([before](larder-crater-2s-2026-11-14/raw/smoke-random-before.txt), [after](larder-crater-2s-2026-11-14/raw/smoke-random-after.txt)):
+
+- Random still loses all 8 games. They are wiped at 74-137 s, against 73-170 s before.
+- Shots and kills are higher on 7 of 8 seeds.
+- Scores are higher on 4 seeds, lower on 2 and tied on 2.
+- Seed 10 is the one that fell, from -1.717 to -1.774: it was wiped at 136 s instead of 170 s.
+- No game ends inside a minute.
