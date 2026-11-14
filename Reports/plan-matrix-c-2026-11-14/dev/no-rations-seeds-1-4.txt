@@ -1,0 +1,25 @@
+   cut seed  1:         cap at   900 s, score +0.337; soldiers 30, mould   7166, bank  16512, harvested  42914; peak 25620; built 0; trace 0:2000/4/25000 30:400/14/8004 60:110
+   cut seed  2:         cap at   900 s, score +0.336; soldiers 30, mould   7313, bank  18613, harvested  42614; peak 25676; built 0; trace 0:2000/4/25000 30:400/14/6774 60:400
+   cut seed  3:         cap at   900 s, score +0.328; soldiers 30, mould   7140, bank  15014, harvested  37814; peak 26007; built 0; trace 0:2000/4/25000 30:900/15/8484 60:700
+   cut seed  4:         cap at   900 s, score +0.400; soldiers 30, mould   4017, bank  27605, harvested  49214; peak 25498; built 0; trace 0:2000/4/25000 30:500/16/6551 60:700
+  boom seed  1:         cap at   900 s, score +0.321; soldiers 20, mould   8543, bank  36510, harvested  46514; peak 25620; built 0; trace 0:2000/4/25000 30:400/14/8004 60:270
+  boom seed  2:         cap at   900 s, score +0.337; soldiers 20, mould   7476, bank  32308, harvested  42314; peak 25676; built 0; trace 0:2000/4/25000 30:400/14/6774 60:280
+  boom seed  3:         cap at   900 s, score +0.280; soldiers 20, mould  10450, bank  27214, harvested  36014; peak 26007; built 0; trace 0:2000/4/25000 30:900/15/8484 60:430
+  boom seed  4:         cap at   900 s, score +0.373; soldiers 20, mould   5536, bank  40812, harvested  49214; peak 25498; built 0; trace 0:2000/4/25000 30:500/16/6551 60:430
+  take seed  1:         cap at   900 s, score +0.310; soldiers 40, mould   9076, bank   5914, harvested  42314; peak 25620; built 8; trace 0:2000/4/25000 30:400/14/8004 60:110
+  take seed  2:         cap at   900 s, score +0.332; soldiers 40, mould   7249, bank  13314, harvested  38114; peak 25676; built 8; trace 0:2000/4/25000 30:400/14/6774 60:400
+  take seed  3:         cap at   900 s, score +0.315; soldiers 40, mould   8188, bank  18414, harvested  40814; peak 26007; built 8; trace 0:2000/4/25000 30:900/15/8484 60:700
+  take seed  4:         cap at   900 s, score +0.385; soldiers 40, mould   4714, bank  20114, harvested  47714; peak 25498; built 8; trace 0:2000/4/25000 30:500/16/6551 60:700
+boom:spend=2+turrets=8 seed  1:         cap at   900 s, score +0.321; soldiers 40, mould   8364, bank  26414, harvested  44414; peak 25620; built 8; trace 0:2000/4/25000 30:40
+boom:spend=2+turrets=8 seed  2:         cap at   900 s, score +0.324; soldiers 40, mould   7997, bank  17814, harvested  37814; peak 25676; built 8; trace 0:2000/4/25000 30:40
+boom:spend=2+turrets=8 seed  3:         cap at   900 s, score +0.302; soldiers 40, mould   9117, bank  21214, harvested  39614; peak 26007; built 8; trace 0:2000/4/25000 30:90
+boom:spend=2+turrets=8 seed  4:         cap at   900 s, score +0.371; soldiers 40, mould   5617, bank  26114, harvested  46514; peak 25498; built 8; trace 0:2000/4/25000 30:50
+larderworld the race world, scale 2 walkers 25000 cap 900 s, tps 15, seeds [1, 2, 3, 4]; on the CPU; tier none; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed:
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
+provenance: harness larderworld, commit 19766a8f3+dirty, seeds 1-4 (4), cap 900 s, settings hash 69aecca4e8d53329
+strike seed  1:         cap at   900 s, score +0.369; soldiers 11, mould   5191, bank    713, harvested  42314; peak 25620; built 0; trace 0:2000/4/25000 30:400/14/8004 60:110
+strike seed  2:         cap at   900 s, score +0.391; soldiers 30, mould   3827, bank   2506, harvested  40514; peak 25676; built 0; trace 0:2000/4/25000 30:400/14/6774 60:400
+strike seed  3:         cap at   900 s, score +0.356; soldiers 17, mould   5462, bank    414, harvested  38414; peak 26007; built 0; trace 0:2000/4/25000 30:900/15/8484 60:700
+strike seed  4:         cap at   900 s, score +0.428; soldiers 30, mould   2270, bank   9413, harvested  43814; peak 25498; built 0; trace 0:2000/4/25000 30:500/16/6551 60:700
+
+[exited with code 0]
