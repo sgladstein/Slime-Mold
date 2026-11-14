@@ -92,9 +92,11 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
 }
 
 /// The key card's rows (the start menu's Keys page; in play F1 shows the
-/// HUD's own, built from the command card).
-pub(super) fn key_card() -> Vec<(String, String)> {
-    [
+/// HUD's own, built from the command card): the RTS round's, then the squad
+/// mode's (`squadmode::squad_help`), whose card letters move off WASD; the
+/// squad mode's first when the command line chose it.
+pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
+    let rts: Vec<(String, String)> = [
         ("Left click / drag", "Select soldiers"),
         ("Right click", "Move; on a crystal, harvest it"),
         ("Shift + order", "Queue it after the current orders"),
@@ -107,6 +109,7 @@ pub(super) fn key_card() -> Vec<(String, String)> {
         ("Z / X / C", "Hold fire, defend, free fire"),
         ("B", "Buy a soldier (or select the larder)"),
         ("V, drag", "Lay a wall"),
+        ("R", "The larder's rally point"),
         ("Q", "Build page: turret, lure, pump, outpost, siren"),
         ("E", "Tools page: blast, det cord, mine"),
         ("H", "Next round loadout"),
@@ -119,16 +122,22 @@ pub(super) fn key_card() -> Vec<(String, String)> {
         ("Esc", "Cancel placing, or the menu"),
         ("F1 or ?", "The key card"),
         ("Ctrl + / Ctrl -", "Bigger or smaller UI and text (saved)"),
-        ("Squad mode: WASD", "Steer your squad (the camera follows; Space comes back)"),
-        ("Squad mode: hold left", "Every soldier fires at the cursor at once"),
-        ("Squad mode: right click", "Send the squad; on a crystal guard it, Ctrl drains it"),
-        ("Squad mode: 1-9, wheel", "Switch squads (Ctrl + wheel zooms)"),
-        ("Squad mode: X, Shift+drag, G", "Split, pull soldiers out, merge the nearest"),
-        ("Squad mode: T", "Formation: blob, line, wedge, ring"),
     ]
     .iter()
     .map(|&(k, v)| (k.to_string(), v.to_string()))
-    .collect()
+    .collect();
+    let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
+    squad.extend(squad_help());
+    // The card's letters as `squad_card_key` moves them.
+    let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
+    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(BURN, KeyCode::KeyF)), "The card for the squad: attack-move, drain, burn".into()));
+    squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+    if squads {
+        squad.push(("RTS round".into(), "Options: Control, rts".into()));
+        squad.into_iter().chain(rts).collect()
+    } else {
+        rts.into_iter().chain(squad).collect()
+    }
 }
 
 /// The menu for the command line's `base`.
@@ -137,7 +146,7 @@ pub(super) fn start_menu(base: &Args) -> StartMenu {
         .into_iter()
         .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
         .collect();
-    let mut menu = StartMenu::new("Larder World", entries, options(base), key_card());
+    let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
     menu
 }

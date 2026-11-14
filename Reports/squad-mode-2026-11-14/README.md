@@ -98,9 +98,17 @@ before. All 51 `larder_world` tests pass, the 9 old ones unchanged.
 
 ## Open
 
-- A call-in delay for bought soldiers (answer 10), a squad list in the HUD,
-  and moving the command card's letters off the squad keys (X, G and the
-  WASD letters on the card are dead in this mode).
+- A call-in delay for bought soldiers (answer 10) and a squad list in the
+  HUD.
+- Keys, after the owner's playtest (08:01Z; [bug sweep](../bug-sweep-2026-11-14.md)):
+  the card's letters came second to the squad's, so G merged instead of
+  harvesting and X split instead of defending, and the wheel switched
+  squads instead of zooming. Now the card's keys come first, split is
+  **Y**, join is **J**, the wheel zooms (about the squad while the camera
+  follows it) and **Ctrl + wheel** switches; the card's WASD letters moved
+  to R (attack-move, mine), F (gas) and U (sow). Answer 4's X and G are a
+  two-line change back (`squadmode::SPLIT`, `MERGE`) if the owner prefers
+  them, with the card's Defend and Drain moved instead.
 - Retune the numbers after a playtest: the rate and strike boost, the guard
   rate, the pace, the merge reach.
 - The player AI doesn't play this mode yet.

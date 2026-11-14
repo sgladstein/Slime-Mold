@@ -407,3 +407,209 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     assert_eq!(app.game.as_ref().unwrap().time(), 0.0, "a fresh round");
     assert!(app.in_menu(), "still on the menu");
 }
+
+fn squad_args(squads: bool) -> Args {
+    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads }
+}
+
+/// **A step a command finishes keeps its shots** (bug sweep, 2026-11-14,
+/// the owner's "the gun animation gets messed up sometimes"): `Game::apply`
+/// finishes the step running on the GPU first, and the window never saw
+/// that step, so its bullets' legs, flashes and casts were lost. In the
+/// squad mode the cursor sent such a command almost every frame.
+#[test]
+fn a_step_a_command_finishes_keeps_its_shots() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(false), (320, 200), &device, &queue).unwrap();
+    let (mut checked, mut legs) = (0, 0);
+    while app.game.as_ref().unwrap().time() < 30.0 && checked < 20 {
+        plan(app.game.as_mut().unwrap(), "rush");
+        app.step(1.0 / 15.0);
+        let g = app.game.as_mut().unwrap();
+        if !g.in_flight() {
+            g.begin_step();
+        }
+        // A command lands while the step runs, as a click does.
+        g.apply(Cmd::Stance(0, Stance::Free));
+        let n = g.last_shots.len();
+        let before = app.tracers.len();
+        app.step(0.0);
+        let drawn = app.tracers.len() - before;
+        assert_eq!(drawn, n, "a tracer for every leg of the step the command finished");
+        if n > 0 {
+            checked += 1;
+            legs += n;
+        }
+    }
+    assert!(checked >= 5, "only {checked} steps with shots ({legs} legs)");
+}
+
+/// **The squad mode's keys** (bug sweep, 2026-11-14, the owner's playtest:
+/// "The shortcuts for harvesting and maybe other things doesn't work", "I
+/// cannot zoom in anymore"): the card has no letter on WASD and its G
+/// drains a crystal as the squad; Y splits and J joins (they were X and G,
+/// over the card's Defend and Harvest); the plain wheel zooms and keeps
+/// following the squad, Ctrl + wheel switches squads.
+#[test]
+fn the_squad_modes_keys_do_what_the_card_says() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    for _ in 0..4 {
+        app.game.as_mut().unwrap().apply(Cmd::Buy);
+    }
+    app.squad_frame(1.0 / 60.0);
+    app.prepare();
+    let m = app.model(None, None);
+    let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD];
+    for page in [(false, false), (true, false), (false, true)] {
+        (app.build_page, app.tools_page) = page;
+        let m = app.model(None, None);
+        for c in &m.commands {
+            assert!(!wasd.contains(&c.key), "{} on {:?} steers instead", c.name, c.key);
+        }
+    }
+    (app.build_page, app.tools_page) = (false, false);
+    let key_of = |name: &str| m.commands.iter().find(|c| c.name == name).map(|c| c.key);
+    assert_eq!(key_of("Drain a crystal"), Some(KeyCode::KeyG));
+    assert_eq!(key_of("Attack-move"), Some(KeyCode::KeyR));
+    assert_eq!(key_of("Defend"), Some(KeyCode::KeyX));
+    assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
+    // G is the card's: it aims a drain, and merges nothing.
+    assert!(!app.squad_key(KeyCode::KeyG, true, false, false));
+    let (took, _) = app.hud.key(KeyCode::KeyG, true, false, &mut app.camera);
+    assert!(took && app.hud.targeting().is_some_and(|t| t.0 == HARVEST), "G aims a drain");
+    app.hud.cancel_targeting();
+    // Y splits the controlled squad.
+    let n = app.game.as_ref().unwrap().live_squads().len();
+    assert!(app.squad_key(squadmode::SPLIT, true, false, false));
+    assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n + 1, "Y split the squad");
+    // The wheel zooms (about the squad, still following it); Ctrl + wheel
+    // switches squads.
+    let (z, active) = (app.camera.zoom, app.game.as_ref().unwrap().active);
+    app.ctrl = false;
+    assert!(!app.squad_wheel(1));
+    assert!(app.squad_zoom(1));
+    assert!(app.camera.zoom > z, "the wheel zoomed in: {z} -> {}", app.camera.zoom);
+    assert!(app.sq.as_ref().unwrap().follow, "and still follows the squad");
+    assert_eq!(app.game.as_ref().unwrap().active, active);
+    app.ctrl = true;
+    assert!(app.squad_wheel(1));
+    assert_ne!(app.game.as_ref().unwrap().active, active, "Ctrl + wheel switched squads");
+}
+
+#[test]
+fn the_squad_cameras_follow_keeps_the_squad_in_the_middle() {
+    // The bug sweep (2026-11-14): the follow eased from the screen's middle
+    // but `centre_on` puts a point in the middle of the band between the
+    // UI's insets, so each frame it fell short and the camera came to rest
+    // about 100 cells off the squad (clamped at the map's edge), and every
+    // zoom in lost it. Steered right for 5 s, zoomed in twice on the way,
+    // the squad's middle must stay within 3 cells of the band's middle.
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    let mut worst: f32 = 0.0;
+    app.squad_key(KeyCode::KeyD, true, false, true);
+    for i in 0..300 {
+        if i == 100 || i == 200 {
+            assert!(app.squad_zoom(1));
+        }
+        app.squad_frame(dt);
+        app.step(dt);
+        let g = app.game.as_ref().unwrap();
+        let m = g.active.and_then(|q| g.middle(q)).unwrap();
+        let f = app.camera.focus();
+        if i >= 10 {
+            worst = worst.max((m.0 - f.0).hypot(m.1 - f.1));
+        }
+        assert!(app.sq.as_ref().unwrap().follow, "frame {i}: the camera stopped following");
+    }
+    app.squad_key(KeyCode::KeyD, false, false, true);
+    let (sx, sy) = app.camera.to_screen(app.game.as_ref().map(|g| g.active.and_then(|q| g.middle(q)).unwrap()).unwrap());
+    eprintln!("follow: worst {worst:.2} cells off; squad on screen at ({sx:.0}, {sy:.0}), zoom {}", app.camera.zoom);
+    assert!(worst < 3.0, "the camera fell {worst:.1} cells behind the squad");
+    assert!((0.0..640.0).contains(&sx) && (0.0..400.0).contains(&sy), "the squad left the screen");
+}
+
+/// **No two commands on a page share a slot or a key** (bug sweep,
+/// 2026-11-14: the Rally point sat at (2, 2) under the Build button, so
+/// only its key reached it). Every page, in the RTS round and the squad
+/// mode, with and without the player's own mould.
+#[test]
+fn every_command_card_page_has_its_own_slots_and_keys() {
+    let Some((device, queue)) = gpu() else { return };
+    for (squads, own) in [(false, false), (false, true), (true, false), (true, true)] {
+        let mut args = squad_args(squads);
+        if own {
+            (args.own, args.map) = (true, None);
+        }
+        let mut app = offscreen(args, (640, 400), &device, &queue).unwrap();
+        for (build, tools) in [(false, false), (true, false), (false, true)] {
+            (app.build_page, app.tools_page) = (build, tools);
+            let cmds = app.model(None, None).commands;
+            let page = format!("squads {squads}, own {own}, build {build}, tools {tools}");
+            for (i, a) in cmds.iter().enumerate() {
+                for b in &cmds[i + 1..] {
+                    assert_ne!(a.slot, b.slot, "{page}: {} and {} share a slot", a.name, b.name);
+                    assert_ne!(a.key, b.key, "{page}: {} and {} share a key", a.name, b.name);
+                }
+            }
+        }
+    }
+}
+
+/// **The card's burn reaches a moving squad** (review after the bug sweep,
+/// 2026-11-14): given soldier by soldier, a squad steered with WASD took
+/// its own order back at its next step, so F + drag did nothing.
+#[test]
+fn the_cards_burn_reaches_a_moving_squad() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    let dt = 1.0 / 60.0;
+    app.squad_key(KeyCode::KeyD, true, false, true);
+    for _ in 0..30 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let (from, to) = {
+        let g = app.game.as_ref().unwrap();
+        let m = g.active.and_then(|q| g.middle(q)).unwrap();
+        let sc = g.world.scale();
+        ((m.0 + 4.0 * sc, m.1 - 6.0 * sc), (m.0 + 4.0 * sc, m.1 + 6.0 * sc))
+    };
+    app.hud_event(HudEvent::Line { id: BURN, from, to }).unwrap();
+    for _ in 0..30 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let g = app.game.as_ref().unwrap();
+    let q = g.active.unwrap();
+    let burning = g.members(q).iter().filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..))).count();
+    assert_eq!(burning, g.members(q).len(), "every member of the squad burns the line half a second later");
+}
+
+/// **The minimap in the squad mode** (review after the bug sweep,
+/// 2026-11-14): a right click on it sends the squad where it shows, as in
+/// the RTS round, and a left click moves the camera, not a volley at the
+/// ground hidden behind the minimap.
+#[test]
+fn the_minimap_sends_the_squad_where_it_shows() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.squad_frame(1.0 / 60.0);
+    app.prepare();
+    let (x, y, w, h) = app.hud.minimap.expect("the HUD drew a minimap");
+    let c = (x as f32 + w as f32 * 0.8, y as f32 + h as f32 * 0.3);
+    app.controls.cursor = Some(c);
+    app.hud.moved(Some(c));
+    let shows = app.hud.on_minimap(c).unwrap();
+    assert!(!app.squad_button(Button::Left, true), "a left click on the minimap is the controls' (the camera)");
+    assert!(app.game.as_ref().unwrap().squads.iter().all(|q| q.fire.is_none()), "and fires nothing");
+    app.squad_button(Button::Left, false);
+    assert!(app.squad_button(Button::Right, true));
+    let g = app.game.as_ref().unwrap();
+    let d = g.squads[g.active.unwrap()].dest.expect("the squad was sent");
+    let sc = g.world.scale();
+    assert!((d.0 - shows.0).hypot(d.1 - shows.1) <= 8.0 * sc, "sent to {d:?}, the minimap shows {shows:?}");
+}
