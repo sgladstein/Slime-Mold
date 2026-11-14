@@ -358,7 +358,7 @@ const GEM_STUB: f32 = 0.1;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
-const GEM_FILM: f32 = 0.75;
+const GEM_FILM: f32 = 0.92;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -868,21 +868,21 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // a mould that is draining it (`hot`, the same charge loss the
             // harvest glow shows) takes a cyan cast.
             let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
-            let film = GEM_FILM * (1.0 - exp(-25.0 * th));
+            let film = GEM_FILM * (1.0 - exp(-40.0 * th));
             let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
-            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.35 * hot, 0.0, 0.35));
-            let on = fed * clamp(0.3 + 0.7 * gs, 0.3, 1.5);
+            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.2 * hot, 0.0, 0.2));
+            let on = fed * clamp(0.5 + 0.5 * gs, 0.4, 1.4);
             // The silhouette stays crisp under the film: a dark line a pixel
             // and a half wide inside the hexagon's edge, where the faces
             // meet the ground (a hard shape's edge, art direction rule 4).
             let rim = 0.72 + 0.28 * smoothstep(0.0, 1.5, gi.x * P.zoom);
             // The charge's light comes up through the film, brightest deep in a
             // full crystal, so a covered crystal still glows cyan.
-            let through = glow * (1.0 - 0.3 * film) + vec3<f32>(20.0, 95.0, 115.0) * v * depth * film;
-            let gc = (mix(rock, on, film) + through) * rim;
+            let through = glow * (1.0 - 0.8 * film) + vec3<f32>(8.0, 40.0, 50.0) * v * depth * film;
+            let gc = mix(rock * rim, on, film) + through;
             c = mix(c, gc, cover);
         }
         if (cover < 1.0 && hot > 0.0) {
