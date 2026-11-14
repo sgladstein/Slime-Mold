@@ -1,0 +1,13 @@
+runner note: GPU-idle check relaxed to under 10% (owner OK; PR #306 job 11-14 23:09Z); idle samples before this run: 0,0,0,0,0 %; card 1987 MHz, 4006 MHz, 35, 43.36 W
+larder-world machine at the start: RAM 3.0 GB free of 8.0; GPU memory 1401 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: planet:5:1:2 seed 1, 728 x 456 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 137.3 MB for 728 x 456 cells (414 bytes a cell), the biggest 17.9 MB
+  1800 frames, 450 game steps; 0.14 read-backs a step, 0.00 waits a step (0.01 ms a step waiting); steps finished once in 449, when the next was due 0
+  every frame (1800 of them), ms: frame p50 3.70 p95 5.54 max 11.80; step  p50 0.02 p95 0.71 max 7.10; prepare  p50 0.11 p95 0.12 max 2.45; record  p50 0.10 p95 0.12 max 1.36; GPU tail  p50 3.48 p95 4.63 max 4.75
+  frames with a step (450 of them), ms: frame p50 5.41 p95 5.59 max 11.80; step  p50 0.67 p95 0.77 max 7.10; prepare  p50 0.11 p95 0.12 max 0.63; record  p50 0.10 p95 0.12 max 0.32; GPU tail  p50 4.51 p95 4.69 max 4.75
+  after the first game second (1740 frames), ms: frame max 10.60; step max 5.77; prepare max 2.45
+  ground refresh: 29 of them, ms: mean 1.91 max 2.33, of which the read-back at most 0.41; 28817 live cells
+  GPU (timestamps, median of 450 steps): the step's ticks 1.09 ms, its drawing 0.10 ms
+  t 30 s: mould 24737, soldiers 2, buildings 0, harvested 0, shots 37, killed 439
+  machine at the end: RAM 2.9 GB free of 8.0; GPU memory 1604 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe

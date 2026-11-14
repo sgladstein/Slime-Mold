@@ -1,0 +1,2 @@
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-levelgen3)
+    Finished `release` profile [optimized] target(s) in 1m 26s
