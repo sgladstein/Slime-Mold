@@ -4,14 +4,17 @@ kind: design
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/gun-order-2026-11-14.md
   - Reports/roguelike-run-2026-11-14/README.md
 code:
   - LADDER
   - PLANETS
   - REF_OPEN
+  - Run::buy_into
   - Run::carried
   - Run::gun
   - Run::level
+  - Run::put_in
   - Run::rules
   - Run::shop
   - ammo_price
@@ -41,7 +44,11 @@ cards (the HUD's icons, in the carried gun's slots, the bag, for sale). The
 run starts with the average rifle and carries one gun (`Run::carried`,
 the gun thread's `guns::Gun`); two guns rolled for the coming planet are on
 sale each shop, priced by `gun_price`, and the carried gun's budget and
-slots hold the cards. Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). Locked buildings and tools show
+slots hold the cards. The gun fires its slots left to right; the player
+drags a card onto a slot to move it, buys a card for sale straight into a
+slot, drags one onto the bag to take it out, or presses Q and E; a card
+put in without a slot lands before the first bullet (`Run::put_in`)
+([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). Locked buildings and tools show
 locked on the command card. Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
@@ -52,6 +59,7 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 - 2026-11-14 15:25Z: "the slime is taking over planets and each level is a new planet as we move towards the core slime world. This is just head cannon right now".
 - 2026-11-14 15:26Z: level generation is its own thread; this one reviews it "but you don't do level generation".
 - 2026-11-14 16:55Z: "Guns and bullets should have icons. This whole menu should not just be uniform buttons. There should be one area for unlocking/upgrading that should match the player menu from the screen (buildings and tools should be separate menus that you open up). The second area of the screen is for Guns/bullet cards."
+- 2026-11-14 20:32Z: "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around".
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 
 ## Open
@@ -62,3 +70,4 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 ## Sources
 
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
+- [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.

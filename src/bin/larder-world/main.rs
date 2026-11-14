@@ -67,6 +67,10 @@
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
 //! that tooltip (a loadout card's, 2026-11-14); `select=0` selects nobody.
+//! `drag=FROM>TO[/FROM>TO..]` with `menu=shop..` films bullet cards dragged
+//! in the shop, one drag to an equal share of the frames: FROM a gun slot
+//! (counted from 1, as the shop numbers them) or the name of a card out of
+//! the gun, TO a slot or `bag` (the gun's cards, 2026-11-14).
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
 //! out round (X, Y), out of the ground at game second T and holds it (for
 //! HOLD seconds, then puts it back), and prints the walkers inside each
@@ -1385,6 +1389,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bank = None;
     let mut centre = None;
     let mut hover = None;
+    let mut drags: Vec<(String, String)> = Vec::new();
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
@@ -1478,6 +1483,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // `select=0`: the no-window pictures with nothing selected (the
             // HUD's collapsed selection panel).
             "select" => select = v != "0",
+            "drag" => {
+                for d in v.split('/') {
+                    let (a, b) = d.split_once('>').ok_or("drag=FROM>TO[/FROM>TO..]: a slot (from 1) or a card's name, to a slot or bag")?;
+                    drags.push((a.to_string(), b.to_string()));
+                }
+            }
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).
@@ -1561,7 +1572,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select, &drags)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
