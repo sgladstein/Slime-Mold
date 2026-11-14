@@ -16,7 +16,9 @@ impl<W: World> Game<W> {
 
     /// Whether `finish_step` would return without waiting on the world.
     pub fn step_ready(&self) -> bool {
-        self.flight.as_ref().is_none_or(|f| f.out.is_some() || self.world.frame_ready())
+        self.flight
+            .as_ref()
+            .is_none_or(|f| f.out.is_some() || self.world.frame_ready())
     }
 
     /// The first half of `step`: the squad's turn (walking, banking, aims
@@ -54,11 +56,17 @@ impl<W: World> Game<W> {
             // none queued it stays, as before: the window shows where).
             // (Not while its squad is still being sent somewhere: its move
             // there is the squad's, renewed every step.)
-            let sent = self.rules.squads && self.squads.get(self.soldiers[k].squad as usize).is_some_and(|q| q.dest.is_some());
+            let sent = self.rules.squads
+                && self
+                    .squads
+                    .get(self.soldiers[k].squad as usize)
+                    .is_some_and(|q| q.dest.is_some());
             if self.soldiers[k].queued > 0 && !sent {
                 let arrived = match self.soldiers[k].order {
                     Order::Hold => true,
-                    Order::Move(..) | Order::Fight(..) => self.goal(k).is_none_or(|g| (g.0 - self.soldiers[k].x).hypot(g.1 - self.soldiers[k].y) <= 1.5 * sc),
+                    Order::Move(..) | Order::Fight(..) => self
+                        .goal(k)
+                        .is_none_or(|g| (g.0 - self.soldiers[k].x).hypot(g.1 - self.soldiers[k].y) <= 1.5 * sc),
                     _ => false,
                 };
                 if arrived {
@@ -94,7 +102,8 @@ impl<W: World> Game<W> {
                     // From its rim (`Rules::crystal_solid`), with the slot's room.
                     let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
                     if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
-                        take = (r.harvest * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
+                        take =
+                            (r.harvest * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
                 }
@@ -119,11 +128,19 @@ impl<W: World> Game<W> {
                             let (sn, cs) = a.sin_cos();
                             (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
                         }
-                        shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
+                        shots.push(ShotIn {
+                            from: (s.x, s.y),
+                            to: (s.x + ux * reach, s.y + uy * reach),
+                            r: strike,
+                        });
                         shooters.push(Some(k));
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
                         let gap = self.shot_gap(q);
-                        let gap = if r.squads && self.working(k) { ((gap as f32 / r.cover.work_fire.max(0.01)).round() as u64).max(1) } else { gap };
+                        let gap = if r.squads && self.working(k) {
+                            ((gap as f32 / r.cover.work_fire.max(0.01)).round() as u64).max(1)
+                        } else {
+                            gap
+                        };
                         self.soldiers[k].ready = t + gap;
                         shot = true;
                         self.bank -= r.price;
@@ -140,8 +157,16 @@ impl<W: World> Game<W> {
                 sight: self.gun_range() * sc,
                 take_r: at_crystal.map_or(4.0 * sc, |i| self.world.crystal_r(i).min(4.0 * sc)),
                 take,
-                smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
-                smell: self.world.food_deposit() * r.smell * s.smell * if pulls { pull.max(1.0) } else { 1.0 } * r.frame_ticks as f32,
+                smell_r: if pulls {
+                    r.build.lure_r.max(r.smell_r) * sc
+                } else {
+                    r.smell_r * sc
+                },
+                smell: self.world.food_deposit()
+                    * r.smell
+                    * s.smell
+                    * if pulls { pull.max(1.0) } else { 1.0 }
+                    * r.frame_ticks as f32,
             });
             who.push(Who::Soldier(k));
             from.push(at_crystal);
@@ -157,18 +182,18 @@ impl<W: World> Game<W> {
         // The larder: smells of the bank, and reads who touches it (none
         // without one, `Rules::larder`).
         if r.larder {
-        units.push(UnitIn {
-            x: self.larder.0,
-            y: self.larder.1,
-            touch: 3.0 * sc,
-            sight: 0.0,
-            take_r: 0.0,
-            take: 0.0,
-            smell_r: 3.0 * sc,
-            smell: self.world.food_deposit() * r.hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32,
-        });
-        who.push(Who::Larder);
-        from.push(None);
+            units.push(UnitIn {
+                x: self.larder.0,
+                y: self.larder.1,
+                touch: 3.0 * sc,
+                sight: 0.0,
+                take_r: 0.0,
+                take: 0.0,
+                smell_r: 3.0 * sc,
+                smell: self.world.food_deposit() * r.hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32,
+            });
+            who.push(Who::Larder);
+            from.push(None);
         }
         // Turrets, lures and pumps: units that do not move (`buildings`).
         // A turret's hits lay the crater too, through the same frame (the
@@ -177,10 +202,26 @@ impl<W: World> Game<W> {
         shooters.resize(shots.len(), None);
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, dt);
-        let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
+        let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32)
+            .round()
+            .clamp(0.0, u16::MAX as f32) as u16;
+        let f = Frame {
+            units,
+            shots,
+            slime: squad::slime_trail(6.0),
+            crater,
+            sink: r.sink,
+        };
         let out = self.world.frame_start(&f, r.frame_ticks);
-        self.flight = Some(Flight { t, f, by, fired, who, from, out });
+        self.flight = Some(Flight {
+            t,
+            f,
+            by,
+            fired,
+            who,
+            from,
+            out,
+        });
     }
 
     /// The second half of `step`: the frame's results, waited for if the
@@ -188,21 +229,62 @@ impl<W: World> Game<W> {
     /// (kills, harvest, touches, theft, the core, the end). Nothing when no
     /// step is running.
     pub fn finish_step(&mut self) {
-        let Some(Flight { t, f, by, fired, who, from, out }) = self.flight.take() else { return };
+        let Some(Flight {
+            t,
+            f,
+            by,
+            fired,
+            who,
+            from,
+            out,
+        }) = self.flight.take()
+        else {
+            return;
+        };
         let out = out.unwrap_or_else(|| self.world.frame_finish());
         let r = self.rules;
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired }).collect();
+        self.last_shots = f
+            .shots
+            .iter()
+            .zip(&out.shots)
+            .zip(&by)
+            .map(|((i, o), &(by, fired))| Shot {
+                from: i.from,
+                to: i.to,
+                hit: o.hit,
+                killed: o.killed,
+                by,
+                fired,
+            })
+            .collect();
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
         // gas): its walkers are taken off each unit's touch.
-        let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
+        let calm = self
+            .world
+            .calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
         // Whole walkers off whole walkers: what each is worth is decided below, per rule.
-        let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
-        let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
+        let out = FrameOut {
+            units: out
+                .units
+                .iter()
+                .zip(&calm)
+                .map(|(u, &c)| UnitOut {
+                    touching: u.touching.saturating_sub(c),
+                    ..*u
+                })
+                .collect(),
+            ..out
+        };
+        let left: Vec<f32> = if r.home_dry {
+            self.world.crystals().iter().map(|c| c.1).collect()
+        } else {
+            Vec::new()
+        };
         let mut empty = Vec::new();
         self.last_takes.clear();
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
@@ -210,7 +292,12 @@ impl<W: World> Game<W> {
                 self.taken[c] += u.took;
                 if u.took > 0.0 {
                     let by = if let Who::Soldier(k) = *k { Some(k) } else { None };
-                    self.last_takes.push(Take { by, crystal: c, at: (ask.x, ask.y), took: u.took });
+                    self.last_takes.push(Take {
+                        by,
+                        crystal: c,
+                        at: (ask.x, ask.y),
+                        took: u.took,
+                    });
                 }
             }
             match *k {
@@ -376,7 +463,9 @@ impl<W: World> Game<W> {
                 continue;
             }
             let cr = self.world.crystal_r(i);
-            let by = |s: &Soldier| s.alive && !matches!(s.order, Order::Clear(..)) && (s.x - c.0).hypot(s.y - c.1) <= cr + (RIM + 4.0) * sc;
+            let by = |s: &Soldier| {
+                s.alive && !matches!(s.order, Order::Clear(..)) && (s.x - c.0).hypot(s.y - c.1) <= cr + (RIM + 4.0) * sc
+            };
             if !self.soldiers.iter().any(by) || self.world.walkers_in(c, cr + sc) > r.guard_walkers {
                 continue;
             }
@@ -390,7 +479,11 @@ impl<W: World> Game<W> {
     /// Once a game second: `Game::stuck`.
     pub(super) fn count_stuck(&mut self) {
         let taken = self.harvested + self.soldiers.iter().map(|s| s.carry).sum::<f32>();
-        if self.alive() > 0 && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
+        if self.alive() > 0
+            && self.shots == self.stuck_mark.0
+            && taken <= self.stuck_mark.1
+            && self.bank < self.rules.soldier_cost
+        {
             self.stuck += 1;
             self.stuck_run += 1;
         } else {
@@ -405,7 +498,11 @@ impl<W: World> Game<W> {
         // Presence: any walker on the larder holds it, at any mass.
         let held = self.larder_touch > 0;
         if r.overrun > 0.0 {
-            self.held_ticks = if held && self.bank < 1.0 { self.held_ticks + ticks } else { 0 };
+            self.held_ticks = if held && self.bank < 1.0 {
+                self.held_ticks + ticks
+            } else {
+                0
+            };
             if self.held_ticks >= self.secs(r.overrun) && self.end.is_none() {
                 self.end = Some(End::Overrun(self.time()));
             }
@@ -430,9 +527,21 @@ impl<W: World> Game<W> {
         }
         let sc = self.s();
         let r = self.rules.core_r * sc;
-        let on = self.soldiers.iter().any(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r);
+        let on = self
+            .soldiers
+            .iter()
+            .any(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r);
         // No walker near: the touch of the soldiers on it reads 0 (presence, so mass doesn't apply).
-        let clear = on && self.soldiers.iter().filter(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r).all(|s| s.touching == 0 && s.aim.is_none_or(|a| (a.0 - self.core.0).hypot(a.1 - self.core.1) > 2.0 * r));
+        let clear = on
+            && self
+                .soldiers
+                .iter()
+                .filter(|s| s.alive && (s.x - self.core.0).hypot(s.y - self.core.1) <= r)
+                .all(|s| {
+                    s.touching == 0
+                        && s.aim
+                            .is_none_or(|a| (a.0 - self.core.0).hypot(a.1 - self.core.1) > 2.0 * r)
+                });
         if clear {
             self.core_clear += self.rules.frame_ticks as u64;
             if self.core_clear >= self.secs(self.core_rule.secs) {

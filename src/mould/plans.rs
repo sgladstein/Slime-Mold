@@ -29,7 +29,14 @@ pub fn by_distance<W: World>(g: &Game<W>) -> Vec<(f32, f32)> {
     // sent home from it (`Rules::home_dry`) is not sent back for crumbs.
     let r = g.rules;
     let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
+    let mut cs: Vec<(f32, f32)> = g
+        .world
+        .crystals()
+        .iter()
+        .filter(|c| c.1 >= dry)
+        .map(|c| c.0)
+        .filter(|c| *c != g.core)
+        .collect();
     cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
     cs
 }
@@ -37,7 +44,9 @@ pub fn by_distance<W: World>(g: &Game<W>) -> Vec<(f32, f32)> {
 /// A building of `kind` at `at`, if the bank holds its price over `reserve`
 /// and it can go there now.
 pub fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32), reserve: f32) -> bool {
-    let ok = g.bank >= g.build_price(kind, at) + reserve && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at));
+    let ok = g.bank >= g.build_price(kind, at) + reserve
+        && g.build_blocked(kind, at).is_none()
+        && g.apply(Cmd::Build(kind, at));
     if ok {
         send_builder(g);
     }
@@ -48,13 +57,18 @@ pub fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32), reserv
 /// nearest live soldier goes to raise it (`Order::Build`), as a player
 /// would send one; the farm hand leaves it be until it stands.
 pub fn send_builder<W: World>(g: &mut Game<W>) {
-    let Some(b) = g.buildings.len().checked_sub(1) else { return };
+    let Some(b) = g.buildings.len().checked_sub(1) else {
+        return;
+    };
     let bd = g.buildings[b];
     if bd.built >= 1.0 {
         return;
     }
     let d = |k: usize| (g.soldiers[k].x - bd.at.0).hypot(g.soldiers[k].y - bd.at.1);
-    if let Some(k) = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).min_by(|&a, &b| d(a).total_cmp(&d(b))) {
+    if let Some(k) = (0..g.soldiers.len())
+        .filter(|&k| g.soldiers[k].alive)
+        .min_by(|&a, &b| d(a).total_cmp(&d(b)))
+    {
         g.apply(Cmd::Order(k, Order::Build(b)));
     }
 }
@@ -62,10 +76,13 @@ pub fn send_builder<W: World>(g: &mut Game<W>) {
 /// An open cell within 3 dish cells of `p`, nearest first.
 pub fn open_by<W: World>(g: &Game<W>, p: (f32, f32)) -> Option<(f32, f32)> {
     let s = g.world.scale();
-    (0..=6).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-        let a = k as f32 / 12.0 * std::f32::consts::TAU;
-        (p.0 + 0.5 * r as f32 * s * a.cos(), p.1 + 0.5 * r as f32 * s * a.sin())
-    }).find(|q| g.world.open(q.0, q.1))
+    (0..=6)
+        .flat_map(|r| (0..12).map(move |k| (r, k)))
+        .map(|(r, k)| {
+            let a = k as f32 / 12.0 * std::f32::consts::TAU;
+            (p.0 + 0.5 * r as f32 * s * a.cos(), p.1 + 0.5 * r as f32 * s * a.sin())
+        })
+        .find(|q| g.world.open(q.0, q.1))
 }
 
 pub fn alive_kind<W: World>(g: &Game<W>, kind: Kind) -> usize {
@@ -98,12 +115,20 @@ pub fn ring<W: World>(g: &mut Game<W>, reserve: f32) {
 /// pumps).
 pub fn turtle<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool, reserve: f32) {
     let s = g.world.scale();
-    let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
-        Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
-        _ => None,
-    }).collect();
+    let sites: Vec<(f32, f32)> = g
+        .soldiers
+        .iter()
+        .filter(|q| q.alive)
+        .filter_map(|q| match q.order {
+            Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
+            _ => None,
+        })
+        .collect();
     for c in sites {
-        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
+        let pumped = g
+            .buildings
+            .iter()
+            .any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
         if pumps && !pumped {
             if let Some(at) = open_by(g, c) {
                 if spare_build(g, Kind::Pump, at, reserve) {
@@ -112,7 +137,10 @@ pub fn turtle<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool, reserve: f3
             }
             continue;
         }
-        let guarded = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
+        let guarded = g
+            .buildings
+            .iter()
+            .any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
         if turrets && !guarded {
             let (dx, dy) = (g.core.0 - c.0, g.core.1 - c.1);
             let d = dx.hypot(dy).max(1.0);
@@ -138,12 +166,21 @@ pub fn zone<W: World>(g: &mut Game<W>, reserve: f32) {
     let (ux, uy) = (dx / d, dy / d);
     let half = 0.5 * ZONE * s;
     let wants = [
-        (Kind::Turret, (l.0 + ux * half - uy * 4.0 * s, l.1 + uy * half + ux * 4.0 * s)),
-        (Kind::Turret, (l.0 + ux * half + uy * 4.0 * s, l.1 + uy * half - ux * 4.0 * s)),
+        (
+            Kind::Turret,
+            (l.0 + ux * half - uy * 4.0 * s, l.1 + uy * half + ux * 4.0 * s),
+        ),
+        (
+            Kind::Turret,
+            (l.0 + ux * half + uy * 4.0 * s, l.1 + uy * half - ux * 4.0 * s),
+        ),
         (Kind::Lure, (l.0 + ux * ZONE * s, l.1 + uy * ZONE * s)),
     ];
     for (kind, p) in wants {
-        let have = g.buildings.iter().any(|b| b.alive && b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * s);
+        let have = g
+            .buildings
+            .iter()
+            .any(|b| b.alive && b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * s);
         if have {
             continue;
         }
@@ -193,13 +230,22 @@ pub fn cut<W: World>(g: &mut Game<W>, cutters: usize) {
     // Only cords with mould on them: a clean line needs no cutter.
     if let Some(grid) = g.world.mould_grid(BIN) {
         let gw = g.world.size().0.div_ceil(BIN);
-        let on = |p: (f32, f32)| grid.get((p.1 as usize / BIN) * gw + p.0 as usize / BIN).is_some_and(|&n| n > 0);
-        cords.retain(|&(a, b)| (0..=8).any(|k| {
-            let t = k as f32 / 8.0;
-            on((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t))
-        }));
+        let on = |p: (f32, f32)| {
+            grid.get((p.1 as usize / BIN) * gw + p.0 as usize / BIN)
+                .is_some_and(|&n| n > 0)
+        };
+        cords.retain(|&(a, b)| {
+            (0..=8).any(|k| {
+                let t = k as f32 / 8.0;
+                on((a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t))
+            })
+        });
     }
-    let live: Vec<usize> = (0..g.soldiers.len()).rev().filter(|&k| g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_))).take(cutters).collect();
+    let live: Vec<usize> = (0..g.soldiers.len())
+        .rev()
+        .filter(|&k| g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_)))
+        .take(cutters)
+        .collect();
     for (k, seg) in live.into_iter().zip(cords) {
         if g.soldiers[k].order != Order::Burn(seg.0, seg.1) {
             g.apply(Cmd::Order(k, Order::Burn(seg.0, seg.1)));
@@ -232,19 +278,31 @@ pub fn sow<W: World>(g: &mut Game<W>, sowers: usize) {
     let gw = g.world.size().0.div_ceil(BIN);
     let clean = |c: (f32, f32), r: f32| match &grid {
         Some(gr) => {
-            let (bx0, bx1) = (((c.0 - r) / BIN as f32).max(0.0) as usize, ((c.0 + r) / BIN as f32) as usize);
-            let (by0, by1) = (((c.1 - r) / BIN as f32).max(0.0) as usize, ((c.1 + r) / BIN as f32) as usize);
+            let (bx0, bx1) = (
+                ((c.0 - r) / BIN as f32).max(0.0) as usize,
+                ((c.0 + r) / BIN as f32) as usize,
+            );
+            let (by0, by1) = (
+                ((c.1 - r) / BIN as f32).max(0.0) as usize,
+                ((c.1 + r) / BIN as f32) as usize,
+            );
             !(by0..=by1).any(|by| (bx0..=bx1.min(gw - 1)).any(|bx| gr.get(by * gw + bx).is_some_and(|&n| n > 0)))
         }
         None => true,
     };
     let cs = g.world.crystals();
-    let target = by_distance(g).into_iter().filter(|&c| (c.0 - home.0).hypot(c.1 - home.1) > 4.0 * s).find(|&c| {
-        let i = cs.iter().position(|q| q.0 == c).unwrap_or(0);
-        clean(c, g.world.crystal_r(i))
-    });
+    let target = by_distance(g)
+        .into_iter()
+        .filter(|&c| (c.0 - home.0).hypot(c.1 - home.1) > 4.0 * s)
+        .find(|&c| {
+            let i = cs.iter().position(|q| q.0 == c).unwrap_or(0);
+            clean(c, g.world.crystal_r(i))
+        });
     let Some(to) = target else { return };
-    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_))).take(sowers).collect();
+    let live: Vec<usize> = (0..g.soldiers.len())
+        .filter(|&k| g.soldiers[k].alive && !matches!(g.soldiers[k].order, Order::Build(_)))
+        .take(sowers)
+        .collect();
     let task = if g.bank > SOW_KEEP { Task::Feed } else { Task::Road };
     for k in live {
         let q = g.soldiers[k];
@@ -290,18 +348,28 @@ pub fn bait<W: World>(g: &mut Game<W>, sowers: usize) {
     let clean = |p: (f32, f32)| match &grid {
         Some(gr) => {
             let r = 3.0 * s;
-            let (bx0, bx1) = (((p.0 - r) / BIN as f32).max(0.0) as usize, ((p.0 + r) / BIN as f32) as usize);
-            let (by0, by1) = (((p.1 - r) / BIN as f32).max(0.0) as usize, ((p.1 + r) / BIN as f32) as usize);
+            let (bx0, bx1) = (
+                ((p.0 - r) / BIN as f32).max(0.0) as usize,
+                ((p.0 + r) / BIN as f32) as usize,
+            );
+            let (by0, by1) = (
+                ((p.1 - r) / BIN as f32).max(0.0) as usize,
+                ((p.1 + r) / BIN as f32) as usize,
+            );
             !(by0..=by1).any(|by| (bx0..=bx1.min(gw - 1)).any(|bx| gr.get(by * gw + bx).is_some_and(|&n| n > 0)))
         }
         None => true,
     };
-    let spots = (0..16).flat_map(|k| [12.0f32, 18.0, 24.0].map(move |r| (k, r))).map(|(k, r)| {
-        let a = k as f32 / 16.0 * std::f32::consts::TAU;
-        (c.0 + r * s * a.cos(), c.1 + r * s * a.sin())
-    });
+    let spots = (0..16)
+        .flat_map(|k| [12.0f32, 18.0, 24.0].map(move |r| (k, r)))
+        .map(|(k, r)| {
+            let a = k as f32 / 16.0 * std::f32::consts::TAU;
+            (c.0 + r * s * a.cos(), c.1 + r * s * a.sin())
+        });
     let far = |p: &(f32, f32)| (p.0 - l.0).hypot(p.1 - l.1);
-    let best = spots.filter(|&p| g.world.open(p.0, p.1) && clean(p)).max_by(|a, b| far(a).total_cmp(&far(b)));
+    let best = spots
+        .filter(|&p| g.world.open(p.0, p.1) && clean(p))
+        .max_by(|a, b| far(a).total_cmp(&far(b)));
     if let Some(at) = best {
         spare_build(g, Kind::Lure, at, 0.0);
     }
@@ -313,9 +381,18 @@ pub fn bait<W: World>(g: &mut Game<W>, sowers: usize) {
 pub fn named(name: &str) -> Option<Plan> {
     Some(match name {
         "ring" => Plan::Ring,
-        "pumps" => Plan::Turtle { pumps: true, turrets: false },
-        "guard" => Plan::Turtle { pumps: false, turrets: true },
-        "turtle" => Plan::Turtle { pumps: true, turrets: true },
+        "pumps" => Plan::Turtle {
+            pumps: true,
+            turrets: false,
+        },
+        "guard" => Plan::Turtle {
+            pumps: false,
+            turrets: true,
+        },
+        "turtle" => Plan::Turtle {
+            pumps: true,
+            turrets: true,
+        },
         "zone" => Plan::Zone,
         "cut" => Plan::Cut(3),
         "sow" => Plan::Sow(SOWERS),

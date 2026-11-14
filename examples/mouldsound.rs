@@ -37,7 +37,9 @@ fn main() {
     let (mut seed, mut level, mut hand, mut out) = (1u64, 0usize, String::from("plan"), String::from("mould.wav"));
     let (mut from, mut secs, mut rate, mut fast) = (0.0f32, f32::INFINITY, 44_100u32, false);
     for a in std::env::args().skip(1) {
-        let (k, v) = a.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {a}"));
+        let (k, v) = a
+            .split_once('=')
+            .unwrap_or_else(|| panic!("expected key=value, got {a}"));
         match k {
             "seed" => seed = v.parse().unwrap(),
             "level" => level = v.parse().unwrap(),
@@ -52,7 +54,13 @@ fn main() {
     }
     let mut d = match (level, hand.as_str()) {
         (0, "tour") => {
-            let mut d = Dish::with_params(seed, Params { wet: true, ..Params::default() });
+            let mut d = Dish::with_params(
+                seed,
+                Params {
+                    wet: true,
+                    ..Params::default()
+                },
+            );
             d.salt_left = d.salt_left.max(1);
             d.snips_left = d.snips_left.max(1);
             d.water_left = d.water_left.max(1);
@@ -117,9 +125,20 @@ fn main() {
     let b = bank.stats;
     println!(
         "played: grains {} (creep {} feed {} starve {}, verbs {}), bursts {}, alerts {}, steals {}",
-        b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.verb_grains, b.bursts, b.alerts, b.steals
+        b.grains,
+        b.grains_by_texture[0],
+        b.grains_by_texture[1],
+        b.grains_by_texture[2],
+        b.verb_grains,
+        b.bursts,
+        b.alerts,
+        b.steals
     );
-    println!("listener: mean {:.1} us/frame, worst {:.1} us over {frames} frames", listen_ns as f64 / frames as f64 / 1000.0, worst_ns as f64 / 1000.0);
+    println!(
+        "listener: mean {:.1} us/frame, worst {:.1} us over {frames} frames",
+        listen_ns as f64 / frames as f64 / 1000.0,
+        worst_ns as f64 / 1000.0
+    );
 }
 
 /// The plan hand, plus each tool once where the mould is thickest.
@@ -135,7 +154,10 @@ impl Player for Tour {
     fn act(&mut self, d: &mut Dish) {
         let sps = STEPS_PER_SECOND as u64;
         let n = d.walkers.len().max(1) as f32;
-        let (cx, cy) = d.walkers.iter().fold((0.0, 0.0), |(a, b), w| (a + w.x / n, b + w.y / n));
+        let (cx, cy) = d
+            .walkers
+            .iter()
+            .fold((0.0, 0.0), |(a, b), w| (a + w.x / n, b + w.y / n));
         match d.t {
             t if t == 8 * sps => d.set_lamp(Some((cx, cy))),
             t if t == 11 * sps => d.set_lamp(None),
@@ -148,7 +170,10 @@ impl Player for Tour {
             }
             t if t == 38 * sps => {
                 // On a walker, not the centroid, which can be on a pile.
-                let near = d.walkers.iter().min_by(|a, b| (a.x - cx).hypot(a.y - cy).total_cmp(&(b.x - cx).hypot(b.y - cy)));
+                let near = d
+                    .walkers
+                    .iter()
+                    .min_by(|a, b| (a.x - cx).hypot(a.y - cy).total_cmp(&(b.x - cx).hypot(b.y - cy)));
                 if let Some(&w) = near {
                     d.place_water(w.x, w.y);
                 }

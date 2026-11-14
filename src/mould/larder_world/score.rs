@@ -21,7 +21,11 @@ impl<W: World> Game<W> {
             }
             let cr = self.world.crystal_r(i);
             let eaten = self.start_charge[i] - charge - self.taken[i] > 0.01 * self.start_charge[i];
-            let on: Vec<&Soldier> = self.soldiers.iter().filter(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= cr + 2.0 * self.s()).collect();
+            let on: Vec<&Soldier> = self
+                .soldiers
+                .iter()
+                .filter(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= cr + 2.0 * self.s())
+                .collect();
             // Presence: a crystal is held while no walker at all is on its soldiers.
             if !on.is_empty() && on.iter().all(|s| s.touching == 0) {
                 ours += 1;
@@ -51,7 +55,11 @@ impl<W: World> Game<W> {
     pub fn take_share(&self) -> f32 {
         let cs = self.world.crystals();
         let ours: f64 = self.taken.iter().map(|&t| t as f64).sum::<f64>();
-        let gone: f64 = cs.iter().enumerate().map(|(i, c)| (self.start_charge[i] - c.1).max(0.0) as f64).sum();
+        let gone: f64 = cs
+            .iter()
+            .enumerate()
+            .map(|(i, c)| (self.start_charge[i] - c.1).max(0.0) as f64)
+            .sum();
         let mould = (gone - ours).max(0.0);
         let stolen = (self.stolen * self.rules.charge) as f64;
         let (ours, mould) = ((ours - stolen).max(0.0), mould + stolen);
@@ -123,11 +131,17 @@ impl<W: World> Game<W> {
         let mut lines = text.lines();
         let Some(head) = lines.next() else { return false };
         let head: Vec<&str> = head.split_whitespace().collect();
-        let Some(end) = head.get(5).and_then(|v| v.parse::<u64>().ok()) else { return false };
+        let Some(end) = head.get(5).and_then(|v| v.parse::<u64>().ok()) else {
+            return false;
+        };
         let mut cmds = Vec::new();
         for l in lines {
-            let Some((t, rest)) = l.split_once(' ') else { return false };
-            let (Ok(t), Some(c)) = (t.parse::<u64>(), Cmd::parse(rest)) else { return false };
+            let Some((t, rest)) = l.split_once(' ') else {
+                return false;
+            };
+            let (Ok(t), Some(c)) = (t.parse::<u64>(), Cmd::parse(rest)) else {
+                return false;
+            };
             cmds.push((t, c));
         }
         let mut next = 0;

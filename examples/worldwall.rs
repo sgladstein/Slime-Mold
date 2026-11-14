@@ -24,11 +24,13 @@ use slime_mould::mould::big::{BigDish, BigParams};
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=8).collect();
-    let (mut scale, mut walkers, mut seconds, mut threads, mut look) = (2usize, 20_000usize, 30u32, 4usize, None::<String>);
+    let (mut scale, mut walkers, mut seconds, mut threads, mut look) =
+        (2usize, 20_000usize, 30u32, 4usize, None::<String>);
     let mut arms: Vec<String> = vec!["none".into(), "road".into(), "random".into()];
     // Defaults follow `BigParams::today`.
     let t = BigParams::today();
-    let (mut wall_hp, mut wall_bite, mut crystal_flow, mut wall_scent) = (t.wall_hp, t.wall_bite, t.crystal_flow, t.wall_scent);
+    let (mut wall_hp, mut wall_bite, mut crystal_flow, mut wall_scent) =
+        (t.wall_hp, t.wall_bite, t.crystal_flow, t.wall_scent);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -92,12 +94,26 @@ fn main() {
             if arm == "cage" {
                 let (hx, hy) = d.piles[0];
                 let s = scale as f32;
-                cage_r = d.walkers.iter().map(|&(x, y, _)| (x / s - hx).hypot(y / s - hy)).fold(0.0f32, f32::max) + 6.0;
+                cage_r = d
+                    .walkers
+                    .iter()
+                    .map(|&(x, y, _)| (x / s - hx).hypot(y / s - hy))
+                    .fold(0.0f32, f32::max)
+                    + 6.0;
                 let n = 48;
                 for q in 0..n {
-                    let (a0, a1) = (q as f32 / n as f32 * std::f32::consts::TAU, (q + 1) as f32 / n as f32 * std::f32::consts::TAU);
+                    let (a0, a1) = (
+                        q as f32 / n as f32 * std::f32::consts::TAU,
+                        (q + 1) as f32 / n as f32 * std::f32::consts::TAU,
+                    );
                     let r = cage_r;
-                    wall_cells += d.build_wall(hx + r * a0.cos(), hy + r * a0.sin(), hx + r * a1.cos(), hy + r * a1.sin(), 2.0);
+                    wall_cells += d.build_wall(
+                        hx + r * a0.cos(),
+                        hy + r * a0.sin(),
+                        hx + r * a1.cos(),
+                        hy + r * a1.sin(),
+                        2.0,
+                    );
                 }
             }
             for t in 0..seconds as u64 * ticks_per_s {
@@ -106,8 +122,16 @@ fn main() {
                     let (s, r) = (scale as f32, d.p.pile_r + 6.0);
                     ring_pile = (1..d.piles.len())
                         .filter(|&i| d.crystal_left(i) >= 0.999)
-                        .filter(|&i| !d.walkers.iter().any(|&(x, y, _)| (x / s - d.piles[i].0).hypot(y / s - d.piles[i].1) < r))
-                        .min_by(|&a, &b| (d.piles[a].0 - hx).hypot(d.piles[a].1 - hy).total_cmp(&(d.piles[b].0 - hx).hypot(d.piles[b].1 - hy)))
+                        .filter(|&i| {
+                            !d.walkers
+                                .iter()
+                                .any(|&(x, y, _)| (x / s - d.piles[i].0).hypot(y / s - d.piles[i].1) < r)
+                        })
+                        .min_by(|&a, &b| {
+                            (d.piles[a].0 - hx)
+                                .hypot(d.piles[a].1 - hy)
+                                .total_cmp(&(d.piles[b].0 - hx).hypot(d.piles[b].1 - hy))
+                        })
                         .unwrap_or(0);
                 }
                 if t == 5 * ticks_per_s && arm == "ring" && ring_pile == 0 {
@@ -118,8 +142,17 @@ fn main() {
                     let r = d.p.pile_r + 4.0;
                     let n = 16;
                     for q in 0..n {
-                        let (a0, a1) = (q as f32 / n as f32 * std::f32::consts::TAU, (q + 1) as f32 / n as f32 * std::f32::consts::TAU);
-                        wall_cells += d.build_wall(cx + r * a0.cos(), cy + r * a0.sin(), cx + r * a1.cos(), cy + r * a1.sin(), 2.0);
+                        let (a0, a1) = (
+                            q as f32 / n as f32 * std::f32::consts::TAU,
+                            (q + 1) as f32 / n as f32 * std::f32::consts::TAU,
+                        );
+                        wall_cells += d.build_wall(
+                            cx + r * a0.cos(),
+                            cy + r * a0.sin(),
+                            cx + r * a1.cos(),
+                            cy + r * a1.sin(),
+                            2.0,
+                        );
                     }
                 } else if t == 5 * ticks_per_s && (arm == "road" || arm == "random") {
                     let (hx, hy) = d.piles[0];
@@ -128,7 +161,10 @@ fn main() {
                         // Toward the mean of the three nearest other crystals.
                         let mut o: Vec<(f32, f32)> = d.piles[1..].to_vec();
                         o.sort_by(|a, b| (a.0 - hx).hypot(a.1 - hy).total_cmp(&(b.0 - hx).hypot(b.1 - hy)));
-                        let (mx, my) = o.iter().take(3).fold((0.0, 0.0), |s, p| (s.0 + p.0 / 3.0, s.1 + p.1 / 3.0));
+                        let (mx, my) = o
+                            .iter()
+                            .take(3)
+                            .fold((0.0, 0.0), |s, p| (s.0 + p.0 / 3.0, s.1 + p.1 / 3.0));
                         let a = (my - hy).atan2(mx - hx);
                         // Just ahead of the mould's front on that line: the
                         // farthest walker within 10 dish cells of the line,
@@ -137,12 +173,28 @@ fn main() {
                         // nothing: road against none 5 up, 3 down of 8.)
                         let s = scale as f32;
                         let (ux, uy) = (a.cos(), a.sin());
-                        let front = d.walkers.iter().map(|&(x, y, _)| ((x / s - hx) * ux + (y / s - hy) * uy, ((x / s - hx) * -uy + (y / s - hy) * ux).abs()))
-                            .filter(|&(_, off)| off < 10.0).map(|(along, _)| along).fold(0.0f32, f32::max);
+                        let front = d
+                            .walkers
+                            .iter()
+                            .map(|&(x, y, _)| {
+                                (
+                                    (x / s - hx) * ux + (y / s - hy) * uy,
+                                    ((x / s - hx) * -uy + (y / s - hy) * ux).abs(),
+                                )
+                            })
+                            .filter(|&(_, off)| off < 10.0)
+                            .map(|(along, _)| along)
+                            .fold(0.0f32, f32::max);
                         let r = front + 6.0;
                         (hx + r * ux, hy + r * uy, a + std::f32::consts::FRAC_PI_2)
                     } else {
-                        let u = |k: u64| ((seed.wrapping_mul(6364136223846793005).wrapping_add(k * 1442695040888963407)) >> 40) as f32 / (1u64 << 24) as f32;
+                        let u = |k: u64| {
+                            ((seed
+                                .wrapping_mul(6364136223846793005)
+                                .wrapping_add(k * 1442695040888963407))
+                                >> 40) as f32
+                                / (1u64 << 24) as f32
+                        };
                         (20.0 + u(1) * 216.0, 20.0 + u(2) * 120.0, u(3) * std::f32::consts::TAU)
                     };
                     let (dx, dy) = (ang.cos() * len / 2.0, ang.sin() * len / 2.0);
@@ -151,7 +203,12 @@ fn main() {
                 d.tick();
                 if arm == "cage" && (t + 1) % (10 * ticks_per_s) == 0 {
                     let ((hx, hy), s) = (d.piles[0], scale as f32);
-                    outside_every_10s.push(d.walkers.iter().filter(|&&(x, y, _)| (x / s - hx).hypot(y / s - hy) > cage_r + 1.0).count());
+                    outside_every_10s.push(
+                        d.walkers
+                            .iter()
+                            .filter(|&&(x, y, _)| (x / s - hx).hypot(y / s - hy) > cage_r + 1.0)
+                            .count(),
+                    );
                 }
                 if first_break.is_none() && d.broken > 0 {
                     first_break = Some(d.seconds());
@@ -198,7 +255,11 @@ fn main() {
             out.push(others / full);
         }
         if out.len() == 3 {
-            println!("seed {seed} road-none {:+.4} road-random {:+.4}", out[1] - out[0], out[1] - out[2]);
+            println!(
+                "seed {seed} road-none {:+.4} road-random {:+.4}",
+                out[1] - out[0],
+                out[1] - out[2]
+            );
         }
     }
 }

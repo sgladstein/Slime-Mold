@@ -118,8 +118,15 @@ impl KitRules {
     /// The cloud's keep a fine step (0: no cloud) and its linger in fine
     /// steps, with `fine` fine steps a game second.
     pub fn gas_cloud(&self, fine: f32) -> (f32, u16) {
-        let keep = if self.gas_half > 0.0 { 0.5f32.powf(1.0 / (self.gas_half * fine)) } else { 0.0 };
-        (keep, (self.gas_linger * fine).round().clamp(0.0, u16::MAX as f32) as u16)
+        let keep = if self.gas_half > 0.0 {
+            0.5f32.powf(1.0 / (self.gas_half * fine))
+        } else {
+            0.0
+        };
+        (
+            keep,
+            (self.gas_linger * fine).round().clamp(0.0, u16::MAX as f32) as u16,
+        )
     }
 }
 
@@ -233,7 +240,10 @@ pub struct Kit {
 
 impl Kit {
     pub fn new(rules: KitRules) -> Self {
-        Kit { rules, ..Default::default() }
+        Kit {
+            rules,
+            ..Default::default()
+        }
     }
 
     fn price(&self, t: Tool) -> f32 {
@@ -302,8 +312,13 @@ impl Kit {
         let ok = match t {
             Tool::Germ(_) if !g.world.has_germ() => false,
             Tool::Gas(_) if !g.world.has_gas() => false,
-            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => self.in_reach(g, p) && g.world.open(p.0, p.1),
-            Tool::Cord(a, b) => (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * s && self.in_reach(g, ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => {
+                self.in_reach(g, p) && g.world.open(p.0, p.1)
+            }
+            Tool::Cord(a, b) => {
+                (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * s
+                    && self.in_reach(g, ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0))
+            }
             Tool::Smell(k, _) => g.soldiers.get(k).is_some_and(|x| x.alive),
         };
         if !ok {
@@ -341,11 +356,30 @@ impl Kit {
                 }
             }
             Tool::Germ(p) => {
-                g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.germ_r, germ: true, ..Burst::default() }, &br);
+                g.world.burst(
+                    &Burst {
+                        at: (p.0 / s, p.1 / s),
+                        r: r.germ_r,
+                        germ: true,
+                        ..Burst::default()
+                    },
+                    &br,
+                );
             }
             Tool::Gas(p) => {
                 let steps = (r.gas_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
-                self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
+                self.gassed += g
+                    .world
+                    .burst(
+                        &Burst {
+                            at: (p.0 / s, p.1 / s),
+                            r: r.gas_r,
+                            gas: steps,
+                            ..Burst::default()
+                        },
+                        &br,
+                    )
+                    .gassed as usize;
             }
             Tool::Smell(k, m) => g.soldiers[k].smell = m,
         }
@@ -386,10 +420,24 @@ impl Kit {
     fn bang<W: World>(&mut self, g: &mut Game<W>, p: (f32, f32), r: f32, crater: f32) -> usize {
         let s = g.world.scale();
         let steps = (self.rules.crater_secs * self.fine_tps(g)).round().min(u16::MAX as f32) as u16;
-        let b = Burst { at: (p.0 / s, p.1 / s), r, kill: true, alarm: self.rules.blast_alarm, alarm_r: 2.0 * r, crater: steps, crater_r: crater, ..Burst::default() };
+        let b = Burst {
+            at: (p.0 / s, p.1 / s),
+            r,
+            kill: true,
+            alarm: self.rules.blast_alarm,
+            alarm_r: 2.0 * r,
+            crater: steps,
+            crater_r: crater,
+            ..Burst::default()
+        };
         let br = self.burst_rules(g);
         let killed = g.world.burst(&b, &br).killed as usize;
-        self.bangs.push(Bang { at: p, r: r * s, tick: g.world.ticks(), killed });
+        self.bangs.push(Bang {
+            at: p,
+            r: r * s,
+            tick: g.world.ticks(),
+            killed,
+        });
         killed
     }
 
@@ -402,7 +450,9 @@ impl Kit {
         let r = self.rules;
         let rr = r.mine_r * g.world.scale();
         let trigger = self.mine_trigger(g);
-        let fired: Vec<usize> = (0..self.mines.len()).filter(|&m| g.world.walkers_in(self.mines[m], rr) >= trigger).collect();
+        let fired: Vec<usize> = (0..self.mines.len())
+            .filter(|&m| g.world.walkers_in(self.mines[m], rr) >= trigger)
+            .collect();
         for &m in fired.iter().rev() {
             let p = self.mines.remove(m);
             self.killed[1] += self.bang(g, p, r.blast_r, r.crater_r);

@@ -53,13 +53,39 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // #198 soldiers could not shoot the bits on them and it fell to 1.
     // `panic=0` turns it off. The report's *A cut-off part panics* has
     // the films.
-    const C: [(&str, &str); 5] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")];
+    const C: [(&str, &str); 5] = [
+        DENSE[0],
+        DENSE[1],
+        ("energy_flow", "0.05"),
+        ("wither", "0.01"),
+        ("panic", "2"),
+    ];
     Some(match name {
         "a" => (5_000, &[]),
-        "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
+        "b" => (
+            25_000,
+            &[
+                ("start", "spread"),
+                ("food", "0"),
+                ("upkeep", "0.00001"),
+                ("capacity", "50000"),
+            ],
+        ),
         "c" => (25_000, &C),
-        "d" => (25_000, &[DENSE[0], DENSE[1], ("sensor_angle", "22.5"), ("sensor_offset", "5")]),
-        "e" => (25_000, &[DENSE[0], DENSE[1], ("step", "0.15"), ("trail_scale", "0.02"), ("step_by", "0.85:2")]),
+        "d" => (
+            25_000,
+            &[DENSE[0], DENSE[1], ("sensor_angle", "22.5"), ("sensor_offset", "5")],
+        ),
+        "e" => (
+            25_000,
+            &[
+                DENSE[0],
+                DENSE[1],
+                ("step", "0.15"),
+                ("trail_scale", "0.02"),
+                ("step_by", "0.85:2"),
+            ],
+        ),
         _ => return None,
     })
 }

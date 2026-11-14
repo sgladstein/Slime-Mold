@@ -75,7 +75,11 @@ pub struct Fields<'a> {
 /// and not a wall is rock (the rim of a dish is rock too).
 pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
     let at = |v: &[bool], i: usize| v.get(i).copied().unwrap_or(false);
-    let depth = if f.depth.len() == cells { f.depth.to_vec() } else { crystal_depth(w, cells, f.crystal) };
+    let depth = if f.depth.len() == cells {
+        f.depth.to_vec()
+    } else {
+        crystal_depth(w, cells, f.crystal)
+    };
     let mut g: Vec<u32> = (0..cells)
         .map(|i| {
             if at(f.wall, i) {
@@ -92,7 +96,9 @@ pub fn ground(w: usize, cells: usize, f: &Fields) -> Vec<u32> {
         })
         .collect();
     for (i, (c, d)) in g.iter_mut().zip(depth).enumerate() {
-        *c |= (d as u32) << 16 | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24 | ((f.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4;
+        *c |= (d as u32) << 16
+            | (f.elev.get(i).copied().unwrap_or(0) as u32) << 24
+            | ((f.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4;
     }
     g
 }
@@ -125,7 +131,13 @@ pub fn mark_far(w: usize, codes: &mut [u32]) {
     let mut rows = vec![0u32; w * h];
     for y in 0..h {
         let row = &codes[y * w..(y + 1) * w];
-        let at = |x: isize| -> u32 { if x < 0 || x >= w as isize { 1 } else { hard(row[x as usize]) as u32 } };
+        let at = |x: isize| -> u32 {
+            if x < 0 || x >= w as isize {
+                1
+            } else {
+                hard(row[x as usize]) as u32
+            }
+        };
         let mut n: u32 = (-(r as isize)..=r as isize).map(at).sum();
         for x in 0..w {
             rows[y * w + x] = n;
@@ -134,7 +146,13 @@ pub fn mark_far(w: usize, codes: &mut [u32]) {
     }
     // Columns of the row counts.
     for x in 0..w {
-        let at = |y: isize| -> u32 { if y < 0 || y >= h as isize { 1 } else { rows[y as usize * w + x] } };
+        let at = |y: isize| -> u32 {
+            if y < 0 || y >= h as isize {
+                1
+            } else {
+                rows[y as usize * w + x]
+            }
+        };
         let mut n: u32 = (-(r as isize)..=r as isize).map(at).sum();
         for y in 0..h {
             let c = &mut codes[y * w + x];
@@ -162,7 +180,14 @@ pub enum Shot {
 /// (rock; the Larder thread lets shots pass over player walls for now). A
 /// game passes its own tests, such as the engine's look thickness over a
 /// threshold; the cut itself is `Engine::set_hits` at the point.
-pub fn first_hit(w: usize, h: usize, from: (f32, f32), to: (f32, f32), mould: impl Fn(usize) -> bool, stops: impl Fn(usize) -> bool) -> Shot {
+pub fn first_hit(
+    w: usize,
+    h: usize,
+    from: (f32, f32),
+    to: (f32, f32),
+    mould: impl Fn(usize) -> bool,
+    stops: impl Fn(usize) -> bool,
+) -> Shot {
     let (dx, dy) = (to.0 - from.0, to.1 - from.1);
     let n = ((dx.hypot(dy)) * 2.0).ceil().max(1.0) as usize;
     for k in 0..=n {
@@ -209,9 +234,18 @@ pub fn dish_crystals(d: &crate::mould::big::BigDish) -> Vec<u16> {
 }
 
 /// A ground buffer on the GPU from codes (`ground`), for `View::set_look`.
-pub fn ground_buffer(device: &pixels::wgpu::Device, queue: &pixels::wgpu::Queue, codes: &[u32]) -> pixels::wgpu::Buffer {
+pub fn ground_buffer(
+    device: &pixels::wgpu::Device,
+    queue: &pixels::wgpu::Queue,
+    codes: &[u32],
+) -> pixels::wgpu::Buffer {
     use pixels::wgpu;
-    let b = device.create_buffer(&wgpu::BufferDescriptor { label: Some("ground"), size: (codes.len() * 4).max(16) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let b = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("ground"),
+        size: (codes.len() * 4).max(16) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
     queue.write_buffer(&b, 0, &crate::gpu::u32_bytes(codes));
     b
 }
@@ -237,7 +271,15 @@ pub fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
         members[k].push(i);
         let (x, y) = (i % w, i / w);
         let same = |xx: usize, yy: usize| crystal.get(yy * w + xx).copied() == Some(k as u16);
-        if x == 0 || y == 0 || x + 1 == w || y + 1 == h || !same(x - 1, y) || !same(x + 1, y) || !same(x, y - 1) || !same(x, y + 1) {
+        if x == 0
+            || y == 0
+            || x + 1 == w
+            || y + 1 == h
+            || !same(x - 1, y)
+            || !same(x + 1, y)
+            || !same(x, y - 1)
+            || !same(x, y + 1)
+        {
             rims[k].push((x as f32, y as f32));
         }
     }
@@ -246,7 +288,11 @@ pub fn crystal_depth(w: usize, cells: usize, crystal: &[u16]) -> Vec<u8> {
             .iter()
             .map(|&i| {
                 let (x, y) = ((i % w) as f32, (i / w) as f32);
-                rims[k].iter().map(|&(rx, ry)| (rx - x).hypot(ry - y)).fold(f32::MAX, f32::min) + 1.0
+                rims[k]
+                    .iter()
+                    .map(|&(rx, ry)| (rx - x).hypot(ry - y))
+                    .fold(f32::MAX, f32::min)
+                    + 1.0
             })
             .collect();
         let top = d.iter().cloned().fold(1.0f32, f32::max);
@@ -265,9 +311,20 @@ mod tests {
     fn soil_sits_in_the_high_nibble_of_the_kind_byte() {
         let soil = [0u8, 1, 2, 3];
         let wet = [false, false, false, true];
-        let g = ground(4, 4, &Fields { soil: &soil, wet: &wet, ..Default::default() });
+        let g = ground(
+            4,
+            4,
+            &Fields {
+                soil: &soil,
+                wet: &wet,
+                ..Default::default()
+            },
+        );
         assert_eq!(g, vec![0, 1 << 4, 2 << 4, 1 | 255 << 8 | 3 << 4]);
-        assert!(g.iter().all(|c| c & 15 <= Ground::Crystal as u32), "the kind stays in the low nibble");
+        assert!(
+            g.iter().all(|c| c & 15 <= Ground::Crystal as u32),
+            "the kind stays in the low nibble"
+        );
     }
 
     #[test]
@@ -279,8 +336,23 @@ mod tests {
         let share = [1.0, 0.25, 1.0, 1.0, 1.0];
         let crystal = [0u16, 0, 1, 0, 0];
         let wet = [false, false, false, false, true];
-        let g = ground(5, 5, &Fields { agar: &agar, wall: &wall, wall_share: &share, crystal: &crystal, wet: &wet, ..Default::default() });
-        assert_eq!(g, vec![0, 3 | 64 << 8, 5 | 255 << 8 | 255 << 16, 0, 1 | 255 << 8], "a lone crystal cell is its own deepest");
+        let g = ground(
+            5,
+            5,
+            &Fields {
+                agar: &agar,
+                wall: &wall,
+                wall_share: &share,
+                crystal: &crystal,
+                wet: &wet,
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            g,
+            vec![0, 3 | 64 << 8, 5 | 255 << 8 | 255 << 16, 0, 1 | 255 << 8],
+            "a lone crystal cell is its own deepest"
+        );
     }
 
     #[test]
@@ -308,7 +380,13 @@ mod tests {
         mark_far(w, &mut codes);
         let far = |c: &[u32], x: usize, y: usize| c[y * w + x] & FAR != 0;
         // The world's edge counts as rock; the wall at (12, 10) reaches 4.
-        assert!(!far(&codes, 3, 10) && !far(&codes, 12, 3) && far(&codes, 4, 10) && far(&codes, 12, 4) && far(&codes, 7, 10));
+        assert!(
+            !far(&codes, 3, 10)
+                && !far(&codes, 12, 3)
+                && far(&codes, 4, 10)
+                && far(&codes, 12, 4)
+                && far(&codes, 7, 10)
+        );
         assert!(!far(&codes, 8, 10) && !far(&codes, 16, 14) && far(&codes, 17, 10) && far(&codes, 12, 15));
         assert_eq!(codes[10 * w + 12] & 15, Ground::Wall as u32, "the kind is kept");
         // Marking twice changes nothing; a wall gone clears its reach.
@@ -323,8 +401,18 @@ mod tests {
     #[test]
     fn a_crystal_is_deepest_in_its_middle() {
         let w = 9;
-        let crystal: Vec<u16> = (0..81).map(|i| ((i % w) as i32 - 4).pow(2) + ((i / w) as i32 - 4).pow(2) <= 9).map(|c| c as u16).collect();
-        let g = ground(w, 81, &Fields { crystal: &crystal, ..Default::default() });
+        let crystal: Vec<u16> = (0..81)
+            .map(|i| ((i % w) as i32 - 4).pow(2) + ((i / w) as i32 - 4).pow(2) <= 9)
+            .map(|c| c as u16)
+            .collect();
+        let g = ground(
+            w,
+            81,
+            &Fields {
+                crystal: &crystal,
+                ..Default::default()
+            },
+        );
         let depth = |x: usize, y: usize| (g[y * w + x] >> 16) & 255;
         assert_eq!(depth(4, 4), 255);
         assert!(depth(4, 2) < depth(4, 3) && depth(4, 3) < 255);
@@ -334,10 +422,33 @@ mod tests {
     #[test]
     fn a_given_depth_draws_the_same_ground() {
         let w = 9;
-        let crystal: Vec<u16> = (0..81usize).map(|i| if (i % 9).abs_diff(4) + (i / 9).abs_diff(4) < 4 { 1 } else { 0 }).collect();
+        let crystal: Vec<u16> = (0..81usize)
+            .map(|i| {
+                if (i % 9).abs_diff(4) + (i / 9).abs_diff(4) < 4 {
+                    1
+                } else {
+                    0
+                }
+            })
+            .collect();
         let depth = crystal_depth(w, 81, &crystal);
-        let a = ground(w, 81, &Fields { crystal: &crystal, ..Default::default() });
-        let b = ground(w, 81, &Fields { crystal: &crystal, depth: &depth, ..Default::default() });
+        let a = ground(
+            w,
+            81,
+            &Fields {
+                crystal: &crystal,
+                ..Default::default()
+            },
+        );
+        let b = ground(
+            w,
+            81,
+            &Fields {
+                crystal: &crystal,
+                depth: &depth,
+                ..Default::default()
+            },
+        );
         assert_eq!(a, b);
     }
 }

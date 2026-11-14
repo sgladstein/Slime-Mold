@@ -16,6 +16,11 @@
 //! soil, so painting rock away with wet or a soil brush gives back what
 //! lay under it only for the soil, not for its old wet.
 //!
+//! Deep water and bridge (new ground kinds, 2026-11-14) are whole cells:
+//! deep water is `G_DEEP` (soil 4 with the wet bit), a bridge `G_BRIDGE`
+//! (soil 5, dry). Over either, wet gives shallow water (a ford) and rock
+//! gives plain rock, so no cell is rock over deep water.
+//!
 //! **Mirror.** Most RTS maps are fair by symmetry, so the editor can draw
 //! each stroke and item twice: across the vertical centre line (`X`) or
 //! through the centre point (`Turn`, a half turn). The landing is one item
@@ -25,7 +30,7 @@
 //! **Undo** keeps whole maps (640 KiB each, at most `UNDO` of them): an
 //! action is a stroke or one click, so a handful of steps is a few MiB.
 
-use super::map::{Crystal, Items, Map, Wall, G_ROCK, G_WET, MAP_H, MAP_W};
+use super::map::{Crystal, Items, Map, Wall, G_BRIDGE, G_DEEP, G_ROCK, G_WET, MAP_H, MAP_W};
 
 /// Undo steps kept.
 pub const UNDO: usize = 40;
@@ -49,13 +54,27 @@ pub enum Brush {
     Barren,
     Rock,
     Wet,
+    Deep,
+    Bridge,
 }
 
 impl Brush {
-    pub const ALL: [Brush; 6] = [Brush::Plain, Brush::Sand, Brush::Clay, Brush::Barren, Brush::Rock, Brush::Wet];
+    pub const ALL: [Brush; 8] = [
+        Brush::Plain,
+        Brush::Sand,
+        Brush::Clay,
+        Brush::Barren,
+        Brush::Rock,
+        Brush::Wet,
+        Brush::Deep,
+        Brush::Bridge,
+    ];
 
     /// The cell's G byte after this brush.
     pub fn apply(self, g: u8) -> u8 {
+        // Deep water and bridge are whole kinds, not a soil under wet or
+        // rock: painting over them starts from plain.
+        let g = if matches!(g >> 4, 4 | 5) { 0 } else { g };
         let soil = g & 0xF0;
         let wet = g & G_WET;
         match self {
@@ -65,6 +84,8 @@ impl Brush {
             Brush::Barren => 0x30 | wet,
             Brush::Rock => soil | G_ROCK,
             Brush::Wet => soil | G_WET,
+            Brush::Deep => G_DEEP,
+            Brush::Bridge => G_BRIDGE,
         }
     }
 
@@ -76,6 +97,8 @@ impl Brush {
             Brush::Barren => "barren",
             Brush::Rock => "rock",
             Brush::Wet => "wet",
+            Brush::Deep => "deep water",
+            Brush::Bridge => "bridge",
         }
     }
 }
@@ -93,13 +116,15 @@ pub enum Tool {
 impl Tool {
     /// The tools in the panel's order, with their keys (the window's
     /// digits and letters).
-    pub const ALL: [(Tool, &'static str); 11] = [
+    pub const ALL: [(Tool, &'static str); 13] = [
         (Tool::Paint(Brush::Plain), "1"),
         (Tool::Paint(Brush::Sand), "2"),
         (Tool::Paint(Brush::Clay), "3"),
         (Tool::Paint(Brush::Barren), "4"),
         (Tool::Paint(Brush::Rock), "5"),
         (Tool::Paint(Brush::Wet), "6"),
+        (Tool::Paint(Brush::Deep), "7"),
+        (Tool::Paint(Brush::Bridge), "8"),
         (Tool::Crystal, "C"),
         (Tool::Mould, "M"),
         (Tool::Landing, "L"),
@@ -179,12 +204,25 @@ pub struct Editor {
 
 impl Editor {
     pub fn new(map: Map) -> Self {
-        Editor { map, tool: Tool::Paint(Brush::Sand), radius: 16.0, crystal_r: CRYSTAL_R, charge: CRYSTAL_CHARGE, mirror: Mirror::Off, dirty: false, undo: Vec::new(), redo: Vec::new() }
+        Editor {
+            map,
+            tool: Tool::Paint(Brush::Sand),
+            radius: 16.0,
+            crystal_r: CRYSTAL_R,
+            charge: CRYSTAL_CHARGE,
+            mirror: Mirror::Off,
+            dirty: false,
+            undo: Vec::new(),
+            redo: Vec::new(),
+        }
     }
 
     /// A blank map: plain open ground, no items.
     pub fn blank() -> Map {
-        Map { ground: vec![0; MAP_W * MAP_H], items: Items::default() }
+        Map {
+            ground: vec![0; MAP_W * MAP_H],
+            items: Items::default(),
+        }
     }
 
     /// Call before each action (a stroke's first stamp, a click): keeps the
@@ -223,8 +261,14 @@ impl Editor {
     pub fn stamp(&mut self, brush: Brush, p: (f32, f32)) {
         let r = self.radius.max(0.5);
         for (cx, cy) in self.both(p) {
-            let (x0, x1) = (((cx - r).floor().max(0.0)) as usize, ((cx + r).ceil().max(0.0) as usize).min(MAP_W));
-            let (y0, y1) = (((cy - r).floor().max(0.0)) as usize, ((cy + r).ceil().max(0.0) as usize).min(MAP_H));
+            let (x0, x1) = (
+                ((cx - r).floor().max(0.0)) as usize,
+                ((cx + r).ceil().max(0.0) as usize).min(MAP_W),
+            );
+            let (y0, y1) = (
+                ((cy - r).floor().max(0.0)) as usize,
+                ((cy + r).ceil().max(0.0) as usize).min(MAP_H),
+            );
             for y in y0..y1 {
                 for x in x0..x1 {
                     let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
@@ -255,7 +299,12 @@ impl Editor {
         match self.tool {
             Tool::Crystal => {
                 for (x, y) in self.both(p) {
-                    self.map.items.crystals.push(Crystal { x, y, r: self.crystal_r, charge: self.charge });
+                    self.map.items.crystals.push(Crystal {
+                        x,
+                        y,
+                        r: self.crystal_r,
+                        charge: self.charge,
+                    });
                 }
             }
             Tool::Mould => {
@@ -279,9 +328,19 @@ impl Editor {
         if (b.0 - a.0).hypot(b.1 - a.1) < 1.0 {
             return;
         }
-        self.map.items.walls.push(Wall { a, b, thick: WALL_THICK, hp: WALL_HP });
+        self.map.items.walls.push(Wall {
+            a,
+            b,
+            thick: WALL_THICK,
+            hp: WALL_HP,
+        });
         if let (Some(ma), Some(mb)) = (self.mirror.of(a), self.mirror.of(b)) {
-            self.map.items.walls.push(Wall { a: ma, b: mb, thick: WALL_THICK, hp: WALL_HP });
+            self.map.items.walls.push(Wall {
+                a: ma,
+                b: mb,
+                thick: WALL_THICK,
+                hp: WALL_HP,
+            });
         }
     }
 
@@ -355,6 +414,7 @@ impl Editor {
             out.push("no landing (L)".to_string());
         }
         let rock = |p: (f32, f32)| self.ground_at(p).is_some_and(|g| g & G_ROCK != 0);
+        let deep = |p: (f32, f32)| self.ground_at(p).is_some_and(|g| g >> 4 == 4);
         for (i, &m) in it.moulds.iter().enumerate() {
             if rock(m) {
                 out.push(format!("mould start {} is on rock", i + 1));
@@ -362,6 +422,18 @@ impl Editor {
         }
         if it.landing.is_some_and(rock) {
             out.push("the landing is on rock".to_string());
+        }
+        if it.landing.is_some_and(deep) {
+            out.push("the landing is in deep water".to_string());
+        } else {
+            // Every map beatable by any strategy (owner, 2026-11-14): the
+            // squad must reach every crystal and nest on foot.
+            for (what, i) in self.map.cut_off() {
+                out.push(format!(
+                    "{what} {} can't be walked to from the landing (deep water or rock)",
+                    i + 1
+                ));
+            }
         }
         out
     }
@@ -376,11 +448,15 @@ impl Editor {
 
     /// The ground under `p` in words, for the status line.
     pub fn describe(&self, p: (f32, f32)) -> String {
-        let Some(g) = self.ground_at(p) else { return "off the map".into() };
+        let Some(g) = self.ground_at(p) else {
+            return "off the map".into();
+        };
         let soil = match g >> 4 {
             1 => "sand",
             2 => "clay",
             3 => "barren",
+            4 => return "deep water".into(),
+            5 => return "bridge".into(),
             _ => "plain",
         };
         let kind = if g & G_ROCK != 0 {
@@ -401,7 +477,11 @@ fn clamp(p: (f32, f32)) -> (f32, f32) {
 pub fn segment_distance(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     let (dx, dy) = (b.0 - a.0, b.1 - a.1);
     let l2 = dx * dx + dy * dy;
-    let t = if l2 > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0) } else { 0.0 };
+    let t = if l2 > 0.0 {
+        (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
     (p.0 - a.0 - t * dx).hypot(p.1 - a.1 - t * dy)
 }
 
@@ -425,11 +505,20 @@ pub fn ground_rgb(g: u8) -> [u8; 3] {
         1 => [150, 134, 92],
         2 => [104, 54, 38],
         3 => [78, 76, 72],
+        // Deep water: dark and opaque, no soil showing (a stand-in until
+        // the view's own material, which the terrain thread writes).
+        4 => return [10, 26, 44],
+        // A bridge: weathered planks.
+        5 => return [112, 88, 60],
         _ => [57, 54, 43],
     };
     if g & G_WET != 0 {
         // Water over the soil, a little of the soil showing.
-        return [((22 * 3 + soil[0] as u32) / 4) as u8, ((46 * 3 + soil[1] as u32) / 4) as u8, ((62 * 3 + soil[2] as u32) / 4) as u8];
+        return [
+            ((22 * 3 + soil[0] as u32) / 4) as u8,
+            ((46 * 3 + soil[1] as u32) / 4) as u8,
+            ((62 * 3 + soil[2] as u32) / 4) as u8,
+        ];
     }
     soil
 }
@@ -449,7 +538,10 @@ impl EditView {
         let (mw, mh) = (MAP_W as f32 * zoom, MAP_H as f32 * zoom);
         let sx = rect.0 + (rect.2 - mw) / 2.0;
         let sy = rect.1 + (rect.3 - mh) / 2.0;
-        EditView { origin: (-sx / zoom, -sy / zoom), zoom }
+        EditView {
+            origin: (-sx / zoom, -sy / zoom),
+            zoom,
+        }
     }
 
     pub fn to_map(&self, s: (f32, f32)) -> (f32, f32) {
@@ -515,33 +607,63 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
         let my = view.origin.1 + (sy as f32 + 0.5) / view.zoom;
         for sx in 0..w {
             let mx = view.origin.0 + (sx as f32 + 0.5) / view.zoom;
-            let c = if mx >= 0.0 && my >= 0.0 && (mx as usize) < MAP_W && (my as usize) < MAP_H { lut[ed.map.ground[my as usize * MAP_W + mx as usize] as usize] } else { [14, 16, 18] };
+            let c = if mx >= 0.0 && my >= 0.0 && (mx as usize) < MAP_W && (my as usize) < MAP_H {
+                lut[ed.map.ground[my as usize * MAP_W + mx as usize] as usize]
+            } else {
+                [14, 16, 18]
+            };
             let i = (sy * w + sx) * 4;
             frame[i..i + 4].copy_from_slice(&[c[0], c[1], c[2], 255]);
         }
     }
     let it = &ed.map.items;
     for wl in &it.walls {
-        line(frame, size, view.to_screen(wl.a), view.to_screen(wl.b), (wl.thick * view.zoom / 2.0).max(1.0), [168, 156, 132, 255]);
+        line(
+            frame,
+            size,
+            view.to_screen(wl.a),
+            view.to_screen(wl.b),
+            (wl.thick * view.zoom / 2.0).max(1.0),
+            [168, 156, 132, 255],
+        );
     }
     for c in &it.crystals {
         // The engine's crystal colour at full charge; brighter with more
         // charge a cell (the designed maps run 192 to 512).
         let k = (c.charge / 512.0).clamp(0.25, 1.0);
-        let col = [(30.0 + 40.0 * k) as u8, (120.0 + 80.0 * k) as u8, (140.0 + 80.0 * k) as u8, 255];
+        let col = [
+            (30.0 + 40.0 * k) as u8,
+            (120.0 + 80.0 * k) as u8,
+            (140.0 + 80.0 * k) as u8,
+            255,
+        ];
         hexagon(frame, size, view, (c.x, c.y), c.r, col);
     }
     for (i, &m) in it.moulds.iter().enumerate() {
         let s = view.to_screen(m);
         disc(frame, size, s, 9.0, [0, 0, 0, 255]);
         disc(frame, size, s, 7.0, [232, 168, 40, 255]);
-        label(frame, size, o.ui, (s.0 + 12.0, s.1 - 7.0 * o.ui), &format!("M{}", i + 1), [255, 220, 140, 255]);
+        label(
+            frame,
+            size,
+            o.ui,
+            (s.0 + 12.0, s.1 - 7.0 * o.ui),
+            &format!("M{}", i + 1),
+            [255, 220, 140, 255],
+        );
     }
     if let Some(l) = it.landing {
         let s = view.to_screen(l);
         rect(frame, size, (s.0 - 9.0, s.1 - 9.0), (18.0, 18.0), [0, 0, 0, 255]);
         rect(frame, size, (s.0 - 7.0, s.1 - 7.0), (14.0, 14.0), [90, 170, 255, 255]);
-        label(frame, size, o.ui, (s.0 + 12.0, s.1 - 7.0 * o.ui), "SQUAD", [180, 215, 255, 255]);
+        label(
+            frame,
+            size,
+            o.ui,
+            (s.0 + 12.0, s.1 - 7.0 * o.ui),
+            "SQUAD",
+            [180, 215, 255, 255],
+        );
     }
     // The mirror's line or centre.
     match ed.mirror {
@@ -557,7 +679,14 @@ pub fn draw(ed: &Editor, view: &EditView, frame: &mut [u8], size: (u32, u32), o:
         }
     }
     if let (Some(a), Some(b)) = (o.wall_from, o.cursor) {
-        line(frame, size, view.to_screen(a), view.to_screen(b), (WALL_THICK * view.zoom / 2.0).max(1.0), [200, 190, 160, 160]);
+        line(
+            frame,
+            size,
+            view.to_screen(a),
+            view.to_screen(b),
+            (WALL_THICK * view.zoom / 2.0).max(1.0),
+            [200, 190, 160, 160],
+        );
     }
     // What the tool would touch, under the cursor (and its mirror).
     if let Some(c) = o.cursor {
@@ -578,12 +707,19 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
     // Laid out on the crisp font's logical lattice (`u` screen pixels a
     // logical one), so at UI size 1 every row sits where it always has.
     let (k, u) = (o.ui, 2.0 * o.ui);
-    let text = |frame: &mut [u8], at: (i32, i32), s: &str, c: [u8; 4]| label(frame, size, k, (at.0 as f32 * u, at.1 as f32 * u), s, c);
+    let text = |frame: &mut [u8], at: (i32, i32), s: &str, c: [u8; 4]| {
+        label(frame, size, k, (at.0 as f32 * u, at.1 as f32 * u), s, c)
+    };
     let (w, h) = (size.0 as f32, size.1 as f32);
     let (pw, sh) = chrome(k);
     rect(frame, size, (0.0, 0.0), (pw, h), [20, 24, 28, 235]);
     rect(frame, size, (0.0, h - sh), (w, sh), [20, 24, 28, 235]);
-    let (white, dim, accent, warn) = ([235, 235, 230, 255], [150, 156, 160, 255], [120, 220, 230, 255], [255, 170, 110, 255]);
+    let (white, dim, accent, warn) = (
+        [235, 235, 230, 255],
+        [150, 156, 160, 255],
+        [120, 220, 230, 255],
+        [255, 170, 110, 255],
+    );
     let mut y = 8;
     text(frame, (8, y), "MAP EDITOR", accent);
     y += 12;
@@ -592,7 +728,13 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
     for (tool, key) in Tool::ALL {
         let on = tool == ed.tool;
         if on {
-            rect(frame, size, (4.0 * k, y as f32 * u - 4.0 * k), (pw - 8.0 * k, 22.0 * k), [50, 70, 80, 255]);
+            rect(
+                frame,
+                size,
+                (4.0 * k, y as f32 * u - 4.0 * k),
+                (pw - 8.0 * k, 22.0 * k),
+                [50, 70, 80, 255],
+            );
         }
         let swatch = match tool {
             Tool::Paint(b) => {
@@ -608,7 +750,12 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
         if let Some(c) = swatch {
             rect(frame, size, (16.0 * k, y as f32 * u), (14.0 * k, 14.0 * k), c);
         }
-        text(frame, (20, y), &format!("{key}  {}", tool.name()), if on { white } else { dim });
+        text(
+            frame,
+            (20, y),
+            &format!("{key}  {}", tool.name()),
+            if on { white } else { dim },
+        );
         y += 12;
     }
     y += 6;
@@ -621,7 +768,17 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
     y += 12;
     text(frame, (8, y), &format!("mirror {} (X)", ed.mirror.name()), dim);
     y += 18;
-    for line in ["CTRL+S save", "CTRL+Z undo", "CTRL+Y redo", "ENTER save + play", "F fit view", "WHEEL zoom", "RIGHT drag pan", "N new blank map", "CTRL +/- UI size"] {
+    for line in [
+        "CTRL+S save",
+        "CTRL+Z undo",
+        "CTRL+Y redo",
+        "ENTER save + play",
+        "F fit view",
+        "WHEEL zoom",
+        "RIGHT drag pan",
+        "N new blank map",
+        "CTRL +/- UI size",
+    ] {
         text(frame, (8, y), line, dim);
         y += 11;
     }
@@ -643,7 +800,10 @@ fn panel(ed: &Editor, frame: &mut [u8], size: (u32, u32), o: &Overlay) {
         }
     }
     // The status line: what is under the cursor, then the last message.
-    let at = o.cursor.map(|c| format!("{} {}  {}", c.0 as i32, c.1 as i32, ed.describe(c))).unwrap_or_default();
+    let at = o
+        .cursor
+        .map(|c| format!("{} {}  {}", c.0 as i32, c.1 as i32, ed.describe(c)))
+        .unwrap_or_default();
     let sy = ((h - sh) / u) as i32 + 4;
     text(frame, (PANEL + 8, sy), &at, dim);
     text(frame, (PANEL + 160, sy), o.message, white);
@@ -750,6 +910,27 @@ mod tests {
         assert_eq!(Brush::Rock.apply(0x21), 0x20 | G_ROCK);
         assert_eq!(Brush::Wet.apply(0x18), 0x10 | G_WET);
         assert_eq!(Brush::Plain.apply(0x39), 0);
+        // Deep water and bridge are whole kinds; over them, wet is a ford
+        // and rock plain rock.
+        assert_eq!(Brush::Deep.apply(0x18), G_DEEP);
+        assert_eq!(Brush::Bridge.apply(G_DEEP), G_BRIDGE);
+        assert_eq!(Brush::Wet.apply(G_DEEP), G_WET);
+        assert_eq!(Brush::Rock.apply(G_DEEP), G_ROCK);
+        assert_eq!(Brush::Sand.apply(G_BRIDGE), 0x10);
+    }
+
+    /// The editor warns when water shuts the squad off a crystal or nest.
+    #[test]
+    fn the_editor_warns_of_a_crystal_across_deep_water() {
+        let ed = Editor::new(crate::mould::map::river(false, false));
+        let p = ed.problems();
+        assert!(
+            p.iter().any(|s| s.contains("crystal 1 can't be walked to"))
+                && p.iter().any(|s| s.contains("mould start 1") || s.contains("mould 1")),
+            "{p:?}"
+        );
+        assert!(Editor::new(crate::mould::map::river(true, false)).problems().is_empty());
+        assert_eq!(ed.describe((500.0, 10.0)), "deep water");
     }
 
     #[test]
@@ -777,7 +958,10 @@ mod tests {
         assert!(ed.map.ground[(MAP_H - 100) * MAP_W + MAP_W - 100] & G_ROCK != 0);
         ed.tool = Tool::Crystal;
         ed.click((200.0, 150.0));
-        assert_eq!(ed.map.items.crystals.iter().map(|c| (c.x, c.y)).collect::<Vec<_>>(), vec![(200.0, 150.0), (824.0, 490.0)]);
+        assert_eq!(
+            ed.map.items.crystals.iter().map(|c| (c.x, c.y)).collect::<Vec<_>>(),
+            vec![(200.0, 150.0), (824.0, 490.0)]
+        );
         ed.tool = Tool::Landing;
         ed.click((512.0, 320.0));
         assert_eq!(ed.map.items.landing, Some((512.0, 320.0)));
@@ -883,7 +1067,24 @@ mod tests {
     #[test]
     fn the_panel_uses_only_glyphs_the_font_has() {
         let mut texts: Vec<String> = Tool::ALL.iter().map(|(t, k)| format!("{k}  {}", t.name())).collect();
-        texts.extend(["MAP EDITOR", "CTRL+S save", "ENTER save + play", "RIGHT drag pan", "ready to play", "no crystal (C)", "mould start 1 is on rock", "the landing is on rock", "crystal r 30 [ ]", "mirror left-right (X)", "mirror half turn (X)", "SQUAD", "plain wet"].map(String::from));
+        texts.extend(
+            [
+                "MAP EDITOR",
+                "CTRL+S save",
+                "ENTER save + play",
+                "RIGHT drag pan",
+                "ready to play",
+                "no crystal (C)",
+                "mould start 1 is on rock",
+                "the landing is on rock",
+                "crystal r 30 [ ]",
+                "mirror left-right (X)",
+                "mirror half turn (X)",
+                "SQUAD",
+                "plain wet",
+            ]
+            .map(String::from),
+        );
         for t in texts {
             assert!(t.chars().all(crate::hud::has_crisp_glyph), "{t:?}");
         }

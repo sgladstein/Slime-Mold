@@ -274,7 +274,11 @@ pub fn apply(from: &Params, to: &mut Params) {
 pub fn nudge(p: &mut Params, row: usize, steps: i32) {
     let k = &KNOBS[row];
     let v = (k.get)(p);
-    let v = if k.switch { 1.0 - v } else { (v + k.step * steps as f32).clamp(k.min, k.max) };
+    let v = if k.switch {
+        1.0 - v
+    } else {
+        (v + k.step * steps as f32).clamp(k.min, k.max)
+    };
     // Snap to the step, so repeated nudges do not drift (0.30000001).
     let v = if k.switch { v } else { (v / k.step).round() * k.step };
     (k.set)(p, v);
@@ -304,7 +308,11 @@ pub fn value_text(p: &Params, row: usize) -> String {
 pub fn to_text(p: &Params) -> String {
     let mut s = String::from("# Mould tuning (T in the window). name=value, one a line.\n");
     for (r, k) in KNOBS.iter().enumerate() {
-        s.push_str(&format!("{}={}\n", k.name, value_text(p, r).replace("ON", "1").replace("off", "0")));
+        s.push_str(&format!(
+            "{}={}\n",
+            k.name,
+            value_text(p, r).replace("ON", "1").replace("off", "0")
+        ));
     }
     s
 }
@@ -349,7 +357,9 @@ pub fn draw(frame: &mut [u8], (fw, fh): (u32, u32), p: &Params, cursor: usize) {
     #[allow(non_snake_case)]
     let K: i32 = if k_big { 2 } else { 1 };
     let line = (hud::GLYPH_HEIGHT + 3) * K;
-    let rows: Vec<(String, String)> = (0..KNOBS.len()).map(|r| (KNOBS[r].name.to_string(), value_text(p, r))).collect();
+    let rows: Vec<(String, String)> = (0..KNOBS.len())
+        .map(|r| (KNOBS[r].name.to_string(), value_text(p, r)))
+        .collect();
     let name_w = rows.iter().map(|(n, _)| hud::text_width(n)).max().unwrap_or(0) * K;
     let head = ["TUNE  (T closes)", "Up/Down pick  Left/Right change"];
     // As wide as the widest of the rows and the header, so the header's
@@ -397,7 +407,13 @@ pub fn draw(frame: &mut [u8], (fw, fh): (u32, u32), p: &Params, cursor: usize) {
         lines.push(cur);
     }
     let hy = y0 + h + 4;
-    fill(frame, (fw, fh), (x0, hy, w, line * lines.len() as i32 + 8), [6, 10, 14], 0.9);
+    fill(
+        frame,
+        (fw, fh),
+        (x0, hy, w, line * lines.len() as i32 + 8),
+        [6, 10, 14],
+        0.9,
+    );
     for (k, l) in lines.iter().enumerate() {
         txt(frame, x0 + 8, hy + 5 + k as i32 * line, l, [255, 220, 110, 255]);
     }
@@ -435,8 +451,14 @@ mod tests {
 
     #[test]
     fn apply_leaves_a_dish_s_own_rules() {
-        let mut to = Params { stray_reach: 24.0, ..Params::default() };
-        let from = Params { flow: true, ..Params::default() };
+        let mut to = Params {
+            stray_reach: 24.0,
+            ..Params::default()
+        };
+        let from = Params {
+            flow: true,
+            ..Params::default()
+        };
         apply(&from, &mut to);
         assert!(to.flow);
         assert_eq!(to.stray_reach, 24.0);

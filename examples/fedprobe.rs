@@ -49,7 +49,12 @@ struct Row {
 
 fn sample(g: &Game<BigDish>, start: &[f32]) -> (usize, usize, f32, f32, f32) {
     let d = &g.world;
-    let near: Vec<((f32, f32), f32)> = d.crystals().iter().enumerate().map(|(c, x)| (x.0, 2.0 * d.crystal_r(c))).collect();
+    let near: Vec<((f32, f32), f32)> = d
+        .crystals()
+        .iter()
+        .enumerate()
+        .map(|(c, x)| (x.0, 2.0 * d.crystal_r(c)))
+        .collect();
     let reached = d.crystals().iter().zip(start).filter(|(c, &s)| c.1 < s * 0.999).count();
     let (mut n_on, mut e_on, mut n_off, mut e_off) = (0usize, 0f64, 0usize, 0f64);
     for k in 0..d.walkers.len() {
@@ -67,7 +72,13 @@ fn sample(g: &Game<BigDish>, start: &[f32]) -> (usize, usize, f32, f32, f32) {
         }
     }
     let all = (n_on + n_off).max(1);
-    (g.mould, reached, n_on as f32 / all as f32, (e_on / n_on.max(1) as f64) as f32, (e_off / n_off.max(1) as f64) as f32)
+    (
+        g.mould,
+        reached,
+        n_on as f32 / all as f32,
+        (e_on / n_on.max(1) as f64) as f32,
+        (e_off / n_off.max(1) as f64) as f32,
+    )
 }
 
 fn image(d: &BigDish) -> image::RgbaImage {
@@ -76,7 +87,15 @@ fn image(d: &BigDish) -> image::RgbaImage {
     let top = d.trail.iter().copied().fold(0.0f32, f32::max).max(1e-6);
     for i in 0..w * h {
         let v = ((1.0 + d.trail[i]).ln() / (1.0 + top).ln()).clamp(0.0, 1.0);
-        let c = if !d.agar[i] { [40u8, 40, 48] } else { [(30.0 + 225.0 * v) as u8, (25.0 + 170.0 * v) as u8, (20.0 + 60.0 * v) as u8] };
+        let c = if !d.agar[i] {
+            [40u8, 40, 48]
+        } else {
+            [
+                (30.0 + 225.0 * v) as u8,
+                (25.0 + 170.0 * v) as u8,
+                (20.0 + 60.0 * v) as u8,
+            ]
+        };
         img.put_pixel((i % w) as u32, (i / w) as u32, image::Rgba([c[0], c[1], c[2], 255]));
     }
     for (c, x) in d.crystals().iter().enumerate() {
@@ -102,14 +121,17 @@ fn packed(d: &BigDish) -> (f32, f32) {
         }
         live += 1;
         let (x, y) = (d.walkers[k].0 as i64, d.walkers[k].1 as i64);
-        let free = (-1..=1i64).flat_map(|dy| (-1..=1i64).map(move |dx| (dx, dy))).filter(|&(dx, dy)| (dx, dy) != (0, 0)).any(|(dx, dy)| {
-            let (nx, ny) = (x + dx, y + dy);
-            if nx < 0 || ny < 0 || nx >= d.w as i64 || ny >= d.h as i64 {
-                return false;
-            }
-            let j = ny as usize * d.w + nx as usize;
-            d.agar[j] && occ[j] == 0
-        });
+        let free = (-1..=1i64)
+            .flat_map(|dy| (-1..=1i64).map(move |dx| (dx, dy)))
+            .filter(|&(dx, dy)| (dx, dy) != (0, 0))
+            .any(|(dx, dy)| {
+                let (nx, ny) = (x + dx, y + dy);
+                if nx < 0 || ny < 0 || nx >= d.w as i64 || ny >= d.h as i64 {
+                    return false;
+                }
+                let j = ny as usize * d.w + nx as usize;
+                d.agar[j] && occ[j] == 0
+            });
         if !free {
             boxed += 1;
         }
@@ -118,7 +140,12 @@ fn packed(d: &BigDish) -> (f32, f32) {
 }
 
 fn trail_split(d: &BigDish) -> (f32, f32) {
-    let near: Vec<((f32, f32), f32)> = d.crystals().iter().enumerate().map(|(c, x)| (x.0, 2.0 * d.crystal_r(c))).collect();
+    let near: Vec<((f32, f32), f32)> = d
+        .crystals()
+        .iter()
+        .enumerate()
+        .map(|(c, x)| (x.0, 2.0 * d.crystal_r(c)))
+        .collect();
     let occ = d.occupancy();
     let (mut a, mut na, mut b, mut nb) = (0f64, 0usize, 0f64, 0usize);
     for (i, &n) in occ.iter().enumerate() {
@@ -138,7 +165,17 @@ fn trail_split(d: &BigDish) -> (f32, f32) {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32, until: f32, look: Option<&str>, name: &str) -> Row {
+fn run(
+    seed: u64,
+    arm: usize,
+    eat: Option<f32>,
+    crowd: u8,
+    full: f32,
+    flow: f32,
+    until: f32,
+    look: Option<&str>,
+    name: &str,
+) -> Row {
     let walkers = 25_000;
     let mut p = race_params(seed, 2, walkers);
     p.upkeep = 0.0002;
@@ -149,10 +186,19 @@ fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32,
     p.energy_flow = flow;
     p.fed_crowd = crowd;
     p.fed_full = full;
-    let rules = Rules { mass: Rules::mass_for(walkers, 2), ..Rules::default() };
+    let rules = Rules {
+        mass: Rules::mass_for(walkers, 2),
+        ..Rules::default()
+    };
     let mut g = Game::new(BigDish::new(p), rules, seed);
     let start: Vec<f32> = g.world.crystals().iter().map(|c| c.1).collect();
-    let mut row = Row { seed, arm, trail: (0.0, 0.0), packed: (0.0, 0.0), series: Vec::new() };
+    let mut row = Row {
+        seed,
+        arm,
+        trail: (0.0, 0.0),
+        packed: (0.0, 0.0),
+        series: Vec::new(),
+    };
     let mut next = 30.0;
     while g.time() < until && g.end.is_none() {
         g.step();
@@ -165,13 +211,21 @@ fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32,
     row.trail = trail_split(&g.world);
     row.packed = packed(&g.world);
     if let Some(dir) = look {
-        image(&g.world).save(format!("{dir}/s{seed}-eat{name}-crowd{crowd}.png")).expect("png");
+        image(&g.world)
+            .save(format!("{dir}/s{seed}-eat{name}-crowd{crowd}.png"))
+            .expect("png");
     }
     row
 }
 
 fn main() {
-    let (mut seeds, mut eats, mut flow, mut until, mut threads) = ((1u64..=4).collect::<Vec<_>>(), vec![None, Some(0.0)], 0.0f32, 300.0f32, 4usize);
+    let (mut seeds, mut eats, mut flow, mut until, mut threads) = (
+        (1u64..=4).collect::<Vec<_>>(),
+        vec![None, Some(0.0)],
+        0.0f32,
+        300.0f32,
+        4usize,
+    );
     let (mut crowds, mut full, mut look) = (vec![0u8], 2.0f32, None::<String>);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -180,7 +234,12 @@ fn main() {
                 let (a, b) = v.split_once('-').unwrap_or((v, v));
                 seeds = (a.parse().unwrap()..=b.parse().unwrap()).collect();
             }
-            "eat" => eats = v.split(',').map(|s| if s == "default" { None } else { Some(s.parse().unwrap()) }).collect(),
+            "eat" => {
+                eats = v
+                    .split(',')
+                    .map(|s| if s == "default" { None } else { Some(s.parse().unwrap()) })
+                    .collect()
+            }
             "flow" => flow = v.parse().unwrap(),
             "crowd" => crowds = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "full" => full = v.parse().unwrap(),
@@ -196,7 +255,10 @@ fn main() {
     // One arm a crystal_eat and fed_crowd pair; arm 0 is the control.
     let arms: Vec<(Option<f32>, u8)> = eats.iter().flat_map(|&e| crowds.iter().map(move |&c| (e, c))).collect();
     let label = |a: usize| format!("eat {} crowd {}", name(&arms[a].0), arms[a].1);
-    let jobs: Vec<(u64, usize)> = seeds.iter().flat_map(|&s| (0..arms.len()).map(move |a| (s, a))).collect();
+    let jobs: Vec<(u64, usize)> = seeds
+        .iter()
+        .flat_map(|&s| (0..arms.len()).map(move |a| (s, a)))
+        .collect();
     let (tx, rx) = mpsc::channel();
     let queue = std::sync::Arc::new(std::sync::Mutex::new(jobs));
     let mut hs = Vec::new();
@@ -206,22 +268,52 @@ fn main() {
             let job = queue.lock().unwrap().pop();
             let Some((s, a)) = job else { break };
             let tag = arms[a].0.map_or("default".to_string(), |e| e.to_string());
-            tx.send(run(s, a, arms[a].0, arms[a].1, full, flow, until, look.as_deref(), &tag)).unwrap();
+            tx.send(run(
+                s,
+                a,
+                arms[a].0,
+                arms[a].1,
+                full,
+                flow,
+                until,
+                look.as_deref(),
+                &tag,
+            ))
+            .unwrap();
         }));
     }
     drop(tx);
     let mut rows: Vec<Row> = Vec::new();
     for r in rx {
-        let series = r.series.iter().map(|(t, n, c, sh, on, off)| format!("{t:.0}s {n} ({c} reached, {:.0}% near, energy {on:.2} near / {off:.2} off)", sh * 100.0)).collect::<Vec<_>>().join("; ");
+        let series = r
+            .series
+            .iter()
+            .map(|(t, n, c, sh, on, off)| {
+                format!(
+                    "{t:.0}s {n} ({c} reached, {:.0}% near, energy {on:.2} near / {off:.2} off)",
+                    sh * 100.0
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; ");
         println!("seed {:>2} {}: {series}; trail at the end {:.2} near crystals / {:.2} elsewhere ({:.1}x); walkers {:.1}% of open cells, {:.1}% of them boxed in", r.seed, label(r.arm), r.trail.0, r.trail.1, r.trail.0 / r.trail.1.max(1e-6), 100.0 * r.packed.0, 100.0 * r.packed.1);
         rows.push(r);
     }
     for h in hs {
         h.join().unwrap();
     }
-    println!("\nsummary, walkers at {until:.0} s (paired by seed against {}):", label(0));
+    println!(
+        "\nsummary, walkers at {until:.0} s (paired by seed against {}):",
+        label(0)
+    );
     for a in 0..arms.len() {
-        let end = |s: u64, a: usize| rows.iter().find(|r| r.seed == s && r.arm == a).and_then(|r| r.series.last()).map(|x| x.1).unwrap_or(0);
+        let end = |s: u64, a: usize| {
+            rows.iter()
+                .find(|r| r.seed == s && r.arm == a)
+                .and_then(|r| r.series.last())
+                .map(|x| x.1)
+                .unwrap_or(0)
+        };
         let ns: Vec<usize> = seeds.iter().map(|&s| end(s, a)).collect();
         let (mut more, mut fewer) = (0, 0);
         for &s in &seeds {
@@ -231,7 +323,15 @@ fn main() {
                 _ => {}
             }
         }
-        let ratio: Vec<String> = seeds.iter().filter_map(|&s| rows.iter().find(|r| r.seed == s && r.arm == a)).map(|r| format!("{:.1}", r.trail.0 / r.trail.1.max(1e-6))).collect();
-        println!("  {}: {ns:?}, mean {:.0} (more {more}, fewer {fewer}); trail near crystals / elsewhere {ratio:?}", label(a), ns.iter().sum::<usize>() as f32 / ns.len().max(1) as f32);
+        let ratio: Vec<String> = seeds
+            .iter()
+            .filter_map(|&s| rows.iter().find(|r| r.seed == s && r.arm == a))
+            .map(|r| format!("{:.1}", r.trail.0 / r.trail.1.max(1e-6)))
+            .collect();
+        println!(
+            "  {}: {ns:?}, mean {:.0} (more {more}, fewer {fewer}); trail near crystals / elsewhere {ratio:?}",
+            label(a),
+            ns.iter().sum::<usize>() as f32 / ns.len().max(1) as f32
+        );
     }
 }

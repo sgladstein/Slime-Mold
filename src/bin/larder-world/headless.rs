@@ -12,7 +12,23 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(
+    args: Args,
+    dir: &str,
+    hand: &str,
+    at: &[f32],
+    screen: (u32, u32),
+    wav: Option<&str>,
+    time_holes: bool,
+    fixed: Option<(f32, f32, f32)>,
+    cut: Option<Cut>,
+    bank: Option<f32>,
+    booms: &[(f32, f32, f32)],
+    turrets: &[(Kind, (f32, f32))],
+    menu_page: Option<slime_mould::world::start::Page>,
+    hover: Option<(f32, f32)>,
+    select: bool,
+) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -26,7 +42,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let n = g.buildings.len();
             g.bank += g.build_price(kind, at);
             if !g.build(kind, at) {
-                return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
+                return Err(format!(
+                    "{}={},{}: {}",
+                    kind.name(),
+                    at.0,
+                    at.1,
+                    g.build_blocked(kind, at).unwrap_or("blocked")
+                ));
             }
             let b = &mut g.buildings[n];
             (b.built, b.hp) = (1.0, b.max_hp);
@@ -45,14 +67,20 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The recording's ear: on the squad, at the window's opening zoom.
     let span = app.camera.span();
     let mut voice_at = u64::MAX;
-    let step = { let r = Rules::default(); r.frame_ticks as f32 / r.tps as f32 };
+    let step = {
+        let r = Rules::default();
+        r.frame_ticks as f32 / r.tps as f32
+    };
     let mut last_sec = u64::MAX;
     // `hand=` a player AI style (boom, claim, late, fort, strike) plays
     // through `larder_world_ai`, as the census does, so a campaign mission's
     // pictures show the hands its numbers were set on.
     let mut ai = match hand {
         "rush" | "farm" | "stand" | "volley" | "edge" | "squads" => None,
-        _ => app.game.as_ref().and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
+        _ => app
+            .game
+            .as_ref()
+            .and_then(|g| slime_mould::mould::larder_world_ai::Hand::named(hand, g)),
     };
     // Each hit: where, its tick, the body there the tick before, and the
     // ticks it took to refill.
@@ -78,7 +106,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
-        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
+        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none())
+            && app.mission.as_ref().is_none_or(|m| m.verdict.is_none())
+        {
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
@@ -90,7 +120,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     None => plan(g, hand),
                 }
             }
-            if let (Some(Cut { t: ct, x: cx, y: cy, r: cr, width: cw, .. }), None) = (cut, cut_inside.as_ref()) {
+            if let (
+                Some(Cut {
+                    t: ct,
+                    x: cx,
+                    y: cy,
+                    r: cr,
+                    width: cw,
+                    ..
+                }),
+                None,
+            ) = (cut, cut_inside.as_ref())
+            {
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= ct {
                     let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
@@ -110,7 +151,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
 
                     g.world.e.block(&ring);
                     let n0 = inside(&read_back(&device, &queue, &g.world.e.look), &core);
-                    println!("  cut t {:.1} s: ring of {} fine cells round ({cx}, {cy}) r {cr}; {n0} walkers inside", g.time(), ring.len());
+                    println!(
+                        "  cut t {:.1} s: ring of {} fine cells round ({cx}, {cy}) r {cr}; {n0} walkers inside",
+                        g.time(),
+                        ring.len()
+                    );
                     cut_inside = Some((core, n0.max(1)));
                 }
             }
@@ -135,7 +180,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let set: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).take(n).collect();
                     let sc = g.world.scale();
                     for (j, &k) in set.iter().enumerate() {
-                        (g.soldiers[k].x, g.soldiers[k].y) = (sx + (j as f32 - (set.len() as f32 - 1.0) / 2.0) * 1.5 * sc, sy);
+                        (g.soldiers[k].x, g.soldiers[k].y) =
+                            (sx + (j as f32 - (set.len() as f32 - 1.0) / 2.0) * 1.5 * sc, sy);
                     }
                     squad_set = Some(set);
                 }
@@ -148,11 +194,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     }
                 }
             }
-            if ring_back.as_ref().is_some_and(|(at, _)| app.game.as_ref().is_some_and(|g| g.time() >= *at)) {
+            if ring_back
+                .as_ref()
+                .is_some_and(|(at, _)| app.game.as_ref().is_some_and(|g| g.time() >= *at))
+            {
                 let (_, cells) = ring_back.take().unwrap();
                 let g = app.game.as_mut().unwrap();
                 g.world.e.unblock(&cells);
-                println!("  cut t {:.1} s: the ring opens ({} cells back on the agar)", g.time(), cells.len());
+                println!(
+                    "  cut t {:.1} s: the ring opens ({} cells back on the agar)",
+                    g.time(),
+                    cells.len()
+                );
             }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, &(bt, bx, by)) in booms.iter().enumerate() {
@@ -161,7 +214,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     boomed.push(j);
                     let (k0, f0) = (app.rounds.killed, app.rounds.flung);
                     app.rounds.cast_at(g, (bx, by));
-                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
+                    println!(
+                        "  boom t {:.2} s at {bx},{by}: {} killed, {} flung",
+                        g.time(),
+                        app.rounds.killed - k0,
+                        app.rounds.flung - f0
+                    );
                 }
             }
             app.step(step);
@@ -177,7 +235,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 if sec != cut_sec {
                     cut_sec = sec;
                     let n = inside(&read_back(&device, &queue, &g.world.e.look), core);
-                    println!("  cut t {sec} s: {n} walkers inside ({:.2} of the cut's)", n as f32 / *n0 as f32);
+                    println!(
+                        "  cut t {sec} s: {n} walkers inside ({:.2} of the cut's)",
+                        n as f32 / *n0 as f32
+                    );
                 }
             }
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
@@ -191,27 +252,47 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
                 let lk = read_back(&device, &queue, &g.world.e.look);
                 let body = |lk: &[u8], x: i32, y: i32| -> f32 {
-                    let cl = |x: i32, y: i32| (y.clamp(0, h as i32 - 1) as usize) * w + x.clamp(0, w as i32 - 1) as usize;
+                    let cl =
+                        |x: i32, y: i32| (y.clamp(0, h as i32 - 1) as usize) * w + x.clamp(0, w as i32 - 1) as usize;
                     let mut n = 0u32;
-                    for dy in -2..=2 { for dx in -2..=2 { n += lk[4 * cl(x + dx, y + dy) + 1] as u32; } }
+                    for dy in -2..=2 {
+                        for dx in -2..=2 {
+                            n += lk[4 * cl(x + dx, y + dy) + 1] as u32;
+                        }
+                    }
                     lk[4 * cl(x, y)] as f32 / 255.0 * (1.0 - (-(n as f32) / 6.0).exp())
                 };
                 let disc = |lk: &[u8], cx: f32, cy: f32, r: f32| -> f32 {
                     let (mut sum, mut k) = (0.0, 0);
                     let ri = r.ceil() as i32;
-                    for dy in -ri..=ri { for dx in -ri..=ri { if ((dx * dx + dy * dy) as f32) <= r * r { sum += body(lk, cx as i32 + dx, cy as i32 + dy); k += 1; } } }
+                    for dy in -ri..=ri {
+                        for dx in -ri..=ri {
+                            if ((dx * dx + dy * dy) as f32) <= r * r {
+                                sum += body(lk, cx as i32 + dx, cy as i32 + dy);
+                                k += 1;
+                            }
+                        }
+                    }
                     sum / k as f32
                 };
                 let tick = g.world.ticks();
                 let r = g.rules.strike * g.world.scale();
                 for t in app.tracers.iter().filter(|t| t.age == 0.0 && t.hit) {
-                    let before = if prev_lk.is_empty() { f32::NAN } else { disc(&prev_lk, t.to.0, t.to.1, r) };
+                    let before = if prev_lk.is_empty() {
+                        f32::NAN
+                    } else {
+                        disc(&prev_lk, t.to.0, t.to.1, r)
+                    };
                     holes.push((t.to, tick, before, None::<u64>));
                 }
                 for hl in holes.iter_mut() {
-                    if hl.2.is_nan() { continue; }
+                    if hl.2.is_nan() {
+                        continue;
+                    }
                     let v = disc(&lk, hl.0 .0, hl.0 .1, r);
-                    if hl.3.is_none() && tick > hl.1 && v >= 0.8 * hl.2.max(0.05) { hl.3 = Some(tick - hl.1); }
+                    if hl.3.is_none() && tick > hl.1 && v >= 0.8 * hl.2.max(0.05) {
+                        hl.3 = Some(tick - hl.1);
+                    }
                 }
                 prev_lk = lk;
             }
@@ -219,8 +300,21 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 let g = app.game.as_ref().unwrap();
                 let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
                 let n = alive.len().max(1) as f32;
-                let centre = if alive.is_empty() { g.larder } else { (alive.iter().map(|p| p.0).sum::<f32>() / n, alive.iter().map(|p| p.1).sum::<f32>() / n) };
-                app.hear(step, Ear { centre, half: (span.0 / 2.0, span.1 / 2.0) });
+                let centre = if alive.is_empty() {
+                    g.larder
+                } else {
+                    (
+                        alive.iter().map(|p| p.0).sum::<f32>() / n,
+                        alive.iter().map(|p| p.1).sum::<f32>() / n,
+                    )
+                };
+                app.hear(
+                    step,
+                    Ear {
+                        centre,
+                        half: (span.0 / 2.0, span.1 / 2.0),
+                    },
+                );
                 // The mould's voice's inputs every 5 game seconds, beside
                 // the recording.
                 let g = app.game.as_ref().unwrap();
@@ -235,9 +329,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         if time_holes {
             let done: Vec<u64> = holes.iter().filter_map(|h| h.3).collect();
             let open = holes.iter().filter(|h| h.3.is_none()).count();
-            let mut d = done.clone(); d.sort();
+            let mut d = done.clone();
+            d.sort();
             let tps = app.game.as_ref().unwrap().rules.tps as f32;
-            if !d.is_empty() { println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]); }
+            if !d.is_empty() {
+                println!("  holes: shots that hit {} refilled {} (still open {open}); ticks to 80%: median {} ({:.2} s), q25 {}, q75 {}, max {}", holes.len(), d.len(), d[d.len() / 2], d[d.len() / 2] as f32 / tps, d[d.len() / 4], d[3 * d.len() / 4], d[d.len() - 1]);
+            }
         }
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
@@ -250,7 +347,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // 2026-11-12: a camera on the squad pans as it walks and jumps to
         // the larder when it dies).
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
-        let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
+        let squad = (!alive.is_empty()).then(|| {
+            (
+                alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32,
+                alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32,
+            )
+        });
         // The squad mode follows the controlled squad, as the window does.
         let squad = g.active.and_then(|q| g.middle(q)).filter(|_| g.rules.squads).or(squad);
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
@@ -275,9 +377,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // past the world's edges (fit with no insets).
         app.prepare();
         for tag in ["all", "near"] {
-            let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
+            let zoom = if tag == "all" {
+                app.camera.fit()
+            } else {
+                fixed.map_or(6.0, |f| f.2)
+            };
             app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
-            app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            app.camera.centre_on(if tag == "all" {
+                (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0)
+            } else {
+                centre
+            });
             app.prepare();
             let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
             let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("shot") });
@@ -286,7 +396,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             queue.submit([enc.finish()]);
             // Whole seconds keep their old names; a time between (a frame
             // sequence) is named in milliseconds.
-            let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", file_part(&app.name), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", file_part(&app.name), (t * 1000.0) as u32) };
+            let path = if t.fract() == 0.0 {
+                format!("{dir}/{}-{hand}-{:03}s-{tag}.png", file_part(&app.name), t as u32)
+            } else {
+                format!(
+                    "{dir}/{}-{hand}-{:05}ms-{tag}.png",
+                    file_part(&app.name),
+                    (t * 1000.0) as u32
+                )
+            };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
@@ -302,12 +420,27 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         for _ in 0..20 {
             let m = app.model(None, None);
             app.canvas.as_mut().unwrap().clear();
-            app.hud.draw(&m, &app.controls, &app.camera, true, app.canvas.as_mut().unwrap(), &mut Marks::default());
+            app.hud.draw(
+                &m,
+                &app.controls,
+                &app.camera,
+                true,
+                app.canvas.as_mut().unwrap(),
+                &mut Marks::default(),
+            );
         }
-        println!("  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame", t0.elapsed().as_secs_f64() * 1e3 / 20.0);
+        println!(
+            "  CPU: ground field {ground_ms:.2} ms (once a game second), model and HUD {:.3} ms a frame",
+            t0.elapsed().as_secs_f64() * 1e3 / 20.0
+        );
         let g = app.game.as_ref().unwrap();
         if g.world.garden.is_some() {
-            println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
+            println!(
+                "  t {:.0} s: own mould {} (green), enemy {}",
+                g.time(),
+                g.world.counts_by_side().0,
+                g.mould
+            );
         }
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
         // What holds the live soldiers (2026-11-13, for the wading and
@@ -315,10 +448,25 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
         if !live.is_empty() {
             let n = live.len() as f32;
-            println!("  squad: touching {:.1} mean, {} most; health {:.0} mean", live.iter().map(|s| s.touching as f32).sum::<f32>() / n, live.iter().map(|s| s.touching).max().unwrap_or(0), live.iter().map(|s| s.hp).sum::<f32>() / n);
+            println!(
+                "  squad: touching {:.1} mean, {} most; health {:.0} mean",
+                live.iter().map(|s| s.touching as f32).sum::<f32>() / n,
+                live.iter().map(|s| s.touching).max().unwrap_or(0),
+                live.iter().map(|s| s.hp).sum::<f32>() / n
+            );
         }
         for b in &g.buildings {
-            println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
+            println!(
+                "    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}",
+                b.kind.name(),
+                b.at.0,
+                b.at.1,
+                b.hp,
+                b.max_hp,
+                b.built,
+                if b.alive { "standing" } else { "worn down" },
+                if b.working { ", working" } else { "" }
+            );
         }
         if !g.buildings.is_empty() {
             println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
@@ -328,7 +476,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         slime_mould::wav::write(Path::new(path), tape, 2, bank.sample_rate()).map_err(|e| format!("{path}: {e}"))?;
         let peak = tape.iter().fold(0.0f32, |m, v| m.max(v.abs()));
         let rms = (tape.iter().map(|v| v * v).sum::<f32>() / tape.len().max(1) as f32).sqrt();
-        println!("{path}: {:.1} s, peak {:.3}, rms {:.4} ({:.1} dBFS)", tape.len() as f32 / 2.0 / bank.sample_rate() as f32, peak, rms, 20.0 * rms.max(1e-9).log10());
+        println!(
+            "{path}: {:.1} s, peak {:.3}, rms {:.4} ({:.1} dBFS)",
+            tape.len() as f32 / 2.0 / bank.sample_rate() as f32,
+            peak,
+            rms,
+            20.0 * rms.max(1e-9).log10()
+        );
         let s = app.listener.as_ref().map(|l| l.stats).unwrap_or_default();
         println!(
             "  heard: shots {} (voiced {}), impacts {} (light {} mid {} heavy {}), kills {}, beats {}, hurts {}, fallen {}, banked {}, bought {}, walls {}, dry {}, cores {}, endings {}",
@@ -339,9 +493,25 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             s.zips, s.sirens, s.blasts, s.torn, s.rejoined, s.withered, s.tells, s.charges, s.pieces, s.withering
         );
         let b = bank.stats;
-        println!("  played: grains {} (touch {} stolen {} kills {} wither {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.verb_grains, b.bursts, b.alerts, b.steals);
+        println!(
+            "  played: grains {} (touch {} stolen {} kills {} wither {}, verbs {}), bursts {}, alerts {}, steals {}",
+            b.grains,
+            b.grains_by_texture[0],
+            b.grains_by_texture[1],
+            b.grains_by_texture[2],
+            b.grains_by_texture[3],
+            b.verb_grains,
+            b.bursts,
+            b.alerts,
+            b.steals
+        );
         let us = &app.hear_us;
-        println!("  listener: mean {:.1} us, max {:.1} us a frame over {} frames", us.iter().sum::<f32>() / us.len().max(1) as f32, us.iter().fold(0.0f32, |a, &b| a.max(b)), us.len());
+        println!(
+            "  listener: mean {:.1} us, max {:.1} us a frame over {} frames",
+            us.iter().sum::<f32>() / us.len().max(1) as f32,
+            us.iter().fold(0.0f32, |a, &b| a.max(b)),
+            us.len()
+        );
     }
     Ok(())
 }
@@ -360,7 +530,12 @@ pub(super) fn join_looks(g: &Game<GpuWorld>, looks: &mut Vec<Look>) {
 /// of a frame can fire in the next step of the same frame (fast forward, or
 /// a slow frame), before the frame's own `join_looks`, so its note joins
 /// here (2026-11-12, after #114's panic on a recruit with no note).
-pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &mut Vec<Look>, listener: Option<&mut WorldListener>) {
+pub(super) fn shot_marks(
+    g: &Game<GpuWorld>,
+    tracers: &mut Vec<Tracer>,
+    looks: &mut Vec<Look>,
+    listener: Option<&mut WorldListener>,
+) {
     if let Some(l) = listener {
         l.shots(&g.last_shots);
     }
@@ -369,11 +544,18 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
         let from = s.from;
-        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        tracers.push(Tracer {
+            from,
+            to: s.hit.unwrap_or(s.to),
+            hit: s.hit.is_some(),
+            age: 0.0,
+        });
         if !s.fired {
             continue;
         }
-        if let Some(k) = s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive)) {
+        if let Some(k) =
+            s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive))
+        {
             looks[k].flash = FLASH;
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
         }
@@ -401,7 +583,10 @@ fn join_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) {
             Some(c) if b.kind == Kind::Pump => c.0,
             _ => g.core,
         };
-        turrets.push(BuildingLook { facing: (to.1 - b.at.1).atan2(to.0 - b.at.0), ..BuildingLook::default() });
+        turrets.push(BuildingLook {
+            facing: (to.1 - b.at.1).atan2(to.0 - b.at.0),
+            ..BuildingLook::default()
+        });
     }
 }
 
@@ -414,7 +599,11 @@ pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) 
         // The game starts a turret's shot at its barrel tip
         // (`TURRET_MUZZLE` touch radii out, less for mould at its foot).
         let tip = TURRET_MUZZLE * g.rules.build.touch * g.world.scale() + 0.5;
-        if let Some(k) = g.buildings.iter().position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < tip) {
+        if let Some(k) = g
+            .buildings
+            .iter()
+            .position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < tip)
+        {
             (turrets[k].facing, turrets[k].shot) = ((s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), TURRET_SHOT);
         }
     }
@@ -456,8 +645,16 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
     for (l, s) in looks.iter_mut().zip(&g.soldiers) {
         if s.alive && l.carry > 0.0 && s.carry < l.carry * 0.5 {
             let d = |p: &(f32, f32)| (p.0 - s.x).hypot(p.1 - s.y);
-            let home = drops.iter().min_by(|a, b| d(a).total_cmp(&d(b))).copied().unwrap_or(g.larder);
-            match g.buildings.iter().position(|b| b.kind == Kind::Outpost && b.up() && b.at == home) {
+            let home = drops
+                .iter()
+                .min_by(|a, b| d(a).total_cmp(&d(b)))
+                .copied()
+                .unwrap_or(g.larder);
+            match g
+                .buildings
+                .iter()
+                .position(|b| b.kind == Kind::Outpost && b.up() && b.at == home)
+            {
                 Some(k) => blooks[k].bank = BANKED,
                 None => *banked = BANKED,
             }

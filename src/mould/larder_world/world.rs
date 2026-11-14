@@ -54,8 +54,15 @@ pub trait World {
     fn landing(&self) -> Option<(f32, f32)> {
         None
     }
-    /// Open ground a soldier can stand on (agar: not rock, wall or rim).
+    /// Open ground a soldier can stand on (agar: not rock, wall or rim, and
+    /// not deep water, `big::SOIL_DEEP`). Buildings go only here too.
     fn open(&self, x: f32, y: f32) -> bool;
+    /// Ground a shot flies over: open ground and deep water (shots fly over
+    /// water; only rock, a wall or the rim stops them). The default is
+    /// `open`, for a world with no deep water.
+    fn clear(&self, x: f32, y: f32) -> bool {
+        self.open(x, y)
+    }
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
     /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
@@ -157,7 +164,11 @@ impl World for BigDish {
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
         let s = self.p.scale as f32;
-        self.piles.iter().enumerate().map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0))).collect()
+        self.piles
+            .iter()
+            .enumerate()
+            .map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0)))
+            .collect()
     }
 
     fn crystal_r(&self, c: usize) -> f32 {
@@ -170,7 +181,11 @@ impl World for BigDish {
     }
 
     fn open(&self, x: f32, y: f32) -> bool {
-        x >= 0.0 && y >= 0.0 && (x as usize) < self.w && (y as usize) < self.h && self.agar[y as usize * self.w + x as usize]
+        self.cell_at(x, y).is_some_and(|i| self.agar[i] && !self.deep(i))
+    }
+
+    fn clear(&self, x: f32, y: f32) -> bool {
+        self.cell_at(x, y).is_some_and(|i| self.agar[i])
     }
 
     fn stop_births(&mut self) {

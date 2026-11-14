@@ -28,7 +28,8 @@ const TPS: f32 = 15.0;
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
-    let (mut grow, mut after, mut keep, mut keys) = (180.0f32, 120.0f32, vec![2usize, 4, 8], Vec::<(String, String)>::new());
+    let (mut grow, mut after, mut keep, mut keys) =
+        (180.0f32, 120.0f32, vec![2usize, 4, 8], Vec::<(String, String)>::new());
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
         match k {
@@ -39,12 +40,31 @@ fn main() {
             "grow" => grow = v.parse().unwrap(),
             "after" => after = v.parse().unwrap(),
             "keep" => keep = v.split(',').map(|s| s.parse().unwrap()).collect(),
-            "keys" => keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
+            "keys" => {
+                keys = v
+                    .split('+')
+                    .map(|kv| {
+                        kv.split_once(':')
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .expect("keys=k:v+k:v")
+                    })
+                    .collect()
+            }
             _ => panic!("unknown {k}"),
         }
     }
-    let base: Vec<(String, String)> = [("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
-    println!("foodprobe: race world scale {SCALE}, 25000 walkers, upkeep 0.0002, grow {grow} s, keys {base:?} then {keys:?}");
+    let base: Vec<(String, String)> = [
+        ("capacity", "50000"),
+        ("energy_flow", "0.05"),
+        ("wither", "0.01"),
+        ("panic", "2"),
+    ]
+    .iter()
+    .map(|(a, b)| (a.to_string(), b.to_string()))
+    .collect();
+    println!(
+        "foodprobe: race world scale {SCALE}, 25000 walkers, upkeep 0.0002, grow {grow} s, keys {base:?} then {keys:?}"
+    );
     for &seed in &seeds {
         let mut p = race_params(seed, SCALE, 25_000);
         p.upkeep = 0.0002;
@@ -89,7 +109,11 @@ fn main() {
                     }
                 }
             }
-            let mut line = format!("seed {seed}: keep {h:>2} crystals ({:.0}% of the food it ate):", 100.0 * order[..h.min(order.len())].iter().map(|&i| fed[i]).sum::<f64>() / fed.iter().sum::<f64>().max(1e-9));
+            let mut line = format!(
+                "seed {seed}: keep {h:>2} crystals ({:.0}% of the food it ate):",
+                100.0 * order[..h.min(order.len())].iter().map(|&i| fed[i]).sum::<f64>()
+                    / fed.iter().sum::<f64>().max(1e-9)
+            );
             for t in 1..=(after * TPS) as u32 {
                 e.tick();
                 if t % (10.0 * TPS) as u32 == 0 {

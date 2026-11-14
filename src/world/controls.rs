@@ -46,10 +46,18 @@ pub enum UiCommand {
     /// Right click: the selection's order at a world point.
     Order { units: Vec<usize>, at: (f32, f32) },
     /// F + left drag: hold the line from `from` to `to` burning.
-    Burn { units: Vec<usize>, from: (f32, f32), to: (f32, f32) },
+    Burn {
+        units: Vec<usize>,
+        from: (f32, f32),
+        to: (f32, f32),
+    },
     /// Any key the controls do not use, pressed: the selection and the
     /// cursor's world point (if on the world).
-    Key { code: KeyCode, units: Vec<usize>, at: Option<(f32, f32)> },
+    Key {
+        code: KeyCode,
+        units: Vec<usize>,
+        at: Option<(f32, f32)>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -65,7 +73,17 @@ pub const DRAG_PX: f32 = 4.0;
 pub const PICK_PX: f32 = 10.0;
 const DOUBLE: Duration = Duration::from_millis(500);
 
-const DIGITS: [KeyCode; 9] = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9];
+const DIGITS: [KeyCode; 9] = [
+    KeyCode::Digit1,
+    KeyCode::Digit2,
+    KeyCode::Digit3,
+    KeyCode::Digit4,
+    KeyCode::Digit5,
+    KeyCode::Digit6,
+    KeyCode::Digit7,
+    KeyCode::Digit8,
+    KeyCode::Digit9,
+];
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Drag {
@@ -101,7 +119,21 @@ pub struct Controls {
 
 impl Controls {
     pub fn new(team: u8) -> Self {
-        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, arrows: [false; 4], drag: None, last_group: None, last_pick: None }
+        Controls {
+            team,
+            selected: Vec::new(),
+            groups: Default::default(),
+            cursor: None,
+            ctrl: false,
+            shift: false,
+            burn: false,
+            arrows_pan: true,
+            edge: true,
+            arrows: [false; 4],
+            drag: None,
+            last_group: None,
+            last_pick: None,
+        }
     }
 
     fn mine<'a>(&self, units: &'a [Unit]) -> impl Iterator<Item = &'a Unit> + 'a {
@@ -153,7 +185,14 @@ impl Controls {
     }
 
     /// A mouse button. `mm` is the minimap's rectangle this frame.
-    pub fn button(&mut self, b: Button, pressed: bool, units: &[Unit], cam: &mut Camera, mm: Option<(u32, u32, u32, u32)>) -> Vec<UiCommand> {
+    pub fn button(
+        &mut self,
+        b: Button,
+        pressed: bool,
+        units: &[Unit],
+        cam: &mut Camera,
+        mm: Option<(u32, u32, u32, u32)>,
+    ) -> Vec<UiCommand> {
         let Some(c) = self.cursor else {
             if !pressed {
                 self.drag = None;
@@ -180,15 +219,25 @@ impl Controls {
                     let (a, z) = (cam.to_world(from), cam.to_world(c));
                     if self.burn && far {
                         if !self.selected.is_empty() {
-                            out.push(UiCommand::Burn { units: self.selected.clone(), from: a, to: z });
+                            out.push(UiCommand::Burn {
+                                units: self.selected.clone(),
+                                from: a,
+                                to: z,
+                            });
                         }
                     } else {
                         let picked: Vec<usize> = if far {
                             let (x0, x1, y0, y1) = (a.0.min(z.0), a.0.max(z.0), a.1.min(z.1), a.1.max(z.1));
-                            self.mine(units).filter(|u| u.x >= x0 && u.x <= x1 && u.y >= y0 && u.y <= y1).map(|u| u.id).collect()
+                            self.mine(units)
+                                .filter(|u| u.x >= x0 && u.x <= x1 && u.y >= y0 && u.y <= y1)
+                                .map(|u| u.id)
+                                .collect()
                         } else {
                             let k = self.pick(units, cam, c);
-                            let double = k.is_some() && self.last_pick.is_some_and(|(q, t)| Some(q) == k && t.elapsed() < DOUBLE);
+                            let double = k.is_some()
+                                && self
+                                    .last_pick
+                                    .is_some_and(|(q, t)| Some(q) == k && t.elapsed() < DOUBLE);
                             self.last_pick = if double { None } else { k.map(|k| (k, Instant::now())) };
                             if double {
                                 // Every local unit on screen.
@@ -220,7 +269,10 @@ impl Controls {
             (Button::Right, true) => {
                 let at = on_map.or_else(|| cam.world_at(c));
                 if let (Some(at), false) = (at, self.selected.is_empty()) {
-                    out.push(UiCommand::Order { units: self.selected.clone(), at });
+                    out.push(UiCommand::Order {
+                        units: self.selected.clone(),
+                        at,
+                    });
                 }
             }
             (Button::Right, false) => {}
@@ -237,7 +289,14 @@ impl Controls {
 
     /// A key. Returns what it gave the game; keys the controls use (F,
     /// Ctrl, Shift, digits, arrows when they pan) give nothing.
-    pub fn key(&mut self, code: KeyCode, pressed: bool, repeat: bool, units: &[Unit], cam: &mut Camera) -> Vec<UiCommand> {
+    pub fn key(
+        &mut self,
+        code: KeyCode,
+        pressed: bool,
+        repeat: bool,
+        units: &[Unit],
+        cam: &mut Camera,
+    ) -> Vec<UiCommand> {
         match code {
             KeyCode::KeyF => {
                 self.burn = pressed;
@@ -253,7 +312,14 @@ impl Controls {
             }
             _ => {}
         }
-        let arrow = [KeyCode::ArrowLeft, KeyCode::ArrowRight, KeyCode::ArrowUp, KeyCode::ArrowDown].iter().position(|&k| k == code);
+        let arrow = [
+            KeyCode::ArrowLeft,
+            KeyCode::ArrowRight,
+            KeyCode::ArrowUp,
+            KeyCode::ArrowDown,
+        ]
+        .iter()
+        .position(|&k| k == code);
         if let (Some(a), true) = (arrow, self.arrows_pan) {
             self.arrows[a] = pressed;
             return Vec::new();
@@ -266,20 +332,36 @@ impl Controls {
                 self.groups[g] = self.selected.clone();
                 return Vec::new();
             }
-            self.selected = self.groups[g].iter().copied().filter(|k| self.mine(units).any(|u| u.id == *k)).collect();
+            self.selected = self.groups[g]
+                .iter()
+                .copied()
+                .filter(|k| self.mine(units).any(|u| u.id == *k))
+                .collect();
             let again = self.last_group.is_some_and(|(h, t)| h == g && t.elapsed() < DOUBLE);
             if again {
-                let at: Vec<(f32, f32)> = self.selected.iter().filter_map(|k| units.iter().find(|u| u.id == *k)).map(|u| (u.x, u.y)).collect();
+                let at: Vec<(f32, f32)> = self
+                    .selected
+                    .iter()
+                    .filter_map(|k| units.iter().find(|u| u.id == *k))
+                    .map(|u| (u.x, u.y))
+                    .collect();
                 if !at.is_empty() {
                     let n = at.len() as f32;
-                    cam.centre_on((at.iter().map(|p| p.0).sum::<f32>() / n, at.iter().map(|p| p.1).sum::<f32>() / n));
+                    cam.centre_on((
+                        at.iter().map(|p| p.0).sum::<f32>() / n,
+                        at.iter().map(|p| p.1).sum::<f32>() / n,
+                    ));
                 }
             }
             self.last_group = Some((g, Instant::now()));
             return vec![UiCommand::Select(self.selected.clone())];
         }
         let at = self.cursor.and_then(|c| cam.world_at(c));
-        vec![UiCommand::Key { code, units: self.selected.clone(), at }]
+        vec![UiCommand::Key {
+            code,
+            units: self.selected.clone(),
+            at,
+        }]
     }
 
     /// The window lost focus: nothing stays held.
@@ -294,7 +376,10 @@ impl Controls {
             cam.edge_scroll(c, dt);
         }
         let step = super::camera::PAN_SPEED * dt;
-        let d = ((self.arrows[1] as i32 - self.arrows[0] as i32) as f32 * step, (self.arrows[3] as i32 - self.arrows[2] as i32) as f32 * step);
+        let d = (
+            (self.arrows[1] as i32 - self.arrows[0] as i32) as f32 * step,
+            (self.arrows[3] as i32 - self.arrows[2] as i32) as f32 * step,
+        );
         if d != (0.0, 0.0) {
             cam.pan(d);
         }
@@ -308,7 +393,11 @@ impl Controls {
         // Just clear of the figure's body (0.8 of its radius in sprite A),
         // thin, so the soldier inside stays the thing you see.
         let ring = (r * cam.zoom * 0.95).max(2.0) + 2.0;
-        let at: Vec<(f32, f32)> = units.iter().filter(|u| u.alive && self.selected.contains(&u.id)).map(|u| (u.x, u.y)).collect();
+        let at: Vec<(f32, f32)> = units
+            .iter()
+            .filter(|u| u.alive && self.selected.contains(&u.id))
+            .map(|u| (u.x, u.y))
+            .collect();
         for (c, px) in ring_groups(&at, ring / cam.zoom.max(1e-6)) {
             out.selected(c, px * cam.zoom);
         }
@@ -361,7 +450,10 @@ pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
             (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
         }
         let c = ((x0 + x1) / 2.0, (y0 + y1) / 2.0);
-        let far = members.iter().map(|p| (p.0 - c.0).hypot(p.1 - c.1)).fold(0.0f32, f32::max);
+        let far = members
+            .iter()
+            .map(|p| (p.0 - c.0).hypot(p.1 - c.1))
+            .fold(0.0f32, f32::max);
         out.push((c, far + ring));
     }
     out
@@ -375,7 +467,14 @@ pub fn unit_marks(u: &Unit, r: f32, hp: f32, zoom: f32, out: &mut Marks) {
         return;
     }
     out.disc((u.x, u.y), r, team_colour(u.team), true);
-    out.bar((u.x, u.y), (r * zoom).max(2.0) + 5.0, (7.0, 1.0), hp, [90, 220, 110, 255], [70, 30, 30, 255]);
+    out.bar(
+        (u.x, u.y),
+        (r * zoom).max(2.0) + 5.0,
+        (7.0, 1.0),
+        hp,
+        [90, 220, 110, 255],
+        [70, 30, 30, 255],
+    );
 }
 
 #[cfg(test)]
@@ -391,16 +490,42 @@ mod tests {
         assert_eq!(g.len(), 3, "{g:?}");
         let knot = g.iter().find(|(c, _)| c.0 > 30.0).unwrap();
         for p in &at[2..] {
-            assert!((p.0 - knot.0 .0).hypot(p.1 - knot.0 .1) + 2.0 <= knot.1 + 1e-4, "the group ring holds every member's ring");
+            assert!(
+                (p.0 - knot.0 .0).hypot(p.1 - knot.0 .1) + 2.0 <= knot.1 + 1e-4,
+                "the group ring holds every member's ring"
+            );
         }
-        assert!(g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0), "a lone unit keeps its own ring");
+        assert!(
+            g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0),
+            "a lone unit keeps its own ring"
+        );
         assert!(ring_groups(&[], 2.0).is_empty());
     }
 
     fn squad() -> Vec<Unit> {
-        let mut v: Vec<Unit> = (0..5).map(|k| Unit { id: k, team: 0, x: 100.0 + 20.0 * k as f32, y: 100.0, alive: true }).collect();
-        v.push(Unit { id: 5, team: 1, x: 120.0, y: 110.0, alive: true });
-        v.push(Unit { id: 6, team: 0, x: 140.0, y: 105.0, alive: false });
+        let mut v: Vec<Unit> = (0..5)
+            .map(|k| Unit {
+                id: k,
+                team: 0,
+                x: 100.0 + 20.0 * k as f32,
+                y: 100.0,
+                alive: true,
+            })
+            .collect();
+        v.push(Unit {
+            id: 5,
+            team: 1,
+            x: 120.0,
+            y: 110.0,
+            alive: true,
+        });
+        v.push(Unit {
+            id: 6,
+            team: 0,
+            x: 140.0,
+            y: 105.0,
+            alive: false,
+        });
         v
     }
 
@@ -457,10 +582,15 @@ mod tests {
         // A second click on the same unit soon after: all of ours on screen.
         let s = c.to_screen((140.0, 100.0));
         click(&mut k, Button::Left, s, &u, &mut c);
-        let mut on: Vec<usize> = u.iter().filter(|q| q.alive && q.team == 0).filter(|q| {
-            let p = c.to_screen((q.x, q.y));
-            p.0 >= 0.0 && p.1 >= 0.0 && p.0 < c.screen.0 && p.1 < c.screen.1
-        }).map(|q| q.id).collect();
+        let mut on: Vec<usize> = u
+            .iter()
+            .filter(|q| q.alive && q.team == 0)
+            .filter(|q| {
+                let p = c.to_screen((q.x, q.y));
+                p.0 >= 0.0 && p.1 >= 0.0 && p.0 < c.screen.0 && p.1 < c.screen.1
+            })
+            .map(|q| q.id)
+            .collect();
         on.sort();
         let mut got = k.selected.clone();
         got.sort();
@@ -477,30 +607,55 @@ mod tests {
         let (u, mut c, mut k) = (squad(), cam(), Controls::new(0));
         k.selected = vec![1, 3];
         let out = click(&mut k, Button::Right, (300.0, 200.0), &u, &mut c);
-        assert_eq!(out, vec![UiCommand::Order { units: vec![1, 3], at: (200.0, 150.0) }]);
+        assert_eq!(
+            out,
+            vec![UiCommand::Order {
+                units: vec![1, 3],
+                at: (200.0, 150.0)
+            }]
+        );
         k.key(KeyCode::KeyF, true, false, &u, &mut c);
         let out = drag(&mut k, (100.0, 100.0), (300.0, 100.0), &u, &mut c);
-        assert_eq!(out, vec![UiCommand::Burn { units: vec![1, 3], from: (100.0, 100.0), to: (200.0, 100.0) }]);
+        assert_eq!(
+            out,
+            vec![UiCommand::Burn {
+                units: vec![1, 3],
+                from: (100.0, 100.0),
+                to: (200.0, 100.0)
+            }]
+        );
     }
 
     #[test]
     fn groups_keep_their_units_and_other_keys_go_to_the_game() {
         // Far from the world's corner, so centring the camera needs no clamp.
-        let u: Vec<Unit> = squad().into_iter().map(|u| Unit { x: u.x + 500.0, y: u.y + 500.0, ..u }).collect();
+        let u: Vec<Unit> = squad()
+            .into_iter()
+            .map(|u| Unit {
+                x: u.x + 500.0,
+                y: u.y + 500.0,
+                ..u
+            })
+            .collect();
         let (mut c, mut k) = (cam(), Controls::new(0));
         k.selected = vec![0, 4];
         k.key(KeyCode::ControlLeft, true, false, &u, &mut c);
         k.key(KeyCode::Digit3, true, false, &u, &mut c);
         k.key(KeyCode::ControlLeft, false, false, &u, &mut c);
         k.selected.clear();
-        assert_eq!(k.key(KeyCode::Digit3, true, false, &u, &mut c), vec![UiCommand::Select(vec![0, 4])]);
+        assert_eq!(
+            k.key(KeyCode::Digit3, true, false, &u, &mut c),
+            vec![UiCommand::Select(vec![0, 4])]
+        );
         // The second press centres the camera on the group.
         k.key(KeyCode::Digit3, true, false, &u, &mut c);
         let m = c.centre();
         assert!((m.0 - 640.0).abs() < 1e-3 && (m.1 - 600.0).abs() < 1e-3, "{m:?}");
         k.moved(Some((0.0, 0.0)), &mut c, None);
         let out = k.key(KeyCode::KeyA, true, false, &u, &mut c);
-        assert!(matches!(&out[..], [UiCommand::Key { code: KeyCode::KeyA, units, at: Some(_) }] if units == &vec![0, 4]));
+        assert!(
+            matches!(&out[..], [UiCommand::Key { code: KeyCode::KeyA, units, at: Some(_) }] if units == &vec![0, 4])
+        );
         // A held key's repeats give nothing.
         assert!(k.key(KeyCode::KeyA, true, true, &u, &mut c).is_empty());
     }
@@ -517,7 +672,13 @@ mod tests {
         assert!(k.selected.is_empty(), "a minimap click selects nothing");
         k.selected = vec![2];
         let out = k.button(Button::Right, true, &u, &mut c, mm);
-        assert_eq!(out, vec![UiCommand::Order { units: vec![2], at: (1024.0, 640.0) }]);
+        assert_eq!(
+            out,
+            vec![UiCommand::Order {
+                units: vec![2],
+                at: (1024.0, 640.0)
+            }]
+        );
     }
 
     #[test]

@@ -92,14 +92,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // seconds. Times the work the window does a frame, not the swap to
         // the screen.
         for scent in [false, true] {
-            let rules = Rules { squad: 40, start_bank: 1e9, ..Rules::default() };
+            let rules = Rules {
+                squad: 40,
+                start_bank: 1e9,
+                ..Rules::default()
+            };
             let mut g = field_game(1, rules);
             for k in 0..40 {
                 g.apply(Cmd::Stance(k, Stance::Free));
             }
             let (w, h) = render::frame_size(SCALE);
             let mut frame = vec![0u8; (w * h * 4) as usize];
-            let view = View { bare: true, keys: false, style: Style::GAME, ..View::default() };
+            let view = View {
+                bare: true,
+                keys: false,
+                style: Style::GAME,
+                ..View::default()
+            };
             let all: Vec<usize> = (0..40).collect();
             let mut times = Vec::new();
             let mut parts = [0.0f64; 4];
@@ -164,13 +173,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         draw_squad(&g, &all, None, false, &mut frame);
         draw_hud(&g, false, false, &mut frame);
         image::RgbaImage::from_raw(w, h, frame).ok_or("frame size")?.save(out)?;
-        println!("{out}: step {}, {} soldiers, {} walkers", g.dish.t, g.alive(), g.dish.walkers.len());
+        println!(
+            "{out}: step {}, {} soldiers, {} walkers",
+            g.dish.t,
+            g.alive(),
+            g.dish.walkers.len()
+        );
         return Ok(());
     }
     let seed = args.first().and_then(|s| s.parse().ok()).unwrap_or(1);
     let ai = args.iter().find_map(|a| a.strip_prefix("ai=")).map(String::from);
     if let Some(name) = &ai {
-        Hand::named(name, &field_game(seed, Rules::default()), seed).ok_or("ai=adapt|turtle|boom|rush|lure[:knob=v+...]")?;
+        Hand::named(name, &field_game(seed, Rules::default()), seed)
+            .ok_or("ai=adapt|turtle|boom|rush|lure[:knob=v+...]")?;
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
@@ -293,7 +308,12 @@ impl App {
         }
         let path = format!("larder-replay-{}.txt", self.seed);
         match std::fs::write(&path, self.game.replay_text(self.seed)) {
-            Ok(()) => println!("saved {} commands to {path} (dish hash {:016x} at step {})", self.game.log.len(), self.game.dish.state_hash(), self.game.dish.t),
+            Ok(()) => println!(
+                "saved {} commands to {path} (dish hash {:016x} at step {})",
+                self.game.log.len(),
+                self.game.dish.state_hash(),
+                self.game.dish.t
+            ),
             Err(e) => eprintln!("could not save {path}: {e}"),
         }
     }
@@ -367,7 +387,11 @@ impl App {
                 if self.ctrl {
                     self.groups[g] = self.selected.clone();
                 } else {
-                    self.selected = self.groups[g].iter().copied().filter(|&k| self.game.soldiers[k].alive).collect();
+                    self.selected = self.groups[g]
+                        .iter()
+                        .copied()
+                        .filter(|&k| self.game.soldiers[k].alive)
+                        .collect();
                 }
             }
             _ => {}
@@ -481,7 +505,11 @@ fn draw_squad(g: &Game, selected: &[usize], drag: Option<((f32, f32), (f32, f32)
         }
         let w = (t.hp / g.rules.turret_hp * 12.0).round() as i32;
         for dx in -6..6 {
-            let c = if dx + 6 < w { [90, 220, 110, 255] } else { [70, 30, 30, 255] };
+            let c = if dx + 6 < w {
+                [90, 220, 110, 255]
+            } else {
+                [70, 30, 30, 255]
+            };
             put(frame, cx + dx, cy + 7, c);
         }
     }

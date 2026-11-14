@@ -238,7 +238,13 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         d.enable_alarm(k.alarm_keep);
     }
     if b.kill || b.burn || b.alarm > 0.0 {
-        out.killed = d.strike(b.at.0, b.at.1, if b.kill || b.burn { b.r } else { 0.0 }, b.alarm, b.alarm_r) as u32;
+        out.killed = d.strike(
+            b.at.0,
+            b.at.1,
+            if b.kill || b.burn { b.r } else { 0.0 },
+            b.alarm,
+            b.alarm_r,
+        ) as u32;
     }
     if b.crater > 0 {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
@@ -261,7 +267,13 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, b.cloud);
     }
     if b.bait > 0.0 || b.smother {
-        d.lay_bait(b.at.0 * s, b.at.1 * s, b.r * s, if b.smother { 0.0 } else { 1.0 }, b.bait);
+        d.lay_bait(
+            b.at.0 * s,
+            b.at.1 * s,
+            b.r * s,
+            if b.smother { 0.0 } else { 1.0 },
+            b.bait,
+        );
     }
     if b.germ {
         if d.sick.is_empty() {
@@ -322,7 +334,10 @@ pub fn r2(r: f32) -> u32 {
 
 /// The cell a point is in, clamped to the world.
 pub fn cell_of(w: usize, h: usize, x: f32, y: f32) -> (i64, i64) {
-    ((x.floor() as i64).clamp(0, w as i64 - 1), (y.floor() as i64).clamp(0, h as i64 - 1))
+    (
+        (x.floor() as i64).clamp(0, w as i64 - 1),
+        (y.floor() as i64).clamp(0, h as i64 - 1),
+    )
 }
 
 /// The cells of a disc round cell (`cx`, `cy`), in rows from the top and
@@ -419,7 +434,8 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
             // squad: the rush hand's squad was wiped on 12 of 16 race seeds
             // (1 of 16 without craters), and the GPU shots pass reads the
             // same. Presence (any living walker, at any mass); elsewhere the trail, not a count.
-            let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
+            let stops =
+                |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
             for (j, &i) in cells.iter().enumerate() {
                 if !d.agar[i as usize] {
                     return NONE;
@@ -437,7 +453,10 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
         if hit == NONE {
             return false;
         }
-        let (dx, dy) = ((c % w) as i64 - (hit as usize % w) as i64, (c / w) as i64 - (hit as usize / w) as i64);
+        let (dx, dy) = (
+            (c % w) as i64 - (hit as usize % w) as i64,
+            (c / w) as i64 - (hit as usize / w) as i64,
+        );
         dx * dx + dy * dy <= r2s[q] as i64
     };
     let mut killed = vec![0u32; shots.len()];
@@ -500,7 +519,10 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
     }
     hits.iter()
         .zip(killed)
-        .map(|(&hit, killed)| ShotOut { hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)), killed })
+        .map(|(&hit, killed)| ShotOut {
+            hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)),
+            killed,
+        })
         .collect()
 }
 
@@ -533,7 +555,10 @@ pub fn sees(w: usize, agar: &[bool], from: (i64, i64), to: (i64, i64)) -> bool {
 /// The centre cell of block (`bx`, `by`), held inside the world, as `read`
 /// looks at it (`sees`).
 pub fn block_cell(w: usize, h: usize, bx: i64, by: i64) -> (i64, i64) {
-    ((bx * BIN as i64 + BIN as i64 / 2).min(w as i64 - 1), (by * BIN as i64 + BIN as i64 / 2).min(h as i64 - 1))
+    (
+        (bx * BIN as i64 + BIN as i64 / 2).min(w as i64 - 1),
+        (by * BIN as i64 + BIN as i64 / 2).min(h as i64 - 1),
+    )
 }
 
 /// Step 4's reads: each unit's walkers within `touch`, the block it aims
@@ -557,7 +582,9 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
             // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
             // A condensed walker (`BigParams::condense`) touches as two.
-            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32)).sum();
+            let touching = disc(w, h, cx, cy, r2(u.touch))
+                .map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32))
+                .sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
             let (by0, by1) = ((cy - r).max(0) / BIN as i64, ((cy + r) / BIN as i64).min(nbh - 1));
@@ -565,7 +592,10 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
             let mut best = (0u32, None);
             for by in by0..=by1 {
                 for bx in bx0..=bx1 {
-                    let (mx, my) = (bx * BIN as i64 + BIN as i64 / 2 - cx, by * BIN as i64 + BIN as i64 / 2 - cy);
+                    let (mx, my) = (
+                        bx * BIN as i64 + BIN as i64 / 2 - cx,
+                        by * BIN as i64 + BIN as i64 / 2 - cy,
+                    );
                     if mx * mx + my * my > s2 {
                         continue;
                     }
@@ -632,14 +662,22 @@ pub fn harvest(d: &mut BigDish, units: &[UnitIn]) -> Vec<f32> {
 /// The centre of block `b` (`read`'s target).
 pub fn block_centre(w: usize, b: usize) -> (f32, f32) {
     let nbw = w.div_ceil(BIN);
-    (((b % nbw) * BIN) as f32 + BIN as f32 / 2.0, ((b / nbw) * BIN) as f32 + BIN as f32 / 2.0)
+    (
+        ((b % nbw) * BIN) as f32 + BIN as f32 / 2.0,
+        ((b / nbw) * BIN) as f32 + BIN as f32 / 2.0,
+    )
 }
 
 /// A whole frame on the CPU: shots, smell, `ticks` ticks, reads, harvest.
 pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
     // The units a panicking walker may charge (`BigParams::panic`): the
     // cells the GPU's squad buffer holds (`pack`).
-    d.threats = f.units.iter().take(UNITS_MAX).map(|u| cell_of(d.w, d.h, u.x, u.y)).collect();
+    d.threats = f
+        .units
+        .iter()
+        .take(UNITS_MAX)
+        .map(|u| cell_of(d.w, d.h, u.x, u.y))
+        .collect();
     let shots = shots(d, &f.shots, f.slime, f.crater, f.sink);
     smell(d, &f.units);
     for _ in 0..ticks {
@@ -649,7 +687,16 @@ pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
     let took = harvest(d, &f.units);
     let w = d.w;
     FrameOut {
-        units: reads.into_iter().zip(took).map(|((touching, b, dense), took)| UnitOut { touching, target: b.map(|b| block_centre(w, b)), took, dense }).collect(),
+        units: reads
+            .into_iter()
+            .zip(took)
+            .map(|((touching, b, dense), took)| UnitOut {
+                touching,
+                target: b.map(|b| block_centre(w, b)),
+                took,
+                dense,
+            })
+            .collect(),
         shots,
     }
 }
@@ -680,7 +727,16 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
     let mut b = vec![0u32; PATH];
     for (k, u) in units.iter().enumerate() {
         let (cx, cy) = cell_of(w, h, u.x, u.y);
-        b[U_IN + 8 * k..U_IN + 8 * k + 8].copy_from_slice(&[cx as u32, cy as u32, r2(u.touch), r2(u.sight), r2(u.take_r), u.take.to_bits(), r2(u.smell_r), u.smell.to_bits()]);
+        b[U_IN + 8 * k..U_IN + 8 * k + 8].copy_from_slice(&[
+            cx as u32,
+            cy as u32,
+            r2(u.touch),
+            r2(u.sight),
+            r2(u.take_r),
+            u.take.to_bits(),
+            r2(u.smell_r),
+            u.smell.to_bits(),
+        ]);
     }
     for k in 0..UNITS_MAX {
         b[U_OUT + 4 * k + 1] = NONE;
@@ -690,7 +746,12 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
         let p = path(w, h, s.from, s.to);
         let p = &p[..p.len().min(PATH_MAX - cells.len())];
         // The fourth word is the alarm's squared radius (`SHOT_ALARM_R`).
-        b[S_IN + 4 * q..S_IN + 4 * q + 4].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX)), r2(SHOT_ALARM_R * s.r.min(R_MAX))]);
+        b[S_IN + 4 * q..S_IN + 4 * q + 4].copy_from_slice(&[
+            cells.len() as u32,
+            p.len() as u32,
+            r2(s.r.min(R_MAX)),
+            r2(SHOT_ALARM_R * s.r.min(R_MAX)),
+        ]);
         cells.extend_from_slice(p);
     }
     for q in 0..SHOTS_MAX {
@@ -706,13 +767,21 @@ pub fn unpack(w: usize, words: &[u32], kills: &[u32], nunits: usize, nshots: usi
         units: (0..nunits)
             .map(|k| {
                 let o = &words[U_OUT + 4 * k..U_OUT + 4 * k + 4];
-                UnitOut { touching: o[0], target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)), took: f32::from_bits(o[2]), dense: o[3] }
+                UnitOut {
+                    touching: o[0],
+                    target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)),
+                    took: f32::from_bits(o[2]),
+                    dense: o[3],
+                }
             })
             .collect(),
         shots: (0..nshots)
             .map(|q| {
                 let hit = words[S_OUT + 4 * q];
-                ShotOut { hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)), killed: kills[q] }
+                ShotOut {
+                    hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)),
+                    killed: kills[q],
+                }
             })
             .collect(),
     }
@@ -773,7 +842,16 @@ mod tests {
     fn a_unit_aims_only_at_slime_it_can_see() {
         let mut d = world();
         let (w, h) = (d.w, d.h);
-        let unit = |i: usize| UnitIn { x: (i % w) as f32 + 0.5, y: (i / w) as f32 + 0.5, touch: 3.0, sight: 30.0, take_r: 0.0, take: 0.0, smell_r: 0.0, smell: 0.0 };
+        let unit = |i: usize| UnitIn {
+            x: (i % w) as f32 + 0.5,
+            y: (i / w) as f32 + 0.5,
+            touch: 3.0,
+            sight: 30.0,
+            take_r: 0.0,
+            take: 0.0,
+            smell_r: 0.0,
+            smell: 0.0,
+        };
         let aim = |d: &BigDish, i: usize| read(d, &[unit(i)])[0];
         // A unit on open agar whose aim is at least 10 cells off.
         let (at, first) = (0..w * h)
@@ -799,7 +877,10 @@ mod tests {
         let (_, b, _) = aim(&d, at);
         assert_ne!(b, Some(first), "aimed through the wall");
         if let Some(b) = b {
-            assert!(sees(w, &d.agar, from, block_cell(w, h, b as i64 % nbw, b as i64 / nbw)), "the new aim is seen");
+            assert!(
+                sees(w, &d.agar, from, block_cell(w, h, b as i64 % nbw, b as i64 / nbw)),
+                "the new aim is seen"
+            );
         }
         d.agar[mid] = true;
         assert_eq!(aim(&d, at).1, Some(first), "open again, the first aim");
@@ -812,25 +893,58 @@ mod tests {
     fn a_condensed_walker_touches_as_two_and_takes_two_shots() {
         let mut d = world();
         let (w, h) = (d.w, d.h);
-        let at = |i: usize| UnitIn { x: (i % w) as f32 + 0.5, y: (i / w) as f32 + 0.5, touch: 3.0, sight: 30.0, take_r: 0.0, take: 0.0, smell_r: 0.0, smell: 0.0 };
+        let at = |i: usize| UnitIn {
+            x: (i % w) as f32 + 0.5,
+            y: (i / w) as f32 + 0.5,
+            touch: 3.0,
+            sight: 30.0,
+            take_r: 0.0,
+            take: 0.0,
+            smell_r: 0.0,
+            smell: 0.0,
+        };
         // The unit where the most walkers touch it.
-        let thick = (0..w * h).step_by(3).max_by_key(|&i| (read(&d, &[at(i)])[0].0, usize::MAX - i)).unwrap();
+        let thick = (0..w * h)
+            .step_by(3)
+            .max_by_key(|&i| (read(&d, &[at(i)])[0].0, usize::MAX - i))
+            .unwrap();
         let (tx, ty) = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         let u = at(thick);
         let plain = read(&d, &[u])[0].0;
         assert!(plain > 2, "walkers touch the unit: {plain}");
         d.dense = vec![0; d.walkers.len()];
-        let near: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0.floor() + 0.5 - tx).hypot(d.walkers[k].1.floor() + 0.5 - ty) <= 3.0).collect();
+        let near: Vec<usize> = (0..d.walkers.len())
+            .filter(|&k| {
+                d.lives(k) && (d.walkers[k].0.floor() + 0.5 - tx).hypot(d.walkers[k].1.floor() + 0.5 - ty) <= 3.0
+            })
+            .collect();
         for &k in &near {
             d.dense[k] = super::super::big::DENSE;
         }
         let heavy = read(&d, &[u])[0].0;
-        assert!(heavy > plain && heavy <= 2 * plain, "condensed walkers touch as two: {heavy} against {plain}");
+        assert!(
+            heavy > plain && heavy <= 2 * plain,
+            "condensed walkers touch as two: {heavy} against {plain}"
+        );
         let living = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k)).count();
         let before = living(&d);
-        let out = shots(&mut d, &[ShotIn { from: (tx, ty), to: (tx + 1.0, ty), r: 3.0 }], 0.0, 0, 0.0);
+        let out = shots(
+            &mut d,
+            &[ShotIn {
+                from: (tx, ty),
+                to: (tx + 1.0, ty),
+                r: 3.0,
+            }],
+            0.0,
+            0,
+            0.0,
+        );
         assert!(out[0].killed > 0, "the shot struck");
-        assert_eq!(living(&d), before - (out[0].killed as usize - near.iter().filter(|&&k| d.lives(k) && !d.is_dense(k)).count()), "condensed walkers break, the rest die");
+        assert_eq!(
+            living(&d),
+            before - (out[0].killed as usize - near.iter().filter(|&&k| d.lives(k) && !d.is_dense(k)).count()),
+            "condensed walkers break, the rest die"
+        );
     }
 
     #[test]
@@ -848,13 +962,32 @@ mod tests {
             })
             .expect("a clear cell near the mould");
         let from = ((from % w) as f32 + 0.5, (from / w) as f32 + 0.5);
-        let alive = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.life.is_empty() || d.life[k] != LIFE_DEAD)).count();
+        let alive = |d: &BigDish| {
+            (0..d.walkers.len())
+                .filter(|&k| d.lives(k) && (d.life.is_empty() || d.life[k] != LIFE_DEAD))
+                .count()
+        };
         let before = alive(&d);
         // The first slime cell on the line, not the thickest.
         let cells = path(w, h, from, (tx, ty));
-        let first = cells.iter().map(|&i| i as usize).take_while(|&i| d.agar[i]).find(|&i| d.trail[i] >= slime).expect("the line reaches slime");
+        let first = cells
+            .iter()
+            .map(|&i| i as usize)
+            .take_while(|&i| d.agar[i])
+            .find(|&i| d.trail[i] >= slime)
+            .expect("the line reaches slime");
         assert_ne!(first, thick, "this line meets thinner slime first");
-        let out = shots(&mut d, &[ShotIn { from, to: (tx, ty), r: 3.0 }], slime, 0, 0.0);
+        let out = shots(
+            &mut d,
+            &[ShotIn {
+                from,
+                to: (tx, ty),
+                r: 3.0,
+            }],
+            slime,
+            0,
+            0.0,
+        );
         let hit = out[0].hit.expect("the line reaches slime");
         assert_eq!(((first % w) as f32 + 0.5, (first / w) as f32 + 0.5), hit);
         assert!(out[0].killed > 0, "walkers die where it hits");
@@ -876,7 +1009,17 @@ mod tests {
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         // A shot that starts on slime hits its first cell.
-        let out = shots(&mut d, &[ShotIn { from: at, to: (at.0 + 5.0, at.1), r: 3.0 }], slime_trail(3.0), 0, 0.0);
+        let out = shots(
+            &mut d,
+            &[ShotIn {
+                from: at,
+                to: (at.0 + 5.0, at.1),
+                r: 3.0,
+            }],
+            slime_trail(3.0),
+            0,
+            0.0,
+        );
         let hit = out[0].hit.expect("it starts on slime");
         let (hx, hy) = (hit.0 as i64, hit.1 as i64);
         let near: Vec<usize> = disc(w, h, hx, hy, r2(SHOT_ALARM_R * 3.0)).collect();
@@ -896,7 +1039,11 @@ mod tests {
         let slime = slime_trail(3.0);
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
-        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        let shot = ShotIn {
+            from: at,
+            to: (at.0 + 12.0, at.1),
+            r: 2.0,
+        };
         // Without a crater no field appears.
         let mut plain = d.clone();
         shots(&mut plain, &[shot], slime, 0, 0.0);
@@ -938,14 +1085,25 @@ mod tests {
         let (w, h) = (d.w, d.h);
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
-        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        let shot = ShotIn {
+            from: at,
+            to: (at.0 + 12.0, at.1),
+            r: 2.0,
+        };
         let out = shots(&mut d, &[shot], slime_trail(3.0), 90, 0.0);
-        let (hx, hy) = out[0].hit.map(|(x, y)| (x as i64, y as i64)).expect("it starts on slime");
+        let (hx, hy) = out[0]
+            .hit
+            .map(|(x, y)| (x as i64, y as i64))
+            .expect("it starts on slime");
         let r2 = r2(2.0);
         let cells: Vec<usize> = disc(w, h, hx, hy, r2).collect();
         for i in 0..w * h {
             let (dx, dy) = ((i % w) as i64 - hx, (i / w) as i64 - hy);
-            let want = if cells.contains(&i) && d.agar[i] { 90 - 90 * (dx * dx + dy * dy) as u16 / (r2 as u16 + 1) } else { 0 };
+            let want = if cells.contains(&i) && d.agar[i] {
+                90 - 90 * (dx * dx + dy * dy) as u16 / (r2 as u16 + 1)
+            } else {
+                0
+            };
             assert_eq!(d.scorch[i], want, "cell {i}");
         }
         assert_eq!(d.scorch[hy as usize * w + hx as usize], 90, "all of them at the hit");
@@ -968,8 +1126,16 @@ mod tests {
             d.trail[y * w + x] = 0.0;
         }
         let at = |x: usize| y * w + x;
-        let shot = ShotIn { from: (x0 as f32 + 0.5, y as f32 + 0.5), to: (x0 as f32 + 29.5, y as f32 + 0.5), r: 3.0 };
-        let hit_x = |d: &BigDish, sink: f32| shots(&mut d.clone(), &[shot], slime, 0, sink)[0].hit.map(|(x, _)| x as usize);
+        let shot = ShotIn {
+            from: (x0 as f32 + 0.5, y as f32 + 0.5),
+            to: (x0 as f32 + 29.5, y as f32 + 0.5),
+            r: 3.0,
+        };
+        let hit_x = |d: &BigDish, sink: f32| {
+            shots(&mut d.clone(), &[shot], slime, 0, sink)[0]
+                .hit
+                .map(|(x, _)| x as usize)
+        };
         // A strand one cell wide at x0 + 10: the blast stays on it.
         d.trail[at(x0 + 10)] = 2.0 * slime;
         assert_eq!(hit_x(&d, 0.0), Some(x0 + 10));
@@ -981,7 +1147,10 @@ mod tests {
         assert_eq!(hit_x(&d, 0.0), Some(x0 + 10), "no sink: the edge");
         assert_eq!(hit_x(&d, 1.0), Some(x0 + 12));
         assert_eq!(hit_x(&d, 1.5), Some(x0 + 14));
-        assert_eq!((sink_r2(1.0, 9), sink_r2(1.5, 9), sink_r2(0.0, 9), sink_r2(-1.0, 9)), (9, 20, 0, 0));
+        assert_eq!(
+            (sink_r2(1.0, 9), sink_r2(1.5, 9), sink_r2(0.0, 9), sink_r2(-1.0, 9)),
+            (9, 20, 0, 0)
+        );
         // A wall between stops the sink: the cells past it are not reached.
         d.agar[at(x0 + 11)] = false;
         assert_eq!(hit_x(&d, 1.5), Some(x0 + 10), "the sink does not cross off the agar");
@@ -1005,20 +1174,27 @@ mod tests {
         let thick = (0..w * h).max_by(|&a, &b| d.trail[a].total_cmp(&d.trail[b])).unwrap();
         let at = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         let line = path(w, h, at, (at.0 + 12.0, at.1));
-        let shot = ShotIn { from: at, to: (at.0 + 12.0, at.1), r: 2.0 };
+        let shot = ShotIn {
+            from: at,
+            to: (at.0 + 12.0, at.1),
+            r: 2.0,
+        };
         shots(&mut d, &[shot], slime, 900, 0.0);
         // Tick until a living walker stands on a crater cell of the line
         // before any slime on it, then shoot again.
         let first = |d: &BigDish| -> Option<(usize, bool)> {
-            line.iter().map(|&i| i as usize).take_while(|&i| d.agar[i]).find_map(|i| {
-                if d.trail[i] >= slime {
-                    Some((i, false))
-                } else if d.scorch[i] > 0 && d.occupancy()[i] > 0 {
-                    Some((i, true))
-                } else {
-                    None
-                }
-            })
+            line.iter()
+                .map(|&i| i as usize)
+                .take_while(|&i| d.agar[i])
+                .find_map(|i| {
+                    if d.trail[i] >= slime {
+                        Some((i, false))
+                    } else if d.scorch[i] > 0 && d.occupancy()[i] > 0 {
+                        Some((i, true))
+                    } else {
+                        None
+                    }
+                })
         };
         let mut found = None;
         for _ in 0..200 {
@@ -1030,7 +1206,13 @@ mod tests {
         }
         let i = found.expect("a walker steps into the crater on the line");
         assert!(d.trail[i] < slime, "the cell holds no slime");
-        let hit = shots(&mut d, &[shot], slime, 900, 0.0)[0].hit.expect("the shot meets the walker");
-        assert_eq!((hit.0 as usize, hit.1 as usize), (i % w, i / w), "it stops at the walker in the crater");
+        let hit = shots(&mut d, &[shot], slime, 900, 0.0)[0]
+            .hit
+            .expect("the shot meets the walker");
+        assert_eq!(
+            (hit.0 as usize, hit.1 as usize),
+            (i % w, i / w),
+            "it stops at the walker in the crater"
+        );
     }
 }

@@ -78,7 +78,20 @@ struct Prim {
 
 impl Prim {
     fn new(kind: u32, lo: (f32, f32), hi: (f32, f32), colour: Rgba) -> Self {
-        Prim { kind, lo, hi, radius: 0.0, colour, colour2: [0; 4], border: 0.0, soft: 0.0, uv: (0, 0), border_colour: [0; 4], fill: 1.0, hole: (0, 0) }
+        Prim {
+            kind,
+            lo,
+            hi,
+            radius: 0.0,
+            colour,
+            colour2: [0; 4],
+            border: 0.0,
+            soft: 0.0,
+            uv: (0, 0),
+            border_colour: [0; 4],
+            fill: 1.0,
+            hole: (0, 0),
+        }
     }
 
     /// The pixels it can touch (a shadow spreads past its box).
@@ -138,7 +151,12 @@ impl Rect {
 
     /// Shrunk by `d` on every side.
     pub fn inset(&self, d: f32) -> Rect {
-        Rect::new(self.x + d, self.y + d, (self.w - 2.0 * d).max(0.0), (self.h - 2.0 * d).max(0.0))
+        Rect::new(
+            self.x + d,
+            self.y + d,
+            (self.w - 2.0 * d).max(0.0),
+            (self.h - 2.0 * d).max(0.0),
+        )
     }
 }
 
@@ -182,8 +200,18 @@ impl Default for Atlas {
 
 impl Atlas {
     pub fn new() -> Self {
-        let fonts = [FontRef::try_from_slice(MEDIUM).expect("Inter Medium"), FontRef::try_from_slice(SEMIBOLD).expect("Inter SemiBold")];
-        Atlas { texels: vec![0; (ATLAS * ATLAS) as usize], slots: HashMap::new(), shelf: (1, 1, 0), dirty: true, full: false, fonts }
+        let fonts = [
+            FontRef::try_from_slice(MEDIUM).expect("Inter Medium"),
+            FontRef::try_from_slice(SEMIBOLD).expect("Inter SemiBold"),
+        ];
+        Atlas {
+            texels: vec![0; (ATLAS * ATLAS) as usize],
+            slots: HashMap::new(),
+            shelf: (1, 1, 0),
+            dirty: true,
+            full: false,
+            fonts,
+        }
     }
 
     /// Empties the atlas (everything is rasterized again on next use).
@@ -206,7 +234,11 @@ impl Atlas {
     /// Room for a w x h box (with a texel of gap); `None` when full.
     fn alloc(&mut self, w: u32, h: u32) -> Option<(u32, u32)> {
         let (x, y, row) = self.shelf;
-        let (x, y, row) = if x + w + 1 > ATLAS { (1, y + row + 1, 0) } else { (x, y, row) };
+        let (x, y, row) = if x + w + 1 > ATLAS {
+            (1, y + row + 1, 0)
+        } else {
+            (x, y, row)
+        };
         if y + h + 1 > ATLAS {
             self.full = true;
             return None;
@@ -221,7 +253,9 @@ impl Atlas {
             return *s;
         }
         let font = self.font(weight).clone();
-        let g = font.glyph_id(ch).with_scale_and_position(PxScale::from(px as f32), ab_glyph::point(0.0, 0.0));
+        let g = font
+            .glyph_id(ch)
+            .with_scale_and_position(PxScale::from(px as f32), ab_glyph::point(0.0, 0.0));
         let slot = font.outline_glyph(g).and_then(|o| {
             let b = o.px_bounds();
             let (w, h) = (b.width().ceil() as u32, b.height().ceil() as u32);
@@ -232,7 +266,14 @@ impl Atlas {
                     self.texels[i] = (c.clamp(0.0, 1.0) * 255.0).round() as u8;
                 }
             });
-            Some(Slot { u, v, w, h, dx: b.min.x.floor() as i32, dy: b.min.y.floor() as i32 })
+            Some(Slot {
+                u,
+                v,
+                w,
+                h,
+                dx: b.min.x.floor() as i32,
+                dy: b.min.y.floor() as i32,
+            })
         });
         self.slots.insert(key, slot);
         self.dirty = true;
@@ -252,7 +293,14 @@ impl Atlas {
                     self.texels[((v + y) * ATLAS + u + x) as usize] = cover[(y * side + x) as usize];
                 }
             }
-            Slot { u, v, w: side, h: side, dx: 0, dy: 0 }
+            Slot {
+                u,
+                v,
+                w: side,
+                h: side,
+                dx: 0,
+                dy: 0,
+            }
         });
         self.slots.insert(key, slot);
         self.dirty = true;
@@ -284,7 +332,10 @@ impl Atlas {
 
     /// The atlas as words, four texels a word, for the GPU.
     pub fn words(&self) -> Vec<u32> {
-        self.texels.chunks_exact(4).map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()
+        self.texels
+            .chunks_exact(4)
+            .map(|c| u32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+            .collect()
     }
 }
 
@@ -308,7 +359,12 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(screen: (u32, u32)) -> Self {
-        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen, ui: UiSize::default() }
+        Canvas {
+            prims: Vec::new(),
+            atlas: Atlas::new(),
+            screen,
+            ui: UiSize::default(),
+        }
     }
 
     /// Starts a frame (and empties the atlas if the last frame filled it).
@@ -335,42 +391,86 @@ impl Canvas {
 
     /// A rounded box, flat.
     pub fn rrect(&mut self, r: Rect, radius: f32, colour: Rgba) {
-        self.push(Prim { radius, ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), colour) });
+        self.push(Prim {
+            radius,
+            ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), colour)
+        });
     }
 
     /// A rounded box with a vertical gradient and an inner border.
     pub fn panel(&mut self, r: Rect, radius: f32, top: Rgba, bottom: Rgba, border: f32, border_colour: Rgba) {
-        self.push(Prim { radius, colour2: bottom, border, border_colour, ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), top) });
+        self.push(Prim {
+            radius,
+            colour2: bottom,
+            border,
+            border_colour,
+            ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), top)
+        });
     }
 
     /// A panel with a rectangular hole left open (a frame round something
     /// drawn before the canvas, such as the minimap).
     #[allow(clippy::too_many_arguments)]
-    pub fn panel_with_hole(&mut self, r: Rect, radius: f32, top: Rgba, bottom: Rgba, border: f32, border_colour: Rgba, hole: Rect) {
+    pub fn panel_with_hole(
+        &mut self,
+        r: Rect,
+        radius: f32,
+        top: Rgba,
+        bottom: Rgba,
+        border: f32,
+        border_colour: Rgba,
+        hole: Rect,
+    ) {
         let p = |a: f32, b: f32| (a.max(0.0) as u32 & 0xffff) | ((b.max(0.0) as u32 & 0xffff) << 16);
         let hole = (p(hole.x, hole.y), p(hole.right(), hole.bottom()).max(1));
-        self.push(Prim { radius, colour2: bottom, border, border_colour, hole, ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), top) });
+        self.push(Prim {
+            radius,
+            colour2: bottom,
+            border,
+            border_colour,
+            hole,
+            ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), top)
+        });
     }
 
     /// A rounded outline `width` wide inside `r`.
     pub fn outline(&mut self, r: Rect, radius: f32, width: f32, colour: Rgba) {
-        self.push(Prim { radius, border: width, border_colour: colour, ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), [0; 4]) });
+        self.push(Prim {
+            radius,
+            border: width,
+            border_colour: colour,
+            ..Prim::new(RRECT, (r.x, r.y), (r.right(), r.bottom()), [0; 4])
+        });
     }
 
     /// A soft shadow under a box: `soft` pixels of blur, offset `dy` down.
     pub fn shadow(&mut self, r: Rect, radius: f32, soft: f32, dy: f32, colour: Rgba) {
-        self.push(Prim { radius, soft, ..Prim::new(SHADOW, (r.x, r.y + dy), (r.right(), r.bottom() + dy), colour) });
+        self.push(Prim {
+            radius,
+            soft,
+            ..Prim::new(SHADOW, (r.x, r.y + dy), (r.right(), r.bottom() + dy), colour)
+        });
     }
 
     /// A bar `fill` (0-1) full, rounded.
     pub fn bar(&mut self, r: Rect, fill: f32, colour: Rgba, back: Rgba) {
-        self.push(Prim { radius: r.h / 2.0, colour2: back, fill: fill.clamp(0.0, 1.0), ..Prim::new(BAR, (r.x, r.y), (r.right(), r.bottom()), colour) });
+        self.push(Prim {
+            radius: r.h / 2.0,
+            colour2: back,
+            fill: fill.clamp(0.0, 1.0),
+            ..Prim::new(BAR, (r.x, r.y), (r.right(), r.bottom()), colour)
+        });
     }
 
     /// A ring `width` wide on `r`'s rounded edge, swept clockwise from the
     /// top to `fill` (1 a full ring).
     pub fn ring(&mut self, r: Rect, radius: f32, width: f32, fill: f32, colour: Rgba) {
-        self.push(Prim { radius, border: width, fill: fill.clamp(0.0, 1.0), ..Prim::new(RING, (r.x, r.y), (r.right(), r.bottom()), colour) });
+        self.push(Prim {
+            radius,
+            border: width,
+            fill: fill.clamp(0.0, 1.0),
+            ..Prim::new(RING, (r.x, r.y), (r.right(), r.bottom()), colour)
+        });
     }
 
     /// An icon `px` pixels square with its top-left at `at`.
@@ -378,7 +478,10 @@ impl Canvas {
         let side = px.round().max(4.0) as u16;
         if let Some(s) = self.atlas.icon(icon, side) {
             let (x, y) = (at.0.round(), at.1.round());
-            self.push(Prim { uv: (s.u, s.v), ..Prim::new(MASK, (x, y), (x + s.w as f32, y + s.h as f32), colour) });
+            self.push(Prim {
+                uv: (s.u, s.v),
+                ..Prim::new(MASK, (x, y), (x + s.w as f32, y + s.h as f32), colour)
+            });
         }
     }
 
@@ -405,7 +508,10 @@ impl Canvas {
             if let Some(s) = self.atlas.glyph(weight, ch, size) {
                 let x = (pen.round() as i32 + s.dx) as f32;
                 let y = (base as i32 + s.dy) as f32;
-                self.push(Prim { uv: (s.u, s.v), ..Prim::new(MASK, (x, y), (x + s.w as f32, y + s.h as f32), colour) });
+                self.push(Prim {
+                    uv: (s.u, s.v),
+                    ..Prim::new(MASK, (x, y), (x + s.w as f32, y + s.h as f32), colour)
+                });
             }
             pen += f.h_advance(id);
             last = Some(id);
@@ -415,7 +521,16 @@ impl Canvas {
 
     /// Text cut to fit `max` pixels, with an ellipsis.
     #[allow(clippy::too_many_arguments)]
-    pub fn text_fit(&mut self, weight: Weight, px: f32, at: (f32, f32), align: Align, text: &str, max: f32, colour: Rgba) -> f32 {
+    pub fn text_fit(
+        &mut self,
+        weight: Weight,
+        px: f32,
+        at: (f32, f32),
+        align: Align,
+        text: &str,
+        max: f32,
+        colour: Rgba,
+    ) -> f32 {
         if self.atlas.measure(weight, px, text) <= max {
             return self.text(weight, px, at, align, text, colour);
         }
@@ -429,7 +544,16 @@ impl Canvas {
     /// Text wrapped to `max` pixels a line, `lead` pixels between
     /// baselines, from a first baseline at `at`. Returns the lines used.
     #[allow(clippy::too_many_arguments)]
-    pub fn paragraph(&mut self, weight: Weight, px: f32, at: (f32, f32), max: f32, lead: f32, text: &str, colour: Rgba) -> usize {
+    pub fn paragraph(
+        &mut self,
+        weight: Weight,
+        px: f32,
+        at: (f32, f32),
+        max: f32,
+        lead: f32,
+        text: &str,
+        colour: Rgba,
+    ) -> usize {
         let lines = self.wrap(weight, px, max, text);
         for (k, l) in lines.iter().enumerate() {
             self.text(weight, px, (at.0, at.1 + k as f32 * lead), Align::Left, l, colour);
@@ -443,7 +567,11 @@ impl Canvas {
         for para in text.split('\n') {
             let mut line = String::new();
             for word in para.split(' ') {
-                let trial = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
+                let trial = if line.is_empty() {
+                    word.to_string()
+                } else {
+                    format!("{line} {word}")
+                };
                 if self.atlas.measure(weight, px, &trial) > max && !line.is_empty() {
                     out.push(std::mem::take(&mut line));
                     line = word.to_string();
@@ -505,7 +633,12 @@ impl Canvas {
 }
 
 fn storage(dev: &wgpu::Device, label: &str, bytes: u64) -> wgpu::Buffer {
-    dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16), usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false })
+    dev.create_buffer(&wgpu::BufferDescriptor {
+        label: Some(label),
+        size: bytes.max(16),
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
 }
 
 /// The GPU side: draws a `Canvas` onto the view's `out` buffer.
@@ -528,19 +661,52 @@ pub struct CanvasPass {
 
 impl CanvasPass {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("canvas"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("canvas"),
+            source: wgpu::ShaderSource::Wgsl(SHADER.into()),
+        });
         let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None },
+            ty: wgpu::BindingType::Buffer {
+                ty,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, ro), entry(5, wgpu::BufferBindingType::Storage { read_only: false })];
-        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("canvas"), entries: &entries });
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("canvas"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
-        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("canvas"), layout: Some(&layout), module: &module, entry_point: Some("draw"), compilation_options: Default::default(), cache: None });
-        let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("canvas params"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let entries = [
+            entry(0, wgpu::BufferBindingType::Uniform),
+            entry(1, ro),
+            entry(2, ro),
+            entry(3, ro),
+            entry(4, ro),
+            entry(5, wgpu::BufferBindingType::Storage { read_only: false }),
+        ];
+        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("canvas"),
+            entries: &entries,
+        });
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("canvas"),
+            bind_group_layouts: &[Some(&bgl)],
+            immediate_size: 0,
+        });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("canvas"),
+            layout: Some(&layout),
+            module: &module,
+            entry_point: Some("draw"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
+        let params = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("canvas params"),
+            size: 32,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
         CanvasPass {
             device: device.clone(),
             queue: queue.clone(),
@@ -573,7 +739,11 @@ impl CanvasPass {
         }
         self.queue.write_buffer(&self.offsets, 0, &u32s(&offsets));
         if self.items.size() < (items.len() * 4) as u64 {
-            self.items = storage(&self.device, "canvas items", (items.len() * 4).next_power_of_two() as u64);
+            self.items = storage(
+                &self.device,
+                "canvas items",
+                (items.len() * 4).next_power_of_two() as u64,
+            );
             self.group = None;
         }
         if !items.is_empty() {
@@ -581,7 +751,11 @@ impl CanvasPass {
         }
         let words = c.words();
         if self.prims.size() < (words.len() * 4) as u64 {
-            self.prims = storage(&self.device, "canvas prims", (words.len() * 4).next_power_of_two() as u64);
+            self.prims = storage(
+                &self.device,
+                "canvas prims",
+                (words.len() * 4).next_power_of_two() as u64,
+            );
             self.group = None;
         }
         if !words.is_empty() {
@@ -598,26 +772,62 @@ impl CanvasPass {
     }
 
     /// As `record`, writing GPU timestamps at the pass's start and end.
-    pub fn record_timed(&mut self, enc: &mut wgpu::CommandEncoder, out: &wgpu::Buffer, stride: u32, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>) {
-        let tw = stamp.map(|(q, a, b)| wgpu::ComputePassTimestampWrites { query_set: q, beginning_of_pass_write_index: a, end_of_pass_write_index: b });
+    pub fn record_timed(
+        &mut self,
+        enc: &mut wgpu::CommandEncoder,
+        out: &wgpu::Buffer,
+        stride: u32,
+        stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>,
+    ) {
+        let tw = stamp.map(|(q, a, b)| wgpu::ComputePassTimestampWrites {
+            query_set: q,
+            beginning_of_pass_write_index: a,
+            end_of_pass_write_index: b,
+        });
         if self.n == 0 {
             // Nothing to draw; an empty pass still writes the timestamps.
             if tw.is_some() {
-                drop(enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("canvas"), timestamp_writes: tw }));
+                drop(enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                    label: Some("canvas"),
+                    timestamp_writes: tw,
+                }));
             }
             return;
         }
         let stale = self.group.as_ref().is_none_or(|(_, o)| o != out);
         if stale || self.stride != stride {
             let bufs = [&self.params, &self.prims, &self.offsets, &self.items, &self.atlas, out];
-            let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
-            let g = self.device.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("canvas"), layout: &self.bgl, entries: &entries });
+            let entries: Vec<wgpu::BindGroupEntry> = bufs
+                .iter()
+                .enumerate()
+                .map(|(i, b)| wgpu::BindGroupEntry {
+                    binding: i as u32,
+                    resource: b.as_entire_binding(),
+                })
+                .collect();
+            let g = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("canvas"),
+                layout: &self.bgl,
+                entries: &entries,
+            });
             self.group = Some((g, out.clone()));
         }
         self.stride = stride;
-        let p = [self.screen.0, self.screen.1, stride, self.tiles.0, self.tiles.1, self.n, ATLAS, 0];
+        let p = [
+            self.screen.0,
+            self.screen.1,
+            stride,
+            self.tiles.0,
+            self.tiles.1,
+            self.n,
+            ATLAS,
+            0,
+        ];
         self.queue.write_buffer(&self.params, 0, &u32s(&p));
-        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("canvas"), timestamp_writes: tw });
+        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
+            label: Some("canvas"),
+            timestamp_writes: tw,
+        });
         pass.set_pipeline(&self.pipe);
         pass.set_bind_group(0, &self.group.as_ref().unwrap().0, &[]);
         pass.dispatch_workgroups(self.tiles.0, self.tiles.1, 1);
@@ -700,6 +910,8 @@ mod tests {
         let c = Canvas::new((100, 100));
         let lines = c.wrap(Weight::Medium, 14.0, 80.0, "Lay a wall the mould must wear through");
         assert!(lines.len() >= 3, "{lines:?}");
-        assert!(lines.iter().all(|l| c.atlas.measure(Weight::Medium, 14.0, l) <= 80.0 || !l.contains(' ')));
+        assert!(lines
+            .iter()
+            .all(|l| c.atlas.measure(Weight::Medium, 14.0, l) <= 80.0 || !l.contains(' ')));
     }
 }
