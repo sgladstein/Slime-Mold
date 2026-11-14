@@ -88,9 +88,15 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // default; how often (steps) a condensed piece may leave for an
         // untouched crystal. Needs Condense.
         ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off"),
+        // Plants (11-14, `mould::plants`): on by default; a stand-in
+        // field on maps without their own. Fire from blasts and scorch
+        // rounds burns through them.
+        ("plants", "Plants", &["0", "1"][..], "Plants grow on the map and burn: blasts and scorch rounds light them, the slime's body stops fire; 0 is off"),
     ];
     for (k, label, choices, note) in notes {
-        let d = c_default(k);
+        // Plants are an engine setting (`Settings::plants`, on), not a
+        // shape key, so the shape's fallback "0" would show them off.
+        let d = if k == "plants" { "1".to_string() } else { c_default(k) };
         let now = key_value(&base.keys, k).map_or(d.clone(), str::to_string);
         o.push(Opt::new(k, label, choices, &d, &now, note));
     }

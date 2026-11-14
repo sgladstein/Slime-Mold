@@ -1706,7 +1706,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
 
-    Map { w, h, ground, items }
+    Map { w, h, ground, plants: Vec::new(), items }
 }
 
 // ---------------------------------------------------------------------
