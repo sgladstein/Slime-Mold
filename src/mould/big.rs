@@ -984,6 +984,29 @@ pub struct BigParams {
     /// dark rim (graphics thread's render of the disc, 11-12 10:11Z).
     /// Blasts (`scorch_disc`) keep their flat disc. Off by default.
     pub scorch_cone: bool,
+    /// Plants (`mould::plants`, 2026-11-14; owner 17:02Z: fully new, not
+    /// the grass above): a field a fine cell that grows toward its
+    /// capacity and spreads into its neighbours, once a tick. On where a
+    /// map's B channel holds any plants or `plant_fill` > 0, else empty.
+    /// `plant_grow` and `plant_spread` are a tick's rates (the rule in
+    /// `plants.rs`), `plant_wet` the pace on wet ground, `plant_scorch` the
+    /// share a scorched cell loses a tick, `plant_cap` the capacity a soil
+    /// kind, `plant_kinds` each plant kind's own (`plants::KIND`). Why these numbers: a cell beside full growth fills in about
+    /// 15 s and a front crosses a 10-cell graze in about half a minute
+    /// (`plants::tests`), slow enough that a stripped patch stays a patch
+    /// for a fight, fast enough to see it close in a level.
+    pub plant_grow: f32,
+    pub plant_spread: f32,
+    pub plant_wet: f32,
+    pub plant_scorch: f32,
+    pub plant_fill: f32,
+    /// Ticks between plant steps (each step's rates times this): the rule
+    /// on 512 x 320 cells costs about 0.9 ms of CPU, so once a tick would be
+    /// a tenth of the CPU world's time; every 8 ticks (15 a second) is
+    /// still smooth, as the field moves a cell in seconds.
+    pub plant_every: u32,
+    pub plant_cap: [f32; crate::mould::plants::SOIL_KINDS],
+    pub plant_kinds: [crate::mould::plants::Kind; crate::mould::plants::KINDS],
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -1189,6 +1212,14 @@ impl BigParams {
             scorch_keep: 0.1,
             scorch_full: 30,
             scorch_cone: false,
+            plant_grow: 0.0007,
+            plant_spread: 0.0015,
+            plant_wet: 2.0,
+            plant_scorch: 0.05,
+            plant_fill: 0.0,
+            plant_every: 8,
+            plant_cap: crate::mould::plants::SOIL_CAP,
+            plant_kinds: crate::mould::plants::KIND,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
@@ -1337,6 +1368,11 @@ pub struct BigDish {
     pub soil: Vec<u8>,
     /// Fine steps of scorch left a fine cell (`scorch_disc`), else empty.
     pub scorch: Vec<u16>,
+    /// Plant density a fine cell (`BigParams::plant_grow`), else empty;
+    /// each cell's soil capacity (`plants::soil_capacity`) and plant kind.
+    pub plant: Vec<f32>,
+    pub plant_cap: Vec<f32>,
+    pub plant_kind: Vec<u8>,
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
     /// dormant walker is not woken by scent, only by alarm.
     pub gassed: Vec<u16>,
@@ -1560,6 +1596,9 @@ impl BigDish {
             wet: Vec::new(),
             soil: Vec::new(),
             scorch: Vec::new(),
+            plant: Vec::new(),
+            plant_cap: Vec::new(),
+            plant_kind: Vec::new(),
             gassed: Vec::new(),
             flung: Vec::new(),
             gas_cloud: Vec::new(),
@@ -1636,7 +1675,57 @@ impl BigDish {
             let (cx, cy) = (W as f32 / 2.0, H as f32 / 2.0);
             d.infect(cx, cy, d.p.sick_seed_r);
         }
+        d.place_plants(map);
         d
+    }
+
+    /// The plant field's start (`BigParams::plant_grow`): a map's B channel
+    /// where it has any, else `plant_fill` everywhere, each capped by its
+    /// cell's capacity; empty (plants off) when neither gives any.
+    fn place_plants(&mut self, map: Option<&Map>) {
+        use crate::mould::plants as pl;
+        let has_map = map.is_some_and(|m| !m.plants.is_empty());
+        if !has_map && self.p.plant_fill <= 0.0 {
+            return;
+        }
+        let (w, s) = (self.w, self.p.scale);
+        self.plant_cap = pl::soil_capacity(&self.agar, &self.soil, &self.p.plant_cap);
+        let (fill, n) = (self.p.plant_fill, self.w * self.h);
+        let start: Vec<(u8, f32)> = (0..n)
+            .map(|i| match map {
+                Some(m) if has_map => pl::unpack(m.plant_fine(s, i % w, i / w)),
+                _ => (pl::MEADOW, fill),
+            })
+            .collect();
+        self.plant_kind = start.iter().map(|&(k, _)| k).collect();
+        let g = pl::Ground { w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &[] };
+        let r = self.plant_rates();
+        self.plant = (0..n)
+            .map(|i| {
+                let crystal = !self.pile_of.is_empty() && self.pile_of[i] != 0;
+                if crystal || !self.agar[i] {
+                    0.0
+                } else {
+                    start[i].1.min(pl::cap_of(&g, &r, i, start[i].0))
+                }
+            })
+            .collect();
+    }
+
+    fn plant_rates(&self) -> crate::mould::plants::Rates {
+        let k = self.p.plant_every.max(1) as f32;
+        crate::mould::plants::Rates { grow: self.p.plant_grow * k, spread: self.p.plant_spread * k, wet: self.p.plant_wet, scorch: (self.p.plant_scorch * k).min(1.0), kinds: self.p.plant_kinds }
+    }
+
+    /// One tick of the plants (`plants::step`), where they are on.
+    fn plant_tick(&mut self) {
+        if self.plant.is_empty() || !self.ticks.is_multiple_of(self.p.plant_every.max(1) as u64) {
+            return;
+        }
+        let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
+        let r = self.plant_rates();
+        crate::mould::plants::step(&g, r, &self.plant, &mut self.scratch, &mut self.plant_kind);
+        std::mem::swap(&mut self.plant, &mut self.scratch);
     }
 
     /// Contagion: every walker within `r` dish cells of (`x`, `y`, dish
@@ -3792,6 +3881,7 @@ impl BigDish {
         if self.p.scent_coarse {
             self.scent_step();
         }
+        self.plant_tick();
         self.update_reached();
         self.ticks += 1;
     }
@@ -3964,10 +4054,10 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(&self.plant).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
-        for &c in self.spec.iter().chain(&self.kind) {
+        for &c in self.spec.iter().chain(&self.kind).chain(&self.plant_kind) {
             eat(c as u32);
         }
         for &c in self.sick.iter().chain(&self.age).chain(&self.life_t) {

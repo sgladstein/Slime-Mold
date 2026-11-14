@@ -162,7 +162,7 @@ fn duel_map(seed: u64, walkers: usize) -> Map {
     items.crystals = crystals;
     items.moulds = vec![(home.x, home.y), (MAP_W as f32 - home.x, home.y)];
     items.landing = None;
-    Map { ground, items }
+    Map { ground, plants: Vec::new(), items }
 }
 
 fn duel(o: &Opts, seed: u64, left: &str, right: &str) -> BigDish {

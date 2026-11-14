@@ -184,7 +184,7 @@ impl Editor {
 
     /// A blank map: plain open ground, no items.
     pub fn blank() -> Map {
-        Map { ground: vec![0; MAP_W * MAP_H], items: Items::default() }
+        Map { ground: vec![0; MAP_W * MAP_H], plants: Vec::new(), items: Items::default() }
     }
 
     /// Call before each action (a stroke's first stamp, a click): keeps the

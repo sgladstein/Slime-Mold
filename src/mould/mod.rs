@@ -73,6 +73,7 @@ pub mod map_edit;
 pub mod organ;
 pub mod own_mould;
 pub mod plans;
+pub mod plants;
 pub mod play;
 pub mod render;
 pub mod rounds;

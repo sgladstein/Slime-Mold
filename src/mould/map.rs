@@ -3,7 +3,11 @@
 //!
 //! - `<name>.png`, 1024 x 640, RGBA: G is the engine ground word's bits
 //!   8-15 (`G_WET` 0x01, `G_ROCK` 0x08, the soil kind in the high nibble).
-//!   R is height, parked (owner, 20:06Z), so the loader ignores it; B is 0.
+//!   R is height, parked (owner, 20:06Z), so the loader ignores it; B is
+//!   the start plants (`Map::plants`, plants and levelgen threads,
+//!   2026-11-14): the plant kind in the top 2 bits (`plants::MEADOW`,
+//!   `JUNGLE`, `REEDS`, `SCRUB`), the density 1-63 in the low 6, 0 no
+//!   plant (`plants::pack`); B 0 everywhere is a map with no plants.
 //! - `<name>.txt`, one item a line, in the same 1024 x 640 cells:
 //!   `crystal x y r charge` (centre, radius, charge a cell), `mould x y`
 //!   (a start of the mould's; a map may give several, and the walkers are
@@ -61,6 +65,9 @@ pub struct Items {
 pub struct Map {
     /// The G byte a map cell, row-major, `MAP_W` x `MAP_H`.
     pub ground: Vec<u8>,
+    /// The B byte a map cell, the start plants (`plants::pack`),
+    /// or empty: a map with B all 0 has no plants.
+    pub plants: Vec<u8>,
     pub items: Items,
 }
 
@@ -128,14 +135,21 @@ impl Map {
             return Err(format!("{}: {} x {}, want {MAP_W} x {MAP_H}", png.display(), img.width(), img.height()));
         }
         let ground = img.pixels().map(|p| p.0[1]).collect();
+        let mut plants: Vec<u8> = img.pixels().map(|p| p.0[2]).collect();
+        if plants.iter().all(|&b| b == 0) {
+            plants = Vec::new();
+        }
         let text = std::fs::read_to_string(&txt).map_err(|e| format!("{}: {e}", txt.display()))?;
         let items = Items::parse(&text).map_err(|e| format!("{}: {e}", txt.display()))?;
-        Ok(Map { ground, items })
+        Ok(Map { ground, plants, items })
     }
 
-    /// Writes `<dir>/<name>.png` (R and B 0, A 255) and `<dir>/<name>.txt`.
+    /// Writes `<dir>/<name>.png` (R 0, B the plants, A 255) and `<dir>/<name>.txt`.
     pub fn save(&self, dir: &Path, name: &str) -> Result<(), String> {
-        let img = image::RgbaImage::from_fn(MAP_W as u32, MAP_H as u32, |x, y| image::Rgba([0, self.ground[y as usize * MAP_W + x as usize], 0, 255]));
+        let img = image::RgbaImage::from_fn(MAP_W as u32, MAP_H as u32, |x, y| {
+            let i = y as usize * MAP_W + x as usize;
+            image::Rgba([0, self.ground[i], if self.plants.is_empty() { 0 } else { self.plants[i] }, 255])
+        });
         let png = dir.join(format!("{name}.png"));
         img.save(&png).map_err(|e| format!("{}: {e}", png.display()))?;
         let txt = dir.join(format!("{name}.txt"));
@@ -149,6 +163,18 @@ impl Map {
         let x = (((fx as f32 + 0.5) * k) as usize).min(MAP_W - 1);
         let y = (((fy as f32 + 0.5) * k) as usize).min(MAP_H - 1);
         self.ground[y * MAP_W + x]
+    }
+
+    /// The B byte (`plants::unpack`) under fine cell (`fx`, `fy`), sampled
+    /// as `ground_fine` samples the ground; 0 on a map with no plants.
+    pub fn plant_fine(&self, scale: usize, fx: usize, fy: usize) -> u8 {
+        if self.plants.is_empty() {
+            return 0;
+        }
+        let k = MAP_SCALE / scale as f32;
+        let x = (((fx as f32 + 0.5) * k) as usize).min(MAP_W - 1);
+        let y = (((fy as f32 + 0.5) * k) as usize).min(MAP_H - 1);
+        self.plants[y * MAP_W + x]
     }
 
     /// Map cells to dish cells.
@@ -178,10 +204,20 @@ impl Map {
                 }
             })
             .collect();
+        let plants = if d.plant.is_empty() {
+            Vec::new()
+        } else {
+            (0..MAP_W * MAP_H)
+                .map(|c| {
+                    let i = (c / MAP_W * s / 4) * d.w + c % MAP_W * s / 4;
+                    crate::mould::plants::pack(d.plant_kind[i], d.plant[i])
+                })
+                .collect()
+        };
         let k = MAP_SCALE;
         let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
         let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
-        Map { ground, items }
+        Map { ground, plants, items }
     }
 }
 
@@ -206,7 +242,7 @@ mod tests {
     fn a_world_at_scale_two_takes_every_other_cell() {
         let mut ground = vec![0u8; MAP_W * MAP_H];
         ground[3 * MAP_W + 5] = G_ROCK;
-        let m = Map { ground, items: Items::default() };
+        let m = Map { ground, plants: Vec::new(), items: Items::default() };
         // Fine cell (2, 1) at scale 2 covers map cells 4-5 x 2-3; its
         // centre is map cell (5, 3).
         assert_eq!(m.ground_fine(2, 2, 1), G_ROCK);
