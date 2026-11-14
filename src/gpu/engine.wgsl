@@ -2859,6 +2859,20 @@ fn gaslay(@builtin(global_invocation_id) gid: vec3<u32>) {
     germ_in[2u * c + i] = germ_in[2u * c + i] + P.kalarm;
 }
 
+// **Bait laid** (`Engine::lay_scent`, the CPU's `BigDish::lay_bait`,
+// 11-14, the rounds' `Bait` trail): every agar cell `gaslay` would pick
+// gains the strike row's `kalarm` of food scent, in the field the next
+// tick reads, as the units' `smell` adds theirs.
+@compute @workgroup_size(256)
+fn baitlay(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h || agar[i] == 0u) { return; }
+    let dx = i32(i % P.w) - i32(P.kx);
+    let dy = i32(i / P.w) - i32(P.ky);
+    if (f32(dx * dx + dy * dy) > P.kr * P.kr) { return; }
+    scent_in[i] = scent_in[i] + P.kalarm;
+}
+
 // **Sleep in the cloud** (the CPU's `gas_sleepers`, at the end of a tick
 // with a cloud): every living ordinary or dormant walker on a cell with
 // more cloud than `gas_sleep` (header word 5) falls (or stays) dormant, timer 0, and is

@@ -42,8 +42,15 @@ th { font-weight:600; }
 
   <section>
     <h2>Alarm is visible, and the default slime ignores it</h2>
-    <p>Alarm is now drawn as a green haze, straight from its field. Filming it showed that the default slime does not react to alarm at all: this run's counts match the plain run exactly. Only the Sleeper, Swarmer and Grudge tiers respond, and they walk toward it. What the Alarm card should become is your call, on the card in the thread.</p>
+    <p>Alarm is now drawn as a green haze, straight from its field. Filming it showed that the default slime does not react to alarm at all: this run's counts match the plain run exactly. Only the Sleeper, Swarmer and Grudge tiers respond, and they walk toward it. You chose to swap it for bait, below.</p>
     <figure><img src="alarm.gif" alt="Alarm loadout: a green haze of alarm around the squad"><figcaption><span class="tag green">Alarm</span><span class="counts">678 killed · mould 24,651 · 156 shots (the same as plain)</span></figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Bait replaces Alarm</h2>
+    <p>You picked swapping Alarm for bait. A Bait bullet lays a line of food scent along its flight, the same scent crystals give off, so every slime follows it. A bullet stops at the first slime it hits, so the bait always lies between the squad and the slime and pulls it into the squad's fire. Paired with Scorch, the bait pulls the slime onto the burning line.</p>
+    <figure><img src="bait.gif" alt="Bait loadout: the slime pulled toward the squad's line of fire"><figcaption><span class="tag">Bait</span><span class="counts">808 killed · mould 24,542 · 167 shots</span></figcaption></figure>
+    <figure><img src="killzone.gif" alt="Bait and Scorch: the slime pulled onto a burning line"><figcaption><span class="tag ember">Bait + scorch (killzone)</span><span class="counts">1,514 killed · 588 by the burn · mould 23,846 · 160 shots</span></figcaption></figure>
   </section>
 
   <section>
@@ -53,7 +60,9 @@ th { font-weight:600; }
       <tbody>
         <tr><td>plain</td><td>24,651</td><td>678</td><td>0</td><td>156</td><td>0</td></tr>
         <tr><td>scorch + scorch</td><td>23,215</td><td>2,297</td><td>1,493</td><td>136</td><td>1,892</td></tr>
-        <tr><td>alarm</td><td>24,651</td><td>678</td><td>0</td><td>156</td><td>1,424</td></tr>
+        <tr><td>alarm (before the swap)</td><td>24,651</td><td>678</td><td>0</td><td>156</td><td>1,424</td></tr>
+        <tr><td>bait</td><td>24,542</td><td>808</td><td>0</td><td>167</td><td>1,431</td></tr>
+        <tr><td>bait + scorch</td><td>23,846</td><td>1,514</td><td>588</td><td>160</td><td>1,870</td></tr>
       </tbody>
     </table></div>
     <p class="muted">These counts come from one seed, so they're a tuning note, not a result. They were rendered on the cloud's software GPU, and the burn's frame cost hasn't been timed on the 1070 yet.</p>

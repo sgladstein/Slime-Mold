@@ -1,4 +1,4 @@
-# Burning Scorch, and crater and alarm drawn on the ground (2026-11-14)
+# Burning Scorch, a Bait trail, and crater and alarm drawn on the ground (2026-11-14)
 
 The owner asked about the trail cards (#244) at 08:40Z: "how are scotch and
 alarm different. It just makes a virtual wall for the slime?". When told
@@ -30,8 +30,19 @@ should be visible though" and "100%". At 08:41Z they added: "Scorch actually bur
 - **The Alarm card's text was wrong.** The default mould (C) has
   `alarm_weight` 0, so it ignores alarm. The Sleeper, Swarmer and Grudge
   walk toward it (+3). Making the plain mould flee alarm is a dead end
-  (`Reports/dead-ends.md`, the flee rows). The text now says what the card
-  does, and what it should become is on an owner card.
+  (`Reports/dead-ends.md`, the flee rows). The owner picked swapping it
+  for bait on a card at 09:02Z.
+- **Bait replaces Alarm.** `rounds::Card::Bait` (`bait`) lays food scent
+  along the flight (`squad::Burst::bait`, `BigDish::lay_bait`, and on the
+  GPU the `baitlay` pass, 55). This is the field crystals, soldiers and lures
+  smell of, so every mould follows it. The amount is `trail_bait` 40 x a
+  soldier's frame of smell (400 at the race world's food deposit 20) per
+  disc. The new loadouts are `bait` and `killzone` (bait+scorch). Because a
+  leg ends at the first slime it hits, the bait lies between the squad and
+  the slime, so it draws the mould into the squad's fire, or into a scorch
+  line. The scent shows only as the ground's existing scent tint, which is
+  faint under the mould; it gets no colour of its own, because scent is
+  everywhere near crystals.
 
 ## Films and counts
 
@@ -44,7 +55,9 @@ screen 800x500, on llvmpipe.
 |---|---|---|---|---|---|
 | plain | 24,651 | 678 | 0 | 156 | 0 |
 | scorch+scorch | 23,215 | 2,297 | 1,493 | 136 | 1,892 |
-| alarm | 24,651 | 678 | 0 | 156 | 1,424 |
+| alarm (before the swap) | 24,651 | 678 | 0 | 156 | 1,424 |
+| bait | 24,542 | 808 | 0 | 167 | 1,431 |
+| bait+scorch (killzone) | 23,846 | 1,514 | 588 | 160 | 1,870 |
 
 The alarm row matches plain to the walker, because the plain mould doesn't
 read alarm. All three rows are one seed, so treat them as a tuning note. Scorch now
@@ -57,7 +70,8 @@ strong in play, `trail_r` or `trail_burn` is the knob.
   burns walkers, and the game kills more than with no round.
 - `trail_cards_lay_discs_along_the_leg_and_cast_nothing`: only scorch
   burns, and `trail_burn` off turns it off.
-- The CPU/GPU trail twin (`mouldgpu`) still matches with the burn.
+- The CPU/GPU trail twin (`mouldgpu`): scorch+bait+mist. 22 walkers burned on
+  both engines, and crater, bait scent and cloud matched cell for cell (486 each, 0 off).
 
 ## Not done
 

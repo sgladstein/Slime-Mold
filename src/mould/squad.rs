@@ -173,6 +173,12 @@ pub struct Burst {
     /// stands in it from the next step. Needs `BurstRules::gas_keep`. 0:
     /// none.
     pub cloud: f32,
+    /// **Bait** (the rounds' `Bait` trail, owner 2026-11-14 09:02Z, in
+    /// place of the alarm trail the default mould ignored): this much food
+    /// scent added to the agar within `r` (`BigDish::lay_bait`), the same
+    /// field crystals, soldiers and lures smell of, so every mould follows
+    /// it while it lasts. 0: none.
+    pub bait: f32,
 }
 
 impl Burst {
@@ -248,6 +254,9 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     if b.cloud > 0.0 && k.gas_keep > 0.0 {
         (d.p.gas_keep, d.p.gas_sleep, d.p.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
         d.lay_gas(b.at.0 * s, b.at.1 * s, b.r * s, b.cloud);
+    }
+    if b.bait > 0.0 {
+        d.lay_bait(b.at.0 * s, b.at.1 * s, b.r * s, b.bait);
     }
     if b.germ {
         if d.sick.is_empty() {

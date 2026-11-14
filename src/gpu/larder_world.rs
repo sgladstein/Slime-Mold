@@ -626,6 +626,9 @@ impl World for GpuWorld {
                 self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
             }
         }
+        if b.bait > 0.0 {
+            self.e.lay_scent(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.bait);
+        }
         if b.cloud > 0.0 && k.gas_keep > 0.0 {
             (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
             self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.cloud);
