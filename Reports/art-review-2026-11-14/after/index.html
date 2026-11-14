@@ -1,0 +1,104 @@
+<title>Larder World Art Review, After</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: before and after side by side for each shot, verdict below; dark like the game's HUD. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1318; --line: #2a313b; --fg: #ecf0f4; --muted: #929ca8;
+  --slime: #e2a64a; --good: #5ed684; --warn: #f2c054; --bad: #f26262;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, sans-serif;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-size: 2.1rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.2rem; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+.lede { color: var(--muted); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair figure { margin: 0; min-width: 0; }
+img { width: 100%; display: block; border-radius: 4px; border: 1px solid var(--line); }
+figcaption { font-size: 0.8rem; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 22px; }
+.tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-right: 8px; letter-spacing: 0.02em; }
+.ok { background: color-mix(in srgb, var(--good) 20%, transparent); color: var(--good); }
+.part { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+.no { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+.tbl { overflow-x: auto; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Larder World art review: after</h1>
+    <p class="lede">Each shot from the 14 Nov review, re-rendered on main at 68870d0 with the same command, map (Fork), seed and camera. Left is 7df2182, right is today. Software Vulkan, 1280 × 800. <a href="https://claude.ai/artifact/6FHfyB88A8Mtk5cQkkuVDm" style="color:var(--slime)">The first review</a>.</p>
+  </header>
+
+  <section>
+    <h2><span class="tag ok">fixed</span>Slime out of focus · stair-step edges</h2>
+    <div class="pair">
+      <figure><img src="before-5-walls-slime-z12-zoomed.jpg" alt="Before: stair-stepped rock and blurred slime, zoom 12 crop"><figcaption>Before, zoom 12 enlarged 2×</figcaption></figure>
+      <figure><img src="5-walls-slime-z12-zoomed.jpg" alt="After: smooth rock edge and sharp slime, same crop"><figcaption>After, same crop</figcaption></figure>
+    </div>
+    <p>The slime is sharp at zoom 12, and rock edges are smooth with a short shadow (#241, #228). The cell staircase is gone.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag ok">fixed</span>Squad you can count · HUD over the fight</h2>
+    <div class="pair">
+      <figure><img src="before-3-fight-z6.jpg" alt="Before: zoom 6, two soldier figures, tall bottom bar"><figcaption>Before, zoom 6, 0:24: 8 selected, 2 figures, bar 160 px</figcaption></figure>
+      <figure><img src="3-fight-z6.jpg" alt="After: zoom 6, nine outlined soldiers in two group rings, shorter bar"><figcaption>After, 0:24: 9 selected, 9 figures in two group rings, bar 120 px</figcaption></figure>
+    </div>
+    <p>The soldiers are outlined and spread out, with group rings, health only when hurt and a card strip (#227, #232, #233). Within a knot they still overlap a little.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag ok">fixed</span>Shots barely show · <span class="tag part">watch</span>slime material</h2>
+    <div class="pair">
+      <figure><img src="before-2-fight-z12.jpg" alt="Before: zoom 12 fight, blurred slime"><figcaption>Before, zoom 12, 0:23</figcaption></figure>
+      <figure><img src="6-volley-z12.gif" alt="After: three seconds of shrapnel volley at zoom 12"><figcaption>After, zoom 12, 0:23-0:26, shrapnel</figcaption></figure>
+    </div>
+    <p>Shots read as light on the slime (#219), and the body is glossy gold with detail in its middle (#241). Two things are new. The thin frontier now reads as pebbles, because each lone walker raises a dome with its own cast shadow. And the dense body's highlights are so fine it looks like crumpled foil. Both go back to the slime thread.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag ok">fixed</span>Hard shapes · <span class="tag no">open</span>flat ground and tint discs</h2>
+    <div class="pair">
+      <figure><img src="before-1-overview-z1.jpg" alt="Before: whole map"><figcaption>Before, 1:10, rush hand: mould 32,398</figcaption></figure>
+      <figure><img src="1-overview-z1.jpg" alt="After: whole map, crisp hexagons and rock"><figcaption>After, 1:10: mould 32.3k</figcaption></figure>
+    </div>
+    <p>The hexagons and rock are crisp at every zoom. The ground is still one flat olive, and the engine's tints still show as flat discs (blue at top left, orange round the bottom crystal). That's next for the crystals thread.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag ok">new</span>Harvesting · <span class="tag part">watch</span>spent crystals</h2>
+    <div class="pair">
+      <figure><img src="7-farm-z6.jpg" alt="Farm hand at 1:00, zoom 6, soldiers carrying cyan packs, grey spent crystals"><figcaption>After, farm hand, 1:00, zoom 6: 14 soldiers, 94% taken</figcaption></figure>
+      <figure><img src="4-menu-z6.jpg" alt="Start menu at 0:03"><figcaption>After, start menu at 0:03</figcaption></figure>
+    </div>
+    <p>Carriers glow cyan and the larder lights as it banks (#238), and crystals drain (#228). A spent crystal is now a large flat grey hexagon that reads like a UI block. It should look like worn rock.</p>
+  </section>
+
+  <section>
+    <h2>Where the ten stand</h2>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Issue</th><th>Now</th></tr>
+      <tr><td>1</td><td>Slime out of focus</td><td><span class="tag ok">fixed</span>Sharp slime, #241</td></tr>
+      <tr><td>2</td><td>Stair-step edges</td><td><span class="tag ok">fixed</span>#228</td></tr>
+      <tr><td>3</td><td>Slime reads as sand</td><td><span class="tag part">mostly</span>Gold and glossy; the frontier reads as pebbles and the body as foil</td></tr>
+      <tr><td>4</td><td>Shots barely show</td><td><span class="tag ok">fixed</span>#219</td></tr>
+      <tr><td>5</td><td>Can't count the squad</td><td><span class="tag ok">fixed</span>#227, #232</td></tr>
+      <tr><td>6</td><td>HUD hides the fight</td><td><span class="tag ok">fixed</span>#233: 15% of the screen</td></tr>
+      <tr><td>7</td><td>Flat ground</td><td><span class="tag no">open</span>Crystals thread, next</td></tr>
+      <tr><td>8</td><td>Explosions, gas</td><td><span class="tag ok">landed</span>Bomb #225; gas cloud follows</td></tr>
+      <tr><td>9</td><td>Menu</td><td><span class="tag ok">fixed</span>Through 1 and 2</td></tr>
+      <tr><td>10</td><td>Map editor</td><td><span class="tag part">to review</span></td></tr>
+    </table></div>
+  </section>
+</div>
