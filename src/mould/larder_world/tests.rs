@@ -147,7 +147,7 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, reach: 0 };
+    let both = BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 };
     let a = run(both);
     assert_eq!(a, run(both), "the same seed played twice");
     let plain = run(BulletMods::default());
@@ -1845,9 +1845,9 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     }
     assert!(!g.engaged(0), "30 cells is past the plain range");
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
-    assert!((g.gun_range() - 36.0).abs() < 1e-4);
-    assert!(g.engaged(0), "one Range card reaches 36 cells");
-    // Fired legs: free fire with the card flies out to 36 cells.
+    assert!((g.gun_range() - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
+    assert!(g.engaged(0), "one Range card reaches 48 cells");
+    // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
     for k in 0..g.soldiers.len() {
@@ -2106,6 +2106,18 @@ fn a_squad_sent_past_a_dead_end_goes_round_it() {
     }
     assert!(tried.len() >= 2, "the cup stood on too few seeds: {tried:?}");
     assert!(tried.iter().all(|&(_, best)| best < 6.0), "(seed, nearest the squad came in cells): {tried:?}");
+}
+
+/// The `Rate` card (owner's notes, 11-14 15:06Z: "2-4x ... rate of
+/// fire"): each copy fires every soldier's gun once more as often.
+#[test]
+fn a_rate_card_fires_twice_as_often() {
+    let mut g = small(1);
+    let plain = g.shot_gap(0);
+    g.bullet_mods = BulletMods { rate: 1, ..BulletMods::default() };
+    assert_eq!(g.shot_gap(0), (plain as f32 / 2.0).round().max(1.0) as u64);
+    g.bullet_mods = BulletMods { rate: 3, ..BulletMods::default() };
+    assert_eq!(g.shot_gap(0), (plain as f32 / 4.0).round().max(1.0) as u64, "three cards, four times");
 }
 
 /// Open ground `d` dish cells from squad 0's middle.

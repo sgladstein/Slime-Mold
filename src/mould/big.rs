@@ -4120,7 +4120,9 @@ impl BigDish {
     /// Food scent laid on the agar within `r` of (`x`, `y`) (fine cells),
     /// the cells chosen as `lay_gas` chooses them: the rounds' `Bait`
     /// trail (2026-11-14). The GPU's `baitlay` adds the same.
-    pub fn lay_bait(&mut self, x: f32, y: f32, r: f32, amount: f32) {
+    /// Each cell's scent becomes scent x `keep` + `amount` (`keep` 0 is the
+    /// `Smother` trail's wipe, 1 the bait's add).
+    pub fn lay_bait(&mut self, x: f32, y: f32, r: f32, keep: f32, amount: f32) {
         let (cx, cy) = (x as i64, y as i64);
         let n = r.max(0.0).ceil() as i64;
         for dy in -n..=n {
@@ -4131,7 +4133,7 @@ impl BigDish {
                 }
                 let i = py as usize * self.w + px as usize;
                 if ((dx * dx + dy * dy) as f32) <= r * r && self.agar[i] {
-                    self.scent[i] += amount;
+                    self.scent[i] = self.scent[i] * keep + amount;
                 }
             }
         }
