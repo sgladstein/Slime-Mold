@@ -1,7 +1,8 @@
 //! **Maps** (ROADMAP WM1): a designed Larder world, read from two files
 //! (agreed with the maps thread, 2026-11-11 19:40Z):
 //!
-//! - `<name>.png`, 1024 x 640, RGBA: G is the engine ground word's bits
+//! - `<name>.png`, 1024 x 640 (or any size in whole dish cells, 4 map
+//!   cells each: a generated planet grows with depth), RGBA: G is the engine ground word's bits
 //!   8-15 (`G_WET` 0x01, `G_ROCK` 0x08, the soil kind in the high nibble).
 //!   R is height, parked (owner, 20:06Z), so the loader ignores it; B is 0.
 //! - `<name>.txt`, one item a line, in the same 1024 x 640 cells:
@@ -12,17 +13,23 @@
 //!   written as walls, so the engine builds it as it builds player walls).
 //!   Blank lines and lines from `#` on are skipped.
 //!
-//! The map's cells are the fine cells of the 256 x 160 dish at scale 4, so
-//! a world at scale `s` takes every `4 / s`-th cell (`Map::ground_fine`)
-//! and divides positions by 4 for dish cells (`Map::dish`).
+//! The map's cells are the fine cells of the dish at scale 4 (the 256 x 160
+//! dish for a 1024 x 640 map; a map `w` x `h` makes a `w / 4` x `h / 4`
+//! dish, `Map::dish_size`), so a world at scale `s` takes every `4 / s`-th
+//! cell (`Map::ground_fine`) and divides positions by 4 for dish cells
+//! (`Map::dish`).
 
 use std::path::Path;
 
 use super::big::BigDish;
 
-/// Map cells: the 1024 x 640 world (the dish's 256 x 160 at scale 4).
+/// Map cells: the 1024 x 640 world (the dish's 256 x 160 at scale 4), the
+/// designed maps' size and a new map's.
 pub const MAP_W: usize = 1024;
 pub const MAP_H: usize = 640;
+/// The biggest map the loader takes, each way: a guard against a stray
+/// picture, well past the run's core world (about 2,500 x 1,570).
+pub const MAP_MAX: usize = 4096;
 /// Map cells a dish cell.
 pub const MAP_SCALE: f32 = 4.0;
 
@@ -72,7 +79,10 @@ pub struct Items {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Map {
-    /// The G byte a map cell, row-major, `MAP_W` x `MAP_H`.
+    /// Map cells across and down: multiples of 4 (map cells a dish cell).
+    pub w: usize,
+    pub h: usize,
+    /// The G byte a map cell, row-major, `w` x `h`.
     pub ground: Vec<u8>,
     pub items: Items,
 }
@@ -132,23 +142,34 @@ impl Items {
 }
 
 impl Map {
+    /// A blank map, plain ground and no items, `w` x `h` map cells.
+    pub fn blank(w: usize, h: usize) -> Map {
+        Map { w, h, ground: vec![0; w * h], items: Items::default() }
+    }
+
+    /// The dish this map makes, in dish cells (`BigParams::dish`).
+    pub fn dish_size(&self) -> (usize, usize) {
+        (self.w / 4, self.h / 4)
+    }
+
     /// `<dir>/<name>.png` and `<dir>/<name>.txt`.
     pub fn load(dir: &Path, name: &str) -> Result<Map, String> {
         let png = dir.join(format!("{name}.png"));
         let txt = dir.join(format!("{name}.txt"));
         let img = image::open(&png).map_err(|e| format!("{}: {e}", png.display()))?.to_rgba8();
-        if (img.width() as usize, img.height() as usize) != (MAP_W, MAP_H) {
-            return Err(format!("{}: {} x {}, want {MAP_W} x {MAP_H}", png.display(), img.width(), img.height()));
+        let (w, h) = (img.width() as usize, img.height() as usize);
+        if w % 4 != 0 || h % 4 != 0 || !(64..=MAP_MAX).contains(&w) || !(64..=MAP_MAX).contains(&h) {
+            return Err(format!("{}: {w} x {h}, want multiples of 4 from 64 to {MAP_MAX} (the designed maps are {MAP_W} x {MAP_H})", png.display()));
         }
         let ground = img.pixels().map(|p| p.0[1]).collect();
         let text = std::fs::read_to_string(&txt).map_err(|e| format!("{}: {e}", txt.display()))?;
         let items = Items::parse(&text).map_err(|e| format!("{}: {e}", txt.display()))?;
-        Ok(Map { ground, items })
+        Ok(Map { w, h, ground, items })
     }
 
     /// Writes `<dir>/<name>.png` (R and B 0, A 255) and `<dir>/<name>.txt`.
     pub fn save(&self, dir: &Path, name: &str) -> Result<(), String> {
-        let img = image::RgbaImage::from_fn(MAP_W as u32, MAP_H as u32, |x, y| image::Rgba([0, self.ground[y as usize * MAP_W + x as usize], 0, 255]));
+        let img = image::RgbaImage::from_fn(self.w as u32, self.h as u32, |x, y| image::Rgba([0, self.ground[y as usize * self.w + x as usize], 0, 255]));
         let png = dir.join(format!("{name}.png"));
         img.save(&png).map_err(|e| format!("{}: {e}", png.display()))?;
         let txt = dir.join(format!("{name}.txt"));
@@ -159,9 +180,9 @@ impl Map {
     /// map cell at the fine cell's centre.
     pub fn ground_fine(&self, scale: usize, fx: usize, fy: usize) -> u8 {
         let k = MAP_SCALE / scale as f32;
-        let x = (((fx as f32 + 0.5) * k) as usize).min(MAP_W - 1);
-        let y = (((fy as f32 + 0.5) * k) as usize).min(MAP_H - 1);
-        self.ground[y * MAP_W + x]
+        let x = (((fx as f32 + 0.5) * k) as usize).min(self.w - 1);
+        let y = (((fy as f32 + 0.5) * k) as usize).min(self.h - 1);
+        self.ground[y * self.w + x]
     }
 
     /// What the squad can't walk to from its landing (owner, 2026-11-14:
@@ -174,18 +195,19 @@ impl Map {
     pub fn cut_off(&self) -> Vec<(&'static str, usize)> {
         const NEAR: f32 = 8.0;
         let Some(l) = self.items.landing else { return Vec::new() };
+        let (mw, mh) = (self.w, self.h);
         let ok = |i: usize| standable(self.ground[i]);
-        let mut seen = vec![false; MAP_W * MAP_H];
-        let start = (l.1 as usize).min(MAP_H - 1) * MAP_W + (l.0 as usize).min(MAP_W - 1);
+        let mut seen = vec![false; mw * mh];
+        let start = (l.1 as usize).min(mh - 1) * mw + (l.0 as usize).min(mw - 1);
         let mut stack = vec![start];
         seen[start] = true;
         while let Some(i) = stack.pop() {
-            let (x, y) = (i % MAP_W, i / MAP_W);
+            let (x, y) = (i % mw, i / mw);
             let n = [
                 (x > 0).then(|| i - 1),
-                (x + 1 < MAP_W).then(|| i + 1),
-                (y > 0).then(|| i - MAP_W),
-                (y + 1 < MAP_H).then(|| i + MAP_W),
+                (x + 1 < mw).then(|| i + 1),
+                (y > 0).then(|| i - mw),
+                (y + 1 < mh).then(|| i + mw),
             ];
             for j in n.into_iter().flatten() {
                 if !seen[j] && ok(j) {
@@ -197,14 +219,14 @@ impl Map {
         let near = |c: (f32, f32), r: f32| {
             let (x0, x1) = (
                 (c.0 - r).floor().max(0.0) as usize,
-                ((c.0 + r).ceil() as usize).min(MAP_W - 1),
+                ((c.0 + r).ceil() as usize).min(mw - 1),
             );
             let (y0, y1) = (
                 (c.1 - r).floor().max(0.0) as usize,
-                ((c.1 + r).ceil() as usize).min(MAP_H - 1),
+                ((c.1 + r).ceil() as usize).min(mh - 1),
             );
             (y0..=y1).any(|y| {
-                (x0..=x1).any(|x| seen[y * MAP_W + x] && (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r)
+                (x0..=x1).any(|x| seen[y * mw + x] && (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r)
             })
         };
         let mut out = Vec::new();
@@ -234,10 +256,11 @@ impl Map {
     pub fn of_dish(d: &BigDish) -> Map {
         assert!(d.wall.is_empty(), "a dish with no walls built");
         let s = d.p.scale;
+        let (w, h) = (d.w * 4 / s, d.h * 4 / s);
         let on = |v: &[bool], i: usize| !v.is_empty() && v[i];
-        let ground = (0..MAP_W * MAP_H)
+        let ground = (0..w * h)
             .map(|c| {
-                let i = (c / MAP_W * s / 4) * d.w + c % MAP_W * s / 4;
+                let i = (c / w * s / 4) * d.w + c % w * s / 4;
                 let soil = if d.soil.is_empty() { 0 } else { d.soil[i] << 4 };
                 soil | if on(&d.rock, i) {
                     G_ROCK
@@ -251,7 +274,7 @@ impl Map {
         let k = MAP_SCALE;
         let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
         let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
-        Map { ground, items }
+        Map { w, h, ground, items }
     }
 }
 
@@ -291,7 +314,7 @@ pub fn river(ford: bool, bridge: bool) -> Map {
         landing: Some((300.0, 500.0)),
         walls: Vec::new(),
     };
-    Map { ground, items }
+    Map { w: MAP_W, h: MAP_H, ground, items }
 }
 
 #[cfg(test)]
@@ -329,9 +352,8 @@ mod tests {
 
     #[test]
     fn a_world_at_scale_two_takes_every_other_cell() {
-        let mut ground = vec![0u8; MAP_W * MAP_H];
-        ground[3 * MAP_W + 5] = G_ROCK;
-        let m = Map { ground, items: Items::default() };
+        let mut m = Map::blank(MAP_W, MAP_H);
+        m.ground[3 * MAP_W + 5] = G_ROCK;
         // Fine cell (2, 1) at scale 2 covers map cells 4-5 x 2-3; its
         // centre is map cell (5, 3).
         assert_eq!(m.ground_fine(2, 2, 1), G_ROCK);
@@ -431,6 +453,34 @@ mod tests {
             let near = d.walkers.iter().zip(&d.alive).filter(|&(w, &a)| a && (w.0 / s - hx).hypot(w.1 / s - hy) < 40.0).count();
             assert_eq!(near, 2500, "start ({hx}, {hy})");
         }
+    }
+
+    /// A map carries its own size: planets smaller (planet 1, 60% of the
+    /// designed maps' area) and bigger (the core world, 6x) save, load and
+    /// make a world of their own size with the map's rock and crystals.
+    #[test]
+    fn a_map_of_another_size_makes_its_world() {
+        use crate::mould::levelgen::{size_of, spec};
+        let dir = std::env::temp_dir().join(format!("map-size-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for (depth, area) in [(1, 0.6), (8, 6.0)] {
+            let (p, m) = spec(&format!("planet:{depth}:2:{area}"), 1).unwrap().unwrap();
+            assert_eq!((m.w, m.h), size_of(area));
+            assert_eq!(p.size, size_of(area));
+            assert_ne!((m.w, m.h), (MAP_W, MAP_H));
+            m.save(&dir, "p").unwrap();
+            let back = Map::load(&dir, "p").unwrap();
+            assert_eq!((back.w, back.h), (m.w, m.h));
+            assert!(back.ground == m.ground && back.items.text() == m.items.text(), "depth {depth} round trip");
+            let d = BigDish::with_map(race_params(1, 2, 3000), &back);
+            assert_eq!((d.w, d.h), (m.w / 2, m.h / 2), "depth {depth}");
+            let rock = d.rock.iter().filter(|&&r| r).count();
+            let want = (0..d.w * d.h).filter(|&i| m.ground_fine(2, i % d.w, i / d.w) & G_ROCK != 0).count();
+            assert_eq!(rock, want, "depth {depth}: rock");
+            assert_eq!(d.piles.len(), m.items.crystals.len());
+            assert!(d.piles.iter().all(|&(x, y)| x < (d.w / 2) as f32 && y < (d.h / 2) as f32));
+        }
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     /// Every map the maps thread has written loads, with crystals and

@@ -40,7 +40,7 @@ use std::sync::Arc;
 
 use pixels::{Pixels, PixelsBuilder, SurfaceTexture};
 use slime_mould::mould::larder_world::race_world;
-use slime_mould::mould::map::{Map, MAP_H, MAP_W};
+use slime_mould::mould::map::Map;
 use slime_mould::mould::map_edit::{self, Brush, EditView, Editor, Mirror, Overlay, Tool};
 use slime_mould::world::settings::{self, UiSize};
 use winit::application::ApplicationHandler;
@@ -76,10 +76,10 @@ fn open(spec: &str, seed: u64) -> Result<Map, String> {
 
 /// The view that fits the whole map beside the panel and above the status
 /// line, at UI size `ui`.
-fn fit(size: (u32, u32), ui: f32) -> EditView {
+fn fit(size: (u32, u32), ui: f32, map: (usize, usize)) -> EditView {
     let (panel, status) = map_edit::chrome(ui);
     let left = panel + 8.0;
-    EditView::fit((left, 8.0, (size.0 as f32 - left - 8.0).max(64.0), (size.1 as f32 - status - 16.0).max(64.0)))
+    EditView::fit((left, 8.0, (size.0 as f32 - left - 8.0).max(64.0), (size.1 as f32 - status - 16.0).max(64.0)), map)
 }
 
 /// The font has no lower-case-only marks such as `_` or `\`; a message
@@ -118,12 +118,13 @@ impl App {
     fn new(ed: Editor, name: String, dir: PathBuf, play_keys: Vec<String>, user: f32) -> Self {
         let size = (1280, 800);
         let ui = UiSize { user, dpi: 1.0 };
-        App { ed, name, dir, play_keys, view: fit(size, ui.fixed()), window: None, pixels: None, size, cursor: None, stroke: None, wall_from: None, pan: None, ctrl: false, message: "paint, place, then ENTER to play".into(), clear_armed: false, ui, result: Ok(()) }
+        let view = fit(size, ui.fixed(), ed.map_size());
+        App { ed, name, dir, play_keys, view, window: None, pixels: None, size, cursor: None, stroke: None, wall_from: None, pan: None, ctrl: false, message: "paint, place, then ENTER to play".into(), clear_armed: false, ui, result: Ok(()) }
     }
 
     /// Fits the view again, as F does (after a resize or a new UI size).
     fn refit(&mut self) {
-        self.view = fit(self.size, self.ui.fixed());
+        self.view = fit(self.size, self.ui.fixed(), self.ed.map_size());
     }
 
     /// Ctrl + and Ctrl - step the UI's size, saved for both binaries.
@@ -399,7 +400,7 @@ impl ApplicationHandler for App {
 /// The window's picture of `ed`, without a window.
 fn picture(ed: &Editor, name: &str, message: &str, size: (u32, u32), cursor: Option<(f32, f32)>, wall_from: Option<(f32, f32)>, ui: f32) -> image::RgbaImage {
     let mut frame = vec![0u8; size.0 as usize * size.1 as usize * 4];
-    let view = fit(size, ui);
+    let view = fit(size, ui, ed.map_size());
     map_edit::draw(ed, &view, &mut frame, size, &Overlay { cursor, wall_from, name, message, ui });
     image::RgbaImage::from_raw(size.0, size.1, frame).expect("frame size")
 }
@@ -412,7 +413,7 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
     ed.mirror = Mirror::Turn;
     let mut n = 0;
     let mut shot = |ed: &Editor, msg: &str, cursor: Option<(f32, f32)>| -> Result<(), String> {
-        let view = fit(size, ui);
+        let view = fit(size, ui, ed.map_size());
         let c = cursor.map(|p| view.to_screen(p));
         let img = picture(ed, name, msg, size, c.map(|s| view.to_map(s)), None, ui);
         img.save(dir.join(format!("frame-{n:03}.png"))).map_err(|e| e.to_string())?;
@@ -518,7 +519,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // a file name: saved as `planet-3-42`.
     let name = name.unwrap_or_else(|| spec.as_deref().map(|s| s.rsplit(['/', '\\']).next().unwrap_or(s).replace(':', "-")).unwrap_or_else(|| "new".into()));
     let dir = dir.unwrap_or_else(|| repo().join("maps"));
-    assert_eq!(map.ground.len(), MAP_W * MAP_H);
+    assert_eq!(map.ground.len(), map.w * map.h);
     let ed = Editor::new(map);
     if let Some(path) = look {
         picture(&ed, &name, "", size, None, None, ui.unwrap_or(1.0)).save(&path)?;

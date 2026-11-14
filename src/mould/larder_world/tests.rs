@@ -49,7 +49,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     // never hands the engines more legs than they take.
     let from = g.soldiers[0];
     let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
-    let by = vec![Some(0); many.len()];
+    let by = vec![(Some(0), 0); many.len()];
     let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
     assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
     assert_eq!(g.bullets_dropped, 40);
@@ -59,7 +59,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     let (w, h) = g.world.size();
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
     let start = (wall.0 - 3.0, wall.1);
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(None, 0)], 1.0);
     assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
     g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
     assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
@@ -72,7 +72,7 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let r = g.rules;
     let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1 };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0 };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -108,7 +108,7 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2 };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0 };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
     let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
     // Every second one hits; the others fly on and keep their places.
@@ -147,7 +147,7 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 };
+    let both = BulletMods { pierce: 1, split: 2, ..BulletMods::default() };
     let a = run(both);
     assert_eq!(a, run(both), "the same seed played twice");
     let plain = run(BulletMods::default());
@@ -328,8 +328,8 @@ fn a_scared_piece_sees_past_the_guns() {
         g.step();
         g.bullet_mods.reach = 1;
     }
-    assert!(g.gun_range() > 36.0);
-    assert_eq!(g.world.p.panic_r, g.gun_range() + g.rules.panic_margin, "a range card moves it too");
+    assert!(g.gun_range(0) > 36.0);
+    assert_eq!(g.world.p.panic_r, g.gun_range(0) + g.rules.panic_margin, "a range card moves it too");
     let mut keep = race_world(1, 1, 1_000);
     keep.p.panic_r = 7.0;
     let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
@@ -1546,6 +1546,9 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Unlink(3),
         Cmd::Cover(1, Cover::More),
         Cmd::Cover(1, Cover::Never),
+        Cmd::Arm(2, None),
+        Cmd::Arm(1, Some(Gun::roll(11, 3))),
+        Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
     ];
     for c in cs {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
@@ -1845,7 +1848,7 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     }
     assert!(!g.engaged(0), "30 cells is past the plain range");
     g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
-    assert!((g.gun_range() - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
+    assert!((g.gun_range(0) - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
@@ -1853,7 +1856,7 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Order(k, Order::Attack));
     }
-    let reach = g.gun_range() * g.s();
+    let reach = g.gun_range(0) * g.s();
     let mut longest: f32 = 0.0;
     for _ in 0..(30 * g.rules.tps) {
         g.step();
@@ -2362,4 +2365,99 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
         // No building in deep water.
         assert!(!g.world.open(deep.0, deep.1));
     }
+// Guns (owner 2026-11-14 16:46Z: "The squad owns the gun. Each gun defines
+// the budget and slot count and range, spread, rate of fire as actual
+// numbers").
+
+/// A squad with no gun of its own fires the standard rifle, which is the
+/// game's own rules, so a game that hands out no guns plays as before.
+#[test]
+fn an_unarmed_squad_fires_the_standard_rifle_of_its_rules() {
+    let mut g = squads(1);
+    g.apply(Cmd::Active(u8::MAX));
+    g.rules.range = 30.0;
+    g.rules.shot_every = 0.5;
+    assert_eq!(g.gun(0), Gun::standard(&g.rules));
+    assert_eq!(g.gun_range(0), 30.0);
+    assert_eq!(g.shot_gap(0), g.secs(0.5).max(1));
+}
+
+/// Each squad fires its own gun: range, rate, spread and bullets a shot.
+/// Both halves of a split carry a copy (owner 18:05Z); merging hands a gun
+/// to a squad without one; `Cmd::Arm` None returns the rifle.
+#[test]
+fn each_squad_fires_its_own_gun_and_both_halves_of_a_split_copy_it() {
+    use crate::mould::guns::GunKind;
+    let mut g = squads(2);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(u8::MAX));
+    let (carbine, long) = (GunKind::Carbine.average(), GunKind::Long.average());
+    assert!(g.apply(Cmd::Arm(0, Some(carbine))));
+    assert_eq!((g.gun(0), g.gun_range(0)), (carbine, 15.0));
+    let m = g.middle(0).unwrap();
+    let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
+    assert_eq!(g.gun(0), carbine, "the half left behind keeps the gun");
+    assert_eq!(g.gun(b), carbine, "the new half carries a copy (owner 18:05Z)");
+    g.apply(Cmd::Arm(b as u8, Some(long)));
+    assert_eq!(g.gun(0), carbine, "a copy: arming one half leaves the other's");
+    assert_eq!(g.gun_range(b), 40.0);
+    assert!(g.shot_gap(0) * 4 <= g.shot_gap(b), "the carbine fires 4.4 times as often as the long gun: {} against {}", g.shot_gap(0), g.shot_gap(b));
+    assert_eq!(g.gun_range_max(), 40.0, "the mould's panic reach reads the farthest gun");
+    g.apply(Cmd::Arm(b as u8, None));
+    assert_eq!(g.gun(b), Gun::standard(&g.rules));
+    assert!(!g.apply(Cmd::Arm(SQUADS_MAX as u8, Some(long))), "no squad there");
+    // Merging: a squad with no gun of its own takes the joining one's.
+    g.apply(Cmd::Arm(0, None));
+    g.apply(Cmd::Arm(b as u8, Some(long)));
+    assert!(g.apply(Cmd::Merge(0, b as u8)));
+    assert_eq!(g.gun(0), long, "the long gun is not lost to the merge");
+}
+
+/// The scattergun fires its `shots` bullets a shot, fanned by its spread:
+/// a soldier's shot leaves as that many legs.
+#[test]
+fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
+    use crate::mould::guns::GunKind;
+    let fired = |shots: Option<u32>| {
+        let mut g = small(3);
+        if let Some(n) = shots {
+            let gun = Gun { shots: n, range: g.rules.range, ..GunKind::Scatter.average() };
+            g.arm(0, Some(gun));
+        }
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+        let (mut legs, mut shooters) = (0, 0);
+        let mut dirs: Vec<(f32, f32)> = Vec::new();
+        for _ in 0..(20 * g.rules.tps / g.rules.frame_ticks) {
+            g.step();
+            // This frame's first legs, by soldier: one shot each a frame
+            // (a soldier fires at most once a frame at these rates).
+            let fresh: Vec<&Shot> = g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).collect();
+            legs += fresh.len();
+            let mut by: Vec<usize> = fresh.iter().filter_map(|s| s.by).collect();
+            by.sort();
+            by.dedup();
+            shooters += by.len();
+            dirs.extend(fresh.iter().map(|s| {
+                let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
+                let d = dx.hypot(dy).max(1e-3);
+                (dx / d, dy / d)
+            }));
+            if g.end.is_some() {
+                break;
+            }
+        }
+        (legs, shooters, dirs)
+    };
+    let (legs1, shooters1, _) = fired(None);
+    assert!(shooters1 > 0 && legs1 <= shooters1 + shooters1 / 10, "the rifle: one bullet a shot ({legs1} legs, {shooters1} shots)");
+    let (legs4, shooters4, dirs) = fired(Some(4));
+    assert!(shooters4 > 0, "the scattergun fired");
+    assert!(legs4 >= 3 * shooters4, "four bullets a shot (some dropped at the cap or a wall): {legs4} legs from {shooters4} shots");
+    let mut d = dirs.clone();
+    d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
+    assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
 }

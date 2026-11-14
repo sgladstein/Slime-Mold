@@ -76,6 +76,8 @@ use buildings::Who;
 use super::big::{BigDish, BigParams, LIFE_DEAD};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
+pub use super::guns::Gun;
+pub use super::rounds::Deck;
 
 pub use super::larder::{End, Order, Stance};
 
@@ -132,6 +134,10 @@ pub struct Soldier {
     /// Game seconds it has stood still, unbitten and not firing: it heals
     /// once this reaches `HealRules::wait` (`Game::heal`).
     pub rest: f32,
+    /// The cast its next shot carries, an index into its squad's casts
+    /// (`BulletMods::casts`): each shot fires the next card in turn and the
+    /// gun never stops to recharge (owner 18:05Z).
+    pub next: u8,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -147,6 +153,8 @@ pub struct Shot {
     /// Fired this frame (a bullet's first leg, or an instant ray): the
     /// muzzle flash and the gunshot's sound; later legs are flight.
     pub fired: bool,
+    /// The cast it carries (`Bullet::cast`): 0 plain.
+    pub cast: u8,
 }
 
 /// One take from a crystal in the last frame, as the window draws it
@@ -163,8 +171,13 @@ pub struct Take {
     pub took: f32,
 }
 
+/// A leg's shooter (None: a turret), whether it was fired this frame, and
+/// the cast it carries (`Bullet::cast`).
+type LegBy = (Option<usize>, bool, u8);
+
 /// A shot in flight (`Rules::bullet_speed`): where it is, its heading, the
-/// fine cells of its range left, its strike radius, and who fired it.
+/// fine cells of its range left, its strike radius, who fired it and the
+/// cast it carries.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Bullet {
     pub at: (f32, f32),
@@ -178,6 +191,11 @@ pub struct Bullet {
     /// Times it splits where it finally lands (`Rules::split_n`); its
     /// pieces split one fewer time and do not pierce.
     pub split: u8,
+    /// The cast it carries: 0 plain (a turret's, a split piece), else 1 +
+    /// the index of the cast in its soldier's squad's cards when it was
+    /// fired (`Soldier::next`). Every slime hit casts it (`rounds`), so a
+    /// piercing bullet casts at each strike.
+    pub cast: u8,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -193,6 +211,9 @@ pub struct BulletMods {
     /// Copies of the `Rate` card: each fires every soldier's gun
     /// `Rules::rate_card` more times as often (`Game::shot_gap`).
     pub rate: u8,
+    /// Casts in the round (its payloads, `rounds::casts`): each shot
+    /// carries the next of them in turn (`Soldier::next`).
+    pub casts: u8,
 }
 
 pub struct Game<W: World> {
@@ -324,9 +345,9 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
-    /// Each of `f.shots`: who fired it and whether it was fired this
-    /// frame; with bullets, leg q is `bullets[q]`'s.
-    by: Vec<(Option<usize>, bool)>,
+    /// Each of `f.shots`: who fired it, whether it was fired this frame
+    /// and the cast it carries; with bullets, leg q is `bullets[q]`'s.
+    by: Vec<LegBy>,
     /// Shots fired this frame.
     fired: u32,
     who: Vec<Who>,
@@ -436,13 +457,59 @@ impl<W: World> Game<W> {
         self.world.scale()
     }
 
-    /// How far a soldier sees and fires, dish cells: `Rules::range`
+    /// How far squad `q`'s soldiers see and fire, dish cells: its gun's
+    /// range (`Gun::range`; the standard rifle's is `Rules::range`)
     /// stretched by the rounds' `Range` cards (owner, 2026-11-14 08:39Z:
     /// "there should be a range modifer card too"). Free fire, aims, the
     /// burn line's stand-off and the squad mode's volleys all read this;
     /// building reach and turrets keep `Rules::range` and `turret_range`.
-    pub fn gun_range(&self) -> f32 {
-        self.rules.range * (1.0 + self.rules.range_card * self.bullet_mods.reach as f32)
+    pub fn gun_range(&self, q: usize) -> f32 {
+        self.gun(q).range * (1.0 + self.rules.range_card * self.mods(q).reach as f32)
+    }
+
+    /// What squad `q`'s bullets carry (`rounds::flight`): from its own
+    /// cards (`Squad::deck`) if it has them, else the army's
+    /// (`bullet_mods`, set by `Rounds::arm` from the H loadout).
+    pub fn mods(&self, q: usize) -> BulletMods {
+        match self.squads.get(q).and_then(|s| s.deck) {
+            Some(d) => super::rounds::flight(&d.cards()),
+            None => self.bullet_mods,
+        }
+    }
+
+    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's.
+    pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
+        match self.squads.get_mut(q) {
+            Some(s) => {
+                s.deck = deck;
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// The farthest any live squad fires (`gun_range`), or the standard
+    /// rifle's with none: what the mould's panic reach reads.
+    pub fn gun_range_max(&self) -> f32 {
+        self.live_squads().into_iter().map(|q| self.gun_range(q)).fold(None, |m: Option<f32>, r| Some(m.map_or(r, |m| m.max(r)))).unwrap_or_else(|| self.gun_range(SQUADS_MAX))
+    }
+
+    /// Squad `q`'s gun (owner 11-14 16:46Z: "The squad owns the gun"): its
+    /// own if it was armed (`arm`), else the standard rifle at these rules.
+    pub fn gun(&self, q: usize) -> Gun {
+        self.squads.get(q).and_then(|s| s.gun).unwrap_or_else(|| Gun::standard(&self.rules))
+    }
+
+    /// Squad `q` takes `gun` (`Cmd::Arm`); `None` gives back the standard
+    /// rifle. Its soldiers fire it from their next shot.
+    pub fn arm(&mut self, q: usize, gun: Option<Gun>) -> bool {
+        match self.squads.get_mut(q) {
+            Some(s) => {
+                s.gun = gun;
+                true
+            }
+            None => false,
+        }
     }
 
     fn add_soldier(&mut self, a: f32) {
@@ -480,6 +547,7 @@ impl<W: World> Game<W> {
             squad: 0,
             cover: false,
             rest: 0.0,
+            next: 0,
         });
     }
 

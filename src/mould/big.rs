@@ -1052,6 +1052,10 @@ pub struct BigParams {
     /// crystal as if it were not there.
     pub wall_scent: f32,
     pub seed: u64,
+    /// The dish in dish cells, `W` x `H` (256 x 160) unless a map sets its
+    /// own (`Map::dish_size`: generated planets grow with depth). The fine
+    /// grid is this times `scale`.
+    pub dish: (usize, usize),
 }
 
 impl BigParams {
@@ -1223,15 +1227,16 @@ impl BigParams {
             wall_bite: 1.0,
             wall_scent: 0.9,
             seed: 1,
+            dish: (W, H),
         }
     }
 
     pub fn w(&self) -> usize {
-        W * self.scale
+        self.dish.0 * self.scale
     }
 
     pub fn h(&self) -> usize {
-        H * self.scale
+        self.dish.1 * self.scale
     }
 }
 
@@ -1523,6 +1528,11 @@ impl BigDish {
     }
 
     fn build(p: BigParams, map: Option<&Map>) -> Self {
+        // A map's world is the map's size.
+        let p = match map {
+            Some(m) => BigParams { dish: m.dish_size(), ..p },
+            None => p,
+        };
         assert!(
             p.species_sets.is_empty() || p.species_sets.len() >= p.species.max(1) as usize,
             "species_sets needs one set per species"
@@ -1531,8 +1541,8 @@ impl BigDish {
         let s = p.scale as f32;
         let ground = |w: usize, h: usize, m: f32| if p.rect { rect(w, h, m) } else { ellipse(w, h, m) };
         let agar = ground(w, h, 3.0 * s);
-        let (sw, sh) = if p.scent_coarse { (W, H) } else { (w, h) };
-        let scent_agar = if p.scent_coarse { ground(W, H, 3.0) } else { agar.clone() };
+        let (sw, sh) = if p.scent_coarse { p.dish } else { (w, h) };
+        let scent_agar = if p.scent_coarse { ground(sw, sh, 3.0) } else { agar.clone() };
         let mut d = BigDish {
             w,
             h,
@@ -1662,7 +1672,7 @@ impl BigDish {
         if d.p.sick_steps > 0 {
             d.sick = vec![0; d.walkers.len()];
             d.germ = vec![0.0; w * h];
-            let (cx, cy) = (W as f32 / 2.0, H as f32 / 2.0);
+            let (cx, cy) = (d.p.dish.0 as f32 / 2.0, d.p.dish.1 as f32 / 2.0);
             d.infect(cx, cy, d.p.sick_seed_r);
         }
         d
@@ -1753,17 +1763,18 @@ impl BigDish {
     fn place_piles(&mut self) {
         let seed = self.p.seed;
         let r = self.p.pile_r;
-        let (cx, cy, rx, ry) = (W as f32 / 2.0, H as f32 / 2.0, W as f32 / 2.0 - 3.0, H as f32 / 2.0 - 3.0);
+        let (dw, dh) = (self.p.dish.0 as f32, self.p.dish.1 as f32);
+        let (cx, cy, rx, ry) = (dw / 2.0, dh / 2.0, dw / 2.0 - 3.0, dh / 2.0 - 3.0);
         let square = self.p.rect;
         let inside = |x: f32, y: f32| {
             let (dx, dy) = ((x - cx) / (rx - r - 4.0), (y - cy) / (ry - r - 4.0));
             if square { dx.abs() <= 1.0 && dy.abs() <= 1.0 } else { dx * dx + dy * dy <= 1.0 }
         };
-        self.piles.push((W as f32 * 0.22, H as f32 * 0.5));
+        self.piles.push((dw * 0.22, dh * 0.5));
         let mut k = 0u32;
         while self.piles.len() < self.p.piles && k < 100_000 {
-            let x = unit(keyed(seed, 0, DRAW_PILES, 2 * k)) * W as f32;
-            let y = unit(keyed(seed, 0, DRAW_PILES, 2 * k + 1)) * H as f32;
+            let x = unit(keyed(seed, 0, DRAW_PILES, 2 * k)) * dw;
+            let y = unit(keyed(seed, 0, DRAW_PILES, 2 * k + 1)) * dh;
             k += 1;
             if inside(x, y) && self.piles.iter().all(|&(px, py)| (px - x).hypot(py - y) >= 28.0) {
                 self.piles.push((x, y));

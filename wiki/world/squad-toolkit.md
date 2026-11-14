@@ -9,7 +9,9 @@ sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/guns-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/no-recharge-2026-11-14.md
   - Reports/noita-spell-look-2026-11-14.md
   - Reports/rounds-2026-11-12.md
   - Reports/rounds-look-2026-11-14/index.html
@@ -31,12 +33,18 @@ code:
   - BigParams::scorch_full
   - BigParams::scorch_keep
   - BigParams::sick_upkeep
+  - Bullet::cast
   - Burst
   - Engine::burst
   - Engine::calm
   - Engine::fling
   - Engine::gas
   - Engine::lay_gas
+  - Game::arm
+  - Game::gun
+  - Gun
+  - Gun::roll
+  - GunKind
   - Kit
   - Kit::restock
   - KitRules
@@ -122,6 +130,17 @@ The default mould ignores alarm (`alarm_weight` 0), so on 09:02Z (owner's card) 
 became `bait`: food scent along the flight (`Burst::bait`, GPU pass `baitlay` 60) that every mould follows.
 Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34Z); `rate`, `thrift` and
 `smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)).
+Since 16:46Z (owner) **the squad owns the gun** (`mould::guns`, [report](../../Reports/guns-2026-11-14.md)): a
+`Gun` is range, rate, spread, bullets a shot, budget and slots, rolled (`Gun::roll(seed, depth)`) round one of four
+kinds (rifle, the old gun; carbine; long gun; scattergun, 2-6 bullets a shot), each stat its own normal draw
+(18:07Z; no gun is labelled lucky, 18:18Z), better and with bigger budgets on deeper planets; `Squad::gun`
+(`Game::gun`, `Cmd::Arm`, `gun=` and Shift+H in the window), none being the standard rifle of the game's `Rules`;
+each squad's own cards (`Squad::deck`, `Cmd::Load`, H in the squad mode), none being the army's round; both halves
+of a split carry a copy of the gun and cards (18:05Z); `rounds::fit_gun` and `guns::Loadout` (a squad's gun and
+cards between planets). Since 18:05Z there is **no recharge** ([report](../../Reports/no-recharge-2026-11-14.md)):
+every shot carries the next cast in turn (`Soldier::next`, `Bullet::cast`) at the gun's rate of fire and casts it
+where it hits slime; payloads are bullets, free to fire (18:38Z: "The bank is just to build the gun. How many and
+which cards"; at the toolkit's prices eight soldiers on gas and blast spent a 2,000 bank in about 5 s).
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
 distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building

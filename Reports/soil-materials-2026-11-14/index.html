@@ -66,4 +66,14 @@ code { font-family: var(--mono); font-size: 0.85em; }
     <h2>Cost</h2>
     <p>On llvmpipe (Dunes, bench 8 s, idle hand, 1280 x 800, three alternating pairs), the GPU tail p50 goes from 74.3-75.5 ms to 80.3-81.6 ms. That is about 6 ms (8%), mostly reading the 16 cells round each ground pixel. It hasn't been timed on the GTX 1070 yet; that whole frame was under 2.6 ms p95 this morning.</p>
   </section>
+  <section>
+    <h2>Follow-up: bent ripples, softer ash</h2>
+    <p>The sand ripples now bend and vary their spacing, and fade to flat sand below zoom 3, so they no longer read as a hatch or a moire. Barren ash is a step darker, with soft clumped grains in place of the speckle.</p>
+    <figure><img src="thumbs-v2.png" alt="Eight planets in grey after the follow-up"><figcaption>Grey thumbnails after the follow-up. Dunes reads as mottled swells, not stripes.</figcaption></figure>
+    <div class="pair">
+      <figure><img src="p1-v2.gif" alt="Barrens at zoom 6"><figcaption>Barrens: darker ash, clumped soft grains</figcaption></figure>
+      <figure><img src="p4-v2.gif" alt="Dunes at zoom 6"><figcaption>Dunes: bent ripples of varied spacing</figcaption></figure>
+    </div>
+    <p class="muted">Baking the soil once a cell was tried and saved nothing, because the cost is the texture arithmetic per pixel, so it was reverted. GPU tail p50 on llvmpipe, five rounds on Dunes: main 73.8 ms, #281 82.7 ms, this follow-up 83.4 ms.</p>
+  </section>
 </div>

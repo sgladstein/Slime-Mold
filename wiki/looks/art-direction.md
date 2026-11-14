@@ -42,7 +42,7 @@ did. The first review (11-14) found the slime out of focus, cell staircases on e
    species its own hue; crystals the only cyan (`theme::ENERGY` family);
    your team cream and olive with one accent colour; danger red
    (`theme::BAD`) for warnings only. A new colour needs a role nobody has.
-   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)).
+   The ground follows this since 11-14 (slate, flat luma 38; [dark ground](../../Reports/dark-ground-2026-11-14/README.md)). Each soil has its own material from the soil field since 11-14 (sand ripples, clay cracks, ash speckle, dark water with a smooth edge and shore, raised rock with a lit rim), so planets read apart in grey; the ripples bend and fade out below zoom 3, and barren ash sits a clear step under rock ([soil materials](../../Reports/soil-materials-2026-11-14/README.md)).
 4. **Sharp at every zoom, 1 to 24.** Hard shapes have exact edges worked
    out at the screen pixel and antialiased over one pixel; no cell stair is
    visible at any zoom. The slime's edge is where its walker density falls
