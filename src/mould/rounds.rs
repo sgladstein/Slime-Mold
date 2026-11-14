@@ -140,8 +140,8 @@ impl Card {
             Card::Thick => "Trigger: the next payload lodges until the mould is thick round it",
             Card::Pierce => "Flight: every bullet flies on through one slime hit",
             Card::Split => "Flight: every bullet splits where it lands",
-            Card::Scorch => "Trail: every bullet leaves a line of crater the mould shuns",
-            Card::Alarm => "Trail: every bullet leaves a line of alarm the mould flees",
+            Card::Scorch => "Trail: every bullet burns the mould along its flight and leaves a line of crater it shuns",
+            Card::Alarm => "Trail: every bullet leaves a line of alarm: Sleepers wake to it, Swarmers and Grudges come to it; the plain mould ignores it",
             Card::Mist => "Trail: every bullet leaves a thin gas cloud that puts the mould to sleep",
             Card::Range => "Flight: every soldier sees and shoots half as far again",
         }
@@ -222,6 +222,11 @@ pub struct RoundRules {
     pub trail_crater_secs: f32,
     pub trail_alarm: f32,
     pub trail_cloud: f32,
+    /// `Scorch` also burns: kills the walkers within its crater radius
+    /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
+    /// and alarm different. It just makes a virtual wall for the slime?").
+    /// Off, scorch is the crater wall alone, as #244 built it.
+    pub trail_burn: bool,
     /// The toolkit's numbers for the payloads (radii, prices, crater).
     pub kit: KitRules,
 }
@@ -252,6 +257,7 @@ impl Default for RoundRules {
             trail_crater_secs: 4.0,
             trail_alarm: 0.5,
             trail_cloud: 0.4,
+            trail_burn: true,
             kit: KitRules::default(),
         }
     }
@@ -333,7 +339,7 @@ pub fn trail_bursts(n: [u8; 3], from: (f32, f32), to: (f32, f32), r: &RoundRules
         .map(|j| {
             let t = (j as f32 * gap).min(len) / len.max(1e-6);
             let at = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-            Burst { at, r: rr, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, alarm, alarm_r: if alarm > 0.0 { r.trail_r * f(n[1]) } else { 0.0 }, cloud, ..Burst::default() }
+            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, alarm, alarm_r: if alarm > 0.0 { r.trail_r * f(n[1]) } else { 0.0 }, cloud, ..Burst::default() }
         })
         .collect()
 }
@@ -351,7 +357,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, fling: 0.0, fling_steps: 0, cloud: 0.0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, fling: 0.0, fling_steps: 0, cloud: 0.0 };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
         Card::Bomb => {
@@ -455,6 +461,8 @@ pub struct Rounds {
     pub unsupported: u32,
     /// Trail bursts laid (`trail_bursts`), all kinds.
     pub trailed: u32,
+    /// Walkers the `Scorch` trail burned (in `killed` too).
+    pub burned: usize,
     pub pops: Vec<Pop>,
 }
 
@@ -608,13 +616,20 @@ impl Rounds {
         let s = g.world.scale();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let k = burst_rules(&self.rules.kit, fine);
+        let mut burned = 0;
         let legs: Vec<((f32, f32), (f32, f32))> = g.last_shots.iter().filter(|s| s.by.is_some()).map(|s| (s.from, s.hit.unwrap_or(s.to))).collect();
         for (from, to) in legs {
             for b in trail_bursts(n, from, to, &self.rules, s, fine) {
-                g.world.burst(&b, &k);
+                burned += g.world.burst(&b, &k).killed as usize;
                 self.trailed += 1;
             }
         }
+        if n[0] > 0 && self.rules.trail_burn {
+            burned += g.world.burned() as usize;
+        }
+        self.killed += burned;
+        self.burned += burned;
+        g.killed += burned as u32;
     }
 
     fn fire<W: World>(&mut self, g: &mut Game<W>, c: &Cast, at: (f32, f32)) {
@@ -648,7 +663,10 @@ mod tests {
         assert_eq!(b.len(), 5);
         assert_eq!(b.last().unwrap().at, (10.0, 2.0));
         let one = b[0];
-        assert!(!one.kill && one.gas == 0 && one.fling == 0.0);
+        assert!(!one.kill && one.burn && one.gas == 0 && one.fling == 0.0, "scorch burns, counted later");
+        let cold = RoundRules { trail_burn: false, ..r };
+        assert!(!trail_bursts([1, 0, 0], (0.0, 0.0), (9.0, 0.0), &cold, 1.0, 30.0)[0].burn);
+        assert!(!trail_bursts([0, 1, 1], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0)[0].burn, "only scorch burns");
         assert_eq!(one.crater, (r.trail_crater_secs * 30.0) as u16);
         assert!((one.alarm - 2.0 * r.kit.blast_alarm * r.trail_alarm).abs() < 1e-4 && (one.alarm_r - r.trail_r * 2f32.sqrt()).abs() < 1e-5);
         assert!((one.cloud - r.trail_cloud).abs() < 1e-6 && one.crater_r == r.trail_r);
@@ -673,6 +691,30 @@ mod tests {
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
         assert_eq!((rd.cast, rd.spent), ([0; 4], 0.0), "a trail casts nothing and costs no food");
+    }
+
+    /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
+    /// bullet's flight dies, counted in the game's kills, and more dies
+    /// than the plain bullets alone kill on the same seed.
+    #[test]
+    fn a_scorch_round_burns_the_slime_on_the_line() {
+        use crate::mould::larder_world::{race_world, Cmd, Order};
+        let run = |round: &str| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            for k in 0..g.soldiers.len() {
+                assert!(g.apply(Cmd::Order(k, Order::Attack)));
+            }
+            let mut rd = Rounds::new(parse(round).unwrap(), RoundRules::default());
+            while g.time() < 20.0 && g.end.is_none() {
+                g.step();
+                rd.after_step(&mut g);
+            }
+            (rd.burned, g.killed)
+        };
+        let (burned, killed) = run("scorch");
+        let (none, plain) = run("none");
+        assert_eq!(none, 0);
+        assert!(burned > 0 && killed > plain, "burned {burned}, killed {killed} vs plain {plain}");
     }
 
     #[test]

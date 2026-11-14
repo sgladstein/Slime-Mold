@@ -143,6 +143,12 @@ pub struct Burst {
     /// The kill and clear radius (0 with `kill`: a shock only).
     pub r: f32,
     pub kill: bool,
+    /// **A burn** (the rounds' `Scorch` trail, owner 2026-11-14 08:41Z:
+    /// "Scorch actually burn the slime caught on the line - yes"): kills
+    /// within `r` as `kill` does, but its count waits for
+    /// `World::burned`, once a frame, so a GPU world reads back once for a
+    /// whole trail instead of once a disc. Ignored with `kill`.
+    pub burn: bool,
     /// Alarm laid on the agar within `alarm_r` (0: none).
     pub alarm: f32,
     pub alarm_r: f32,
@@ -220,8 +226,8 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     if b.alarm > 0.0 {
         d.enable_alarm(k.alarm_keep);
     }
-    if b.kill || b.alarm > 0.0 {
-        out.killed = d.strike(b.at.0, b.at.1, if b.kill { b.r } else { 0.0 }, b.alarm, b.alarm_r) as u32;
+    if b.kill || b.burn || b.alarm > 0.0 {
+        out.killed = d.strike(b.at.0, b.at.1, if b.kill || b.burn { b.r } else { 0.0 }, b.alarm, b.alarm_r) as u32;
     }
     if b.crater > 0 {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);

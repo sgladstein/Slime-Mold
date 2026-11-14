@@ -4528,7 +4528,9 @@ mod tests {
     /// (`rounds::trail_bursts`, every trail at once) on the race world and
     /// on the GPU world from the same dish (`Engine::inject`), through
     /// `World::burst`; then the crater, the alarm and the gas cloud must
-    /// match cell for cell (alarm and cloud within 1e-6), and none kills.
+    /// match cell for cell (alarm and cloud within 1e-6). Scorch burns
+    /// (11-14 08:41Z): the CPU counts each disc's burn at once, the GPU
+    /// counts the whole trail's at `World::burned`, and the totals match.
     #[test]
     fn trail_bursts_lay_the_same_fields_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
@@ -4546,10 +4548,17 @@ mod tests {
         let n = trails(&parse("scorch+alarm+mist").unwrap());
         let bursts = trail_bursts(n, (60.0 * s, 100.0 * s), (90.0 * s, 110.0 * s), &r, s, fine);
         assert!(bursts.len() >= 10, "{} discs", bursts.len());
+        let mut burned_cpu = 0;
         for b in &bursts {
+            assert!(b.burn && !b.kill);
             let (c, g) = (cpu.burst(b, &k), gpu.burst(b, &k));
-            assert_eq!((c.killed, g.killed), (0, 0), "a trail kills nothing");
+            assert_eq!(g.killed, 0, "a burn is counted at `burned` on the GPU");
+            burned_cpu += c.killed;
         }
+        assert_eq!(cpu.burned(), 0);
+        let burned_gpu = gpu.burned();
+        eprintln!("burned: cpu {burned_cpu}, gpu {burned_gpu}");
+        assert_eq!(burned_gpu, burned_cpu, "the same walkers burned on both");
         let crater_cpu: Vec<f32> = cpu.scorch.iter().map(|&c| c as f32).collect();
         let crater_off = gpu.e.crater_of().iter().zip(&crater_cpu).filter(|(a, b)| a != b).count();
         let alarm_off = gpu.e.alarm_of().iter().zip(&cpu.alarm).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
