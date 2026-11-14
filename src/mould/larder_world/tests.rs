@@ -1771,7 +1771,11 @@ fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
 /// soldiers 850 cells in 5 s over seeds 1-4, and a death 241 (a wedge
 /// 216). Now a blob doesn't turn and every soldier takes the nearest free
 /// place: 0 and 35 (a wedge's death 48). A line or wedge still turns to
-/// face the cursor, as it should.
+/// face the cursor, as it should. Every squad must have arrived first: a
+/// wedge sent round rock waited for its own tail (its middle stands behind
+/// its anchor) and was still walking at 8 s on seed 3 and for good on
+/// seed 4, so its member's death walked it 113 cells (2026-11-14, after
+/// sent squads took the walking map round walls); now 36 and 22.
 #[test]
 fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
     for f in [Formation::Blob, Formation::Wedge] {
@@ -1784,6 +1788,7 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
             g.apply(Cmd::Active(0));
             g.apply(Cmd::Formation(0, f));
             off_the_crystal(&mut g);
+            assert!(g.squads[0].dest.is_none(), "{f:?} seed {seed}: still walking 8 s after it was sent 25 cells");
             let sc = g.s();
             let frames = 5 * g.rules.tps / g.rules.frame_ticks;
             let m = g.middle(0).unwrap();
@@ -2043,4 +2048,56 @@ fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
     let n = g.buildings.len() - 1;
     assert!(g.buildings[n].up());
     assert!(!g.apply(Cmd::Unbuild(n)));
+}
+
+/// **A squad sent past a dead end goes round it** (2026-11-14, the squad
+/// thread's film: a squad sent from inside the Fork's V wall to a crystal
+/// beyond it stood at the wall for good). A cup of walls opens toward the
+/// squad with the point it is sent to beyond it: the anchor's straight
+/// step led into the cup and its path step back out, turn about.
+#[test]
+fn a_squad_sent_past_a_dead_end_goes_round_it() {
+    let mut tried = Vec::new();
+    for seed in 1..5u64 {
+        let mut g = squads(seed);
+        g.rules.build.raise = 0.0;
+        for _ in 0..4 {
+            g.apply(Cmd::Buy);
+        }
+        off_the_crystal(&mut g);
+        g.bank = 1e6;
+        let sc = g.s();
+        let m = g.middle(0).unwrap();
+        let mut sent = None;
+        for dir in 0..8 {
+            let a = dir as f32 * std::f32::consts::FRAC_PI_4;
+            let (d, p) = ((a.cos(), a.sin()), (-a.sin(), a.cos()));
+            let at = |f: f32, s: f32| (m.0 + (d.0 * f + p.0 * s) * sc, m.1 + (d.1 * f + p.1 * s) * sc);
+            let to = at(30.0, 0.0);
+            if !g.standable(to.0, to.1) || g.solid_at(to).is_some() {
+                continue;
+            }
+            let n = g.buildings.len();
+            let walls = [(at(14.0, -8.0), at(14.0, 8.0)), (at(6.0, -8.0), at(14.0, -8.0)), (at(6.0, 8.0), at(14.0, 8.0))];
+            if walls.iter().all(|&(a, b)| g.apply(Cmd::Wall(a, b))) {
+                sent = Some(to);
+                break;
+            }
+            // Not all three stood: take down what did and try the next way.
+            for b in &mut g.buildings[n..] {
+                b.alive = false;
+            }
+        }
+        let Some(to) = sent else { continue };
+        g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+        let mut best = f32::MAX;
+        for _ in 0..40 * g.rules.tps / g.rules.frame_ticks {
+            g.step();
+            let mid = g.middle(0).unwrap();
+            best = best.min((mid.0 - to.0).hypot(mid.1 - to.1) / sc);
+        }
+        tried.push((seed, best));
+    }
+    assert!(tried.len() >= 2, "the cup stood on too few seeds: {tried:?}");
+    assert!(tried.iter().all(|&(_, best)| best < 6.0), "(seed, nearest the squad came in cells): {tried:?}");
 }

@@ -226,6 +226,25 @@ impl<W: World> Game<W> {
         (c.0 + ux * out, c.1 + uy * out)
     }
 
+    /// Soldier `k`'s place in its squad's formation round `p`, fine cells
+    /// (`squads`; it was M3's sunflower by soldier index, `slot(k)`, before
+    /// squads).
+    pub(super) fn place_at(&self, k: usize, p: (f32, f32)) -> (f32, f32) {
+        let o = self.place(k);
+        let sc = self.s();
+        let q = (p.0 + o.0 * sc, p.1 + o.1 * sc);
+        // A formation place in rock or past a wall: the point itself, so
+        // a squad squeezing past a wall is not stuck on places it can't
+        // stand on (seen on the Fork: a squad steered into the V wall
+        // stood still, its anchor waiting for members whose places were
+        // in the wall).
+        if self.rules.squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
+            p
+        } else {
+            q
+        }
+    }
+
     /// Where soldier `k`'s order points, before a crystal moves it to its
     /// rim (`goal`).
     pub(super) fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
@@ -233,22 +252,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         // Its place in its squad's formation (`squads`; it was M3's
         // sunflower by soldier index, `slot(k)`, before squads).
-        let place = self.place(k);
-        let squads = self.rules.squads;
-        let off = |p: (f32, f32)| {
-            let o = place;
-            let q = (p.0 + o.0 * sc, p.1 + o.1 * sc);
-            // A formation place in rock or past a wall: the point itself, so
-            // a squad squeezing past a wall is not stuck on places it can't
-            // stand on (seen on the Fork: a squad steered into the V wall
-            // stood still, its anchor waiting for members whose places were
-            // in the wall).
-            if squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
-                p
-            } else {
-                q
-            }
-        };
+        let off = |p: (f32, f32)| self.place_at(k, p);
         match s.order {
             Order::Hold => None,
             Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),

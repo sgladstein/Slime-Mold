@@ -319,13 +319,25 @@ impl<W: World> Game<W> {
     /// Up to `lead` fine cells from `from` toward `to` along a walkable way:
     /// straight if the line is open, else down `to`'s distance map, and
     /// never off standable ground from standable ground (`slide`).
-    fn guide(&mut self, from: (f32, f32), to: (f32, f32), lead: f32) -> (f32, f32) {
+    ///
+    /// `sent`: the squad was sent to `to`, so the line must be open all the
+    /// way there. Before 2026-11-14 the straight step was taken whenever
+    /// the step itself was open: in a dead end facing the goal, such as the
+    /// inside of the Fork's V wall with a crystal beyond it, the map's step
+    /// back out and the straight step back in alternated, and a sent squad
+    /// stood at the wall for good (the squad thread's film: parked at
+    /// (258, 190) from 8 s on, 65 shots by 24 s; now round the wall by 12 s,
+    /// 244 shots by 24 s). A steered squad keeps the step's own check: its
+    /// `to` is 40 cells ahead and moves every step, so the whole line would
+    /// build a walking map (15 ms at scale 2) each step it is not clear,
+    /// and a player steering at a wall expects to walk up to it.
+    fn guide(&mut self, from: (f32, f32), to: (f32, f32), lead: f32, sent: bool) -> (f32, f32) {
         let d = (to.0 - from.0).hypot(to.1 - from.1);
         if d <= lead {
             return self.slide(from, to);
         }
         let straight = (from.0 + (to.0 - from.0) / d * lead, from.1 + (to.1 - from.1) / d * lead);
-        if self.walk_line(from, straight) {
+        if self.walk_line(from, if sent { to } else { straight }) {
             return straight;
         }
         let (w, h) = self.world.size();
@@ -352,14 +364,24 @@ impl<W: World> Game<W> {
             // the edge or rock for 25 s on seeds 1-4).
             return self.slide(from, straight);
         }
-        for _ in 0..lead.ceil() as usize {
+        // `lead` along the way, through the cells' centres: whole cells
+        // ran the anchor a cell a step (full pace) whatever its squad's
+        // slowest member could do, which only showed once a sent squad took
+        // the map whenever its line was shut (2026-11-14).
+        let (mut p, mut left) = (from, lead);
+        for _ in 0..lead.ceil() as usize + 2 {
             let n = downhill(w, h, map, at, self.rules.corners);
             if n == at {
                 break;
             }
-            at = n;
+            let c = ((n % w) as f32 + 0.5, (n / w) as f32 + 0.5);
+            let dd = (c.0 - p.0).hypot(c.1 - p.1);
+            if dd >= left {
+                return (p.0 + (c.0 - p.0) / dd * left, p.1 + (c.1 - p.1) / dd * left);
+            }
+            (p, left, at) = (c, left - dd, n);
         }
-        ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5)
+        p
     }
 
     /// `to` if a soldier can stand there, else as far as it can go along
@@ -422,15 +444,24 @@ impl<W: World> Game<W> {
             // but never to come back toward it: a squad pressed against
             // rock and steered away goes (before the bug sweep, 2026-11-14,
             // an anchor that ahead never moved again).
+            // Measured from where the anchor stands when every member is in
+            // its place, not from the members' middle: a wedge or a line
+            // stands behind its anchor, so its middle sits a few cells back
+            // even at rest. Measured from the middle, a big wedge (8 or more)
+            // was "ahead" while it stood in its places and never moved again,
+            // and a sent wedge never arrived (bug sweep, 2026-11-14: seed 4's
+            // wedge stood 4.1 cells from its middle, the lead 4, for good).
+            let rest = self.shape_off(q, at);
+            let mid = (mid.0 - rest.0, mid.1 - rest.1);
             let gap = |p: (f32, f32)| (p.0 - mid.0).hypot(p.1 - mid.1);
             let ahead = gap(at) > LEAD * sc;
             let step = self.rules.speed * sc * dt * PACE * self.pace(q);
             let a = if steering {
                 let far = (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc);
-                if step > 0.0 { self.guide(at, far, step) } else { at }
+                if step > 0.0 { self.guide(at, far, step, false) } else { at }
             } else {
                 let d = sq.dest.unwrap_or(at);
-                if step > 0.0 { self.guide(at, d, step) } else { at }
+                if step > 0.0 { self.guide(at, d, step, true) } else { at }
             };
             let a = if ahead && gap(a) >= gap(at) - 1e-3 { at } else { a };
             if let Some(d) = sq.dest.filter(|_| !steering) {
@@ -462,6 +493,21 @@ impl<W: World> Game<W> {
                 s.homing = false;
             }
         }
+    }
+
+    /// How far squad `q`'s middle stands from an anchor at `at` once every
+    /// member is in its place (`Game::place_at`), fine cells. About zero
+    /// for a blob or a ring; a wedge or a line stands behind its anchor. A
+    /// place in rock or past a wall is the anchor itself, as its member's
+    /// order is: the formation's own places alone (tried first) froze a
+    /// wedge walking round rock with places in it (seed 3, 2 s).
+    pub(super) fn shape_off(&self, q: usize, at: (f32, f32)) -> (f32, f32) {
+        let m = self.members(q);
+        if m.is_empty() {
+            return (0.0, 0.0);
+        }
+        let (x, y) = m.iter().map(|&k| self.place_at(k, at)).fold((0.0, 0.0), |a, p| (a.0 + p.0 - at.0, a.1 + p.1 - at.1));
+        (x / m.len() as f32, y / m.len() as f32)
     }
 
     /// The pace of squad `q` while it moves as one: its slowest member's
