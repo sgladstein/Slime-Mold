@@ -147,8 +147,13 @@ impl App {
         // with no mould near for 5 s to take it). Game objects, not the
         // simulation, so marks.
         if g.rules.larder {
-        self.marks.rect(g.larder, (1.4 * sc, 1.4 * sc), [214, 196, 150, 255], true);
-        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
+        // The larder is a sprite in soldier A's style (art review
+        // 2026-11-14: it was a plain beige square), drawn from the game's
+        // state: its charge cells lit while the bank holds food, darkening
+        // as the mould holds it with the bank dry (the overrun count). The
+        // faint ring is the ground a walker must reach to hold it.
+        self.marks.building(g.larder, 1.6 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0);
+        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
         } else {
             // No larder (the squad mode): each guarded crystal's ring, the
             // game's count of who holds it (`Game::guarded`).
@@ -170,7 +175,7 @@ impl App {
             }
         }
         if self.larder_sel {
-            self.marks.ring(g.larder, 3.6 * sc, [255, 255, 255, 200]);
+            self.marks.selected(g.larder, 3.6 * sc * zoom);
         }
         if let Order::Move(x, y) | Order::Clear(x, y) = g.rally {
             if self.larder_sel || !self.controls.selected.is_empty() {
@@ -204,12 +209,20 @@ impl App {
             let wide = (g.rules.build.touch * sc * zoom).clamp(10.0, 40.0);
             let progress = |marks: &mut Marks, at: (f32, f32), below: f32| {
                 marks.bar(at, below, (wide, 2.0), b.built, [235, 235, 235, 255], [40, 40, 40, 220]);
-                let note = match (g.raise_left(k), g.raising(k)) {
-                    (Some(t), _) => format!("{}s", t.ceil() as u32),
-                    (None, (_, n)) if n > 0 => "on the way".into(),
-                    _ => "no builder".into(),
-                };
-                marks.label(at, (wide + 4.0, below - 5.0), &note, 1.5, [235, 235, 235, 230]);
+                // The seconds left as text; "on the way" and "no builder"
+                // as a figure striding, or standing struck through (art
+                // director, 11-14: two ghosts side by side ran their words
+                // into each other).
+                let (x, y) = (wide + 4.0, below - 5.0);
+                let ink = [235, 235, 235, 230];
+                match (g.raise_left(k), g.raising(k)) {
+                    (Some(t), _) => marks.label(at, (x, y), &format!("{}s", t.ceil() as u32), 1.5, ink),
+                    (None, (_, n)) if n > 0 => marks.icon(at, (x, y), WALKING, 1.5, ink),
+                    _ => {
+                        marks.icon(at, (x, y), STANDING, 1.5, [200, 200, 200, 200]);
+                        marks.icon(at, (x, y), SLASH, 1.5, [235, 80, 70, 255]);
+                    }
+                }
             };
             if let Kind::Wall { to } = b.kind {
                 // A wall is ground once whole; until then a faint dashed
@@ -229,7 +242,11 @@ impl App {
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             self.marks.building(b.at, half, kind, if b.up() { 1.0 } else { b.built }, b.hp / b.max_hp.max(1.0), working);
             let below = (half * zoom).max(2.0) + 5.0;
-            self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
+            // Health once it stands (a ghost's lower hp is its progress,
+            // shown by the bar below and the sprite's seam).
+            if b.up() {
+                self.marks.health(b.at, below, b.hp / b.max_hp.max(1.0));
+            }
             if !b.up() {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
@@ -267,34 +284,109 @@ impl App {
                 }
             }
         }
-        for t in &self.tracers {
+        // A shot's line, only while shots are rays: with bullets flying
+        // (`bullet_speed` > 0) the bullet's own streak shows its path, and
+        // the line beside it was a painted effect.
+        for t in self.tracers.iter().filter(|_| g.rules.bullet_speed <= 0.0) {
             let a = (255.0 * (1.0 - t.age / TRACER)).clamp(0.0, 255.0) as u8;
             self.marks.line(t.from, t.to, 0.0, if t.hit { [255, 236, 170, a] } else { [200, 200, 200, a / 2] });
         }
-        // Each bullet in flight where the game has it (`Game::bullets`),
-        // a small bright ring at least 2 pixels across, so a shot reads as
-        // a thing moving out to the mould and not only as a line.
-        // A filled disc (rings at 0.3 cells were too faint to find in the
-        // first clips) with a short bright tail back along its flight.
+        // Each bullet in flight (`Game::bullets`) as Noita draws a spell
+        // (Reports/noita-spell-look-2026-11-14.md): a streak along this
+        // frame's travel (`draw_as_long`), in the colour of the payload its
+        // soldier's next hit casts (`Rounds::next_cast`; a plain shot, a
+        // turret's, or one fired while the gun recharges is pale gold),
+        // and a light that lights the real slime as it flies over it.
+        // Its shape is its cards: wide is bigger, quiet dimmer, pierce a
+        // long thin lance, split a fatter head, scatter three heads.
+        // (Before 11-14: a 3-pixel disc and a line, the same for every
+        // card; the owner's playtest: "really bad".)
+        self.lights.clear();
+        let t = g.world.ticks();
+        let tps = g.rules.tps as f32;
+        let travel = g.rules.bullet_speed * sc * 0.06;
         for b in &g.bullets {
-            let r = (0.45 * sc).max(3.0 / zoom);
-            let tail = (2.5 * sc).max(14.0 / zoom);
-            self.marks.line((b.at.0 - b.dir.0 * tail, b.at.1 - b.dir.1 * tail), b.at, 0.0, [255, 230, 150, 220]);
-            self.marks.disc(b.at, r, [255, 250, 220, 255], false);
+            // A payload this world can't cast yet flies plain, as it lands.
+            let castable = |c: &rounds::Cast| match c.payload {
+                rounds::Card::Gas => g.world.has_gas(),
+                rounds::Card::Germ => g.world.has_germ(),
+                _ => true,
+            };
+            let cast = b.by.and_then(|k| self.rounds.next_cast(k, t)).filter(|&(c, charging)| !charging && castable(&c)).map(|(c, _)| c);
+            let look = card_look(cast.map(|c| c.payload));
+            let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32);
+            let quiet = cast.is_some_and(|c| c.quiet);
+            let core = (0.22 * sc * zoom).clamp(1.4, 5.0) * wide * if b.split > 0 { 1.3 } else { 1.0 } * if b.pierce > 0 { 0.8 } else { 1.0 };
+            let len = travel * if b.pierce > 0 { 2.4 } else { 1.0 };
+            let tail = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
+            let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 210 }];
+            self.marks.streak(b.at, tail, core, glow, look.core);
+            if cast.is_some_and(|c| c.scatter) {
+                let side = (-b.dir.1 * 0.9 * sc, b.dir.0 * 0.9 * sc);
+                for f in [-1.0, 1.0] {
+                    let h = (b.at.0 + side.0 * f - b.dir.0 * 0.6 * sc, b.at.1 + side.1 * f - b.dir.1 * 0.6 * sc);
+                    self.marks.streak(h, (h.0 - b.dir.0 * len * 0.6, h.1 - b.dir.1 * len * 0.6), core * 0.6, glow, look.core);
+                }
+            }
+            self.lights.push(Light { at: b.at, reach: 7.0 * sc * wide, lift: 3.0, colour: look.light, strength: if quiet { 0.35 } else { 0.9 } });
+        }
+        // A burst lights the world for its first tenth of a second (Noita's
+        // explosion light lasts 0.08 s at 8 radii), brighter the more it
+        // killed; after that only what it did stays: the hole, the crater,
+        // the sleepers, the sick colour.
+        for p in self.rounds.pops.iter().rev() {
+            let age = (t.saturating_sub(p.tick)) as f32 / tps;
+            if age > BURST_LIGHT {
+                break;
+            }
+            let f = 1.0 - age / BURST_LIGHT;
+            let look = card_look(Some(p.payload));
+            let at = (p.burst.at.0 * sc, p.burst.at.1 * sc);
+            self.lights.push(Light { at, reach: 3.0 * p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.6 + (p.killed as f32 / 120.0).min(2.0)) });
+        }
+        // Plain hits (a shot with no cast) light their spot as the tracer
+        // fades, and a muzzle lights round the soldier as it fires.
+        for tr in self.tracers.iter().filter(|tr| tr.hit) {
+            self.lights.push(Light { at: tr.to, reach: 4.0 * sc, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.8 * (1.0 - tr.age / TRACER) });
+        }
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let fl = self.looks.get(k).map_or(0.0, |l| l.flash / FLASH);
+            if s.alive && fl > 0.0 {
+                self.lights.push(Light { at: (s.x, s.y), reach: 5.0 * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.7 * fl });
+            }
+        }
+        // A lodged cast (delay, thick) is an ember where it waits, its light
+        // swelling as its fuse burns down (delay) or steady (thick).
+        for (c, at, due) in self.rounds.lodged() {
+            let look = card_look(Some(c.payload));
+            let left = due.saturating_sub(t) as f32 / tps;
+            let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
+            self.marks.streak(at, at, (0.18 * sc * zoom).clamp(1.2, 4.0), [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8], look.core);
+            self.lights.push(Light { at, reach: 3.0 * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
         }
         // A soldier is drawn its touch wide (walkers that close drain it),
         // and at least 8 pixels across the radius, so it reads at any zoom
         // (at 0.9 dish cells, the stand-in's size, it was a 4-pixel dot at
         // the whole map's zoom).
-        let r = (g.rules.touch * sc).max(8.0 / zoom);
-        for (k, s) in g.soldiers.iter().enumerate() {
+        // Drawn 1.15 times that and at least 10 pixels since the art review
+        // (2026-11-14: a 20-pixel olive disc at zoom 6); elbow room
+        // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
+        // dead first, so the living are drawn over them.
+        let r = (g.rules.touch * sc * 1.15).max(10.0 / zoom);
+        let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
+        for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, at: (s.x, s.y), alive: s.alive });
             self.marks.soldier((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive);
+        }
+        // The bars after every figure, so a neighbour never hides one.
+        for s in &g.soldiers {
             if s.alive {
-                let below = (r * zoom).max(2.0) + 5.0;
-                self.marks.bar((s.x, s.y), below, (7.0, 1.0), s.hp / g.rules.hp, [90, 220, 110, 255], [70, 30, 30, 255]);
+                // Health only when hurt (art direction rule 6); a carried
+                // load always, under it.
+                let below = (r * zoom * 0.9).max(2.0) + 5.0;
+                self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
                 if s.carry > 0.0 {
-                    self.marks.bar((s.x, s.y), below + 3.0, (7.0, 0.8), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
+                    self.marks.bar((s.x, s.y), below + 4.0, (8.0, 1.0), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
                 }
             }
         }
@@ -610,9 +702,32 @@ impl App {
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
-            ("E".into(), "Tools page: blast, det cord, mine, sleep gas (germ not on the GPU yet); E again goes back".into()),
+            ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
         ];
         m.main_menu = self.base.is_some();
         m
     }
+}
+
+/// How long a burst lights the world, game seconds.
+const BURST_LIGHT: f32 = 0.12;
+
+/// A payload's colours: the streak's glow and hot core, and its light.
+pub(super) struct CardLook {
+    pub glow: [u8; 3],
+    pub core: [u8; 4],
+    pub light: [f32; 3],
+}
+
+/// Each payload in its own colour, as each Noita spell is (blast hot
+/// orange, gas violet, germ acid green; none, a plain or recharging shot,
+/// pale gold).
+pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
+    let (glow, core, light): ([u8; 3], [u8; 3], [f32; 3]) = match payload {
+        Some(rounds::Card::Blast) => ([255, 120, 40], [255, 236, 190], [255.0, 160.0, 80.0]),
+        Some(rounds::Card::Gas) => ([165, 110, 255], [236, 222, 255], [180.0, 140.0, 255.0]),
+        Some(rounds::Card::Germ) => ([110, 255, 70], [226, 255, 196], [140.0, 255.0, 110.0]),
+        _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
+    };
+    CardLook { glow, core: [core[0], core[1], core[2], 255], light }
 }

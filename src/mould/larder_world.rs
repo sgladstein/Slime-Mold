@@ -435,6 +435,16 @@ impl<W: World> Game<W> {
         self.world.ticks() as f32 / self.rules.tps as f32
     }
 
+    /// How far the mould is through overrunning the larder (`Rules::overrun`),
+    /// 0-1: 0 while it is not held with the bank dry (or the rule is off),
+    /// 1 as the round is lost. The window darkens the larder's sprite by it.
+    pub fn overrun_share(&self) -> f32 {
+        if self.rules.overrun <= 0.0 {
+            return 0.0;
+        }
+        (self.held_ticks as f32 / self.secs(self.rules.overrun).max(1) as f32).min(1.0)
+    }
+
     fn secs(&self, s: f32) -> u64 {
         (s * self.rules.tps as f32).round() as u64
     }

@@ -41,6 +41,9 @@ impl<W: World> Game<W> {
         let mut from = Vec::new();
         let mut shots = Vec::new();
         let mut shooters: Vec<Option<usize>> = Vec::new();
+        // Elbow room first (`Rules::elbow`), so this frame's walk, touch
+        // and shots all see the spread squad.
+        self.elbow_room(dt);
         for k in 0..self.soldiers.len() {
             if !self.soldiers[k].alive {
                 continue;

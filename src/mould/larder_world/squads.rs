@@ -52,7 +52,8 @@ pub const LEAD: f32 = 4.0;
 /// A member further than this from its squad's middle, dish cells, stops
 /// counting toward the middle.
 pub const STRAY: f32 = 14.0;
-/// Room between soldiers in a formation, dish cells.
+/// Room between soldiers in a formation with elbow room off, dish cells;
+/// with it on, the sunflower's ring (`Game::gap`).
 pub const GAP: f32 = 1.6;
 /// A moving squad's anchor goes at this share of a soldier's speed.
 pub const PACE: f32 = 0.75;
@@ -94,10 +95,18 @@ impl Formation {
         Formation::ALL[(i + 1) % Formation::ALL.len()]
     }
 
-    /// Place `r` of `n`, dish cells, with the facing along +x.
-    pub fn offset(self, r: usize, n: usize) -> (f32, f32) {
+    /// Place `r` of `n`, dish cells, with the facing along +x, `gap`
+    /// between neighbours.
+    pub fn offset(self, r: usize, n: usize, gap: f32) -> (f32, f32) {
+        let (x, y) = self.unit_offset(r, n);
+        (x * gap, y * gap)
+    }
+
+    /// `offset` with a gap of 1 (the local `GAP` shadows the module's).
+    fn unit_offset(self, r: usize, n: usize) -> (f32, f32) {
+        const GAP: f32 = 1.0;
         match self {
-            Formation::Blob => slot(r),
+            Formation::Blob => slot(r, GAP),
             Formation::Line => {
                 let row = r / LINE_ROW;
                 let in_row = (n - row * LINE_ROW).min(LINE_ROW);
@@ -172,6 +181,13 @@ fn unit(v: (f32, f32)) -> Option<(f32, f32)> {
 }
 
 impl<W: World> Game<W> {
+    /// Room between neighbours in a formation, dish cells: the sunflower's
+    /// ring (`Game::slot`: a little over elbow room's separation, so elbow
+    /// room never pushes a squad at rest off its places), at least `GAP`.
+    pub(super) fn gap(&self) -> f32 {
+        (self.rules.elbow * self.rules.touch * 1.05).max(GAP)
+    }
+
     /// Live members of squad `q`, by soldier index.
     pub fn members(&self, q: usize) -> Vec<usize> {
         (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].squad as usize == q).collect()
@@ -215,14 +231,14 @@ impl<W: World> Game<W> {
     /// anchor, dish cells, turned to the squad's facing.
     pub(super) fn place(&self, k: usize) -> (f32, f32) {
         if !self.rules.squads {
-            return slot(k);
+            return self.slot(k);
         }
         let s = self.soldiers[k];
         let q = s.squad as usize;
         let m = self.members(q);
         let r = m.iter().position(|&j| j == k).unwrap_or(0);
         let sq = self.squads[q];
-        let (ox, oy) = sq.formation.offset(r, m.len());
+        let (ox, oy) = sq.formation.offset(r, m.len(), self.gap());
         let (fx, fy) = sq.face;
         (ox * fx - oy * fy, ox * fy + oy * fx)
     }
@@ -318,11 +334,11 @@ impl<W: World> Game<W> {
     }
 
     /// The pace of squad `q` while it moves as one: its slowest member's
-    /// wade (`Game::wade_of`), not counting those left past `STRAY`.
+    /// wade (`Game::wade`), not counting those left past `STRAY`.
     pub(super) fn pace(&self, q: usize) -> f32 {
         let Some(mid) = self.middle(q) else { return 1.0 };
         let stray = STRAY * self.s();
-        self.members(q).into_iter().filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray).map(|j| self.wade_of(j)).fold(1.0, f32::min)
+        self.members(q).into_iter().filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray).map(|j| self.wade(j)).fold(1.0, f32::min)
     }
 
     /// Whether soldier `k` fires a volley shot this step, and at what.

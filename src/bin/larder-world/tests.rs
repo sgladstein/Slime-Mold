@@ -135,7 +135,7 @@ fn the_window_plays_the_real_game() {
 
 /// **The tools page works in the window** (2026-11-12): soldiers take
 /// tools at the larder between steps, the page lists the five, the germ
-/// is greyed out on the GPU world (sleep gas runs there since 11-14), a
+/// is ready on the GPU world, as is the sleep gas (both since 11-14), a
 /// blast thrown near a soldier is paid, spends a held tool and leaves a
 /// crater, and a det cord and a sleep gas cloud do too.
 #[test]
@@ -150,7 +150,7 @@ fn the_window_uses_the_tools() {
     app.tools_page = true;
     let m = app.model(None, None);
     assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
-    assert!(m.commands[0].ready && !m.commands[3].ready && m.commands[4].ready, "blast and gas ready, germ not on the GPU");
+    assert!(m.commands[0].ready && m.commands[3].ready && m.commands[4].ready, "blast, germ and gas ready on the GPU");
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
     let s = g.soldiers[0];
@@ -330,4 +330,36 @@ fn the_menu_plays_the_command_lines_rounds() {
     w.at = w.default;
     let a = round_args(&given, false, &menu, &StartEvent::Sandbox);
     assert_eq!(a.keys.iter().filter(|k| k.0 == "wither").map(|k| k.1.as_str()).collect::<Vec<_>>(), vec!["0.01"], "reset to C's own");
+}
+
+/// Turning the sandbox map (or the own mould) on the start menu starts the
+/// dish behind it again on that map (owner, 11-14 05:04Z); turning another
+/// option, or moving between rows, leaves the dish playing. Skips with no
+/// GPU (CI); the cloud's software Vulkan runs it.
+#[test]
+fn turning_the_map_on_the_menu_switches_the_dish_behind() {
+    use slime_mould::world::start::Page;
+    let Some((device, queue)) = gpu() else { return };
+    let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false };
+    let mut app = offscreen(base.clone(), (640, 400), &device, &queue).unwrap();
+    app.base = Some((base.clone(), true));
+    app.menu = Some(start_menu(&base));
+    app.open_menu().unwrap();
+    app.menu.as_mut().unwrap().show(Page::Options);
+    // Down to "Your own mould" and back: no restart (the round's clock runs on).
+    for _ in 0..3 {
+        app.game.as_mut().unwrap().step();
+    }
+    let t = app.game.as_ref().unwrap().time();
+    app.menu_input(|m| m.key(KeyCode::ArrowDown, true)).unwrap();
+    app.menu_input(|m| m.key(KeyCode::ArrowUp, true)).unwrap();
+    assert_eq!(app.game.as_ref().unwrap().time(), t, "moving between rows kept the dish");
+    // The map row: Right turns Fork to the next map, and the dish is on it.
+    let picks = app.menu_input(|m| m.key(KeyCode::ArrowRight, true)).unwrap();
+    assert!(picks.is_empty());
+    let next = app.menu.as_ref().unwrap().option("map").unwrap().value().to_string();
+    assert_ne!(next, "fork");
+    assert_eq!((app.args.map.as_deref(), app.name.as_str()), (Some(next.as_str()), next.as_str()));
+    assert_eq!(app.game.as_ref().unwrap().time(), 0.0, "a fresh round");
+    assert!(app.in_menu(), "still on the menu");
 }

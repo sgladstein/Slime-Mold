@@ -38,6 +38,18 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 /// defaults (`shape_keys("c")`, the default mould).
 const ENGINE_OPTS: [&str; 3] = ["panic", "wither", "energy_flow"];
 
+/// The options that change the world itself: when one is turned, the dish
+/// behind the menu starts again on the new world (owner, 11-14 05:04Z:
+/// "when you switch the map in the menu it should switch in the
+/// background"). An option that picks a new kind of world (a game mode)
+/// goes here too; the rest wait for the round.
+const DISH_OPTS: [&str; 2] = ["map", "own"];
+
+/// The dish options' values, to tell when one moved.
+fn dish_key(m: &StartMenu) -> Vec<String> {
+    DISH_OPTS.iter().filter_map(|k| m.option(k).map(|o| o.value().to_string())).collect()
+}
+
 /// The value a key last took in `keys` (the last wins, as `gpu::set` plays them).
 fn key_value<'a>(keys: &'a [(String, String)], k: &str) -> Option<&'a str> {
     keys.iter().rev().find(|(n, _)| n == k).map(|(_, v)| v.as_str())
@@ -55,9 +67,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let bullet = Rules::default().bullet_speed;
     let num = |v: f32| format!("{v}");
     let mut o = vec![
-        Opt::new("mode", "Control", &["rts", "squads"], "rts", if base.squads { "squads" } else { "rts" }, "Squads: steer one squad with WASD, fire at the cursor, split and merge; no larder (guard or drain crystals)"),
         Opt::new("map", "Sandbox map", &maps, "fork", &map_now, "The sandbox's map (noise: the censuses' race world)"),
         Opt::new("own", "Your own mould", &["off", "on"], "off", if base.own { "on" } else { "off" }, "A green mould the squad sows and feeds; sandbox on the race world"),
+        Opt::new("mode", "Control", &["rts", "squads"], "rts", if base.squads { "squads" } else { "rts" }, "Squads: steer one squad with WASD, fire at the cursor, split and merge; no larder (guard or drain crystals)"),
         Opt::new("rounds", "Rounds", &loadouts, LOADOUTS[0].0, LOADOUTS[base.round].0, "The squad's loadout at the start (H cycles it in play)"),
         Opt::new("bullet", "Bullet speed", &["0", "30", "45", "60", "90"], &num(bullet), &base.bullet.map_or(num(bullet), num), "Dish cells a game second a shot flies; 0 is the instant ray"),
     ];
@@ -194,6 +206,7 @@ impl App {
         let Some((base, chosen)) = self.base.clone() else { return Ok(()) };
         let menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
+        self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
         self.menu = Some(menu);
         self.paused = false;
         self.start()?;
@@ -207,6 +220,18 @@ impl App {
         let z = self.camera.fit();
         self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
         self.camera.centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
+    }
+
+    /// A key or a click on the menu (`input`): what it picked, after the
+    /// dish behind is started again if it turned a world option (`DISH_OPTS`).
+    pub(super) fn menu_input(&mut self, input: impl FnOnce(&mut StartMenu) -> Vec<StartEvent>) -> Result<Vec<StartEvent>, String> {
+        let Some(m) = self.menu.as_mut() else { return Ok(Vec::new()) };
+        let before = dish_key(m);
+        let picks = input(m);
+        if picks.is_empty() && dish_key(m) != before {
+            self.open_menu()?;
+        }
+        Ok(picks)
     }
 
     pub(super) fn menu_events(&mut self, picks: Vec<StartEvent>, event_loop: &ActiveEventLoop) {

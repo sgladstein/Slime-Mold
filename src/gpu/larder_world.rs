@@ -61,6 +61,7 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         // Contagion is off (`sick` 0); these only make the params equal.
         immune: p.immune_steps as u32,
         catch_at: p.sick_catch,
+        sick_upkeep: p.sick_upkeep,
         upkeep: p.upkeep,
         start_energy: p.start_energy,
         birth_energy: p.birth_energy,
@@ -532,9 +533,11 @@ impl World for GpuWorld {
     /// submit of its own, after any frame in flight), then one read-back for
     /// the walkers killed: bursts are a player's tool uses, a few a second
     /// at most, not a pass a frame. Then the sleep gas (`Engine::gas`,
-    /// 11-14), in the CPU's order (`squad::burst`). The germ is not on the
-    /// GPU yet (`has_germ`): the toolkit doesn't offer it here. The alarm
-    /// field turns on with the first alarm or gas, as `BigDish::
+    /// 11-14), in the CPU's order (`squad::burst`), and the germ (11-14):
+    /// contagion turns on with the first germ (its settings from `k`, as
+    /// `squad::burst` sets the CPU's; sickness changes no step, trail,
+    /// reach or turn, as there), and the strike's `kill` pass infects. The
+    /// alarm field turns on with the first alarm or gas, as `BigDish::
     /// enable_alarm` does.
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
         // A step in shares (`spread`) runs whole before the burst, so the
@@ -546,7 +549,7 @@ impl World for GpuWorld {
         let mut out = squad::BurstOut::default();
         if b.kill || b.alarm > 0.0 || b.crater > 0 {
             let r = if b.kill { b.r } else { 0.0 };
-            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater);
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
             let now = self.e.struck();
             out.killed = now.wrapping_sub(self.struck);
             self.struck = now;
@@ -554,6 +557,25 @@ impl World for GpuWorld {
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
             out.gassed = self.e.gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
+            // The cloud after the gas, as `squad::burst` lays it.
+            if k.gas_keep > 0.0 {
+                (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+                self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
+            }
+        }
+        // The germ last, as on the CPU: a burst of its own that kills,
+        // clears and lays nothing, only infects within `r`.
+        if b.germ {
+            if self.s.sick == 0 {
+                assert!(k.sick_steps > 0, "the germ needs sick_steps");
+                self.s.sick = k.sick_steps as u32;
+                self.s.immune = k.immune_steps as u32;
+                self.s.sick_upkeep = k.sick_upkeep;
+                self.s.catch_at = k.sick_catch;
+                self.s.germ = k.sick_deposit;
+                self.s.germ_keep = k.sick_keep;
+            }
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
         }
         out
     }
@@ -566,6 +588,12 @@ impl World for GpuWorld {
     }
 
     fn has_gas(&self) -> bool {
+        true
+    }
+
+    /// The germ runs here (2026-11-14): the burst's `kill` pass infects,
+    /// and the `life` pass charges the sick `sick_upkeep`.
+    fn has_germ(&self) -> bool {
         true
     }
 
@@ -788,6 +816,9 @@ mod tests {
         fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
             self.g.burst(b, k)
         }
+        fn has_germ(&self) -> bool {
+            self.g.has_germ()
+        }
         fn living(&self) -> usize {
             self.g.living()
         }
@@ -922,8 +953,9 @@ mod tests {
     /// **The squad toolkit runs on the GPU world** (2026-11-12): a kit blast
     /// at the start kills the same walkers there as on the CPU race world
     /// (the same mould, before any tick) and lays its crater; a det cord
-    /// lays one too; the germ is refused and not paid, the gas (11-14) is paid and sleeps the mould. Then, as the
-    /// game runs, a mine at the mould's home goes off from the frames' grid.
+    /// lays one too; the gas (11-14) is paid and sleeps the mould. Then, as
+    /// the game runs, a mine at the mould's home goes off from the frames'
+    /// grid. The germ has its own test (`the_germ_runs_on_the_gpu_world`).
     #[test]
     fn the_kit_runs_on_the_gpu_world() {
         use crate::mould::kit::{Kit, KitRules, Tool};
@@ -949,9 +981,7 @@ mod tests {
         let after_blast = cratered(&gpu);
         assert_eq!(after_blast, cpu.world.scorch.iter().filter(|&&c| c > 0).count(), "the blast's crater");
         let bank = gpu.bank;
-        // The germ is still refused on the GPU; the sleep gas works since
-        // 11-14 (`Engine::gas`) and is paid.
-        assert!(!kg.use_tool(&mut gpu, Tool::Germ(home)) && gpu.bank == bank, "the germ refused on the GPU");
+        // The sleep gas works since 11-14 (`Engine::gas`) and is paid.
         assert!(kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank < bank && kg.gassed > 0, "the gas on the GPU: {} gassed", kg.gassed);
         let k = gpu.world.scale();
         assert!(kg.use_tool(&mut gpu, Tool::Cord((home.0 + 20.0 * k, home.1 - 10.0 * k), (home.0 + 20.0 * k, home.1 + 10.0 * k))));
@@ -970,6 +1000,65 @@ mod tests {
         }
         assert_eq!(fired, 1, "the mine (trigger {}) went off by {:.0} s", km.mine_trigger(&g2), g2.time());
         eprintln!("GPU kit: blast {} killed, mine {} killed at {:.1} s", kg.killed[0], km.killed[1], g2.time());
+    }
+
+    /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a
+    /// kit germ at the mould's home makes the same walkers sick there as
+    /// on the CPU race world (the same mould, before any tick; within 1%,
+    /// the float distance at the rim as the blast's), and then, as the
+    /// game runs, sickness spreads through the germ field and its upkeep
+    /// thins the mould against the same world with no germ, on both.
+    #[test]
+    fn the_germ_runs_on_the_gpu_world() {
+        use crate::mould::kit::{Kit, KitRules, Tool};
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let rules = Rules { cap: 60.0, ..Rules::default() };
+        let gpu_world = || Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let (mut gpu, mut gpu_none) = (gpu_world(), gpu_world());
+        let (mut cpu, mut cpu_none) = (Game::new(race_world(seed, scale, walkers), rules, seed), Game::new(race_world(seed, scale, walkers), rules, seed));
+        let home = gpu.world.crystals()[0].0;
+        let free = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let (mut kg, mut kc) = (Kit::new(free), Kit::new(free));
+        gpu.bank = 10_000.0;
+        cpu.bank = 10_000.0;
+        assert!(gpu.world.has_germ());
+        assert!(kg.use_tool(&mut gpu, Tool::Germ(home)) && kc.use_tool(&mut cpu, Tool::Germ(home)));
+        let immune = gpu.world.s.immune;
+        let gpu_sick = |g: &Game<GpuWorld>| read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.sick).chunks_exact(4).take(g.world.e.n as usize).filter(|c| u32::from_le_bytes((*c).try_into().unwrap()) > immune).count();
+        let cpu_sick = |g: &Game<BigDish>| g.world.sick.iter().filter(|&&c| c as u32 > g.world.p.immune_steps as u32).count();
+        let (sg, sc) = (gpu_sick(&gpu), cpu_sick(&cpu));
+        eprintln!("germ: {sg} sick on the GPU, {sc} on the CPU");
+        assert!(sc > 50 && sg.abs_diff(sc) * 100 <= sc, "the germ made {sg} sick on the GPU, {sc} on the CPU");
+        assert_eq!((immune, gpu.world.s.sick_upkeep), (cpu.world.p.immune_steps as u32, cpu.world.p.sick_upkeep), "the same contagion settings");
+        // Twenty game seconds: the sick pay 60 times the upkeep and die,
+        // and the germ they lay catches more.
+        let secs = 20.0;
+        let mut most = (sg, sc);
+        // Each world's own time too: with contagion on the germ field
+        // spreads every tick (software Vulkan, so only a ratio).
+        let mut took = [0.0f64; 2];
+        while gpu.time() < secs {
+            for (j, g) in [&mut gpu, &mut gpu_none].into_iter().enumerate() {
+                let t = Instant::now();
+                g.world.mould_grid(scale);
+                g.step();
+                took[j] += t.elapsed().as_secs_f64();
+            }
+            most.0 = most.0.max(gpu_sick(&gpu));
+        }
+        eprintln!("germ: GPU world {:.2} s with contagion on, {:.2} s off, for {secs} game s", took[0], took[1]);
+        while cpu.time() < secs {
+            cpu.step();
+            cpu_none.step();
+            most.1 = most.1.max(cpu_sick(&cpu));
+        }
+        let (lg, lgn, lc, lcn) = (gpu.world.living(), gpu_none.world.living(), cpu.world.living(), cpu_none.world.living());
+        eprintln!("germ after {secs} s: GPU {lg} living against {lgn} with none (most sick {}), CPU {lc} against {lcn} (most sick {})", most.0, most.1);
+        assert!(most.0 > sg && most.1 > sc, "the sickness spread (most sick {most:?}, from {sg} and {sc})");
+        assert!(lg * 10 < lgn * 9 && lc * 10 < lcn * 9, "the germ thinned the mould: GPU {lg} against {lgn}, CPU {lc} against {lcn}");
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar

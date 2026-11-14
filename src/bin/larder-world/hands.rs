@@ -40,7 +40,10 @@ pub(super) fn volley(g: &mut Game<GpuWorld>, free: bool) {
     let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
     let burning = live.iter().any(|&k| matches!(g.soldiers[k].order, Order::Burn(..)));
     if t < VOLLEY {
-        while t < 1.0 && g.bank >= g.rules.soldier_cost {
+        // Bounded by the squad's cap too: with a bank past the cap's price
+        // (`bank=` films) the loop never ended, and the command log grew
+        // until the run ran out of memory (11-14).
+        while t < 1.0 && g.bank >= g.rules.soldier_cost && g.alive() < g.rules.max_squad {
             g.apply(Cmd::Buy);
         }
         // The starting disc of walkers fills the stem until it thins out

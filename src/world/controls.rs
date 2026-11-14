@@ -305,9 +305,12 @@ impl Controls {
     /// zoom) and the drag box or burn line under way. The game draws the
     /// units; push these after them, so they draw on top.
     pub fn marks(&self, units: &[Unit], cam: &Camera, r: f32, out: &mut Marks) {
-        let ring = (r * cam.zoom).max(2.0) + 4.0;
-        for u in units.iter().filter(|u| u.alive && self.selected.contains(&u.id)) {
-            out.ring_px((u.x, u.y), ring, SELECTED);
+        // Just clear of the figure's body (0.8 of its radius in sprite A),
+        // thin, so the soldier inside stays the thing you see.
+        let ring = (r * cam.zoom * 0.95).max(2.0) + 2.0;
+        let at: Vec<(f32, f32)> = units.iter().filter(|u| u.alive && self.selected.contains(&u.id)).map(|u| (u.x, u.y)).collect();
+        for (c, px) in ring_groups(&at, ring / cam.zoom.max(1e-6)) {
+            out.selected(c, px * cam.zoom);
         }
         if let (Some(Drag::Select(from)), Some(c)) = (self.drag, self.cursor) {
             if (c.0 - from.0).hypot(c.1 - from.1) > DRAG_PX {
@@ -320,6 +323,48 @@ impl Controls {
             }
         }
     }
+}
+
+/// The selection rings for units at `at` (world points), each ring
+/// `ring` world units out: units whose rings overlap share one ring round
+/// the whole group (art direction, 2026-11-14: in a tight knot at zoom 6
+/// a ring per soldier tangled into a mesh that hid the figures). Returns
+/// (centre, radius) in world units; a lone unit keeps its own ring.
+/// Groups join through any overlapping pair (union-find, O(n²): 780 pairs
+/// at 40 units).
+pub fn ring_groups(at: &[(f32, f32)], ring: f32) -> Vec<((f32, f32), f32)> {
+    let n = at.len();
+    let mut parent: Vec<usize> = (0..n).collect();
+    fn root(p: &mut [usize], mut i: usize) -> usize {
+        while p[i] != i {
+            p[i] = p[p[i]];
+            i = p[i];
+        }
+        i
+    }
+    for i in 0..n {
+        for j in i + 1..n {
+            if (at[i].0 - at[j].0).hypot(at[i].1 - at[j].1) < 2.0 * ring {
+                let (a, b) = (root(&mut parent, i), root(&mut parent, j));
+                parent[a.max(b)] = a.min(b);
+            }
+        }
+    }
+    let mut out = Vec::new();
+    for g in 0..n {
+        if root(&mut parent, g) != g {
+            continue;
+        }
+        let members: Vec<(f32, f32)> = (0..n).filter(|&i| root(&mut parent, i) == g).map(|i| at[i]).collect();
+        let (mut x0, mut y0, mut x1, mut y1) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+        for &(x, y) in &members {
+            (x0, y0, x1, y1) = (x0.min(x), y0.min(y), x1.max(x), y1.max(y));
+        }
+        let c = ((x0 + x1) / 2.0, (y0 + y1) / 2.0);
+        let far = members.iter().map(|p| (p.0 - c.0).hypot(p.1 - c.1)).fold(0.0f32, f32::max);
+        out.push((c, far + ring));
+    }
+    out
 }
 
 /// A unit's usual marks: a disc in its team's colour (`r` world cells, on
@@ -336,6 +381,21 @@ pub fn unit_marks(u: &Unit, r: f32, hp: f32, zoom: f32, out: &mut Marks) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn overlapping_selection_rings_share_one_ring() {
+        // Two units far apart, three in a knot: a ring each for the two,
+        // one round the knot.
+        let at = [(0.0, 0.0), (20.0, 0.0), (40.0, 40.0), (41.0, 40.0), (40.0, 41.5)];
+        let g = ring_groups(&at, 2.0);
+        assert_eq!(g.len(), 3, "{g:?}");
+        let knot = g.iter().find(|(c, _)| c.0 > 30.0).unwrap();
+        for p in &at[2..] {
+            assert!((p.0 - knot.0 .0).hypot(p.1 - knot.0 .1) + 2.0 <= knot.1 + 1e-4, "the group ring holds every member's ring");
+        }
+        assert!(g.iter().any(|&(c, r)| c == (0.0, 0.0) && r == 2.0), "a lone unit keeps its own ring");
+        assert!(ring_groups(&[], 2.0).is_empty());
+    }
 
     fn squad() -> Vec<Unit> {
         let mut v: Vec<Unit> = (0..5).map(|k| Unit { id: k, team: 0, x: 100.0 + 20.0 * k as f32, y: 100.0, alive: true }).collect();

@@ -1188,6 +1188,52 @@ fn an_aim_spread_turns_the_shots_within_the_spread() {
     assert!(turned > 0, "the spread turned some shot");
 }
 
+/// Elbow room (`Rules::elbow`, art review 2026-11-14): a squad stacked on
+/// one point fans out until every pair is the separation apart, never onto
+/// unstandable ground; a squad sent to one cell ends that far apart too;
+/// with the rule off a stack stays a stack.
+#[test]
+fn stacked_soldiers_step_apart_onto_open_ground() {
+    let spread = |elbow: f32, send: bool| {
+        let mut g = small(1);
+        g.rules.elbow = elbow;
+        while g.soldiers.len() < 8 {
+            g.bank = g.bank.max(g.rules.soldier_cost);
+            g.apply(Cmd::Buy);
+        }
+        let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+        let sc = g.s();
+        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 12.0 * sc * a.cos(), y + 12.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+            (g.soldiers[k].x, g.soldiers[k].y) = (x, y);
+            if send {
+                g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
+            }
+        }
+        for _ in 0..(g.rules.tps * 8) {
+            g.step();
+            for s in g.soldiers.iter().filter(|s| s.alive) {
+                assert!(g.standable(s.x, s.y), "a soldier on unstandable ground at {:?}", (s.x, s.y));
+            }
+        }
+        let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        assert!(live.len() >= 8, "the squad lived");
+        let mut near = f32::MAX;
+        for (i, a) in live.iter().enumerate() {
+            for b in &live[i + 1..] {
+                near = near.min((a.0 - b.0).hypot(a.1 - b.1));
+            }
+        }
+        near / (g.rules.touch * sc)
+    };
+    for send in [false, true] {
+        let near = spread(1.6, send);
+        assert!(near >= 1.6 * 0.95, "sent {send}: nearest pair {near} touch radii apart");
+    }
+    assert!(spread(0.0, false) < 0.01, "off, the stack stays");
+}
+
 /// A burning soldier fires along its line once the line is in reach, and
 /// while it still walks there it shoots what reaches it, by its own aim
 /// and stance (2026-11-14: on shape C the `volley` squad, short of its
@@ -1268,7 +1314,8 @@ fn a_steered_squad_moves_together_and_settles_when_let_go() {
     g.apply(Cmd::Active(0));
     off_the_crystal(&mut g);
     let settled = spread_of(&g, 0);
-    assert!(settled < 5.0, "a settled blob of 8 stands {settled} cells wide");
+    // A blob of 8 has its last place gap x sqrt(7) out (`Game::gap`).
+    assert!(settled < 3.0 * g.gap(), "a settled blob of 8 stands {settled} cells wide (gap {})", g.gap());
     let start = g.middle(0).unwrap();
     // Steer toward the mould's home for 6 s.
     let to = g.core;
@@ -1284,8 +1331,7 @@ fn a_steered_squad_moves_together_and_settles_when_let_go() {
     let moved = g.middle(0).unwrap();
     let gone = (moved.0 - start.0).hypot(moved.1 - start.1) / g.s();
     assert!(gone > 10.0, "the squad moved {gone} cells");
-    // Eight soldiers in a blob stand within about 5 cells of the middle.
-    assert!(worst < 7.0, "the squad spread to {worst} cells while steered");
+    assert!(worst < 4.5 * g.gap(), "the squad spread to {worst} cells while steered");
     g.apply(Cmd::Steer(0, (0.0, 0.0)));
     for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
         g.step();
@@ -1406,14 +1452,14 @@ fn split_join_and_merge_move_soldiers_between_squads() {
     for _ in 0..4 * g.rules.tps / g.rules.frame_ticks {
         g.step();
     }
-    assert!(spread_of(&g, 0) < 7.0, "the merged squad gathers into one blob: {}", spread_of(&g, 0));
+    assert!(spread_of(&g, 0) < 4.0 * g.gap(), "the merged squad gathers into one blob: {}", spread_of(&g, 0));
 }
 
 #[test]
 fn formations_place_every_member_apart() {
     for f in Formation::ALL {
         for n in [1, 2, 5, 12, 30] {
-            let pts: Vec<_> = (0..n).map(|r| f.offset(r, n)).collect();
+            let pts: Vec<_> = (0..n).map(|r| f.offset(r, n, 1.6)).collect();
             for i in 0..n {
                 for j in 0..i {
                     let d = (pts[i].0 - pts[j].0).hypot(pts[i].1 - pts[j].1);
