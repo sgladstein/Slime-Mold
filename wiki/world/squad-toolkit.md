@@ -123,8 +123,9 @@ became `bait`: food scent along the flight (`Burst::bait`, GPU pass `baitlay` 60
 Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34Z); `rate`, `thrift` and
 `smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)).
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
-reach by `Rules::range_card` (0.5 of `Rules::range`) a copy, through `Game::gun_range`:
-36 cells with one, 48 with two; building reach and turrets keep their own ranges.
+reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
+distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building
+reach and turrets keep their own ranges.
 **Bomb rounds** (11-14, the owner's "Do we have explosions yet"): the
 `bomb` payload kills a small core (4 dish cells) and throws the live mould
 out to 2.5 times that straight outward, as real walkers in flight
