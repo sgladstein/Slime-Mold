@@ -1,0 +1,11 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  holes: shots that hit 75 refilled 75 (still open 0); ticks to 80%: median 8 (0.53 s), q25 4, q75 11, max 74
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/s2/fork-stand-030s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/s2/fork-stand-030s-near.png
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.041 ms a frame
+  t 30 s: mould 25182, soldiers 0, bank 1748, harvested 0, shots 76, killed 650, took 0%, crystals left 0.997
+  holes: shots that hit 75 refilled 75 (still open 0); ticks to 80%: median 8 (0.53 s), q25 4, q75 11, max 74
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/s2/fork-stand-060s-all.png
+/tmp/claude-0/-home-user/de1ff83b-4c18-5c34-93e1-2d5f866e1ccd/scratchpad/c2s/s2/fork-stand-060s-near.png
+  CPU: ground field 2.11 ms (once a game second), model and HUD 0.047 ms a frame
+  t 60 s: mould 30458, soldiers 0, bank 1157, harvested 0, shots 76, killed 650, took 0%, crystals left 0.990
