@@ -360,7 +360,7 @@ impl<W: World> Game<W> {
             // burn order and died in 2 s (`Reports/larder-crater-2s-
             // 2026-11-14.md`). The owner, 11-13 16:15Z: a soldier "standing
             // still and gets rushed by walkers" must be able to kill them.
-            if (p.0 - s.x).hypot(p.1 - s.y) <= self.rules.range * sc + 4.0 {
+            if (p.0 - s.x).hypot(p.1 - s.y) <= self.gun_range() * sc + 4.0 {
                 return Some(p);
             }
         }

@@ -35,7 +35,7 @@ pub(super) fn volley(g: &mut Game<GpuWorld>, free: bool) {
     // burning soldier stands back from it (0.6 of its range).
     let reach = g.world.crystal_r(0) + 2.0 * sc;
     let m = (g.core.0 - u.0 * reach, g.core.1 - u.1 * reach);
-    let keep = 0.6 * g.rules.range * sc;
+    let keep = 0.6 * g.gun_range() * sc;
     let stand = (m.0 - u.0 * keep, m.1 - u.1 * keep);
     let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
     let burning = live.iter().any(|&k| matches!(g.soldiers[k].order, Order::Burn(..)));
@@ -322,7 +322,7 @@ pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
     let back = split.and_then(|s| g.log.iter().find(|(tk, c)| matches!(c, Cmd::Active(_)) && *tk as f32 / tps > s).map(|(tk, _)| *tk as f32 / tps));
     // The thickest slime a member of `q` sees in range, and how thick.
     let sight = |g: &Game<GpuWorld>, q: usize| {
-        g.members(q).iter().filter_map(|&k| g.soldiers[k].aim.map(|a| (g.soldiers[k].dense, a, (a.0 - g.soldiers[k].x).hypot(a.1 - g.soldiers[k].y)))).filter(|&(n, _, d)| n >= g.rules.aim_min && d <= g.rules.range * sc).max_by_key(|&(n, ..)| n).map(|(n, a, _)| (a, n))
+        g.members(q).iter().filter_map(|&k| g.soldiers[k].aim.map(|a| (g.soldiers[k].dense, a, (a.0 - g.soldiers[k].x).hypot(a.1 - g.soldiers[k].y)))).filter(|&(n, _, d)| n >= g.rules.aim_min && d <= g.gun_range() * sc).max_by_key(|&(n, ..)| n).map(|(n, a, _)| (a, n))
     };
     let cs = g.world.crystals();
     let slimed: Vec<bool> = (0..cs.len()).map(|i| g.world.walkers_in(cs[i].0, g.world.crystal_r(i) + 2.0 * sc) > 200).collect();
