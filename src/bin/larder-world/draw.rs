@@ -1025,14 +1025,14 @@ pub(super) fn gun_icon(k: GunKind) -> Icon {
 
 /// A payload's colour in the panel: its bullets' glow (`card_look`), so a
 /// card and its shot in the world match.
-fn payload_colour(c: rounds::Card) -> [u8; 4] {
+pub(super) fn payload_colour(c: rounds::Card) -> [u8; 4] {
     let g = card_look(Some(c)).glow;
     [g[0], g[1], g[2], 255]
 }
 
 /// A card's glyph, frame and words for the loadout panel, with the round's
 /// own numbers.
-fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
+pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
     let split_n = w.split_n;
     use rounds::Card as C;
     let k = &r.kit;

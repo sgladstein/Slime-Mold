@@ -66,9 +66,58 @@ towards the core slime world". Level generation is its own thread (15:22Z,
   "Give up the run". `run=SEED` starts a run from the command line and
   `run=SEED menu=shop look=DIR` films its shop.
 
+## The shop, second build (2026-11-14 18:00Z)
+
+The owner, 16:55Z: "Guns and bullets should have icons. This whole menu
+should not just be uniform buttons. There should be one area for
+unlocking/upgrading that should match the player menu from the screen
+(buildings and tools should be separate menus that you open up). The second
+area of the screen is for Guns/bullet cards." Built on the gun thread's
+guns (#283: `guns::Gun`, rolled by kind around averages, deeper rolls
+bigger; the owner, 16:46Z, "The squad owns the gun").
+
+- **Upgrades** (left): a grid of tiles six wide, drawn as the command card
+  draws its buttons (the icon in the middle, the name, levels as pips, the
+  price bottom right in the energy colour or red when short, a tick when an
+  unlock is owned), with the command card's own icons. Buildings, Tools and
+  (in dev mode) Dev are folder tiles with the build and tools pages' icons;
+  a click or Enter opens one, Back or Esc closes it. A dot on a folder
+  says something in it is affordable now. Under the grid a box says what
+  the tile under the cursor (or the keyboard's) is, does and costs.
+- **Armory** (right): gun cards (the kind's icon, gold for a lucky roll;
+  the name; carried, armory or the price; bars for range, rate, aim,
+  bullets a shot, budget and slots), then the carried gun's slots with its
+  cards ("In the gun, budget 7 of 22, 3 of 3 slots", empty slots drawn
+  empty), then the cards for sale and in the bag as bullet cards: a band in
+  the kind's colour, the HUD's card icon, the name, the budget cost as
+  pips, the price. The HUD's own card words fill the detail box.
+- **Guns in the run** (`Run::guns`, `carry`, `gun_offers`): the run starts
+  with the average rifle (budget 10, 4 slots, free play's gun) and each
+  shop sells two guns rolled for the planet ahead (`Gun::roll`). A bought
+  gun is carried at once; an owned one is carried again for free. The
+  carried gun's budget and slots hold the cards (`rounds::fit_gun`); when a
+  smaller gun is carried, the last cards bought go back to the bag. Price:
+  `(80 + 40 x depth) x grade^2`, in tens (`gun_price`). Every soldier lands
+  in squad 0 armed with it (`Cmd::Arm`); a split's new half gets the
+  standard rifle (the gun thread's rule). "Bigger gun" (+2 budget a level,
+  from 5) is gone: a bigger gun is bought.
+- **Walkers by area**: a planet's walkers are its depth factor times its
+  area over today's map, so the level generator's smaller planets 1 and 2
+  (#284: 60% and 80%) are not flooded and bigger ones are not empty.
+- `menu=shop-mid` films a run three planets in (cards in the gun and the
+  bag, a second gun, points left); `menu=shop-build` and `shop-tools` with
+  that folder open.
+
+Checks: `world::start::tests::the_shop_fits_and_its_rows_pick` (every tile,
+on the first page and in each folder, with 6 to 24 cards, on screen and
+apart at 1280x720 to 1920x1080 and every UI size; folders open and close by
+click, Enter and Esc); `mould::run::tests` (7: cards fit the carried gun's
+budget and slots and leave it when a smaller gun is carried; deeper shops
+sell guns with bigger budgets, 40 runs a depth; the first gun is carried).
+
 ## Pictures
 
-[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
+[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the second shop (after planet 1; three planets in; the Buildings and Tools folders; 1280x720 with dev mode), then the first build's start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
 
 ## Checks
 
