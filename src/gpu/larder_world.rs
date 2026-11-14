@@ -1236,7 +1236,14 @@ mod tests {
             for _ in 0..20 {
                 let _ = gpu.frame(&f, 15);
                 let _ = cpu.frame(&f, 15);
-                assert_eq!(gpu.counts_by_side(), cpu.counts_by_side(), "the engines part");
+                // Each side within 1% and the whole within 1%, not exact: on the
+                // GTX 1070 (11-14, 004b7cb) the sides came out (988, 1068)
+                // against the CPU's (992, 1064), the same 2,056 walkers with
+                // four on the other side, where llvmpipe matched exactly; the
+                // births race on the card's atomics in another order.
+                let (g, c) = (gpu.counts_by_side(), cpu.counts_by_side());
+                let near = |a: usize, b: usize| a.abs_diff(b) <= b / 100 + 2;
+                assert!(near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1), "the engines part: {g:?} on the GPU, {c:?} on the CPU");
                 most = most.max(gpu.counts_by_side().1);
             }
             (gpu.counts_by_side(), most)

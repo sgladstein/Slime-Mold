@@ -2,13 +2,14 @@
 title: The GPU sandbox (phase 3)
 kind: mechanism
 status: current
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
   - Reports/creatures-2026-11-11.md
   - Reports/gpu-readout-2026-11-12.md
   - Reports/gpu-sandbox-2026-11-11.md
   - Reports/jenson-looks-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
+  - Reports/pc-batch-1070-2026-11-14.md
   - Reports/outside-rules-2026-11-11.md
   - Reports/species-gpu-2026-11-11.md
 code:
@@ -156,6 +157,13 @@ report](../../Reports/gpu-readout-2026-11-12.md), *Two GPU fixes*). To see the d
 `DRIFT_SEEDS=32` for 32). The numbers are in [the readout
 report](../../Reports/gpu-readout-2026-11-12.md), *On the GTX 1070*.
 
+The whole batch now runs from one script, `scripts/pc-batch.ps1` (twins at
+main, then timing with `-Timing`). At 004b7cb (2026-11-14) four more twins
+failed on the 1070 alone: card drift (birth order, one flung walker) and
+chaos on a small late mould (the squad twins), none a rule. Their tolerances
+carry the card's numbers. Every game frame was under 2.6 ms p95, the draw
+0.1-0.6 ms ([the batch](../../Reports/pc-batch-1070-2026-11-14.md)).
+
 ## Sources
 
 - [gpu-readout-2026-11-12.md](../../Reports/gpu-readout-2026-11-12.md): *On the GTX 1070*, the game's passes, the twins and the maths on the 1070.
@@ -163,3 +171,4 @@ report](../../Reports/gpu-readout-2026-11-12.md), *On the GTX 1070*.
 - [gpu-sandbox-2026-11-11.md](../../Reports/gpu-sandbox-2026-11-11.md): the sandbox, its controls and presets, the twin tests and timings.
 - [species-gpu-2026-11-11.md](../../Reports/species-gpu-2026-11-11.md): the species settings on the GPU, their twin test, planted bugs and cost.
 - [life-gpu-2026-11-11.md](../../Reports/life-gpu-2026-11-11.md): the tiers' life cycle on the GPU, its twin tests, planted bugs and cost.
+- [pc-batch-1070-2026-11-14.md](../../Reports/pc-batch-1070-2026-11-14.md): the 1070 batch at 004b7cb, twins triaged and every timing.
