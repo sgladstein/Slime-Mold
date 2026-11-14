@@ -14,9 +14,9 @@ plants thread).
   B-spline over 4 x 4 cells) is sharpened by a softmax whose sharpness grows
   with the zoom, so a boundary is where two shares are equal, about a pixel
   wide at any zoom. Textures follow the crisp shares.
-- **Plants crisp at the pixel.** The plants' density is on the same spline.
-  A patch's edge is where it crosses 0.2, antialiased by its gradient; kinds
-  (meadow, jungle, reeds, scrub) are split by the same softmax.
+- **Plants crisp at the pixel** in the first cut (density spline, crisp
+  cover at 0.2, kinds by softmax). Dropped at the merge with #304, whose
+  per-pixel crowns draw plants and char over the ground.
 - **Exact cancellation of the material's blend.** `soil_detail` adds
   `want - est`. `est` is the bare ground as `mat_at` sees it, which at
   `fine` 2 is a blend of blends. The `prep` pass now stores it a fine cell
@@ -54,7 +54,22 @@ p50, alternating rounds against main 5168e103.
 | Final | 115.7-117.9 (median +18) |
 
 Most of what is left is reading the plants' density over 16 cells a pixel.
-Not timed on the 1070 yet (every frame was under 2.6 ms p95 there on 11-14).
+
+**After merging main's plant crowns (#304) and the art lead's cost note
+(22:15Z).** The plants thread now draws plants and char at the pixel, so
+this change drops its own plant spline, crisp plant cover and kinds. Where
+the four cells round a pixel are one ground, the 4 x 4 spline is skipped.
+llvmpipe River, one round each against main 2b1a851c (which has #304):
+
+| Zoom | Main | This |
+| --- | --- | --- |
+| 1 | 351.9 | 337.6 |
+| 6 | 206.8 | 192.1 |
+| 12 | 173.5 | 167.9 |
+
+The art lead's 1070 run of main with #304 (not #305): about +1.9 ms at
+every zoom over the morning's build, frame p95 4.3-6.6 ms; the +25 ms
+llvmpipe cap is lifted.
 
 ## Left as it is
 
