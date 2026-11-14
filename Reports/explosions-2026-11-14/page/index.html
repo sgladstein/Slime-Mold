@@ -1,0 +1,104 @@
+<title>Bomb Rounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column of film rows; each film a tile with its counts underneath, a speed switch at the top. */
+:root {
+  --bg: #f4f2ee; --panel: #ffffff; --fg: #23201b; --muted: #6b645a; --line: #ddd7cc; --accent: #c2581c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #16140f; --panel: #201d17; --fg: #ece6db; --muted: #a59c8d; --line: #39342b; --accent: #f08a45; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #16140f; --panel: #201d17; --fg: #ece6db; --muted: #a59c8d; --line: #39342b; --accent: #f08a45; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+main { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 70ch; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font: 600 0.9rem var(--body); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+section { display: grid; gap: 12px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.grid.wide { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: grid; min-width: 0; }
+video { width: 100%; height: auto; display: block; background: #000; aspect-ratio: 960 / 450; max-width: 100%; }
+figcaption { padding: 10px 12px; display: grid; gap: 4px; min-width: 0; }
+.name { font-family: var(--display); font-weight: 700; }
+.counts { font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.counts b { color: var(--accent); font-weight: 400; }
+ul { margin: 0; padding-left: 1.2em; max-width: 72ch; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 0.88em; }
+</style>
+<main>
+  <div class="lede">
+    <h1>Bomb rounds</h1>
+    <p>A new payload card, <b>bomb</b>, for the gun rounds. It kills a small core, then throws the live mould in a ring around it straight outward. The thrown walkers fly for up to half a second, landing where they stop, and they live on there. So a bomb cuts the body and also spreads it. Nothing here is painted on: the sparks are the thrown walkers themselves, the bright band is the trail they lay as they fly, and the hole is the kill.</p>
+    <p class="muted">Shape C on the Fork, seed 1, software Vulkan. Every film plays at real time, 15 frames a game second. The impact light from the gun rounds work is not in these films yet.</p>
+    <div class="bar" role="group" aria-label="Playback speed">
+      <span class="muted">Speed</span>
+      <button id="sp1" data-rate="1" aria-pressed="true">Real time</button>
+      <button id="sp2" data-rate="0.5" aria-pressed="false">Half</button>
+      <button id="sp4" data-rate="0.25" aria-pressed="false">Quarter</button>
+    </div>
+  </div>
+
+  <section>
+    <h2>One shot into the body, close up (zoom 6)</h2>
+    <p class="muted">Each round is set off once at the same spot in C's body at 0:20 (<code>boom=20,175,215</code>), with the squad idle at the larder. The blast is today's card, for comparison.</p>
+    <div class="grid">
+      <figure><video src="z6-blast.mp4" poster="z6-blast.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">blast</span><span class="counts">killed <b>334</b> · thrown <b>0</b></span></figcaption></figure>
+      <figure><video src="z6-bomb.mp4" poster="z6-bomb.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">bomb</span><span class="counts">killed <b>171</b> · thrown <b>678</b></span></figcaption></figure>
+      <figure><video src="z6-cluster.mp4" poster="z6-cluster.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">cluster (scatter + bomb)</span><span class="counts">killed <b>161</b> · thrown <b>716</b></span></figcaption></figure>
+      <figure><video src="z6-blowout.mp4" poster="z6-blowout.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">blowout (wide + bomb)</span><span class="counts">killed <b>375</b> · thrown <b>1,503</b></span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The same shots, closer (zoom 12)</h2>
+    <div class="grid">
+      <figure><video src="z12-blast.mp4" poster="z12-blast.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">blast</span><span class="counts">killed <b>334</b> · thrown <b>0</b></span></figcaption></figure>
+      <figure><video src="z12-bomb.mp4" poster="z12-bomb.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">bomb</span><span class="counts">killed <b>171</b> · thrown <b>678</b></span></figcaption></figure>
+      <figure><video src="z12-cluster.mp4" poster="z12-cluster.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">cluster</span><span class="counts">killed <b>161</b> · thrown <b>716</b></span></figcaption></figure>
+      <figure><video src="z12-blowout.mp4" poster="z12-blowout.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">blowout</span><span class="counts">killed <b>375</b> · thrown <b>1,503</b></span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>In play (zoom 4)</h2>
+    <p class="muted">Eight soldiers stand on open ground by the body on free fire with 8,000 food (<code>hand=hold@95,185 bank=8000</code>), 0:17 to 0:27. Counts are from 0:00 to 0:27. The mould here is the body's thin edge, so each hit kills a few and throws a dozen or so.</p>
+    <div class="grid wide">
+      <figure><video src="play-blast.mp4" poster="play-blast.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">blast rounds</span><span class="counts">37 casts · killed <b>225</b> · thrown <b>0</b> · mould 24,995</span></figcaption></figure>
+      <figure><video src="play-bomb.mp4" poster="play-bomb.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">bomb rounds</span><span class="counts">46 casts · killed <b>111</b> · thrown <b>609</b> · mould 25,144</span></figcaption></figure>
+      <figure><video src="play-cluster.mp4" poster="play-cluster.jpg" autoplay muted loop playsinline></video><figcaption><span class="name">cluster rounds</span><span class="counts">41 casts · killed <b>109</b> · thrown <b>516</b> · mould 25,111</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <ul>
+      <li>A bomb kills everything within 4 dish cells, leaves a 6-second crater there, and lays alarm out to 8 cells. Every living walker on the ground out to 10 cells (2.5 times the kill) is thrown.</li>
+      <li>A thrown walker flies straight out from the centre at 1.5 times a walker's step, for up to 0.5 s. The ones nearest the kill fly furthest, about 11 dish cells, and the ones at the ring's edge barely move.</li>
+      <li>It lays 3 times a walker's trail as it flies, so the throw draws a bright band, and the view draws it as a hot speck while it is in the air. It stops at a wall and lands on the first free cell. It can eat, breed or doze as soon as it lands.</li>
+      <li>Cards: <b>bomb</b> on its own, <b>cluster</b> (three small bombs round the hit) and <b>blowout</b> (1.6 times wider). They are in <code>rounds=</code> and the H cycle. A bomb costs 60 food, as a blast does.</li>
+      <li>It runs on both engines. The engine's throw matches the CPU's exactly on software Vulkan, every walker at every step of the flight. A twin with a wrong speed planted in it fails. The GTX 1070 twin is pending until the PC is free.</li>
+    </ul>
+  </section>
+</main>
+<script>
+const buttons = [...document.querySelectorAll('button[data-rate]')];
+function setRate(r) {
+  document.querySelectorAll('video').forEach(v => { v.playbackRate = r; });
+  buttons.forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.rate) === r)));
+}
+buttons.forEach(b => b.addEventListener('click', () => setRate(Number(b.dataset.rate))));
+document.querySelectorAll('video').forEach(v => v.addEventListener('loadedmetadata', () => {
+  const on = buttons.find(b => b.getAttribute('aria-pressed') === 'true');
+  v.playbackRate = Number(on ? on.dataset.rate : 1);
+}));
+</script>

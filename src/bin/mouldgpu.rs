@@ -2926,6 +2926,174 @@ mod tests {
         assert!(rounds.iter().any(|r| r.0 > 0), "the twin catches a cloud that keeps more");
     }
 
+    /// **An explosion's fling on the engine** (`Engine::fling`, the CPU's
+    /// `BigDish::fling`; the gun rounds' `Bomb`, 11-14): from the same
+    /// state, a kill of radius 4 and a ring out to 10 dish cells. Right
+    /// after: the same walkers flung on both, with the same timers, marks
+    /// and states, every count the same, the headings (atan2) within 1e-5.
+    /// Then the whole flight a tick at a time (`twin`: each tick from the
+    /// CPU's state, so the flight's every step is compared, not a drift):
+    /// the walkers within 0.001, states and marks the same, and once the
+    /// flight is over none flung on either. One planted bug must fail it:
+    /// the GPU's fling speed 2 against the CPU's 1.5.
+    #[test]
+    fn an_explosion_flings_the_same_walkers_as_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let with = |mut s: Settings, keys: &[(&str, &str)]| {
+            for (k, v) in keys {
+                set(&mut s, k, v).unwrap();
+            }
+            s
+        };
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
+        const STEPS: u16 = 12;
+        // (walkers off over the flight, worst tick)
+        let play = |name: &str, s: &Settings, gpu_speed: f32| -> usize {
+            let s = Settings { fling_speed: 1.5, ..s.clone() };
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.lives(j) {
+                    (x, y, m) = (x + wx, y + wy, m + 1.0);
+                }
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            // A wall across the ring on the crystal dish: the flung that
+            // meet it stop and turn as spores do.
+            if s.crystal > 0.0 {
+                cpu.build_wall(x - 8.0, y + 7.0, x + 8.0, y + 7.0, 1.0);
+            }
+            e.inject(&cpu);
+            let (r, rr) = (4.0f32, 10.0f32);
+            let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
+            let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
+            e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
+            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
+            let g = Settings { fling_speed: gpu_speed, ..s.clone() };
+            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
+            let n = cpu.walkers.len();
+            let (life, timer) = e.life_of();
+            let marks = e.flung_of();
+            let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+            let timer_off = timer.iter().zip(&cpu.life_t).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
+            let marks_off = marks.iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
+            let occ_off = read_back(&device, &queue, &e.occ).chunks_exact(4).zip(cpu.occupancy()).filter(|(a, b)| u32::from_le_bytes((*a).try_into().unwrap()) != **b as u32).count();
+            let gpu_w = walkers_of(&e);
+            let heading_off = (0..n).filter(|&j| cpu.flung[j] && (gpu_w[j].2 - cpu.walkers[j].2).abs() > 1e-5).count();
+            let timers: std::collections::BTreeSet<u16> = (0..n).filter(|&j| cpu.flung[j]).map(|j| cpu.life_t[j]).collect();
+            eprintln!("{name}: killed {killed}, flung {n_gpu} on the GPU and {n_cpu} on the CPU, timers {timers:?}; {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
+            assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
+            assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
+            assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
+            let mut worst = 0;
+            for t in 0..(STEPS as u32 + 4) {
+                let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
+                let (life, _) = e.life_of();
+                let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+                let marks_off = e.flung_of().iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
+                worst = worst.max(off);
+                if gpu_speed == s.fling_speed {
+                    assert!(off * 1000 <= n && life_off * 1000 <= n && marks_off * 1000 <= n && lt <= 1e-6, "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
+                }
+            }
+            if gpu_speed == s.fling_speed {
+                let left = cpu.flung.iter().filter(|&&f| f).count();
+                let left_gpu = e.flung_of().iter().filter(|&&f| f).count();
+                eprintln!("{name}: after the flight {left} still flung on the CPU, {left_gpu} on the GPU; worst tick {worst} walkers off");
+                assert!(left * 20 <= n_cpu && left_gpu * 20 <= n_cpu, "{name}: {left} and {left_gpu} of {n_cpu} still in flight");
+            }
+            worst
+        };
+        let dishes = [
+            ("plain (the fling turns the states on)", small(0)),
+            ("no crowd limit", small(3)),
+            ("dormancy and alarm", with(small(0), sleep)),
+            ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
+        ];
+        for (name, s) in &dishes {
+            play(name, s, 1.5);
+        }
+        // Planted: the GPU's flung fly at 2, not 1.5.
+        let off = play("planted, fling speed 2", &dishes[0].1, 2.0);
+        eprintln!("planted, fling speed 2: worst tick {off} walkers off");
+        assert!(off > 50, "the twin catches a fling speed off");
+    }
+
+    /// **Bomb rounds in the game on the engine as on the CPU** (the gun
+    /// rounds' explosion, 11-14): the squad attacks with `bomb` rounds on
+    /// the CPU world. Whenever its rounds cast, the engine is loaded with
+    /// the CPU dish as it was just before (`Engine::inject`, which carries
+    /// the flung marks) and the same bursts go through `World::burst` on
+    /// the engine's world: each must fling the same walkers, and after
+    /// them every slot's state, timer and mark must match. Then two
+    /// frames of the game on the engine from there (injected each frame)
+    /// against the CPU's, and the flung marks still match within 1 in
+    /// 1000 (the flight on the engine in the game's own frame). The bombs
+    /// must have thrown some mould, and the flung must land on both.
+    #[test]
+    fn bomb_rounds_fling_the_same_mould_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::rounds::{burst_rules, parse, RoundRules, Rounds};
+        use slime_mould::mould::squad::{BurstRules, Frame};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        cpu.bank = 1.0e9;
+        for k in 0..cpu.soldiers.len() {
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)));
+        }
+        let rr = RoundRules::default();
+        let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
+        let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
+        let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
+        let (mut frames, mut checked, mut after_off) = (0, 0, 0);
+        while cpu.end.is_none() && cpu.time() < 30.0 {
+            cpu.step();
+            let pre = cpu.world.clone();
+            let n0 = rc.pops.len();
+            rc.after_step(&mut cpu);
+            frames += 1;
+            if rc.pops.len() == n0 {
+                continue;
+            }
+            gpu.world.e.inject(&pre);
+            for p in &rc.pops[n0..] {
+                let o = gpu.world.burst(&p.burst, &k);
+                assert_eq!(o.flung as usize, p.flung, "frame {frames}: walkers flung");
+            }
+            let (life, timer) = gpu.world.e.life_of();
+            let d = &cpu.world;
+            let off = (0..d.walkers.len()).filter(|&j| life[j] != d.life[j] || (d.lives(j) && timer[j] != d.life_t[j])).count();
+            let marks = gpu.world.e.flung_of().iter().zip(&d.flung).filter(|(a, b)| a != b).count();
+            assert!(off == 0 && marks == 0, "frame {frames}: after the bombs {off} states or timers and {marks} marks off");
+            checked += 1;
+            // Two frames on, each from the CPU's state.
+            let mut twin = cpu.world.clone();
+            for _ in 0..2 {
+                gpu.world.e.inject(&twin);
+                World::frame(&mut twin, &Frame::default(), 2);
+                gpu.world.frame(&Frame::default(), 2);
+                let m = gpu.world.e.flung_of().iter().zip(&twin.flung).filter(|(a, b)| a != b).count();
+                after_off = after_off.max(m);
+            }
+        }
+        let left = cpu.world.flung.iter().filter(|&&f| f).count();
+        eprintln!("bombs: {} cast, {} killed, {} flung in {frames} frames; {checked} casts checked on the engine, flung marks at most {after_off} off two frames on; {left} still flung at the end", rc.cast[3], rc.killed, rc.flung);
+        assert!(rc.cast[3] > 0 && rc.flung > 0 && checked > 0, "the bombs threw mould: {:?}, {} flung", rc.cast, rc.flung);
+        assert!(after_off * 1000 <= walkers, "{after_off} marks off in flight");
+    }
+
     #[test]
     fn the_life_cycle_matches_the_cpu_for_four_ticks() {
         const TICKS: u32 = 4;

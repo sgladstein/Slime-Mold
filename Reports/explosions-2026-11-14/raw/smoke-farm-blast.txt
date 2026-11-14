@@ -1,0 +1,6 @@
+  rounds t   30 s: 45 casts (blast, gas, germ, bomb [45, 0, 0, 0]), 521 walkers killed, 0 flung, 2700 food spent, 5 skipped for food, 0 not on this world, 0 lodged
+  t 30 s: mould 24538, soldiers 6, bank 389, harvested 2085, shots 146, killed 1143, took 97%, crystals left 0.894; squad at 257.4,94.0
+  rounds t   60 s: 88 casts (blast, gas, germ, bomb [88, 0, 0, 0]), 925 walkers killed, 0 flung, 5280 food spent, 7 skipped for food, 0 not on this world, 0 lodged
+  t 60 s: mould 26739, soldiers 6, bank 20, harvested 4485, shots 300, killed 2101, took 96%, crystals left 0.792; squad at 265.4,111.2
+  rounds t   90 s: 125 casts (blast, gas, germ, bomb [125, 0, 0, 0]), 1227 walkers killed, 0 flung, 7500 food spent, 16 skipped for food, 0 not on this world, 0 lodged
+  t 90 s: mould 18473, soldiers 4, bank 4, harvested 6867, shots 431, killed 2802, took 95%, crystals left 0.730; squad at 257.4,113.5

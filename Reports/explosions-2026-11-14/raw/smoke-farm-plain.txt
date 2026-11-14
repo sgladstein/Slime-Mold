@@ -1,0 +1,3 @@
+  t 30 s: mould 24701, soldiers 12, bank 1170, harvested 2669, shots 206, killed 1073, took 97%, crystals left 0.862; squad at 255.1,90.4
+  t 60 s: mould 26669, soldiers 19, bank 933, harvested 5745, shots 600, killed 2299, took 96%, crystals left 0.761; squad at 185.9,126.3
+  t 90 s: mould 16496, soldiers 17, bank 894, harvested 7429, shots 999, killed 3831, took 96%, crystals left 0.665; squad at 179.1,75.2

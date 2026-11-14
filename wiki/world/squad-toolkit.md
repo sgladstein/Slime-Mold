@@ -4,6 +4,7 @@ kind: tool
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/explosions-2026-11-14/README.md
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
@@ -14,10 +15,13 @@ sources:
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
 code:
+  - BigDish::fling
   - BigDish::gas
   - BigDish::gassed_near
   - BigDish::lay_gas
   - BigDish::scorch_disc
+  - BigParams::fling_deposit
+  - BigParams::fling_speed
   - BigParams::gas_death
   - BigParams::gas_keep
   - BigParams::germ_resist
@@ -27,6 +31,7 @@ code:
   - Burst
   - Engine::burst
   - Engine::calm
+  - Engine::fling
   - Engine::gas
   - Engine::lay_gas
   - Kit
@@ -104,6 +109,16 @@ lights its area for 0.12 s; the simulation is unchanged. Step 4 is built on both
 ([report](../../Reports/gas-cloud-2026-11-14.md)): a gas burst also lays a cloud
 (`BigDish::lay_gas`) that spreads and halves every `KitRules::gas_half` 4 s, is held by
 walls, and puts to sleep any walker on a cell over 0.2; the window shows it as a violet haze.
+**Bomb rounds** (11-14, the owner's "Do we have explosions yet"): the
+`bomb` payload kills a small core (4 dish cells) and throws the live mould
+out to 2.5 times that straight outward, as real walkers in flight
+(`Burst::fling`, `BigDish::fling`, `Engine::fling`) that land and live on,
+drawn as hot specks with a streak of trail. Loadouts bomb, cluster and
+blowout. Exact engine twin on llvmpipe; one shot into C kills 171 and
+throws 678 against a blast's 334 killed. Every round, blast too, ends the
+rush, idle and farm smoke hands sooner than plain shots on one seed; with
+bombs the rush is wiped at 21 s, a tuning note
+([report](../../Reports/explosions-2026-11-14/README.md), films page linked there).
 
 ## Owner's word
 

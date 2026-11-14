@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -61,6 +61,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut ring_back: Option<(f32, Vec<usize>)> = None;
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
+    let mut boomed: Vec<usize> = Vec::new();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for &t in at {
         // A mission's verdict stops the steps, as the game's end does.
@@ -140,6 +141,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 g.world.e.unblock(&cells);
                 println!("  cut t {:.1} s: the ring opens ({} cells back on the agar)", g.time(), cells.len());
             }
+            // `boom=T,X,Y`: the round set off there once T has come.
+            for (j, &(bt, bx, by)) in booms.iter().enumerate() {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= bt && !boomed.contains(&j) {
+                    boomed.push(j);
+                    let (k0, f0) = (app.rounds.killed, app.rounds.flung);
+                    app.rounds.cast_at(g, (bx, by));
+                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
+                }
+            }
             app.step(step);
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
@@ -218,7 +229,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
         if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ {:?}), {} walkers killed, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.spent, rd.broke, rd.unsupported, rd.waiting());
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting());
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames

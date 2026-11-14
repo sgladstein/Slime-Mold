@@ -223,7 +223,13 @@ fn cell_height(ix: i32, iy: i32, th: f32) -> f32 {
     let v = byte(g, 1u);
     // The land (byte 3, the map's elevation) under everything on it.
     let land = ELEV * byte(g, 3u);
-    var h = 4.0 * pow(th, 0.65);
+    // Thick veins stand higher than before (4 th^0.65) so they read as
+    // raised tubes with a lit and a shaded flank (2026-11-14, material).
+    // Tried 5 th^0.75: the dense body's trail swings showed as mottling.
+    // A saturating curve, so the dense body's small swings of trail read
+    // as a calm surface, not as sand grains (2026-11-14).
+    var h = 5.0 * (1.0 - exp(-2.6 * th)) / (1.0 - exp(-2.6));
+    // Hard terrain is drawn by `terrain_over`; its cells shade as soil.
     if (kind == ROCK || kind == WALL || kind == RUBBLE) { h = 0.0; }
     else if (kind == WET) { h = max(h - 0.3, 0.0); }
     else if (kind == CRYSTAL && P.n_gems == 0u) { h = max(h, (0.6 + 9.0 * byte(g, 2u)) * v); }
@@ -409,7 +415,9 @@ fn cells_height(x: f32, y: f32) -> f32 {
     return h;
 }
 
-struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, wound: f32, gem: f32 };
+// `body`: the wide walker count (`prep`'s `wide`, 0-1) in the byte the
+// wound had (no wound is drawn, see `shaded`), for the specks' light.
+struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, body: f32, gem: f32 };
 
 // A cell's material: the engine's colour for agar (mould, scent, species,
 // germ, grass all in it), the ground kinds in their own colours, scaled by
@@ -467,7 +475,7 @@ fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32) -> Mat {
 fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
-        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.wound = 0.0; m.gem = 0.0;
+        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0;
         return m;
     }
     let i = cidx(ix, iy);
@@ -492,10 +500,26 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
     let soil = base + tint * 0.6;
-    m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+    // The slime's material (art director, 2026-11-14: "it still reads as
+    // sand against the olive ground"). Before, the body was the hue at 55%
+    // to 100% by thickness, laid over the soil up to 85%: a thin film was
+    // dim opaque paint and a thick vein a flat ochre. Now, by the same
+    // thickness: a thin film is a gel the ground shows through (the soil
+    // tinted by the hue, as through coloured glass), and the body turns
+    // opaque and brighter gold as it thickens, its hue pushed away from
+    // grey so it is the most saturated warm colour on screen; a starving
+    // piece loses the push with its colour (`cut`). Every weight is a
+    // smooth function of `th`, so no line is drawn where the film ends.
+    let lum = dot(hue, vec3<f32>(0.299, 0.587, 0.114));
+    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut));
+    let body_c = vivid * (0.95 + 0.3 * smoothstep(0.3, 1.0, th));
+    let gel = soil * (0.55 + 0.7 * vivid / 255.0);
+    let film = 1.0 - exp(-14.0 * th);
+    let opaque = smoothstep(0.08, 0.55, th);
+    m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
     m.glow = vec3<f32>(0.0);
-    m.gloss = (0.08 + 0.7 * sqrt(th)) * (1.0 - 0.6 * cut);
-    m.wound = byte(lk, 2u);
+    m.gloss = (0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut);
+    m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
         // Standing water over the soil: dark blue-green, glossy; mould in
@@ -521,12 +545,12 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     return m;
 }
 
-// A material in two u32s: albedo and gloss, glow and wound, a byte each
-// (albedo and glow in colour units, gloss and wound 0-1 as 0-255). `gem`
+// A material in two u32s: albedo and gloss, glow and body, a byte each
+// (albedo and glow in colour units, gloss and body 0-1 as 0-255). `gem`
 // is not drawn and not kept.
 fn mat_pack(m: Mat) -> vec2<u32> {
     let a = vec4<u32>(vec4<f32>(clamp(m.albedo, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.gloss, 0.0, 1.0) * 255.0) + 0.5);
-    let g = vec4<u32>(vec4<f32>(clamp(m.glow, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.wound, 0.0, 1.0) * 255.0) + 0.5);
+    let g = vec4<u32>(vec4<f32>(clamp(m.glow, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.body, 0.0, 1.0) * 255.0) + 0.5);
     return vec2<u32>(a.x | a.y << 8u | a.z << 16u | a.w << 24u, g.x | g.y << 8u | g.z << 16u | g.w << 24u);
 }
 
@@ -536,7 +560,7 @@ fn mc(ix: i32, iy: i32) -> Mat {
     m.albedo = unpack(p.x);
     m.gloss = byte(p.x, 3u);
     m.glow = unpack(p.y);
-    m.wound = byte(p.y, 3u);
+    m.body = byte(p.y, 3u);
     m.gem = 0.0;
     return m;
 }
@@ -623,10 +647,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     for (var dy = 0u; dy < 9u; dy++) {
         for (var dx = 0u; dx < 9u; dx++) {
             let t = crowd[(lid.y + dy) * 24u + lid.x + dx];
-            let c = f32(t & 0xFFFFu);
+            let c = f32(t & 0xFFFFu) / 15.0;
             let w = g1[dx] * g1[dy];
             n += w * c;
-            m += w * f32(t >> 16u);
+            m += w * f32(t >> 16u) / 15.0;
             ws += w;
             let v = g2[dx] * g2[dy];
             nb += v * c;
@@ -645,17 +669,30 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let wy = f32(P.oy) + (f32(gid.y) + 0.5) / kf;
     // Where the wide count says body, its smooth value; towards the
     // frontier, the sharp one; a smooth blend between, so no contour.
-    let dense = smoothstep(0.15, 0.45, wide);
+    // The body's middle keeps 40% of the sharp count (owner's playtest,
+    // 11-14 04:50Z: "The middle still looks blurry"): with the wide count
+    // alone there the sheet was a smooth swell with no structure of its own;
+    // the sharp share shows its walkers' own clumps and channels, at the
+    // fine grid, while the wide share keeps them calm (all-sharp, at four
+    // fine cells a cell, was lumpy squares).
+    let dense = smoothstep(0.15, 0.45, wide) * 0.6;
     let th = look_trail(wx, wy) * mix(near, wide, dense);
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
         tcell[(gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine] = ter_prep(P.ox + i32(gid.x / P.fine), P.oy + i32(gid.y / P.fine));
     }
+    // The colour's thickness counts the walkers on their own too (owner,
+    // 11-14: lone walkers read dim): an explorer lays little trail, so by
+    // the trail alone it was a dark film bead; where walkers are, it is
+    // mould and takes the mould's colour. The height keeps `th`.
+    let tm = max(th, 0.4 * near);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
         hcell[i] = cell_height(ix, iy, th);
-        mcell[i] = mat_pack(cell_mat(ix, iy, th, cut_share));
+        var m1 = cell_mat(ix, iy, tm, cut_share);
+        m1.body = wide;
+        mcell[i] = mat_pack(m1);
         return;
     }
     // The ground under it: the four cells round, bilinear (their kinds and
@@ -667,15 +704,15 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let o = array<vec2<i32>, 4>(vec2<i32>(0, 0), vec2<i32>(1, 0), vec2<i32>(0, 1), vec2<i32>(1, 1));
     var h = 0.0;
     var mt: Mat;
-    mt.albedo = vec3<f32>(0.0); mt.glow = vec3<f32>(0.0); mt.gloss = 0.0; mt.wound = 0.0; mt.gem = 0.0;
+    mt.albedo = vec3<f32>(0.0); mt.glow = vec3<f32>(0.0); mt.gloss = 0.0; mt.body = wide; mt.gem = 0.0;
     let cs = colour_at(wx, wy);
     for (var q = 0; q < 4; q++) {
         let wq = w4[q];
         if (wq <= 0.0) { continue; }
         let cx = ix + o[q].x; let cy = iy + o[q].y;
         h += wq * cell_height(cx, cy, th);
-        let mq = cell_mat_c(cx, cy, th, cut_share, cs);
-        mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.wound += wq * mq.wound;
+        let mq = cell_mat_c(cx, cy, tm, cut_share, cs);
+        mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
     hcell[i] = h;
     mcell[i] = mat_pack(mt);
@@ -692,14 +729,18 @@ fn mat_at(x: f32, y: f32) -> Mat {
     m.albedo = mix(mix(a.albedo, b.albedo, tx), mix(c.albedo, d.albedo, tx), ty);
     m.glow = mix(mix(a.glow, b.glow, tx), mix(c.glow, d.glow, tx), ty);
     m.gloss = mix(mix(a.gloss, b.gloss, tx), mix(c.gloss, d.gloss, tx), ty);
-    m.wound = mix(mix(a.wound, b.wound, tx), mix(c.wound, d.wound, tx), ty);
+    m.body = mix(mix(a.body, b.body, tx), mix(c.body, d.body, tx), ty);
     m.gem = mix(mix(a.gem, b.gem, tx), mix(c.gem, d.gem, tx), ty);
     return m;
 }
 
+// The wide walker count under the last `shaded` point, for the specks' light.
+var<private> under_body: f32;
+
 // The shaded colour at world point (x, y); `e` is the slope's sample step.
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let m = mat_at(x, y);
+    under_body = m.body;
     // No wound is drawn (owner, 2026-11-12 04:38Z, on a blind A/B of the
     // old ember burn and a char where walkers died: "Neither. Both of
     // those look like stamps. Placed on the slime that fade"). A hit shows
@@ -716,7 +757,16 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // Forward differences: three B-spline samples, not five.
     let dx = cells_height(x + e, y) - hc0;
     let dy = cells_height(x, y + e) - hc0;
-    let n = normalize(vec3<f32>(-dx / e, -dy / e, 1.0));
+    // The slope capped at 0.7 (2026-11-14, owner: lone walkers looked
+    // dim). The sharp count makes a lone walker a bump some 3 cells tall
+    // and a cell wide; its flank away from the light shaded to the floor,
+    // so explorers on bare ground read as black dots. Capped, the far
+    // flank stays at about 0.4 of the light and a vein still has a lit and
+    // a shaded side.
+    var g = vec2<f32>(dx, dy) / e;
+    let gl = length(g);
+    if (gl > 0.7) { g *= 0.7 / gl; }
+    let n = normalize(vec3<f32>(-g.x, -g.y, 1.0));
     // A crystal stands as a pyramid on its footprint (height from its
     // depth inside it), so a hexagonal crystal has six flat faces. An
     // earlier version turned each slope to the nearest sixth to fake faces
@@ -729,8 +779,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let toward = max(cells_height_lin(tx, ty), gem_height(tx, ty));
     shade *= 1.0 - 0.35 * clamp((toward - h - 0.3) * 0.5, 0.0, 1.0);
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
-    let spec = pow(max(dot(n, half_v), 0.0), 28.0) * m.gloss;
-    var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * 0.7 + m.glow;
+    // A wet sheet: the glossier (thicker) the mould, the tighter and
+    // brighter its highlight, so a raised vein carries a sharp white glint
+    // along its lit flank and a thin film only a faint sheen.
+    let spec = pow(max(dot(n, half_v), 0.0), 16.0 + 64.0 * m.gloss) * m.gloss * (0.5 + 0.9 * m.gloss);
+    var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
     // own height is in `to`, so a tube's flank toward a bullet lights and
@@ -775,8 +828,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould feeding on it lies over it in its own colour: the
             // cells' material is the mould over the ground there, and its
-            // thickness is the cells' height (4 th^0.65).
-            let th = pow(clamp(cells_height(x, y) * 0.25, 0.0, 1.0), 1.0 / 0.65);
+            // thickness is the inverse of the cells' height curve.
+            let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
             alb = mix(alb, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.7);
             let gc = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7 + glow;
             c = mix(c, gc, cover);
@@ -963,20 +1016,35 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let w = walkers[k];
     if (!(w.x >= 0.0 && w.y >= 0.0 && w.x < f32(P.ww) && w.y < f32(P.wh))) { return; }
     // A speck a walker, coloured by its news of food (C8, 2026-11-14): calm
-    // (bits 0-9), cut off and leaning (10-19), cut off and bolting (20-29),
-    // the phases `panic_to` in the engine steers by; it also counts the
-    // cut-off walkers a cell for `prep`'s ashen fade.
-    var add = 1u;
-    var cnt = 1u;
+    // (bits 0-9), leaning (10-19), bolting (20-31), the phases `panic_to`
+    // in the engine steers by; it also counts the cut-off walkers a cell
+    // for `prep`'s ashen fade. Each is a ramp of the walker's news age in
+    // fifteenths, not a step at the lag (art director, 2026-11-14: a whole
+    // piece crosses the lag within a tick or two, so a step snapped it from
+    // gold to ash, then to red, at once). The ash runs from a third of the
+    // lean before the lag to 4/3 lean past it (-1 s to +2 s at the 5 s lag
+    // and 1.5 s lean), amber comes in over a third of the lean each side of
+    // the lag, and red over a third each side of the lean's end; the fine
+    // grid counts a walker 15 so its ash share keeps the ramp's steps.
+    var lean = 0u;
+    var bolt = 0u;
+    var cnt = 15u;
+    var cut = 0.0;
     if (P.news_on == 1u) {
         let heard = news[k];
         let now = state[0] + 1u;
-        let age = now - min(heard, now);
-        if (age > P.lag) {
-            cnt = 1u | (1u << 16u);
-            if (age > P.lag + P.lean) { add = 1u << 20u; } else { add = 1u << 10u; }
-        }
+        let age = f32(now - min(heard, now));
+        let lag = f32(P.lag);
+        let ln = max(f32(P.lean), 1.0);
+        let a = smoothstep(lag - ln * 2.0 / 3.0, lag + ln * 4.0 / 3.0, age);
+        let l = smoothstep(lag - ln / 3.0, lag + ln / 3.0, age);
+        let b = smoothstep(lag + ln * 2.0 / 3.0, lag + ln * 4.0 / 3.0, age);
+        cnt = 15u | (u32(round(a * 15.0)) << 16u);
+        lean = u32(round(l * (1.0 - b) * 15.0));
+        bolt = u32(round(b * 15.0));
+        cut = l;
     }
+    let add = select(1u, 0u, cut > 0.5) | (lean << 10u) | (bolt << 20u);
     // The walker in its fine cell for `prep`'s body (and, above bit 16,
     // counted cut off for its ashen fade); before the screen test, as
     // `prep` reads a rim past it.
@@ -987,13 +1055,32 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);
     let px = i32(floor(s.x)); let py = i32(floor(s.y));
     if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { return; }
+    // A walker an explosion threw (the engine's `fling`, 11-14) has 1 in
+    // its fourth word while it flies: a hot speck, a pixel more each side
+    // per 4 of zoom, so the throw shows as the mould itself in the air
+    // and not only as the streak it lays. It counts 6 calm walkers a pixel
+    // (the calm bits, 0-9, so it never reads as cut off).
+    if (w.w > 0.5) {
+        let r = i32(P.zoom / 4.0);
+        for (var dy = -r; dy <= r; dy++) {
+            for (var dx = -r; dx <= r; dx++) {
+                let qx = px + dx; let qy = py + dy;
+                if (qx < 0 || qy < 0 || qx >= i32(P.sw) || qy >= i32(P.sh)) { continue; }
+                atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], 6u);
+            }
+        }
+        return;
+    }
     // A cut-off walker's speck grows with the zoom (a pixel a walker was
     // lost at zoom 6: 195 of them in a cut piece did not read), up to 4 x 4
-    // pixels; a calm one stays a pixel, so the body's grain is as before.
-    var d = 1;
-    if (add > 1u) { d = clamp(i32(P.zoom / 3.0), 1, 4); }
+    // pixels.
+    // Every speck grows with the zoom, to zoom / 3 pixels up to 4 (calm
+    // ones too since the owner's playtest, 11-14: lone walkers read dim);
+    // from 3 pixels its corners are left off, so it is a dot, not a square.
+    let d = clamp(i32(round(P.zoom / 3.0)), 1, 4);
     for (var dy = 0; dy < d; dy++) {
         for (var dx = 0; dx < d; dx++) {
+            if (d >= 3 && (dx == 0 || dx == d - 1) && (dy == 0 || dy == d - 1)) { continue; }
             let qx = px + dx - d / 2; let qy = py + dy - d / 2;
             if (qx >= 0 && qy >= 0 && qx < i32(P.sw) && qy < i32(P.sh)) { atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], add); }
         }
@@ -1037,12 +1124,28 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             c = shaded(fx, fy, 0.75 / f32(P.fine));
             c = terrain_over(c, fx, fy);
             let n = atomicExchange(&specks[y * P.stride + x], 0u);
-            c += vec3<f32>(255.0, 236.0, 180.0) * min(f32(n & 1023u) * 0.048, 0.25);
+            // Each calm walker a point of light (owner's playtest, 11-14
+            // 04:50Z: "single individual walkers should be brighter"). It
+            // was 0.048 of white added a walker, so a lone explorer on bare
+            // ground was a faint pixel. Now its light is a share of the way
+            // to the speck colour that falls with the square of the walkers
+            // a cell round it (from the wide count, `prep`): about 0.5 for a
+            // walker alone (0.13 a cell under a 1.1-cell Gaussian), under
+            // 0.02 in the body (1 a cell and up). A share falling linearly
+            // with the wide count left the body's middle a starfield. So a
+            // lone walker reads plainly and the dense body keeps a calm,
+            // moving grain (its flow) without going white.
+            var n0 = BODY_N;
+            if (P.body_density > 0.0) { n0 = BODY_N * max(P.body_density / BODY_DENSITY, 0.05); }
+            let dens = -log(max(1.0 - under_body, 0.004)) * n0 / 25.0;
+            let per = 0.95 / (1.0 + (dens / 0.35) * (dens / 0.35));
+            let lit = 1.0 - pow(1.0 - per, f32(n & 1023u));
+            c = mix(c, vec3<f32>(255.0, 222.0, 130.0), lit * 0.92);
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a
             // bolting piece read red on the first film).
-            c = mix(c, vec3<f32>(255.0, 178.0, 40.0), min(f32((n >> 10u) & 1023u) * 0.4, 0.75));
-            c = mix(c, vec3<f32>(235.0, 52.0, 40.0), min(f32(n >> 20u) * 0.5, 0.85));
+            c = mix(c, vec3<f32>(255.0, 178.0, 40.0), min(f32((n >> 10u) & 1023u) * (0.4 / 15.0), 0.75));
+            c = mix(c, vec3<f32>(235.0, 52.0, 40.0), min(f32(n >> 20u) * (0.5 / 15.0), 0.85));
         } else if (fx >= 0.0 && fy >= 0.0 && fx < f32(P.ww) && fy < f32(P.wh)) {
             if (P.zoom >= 1.0) {
                 c = cell(fx, fy);

@@ -1,0 +1,3 @@
+  t 30 s: mould 24971, soldiers 0, bank 1851, harvested 0, shots 97, killed 836, took 0%, crystals left 0.997
+  t 60 s: mould 30119, soldiers 0, bank 1539, harvested 0, shots 97, killed 836, took 0%, crystals left 0.991
+  t 90 s: mould 24055, soldiers 0, bank 919, harvested 0, shots 97, killed 836, took 0%, crystals left 0.981

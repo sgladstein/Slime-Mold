@@ -10,12 +10,32 @@
 # (pumps+boom) 2/4; idle 0/4 (best 0.00), random 0/4 (wiped or overrun by 2:26-4:11). Tuning note: the
 # pump is not yet the verb that wins, and the race is led from the start, so the hold is
 # five minutes of farming; the design review should say whether the Sporer must contest it.
+# Design review of v13 (2026-11-14 03:16Z): five minutes of farming is dead time; the lesson
+# is "starve it", with a first decision by about 0:45. So the goal is the landing's two
+# crystals (5, by the landing, and 9, the west one), clear of mould for a minute: counted
+# from the start, so the spores must be kept off, not chased off. Seed-1 probes: three home
+# crystals (5, 8, 9) for 5:00 or 2:00, or two for 5:00, no hand (pumps best, 0.08-0.71);
+# two for 1:00 on seeds 1-2, pumps with farming 4/4 (2:50-12:40), farming alone 0/2
+# (best 0.62), idle 0/2 (0.27), pumps with an early claim overrun 0/2.
+# Census v14 (seeds 1-4, CPU): pumps with twelve farming (pumps+boom:buy_to=12) 3/4 at
+# 2:50-10:20, pumps and turrets (turtle+boom) 2/4 at 6:10-11:51, pumps with eight 2/4;
+# farming alone 0/4 (best 0.63), idle 0/4 (0.20), random 0/4 (wiped or overrun by 2:56-3:55).
+# After elbow room (#227; census v15, main 30bf05e0) no plan is reliable: pumps and turrets
+# with eight (turtle+boom) 2/4 at 3:46-12:25, farming alone 2/4, pumps with eight 1/4, pumps
+# with twelve 0/4 (best 0.20), turrets alone 0/4; idle and random still 0/4. The larder
+# stays in this game (the squads work is a separate mode, owner 04:49Z), so re-tuned now.
+# Seed 1-2 probes: the landing crystal alone (5) for 1:00, every farming hand 2/2 and idle
+# 0/2 (best 0.32); both home crystals for 0:45, boom and turtle 2/2, pumps 1/2. So: the
+# landing crystal for a minute. Census v16 (seeds 1-4, main 30bf05e0): pumps and turrets
+# (turtle+boom) 4/4 at 3:43-9:01, farming alone (boom) 4/4 at 2:50-8:56, pumps alone 2/4;
+# idle 0/4 (best 0.32), random 0/4 (wiped by 2:30-4:07). Tuning note: the pump helps but
+# no longer decides it.
 name Spore season
-says Out-eat the spores: hold 60% of the charge eaten for 5:00
+says Keep the spores off your landing crystal for a minute
 map rim
 tier sporer
 verbs move harvest buy stance fire wall cut turret strike pump
 rule ration 0
 rule drain 0.5
 bonus stolen 0
-goal take 0.6 300
+goal clear 1 60 5

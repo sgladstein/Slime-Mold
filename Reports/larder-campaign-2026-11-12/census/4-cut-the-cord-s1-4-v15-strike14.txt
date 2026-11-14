@@ -1,0 +1,24 @@
+mission 4-cut-the-cord (Cut the cord): "Starve the Trunk: cut its cords until it is a fifth of its size", map fork, tier trunk , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  strike:strike_at=180+strike_army=14+buy_to=18 s4: Goal 247s 3*
+  strike:strike_at=180+strike_army=14+buy_to=18 s1: Goal 336s 2*
+  strike:strike_at=180+strike_army=14+buy_to=18 s2: Goal 292s 3*
+  strike:strike_at=180+strike_army=14+buy_to=18 s3: Goal 304s 3*
+  cut+strike:strike_at=180+strike_army=14+buy_to=18 s1: Goal 333s 3*
+  cut+strike:strike_at=180+strike_army=14+buy_to=18 s2: Goal 298s 3*
+  cut+strike:strike_at=180+strike_army=14+buy_to=18 s3: Goal 279s 3*
+  cut+strike:strike_at=180+strike_army=14+buy_to=18 s4: Goal 357s 3*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+cut+strike:strike_at=180+strike_army=14+buy_to=18    1  Goal         333      3 1.00     0%     0%    0%    0%    0%                             0    0    4      332     18     14983  13177  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=14+buy_to=18    2  Goal         298      3 1.00     0%     0%    0%    0%    0%                             0    0    4      297     18     12883  11856  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=14+buy_to=18    3  Goal         279      3 1.00     0%     0%    0%    0%    0%                             0    0    6      278     18      9883  10012  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+cut+strike:strike_at=180+strike_army=14+buy_to=18    4  Goal         357      3 1.00     0%     0%    0%    0%    0%                             0    0    6      356     18     13800  14782  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=14+buy_to=18    1  Goal         336      2 1.00     1%     0%    1%    0%    0%                             2    0    5      335     18     14774  13502  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=14+buy_to=18    2  Goal         292      3 1.00     0%     0%    0%    0%    0%                             0    0    4      291     18     14174  11444  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=14+buy_to=18    3  Goal         304      3 1.00     1%     0%    1%    0%    0%                             2    0    5      303     18     14774  11593  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 6, 7, 8, 9]
+strike:strike_at=180+strike_army=14+buy_to=18    4  Goal         247      3 1.00     0%     0%    1%    0%    0%                             1    0    6      246     18     13500   7650  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  cut+strike:strike_at=180+strike_army=14+buy_to=18 4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 6 s
+  strike:strike_at=180+strike_army=14+buy_to=18 4/4  stars 3  best 1.00  dead 0%  stuck 0 s  stall 6 s
