@@ -86,6 +86,12 @@ fn rgba(c: Rgba) -> u32 {
     u32::from_le_bytes(c)
 }
 
+/// A turret's lamp (`Marks::turret`): nothing in reach, mould in reach
+/// with food to fire, and the bank too low to pay for a shot.
+pub const TURRET_IDLE: u32 = 0;
+pub const TURRET_TRACKING: u32 = 1;
+pub const TURRET_DRY: u32 = 2;
+
 /// The colours teams are drawn in: team 0 (the local player) white, then
 /// sky blue, rose and lime. Mould species have their own colours in the
 /// world frame; these are only for marks.
@@ -270,6 +276,21 @@ impl Marks {
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | (working as u32) << 16 | ((pulse.clamp(0.0, 1.0) * 255.0).round() as u32) << 17;
         self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
+    }
+
+    /// A turret (building kind 0) as `building`, its head turned to
+    /// `facing` (radians, the game's aim), kicked back by `shot` 0-1 (the
+    /// shot just fired, fading) with the muzzle flash, and its lamp by
+    /// `state`: `TURRET_IDLE`, `TURRET_TRACKING` or `TURRET_DRY`
+    /// (owner's playtest 11-14 08:15Z: "turrets need to look better"). The
+    /// facing rides in the second colour's word, which a building does not
+    /// use.
+    #[allow(clippy::too_many_arguments)]
+    pub fn turret(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
+        let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let extra = b | h << 8 | ((shot.clamp(0.0, 1.0) * 255.0).round() as u32) << 17 | (state.min(3)) << 25;
+        self.push(Mark { flags: WORLD | MINIMAP, fill: 0.0, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
     /// The words the view pass reads, `MARK_WORDS` a mark.
