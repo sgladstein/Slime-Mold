@@ -144,29 +144,25 @@ pub const ITEMS: [Item; 21] = [
     Item { key: "cord", name: "Det cord", group: Group::Tools, about: "Unlocks det cord, a line of blasts", max: 1, cost: 200, needs: None },
     Item { key: "gas", name: "Sleep gas", group: Group::Tools, about: "Unlocks sleep gas", max: 1, cost: 200, needs: None },
     Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
-    Item { key: "slot", name: "Gun slot", group: Group::Gun, about: "One more card in the gun (at most 4)", max: 2, cost: 150, needs: None },
+    Item { key: "budget", name: "Bigger gun", group: Group::Gun, about: "2 more card budget in the gun (still at most 4 cards)", max: 3, cost: 150, needs: None },
     Item { key: "draw", name: "More cards on offer", group: Group::Gun, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
 ];
 
 /// What the run owns at the start: walls (the plainest defence).
 pub const START: [&str; 1] = ["walls"];
-/// Card slots the gun starts with.
-pub const START_SLOTS: usize = 2;
+/// The gun's card budget at the start (`rounds::fit`; the gun thread's
+/// cards cost 1-4, so 5 holds a payload and a tweak). Free play's gun
+/// has `RoundRules::budget` (10); `budget` upgrades reach 11.
+pub const START_BUDGET: u32 = 5;
+pub const BUDGET_STEP: u32 = 2;
 /// Cards on offer in a shop before `draw`.
 pub const OFFER: usize = 3;
 
-/// A gun card's power, 1-3 (to become the gun thread's `Card::tier`): which depth first offers it and its price.
-/// None: never sold (the germ: the GPU world casts none yet).
+/// A gun card's power, 1-3: the gun thread's `Card::tier` (common,
+/// uncommon, rare), which depth first offers it and its price. None:
+/// never sold (the germ: the GPU world casts none yet).
 pub fn card_power(c: Card) -> Option<u8> {
-    Some(match c {
-        Card::Germ => return None,
-        Card::Pierce | Card::Split | Card::Wide | Card::Quiet | Card::Delay | Card::Range | Card::Mist => 1,
-        Card::Bomb => 3,
-        // The rest, and any card the gun thread adds (alarm became bait,
-        // 11-14), in the middle until `Card::tier` lands to gate by.
-        #[allow(unreachable_patterns)]
-        _ => 2,
-    })
+    (c != Card::Germ).then(|| c.tier())
 }
 
 /// The first depth whose shop offers a card of this power.
@@ -336,9 +332,16 @@ impl Run {
         k.germ_price *= f;
     }
 
-    /// Card slots in the gun.
-    pub fn slots(&self) -> usize {
-        (START_SLOTS + self.level_of("slot") as usize).min(rounds::SLOTS)
+    /// The gun's card budget (`rounds::fit`).
+    pub fn budget(&self) -> u32 {
+        START_BUDGET + BUDGET_STEP * u32::from(self.level_of("budget"))
+    }
+
+    /// Card `c` would fit in the gun beside what it holds.
+    pub fn fits(&self, c: Card) -> bool {
+        let mut g = self.gun();
+        g.push(c);
+        rounds::fit(g, self.budget()).is_ok()
     }
 
     /// The gun: the cards in it, flight cards first, then the modifiers and
@@ -423,17 +426,17 @@ impl Run {
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_cost(card_power(c).unwrap_or(1));
-            rows.push(Row { group: Group::Gun, name: format!("Card: {}", title(c.name())), about: c.about().into(), price: p.to_string(), state: "on offer".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            rows.push(Row { group: Group::Gun, name: format!("Card: {} (budget {})", title(c.name()), c.cost()), about: c.about().into(), price: p.to_string(), state: "on offer".into(), ready: p <= self.points, pick: Pick::Offer(i) });
         }
-        let full = self.gun().len() >= self.slots();
         for (i, &(c, on)) in self.cards.iter().enumerate() {
+            let fits = self.fits(c);
             rows.push(Row {
                 group: Group::Gun,
-                name: format!("{} (yours)", title(c.name())),
-                about: if on { "In the gun: pick to take it out".into() } else if full { "In the bag: the gun is full, take a card out first".into() } else { "In the bag: pick to put it in the gun".into() },
+                name: format!("{} (yours, budget {})", title(c.name()), c.cost()),
+                about: if on { "In the gun: pick to take it out".into() } else if fits { "In the bag: pick to put it in the gun".into() } else { "In the bag: over the gun's budget, take a card out first".into() },
                 price: String::new(),
                 state: if on { "in the gun".into() } else { "in the bag".into() },
-                ready: on || !full,
+                ready: on || fits,
                 pick: Pick::Card(i),
             });
         }
@@ -467,8 +470,8 @@ impl Run {
                 }
                 self.points -= price;
                 self.offers.remove(i);
-                // Straight into the gun when it has room.
-                let room = self.gun().len() < self.slots();
+                // Straight into the gun when it fits the budget.
+                let room = self.fits(c);
                 self.cards.push((c, room));
                 true
             }
@@ -488,7 +491,7 @@ impl Run {
             }
             Pick::DevDepth(_) | Pick::DevPoints | Pick::DevReroll => false,
             Pick::Card(i) => {
-                let room = self.gun().len() < self.slots();
+                let room = self.cards.get(i).is_some_and(|c| self.fits(c.0));
                 match self.cards.get_mut(i) {
                     Some(c) if c.1 || room => {
                         c.1 = !c.1;
@@ -571,22 +574,27 @@ mod tests {
     }
 
     #[test]
-    fn cards_fill_the_gun_to_its_slots_and_get_better_deeper() {
+    fn cards_fill_the_gun_to_its_budget_and_get_better_deeper() {
         let mut r = Run::new(5);
         r.restock();
         assert!(r.offers.iter().all(|&c| card_power(c) == Some(1)), "planet 1 offers only the plainest cards");
         r.depth = 4;
         r.restock();
         assert!(r.offers.iter().all(|&c| c != Card::Germ));
+        // Blast (3) and Wide (2) fill a budget of 5; Thick (1) waits in the bag.
         r.points = 10_000;
+        r.offers = vec![Card::Blast, Card::Wide, Card::Thick];
         for _ in 0..3 {
             assert!(r.pick(Pick::Offer(0)));
         }
-        assert_eq!(r.gun().len(), START_SLOTS, "the third waits in the bag");
-        assert!(!r.cards[2].1 && !r.pick(Pick::Card(2)), "the gun is full");
-        assert!(r.pick(Pick::Card(0)) && r.pick(Pick::Card(2)));
-        assert_eq!(r.gun().len(), 2);
-        assert!(rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
+        assert_eq!(r.gun_text(), "wide+blast");
+        assert!(!r.cards[2].1 && !r.pick(Pick::Card(2)), "over the budget");
+        assert!(r.pick(Pick::Card(1)) && r.pick(Pick::Card(2)), "wide out, thick in");
+        assert_eq!(r.gun_text(), "thick+blast");
+        let big = ITEMS.iter().position(|i| i.key == "budget").unwrap();
+        assert!(r.pick(Pick::Item(big)) && r.budget() == START_BUDGET + BUDGET_STEP);
+        assert!(r.pick(Pick::Card(1)), "a bigger gun holds all three");
+        assert!(rounds::fit(r.gun(), r.budget()).is_ok() && rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
         // Payloads go last.
         r.cards = vec![(Card::Blast, true), (Card::Wide, true), (Card::Pierce, true)];
         assert_eq!(r.gun_text(), "pierce+wide+blast");

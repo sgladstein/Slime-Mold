@@ -1,0 +1,206 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/roam/clip/fork-farm-018s-all.png
+/tmp/claude-0/roam/clip/fork-farm-018s-near.png
+  CPU: ground field 3.33 ms (once a game second), model and HUD 0.075 ms a frame
+  t 18 s: mould 17495, soldiers 9, bank 1162, harvested 1222, shots 92, killed 667, took 94%, crystals left 0.941; squad at 277.3,119.8
+  squad: touching 0.2 mean, 1 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-18500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-18500ms-near.png
+  CPU: ground field 2.28 ms (once a game second), model and HUD 0.063 ms a frame
+  t 19 s: mould 17495, soldiers 9, bank 1384, harvested 1445, shots 98, killed 693, took 94%, crystals left 0.941; squad at 275.1,118.3
+  squad: touching 0.3 mean, 2 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-019s-all.png
+/tmp/claude-0/roam/clip/fork-farm-019s-near.png
+  CPU: ground field 2.32 ms (once a game second), model and HUD 0.061 ms a frame
+  t 19 s: mould 17271, soldiers 9, bank 1384, harvested 1445, shots 101, killed 702, took 94%, crystals left 0.941; squad at 268.5,116.0
+  squad: touching 1.7 mean, 6 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-19500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-19500ms-near.png
+  CPU: ground field 3.59 ms (once a game second), model and HUD 0.097 ms a frame
+  t 20 s: mould 17271, soldiers 10, bank 984, harvested 1445, shots 108, killed 737, took 94%, crystals left 0.941; squad at 264.0,109.6
+  squad: touching 0.7 mean, 4 most; health 69 mean
+/tmp/claude-0/roam/clip/fork-farm-020s-all.png
+/tmp/claude-0/roam/clip/fork-farm-020s-near.png
+  CPU: ground field 3.50 ms (once a game second), model and HUD 0.103 ms a frame
+  t 20 s: mould 16993, soldiers 10, bank 984, harvested 1445, shots 110, killed 746, took 95%, crystals left 0.940; squad at 262.0,104.3
+  squad: touching 0.9 mean, 4 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-20500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-20500ms-near.png
+  CPU: ground field 2.87 ms (once a game second), model and HUD 0.091 ms a frame
+  t 21 s: mould 16993, soldiers 10, bank 984, harvested 1445, shots 116, killed 758, took 95%, crystals left 0.937; squad at 260.8,102.1
+  squad: touching 0.0 mean, 0 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-021s-all.png
+/tmp/claude-0/roam/clip/fork-farm-021s-near.png
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.064 ms a frame
+  t 21 s: mould 16842, soldiers 10, bank 983, harvested 1445, shots 118, killed 761, took 95%, crystals left 0.933; squad at 260.2,102.2
+  squad: touching 0.1 mean, 1 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-21500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-21500ms-near.png
+  CPU: ground field 3.46 ms (once a game second), model and HUD 0.096 ms a frame
+  t 22 s: mould 16842, soldiers 10, bank 983, harvested 1445, shots 123, killed 774, took 96%, crystals left 0.929; squad at 259.4,102.7
+  squad: touching 0.2 mean, 2 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-022s-all.png
+/tmp/claude-0/roam/clip/fork-farm-022s-near.png
+  CPU: ground field 3.47 ms (once a game second), model and HUD 0.094 ms a frame
+  t 22 s: mould 16749, soldiers 10, bank 982, harvested 1445, shots 126, killed 789, took 96%, crystals left 0.925; squad at 258.6,103.2
+  squad: touching 0.5 mean, 3 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-22500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-22500ms-near.png
+  CPU: ground field 3.39 ms (once a game second), model and HUD 0.086 ms a frame
+  t 23 s: mould 16749, soldiers 10, bank 982, harvested 1445, shots 132, killed 806, took 96%, crystals left 0.921; squad at 258.2,103.8
+  squad: touching 0.0 mean, 0 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-023s-all.png
+/tmp/claude-0/roam/clip/fork-farm-023s-near.png
+  CPU: ground field 3.43 ms (once a game second), model and HUD 0.095 ms a frame
+  t 23 s: mould 16720, soldiers 10, bank 981, harvested 1445, shots 135, killed 816, took 96%, crystals left 0.917; squad at 257.7,103.1
+  squad: touching 0.2 mean, 1 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-23500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-23500ms-near.png
+  CPU: ground field 3.61 ms (once a game second), model and HUD 0.097 ms a frame
+  t 24 s: mould 16720, soldiers 10, bank 980, harvested 1445, shots 137, killed 818, took 96%, crystals left 0.911; squad at 257.4,102.4
+  squad: touching 0.3 mean, 2 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-024s-all.png
+/tmp/claude-0/roam/clip/fork-farm-024s-near.png
+  CPU: ground field 3.49 ms (once a game second), model and HUD 0.095 ms a frame
+  t 24 s: mould 16721, soldiers 10, bank 979, harvested 1445, shots 140, killed 835, took 96%, crystals left 0.907; squad at 257.5,102.2
+  squad: touching 0.5 mean, 3 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-24500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-24500ms-near.png
+  CPU: ground field 3.30 ms (once a game second), model and HUD 0.096 ms a frame
+  t 25 s: mould 16721, soldiers 10, bank 978, harvested 1445, shots 147, killed 867, took 96%, crystals left 0.902; squad at 257.5,101.9
+  squad: touching 0.5 mean, 2 most; health 65 mean
+/tmp/claude-0/roam/clip/fork-farm-025s-all.png
+/tmp/claude-0/roam/clip/fork-farm-025s-near.png
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.057 ms a frame
+  t 25 s: mould 16741, soldiers 10, bank 978, harvested 1445, shots 150, killed 872, took 97%, crystals left 0.897; squad at 257.6,101.3
+  squad: touching 0.2 mean, 1 most; health 65 mean
+/tmp/claude-0/roam/clip/fork-farm-25500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-25500ms-near.png
+  CPU: ground field 3.00 ms (once a game second), model and HUD 0.084 ms a frame
+  t 26 s: mould 16741, soldiers 10, bank 978, harvested 1445, shots 155, killed 889, took 97%, crystals left 0.893; squad at 257.6,101.9
+  squad: touching 0.2 mean, 1 most; health 65 mean
+/tmp/claude-0/roam/clip/fork-farm-026s-all.png
+/tmp/claude-0/roam/clip/fork-farm-026s-near.png
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.063 ms a frame
+  t 26 s: mould 16757, soldiers 10, bank 978, harvested 1445, shots 157, killed 893, took 97%, crystals left 0.889; squad at 257.6,102.3
+  squad: touching 0.2 mean, 2 most; health 65 mean
+/tmp/claude-0/roam/clip/fork-farm-26500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-26500ms-near.png
+  CPU: ground field 2.20 ms (once a game second), model and HUD 0.057 ms a frame
+  t 27 s: mould 16757, soldiers 10, bank 978, harvested 1445, shots 163, killed 906, took 97%, crystals left 0.885; squad at 257.3,102.4
+  squad: touching 0.3 mean, 2 most; health 64 mean
+/tmp/claude-0/roam/clip/fork-farm-027s-all.png
+/tmp/claude-0/roam/clip/fork-farm-027s-near.png
+  CPU: ground field 3.53 ms (once a game second), model and HUD 0.085 ms a frame
+  t 27 s: mould 16778, soldiers 10, bank 1278, harvested 1745, shots 167, killed 915, took 97%, crystals left 0.882; squad at 256.9,101.5
+  squad: touching 0.2 mean, 2 most; health 64 mean
+/tmp/claude-0/roam/clip/fork-farm-27500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-27500ms-near.png
+  CPU: ground field 3.34 ms (once a game second), model and HUD 0.086 ms a frame
+  t 28 s: mould 16778, soldiers 11, bank 878, harvested 1745, shots 171, killed 923, took 97%, crystals left 0.878; squad at 257.1,100.4
+  squad: touching 0.2 mean, 2 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-028s-all.png
+/tmp/claude-0/roam/clip/fork-farm-028s-near.png
+  CPU: ground field 3.42 ms (once a game second), model and HUD 0.082 ms a frame
+  t 28 s: mould 16799, soldiers 11, bank 878, harvested 1745, shots 172, killed 926, took 97%, crystals left 0.875; squad at 257.3,98.8
+  squad: touching 0.5 mean, 6 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-28500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-28500ms-near.png
+  CPU: ground field 3.34 ms (once a game second), model and HUD 0.090 ms a frame
+  t 29 s: mould 16799, soldiers 11, bank 878, harvested 1745, shots 174, killed 933, took 97%, crystals left 0.872; squad at 256.9,99.3
+  squad: touching 0.3 mean, 2 most; health 67 mean
+/tmp/claude-0/roam/clip/fork-farm-029s-all.png
+/tmp/claude-0/roam/clip/fork-farm-029s-near.png
+  CPU: ground field 3.01 ms (once a game second), model and HUD 0.092 ms a frame
+  t 29 s: mould 16868, soldiers 11, bank 878, harvested 1745, shots 182, killed 934, took 97%, crystals left 0.869; squad at 257.1,100.1
+  squad: touching 0.3 mean, 2 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-29500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-29500ms-near.png
+  CPU: ground field 3.48 ms (once a game second), model and HUD 0.089 ms a frame
+  t 30 s: mould 16868, soldiers 11, bank 1478, harvested 2345, shots 184, killed 944, took 97%, crystals left 0.866; squad at 257.4,99.0
+  squad: touching 0.4 mean, 2 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-030s-all.png
+/tmp/claude-0/roam/clip/fork-farm-030s-near.png
+  CPU: ground field 3.07 ms (once a game second), model and HUD 0.053 ms a frame
+  t 30 s: mould 16933, soldiers 11, bank 1478, harvested 2345, shots 186, killed 947, took 97%, crystals left 0.865; squad at 257.7,98.0
+  squad: touching 0.5 mean, 6 most; health 66 mean
+/tmp/claude-0/roam/clip/fork-farm-30500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-30500ms-near.png
+  CPU: ground field 3.27 ms (once a game second), model and HUD 0.079 ms a frame
+  t 31 s: mould 16933, soldiers 12, bank 1078, harvested 2345, shots 191, killed 957, took 97%, crystals left 0.863; squad at 257.7,98.2
+  squad: touching 0.3 mean, 4 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-031s-all.png
+/tmp/claude-0/roam/clip/fork-farm-031s-near.png
+  CPU: ground field 4.63 ms (once a game second), model and HUD 0.099 ms a frame
+  t 31 s: mould 17005, soldiers 12, bank 1378, harvested 2645, shots 194, killed 959, took 97%, crystals left 0.862; squad at 257.8,98.6
+  squad: touching 0.1 mean, 1 most; health 68 mean
+/tmp/claude-0/roam/clip/fork-farm-31500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-31500ms-near.png
+  CPU: ground field 3.15 ms (once a game second), model and HUD 0.078 ms a frame
+  t 32 s: mould 17005, soldiers 13, bank 978, harvested 2645, shots 204, killed 970, took 97%, crystals left 0.861; squad at 257.7,98.1
+  squad: touching 0.2 mean, 2 most; health 70 mean
+/tmp/claude-0/roam/clip/fork-farm-032s-all.png
+/tmp/claude-0/roam/clip/fork-farm-032s-near.png
+  CPU: ground field 2.76 ms (once a game second), model and HUD 0.076 ms a frame
+  t 32 s: mould 17027, soldiers 13, bank 978, harvested 2645, shots 206, killed 973, took 97%, crystals left 0.860; squad at 257.7,97.4
+  squad: touching 0.5 mean, 4 most; health 70 mean
+/tmp/claude-0/roam/clip/fork-farm-32500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-32500ms-near.png
+  CPU: ground field 2.39 ms (once a game second), model and HUD 0.055 ms a frame
+  t 33 s: mould 17027, soldiers 13, bank 978, harvested 2645, shots 209, killed 977, took 96%, crystals left 0.859; squad at 257.3,96.8
+  squad: touching 0.4 mean, 4 most; health 69 mean
+/tmp/claude-0/roam/clip/fork-farm-033s-all.png
+/tmp/claude-0/roam/clip/fork-farm-033s-near.png
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.057 ms a frame
+  t 33 s: mould 17127, soldiers 13, bank 978, harvested 2645, shots 211, killed 979, took 96%, crystals left 0.858; squad at 256.4,95.9
+  squad: touching 0.2 mean, 3 most; health 69 mean
+/tmp/claude-0/roam/clip/fork-farm-33500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-33500ms-near.png
+  CPU: ground field 2.48 ms (once a game second), model and HUD 0.065 ms a frame
+  t 34 s: mould 17127, soldiers 13, bank 1240, harvested 2907, shots 215, killed 991, took 96%, crystals left 0.858; squad at 256.0,96.5
+  squad: touching 0.1 mean, 1 most; health 69 mean
+/tmp/claude-0/roam/clip/fork-farm-034s-all.png
+/tmp/claude-0/roam/clip/fork-farm-034s-near.png
+  CPU: ground field 4.62 ms (once a game second), model and HUD 0.093 ms a frame
+  t 34 s: mould 17165, soldiers 13, bank 1487, harvested 3154, shots 223, killed 999, took 96%, crystals left 0.858; squad at 255.9,101.3
+  squad: touching 0.0 mean, 0 most; health 69 mean
+/tmp/claude-0/roam/clip/fork-farm-34500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-34500ms-near.png
+  CPU: ground field 3.63 ms (once a game second), model and HUD 0.089 ms a frame
+  t 35 s: mould 17165, soldiers 14, bank 1087, harvested 3154, shots 227, killed 1008, took 96%, crystals left 0.858; squad at 249.2,102.4
+  squad: touching 0.1 mean, 1 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-035s-all.png
+/tmp/claude-0/roam/clip/fork-farm-035s-near.png
+  CPU: ground field 2.41 ms (once a game second), model and HUD 0.058 ms a frame
+  t 35 s: mould 17216, soldiers 14, bank 1087, harvested 3154, shots 232, killed 1014, took 96%, crystals left 0.858; squad at 243.4,103.0
+  squad: touching 0.0 mean, 0 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-35500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-35500ms-near.png
+  CPU: ground field 3.41 ms (once a game second), model and HUD 0.092 ms a frame
+  t 36 s: mould 17216, soldiers 14, bank 1087, harvested 3154, shots 233, killed 1015, took 96%, crystals left 0.858; squad at 236.7,105.0
+  squad: touching 0.0 mean, 0 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-036s-all.png
+/tmp/claude-0/roam/clip/fork-farm-036s-near.png
+  CPU: ground field 3.53 ms (once a game second), model and HUD 0.086 ms a frame
+  t 36 s: mould 17291, soldiers 14, bank 1087, harvested 3154, shots 235, killed 1016, took 96%, crystals left 0.857; squad at 230.8,107.0
+  squad: touching 0.1 mean, 1 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-36500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-36500ms-near.png
+  CPU: ground field 2.56 ms (once a game second), model and HUD 0.089 ms a frame
+  t 37 s: mould 17291, soldiers 14, bank 1387, harvested 3454, shots 240, killed 1023, took 96%, crystals left 0.857; squad at 224.8,109.7
+  squad: touching 0.1 mean, 1 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-037s-all.png
+/tmp/claude-0/roam/clip/fork-farm-037s-near.png
+  CPU: ground field 3.26 ms (once a game second), model and HUD 0.090 ms a frame
+  t 37 s: mould 17353, soldiers 14, bank 1687, harvested 3754, shots 244, killed 1033, took 96%, crystals left 0.857; squad at 219.8,112.4
+  squad: touching 0.2 mean, 1 most; health 71 mean
+/tmp/claude-0/roam/clip/fork-farm-37500ms-all.png
+/tmp/claude-0/roam/clip/fork-farm-37500ms-near.png
+  CPU: ground field 3.16 ms (once a game second), model and HUD 0.103 ms a frame
+  t 38 s: mould 17353, soldiers 15, bank 1287, harvested 3754, shots 248, killed 1041, took 96%, crystals left 0.857; squad at 215.1,115.1
+  squad: touching 0.1 mean, 2 most; health 73 mean
+/tmp/claude-0/roam/clip/fork-farm-038s-all.png
+/tmp/claude-0/roam/clip/fork-farm-038s-near.png
+  CPU: ground field 3.28 ms (once a game second), model and HUD 0.086 ms a frame
+  t 38 s: mould 17381, soldiers 15, bank 1287, harvested 3754, shots 254, killed 1062, took 96%, crystals left 0.857; squad at 209.4,117.5
+  squad: touching 0.1 mean, 2 most; health 73 mean

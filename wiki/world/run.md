@@ -28,7 +28,7 @@ map with one slime to cut to `shrink_goal` of its peak (25% on planet 1 down
 to 10%), the tier climbing `LADDER` and walkers a fifth more each planet. A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells gun cards that get
-better deeper; a lost planet ends the run. Locked buildings and tools show
+better deeper (by `Card::tier`, into a gun whose card budget grows from 5); a lost planet ends the run. Locked buildings and tools show
 locked on the command card. Dev mode adds rows to jump planets, add points
 and redraw cards. Planets play the hand-made maps until the level
 generator's `levelgen::level(seed, depth)` lands. Not yet played by the
@@ -43,7 +43,6 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 
 ## Open
 
-- The gun thread's card budget (PR #275) in place of slots and power.
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 

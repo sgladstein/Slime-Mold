@@ -43,16 +43,17 @@ towards the core slime world". Level generation is its own thread (15:22Z,
   soldiers, supply drop +500 bank, quick hands +25% harvest), buildings
   (walls, owned at the start; turrets and turret power; lures, pumps,
   outposts, sirens), tools (blast, mine, det cord, sleep gas; cheaper tools
-  -20%), gun (slots 2 to 4, more cards on offer). Levels cost the first
+  -20%), gun (bigger gun, more cards on offer). Levels cost the first
   price times the level. Locked buildings and tools show on the command
   card dimmed, "Locked: unlock it in the shop between planets".
-- **Gun cards**: three on offer a shop (`OFFER`), by power: plain cards from
-  planet 1, the payloads and the rest from planet 2, the bomb from planet 4;
-  80, 150, 250 points. Bought cards go into the gun while it has slots, else
-  the bag; a pick moves a card in or out, free. The gun is today's rounds
-  loadout text (`Run::gun_text`); H does not cycle it in a run. The gun
-  thread's budget API (`Card::cost`, `Card::tier`, `rounds::fit`, PR #275)
-  replaces slots and power once it is on main.
+- **Gun cards** (the gun thread's budget, #275, merged while this was
+  built): three on offer a shop (`OFFER`), gated by `Card::tier`: common
+  from planet 1, uncommon from planet 2, rare (the bomb) from planet 4; 80,
+  150, 250 points. The gun's card budget starts at 5 (`START_BUDGET`; free
+  play's is 10) and the Bigger gun upgrade adds 2 a level up to 11, at most
+  4 cards (`rounds::fit`). A bought card goes into the gun when it fits,
+  else the bag; a pick moves a card in or out, free. H does not cycle the
+  gun in a run.
 - **Dev mode** (Options, Dev mode, or `dev=1`): shop rows for the next
   planet one deeper or shallower, 1,000 points, and a fresh draw of cards.
 - **In the window**: Run on the start menu's main page (Back to the run
@@ -70,7 +71,7 @@ towards the core slime world". Level generation is its own thread (15:22Z,
 
 - Library: `mould::run::tests` (6): harder deeper and repeatable; a level is
   a mission the campaign's parser takes; the shop sells what the points buy;
-  cards fill the gun to its slots and get better deeper; dev mode and the
+  cards fill the gun to its budget and get better deeper; dev mode and the
   home world; every ladder rung sets on the GPU engine.
 - Menu: `world::start::tests::the_shop_fits_and_its_rows_pick` (every row and
   button on screen and apart at 1280x720 to 1920x1080, every UI size, 5 to
@@ -86,7 +87,6 @@ towards the core slime world". Level generation is its own thread (15:22Z,
 
 - Planet names and biomes from `levelgen::planet(seed, depth)` on the shop
   and the start alert; the generated maps (sizes 60% to 6x by depth).
-- The gun thread's budget cards in place of slots.
 - Mortar or artillery: no such building exists yet; the shop sells it once
   one is built.
 - Rescue planets (base ruins, stranded soldiers; owner 15:33Z): a rescue

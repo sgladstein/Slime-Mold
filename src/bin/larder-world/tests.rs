@@ -843,3 +843,14 @@ fn the_window_plays_a_runs_planet() {
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("run: {e}"));
     assert!(last.contains("t "), "{last}");
 }
+
+/// Every test loadout H cycles fits a default gun's budget (owner's card,
+/// 11-14 15:34Z): the presets stay playable as the budget lands.
+#[test]
+fn every_test_loadout_fits_the_default_budget() {
+    let b = RoundRules::default().budget;
+    for (name, cards) in LOADOUTS {
+        let r = rounds::parse(cards).unwrap_or_else(|| panic!("{name} parses"));
+        assert!(rounds::cost(&r) <= b, "{name} costs {} of {b}", rounds::cost(&r));
+    }
+}

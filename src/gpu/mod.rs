@@ -67,7 +67,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (228 words).
-pub const PARAMS_BYTES: usize = 912;
+pub const PARAMS_BYTES: usize = 928;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -83,6 +83,8 @@ pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
 pub const FLING_AT: usize = 896;
+/// The breakaway row (`BigParams::roam`, 11-14).
+pub const ROAM_AT: usize = 912;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -424,6 +426,12 @@ pub struct Settings {
     pub condense: u32,
     pub condense_crowd: u32,
     pub condense_r: u8,
+    /// Condensed slime breaks away (`BigParams::roam`, `roam_far`,
+    /// `roam_share`; 11-14): steps between chances to leave, 0 off; needs
+    /// `condense`.
+    pub roam: u32,
+    pub roam_far: f32,
+    pub roam_share: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -580,6 +588,9 @@ impl Settings {
             condense: t.condense,
             condense_crowd: t.condense_crowd,
             condense_r: t.condense_r,
+            roam: t.roam,
+            roam_far: t.roam_far,
+            roam_share: t.roam_share,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -836,6 +847,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "condense" => s.condense = int()?.min(crate::mould::big::RIPE),
         "condense_crowd" => s.condense_crowd = int()?,
         "condense_r" => s.condense_r = int()?.clamp(1, 8) as u8,
+        "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
+        "roam_far" => s.roam_far = f()?,
+        "roam_share" => s.roam_share = f()?,
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -981,6 +995,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         condense: s.condense,
         condense_crowd: s.condense_crowd,
         condense_r: s.condense_r,
+        roam: s.roam,
+        roam_far: s.roam_far,
+        roam_share: s.roam_share,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1122,9 +1139,11 @@ pub const MASSCLEAR: usize = 56;
 pub const MASSCOUNT: usize = 57;
 pub const DCLEAR: usize = 58;
 pub const DCOUNT: usize = 59;
+/// Bait laid (11-14, `Engine::lay_scent`).
+pub const BAITLAY: usize = 60;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 60] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount",
+pub const PASSES: [&str; 61] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay",
 ];
 
 impl Shared {
@@ -1872,6 +1891,17 @@ impl Engine {
         b.extend(f32_bytes(&[s.fling_deposit]));
         b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | ((s.condense_r.clamp(1, 8) as u32) << 16), stream(seed, DRAW_CONDENSE)]));
         self.condenses = condense > 0;
+        // The breakaway row (11-14, the condense thread; Params grew from
+        // 912 to 928 for it): steps between chances to leave (0 off), how
+        // far the crystal must be and how near a landing is, in whole fine
+        // cells as the CPU's `roam_pick` counts them, and the share sent.
+        assert_eq!(b.len(), ROAM_AT, "Params rows before the breakaway row moved");
+        let sc = self.dish.p.scale as f32;
+        let roam = if condense > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
+        let far = (s.roam_far.max(0.0) * sc).floor() as u32;
+        let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
+        b.extend(u32_bytes(&[roam, far, land]));
+        b.extend(f32_bytes(&[s.roam_share]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2353,6 +2383,15 @@ impl Engine {
     /// every walker over `s.gas_sleep`, gassed `s.gas_linger` steps more
     /// (`gasp`, a pass a tick from the first cloud on). Runs on its own,
     /// between ticks.
+    /// Food scent laid within `r` of (`x`, `y`) (dish cells): the CPU's
+    /// `BigDish::lay_bait` (the rounds' `Bait` trail, 11-14).
+    pub fn lay_scent(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, amount: f32) {
+        let k = self.dish.p.scale as f32;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, amount, 0.0, 0.0, 0.0, 0.0]));
+        self.run(shared, &[(BAITLAY, self.cells.div_ceil(256))]);
+    }
+
     pub fn lay_gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, dose: f32) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
@@ -2500,6 +2539,11 @@ impl Engine {
     pub fn gas_cloud_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[2 * self.cells as usize..3 * self.cells as usize].to_vec()
+    }
+
+    /// The food scent now (the CPU's `scent`), read back.
+    pub fn scent_of(&self) -> Vec<f32> {
+        floats(&read_back(&self.device, &self.queue, &self.scent[(self.done % 2) as usize]))
     }
 
     pub fn alarm_of(&self) -> Vec<f32> {

@@ -37,7 +37,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 4] = ["panic", "wither", "energy_flow", "condense"];
+const ENGINE_OPTS: [&str; 5] = ["panic", "wither", "energy_flow", "condense", "roam"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -82,6 +82,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // default for the owner's playtest; the steps a crowded or feeding
         // walker takes to condense (300 is 10 game seconds).
         ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off"),
+        // Condensed slime breaks away (11-14, `BigParams::roam`): off by
+        // default; how often (steps) a condensed piece may leave for an
+        // untouched crystal. Needs Condense.
+        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off"),
     ];
     for (k, label, choices, note) in notes {
         let d = c_default(k);
@@ -181,7 +185,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let gun = r.gun_text();
     let mut lines = vec![
         format!("{}. Next: {} on {}, {:.1} times the first planet's walkers", r.line(), title_case(l.tier.name()), title_case(&l.mission.map), l.walkers),
-        format!("Gun: {} ({} of {} slots)", if gun == "none" { "plain shots".to_string() } else { gun }, r.gun().len(), r.slots()),
+        format!("Gun: {} (budget {} of {})", if gun == "none" { "plain shots".to_string() } else { gun }, slime_mould::mould::rounds::cost(&r.gun()), r.budget()),
     ];
     if r.depth == run::PLANETS {
         lines.push("The slime's home world: beat it and the run is won".into());
