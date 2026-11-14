@@ -68,6 +68,7 @@ pub mod lesson;
 pub mod level;
 pub mod look;
 pub mod map;
+pub mod map_edit;
 pub mod organ;
 pub mod own_mould;
 pub mod plans;
