@@ -1691,3 +1691,157 @@ fn a_soldier_holding_tools_goes_to_the_crystal_it_is_sent_to() {
     }
     assert!(!g.soldiers[0].homing, "home with nothing to bank");
 }
+
+// Building (2026-11-14, owner 08:10Z: queue builds; start raising once in
+// range instead of walking to the ghost; keep the soldiers on one side of
+// a turret raised by the enemy).
+
+fn frames(g: &Game<BigDish>, secs: f32) -> u32 {
+    (secs * g.rules.tps as f32 / g.rules.frame_ticks as f32) as u32
+}
+
+/// Standable ground near `p` with room round it (6 dish cells clear).
+fn room_near(g: &Game<BigDish>, p: (f32, f32)) -> (f32, f32) {
+    let sc = g.s();
+    (0..40)
+        .flat_map(|r| (0..16).map(move |k| (r, k)))
+        .map(|(r, k)| {
+            let a = k as f32 / 16.0 * std::f32::consts::TAU;
+            (p.0 + r as f32 * sc * a.cos(), p.1 + r as f32 * sc * a.sin())
+        })
+        .find(|&q| g.build_blocked(Kind::Turret, q).is_none() && (0..8).all(|j| { let a = j as f32 * 0.785; g.standable(q.0 + 6.0 * sc * a.cos(), q.1 + 6.0 * sc * a.sin()) }))
+        .expect("open ground")
+}
+
+#[test]
+fn builders_raise_from_reach_and_stay_on_the_side_they_came_from() {
+    let mut g = small(15);
+    g.rules.start_bank = 1e6;
+    g.bank = 1e6;
+    g.rules.build.raise = 6.0;
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    let sc = g.s();
+    let from = g.larder;
+    let dir = {
+        let (dx, dy) = (g.core.0 - from.0, g.core.1 - from.1);
+        let d = dx.hypot(dy);
+        (dx / d, dy / d)
+    };
+    let at = room_near(&g, (from.0 + dir.0 * 30.0 * sc, from.1 + dir.1 * 30.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+    let n = g.soldiers.len();
+    for k in 0..n {
+        g.apply(Cmd::Order(k, Order::Build(0)));
+    }
+    let reach = g.rules.build.reach * sc;
+    let mut first = None;
+    for _ in 0..frames(&g, 60.0) {
+        g.step();
+        if first.is_none() && g.buildings[0].built > 0.0 {
+            // The nearest builder when it began: about `reach` out, not at the ghost.
+            first = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - at.0).hypot(s.y - at.1)).reduce(f32::min);
+        }
+        if g.buildings[0].up() {
+            break;
+        }
+    }
+    assert!(g.buildings[0].up(), "the squad raised it");
+    let first = first.unwrap();
+    assert!(first > reach - 1.5 * sc, "raising began {:.1} cells out (reach {})", first / sc, g.rules.build.reach);
+    // Every builder on the side it came from (toward the larder), none
+    // past the ghost or round it toward the mould, and none on it.
+    let back = (from.0 - at.0, from.1 - at.1);
+    for (k, s) in g.soldiers.iter().enumerate().filter(|(_, s)| s.alive) {
+        let d = (s.x - at.0).hypot(s.y - at.1);
+        let side = ((s.x - at.0) * back.0 + (s.y - at.1) * back.1) / back.0.hypot(back.1);
+        assert!(side > 0.0, "soldier {k} stands {:.1} cells on the far side", -side / sc);
+        assert!(d >= (g.rules.build.touch + 1.0) * sc - 0.5, "soldier {k} on the ghost ({:.1} cells)", d / sc);
+    }
+}
+
+#[test]
+fn shift_queued_builds_rise_in_turn_by_one_builder() {
+    let mut g = small(16);
+    g.bank = 1e6;
+    g.rules.build.raise = 2.0;
+    let sc = g.s();
+    let (x, y) = g.larder;
+    for k in 1..g.soldiers.len() {
+        g.apply(Cmd::Order(k, Order::Move(x - 30.0 * sc, y)));
+    }
+    let mut sites = Vec::new();
+    for i in 0..3 {
+        let at = room_near(&g, (x + (12.0 + 8.0 * i as f32) * sc, y + 10.0 * sc));
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)), "site {i}");
+        assert!(g.apply(Cmd::Queue(0, Order::Build(i))));
+        sites.push(at);
+    }
+    assert_eq!((g.soldiers[0].order, g.soldiers[0].queued), (Order::Build(0), 2), "the first at once, two queued");
+    // The others go far off, out of the idle soldiers' pickup range.
+    let mut done = Vec::new();
+    for _ in 0..frames(&g, 60.0) {
+        g.step();
+        for b in 0..3 {
+            if g.buildings[b].up() && !done.contains(&b) {
+                done.push(b);
+            }
+        }
+        if done.len() == 3 {
+            break;
+        }
+    }
+    assert_eq!(done, vec![0, 1, 2], "raised in the order queued");
+    g.step();
+    assert_eq!(g.soldiers[0].order, Order::Hold, "then it holds");
+}
+
+#[test]
+fn a_squad_sent_off_keeps_a_build_queued_for_when_it_gets_there() {
+    let mut g = squads(17);
+    g.bank = 1e6;
+    g.rules.build.raise = 2.0;
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let sc = g.s();
+    let m = g.middle(0).unwrap();
+    let to = (0..32)
+        .map(|i| i as f32 / 32.0 * std::f32::consts::TAU)
+        .map(|a| room_near(&g, (m.0 + 20.0 * sc * a.cos(), m.1 + 20.0 * sc * a.sin())))
+        .find(|q| (q.0 - m.0).hypot(q.1 - m.1) > 15.0 * sc)
+        .expect("somewhere to send it");
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    g.step();
+    let at = room_near(&g, (to.0, to.1 + 9.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+    for k in g.members(0) {
+        assert!(g.apply(Cmd::Queue(k, Order::Build(0))));
+    }
+    for _ in 0..3 {
+        g.step();
+    }
+    assert!(g.squads[0].dest.is_some(), "still on its way");
+    assert!(g.members(0).iter().all(|&k| g.soldiers[k].queued == 1), "the build stays queued while it walks");
+    for _ in 0..frames(&g, 30.0) {
+        g.step();
+        if g.buildings[0].up() {
+            break;
+        }
+    }
+    assert!(g.buildings[0].up(), "the queued build rose once the squad got there");
+    // And a build placed without Shift while it walks stops the walk.
+    let far = room_near(&g, (to.0 - 25.0 * sc, to.1));
+    g.apply(Cmd::SquadOrder(0, Order::Move(far.0, far.1)));
+    g.step();
+    let at2 = room_near(&g, (to.0 + 6.0 * sc, to.1 - 9.0 * sc));
+    assert!(g.apply(Cmd::Build(Kind::Turret, at2)));
+    assert!(g.apply(Cmd::SquadOrder(0, Order::Build(1))));
+    for _ in 0..frames(&g, 30.0) {
+        g.step();
+        if g.buildings[1].up() {
+            break;
+        }
+    }
+    assert!(g.buildings[1].up(), "the squad turned to the build");
+}

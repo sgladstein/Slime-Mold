@@ -6,6 +6,7 @@ updated: 2026-11-14
 sources:
   - CLAUDE.md
   - HANDOFF.md
+  - Reports/build-flow-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-playtest-fixes-2026-11-14.md
@@ -32,6 +33,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-14 08:10 | Builders start raising once in reach (`BuildRules::reach` 6) and stay on the side they came from; builds can be queued with Shift | "I should be able to queue builds. Right now soilders center themselves on the build spot but it would be best if they just started building when the got in range. If I am building a turret enemy, I want to be able to keep my soliders on one side of the building turret." | [Larder World](world/larder.md), [report](../Reports/build-flow-2026-11-14/README.md) |
 | 2026-11-14 04:53 | No upkeep: nothing costs food to keep. The lure's burn is off (`BuildRules::lure_burn` 0); everything else is paid once, or per use | "There should be no maintenance costs in this game" | [Larder World](world/larder.md), [report](../Reports/larder-playtest-fixes-2026-11-14.md) |
 | 2026-11-14 04:08-04:49 | Squad-based control, built as a separate mode (`mode=squads`, `Rules::squads`): squads stick together, split, merge and switch; the controlled squad volleys at the cursor and is stronger; no larder in that mode, and crystals are drained or guarded, with guarding worth more in the long run | "the unit control should be squad based from the ground up ... when you are controlling a specific squad you mouse is the aim for the guns and they alll fire in unison at the mouse"; card "Drain or guard (choice per crystal)"; "guarding has to be more valuable in the long run"; "This should be built as a seperate mode for right now. Not erase the other game" | [Larder World](world/larder.md) |
 | 2026-11-14 01:49 | Soldiers no longer need feeding: rations are off by default (`Rules::ration` 0; `ration=1` plays the PR 4 economy). Food buys soldiers, walls and buildings | "I just ran a playtest and I don't know when it was decided that I have to keep my solider fed or they die, but that is bad. The whole game is just trying to harvest crystals then I am have no time to attack the slime." | [Larder World](world/larder.md) |

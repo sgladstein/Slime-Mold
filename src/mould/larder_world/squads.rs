@@ -327,7 +327,12 @@ impl<W: World> Game<W> {
             for k in self.members(q) {
                 let s = &mut self.soldiers[k];
                 s.order = o;
-                s.queued = 0;
+                // Steering drops what was queued; a squad sent somewhere
+                // keeps it (Shift + a build while it walks: the build comes
+                // once it is there; `Cmd::SquadOrder` drops the old queue).
+                if steering {
+                    s.queued = 0;
+                }
                 s.homing = false;
             }
         }
@@ -400,6 +405,9 @@ impl<W: World> Game<W> {
                     Order::Move(x, y) | Order::Fight(x, y) => {
                         self.squads[q].dest = Some((x, y));
                         self.squads[q].fight = matches!(o, Order::Fight(..));
+                        for k in self.members(q) {
+                            self.soldiers[k].queued = 0;
+                        }
                     }
                     _ => {
                         self.squads[q].dest = None;

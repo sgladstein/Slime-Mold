@@ -51,7 +51,10 @@ impl<W: World> Game<W> {
             self.walk(k, dt);
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
-            if self.soldiers[k].queued > 0 {
+            // (Not while its squad is still being sent somewhere: its move
+            // there is the squad's, renewed every step.)
+            let sent = self.rules.squads && self.squads.get(self.soldiers[k].squad as usize).is_some_and(|q| q.dest.is_some());
+            if self.soldiers[k].queued > 0 && !sent {
                 let arrived = match self.soldiers[k].order {
                     Order::Hold => true,
                     Order::Move(..) | Order::Fight(..) => self.goal(k).is_none_or(|g| (g.0 - self.soldiers[k].x).hypot(g.1 - self.soldiers[k].y) <= 1.5 * sc),
