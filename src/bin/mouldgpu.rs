@@ -3641,7 +3641,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 19] = [
+        let dishes: [(&str, Settings, Build); 20] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3706,6 +3706,11 @@ mod tests {
             // from condensing (below); and with withering at even odds
             // some condensed walkers break in the tick.
             ("condense: dense walkers ripen, condense and break", Settings { condense: 3, condense_crowd: 4, condense_r: 2, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Condensed slime breaks away (`roam`, 11-14): as above, and of
+            // the condensed walkers (below) a quarter are already on their
+            // way to a crystal (some land in the tick) and a quarter reach
+            // their `roam` age in it and pick one.
+            ("roam: condensed walkers break away, run and land", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3759,7 +3764,21 @@ mod tests {
                         cpu.dense[k] = s.condense - 1;
                     }
                 }
+                if s.roam > 0 {
+                    use slime_mould::mould::big::{DENSE, ROAM, ROAM_SHIFT};
+                    let piles = cpu.piles.len().min(64) as u32;
+                    for k in 0..cpu.walkers.len() {
+                        if cpu.lives(k) && cpu.is_dense(k) && cpu.roam_of(k).is_none() {
+                            match k % 4 {
+                                0 => cpu.dense[k] = DENSE | ROAM | ((k as u32 % piles) << ROAM_SHIFT) | 1,
+                                1 => cpu.dense[k] = DENSE | (s.roam - 1),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
             }
+            let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed) = (cpu.absorbed, cpu.condensed);
             // The walkers that panic in the tick, and where the living were.
             let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
@@ -3803,6 +3822,13 @@ mod tests {
                 eprintln!("{name}: {held} condensed; in the tick {} absorbed, {} condensed, {broke} broke; mass {} of {n}; {dense_off} words off", cpu.absorbed - absorbed, cpu.condensed - condensed, cpu.mass());
                 assert!(held > 0 && cpu.absorbed > absorbed && cpu.condensed > condensed && broke > 0, "{name}: walkers condense, are absorbed and break in the tick");
                 assert_eq!(dense_off, 0, "{name}: condensing words");
+                if s.roam > 0 {
+                    let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
+                    let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
+                    let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
+                    eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
+                    assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
+                }
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
