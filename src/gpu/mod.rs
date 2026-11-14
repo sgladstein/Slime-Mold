@@ -1686,7 +1686,7 @@ impl Engine {
         // no tick spreads an empty one.
         let cloud_keep = if self.clouded { s.gas_keep } else { 0.0 };
         b.extend(u32_bytes(&[s.sick, s.immune, infect, cloud_keep.to_bits()]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.gas_sleep, s.gas_death, 0.0]));
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, 0.0, s.gas_death, 0.0]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {
@@ -2278,7 +2278,7 @@ impl Engine {
         self.clouded = true;
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, 0.0, dose]));
-        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]));
         self.run(shared, &[(GASLAY, self.cells.div_ceil(256))]);
         // How long `calm` must keep looking: the cloud's top can only fall
         // by `gas_keep` a step once laid (a 3x3 mean never raises it), so
@@ -2316,7 +2316,7 @@ impl Engine {
         }
         // Word 2 (walkers gassed so far) is kept.
         // Words 2-7 (walkers gassed so far, the flung count, the cloud's
-        // linger) are kept.
+        // linger and sleep level) are kept.
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
         self.queue.write_buffer(&self.news, self.gas_at + 4 * GAS_HEAD as u64, &u32_bytes(&words[GAS_HEAD..]));
         self.run(shared, &[(CALM, self.n.div_ceil(256))]);
@@ -2523,12 +2523,13 @@ pub fn spec_words(d: &BigDish) -> Vec<u32> {
 pub const GAS_HEAD: usize = 8;
 pub const GAS_SLOTS: usize = GAS_HEAD + 5 * squad::UNITS_MAX;
 
-/// The sleep gas's buffer a CPU dish starts the GPU's with: a header (zero but word 4, the cloud's linger)
+/// The sleep gas's buffer a CPU dish starts the GPU's with: a header (zero but words 4 and 5, the cloud's linger and sleep level)
 /// and calm block, then each slot's step its gas runs out at (the dish's
 /// step plus its `gassed`; 0, never, where it has none).
 pub fn gas_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; GAS_SLOTS + d.walkers.len()];
     w[4] = d.p.gas_linger as u32;
+    w[5] = d.p.gas_sleep.to_bits();
     for (k, &g) in d.gassed.iter().enumerate() {
         if g > 0 {
             w[GAS_SLOTS + k] = d.steps as u32 + g as u32;
