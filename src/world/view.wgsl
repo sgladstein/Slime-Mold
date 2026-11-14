@@ -197,13 +197,14 @@ const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 // apart by value and its own texture (`soil_detail`), so a planet's
 // biome reads from a grey thumbnail (art lead, 11-14): sand just above
 // the ground with wind ripples, clay darker with crack lines, barren a
-// lighter ash grey with a dry speckle, water darker still. Before
+// lighter ash grey (still a clear step under rock) with clumped grains,
+// water darker still. Before
 // 2026-11-14 sand was (150,134,92), brighter than thin slime, and clay a
 // saturated brick; #247's flat (70,68,60)/(56,38,34)/(50,50,50) read as
 // one grey on the planets (Reports/soil-materials-2026-11-14).
 const SAND_RGB: vec3<f32> = vec3<f32>(50.0, 48.0, 42.0);
 const CLAY_RGB: vec3<f32> = vec3<f32>(38.0, 28.0, 26.0);
-const BARREN_RGB: vec3<f32> = vec3<f32>(64.0, 64.0, 62.0);
+const BARREN_RGB: vec3<f32> = vec3<f32>(55.0, 55.0, 53.0);
 // Standing water: deep and dark (`cell_mat_c`, `soil_detail`).
 const WET_RGB: vec3<f32> = vec3<f32>(10.0, 24.0, 34.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
@@ -899,6 +900,14 @@ fn hash2(p: vec2<f32>) -> f32 {
     return fract((r.x + r.y) * r.x);
 }
 
+// Smooth value noise in 0..1, one lattice point a unit.
+fn vnoise(p: vec2<f32>) -> f32 {
+    let i = floor(p);
+    let f = p - i;
+    let u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash2(i), hash2(i + vec2<f32>(1.0, 0.0)), u.x), mix(hash2(i + vec2<f32>(0.0, 1.0)), hash2(i + vec2<f32>(1.0, 1.0)), u.x), u.y);
+}
+
 // The share of sand, clay, barren and wet ground at (x, y), a cubic
 // B-spline over the 4 x 4 cells round (no cell stair in a patch's edge),
 // and the wet share's gradient (per cell), for the water's crisp edge.
@@ -936,16 +945,27 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     if (dot(w, vec4<f32>(1.0)) <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
     var mul = 1.0;
     var add = vec3<f32>(0.0);
-    // Sand: wind ripples about 1.6 cells apart, slightly wavy, the flank
-    // toward the light lighter.
+    // Sand: wind ripples about 1.6 cells apart, the flank toward the
+    // light lighter. Low-frequency noise in their phase bends them and
+    // stretches or squeezes their spacing (art lead, 11-14: straight even
+    // diagonals read as a hatch at zoom 6 and a moire at zoom 1), and they
+    // fade to flat sand below about zoom 3, where a ripple is under five
+    // pixels and would alias.
     if (w.x > 0.0) {
-        let ph = (x * 0.82 + y * 0.42 + 0.7 * sin(y * 0.31 + x * 0.13)) / 1.6;
-        let r = sin(6.2831853 * ph);
-        let fade = smoothstep(2.0, 5.0, 1.6 * P.zoom);
-        // and long dune swells about 14 cells apart under them, which a
-        // whole-map view still shows.
-        let dune = sin(6.2831853 * (x * 0.55 + y * 0.3 + 2.0 * sin(y * 0.05)) / 14.0);
-        mul *= 1.0 + (0.14 * r * fade + 0.16 * dune) * w.x * bare;
+        let p = vec2<f32>(x, y);
+        // Long dune swells about 14 cells apart, bent at their own scale,
+        // which a whole-map view still shows,
+        let big = vnoise(p / 24.0);
+        var k = 0.12 * sin(6.2831853 * ((x * 0.55 + y * 0.3) / 14.0 + 1.6 * big));
+        // and the ripples on them, bent by the same noise and one finer
+        // octave (two vnoise a pixel; sums of sines cost the same on
+        // llvmpipe and looked like wood grain).
+        let fade = smoothstep(2.5, 4.0, P.zoom);
+        if (fade > 0.0) {
+            let bend = 4.0 * big + 1.2 * vnoise(p / 4.0 + 17.0);
+            k += 0.14 * fade * sin(6.2831853 * ((x * 0.82 + y * 0.42) / 1.6 + bend));
+        }
+        mul *= 1.0 + k * w.x * bare;
     }
     // Clay: dried into plates about 3 cells across, dark cracks between,
     // a pixel or so wide (the second-nearest minus nearest jittered point).
@@ -966,12 +986,15 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         let plate = 0.92 + 0.16 * hash2(floor(p * 7.0));
         mul *= mix(1.0, (1.0 - 0.6 * crack) * mix(1.0, plate, smoothstep(3.0, 8.0, P.zoom)), w.y * bare);
     }
-    // Barren: dry ash with a speckle of grains half a cell across.
+    // Barren: dry ash, its grains soft and about a cell across, in clumps
+    // a few cells wide with bare ash between (art lead, 11-14: a hashed
+    // speckle half a cell across read as TV static at zoom 6).
     if (w.z > 0.0) {
-        let q = floor(vec2<f32>(x, y) * 2.0);
-        let h = hash2(q);
-        let sp = select(0.0, 0.25, h > 0.86) - select(0.0, 0.2, h < 0.1);
-        let fade = smoothstep(1.5, 3.0, P.zoom / 2.0);
+        let p = vec2<f32>(x, y);
+        let n = vnoise(p * 1.3 + 5.0);
+        let clump = smoothstep(0.4, 0.7, vnoise(p / 3.5 + 11.0));
+        let sp = (0.2 * smoothstep(0.6, 0.85, n) - 0.15 * smoothstep(0.6, 0.85, 1.0 - n)) * clump;
+        let fade = smoothstep(2.0, 4.0, P.zoom);
         mul *= 1.0 + sp * w.z * fade * bare;
     }
     // Wet: the water's edge is where the smooth wet share crosses one
