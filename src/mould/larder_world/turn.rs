@@ -178,9 +178,14 @@ impl<W: World> Game<W> {
         let out = FrameOut { units: out.units.iter().zip(&calm).map(|(u, &c)| UnitOut { touching: u.touching.saturating_sub(c), ..*u }).collect(), ..out };
         let left: Vec<f32> = if r.home_dry { self.world.crystals().iter().map(|c| c.1).collect() } else { Vec::new() };
         let mut empty = Vec::new();
+        self.last_takes.clear();
         for (((u, k), c), ask) in out.units.iter().zip(&who).zip(&from).zip(&f.units) {
             if let Some(c) = *c {
                 self.taken[c] += u.took;
+                if u.took > 0.0 {
+                    let by = if let Who::Soldier(k) = *k { Some(k) } else { None };
+                    self.last_takes.push(Take { by, crystal: c, at: (ask.x, ask.y), took: u.took });
+                }
             }
             match *k {
                 Who::Building(b) => self.building_out(b, u, dt),

@@ -265,6 +265,12 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How long a take's pulse lasts at a harvester's hands, seconds: a step
+/// is 1/15 s, so a soldier taking every step glows steadily and one that
+/// stops fades in about a third of a second.
+const TAKE: f32 = 0.3;
+/// How long the larder's cells flare when a load is banked, seconds.
+const BANKED: f32 = 0.6;
 /// Game seconds between read-backs of the crystals' and walls' cells for
 /// the ground the look shades.
 const GROUND_EVERY: f32 = 1.0;
@@ -362,6 +368,9 @@ struct Tracer {
 struct Look {
     facing: f32,
     flash: f32,
+    /// Seconds left of the pulse at its hands from its last take from a
+    /// crystal (`Game::last_takes`, `TAKE` long).
+    take: f32,
     at: (f32, f32),
     alive: bool,
 }
@@ -426,6 +435,10 @@ struct App {
     hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
+    /// Seconds left of the larder's flare (`BANKED`), and the harvest
+    /// banked when it was last checked.
+    banked: f32,
+    harvested_seen: f32,
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
@@ -511,6 +524,8 @@ impl App {
             broke: false,
             hungry: false,
             bank_log: Default::default(),
+            banked: 0.0,
+            harvested_seen: 0.0,
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
@@ -650,7 +665,7 @@ impl App {
         }
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
-        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -658,6 +673,7 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
         self.bank_log.clear();
+        (self.banked, self.harvested_seen) = (0.0, 0.0);
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
@@ -704,7 +720,14 @@ impl App {
         self.tracers.retain(|t| t.age < TRACER);
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
+            l.take = (l.take - dt).max(0.0);
         }
+        self.banked = (self.banked - dt).max(0.0);
+        // A load banked since the last frame flares the larder's cells.
+        if g.harvested > self.harvested_seen + 0.5 {
+            self.banked = BANKED;
+        }
+        self.harvested_seen = g.harvested;
         // A bought soldier (by the card or a replay) joins the notes.
         join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());

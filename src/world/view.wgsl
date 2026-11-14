@@ -585,7 +585,18 @@ fn silhouette(p: vec2<f32>, small: bool) -> f32 {
     return max(sprite(0u, p, small).w, sprite(1u, p, small).w);
 }
 
-fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool) -> vec4<f32> {
+// Harvesting (art direction, the owner's playtest 11-14 04:53Z:
+// "harvesting crystals could look way better"): `carry` 0-1 is the share
+// of a full load the soldier holds, shown as cyan charge filling the pack
+// on its back from the bottom (sprite frame) with a glow round it that
+// grows with the load, so a carrier walking home is a light you can
+// follow; `take` 0-1 is a pulse at its hands while it takes from a crystal
+// this moment (`Game::last_takes`). Both are game state, not decoration.
+// The pack is the body tile's rectangle at x -0.72..-0.30, y -0.42..0.42.
+const CHARGE: vec3<f32> = vec3<f32>(92.0, 224.0, 232.0);
+const CHARGE_HOT: vec3<f32> = vec3<f32>(220.0, 255.0, 255.0);
+
+fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool, carry: f32, take: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let ca = cos(ang); let sa = sin(ang);
@@ -621,6 +632,31 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     let inside = max(body.w, h.w);
     let rim = clamp(inside - silhouette(p + lp * 1.2, small), 0.0, 1.0) * 0.75;
     out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
+    if (carry > 0.0) {
+        // The pack's charge, filled from its foot (+y) up, a hot core
+        // where it is full.
+        let inpack = p.x > -0.68 && p.x < -0.34 && abs(p.y) < 0.38;
+        let level = 0.38 - 0.76 * carry;
+        if (inpack && p.y >= level) {
+            let c = mix(CHARGE, CHARGE_HOT, clamp(carry * 1.2 - 0.2, 0.0, 1.0) * 0.6);
+            out = vec4<f32>(c, 1.0);
+        }
+        // The glow: light, so it adds; its reach grows with the load. Kept
+        // inside the body's edge: each screen pixel shows one mark (the
+        // highest that claims it), so a wide glow claimed a neighbour's
+        // pixels and cut a dark bite out of it (first try, 0.06 + 0.12 *
+        // carry, at the zoom 12 film).
+        let q = vec2<f32>(clamp(p.x, -0.68, -0.34), clamp(p.y, -0.38, 0.38));
+        let dd = length(p - q);
+        let g = carry * exp(-dd * dd / (0.02 + 0.04 * carry)) * 0.6;
+        out = vec4<f32>(out.xyz + CHARGE * g, min(out.w + g, 1.0));
+    }
+    if (take > 0.0) {
+        // A pulse at the hands as charge comes in.
+        let dh = length(p - vec2<f32>(0.66, 0.3));
+        let g = take * exp(-dh * dh / 0.03);
+        out = vec4<f32>(out.xyz + CHARGE_HOT * g, min(out.w + g, 1.0));
+    }
     if (flash > 0.0) {
         let f = sprite(2u, p, small) * clamp(flash * 1.5, 0.0, 1.0);
         out = pm_over(out, f);
@@ -636,7 +672,9 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
 // darkens and greys as its health goes, and its lamp is lit only while it
 // works (a turret firing, a lure laying scent, a pump drawing charge, a
 // siren while it is on).
-fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool) -> vec4<f32> {
+// `pulse` 0-1 brightens the lamp for a moment: the larder's charge cells
+// as a carrier banks its load (harvest look, 11-14).
+fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;
@@ -690,13 +728,27 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         out = pm_over(out, vec4<f32>(RIM * seam, seam));
     }
     if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
+    if (pulse > 0.0 && built >= 1.0) {
+        let lamp = sprite(k + 1u, p, small);
+        let g = pulse * 1.5;
+        out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
+        // A halo round the lit cells.
+        let lit = sprite(k + 1u, p * 0.8, true).w;
+        out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
+        // The whole store washed in charge light, on the body only (no
+        // new alpha, so it claims no neighbour's pixels): the lit cells
+        // alone were a few pixels at zoom 12 and lost under the carriers
+        // walking in (first film, 11-14).
+        let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
+        out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+    }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
 }
 
 fn building_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u);
+    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that
@@ -855,7 +907,7 @@ fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u);
+    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the

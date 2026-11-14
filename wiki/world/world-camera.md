@@ -11,6 +11,7 @@ sources:
   - Reports/start-menu-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
+  - Reports/units-read-2026-11-14/harvest.md
   - Reports/world-camera-2026-11-11.md
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
@@ -23,6 +24,7 @@ code:
   - Controls::button
   - Engine::set_hits
   - Game::elbow_room
+  - Game::last_takes
   - Game::overrun_share
   - Game::seek
   - Hud::aim
@@ -32,11 +34,13 @@ code:
   - MAX_MARKS
   - MAX_ZOOM
   - Marks::building
+  - Marks::building_pulse
   - Marks::health
   - Marks::icon
   - Marks::label
   - Marks::selected
   - Marks::soldier
+  - Marks::soldier_working
   - Order::Fight
   - SPRITES
   - Squad::model
@@ -112,8 +116,11 @@ crystals are hexagons. Since 11-14 every soldier can be counted at zoom 6
 ring round an overlapping group (`ring_groups`), hurt-only
 `Marks::health`, a dead pose), and buildings and the larder show their
 state in the sprite (`Marks::building`, `Game::overrun_share`; a ghost's
-builder state is a sign, `Marks::icon`)
-([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
+builder state is a sign, `Marks::icon`). Harvesting shows on the soldier:
+a taker (`Game::last_takes`) faces the crystal with a pulse at its hands, its
+pack fills cyan as it carries (`Marks::soldier_working`; no carry bar), and the
+larder flashes as a load is banked (`Marks::building_pulse`)
+([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines
 as lines.

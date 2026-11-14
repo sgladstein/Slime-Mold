@@ -363,6 +363,30 @@ fn a_clearing_soldier_carries_charge_home() {
 }
 
 #[test]
+fn takes_are_listed_each_step_for_the_harvest_look() {
+    // `Game::last_takes` is what the harvest look draws from (the soldier's
+    // working pose and pulse, the crystal's reaction): this step's takes
+    // only, by whom and from which crystal, summing (in charge, `Rules::charge`
+    // a unit of food) to what was carried in.
+    let mut g = small(2);
+    let c = g.larder;
+    g.apply(Cmd::Order(0, Order::Clear(c.0, c.1)));
+    g.apply(Cmd::Stance(0, Stance::HoldFire));
+    let (k, _) = g.crystal_at(c).unwrap();
+    let mut seen = 0;
+    for _ in 0..(g.rules.tps * 5) {
+        let held = g.soldiers[0].carry + g.harvested;
+        g.step();
+        let took: f32 = g.last_takes.iter().filter(|t| t.by == Some(0)).map(|t| t.took).sum::<f32>() / g.rules.charge;
+        assert!(g.last_takes.iter().all(|t| t.took > 0.0 && t.crystal == k), "{:?}", g.last_takes.len());
+        let gained = g.soldiers[0].carry + g.harvested - held;
+        assert!((gained - took).abs() < 1e-3, "carried in {gained}, listed {took}");
+        seen += (took > 0.0) as usize;
+    }
+    assert!(seen > 0, "no take listed in 5 s on the crystal");
+}
+
+#[test]
 fn soldiers_stand_round_a_crystal_not_on_it() {
     // Owner, 11-12 14:43Z: soldiers "shouldn't be able to stand on top
     // of the crystal". They start outside the larder's crystal, a move
