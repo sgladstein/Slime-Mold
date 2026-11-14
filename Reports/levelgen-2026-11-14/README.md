@@ -368,15 +368,67 @@ checks are unchanged (400 planets: the same 354 first, all within four;
 water never blocks a walk). The films and sheets above are from before the
 change. Water's value against the ground is the ground thread's.
 
+## Plants, deep water and 2x planets
+
+**Plants** (owner 19:10Z, "You have a meadow biome with no green"). The
+plants thread's field (#290) reads the map's B byte: kind in the top two
+bits, density in the low six. Levelgen now writes each biome's (`Sow`) on
+one canopy noise about 140 cells across, so patches thicken from the
+edge in (the graphics lead's density gradients):
+
+| Biome | Plants |
+| --- | --- |
+| meadow | grass over three quarters of it, a few jungle copses |
+| barrens | thin scrub where the ground isn't barren; lush grass and copses in the oases |
+| fen | reed beds round every pool and lake (18 cells), grass between |
+| river valley | reeds along the banks (14), scrub on the dunes |
+| jungle | canopy over most of it, grass in the clearings |
+| highlands | sparse grass in the rooms |
+| cave | a little growth in the caverns, reeds at the pools |
+| core | grass, canopy and scrub mixed |
+
+Reeds reach a third as far into the water as onto land (a full fringe hid
+the rivers' shallows). Nothing on deep water, bridges, barren ground, a
+crystal, or a ragged pad round the landing. The fingerprints now include
+the plants.
+
+**Deep water and bridges** (the ground thread's #285, merged into this
+branch): river and lake middles are deep (`G_DEEP`), and half the rivers
+get a bridge 12-16 cells wide away from the fords. The walk checks use
+`map::standable`. On the first try deep water cut the squad off on 29 of
+400 planets (one core world, rocky rooms and rivers, took 23 attempts and
+the fallback, 4.6 s). `cut_fords` now makes the shortest way to each
+cut-off crystal or nest shallow, 32 cells wide, as passes are cut through
+ridges. Then 358 of 400 first, all within five attempts, none fall back
+([raw](raw/planets-seeds-1-50-plants.txt)).
+
+**2x planets.** The 1070 timing the technical lead asked for
+([raw](raw/sizes-1070/), PR #284's head, seed 1, rush hand, 25k walkers;
+runs 1 and 8 at low clocks):
+
+| Area | GPU step (timestamps) | Drawing | Frame p95 | Prepare max |
+| --- | --- | --- | --- | --- |
+| 1x | 0.63 ms | 0.08 ms | 3.1-3.3 ms | 4.6 ms |
+| 2x | 0.97 ms | 0.10 ms | 2.7-3.7 ms | 8.4 ms |
+| 4x | 1.50 ms | 0.17 ms | 3.3-4.5 ms | 23.6 ms |
+| 6x | 2.11 ms | 0.24 ms | 3.7-5.2 ms | 32.9 ms |
+
+The prepare spike is `refresh_ground`: once a game second it reads back
+every cell's charge and rebuilds every cell's ground code on the CPU, a
+dropped frame or two a second from 4x. `GROW_CAP` 1.0 -> 2.0: planets 1-5
+at the owner's sizes (0.6, 0.8, 1.0, 1.4, 2.0), 6-8 at 2x until the
+refresh touches only the cells that change (next). Build time with
+everything: 172 ms median, 1.2 s at most.
+
 ## Next
 
-1. **Deep water, plants and new ground in the maps** as the ground and
-   plants threads land them (soil kinds 4 and 5, plants in B), and the
-   graphics lead's review of round 3.
+1. **A sparse ground refresh**, then planets to the owner's 6x; the
+   plants thread's `moisture` line in every planet; a three-agent
+   adversarial review (owner, 19:12Z and 19:32Z).
 2. **Every strategy can win**: the check that each nest has an open
    approach and a choke, after a short read on how StarCraft map
    generators score chokepoints and fairness (owner's question, 17:24Z).
-3. **Planets grow**: the 1070 timing, then `GROW_CAP` up.
+3. **Planets grow** past 2x once the refresh is sparse.
 4. **Twists** shown before landing (Flooded, Rich crystals, ...).
 5. **Rescue planets**, rare: base ruins and stranded soldiers as new map
    items, with a rescue goal from the run thread.
