@@ -26,7 +26,7 @@ Choices, all as recommended: only unlocked verbs carry between missions (the per
 | 5 | Kill zone | Flats | Swarmer (floods where hit) | Turret | "Drive the swarm off the three middle crystals for a minute" [seconds all three are clear, once the swarm has been on them] (built 2026-11-14) | Turrets (buildings batch 1) |
 | 6 | The nest | Nest | Sleeper (dormant crust) | Strike | "Break the nest: cut the Sleeper to half its size" [walkers now against its peak] (built 2026-11-14) | Sleeper and strike in the GPU game |
 | 7 | Spore season | Rim | Sporer (spores fly to crystals) | Pump | "Keep the spores off your landing crystal for a minute" [seconds it is clear] (built 2026-11-14; was "Hold 6 of the 8 outer crystals", then a held charge race) | Pumps (buildings batch 1) |
-| 8 | Two moulds | Passes | Rival pair (sand fast, clay slow) | Lure | "Take 60% of the valley's charge" [take share] | Lure (buildings batch 1); the rivals as two species |
+| 8 | Two moulds | Passes | Your own mould against the Swarmer (the Grudge once its scar is on the GPU; D4, 11-14) | Sow, lure | "Grow your mould to 60% of all the slime and hold it for a minute" [outgrow 0.6 60] | Built 11-14 (census v4-v6); the rival pair moves to chapter 2 |
 
 Missions 1 to 3 are the first playable slice. Mission 4 is the owner's "cut-off hunk" (11-12 04:18Z) made into a lesson. Hunter, Converter and Mixes are a second chapter once they run in the world; the squad toolkit's verbs slot in as missions against the tier each counters. Mission 5's goal was a kill count until the design review pointed out that free shots and turrets reward turtling for it.
 
@@ -476,4 +476,71 @@ Seeds 1-4: pumps and turrets 4/4 at 3:43-9:01, farming alone 4/4 at
 2:50-8:56, pumps alone 2/4; idle 0/4 (best 0.32), random 0/4 (wiped by
 4:07). The pump helps but no longer decides it, a tuning note for the
 next pass.
+
+### Mission 8 built: Two moulds (census v1-v6, 2026-11-14)
+
+**What D4 settled** (the designer and the tech lead, 07:16Z): mission 8 is
+your own mould (the gardeners, `own_mould`) against the Grudge on the
+Passes; the rival pair moves to chapter 2. The Grudge's scar keys have no
+GPU port, so the window would refuse it: the Swarmer stands in, and the
+swap is the one line `tier grudge` once the scar is on the GPU. The
+designer's note: Kill zone already teaches "the Swarmer floods where it is
+hit", so mission 8 leans on your mould and the lure, not on turrets.
+
+**Built.**
+- `own_mould::garden_on_map` (CPU) and `GpuWorld::garden_on_map` (GPU): the
+  garden on a designed map. The map's mould starts are the enemy's; your
+  mould starts on the crystal nearest the landing, listed once per enemy
+  start so both sides get the same walkers (`walkers` a side, rounded to a
+  multiple of the enemy's starts). Each walker's side is set where it was
+  placed (the start nearest it), not by walker order, and a start where a
+  side is not its count or is over its cap is refused (the tech lead's
+  review). Tests: `the_garden_goes_on_a_designed_map` (CPU: counts, each
+  walker by its own start, the caps, a map with no landing refused) and
+  `the_gpu_garden_on_a_map_starts_and_runs_as_the_cpu` (the GPU dish is
+  the CPU's walker for walker, the same counts a side for five frames,
+  and a planted swap of one walker's side is seen).
+- A mission line `own` and the goal `outgrow F SECS`: your mould is `F` of
+  all the living slime for `SECS` in a row (`World::own_living`, on both
+  engines). The design asked for the take share, but the GPU world cannot
+  tell which mould ate a crystal's charge; both engines count each side's
+  walkers, which is also what the player sees (the two colours).
+- The window plays an `own` mission (and `own=1` with `map=`): its smoke
+  test plays mission 8 for 60 s on the software GPU.
+- Census hands: `sow+STYLE` (two soldiers walk from the larder to the
+  nearest crystal without enemy on it and back, on Feed over 600 food, on
+  Road below), `bait+STYLE` (sow, and one lure on clean ground 12-24 cells
+  round the enemy's core, on the side away from the larder, at most three
+  over a game), and random gives random gardener tasks there.
+
+**What the census found** (CPU, scale 2, 5,000 walkers a side; raw output
+`census/8-two-moulds-*.txt`).
+- v1-v3, your mould on the bare landing: it starved from 5,000 to 240-520
+  walkers in 30 s before any plan could feed it, and only random kept it,
+  by feeding from the first second. It now starts on the crystal by the
+  landing (as the race-world garden starts on the larder's crystal).
+- v4: a lure past the enemy's core on the larder's line went up inside the
+  enemy and was eaten as it was built, 300 food each time (the bank sat at
+  100 for ten minutes). It now stands on clean ground.
+
+Seeds 1-4 (v4 for seed 1, v5 for bait on seed 1, v6 for seeds 2-4):
+
+| Hand | Met | When |
+| --- | --- | --- |
+| sow while farming (sow+boom) | 3/4 | 7:36-13:38 |
+| sow and a lure behind the enemy (bait+boom) | 3/4 | 5:33-10:35 |
+| farm and shoot alone (boom) | 3/4 | 5:18-6:36 |
+| idle | 0/4 | |
+| random | 2/4 | 1:36, 5:06 |
+
+The lure plan grows your mould soonest (seed 1 at 3:00: 4,040 walkers with
+the lure, 3,039 sowing alone). **Tuning notes**, not blockers (build first,
+balance later): random wins 2/4 because a random Feed task stays on and
+spends the 2,000 start bank on your mould in its first 30 s (seed 4: 2,566
+walkers at 0:30, 9,146 at 1:30), so feeding early is the strongest opener
+and the scripted plans, which spend the start bank on soldiers, miss it;
+and farming and shooting alone wins as often as tending your mould. The
+levers are the mission's start bank (`rule start_bank`), the Feed rate
+(`Tend::feed`) and the conversion ratio (`own_mould::CONVERT`). Range 24
+(#249) landed after this census.
 
