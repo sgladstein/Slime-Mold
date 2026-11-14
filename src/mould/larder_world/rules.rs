@@ -296,9 +296,11 @@ pub struct Rules {
     /// last too long"). The card's other choices were a crater that keeps
     /// half the trail under it (`scorch_keep` 0.5, so thick mould closes
     /// it soonest) and keeping 4.5 s. Two seconds answers "too long"
-    /// directly, and since aims see their slime (#198) a squad fires
-    /// about four times as often, so a hole under steady fire is renewed
-    /// before it closes; it closes about 2.5 s sooner once fire stops
+    /// directly, and since aims see their slime (#198) a squad by a wall
+    /// fires about four times as often, so a hole under steady fire is
+    /// renewed before it closes. On shape C (the Fork, seed 1, three
+    /// hands) a hit's hole is back to 80% of its body in a median 0.5 to
+    /// 0.9 s, against 1.3 to 3.9 s at 4.5 s, and a shot kills 2-6% fewer
     /// (`Reports/larder-crater-2s-2026-11-14.md`). Set from the card
     /// with smoke checks, no census (the 17:26Z testing rule).
     pub crater: f32,
