@@ -952,7 +952,13 @@ impl App {
             slots: rounds::SLOTS,
             recharge: rech,
             charging: lead.map_or(0.0, left).clamp(0.0, 1.0),
-            note: if rd.round.is_empty() { Some("No cards: H or the button for a loadout".into()) } else { note },
+            // The budget (owner's card, 11-14 15:34Z) under the cards.
+            note: if rd.round.is_empty() {
+                Some("No cards: H or the button for a loadout".into())
+            } else {
+                let spent = format!("Cost {} of {}", rounds::cost(&rd.round), rd.rules.budget);
+                Some(note.map_or(spent.clone(), |n| format!("{spent} · {n}")))
+            },
             cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
         }
     }
@@ -1012,6 +1018,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
+        about = format!("{about} Costs {} of the gun's budget.", c.cost());
         let flight = kind == CardKind::Flight;
         let idle = !flight && runs[i] >= payloads;
         let goes_with = if flight { None } else { payload_of(runs[i]) };
