@@ -154,6 +154,23 @@ pub struct Burst {
     pub gas: u16,
     /// Infects the walkers within `r`.
     pub germ: bool,
+    /// **The fling** (an explosion, the gun rounds' `Bomb`, 2026-11-14):
+    /// after the kill, every living walker on the ground between `r` and
+    /// `fling` dish cells is thrown straight out from the centre for up to
+    /// `fling_steps` fine steps (those nearest the kill furthest), and lives
+    /// on where it lands (`BigDish::fling`). 0: none.
+    pub fling: f32,
+    pub fling_steps: u16,
+}
+
+impl Burst {
+    /// The fling's ring in fine cells at `scale` (inner and outer radius)
+    /// and the reciprocal both engines multiply by (`BigDish::fling`), or
+    /// none without a fling.
+    pub fn fling_ring(&self, scale: f32) -> Option<(f32, f32, f32)> {
+        let (r, rr) = (self.r * scale, self.fling * scale);
+        (self.fling_steps > 0 && rr > r).then(|| (r, rr, 1.0 / (rr * rr - r * r)))
+    }
 }
 
 /// What a burst needs from the rules that is not its own: the alarm field's
@@ -169,6 +186,9 @@ pub struct BurstRules {
     pub sick_catch: f32,
     pub sick_deposit: f32,
     pub sick_keep: f32,
+    /// A flung walker's speed x `step` (`BigParams::fling_speed`), set
+    /// with the first fling.
+    pub fling_speed: f32,
 }
 
 /// What a burst did.
@@ -176,11 +196,12 @@ pub struct BurstRules {
 pub struct BurstOut {
     pub killed: u32,
     pub gassed: u32,
+    pub flung: u32,
 }
 
 /// A burst on the CPU, in the order a kit blast always ran (`Kit::bang`
 /// before 2026-11-12): the alarm field on, the strike (kill, clear,
-/// alarm), the crater; then gas, then germ.
+/// alarm), the crater; then the fling (11-14), gas, then germ.
 pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     let s = d.p.scale as f32;
     let mut out = BurstOut::default();
@@ -192,6 +213,10 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     }
     if b.crater > 0 {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
+    }
+    if let Some((r, rr, inv)) = b.fling_ring(s) {
+        d.p.fling_speed = k.fling_speed;
+        out.flung = d.fling(b.at.0 * s, b.at.1 * s, r, rr, b.fling_steps, inv) as u32;
     }
     if b.gas > 0 {
         d.enable_alarm(k.alarm_keep);

@@ -4,6 +4,7 @@ kind: tool
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/explosions-2026-11-14/README.md
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/rounds-2026-11-12.md
@@ -11,9 +12,12 @@ sources:
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
 code:
+  - BigDish::fling
   - BigDish::gas
   - BigDish::gassed_near
   - BigDish::scorch_disc
+  - BigParams::fling_deposit
+  - BigParams::fling_speed
   - BigParams::gas_death
   - BigParams::germ_resist
   - BigParams::scorch_full
@@ -22,6 +26,7 @@ code:
   - Burst
   - Engine::burst
   - Engine::calm
+  - Engine::fling
   - Engine::gas
   - Kit
   - Kit::restock
@@ -84,6 +89,16 @@ Since 11-13 shots fly as bullets (`Rules::bullet_speed` 45 dish cells a
 second; 0 gives back the ray), and the flight cards pierce and split ride on
 every bullet; they are game state, so both engines play them alike (an
 exact bullet twin in `mouldgpu` checks the engine's trace of each leg).
+**Bomb rounds** (11-14, the owner's "Do we have explosions yet"): the
+`bomb` payload kills a small core (4 dish cells) and throws the live mould
+out to 2.5 times that straight outward, as real walkers in flight
+(`Burst::fling`, `BigDish::fling`, `Engine::fling`) that land and live on,
+drawn as hot specks with a streak of trail. Loadouts bomb, cluster and
+blowout. Exact engine twin on llvmpipe; one shot into C kills 171 and
+throws 678 against a blast's 334 killed. Every round, blast too, ends the
+rush, idle and farm smoke hands sooner than plain shots on one seed; with
+bombs the rush is wiped at 21 s, a tuning note
+([report](../../Reports/explosions-2026-11-14/README.md), films page linked there).
 
 ## Owner's word
 

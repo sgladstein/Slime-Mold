@@ -1,0 +1,6 @@
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 703 walkers killed, 7825 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+  t 21 s: mould 23688, soldiers 0, bank 400, harvested 0, shots 69, killed 1803, took 0%, crystals left 0.998, ended: squad wiped
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 703 walkers killed, 7825 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+  t 21 s: mould 23688, soldiers 0, bank 400, harvested 0, shots 69, killed 1803, took 0%, crystals left 0.998, ended: squad wiped
+  rounds t   21 s: 21 casts (blast, gas, germ, bomb [0, 0, 0, 21]), 703 walkers killed, 7825 flung, 1260 food spent, 0 skipped for food, 0 not on this world, 0 lodged
+  t 21 s: mould 23688, soldiers 0, bank 400, harvested 0, shots 69, killed 1803, took 0%, crystals left 0.998, ended: squad wiped

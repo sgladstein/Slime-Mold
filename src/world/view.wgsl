@@ -362,6 +362,21 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);
     let px = i32(floor(s.x)); let py = i32(floor(s.y));
     if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { return; }
+    // A walker an explosion threw (the engine's `fling`, 11-14) has 1 in
+    // its fourth word while it flies: a hot speck, a pixel more each side
+    // per 4 of zoom, so the throw shows as the mould itself in the air
+    // and not only as the streak it lays.
+    if (w.w > 0.5) {
+        let r = i32(P.zoom / 4.0);
+        for (var dy = -r; dy <= r; dy++) {
+            for (var dx = -r; dx <= r; dx++) {
+                let qx = px + dx; let qy = py + dy;
+                if (qx < 0 || qy < 0 || qx >= i32(P.sw) || qy >= i32(P.sh)) { continue; }
+                atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], 24u);
+            }
+        }
+        return;
+    }
     atomicAdd(&specks[u32(py) * P.stride + u32(px)], 4u);
 }
 

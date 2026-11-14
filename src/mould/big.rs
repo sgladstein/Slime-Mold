@@ -756,6 +756,18 @@ pub struct BigParams {
     /// A gassed walker (`BigDish::gas`, the squad toolkit's sleep gas)
     /// dies with this chance each step while its gas lasts (0 the default).
     pub gas_death: f32,
+    /// **A flung walker's speed** (`BigDish::fling`, the gun rounds'
+    /// explosion, 2026-11-14), x `step` a fine step. A flung walker is a
+    /// spore in flight (`LIFE_SPORE`, marked in `BigDish::flung`) that
+    /// flies straight, never homes, at this speed instead of
+    /// `spore_speed`, and lands with its timer out with no rest (it can
+    /// fruit or doze at once). Set by the first explosion
+    /// (`squad::BurstRules::fling_speed`).
+    pub fling_speed: f32,
+    /// A flung walker's trail a step in flight, x `deposit` (where
+    /// `spore_deposit` is a spore's): the throw drawn by the field, a streak
+    /// out from the blast (Noita's splash, the world's matter in flight).
+    pub fling_deposit: f32,
     /// **Alarm** (off when `alarm_keep` is 0): a field on the fine grid that
     /// a strike lays (`BigDish::strike`) and a waking walker relays. Each
     /// fine step it gets one 3x3 mean over the agar times `alarm_keep`, as
@@ -1057,6 +1069,8 @@ impl BigParams {
             sleep_rest: 0,
             sleep_death: 0.0,
             gas_death: 0.0,
+            fling_speed: 1.5,
+            fling_deposit: 3.0,
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
@@ -1222,6 +1236,9 @@ pub struct BigDish {
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
     /// dormant walker is not woken by scent, only by alarm.
     pub gassed: Vec<u16>,
+    /// Whether a spore in flight was flung by an explosion (`fling`), not
+    /// fruited; empty until the first fling. Cleared when it lands.
+    pub flung: Vec<bool>,
     /// Walls the player built (`build_wall`), a fine cell; empty until the
     /// first. A wall is ground the mould cannot enter, the same channel as
     /// the rim and rock.
@@ -1241,6 +1258,14 @@ pub struct BigDish {
 }
 
 /// Agar inside a rectangle `margin` cells in from the edge (`rect`).
+/// A flung walker's flight in fine steps (`BigDish::fling`): `steps` x
+/// the share of the ring outside it (`left` = `rr`² - d², times `inv` =
+/// 1 / (`rr`² - `r`²)), floored, at least 1. The engine's `fling` pass
+/// computes the same.
+pub fn fling_timer(steps: u16, left: f32, inv: f32) -> u16 {
+    ((steps as f32 * (left * inv)).floor() as u16).clamp(1, steps.max(1))
+}
+
 fn rect(w: usize, h: usize, margin: f32) -> Vec<bool> {
     let m = margin as usize;
     (0..w * h).map(|i| {
@@ -1427,6 +1452,7 @@ impl BigDish {
             soil: Vec::new(),
             scorch: Vec::new(),
             gassed: Vec::new(),
+            flung: Vec::new(),
             wall: Vec::new(),
             wall_health: Vec::new(),
             broken: 0,
@@ -3026,6 +3052,9 @@ impl BigDish {
             if !self.gassed.is_empty() {
                 self.gassed[b] = 0;
             }
+            if !self.flung.is_empty() {
+                self.flung[b] = false;
+            }
             if !self.spec.is_empty() {
                 self.spec[b] = self.spec[k];
             }
@@ -3113,12 +3142,15 @@ impl BigDish {
             }
         }
         // Spores: steer by scent, fly, lay a streak, land.
-        let (so, sa, ra, st) = (p.spore_reach, p.sensor_angle, p.rotate_angle, p.step * p.spore_speed);
+        let (so, sa, ra) = (p.spore_reach, p.sensor_angle, p.rotate_angle);
         let mut landing = Vec::new();
         for &k in flying {
             let (x, y, mut h) = self.walkers[k];
             let tt = self.life_t[k];
-            let homing = tt > 0 && tt <= p.spore_steps / 2;
+            // A flung walker (`fling`) flies straight at `fling_speed`.
+            let flung = !self.flung.is_empty() && self.flung[k];
+            let st = p.step * if flung { p.fling_speed } else { p.spore_speed };
+            let homing = !flung && tt > 0 && tt <= p.spore_steps / 2;
             if so > 0.0 && homing {
                 let read = |a: f32| {
                     let (px, py) = (x + a.cos() * so, y + a.sin() * so);
@@ -3144,8 +3176,9 @@ impl BigDish {
             };
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
-            if p.spore_deposit > 0.0 {
-                self.lay(k, i, dep * p.spore_deposit);
+            let lays = if flung { p.fling_deposit } else { p.spore_deposit };
+            if lays > 0.0 {
+                self.lay(k, i, dep * lays);
             }
             self.life_t[k] = self.life_t[k].saturating_sub(1);
             let lands = self.life_t[k] == 0 || (homing && p.spore_land > 0.0 && self.scent_at(x, y) > p.spore_land);
@@ -3161,7 +3194,12 @@ impl BigDish {
             if crowd == 0 || self.claim[i] == keyed(seed, t, CLAIM_LAND, k as u32) {
                 self.occ[i] += 1;
                 self.life[k] = LIFE_WALKER;
-                self.life_t[k] = p.spore_rest;
+                if !self.flung.is_empty() && self.flung[k] {
+                    self.flung[k] = false;
+                    self.life_t[k] = 0;
+                } else {
+                    self.life_t[k] = p.spore_rest;
+                }
             }
         }
         for &(_, i, _) in &landing {
@@ -3671,6 +3709,9 @@ impl BigDish {
         for &c in self.scorch.iter().chain(&self.gassed) {
             eat(c as u32);
         }
+        for &f in &self.flung {
+            eat(f as u32);
+        }
         h
     }
 
@@ -3751,6 +3792,42 @@ impl BigDish {
                 self.gassed[k] = steps;
                 n += 1;
             }
+        }
+        n
+    }
+
+    /// **An explosion's fling** (the gun rounds' `Bomb`, 2026-11-14, after
+    /// Noita's splash: the world's own matter in flight). Every living
+    /// ordinary or dormant walker with `r`² < d² <= `rr`² from (`x`, `y`),
+    /// fine cells, leaves its cell and flies straight out from the centre
+    /// as a flung spore (`fling_speed`): heading atan2(dy, dx), timer
+    /// max(1, floor(`steps` x (`rr`² - d²) x `inv`)), where `inv` is
+    /// 1 / (`rr`² - `r`²) as the caller computes it (so the engine
+    /// multiplies the same f32s: WGSL's division isn't exact). The walkers
+    /// nearest the kill fly furthest. It lands where its timer runs out
+    /// (`life_step`) and lives on there. Squared distances, as the engine's
+    /// `fling` pass. Allocates the life states. Returns walkers flung.
+    pub fn fling(&mut self, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32) -> usize {
+        self.enable_life();
+        if self.flung.is_empty() {
+            self.flung = vec![false; self.walkers.len()];
+        }
+        let (r2, rr2) = (r * r, rr * rr);
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let (wx, wy, _) = self.walkers[k];
+            let (dx, dy) = (wx - x, wy - y);
+            let d2 = dx * dx + dy * dy;
+            if !self.lives(k) || !matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT) || d2 <= r2 || d2 > rr2 {
+                continue;
+            }
+            let i = self.cell(wx, wy).expect("walker inside the dish");
+            self.occ[i] -= 1;
+            self.life[k] = LIFE_SPORE;
+            self.life_t[k] = fling_timer(steps, rr2 - d2, inv);
+            self.flung[k] = true;
+            self.walkers[k].2 = dy.atan2(dx);
+            n += 1;
         }
         n
     }

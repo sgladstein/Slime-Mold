@@ -531,8 +531,9 @@ impl World for GpuWorld {
     /// The kill, clear, alarm and crater in the engine's strike passes (a
     /// submit of its own, after any frame in flight), then one read-back for
     /// the walkers killed: bursts are a player's tool uses, a few a second
-    /// at most, not a pass a frame. Then the sleep gas (`Engine::gas`,
-    /// 11-14), in the CPU's order (`squad::burst`). The germ is not on the
+    /// at most, not a pass a frame. Then an explosion's fling
+    /// (`Engine::fling`) and the sleep gas (`Engine::gas`, 11-14), in the
+    /// CPU's order (`squad::burst`). The germ is not on the
     /// GPU yet (`has_germ`): the toolkit doesn't offer it here. The alarm
     /// field turns on with the first alarm or gas, as `BigDish::
     /// enable_alarm` does.
@@ -550,6 +551,13 @@ impl World for GpuWorld {
             let now = self.e.struck();
             out.killed = now.wrapping_sub(self.struck);
             self.struck = now;
+        }
+        // An explosion's fling (`Engine::fling`, 11-14), after the kill as
+        // on the CPU.
+        if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
+            self.s.fling_speed = k.fling_speed;
+            let sc = self.e.dish.p.scale as f32;
+            out.flung = self.e.fling(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv);
         }
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;

@@ -30,8 +30,11 @@ struct Params {
     sick_reach: f32, sick_turn: f32, ix: f32, iy: f32,
     // Word 232 (`_p2` until 11-14) is the sleep gas's `gas_death`
     // (`BigParams::gas_death`, the gun rounds thread, C5): a gassed dormant
-    // walker's chance a tick of dying, if over `sleep_death`.
-    ir: f32, _p1: f32, gas_death: f32, _p3: f32,
+    // walker's chance a tick of dying, if over `sleep_death`. Words 231
+    // and 233 (`_p1`, `_p3` until 11-14) are a flung walker's deposit and
+    // step (`BigParams::fling_deposit` and `fling_speed` x `step`, the gun
+    // rounds' explosion).
+    ir: f32, fling_dep: f32, gas_death: f32, fling_st: f32,
     // The outside rules (`BigParams` of PR #55, Reports/outside-rules-2026-11-11.md),
     // all off at 0: species fields (`nsp`, 0 for none, else 2-4), cyclic
     // species, explorers (`explore` steps), blocked walkers' deposit share
@@ -347,6 +350,10 @@ const L_DORMANT: u32 = 2u;
 const L_DEAD: u32 = 3u;
 const FRUIT: u32 = 0x800u;
 const DOZE: u32 = 0x1000u;
+// `FLUNG` (bit 13, 11-14): a spore thrown by an explosion (`fling`, the
+// CPU's `BigDish::flung`), not fruited: it flies straight at `fling_st`
+// and lands with no rest. `alight` clears it.
+const FLUNG: u32 = 0x2000u;
 fn state(k: u32) -> u32 { if (!cycles()) { return L_WALKER; } return (spec[k] >> 9u) & 3u; }
 // An ordinary walker (the CPU's `active`): living, and not a spore,
 // dormant or dead.
@@ -1280,11 +1287,13 @@ fn laid_kind(s: u32, kd: u32, j: u32, all: f32) -> f32 {
     var l = moved_kind(s, kd, j, all);
     // The life cycle: a spore lays `spore_dep` of the global deposit where
     // it flew to, a dormant walker `sleep_dep` where it lies (the CPU's
-    // `life_step`, through `lay`).
+    // `life_step`, through `lay`). A flung spore (11-14) counts 65536 in
+    // the spores' block and lays `fling_dep`: a streak along its throw.
     if (cycles()) {
         let c = P.w * P.h;
         let o = blk(s, kd) * c + j + 2u * nblk() * c;
-        l += P.deposit * (P.spore_dep * f32(atomicLoad(&bdep[o])) + P.sleep_dep * f32(atomicLoad(&bdep[o + nblk() * c])));
+        let sp = atomicLoad(&bdep[o]);
+        l += P.deposit * (P.spore_dep * f32(sp & 0xFFFFu) + P.fling_dep * f32(sp >> 16u) + P.sleep_dep * f32(atomicLoad(&bdep[o + nblk() * c])));
     }
     return l;
 }
@@ -2440,7 +2449,8 @@ fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     let c = P.w * P.h;
-    var mark = 0u;
+    // A flung spore stays flung until it lands.
+    var mark = w & FLUNG;
     if ((w & FRUIT) != 0u) {
         // It leaves its cell and takes a new heading; it flies from the
         // next tick.
@@ -2513,7 +2523,9 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // T, before this tick's count: the first half of the flight straight,
     // the second steering by scent; at 0 it drifts straight.
     let tt = w >> 16u;
-    let homing = tt > 0u && tt <= P.spore_steps / 2u;
+    // A flung spore (`FLUNG`) never homes, and flies at `fling_st`.
+    let flung = (w & FLUNG) != 0u;
+    let homing = !flung && tt > 0u && tt <= P.spore_steps / 2u;
     if (P.spore_reach > 0.0 && homing) {
         let f = spore_sense(wk.x, wk.y, h);
         let fl = spore_sense(wk.x, wk.y, h - P.sa);
@@ -2529,15 +2541,19 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // It flies `spore_speed` x `step` ignoring the crowd, or, off the agar,
     // stays with a new heading.
-    let nx = wk.x + cos(h) * P.spore_st;
-    let ny = wk.y + sin(h) * P.spore_st;
+    let sst = select(P.spore_st, P.fling_st, flung);
+    let nx = wk.x + cos(h) * sst;
+    let ny = wk.y + sin(h) * sst;
     let j = cell(nx, ny);
-    var at = vec4<f32>(nx, ny, h, 0.0);
-    if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, 0.0); }
+    // A flung walker's fourth word is 1 while it flies, so the view draws
+    // it as a hot speck (`draw_specks`); `alight` puts it back to 0.
+    let fw = select(0.0, 1.0, flung);
+    var at = vec4<f32>(nx, ny, h, fw);
+    if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
     walkers[k] = at;
     let i = cell(at.x, at.y);
     let c = P.w * P.h;
-    atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + i + 2u * nblk() * c], 1u);
+    atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + i + 2u * nblk() * c], select(1u, 65536u, flung));
     let t2 = max(tt, 1u) - 1u;
     spec[k] = (w & 0xFFFFu) | (t2 << 16u);
     // It lands with its timer out, or homing over `spore_land` of scent:
@@ -2575,7 +2591,10 @@ fn alight(@builtin(global_invocation_id) gid: vec3<u32>) {
         // claims. A spore of a species without a limit lands either way.
         if (won) { atomicStore(&claim[i], NONE); }
         atomicAdd(&occ[i], 1u);
-        spec[k] = (spec[k] & 0x1FFu) | (min(P.spore_rest, 65535u) << 16u);
+        // A flung walker lands with no rest, and is no longer flung.
+        let rest = select(min(P.spore_rest, 65535u), 0u, (spec[k] & FLUNG) != 0u);
+        spec[k] = (spec[k] & 0x1FFu) | (rest << 16u);
+        walkers[k].w = 0.0;
         now_active(k, i, ill, ex);
     }
     tally(k);
@@ -2772,3 +2791,30 @@ fn calm(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// **The fling** (`Engine::fling`, the CPU's `BigDish::fling`; the gun
+// rounds' explosion, 11-14): every living ordinary or dormant walker with
+// `kr`^2 < d^2 <= `kar`^2 from (`kx`, `ky`), fine cells, leaves its cell
+// and flies straight out as a flung spore: heading atan2(dy, dx), timer
+// max(1, floor(`kcs` x ((`kar`^2 - d^2) x `kalarm`))), where this pass's
+// strike row holds the reciprocal 1 / (`kar`^2 - `kr`^2) in `kalarm` (the
+// host's f32, so both engines multiply the same numbers). Counted in the
+// gas header's word 3.
+@compute @workgroup_size(256)
+fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    let st = (w >> 9u) & 3u;
+    if (st != L_WALKER && st != L_DORMANT) { return; }
+    let wk = walkers[k];
+    let dx = wk.x - P.kx;
+    let dy = wk.y - P.ky;
+    let d2 = dx * dx + dy * dy;
+    if (d2 <= P.kr * P.kr || d2 > P.kar * P.kar) { return; }
+    let steps = u32(P.kcs);
+    let tm = clamp(u32(floor(P.kcs * ((P.kar * P.kar - d2) * P.kalarm))), 1u, max(steps, 1u));
+    atomicSub(&occ[cell(wk.x, wk.y)], 1u);
+    spec[k] = (w & 0x1FFu) | (L_SPORE << 9u) | FLUNG | (tm << 16u);
+    walkers[k] = vec4<f32>(wk.x, wk.y, atan2(dy, dx), 1.0);
+    atomicAdd(&news[gas_base() + 3u], 1u);
+}

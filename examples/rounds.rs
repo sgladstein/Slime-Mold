@@ -43,7 +43,7 @@ struct Row {
     t: f32,
     alive: usize,
     mould: usize,
-    cast: [u32; 3],
+    cast: [u32; 4],
     killed: usize,
     round_killed: usize,
     spent: f32,

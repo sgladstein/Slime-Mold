@@ -12,6 +12,13 @@
 //!   `Germ` (contagion). Each is paid from the bank at the toolkit's price
 //!   when it is cast. The reviewers' call (game designer and technical
 //!   lead, 15:31Z): no third weapons system, the payloads are the toolkit.
+//!   `Bomb` (2026-11-14, the owner's "Do we have explosions yet. That
+//!   should also be a thing", after Noita's splash,
+//!   `Reports/noita-spell-look-2026-11-14.md` step 3) is the one payload
+//!   that is the rounds' own: a smaller kill and crater than a blast, and a
+//!   ring out to `bomb_ring` x its radius whose live mould is thrown
+//!   outward as real walkers (`squad::Burst::fling`) that land and live
+//!   on. It cuts the body and spreads it, a trade against blast and germ.
 //! - *Modifiers* change the next payload: `Wide` (radius x `wide`),
 //!   `Scatter` (`scatter_n` smaller bursts round the hit), `Quiet` (no
 //!   alarm, so a Sleeper or a flee tier is not woken or warned).
@@ -63,6 +70,7 @@ pub const SLOTS: usize = 4;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Card {
     Blast,
+    Bomb,
     Gas,
     Germ,
     Wide,
@@ -83,11 +91,11 @@ pub enum Kind {
 }
 
 impl Card {
-    pub const ALL: [Card; 10] = [Card::Blast, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split];
+    pub const ALL: [Card; 11] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Blast | Card::Gas | Card::Germ => Kind::Payload,
+            Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
             Card::Delay | Card::Thick => Kind::Trigger,
             Card::Pierce | Card::Split => Kind::Flight,
@@ -97,6 +105,7 @@ impl Card {
     pub fn name(self) -> &'static str {
         match self {
             Card::Blast => "blast",
+            Card::Bomb => "bomb",
             Card::Gas => "gas",
             Card::Germ => "germ",
             Card::Wide => "wide",
@@ -160,6 +169,19 @@ pub struct RoundRules {
     pub thick_n: u32,
     pub thick_r: f32,
     pub thick_secs: f32,
+    /// `Bomb`: its kill radius (dish cells), the fling ring's outer radius
+    /// x that, how long the walkers nearest the kill fly (game seconds;
+    /// the ring's outer edge barely moves), a flung walker's speed x
+    /// `step` a fine step, its crater (radius, seconds) and its price.
+    /// At the race world's 30 fine steps a second and step 1, 0.5 s at 1.5
+    /// throws the inner edge 22 fine cells, 11 dish cells.
+    pub bomb_r: f32,
+    pub bomb_ring: f32,
+    pub bomb_secs: f32,
+    pub fling_speed: f32,
+    pub bomb_crater_r: f32,
+    pub bomb_crater_secs: f32,
+    pub bomb_price: f32,
     /// The toolkit's numbers for the payloads (radii, prices, crater).
     pub kit: KitRules,
 }
@@ -179,6 +201,13 @@ impl Default for RoundRules {
             thick_n: 40,
             thick_r: 5.0,
             thick_secs: 30.0,
+            bomb_r: 4.0,
+            bomb_ring: 2.5,
+            bomb_secs: 0.5,
+            fling_speed: 1.5,
+            bomb_crater_r: 4.0,
+            bomb_crater_secs: 6.0,
+            bomb_price: 60.0,
             kit: KitRules::default(),
         }
     }
@@ -209,9 +238,10 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
             Card::Delay | Card::Thick => trigger = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split => {}
-            Card::Blast | Card::Gas | Card::Germ => {
+            Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let price = match c {
                     Card::Blast => r.kit.blast_price,
+                    Card::Bomb => r.bomb_price,
                     Card::Gas => r.kit.gas_price,
                     _ => r.kit.germ_price,
                 };
@@ -244,9 +274,13 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false };
+    let none = Burst { at, r: 0.0, kill: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, fling: 0.0, fling_steps: 0 };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
+        Card::Bomb => {
+            let br = r.bomb_r * f;
+            Burst { r: br, kill: true, alarm, alarm_r: 2.0 * br, crater: steps(r.bomb_crater_secs), crater_r: r.bomb_crater_r * f, fling: br * r.bomb_ring, fling_steps: steps(r.bomb_secs).max(1), ..none }
+        }
         Card::Gas => Burst { r: k.gas_r * f, gas: steps(k.gas_secs), ..none },
         _ => Burst { r: k.germ_r * f, germ: true, ..none },
     };
@@ -259,13 +293,14 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         .map(|j| {
             let a = j as f32 * std::f32::consts::TAU / n as f32;
             let q = r.scatter_r;
-            Burst { at: (at.0 + d * a.cos(), at.1 + d * a.sin()), r: one.r * q, alarm_r: one.alarm_r * q, crater_r: one.crater_r * q, ..one }
+            Burst { at: (at.0 + d * a.cos(), at.1 + d * a.sin()), r: one.r * q, alarm_r: one.alarm_r * q, crater_r: one.crater_r * q, fling: one.fling * q, ..one }
         })
         .collect()
 }
 
 /// The bursts' shared settings from the toolkit's rules, as `Kit` makes
-/// them; `fine` fine steps a game second.
+/// them; `fine` fine steps a game second. The rounds' own `Bomb` adds the
+/// fling's speed (`Rounds::fire`).
 pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
     let sick_steps = (k.sick_secs * fine).round().max(1.0) as u16;
     BurstRules {
@@ -277,6 +312,7 @@ pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
         sick_catch: k.sick_catch,
         sick_deposit: k.sick_deposit,
         sick_keep: k.sick_keep,
+        fling_speed: 0.0,
     }
 }
 
@@ -304,6 +340,7 @@ pub struct Pop {
     pub payload: Card,
     pub tick: u64,
     pub killed: usize,
+    pub flung: usize,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -323,11 +360,12 @@ pub struct Rounds {
     casts: Vec<Cast>,
     guns: Vec<Gun>,
     pending: Vec<Pending>,
-    /// Casts by payload (`Card::ALL` order of the three payloads), walkers
-    /// killed by rounds, bank spent, casts dropped at `PENDING_MAX`, and
-    /// casts skipped for want of food.
-    pub cast: [u32; 3],
+    /// Casts by payload (blast, gas, germ, bomb), walkers killed by
+    /// rounds, walkers flung by bombs, bank spent, casts dropped at
+    /// `PENDING_MAX`, and casts skipped for want of food.
+    pub cast: [u32; 4],
     pub killed: usize,
+    pub flung: usize,
     pub spent: f32,
     pub dropped: u32,
     pub broke: u32,
@@ -340,6 +378,7 @@ fn slot(p: Card) -> usize {
     match p {
         Card::Blast => 0,
         Card::Gas => 1,
+        Card::Bomb => 3,
         _ => 2,
     }
 }
@@ -435,16 +474,28 @@ impl Rounds {
         }
     }
 
+    /// Every cast of the round at once at `at` (fine cells), free and with
+    /// no trigger: a staged scene for a film or a test (`larder-world
+    /// boom=`), the same bursts a hit there would cast.
+    pub fn cast_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32)) {
+        for c in self.casts.clone() {
+            self.cast[slot(c.payload)] += 1;
+            self.fire(g, &c, at);
+        }
+    }
+
     fn fire<W: World>(&mut self, g: &mut Game<W>, c: &Cast, at: (f32, f32)) {
         let s = g.world.scale();
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
-        let k = burst_rules(&self.rules.kit, fine);
+        let k = BurstRules { fling_speed: self.rules.fling_speed, ..burst_rules(&self.rules.kit, fine) };
         for b in bursts(c, at, &self.rules, s, fine) {
-            let killed = g.world.burst(&b, &k).killed as usize;
+            let out = g.world.burst(&b, &k);
+            let killed = out.killed as usize;
             self.killed += killed;
+            self.flung += out.flung as usize;
             g.killed += killed as u32;
-            self.pops.push(Pop { burst: b, payload: c.payload, tick: t, killed });
+            self.pops.push(Pop { burst: b, payload: c.payload, tick: t, killed, flung: out.flung as usize });
         }
     }
 }
@@ -534,6 +585,49 @@ mod tests {
             b.step();
         }
         assert_eq!(a.world.hash(), b.world.hash());
+    }
+
+    /// **A bomb** (11-14): it kills a small core, and the live mould in its
+    /// ring flies straight out from the centre, lands within its flight,
+    /// and lives on there: the body is cut and spread at once.
+    #[test]
+    fn a_bomb_flings_its_rim_and_the_flung_live_on() {
+        use crate::mould::big::{LIFE_SPORE, LIFE_WALKER};
+        let mut g = game(3);
+        let d = &g.world;
+        let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+        for (j, &(wx, wy, _)) in d.walkers.iter().enumerate() {
+            if d.lives(j) {
+                (x, y, m) = (x + wx, y + wy, m + 1.0);
+            }
+        }
+        let p = (x / m, y / m);
+        let r = RoundRules::default();
+        let fine = g.rules.tps as f32 * g.world.p.substeps as f32;
+        let c = casts(&[Card::Bomb], &r)[0];
+        assert_eq!(c.price, r.bomb_price);
+        let k = BurstRules { fling_speed: r.fling_speed, ..burst_rules(&r.kit, fine) };
+        let b = bursts(&c, p, &r, g.world.p.scale as f32, fine);
+        assert_eq!(b.len(), 1);
+        let living = World::living(&g.world);
+        let from = g.world.walkers.clone();
+        let out = g.world.burst(&b[0], &k);
+        let flung: Vec<usize> = (0..from.len()).filter(|&j| g.world.flung.get(j) == Some(&true)).collect();
+        assert!(out.killed > 10 && out.flung as usize == flung.len() && flung.len() > 50, "killed {}, flung {}", out.killed, out.flung);
+        assert!(flung.iter().all(|&j| g.world.life[j] == LIFE_SPORE), "the flung are in flight");
+        let dist = |q: (f32, f32, f32)| (q.0 - p.0).hypot(q.1 - p.1);
+        let ring = b[0].fling * g.world.p.scale as f32;
+        // Their flight, then a few ticks to land on a free cell.
+        for _ in 0..(r.bomb_secs * g.rules.tps as f32) as usize + 6 {
+            g.step();
+        }
+        let landed = flung.iter().filter(|&&j| !g.world.flung[j] && g.world.life[j] == LIFE_WALKER).count();
+        let out_far = flung.iter().filter(|&&j| dist(g.world.walkers[j]) > dist(from[j]) + 1.0).count();
+        let beyond = flung.iter().filter(|&&j| g.world.lives(j) && dist(g.world.walkers[j]) > ring).count();
+        eprintln!("bomb: killed {}, flung {}, landed {landed}, {out_far} further out, {beyond} beyond the ring; living {living} then {}", out.killed, flung.len(), World::living(&g.world));
+        assert!(landed * 10 >= flung.len() * 9, "{landed} of {} landed", flung.len());
+        assert!(out_far * 10 >= flung.len() * 8, "{out_far} of {} thrown outward", flung.len());
+        assert!(beyond * 4 >= flung.len(), "{beyond} of {} landed beyond the ring", flung.len());
     }
 
     #[test]

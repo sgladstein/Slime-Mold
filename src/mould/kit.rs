@@ -342,6 +342,8 @@ impl Kit {
             sick_catch: r.sick_catch,
             sick_deposit: r.sick_deposit,
             sick_keep: r.sick_keep,
+            // The toolkit throws nothing (the rounds' `Bomb` does).
+            fling_speed: 0.0,
         }
     }
 
