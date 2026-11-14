@@ -69,3 +69,35 @@ under 2.6 ms p95 this morning).
 - A thumbnail tell for Claypan against Thicket/Spires would need a
   coarser texture than cracks (for example clay-darkened ground at map
   scale); not tried.
+
+## Follow-up (art lead, 11-14 16:54Z)
+
+The art lead accepted #281 and asked for three things.
+
+- **Sand ripples read as a hatch at zoom 6 and a moire at zoom 1.** The
+  ripples' phase is now bent by two octaves of value noise (one at 24
+  cells, which also bends the dune swells, and one at 4 cells), which
+  also squeezes and stretches their spacing. They fade to flat sand
+  between zoom 4 and 2.5. Sums of sines cost the same but looked like
+  wood grain.
+- **Barren ash was close to rock in grey, and its speckle read as TV
+  static.** It is a step darker, (55,55,53) where it was (64,64,62). Its
+  grains are soft value noise about a cell across, in clumps a few cells
+  wide with bare ash between, and fade in from zoom 2-4.
+- **Bake the soil instead of reading 16 cells a pixel.** Built and
+  measured, with no saving, so it was reverted (see `Reports/dead-ends.md`).
+  Five alternating rounds, Dunes, GPU tail p50:
+
+  | Build | Median (ms) |
+  | --- | --- |
+  | main before #281 | 73.8 |
+  | #281 | 82.7 |
+  | This follow-up | 83.4 |
+
+  An earlier five-round set gave 74.9, 81.0 and 83.3 for the follow-up's
+  first form with the bake, and 77.6 for the bake with no texture. The
+  cost is the arithmetic per pixel. A real bake would have to run only
+  when the ground changes, which needs the game to say when that is.
+
+Pictures: `thumbs-v2.png` (the eight planets in grey, as above),
+`p1-v2.gif` (Barrens) and `p4-v2.gif` (Dunes) at zoom 6.
