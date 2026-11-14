@@ -572,9 +572,10 @@ impl World for Garden {
         }
         let reads = self.read(&f.units);
         let took = squad::harvest(&mut self.dish, &f.units);
+        let heat = squad::heats(&self.dish, &f.units);
         let w = self.dish.w;
         FrameOut {
-            units: reads.into_iter().zip(took).map(|((touching, b, dense), took)| UnitOut { touching, target: b.map(|b| squad::block_centre(w, b)), took, dense }).collect(),
+            units: reads.into_iter().zip(took).zip(heat).map(|(((touching, b, dense), took), heat)| UnitOut { touching, target: b.map(|b| squad::block_centre(w, b)), took, dense, heat }).collect(),
             shots,
         }
     }

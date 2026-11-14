@@ -1017,7 +1017,17 @@ pub struct BigParams {
     /// its thin edge and stragglers, not its body (owner 11-14 17:29Z).
     pub fire_heat: f32,
     pub fire_eat: f32,
-    pub fire_catch: f32,
+    /// The owner (11-14 19:18Z) asked for fire 5x slower, patchy, going
+    /// out in places, with a moisture field: a cell catches by chance
+    /// (`fire_spread`), goes out with chance `fire_out` x moisture², and
+    /// where damp eats slower (`fire_smoulder`) and burns cooler
+    /// (`fire_cool`); `plants::Fire`. Replaced `fire_catch` 0.08 (a
+    /// deterministic threshold: an even ribbon 9 cells deep, 5 cells a
+    /// second); `fire_eat` went 0.05 to 0.02, so a cell burns about 3 s, not 1.
+    pub fire_spread: f32,
+    pub fire_out: f32,
+    pub fire_smoulder: f32,
+    pub fire_cool: f32,
     pub fire_fuel: f32,
     pub fire_damp: f32,
     pub fire_kill: f32,
@@ -1243,8 +1253,11 @@ impl BigParams {
             plant_fill: 0.0,
             plant_every: 8,
             fire_heat: 0.15,
-            fire_eat: 0.05,
-            fire_catch: 0.08,
+            fire_eat: 0.02,
+            fire_spread: 0.3,
+            fire_out: 0.05,
+            fire_smoulder: 0.75,
+            fire_cool: 0.4,
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
@@ -1416,6 +1429,12 @@ pub struct BigDish {
     pub char: Vec<f32>,
     pub burning: usize,
     pub fire_killed: u64,
+    /// Each fine cell's moisture (`plants::moisture`), made with the
+    /// plants, and fire steps run (each cell's chance is keyed on it).
+    pub moist: Vec<f32>,
+    pub fire_steps: u32,
+    /// The map's `moisture BASE SPREAD` line, kept for `Map::of_dish`.
+    pub moisture_of: Option<(f32, f32)>,
     /// Fire's kills the game has been told of (`World::burned`).
     pub fire_told: u64,
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
@@ -1654,6 +1673,9 @@ impl BigDish {
             char: Vec::new(),
             burning: 0,
             fire_killed: 0,
+            moist: Vec::new(),
+            fire_steps: 0,
+            moisture_of: None,
             fire_told: 0,
             gassed: Vec::new(),
             flung: Vec::new(),
@@ -1766,6 +1788,11 @@ impl BigDish {
                 }
             })
             .collect();
+        // Water for moisture: wet ground and deep water (soil 4).
+        let water: Vec<bool> = (0..n).map(|i| (!self.wet.is_empty() && self.wet[i]) || (!self.soil.is_empty() && self.soil[i] == 4)).collect();
+        self.moisture_of = map.and_then(|m| m.items.moisture);
+        let (base, spread) = self.moisture_of.unwrap_or((0.15, 0.3));
+        self.moist = pl::moisture(w, self.h, &water, &self.plant_kind, self.p.seed as u32, base, spread);
     }
 
     fn plant_rates(&self) -> crate::mould::plants::Rates {
@@ -1790,7 +1817,7 @@ impl BigDish {
     }
 
     fn fire_rates(&self) -> crate::mould::plants::Fire {
-        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, catch: self.p.fire_catch, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, spread: self.p.fire_spread, out: self.p.fire_out, smoulder: self.p.fire_smoulder, cool: self.p.fire_cool, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
     }
 
     /// Fire's step, after the plants' (they grow, then burn), then the
@@ -1798,7 +1825,8 @@ impl BigDish {
     fn fire_tick(&mut self) {
         let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let (r, f) = (self.plant_rates(), self.fire_rates());
-        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next);
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps);
+        self.fire_steps = self.fire_steps.wrapping_add(1);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
         let kill = self.p.fire_kill;
         for k in 0..self.walkers.len() {
@@ -4821,7 +4849,7 @@ mod tests {
     #[test]
     fn outside_rules_ignore_threads() {
         for p in [
-            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.6, ..small(2, 1) },
+            BigParams { sensor_r: 1, chance_exp: 4.0, size_spread: 0.3, ..small(2, 1) },
             BigParams { species: 2, species_zones: true, explore_steps: 30, ..small(2, 1) },
             BigParams { species: 3, species_cycle: true, species_convert: 1.0, ..small(2, 1) },
             BigParams { species: 2, species_convert: 1.5, species_boost: 1.5, graze_weight: 10.0, ..small(2, 1) },

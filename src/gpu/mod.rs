@@ -103,6 +103,9 @@ pub const WORLD_TERRAIN: u32 = 8;
 pub const WORLD_SOIL: u32 = 16;
 /// The gardeners' world (`own_mould`; the shader's `GARDEN`): species 3 is the player's.
 pub const WORLD_GARDEN: u32 = 32;
+/// The dish has plants (`plant_words`; the shader's `PLANTS`), for the
+/// units' fire reads.
+pub const WORLD_PLANTS: u32 = 64;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
 /// the low byte, then wet, wall, a wall that lets scent through, rock, and
 /// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
@@ -1854,6 +1857,9 @@ impl Engine {
         if self.garden {
             world |= WORLD_GARDEN;
         }
+        if self.plants {
+            world |= WORLD_PLANTS;
+        }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         // Real asserts, not debug ones (2026-11-12, game integration): six
@@ -2829,13 +2835,16 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     }
     let p = &d.p;
     let k = p.plant_every.max(1) as f32;
-    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_catch, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear];
+    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_spread, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear, p.fire_out, p.fire_smoulder, p.fire_cool];
     for (o, v) in head.iter().enumerate() {
         w[o] = v.to_bits();
     }
     for (q, kd) in p.plant_kinds.iter().enumerate() {
         (w[16 + q], w[20 + q], w[24 + q], w[28 + q]) = (kd.cap.to_bits(), kd.pace.to_bits(), kd.dry.to_bits(), kd.burn.to_bits());
     }
+    // Word 45: fire steps run (`BigDish::fire_steps`), which keys each
+    // cell's chance; the `firekill` pass counts it on.
+    w[45] = d.fire_steps;
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
@@ -2846,6 +2855,8 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(fire(&d.fire));
     w.extend(std::iter::repeat_n(0u32, c));
     w.extend(fire(&d.char));
+    // Block 7: moisture (`plants::moisture`).
+    w.extend(fire(&d.moist));
     w
 }
 

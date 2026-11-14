@@ -145,6 +145,11 @@ pub struct Rules {
     /// (`BuildRules::drain`). Today's 5,000-walker mould (shape A, mass 1)
     /// bites twice what it did.
     pub drain: f32,
+    /// Health a soldier standing in fire loses a game second at full heat
+    /// (x the heat on its cell, `UnitOut::heat`): the owner (11-14 19:18Z)
+    /// "It should hurt the player too". 25: four seconds in the hottest
+    /// fire kills, so a soldier walking out of a front lives.
+    pub fire_hurt: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
     /// Elbow room: the least distance between two living soldiers'
@@ -480,6 +485,7 @@ impl Default for Rules {
             price: 0.0,
             hp: 100.0,
             drain: 2.0,
+            fire_hurt: 25.0,
             touch: 1.5,
             elbow: 1.6,
             corners: true,

@@ -101,7 +101,7 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
 // sums, the wall counters with the living walkers, then the mould grid
 // (10 KB at scale 1 in squares of 4 dish cells, 40 KB at scale 2).
 const RO_UNITS: u64 = 0;
-const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * 16) as u64;
+const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * squad::U_OUT_W * 4) as u64;
 const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
 const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
 const RO_WSTAT: u64 = RO_PILES + (MAX_PILES * 32) as u64;
@@ -1209,24 +1209,39 @@ mod tests {
         let (seed, scale, walkers) = (3, 1, 2_000);
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
         let mut m = Map::load(&dir, "flats").unwrap();
-        m.plants = (0..m.ground.len()).map(|i| if i % 7 == 0 { pack((i / 1024 / 160) as u8, 1.0) } else { 0 }).collect();
+        // Full cover in kind bands (sparse plants, every 7th cell, went out within
+        // a second once fire caught by chance, 11-14).
+        // No reeds by the burn (they never catch).
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
         let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
         let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
         assert!(!cpu.plant.is_empty() && gpu.e.plants);
         let home = cpu.homes[0];
-        let burn = squad::Burst { at: (home.0 + 12.0, home.1), r: 6.0, burn: true, ..Default::default() };
+        let burn = squad::Burst { at: (home.0 + 25.0, home.1), r: 6.0, burn: true, ..Default::default() };
         let k = squad::BurstRules::default();
         let (mut killed, mut fired) = ((0, 0), 0);
-        for sec in 1..=6 {
-            let f = Frame::default();
-            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
-                w.frame(&f, 60);
-            }
-            if sec == 3 {
+        let mut hot = 0.0f32;
+        // Steps of 15 ticks (a game second at 15 tps), so the soldier
+        // reads the fire while it burns.
+        for sec in 1..=24 {
+            // A soldier standing at the burn reads its heat (`UnitOut::heat`,
+            // fire hurts soldiers, owner 11-14 19:18Z).
+            // Just inside the burn's edge: its middle is scorched bare.
+            let at = (burn.at.0 + 5.0, burn.at.1);
+            let f = Frame { units: vec![squad::UnitIn { x: at.0, y: at.1, touch: 1.5, ..Default::default() }], ..Frame::default() };
+            let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 15).units[0].heat).collect();
+            assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "{sec} s: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+            hot = hot.max(outs[0]);
+            if sec == 12 {
                 // A burn's own kills: the CPU's in its out, the GPU's
                 // with fire's in `burned`.
                 killed.0 += World::burst(&mut cpu, &burn, &k).killed;
                 World::burst(&mut gpu, &burn, &k);
+                // Two ticks on, the soldier stands in the burn's flames (its
+                // cells here hold 0.17 of plants, out within a second).
+                let outs: Vec<f32> = [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World].into_iter().map(|w| w.frame(&f, 2).units[0].heat).collect();
+                assert_eq!(outs[0].to_bits(), outs[1].to_bits(), "after the burn: heat under the soldier CPU {} GPU {}", outs[0], outs[1]);
+                hot = hot.max(outs[0]);
             }
             killed.0 += World::burned(&mut cpu);
             killed.1 += World::burned(&mut gpu);
@@ -1242,6 +1257,7 @@ mod tests {
             assert!(same_kind >= tol(1.0, 0.99), "{sec} s: kinds {same_kind}");
         }
         assert!(fired > 0, "the burn lit the plants");
+        assert!(hot > 0.0, "the soldier at the burn stood in fire");
         assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
     }
 
