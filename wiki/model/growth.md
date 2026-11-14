@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-13
+updated: 2026-11-14
 sources:
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/food-tubes-2026-11-11.md
@@ -151,6 +151,12 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   eaten from one crystal fewer on 3 of them ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md);
   [films](https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP)).
   `larder-world -- panic=0` plays C without it.
+- **Size barely follows food** (11-14, parked by the owner's 01:08Z
+  ruling that they beat the game easily): at its cap C eats three times
+  its upkeep, a crystal feeds about 9,400 walkers, so with all but one
+  crystal emptied it holds 50,000 for two minutes and falls to 10,000 by
+  six; with four kept it is at 47,000 at six minutes (seed 1,
+  `examples/foodprobe.rs`; [fed mould, *Does its size follow*](../../Reports/fed-mould-2026-11-13/README.md)).
   The one-body page's 25,000-walker films ran with one walker a cell off
   (corrected 11-12 17:10Z); the 5,000-walker game and the CPU numbers here
   are unaffected ([slime enemy review](../../Reports/slime-enemy-review-2026-11-12.md)).

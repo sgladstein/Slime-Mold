@@ -246,6 +246,11 @@ the soldiers for about 3 s before it lands, against about 1.5 s, and a
 charge at a unit gives up after a 0.5 s dash (`panic_dash` 15), so a
 squad that pulls back in time gets clear (5 of 6 seeds at 24 cells,
 half a second late) and one that stands does not ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
+Taking crystals barely shrinks C: at its cap it eats three times its
+upkeep, so on one crystal of 23 it holds 50,000 walkers for two minutes
+before it falls (10,369 at six). Making size follow held food, and a
+higher collapse threshold, are parked by the owner's ruling below (11-14,
+[fed mould, *Does its size follow*](../../Reports/fed-mould-2026-11-13/README.md)).
 
 ## Small-dish milestones (M1-M3)
 
