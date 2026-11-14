@@ -106,7 +106,7 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
   together (held ring cuts: 10 of 12 whole at 2:00 on the CPU; +75 s in
   the window). `BigParams::flow_loss` 0.05 (food fades as it travels; on
   the GPU too since 11-13, `eloss`) kills it in 35-50 s, still at once,
-  and leaves C about 30% smaller; 0.2 shrinks C to a fifth.
+  and leaves C about 30% smaller; 0.2 shrinks C to a fifth. **Parked** (designer and integration, 11-14 00:35Z, cloud plan D2): off, kept in the code on both engines, not deleted; withering is the owner's pick for a cut-off piece. It would come back only if withering reads too slowly in play.
   **`BigParams::wither`** (11-13, both engines, off in `BigParams`; **on
   at 0.01 in the window's shape C since 11-13 15:53Z**) makes a cut-off
   part thin steadily instead: news of food travels through the

@@ -447,10 +447,28 @@ the plain game is hash-identical (all twin tests unchanged).
   crystal, the rest farm). Tests: GPU garden starts as the CPU garden; shots
   spare the player's mould (a line through green hits amber); Road and Feed
   as the CPU; the window smoke test runs every command for 60 s.
-- **Not yet on the GPU: `species_cap`.** Until it lands, both moulds draw
-  births from one shared pool, so the enemy can crowd the player's mould out
-  of it. A garden that loses ground late is that, not balance.
+- **`species_cap` was not on the GPU here**; it landed 11-14 (below).
 - **Cost.** On llvmpipe (software Vulkan, not a timing) `tend`, `ownclear`
   and `owncount` cost 0.2-0.5 ms a step each. 1070 timing at 5k and 20k
   walkers in all, with the garden's all-cells eat as its own number, is
   booked on the PC; the twin tests with `own` on and off are booked too.
+
+## Each side's birth reserve on the GPU (11-14)
+
+`species_cap` now runs on the GPU in a garden, so a mission on `own=1`
+plays the same on both engines (tech lead, for the campaign's mission 8,
+"your own mould against the Grudge"). Each tick, before the births, two
+passes count each side's living walkers (`capclear`, `capcount`: the enemy
+into `wstat` word 6, the player's mould into 7), and `breed` skips a parent
+whose side held its cap, as the CPU's `held`. The cap is each species
+`Set`'s spare word (+44, now `cap`; u32 max for none). `garden_settings`
+gives each side half the slots, as the CPU garden; `stop_births` (a taken
+core) sets the enemy's cap to 0 in a garden instead of stopping every birth.
+
+Twin test (seed 5, 1,000 a side, 20 frames of 15 ticks, no sowing): the two
+engines count the same each frame; the uncapped enemy reaches 1,116, capped
+at 1,000 it reaches 1,027 and with its births stopped 1,027 (the last few
+dozen come over by conversion, not birth). The player's mould is 980-981 in
+every run. Cost on llvmpipe (not a timing): `capclear` 0.19 ms and
+`capcount` 0.35 ms a step, garden only. Outside a garden nothing runs and the
+plain game is unchanged.

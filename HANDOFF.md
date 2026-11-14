@@ -61,6 +61,15 @@ Decided and not yet built: **the forest floor from above** (owner's card,
 with no engine, is in §5 of
 [`Reports/mould-real-world-2026-11-09.md`](Reports/mould-real-world-2026-11-09.md).
 
+**Settled without the owner (cloud plan, 11-14 00:35Z; reviewers with the
+integration thread, under the owner's 11-12 04:48Z rule; [plan](Reports/cloud-plan-2026-11-14.md),
+[ROADMAP](ROADMAP.md) *Cloud plan picks*):** D1 the census harness moves to
+shape C's rules at a census-sized map; D2 `flow_loss` parked (off, kept;
+it cost about 30% of C's size and still died at once); D3 the counter
+table C4 is judged against (designer); D4 mission 8 becomes "Your own mould" against
+the Grudge on the Passes, the rival pair moves to chapter 2; D5 the start menu's
+first scope; D6 the file split goes first, in a short freeze.
+
 ## Next steps, in order
 
 How these sit against the GPU plan, the Pixel_Physics ports and the RTS,
