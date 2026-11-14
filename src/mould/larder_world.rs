@@ -58,6 +58,7 @@ mod shots;
 mod turn;
 mod score;
 mod shapes;
+mod squads;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -66,6 +67,7 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
+pub use squads::{Formation, LeadRules, Squad, SQUADS_MAX};
 pub use buildings::{BuildRules, Building, Kind};
 use buildings::Who;
 
@@ -121,6 +123,8 @@ pub struct Soldier {
     /// Carry taken up by tools it holds (`mould::kit`'s carry rule): a
     /// soldier carrying blasts brings home less food. 0 by default.
     pub load: f32,
+    /// Its squad (`squads`), an index into `Game::squads`.
+    pub squad: u8,
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -264,6 +268,15 @@ pub struct Game<W: World> {
     /// The larder's rally point: the order a bought soldier starts with
     /// (`Cmd::Rally`; the window's right click with the larder selected).
     pub rally: Order,
+    /// Every squad slot (`squads`), `SQUADS_MAX` of them; a slot with no
+    /// live soldier is free.
+    pub squads: Vec<Squad>,
+    /// The squad the player controls (`Cmd::Active`), if any.
+    pub active: Option<usize>,
+    /// Crystals guarded at the last count (`Rules::larder` off), and what
+    /// guarding has paid in all.
+    pub guarded: Vec<usize>,
+    pub guard_paid: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -354,6 +367,10 @@ impl<W: World> Game<W> {
             log: Vec::new(),
             flight: None,
             rally: Order::Hold,
+            squads: vec![Squad::default(); SQUADS_MAX],
+            active: None,
+            guarded: Vec::new(),
+            guard_paid: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.solid = g.solid_now();
@@ -378,13 +395,18 @@ impl<W: World> Game<W> {
     }
 
     fn add_soldier(&mut self, a: f32) {
-        // Round the larder, out past a crystal it sits on.
+        self.add_soldier_at(self.larder, a);
+    }
+
+    fn add_soldier_at(&mut self, at: (f32, f32), a: f32) {
+        // Round the point (the larder, or a squad), out past a crystal it
+        // sits on.
         let sc = self.s();
         let (x, y) = (0..30)
             .map(|n| (3.0 + n as f32) * sc)
-            .map(|r| (self.larder.0 + r * a.cos(), self.larder.1 + r * a.sin()))
+            .map(|r| (at.0 + r * a.cos(), at.1 + r * a.sin()))
             .find(|&(x, y)| self.standable(x, y))
-            .unwrap_or(self.larder);
+            .unwrap_or(at);
         self.soldiers.push(Soldier {
             x,
             y,
@@ -404,6 +426,7 @@ impl<W: World> Game<W> {
             dense: 0,
             smell: 1.0,
             load: 0.0,
+            squad: 0,
         });
     }
 

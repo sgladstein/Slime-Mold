@@ -121,6 +121,11 @@ impl Controls {
             .map(|(k, _)| k)
     }
 
+    /// Whether a left drag (a box or a burn line) is under way.
+    pub fn dragging(&self) -> bool {
+        self.drag.is_some()
+    }
+
     /// Drops dead or lost units from the selection and the groups.
     pub fn prune(&mut self, units: &[Unit]) {
         let alive = |k: &usize| units.iter().any(|u| u.id == *k && u.alive);

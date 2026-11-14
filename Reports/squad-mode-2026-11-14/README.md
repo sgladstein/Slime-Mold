@@ -1,0 +1,106 @@
+# Larder World squad mode (2026-11-14)
+
+The owner, 04:08Z: "revamp potentially the whole feel of the game. the unit
+control should be squad based from the ground up. All soliders in a squad
+stick together at least as well as they can. We need a really good and
+intuitive system to split and combine squads and to switch control between
+them and when you are controlling a specific squad you mouse is the aim for
+the guns and they alll fire in unison at the mouse. maybe whoever you are
+actively controlling is stronger (and that should be visible)." 04:49Z:
+"This should be built as a seperate mode for right now. Not erase the other
+game."
+
+Page (films with counts): https://claude.ai/artifact/JVSTNATVeyXGivTGoT9HU7,
+source `page/`.
+
+## The owner's answers (04:18-04:28Z)
+
+1. Steering: both, WASD steers and right click sends ("c").
+2. Hold the left button, and all the soldiers fire at the cursor on one beat ("a").
+3. The squads you aren't controlling keep their last order and fire on their own ("a").
+4. Splitting and merging, as proposed ("Yes this sound perfect"): 1-9 or the wheel switch, X splits, a box pulls soldiers out, G merges, and there's no size cap.
+5. The controlled squad fires faster and hits harder, and you can see it in the bullets and the holes ("a").
+6. The default is a tight blob facing the cursor, and other formations can be picked.
+7. A bought soldier joins the controlled squad.
+8. Get rid of the larder. Each crystal is drained or guarded (the card, 04:27Z), and "guarding has to be more valuable in the long run" (04:28Z). The owner wants more complexity than a race to grab crystals.
+9. The slime's goal is to hold as many crystals as it can, so it grows. You lose when every soldier is dead.
+10-12. A bought soldier appears beside the squad. WASD is freed. The camera follows the controlled squad, you can pan away freely, and Space brings it back.
+
+## What was built
+
+Everything is behind `Rules::squads` and `Rules::larder` (off and on by
+default), so the RTS round, the AI, the census and the missions play as
+before. All 51 `larder_world` tests pass, the 9 old ones unchanged.
+
+- **Squads as game state** (`src/mould/larder_world/squads.rs`):
+  `Soldier::squad`, `Game::squads` (16 slots), `Game::active`. Every action
+  is a `Cmd` with a replay line: `Steer`, `SquadOrder`, `Fire`, `Face`,
+  `Split`, `Join`, `Merge`, `Active`, `Formation`.
+- **Sticking together.** A steered or sent squad has an anchor, and each
+  member walks to its place in the formation round it. The anchor moves at
+  0.75 of a soldier's speed, times the wade of its slowest member, and it
+  waits once it is more than 4 cells ahead of the squad's middle. A member
+  more than 14 cells from the middle stops counting. Formations: blob, line,
+  wedge and ring. Tests: a steered blob of eight stays under 7 cells wide; a
+  squad with one member held to a fifth of its speed keeps it within 12
+  cells of the middle.
+- **The volley.** A squad with a fire point fires every member at it on the
+  same tick and fires at nothing else. The controlled squad fires 2x as
+  often with a 1.4x strike (`LeadRules`). Test: 80 shots against 48 over
+  6 s; the first wait comes on the old beat. When it isn't volleying, the
+  controlled squad only fires in self-defence.
+- **Drain or guard** (`Rules::larder` off). There is no larder unit, so
+  nothing smells it or steals from it. A harvest banks the charge as it is
+  taken. A crystal with a soldier by it (not draining it) and at most
+  `Rules::guard_walkers` (8) walkers on it pays its charge left /
+  `Rules::charge` / `Rules::guard` (120 s) each game second. Test: guarding
+  pays to within 1% of that rate and nothing is carried.
+- **The window** (`src/bin/larder-world/squadmode.rs`): the controls in the
+  module comment and on the key card, `mode=squads`, and "Control: squads"
+  on the start menu's options page (missions always play the RTS round).
+  Each squad's number floats over its middle, and guarded crystals get a
+  green ring. In this mode the screen edge doesn't pan, because the cursor
+  is the aim.
+- **The film hand** `hand=squads` (look mode): buy eight, walk to a slimed
+  crystal, volley, split to guard, then go back to the fighting half.
+
+## Rejected on the way
+
+- **The anchor always 4 cells ahead of the middle.** Every member ran at
+  full speed, so the ones that started behind never caught up. An 8-soldier
+  blob moved 10-12 cells wide instead of under 7.
+- **Formation places on a solid crystal's middle.** The members stood round
+  its rim on every side, 10.8 cells wide. Anchors and destinations now move
+  past the near rim.
+- **Formation places inside rock or past a wall.** On the Fork a squad
+  steered into the V wall stood still: its anchor waited for members whose
+  places they could not stand on. A blocked place now falls back to the
+  anchor itself.
+- **Guarding paid on the starting charge.** A crystal drained dry keeps
+  crumbs, so it went on paying the full rate forever. The rate now follows
+  the charge left.
+- **Guarding only with no walker on the crystal.** On shape C a thin film
+  covers nearly everything, so no crystal ever paid. The threshold is now
+  8 walkers.
+
+## Films (Fork, seed 1, llvmpipe)
+
+`larder-world mode=squads look=DIR hand=squads at=1,1.5,...,65.5` and
+`at=14,14.067,...,21.93`. The GIFs were made with ffmpeg from the near frames.
+
+| t | shots | killed | bank | mould |
+|---|---|---|---|---|
+| 1 s | 0 | 0 | 430 | 25,000 |
+| 16 s (volley) | 104 | 1,441 | 445 | 23,689 |
+| 25 s (split) | 240 | 2,477 | 445 | 22,961 |
+| 37 s (control back) | 316 | 2,778 | 460 | 23,626 |
+| 66 s | 584 | 4,680 | 482 | 27,200 |
+
+## Open
+
+- A call-in delay for bought soldiers (answer 10), a squad list in the HUD,
+  and moving the command card's letters off the squad keys (X, G and the
+  WASD letters on the card are dead in this mode).
+- Retune the numbers after a playtest: the rate and strike boost, the guard
+  rate, the pace, the merge reach.
+- The player AI doesn't play this mode yet.

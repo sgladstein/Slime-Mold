@@ -98,6 +98,10 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
+                // The squad mode's keys come before the card's letters.
+                if self.squad_key(code, pressed, event.repeat) {
+                    return;
+                }
                 // The game UI first: its command keys, Esc for its menu,
                 // Space for the newest alert.
                 if !event.repeat {
@@ -136,6 +140,7 @@ impl ApplicationHandler for App {
                 self.controls.edge = focused;
                 if !focused {
                     self.controls.unfocus();
+                    self.squad_unfocus();
                 }
             }
             WindowEvent::MouseWheel { delta, .. } => {
@@ -144,6 +149,9 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
                 };
                 if self.in_menu() {
+                    return;
+                }
+                if self.squad_wheel(notches) {
                     return;
                 }
                 self.controls.wheel(notches, &mut self.camera);
@@ -168,6 +176,11 @@ impl ApplicationHandler for App {
                 if took {
                     return;
                 }
+                // Over the HUD the card took it; on the world the squad mode
+                // fires, sends and switches (Shift + drag still boxes).
+                if self.squad_button(b, down) {
+                    return;
+                }
                 let units = self.units();
                 let mm = self.view.as_ref().and_then(|v| v.minimap_rect(&self.camera));
                 let point = self.controls.cursor.and_then(|c| self.camera.world_at(c));
@@ -182,6 +195,7 @@ impl ApplicationHandler for App {
                     match c {
                         UiCommand::Order { units, at } => self.order_at(&units, at),
                         UiCommand::Burn { units, from, to } => self.burn(&units, from, to),
+                        UiCommand::Select(picked) if self.sq.is_some() => self.squad_picked(&picked),
                         UiCommand::Select(picked) => self.larder_sel = picked.is_empty() && self.on_larder(point),
                         _ => {}
                     }
