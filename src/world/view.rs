@@ -204,10 +204,10 @@ impl View {
     }
 
     /// The soldier sprite atlas on the GPU: `SPRITES` decoded, a u32 RGBA
-    /// a texel, 512 x 160.
+    /// a texel, 2048 x 160 (16 tiles).
     fn atlas(dev: &wgpu::Device, queue: &wgpu::Queue) -> wgpu::Buffer {
         let img = image::load_from_memory(SPRITES).expect("sprites.png").to_rgba8();
-        assert_eq!(img.dimensions(), (1792, 160), "the atlas the view's shader expects");
+        assert_eq!(img.dimensions(), (2048, 160), "the atlas the view's shader expects");
         let b = storage(dev, "sprites", img.as_raw().len() as u64);
         queue.write_buffer(&b, 0, img.as_raw());
         b

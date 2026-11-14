@@ -103,4 +103,45 @@
    <path d="M -1.2 -0.5 Q -1.42 0 -1.2 0.5"/><path d="M -1.48 -0.75 Q -1.8 0 -1.48 0.75" opacity="0.6"/>
   </g>
  </g>
+
+ <!-- The larder (art review 2026-11-14: it was a plain beige square): the
+      squad's store, a hipped roof (four faces lit from the top left) over a
+      square house, sacks against two walls and a rack of charge cells at
+      the front. Lit while the bank holds food: the cells glow cyan and the
+      door lamp burns; it darkens as the mould holds it with the bank dry
+      (the overrun count, `Game::overrun_share`). -->
+ <g id="larder">
+  <g fill="url(#sand)" stroke="#4a3e2a" stroke-width="0.04">
+   <ellipse cx="-0.98" cy="-0.45" rx="0.14" ry="0.26"/>
+   <ellipse cx="-0.98" cy="0.05" rx="0.14" ry="0.26"/>
+   <ellipse cx="-0.98" cy="0.55" rx="0.14" ry="0.26"/>
+   <ellipse cx="-0.4" cy="-0.98" rx="0.26" ry="0.14"/>
+   <ellipse cx="0.15" cy="-0.98" rx="0.26" ry="0.14"/>
+  </g>
+  <rect x="-0.82" y="-0.82" width="1.64" height="1.64" rx="0.06" fill="#3a3528" stroke="#1a170f" stroke-width="0.07"/>
+  <polygon points="-0.78,-0.78 0.78,-0.78 0.3,-0.3 -0.3,-0.3" fill="#b9a77c"/>
+  <polygon points="-0.78,-0.78 -0.3,-0.3 -0.3,0.3 -0.78,0.78" fill="#a8966c"/>
+  <polygon points="0.78,-0.78 0.78,0.78 0.3,0.3 0.3,-0.3" fill="#76684a"/>
+  <polygon points="-0.78,0.78 -0.3,0.3 0.3,0.3 0.78,0.78" fill="#665a3f"/>
+  <rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="#8e7f5a"/>
+  <path d="M -0.78 -0.78 L -0.3 -0.3 M 0.78 -0.78 L 0.3 -0.3 M -0.78 0.78 L -0.3 0.3 M 0.78 0.78 L 0.3 0.3" stroke="#2e2a1e" stroke-width="0.04"/>
+  <rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="none" stroke="#2e2a1e" stroke-width="0.04"/>
+  <rect x="-0.62" y="0.86" width="1.24" height="0.3" rx="0.05" fill="#3d4244" stroke="#151819" stroke-width="0.04"/>
+  <g fill="#2a4a50" stroke="#101c1e" stroke-width="0.03">
+   <polygon points="-0.46,0.92 -0.36,0.92 -0.31,1.01 -0.36,1.1 -0.46,1.1 -0.51,1.01"/>
+   <polygon points="-0.15,0.92 -0.05,0.92 0,1.01 -0.05,1.1 -0.15,1.1 -0.2,1.01"/>
+   <polygon points="0.16,0.92 0.26,0.92 0.31,1.01 0.26,1.1 0.16,1.1 0.11,1.01"/>
+   <polygon points="0.42,0.92 0.52,0.92 0.57,1.01 0.52,1.1 0.42,1.1 0.37,1.01"/>
+  </g>
+  <circle cx="0.62" cy="0.62" r="0.07" fill="#3a3a3a"/>
+ </g>
+ <g id="larder-lit">
+  <g fill="#7ee8f0" stroke="#d8ffff" stroke-width="0.02">
+   <polygon points="-0.46,0.92 -0.36,0.92 -0.31,1.01 -0.36,1.1 -0.46,1.1 -0.51,1.01"/>
+   <polygon points="-0.15,0.92 -0.05,0.92 0,1.01 -0.05,1.1 -0.15,1.1 -0.2,1.01"/>
+   <polygon points="0.16,0.92 0.26,0.92 0.31,1.01 0.26,1.1 0.16,1.1 0.11,1.01"/>
+   <polygon points="0.42,0.92 0.52,0.92 0.57,1.01 0.52,1.1 0.42,1.1 0.37,1.01"/>
+  </g>
+  <circle cx="0.62" cy="0.62" r="0.24" fill="url(#glow)"/>
+ </g>
 </svg>
