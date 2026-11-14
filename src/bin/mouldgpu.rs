@@ -3641,7 +3641,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 19] = [
+        let dishes: [(&str, Settings, Build); 20] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3706,6 +3706,11 @@ mod tests {
             // from condensing (below); and with withering at even odds
             // some condensed walkers break in the tick.
             ("condense: dense walkers ripen, condense and break", Settings { condense: 3, condense_crowd: 4, condense_r: 2, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Condensed slime breaks away (`roam`, 11-14): as above, and of
+            // the condensed walkers (below) a quarter are already on their
+            // way to a crystal (some land in the tick) and a quarter reach
+            // their `roam` age in it and pick one.
+            ("roam: condensed walkers break away, run and land", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3759,7 +3764,21 @@ mod tests {
                         cpu.dense[k] = s.condense - 1;
                     }
                 }
+                if s.roam > 0 {
+                    use slime_mould::mould::big::{DENSE, ROAM, ROAM_SHIFT};
+                    let piles = cpu.piles.len().min(64) as u32;
+                    for k in 0..cpu.walkers.len() {
+                        if cpu.lives(k) && cpu.is_dense(k) && cpu.roam_of(k).is_none() {
+                            match k % 4 {
+                                0 => cpu.dense[k] = DENSE | ROAM | ((k as u32 % piles) << ROAM_SHIFT) | 1,
+                                1 => cpu.dense[k] = DENSE | (s.roam - 1),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
             }
+            let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed) = (cpu.absorbed, cpu.condensed);
             // The walkers that panic in the tick, and where the living were.
             let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
@@ -3803,6 +3822,13 @@ mod tests {
                 eprintln!("{name}: {held} condensed; in the tick {} absorbed, {} condensed, {broke} broke; mass {} of {n}; {dense_off} words off", cpu.absorbed - absorbed, cpu.condensed - condensed, cpu.mass());
                 assert!(held > 0 && cpu.absorbed > absorbed && cpu.condensed > condensed && broke > 0, "{name}: walkers condense, are absorbed and break in the tick");
                 assert_eq!(dense_off, 0, "{name}: condensing words");
+                if s.roam > 0 {
+                    let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
+                    let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
+                    let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
+                    eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
+                    assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
+                }
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
@@ -4599,8 +4625,11 @@ mod tests {
     /// `Alarm`, `Mist`, 2026-11-14): one bullet leg's trail bursts
     /// (`rounds::trail_bursts`, every trail at once) on the race world and
     /// on the GPU world from the same dish (`Engine::inject`), through
-    /// `World::burst`; then the crater, the alarm and the gas cloud must
-    /// match cell for cell (alarm and cloud within 1e-6), and none kills.
+    /// `World::burst`; then the crater, the bait's scent (the `Alarm`
+    /// trail's alarm until the owner swapped it for bait, 09:02Z) and the
+    /// gas cloud must match cell for cell. Scorch burns
+    /// (11-14 08:41Z): the CPU counts each disc's burn at once, the GPU
+    /// counts the whole trail's at `World::burned`, and the totals match.
     #[test]
     fn trail_bursts_lay_the_same_fields_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
@@ -4615,21 +4644,32 @@ mod tests {
         let fine = 15.0 * cpu.fine_steps() as f32;
         let k = burst_rules(&r.kit, fine);
         let s = cpu.scale();
-        let n = trails(&parse("scorch+alarm+mist").unwrap());
-        let bursts = trail_bursts(n, (60.0 * s, 100.0 * s), (90.0 * s, 110.0 * s), &r, s, fine);
+        let n = trails(&parse("scorch+bait+mist").unwrap());
+        let smell = cpu.food_deposit() * 0.5;
+        let bursts = trail_bursts(n, (60.0 * s, 100.0 * s), (90.0 * s, 110.0 * s), &r, s, fine, smell);
+        let scent_before = cpu.scent.clone();
         assert!(bursts.len() >= 10, "{} discs", bursts.len());
+        let mut burned_cpu = 0;
         for b in &bursts {
+            assert!(b.burn && !b.kill);
             let (c, g) = (cpu.burst(b, &k), gpu.burst(b, &k));
-            assert_eq!((c.killed, g.killed), (0, 0), "a trail kills nothing");
+            assert_eq!(g.killed, 0, "a burn is counted at `burned` on the GPU");
+            burned_cpu += c.killed;
         }
+        assert_eq!(cpu.burned(), 0);
+        let burned_gpu = gpu.burned();
+        eprintln!("burned: cpu {burned_cpu}, gpu {burned_gpu}");
+        assert_eq!(burned_gpu, burned_cpu, "the same walkers burned on both");
         let crater_cpu: Vec<f32> = cpu.scorch.iter().map(|&c| c as f32).collect();
         let crater_off = gpu.e.crater_of().iter().zip(&crater_cpu).filter(|(a, b)| a != b).count();
-        let alarm_off = gpu.e.alarm_of().iter().zip(&cpu.alarm).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+        // Bait (11-14, in place of the alarm trail): food scent, the field
+        // the units' smell adds to, within 1e-5 of its size.
+        let scent_off = gpu.e.scent_of().iter().zip(&cpu.scent).filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0)).count();
         let cloud_off = gpu.e.gas_cloud_of().iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
-        let laid = (crater_cpu.iter().filter(|&&c| c > 0.0).count(), cpu.alarm.iter().filter(|&&a| a > 0.0).count(), cpu.gas_cloud.iter().filter(|&&v| v > 0.0).count());
-        eprintln!("trail of {} discs: cells laid (crater, alarm, cloud) {laid:?}; off on the GPU {crater_off}, {alarm_off}, {cloud_off}", bursts.len());
+        let laid = (crater_cpu.iter().filter(|&&c| c > 0.0).count(), cpu.scent.iter().zip(&scent_before).filter(|(a, b)| a > b).count(), cpu.gas_cloud.iter().filter(|&&v| v > 0.0).count());
+        eprintln!("trail of {} discs: cells laid (crater, bait, cloud) {laid:?}; off on the GPU {crater_off}, {scent_off}, {cloud_off}", bursts.len());
         assert!(laid.0 > 100 && laid.1 > 100 && laid.2 > 100, "every trail laid its field: {laid:?}");
-        assert_eq!((crater_off, alarm_off, cloud_off), (0, 0, 0));
+        assert_eq!((crater_off, scent_off, cloud_off), (0, 0, 0));
     }
 
     #[test]

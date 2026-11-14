@@ -427,7 +427,11 @@ squad toolkit thread's germ port (11-14, C5, #216). Still spare: **188**,
 (u32, the split's stream). Its state sits in binding 48 after the sleep
 gas's slots (`Engine::dense_at`: a 4-word header with the mass, a word a
 slot, a word a cell), and it appends passes 55-59 (`ripen`, `massclear`,
-`masscount`, `dclear`, `dcount`).
+`masscount`, `dclear`, `dcount`). Then the condense thread grew Params by a
+row, 912 to 928 (11-14, `ROAM_AT` 912: `roam`, `roam_far`, `roam_land`,
+`roam_share`, the breakaway). Correction (11-14): 188 and 236 are no longer
+spare (`gas_keep`, `fling_st`), so no words are spare; a new rule grows
+Params by a row.
 
 ## Keeping this page true
 

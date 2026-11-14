@@ -98,6 +98,12 @@ pub trait World {
     /// where `has_gas` and `has_germ` say so (a world without them leaves
     /// those parts out, and the toolkit doesn't sell them there).
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
+    /// Walkers `Burst::burn` bursts killed since the last call that their
+    /// `burst` did not count (a GPU world counts them here, in one
+    /// read-back; a CPU world counts them in `burst` and returns 0).
+    fn burned(&mut self) -> u32 {
+        0
+    }
     /// Whether `burst`'s gas and germ parts work on this world.
     fn has_gas(&self) -> bool {
         false
