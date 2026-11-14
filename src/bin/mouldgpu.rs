@@ -2843,6 +2843,88 @@ mod tests {
         assert!(words > 50, "the twin catches a gas a step too long");
     }
 
+    /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
+    /// rounds thread, after Noita's mists): from the same state a cloud
+    /// laid on both, then 40 ticks each with no re-inject. The cloud field
+    /// within 1e-6 on every cell, 0 off the agar; the walkers it puts to
+    /// sleep (over 50) the same, states off on at most 1 slot in 1000 as
+    /// in the gas twin, and the gas words exact on every slot both hold
+    /// dormant; the calm while the cloud lasts. Planted: a GPU cloud that
+    /// sleeps walkers over 0.3 (not 0.2), and one that keeps 0.1% more a
+    /// step, must each fail it.
+    #[test]
+    fn the_gas_cloud_matches_the_cpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let _ = &queue;
+        let mut sleepy = small(0);
+        for (k, v) in [("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")] {
+            set(&mut sleepy, k, v).unwrap();
+        }
+        const KEEP: f32 = 0.97;
+        const SLEEP: f32 = 0.2;
+        const LINGER: u16 = 15;
+        // (cloud cells off by over 1e-6, states off, gas words off, sleepers on the CPU) after each 10 ticks
+        let play = |name: &str, s: &Settings, gpu_sleep: f32, gpu_keep: f32| -> Vec<(usize, usize, usize, usize)> {
+            let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.lives(j) {
+                    (x, y, m) = (x + wx, y + wy, m + 1.0);
+                }
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            (cpu.p.gas_keep, cpu.p.gas_sleep, cpu.p.gas_linger) = (KEEP, SLEEP, LINGER);
+            let g = Settings { gas_keep: gpu_keep, gas_sleep: gpu_sleep, gas_linger: LINGER, ..s.clone() };
+            cpu.lay_gas(x * k, y * k, 8.0 * k, 1.0);
+            e.lay_gas(&shared, &g, x, y, 8.0, 1.0);
+            let n = cpu.walkers.len();
+            let points = [(x * k, y * k), (x * k + 40.0 * k, y * k)];
+            let mut out = Vec::new();
+            for round in 0..4 {
+                run(&mut e, &shared, &g, 10, Hand::default());
+                for _ in 0..10 {
+                    cpu.tick();
+                }
+                let cloud = e.gas_cloud_of();
+                let cells_off = cloud.iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+                let walled = cloud.iter().zip(&cpu.agar).filter(|(v, a)| !**a && **v != 0.0).count();
+                assert_eq!(walled, 0, "{name}: cloud off the agar");
+                let (life, _) = e.life_of();
+                let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+                let gw = e.gassed_of();
+                let gas_off = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j]).count();
+                let sleepers = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && cpu.gassed[j] > 0).count();
+                let top = cpu.gas_cloud.iter().cloned().fold(0.0f32, f32::max);
+                eprintln!("{name}, tick {}: cloud top {top:.3}, {cells_off} cells off, {life_off} of {n} states off, {gas_off} gas words off, {sleepers} gassed sleepers", 10 * (round + 1));
+                if round == 0 && gpu_sleep == SLEEP && gpu_keep == KEEP {
+                    let calm_gpu = e.calm(&shared, &points, 3.0 * k);
+                    let calm_cpu = cpu.gassed_near(&points, 3.0 * k);
+                    assert!(calm_cpu[0] > 0 && calm_gpu == calm_cpu, "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU");
+                }
+                out.push((cells_off, life_off, gas_off, sleepers));
+            }
+            out
+        };
+        for (name, s) in [("plain (the cloud turns the states on)", small(0)), ("dormancy and alarm", sleepy.clone())] {
+            let rounds = play(name, &s, SLEEP, KEEP);
+            assert!(rounds[0].3 > 50, "{name}: the cloud put walkers to sleep");
+            for (r, &(cells, states, words, _)) in rounds.iter().enumerate() {
+                assert!(cells == 0 && states * 1000 <= s.walkers && words == 0, "{name}, round {r}: {cells} cells, {states} states, {words} gas words off");
+            }
+        }
+        let rounds = play("planted, sleeps over 0.3", &sleepy, 0.3, KEEP);
+        assert!(rounds.iter().any(|r| r.1 * 1000 > sleepy.walkers || r.2 > 10), "the twin catches a cloud that sleeps at the wrong level");
+        let rounds = play("planted, keeps more", &sleepy, SLEEP, KEEP * 1.001);
+        assert!(rounds.iter().any(|r| r.0 > 0), "the twin catches a cloud that keeps more");
+    }
+
     #[test]
     fn the_life_cycle_matches_the_cpu_for_four_ticks() {
         const TICKS: u32 = 4;

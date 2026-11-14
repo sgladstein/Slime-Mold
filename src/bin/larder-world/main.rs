@@ -642,6 +642,10 @@ impl App {
             // (news is kept then).
             let ws = &game.world.s;
             v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
+            // The crystals as hexagons at screen resolution (the owner's
+            // playtest, 2026-11-14: "The crystals are pixelated").
+            let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
+            v.set_crystals(&gems, &e.dish.pile_of);
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
