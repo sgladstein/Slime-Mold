@@ -385,7 +385,7 @@ and 484 `panic` (f32), `wclock` bits 25-31 (the lean) and `Pile`'s spare
 word (`centre`), the slime-enemy thread's panic PR (11-13); then 488
 `panic_creep` (f32, the lean's pace), the slime-enemy thread's creep PR
 (11-13); then 492 `panic_dash` (u32, the charge's dash), the slime-enemy
-thread's dash PR (11-13). Still spare: **188**, **228/232/236**, **828**
+thread's dash PR (11-13); then each `Set`'s +44 `_p` as `cap` (u32, the species' birth cap, garden only), the player's own mould thread's cap PR (11-14). Still spare: **188**, **228/232/236**, **828**
 (five).
 
 ## Keeping this page true
