@@ -2,7 +2,7 @@
 title: The Larder player AI
 kind: tool
 status: current
-updated: 2026-11-13
+updated: 2026-11-14
 sources:
   - Reports/larder-ai-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
@@ -26,6 +26,8 @@ code:
 ## Now
 
 The player AI plays Larder's soldier side for automated playtests. It gives only the player's commands (`Cmd` through `Game::apply`), so every AI round is a replay. It reads only what a player sees (a `View`), and it commands a `Side`, so a second soldier team later is a second brain.
+
+**On shape C before the playtest** (C4, [report](../../Reports/plan-matrix-c-2026-11-14.md)): a new style, **cut** (`Style::CUT`), attack-moves the strike's army to the middle of the roads from the mould's home to the held crystals nearest the larder. On seeds 301-308 at 25,000 walkers the strike lost its squad on 7 of 8; cut beat it 7-1 but, like boom, claim and fort, only stalemated (+0.33 to +0.34). No plan wiped the mould and none dominates.
 
 **Walkers weighed** (#199's audit; [report](../../Reports/ai-mass-2026-11-13.md)): the brain's walker thresholds (`dare`, `wall_alarm`, `HELD`) read walkers times `Rules::mass` (`View::weigh`), so they mean the same thickness on shape C's 25,000 walkers as on the 5,000 mould they were tuned on; the 5,000 census replays identically. On C (race 5-8) boom and claim score higher 4-0 and harvest more on every game; the strike's squad still dies on 3 of 4.
 
@@ -63,6 +65,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 ## Sources
 
+- [plan-matrix-c-2026-11-14.md](../../Reports/plan-matrix-c-2026-11-14.md).
 - [ai-mass-2026-11-13.md](../../Reports/ai-mass-2026-11-13.md).
 - [ai-rations-2026-11-12.md](../../Reports/ai-rations-2026-11-12.md).
 - [plan-matrix-2026-11-12.md](../../Reports/plan-matrix-2026-11-12.md).
