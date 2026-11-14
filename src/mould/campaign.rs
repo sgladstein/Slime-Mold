@@ -82,6 +82,14 @@ pub enum Goal {
     /// Spore season (2026-11-14): a share met at once was met at 0:41-0:51
     /// by every hand that farmed, before the Sporer had spread.
     Take(f32, f32),
+    /// The player's own mould is `frac` of all the living mould, the
+    /// enemy's and its own (`World::own_living`), held for `secs` game
+    /// seconds in a row (mission 8, `goal outgrow F SECS`). The design asked
+    /// for the take share; the GPU world does not know which side ate a
+    /// crystal's charge (the CPU garden counts it, `Garden::own_ate`), but
+    /// both engines count each side's walkers, and a mould's walkers are
+    /// what it ate. It is also what the player sees: the two colours.
+    Outgrow(f32, f32),
 }
 
 /// A bonus that earns the third star (never a time: the design review,
@@ -109,6 +117,10 @@ pub struct Mission {
     pub bonus: Option<Bonus>,
     /// `Rules` keys this mission sets (`rule price 0`).
     pub rules: Vec<(String, f32)>,
+    /// The player has a mould of their own (`own`, mission 8): the world is
+    /// `own_mould`'s garden on the mission's map, the enemy at the map's
+    /// mould starts and the player's mould at its landing.
+    pub own: bool,
 }
 
 impl Mission {
@@ -117,9 +129,10 @@ impl Mission {
     /// `bonus lose N` | `bonus stolen F`, and one goal: `goal squad N [K]`,
     /// `goal clear NEED SECS C...` (or `retake`: only crystals the mould has
     /// been on; `hold`: retake, and a soldier stands on it), `goal contain X0 Y0 X1 Y1 SECS LEAK`, `goal
-    /// shrink F`, `goal take F`.
+    /// shrink F`, `goal take F [SECS]`, `goal outgrow F SECS`; and `own`
+    /// (no value) for the player's own mould.
     pub fn parse(text: &str) -> Result<Mission, String> {
-        let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules) = (None, None, None, None, None, vec![], None, vec![]);
+        let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules, mut own) = (None, None, None, None, None, vec![], None, vec![], false);
         for (n, line) in text.lines().enumerate() {
             let line = line.split('#').next().unwrap_or("").trim();
             if line.is_empty() {
@@ -133,6 +146,7 @@ impl Mission {
                 "says" => says = Some(rest.to_string()),
                 "map" => map = Some(rest.to_string()),
                 "tier" => tier = Some(rest.to_string()),
+                "own" if rest.is_empty() => own = true,
                 "verbs" => verbs = rest.split_whitespace().map(str::to_string).collect(),
                 "rule" => {
                     let (k, v) = rest.split_once(char::is_whitespace).ok_or_else(|| err("`rule` takes KEY VALUE".into()))?;
@@ -166,6 +180,8 @@ impl Mission {
                         ("shrink", [f]) => Goal::Shrink(*f),
                         ("take", [f]) => Goal::Take(*f, 0.0),
                         ("take", [f, secs]) => Goal::Take(*f, *secs),
+                        // An even start is a share of 0.5, so the goal is above it.
+                        ("outgrow", [f, secs]) if *f > 0.5 && *f <= 1.0 => Goal::Outgrow(*f, *secs),
                         _ => return Err(err(format!("bad goal `{rest}`"))),
                     });
                 }
@@ -181,6 +197,7 @@ impl Mission {
             verbs,
             bonus,
             rules,
+            own,
         })
     }
 
@@ -462,6 +479,16 @@ impl Tracker {
                 // and half the share's progress toward it while it is not.
                 self.held = if share >= 1.0 { self.held + dt } else { 0.0 };
                 Some(if share >= 1.0 { 0.5 + 0.5 * (self.held / secs).min(1.0) } else { 0.5 * share })
+            }
+            // From the even start (0.5), as `Take`: the bar is half the
+            // share's way to `f`, then the seconds held at it.
+            Goal::Outgrow(f, secs) => {
+                let (own, enemy) = (g.world.own_living() as f32, g.mould as f32);
+                let share = own / (own + enemy).max(1.0);
+                self.count = Some(own as u32);
+                let way = ((share - 0.5) / (f - 0.5)).clamp(0.0, 1.0);
+                self.held = if way >= 1.0 { self.held + dt } else { 0.0 };
+                Some(if way >= 1.0 { 0.5 + 0.5 * (self.held / secs.max(1e-3)).min(1.0) } else { 0.5 * way })
             }
             Goal::Clear { crystals, need, secs, retake, guard } => {
                 let grid = grid?;
@@ -745,6 +772,12 @@ mod tests {
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
         assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6")).unwrap().goal, Goal::Take(0.6, 0.0));
         assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6 300")).unwrap().goal, Goal::Take(0.6, 300.0));
+        let own = Mission::parse(&LANDFALL.replace("goal squad 8", "own\ngoal outgrow 0.6 60")).unwrap();
+        assert_eq!((own.goal, own.own), (Goal::Outgrow(0.6, 60.0), true));
+        assert!(!Mission::parse(LANDFALL).unwrap().own);
+        // An even start is already 0.5, so the goal is above it.
+        assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal outgrow 0.5 60")).is_err());
+        assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "own 1\ngoal squad 8")).is_err());
     }
 
     #[test]
@@ -969,6 +1002,38 @@ mod tests {
             }
         }
         assert!(tr.best <= 0.75, "a minute and a half is at most 0.5 + 0.5 x 90 / 300: {}", tr.best);
+    }
+
+    /// **Outgrow** (mission 8): on the garden the bar is 0 at the even
+    /// start (half of the way from 0.5 to the goal's share), and a player's
+    /// mould grown to the share fills the held half over its seconds; with
+    /// no mould of the player's own the bar never moves.
+    #[test]
+    fn outgrow_reads_each_sides_walkers() {
+        use crate::mould::own_mould::{garden_on_map, tests::passes, OWN};
+        let m = passes();
+        let p = crate::mould::larder_world::race_params(3, 1, 600);
+        let mut g = Game::new(garden_on_map(p, &m, 600).unwrap(), Rules::default(), 3);
+        let mut tr = Tracker::new(mission("goal outgrow 0.6 10"), &g);
+        tr.second(&g, None, 1.0);
+        assert!(tr.bar.unwrap() < 0.05, "even sides: {:?}", tr.bar);
+        // Kill most of the enemy's walkers: the share passes 0.6.
+        let d = &mut g.world.dish;
+        let enemy: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] != OWN).collect();
+        for &k in &enemy[..enemy.len() * 3 / 4] {
+            d.kill(k);
+        }
+        g.mould = g.world.living();
+        for _ in 0..5 {
+            tr.second(&g, None, 1.0);
+        }
+        let b = tr.bar.unwrap();
+        assert!(b > 0.7 && b < 1.0, "held 5 of 10 s: {b}");
+        // The plain world has no mould of the player's: the bar stays 0.
+        let g2 = small(Rules::default());
+        let mut t2 = Tracker::new(mission("goal outgrow 0.6 10"), &g2);
+        t2.second(&g2, None, 1.0);
+        assert_eq!(t2.bar, Some(0.0));
     }
 
     /// A squad that has no food and pays for shots is stuck: after 30 s the

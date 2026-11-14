@@ -1,0 +1,30 @@
+    Finished `release` profile [optimized] target(s) in 33.09s
+739s
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 1-2, scale 2, walkers 5000
+on the CPU
+  random s1: Goal 188s 2*
+  strike s1: Goal 577s 2*
+  idle s1: Cap 900s 0*
+  idle s2: Cap 900s 0*
+  boom s1: Cap 900s 0*
+  random s2: Stuck 780s 1*
+  boom s2: Cap 900s 0*
+  strike s2: Cap 900s 0*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+boom         1  Cap          900      0 0.00     6%     0%    0%    4%   17%                            10    0   62        0     20     14100  29065  186.000/5032.000  0/0/0 0  []
+boom         2  Cap          900      0 0.00     8%     0%    0%    4%   24%                            45    0   61        0      2     10800  51529  60.000/5016.000  0/0/0 0  []
+idle         1  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0  164        0      4         0      0  680.000/5091.000  0/0/0 0  []
+idle         2  Cap          900      0 0.00   100%   100%  100%  100%  100%                           900    0   91        0      4         0      0  9.000/5018.000  0/0/0 0  []
+random       1  Goal         188      2 1.00     3%     4%    1%    0%    0%                             3    4   35      187      5       600   1609  2020.000/8357.000  0/0/0 0  []
+random       2  Stuck        780      1 0.73    14%     3%   18%   12%   26%                             7   30   77      780      2      2100   9410  305.000/8908.000  0/0/0 0  []
+strike       1  Goal         577      2 1.00     1%     0%    0%    4%    0%                             2    0   16      576     26     10800  13739  186.000/5032.000  0/0/0 0  []
+strike       2  Cap          900      0 0.00     2%     0%    2%    6%    0%                            14    0   43        0      8     12600  52095  60.000/5016.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  boom      0/2  stars 0  best 0.00  dead 7%  stuck 0 s  stall 62 s
+  idle      0/2  stars 0  best 0.00  dead 100%  stuck 0 s  stall 164 s
+  random    1/2  stars 2  best 0.87  dead 9%  stuck 30 s  stall 77 s
+  strike    1/2  stars 2  best 0.50  dead 2%  stuck 0 s  stall 43 s
+
+[exited with code 0]

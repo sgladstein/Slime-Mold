@@ -34,6 +34,16 @@ pub trait World {
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32);
     /// Walkers alive (not counting the dead).
     fn living(&self) -> usize;
+    /// The player's own mould's living walkers (`own_mould`'s garden, on
+    /// either engine); 0 where the player has none. The campaign's
+    /// `goal outgrow` reads it (mission 8).
+    fn own_living(&self) -> usize {
+        0
+    }
+    /// Soldier `k`'s gardener's task (`own_mould::Task`) where the player
+    /// has a mould of their own; elsewhere nothing. The campaign's own-mould
+    /// plans give it (`plans::sow`).
+    fn set_task(&mut self, _k: usize, _t: crate::mould::own_mould::Task) {}
     /// Each crystal's centre (fine cells) and charge left.
     fn crystals(&self) -> Vec<((f32, f32), f32)>;
     /// Crystal `c`'s radius, fine cells.

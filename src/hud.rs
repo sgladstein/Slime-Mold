@@ -248,6 +248,85 @@ pub fn draw_text_crisp(frame: &mut [u8], (width, height): (u32, u32), (x, y): (i
     }
 }
 
+/// Inter Medium (SIL OFL 1.1, `assets/fonts/OFL.txt`), the game UI's face
+/// (`world::canvas` draws it on the GPU; this file on CPU frames).
+pub static INTER_MEDIUM: &[u8] = include_bytes!("../assets/fonts/Inter-Medium.otf");
+
+/// A glyph's coverage at a size: its box's offset from the pen, its size,
+/// and the coverage row by row.
+type Coverage = Option<(i32, i32, u32, u32, Vec<u8>)>;
+
+/// **Text at any size on a CPU frame**, in Inter Medium: `px` the font's
+/// size, the pen starting at `at.0` with its baseline at `at.1`. Returns
+/// the advance. For the map editor, whose panel takes the UI size the game
+/// does (`world::settings::UiSize`, owner 2026-11-14 08:07Z: "they look too
+/// small on my screen"): the crisp font above is drawn at exactly twice the
+/// dot font, so it could only double. Each glyph is rasterized once a size
+/// (a cache a thread), and blended as `draw_text_crisp` blends.
+pub fn draw_text_inter(frame: &mut [u8], (width, height): (u32, u32), at: (f32, f32), px: f32, text: &str, colour: [u8; 4]) -> f32 {
+    use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    thread_local! {
+        static CACHE: RefCell<HashMap<(char, u16), Coverage>> = RefCell::new(HashMap::new());
+    }
+    static FONT: std::sync::OnceLock<FontRef<'static>> = std::sync::OnceLock::new();
+    let font = FONT.get_or_init(|| FontRef::try_from_slice(INTER_MEDIUM).expect("Inter Medium"));
+    let size = px.round().max(4.0) as u16;
+    let f = font.as_scaled(PxScale::from(size as f32));
+    let (mut pen, base) = (at.0, at.1.round() as i32);
+    let mut last = None;
+    let alpha = colour[3] as u32;
+    for ch in text.chars() {
+        let id = f.glyph_id(ch);
+        if let Some(l) = last {
+            pen += f.kern(l, id);
+        }
+        CACHE.with_borrow_mut(|cache| {
+            let cov = cache.entry((ch, size)).or_insert_with(|| {
+                let g = id.with_scale_and_position(PxScale::from(size as f32), ab_glyph::point(0.0, 0.0));
+                font.outline_glyph(g).map(|o| {
+                    let b = o.px_bounds();
+                    let (w, h) = (b.width().ceil() as u32, b.height().ceil() as u32);
+                    let mut c = vec![0u8; (w * h) as usize];
+                    o.draw(|x, y, v| {
+                        if let Some(t) = c.get_mut((y * w + x) as usize) {
+                            *t = (v.clamp(0.0, 1.0) * 255.0).round() as u8;
+                        }
+                    });
+                    (b.min.x.floor() as i32, b.min.y.floor() as i32, w, h, c)
+                })
+            });
+            let Some((dx, dy, w, h, c)) = cov else { return };
+            let (x0, y0) = (pen.round() as i32 + *dx, base + *dy);
+            for row in 0..*h as i32 {
+                let py = y0 + row;
+                if py < 0 || py >= height as i32 {
+                    continue;
+                }
+                for col in 0..*w as i32 {
+                    let x = x0 + col;
+                    let v = c[(row * *w as i32 + col) as usize] as u32;
+                    if v == 0 || x < 0 || x >= width as i32 {
+                        continue;
+                    }
+                    let a = v * alpha / 255;
+                    let i = (py as usize * width as usize + x as usize) * 4;
+                    for k in 0..3 {
+                        let d = frame[i + k] as u32;
+                        frame[i + k] = ((colour[k] as u32 * a + d * (255 - a) + 127) / 255) as u8;
+                    }
+                    let d = frame[i + 3] as u32;
+                    frame[i + 3] = ((255 * a + d * (255 - a) + 127) / 255) as u8;
+                }
+            }
+        });
+        pen += f.h_advance(id);
+        last = Some(id);
+    }
+    pen - at.0
+}
+
 /// Whether the crisp table can draw `c` -- the same question `has_glyph`
 /// answers for the dot font, so a test can hold the two sets equal.
 pub fn has_crisp_glyph(c: char) -> bool {

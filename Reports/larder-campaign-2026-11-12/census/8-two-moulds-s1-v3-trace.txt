@@ -1,0 +1,83 @@
+mission 8-two-moulds (Two moulds): "Grow your mould to 60% of all the slime and hold it for a minute", map passes, tier swarmer , seeds 1-1, scale 2, walkers 5000
+on the CPU
+    random s1 t 30: own 2087 enemy 2450 soldiers 4 bank 1500 killed 0 buildings 0
+    boom s1 t 30: own 518 enemy 1797 soldiers 8 bank 600 killed 587 buildings 0
+    bait+boom s1 t 30: own 374 enemy 1778 soldiers 7 bank 400 killed 558 buildings 0
+    sow+boom s1 t 30: own 374 enemy 1778 soldiers 7 bank 400 killed 558 buildings 0
+    random s1 t 60: own 2737 enemy 4140 soldiers 5 bank 200 killed 124 buildings 0
+    sow+boom s1 t 60: own 608 enemy 2746 soldiers 9 bank 480 killed 642 buildings 0
+    boom s1 t 60: own 415 enemy 2731 soldiers 12 bank 400 killed 924 buildings 0
+    bait+boom s1 t 60: own 688 enemy 2670 soldiers 8 bank 440 killed 558 buildings 0
+    bait+boom s1 t 90: own 1899 enemy 3408 soldiers 8 bank 480 killed 847 buildings 0
+    sow+boom s1 t 90: own 1722 enemy 3410 soldiers 8 bank 880 killed 1200 buildings 0
+    boom s1 t 90: own 244 enemy 3552 soldiers 13 bank 500 killed 1197 buildings 0
+    random s1 t 90: own 3636 enemy 4804 soldiers 4 bank 260 killed 762 buildings 0
+    bait+boom s1 t 120: own 2915 enemy 3252 soldiers 8 bank 660 killed 850 buildings 0
+    sow+boom s1 t 120: own 2635 enemy 3404 soldiers 9 bank 740 killed 1791 buildings 0
+    boom s1 t 120: own 237 enemy 3542 soldiers 15 bank 500 killed 1517 buildings 0
+    random s1 t 120: own 5827 enemy 3955 soldiers 5 bank 0 killed 1347 buildings 0
+    bait+boom s1 t 150: own 3609 enemy 3413 soldiers 9 bank 400 killed 850 buildings 0
+    boom s1 t 150: own 790 enemy 3513 soldiers 16 bank 600 killed 1865 buildings 0
+    sow+boom s1 t 150: own 3568 enemy 3552 soldiers 10 bank 480 killed 2100 buildings 0
+    bait+boom s1 t 180: own 3968 enemy 3384 soldiers 10 bank 480 killed 850 buildings 0
+    boom s1 t 180: own 1572 enemy 3257 soldiers 17 bank 700 killed 3201 buildings 0
+    sow+boom s1 t 180: own 4364 enemy 3350 soldiers 11 bank 460 killed 2367 buildings 0
+    random s1 t 150: own 7118 enemy 3849 soldiers 5 bank 0 killed 1608 buildings 0
+    bait+boom s1 t 210: own 4043 enemy 3487 soldiers 11 bank 480 killed 850 buildings 0
+    boom s1 t 210: own 2447 enemy 3599 soldiers 19 bank 400 killed 3628 buildings 0
+    sow+boom s1 t 210: own 4397 enemy 3382 soldiers 11 bank 600 killed 2925 buildings 0
+    bait+boom s1 t 240: own 4070 enemy 3492 soldiers 11 bank 580 killed 850 buildings 0
+    random s1 t 180: own 8078 enemy 4030 soldiers 5 bank 0 killed 1609 buildings 0
+    sow+boom s1 t 240: own 4442 enemy 2967 soldiers 13 bank 500 killed 3741 buildings 0
+    boom s1 t 240: own 2582 enemy 3328 soldiers 20 bank 900 killed 4719 buildings 0
+  random s1: Goal 188s 2*
+    sow+boom s1 t 270: own 5238 enemy 2405 soldiers 14 bank 500 killed 4725 buildings 0
+    boom s1 t 270: own 2919 enemy 3579 soldiers 20 bank 800 killed 5471 buildings 0
+    bait+boom s1 t 270: own 4098 enemy 3641 soldiers 11 bank 480 killed 1172 buildings 0
+    boom s1 t 300: own 2745 enemy 3715 soldiers 20 bank 1300 killed 5933 buildings 0
+    sow+boom s1 t 300: own 5621 enemy 2433 soldiers 15 bank 500 killed 4725 buildings 0
+  sow+boom s1: Goal 300s 2*
+    bait+boom s1 t 300: own 3978 enemy 3592 soldiers 11 bank 580 killed 1172 buildings 0
+    boom s1 t 330: own 2786 enemy 3353 soldiers 20 bank 2200 killed 7585 buildings 0
+    bait+boom s1 t 330: own 4157 enemy 3587 soldiers 12 bank 400 killed 1172 buildings 0
+    boom s1 t 360: own 2653 enemy 3536 soldiers 20 bank 2400 killed 8658 buildings 0
+    bait+boom s1 t 360: own 4074 enemy 3574 soldiers 12 bank 580 killed 1172 buildings 0
+    boom s1 t 390: own 2765 enemy 3451 soldiers 19 bank 2400 killed 9751 buildings 0
+    bait+boom s1 t 390: own 4095 enemy 3481 soldiers 13 bank 480 killed 1172 buildings 0
+    boom s1 t 420: own 2990 enemy 3738 soldiers 20 bank 2200 killed 10220 buildings 0
+    boom s1 t 450: own 3086 enemy 3888 soldiers 20 bank 2400 killed 10506 buildings 0
+    bait+boom s1 t 420: own 4215 enemy 3729 soldiers 13 bank 580 killed 1172 buildings 0
+    boom s1 t 480: own 2800 enemy 3529 soldiers 20 bank 2700 killed 11579 buildings 0
+    bait+boom s1 t 450: own 4234 enemy 3601 soldiers 14 bank 440 killed 1172 buildings 0
+    boom s1 t 510: own 2921 enemy 3518 soldiers 20 bank 2700 killed 13246 buildings 0
+    boom s1 t 540: own 2836 enemy 3766 soldiers 20 bank 2600 killed 14319 buildings 0
+    bait+boom s1 t 480: own 4279 enemy 3562 soldiers 14 bank 400 killed 1172 buildings 0
+    boom s1 t 570: own 2852 enemy 3581 soldiers 20 bank 2900 killed 15389 buildings 0
+    boom s1 t 600: own 2852 enemy 3565 soldiers 20 bank 3200 killed 17006 buildings 0
+    bait+boom s1 t 510: own 4629 enemy 3716 soldiers 13 bank 400 killed 1449 buildings 0
+    boom s1 t 630: own 2904 enemy 3586 soldiers 20 bank 3200 killed 18651 buildings 0
+    bait+boom s1 t 540: own 5405 enemy 2949 soldiers 13 bank 580 killed 2130 buildings 0
+    boom s1 t 660: own 2774 enemy 3597 soldiers 20 bank 3500 killed 20292 buildings 0
+    bait+boom s1 t 570: own 6083 enemy 2678 soldiers 14 bank 440 killed 2130 buildings 0
+  bait+boom s1: Goal 579s 2*
+    boom s1 t 690: own 2713 enemy 3598 soldiers 20 bank 3800 killed 21923 buildings 0
+    boom s1 t 720: own 2639 enemy 3564 soldiers 20 bank 4100 killed 23624 buildings 0
+    boom s1 t 750: own 2638 enemy 3587 soldiers 20 bank 4100 killed 25299 buildings 0
+    boom s1 t 780: own 2598 enemy 3548 soldiers 20 bank 4100 killed 26953 buildings 0
+    boom s1 t 810: own 2922 enemy 3814 soldiers 20 bank 3700 killed 27549 buildings 0
+    boom s1 t 840: own 2781 enemy 3897 soldiers 20 bank 2900 killed 27946 buildings 0
+    boom s1 t 870: own 2720 enemy 3774 soldiers 20 bank 2500 killed 28230 buildings 0
+    boom s1 t 900: own 2963 enemy 3174 soldiers 20 bank 2500 killed 29065 buildings 0
+  boom s1: Cap 900s 0*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+bait+boom    1  Goal         579      2 1.00     1%     0%    0%    2%    0%                             2   10   17      578     14     12000   2177  347.000/6386.000  0/0/0 0  []
+boom         1  Cap          900      0 0.00     6%     0%    0%    4%   17%                            10    0   62        0     20     14100  29065  186.000/5032.000  0/0/0 0  []
+random       1  Goal         188      2 1.00     3%     4%    1%    0%    0%                             3    4   35      187      5       600   1609  2020.000/8357.000  0/0/0 0  []
+sow+boom     1  Goal         300      2 1.00     0%     0%    0%    0%    0%                             0    0   17      299     15      8100   4725  347.000/5715.000  0/0/0 0  []
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  bait+boom 1/1  stars 2  best 1.00  dead 1%  stuck 10 s  stall 17 s
+  boom      0/1  stars 0  best 0.00  dead 6%  stuck 0 s  stall 62 s
+  random    1/1  stars 2  best 1.00  dead 3%  stuck 4 s  stall 35 s
+  sow+boom  1/1  stars 2  best 1.00  dead 0%  stuck 0 s  stall 17 s

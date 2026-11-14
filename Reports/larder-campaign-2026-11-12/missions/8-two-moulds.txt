@@ -1,0 +1,18 @@
+# Mission 8: your own mould against the swarm on the Passes (D4, the designer and the tech
+# lead, 2026-11-14). The Grudge was the pick; its scar keys are not on the GPU yet, so the
+# Swarmer stands in (a one-line change to `tier grudge` once they are). The enemy starts at
+# the Passes' two mould starts, your mould on the crystal by the landing, the same walkers a side
+# (`own_mould::garden_on_map`). The goal is the share of all the slime that is yours: the
+# design asked for the take share, which the GPU world cannot split between the two moulds.
+# Census v4-v6 (2026-11-14, seeds 1-4, CPU, your mould on the crystal by the landing): sowing
+# with two soldiers while farming (sow+boom) 3/4 at 7:36-13:38, a lure behind the enemy as well
+# (bait+boom) 3/4 at 5:33-10:35, farming and shooting alone (boom) 3/4 at 5:18-6:36; idle 0/4;
+# random 2/4 (1:36 and 5:06), because a random Feed task stays on and spends the 2,000 start bank
+# on your mould in the first 30 s: feeding early is the strongest opener (a tuning note).
+name Two moulds
+says Grow your mould to 60% of all the slime and hold it for a minute
+map passes
+tier swarmer
+own
+verbs move harvest buy stance fire sow road lure turret
+goal outgrow 0.6 60
