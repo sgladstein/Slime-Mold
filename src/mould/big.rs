@@ -317,7 +317,8 @@ pub struct BigParams {
     /// own mould (tech lead's review): with one shared pool a sown player
     /// mould reached 32,000 of the 50,000 slots, so a later fight could be
     /// won by filling the enemy's birth slots. A cap of 0 stops a species'
-    /// births (a taken core). CPU only.
+    /// births (a taken core). On the GPU in a garden since 11-14
+    /// (`gpu::Settings::species_cap`, the `capcount` pass).
     pub species_cap: Vec<usize>,
     /// Species 0 lays this many times the deposit (1 is even; added
     /// 2026-11-11 to give one side an edge in a fight).

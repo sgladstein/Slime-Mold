@@ -2,7 +2,7 @@
 title: Outside looks and creature rules on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
   - Reports/creatures-2026-11-11.md
   - Reports/first-reach-2026-11-11.md
