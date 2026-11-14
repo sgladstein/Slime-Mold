@@ -2,19 +2,22 @@
 title: Larder World maps
 kind: design
 status: open
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
   - Reports/larder-maps-2026-11-11.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/map-editor-2026-11-14/README.md
 code:
   - BigDish::homes
   - BigDish::pile_fill
   - BigDish::pile_rs
   - BigDish::with_map
+  - Editor::problems
   - Engine::with_map
   - GpuWorld::with_map
   - Map::load
   - Map::of_dish
+  - Mirror::of
   - Rules::home_dry
   - World::landing
   - build_wall_hp
@@ -25,7 +28,7 @@ code:
 
 ## Now
 
-A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) reads `maps/<name>.png` (G byte: wet, rock, and the soil kind in the high nibble; R height is parked) and `maps/<name>.txt` (crystal, mould, landing and wall lines). `BigDish::with_map` builds the world with each crystal its own size and charge, the walkers shared among the `mould` starts, the larder on `landing`, and the walls at their own health. `GpuWorld::with_map` puts the same world on the engine. The gate passed: the Fork and the Nest play within 1% on the CPU and the GPU, and a saved noise world (`Map::of_dish`) loads back hash-identical ([report, *WM1*](../../Reports/larder-world-roadmap-2026-11-11.md)). Soil plays on the engine too since 2026-11-12, and the window draws it: one GPU tick on soil bands matches the CPU's, and the four soil maps' game twin stays within 2.1% ([report, *Soil on the GPU*](../../Reports/larder-world-roadmap-2026-11-11.md)). In the window the Rim's sand ring holds the mould in its clay core, and the Passes' sand lane breaks its tube ([page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ)). `larderworld census map=NAME` runs W2b's hands on a map. The five designed maps (v2: Rim, Fork, Flats, Nest, Passes), each drawn for a different winning plan, are the maps thread's ([plan and v2](../../Reports/larder-maps-2026-11-11.md)). Their WM2 gate is next.
+A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) reads `maps/<name>.png` (G byte: wet, rock, and the soil kind in the high nibble; R height is parked) and `maps/<name>.txt` (crystal, mould, landing and wall lines). `BigDish::with_map` builds the world with each crystal its own size and charge, the walkers shared among the `mould` starts, the larder on `landing`, and the walls at their own health. `GpuWorld::with_map` puts the same world on the engine. The gate passed: the Fork and the Nest play within 1% on the CPU and the GPU, and a saved noise world (`Map::of_dish`) loads back hash-identical ([report, *WM1*](../../Reports/larder-world-roadmap-2026-11-11.md)). Soil plays on the engine too since 2026-11-12, and the window draws it: one GPU tick on soil bands matches the CPU's, and the four soil maps' game twin stays within 2.1% ([report, *Soil on the GPU*](../../Reports/larder-world-roadmap-2026-11-11.md)). In the window the Rim's sand ring holds the mould in its clay core, and the Passes' sand lane breaks its tube ([page](https://claude.ai/artifact/1ifC4Qrw6fXe5Aq7vVSRzZ)). `larderworld census map=NAME` runs W2b's hands on a map. The five designed maps (v2: Rim, Fork, Flats, Nest, Passes), each drawn for a different winning plan, are the maps thread's ([plan and v2](../../Reports/larder-maps-2026-11-11.md)). Their WM2 gate is next. Maps can be drawn in the editor since 2026-11-14 (WM5, `cargo run --release --bin larder-edit -- map=fork`): six ground brushes, hexagon crystals, mould starts, the landing and walls, with mirroring and undo; it saves the same files under `maps/` and Enter plays the map in `larder-world` ([report](../../Reports/map-editor-2026-11-14/README.md), [page](https://claude.ai/artifact/NAJ89BJNhtkszVmFBWHutK)).
 
 ## Owner's word
 
@@ -40,9 +43,10 @@ A Larder World can be a designed map, not only noise. The loader (ROADMAP WM1) r
 
 - The WM2 gate on each map: idle and random lose, and the winning plan changes between maps.
 - Rival moulds as different species (the Passes' two starts are one species today).
-- Map look (WM4) and an editor (WM5).
+- Map look (WM4). The editor has no keys yet for crystal charge or wall health, and no start-menu entry.
 
 ## Sources
 
 - [Larder World roadmap](../../Reports/larder-world-roadmap-2026-11-11.md), *Maps in the plan* and *WM1: maps load into the world*.
 - [Larder maps](../../Reports/larder-maps-2026-11-11.md), *Loader files*, *Which ground the mould feels* and *Maps, version 2*.
+- [Map editor](../../Reports/map-editor-2026-11-14/README.md).
