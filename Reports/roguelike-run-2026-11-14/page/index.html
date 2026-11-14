@@ -1,0 +1,29 @@
+<title>Roguelike Run</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One column of captioned screenshots, the run in the order a player meets it. */
+:root { --bg:#eef1f4; --fg:#16202b; --muted:#566373; --line:#cfd6de; --accent:#2f7fc4;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f141a; --fg:#e4eaf0; --muted:#93a1b0; --line:#26303b; --accent:#6db3ee; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#0f141a; --fg:#e4eaf0; --muted:#93a1b0; --line:#26303b; --accent:#6db3ee; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font-family:var(--body); line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:32px 48px }
+main { max-width:1100px; margin:0 auto; display:grid; gap:36px }
+h1 { font-family:var(--display); font-size:2rem; margin:0; text-wrap:balance }
+h2 { font-family:var(--display); font-size:1.2rem; margin:0 0 6px }
+p { margin:0; max-width:68ch; color:var(--muted) }
+figure { margin:0; display:grid; gap:10px }
+img { width:100%; border-radius:8px; border:1px solid var(--line) }
+code { font-size:.9em; color:var(--accent) }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600&display=swap">
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Roguelike run, first build</h1>
+    <p>Eight planets on the way to the slime's home world. One map and one slime each, a shop between them. Shots from <code>larder-world run=1</code> on software Vulkan, 1600 x 900. Nothing is balanced yet.</p>
+  </header>
+  <figure><img src="main.jpg" alt="Start menu with Run as the second entry"><figcaption><h2>Start menu</h2><p>Run sits under Sandbox. While a run is under way it reads "Back to the run" and goes to the shop.</p></figcaption></figure>
+  <figure><img src="planet1.jpg" alt="Planet 1 at 1:30 with the goal bar at the top"><figcaption><h2>Planet 1 of 8, 1:30</h2><p>Flats against the Drifter. Goal: cut the slime to 25% of its peak. The farm hand at 1:30 has 14 soldiers and 3,771 food harvested, with the slime at 2,135 walkers from 5,017 at the start. Turrets, lures and tools show locked on the card until the shop sells them; walls are owned from the start.</p></figcaption></figure>
+  <figure><img src="shop.jpg" alt="The shop after planet 1"><figcaption><h2>The shop after planet 1 (two stars, 250 points)</h2><p>Squad upgrades, building and tool unlocks, gun slots and three gun cards on offer. Bright rows are what the points buy now. Planet 2 is the Sprawler on the Rim with 1.2 times the walkers, goal 22%.</p></figcaption></figure>
+  <figure><img src="shop-dev.jpg" alt="The shop with dev mode rows"><figcaption><h2>Dev mode</h2><p>Options, Dev mode (or <code>dev=1</code>) adds rows to jump a planet deeper or shallower, add 1,000 points and redraw the cards.</p></figcaption></figure>
+</main>

@@ -12,6 +12,11 @@ impl App {
     /// too since 11-14), kept for the next game too: H, or the loadout
     /// strip's button.
     pub(super) fn next_round(&mut self) {
+        // A run's gun is what its shop built.
+        if self.args.run.is_some() {
+            self.hud.alert("In a run the gun holds the cards you bought: change it in the shop between planets", None, theme::WARN);
+            return;
+        }
         let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
             rounds::Card::Gas => g.world.has_gas(),
             rounds::Card::Germ => g.world.has_germ(),
@@ -179,6 +184,7 @@ impl App {
                     self.paused = false;
                 }
                 HudEvent::Menu(MenuItem::MainMenu) => self.back_to_menu()?,
+                HudEvent::Menu(MenuItem::Continue) => self.carry_on()?,
                 HudEvent::Menu(MenuItem::Quit) => {
                     self.save_replay();
                     return Ok(true);
@@ -352,6 +358,7 @@ impl App {
         match code {
             KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
+            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
             KeyCode::KeyN => {
                 let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
                 self.args.map = Some(MAPS[next].to_string());

@@ -830,6 +830,17 @@ impl App {
                 })
                 .collect();
         }
+        // A run's locks (`Run::has`): what its shop has not unlocked shows,
+        // dimmed, with where to get it.
+        if let Some(run) = &self.args.run {
+            for c in &mut cmds {
+                if run_lock(c.id).is_some_and(|k| !run.has(k)) {
+                    c.ready = false;
+                    c.why_not = Some("Locked: unlock it in the shop between planets".into());
+                    c.about = format!("Locked in this run (the shop sells it). {}", c.about);
+                }
+            }
+        }
         for c in &mut cmds {
             if c.ready {
                 c.why_not = None;
@@ -884,6 +895,16 @@ impl App {
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
             m.end = Some(mission_screen(tr, g));
+            if let (Some(r), Some(v), Some(end)) = (&self.args.run, tr.verdict, m.end.as_mut()) {
+                let last = r.depth >= slime_mould::mould::run::PLANETS;
+                let (label, line) = match (v.stars > 0, last) {
+                    (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
+                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", slime_mould::mould::run::reward(r.depth, v.stars), r.points + slime_mould::mould::run::reward(r.depth, v.stars))),
+                    (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
+                };
+                end.1.insert(1, line);
+                m.carry_on = Some(label.into());
+            }
         } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
@@ -1068,4 +1089,25 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }
+}
+
+/// The run's unlock (`mould::run::ITEMS`) a command needs, if any: the
+/// buildings and the tools the shop sells.
+pub(super) fn run_lock(id: u32) -> Option<&'static str> {
+    Some(match id {
+        WALL => "walls",
+        TURRET => "turret",
+        LURE => "lure",
+        LURES => return None,
+        PUMP => "pump",
+        OUTPOST => "outpost",
+        SIREN => "siren",
+        T_BLAST => "blast",
+        T_MINE => "mine",
+        T_CORD => "cord",
+        T_GAS => "gas",
+        // Never sold: the GPU world casts no germ yet.
+        T_GERM => "germ",
+        _ => return None,
+    })
 }

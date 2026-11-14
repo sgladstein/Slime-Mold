@@ -36,6 +36,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // window shows it (the menu's pictures).
     if let Some(p) = menu_page {
         let mut m = start_menu(&app.args);
+        // The run's shop (`run=SEED menu=shop`): as after its first planet
+        // won with two stars, so the picture has points to spend.
+        if let (slime_mould::world::start::Page::Shop, Some(r)) = (p, app.run.as_ref()) {
+            let mut r = r.clone();
+            if r.points == 0 {
+                r.won(2);
+            }
+            m.shop = Some(shop_of(&r));
+            m.run_live = true;
+        }
         m.show(p);
         app.menu = Some(m);
     }
