@@ -29,7 +29,10 @@
 //! what is off it is quieter the farther it is, so a fight across the map
 //! does not sound like the one in front of you.
 
-use crate::mould::larder_world::{Game, Shot, World};
+use crate::mould::kit::Bang;
+use crate::mould::larder_world::{Game, Kind, Shot, World};
+
+use super::pieces::{blobs, Pieces};
 use crate::mould::larder::End;
 
 use super::listen::density;
@@ -154,6 +157,19 @@ pub struct WorldStats {
     pub hunger: f32,
     pub growth: f32,
     pub eating: f32,
+    /// Cloud plan C7 (2026-11-14): bullets heard flying past, siren calls,
+    /// kit blasts, pieces torn off, rejoined and withered out, panic tells
+    /// (snarls), and the last frame's pieces and walkers withering a second.
+    pub zips: u64,
+    pub sirens: u32,
+    pub blasts: u32,
+    pub torn: u32,
+    pub rejoined: u32,
+    pub withered: u32,
+    pub tells: u32,
+    pub charges: u32,
+    pub pieces: u32,
+    pub withering: f32,
 }
 
 pub struct WorldListener {
@@ -187,6 +203,18 @@ pub struct WorldListener {
     flinch: f32,
     inhale_wait: f32,
     kills_since: u64,
+    pieces: Pieces,
+    /// The mould grid's square the pieces are read on (`piece_bin`: one
+    /// dish cell); a mission sets it to the campaign's.
+    pub piece_bin: usize,
+    pieces_bin: usize,
+    piece_tick: u64,
+    ask_tick: u64,
+    sirens: u32,
+    bang_tick: u64,
+    bangs: Vec<Bang>,
+    last_grid: Vec<u32>,
+    held: Vec<SoundCmd>,
     pub stats: WorldStats,
 }
 
@@ -221,6 +249,16 @@ impl WorldListener {
             flinch: 0.0,
             inhale_wait: 0.0,
             kills_since: 0,
+            pieces: Pieces::new(piece_bin(g), g.world.scale()),
+            piece_bin: piece_bin(g),
+            pieces_bin: piece_bin(g),
+            piece_tick: 0,
+            ask_tick: 0,
+            sirens: 0,
+            bang_tick: 0,
+            bangs: Vec::new(),
+            last_grid: Vec::new(),
+            held: Vec::new(),
             stats: WorldStats::default(),
         };
         l.rebaseline(g);
@@ -248,6 +286,15 @@ impl WorldListener {
         self.charge = g.world.crystals().iter().map(|c| c.1).sum();
         self.carried = g.soldiers.iter().map(|s| s.carry).sum::<f32>() + g.harvested;
         self.kills_since = 0;
+        self.pieces_bin = self.piece_bin;
+        self.pieces = Pieces::new(self.piece_bin, g.world.scale());
+        self.piece_tick = self.ticks;
+        self.ask_tick = self.ticks;
+        self.sirens = g.sirens;
+        self.bang_tick = self.ticks;
+        self.bangs.clear();
+        self.last_grid.clear();
+        self.held.clear();
         self.stats.rebaselines += 1;
     }
 
@@ -293,13 +340,29 @@ impl WorldListener {
         let voiced = order.len().min(SHOTS_VOICED);
         // Spread over the frame so a volley is a rattle, not one flam.
         let gap = if voiced > 1 { (dt / voiced as f32).min(0.03) } else { 0.0 };
+        let mut zips = 0;
         for (j, &i) in order.iter().take(voiced).enumerate() {
             let s = shots[i];
             let delay = gap * j as f32;
             if s.fired {
                 let (pan, gain) = ear.place(s.from);
-                out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain, delay });
+                // A turret's shot (no soldier) sits under the ones the
+                // player orders, or a kill zone is a wall of cracks (design
+                // review of #96).
+                let own = if s.by.is_some() { 1.0 } else { TURRET };
+                out.push(SoundCmd::Grain { kind: GrainKind::Crack, pan, gain: 0.4 * gain * own, delay });
                 self.stats.voiced += 1;
+                // A bullet in flight (`Rules::bullet_speed`) whizzes past
+                // halfway, where and when it is halfway.
+                if g.rules.bullet_speed > 0.0 && zips < ZIPS_VOICED {
+                    let end = s.hit.unwrap_or(s.to);
+                    let mid = ((s.from.0 + end.0) * 0.5, (s.from.1 + end.1) * 0.5);
+                    let half = (end.0 - s.from.0).hypot(end.1 - s.from.1) * 0.5 / (g.rules.bullet_speed * g.world.scale()).max(1.0);
+                    let (pan, gain) = ear.place(mid);
+                    out.push(SoundCmd::Grain { kind: GrainKind::Zip, pan, gain: 0.22 * gain * own, delay: delay + half });
+                    zips += 1;
+                    self.stats.zips += 1;
+                }
             }
             if let Some(h) = s.hit {
                 let w = kill_weight(s.killed, self.full);
@@ -455,6 +518,7 @@ impl WorldListener {
         }
         self.ended = g.end.is_some();
         self.body(g, ear, dt, killed, &mut out);
+        self.news(g, ear, &mut out);
         self.ticks = ticks;
         out
     }
@@ -532,7 +596,196 @@ impl WorldListener {
         let breath = BREATH * (1.0 - 0.4 * hunger + 1.4 * self.flinch);
         let rough = (0.15 + 0.7 * hunger + 0.3 * self.flinch).min(1.0);
         let (pan, _) = ear.place(g.core);
-        out.push(SoundCmd::Body { level, pitch, breath, rough, bright: eating, pan });
+        out.push(SoundCmd::Body { slot: 0, level, pitch, breath, rough, bright: eating, pan: pan * 0.5 });
+    }
+}
+
+/// A turret's shot against one the player ordered.
+const TURRET: f32 = 0.5;
+/// Bullets heard whizzing past a drawn frame.
+const ZIPS_VOICED: usize = 4;
+/// A piece's least walkers, as a share of the mould at the start: 100 of
+/// shape C's 25,000. The first cut was the designer's 200 of 5,000 (4%),
+/// which made the Fork's 220-walker cut-off part (the panic films' ring)
+/// too small to be a piece at C's density: no tear, no voice. The panic
+/// films' parts that matter run 160-250 walkers (a 163-walker one killed
+/// four soldiers), so the floor sits under them.
+const PIECE_MIN: f32 = 0.004;
+/// A group of this share of all the walkers or more is part of the body,
+/// not a piece: about 2,000 of the Fork's 20,000-25,000, whose mould
+/// lies in two or three parts of 8,000 apart at this grid's square.
+const PIECE_SHARE: f32 = 0.1;
+/// Walkers on a square for it to join a group (`pieces::blobs`' floor).
+const LINK: u32 = 2;
+/// A piece's approach toward a soldier, dish cells a second, at which its
+/// lean is heard (the snarl) and at which it is a full charge. The lean
+/// creeps at half a walker's pace (`panic_creep` 0.5 of 15 cells a second)
+/// and the bolt runs at twice it (`panic` 2): 3 is well under the creep,
+/// so the snarl comes as the lean starts, 1-3 s before it lands.
+const TELL_AT: f32 = 3.0;
+const CHARGE_AT: f32 = 20.0;
+/// Seconds between one piece's snarls.
+const TELL_GAP: f32 = 4.0;
+
+/// The mould grid's square for the pieces, fine cells: one dish cell (the
+/// scale), the square `World::walkers_in` asks for (a mine's trigger).
+/// The first cut used twice that, the campaign's `BIN` (4 at scale 2), so
+/// a mission's two askers would share the GPU readout's one packed square;
+/// but two squares side by side span 8 fine cells, so a cut 6 wide (the
+/// staged ring of the panic films, a crater) left the piece joined to the
+/// body on that grid: the Fork's held ring round 220 walkers was never a
+/// piece. At one dish cell a cut over 2 fine cells wide parts them. In a
+/// mission set `WorldListener::piece_bin` to the campaign's square, or
+/// the GPU world reads its grid back on every ask that differs from the
+/// last (`GpuWorld::mould_grid` packs one square).
+fn piece_bin<W: World>(g: &Game<W>) -> usize {
+    (g.world.scale().round() as usize).max(1)
+}
+
+impl WorldListener {
+    /// The kit's blasts (`Kit::bangs`, a mine or a thrown charge), called
+    /// with the whole list each frame: the ones newer than the last call
+    /// are heard at the next `hear`.
+    pub fn bangs(&mut self, bangs: &[Bang]) {
+        for b in bangs.iter().filter(|b| b.tick > self.bang_tick) {
+            self.bangs.push(*b);
+        }
+        if let Some(t) = bangs.iter().map(|b| b.tick).max() {
+            self.bang_tick = self.bang_tick.max(t);
+        }
+    }
+
+    /// **What the cloud plan's C7 added** (2026-11-14): sirens, the kit's
+    /// blasts and the mould's cut-off pieces (`pieces`), each from a count
+    /// the game already has.
+    fn news<W: World>(&mut self, g: &Game<W>, ear: Ear, out: &mut Vec<SoundCmd>) {
+        // A siren's call: the wail where the siren that called stands.
+        if g.sirens > self.sirens {
+            let at = g.buildings.iter().find(|b| b.alive && b.working && matches!(b.kind, Kind::Siren)).map_or(g.larder, |b| b.at);
+            let (pan, _) = ear.place(at);
+            out.push(SoundCmd::Alert { kind: AlertKind::Siren, weight: 1.0, pan });
+            self.stats.sirens += g.sirens - self.sirens;
+        }
+        self.sirens = g.sirens;
+        // A blast: a low thud and an impact weighted by its kills, and its
+        // debris.
+        for b in std::mem::take(&mut self.bangs) {
+            let (pan, gain) = ear.place(b.at);
+            let gain = gain.max(0.5);
+            let w = kill_weight(b.killed as u32, self.full);
+            out.push(SoundCmd::Grain { kind: GrainKind::Thud, pan, gain: 0.8 * gain, delay: 0.0 });
+            out.push(SoundCmd::Impact { weight: w.max(0.5), pan, gain: (0.4 + 0.3 * w) * gain, delay: 0.02 });
+            out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 120.0, secs: 0.25, pan, spread: 0.3, gain: 0.3 * gain });
+            self.stats.blasts += 1;
+        }
+        // The pieces, from the mould grid, and only when it is new: the
+        // GPU world's is summed once a game second (`GRID_EVERY`), and a
+        // piece's rates over a frame of an old grid would read 0 then jump.
+        // Between grids the last voices and texture are held.
+        if g.end.is_some() {
+            self.held.clear();
+            for slot in 1..4 {
+                out.push(SoundCmd::Body { slot, level: 0.0, pitch: PITCH * 1.5, breath: BREATH * 2.0, rough: 0.3, bright: 0.0, pan: 0.0 });
+            }
+            return;
+        }
+        let ticks = g.world.ticks();
+        let bin = self.piece_bin.max(1);
+        if bin != self.pieces_bin {
+            self.pieces = Pieces::new(bin, g.world.scale());
+            self.pieces_bin = bin;
+            self.last_grid.clear();
+        }
+        // Asked at most four times a game second: the CPU world sums its
+        // grid on each ask (a pass over every fine cell) and the GPU
+        // world's copies a packed one, so asking every drawn frame cost
+        // 15-18 us a frame on llvmpipe against the listener's 3 us before.
+        let every = (g.rules.tps as u64 / 4).max(1);
+        let grid = if ticks >= self.ask_tick + every {
+            self.ask_tick = ticks;
+            g.world.mould_grid(bin)
+        } else {
+            None
+        };
+        let Some(grid) = grid.filter(|grid| *grid != self.last_grid) else {
+            out.extend_from_slice(&self.held);
+            return;
+        };
+        let secs = (ticks - self.piece_tick) as f32 / g.rules.tps.max(1) as f32;
+        self.piece_tick = ticks;
+        let held_from = out.len();
+        let cols = g.world.size().0.div_ceil(bin);
+        let min = ((g.start_mould as f32 * PIECE_MIN) as u32).max(20);
+        let soldiers: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let ev = self.pieces.update(&blobs(&grid, cols, bin, LINK), min, PIECE_SHARE, secs, &soldiers);
+        for at in &ev.torn {
+            let (pan, gain) = ear.place(*at);
+            out.push(SoundCmd::Grain { kind: GrainKind::Tear, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
+            self.stats.torn += 1;
+        }
+        // A scared piece's charge: it breaks up running at a soldier.
+        for at in &ev.scattered {
+            let (pan, gain) = ear.place(*at);
+            out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.5 * gain.max(0.6), delay: 0.0 });
+            self.stats.tells += 1;
+            self.stats.charges += 1;
+        }
+        for &(at, rejoined) in &ev.gone {
+            let (pan, gain) = ear.place(at);
+            if rejoined {
+                out.push(SoundCmd::Grain { kind: GrainKind::Squelch, pan, gain: 0.5 * gain.max(0.5), delay: 0.0 });
+                out.push(SoundCmd::Grain { kind: GrainKind::Squelch, pan, gain: 0.35 * gain.max(0.5), delay: 0.08 });
+                self.stats.rejoined += 1;
+            } else {
+                out.push(SoundCmd::Burst { kind: GrainKind::Wilt, rate: 60.0, secs: 0.4, pan, spread: 0.1, gain: 0.25 * gain.max(0.5) });
+                self.stats.withered += 1;
+            }
+        }
+        // Withering: the walkers the pieces lose a second (shots into a
+        // piece count here too; the kill crackle already marks those).
+        let sc = g.world.scale().max(1.0);
+        let (mut lost, mut lx, mut ly) = (0.0f32, 0.0f32, 0.0f32);
+        let mut voiced = [false; 4];
+        for p in self.pieces.pieces.iter_mut().filter(|p| p.heard()) {
+            lost += p.losing;
+            lx += p.at.0 * p.losing;
+            ly += p.at.1 * p.losing;
+            // The tell: a piece leaning at a soldier snarls as it starts.
+            let approach = p.approach / sc;
+            if approach > TELL_AT && p.since_tell > TELL_GAP {
+                let (pan, gain) = ear.place(p.at);
+                out.push(SoundCmd::Grain { kind: GrainKind::Snarl, pan, gain: 0.45 * gain.max(0.6), delay: 0.0 });
+                p.since_tell = 0.0;
+                self.stats.tells += 1;
+            }
+            if p.slot == 0 || !self.voice {
+                continue;
+            }
+            voiced[p.slot as usize] = true;
+            // Its own voice: fainter and higher than the body's, strained
+            // as it withers, quick and rising as it charges.
+            let charge = (approach / CHARGE_AT).clamp(0.0, 1.0);
+            let wither = (-p.change / 0.05).clamp(0.0, 1.0);
+            let level = 0.6 * 0.18 * ((1.0 + p.walkers as f32 / 100.0).log10() / 51f32.log10()).clamp(0.0, 1.4) * (1.0 + 0.6 * charge);
+            let pitch = PITCH * (1.5 + 0.12 * p.slot as f32) * (1.0 - 0.15 * wither + 0.5 * charge);
+            let breath = BREATH * 2.0 * (1.0 - 0.3 * wither + 3.0 * charge);
+            let rough = (0.25 + 0.65 * wither + 0.3 * charge).min(1.0);
+            let (pan, _) = ear.place(p.at);
+            out.push(SoundCmd::Body { slot: p.slot, level, pitch, breath, rough, bright: 0.0, pan });
+        }
+        for (slot, v) in voiced.iter().enumerate().skip(1) {
+            if !v {
+                out.push(SoundCmd::Body { slot: slot as u8, level: 0.0, pitch: PITCH * 1.5, breath: BREATH * 2.0, rough: 0.3, bright: 0.0, pan: 0.0 });
+            }
+        }
+        let at = if lost > 0.0 { (lx / lost, ly / lost) } else { ear.centre };
+        let (pan, gain) = ear.place(at);
+        let (rate, level) = density(lost, 1.0, 40.0, 0.18);
+        out.push(SoundCmd::Texture { kind: TextureKind::Wither, rate, level: level * gain.max(0.5), pan, spread: 0.2 });
+        self.stats.pieces = self.pieces.pieces.iter().filter(|p| p.heard()).count() as u32;
+        self.stats.withering = lost;
+        self.held = out[held_from..].iter().filter(|c| matches!(c, SoundCmd::Body { .. } | SoundCmd::Texture { .. })).copied().collect();
+        self.last_grid = grid;
     }
 }
 
@@ -635,6 +888,49 @@ mod tests {
         g.mould = 50;
         let small_body = body(&l.hear(&g, ear, 1.0 / 60.0, false));
         assert!(small_body < on * 0.5, "a small mould is quieter: {small_body} vs {on}");
+    }
+
+    /// Cloud plan C7: a fired bullet in flight whizzes past halfway, later
+    /// than its crack; a turret's sits under a soldier's.
+    #[test]
+    fn a_bullet_in_flight_zips_after_its_crack() {
+        let g = small(1);
+        assert!(g.rules.bullet_speed > 0.0);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let shot = Shot { from: (10.0, 10.0), to: (90.0, 10.0), hit: Some((80.0, 10.0)), killed: 0, by: Some(0), fired: true };
+        let zip = |cmds: Vec<SoundCmd>| cmds.into_iter().find_map(|c| match c {
+            SoundCmd::Grain { kind: GrainKind::Zip, gain, delay, .. } => Some((gain, delay)),
+            _ => None,
+        });
+        l.shots(&[shot]);
+        let (own, delay) = zip(l.hear(&g, ear, 1.0 / 60.0, false)).expect("a zip");
+        let flight = 35.0 / (g.rules.bullet_speed * g.world.scale());
+        assert!((delay - flight).abs() < 1e-4, "halfway at {delay} s, flight half {flight}");
+        l.shots(&[Shot { by: None, ..shot }]);
+        let (turret, _) = zip(l.hear(&g, ear, 1.0 / 60.0, false)).unwrap();
+        assert!(turret < own, "turret {turret} vs soldier {own}");
+        assert_eq!(l.stats.zips, 2);
+    }
+
+    /// A siren's call wails once per call, and a kit blast is heard once.
+    #[test]
+    fn a_siren_wails_and_a_blast_booms_once() {
+        let mut g = small(1);
+        let mut l = WorldListener::new(&g);
+        let ear = whole(&g);
+        let sirens = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Alert { kind: AlertKind::Siren, .. })).count();
+        let thuds = |c: &[SoundCmd]| c.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Thud, .. })).count();
+        assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 0);
+        g.sirens += 1;
+        assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
+        assert_eq!(sirens(&l.hear(&g, ear, 1.0 / 60.0, false)), 0, "once per call");
+        let bang = Bang { at: (40.0, 40.0), r: 6.0, tick: 5, killed: 30 };
+        l.bangs(&[bang]);
+        assert_eq!(thuds(&l.hear(&g, ear, 1.0 / 60.0, false)), 1);
+        l.bangs(&[bang]);
+        assert_eq!(thuds(&l.hear(&g, ear, 1.0 / 60.0, false)), 0, "the same blast again is not new");
+        assert_eq!((l.stats.sirens, l.stats.blasts), (1, 1));
     }
 
     #[test]

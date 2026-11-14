@@ -1,0 +1,114 @@
+<title>Larder World Art Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column of findings, each a frame from the game beside its note; dark like the game's own HUD. */
+:root {
+  color-scheme: dark;
+  --bg: #0f1318; --panel: #181d24; --line: #2a313b;
+  --fg: #ecf0f4; --muted: #929ca8; --slime: #e2a64a; --energy: #80e0ff; --bad: #f26262;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, sans-serif;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1 { font-family: var(--display); font-size: 2.1rem; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-size: 1.25rem; margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.rule { border-left: 3px solid var(--slime); padding-left: 14px; font-family: var(--display); font-size: 1.15rem; }
+.finding { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start;
+  border-top: 1px solid var(--line); padding-top: 24px; }
+.finding img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; }
+.cap { font-size: 0.82rem; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.n { color: var(--slime); font-family: var(--display); font-weight: 700; margin-right: 6px; }
+.owner { color: var(--energy); font-size: 0.9rem; margin-top: 8px; }
+ul { margin: 6px 0 0; padding-left: 18px; }
+li { margin: 3px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+td, th { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+.tbl { overflow-x: auto; }
+@media (max-width: 700px) { .finding { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Larder World art review</h1>
+    <p class="lede">Main at 7df2182, 14 Nov. The window's own picture made without a window on software Vulkan: Fork map, seed 1, shape C, 1280 × 800. Ten issues, worst first, and the thread that has each.</p>
+    <p class="rule">The look we're aiming for: living light on dark ground. The slime is the brightest, sharpest, most alive thing on screen, and every glow shows something the simulation did.</p>
+  </header>
+
+  <section class="finding">
+    <div><img src="6-volley-z12.gif" alt="Three seconds of the squad firing shrapnel rounds into the slime at zoom 12"><div class="cap">Zoom 12, 0:23-0:26, volley hand, shrapnel rounds. 9 soldiers, 2,374 walkers killed by 0:25.</div></div>
+    <div><h2><span class="n">1</span>The slime is out of focus</h2>
+      <p>At zoom 6 and closer the slime looks like a blurred photo, because its thickness is averaged over 5 × 5 cells and its lighting is sampled 1.5 cells apart. It's the subject of the game, so this matters most.</p>
+      <p class="owner">"The slime looks very blurry/out of focus."</p>
+      <p class="cap">Slime sharpness thread</p></div>
+  </section>
+
+  <section class="finding">
+    <div><img src="5-walls-slime-z12-zoomed.jpg" alt="Close crop of rock ridges with stair-stepped edges and blurred slime"><div class="cap">Zoom 12, cropped and enlarged 2× with no smoothing.</div></div>
+    <div><h2><span class="n">2</span>Every hard shape has stair-step edges</h2>
+      <p>Rock ridges, walls and crystal faces are drawn from the cell grid, so their edges step every 6 to 12 pixels and carry a black shadow band one cell wide. Crystals that touch rock get cut into odd shapes.</p>
+      <p class="owner">"The crystals are pixelated."</p>
+      <p class="cap">Crisp crystals thread, now covering all terrain edges</p></div>
+  </section>
+
+  <section class="finding">
+    <div><img src="1-overview-z1.jpg" alt="The whole Fork map at 1:10 with ochre slime over olive ground"><div class="cap">Whole map at 1:10, rush hand. Mould 32,398 walkers; squad lost.</div></div>
+    <div><h2><span class="n">3</span>The slime reads as sand, not a creature</h2>
+      <p>Its ochre is close in brightness to the olive ground, and a fine mottled grain covers everything. There are no veins and no wet film, and you can't tell which way it's flowing.</p>
+      <h2 style="margin-top:14px"><span class="n">7</span>The ground is flat</h2>
+      <p>Open agar is one dark olive. The engine's tints show up as flat coloured discs that look like UI, such as the blue disc at top left and the orange one at the bottom crystal.</p>
+      <p class="cap">3: slime thread. 7: terrain, after issue 2.</p></div>
+  </section>
+
+  <section class="finding">
+    <div><img src="2-fight-z12.jpg" alt="Zoom 12: two soldier figures visible although nine are selected"><div class="cap">Zoom 12: 9 soldiers selected, 2 figures on screen.</div></div>
+    <div><h2><span class="n">5</span>You can't count your squad</h2>
+      <ul>
+        <li>Soldiers stack exactly on top of each other.</li>
+        <li>At zoom 6 a soldier is a 20-pixel olive disc on ochre, mostly hidden by a heavy yellow ring.</li>
+        <li>Health bars are 7 × 1 pixels.</li>
+        <li>The larder is a plain beige square.</li>
+        <li>A dead soldier still looks alive.</li>
+      </ul>
+      <h2 style="margin-top:14px"><span class="n">4</span>Shots barely show</h2>
+      <p>A tracer is a 1-pixel dotted line, and a hit leaves a soft dark smudge that closes in under a second.</p>
+      <p class="cap">5: a new units and buildings thread. 4: gun rounds thread (PR #219, bullets as lights on the slime).</p></div>
+  </section>
+
+  <section class="finding">
+    <div><img src="3-fight-z6.jpg" alt="Zoom 6 with the bottom HUD bar covering the larder"><div class="cap">Zoom 6, 0:24. The bar is 160 of 800 pixels high, and the larder is under it.</div></div>
+    <div><h2><span class="n">6</span>The HUD hides the fight</h2>
+      <p>The bottom bar stays full height even when it only says "Nothing selected", and the camera opens with the squad underneath it.</p>
+      <p class="cap">Gun card HUD thread, once its card panel lands</p></div>
+  </section>
+
+  <section class="finding">
+    <div><img src="4-menu-z6.jpg" alt="Start menu over the sandbox"><div class="cap">The start menu at 0:03.</div></div>
+    <div><h2><span class="n">8–10</span>Explosions, gas, menu, editor</h2>
+      <ul>
+        <li>8. Explosions: the explosion cards thread has a blast that throws live slime outward. Gas becomes a drifting cloud in the gun rounds thread.</li>
+        <li>9. The start menu is clean. Its background has the same faults as issues 1 and 2.</li>
+        <li>10. The map editor isn't on main yet (#209). I'll review it when it merges.</li>
+      </ul></div>
+  </section>
+
+  <section style="display:grid;gap:10px;border-top:1px solid var(--line);padding-top:24px">
+    <h2>Who has what</h2>
+    <div class="tbl"><table>
+      <tr><th>Thread</th><th>Issues</th></tr>
+      <tr><td>Slime sharpness</td><td>1, 3</td></tr>
+      <tr><td>Crisp crystals</td><td>2 (crystals, rock, walls, rubble), then 7</td></tr>
+      <tr><td>Gun rounds</td><td>4 and the gas cloud</td></tr>
+      <tr><td>Explosion cards</td><td>8 (blasts)</td></tr>
+      <tr><td>Gun card HUD</td><td>The card panel, then 6</td></tr>
+      <tr><td>New: units and buildings</td><td>5</td></tr>
+    </table></div>
+    <p class="cap">The style guide is in the repo at wiki/looks/art-direction.md.</p>
+  </section>
+</div>
