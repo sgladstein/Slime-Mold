@@ -41,8 +41,13 @@ impl App {
                 g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&round))));
                 format!("Squad {} round", q + 1)
             }
-            _ => {
+            (_, g) => {
                 self.rounds = Rounds::new(round.clone(), RoundRules::default());
+                // Squad 0 may hold rolled bullets of its own (Ctrl+H):
+                // back to the army's round.
+                if let Some(g) = g {
+                    g.apply(Cmd::Load(0, None));
+                }
                 "Round".to_string()
             }
         };
@@ -69,6 +74,29 @@ impl App {
         let gun = Gun::roll_kind(kind, self.args.seed.wrapping_mul(1_000_003) ^ n as u64, self.planet_depth);
         g.apply(Cmd::Arm(q as u8, Some(gun)));
         let what = format!("Gun: {}, {}", draw::capital(&gun.title()), gun.line());
+        self.hud.alert(&what, None, theme::ACCENT);
+    }
+
+    /// Test bullets for the controlled squad (squad 0 in the RTS round):
+    /// Ctrl+H rolls bullets for this planet's depth (`Ammo::roll`) and
+    /// loads as many as the squad's gun takes in budget and slots
+    /// (`rounds::fit_gun`), a new load each press, so a playtest sees the
+    /// sets and how far their rolls stray. Goes through `Cmd::Load`, so
+    /// the replay keeps it.
+    pub(super) fn next_bullets(&mut self) {
+        if self.args.run.is_some() {
+            self.hud.alert("In a run the gun holds the bullets you bought: change them in the shop between planets", None, theme::WARN);
+            return;
+        }
+        let Some(g) = self.game.as_mut() else { return };
+        let q = g.active.unwrap_or(0);
+        let gun = g.gun(q);
+        let n = self.ammo_rolls;
+        self.ammo_rolls += 1;
+        let cards = bullet_load(&gun, self.args.seed, n, self.planet_depth);
+        g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&cards))));
+        let names: Vec<String> = cards.iter().map(|c| c.title()).collect();
+        let what = format!("Bullets: {} (cost {} of {})", names.join(", "), rounds::cost(&cards), gun.budget);
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
@@ -409,6 +437,7 @@ impl App {
                 }
             }
             KeyCode::KeyH if self.shift => self.next_gun(),
+            KeyCode::KeyH if self.ctrl => self.next_bullets(),
             KeyCode::KeyH => self.next_round(),
             KeyCode::KeyM => {
                 if let Some(v) = self.view.as_mut() {
@@ -437,4 +466,26 @@ impl App {
             _ => {}
         }
     }
+}
+
+/// Load `n` of test bullets for `gun` (Ctrl+H, `ammo=N`): bullets rolled
+/// for `depth` (`Ammo::roll`), each kept while the gun's budget and slots
+/// take it (`rounds::fit_gun`); a plain bullet if none fits.
+pub(super) fn bullet_load(gun: &Gun, seed: u64, n: u32, depth: u32) -> Vec<rounds::Card> {
+    let base = seed.wrapping_mul(1_000_033) ^ ((n as u64) << 8);
+    let mut cards: Vec<rounds::Card> = Vec::new();
+    for j in 0..(4 * gun.slots as u64) {
+        let mut more = cards.clone();
+        more.push(rounds::Card::Ammo(rounds::Ammo::roll(base + j, depth)));
+        if rounds::fit_gun(more.clone(), gun).is_ok() {
+            cards = more;
+        }
+        if cards.len() >= gun.slots as usize {
+            break;
+        }
+    }
+    if cards.is_empty() {
+        cards.push(rounds::Card::Plain);
+    }
+    cards
 }

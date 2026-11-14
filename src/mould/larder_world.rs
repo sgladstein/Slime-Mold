@@ -196,6 +196,9 @@ pub struct Bullet {
     /// fired (`Soldier::next`). Every slime hit casts it (`rounds`), so a
     /// piercing bullet casts at each strike.
     pub cast: u8,
+    /// Its speed, times `Rules::bullet_speed` (its bullet card's,
+    /// `bullets::Ammo::speed`; 1 for a turret's).
+    pub speed: f32,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -211,9 +214,12 @@ pub struct BulletMods {
     /// Copies of the `Rate` card: each fires every soldier's gun
     /// `Rules::rate_card` more times as often (`Game::shot_gap`).
     pub rate: u8,
-    /// Casts in the round (its payloads, `rounds::casts`): each shot
+    /// Casts in the round (its bullets, `rounds::casts`): each shot
     /// carries the next of them in turn (`Soldier::next`).
     pub casts: u8,
+    /// Each cast's bullet (`bullets::Ammo`), the first `casts` of them:
+    /// the shot's damage (its strike), speed, range and spread.
+    pub ammo: [super::bullets::Ammo; super::rounds::MAX_SLOTS],
 }
 
 pub struct Game<W: World> {

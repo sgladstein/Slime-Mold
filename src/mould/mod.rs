@@ -59,6 +59,7 @@
 pub mod big;
 pub mod campaign;
 pub mod fever;
+pub mod bullets;
 pub mod guns;
 pub mod larder;
 pub mod larder_ai;
