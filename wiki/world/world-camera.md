@@ -10,6 +10,7 @@ sources:
   - Reports/shot-damage-2026-11-12.md
   - Reports/soldier-controls-2026-11-12.md
   - Reports/start-menu-2026-11-14/README.md
+  - Reports/units-read-2026-11-14/README.md
   - Reports/world-camera-2026-11-11.md
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
@@ -21,6 +22,8 @@ code:
   - Cmd::Rally
   - Controls::button
   - Engine::set_hits
+  - Game::elbow_room
+  - Game::overrun_share
   - Game::seek
   - Hud::aim
   - Hud::draw
@@ -29,7 +32,9 @@ code:
   - MAX_MARKS
   - MAX_ZOOM
   - Marks::building
+  - Marks::health
   - Marks::label
+  - Marks::selected
   - Marks::soldier
   - Order::Fight
   - SPRITES
@@ -100,7 +105,11 @@ shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
 empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
-crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Buildings (turret, lure, pump, outpost) are sprites in the same style (`Marks::building`): they rise as they are built, darken as they are hurt and light their lamp only while working ([world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
+crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Since 11-14 every soldier can be counted at zoom 6
+(elbow room `Rules::elbow`, outlined figures, `Marks::selected`, hurt-only
+`Marks::health`, a dead pose), and buildings and the larder show their
+state in the sprite (`Marks::building`, `Game::overrun_share`)
+([units read](../../Reports/units-read-2026-11-14/README.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines
 as lines.
