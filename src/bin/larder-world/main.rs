@@ -588,10 +588,12 @@ impl App {
         self.save_replay();
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
-        let mut s = if a.own { garden_settings(a.seed, a.scale, a.walkers) } else { race_settings(a.seed, a.scale, a.walkers) };
-        if a.own && (a.mission.is_some() || a.map.is_some()) {
-            return Err("own=1 plays on the race world: give map=noise and no mission".into());
-        }
+        // own=1 on the noise world is the gardeners' race world; on a map,
+        // or a mission with `own` (mission 8), the garden goes on the map
+        // (`GpuWorld::garden_on_map`), which sets its own species keys over
+        // the race settings and the tier's.
+        let on_map = a.mission.is_some() || a.map.is_some();
+        let mut s = if a.own && !on_map { garden_settings(a.seed, a.scale, a.walkers) } else { race_settings(a.seed, a.scale, a.walkers) };
         // The tier whose core the game plays (`Tier::core`, read by
         // `Game::with_tier`): the mission's, or a `tier=` key's (the last).
         let mut core_tier = None;
@@ -621,10 +623,11 @@ impl App {
                 core_tier = Tier::from_name(v);
             }
         }
-        let walkers = s.walkers;
+        let mut walkers = s.walkers;
+        let own = a.own || mission.as_ref().is_some_and(|m| m.own);
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
-            None if a.own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
+            None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
@@ -632,7 +635,13 @@ impl App {
                     None => (dir, name.clone()),
                 };
                 let m = Map::load(&dir, &name)?;
-                GpuWorld::with_map(device, queue, s, a.scale, &m)
+                if own {
+                    // `walkers=` a side, as on the noise world.
+                    walkers = 2 * slime_mould::mould::own_mould::garden_map_on(&m, a.walkers)?.1;
+                    GpuWorld::garden_on_map(device, queue, s, a.scale, &m, a.walkers)?
+                } else {
+                    GpuWorld::with_map(device, queue, s, a.scale, &m)
+                }
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };

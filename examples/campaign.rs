@@ -27,6 +27,7 @@ use slime_mould::mould::campaign::{self, decided_at, Goal, Mission, Tracker, BIN
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
+use slime_mould::mould::own_mould::{self, Task};
 use slime_mould::mould::plans;
 use slime_mould::mould::tiers::{self, Tier};
 use std::path::Path;
@@ -222,6 +223,12 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, keys: &[(String, String)], s
             for (k, v) in keys {
                 tiers::set_key(&mut p, k, v).unwrap();
             }
+            if m.own {
+                // The player's own mould (mission 8): `walkers` a side.
+                let mut world = own_mould::garden_on_map(p, map, walkers).unwrap();
+                world.dish.threads = 1;
+                return play_on(Game::new(world, rules, seed), m, seed, hand, false);
+            }
             let mut world = BigDish::with_map(p, map);
             world.threads = 1;
             play_on(Game::new(world, rules, seed), m, seed, hand, false)
@@ -232,7 +239,8 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, keys: &[(String, String)], s
                 t.settings(&mut s).unwrap();
             }
             assert!(keys.is_empty(), "keys= is CPU only");
-            play_on(Game::new(GpuWorld::with_map(device, queue, s, scale, map), rules, seed), m, seed, hand, true)
+            let world = if m.own { GpuWorld::garden_on_map(device, queue, s, scale, map, walkers).unwrap() } else { GpuWorld::with_map(device, queue, s, scale, map) };
+            play_on(Game::new(world, rules, seed), m, seed, hand, true)
         }
     }
 }
@@ -275,6 +283,11 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
             g.step();
         }
         let grid = g.world.mould_grid(BIN);
+        // `CAMPAIGN_TRACE=1`: each side's walkers, the bank and the
+        // buildings every 30 s (mission 8: who is winning, and how).
+        if std::env::var_os("CAMPAIGN_TRACE").is_some() && (g.time() as u64).is_multiple_of(30) {
+            eprintln!("    {hand} s{seed} t {:.0}: own {} enemy {} soldiers {} bank {:.0} killed {} buildings {}", g.time(), g.world.own_living(), g.mould, g.alive(), g.bank, g.killed, g.buildings.iter().filter(|b| b.alive).count());
+        }
         if let Some(gr) = grid.as_deref() {
             let gw = g.world.size().0.div_ceil(BIN);
             for (c, ((x, y), _)) in g.world.crystals().into_iter().enumerate().take(64) {
@@ -384,5 +397,12 @@ fn random_hand<W: World>(g: &mut Game<W>) {
     g.apply(Cmd::Stance(k, stance));
     if g.rng.below(4) == 0 {
         g.apply(Cmd::Buy);
+    }
+    // With a mould of the player's own (mission 8), a random gardener's
+    // task too, as `examples/garden.rs`'s random hand (drawn only there, so
+    // the other missions' random rounds are unchanged).
+    if g.world.own_living() > 0 {
+        let t = [Task::None, Task::Road, Task::Feed, Task::Cut][g.rng.below(4) as usize];
+        g.world.set_task(k, t);
     }
 }
