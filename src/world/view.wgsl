@@ -354,7 +354,7 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
-const GEM_STUB: f32 = 0.15;
+const GEM_STUB: f32 = 0.1;
 // The most a mould film on a crystal covers it (`shaded`): a thick mat
 // still lets a fifth of the faces and glow through, so it reads as a
 // crystal under mould.
@@ -829,15 +829,29 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
             let depth = clamp(gi.x / a, 0.0, 1.0);
+            // Spent, it is worn stone (art director, 11-14: a dry crystal
+            // "reads like a UI block"): darker than the rock round it, matte,
+            // and stepped in three hexagonal terraces from its depth field,
+            // each step's riser (two pixels) tilted out so the light catches
+            // one side and shades the other, as a worn step pyramid. The
+            // steps come in as the charge goes, so a live crystal is clean
+            // glass. Before: a flat (84,88,92) grey, steps tried as dark
+            // seams alone read as a target.
+            let spent = 1.0 - v;
+            let tf = fract(depth * 3.0 + 0.5);
+            let tw = 2.0 * 3.0 / max(a * P.zoom, 1.0);
+            let riser = (1.0 - smoothstep(0.0, tw, min(tf, 1.0 - tf) * 2.0)) * spent;
             // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
-            // slope is 9 tall(v) / a along the distance's gradient.
-            let s = 9.0 * gem_tall(v) / a;
+            // slope is 9 tall(v) / a along the distance's gradient; a riser
+            // adds a steep outward tilt.
+            let s = 9.0 * gem_tall(v) / a + 2.2 * riser;
             let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            // Charged, it is glassy cyan lit from inside; spent, matte grey
-            // rock (the only cyan in the world is charge).
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
-            var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
+            // Charged, it is glassy cyan lit from inside; spent, matte stone
+            // (the only cyan in the world is charge).
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
+            let worn = 0.6 + 0.3 * depth;
+            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(30.0, 120.0, 140.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
