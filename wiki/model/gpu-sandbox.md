@@ -9,8 +9,8 @@ sources:
   - Reports/gpu-sandbox-2026-11-11.md
   - Reports/jenson-looks-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
-  - Reports/pc-batch-1070-2026-11-14.md
   - Reports/outside-rules-2026-11-11.md
+  - Reports/pc-batch-1070-2026-11-14.md
   - Reports/species-gpu-2026-11-11.md
 code:
   - BigParams::graze_weight
