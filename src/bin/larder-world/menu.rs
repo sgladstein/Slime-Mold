@@ -126,6 +126,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Q", "Build page: turret, lure, pump, outpost, siren"),
         ("E", "Tools page: blast, det cord, mine"),
         ("H", "Next round loadout"),
+        ("Shift+H", "Roll a test gun for the squad (rifle, carbine, long gun, scattergun in turn)"),
         ("P", "Pause"),
         ("Tab", "Four times faster, or back"),
         ("N", "Next map"),
