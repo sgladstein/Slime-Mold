@@ -190,6 +190,8 @@ const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
+// The mould's gold (`draw`'s (255, 190, 90) over agar) as a hue at 240.
+const MOULD_HUE: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2);
 
 // The mould's thickness as drawn: the trail's brightness (the look's byte
 // 0) times how many living walkers are near (byte 1 summed over the 5 x 5
@@ -495,7 +497,18 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     // look carries it at full strength wherever there is mould, by the
     // thickness, so a thin film reads as slime, not as dim ground.
     let tint = max(c - AGAR_RGB, vec3<f32>(0.0));
-    var hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
+    let tmax = max(tint.x, max(tint.y, tint.z));
+    var hue = tint / max(tmax, 1.0) * 240.0;
+    // Where walkers stand on little or no trail, the engine's colour has
+    // next to no mould in it, and the line above blew that near-nothing
+    // up to full strength: zero went black, a faint reddish ground tint
+    // pure red. The owner (11-14 08:30Z, "Are these blackish spots in the
+    // middle of the mold intentional?") saw black blobs with red rims in a
+    // thick body: crater and scorch cells, whose trail is wiped while the
+    // walkers stay (`look_trail` 0, `tm` from the walkers alone). There the
+    // hue is the mould's own gold (the engine's `draw` gold over agar),
+    // taking the engine's hue as its colour carries mould.
+    hue = mix(MOULD_HUE, hue, smoothstep(6.0, 40.0, tmax));
     // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
