@@ -19,18 +19,27 @@
 //! window plays it with the mission tracker and its end screen; nothing in
 //! `larder_world` changes for a run.
 //!
-//! **Gun cards** are today's `rounds` cards by name, joined into a loadout
-//! (`Run::gun`). The gun thread is reworking guns into a card budget; when
-//! that lands the shop sells its cards instead (asked 15:24Z).
+//! **Guns and cards.** A gun is the gun thread's `guns::Gun` (owner,
+//! 16:46Z: "The squad owns the gun"; its budget and slots are what its
+//! cards may cost and hold). The run owns guns in an armory and carries
+//! one (`Run::carried`), which every soldier lands with: they all start in
+//! squad 0 and a split carries it on. Each shop sells `GUN_OFFER` guns
+//! rolled for the coming planet (`Gun::roll(seed, depth)`), so deeper
+//! shops sell bigger budgets. Cards are the rounds' cards, bought into a
+//! bag and put into the carried gun up to its budget and slots
+//! (`rounds::fit_gun`). Before the guns (#283) the run had one gun whose
+//! budget grew with a "Bigger gun" upgrade (5, +2 a level); a rolled gun
+//! replaces it.
 //!
 //! Rules-free and window-free, like the HUD: the window turns `Run::shop`
 //! rows into the start menu's shop page and a pick back into `Run::pick`.
 
 use super::campaign::{Bonus, Goal, Mission};
+use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
 use super::larder_world::Rules;
 use super::levelgen::{self, Planet};
-use super::map::Map;
+use super::map::{Map, MAP_H, MAP_W};
 use super::rounds::{self, Card, Kind};
 use super::tiers::Tier;
 
@@ -85,7 +94,8 @@ pub struct Level {
 /// 2026-11-14: the owner's guess is 20 minutes to over an hour a run.
 pub const PLANETS: u32 = 8;
 
-/// Walkers grow this much a planet (a fifth more each).
+/// Walkers grow this much a planet (a fifth more each), times the
+/// planet's area over today's map (`MAP_W` x `MAP_H`).
 pub const WALKERS_PER_DEPTH: f32 = 0.2;
 
 /// The goal: the slime down to this share of its peak. Gentler early
@@ -105,7 +115,10 @@ pub enum Group {
     Squad,
     Build,
     Tools,
-    Gun,
+    /// Guns owned and for sale.
+    Guns,
+    /// Gun cards: in the gun, in the bag, for sale, and more on offer.
+    Cards,
     Dev,
 }
 
@@ -115,7 +128,8 @@ impl Group {
             Group::Squad => "Squad",
             Group::Build => "Buildings",
             Group::Tools => "Tools",
-            Group::Gun => "Gun",
+            Group::Guns => "Guns",
+            Group::Cards => "Cards",
             Group::Dev => "Dev mode",
         }
     }
@@ -138,7 +152,7 @@ pub struct Item {
 
 /// Everything the shop sells but cards. Unlock keys (`max` 1) are what
 /// `Run::has` answers for the window's command card.
-pub const ITEMS: [Item; 21] = [
+pub const ITEMS: [Item; 20] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -158,17 +172,28 @@ pub const ITEMS: [Item; 21] = [
     Item { key: "cord", name: "Det cord", group: Group::Tools, about: "Unlocks det cord, a line of blasts", max: 1, cost: 200, needs: None },
     Item { key: "gas", name: "Sleep gas", group: Group::Tools, about: "Unlocks sleep gas", max: 1, cost: 200, needs: None },
     Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
-    Item { key: "budget", name: "Bigger gun", group: Group::Gun, about: "2 more card budget in the gun (still at most 4 cards)", max: 3, cost: 150, needs: None },
-    Item { key: "draw", name: "More cards on offer", group: Group::Gun, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
+    Item { key: "draw", name: "More cards on offer", group: Group::Cards, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
 ];
 
 /// What the run owns at the start: walls (the plainest defence).
 pub const START: [&str; 1] = ["walls"];
-/// The gun's card budget at the start (`rounds::fit`; the gun thread's
-/// cards cost 1-4, so 5 holds a payload and a tweak). Free play's gun
-/// has `RoundRules::budget` (10); `budget` upgrades reach 11.
-pub const START_BUDGET: u32 = 5;
-pub const BUDGET_STEP: u32 = 2;
+/// The gun the run starts with: the average rifle (free play's gun,
+/// budget 10 and 4 slots). The first build started on a budget of 5 that
+/// "Bigger gun" raised; with rolled guns the budget grows by buying one.
+pub fn first_gun() -> Gun {
+    GunKind::Rifle.average_at(1)
+}
+
+/// Guns for sale in each shop.
+pub const GUN_OFFER: usize = 2;
+
+/// A gun's price: dearer the deeper it was found and the better it rolled
+/// (`Gun::grade`, 1 average, squared so a lucky roll costs what it gives),
+/// in tens.
+pub fn gun_price(g: &Gun) -> u32 {
+    let p = (80.0 + 40.0 * g.depth as f32) * g.grade.max(0.5).powi(2);
+    ((p / 10.0).round() as u32).max(1) * 10
+}
 /// Cards on offer in a shop before `draw`.
 pub const OFFER: usize = 3;
 
@@ -196,6 +221,10 @@ pub fn card_cost(power: u8) -> u32 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Row {
     pub group: Group,
+    /// What it shows: the window picks its icon from this.
+    pub face: Face,
+    /// The carried gun, or a card in it.
+    pub on: bool,
     pub name: String,
     pub about: String,
     /// "150", or "" when it can't be bought again.
@@ -207,6 +236,16 @@ pub struct Row {
     pub pick: Pick,
 }
 
+/// What a row is, for its icon and its face on the page.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Face {
+    /// `ITEMS` by key.
+    Item(&'static str),
+    Card(Card),
+    Gun(Gun),
+    Dev,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Pick {
     /// `ITEMS[i]`'s next level.
@@ -215,6 +254,10 @@ pub enum Pick {
     Offer(usize),
     /// Owned card `i`: into the gun or out of it, free.
     Card(usize),
+    /// Gun on offer `i`: bought, into the armory and carried.
+    Gun(usize),
+    /// Owned gun `i` carried instead, free.
+    Carry(usize),
     /// Dev mode (owner, 11-14 15:33Z: "a dev mode to control what level
     /// planet i go to", unlimited money, auto reroll): the next planet one
     /// deeper or shallower.
@@ -238,6 +281,12 @@ pub struct Run {
     pub cards: Vec<(Card, bool)>,
     /// This shop's cards on offer (a bought one is taken off).
     pub offers: Vec<Card>,
+    /// Guns owned (the armory); never empty.
+    pub guns: Vec<Gun>,
+    /// The one carried: `guns[carry]`.
+    pub carry: usize,
+    /// This shop's guns for sale.
+    pub gun_offers: Vec<Gun>,
     /// Stars won on each level so far.
     pub stars: Vec<u8>,
     /// The run is over (a level was lost) at this depth.
@@ -271,7 +320,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false }
     }
 
     /// Levels owned of the item `key` (0 for an unknown key).
@@ -317,7 +366,11 @@ impl Run {
             rules: vec![("drain".into(), Rules::default().drain)],
             own: false,
         };
-        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: 1.0 + WALKERS_PER_DEPTH * (d - 1) as f32, mission }
+        // Walkers scale with the planet's area too (the level-gen thread,
+        // 11-14 17:50Z: the same count covered a third of the smaller
+        // planet 1 by 30 s, and would be a corner of a 6x core world).
+        let area = (planet.size.0 * planet.size.1) as f32 / (MAP_W * MAP_H) as f32;
+        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area, mission }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -347,16 +400,31 @@ impl Run {
         k.germ_price *= f;
     }
 
-    /// The gun's card budget (`rounds::fit`).
+    /// The gun every soldier lands with.
+    pub fn carried(&self) -> Gun {
+        self.guns.get(self.carry).copied().unwrap_or_else(first_gun)
+    }
+
+    /// The carried gun's card budget (`rounds::fit_gun`).
     pub fn budget(&self) -> u32 {
-        START_BUDGET + BUDGET_STEP * u32::from(self.level_of("budget"))
+        self.carried().budget
     }
 
     /// Card `c` would fit in the gun beside what it holds.
     pub fn fits(&self, c: Card) -> bool {
         let mut g = self.gun();
         g.push(c);
-        rounds::fit(g, self.budget()).is_ok()
+        rounds::fit_gun(g, &self.carried()).is_ok()
+    }
+
+    /// The cards in the gun fit it: the last bought come out first.
+    fn refit(&mut self) {
+        while rounds::fit_gun(self.gun(), &self.carried()).is_err() {
+            match self.cards.iter().rposition(|c| c.1) {
+                Some(i) => self.cards[i].1 = false,
+                None => break,
+            }
+        }
     }
 
     /// The gun: the cards in it, flight cards first, then the modifiers and
@@ -392,6 +460,8 @@ impl Run {
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
         }
+        // Guns for the planet ahead, each its own seed.
+        self.gun_offers = (0..GUN_OFFER as u64).map(|k| Gun::roll(mix(z ^ (0x6755_4E00 + k)), self.depth)).filter(|g| !self.guns.contains(g)).collect();
     }
 
     /// The current level was won with `stars` (1-3): its points, the next
@@ -437,18 +507,38 @@ impl Run {
                 format!("{l}/{}", it.max)
             };
             let about = if needs { format!("{} (needs {})", it.about, it.needs.and_then(|k| ITEMS.iter().find(|x| x.key == k)).map_or("", |x| x.name)) } else { it.about.to_string() };
-            rows.push(Row { group: it.group, name: it.name.into(), about, price: price.map_or(String::new(), |p| p.to_string()), state, ready: !needs && price.is_some_and(|p| p <= self.points), pick: Pick::Item(i) });
+            rows.push(Row { group: it.group, face: Face::Item(it.key), on: false, name: it.name.into(), about, price: price.map_or(String::new(), |p| p.to_string()), state, ready: !needs && price.is_some_and(|p| p <= self.points), pick: Pick::Item(i) });
+        }
+        for (i, g) in self.guns.iter().enumerate() {
+            let on = i == self.carry;
+            rows.push(Row {
+                group: Group::Guns,
+                face: Face::Gun(*g),
+                on,
+                name: title(&g.title()),
+                about: if on { format!("{}. Carried: every soldier lands with it", g.line()) } else { format!("{}. In the armory: pick to carry it", g.line()) },
+                price: String::new(),
+                state: if on { "carried".into() } else { "armory".into() },
+                ready: !on,
+                pick: Pick::Carry(i),
+            });
+        }
+        for (i, g) in self.gun_offers.iter().enumerate() {
+            let p = gun_price(g);
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("{}. Found on planet {}", g.line(), g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_cost(card_power(c).unwrap_or(1));
-            rows.push(Row { group: Group::Gun, name: format!("Card: {} (budget {})", title(c.name()), c.cost()), about: c.about().into(), price: p.to_string(), state: "on offer".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: title(c.name()), about: c.about().into(), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
         }
         for (i, &(c, on)) in self.cards.iter().enumerate() {
             let fits = self.fits(c);
             rows.push(Row {
-                group: Group::Gun,
-                name: format!("{} (yours, budget {})", title(c.name()), c.cost()),
-                about: if on { "In the gun: pick to take it out".into() } else if fits { "In the bag: pick to put it in the gun".into() } else { "In the bag: over the gun's budget, take a card out first".into() },
+                group: Group::Cards,
+                face: Face::Card(c),
+                on,
+                name: title(c.name()),
+                about: if on { format!("{} In the gun: pick to take it out", c.about()) } else if fits { format!("{} In the bag: pick to put it in the gun", c.about()) } else { format!("{} In the bag: over the gun's budget or slots, take a card out first", c.about()) },
                 price: String::new(),
                 state: if on { "in the gun".into() } else { "in the bag".into() },
                 ready: on || fits,
@@ -456,7 +546,7 @@ impl Run {
             });
         }
         if self.dev {
-            let dev = |name: &str, about: String, pick| Row { group: Group::Dev, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
+            let dev = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
             rows.push(dev("Next planet deeper", format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)), Pick::DevDepth(1)));
             rows.push(dev("Next planet shallower", format!("Land on planet {} instead", self.depth.saturating_sub(1).max(1)), Pick::DevDepth(-1)));
             rows.push(dev("1,000 points", "Free points".into(), Pick::DevPoints));
@@ -488,6 +578,27 @@ impl Run {
                 // Straight into the gun when it fits the budget.
                 let room = self.fits(c);
                 self.cards.push((c, room));
+                true
+            }
+            Pick::Gun(i) => {
+                let Some(&g) = self.gun_offers.get(i) else { return false };
+                let price = gun_price(&g);
+                if price > self.points {
+                    return false;
+                }
+                self.points -= price;
+                self.gun_offers.remove(i);
+                self.guns.push(g);
+                self.carry = self.guns.len() - 1;
+                self.refit();
+                true
+            }
+            Pick::Carry(i) => {
+                if i >= self.guns.len() || i == self.carry {
+                    return false;
+                }
+                self.carry = i;
+                self.refit();
                 true
             }
             Pick::DevDepth(by) if self.dev => {
@@ -597,6 +708,7 @@ mod tests {
         r.restock();
         assert!(r.offers.iter().all(|&c| c != Card::Germ));
         // Blast (3) and Wide (2) fill a budget of 5; Thick (1) waits in the bag.
+        r.guns = vec![Gun { budget: 5, slots: 3, ..first_gun() }];
         r.points = 10_000;
         r.offers = vec![Card::Blast, Card::Wide, Card::Thick];
         for _ in 0..3 {
@@ -606,10 +718,20 @@ mod tests {
         assert!(!r.cards[2].1 && !r.pick(Pick::Card(2)), "over the budget");
         assert!(r.pick(Pick::Card(1)) && r.pick(Pick::Card(2)), "wide out, thick in");
         assert_eq!(r.gun_text(), "thick+blast");
-        let big = ITEMS.iter().position(|i| i.key == "budget").unwrap();
-        assert!(r.pick(Pick::Item(big)) && r.budget() == START_BUDGET + BUDGET_STEP);
+        // A bigger gun bought is carried, and holds all three.
+        r.gun_offers = vec![Gun { budget: 7, slots: 4, ..first_gun() }];
+        let before = r.points;
+        assert!(r.pick(Pick::Gun(0)) && r.carry == 1 && r.budget() == 7);
+        assert_eq!(r.points, before - gun_price(&r.carried()));
         assert!(r.pick(Pick::Card(1)), "a bigger gun holds all three");
-        assert!(rounds::fit(r.gun(), r.budget()).is_ok() && rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
+        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok() && rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
+        // Back to the small gun: the last bought comes out (thick).
+        assert!(r.pick(Pick::Carry(0)) && !r.pick(Pick::Carry(0)));
+        assert_eq!(r.gun_text(), "wide+blast");
+        // Slots count too: three 1-cost cards and a fourth do not fit 3 slots.
+        r.guns[0] = Gun { budget: 20, slots: 3, ..first_gun() };
+        r.cards = vec![(Card::Thick, true), (Card::Quiet, true), (Card::Delay, true), (Card::Blast, false)];
+        assert!(!r.fits(Card::Blast));
         // Payloads go last.
         r.cards = vec![(Card::Blast, true), (Card::Wide, true), (Card::Pierce, true)];
         assert_eq!(r.gun_text(), "pierce+wide+blast");
@@ -621,6 +743,35 @@ mod tests {
             r.offers.contains(&Card::Bomb)
         });
         assert!(deep);
+    }
+
+    #[test]
+    fn deeper_shops_sell_guns_with_bigger_budgets() {
+        let mean = |d: u32| {
+            let budgets: Vec<f32> = (0..40u64)
+                .flat_map(|seed| {
+                    let mut r = Run::new(seed);
+                    r.depth = d;
+                    r.restock();
+                    assert_eq!(r.gun_offers.len(), GUN_OFFER);
+                    assert!(r.gun_offers.iter().all(|g| g.depth == d));
+                    r.gun_offers.iter().map(|g| g.budget as f32 / g.kind.average().budget as f32).collect::<Vec<_>>()
+                })
+                .collect();
+            budgets.iter().sum::<f32>() / budgets.len() as f32
+        };
+        assert!(mean(6) > 1.3 * mean(1), "{} vs {}", mean(6), mean(1));
+        // The two on offer differ, and the same run sells the same guns.
+        let mut a = Run::new(3);
+        a.restock();
+        assert_ne!(a.gun_offers[0], a.gun_offers[1]);
+        let mut b = Run::new(3);
+        b.restock();
+        assert_eq!(a.gun_offers, b.gun_offers);
+        // A better roll costs more.
+        let g = GunKind::Carbine.average_at(3);
+        assert!(gun_price(&Gun { grade: 1.3, ..g }) > gun_price(&g));
+        assert!(Run::new(1).shop().iter().any(|r| r.on && r.face == Face::Gun(first_gun())), "the first gun is carried");
     }
 
     #[test]

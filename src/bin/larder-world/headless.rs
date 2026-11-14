@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -34,7 +34,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
-    if let Some(p) = menu_page {
+    if let Some((p, flag)) = menu_page {
         let mut m = start_menu(&app.args);
         // The run's shop (`run=SEED menu=shop`): as after its first planet
         // won with two stars, so the picture has points to spend.
@@ -43,10 +43,35 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if r.points == 0 {
                 r.won(2);
             }
+            // `menu=shop-mid` films a run three planets in: cards in the
+            // gun and the bag, a second gun bought, armour and turrets, and
+            // points left; `shop-build` and `shop-tools` with that folder open.
+            if flag != "shop" {
+                r.won(2);
+                r.won(3);
+                r.points += 900;
+                for _ in 0..3 {
+                    r.pick(slime_mould::mould::run::Pick::Offer(0));
+                }
+                r.pick(slime_mould::mould::run::Pick::Gun(1));
+                // A fresh offer, one more card (the gun is full: it goes
+                // in the bag), and a fresh offer again.
+                r.restock();
+                r.pick(slime_mould::mould::run::Pick::Offer(0));
+                r.restock();
+                for p in [r.shop().iter().find(|x| x.name == "Armour").map(|x| x.pick), r.shop().iter().find(|x| x.name == "Turrets").map(|x| x.pick)].into_iter().flatten() {
+                    r.pick(p);
+                }
+            }
             m.shop = Some(shop_of(&r));
             m.run_live = true;
         }
         m.show(p);
+        match flag {
+            "shop-build" => m.open_folder("Buildings"),
+            "shop-tools" => m.open_folder("Tools"),
+            _ => {}
+        }
         app.menu = Some(m);
     }
     if wav.is_some() {
