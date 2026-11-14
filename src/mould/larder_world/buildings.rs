@@ -193,6 +193,18 @@ pub struct BuildRules {
     /// to be near the build location to build is annoying". Off is the
     /// old rule, for replays and census hands that relied on it.
     pub anywhere: bool,
+    /// How near its site a builder raises from, dish cells: from the
+    /// building's middle, or for a wall from its line (plus a crystal's
+    /// rim for a ghost placed on one). A builder walks straight at the
+    /// site and stops the moment it is this near, on the side it came
+    /// from. Owner, 2026-11-14 08:10Z: "Right now soldiers center
+    /// themselves on the build spot but it would be best if they just
+    /// started building when they got in range", and building a turret by
+    /// the enemy, "keep my soldiers on one side". 6 (the turret's touch,
+    /// 2, plus 4): a squad of eight stands in an arc on its side. Before
+    /// it, 3 cells plus the soldier's place in its squad's sunflower round
+    /// the ghost, so a squad walked round to stand on every side.
+    pub reach: f32,
 }
 
 impl Default for BuildRules {
@@ -226,6 +238,7 @@ impl Default for BuildRules {
             touch: 2.0,
             drain: 1.0,
             anywhere: true,
+            reach: 6.0,
         }
     }
 }
