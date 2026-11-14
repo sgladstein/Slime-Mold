@@ -173,17 +173,25 @@ fn byte(v: u32, k: u32) -> f32 { return f32((v >> (8u * k)) & 255u) / 255.0; }
 // proposes it as the first new ground kind: slower uphill, wet hollows,
 // scent drifting down), so the height drawn is the height the mould feels.
 const ELEV: f32 = 5.0;
-// Bare ground: damp low loam to dry high soil, by elevation.
-const SOIL_LOW: vec3<f32> = vec3<f32>(30.0, 34.0, 28.0);
-const SOIL_HIGH: vec3<f32> = vec3<f32>(84.0, 74.0, 58.0);
+// Bare ground: damp low loam to dry high soil, by elevation. Dark, cool
+// and low in saturation since 2026-11-14 (art direction rules 2 and 3:
+// the ground is the darkest thing and slate, so the gold slime and the
+// cyan crystals are the only colour); before, (30,34,28) to (84,74,58),
+// an olive-brown whose middle (57,54,43) read as sand beside the slime.
+const SOIL_LOW: vec3<f32> = vec3<f32>(18.0, 22.0, 27.0);
+const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 // Soil kinds (byte 0's high nibble, `look::Fields::soil`; the mould's
 // `BigDish::soil`, Larder World maps): each changes the mould (sand: its
 // trail fades, and it spreads further; clay: its trail lasts, and it is
 // trapped; barren: no births, upkeep x 3; Reports/larder-maps-2026-11-11.md,
 // *Which ground the mould feels*), so each reads as its own ground.
-const SAND_RGB: vec3<f32> = vec3<f32>(150.0, 134.0, 92.0);
-const CLAY_RGB: vec3<f32> = vec3<f32>(104.0, 54.0, 38.0);
-const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
+// Each still dark and muted beside plain ground (35,38,42 flat), told
+// apart by value and a slight cast: sand paler and faintly warm, clay a
+// dull red-brown, barren a flat ash grey. Before 2026-11-14 sand was
+// (150,134,92), brighter than thin slime, and clay a saturated brick.
+const SAND_RGB: vec3<f32> = vec3<f32>(70.0, 68.0, 60.0);
+const CLAY_RGB: vec3<f32> = vec3<f32>(56.0, 38.0, 34.0);
+const BARREN_RGB: vec3<f32> = vec3<f32>(50.0, 50.0, 50.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // Condensed mould's colour (`cell_mat_c`'s `dense`): a deep bronze-brown,
@@ -202,6 +210,8 @@ const ABSORB_RGB: vec3<f32> = vec3<f32>(255.0, 232.0, 190.0);
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
+// The mould's gold (`draw`'s (255, 190, 90) over agar) as a hue at 240.
+const MOULD_HUE: vec3<f32> = vec3<f32>(240.0, 165.9, 63.2);
 
 // The mould's thickness as drawn: the trail's brightness (the look's byte
 // 0) times how many living walkers are near (byte 1 summed over the 5 x 5
@@ -367,6 +377,10 @@ fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
 // A spent crystal keeps this share of its height: a low stub of grey rock,
 // not a hole.
 const GEM_STUB: f32 = 0.15;
+// The most a mould film on a crystal covers it (`shaded`): a thick mat
+// still lets a fifth of the faces and glow through, so it reads as a
+// crystal under mould.
+const GEM_FILM: f32 = 0.75;
 // The rate (share of a cell's full charge a game second) that lights a
 // cell half way.
 const GEM_HOT: f32 = 0.15;
@@ -451,18 +465,19 @@ fn cell_colour(ix: i32, iy: i32) -> vec3<f32> {
     let kind = ground[i] & 15u;
     // With crystals drawn as hexagons (`set_crystals`), a crystal cell's
     // own colour (the engine's crystal cyan) would tint the mould on it and
-    // show as a cyan rim round the hexagon: take the mould's colour from
-    // the nearest cell beside it that is not crystal.
+    // show as a cyan rim round the hexagon. The engine draws a crystal cell
+    // as base = agar + (cyan - agar) x share, then the mould over it as
+    // base + (gold - base) x g (`engine.wgsl`, the game's amber); so the
+    // mould's own g comes back from the red channel, where gold and the
+    // crystal differ most, and the cell is drawn as that mould on bare
+    // agar. Before 11-14 08:30Z the colour was taken from the nearest
+    // non-crystal cell within 6, which a crystal 30 cells wide never
+    // reached: its middle kept the cyan, and the mould on it read pale.
     if (kind == CRYSTAL && P.n_gems > 0u) {
-        for (var r = 1; r <= 6; r++) {
-            let o = array<vec2<i32>, 4>(vec2<i32>(r, 0), vec2<i32>(-r, 0), vec2<i32>(0, r), vec2<i32>(0, -r));
-            var found = false;
-            for (var q = 0; q < 4; q++) {
-                let j = cidx(ix + o[q].x, iy + o[q].y);
-                if ((ground[j] & 15u) != CRYSTAL) { c = unpack(world[j]); found = true; break; }
-            }
-            if (found) { break; }
-        }
+        let sh = byte(ground[i], 1u);
+        let base = AGAR_RGB + (vec3<f32>(140.0, 235.0, 255.0) - AGAR_RGB) * sh;
+        let g = clamp((c.x - base.x) / max(255.0 - base.x, 1.0), 0.0, 1.0);
+        c = AGAR_RGB + (vec3<f32>(255.0, 190.0, 90.0) - AGAR_RGB) * g;
     }
     if (P.mask == 1u) { c *= 0.3 + 0.7 * clamp(vis[i], 0.0, 1.0); }
     return c;
@@ -507,7 +522,18 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // look carries it at full strength wherever there is mould, by the
     // thickness, so a thin film reads as slime, not as dim ground.
     let tint = max(c - AGAR_RGB, vec3<f32>(0.0));
-    var hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
+    let tmax = max(tint.x, max(tint.y, tint.z));
+    var hue = tint / max(tmax, 1.0) * 240.0;
+    // Where walkers stand on little or no trail, the engine's colour has
+    // next to no mould in it, and the line above blew that near-nothing
+    // up to full strength: zero went black, a faint reddish ground tint
+    // pure red. The owner (11-14 08:30Z, "Are these blackish spots in the
+    // middle of the mold intentional?") saw black blobs with red rims in a
+    // thick body: crater and scorch cells, whose trail is wiped while the
+    // walkers stay (`look_trail` 0, `tm` from the walkers alone). There the
+    // hue is the mould's own gold (the engine's `draw` gold over agar),
+    // taking the engine's hue as its colour carries mould.
+    hue = mix(MOULD_HUE, hue, smoothstep(6.0, 40.0, tmax));
     // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
     // walkers' news goes stale, before they wither: the share of stale
     // walkers is the fade, so a piece greys as it starves, not on a timer.
@@ -550,9 +576,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     m.body = 0.0;
     m.gem = 0.0;
     if (kind == WET) {
-        // Standing water over the soil: dark blue-green, glossy; mould in
-        // it keeps its own colour.
-        m.albedo = mix(vec3<f32>(22.0, 46.0, 62.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+        // Standing water over the soil: dark blue-green, glossy (darker
+        // since 2026-11-14 with the ground); mould in it keeps its own colour.
+        m.albedo = mix(vec3<f32>(14.0, 30.0, 42.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
         m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
         // Under hard terrain, the soil: `terrain_over` lays the rock, wall
@@ -884,12 +910,36 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
             var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
-            // Mould feeding on it lies over it in its own colour: the
-            // cells' material is the mould over the ground there, and its
-            // thickness is the inverse of the cells' height curve.
+            // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
+            // shouldn't go under crystals, they should grow over it but it
+            // needs to still clearly look like a crystal"). Before, the
+            // hexagon was drawn over the slime with the mould mixed into its
+            // albedo at most 70%, lit by the crystal's faces only, so the
+            // mould read as sliding underneath. Now the slime there is a
+            // film on the faces: its cover follows its real thickness (the
+            // inverse of the cells' height curve), at most `GEM_FILM`, so a
+            // thin film shows the faces through and a feeding mat covers
+            // more; it is lit by the face it lies on with a little of its
+            // own relief, so the six faces and their edges still read; the
+            // crystal's glow shines through it, weakened by the cover; and
+            // a mould that is draining it (`hot`, the same charge loss the
+            // harvest glow shows) takes a cyan cast.
             let th = -log(1.0 - clamp(cells_height(x, y) * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
-            alb = mix(alb, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.7);
-            let gc = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7 + glow;
+            let film = GEM_FILM * (1.0 - exp(-25.0 * th));
+            let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
+            // The film is the slime as shaded off the crystal (its own
+            // bumps, gloss and glint), tilted by the face it lies on.
+            let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
+            let fed = mix(c, vec3<f32>(0.45, 1.05, 1.2) * lum, clamp(0.35 * hot, 0.0, 0.35));
+            let on = fed * clamp(0.3 + 0.7 * gs, 0.3, 1.5);
+            // The silhouette stays crisp under the film: a dark line a pixel
+            // and a half wide inside the hexagon's edge, where the faces
+            // meet the ground (a hard shape's edge, art direction rule 4).
+            let rim = 0.72 + 0.28 * smoothstep(0.0, 1.5, gi.x * P.zoom);
+            // The charge's light comes up through the film, brightest deep in a
+            // full crystal, so a covered crystal still glows cyan.
+            let through = glow * (1.0 - 0.3 * film) + vec3<f32>(20.0, 95.0, 115.0) * v * depth * film;
+            let gc = (mix(rock, on, film) + through) * rim;
             c = mix(c, gc, cover);
         }
         if (cover < 1.0 && hot > 0.0) {
@@ -1401,7 +1451,18 @@ fn silhouette(p: vec2<f32>, small: bool) -> f32 {
     return max(sprite(0u, p, small).w, sprite(1u, p, small).w);
 }
 
-fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool) -> vec4<f32> {
+// Harvesting (art direction, the owner's playtest 11-14 04:53Z:
+// "harvesting crystals could look way better"): `carry` 0-1 is the share
+// of a full load the soldier holds, shown as cyan charge filling the pack
+// on its back from the bottom (sprite frame) with a glow round it that
+// grows with the load, so a carrier walking home is a light you can
+// follow; `take` 0-1 is a pulse at its hands while it takes from a crystal
+// this moment (`Game::last_takes`). Both are game state, not decoration.
+// The pack is the body tile's rectangle at x -0.72..-0.30, y -0.42..0.42.
+const CHARGE: vec3<f32> = vec3<f32>(92.0, 224.0, 232.0);
+const CHARGE_HOT: vec3<f32> = vec3<f32>(220.0, 255.0, 255.0);
+
+fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bool, carry: f32, take: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let ca = cos(ang); let sa = sin(ang);
@@ -1437,6 +1498,31 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
     let inside = max(body.w, h.w);
     let rim = clamp(inside - silhouette(p + lp * 1.2, small), 0.0, 1.0) * 0.75;
     out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
+    if (carry > 0.0) {
+        // The pack's charge, filled from its foot (+y) up, a hot core
+        // where it is full.
+        let inpack = p.x > -0.68 && p.x < -0.34 && abs(p.y) < 0.38;
+        let level = 0.38 - 0.76 * carry;
+        if (inpack && p.y >= level) {
+            let c = mix(CHARGE, CHARGE_HOT, clamp(carry * 1.2 - 0.2, 0.0, 1.0) * 0.6);
+            out = vec4<f32>(c, 1.0);
+        }
+        // The glow: light, so it adds; its reach grows with the load. Kept
+        // inside the body's edge: each screen pixel shows one mark (the
+        // highest that claims it), so a wide glow claimed a neighbour's
+        // pixels and cut a dark bite out of it (first try, 0.06 + 0.12 *
+        // carry, at the zoom 12 film).
+        let q = vec2<f32>(clamp(p.x, -0.68, -0.34), clamp(p.y, -0.38, 0.38));
+        let dd = length(p - q);
+        let g = carry * exp(-dd * dd / (0.02 + 0.04 * carry)) * 0.6;
+        out = vec4<f32>(out.xyz + CHARGE * g, min(out.w + g, 1.0));
+    }
+    if (take > 0.0) {
+        // A pulse at the hands as charge comes in.
+        let dh = length(p - vec2<f32>(0.66, 0.3));
+        let g = take * exp(-dh * dh / 0.03);
+        out = vec4<f32>(out.xyz + CHARGE_HOT * g, min(out.w + g, 1.0));
+    }
     if (flash > 0.0) {
         let f = sprite(2u, p, small) * clamp(flash * 1.5, 0.0, 1.0);
         out = pm_over(out, f);
@@ -1452,7 +1538,9 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
 // darkens and greys as its health goes, and its lamp is lit only while it
 // works (a turret firing, a lure laying scent, a pump drawing charge, a
 // siren while it is on).
-fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool) -> vec4<f32> {
+// `pulse` 0-1 brightens the lamp for a moment: the larder's charge cells
+// as a carrier banks its load (harvest look, 11-14).
+fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;
@@ -1506,13 +1594,27 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         out = pm_over(out, vec4<f32>(RIM * seam, seam));
     }
     if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
+    if (pulse > 0.0 && built >= 1.0) {
+        let lamp = sprite(k + 1u, p, small);
+        let g = pulse * 1.5;
+        out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
+        // A halo round the lit cells.
+        let lit = sprite(k + 1u, p * 0.8, true).w;
+        out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
+        // The whole store washed in charge light, on the body only (no
+        // new alpha, so it claims no neighbour's pixels): the lit cells
+        // alone were a few pixels at zoom 12 and lost under the carriers
+        // walking in (first film, 11-14).
+        let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
+        out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+    }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
 }
 
 fn building_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u);
+    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that
@@ -1671,7 +1773,7 @@ fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
 
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u);
+    return soldier(d, r, bitcast<f32>(marks[b + 9u]), unpack(marks[b + 7u]), f32(extra & 255u) / 255.0, (extra & 256u) != 0u, f32((extra >> 9u) & 255u) / 255.0, f32((extra >> 17u) & 255u) / 255.0);
 }
 
 // Marks, then the overlay (premultiplied RGBA, screen-sized), over the

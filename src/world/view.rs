@@ -1128,4 +1128,73 @@ mod tests {
         let spread = vals.iter().cloned().fold(f32::MIN, f32::max) - vals.iter().cloned().fold(f32::MAX, f32::min);
         assert!(spread < 0.6 * (lone - bare), "the body's grain spread {spread} against the lone walker's {}", lone - bare);
     }
+
+    /// Walkers on a crater (trail wiped, the engine's colour bare agar)
+    /// inside a gold body are gold, not black (owner, 2026-11-14 08:30Z:
+    /// "Are these blackish spots in the middle of the mold intentional?").
+    #[test]
+    fn walkers_in_a_crater_stay_mould_coloured() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        // A gold body over x 4..40, its trail wiped in a crater over
+        // x 18..26, y 12..20 (the engine draws agar there), 4 walkers a
+        // cell throughout.
+        let crater = |x: usize, y: usize| (18..26).contains(&x) && (12..20).contains(&y);
+        let mut px = Vec::new();
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for y in 0..h {
+            for x in 0..w {
+                let body = (4..40).contains(&x) && (4..28).contains(&y);
+                let gold = body && !crater(x, y);
+                px.extend(if gold { [200u8, 150, 70, 255] } else { [12, 22, 26, 255] });
+                if body {
+                    look[y * w + x] = if gold { 255 } else { 0 } | (4 << 8);
+                    for k in 0..4 {
+                        walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                    }
+                }
+            }
+        }
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (288, 192);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // The mean colour over a 2 x 2 cell patch, every screen pixel.
+        let mean = |cx: f32, cy: f32| {
+            let (x0, y0) = cam.to_screen((cx - 1.0, cy - 1.0));
+            let (x1, y1) = cam.to_screen((cx + 1.0, cy + 1.0));
+            let mut s = [0.0f32; 3];
+            let mut n = 0.0;
+            for y in y0 as u32..y1 as u32 {
+                for x in x0 as u32..x1 as u32 {
+                    let p = pic.get_pixel(x, y).0;
+                    for c in 0..3 {
+                        s[c] += p[c] as f32;
+                    }
+                    n += 1.0;
+                }
+            }
+            s.map(|v| v / n)
+        };
+        let lum = |c: [f32; 3]| 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+        let (hole, bare) = (mean(22.0, 16.0), mean(44.0, 16.0));
+        assert!(lum(hole) > lum(bare) + 25.0, "the crater's walkers {hole:?} against bare ground {bare:?}");
+        assert!(hole[0] > hole[2] + 30.0 && hole[1] > hole[2], "the crater's walkers are mould-coloured: {hole:?}");
+    }
 }

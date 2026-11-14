@@ -43,17 +43,20 @@ param(
 # (cargo's progress lines) into errors under Stop.
 $ErrorActionPreference = "Continue"
 
-# Booking rule 7 (3 GB RAM free); disk raised to 8 GB because a few release
+# Booking rule 7 asked 3 GB RAM free, but the owner's own apps leave 2.0-2.3
+# GB (the runner's dry run at 004b7cb, 11-14), so the gate is 2 GB and builds
+# run two jobs at a time (CARGO_BUILD_JOBS=2) to stay inside it. Disk raised to 8 GB because a few release
 # builds share the one target folder.
 $ram = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB
 $disk = (Get-PSDrive C).Free / 1GB
 "free RAM {0:N1} GB, free C: {1:N1} GB" -f $ram, $disk
-if (-not $DryRun -and ($ram -lt 3 -or $disk -lt 8)) { throw "Not enough free RAM (3 GB) or disk (8 GB): stop and report these two numbers." }
+if (-not $DryRun -and ($ram -lt 2 -or $disk -lt 8)) { throw "Not enough free RAM (2 GB) or disk (8 GB): stop and report these two numbers." }
 
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $dir = Join-Path $Out $stamp
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 $env:CARGO_TARGET_DIR = "$Tree-target"
+$env:CARGO_BUILD_JOBS = "2"
 $bins = "$Tree-bins"
 New-Item -ItemType Directory -Force -Path $bins | Out-Null
 $env:MOULDGPU_TEST_GPU = "1"
@@ -120,7 +123,16 @@ if ($Timing) {
     }
     if (-not $DryRun) { Set-Location $Tree }
 
-    $busy = nvidia-smi --query-compute-apps=pid,process_name --format=csv,noheader
+    # Is anything else using the card? Not --query-compute-apps: on Windows
+    # (WDDM) it lists every desktop app with "N/A" memory, so it always
+    # refused (dry run at 004b7cb). The card's own load instead: five
+    # samples a second apart, busy if any is over 5%.
+    $util = @()
+    if (-not $DryRun) {
+        foreach ($k in 1..5) { $util += [int](nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | Select-Object -First 1).Trim(); Start-Sleep -Seconds 1 }
+    }
+    $busy = if (($util | Measure-Object -Maximum).Maximum -gt 5) { "GPU load % over 5 s: $($util -join ', ')" } else { $null }
+    "GPU load % before timing: $($util -join ', ')"
     if ($busy) {
         "GPU busy, no timing run: $busy" | Set-Content (Join-Path $dir "timing-refused.txt")
         Get-Content (Join-Path $dir "timing-refused.txt")
@@ -148,6 +160,18 @@ if ($Timing) {
                 Time "r7-$tag-20k-$i" "$bins\lw-$tag.exe bench=60 hand=strike scale=4 walkers=20000 spread=0 passes=30"
             }
         }
+        # The draw (technical lead, 11-14 07:42Z): the view shaders cost about
+        # 6 ms a frame on llvmpipe after #228, #230 and #241, which says
+        # nothing of the 1070. bench draws every frame as the window does
+        # (view and canvas, GPU waited for; with timestamps "its drawing" ms
+        # beside the step's ticks), here at the window's opening view and,
+        # with centre=, over C's body at zoom 6 and at full zoom-in (24 px a
+        # cell, where prep's fine cells are most). Twice each, interleaved.
+        foreach ($i in 1, 2) {
+            Time "time-view-open-$i" "$lw bench=30 hand=farm"
+            Time "time-view-z6-$i" "$lw bench=30 hand=farm centre=175,215,6"
+            Time "time-view-z24-$i" "$lw bench=30 hand=farm centre=175,215,24"
+        }
         # Panic and withering on shape C (slime-enemy thread).
         Time "time-c-default" "$lw bench=30 hand=farm"
         Time "time-c-panic0" "$lw panic=0 bench=30 hand=farm"
@@ -168,7 +192,7 @@ $sum = Join-Path $dir "summary.txt"
 "driver: " + (nvidia-smi --query-gpu=name,driver_version --format=csv,noheader) | Add-Content $sum
 Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } | Sort-Object Name | ForEach-Object {
     "--- $($_.BaseName)" | Add-Content $sum
-    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s" | ForEach-Object { $_.Line } | Add-Content $sum
+    Select-String -Path $_.FullName -Pattern "^test result|GB free of|FAILED|panicked|^== |^free RAM|GPU busy|larder-world bench:|every frame|frames with a step|GPU \(timestamps|^ *t [0-9]+ s|^  view:|GPU load" | ForEach-Object { $_.Line } | Add-Content $sum
     Get-Content $_.FullName -Tail 3 | Add-Content $sum
 }
 # The worktrees go; the shared target and the exes stay for a rerun (delete

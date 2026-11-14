@@ -158,6 +158,9 @@ mod bench;
 mod hands;
 mod menu;
 mod squadmode;
+mod uisize;
+use uisize::*;
+use slime_mould::world::settings::{self, UiSize};
 use squadmode::SquadInput;
 // The moved modules' functions, reached as before from here and from each
 // other.
@@ -273,6 +276,12 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How long a take's pulse lasts at a harvester's hands, seconds: a step
+/// is 1/15 s, so a soldier taking every step glows steadily and one that
+/// stops fades in about a third of a second.
+const TAKE: f32 = 0.3;
+/// How long the larder's cells flare when a load is banked, seconds.
+const BANKED: f32 = 0.6;
 /// Game seconds between read-backs of the crystals' and walls' cells for
 /// the ground the look shades.
 const GROUND_EVERY: f32 = 1.0;
@@ -384,6 +393,9 @@ struct Tracer {
 struct Look {
     facing: f32,
     flash: f32,
+    /// Seconds left of the pulse at its hands from its last take from a
+    /// crystal (`Game::last_takes`, `TAKE` long).
+    take: f32,
     at: (f32, f32),
     alive: bool,
 }
@@ -450,6 +462,10 @@ struct App {
     hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
+    /// Seconds left of the larder's flare (`BANKED`), and the harvest
+    /// banked when it was last checked.
+    banked: f32,
+    harvested_seen: f32,
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
@@ -536,6 +552,8 @@ impl App {
             broke: false,
             hungry: false,
             bank_log: Default::default(),
+            banked: 0.0,
+            harvested_seen: 0.0,
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
@@ -570,10 +588,12 @@ impl App {
         self.save_replay();
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
-        let mut s = if a.own { garden_settings(a.seed, a.scale, a.walkers) } else { race_settings(a.seed, a.scale, a.walkers) };
-        if a.own && (a.mission.is_some() || a.map.is_some()) {
-            return Err("own=1 plays on the race world: give map=noise and no mission".into());
-        }
+        // own=1 on the noise world is the gardeners' race world; on a map,
+        // or a mission with `own` (mission 8), the garden goes on the map
+        // (`GpuWorld::garden_on_map`), which sets its own species keys over
+        // the race settings and the tier's.
+        let on_map = a.mission.is_some() || a.map.is_some();
+        let mut s = if a.own && !on_map { garden_settings(a.seed, a.scale, a.walkers) } else { race_settings(a.seed, a.scale, a.walkers) };
         // The tier whose core the game plays (`Tier::core`, read by
         // `Game::with_tier`): the mission's, or a `tier=` key's (the last).
         let mut core_tier = None;
@@ -603,10 +623,11 @@ impl App {
                 core_tier = Tier::from_name(v);
             }
         }
-        let walkers = s.walkers;
+        let mut walkers = s.walkers;
+        let own = a.own || mission.as_ref().is_some_and(|m| m.own);
         let map_name = mission.as_ref().map(|m| m.map.clone()).or_else(|| a.map.clone());
         let world = match &map_name {
-            None if a.own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
+            None if own => GpuWorld::garden(device, queue, s, a.seed, a.scale, a.walkers)?,
             Some(name) => {
                 let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 let (dir, name) = match name.rsplit_once('/') {
@@ -614,7 +635,13 @@ impl App {
                     None => (dir, name.clone()),
                 };
                 let m = Map::load(&dir, &name)?;
-                GpuWorld::with_map(device, queue, s, a.scale, &m)
+                if own {
+                    // `walkers=` a side, as on the noise world.
+                    walkers = 2 * slime_mould::mould::own_mould::garden_map_on(&m, a.walkers)?.1;
+                    GpuWorld::garden_on_map(device, queue, s, a.scale, &m, a.walkers)?
+                } else {
+                    GpuWorld::with_map(device, queue, s, a.scale, &m)
+                }
             }
             None => GpuWorld::new(device, queue, s, a.scale),
         };
@@ -700,7 +727,7 @@ impl App {
             // The HUD's insets before it has drawn, so the larder opens in
             // the middle of the band above the bottom panels, not under
             // them (the art director, 11-14).
-            let (top, bottom) = Hud::insets(v.screen);
+            let (top, bottom) = Hud::insets(v.screen, self.canvas.as_ref().map_or_else(UiSize::default, |c| c.ui));
             self.camera.set_inset(top, bottom);
             let z = self.camera.fit().max(4.0);
             self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
@@ -708,7 +735,7 @@ impl App {
         }
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
-        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
+        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -716,6 +743,7 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
         self.bank_log.clear();
+        (self.banked, self.harvested_seen) = (0.0, 0.0);
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
@@ -762,7 +790,14 @@ impl App {
         self.tracers.retain(|t| t.age < TRACER);
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
+            l.take = (l.take - dt).max(0.0);
         }
+        self.banked = (self.banked - dt).max(0.0);
+        // A load banked since the last frame flares the larder's cells.
+        if g.harvested > self.harvested_seen + 0.5 {
+            self.banked = BANKED;
+        }
+        self.harvested_seen = g.harvested;
         // A bought soldier (by the card or a replay) joins the notes.
         join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
@@ -1074,6 +1109,12 @@ struct Bench {
     squad1: bool,
     /// `spread=0`: each step's ticks all on the step's frame (`App::spread`).
     spread: bool,
+    /// `centre=X,Y[,ZOOM]`: the camera's place and zoom for the timed run
+    /// (11-14, the technical lead): the view's cost is a screen pixel's
+    /// shading plus `prep`'s fine cells, which grow with the zoom (two a
+    /// cell each way from zoom 6), so the draw is timed at the opening zoom
+    /// and at `MAX_ZOOM` (24) over the body, not only where the window opens.
+    view: Option<(f32, f32, f32)>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1095,7 +1136,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `menu=0` never; with no arguments at all the window opens on it.
     // With `look=`, `menu=PAGE` films that page over the round.
     let mut menu_flag: Option<String> = None;
-    let bare = std::env::args().len() == 1;
+    // (`ui=` alone still opens on the menu: it only sizes the UI.)
+    let bare = std::env::args().skip(1).all(|a| a.starts_with("ui="));
+    let mut ui = None;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
@@ -1138,6 +1181,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
             }
             "look" => look = Some(v.to_string()),
+            // `ui=150%` or `ui=1.5`: the UI's size this run (`uisize`).
+            "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
                     return Err("menu=0|1|main|campaign|options|keys".into());
@@ -1208,12 +1253,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
     // The own mould's garden (`own=1`, #165) keeps its own walkers, as a
     // mission keeps its mould: its two species start at twice `walkers`.
+    // The pictures and the bench draw at `ui=` or 100%, never at a size
+    // saved on this machine; the window opens at the saved size.
+    set_ui_user(ui.unwrap_or_else(|| if look.is_some() || bench_secs.is_some() { 1.0 } else { settings::saved_ui() }));
     let base = args.clone();
     if !chosen && args.mission.is_none() && !args.own {
         default_shape(&mut args);
@@ -1221,7 +1269,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(secs) = bench_secs {
         println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread }, &device, &queue)?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
         return Ok(());
     }

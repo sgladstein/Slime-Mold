@@ -1,0 +1,52 @@
+<title>Slime Over Crystals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · fork map · idle hand · llvmpipe · 2026-11-14</span>
+    <h1>Slime over crystals</h1>
+    <p>The owner's ruling: "slime shouldn't go under crystals, they should grow over it but it needs to still clearly look like a crystal." The mould on a crystal is now a film over its faces. Its cover follows the mould's real thickness there, so a thin film shows the faces through and a feeding mat covers up to three quarters. The film is lit by the face it lies on, so the six faces still read. The charge glows up through it, the hexagon's edge stays crisp, and mould that is draining the crystal takes a cyan cast.</p>
+    <p class="muted">The left crystal on the fork map, 12 to 74 game seconds, as the mould reaches and covers it. Before is main.</p>
+  </div>
+  <section>
+    <h2>Zoom 6</h2>
+    <div class="pair">
+      <figure><img src="before-z6.gif" alt="Before at zoom 6"><figcaption>Before: the crystal drawn on top, the mould slides under it</figcaption></figure>
+      <figure><img src="after-z6.gif" alt="After at zoom 6"><figcaption>After: the mould grows over it as a film; faces, glow and edge still read</figcaption></figure>
+    </div>
+  </section>
+  <section>
+    <h2>Zoom 12</h2>
+    <div class="pair">
+      <figure><img src="after-z12.gif" alt="After at zoom 12"><figcaption>After: the film carries the slime's own bumps and glint</figcaption></figure>
+      <div class="lede"><p class="muted">Cover = 0.75 (1 - e^(-25 th)) from the mould's thickness on each pixel. The mould's colour on crystal cells is now recovered from the engine's frame; before, the middle of a big crystal kept the engine's cyan and the mould there read pale. Cost: a few operations on crystal pixels only, not measurable on llvmpipe.</p></div>
+    </div>
+  </section>
+</div>
