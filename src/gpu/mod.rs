@@ -332,6 +332,13 @@ pub struct Settings {
     pub birth_cost: f32,
     pub starve: f32,
     pub capacity: usize,
+    /// Most living walkers each species may hold (`BigParams::species_cap`;
+    /// empty is off). On the GPU only in a garden (the player's own mould,
+    /// 2026-11-14), where the enemy (species 0) and the player's mould
+    /// (species 3) are counted each tick before the births; a cap of 0
+    /// stops a species' births. Written to each species `Set`'s `cap` word
+    /// (its old `_p`), u32::MAX for no cap.
+    pub species_cap: Vec<usize>,
     /// The Larder World (W1b, 2026-11-11; `BigParams`'s names in `set`):
     /// the dish's piles and its shape (`rect`); crystal charge a cell (0
     /// off), eaten in equal shares, flowing inside a crystal and regrowing
@@ -508,6 +515,7 @@ impl Settings {
             birth_cost: t.birth_cost,
             starve: t.starve,
             capacity: t.capacity,
+            species_cap: t.species_cap.clone(),
             piles: t.piles,
             rect: t.rect,
             crystal: t.crystal_charge,
@@ -889,6 +897,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         birth_cost: s.birth_cost,
         starve: s.starve,
         capacity: s.capacity,
+        species_cap: s.species_cap.clone(),
         piles: s.piles,
         rect: s.rect,
         crystal_charge: s.crystal,
@@ -1037,9 +1046,11 @@ pub const NSPREAD: usize = 44;
 pub const NAB: usize = 45;
 pub const NBA: usize = 46;
 pub const NHEAR: usize = 47;
+pub const CAPCLEAR: usize = 48;
+pub const CAPCOUNT: usize = 49;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 48] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear",
+pub const PASSES: [&str; 50] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount",
 ];
 
 impl Shared {
@@ -1693,14 +1704,18 @@ impl Engine {
         b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, panic_r2]));
         b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, panic, s.panic_creep.max(crate::mould::big::PANIC_CREEP_MIN)]));
         b.extend(u32_bytes(&[s.panic_dash.min(crate::mould::big::PANIC_DASH_MAX)]));
+        // Each species' birth cap borrows its set's spare word (+44, `cap`;
+        // the player's own mould thread, 11-14): u32::MAX is none.
+        let cap_of = |sp: usize| s.species_cap.get(sp).map_or(u32::MAX, |&c| c.min(u32::MAX as usize - 1) as u32);
         for sp in 0..MAX_SPECIES as usize {
             let Some(t) = sets.get(sp) else {
-                b.extend([0u8; 48]);
+                b.extend([0u8; 44]);
+                b.extend(u32_bytes(&[cap_of(sp)]));
                 continue;
             };
             let sso = if s.smell > 0.0 { s.smell } else { t.sensor_offset };
             b.extend(f32_bytes(&[t.sensor_angle, t.sensor_offset, t.rotate_angle, t.step, sso, t.deposit, t.keep, t.blocked_deposit, t.graze_weight]));
-            b.extend(u32_bytes(&[t.crowd as u32, t.explore_steps as u32, 0]));
+            b.extend(u32_bytes(&[t.crowd as u32, t.explore_steps as u32, cap_of(sp)]));
         }
         // The life cycle: on for good once spores or dormancy are, as the
         // CPU's states (a strike switches it on too); the alarm field once
@@ -1961,7 +1976,12 @@ impl Engine {
             tick.extend([(ESUM, n), (EGAIN, n)]);
         }
         if self.grows {
-            tick.extend([(LIFE, n), (BREED, n), (BORN, n)]);
+            tick.push((LIFE, n));
+            // A garden's birth caps count each side first (`capcount`).
+            if self.garden {
+                tick.extend([(CAPCLEAR, 1), (CAPCOUNT, n)]);
+            }
+            tick.extend([(BREED, n), (BORN, n)]);
         }
         if self.converts {
             // Conversion's square: the rows' sums first (`rows`), the
