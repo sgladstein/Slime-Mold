@@ -708,10 +708,15 @@ impl App {
                 };
                 // `planet`, `planet:DEPTH` or `planet:DEPTH:SEED`: a
                 // generated planet (`mould::levelgen`), from `seed=`.
-                let m = match slime_mould::mould::levelgen::spec(&name, a.seed) {
+                let mut m = match slime_mould::mould::levelgen::spec(&name, a.seed) {
                     Some(made) => made?.1,
                     None => Map::load(&dir, &name)?,
                 };
+                // Plants (11-14): the stand-in on a map without its own,
+                // until levelgen writes each biome's (`plants=0` off).
+                if s.plants {
+                    slime_mould::mould::plants::stand_in(&mut m, a.seed as u32, 1.0);
+                }
                 if own {
                     // `walkers=` a side, as on the noise world.
                     walkers = 2 * slime_mould::mould::own_mould::garden_map_on(&m, a.walkers)?.1;

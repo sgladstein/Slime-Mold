@@ -448,6 +448,10 @@ pub struct Settings {
     pub scorch_keep: f32,
     pub scorch_full: u16,
     pub scorch_cone: bool,
+    /// Plants on a map that has none (`plants::stand_in`, 11-14): until
+    /// levelgen writes each biome's, the game grows the stand-in on any
+    /// designed map or planet without plants of its own (`plants=0` off).
+    pub plants: bool,
     pub seed: u64,
 }
 
@@ -599,6 +603,7 @@ impl Settings {
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
+            plants: true,
             seed: 1,
         }
     }
@@ -858,6 +863,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
+        "plants" => s.plants = b()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }

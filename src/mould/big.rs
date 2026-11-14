@@ -1244,7 +1244,7 @@ impl BigParams {
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
-            char_gain: 0.2,
+            char_gain: 1.0,
             char_keep: 0.999,
             char_clear: 0.02,
             plant_cap: crate::mould::plants::SOIL_CAP,

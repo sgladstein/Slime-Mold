@@ -199,25 +199,64 @@ fn plant_rgb(k: u32) -> vec3<f32> {
     return vec3<f32>(68.0, 76.0, 48.0);
 }
 // Each kind's height at full density (jungle tall, meadow low).
+// (Graphics lead's review 11-14 18:20Z: the first heights, 0.6, 0.4, 0.2
+// and 0.15, read flat; at these the jungle gets a canopy texture.)
 fn plant_h(k: u32) -> f32 {
-    if (k == 1u) { return 0.6; }
-    if (k == 2u) { return 0.4; }
-    if (k == 3u) { return 0.2; }
-    return 0.15;
+    if (k == 1u) { return 1.2; }
+    if (k == 2u) { return 0.8; }
+    if (k == 3u) { return 0.4; }
+    return 0.25;
 }
 fn plant_cover(d: f32) -> f32 { return 1.0 - exp(-3.0 * d); }
-// Burnt ground: the soil toward grey-black by the char.
-const CHAR_RGB: vec3<f32> = vec3<f32>(11.0, 11.0, 12.0);
+// Burnt ground: the soil toward a dark warm grey-brown by the char (the
+// plants that burnt there, so jungle leaves darker ground than meadow).
+// The first cut mixed toward (11, 11, 12) and read as holes, next to the
+// black spots the owner already asked about in the mould.
+const CHAR_RGB: vec3<f32> = vec3<f32>(40.0, 35.0, 30.0);
+// The plants round cell (ix, iy) through a 3 x 3 Gaussian (1 2 1): their
+// cover, their colour (weighted by density) and the fire's heat. The
+// graphics lead's review (11-14 18:20Z): read cell by cell, plant edges
+// were stair-stepped at the cell and the fire a one-cell stroke; the
+// prep's bilinear blend between cells only ramped each step over a cell.
+// Blurred, an edge is a soft curve and the fire a halo. The density is
+// blurred before the cover's curve, so a lone dense cell stays faint.
+struct PlantLook { rgb: vec3<f32>, cover: f32, heat: f32 }
+fn plant_look(ix: i32, iy: i32) -> PlantLook {
+    var o: PlantLook;
+    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.heat = 0.0;
+    if (P.plant_at == 0u) { return o; }
+    var d = 0.0;
+    var c = vec3<f32>(0.0);
+    var cw = 0.0;
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let x = clamp(ix + dx, 0, i32(P.ww) - 1);
+            let y = clamp(iy + dy, 0, i32(P.wh) - 1);
+            let j = cidx(x, y);
+            let w = f32((2 - abs(dx)) * (2 - abs(dy))) / 16.0;
+            let pd = plant_d(j);
+            d += w * pd;
+            c += w * pd * plant_rgb(plant_k(j));
+            cw += w * pd;
+            o.heat += w * plant_heat(j);
+        }
+    }
+    o.cover = plant_cover(d);
+    o.rgb = c / max(cw, 1e-4);
+    return o;
+}
 // Flame from fire's heat: deep ember to orange to yellow-white (no pure
 // red: red is the bolting walkers').
+// The colour goes by heat^1.5, so most of a front is ember to orange and
+// only heat near 1 turns yellow, capped below the slime's own highlight
+// (graphics lead's review 18:20Z: a yellow-white ribbon competed with the
+// slime's gold; before that a white line).
 fn flame(h: f32) -> vec3<f32> {
-    // A cell sits at full heat most of its burn, so full heat is orange
-    // going yellow, and only the hottest top goes toward white: drawn white
-    // at full heat (first try) the front read as a white line.
     let ember = vec3<f32>(110.0, 34.0, 8.0);
-    let orange = vec3<f32>(230.0, 112.0, 26.0);
-    let yellow = vec3<f32>(250.0, 196.0, 110.0);
-    return select(mix(orange, yellow, (h - 0.6) * 2.5), mix(ember, orange, h / 0.6), h < 0.6) * smoothstep(0.0, 0.15, h);
+    let orange = vec3<f32>(225.0, 100.0, 22.0);
+    let yellow = vec3<f32>(250.0, 170.0, 60.0);
+    let k = pow(clamp(h, 0.0, 1.0), 1.5);
+    return select(mix(orange, yellow, (k - 0.7) / 0.3), mix(ember, orange, k / 0.7), k < 0.7) * smoothstep(0.0, 0.15, h);
 }
 
 // How tall the land's full elevation stands, in cells: about a fat tube's
@@ -605,10 +644,10 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
     // Burnt ground, then the plants over the soil, before the slime.
-    let pd = plant_d(i);
-    let pc = plant_cover(pd);
-    let prgb = plant_rgb(plant_k(i));
-    base = mix(base, CHAR_RGB, 0.7 * plant_char(i));
+    let pl = plant_look(ix, iy);
+    let pc = pl.cover;
+    let prgb = pl.rgb;
+    base = mix(base, CHAR_RGB * (0.6 + 0.8 * base / max(SOIL_HIGH, vec3<f32>(1.0))), plant_char(i));
     if (kind != WET) { base = mix(base, prgb, pc); }
     let soil = base + tint * 0.6;
     // The slime's material (art director, 2026-11-14: "it still reads as
@@ -675,8 +714,8 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         m.gem = 1.0;
     }
     // Fire: its heat glows (an emissive, so it lights the dark).
-    let fh = plant_heat(i);
-    if (fh > 0.0) { m.glow = max(m.glow, flame(fh)); m.albedo = mix(m.albedo, flame(fh), 0.5 * fh); }
+    let fh = pl.heat;
+    if (fh > 0.0) { m.glow = max(m.glow, flame(fh)); m.albedo = mix(m.albedo, flame(fh), 0.35 * fh); }
     return m;
 }
 

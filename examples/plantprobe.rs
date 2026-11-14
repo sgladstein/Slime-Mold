@@ -11,10 +11,8 @@
 //! open cells with plants on, each kind's cells, and the CPU cost of one
 //! plant tick (median of the ticks timed).
 //!
-//! The stand-in start: reeds on wet ground; elsewhere a low-frequency value
-//! noise picks jungle in its high part, bare ground in its low part and
-//! meadow between, and only one cell in 40 starts planted, so the stills
-//! show the fronts filling in.
+//! The start is `plants::stand_in` with one cell in 40 planted, so the
+//! stills show the fronts filling in.
 
 use std::path::PathBuf;
 use std::time::Instant;
@@ -22,55 +20,7 @@ use std::time::Instant;
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::larder_world::race_params;
 use slime_mould::mould::levelgen;
-use slime_mould::mould::map::{Map, G_ROCK, G_WET, MAP_H, MAP_W};
-use slime_mould::mould::plants::{self, JUNGLE, KINDS, MEADOW, REEDS, SCRUB};
-
-fn hash(x: u32, y: u32, s: u32) -> u32 {
-    let mut h = x.wrapping_mul(0x9E37_79B1) ^ y.wrapping_mul(0x85EB_CA77) ^ s.wrapping_mul(0xC2B2_AE3D);
-    h ^= h >> 15;
-    h = h.wrapping_mul(0x2C1B_3C6D);
-    h ^= h >> 12;
-    h
-}
-
-fn unit(h: u32) -> f32 {
-    (h >> 8) as f32 / 16_777_216.0
-}
-
-/// Value noise on a `cell`-cell lattice, 0-1.
-fn noise(x: usize, y: usize, cell: usize, s: u32) -> f32 {
-    let (gx, gy) = ((x / cell) as u32, (y / cell) as u32);
-    let (fx, fy) = ((x % cell) as f32 / cell as f32, (y % cell) as f32 / cell as f32);
-    let v = |a: u32, b: u32| unit(hash(a, b, s));
-    let top = v(gx, gy) * (1.0 - fx) + v(gx + 1, gy) * fx;
-    let bot = v(gx, gy + 1) * (1.0 - fx) + v(gx + 1, gy + 1) * fx;
-    top * (1.0 - fy) + bot * fy
-}
-
-fn stand_in(m: &mut Map, seed: u32, share: f32) {
-    m.plants = (0..MAP_W * MAP_H)
-        .map(|i| {
-            let (x, y) = (i % MAP_W, i / MAP_W);
-            let g = m.ground[i];
-            if g & G_ROCK != 0 || unit(hash(x as u32, y as u32, seed ^ 77)) > share {
-                return 0;
-            }
-            if g & G_WET != 0 {
-                return plants::pack(REEDS, 1.0);
-            }
-            let n = noise(x, y, 96, seed);
-            if n > 0.62 {
-                plants::pack(JUNGLE, 1.0)
-            } else if n < 0.3 {
-                0
-            } else if g >> 4 == 1 {
-                plants::pack(SCRUB, 1.0)
-            } else {
-                plants::pack(MEADOW, 1.0)
-            }
-        })
-        .collect();
-}
+use slime_mould::mould::plants::{self, KINDS};
 
 /// The plant kinds' colours (a stand-in for the look, which is the graphics
 /// lead's): meadow yellow-green, jungle deep green, reeds blue-green, scrub
@@ -161,7 +111,7 @@ fn main() -> Result<(), String> {
     std::fs::create_dir_all(&out).map_err(|e| e.to_string())?;
     let mut m = levelgen::level(seed, depth);
     // A saved map starts full grown; the probe's run from one cell in 40.
-    stand_in(&mut m, seed as u32, if save.is_some() { 1.0 } else { 1.0 / 40.0 });
+    plants::stand_in(&mut m, seed as u32, if save.is_some() { 1.0 } else { 1.0 / 40.0 });
     // `save=DIR`: the planet with its stand-in plants as the loader's
     // files, for the game (`larder-world map=DIR/plants-DEPTH-SEED`).
     if let Some(dir) = &save {

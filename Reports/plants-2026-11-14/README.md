@@ -22,3 +22,13 @@ slow ground to test; cover to think about.
   (`plant_every` 1); at 8 fire crept 8x slower in the game than the probe.
 - [Page](page/index.html) (films, counts): two bombs light a wildfire
   that stops at the slime body; +3.1 ms frame on llvmpipe.
+- Graphics lead's review (18:20Z), all four taken: plants and heat read
+  through a 3 x 3 Gaussian (the cell-by-cell read stair-stepped edges and
+  drew fire as a one-cell stroke); flame colour by heat^1.5, ember to
+  orange, yellow capped at (250, 170, 60) (was yellow-white over most of
+  the front); char toward (40, 35, 30) by the plants that burnt, not by
+  heat (was one flat near-black, 0.2 a step of heat), cleared by regrowth
+  only after the fire is out (cleared while burning it came out at 0.2,
+  a third of the fuel); heights jungle 1.2, reeds 0.8, scrub 0.4, meadow
+  0.25 (were 0.6, 0.4, 0.2, 0.15). Plants are on by default with
+  `plants::stand_in` on maps without their own (menu Plants).

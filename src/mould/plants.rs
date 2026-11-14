@@ -218,8 +218,11 @@ pub struct Fire {
     pub damp: f32,
     /// Char (burnt ground, the graphics lead's ask 11-14 17:55Z: without
     /// it burnt ground reads as bare ground): a cell's char is kept x
-    /// `char_keep` a step, gains heat x `char_gain`, up to 1, and loses
-    /// plants x `char_clear`, so regrowth clears it.
+    /// `char_keep` a step, gains the plants burnt x `char_gain`, up to 1,
+    /// and loses plants x `char_clear`, so regrowth clears it. From what
+    /// burnt, not the heat (graphics lead's review 18:20Z), so a burnt
+    /// jungle leaves darker ground than a meadow; the first cut gained
+    /// heat x 0.2 and every burnt cell went the same flat black.
     pub char_gain: f32,
     pub char_keep: f32,
     pub char_clear: f32,
@@ -230,6 +233,7 @@ pub struct Fire {
 /// `to`, eating `plant` where it burns. Wet ground and slime (`trail` at or
 /// over `damp`) never catch and put a fire out. Only `+`, `*`, `/`, so the
 /// GPU matches. Returns cells burning after the step.
+#[allow(clippy::too_many_arguments)]
 pub fn fire_step(
     g: &Ground,
     r: &Rates,
@@ -249,11 +253,13 @@ pub fn fire_step(
             let wet = (!g.wet.is_empty() && g.wet[i]) || trail[i] >= f.damp || !g.agar[i];
             let heat = from[i];
             let p = plant[i];
+            let mut ate = 0.0;
             if wet {
                 to[i] = 0.0;
             } else if heat > 0.0 {
                 let eat = (f.eat * heat).min(p);
                 plant[i] = p - eat;
+                ate = eat;
                 to[i] = if p - eat < f.fuel {
                     heat * 0.5
                 } else {
@@ -284,10 +290,71 @@ pub fn fire_step(
             if to[i] > 0.0 {
                 lit += 1;
             }
-            char[i] = ((char[i] * f.char_keep + to[i] * f.char_gain).min(1.0) - plant[i] * f.char_clear).max(0.0);
+            // Regrowth clears char only once the fire is out: cleared while
+            // it burned, a jungle's char came out at 0.2, a third of its fuel.
+            let clear = if to[i] > 0.0 { 0.0 } else { plant[i] * f.char_clear };
+            char[i] = ((char[i] * f.char_keep + ate * f.char_gain).min(1.0) - clear).max(0.0);
         }
     }
     lit
+}
+
+fn hash(x: u32, y: u32, s: u32) -> u32 {
+    let mut h = x.wrapping_mul(0x9E37_79B1) ^ y.wrapping_mul(0x85EB_CA77) ^ s.wrapping_mul(0xC2B2_AE3D);
+    h ^= h >> 15;
+    h = h.wrapping_mul(0x2C1B_3C6D);
+    h ^= h >> 12;
+    h
+}
+
+fn unit(h: u32) -> f32 {
+    (h >> 8) as f32 / 16_777_216.0
+}
+
+/// Value noise on a `cell`-cell lattice, 0-1 (integer hash, no platform
+/// maths).
+fn noise(x: usize, y: usize, cell: usize, s: u32) -> f32 {
+    let (gx, gy) = ((x / cell) as u32, (y / cell) as u32);
+    let (fx, fy) = ((x % cell) as f32 / cell as f32, (y % cell) as f32 / cell as f32);
+    let v = |a: u32, b: u32| unit(hash(a, b, s));
+    let top = v(gx, gy) * (1.0 - fx) + v(gx + 1, gy) * fx;
+    let bot = v(gx, gy + 1) * (1.0 - fx) + v(gx + 1, gy + 1) * fx;
+    top * (1.0 - fy) + bot * fy
+}
+
+/// **A stand-in start** for a map with no plants of its own, until
+/// levelgen writes each biome's (11-14): reeds on wet ground; elsewhere a
+/// value noise 96 map cells across picks jungle in its high part (over
+/// 0.62), bare ground in its low part (under 0.3), scrub on sand and meadow
+/// between; `share` of the cells start planted (1 full grown), full. A map
+/// that has plants keeps them.
+pub fn stand_in(m: &mut crate::mould::map::Map, seed: u32, share: f32) {
+    use crate::mould::map::{G_ROCK, G_WET, MAP_W};
+    if !m.plants.is_empty() {
+        return;
+    }
+    m.plants = (0..m.ground.len())
+        .map(|i| {
+            let (x, y) = (i % MAP_W, i / MAP_W);
+            let g = m.ground[i];
+            if g & G_ROCK != 0 || unit(hash(x as u32, y as u32, seed ^ 77)) > share {
+                return 0;
+            }
+            if g & G_WET != 0 {
+                return pack(REEDS, 1.0);
+            }
+            let n = noise(x, y, 96, seed);
+            if n > 0.62 {
+                pack(JUNGLE, 1.0)
+            } else if n < 0.3 {
+                0
+            } else if g >> 4 == 1 {
+                pack(SCRUB, 1.0)
+            } else {
+                pack(MEADOW, 1.0)
+            }
+        })
+        .collect();
 }
 
 /// A B byte's kind and start density (0-1).
@@ -470,7 +537,7 @@ mod tests {
         catch: 0.2,
         fuel: 0.05,
         damp: 1.0,
-        char_gain: 0.2,
+        char_gain: 1.0,
         char_keep: 0.999,
         char_clear: 0.02,
     };
@@ -543,7 +610,9 @@ mod tests {
             plant[w + 55]
         );
         assert!(a.iter().all(|&v| v == 0.0), "out");
-        assert!(ch[w + 10] > 0.3 && ch[w + 20] == 0.0 && ch[w + 55] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 55]);
+        // x 10 burnt in the first of the three runs, its 0.8 of plants since
+        // kept x 0.999 for about 1,000 steps.
+        assert!(ch[w + 10] > 0.2 && ch[w + 20] == 0.0 && ch[w + 55] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 55]);
         // Reeds never catch.
         let reeds = vec![REEDS; w * h];
         let mut plant = vec![0.8; w * h];

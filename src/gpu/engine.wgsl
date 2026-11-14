@@ -3213,11 +3213,13 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     let heat = pget(PB_FA, i);
     let p = pget(PB_B, i);
     var to = 0.0;
+    var ate = 0.0;
     if (wet) {
         to = 0.0;
     } else if (heat > 0.0) {
         let eat = min(pf(5u) * heat, p);
         pset(PB_B, i, p - eat);
+        ate = eat;
         to = select(min(heat + pf(4u), 1.0), heat * 0.5, p - eat < pf(7u));
         if (to < 0.01) { to = 0.0; }
     } else {
@@ -3232,7 +3234,8 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     pset(PB_FB, i, to);
     let ch = pget(PB_CHAR, i);
-    pset(PB_CHAR, i, max(min(ch * pf(11u) + to * pf(10u), 1.0) - pget(PB_B, i) * pf(12u), 0.0));
+    let clear = select(pget(PB_B, i) * pf(12u), 0.0, to > 0.0);
+    pset(PB_CHAR, i, max(min(ch * pf(11u) + ate * pf(10u), 1.0) - clear, 0.0));
 }
 
 @compute @workgroup_size(256)
