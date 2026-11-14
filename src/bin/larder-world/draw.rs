@@ -188,12 +188,20 @@ impl App {
             let wide = (g.rules.build.touch * sc * zoom).clamp(10.0, 40.0);
             let progress = |marks: &mut Marks, at: (f32, f32), below: f32| {
                 marks.bar(at, below, (wide, 2.0), b.built, [235, 235, 235, 255], [40, 40, 40, 220]);
-                let note = match (g.raise_left(k), g.raising(k)) {
-                    (Some(t), _) => format!("{}s", t.ceil() as u32),
-                    (None, (_, n)) if n > 0 => "on the way".into(),
-                    _ => "no builder".into(),
-                };
-                marks.label(at, (wide + 4.0, below - 5.0), &note, 1.5, [235, 235, 235, 230]);
+                // The seconds left as text; "on the way" and "no builder"
+                // as a figure striding, or standing struck through (art
+                // director, 11-14: two ghosts side by side ran their words
+                // into each other).
+                let (x, y) = (wide + 4.0, below - 5.0);
+                let ink = [235, 235, 235, 230];
+                match (g.raise_left(k), g.raising(k)) {
+                    (Some(t), _) => marks.label(at, (x, y), &format!("{}s", t.ceil() as u32), 1.5, ink),
+                    (None, (_, n)) if n > 0 => marks.icon(at, (x, y), WALKING, 1.5, ink),
+                    _ => {
+                        marks.icon(at, (x, y), STANDING, 1.5, [200, 200, 200, 200]);
+                        marks.icon(at, (x, y), SLASH, 1.5, [235, 80, 70, 255]);
+                    }
+                }
             };
             if let Kind::Wall { to } = b.kind {
                 // A wall is ground once whole; until then a faint dashed

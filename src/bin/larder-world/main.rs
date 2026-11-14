@@ -135,7 +135,7 @@ use slime_mould::sound::world::{Ear, WorldListener};
 use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
-use slime_mould::world::marks::team_colour;
+use slime_mould::world::marks::{team_colour, SLASH, STANDING, WALKING};
 use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
 use winit::application::ApplicationHandler;

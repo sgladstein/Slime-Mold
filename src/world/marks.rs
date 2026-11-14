@@ -86,6 +86,12 @@ pub const TEAMS: [Rgba; 4] = [[245, 245, 240, 255], [110, 180, 255, 255], [255, 
 /// direction rule 3), over a dark ring (`Marks::selected`). Heavy yellow
 /// rings 1.5 pixels wide hid a soldier on gold slime (art review
 /// 2026-11-14) and were the slime's own hue.
+/// A striding figure, 5x7 (`Marks::icon`): a builder on the way.
+pub const WALKING: [u8; 7] = [0b00100, 0b01110, 0b10101, 0b00100, 0b01010, 0b01001, 0b10001];
+/// A standing figure; with `SLASH` over it, no builder sent.
+pub const STANDING: [u8; 7] = [0b00100, 0b01110, 0b10101, 0b00100, 0b01010, 0b01010, 0b01010];
+/// A slash corner to corner, drawn over `STANDING` in the warning colour.
+pub const SLASH: [u8; 7] = [0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000];
 pub const SELECTED: Rgba = [250, 246, 228, 255];
 /// The dark under-ring that keeps a selection ring readable on bright slime.
 pub const SELECTED_INK: Rgba = [14, 13, 10, 200];
@@ -199,22 +205,22 @@ impl Marks {
             if c == ' ' {
                 continue;
             }
-            let rows = crate::hud::glyph_rows(c);
-            let mut bits = 0u64;
-            for (r, row) in rows.iter().enumerate() {
-                for col in 0..5 {
-                    if row >> (4 - col) & 1 == 1 {
-                        bits |= 1 << (r * 5 + col);
-                    }
+            self.icon(at, (offset.0 + i as f32 * advance, offset.1), crate::hud::glyph_rows(c), scale, colour);
+        }
+    }
+
+    /// One 5x7 picture (rows top down, bit 4 the left column), drawn as a
+    /// glyph: a small sign beside a building, such as `WALKING`.
+    pub fn icon(&mut self, at: (f32, f32), offset: (f32, f32), rows: [u8; 7], scale: f32, colour: Rgba) {
+        let mut bits = 0u64;
+        for (r, row) in rows.iter().enumerate() {
+            for col in 0..5 {
+                if row >> (4 - col) & 1 == 1 {
+                    bits |= 1 << (r * 5 + col);
                 }
             }
-            self.push(Mark {
-                offset: (offset.0 + i as f32 * advance, offset.1),
-                colour2: (bits as u32).to_le_bytes(),
-                extra: (bits >> 32) as u32,
-                ..Mark::new(Shape::Glyph, at, (scale, scale), colour)
-            });
         }
+        self.push(Mark { offset, colour2: (bits as u32).to_le_bytes(), extra: (bits >> 32) as u32, ..Mark::new(Shape::Glyph, at, (scale, scale), colour) });
     }
 
     /// A soldier at `at`, `r` world cells across the radius, facing
