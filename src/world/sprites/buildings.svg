@@ -17,20 +17,34 @@
   <radialGradient id="charge" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#eaffff"/><stop offset="0.4" stop-color="#5ce0e8"/><stop offset="1" stop-color="#20a0b0" stop-opacity="0"/></radialGradient>
  </defs>
 
- <!-- Turret: an octagonal concrete base, a round head with twin barrels toward +x. -->
+ <!-- Turret: an octagonal concrete base that stays put (`turret`), and a
+      head with twin barrels toward +x that the view turns to the game's aim
+      (`turret-head`, tile 16) and pushes back as it fires; `turret-lit` is
+      the muzzle flash in the head's frame. Split 11-14 (owner: "turrets
+      need to look better"): one tile turned nowhere, so the gun never
+      pointed at what it shot. The head and barrels are a size up so the
+      gun reads at zoom 6 as clearly as a soldier. -->
  <g id="turret">
   <polygon points="0.42,-1 1,-0.42 1,0.42 0.42,1 -0.42,1 -1,0.42 -1,-0.42 -0.42,-1" fill="url(#pad)" stroke="#2a2622" stroke-width="0.06"/>
-  <rect x="0.2" y="-0.26" width="1.35" height="0.17" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.03"/>
-  <rect x="0.2" y="0.09" width="1.35" height="0.17" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.03"/>
-  <circle cx="0" cy="0" r="0.58" fill="url(#olive)" stroke="#23261a" stroke-width="0.06"/>
-  <rect x="-0.42" y="-0.16" width="0.3" height="0.32" rx="0.06" fill="#30331f"/>
-  <circle cx="0.18" cy="-0.22" r="0.09" fill="#3a3a3a" stroke="#111" stroke-width="0.02"/>
+  <circle cx="0" cy="0" r="0.74" fill="#3a3630" stroke="#24211c" stroke-width="0.05"/>
+  <g fill="#5e584e">
+   <circle cx="0.78" cy="-0.32" r="0.06"/><circle cx="0.78" cy="0.32" r="0.06"/><circle cx="-0.78" cy="-0.32" r="0.06"/><circle cx="-0.78" cy="0.32" r="0.06"/>
+   <circle cx="0.32" cy="-0.78" r="0.06"/><circle cx="-0.32" cy="-0.78" r="0.06"/><circle cx="0.32" cy="0.78" r="0.06"/><circle cx="-0.32" cy="0.78" r="0.06"/>
+  </g>
  </g>
  <g id="turret-lit">
-  <ellipse cx="1.72" cy="-0.17" rx="0.3" ry="0.16" fill="#ffb040"/>
-  <ellipse cx="1.72" cy="0.17" rx="0.3" ry="0.16" fill="#ffb040"/>
-  <ellipse cx="1.68" cy="0" rx="0.18" ry="0.24" fill="#fff8d8"/>
-  <circle cx="0.18" cy="-0.22" r="0.22" fill="url(#glow)"/>
+  <ellipse cx="1.86" cy="-0.19" rx="0.3" ry="0.17" fill="#ffb040"/>
+  <ellipse cx="1.86" cy="0.19" rx="0.3" ry="0.17" fill="#ffb040"/>
+  <ellipse cx="1.82" cy="0" rx="0.2" ry="0.28" fill="#fff8d8"/>
+ </g>
+ <g id="turret-head">
+  <rect x="0.25" y="-0.3" width="1.4" height="0.2" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.035"/>
+  <rect x="0.25" y="0.1" width="1.4" height="0.2" rx="0.05" fill="#2a2a2e" stroke="#111" stroke-width="0.035"/>
+  <rect x="1.48" y="-0.33" width="0.2" height="0.26" rx="0.04" fill="#1c1c20"/>
+  <rect x="1.48" y="0.07" width="0.2" height="0.26" rx="0.04" fill="#1c1c20"/>
+  <path d="M -0.62 -0.5 L 0.3 -0.6 Q 0.72 -0.5 0.72 0 Q 0.72 0.5 0.3 0.6 L -0.62 0.5 Q -0.8 0 -0.62 -0.5 Z" fill="url(#olive)" stroke="#23261a" stroke-width="0.06"/>
+  <rect x="-0.6" y="-0.22" width="0.28" height="0.44" rx="0.06" fill="#30331f"/>
+  <path d="M -0.1 -0.42 L 0.4 -0.42" stroke="#9aa27a" stroke-width="0.05" stroke-linecap="round" opacity="0.7"/>
  </g>
 
  <!-- Lure: a squat bait canister on three feet, a vented lid. -->

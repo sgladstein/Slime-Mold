@@ -12,12 +12,24 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(f32, f32)], menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
+    }
+    // `turret=X,Y`: standing from the start (the turret films).
+    if let Some(g) = app.game.as_mut() {
+        for &at in turrets {
+            let n = g.buildings.len();
+            g.bank += g.build_price(Kind::Turret, at);
+            if !g.build(Kind::Turret, at) {
+                return Err(format!("turret={},{}: {}", at.0, at.1, g.build_blocked(Kind::Turret, at).unwrap_or("blocked")));
+            }
+            let b = &mut g.buildings[n];
+            (b.built, b.hp) = (1.0, b.max_hp);
+        }
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
@@ -247,6 +259,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             None => Vec::new(),
         };
         app.hud.moved(hover);
+        app.controls.cursor = hover;
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
         // past the world's edges (fit with no insets).
@@ -345,7 +358,8 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
     for s in &g.last_shots {
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
-        tracers.push(Tracer { from: s.from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        let from = s.from;
+        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
         if !s.fired {
             continue;
         }
@@ -364,6 +378,43 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
             if looks[k].flash <= 0.0 {
                 looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
             }
+        }
+    }
+}
+
+/// A turret per building, facing the mould's core when it is new.
+fn join_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<TurretLook>) {
+    for b in &g.buildings[turrets.len().min(g.buildings.len())..] {
+        turrets.push(TurretLook { facing: (g.core.1 - b.at.1).atan2(g.core.0 - b.at.0), shot: 0.0 });
+    }
+}
+
+/// A turret that fired this step faces down its shot and kicks (turret
+/// look, owner's playtest 11-14 08:15Z): the shot is the game's, from the
+/// turret's own place.
+pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<TurretLook>) {
+    join_turrets(g, turrets);
+    for s in g.turret_shots().filter(|s| s.fired) {
+        // The game starts a turret's shot at its barrel tip
+        // (`TURRET_MUZZLE` touch radii out, less for mould at its foot).
+        let tip = TURRET_MUZZLE * g.rules.build.touch * g.world.scale() + 0.5;
+        if let Some(k) = g.buildings.iter().position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < tip) {
+            turrets[k] = TurretLook { facing: (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), shot: TURRET_SHOT };
+        }
+    }
+}
+
+/// Between shots a turret's head turns toward its aim (`Building::aim`,
+/// what it would shoot), at `TURRET_TURN`; with nothing in reach it holds.
+pub(super) fn turn_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<TurretLook>, dt: f32) {
+    join_turrets(g, turrets);
+    for (t, b) in turrets.iter_mut().zip(&g.buildings) {
+        t.shot = (t.shot - dt).max(0.0);
+        if let (Kind::Turret, Some(aim)) = (b.kind, b.aim) {
+            let want = (aim.1 - b.at.1).atan2(aim.0 - b.at.0);
+            let mut d = want - t.facing;
+            d = (d + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+            t.facing += d.clamp(-TURRET_TURN * dt, TURRET_TURN * dt);
         }
     }
 }

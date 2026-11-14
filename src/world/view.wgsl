@@ -54,9 +54,9 @@ struct V {
 @group(0) @binding(8) var<storage, read> ground: array<u32>;
 @group(0) @binding(9) var<storage, read> walkers: array<vec4<f32>>;
 @group(0) @binding(10) var<storage, read_write> specks: array<atomic<u32>>;
-// The sprites (`src/world/sprites/`): 2048 x 160 RGBA, sixteen 128 px
+// The sprites (`src/world/sprites/`): 2176 x 160 RGBA, seventeen 128 px
 // tiles (soldier body, helmet, flash, dead; six buildings, each body then
-// lamp) above the same at 32 px.
+// lamp; the turret's head) above the same at 32 px.
 @group(0) @binding(11) var<storage, read> atlas: array<u32>;
 // Each shown cell's height and material, worked out once a frame by `prep`
 // (rows `rw` apart from cell ox, oy). `base` reads these: a pixel needs 24
@@ -1280,13 +1280,14 @@ fn cover(sd: f32, aa: f32) -> f32 { return clamp(0.5 - sd / aa, 0.0, 1.0); }
 
 // One texel of the atlas, premultiplied.
 fn texel(x: i32, y: i32) -> vec4<f32> {
-    let c = atlas[u32(clamp(y, 0, 159)) * 2048u + u32(clamp(x, 0, 2047))];
+    let c = atlas[u32(clamp(y, 0, 159)) * 2176u + u32(clamp(x, 0, 2175))];
     let a = f32(c >> 24u) / 255.0;
     return vec4<f32>(unpack(c) * a, a);
 }
 
 // Tile `k` (0 body, 1 helmet, 2 flash, 3 dead; 4-15 the buildings, each
-// body then lamp: turret, lure, pump, outpost, siren, larder) at point `p` in radii
+// body then lamp: turret, lure, pump, outpost, siren, larder; 16 the
+// turret's head) at point `p` in radii
 // (-2..2 across the tile), bilinear, from the 128 px or the 32 px row.
 fn sprite(k: u32, p: vec2<f32>, small: bool) -> vec4<f32> {
     var size = 128.0; var oy = 0.0;
@@ -1422,13 +1423,50 @@ fn soldier(d: vec2<f32>, r: f32, ang: f32, team: vec3<f32>, flash: f32, dead: bo
 // siren while it is on).
 // `pulse` 0-1 brightens the lamp for a moment: the larder's charge cells
 // as a carrier banks its load (harvest look, 11-14).
-fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) -> vec4<f32> {
+//
+// The turret (kind 0; owner's playtest 11-14 08:15Z: "turrets need to look
+// better"): a base that stays put and a head (tile 16) turned to `facing`,
+// the game's aim, so the gun points at what it shoots. `pulse` is its shot:
+// the head kicks back along the barrels by up to 0.22 radii and the muzzle
+// flash (its lamp tile) shows, both fading with the pulse. `state` lights
+// the lamp on the head's back: 0 idle (dark, nothing in reach), 1 tracking
+// (amber, mould in reach and food to fire), 2 dry (red, and the head
+// greyed: the bank cannot pay for a shot). Every standing building gets
+// the soldier's rim toward the light (#227).
+fn turret_frame(q: vec2<f32>, ca: f32, sa: f32, recoil: f32) -> vec2<f32> {
+    return vec2<f32>(q.x * ca + q.y * sa + recoil, -q.x * sa + q.y * ca);
+}
+
+// The building's own texels at `q` (radii): its tile, and a turret's head
+// over its base.
+fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool) -> vec4<f32> {
+    var body = sprite(k, q, small);
+    if (turret) {
+        var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
+        if (dry) {
+            let g = dot(head.xyz, vec3<f32>(0.3, 0.59, 0.11));
+            head = vec4<f32>(mix(head.xyz, vec3<f32>(g), 0.75) * 0.8, head.w);
+        }
+        body = pm_over(body, head);
+    }
+    return body;
+}
+
+const LAMP_TRACK: vec3<f32> = vec3<f32>(255.0, 190.0, 80.0);
+const LAMP_DRY: vec3<f32> = vec3<f32>(240.0, 64.0, 52.0);
+const LAMP_IDLE: vec3<f32> = vec3<f32>(70.0, 72.0, 60.0);
+
+fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;
     let small = r < 12.0;
     let k = 4u + 2u * min(kind, 5u);
-    var body = sprite(k, p, small);
+    let turret = kind == 0u;
+    let ca = cos(facing); let sa = sin(facing);
+    let recoil = select(0.0, pulse * 0.22, turret);
+    let dry = turret && state == 2u && built >= 1.0;
+    var body = building_body(k, p, small, turret, ca, sa, recoil, dry);
     // The silhouette's edge, OUTLINE pixels out (eight taps): a dark
     // outline round a standing building, as round a soldier, so it parts
     // from the slime (art review 2026-11-14), and the cream line of a
@@ -1437,7 +1475,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     var grown = 0.0;
     for (var i = 0u; i < 8u; i++) {
         let a = f32(i) * 0.785398;
-        grown = max(grown, sprite(k, p + vec2<f32>(cos(a), sin(a)) * o, small).w);
+        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false).w);
     }
     let edge = clamp(grown - body.w, 0.0, 1.0);
     // Built from the foot (screen down) up (owner's playtest 2026-11-12:
@@ -1471,24 +1509,49 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         out = pm_over(out, vec4<f32>(INK * edge, edge));
     }
     out = pm_over(out, body);
+    if (built >= 1.0) {
+        // The rim: inside the silhouette, where a pixel toward the light
+        // is outside it (the soldier's, #227).
+        let lp = vec2<f32>(l.x, l.y) / r * 1.2;
+        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false).w, 0.0, 1.0) * 0.6;
+        out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
+    }
     if (built < 1.0) {
         let seam = clamp(1.0 - abs(p.y - line) * r / 1.2, 0.0, 1.0) * max(body.w, edge);
         out = pm_over(out, vec4<f32>(RIM * seam, seam));
     }
-    if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
-    if (pulse > 0.0 && built >= 1.0) {
-        let lamp = sprite(k + 1u, p, small);
-        let g = pulse * 1.5;
-        out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
-        // A halo round the lit cells.
-        let lit = sprite(k + 1u, p * 0.8, true).w;
-        out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
-        // The whole store washed in charge light, on the body only (no
-        // new alpha, so it claims no neighbour's pixels): the lit cells
-        // alone were a few pixels at zoom 12 and lost under the carriers
-        // walking in (first film, 11-14).
-        let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
-        out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+    if (turret) {
+        if (built >= 1.0) {
+            let ph = turret_frame(p, ca, sa, recoil);
+            // The lamp on the head's back.
+            let lc = select(select(LAMP_IDLE, LAMP_TRACK, state == 1u), LAMP_DRY, state == 2u);
+            let dl = length(ph - vec2<f32>(-0.46, 0.0));
+            let la = cover(dl - 0.11, aa * 2.0);
+            out = pm_over(out, vec4<f32>(lc * la, la));
+            if (state != 0u) {
+                let g = exp(-dl * dl / 0.02) * 0.5;
+                out = vec4<f32>(out.xyz + lc * g * out.w, out.w);
+            }
+            if (pulse > 0.0) {
+                out = pm_over(out, sprite(k + 1u, ph, small) * clamp(pulse * 1.5, 0.0, 1.0));
+            }
+        }
+    } else {
+        if (working && built >= 1.0) { out = pm_over(out, sprite(k + 1u, p, small)); }
+        if (pulse > 0.0 && built >= 1.0) {
+            let lamp = sprite(k + 1u, p, small);
+            let g = pulse * 1.5;
+            out = vec4<f32>(out.xyz + lamp.xyz * g, min(out.w + lamp.w * g, 1.0));
+            // A halo round the lit cells.
+            let lit = sprite(k + 1u, p * 0.8, true).w;
+            out = vec4<f32>(out.xyz + CHARGE * lit * pulse * 0.5, min(out.w + lit * pulse * 0.5, 1.0));
+            // The whole store washed in charge light, on the body only (no
+            // new alpha, so it claims no neighbour's pixels): the lit cells
+            // alone were a few pixels at zoom 12 and lost under the carriers
+            // walking in (first film, 11-14).
+            let wash = pulse * exp(-dot(p, p) / 0.6) * 0.45;
+            out = vec4<f32>(out.xyz + CHARGE * wash * out.w, out.w);
+        }
     }
     if (out.w <= 0.0) { return vec4<f32>(0.0); }
     return vec4<f32>(out.xyz / out.w, out.w);
@@ -1496,7 +1559,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
 
 fn building_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
     let extra = marks[b + 11u];
-    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0);
+    return building(d, r, u32(bitcast<f32>(marks[b + 9u])), f32(extra & 255u) / 255.0, f32((extra >> 8u) & 255u) / 255.0, (extra & 65536u) != 0u, f32((extra >> 17u) & 255u) / 255.0, bitcast<f32>(marks[b + 8u]), (extra >> 25u) & 3u);
 }
 
 // Marks claim pixels: each covered pixel keeps the highest mark index that
