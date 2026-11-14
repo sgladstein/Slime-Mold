@@ -46,8 +46,6 @@ struct Row {
     cast: [u32; 4],
     killed: usize,
     round_killed: usize,
-    spent: f32,
-    broke: u32,
     dropped: u32,
     ms_tick: f64,
     load: String,
@@ -193,8 +191,6 @@ fn play(seed: u64, tier: &str, load: &str, hand: &str, rules: Rules, rr: RoundRu
         cast: rd.cast,
         killed: g.killed as usize,
         round_killed: rd.killed,
-        spent: rd.spent,
-        broke: rd.broke,
         dropped: rd.dropped,
         ms_tick: start.elapsed().as_secs_f64() * 1000.0 / g.world.ticks().max(1) as f64,
         load: rounds::name(&round),
@@ -268,8 +264,8 @@ fn main() {
                 let lk = if *seed == seeds[0] { look.as_deref() } else { None };
                 let r = play(*seed, tier, load, &hand, rules, rr, lk);
                 println!(
-                    "{tier:>8} {load:>24} seed {seed:>2}: {:>11} at {:>4.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}; round {}, casts {:?}, round kills {} of {}, spent {:.0}, broke {}, dropped {}; {:.2} ms a tick",
-                    r.end, r.t, r.score, r.alive, r.mould, r.load, r.cast, r.round_killed, r.killed, r.spent, r.broke, r.dropped, r.ms_tick
+                    "{tier:>8} {load:>24} seed {seed:>2}: {:>11} at {:>4.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}; round {}, casts {:?}, round kills {} of {}, dropped {}; {:.2} ms a tick",
+                    r.end, r.t, r.score, r.alive, r.mould, r.load, r.cast, r.round_killed, r.killed, r.dropped, r.ms_tick
                 );
                 out.lock().unwrap()[j] = r;
             });

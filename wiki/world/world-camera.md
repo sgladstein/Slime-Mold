@@ -116,8 +116,7 @@ switches the dish behind it
 ([report](../../Reports/start-menu-2026-11-14/README.md)). A one-row
 loadout strip (`ui::Loadout`, 2026-11-14) on the selection panel's top
 edge shows the squad's gun cards in their four slots, framed by kind, with
-the cast the shown soldier's next shot fires lit (the recharge bar went
-with the recharge, 18:05Z), a tooltip
+the cast the shown soldier's next shot fires lit, a tooltip
 per card and a swap button (H, `NEXT_ROUND`); the same change cut the
 bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
 800), collapses the selection panel when nothing is selected, and opens

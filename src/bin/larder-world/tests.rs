@@ -343,14 +343,12 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     let lull = cards("quiet+gas+quiet+blast", Some(1));
     assert_eq!(lit(&lull), [false, false, true, true]);
     assert_eq!(lull.iter().map(|c| c.kind).collect::<Vec<_>>(), [CardKind::Modifier, CardKind::Payload, CardKind::Modifier, CardKind::Payload]);
-    // A modifier takes its payload's colour; a payload shows its bank
-    // price a hit only when casts pay (`RoundRules::pay`, 0 by default).
+    // A modifier takes its payload's colour; a payload has no price a hit
+    // (owner 18:38Z: "The bank is just to build the gun"), only its
+    // budget cost.
     assert_eq!(lull[0].colour, lull[1].colour);
     assert_ne!(lull[0].colour, lull[3].colour);
-    assert_eq!(lull[3].cost, None);
-    let paid = RoundRules { pay: 1.0, ..r };
-    let lull = gun_cards(&rounds::parse("quiet+gas+quiet+blast").unwrap(), &paid, &Rules::default(), Some(1), |_| true);
-    assert_eq!(lull[3].cost.as_deref(), Some(format!("{:.0}", r.kit.blast_price).as_str()));
+    assert!(lull[3].about.contains("Costs 3 of the gun's budget"), "{}", lull[3].about);
     // A card after the last payload casts nothing; flight cards ride every
     // bullet, never lit as a cast and never idle.
     let tail = cards("blast+quiet", Some(0));

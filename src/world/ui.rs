@@ -252,8 +252,6 @@ pub struct GunCard {
     pub colour: Rgba,
     /// What it does, for its tooltip.
     pub about: String,
-    /// A payload's price a cast ("40").
-    pub cost: Option<String>,
     /// In the cast the gun's next shot fires: lit.
     pub next: bool,
     /// After the last payload: it casts nothing.
@@ -1529,12 +1527,6 @@ impl Hud {
         let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
         c.rrect(kr, 5.0 * s, alpha(frame, 0.18));
         c.text(Weight::SemiBold, 10.5 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &kind, frame);
-        if let Some(cost) = &k.cost {
-            let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
-            let cx = kr.x - 10.0 * s - cw;
-            c.icon(Icon::Crystal, (cx - 16.0 * s, y - 12.0 * s), 13.0 * s, ENERGY);
-            c.text(Weight::SemiBold, 12.0 * s, (cx, y - 1.0 * s), Align::Left, cost, ENERGY);
-        }
         y += 22.0 * s;
         for l in &lines {
             c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
@@ -1926,7 +1918,7 @@ mod tests {
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
 
     fn loadout() -> Loadout {
-        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), cost: (kind == CardKind::Payload).then(|| "60".into()), next, idle };
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), next, idle };
         Loadout {
             name: "Lull".into(),
             whose: "Soldier 1".into(),

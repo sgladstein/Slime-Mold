@@ -1055,7 +1055,6 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
 /// payload, and the payload), cards after the last payload idle. Flight
 /// cards ride every bullet, so they are never idle.
 pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
-    use rounds::Card as C;
     let payloads = round.iter().filter(|c| c.kind() == rounds::Kind::Payload).count();
     let mut cast = 0;
     let mut out = Vec::new();
@@ -1079,16 +1078,6 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             (_, Some(p)) => payload_colour(p),
             (_, None) => [146, 156, 168, 255],
         };
-        // A payload's bank price a hit, when casts pay (`RoundRules::pay`).
-        let price = match c {
-            C::Blast => Some(r.kit.blast_price),
-            C::Gas => Some(r.kit.gas_price),
-            C::Germ => Some(r.kit.germ_price),
-            C::Bomb => Some(r.bomb_price),
-            _ => None,
-        }
-        .map(|p| p * r.pay)
-        .filter(|&p| p > 0.0);
         if kind == CardKind::Payload && !castable(c) {
             about.push_str(" Not on this world yet: it casts nothing here.");
         }
@@ -1098,7 +1087,6 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             kind,
             colour,
             about,
-            cost: price.map(|p| format!("{p:.0}")),
             next: !flight && !idle && next == Some(runs[i]),
             idle,
         });

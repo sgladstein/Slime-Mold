@@ -50,7 +50,6 @@ code:
   - KitRules
   - KitRules::carry_max
   - KitRules::gas_cloud
-  - RoundRules::pay
   - Soldier::load
   - Soldier::smell
   - Tool
@@ -140,8 +139,8 @@ each squad's own cards (`Squad::deck`, `Cmd::Load`, H in the squad mode), none b
 of a split carry a copy of the gun and cards (18:05Z); `rounds::fit_gun` and `guns::Loadout` (a squad's gun and
 cards between planets). Since 18:05Z there is **no recharge** ([report](../../Reports/no-recharge-2026-11-14.md)):
 every shot carries the next cast in turn (`Soldier::next`, `Bullet::cast`) at the gun's rate of fire and casts it
-where it hits slime; payloads are bullets, free to fire (`RoundRules::pay` 0, the thread's pick put to the owner;
-at the toolkit's prices eight soldiers on gas and blast spent a 2,000 bank in about 5 s).
+where it hits slime; payloads are bullets, free to fire (18:38Z: "The bank is just to build the gun. How many and
+which cards"; at the toolkit's prices eight soldiers on gas and blast spent a 2,000 bank in about 5 s).
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
 distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building

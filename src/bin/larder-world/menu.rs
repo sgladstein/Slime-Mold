@@ -224,7 +224,8 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 }
                 Face::Gun(g) => {
                     s.icon = draw::gun_icon(g.kind);
-                    s.tint = if g.lucky { theme::WARN } else { theme::TEXT };
+                    // No gun is labelled lucky (owner 18:18Z).
+                    s.tint = theme::TEXT;
                     s.bars = gun_bars(&g);
                     s.about = format!("{}. {}", g.kind.about(), row.about);
                 }

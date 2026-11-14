@@ -9,9 +9,12 @@
 //! **Cards**, four kinds:
 //! - *Payloads* are the squad toolkit's tools (`mould::kit`), cast where a
 //!   soldier's shot hit: `Blast` (kill, crater, alarm), `Gas` (sleep),
-//!   `Germ` (contagion). Each was paid from the bank at the toolkit's price
-//!   when it was cast; since the recharge went (18:05Z) that price is x
-//!   `RoundRules::pay`, 0 by default (the thread's pick, put to the owner). The reviewers' call (game designer and technical
+//!   `Germ` (contagion). Firing one is free: "The bank is just to build
+//!   the gun. How many and which cards" (owner 18:38Z). Until then each
+//!   cast was paid from the bank at the toolkit's price (blast 60, gas
+//!   150, germ 300, bomb 60), skipped when the bank was short; with the
+//!   recharge gone eight soldiers on `lull` spent 373 a second, a 2,000
+//!   start bank in about 5 s. The reviewers' call (game designer and technical
 //!   lead, 15:31Z): no third weapons system, the payloads are the toolkit.
 //!   `Bomb` (2026-11-14, the owner's "Do we have explosions yet. That
 //!   should also be a thing", after Noita's splash,
@@ -49,7 +52,7 @@
 //! weight (a payload 1 s, Wide 1 s, any other 0.5 s) after its last cast,
 //! firing plain shots meanwhile, and a hit, not a shot, took the next
 //! cast. What limits a round is its gun's budget and slots
-//! (`fit_gun`) and each payload's bank price.
+//! (`fit_gun`).
 //!
 //! **Bursts.** A cast compiles to a list of `squad::Burst`s (centre,
 //! radius, kill, alarm, crater, gas, germ), applied by `World::burst`, so
@@ -313,7 +316,7 @@ pub struct RoundRules {
     /// `Bomb`: its kill radius (dish cells), the fling ring's outer radius
     /// x that, how long the walkers nearest the kill fly (game seconds;
     /// the ring's outer edge barely moves), a flung walker's speed x
-    /// `step` a fine step, its crater (radius, seconds) and its price.
+    /// `step` a fine step, and its crater (radius, seconds).
     /// At the race world's 30 fine steps a second and step 1, 0.5 s at 1.5
     /// throws the inner edge 22 fine cells, 11 dish cells.
     pub bomb_r: f32,
@@ -322,7 +325,6 @@ pub struct RoundRules {
     pub fling_speed: f32,
     pub bomb_crater_r: f32,
     pub bomb_crater_secs: f32,
-    pub bomb_price: f32,
     /// **Trails** (the flight cards `Scorch`, `Bait`, `Mist`, 2026-11-14,
     /// after Noita's burning and gunpowder trails: step 5 of
     /// `Reports/noita-spell-look-2026-11-14.md`): each soldier bullet's leg
@@ -344,13 +346,6 @@ pub struct RoundRules {
     /// and alarm different. It just makes a virtual wall for the slime?").
     /// Off, scorch is the crater wall alone, as #244 built it.
     pub trail_burn: bool,
-    /// What a cast spends of the bank, x its toolkit price (`Cast::price`).
-    /// 0: free to fire, the gun's budget its only limit. With no recharge
-    /// (owner 18:05Z) a squad of eight on `lull` (gas and blast in turn)
-    /// spent 373 a second at 1, so a 2,000 bank ran dry in about 5 s and
-    /// the shots went plain, which the owner ruled out ("It never has to
-    /// stop to recharge or switch to regular bullets"). Was 1 until then.
-    pub pay: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -376,13 +371,11 @@ impl Default for RoundRules {
             fling_speed: 1.5,
             bomb_crater_r: 4.0,
             bomb_crater_secs: 6.0,
-            bomb_price: 60.0,
             trail_r: 2.0,
             trail_crater_secs: 4.0,
             trail_bait: 40.0,
             trail_cloud: 0.4,
             trail_burn: true,
-            pay: 0.0,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -397,13 +390,11 @@ pub struct Cast {
     pub scatter: bool,
     pub quiet: bool,
     pub trigger: Option<Card>,
-    /// Payloads' bank price (the toolkit's), before `RoundRules::pay`.
-    pub price: f32,
 }
 
 /// The round's casts, left to right. Modifiers and triggers apply to the
 /// next payload; a second trigger before it replaces the first.
-pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
+pub fn casts(round: &[Card]) -> Vec<Cast> {
     let mut out = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger) = (0, false, false, None);
     for &c in round.iter().take(MAX_SLOTS) {
@@ -415,13 +406,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
-                let price = match c {
-                    Card::Blast => r.kit.blast_price,
-                    Card::Bomb => r.bomb_price,
-                    Card::Gas => r.kit.gas_price,
-                    _ => r.kit.germ_price,
-                };
-                out.push(Cast { payload: c, wide, scatter, quiet, trigger, price });
+                out.push(Cast { payload: c, wide, scatter, quiet, trigger });
                 (wide, scatter, quiet, trigger) = (0, false, false, None);
             }
         }
@@ -567,14 +552,11 @@ pub struct Rounds {
     casts: Vec<Cast>,
     pending: Vec<Pending>,
     /// Casts by payload (blast, gas, germ, bomb), walkers killed by
-    /// rounds, walkers flung by bombs, bank spent, casts dropped at
-    /// `PENDING_MAX`, and casts skipped for want of food.
+    /// rounds, walkers flung by bombs, and casts dropped at `PENDING_MAX`.
     pub cast: [u32; 4],
     pub killed: usize,
     pub flung: usize,
-    pub spent: f32,
     pub dropped: u32,
-    pub broke: u32,
     /// Casts skipped because this world has no gas or germ yet.
     pub unsupported: u32,
     /// Trail bursts laid (`trail_bursts`), all kinds.
@@ -596,7 +578,7 @@ fn slot(p: Card) -> usize {
 impl Rounds {
     /// A gun with these cards, unchecked (the window's test loadouts).
     pub fn new(round: Vec<Card>, rules: RoundRules) -> Self {
-        let casts = casts(&round, &rules);
+        let casts = casts(&round);
         Rounds { rules, round, casts, ..Default::default() }
     }
 
@@ -635,7 +617,7 @@ impl Rounds {
     /// Squad `q`'s casts, left to right (`casts` of `cards_of`).
     pub fn casts_of<W: World>(&self, g: &Game<W>, q: usize) -> Vec<Cast> {
         match g.squads.get(q).and_then(|s| s.deck) {
-            Some(d) => casts(&d.cards(), &self.rules),
+            Some(d) => casts(&d.cards()),
             None => self.casts.clone(),
         }
     }
@@ -646,7 +628,7 @@ impl Rounds {
     pub fn cast_of<W: World>(&self, g: &Game<W>, q: usize, cast: u8) -> Option<Cast> {
         let i = (cast as usize).checked_sub(1)?;
         match g.squads.get(q).and_then(|s| s.deck) {
-            Some(d) => casts(&d.cards(), &self.rules).get(i).copied(),
+            Some(d) => casts(&d.cards()).get(i).copied(),
             None => self.casts.get(i).copied(),
         }
     }
@@ -686,15 +668,9 @@ impl Rounds {
             }
             let cs = by_squad[q].get_or_insert_with(|| self.casts_of(g, q));
             let Some(&c) = cs.get(cast as usize - 1) else { continue };
-            let price = c.price * self.rules.pay;
             if !castable(&g.world, c.payload) {
                 self.unsupported += 1;
-            } else if g.bank < price {
-                self.broke += 1;
             } else {
-                g.bank -= price;
-                g.spent += price;
-                self.spent += price;
                 self.cast[slot(c.payload)] += 1;
                 match c.trigger {
                     None => self.fire(g, &c, hit),
@@ -836,7 +812,7 @@ mod tests {
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
         let r = RoundRules::default();
         let round = parse("scorch+bait+bait+mist").unwrap();
-        assert!(casts(&round, &r).is_empty());
+        assert!(casts(&round).is_empty());
         assert_eq!(trails(&round), [1, 2, 1, 0]);
         // A 9-dish-cell leg at scale 2: a disc every 2 cells, the last on the end.
         let b = trail_bursts(trails(&round), (2.0, 4.0), (20.0, 4.0), &r, 2.0, 30.0, 1.0);
@@ -870,7 +846,7 @@ mod tests {
         }
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
-        assert_eq!((rd.cast, rd.spent), ([0; 4], 0.0), "a trail casts nothing and costs no food");
+        assert_eq!(rd.cast, [0; 4], "a trail casts nothing");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
@@ -947,9 +923,9 @@ mod tests {
         let round = parse("pierce+split+split+blast").unwrap();
         assert_eq!(flight(&round), BulletMods { pierce: 1, split: 2, reach: 0, rate: 0, casts: 1 });
         assert_eq!(flight(&parse("range+range+pierce").unwrap()), BulletMods { pierce: 1, split: 0, reach: 2, rate: 0, casts: 0 });
-        assert_eq!(casts(&round, &r).len(), 1);
-        assert_eq!(casts(&parse("split").unwrap(), &r), vec![]);
-        assert_eq!(flight(&parse("blast+wide+gas+quiet").unwrap()).casts as usize, casts(&parse("blast+wide+gas+quiet").unwrap(), &r).len());
+        assert_eq!(casts(&round).len(), 1);
+        assert_eq!(casts(&parse("split").unwrap()), vec![]);
+        assert_eq!(flight(&parse("blast+wide+gas+quiet").unwrap()).casts as usize, casts(&parse("blast+wide+gas+quiet").unwrap()).len());
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
         assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0, rate: 0, casts: 1 });
@@ -960,14 +936,13 @@ mod tests {
 
     #[test]
     fn modifiers_and_triggers_go_to_the_next_payload() {
-        let r = RoundRules::default();
         let round = parse("wide+blast+thick+gas").unwrap();
-        let c = casts(&round, &r);
+        let c = casts(&round);
         assert_eq!(c.len(), 2);
         assert_eq!((c[0].payload, c[0].wide, c[0].trigger), (Card::Blast, 1, None));
         assert_eq!((c[1].payload, c[1].wide, c[1].trigger), (Card::Gas, 0, Some(Card::Thick)));
         // Cards after the last payload do nothing.
-        assert_eq!(casts(&parse("blast+quiet").unwrap(), &r), casts(&parse("blast").unwrap(), &r));
+        assert_eq!(casts(&parse("blast+quiet").unwrap()), casts(&parse("blast").unwrap()));
         // A round reads up to `MAX_SLOTS` (a rolled gun's most, 6); the
         // rifle's 4 is `fit`'s to check.
         assert!(parse("blast+blast+blast+blast+blast+blast+blast").is_none());
@@ -979,11 +954,11 @@ mod tests {
     #[test]
     fn scatter_splits_a_payload_and_quiet_lays_no_alarm() {
         let r = RoundRules::default();
-        let c = casts(&parse("scatter+quiet+blast").unwrap(), &r)[0];
+        let c = casts(&parse("scatter+quiet+blast").unwrap())[0];
         let b = bursts(&c, (100.0, 100.0), &r, 2.0, 30.0);
         assert_eq!(b.len(), r.scatter_n);
         assert!(b.iter().all(|b| b.alarm == 0.0 && b.r < r.kit.blast_r && b.kill));
-        let loud = bursts(&casts(&parse("blast").unwrap(), &r)[0], (100.0, 100.0), &r, 2.0, 30.0);
+        let loud = bursts(&casts(&parse("blast").unwrap())[0], (100.0, 100.0), &r, 2.0, 30.0);
         assert_eq!(loud.len(), 1);
         assert!(loud[0].alarm > 0.0);
     }
@@ -1015,12 +990,13 @@ mod tests {
         assert!(kit.use_tool(&mut a, Tool::Blast(p)));
         let r = RoundRules { kit: kit.rules, ..RoundRules::default() };
         let fine = b.rules.tps as f32 * b.world.p.substeps as f32;
-        let c = casts(&[Card::Blast], &r)[0];
+        let c = casts(&[Card::Blast])[0];
         let k = burst_rules(&r.kit, fine);
         let killed: usize = bursts(&c, p, &r, b.world.p.scale as f32, fine).iter().map(|x| b.world.burst(x, &k).killed as usize).sum();
         assert_eq!(killed, kit.killed[0]);
-        // The larder smells of the bank, so both pay the price.
-        b.bank -= c.price;
+        // The larder smells of the bank, so both pay the kit's price (a
+        // round's cast is free since 18:38Z; the kit's tools still cost).
+        b.bank -= r.kit.blast_price;
         assert_eq!(a.bank, b.bank);
         assert_eq!(a.world.hash(), b.world.hash());
         assert_eq!(a.world.scorch, b.world.scorch);
@@ -1048,8 +1024,7 @@ mod tests {
         let p = (x / m, y / m);
         let r = RoundRules::default();
         let fine = g.rules.tps as f32 * g.world.p.substeps as f32;
-        let c = casts(&[Card::Bomb], &r)[0];
-        assert_eq!(c.price, r.bomb_price);
+        let c = casts(&[Card::Bomb])[0];
         let k = BurstRules { fling_speed: r.fling_speed, ..burst_rules(&r.kit, fine) };
         let b = bursts(&c, p, &r, g.world.p.scale as f32, fine);
         assert_eq!(b.len(), 1);
@@ -1130,10 +1105,8 @@ mod tests {
                 assert!(v.iter().all(|&c| c == 1 || c == 2), "soldier {k}: never a plain shot: {v:?}");
                 assert!(v.windows(2).all(|w| w[1] == 3 - w[0]), "soldier {k}: blast, gas, blast, ...: {v:?}");
             }
-            // Every hit cast what its bullet carried, recharge or none,
-            // and free (`RoundRules::pay` 0).
+            // Every hit cast what its bullet carried, recharge or none.
             assert_eq!(rd.cast[0], hits[0], "a blast on every blast bullet's hit");
-            assert_eq!((rd.spent, rd.broke), (0.0, 0));
             assert_eq!(rd.cast[1] + rd.unsupported, hits[1]);
             assert!(rd.killed > 0, "cast {:?} pops {:?}", rd.cast, &rd.pops[..rd.pops.len().min(3)]);
             // The old recharge (2 s, plus 1 a payload and 1 for Wide) let
@@ -1153,22 +1126,17 @@ mod tests {
         }
         assert!(lodged.cast[0] > 0 && lodged.pops.iter().all(|p| p.payload == Card::Blast));
         assert!(lodged.pops.len() as u32 + lodged.waiting() as u32 + lodged.dropped >= lodged.cast[0]);
-        // At `pay` 1 a cast spends its toolkit price, and an empty bank
-        // casts nothing.
+        // Firing is free (owner 18:38Z: "The bank is just to build the
+        // gun"): an empty bank still blasts, and the round spends none.
         let mut p = game(2);
         attack(&mut p);
-        let mut paid = Rounds::new(vec![Card::Blast], RoundRules { pay: 1.0, ..RoundRules::default() });
+        p.bank = 0.0;
+        let mut free = Rounds::new(vec![Card::Blast], RoundRules::default());
         for _ in 0..15 * 10 {
             p.step();
-            paid.after_step(&mut p);
+            free.after_step(&mut p);
         }
-        assert!(paid.cast[0] > 0 && (paid.spent - paid.cast[0] as f32 * paid.rules.kit.blast_price).abs() < 1e-3, "spent {} on {} casts", paid.spent, paid.cast[0]);
-        p.bank = 0.0;
-        let before = paid.cast[0];
-        for _ in 0..15 * 5 {
-            p.step();
-            paid.after_step(&mut p);
-        }
-        assert!(paid.broke > 0 && paid.cast[0] == before, "an empty bank pays for nothing");
+        assert!(free.cast[0] > 0, "an empty bank blasts");
+        assert_eq!(p.bank, 0.0, "and pays nothing for it");
     }
 }
