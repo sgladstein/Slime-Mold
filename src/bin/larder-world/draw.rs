@@ -35,6 +35,7 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
             *c = look::code(Ground::Rubble, 0.0);
         }
     }
+    look::mark_far(d.w, &mut codes);
     codes
 }
 

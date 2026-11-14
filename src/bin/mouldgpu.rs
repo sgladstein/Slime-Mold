@@ -1015,7 +1015,8 @@ impl App {
         }
         let g = self.ground.get_or_insert_with(|| {
             let crystal = look::dish_crystals(&e.dish);
-            let codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
+            let mut codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
+            look::mark_far(e.dish.w, &mut codes);
             look::ground_buffer(p.device(), p.queue(), &codes)
         });
         v.set_look(&e.look, g, &e.walkers, e.n);
