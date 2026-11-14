@@ -5050,10 +5050,8 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         // The old bite (1 a walker): at the game's 2 the builder dies before
         // the turret stands, and it never fires on either engine.
-        let mut rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
-        // A lure's burn is off by default (no upkeep, owner 2026-11-14); on
-        // here so the twin still checks the bank's share of it.
-        rules.build.lure_burn = 2.0;
+        // The lure's burn (once checked here too) was removed 2026-11-14: no upkeep.
+        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {
@@ -5101,9 +5099,8 @@ mod tests {
                 sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
             }
         }
-        eprintln!("buildings: living CPU, GPU {sizes:?}; pumped {} / {}, lured {} / {}, shots {} / {}, killed {} / {}", cpu.pumped, gpu.pumped, cpu.lured, gpu.lured, cpu.shots, gpu.shots, cpu.killed, gpu.killed);
+        eprintln!("buildings: living CPU, GPU {sizes:?}; pumped {} / {}, shots {} / {}, killed {} / {}", cpu.pumped, gpu.pumped, cpu.shots, gpu.shots, cpu.killed, gpu.killed);
         assert!(cpu.pumped > 0.0 && (gpu.pumped - cpu.pumped).abs() <= 1e-3 * cpu.pumped, "pumped {} on the GPU, {} on the CPU", gpu.pumped, cpu.pumped);
-        assert!(cpu.lured > 0.0 && gpu.lured == cpu.lured, "lured {} on the GPU, {} on the CPU", gpu.lured, cpu.lured);
         assert!(cpu.killed > 0 && gpu.killed > 0, "the turret kills on both: {} / {}", cpu.killed, gpu.killed);
         for &(t, a, b) in &sizes {
             let (a, b) = (a as f64, b as f64);

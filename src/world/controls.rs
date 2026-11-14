@@ -92,16 +92,29 @@ pub struct Controls {
     pub arrows_pan: bool,
     /// Edge scrolling (off when the window is not focused).
     pub edge: bool,
+    /// WASD pans as the arrows do (the window sets it while the game is
+    /// paused: owner's playtest, 2026-11-14 20:12Z, "when paused wasd
+    /// should let me move around the map"; unpaused, WASD stays the squad's
+    /// steering and the card's letters).
+    pub wasd_pan: bool,
     arrows: [bool; 4],
+    /// W, A, S, D held while `wasd_pan`, in the arrows' order (left, right,
+    /// up, down).
+    wasd: [bool; 4],
     drag: Option<Drag>,
     last_group: Option<(usize, Instant)>,
     /// The last click that picked a unit, for the double click.
     last_pick: Option<(usize, Instant)>,
 }
 
+/// W, A, S or D as an arrow's index (left, right, up, down).
+pub fn wasd_index(code: KeyCode) -> Option<usize> {
+    [KeyCode::KeyA, KeyCode::KeyD, KeyCode::KeyW, KeyCode::KeyS].iter().position(|&k| k == code)
+}
+
 impl Controls {
     pub fn new(team: u8) -> Self {
-        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, arrows: [false; 4], drag: None, last_group: None, last_pick: None }
+        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, wasd_pan: false, arrows: [false; 4], wasd: [false; 4], drag: None, last_group: None, last_pick: None }
     }
 
     fn mine<'a>(&self, units: &'a [Unit]) -> impl Iterator<Item = &'a Unit> + 'a {
@@ -258,6 +271,10 @@ impl Controls {
             self.arrows[a] = pressed;
             return Vec::new();
         }
+        if let (Some(a), true) = (wasd_index(code), self.wasd_pan) {
+            self.wasd[a] = pressed;
+            return Vec::new();
+        }
         if !pressed || repeat {
             return Vec::new();
         }
@@ -284,7 +301,7 @@ impl Controls {
 
     /// The window lost focus: nothing stays held.
     pub fn unfocus(&mut self) {
-        (self.ctrl, self.shift, self.burn, self.arrows, self.drag) = (false, false, false, [false; 4], None);
+        (self.ctrl, self.shift, self.burn, self.arrows, self.wasd, self.drag) = (false, false, false, [false; 4], [false; 4], None);
     }
 
     /// Once a frame: the edge scroll and the arrow keys over `dt` seconds.
@@ -294,7 +311,12 @@ impl Controls {
             cam.edge_scroll(c, dt);
         }
         let step = super::camera::PAN_SPEED * dt;
-        let d = ((self.arrows[1] as i32 - self.arrows[0] as i32) as f32 * step, (self.arrows[3] as i32 - self.arrows[2] as i32) as f32 * step);
+        if !self.wasd_pan {
+            // Unpaused with a key still down: WASD is the game's again.
+            self.wasd = [false; 4];
+        }
+        let held: [bool; 4] = std::array::from_fn(|i| self.arrows[i] || self.wasd[i]);
+        let d = ((held[1] as i32 - held[0] as i32) as f32 * step, (held[3] as i32 - held[2] as i32) as f32 * step);
         if d != (0.0, 0.0) {
             cam.pan(d);
         }
@@ -503,6 +525,30 @@ mod tests {
         assert!(matches!(&out[..], [UiCommand::Key { code: KeyCode::KeyA, units, at: Some(_) }] if units == &vec![0, 4]));
         // A held key's repeats give nothing.
         assert!(k.key(KeyCode::KeyA, true, true, &u, &mut c).is_empty());
+    }
+
+    #[test]
+    fn wasd_pans_only_while_set_and_lets_go_when_cleared() {
+        let u: Vec<Unit> = squad().into_iter().map(|u| Unit { x: u.x + 500.0, y: u.y + 500.0, ..u }).collect();
+        let (mut c, mut k) = (cam(), Controls::new(0));
+        c.centre_on((800.0, 600.0));
+        // Unset (unpaused): D is the game's key, and the camera stays.
+        let m = c.centre();
+        assert!(matches!(&k.key(KeyCode::KeyD, true, false, &u, &mut c)[..], [UiCommand::Key { code: KeyCode::KeyD, .. }]));
+        k.update(&mut c, 0.1);
+        assert_eq!(c.centre(), m);
+        k.key(KeyCode::KeyD, false, false, &u, &mut c);
+        // Set (paused): D pans right and W up, as the arrows do.
+        k.wasd_pan = true;
+        assert!(k.key(KeyCode::KeyD, true, false, &u, &mut c).is_empty());
+        assert!(k.key(KeyCode::KeyW, true, false, &u, &mut c).is_empty());
+        k.update(&mut c, 0.1);
+        let p = c.centre();
+        assert!(p.0 > m.0 + 1.0 && p.1 < m.1 - 1.0, "{m:?} -> {p:?}");
+        // Unpaused with the keys still down: the pan stops.
+        k.wasd_pan = false;
+        k.update(&mut c, 0.1);
+        assert_eq!(c.centre(), p);
     }
 
     #[test]

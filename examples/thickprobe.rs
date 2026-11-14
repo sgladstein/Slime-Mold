@@ -83,11 +83,12 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
         p.sensor_angle = 22.5f32.to_radians();
         p.sensor_offset = 5.0;
     }
-    // No rations and no overrun (both later than the first runs): a squad
-    // held at the larder for 240 s would otherwise starve, or lose the
+    // No overrun (later than the first runs; rations, which also starved
+    // it, were removed 2026-11-14): a squad held at the larder for 240 s
+    // would otherwise lose the
     // round to the mould at the larder before the order (seeds 1, 2 and
     // 4 with 10 soldiers, 2026-11-13). The probe measures the bite.
-    let rules = Rules { mass: Rules::mass_for(walkers, 2), squad: n, max_squad: n.max(40), wade, ration: 0.0, overrun: 0.0, ..Rules::default() };
+    let rules = Rules { mass: Rules::mass_for(walkers, 2), squad: n, max_squad: n.max(40), wade, overrun: 0.0, ..Rules::default() };
     let base = rules.drain;
     let mut g = Game::new(BigDish::new(p), rules, seed);
     g.rules.drain = 0.0;
