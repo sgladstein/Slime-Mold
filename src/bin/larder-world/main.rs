@@ -65,7 +65,7 @@
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
-//! that tooltip (a loadout card's, 2026-11-14).
+//! that tooltip (a loadout card's, 2026-11-14); `select=0` selects nobody.
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
 //! out round (X, Y), out of the ground at game second T and holds it (for
 //! HOLD seconds, then puts it back), and prints the walkers inside each
@@ -633,6 +633,11 @@ impl App {
             // On the larder, at zoom 4 or the whole map if that is closer
             // (the minimap shows the rest).
             self.camera = Camera::new(size, v.screen);
+            // The HUD's insets before it has drawn, so the larder opens in
+            // the middle of the band above the bottom panels, not under
+            // them (the art director, 11-14).
+            let (top, bottom) = Hud::insets(v.screen);
+            self.camera.set_inset(top, bottom);
             let z = self.camera.fit().max(4.0);
             self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
             self.camera.centre_on(game.larder);
@@ -1004,6 +1009,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bank = None;
     let mut centre = None;
     let mut hover = None;
+    let mut select = true;
     let mut cut = None;
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
@@ -1068,6 +1074,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "squad1" => squad1 = v != "0",
             "spread" => spread = v != "0",
             "holes" => holes = v != "0",
+            // `select=0`: the no-window pictures with nothing selected (the
+            // HUD's collapsed selection panel).
+            "select" => select = v != "0",
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).
@@ -1106,7 +1115,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut, hover; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1125,7 +1134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(page_named);
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, page, hover)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, page, hover, select)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

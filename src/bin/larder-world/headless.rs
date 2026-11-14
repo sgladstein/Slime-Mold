@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, menu_page: Option<slime_mould::world::start::Page>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -228,7 +228,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let alive: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
         let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
-        app.controls.selected = (0..g.soldiers.len()).collect();
+        app.controls.selected = if select { (0..g.soldiers.len()).collect() } else { Vec::new() };
         app.hud.moved(hover);
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in
