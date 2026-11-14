@@ -214,6 +214,7 @@ walkers touching, a fifth with 12). **Every walker counts whole** toward wading 
 mould on 4 of 64 (5 at #126) and every plan, the rush included, beats
 random after Holm; the cone moves no score, and wading mostly slows
 random's killing. **Each hit's crater lasts 2 s** (`Rules::crater`) since 2026-11-14, the owner's card pick (01:05Z: "Shorter craters, 2 s", over a crater keeping half its trail and keeping 4.5 s), after playing C (11-12 22:18Z: "The craters last too long"); it was 4.5 s from the owner's 11-12 17:29Z pick from clips of the squad firing into the thick body. On C a hit's hole refills in a median 0.5 to 0.9 s against 1.3 to 3.9 s at 4.5 s, and a shot kills 2-6% fewer ([report](../../Reports/larder-crater-2s-2026-11-14.md)). **The economy** (PR 4; [report](../../Reports/larder-economy-2026-11-12.md)):
+**Rations are off since 2026-11-14** (owner, after a playtest: keeping soldiers fed turned the game into harvesting with no time to attack; `ration=1` plays them). With them on,
 every soldier eats `Rules::ration` 1 food a second from the bank, and an
 unpaid bank costs each soldier `Rules::hunger` 1 hit point a second (hit
 points only, so starving soldiers still harvest and a dry farm recovers;
