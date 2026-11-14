@@ -537,9 +537,14 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, c: vec3<f32>) -> Mat {
     // piece loses the push with its colour (`cut`). Every weight is a
     // smooth function of `th`, so no line is drawn where the film ends.
     let lum = dot(hue, vec3<f32>(0.299, 0.587, 0.114));
-    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut));
-    let body_c = vivid * (0.95 + 0.3 * smoothstep(0.3, 1.0, th));
-    let gel = soil * (0.55 + 0.7 * vivid / 255.0);
+    // The push eases off where the body is thickest (art director, 11-14
+    // 08:15Z: the soldiers and the bullet light must still win the value
+    // order), and the gel adds a little of the hue's own light, so a thin
+    // film stays above the darker ground (crystals thread, 11-14) in grey.
+    let thick = smoothstep(0.6, 1.0, th);
+    let vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
+    let body_c = vivid * (0.95 + 0.2 * smoothstep(0.3, 1.0, th));
+    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
     let film = 1.0 - exp(-14.0 * th);
     let opaque = smoothstep(0.08, 0.55, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
@@ -703,6 +708,12 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // fine cells a cell, was lumpy squares).
     let dense = smoothstep(0.15, 0.45, wide) * 0.6;
     let th = look_trail(wx, wy) * mix(near, wide, dense);
+    // The height's thickness comes in with the wide count (art director,
+    // 11-14 08:15Z: the thin frontier read as bubble wrap, each lone walker
+    // a dome with a cast shadow and a glint). A walker alone (wide about
+    // 0.4) is a point of light (its speck) on a flat film; the height
+    // rises as walkers gather, full in the body (wide 0.6 and up).
+    let th_h = th * smoothstep(0.3, 0.6, wide);
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
@@ -715,7 +726,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let tm = max(th, 0.4 * near);
     if (P.fine == 1u) {
         let ix = i32(floor(wx)); let iy = i32(floor(wy));
-        hcell[i] = cell_height(ix, iy, th);
+        hcell[i] = cell_height(ix, iy, th_h);
         var m1 = cell_mat(ix, iy, tm, cut_share);
         m1.body = wide;
         mcell[i] = mat_pack(m1);
@@ -736,7 +747,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         let wq = w4[q];
         if (wq <= 0.0) { continue; }
         let cx = ix + o[q].x; let cy = iy + o[q].y;
-        h += wq * cell_height(cx, cy, th);
+        h += wq * cell_height(cx, cy, th_h);
         let mq = cell_mat_c(cx, cy, tm, cut_share, cs);
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
     }
@@ -808,7 +819,18 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // A wet sheet: the glossier (thicker) the mould, the tighter and
     // brighter its highlight, so a raised vein carries a sharp white glint
     // along its lit flank and a thin film only a faint sheen.
-    let spec = pow(max(dot(n, half_v), 0.0), 16.0 + 64.0 * m.gloss) * m.gloss * (0.5 + 0.9 * m.gloss);
+    // The highlight takes its normal from the height sampled wider than
+    // the shading's (bilinear, four cheap samples) and a broad lobe (art director,
+    // 11-14 08:15Z: at the fine slope and exponent 16-80 the dense body
+    // glittered like crumpled gold foil): wet sheens along the veins, not
+    // one glint a walker clump.
+    // The spacing is some 9 screen pixels (1.5 cells at zoom 6, 0.75 at
+    // 12): a fixed 1.5 cells made zoom 12 read soft again.
+    let so = clamp(9.0 / P.zoom, 0.6, 1.5);
+    let sx = cells_height_lin(x + so, y) - cells_height_lin(x - so, y);
+    let sy = cells_height_lin(x, y + so) - cells_height_lin(x, y - so);
+    let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
+    let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
