@@ -157,8 +157,11 @@ impl<W: World> Game<W> {
     pub(super) fn goal_raw(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
         let sc = self.s();
+        // Its place in its squad's formation (`squads`; it was M3's
+        // sunflower by soldier index, `slot(k)`, before squads).
+        let place = self.place(k);
         let off = |p: (f32, f32)| {
-            let o = slot(k);
+            let o = place;
             (p.0 + o.0 * sc, p.1 + o.1 * sc)
         };
         match s.order {
@@ -270,13 +273,7 @@ impl<W: World> Game<W> {
         let (dx, dy) = (g.0 - s.x, g.1 - s.y);
         let d = dx.hypot(dy).max(1e-6);
         // Thick slime holds a soldier back (`Rules::wade`).
-        let wade = if self.rules.wade > 0.0 {
-            // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
-            let x = s.touching as f32 / self.rules.wade;
-            1.0 / (1.0 + x * x)
-        } else {
-            1.0
-        };
+        let wade = self.wade_of(k);
         let step = (self.rules.speed * self.s() * dt * wade).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
         let ok = |x: f32, y: f32| if caught { self.world.open(x, y) } else { self.standable(x, y) };
@@ -292,6 +289,18 @@ impl<W: World> Game<W> {
         if let Some((x, y)) = to {
             self.soldiers[k].x = x;
             self.soldiers[k].y = y;
+        }
+    }
+
+    /// How much thick slime holds soldier `k` back (`Rules::wade`): 1 free,
+    /// toward 0 deep in it.
+    pub(super) fn wade_of(&self, k: usize) -> f32 {
+        if self.rules.wade > 0.0 {
+            // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
+            let x = self.soldiers[k].touching as f32 / self.rules.wade;
+            1.0 / (1.0 + x * x)
+        } else {
+            1.0
         }
     }
 

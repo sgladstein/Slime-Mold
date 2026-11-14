@@ -1227,3 +1227,219 @@ fn a_soldier_walking_to_a_burn_line_shoots_what_reaches_it() {
         assert!(g.target(0).is_none(), "Defend does not fire at far slime on the way");
     }
 }
+
+// Squads (`squads`, owner 2026-11-14).
+
+/// `small` in the squad mode.
+fn squads(seed: u64) -> Game<BigDish> {
+    let mut g = small(seed);
+    g.rules.squads = true;
+    g
+}
+
+/// Furthest any of squad `q` stands from its middle, dish cells.
+fn spread_of(g: &Game<BigDish>, q: usize) -> f32 {
+    let m = g.middle(q).unwrap();
+    g.members(q).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).fold(0.0, f32::max) / g.s()
+}
+
+/// Walks squad 0 off the crystal it starts round (its members start on
+/// every side of it) onto open ground and lets it settle.
+fn off_the_crystal(g: &mut Game<BigDish>) {
+    let m = g.middle(0).unwrap();
+    let sc = g.s();
+    let to = (0..64)
+        .map(|i| i as f32 / 64.0 * std::f32::consts::TAU)
+        .map(|a| (m.0 + 25.0 * sc * a.cos(), m.1 + 25.0 * sc * a.sin()))
+        .find(|&p| g.standable(p.0, p.1) && g.solid_at(p).is_none() && (0..8).all(|j| { let a = j as f32 * 0.785; g.standable(p.0 + 6.0 * sc * a.cos(), p.1 + 6.0 * sc * a.sin()) }))
+        .expect("open ground near the start");
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    for _ in 0..8 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+}
+
+#[test]
+fn a_steered_squad_moves_together_and_settles_when_let_go() {
+    let mut g = squads(2);
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let settled = spread_of(&g, 0);
+    assert!(settled < 5.0, "a settled blob of 8 stands {settled} cells wide");
+    let start = g.middle(0).unwrap();
+    // Steer toward the mould's home for 6 s.
+    let to = g.core;
+    let d = ((to.0 - start.0), (to.1 - start.1));
+    g.apply(Cmd::Steer(0, d));
+    let mut worst: f32 = 0.0;
+    for i in 0..6 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+        if i > 15 {
+            worst = worst.max(spread_of(&g, 0));
+        }
+    }
+    let moved = g.middle(0).unwrap();
+    let gone = (moved.0 - start.0).hypot(moved.1 - start.1) / g.s();
+    assert!(gone > 10.0, "the squad moved {gone} cells");
+    // Eight soldiers in a blob stand within about 5 cells of the middle.
+    assert!(worst < 7.0, "the squad spread to {worst} cells while steered");
+    g.apply(Cmd::Steer(0, (0.0, 0.0)));
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let still = g.middle(0).unwrap();
+    for _ in 0..g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let after = g.middle(0).unwrap();
+    assert!((after.0 - still.0).hypot(after.1 - still.1) < 0.5 * g.s(), "a let-go squad stays put");
+}
+
+#[test]
+fn a_squad_sent_somewhere_goes_at_the_pace_of_its_slowest() {
+    // Hold one member back as the slime would (its touch is set each
+    // frame): the rest must not run ahead of it by much more than the lead.
+    let mut g = squads(4);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    let start = g.middle(0).unwrap();
+    let dest = (start.0 + 40.0 * g.s(), start.1);
+    let dest = if g.standable(dest.0, dest.1) { dest } else { (start.0 - 40.0 * g.s(), start.1) };
+    g.apply(Cmd::SquadOrder(0, Order::Move(dest.0, dest.1)));
+    g.rules.wade = 6.0;
+    off_the_crystal(&mut g);
+    let start = g.middle(0).unwrap();
+    let dest = (start.0 + 40.0 * g.s(), start.1);
+    let dest = if g.standable(dest.0, dest.1) { dest } else { (start.0 - 40.0 * g.s(), start.1) };
+    g.apply(Cmd::SquadOrder(0, Order::Move(dest.0, dest.1)));
+    let slow = g.members(0)[0];
+    for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
+        // Walkers on it each frame (`finish_step` reads the real touch
+        // back after the walk): wade 6 holds it to a fifth of its speed.
+        g.soldiers[slow].touching = 12;
+        g.step();
+        g.soldiers[slow].hp = g.rules.hp;
+    }
+    let m = g.middle(0).unwrap();
+    let s = g.soldiers[slow];
+    let gap = (m.0 - s.x).hypot(m.1 - s.y) / g.s();
+    eprintln!("slow soldier {gap} cells from the middle; squad spread {}", spread_of(&g, 0));
+    assert!(gap < STRAY_TEST, "the squad left its slow soldier {gap} cells behind");
+}
+
+const STRAY_TEST: f32 = 12.0;
+
+#[test]
+fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster() {
+    let mut g = squads(5);
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    let m = g.middle(0).unwrap();
+    let p = (m.0 + 10.0 * g.s(), m.1);
+    g.apply(Cmd::Fire(0, Some(p)));
+    g.step();
+    let n = g.members(0).len();
+    let fired: Vec<_> = g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).collect();
+    assert_eq!(fired.len(), n, "every member fires on the same step");
+    // Each flies toward the point.
+    for s in &fired {
+        let a = (p.1 - s.from.1).atan2(p.0 - s.from.0);
+        let b = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+        assert!((a - b).abs() < 0.05 || s.hit.is_some(), "a volley shot off the aim");
+    }
+    // Volleys over 6 s, not controlled and controlled.
+    let count = |g: &mut Game<BigDish>| {
+        let mut v = 0;
+        for _ in 0..6 * g.rules.tps / g.rules.frame_ticks {
+            g.step();
+            v += g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).count();
+        }
+        v
+    };
+    let plain = count(&mut g);
+    g.apply(Cmd::Active(0));
+    let lead = count(&mut g);
+    // Twice the rate, less the first wait on the old beat.
+    assert!(lead as f32 >= 1.6 * plain as f32, "controlled {lead} shots against {plain}");
+    // Let go of fire: no more volleys.
+    g.apply(Cmd::Fire(0, None));
+    assert!(g.squads[0].fire.is_none());
+}
+
+#[test]
+fn split_join_and_merge_move_soldiers_between_squads() {
+    let mut g = squads(6);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let n = g.members(0).len();
+    let m = g.middle(0).unwrap();
+    let p = (m.0 + 30.0, m.1);
+    assert!(g.apply(Cmd::Split(0, p)));
+    let b = g.active.unwrap();
+    assert_ne!(b, 0, "control goes to the half split off");
+    assert_eq!(g.members(0).len() + g.members(b).len(), n);
+    assert_eq!(g.members(b).len(), n / 2);
+    // The new half is the one nearer the point.
+    let d = |q: usize| g.middle(q).map(|c| (c.0 - p.0).hypot(c.1 - p.1)).unwrap();
+    assert!(d(b) <= d(0));
+    // A bought soldier joins the controlled squad.
+    g.bank = 1e6;
+    g.apply(Cmd::Buy);
+    assert_eq!(g.soldiers.last().unwrap().squad as usize, b);
+    // Pull one out into a fresh squad, then merge everything back.
+    let c = g.free_squad().unwrap();
+    let k = g.members(0)[0];
+    assert!(g.apply(Cmd::Join(k, c as u8)));
+    assert_eq!(g.live_squads().len(), 3);
+    assert!(g.apply(Cmd::Merge(0, b as u8)));
+    assert!(g.apply(Cmd::Merge(0, c as u8)));
+    assert_eq!(g.live_squads(), vec![0]);
+    assert_eq!(g.active, Some(0), "merging the controlled squad keeps control");
+    for _ in 0..4 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    assert!(spread_of(&g, 0) < 7.0, "the merged squad gathers into one blob: {}", spread_of(&g, 0));
+}
+
+#[test]
+fn formations_place_every_member_apart() {
+    for f in Formation::ALL {
+        for n in [1, 2, 5, 12, 30] {
+            let pts: Vec<_> = (0..n).map(|r| f.offset(r, n)).collect();
+            for i in 0..n {
+                for j in 0..i {
+                    let d = (pts[i].0 - pts[j].0).hypot(pts[i].1 - pts[j].1);
+                    assert!(d >= 0.9, "{f:?} with {n}: places {i} and {j} {d} apart");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn squad_commands_round_trip_as_lines() {
+    let cs = [
+        Cmd::Steer(2, (0.6, -0.8)),
+        Cmd::SquadOrder(1, Order::Fight(3.5, 4.0)),
+        Cmd::SquadOrder(0, Order::Clear(10.0, 2.0)),
+        Cmd::Fire(3, Some((1.0, 2.0))),
+        Cmd::Fire(3, None),
+        Cmd::Face(0, (5.0, 6.0)),
+        Cmd::Split(1, (7.0, 8.0)),
+        Cmd::Join(12, 4),
+        Cmd::Merge(0, 5),
+        Cmd::Active(2),
+        Cmd::Formation(1, Formation::Wedge),
+    ];
+    for c in cs {
+        assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
+    }
+}

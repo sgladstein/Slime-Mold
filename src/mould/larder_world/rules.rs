@@ -326,6 +326,16 @@ pub struct Rules {
     /// (its first name): the mould's bite is its damage to soldiers
     /// (`drain`).
     pub sink: f32,
+    /// The controlled squad's edge (`squads`, owner 2026-11-14 04:08Z:
+    /// "whoever you are actively controlling is stronger"; 04:18Z: faster
+    /// fire and harder hits, seen in the bullets and the holes).
+    pub lead: super::LeadRules,
+    /// The squad mode (`squads`, owner 2026-11-14 04:49Z: "a separate
+    /// mode for right now. Not erase the other game"): formations by
+    /// squad, the controlled squad's self-defence stance and bought
+    /// soldiers joining it. Off, the game plays as before (squad commands
+    /// still apply, but nothing sends them).
+    pub squads: bool,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -429,6 +439,8 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
+            lead: super::LeadRules::default(),
+            squads: false,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

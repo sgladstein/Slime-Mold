@@ -29,6 +29,25 @@ pub enum Cmd {
     /// back to its order once the building stands. What a build order with
     /// no soldier selected does, so a ghost placed far away still rises.
     Send(usize),
+    /// Squad commands (`squads`). Steer squad `q` (a direction, zero to
+    /// stop; WASD).
+    Steer(u8, (f32, f32)),
+    /// Every member of squad `q` takes the order; a move or fight sends
+    /// the squad there in formation.
+    SquadOrder(u8, Order),
+    /// Squad `q` volleys at the point while it is Some (left button held).
+    Fire(u8, Option<(f32, f32)>),
+    /// Squad `q` faces the point (the cursor).
+    Face(u8, (f32, f32)),
+    /// Squad `q` splits; the half nearer the point is a new squad.
+    Split(u8, (f32, f32)),
+    /// Soldier `k` joins squad `q` (a free id starts a new squad).
+    Join(usize, u8),
+    /// Squad `b` joins squad `a`.
+    Merge(u8, u8),
+    /// The player controls squad `q` (`u8::MAX`: none).
+    Active(u8),
+    Formation(u8, Formation),
 }
 
 impl Cmd {
@@ -44,6 +63,16 @@ impl Cmd {
             Cmd::Queue(k, o) => format!("queue{}", &super::super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Send(b) => format!("send {b}"),
+            Cmd::Steer(q, d) => format!("steer {q} {} {}", d.0, d.1),
+            Cmd::SquadOrder(q, o) => format!("sorder {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
+            Cmd::Fire(q, Some(p)) => format!("fire {q} {} {}", p.0, p.1),
+            Cmd::Fire(q, None) => format!("fire {q} none"),
+            Cmd::Face(q, p) => format!("face {q} {} {}", p.0, p.1),
+            Cmd::Split(q, p) => format!("split {q} {} {}", p.0, p.1),
+            Cmd::Join(k, q) => format!("join {k} {q}"),
+            Cmd::Merge(a, b) => format!("merge {a} {b}"),
+            Cmd::Active(q) => format!("active {q}"),
+            Cmd::Formation(q, f) => format!("formation {q} {}", f.name()),
         }
     }
 
@@ -54,6 +83,23 @@ impl Cmd {
             "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
             "send" => return Some(Cmd::Send(w.get(1)?.parse().ok()?)),
+            "steer" => return Some(Cmd::Steer(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
+            "fire" if w.get(2) == Some(&"none") => return Some(Cmd::Fire(w.get(1)?.parse().ok()?, None)),
+            "fire" => return Some(Cmd::Fire(w.get(1)?.parse().ok()?, Some((f(2)?, f(3)?)))),
+            "face" => return Some(Cmd::Face(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
+            "split" => return Some(Cmd::Split(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
+            "join" => return Some(Cmd::Join(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
+            "merge" => return Some(Cmd::Merge(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
+            "active" => return Some(Cmd::Active(w.get(1)?.parse().ok()?)),
+            "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
+            "sorder" => {
+                let q: u8 = w.get(1)?.parse().ok()?;
+                let rest = w[2..].join(" ");
+                return match super::super::larder::Cmd::parse(&format!("order 0 {rest}"))? {
+                    super::super::larder::Cmd::Order(_, o) => Some(Cmd::SquadOrder(q, o)),
+                    _ => None,
+                };
+            }
             "build" => {
                 let kind = match *w.get(1)? {
                     "turret" => Kind::Turret,
@@ -130,6 +176,7 @@ impl<W: World> Game<W> {
                 self.rally = o;
                 true
             }
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) => self.squad_cmd(c),
             _ => false,
         }
     }
@@ -141,9 +188,23 @@ impl<W: World> Game<W> {
         self.bank -= self.rules.soldier_cost;
         self.spent += self.rules.soldier_cost;
         let a = self.rng.f32() * std::f32::consts::TAU;
-        self.add_soldier(a);
+        // A bought soldier joins the controlled squad, at its side (owner,
+        // 2026-11-14 04:18Z); with none controlled it starts at the larder
+        // on the rally order, as before.
+        let join = self.active.filter(|&q| self.rules.squads && !self.members(q).is_empty());
+        let at = join.and_then(|q| self.middle(q));
+        self.add_soldier_at(at.unwrap_or(self.larder), a);
+        let gather = join.is_some_and(|q| self.squads[q].steer == (0.0, 0.0) && self.squads[q].dest.is_none());
         if let Some(s) = self.soldiers.last_mut() {
-            s.order = self.rally;
+            match join {
+                Some(q) => s.squad = q as u8,
+                None => s.order = self.rally,
+            }
+        }
+        if let (true, Some(q)) = (gather, join) {
+            let o = self.soldiers[self.members(q)[0]].order;
+            let k = self.soldiers.len() - 1;
+            self.soldiers[k].order = o;
         }
         true
     }
@@ -307,7 +368,15 @@ impl<W: World> Game<W> {
             return None;
         }
         let near = |p: (f32, f32), r: f32| (p.0 - aim.0).hypot(p.1 - aim.1) <= r;
-        let stance = if matches!(s.order, Order::Attack | Order::Fight(..)) { Stance::Free } else { s.stance };
+        let stance = if self.rules.squads && Some(s.squad as usize) == self.active {
+            // The controlled squad's guns are the player's (`squads`): on
+            // its own it only defends itself.
+            if s.stance == Stance::HoldFire { Stance::HoldFire } else { Stance::Defend }
+        } else if matches!(s.order, Order::Attack | Order::Fight(..)) {
+            Stance::Free
+        } else {
+            s.stance
+        };
         match stance {
             Stance::HoldFire => None,
             Stance::Free => Some(aim),

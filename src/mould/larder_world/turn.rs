@@ -34,7 +34,8 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let dt = r.frame_ticks as f32 / r.tps as f32;
-        let strike = (r.strike * sc).min(squad::R_MAX);
+        // Steered and sent squads move their anchors first (`squads`).
+        self.squad_turn(dt);
         let mut units = Vec::new();
         let mut who = Vec::new();
         let mut from = Vec::new();
@@ -88,12 +89,19 @@ impl<W: World> Game<W> {
                     }
                 }
             }
-            if s.ready <= t && self.bank >= r.price {
-                if let Some(at) = self.target(k) {
+            let q = s.squad as usize;
+            let strike = self.strike_of(q);
+            // A volleying squad fires every member at its point at once and
+            // nothing else; the others fire on their own clocks.
+            let volley = self.volley(k, t);
+            let firing = self.squads[q].fire.is_some();
+            if (volley.is_some() || (!firing && s.ready <= t)) && self.bank >= r.price {
+                let aim = if firing { volley } else { self.target(k) };
+                if let Some(at) = aim {
                     let (dx, dy) = (at.0 - s.x, at.1 - s.y);
                     let d = dx.hypot(dy).max(0.1);
                     let reach = r.range * sc;
-                    if d <= reach + 4.0 {
+                    if volley.is_some() || d <= reach + 4.0 {
                         let (mut ux, mut uy) = (dx / d, dy / d);
                         if r.spread > 0.0 {
                             let a = ((self.rng.f32() * 2.0 - 1.0) * r.spread * sc / d).atan();
@@ -102,7 +110,7 @@ impl<W: World> Game<W> {
                         }
                         shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
                         shooters.push(Some(k));
-                        self.soldiers[k].ready = t + self.secs(r.shot_every);
+                        self.soldiers[k].ready = t + self.shot_gap(q);
                         self.bank -= r.price;
                         self.spent += r.price;
                     }
@@ -123,6 +131,7 @@ impl<W: World> Game<W> {
             who.push(Who::Soldier(k));
             from.push(at_crystal);
         }
+        self.volley_done(t);
         // The player's own mould's gardeners (`own_mould`; nothing here
         // unless the world has one).
         let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);

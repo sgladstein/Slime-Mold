@@ -76,7 +76,7 @@ impl<W: World> Game<W> {
     pub(super) fn at_site(&self, k: usize, b: usize) -> bool {
         let Some(p) = self.site(k, b) else { return false };
         let s = self.soldiers[k];
-        let o = slot(k);
+        let o = self.place(k);
         (p.0 - s.x).hypot(p.1 - s.y) <= self.reach(p, BUILD_REACH) + o.0.hypot(o.1) * self.s()
     }
 
