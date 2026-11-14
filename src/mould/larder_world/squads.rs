@@ -170,11 +170,49 @@ pub struct Squad {
     /// The point its formation stands round while it moves as one, fine
     /// cells (None when it is not steered or sent).
     pub anchor: Option<(f32, f32)>,
+    /// The crystal or building it works (`Order::Clear` or `Order::Build`),
+    /// while some of it does (`Game::cover_turn`).
+    pub work: Option<Order>,
+    /// How many stand guard while it works.
+    pub cover: Cover,
+    /// Orders it does next (Shift + an order, `Cmd::SquadQueue`).
+    pub queue: [Order; SQUAD_QUEUE],
+    pub queued: u8,
+    /// The squad it is linked through (`Cmd::Link`), the lowest id of its
+    /// link; `NO_LINK` alone.
+    pub link: u8,
 }
+
+/// Orders a squad holds queued.
+pub const SQUAD_QUEUE: usize = 6;
+/// `Squad::link` of a squad not linked.
+pub const NO_LINK: u8 = u8::MAX;
 
 impl Default for Squad {
     fn default() -> Self {
-        Squad { steer: (0.0, 0.0), dest: None, fight: false, face: (1.0, 0.0), formation: Formation::Blob, fire: None, next_volley: 0, anchor: None }
+        Squad {
+            steer: (0.0, 0.0),
+            dest: None,
+            fight: false,
+            face: (1.0, 0.0),
+            formation: Formation::Blob,
+            fire: None,
+            next_volley: 0,
+            anchor: None,
+            work: None,
+            cover: Cover::Some,
+            queue: [Order::Hold; SQUAD_QUEUE],
+            queued: 0,
+            link: NO_LINK,
+        }
+    }
+}
+
+impl Squad {
+    /// A new squad made from this one (a split, a soldier joining a free
+    /// id): its formation and settings, nothing it was doing, no link.
+    fn offshoot(&self) -> Squad {
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, ..Squad::default() }
     }
 }
 
@@ -204,6 +242,40 @@ impl<W: World> Game<W> {
     /// Live members of squad `q`, by soldier index.
     pub fn members(&self, q: usize) -> Vec<usize> {
         (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].squad as usize == q).collect()
+    }
+
+    /// The squads linked with `q` (`Cmd::Link`), `q` among them, in id order.
+    pub fn linked(&self, q: usize) -> Vec<usize> {
+        let g = self.squads[q].link;
+        if g == NO_LINK {
+            return vec![q];
+        }
+        self.live_squads().into_iter().filter(|&r| r == q || self.squads[r].link == g).collect()
+    }
+
+    /// Whether squad `q` is the controlled one or linked with it: its shots
+    /// get the lead's edge (`LeadRules`).
+    pub fn leads(&self, q: usize) -> bool {
+        self.active.is_some_and(|a| a == q || (self.squads[q].link != NO_LINK && self.squads[a].link == self.squads[q].link))
+    }
+
+    /// Whether squad `q` is doing nothing: not steered, sent or working.
+    pub fn idle(&self, q: usize) -> bool {
+        let sq = &self.squads[q];
+        sq.steer == (0.0, 0.0) && sq.dest.is_none() && sq.work.is_none()
+    }
+
+    /// Squad `q` starts its next queued order, if it has one.
+    pub(super) fn squad_next(&mut self, q: usize) -> bool {
+        let sq = &mut self.squads[q];
+        if sq.queued == 0 {
+            return false;
+        }
+        let o = sq.queue[0];
+        sq.queue.copy_within(1.., 0);
+        sq.queued -= 1;
+        self.send_squad(q, o);
+        true
     }
 
     /// Squads with a live member, in id order.
@@ -466,8 +538,11 @@ impl<W: World> Game<W> {
             let a = if ahead && gap(a) >= gap(at) - 1e-3 { at } else { a };
             if let Some(d) = sq.dest.filter(|_| !steering) {
                 if (d.0 - a.0).hypot(d.1 - a.1) < 1e-3 && gap(d) <= 2.0 * sc {
-                    // Arrived: the members keep their places round it.
+                    // Arrived: the members keep their places round it, or
+                    // it starts what it has queued.
                     self.squads[q].dest = None;
+                    self.squad_next(q);
+                    continue;
                 }
             }
             self.squads[q].anchor = Some(a);
@@ -481,9 +556,12 @@ impl<W: World> Game<W> {
             }
             self.rank_squad(q, a);
             let o = if sq.fight && !steering { Order::Fight(a.0, a.1) } else { Order::Move(a.0, a.1) };
+            // Moving as one, nobody works or stands guard.
+            self.squads[q].work = None;
             for k in self.members(q) {
                 let s = &mut self.soldiers[k];
                 s.order = o;
+                s.cover = false;
                 // Steering drops what was queued; a squad sent somewhere
                 // keeps it (Shift + a build while it walks: the build comes
                 // once it is there; `Cmd::SquadOrder` drops the old queue).
@@ -542,7 +620,7 @@ impl<W: World> Game<W> {
     /// Ticks between squad `q`'s shots: the controlled squad's are
     /// `LeadRules::rate` times as often.
     pub(super) fn shot_gap(&self, q: usize) -> u64 {
-        let every = self.rules.shot_every / if Some(q) == self.active { self.rules.lead.rate.max(0.01) } else { 1.0 };
+        let every = self.rules.shot_every / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
         // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
         let every = every / (1.0 + self.rules.rate_card * self.bullet_mods.rate as f32).max(0.01);
         self.secs(every).max(1)
@@ -550,12 +628,80 @@ impl<W: World> Game<W> {
 
     /// Strike radius of squad `q`'s shots, fine cells.
     pub(super) fn strike_of(&self, q: usize) -> f32 {
-        let lead = if Some(q) == self.active { self.rules.lead.strike } else { 1.0 };
+        let lead = if self.leads(q) { self.rules.lead.strike } else { 1.0 };
         (self.rules.strike * self.s() * lead).min(squad::R_MAX)
     }
 
     /// Applies a squad command (`Game::apply`). True if it took effect.
+    /// Moving, ordering, firing and facing a linked squad does the same to
+    /// every squad linked with it: a move sends each to the point offset by
+    /// where it stands in the link, so the link arrives as it walked.
     pub(super) fn squad_cmd(&mut self, c: Cmd) -> bool {
+        let q = match c {
+            Cmd::Steer(q, _) | Cmd::SquadOrder(q, _) | Cmd::SquadQueue(q, _) | Cmd::Fire(q, _) | Cmd::Face(q, _) if (q as usize) < SQUADS_MAX => q as usize,
+            _ => return self.squad_one(c),
+        };
+        let group = self.linked(q);
+        if group.len() < 2 {
+            return self.squad_one(c);
+        }
+        let mids: Vec<Option<(f32, f32)>> = group.iter().map(|&r| self.middle(r)).collect();
+        let at = mids.iter().flatten().fold((0.0f32, 0.0f32, 0.0f32), |a, m| (a.0 + m.0, a.1 + m.1, a.2 + 1.0));
+        let centre = (at.0 / at.2.max(1.0), at.1 / at.2.max(1.0));
+        let shift = |o: Order, m: Option<(f32, f32)>| match (o, m) {
+            (Order::Move(x, y), Some(m)) => Order::Move(x + m.0 - centre.0, y + m.1 - centre.1),
+            (Order::Fight(x, y), Some(m)) => Order::Fight(x + m.0 - centre.0, y + m.1 - centre.1),
+            _ => o,
+        };
+        let mut any = false;
+        for (&r, &m) in group.iter().zip(&mids) {
+            let r8 = r as u8;
+            let one = match c {
+                Cmd::Steer(_, d) => Cmd::Steer(r8, d),
+                Cmd::SquadOrder(_, o) => Cmd::SquadOrder(r8, shift(o, m)),
+                Cmd::SquadQueue(_, o) => Cmd::SquadQueue(r8, shift(o, m)),
+                Cmd::Fire(_, p) => Cmd::Fire(r8, p),
+                Cmd::Face(_, p) => Cmd::Face(r8, p),
+                _ => unreachable!(),
+            };
+            any |= self.squad_one(one);
+        }
+        any
+    }
+
+    /// Squad `q` takes order `o` (what `Cmd::SquadOrder` does, bar dropping
+    /// its queue): a move or fight sends it there in formation; a harvest
+    /// or a build sets it to work (`Game::cover_turn` calls its defenders).
+    pub(super) fn send_squad(&mut self, q: usize, o: Order) {
+        self.squads[q].steer = (0.0, 0.0);
+        self.squads[q].work = None;
+        match o {
+            Order::Move(x, y) | Order::Fight(x, y) => {
+                self.squads[q].dest = Some((x, y));
+                self.squads[q].fight = matches!(o, Order::Fight(..));
+                for k in self.members(q) {
+                    self.soldiers[k].queued = 0;
+                    self.soldiers[k].cover = false;
+                }
+            }
+            _ => {
+                self.squads[q].dest = None;
+                for k in self.members(q) {
+                    let s = &mut self.soldiers[k];
+                    s.order = o;
+                    s.queued = 0;
+                    s.homing = false;
+                    s.cover = false;
+                }
+                if matches!(o, Order::Clear(..) | Order::Build(_)) {
+                    self.squads[q].work = Some(o);
+                    self.cover_squad(q);
+                }
+            }
+        }
+    }
+
+    fn squad_one(&mut self, c: Cmd) -> bool {
         let ok = |q: u8| (q as usize) < SQUADS_MAX;
         match c {
             Cmd::Steer(q, d) if ok(q) => {
@@ -574,24 +720,59 @@ impl<W: World> Game<W> {
             }
             Cmd::SquadOrder(q, o) if ok(q) => {
                 let q = q as usize;
-                self.squads[q].steer = (0.0, 0.0);
-                match o {
-                    Order::Move(x, y) | Order::Fight(x, y) => {
-                        self.squads[q].dest = Some((x, y));
-                        self.squads[q].fight = matches!(o, Order::Fight(..));
-                        for k in self.members(q) {
-                            self.soldiers[k].queued = 0;
-                        }
-                    }
-                    _ => {
-                        self.squads[q].dest = None;
-                        for k in self.members(q) {
-                            let s = &mut self.soldiers[k];
-                            s.order = o;
-                            s.queued = 0;
-                            s.homing = false;
-                        }
-                    }
+                self.squads[q].queued = 0;
+                self.send_squad(q, o);
+                true
+            }
+            Cmd::SquadQueue(q, o) if ok(q) => {
+                let q = q as usize;
+                if self.members(q).is_empty() {
+                    return false;
+                }
+                if self.idle(q) {
+                    self.send_squad(q, o);
+                    return true;
+                }
+                let sq = &mut self.squads[q];
+                if sq.queued as usize >= SQUAD_QUEUE {
+                    return false;
+                }
+                sq.queue[sq.queued as usize] = o;
+                sq.queued += 1;
+                true
+            }
+            Cmd::Link(a, b) if ok(a) && ok(b) && a != b => {
+                let (a, b) = (a as usize, b as usize);
+                if self.members(a).is_empty() || self.members(b).is_empty() {
+                    return false;
+                }
+                let both: Vec<usize> = self.linked(a).into_iter().chain(self.linked(b)).collect();
+                let g = *both.iter().min().unwrap() as u8;
+                for r in both {
+                    self.squads[r].link = g;
+                }
+                true
+            }
+            Cmd::Unlink(q) if ok(q) => {
+                let q = q as usize;
+                let group = self.linked(q);
+                if group.len() < 2 {
+                    return false;
+                }
+                self.squads[q].link = NO_LINK;
+                let rest: Vec<usize> = group.into_iter().filter(|&r| r != q).collect();
+                // The rest stay linked through their lowest id; one left
+                // alone is not linked.
+                let g = if rest.len() < 2 { NO_LINK } else { rest[0] as u8 };
+                for r in rest {
+                    self.squads[r].link = g;
+                }
+                true
+            }
+            Cmd::Cover(q, c) if ok(q) => {
+                self.squads[q as usize].cover = c;
+                if self.squads[q as usize].work.is_some() {
+                    self.cover_squad(q as usize);
                 }
                 true
             }
@@ -620,7 +801,7 @@ impl<W: World> Game<W> {
                 let q = q as usize;
                 if self.members(q).is_empty() && from != q {
                     // A new squad starts as the one it leaves.
-                    self.squads[q] = Squad { steer: (0.0, 0.0), dest: None, fire: None, anchor: None, ..self.squads[from] };
+                    self.squads[q] = self.squads[from].offshoot();
                 }
                 self.soldiers[k].squad = q as u8;
                 true
@@ -651,12 +832,22 @@ impl<W: World> Game<W> {
                 if (q as usize) >= SQUADS_MAX || self.members(q as usize).is_empty() {
                     return false;
                 }
+                // A link is commanded as one (owner 15:49Z: "When they are
+                // linked, I cannot choose who i am commanding between them.
+                // I only command all of them").
+                if self.active.is_some_and(|a| self.linked(a).contains(&(q as usize))) {
+                    return false;
+                }
                 if let Some(old) = self.active.filter(|&o| o != q as usize) {
-                    // The one let go stops where it is and stops volleying.
-                    self.squads[old].fire = None;
-                    if self.squads[old].steer != (0.0, 0.0) {
-                        self.squads[old].steer = (0.0, 0.0);
-                        self.squads[old].dest = self.middle(old);
+                    // The one let go stops where it is and stops volleying,
+                    // and so does its link, unless the new one is in it.
+                    let keep = self.linked(q as usize);
+                    for old in self.linked(old).into_iter().filter(|r| !keep.contains(r)) {
+                        self.squads[old].fire = None;
+                        if self.squads[old].steer != (0.0, 0.0) {
+                            self.squads[old].steer = (0.0, 0.0);
+                            self.squads[old].dest = self.middle(old);
+                        }
                     }
                 }
                 self.active = Some(q as usize);
@@ -689,7 +880,7 @@ impl<W: World> Game<W> {
         let n = self.free_squad()?;
         let d = |s: &Soldier| (s.x - p.0).hypot(s.y - p.1);
         m.sort_by(|&a, &b| d(&self.soldiers[a]).total_cmp(&d(&self.soldiers[b])).then(a.cmp(&b)));
-        self.squads[n] = Squad { steer: (0.0, 0.0), dest: None, fire: None, anchor: None, ..self.squads[q] };
+        self.squads[n] = self.squads[q].offshoot();
         self.squads[q].anchor = None;
         for &k in &m[..m.len() / 2] {
             self.soldiers[k].squad = n as u8;

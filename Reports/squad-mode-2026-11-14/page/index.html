@@ -47,9 +47,32 @@ th { color: var(--muted); font-weight: 600; }
       <div class="key"><b>Right click</b>Send the squad there in formation. On a crystal it stands guard; Ctrl + right click drains it.</div>
       <div class="key"><b>1-9 · Ctrl + wheel</b>Switch squads. A squad keeps its number while it lives; it floats over it, and the one you control has a star. The plain wheel zooms.</div>
       <div class="key"><b>Y</b>Split. The half nearer the cursor becomes a new squad, and control moves to it.</div>
-      <div class="key"><b>Shift + drag · J</b>Pull the boxed soldiers out into a new squad. J merges the nearest squad within 24 cells.</div>
+      <div class="key"><b>Shift + drag · J</b>Pull the boxed soldiers out into a new squad. J merges a squad that overlaps yours.</div>
+      <div class="key"><b>Shift + right click</b>Queue an order. The squad does it after what it is doing now.</div>
+      <div class="key"><b>Ctrl + 1-9</b>Link that squad with yours while the two touch; press again to unlink. A link is commanded as one.</div>
+      <div class="key"><b>I</b>Guards while the squad drains or builds next to slime: none, some (a third) or more (half).</div>
       <div class="key"><b>T</b>Formation: blob (the default), line, wedge or ring.</div>
       <div class="key"><b>B</b>Buy a soldier. It joins the squad you control, at its side.</div>
+    </div>
+  </section>
+
+  <section class="film">
+    <video src="squad-work-2x.mp4" autoplay muted loop playsinline controls style="width:100%; border-radius:6px; border:1px solid var(--line)"></video>
+    <div style="display:grid; gap:10px; min-width:0">
+      <h2>Guards, links and queues, 60 seconds at 2x</h2>
+      <p class="note">Eight soldiers are told to drain a crystal with slime to its south. Once they are there, 3 of the 8 stand guard on that side, on thin ground just off the body, and fire from their posts. The other 5 drain and fire half as often. At 30 s the squad splits and the two halves are linked. One order sends both halfway to the big crystal at the top left, and draining it was queued with Shift, so both halves start draining it when they arrive. Soldiers bitten earlier heal while they stand still.</p>
+      <div class="tbl"><table>
+        <tr><th>Game time</th><th>Guards</th><th>Banked</th><th>Shots</th><th>Walkers killed</th><th>Health healed</th></tr>
+        <tr><td>5 s, at the crystal</td><td>3 of 8</td><td>0</td><td>16</td><td>110</td><td>0</td></tr>
+        <tr><td>20 s</td><td>3 of 8</td><td>936</td><td>90</td><td>891</td><td>0</td></tr>
+        <tr><td>30 s, split and link</td><td>0</td><td>1,286</td><td>148</td><td>1,666</td><td>11</td></tr>
+        <tr><td>45 s, draining the queued crystal</td><td>0 to 1 of 4</td><td>2,857</td><td>254</td><td>2,020</td><td>11</td></tr>
+        <tr><td>61 s</td><td>1 of 4</td><td>6,322</td><td>354</td><td>2,167</td><td>11</td></tr>
+      </table></div>
+      <p class="note">With 3 of 8 on guard, the squad's work rate falls by 22.5%, not the 37.5% you would lose if the guards simply stopped working. No soldier was lost. Healing takes 10 s for a full heal by a crystal you hold and a minute anywhere else, and every point costs food. A guard check runs once a game second.</p>
+      <img src="squad-guards-20s.jpg" alt="At 20 s: five soldiers drain a crystal by the wall while three guards stand south of it, between the crystal and the slime" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+      <img src="squad-link-tiles.png" alt="The squad tiles at 35 s: Squad 1's tile has a blue link outline, a link button and a plus (it overlaps yours); Squad 2 is commanded; header buttons Guards: some I, Split Y, Combine J" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+      <p class="note">The tiles: a linked squad gets a blue outline and its link button lights up. The + (combine) and the link button only appear while a squad touches yours. <b>Guards</b> on the header line, key I, cycles none, some and more.</p>
     </div>
   </section>
 

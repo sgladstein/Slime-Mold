@@ -62,7 +62,10 @@ impl<W: World> Game<W> {
             Some(_) => {
                 if self.at_site(k, b) {
                     let secs = self.raise_secs(b);
-                    self.raise(b, if secs > 0.0 { dt / secs } else { 1.0 });
+                    // A working squad's builders make up for its defenders
+                    // (`Game::work_boost`).
+                    let boost = self.work_boost(k);
+                    self.raise(b, if secs > 0.0 { dt / secs * boost } else { 1.0 });
                 }
             }
         }
