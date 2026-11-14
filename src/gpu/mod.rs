@@ -2524,9 +2524,8 @@ impl Engine {
     }
 
     fn gas_word(&self, i: usize) -> u32 {
-        let b = read_back(&self.device, &self.queue, &self.news);
-        let o = self.gas_at as usize + 4 * i;
-        u32::from_le_bytes(b[o..o + 4].try_into().unwrap())
+        let b = read_back_range(&self.device, &self.queue, &self.news, self.gas_at + 4 * i as u64, 4);
+        u32::from_le_bytes(b[..4].try_into().unwrap())
     }
 
     /// For each point (fine cells, at most `squad::UNITS_MAX`), the gassed
@@ -2549,9 +2548,9 @@ impl Engine {
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
         self.queue.write_buffer(&self.news, self.gas_at + 4 * GAS_HEAD as u64, &u32_bytes(&words[GAS_HEAD..]));
         self.run(shared, &[(CALM, self.n.div_ceil(256))]);
-        let b = read_back(&self.device, &self.queue, &self.news);
-        let calm = self.gas_at as usize + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX);
-        let mut out: Vec<u32> = (0..n).map(|u| u32::from_le_bytes(b[calm + 4 * u..calm + 4 * u + 4].try_into().unwrap())).collect();
+        let calm = self.gas_at + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX) as u64;
+        let b = read_back_range(&self.device, &self.queue, &self.news, calm, 4 * n as u64);
+        let mut out: Vec<u32> = b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
         out.resize(at.len(), 0);
         out
     }
@@ -3043,6 +3042,26 @@ pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer)
     let bytes = staging.get_mapped_range(..).to_vec();
     staging.unmap();
     bytes
+}
+
+/// `len` bytes of `src` from `at` (both multiples of 4), as `read_back`:
+/// for a few words of a big buffer. The gas and fling counts and `calm`
+/// read the whole `news` buffer first, which holds three words a dish cell
+/// and three a walker: at 6x a planet's area one gas press took 115 ms on
+/// software Vulkan and the every-command bench's frames without a step
+/// 37.8 ms on the 1070 (2026-11-14), nearly all of it these copies.
+pub fn read_back_range(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer, at: u64, len: u64) -> Vec<u8> {
+    READS.with(|r| r.set(r.get() + 1));
+    let size = len.max(4).next_multiple_of(4);
+    let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+    enc.copy_buffer_to_buffer(src, at, &staging, 0, size);
+    queue.submit([enc.finish()]);
+    staging.map_async(wgpu::MapMode::Read, .., |r| r.expect("map"));
+    device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+    let bytes = staging.get_mapped_range(..).to_vec();
+    staging.unmap();
+    bytes[..len as usize].to_vec()
 }
 
 /// Chosen 4-byte words of two storage buffers gathered on the GPU into
