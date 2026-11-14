@@ -79,6 +79,12 @@ const CARD_ROWS: u8 = 2;
 /// standing above the shorter bar, so it does not shrink with it.
 const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
 
+/// The loadout strip's width: its slots, the name and state, and Swap.
+fn loadout_w(l: &Loadout, s: f32) -> f32 {
+    let slots = l.slots.max(l.cards.len()).max(1) as f32;
+    2.0 * 6.0 * s + slots * 34.0 * s + (slots - 1.0) * 4.0 * s + 8.0 * s + 112.0 * s + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
+}
+
 /// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
 /// the twelve slots in reading order, wrapped at six.
 fn card_slot(slot: (u8, u8)) -> (u8, u8) {
@@ -819,9 +825,15 @@ impl Hud {
             right = f.x - 8.0 * s;
         }
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
-        // Wide and one card row tall (owner, 08:33Z).
-        let sel_w = (900.0 * s).min(card.x - 16.0 * s);
-        let sel = Rect::new(card.x - 8.0 * s - sel_w, top_of, sel_w, panel_h);
+        // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
+        // menu should go on the far left to fill the rest of the screen"),
+        // the selection panel filling the row between it and the command
+        // card (one card row tall, owner 08:33Z). Where that leaves the
+        // selection under 240 units the strip goes back over the panels.
+        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, s));
+        let gun = gun_w.map(|w| Rect::new(8.0 * s, top_of, w, panel_h)).filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
+        let left = gun.map_or(8.0 * s, |g| g.right() + 8.0 * s);
+        let sel = Rect::new(left, top_of, (card.x - 8.0 * s - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
         // along the bottom (the art director, 11-14 02:34Z: a full-height
         // panel that only said "Nothing selected").
@@ -834,7 +846,7 @@ impl Hud {
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, sel, empty, card, c, s));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
         self.command_card(m, card, c, s);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
@@ -1166,20 +1178,23 @@ impl Hud {
     /// 140-pixel box over the command card with each card's name under its
     /// glyph. Returns the hovered card (or `usize::MAX` for the name and
     /// state, whose tooltip is the whole loadout) and its rectangle.
-    fn loadout_draw(&mut self, l: &Loadout, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+    #[allow(clippy::too_many_arguments)]
+    fn loadout_draw(&mut self, l: &Loadout, panel: Option<Rect>, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
         let pad = 6.0 * s;
         let cell = 34.0 * s;
         let gap = 4.0 * s;
         let slots = l.slots.max(l.cards.len()).max(1);
         let info_w = 112.0 * s;
         let swap = 26.0 * s;
-        let w = 2.0 * pad + slots as f32 * cell + (slots - 1) as f32 * gap + 8.0 * s + info_w + if l.cycle.is_some() { swap + 6.0 * s } else { 0.0 };
+        let w = loadout_w(l, s);
         let h = 2.0 * pad + cell + 5.0 * s;
-        // On the selection panel's top edge at its right; where the window
-        // is too narrow for one, on the command card's.
-        // With the selection panel collapsed, at the bottom of its place,
-        // right of the collapsed strip.
-        let r = if collapsed && sel.w >= w + 158.0 * s {
+        // Its own panel at the bar's far left (11-14 08:46Z), the strip
+        // centred in it; else, as before, on the selection panel's top edge
+        // at its right, or the command card's where the window is too
+        // narrow; with the selection collapsed, at the bottom of its place.
+        let r = if let Some(p) = panel {
+            Rect::new(p.x, p.y + (p.h - h) / 2.0, p.w, h)
+        } else if collapsed && sel.w >= w + 158.0 * s {
             Rect::new(sel.right() - w, sel.bottom() - h, w, h)
         } else {
             let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s { sel } else { card };
@@ -1188,7 +1203,10 @@ impl Hud {
         if r.y < self.top + 8.0 * s {
             return None;
         }
-        self.glass(r, 10.0 * s, c, s);
+        match panel {
+            Some(p) => self.glass(p, 12.0 * s, c, s),
+            None => self.glass(r, 10.0 * s, c, s),
+        }
         let mut tip = None;
         let y = r.y + pad;
         for i in 0..slots {

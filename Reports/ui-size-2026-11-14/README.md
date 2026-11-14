@@ -50,7 +50,12 @@ shorter". The command card is 6 x 2 (the 4 x 3 slots in reading order,
 `card_slot`), the selection panel one row of cards and up to 900 units wide
 (600 before), and the bar 113 units at 1080 lines instead of 160 (10.5% of
 the screen, 15% before). The minimap keeps the old 152-unit height in the
-corner. Pictures: the page's *Wider, shorter bottom bar*.
+corner. Then (08:46Z: "gun/card menu should go on the far left to fill
+the rest of the screen") the gun-card strip became its own panel at the
+bar's far left, and the selection panel fills the row between it and the
+command card (no 900 cap); where that would leave the selection under 240
+units the strip goes back over the panels. Pictures: the page's *Wider,
+shorter bottom bar*.
 
 ## Cost
 
