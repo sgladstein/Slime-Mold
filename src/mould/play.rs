@@ -578,10 +578,7 @@ impl Route {
     /// true once the end of the path has tube.
     fn lead_along(&mut self, d: &mut Dish, path: &[(f32, f32)], anchor: Option<usize>) -> bool {
         let s = Self::samples(path);
-        let front = (0..s.len())
-            .rev()
-            .find(|&k| Self::tube_near(d, anchor, s[k], 4.0))
-            .unwrap_or(0);
+        let front = (0..s.len()).rev().find(|&k| Self::tube_near(d, anchor, s[k], 4.0)).unwrap_or(0);
         if front + 3 >= s.len() {
             return true;
         }
@@ -590,9 +587,7 @@ impl Route {
         // enough to reach the end (the food's own scent pulls the last
         // 20 cells), or a full hand.
         let sps = STEPS_PER_SECOND as u64;
-        let in_relay = self
-            .last
-            .is_some_and(|(_, when)| d.t < when + (WAIT_S * sps as f32) as u64);
+        let in_relay = self.last.is_some_and(|(_, when)| d.t < when + (WAIT_S * sps as f32) as u64);
         let left = (s.len() - 1 - front) as f32 * 2.0;
         let need = (((left - 20.0) / self.ahead).ceil().max(1.0) as u32).min(d.oats_stock);
         if !self.chase && !in_relay && d.oats_left < need {
@@ -705,11 +700,13 @@ impl Player for Route {
 
 /// Oats `ahead` cells from the walker nearest `to`, toward it (never past it).
 pub fn oats_toward(d: &mut Dish, to: (f32, f32), ahead: f32) -> bool {
-    let Some((wx, wy)) = d.walkers.iter().step_by(3).map(|w| (w.x, w.y)).min_by(|a, b| {
-        (a.0 - to.0)
-            .hypot(a.1 - to.1)
-            .total_cmp(&(b.0 - to.0).hypot(b.1 - to.1))
-    }) else {
+    let Some((wx, wy)) = d
+        .walkers
+        .iter()
+        .step_by(3)
+        .map(|w| (w.x, w.y))
+        .min_by(|a, b| (a.0 - to.0).hypot(a.1 - to.1).total_cmp(&(b.0 - to.0).hypot(b.1 - to.1)))
+    else {
         return false;
     };
     let g = (wx - to.0).hypot(wy - to.1).max(1.0);
@@ -878,11 +875,12 @@ impl Player for Leader {
             }
         }
         // Lamp: a stray near the front, well off the line it is led along.
-        let Some(tip) = d.walkers.iter().map(|w| (w.x, w.y)).min_by(|a, b| {
-            (a.0 - target.0)
-                .hypot(a.1 - target.1)
-                .total_cmp(&(b.0 - target.0).hypot(b.1 - target.1))
-        }) else {
+        let Some(tip) = d
+            .walkers
+            .iter()
+            .map(|w| (w.x, w.y))
+            .min_by(|a, b| (a.0 - target.0).hypot(a.1 - target.1).total_cmp(&(b.0 - target.0).hypot(b.1 - target.1)))
+        else {
             d.set_lamp(None);
             return;
         };
@@ -890,21 +888,14 @@ impl Player for Leader {
             .dish_piles()
             .filter(|p| p.reached())
             .map(|p| (p.x, p.y))
-            .min_by(|a, b| {
-                (a.0 - tip.0)
-                    .hypot(a.1 - tip.1)
-                    .total_cmp(&(b.0 - tip.0).hypot(b.1 - tip.1))
-            })
+            .min_by(|a, b| (a.0 - tip.0).hypot(a.1 - tip.1).total_cmp(&(b.0 - tip.0).hypot(b.1 - tip.1)))
             .unwrap_or(tip);
         let mut stray: Option<(f32, (f32, f32))> = None;
         for w in d.walkers.iter().step_by(3) {
             if (w.x - tip.0).hypot(w.y - tip.1) > 50.0 {
                 continue;
             }
-            let near_food = d
-                .piles
-                .iter()
-                .any(|p| (p.x - w.x).hypot(p.y - w.y) < p.r + LAMP_R + 2.0);
+            let near_food = d.piles.iter().any(|p| (p.x - w.x).hypot(p.y - w.y) < p.r + LAMP_R + 2.0);
             let off = seg_dist((w.x, w.y), src, target);
             if off > 16.0 && !near_food && stray.is_none_or(|s| off > s.0) {
                 stray = Some((off, (w.x, w.y)));

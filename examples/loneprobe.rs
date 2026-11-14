@@ -90,12 +90,7 @@ fn lone_share(d: &BigDish) -> f32 {
 }
 
 fn reached(g: &Game<BigDish>, start: &[f32]) -> usize {
-    g.world
-        .crystals()
-        .iter()
-        .zip(start)
-        .filter(|(c, &s)| c.1 < s * 0.999)
-        .count()
+    g.world.crystals().iter().zip(start).filter(|(c, &s)| c.1 < s * 0.999).count()
 }
 
 fn hash(seed: u64, k: u64) -> f32 {
@@ -120,29 +115,15 @@ fn run(seed: u64, shape: &str, arm: &Arm, lone_r: u8, sweep: f32, keep: f32, unt
     p.lone_r = lone_r;
     // The broken mould is the game's own rule (`Rules::broken`, on by
     // default since this probe); `broken=0` is the control.
-    let rules = Rules {
-        mass: Rules::mass_for(walkers, 2),
-        broken: arm.broken,
-        broken_starve: arm.starve_x,
-        ..Rules::default()
-    };
+    let rules = Rules { mass: Rules::mass_for(walkers, 2), broken: arm.broken, broken_starve: arm.starve_x, ..Rules::default() };
     let mut g = Game::new(BigDish::new(p), rules, seed);
     let start: Vec<f32> = g.world.crystals().iter().map(|c| c.1).collect();
-    let mut row = Row {
-        seed,
-        lone: arm.lone,
-        series: Vec::new(),
-        at_sweep: (0, 0),
-        clear: None,
-        after: Vec::new(),
-        end: 0,
-    };
+    let mut row = Row { seed, lone: arm.lone, series: Vec::new(), at_sweep: (0, 0), clear: None, after: Vec::new(), end: 0 };
     let mut next = 30.0;
     while g.time() < sweep && g.end.is_none() {
         g.step();
         if g.time() >= next {
-            row.series
-                .push((next, g.mould, lone_share(&g.world), reached(&g, &start)));
+            row.series.push((next, g.mould, lone_share(&g.world), reached(&g, &start)));
             next += 30.0;
         }
     }
@@ -156,13 +137,7 @@ fn run(seed: u64, shape: &str, arm: &Arm, lone_r: u8, sweep: f32, keep: f32, unt
     // the endgame the owner met.)
     // Crystals, their radii and walkers are all fine cells (`BigDish`'s
     // grid is `scale` times today's).
-    let near: Vec<((f32, f32), f32)> = g
-        .world
-        .crystals()
-        .iter()
-        .enumerate()
-        .map(|(c, x)| (x.0, 2.0 * g.world.crystal_r(c)))
-        .collect();
+    let near: Vec<((f32, f32), f32)> = g.world.crystals().iter().enumerate().map(|(c, x)| (x.0, 2.0 * g.world.crystal_r(c))).collect();
     for k in 0..g.world.walkers.len() {
         if !g.world.lives(k) {
             continue;
@@ -190,12 +165,7 @@ fn run(seed: u64, shape: &str, arm: &Arm, lone_r: u8, sweep: f32, keep: f32, unt
 }
 
 fn main() {
-    let (mut seeds, mut shape, mut lones, mut lone_r) = (
-        (1u64..=4).collect::<Vec<_>>(),
-        "d".to_string(),
-        vec![1.0f32, 3.0, 10.0],
-        1u8,
-    );
+    let (mut seeds, mut shape, mut lones, mut lone_r) = ((1u64..=4).collect::<Vec<_>>(), "d".to_string(), vec![1.0f32, 3.0, 10.0], 1u8);
     let (mut sweep, mut keep, mut until, mut threads) = (180.0f32, 0.02f32, 300.0f32, 4usize);
     let (mut broken, mut starve_x) = (Rules::default().broken, Rules::default().broken_starve);
     for a in std::env::args().skip(1) {
@@ -227,45 +197,16 @@ fn main() {
         hs.push(std::thread::spawn(move || loop {
             let job = queue.lock().unwrap().pop();
             let Some((s, l)) = job else { break };
-            tx.send(run(
-                s,
-                &shape,
-                &Arm {
-                    lone: l,
-                    broken,
-                    starve_x,
-                },
-                lone_r,
-                sweep,
-                keep,
-                until,
-            ))
-            .unwrap();
+            tx.send(run(s, &shape, &Arm { lone: l, broken, starve_x }, lone_r, sweep, keep, until)).unwrap();
         }));
     }
     drop(tx);
     let mut rows: Vec<Row> = Vec::new();
     for r in rx {
-        let series = r
-            .series
-            .iter()
-            .map(|(t, n, l, c)| format!("{t:.0}s {n} lone {:.3} reached {c}", l))
-            .collect::<Vec<_>>()
-            .join("; ");
-        let after = r
-            .after
-            .iter()
-            .map(|(t, n, l)| format!("+{t:.0}s {n} ({:.2})", l))
-            .collect::<Vec<_>>()
-            .join(" ");
+        let series = r.series.iter().map(|(t, n, l, c)| format!("{t:.0}s {n} lone {:.3} reached {c}", l)).collect::<Vec<_>>().join("; ");
+        let after = r.after.iter().map(|(t, n, l)| format!("+{t:.0}s {n} ({:.2})", l)).collect::<Vec<_>>().join(" ");
         println!("seed {:>2} lone {:>4}: {series}", r.seed, r.lone);
-        println!(
-            "    sweep: {} walkers, {} crystals reached; clear {}; after: {after}; end {}",
-            r.at_sweep.0,
-            r.at_sweep.1,
-            r.clear.map_or("never".to_string(), |c| format!("{c:.1} s")),
-            r.end
-        );
+        println!("    sweep: {} walkers, {} crystals reached; clear {}; after: {after}; end {}", r.at_sweep.0, r.at_sweep.1, r.clear.map_or("never".to_string(), |c| format!("{c:.1} s")), r.end);
         rows.push(r);
     }
     for h in hs {
@@ -273,14 +214,8 @@ fn main() {
     }
     println!("\nsummary (paired by seed against lone {}):", lones[0]);
     for &l in &lones {
-        let mine: Vec<&Row> = seeds
-            .iter()
-            .filter_map(|&s| rows.iter().find(|r| r.seed == s && r.lone == l))
-            .collect();
-        let base: Vec<&Row> = seeds
-            .iter()
-            .filter_map(|&s| rows.iter().find(|r| r.seed == s && r.lone == lones[0]))
-            .collect();
+        let mine: Vec<&Row> = seeds.iter().filter_map(|&s| rows.iter().find(|r| r.seed == s && r.lone == l)).collect();
+        let base: Vec<&Row> = seeds.iter().filter_map(|&s| rows.iter().find(|r| r.seed == s && r.lone == lones[0])).collect();
         let mean = |f: &dyn Fn(&Row) -> f32| mine.iter().map(|r| f(r)).sum::<f32>() / mine.len().max(1) as f32;
         let lone_at = |r: &Row| r.series.last().map_or(0.0, |s| s.2);
         let (mut fewer, mut more) = (0, 0);

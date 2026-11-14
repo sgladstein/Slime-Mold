@@ -72,11 +72,7 @@ pub struct Side {
 
 impl Side {
     pub fn whole<W: World>(g: &Game<W>) -> Side {
-        Side {
-            home: g.larder,
-            ids: Vec::new(),
-            whole: true,
-        }
+        Side { home: g.larder, ids: Vec::new(), whole: true }
     }
 
     pub fn owns(&self, k: usize) -> bool {
@@ -148,14 +144,7 @@ impl View {
             .filter(|&k| g.soldiers[k].alive && side.owns(k))
             .map(|k| {
                 let s = g.soldiers[k];
-                UnitView {
-                    k,
-                    at: (s.x, s.y),
-                    hp: s.hp,
-                    order: s.order,
-                    stance: s.stance,
-                    touching: s.touching,
-                }
+                UnitView { k, at: (s.x, s.y), hp: s.hp, order: s.order, stance: s.stance, touching: s.touching }
             })
             .collect();
         let mut v = View {
@@ -189,14 +178,7 @@ impl View {
             .filter(|c| c.1 .1 >= dry)
             .map(|(i, (at, charge))| {
                 let r = g.world.crystal_r(i);
-                CrystalView {
-                    i,
-                    at,
-                    charge,
-                    r,
-                    on: v.mass(at, r + 2.0 * scale),
-                    near: v.mass(at, NEAR * scale),
-                }
+                CrystalView { i, at, charge, r, on: v.mass(at, r + 2.0 * scale), near: v.mass(at, NEAR * scale) }
             })
             .collect();
         v
@@ -209,14 +191,8 @@ impl View {
         let Some(grid) = &self.grid else { return 0 };
         let b = self.bin as f32;
         let rows = grid.len() / self.cols;
-        let (x0, x1) = (
-            ((c.0 - r) / b).floor().max(0.0) as usize,
-            (((c.0 + r) / b) as usize).min(self.cols - 1),
-        );
-        let (y0, y1) = (
-            ((c.1 - r) / b).floor().max(0.0) as usize,
-            (((c.1 + r) / b) as usize).min(rows - 1),
-        );
+        let (x0, x1) = (((c.0 - r) / b).floor().max(0.0) as usize, (((c.0 + r) / b) as usize).min(self.cols - 1));
+        let (y0, y1) = (((c.1 - r) / b).floor().max(0.0) as usize, (((c.1 + r) / b) as usize).min(rows - 1));
         let mut n = 0;
         for y in y0..=y1 {
             for x in x0..=x1 {
@@ -233,14 +209,8 @@ impl View {
         let grid = self.grid.as_ref()?;
         let b = self.bin as f32;
         let rows = grid.len() / self.cols;
-        let (x0, x1) = (
-            ((c.0 - r) / b).floor().max(0.0) as usize,
-            (((c.0 + r) / b) as usize).min(self.cols - 1),
-        );
-        let (y0, y1) = (
-            ((c.1 - r) / b).floor().max(0.0) as usize,
-            (((c.1 + r) / b) as usize).min(rows - 1),
-        );
+        let (x0, x1) = (((c.0 - r) / b).floor().max(0.0) as usize, (((c.0 + r) / b) as usize).min(self.cols - 1));
+        let (y0, y1) = (((c.1 - r) / b).floor().max(0.0) as usize, (((c.1 + r) / b) as usize).min(rows - 1));
         let (mut sx, mut sy, mut n) = (0.0, 0.0, 0u32);
         for y in y0..=y1 {
             for x in x0..=x1 {
@@ -371,93 +341,46 @@ impl Style {
     /// seeds 1-4 a claim from 5:00 (mean +0.03) and fours on Free fire
     /// (+0.03) did worse than one from 10:00 (+0.08): holders stood in the
     /// network and were eaten.
-    pub const CLAIM: Style = Style {
-        name: "claim",
-        buy_to: 28,
-        claim_at: 600.0,
-        ..Style::BOOM
-    };
+    pub const CLAIM: Style = Style { name: "claim", buy_to: 28, claim_at: 600.0, ..Style::BOOM };
 
     /// **Late**: as claim, but the claim starts 90 s before the cap. The
     /// share is counted only at the cap, so this asks whether a last-minute
     /// grab beats holding (an exploiter's question about the scoring).
-    pub const LATE: Style = Style {
-        name: "late",
-        claim_at: -90.0,
-        ..Style::CLAIM
-    };
+    pub const LATE: Style = Style { name: "late", claim_at: -90.0, ..Style::CLAIM };
 
     /// **Fort**: boom, plus up to eight walls, each across the mould's road
     /// to a farmed crystal when it comes near (W2b's one wall on the
     /// core-to-larder road added nothing over farming; this one walls where
     /// the mould is, not where it starts).
-    pub const FORT: Style = Style {
-        name: "fort",
-        walls: 8,
-        ..Style::BOOM
-    };
+    pub const FORT: Style = Style { name: "fort", walls: 8, ..Style::BOOM };
 
     /// **Strike**: boom to 30 soldiers, and from 6:00, once 20 stand, all
     /// but eight attack the core (W2b's rush of 4 killed about 900 walkers
     /// and died within 36 s); after the core falls, claim.
-    pub const STRIKE: Style = Style {
-        name: "strike",
-        buy_to: 30,
-        strike_at: 360.0,
-        keep: 8,
-        ..Style::BOOM
-    };
+    pub const STRIKE: Style = Style { name: "strike", buy_to: 30, strike_at: 360.0, keep: 8, ..Style::BOOM };
 
     /// **Cut**: the strike's army and timing, aimed at the roads between
     /// the body and the crystals it holds instead of at its home
     /// (`Style::cut`).
-    pub const CUT: Style = Style {
-        name: "cut",
-        cut: true,
-        ..Style::STRIKE
-    };
+    pub const CUT: Style = Style { name: "cut", cut: true, ..Style::STRIKE };
 
     /// **Take**: cut-and-take (`Style::take`), spending the bank on the
     /// squad and turrets on the crystals it takes.
-    pub const TAKE: Style = Style {
-        name: "take",
-        take: true,
-        spend: 2.0,
-        turrets: 8,
-        ..Style::STRIKE
-    };
+    pub const TAKE: Style = Style { name: "take", take: true, spend: 2.0, turrets: 8, ..Style::STRIKE };
 
     /// Take plus one specialty each (the designer, 11-14 04:27Z, after the
     /// tier matrix had take best on 7 of 8 columns and the plans that
     /// never attack only stalemate): so a plan "best somewhere" says which
     /// specialty wins on which tier. **Take-fort**: walls across the roads
     /// into what it holds.
-    pub const TAKE_FORT: Style = Style {
-        name: "take_fort",
-        walls: 8,
-        ..Style::TAKE
-    };
+    pub const TAKE_FORT: Style = Style { name: "take_fort", walls: 8, ..Style::TAKE };
     /// **Take-boom**: the take started later, at 10:00, with the full army.
-    pub const TAKE_BOOM: Style = Style {
-        name: "take_boom",
-        strike_at: 600.0,
-        strike_army: 36,
-        ..Style::TAKE
-    };
+    pub const TAKE_BOOM: Style = Style { name: "take_boom", strike_at: 600.0, strike_army: 36, ..Style::TAKE };
     /// **Take-claim**: holds what it takes with turrets, not soldiers: twice
     /// the turrets and four farmers kept back instead of eight.
-    pub const TAKE_CLAIM: Style = Style {
-        name: "take_claim",
-        turrets: 16,
-        keep: 4,
-        ..Style::TAKE
-    };
+    pub const TAKE_CLAIM: Style = Style { name: "take_claim", turrets: 16, keep: 4, ..Style::TAKE };
     /// **Take-strike**: two crystals taken, then the army walks on the core.
-    pub const TAKE_STRIKE: Style = Style {
-        name: "take_strike",
-        core_after: 2,
-        ..Style::TAKE
-    };
+    pub const TAKE_STRIKE: Style = Style { name: "take_strike", core_after: 2, ..Style::TAKE };
 
     pub fn presets() -> [Style; 11] {
         [
@@ -576,20 +499,7 @@ pub struct Brain {
 
 impl Brain {
     pub fn new(style: Style, side: Side) -> Brain {
-        Brain {
-            style,
-            side,
-            hurt: Vec::new(),
-            walled: Vec::new(),
-            walls: 0,
-            striking: false,
-            cap: 0.0,
-            income: 0.0,
-            seen: None,
-            taking: None,
-            taken: Vec::new(),
-            turreted: Vec::new(),
-        }
+        Brain { style, side, hurt: Vec::new(), walled: Vec::new(), walls: 0, striking: false, cap: 0.0, income: 0.0, seen: None, taking: None, taken: Vec::new(), turreted: Vec::new() }
     }
 
     /// Look, decide, and give the commands on `g`. Returns how many it gave.
@@ -642,21 +552,12 @@ impl Brain {
         // them, so the army is also held to what the bank and a share of
         // the food on crystals the mould is not near can feed for the next
         // `LEFT_SECS`.
-        let left: f32 = v
-            .crystals
-            .iter()
-            .filter(|c| v.weigh(c.near) < st.dare as f32)
-            .map(|c| c.charge)
-            .sum::<f32>()
-            / v.rules.charge;
+        let left: f32 = v.crystals.iter().filter(|c| v.weigh(c.near) < st.dare as f32).map(|c| c.charge).sum::<f32>() / v.rules.charge;
         let to_cap = (self.cap - v.t).clamp(1.0, LEFT_SECS);
         let feeds = |size: usize, bank: f32| {
             let spare = (bank - v.rules.soldier_cost - st.reserve - v.ammo(size + 1, st.ammo)).max(0.0);
             let need = (size + 1) as f32 * v.rules.ration;
-            v.rules.ration <= 0.0
-                || v.t < INCOME_TAU
-                || (need <= FEED_SHARE * self.income + spare / FEED_HORIZON
-                    && need <= (spare + LEFT_SHARE * left) / to_cap)
+            v.rules.ration <= 0.0 || v.t < INCOME_TAU || (need <= FEED_SHARE * self.income + spare / FEED_HORIZON && need <= (spare + LEFT_SHARE * left) / to_cap)
         };
         let mut bank = v.bank;
         let mut size = n;
@@ -668,15 +569,8 @@ impl Brain {
         // (below), which eat nothing. Without rations (the owner's playtest,
         // 11-14 01:49Z: soldiers that starve are "bad") nothing stops a rich
         // bank buying to the squad's most.
-        let buy_to = if v.rules.ration <= 0.0 && v.bank > st.spend * v.rules.soldier_cost {
-            v.rules.max_squad
-        } else {
-            st.buy_to
-        };
-        while size < buy_to.min(v.rules.max_squad)
-            && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo)
-            && feeds(size, bank)
-        {
+        let buy_to = if v.rules.ration <= 0.0 && v.bank > st.spend * v.rules.soldier_cost { v.rules.max_squad } else { st.buy_to };
+        while size < buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
             out.push(Cmd::Buy);
             bank -= v.rules.soldier_cost;
             size += 1;
@@ -690,17 +584,8 @@ impl Brain {
             }
         }
         // A soldier raising a building finishes it before it takes a job.
-        let free: Vec<UnitView> = v
-            .units
-            .iter()
-            .copied()
-            .filter(|u| !self.hurt.contains(&u.k) && !matches!(u.order, Order::Build(_)))
-            .collect();
-        let claim_at = if st.claim_at < 0.0 {
-            self.cap + st.claim_at
-        } else {
-            st.claim_at
-        };
+        let free: Vec<UnitView> = v.units.iter().copied().filter(|u| !self.hurt.contains(&u.k) && !matches!(u.order, Order::Build(_))).collect();
+        let claim_at = if st.claim_at < 0.0 { self.cap + st.claim_at } else { st.claim_at };
         if !self.striking && v.t >= st.strike_at && free.len() >= st.strike_army {
             self.striking = true;
         }
@@ -716,19 +601,9 @@ impl Brain {
         let mut striker = vec![false; free.len()];
         // Cut points: the roads from the core to the held crystals nearest
         // home. With none held, a cut strikes the core as the strike does.
-        let road = |c: (f32, f32)| {
-            (
-                v.core.0 + CUT_AT * (c.0 - v.core.0),
-                v.core.1 + CUT_AT * (c.1 - v.core.1),
-            )
-        };
+        let road = |c: (f32, f32)| (v.core.0 + CUT_AT * (c.0 - v.core.0), v.core.1 + CUT_AT * (c.1 - v.core.1));
         if st.take && striking {
-            let holds = |i: usize| {
-                v.crystals
-                    .iter()
-                    .find(|c| c.i == i)
-                    .is_some_and(|c| v.weigh(c.on) >= HELD as f32)
-            };
+            let holds = |i: usize| v.crystals.iter().find(|c| c.i == i).is_some_and(|c| v.weigh(c.on) >= HELD as f32);
             if let Some(i) = self.taking {
                 if !holds(i) {
                     self.taken.push(i);
@@ -739,26 +614,15 @@ impl Brain {
                 // Cut enough: the cuts end and the strike walks on the core.
                 self.taking = None;
             } else if self.taking.is_none() {
-                let mut held: Vec<&CrystalView> = v
-                    .crystals
-                    .iter()
-                    .filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0 && !self.taken.contains(&c.i))
-                    .collect();
+                let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0 && !self.taken.contains(&c.i)).collect();
                 held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
                 self.taking = held.first().map(|c| c.i);
             }
         }
         let cuts: Vec<(f32, f32)> = if st.take {
-            self.taking
-                .and_then(|i| v.crystals.iter().find(|c| c.i == i))
-                .map(|c| vec![road(c.at)])
-                .unwrap_or_default()
+            self.taking.and_then(|i| v.crystals.iter().find(|c| c.i == i)).map(|c| vec![road(c.at)]).unwrap_or_default()
         } else if st.cut {
-            let mut held: Vec<&CrystalView> = v
-                .crystals
-                .iter()
-                .filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0)
-                .collect();
+            let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32 && dist(c.at, v.core) > 1.0).collect();
             held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
             held.iter().take(st.claims.max(1)).map(|c| road(c.at)).collect()
         } else {
@@ -767,11 +631,7 @@ impl Brain {
         if striking && !v.core_down && !cuts.is_empty() {
             let on_cut = |o: Order| matches!(o, Order::Fight(x, y) if cuts.iter().any(|&c| dist(c, (x, y)) < 1.0));
             let mut by: Vec<usize> = (0..free.len()).collect();
-            by.sort_by(|&a, &b| {
-                on_cut(free[b].order)
-                    .cmp(&on_cut(free[a].order))
-                    .then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core)))
-            });
+            by.sort_by(|&a, &b| on_cut(free[b].order).cmp(&on_cut(free[a].order)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
             let mut count = vec![0usize; cuts.len()];
             let chosen: Vec<usize> = by.iter().copied().take(free.len().saturating_sub(st.keep)).collect();
             // Those already on a cut stay on it; the rest go to the cut
@@ -790,11 +650,7 @@ impl Brain {
             }
         } else if striking && !v.core_down {
             let mut by: Vec<usize> = (0..free.len()).collect();
-            by.sort_by(|&a, &b| {
-                (free[b].order == Order::Attack)
-                    .cmp(&(free[a].order == Order::Attack))
-                    .then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core)))
-            });
+            by.sort_by(|&a, &b| (free[b].order == Order::Attack).cmp(&(free[a].order == Order::Attack)).then(dist(free[a].at, v.core).total_cmp(&dist(free[b].at, v.core))));
             for &j in by.iter().take(free.len().saturating_sub(st.keep)) {
                 striker[j] = true;
                 if free[j].order != Order::Attack {
@@ -804,11 +660,7 @@ impl Brain {
         }
         let claiming = !lean && (v.t >= claim_at || (striking && v.core_down));
         // Farm the nearest crystals the mould is not near, the core last.
-        let mut farmable: Vec<&CrystalView> = v
-            .crystals
-            .iter()
-            .filter(|c| dist(c.at, v.core) > 1.0 && v.weigh(c.near) < st.dare as f32)
-            .collect();
+        let mut farmable: Vec<&CrystalView> = v.crystals.iter().filter(|c| dist(c.at, v.core) > 1.0 && v.weigh(c.near) < st.dare as f32).collect();
         farmable.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
         // Taken crystals are farmed first, whatever is near them: they
         // were won for that.
@@ -820,18 +672,12 @@ impl Brain {
         farmable.truncate(st.farm);
         // Turrets on farmed crystals, taken ones first, when the bank is
         // rich enough to pay one.
-        if self.turreted.len() < st.turrets
-            && v.bank > st.spend * v.rules.soldier_cost
-            && bank >= v.rules.build.turret_cost + st.reserve
-        {
+        if self.turreted.len() < st.turrets && v.bank > st.spend * v.rules.soldier_cost && bank >= v.rules.build.turret_cost + st.reserve {
             if let Some(c) = farmable.iter().find(|c| !self.turreted.contains(&c.i)) {
                 // Between the crystal and the core, out of the carriers' way.
                 let d = dist(c.at, v.core).max(1.0);
                 let off = (c.r + 3.0 * sc).min(d * 0.5);
-                let at = (
-                    c.at.0 + (v.core.0 - c.at.0) / d * off,
-                    c.at.1 + (v.core.1 - c.at.1) / d * off,
-                );
+                let at = (c.at.0 + (v.core.0 - c.at.0) / d * off, c.at.1 + (v.core.1 - c.at.1) / d * off);
                 self.turreted.push(c.i);
                 out.push(Cmd::Build(Kind::Turret, at));
             }
@@ -839,11 +685,7 @@ impl Brain {
         // Crystals the mould holds, nearest home first, for the claim.
         let mut held: Vec<&CrystalView> = v.crystals.iter().filter(|c| v.weigh(c.on) >= HELD as f32).collect();
         held.sort_by(|a, b| dist(a.at, v.home).total_cmp(&dist(b.at, v.home)));
-        let farmers = if claiming || striking {
-            st.keep.min(free.len())
-        } else {
-            free.len()
-        };
+        let farmers = if claiming || striking { st.keep.min(free.len()) } else { free.len() };
         // Soldiers keep a job they hold if it is still wanted, so the
         // squad doesn't walk back and forth between thinks.
         let mut used = striker.clone();
@@ -870,12 +712,7 @@ impl Brain {
                 continue;
             }
             // The nearest unused soldier.
-            let Some(j) = (0..free.len())
-                .filter(|&j| !used[j])
-                .min_by(|&a, &b| dist(free[a].at, c.at).total_cmp(&dist(free[b].at, c.at)))
-            else {
-                break;
-            };
+            let Some(j) = (0..free.len()).filter(|&j| !used[j]).min_by(|&a, &b| dist(free[a].at, c.at).total_cmp(&dist(free[b].at, c.at))) else { break };
             used[j] = true;
             farm_taken.push(c.i);
             nfarm += 1;
@@ -931,12 +768,7 @@ impl Brain {
                     None => continue,
                 };
                 while groups[at].1 < st.claim_group {
-                    let Some(j) = (0..free.len())
-                        .filter(|&j| !used[j])
-                        .min_by(|&a, &b| dist(free[a].at, c.at).total_cmp(&dist(free[b].at, c.at)))
-                    else {
-                        break;
-                    };
+                    let Some(j) = (0..free.len()).filter(|&j| !used[j]).min_by(|&a, &b| dist(free[a].at, c.at).total_cmp(&dist(free[b].at, c.at))) else { break };
                     used[j] = true;
                     groups[at].1 += 1;
                     let p = spot(c.at, free[j].k);
@@ -958,28 +790,12 @@ impl Brain {
             // Crystals a soldier was clearing at this think's start: one
             // the mould has come near has just left `farmable` (`dare`),
             // and that is when it needs the wall.
-            let clearing: Vec<(f32, f32)> = v
-                .units
-                .iter()
-                .filter_map(|u| {
-                    if let Order::Clear(x, y) = u.order {
-                        Some((x, y))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            for c in v.crystals.iter().filter(|c| {
-                clearing.iter().any(|&p| dist(p, c.at) < 1.0)
-                    && v.weigh(c.near) >= st.wall_alarm as f32
-                    && v.weigh(c.on) < HELD as f32
-            }) {
+            let clearing: Vec<(f32, f32)> = v.units.iter().filter_map(|u| if let Order::Clear(x, y) = u.order { Some((x, y)) } else { None }).collect();
+            for c in v.crystals.iter().filter(|c| clearing.iter().any(|&p| dist(p, c.at) < 1.0) && v.weigh(c.near) >= st.wall_alarm as f32 && v.weigh(c.on) < HELD as f32) {
                 if self.walled.iter().any(|w| w.0 == c.i && v.t - w.1 < WALL_EVERY) {
                     continue;
                 }
-                let Some((m, _)) = v.centroid(c.at, NEAR * sc) else {
-                    continue;
-                };
+                let Some((m, _)) = v.centroid(c.at, NEAR * sc) else { continue };
                 let (dx, dy) = (m.0 - c.at.0, m.1 - c.at.1);
                 let d = dx.hypot(dy).max(1.0);
                 let (ux, uy) = (dx / d, dy / d);
@@ -1048,31 +864,13 @@ mod tests {
     /// `buy_to`; with `spend` it also puts its turrets up.
     #[test]
     fn a_rich_hand_spends_its_bank() {
-        let rules = Rules {
-            start_bank: 30_000.0,
-            ..Rules::default()
-        };
+        let rules = Rules { start_bank: 30_000.0, ..Rules::default() };
         let boom = round("boom", 1, 5.0, rules);
-        assert_eq!(
-            boom.alive(),
-            Style::BOOM.buy_to,
-            "boom with 30,000 banked has {} soldiers after 5 s",
-            boom.alive()
-        );
+        assert_eq!(boom.alive(), Style::BOOM.buy_to, "boom with 30,000 banked has {} soldiers after 5 s", boom.alive());
         let rich = round("boom:spend=2+turrets=3", 1, 60.0, rules);
-        let turrets = rich
-            .buildings
-            .iter()
-            .filter(|b| b.alive && b.kind == Kind::Turret)
-            .count();
-        assert_eq!(
-            turrets, 3,
-            "boom:spend=2+turrets=3 with 30,000 banked placed {turrets} turrets in 60 s"
-        );
-        assert!(
-            rich.buildings.iter().any(|b| b.kind == Kind::Turret && b.built >= 1.0),
-            "no turret raised in 60 s"
-        );
+        let turrets = rich.buildings.iter().filter(|b| b.alive && b.kind == Kind::Turret).count();
+        assert_eq!(turrets, 3, "boom:spend=2+turrets=3 with 30,000 banked placed {turrets} turrets in 60 s");
+        assert!(rich.buildings.iter().any(|b| b.kind == Kind::Turret && b.built >= 1.0), "no turret raised in 60 s");
     }
 
     #[test]
@@ -1089,31 +887,19 @@ mod tests {
     #[test]
     fn styles_play_differently() {
         let mut logs = Vec::new();
-        for s in [
-            "boom",
-            "claim:claim_at=10+keep=2",
-            "strike:strike_at=10+strike_army=4+keep=1",
-        ] {
+        for s in ["boom", "claim:claim_at=10+keep=2", "strike:strike_at=10+strike_army=4+keep=1"] {
             let g = round(s, 2, 40.0, Rules::default());
             logs.push(g.log.iter().map(|c| c.1.to_line()).collect::<Vec<_>>());
         }
         assert_ne!(logs[0], logs[1]);
         assert_ne!(logs[0], logs[2]);
-        assert!(
-            logs[2].iter().any(|l| l.contains("attack")),
-            "strike attacks: {:?}",
-            logs[2]
-        );
+        assert!(logs[2].iter().any(|l| l.contains("attack")), "strike attacks: {:?}", logs[2]);
     }
 
     #[test]
     fn a_side_commands_only_its_own() {
         let mut g = Game::new(race_world(4, 1, 1_000), Rules::default(), 4);
-        let side = Side {
-            home: g.larder,
-            ids: vec![0, 1],
-            whole: false,
-        };
+        let side = Side { home: g.larder, ids: vec![0, 1], whole: false };
         let mut b = Brain::new(Style::BOOM, side);
         for _ in 0..30 {
             b.play(&mut g);
@@ -1146,12 +932,7 @@ mod tests {
         let c = Style::named("take_claim").unwrap();
         assert_eq!((c.turrets, c.keep), (16, 4));
         assert_eq!(Style::named("take_strike").unwrap().core_after, 2);
-        for s in [
-            Style::TAKE_FORT,
-            Style::TAKE_BOOM,
-            Style::TAKE_CLAIM,
-            Style::TAKE_STRIKE,
-        ] {
+        for s in [Style::TAKE_FORT, Style::TAKE_BOOM, Style::TAKE_CLAIM, Style::TAKE_STRIKE] {
             assert!(s.take && s.spend == t.spend, "{} is a take", s.name);
         }
         assert_eq!(Style::named("take:core_after=1").unwrap().core_after, 1);
@@ -1161,11 +942,7 @@ mod tests {
     fn the_view_sees_the_mould_on_its_home_crystal() {
         let g = Game::new(race_world(1, 1, 1_000), Rules::default(), 1);
         let v = View::of(&g, &Side::whole(&g));
-        let home = v
-            .crystals
-            .iter()
-            .find(|c| dist(c.at, g.core) < 1.0)
-            .expect("core crystal");
+        let home = v.crystals.iter().find(|c| dist(c.at, g.core) < 1.0).expect("core crystal");
         assert!(home.on >= HELD, "mould on its start: {}", home.on);
         let total: u32 = v.grid.as_ref().unwrap().iter().sum();
         assert_eq!(total as usize, g.world.living(), "the grid counts every walker");

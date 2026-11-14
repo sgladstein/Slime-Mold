@@ -44,16 +44,7 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
             continue;
         }
         let (x, y) = ((i % w) as i64, (i / w) as i64);
-        for (dx, dy) in [
-            (-1i64, 0i64),
-            (1, 0),
-            (0, -1),
-            (0, 1),
-            (-1, -1),
-            (1, -1),
-            (-1, 1),
-            (1, 1),
-        ] {
+        for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
             let (nx, ny) = (x + dx, y + dy);
             if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
                 continue;
@@ -82,16 +73,7 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
 pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool) -> usize {
     let (x, y) = ((i % w) as i64, (i / w) as i64);
     let mut best = i;
-    for (dx, dy) in [
-        (-1i64, 0i64),
-        (1, 0),
-        (0, -1),
-        (0, 1),
-        (-1, -1),
-        (1, -1),
-        (-1, 1),
-        (1, 1),
-    ] {
+    for (dx, dy) in [(-1i64, 0i64), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)] {
         let (nx, ny) = (x + dx, y + dy);
         if nx < 0 || ny < 0 || nx >= w as i64 || ny >= h as i64 {
             continue;
@@ -100,11 +82,7 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool)
         // A diagonal only past two open side cells, as `distance_map` walks
         // (2026-11-14): a step cutting a wall's corner was blocked in
         // `Game::walk`, and a soldier at a wall's end stood there for good.
-        if corners
-            && dx != 0
-            && dy != 0
-            && (map[y as usize * w + nx as usize] == u32::MAX || map[ny as usize * w + x as usize] == u32::MAX)
-        {
+        if corners && dx != 0 && dy != 0 && (map[y as usize * w + nx as usize] == u32::MAX || map[ny as usize * w + x as usize] == u32::MAX) {
             continue;
         }
         if map[j] < map[best] {
@@ -118,11 +96,7 @@ pub(super) fn downhill(w: usize, h: usize, map: &[u32], i: usize, corners: bool)
 pub(super) fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f32) {
     let (dx, dy) = (b.0 - a.0, b.1 - a.1);
     let l2 = dx * dx + dy * dy;
-    let t = if l2 > 0.0 {
-        (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0)
-    } else {
-        0.0
-    };
+    let t = if l2 > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0) } else { 0.0 };
     (a.0 + dx * t, a.1 + dy * t)
 }
 
@@ -166,10 +140,7 @@ impl<W: World> Game<W> {
         if self.standable(g.0, g.1) {
             return Some((g, false));
         }
-        Some(
-            self.nearest_standable(g, GOAL_SEARCH * self.s())
-                .map_or((g, false), |q| (q, true)),
-        )
+        Some(self.nearest_standable(g, GOAL_SEARCH * self.s()).map_or((g, false), |q| (q, true)))
     }
 
     /// The centre of the standable cell nearest `p` within `r` fine cells,
@@ -227,10 +198,7 @@ impl<W: World> Game<W> {
     /// The crystal (charge left) whose disc holds `p`, if crystals are
     /// solid (`Rules::crystal_solid`): its centre and radius.
     pub(super) fn solid_at(&self, p: (f32, f32)) -> Option<((f32, f32), f32)> {
-        self.solid
-            .iter()
-            .copied()
-            .find(|&(c, r)| (c.0 - p.0).hypot(c.1 - p.1) < r)
+        self.solid.iter().copied().find(|&(c, r)| (c.0 - p.0).hypot(c.1 - p.1) < r)
     }
 
     /// How near `p` a soldier must stand to work at it, fine cells: `near`
@@ -238,8 +206,7 @@ impl<W: World> Game<W> {
     /// outpost or ghost placed on one).
     pub(super) fn reach(&self, p: (f32, f32), near: f32) -> f32 {
         let sc = self.s();
-        self.solid_at(p)
-            .map_or(near * sc, |(_, r)| (r + (RIM + 2.0) * sc).max(near * sc))
+        self.solid_at(p).map_or(near * sc, |(_, r)| (r + (RIM + 2.0) * sc).max(near * sc))
     }
 
     /// Ground a soldier may stand on: open, and not on a crystal with
@@ -354,19 +321,14 @@ impl<W: World> Game<W> {
     /// the line standable (`standable`; `clear_line` is the line of fire).
     pub(super) fn walk_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
-        squad::path(w, h, a, b)
-            .into_iter()
-            .all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+        squad::path(w, h, a, b).into_iter().all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
     }
 
     /// Whether every cell on the line from `a` to `b` is clear to fire
     /// across (`World::clear`: open ground or deep water).
     pub fn clear_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
-        squad::path(w, h, a, b).into_iter().all(|i| {
-            self.world
-                .clear((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5)
-        })
+        squad::path(w, h, a, b).into_iter().all(|i| self.world.clear((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
     }
 
     /// Walk soldier `k` toward its goal for `dt` game seconds: straight
@@ -382,11 +344,7 @@ impl<W: World> Game<W> {
         // A goal moved off rock is one cell for every slot that fell in the
         // rock: near it is there, or those soldiers would shove for it
         // against their elbow room (`elbow_room`) without end.
-        let there = if moved {
-            (self.rules.elbow * self.rules.touch * self.s()).max(0.5)
-        } else {
-            0.5
-        };
+        let there = if moved { (self.rules.elbow * self.rules.touch * self.s()).max(0.5) } else { 0.5 };
         if d < there || self.engaged(k) {
             return;
         }
@@ -396,11 +354,7 @@ impl<W: World> Game<W> {
         // Shut in a wall or rock (a wall that rose on it, an old save):
         // straight out to the nearest standable ground, over anything.
         let shut = !caught && !self.world.open(s.x, s.y);
-        let out = if shut {
-            self.nearest_standable((s.x, s.y), GOAL_SEARCH * self.s())
-        } else {
-            None
-        };
+        let out = if shut { self.nearest_standable((s.x, s.y), GOAL_SEARCH * self.s()) } else { None };
         let g = if let Some(o) = out {
             o
         } else if caught {
@@ -437,15 +391,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         let step = (self.rules.speed * self.s() * dt * self.wade(k)).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
-        let ok = |x: f32, y: f32| {
-            if out.is_some() {
-                true
-            } else if caught {
-                self.world.open(x, y)
-            } else {
-                self.standable(x, y)
-            }
-        };
+        let ok = |x: f32, y: f32| if out.is_some() { true } else if caught { self.world.open(x, y) } else { self.standable(x, y) };
         let to = if ok(nx, ny) {
             Some((nx, ny))
         } else if ok(nx, s.y) {
@@ -557,18 +503,13 @@ impl<W: World> Game<W> {
         let s = self.soldiers[k];
         let Order::Fight(..) = s.order else { return false };
         let Some(aim) = s.aim else { return false };
-        s.dense >= self.rules.aim_min
-            && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.gun_range() * self.s()
-            && self.clear_line((s.x, s.y), aim)
+        s.dense >= self.rules.aim_min && (aim.0 - s.x).hypot(aim.1 - s.y) <= self.gun_range() * self.s() && self.clear_line((s.x, s.y), aim)
     }
 
     /// The depot a carrier at `p` walks home to: the nearest of the larder
     /// and the standing outposts (`Game::drop_offs`).
     pub(super) fn drop_off(&self, p: (f32, f32)) -> (f32, f32) {
         let d = |a: (f32, f32)| (a.0 - p.0).hypot(a.1 - p.1);
-        self.drop_offs()
-            .into_iter()
-            .min_by(|a, b| d(*a).total_cmp(&d(*b)))
-            .unwrap_or(self.larder)
+        self.drop_offs().into_iter().min_by(|a, b| d(*a).total_cmp(&d(*b))).unwrap_or(self.larder)
     }
 }

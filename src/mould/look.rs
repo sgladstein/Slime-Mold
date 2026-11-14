@@ -43,8 +43,9 @@ use super::level::{Win, FREE};
 use super::render::{entry_lines, frame_size, menu_cards, thousands, Menu, View};
 use super::wander::{self, Outcome, Wander};
 use super::{
-    disc, Dish, Ground, Phase, Tool, CARRIED_FULL, FED_LOOK_SECONDS, H, OATS_R, OATS_SECONDS, SALT_LEN, SALT_STOCK,
-    SAP_FULL, SNIP_LEN, SNIP_STOCK, STEPS_PER_SECOND, STORM_WARNING_SECONDS, THRIFT_BAR, THRIFT_MIN_JOINED, W,
+    FED_LOOK_SECONDS, CARRIED_FULL, SAP_FULL,
+    disc, Dish, Ground, Phase, Tool, H, OATS_R, OATS_SECONDS, SALT_LEN, SALT_STOCK,
+    SNIP_LEN, SNIP_STOCK, STEPS_PER_SECOND, STORM_WARNING_SECONDS, THRIFT_BAR, THRIFT_MIN_JOINED, W,
 };
 use crate::hud;
 use std::f32::consts::{PI, TAU};
@@ -456,11 +457,7 @@ impl Cv<'_> {
                 continue;
             }
             let outer = (reach * reach - dy * dy).sqrt();
-            let hole = if dy < inner {
-                (inner * inner - dy * dy).sqrt()
-            } else {
-                0.0
-            };
+            let hole = if dy < inner { (inner * inner - dy * dy).sqrt() } else { 0.0 };
             let runs = [
                 ((cx - outer).floor() as i32, (cx - hole).ceil() as i32),
                 ((cx + hole).floor() as i32, (cx + outer).ceil() as i32),
@@ -569,89 +566,35 @@ impl Cv<'_> {
 /// a mixed line keeps one baseline.
 fn lower(c: char) -> Option<[u8; 9]> {
     let rows: [&str; 9] = match c {
-        'a' => [
-            ".....", ".....", ".###.", "....#", ".####", "#...#", ".####", ".....", ".....",
-        ],
-        'b' => [
-            "#....", "#....", "####.", "#...#", "#...#", "#...#", "####.", ".....", ".....",
-        ],
-        'c' => [
-            ".....", ".....", ".####", "#....", "#....", "#....", ".####", ".....", ".....",
-        ],
-        'd' => [
-            "....#", "....#", ".####", "#...#", "#...#", "#...#", ".####", ".....", ".....",
-        ],
-        'e' => [
-            ".....", ".....", ".###.", "#...#", "#####", "#....", ".####", ".....", ".....",
-        ],
-        'f' => [
-            "..##.", ".#...", "####.", ".#...", ".#...", ".#...", ".#...", ".....", ".....",
-        ],
-        'g' => [
-            ".....", ".....", ".####", "#...#", "#...#", "#...#", ".####", "....#", ".###.",
-        ],
-        'h' => [
-            "#....", "#....", "####.", "#...#", "#...#", "#...#", "#...#", ".....", ".....",
-        ],
-        'i' => [
-            "..#..", ".....", ".##..", "..#..", "..#..", "..#..", ".###.", ".....", ".....",
-        ],
-        'j' => [
-            "...#.", ".....", "..##.", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##..",
-        ],
-        'k' => [
-            "#....", "#....", "#..#.", "#.#..", "##...", "#.#..", "#..#.", ".....", ".....",
-        ],
-        'l' => [
-            ".##..", "..#..", "..#..", "..#..", "..#..", "..#..", ".###.", ".....", ".....",
-        ],
-        'm' => [
-            ".....", ".....", "##.#.", "#.#.#", "#.#.#", "#.#.#", "#.#.#", ".....", ".....",
-        ],
-        'n' => [
-            ".....", ".....", "####.", "#...#", "#...#", "#...#", "#...#", ".....", ".....",
-        ],
-        'o' => [
-            ".....", ".....", ".###.", "#...#", "#...#", "#...#", ".###.", ".....", ".....",
-        ],
-        'p' => [
-            ".....", ".....", "####.", "#...#", "#...#", "#...#", "####.", "#....", "#....",
-        ],
-        'q' => [
-            ".....", ".....", ".####", "#...#", "#...#", "#...#", ".####", "....#", "....#",
-        ],
-        'r' => [
-            ".....", ".....", "#.##.", "##..#", "#....", "#....", "#....", ".....", ".....",
-        ],
-        's' => [
-            ".....", ".....", ".####", "#....", ".###.", "....#", "####.", ".....", ".....",
-        ],
-        't' => [
-            ".#...", ".#...", "####.", ".#...", ".#...", ".#..#", "..##.", ".....", ".....",
-        ],
-        'u' => [
-            ".....", ".....", "#...#", "#...#", "#...#", "#..##", ".##.#", ".....", ".....",
-        ],
-        'v' => [
-            ".....", ".....", "#...#", "#...#", "#...#", ".#.#.", "..#..", ".....", ".....",
-        ],
-        'w' => [
-            ".....", ".....", "#...#", "#...#", "#.#.#", "#.#.#", ".#.#.", ".....", ".....",
-        ],
-        'x' => [
-            ".....", ".....", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", ".....", ".....",
-        ],
-        'y' => [
-            ".....", ".....", "#...#", "#...#", "#...#", "#...#", ".####", "....#", ".###.",
-        ],
-        'z' => [
-            ".....", ".....", "#####", "...#.", "..#..", ".#...", "#####", ".....", ".....",
-        ],
+        'a' => [".....", ".....", ".###.", "....#", ".####", "#...#", ".####", ".....", "....."],
+        'b' => ["#....", "#....", "####.", "#...#", "#...#", "#...#", "####.", ".....", "....."],
+        'c' => [".....", ".....", ".####", "#....", "#....", "#....", ".####", ".....", "....."],
+        'd' => ["....#", "....#", ".####", "#...#", "#...#", "#...#", ".####", ".....", "....."],
+        'e' => [".....", ".....", ".###.", "#...#", "#####", "#....", ".####", ".....", "....."],
+        'f' => ["..##.", ".#...", "####.", ".#...", ".#...", ".#...", ".#...", ".....", "....."],
+        'g' => [".....", ".....", ".####", "#...#", "#...#", "#...#", ".####", "....#", ".###."],
+        'h' => ["#....", "#....", "####.", "#...#", "#...#", "#...#", "#...#", ".....", "....."],
+        'i' => ["..#..", ".....", ".##..", "..#..", "..#..", "..#..", ".###.", ".....", "....."],
+        'j' => ["...#.", ".....", "..##.", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##.."],
+        'k' => ["#....", "#....", "#..#.", "#.#..", "##...", "#.#..", "#..#.", ".....", "....."],
+        'l' => [".##..", "..#..", "..#..", "..#..", "..#..", "..#..", ".###.", ".....", "....."],
+        'm' => [".....", ".....", "##.#.", "#.#.#", "#.#.#", "#.#.#", "#.#.#", ".....", "....."],
+        'n' => [".....", ".....", "####.", "#...#", "#...#", "#...#", "#...#", ".....", "....."],
+        'o' => [".....", ".....", ".###.", "#...#", "#...#", "#...#", ".###.", ".....", "....."],
+        'p' => [".....", ".....", "####.", "#...#", "#...#", "#...#", "####.", "#....", "#...."],
+        'q' => [".....", ".....", ".####", "#...#", "#...#", "#...#", ".####", "....#", "....#"],
+        'r' => [".....", ".....", "#.##.", "##..#", "#....", "#....", "#....", ".....", "....."],
+        's' => [".....", ".....", ".####", "#....", ".###.", "....#", "####.", ".....", "....."],
+        't' => [".#...", ".#...", "####.", ".#...", ".#...", ".#..#", "..##.", ".....", "....."],
+        'u' => [".....", ".....", "#...#", "#...#", "#...#", "#..##", ".##.#", ".....", "....."],
+        'v' => [".....", ".....", "#...#", "#...#", "#...#", ".#.#.", "..#..", ".....", "....."],
+        'w' => [".....", ".....", "#...#", "#...#", "#.#.#", "#.#.#", ".#.#.", ".....", "....."],
+        'x' => [".....", ".....", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", ".....", "....."],
+        'y' => [".....", ".....", "#...#", "#...#", "#...#", "#...#", ".####", "....#", ".###."],
+        'z' => [".....", ".....", "#####", "...#.", "..#..", ".#...", "#####", ".....", "....."],
         // The dot font's comma reads as a full stop at this size, and
         // "1,265" read as "1.265": a comma with a tail below the line.
-        ',' => [
-            ".....", ".....", ".....", ".....", ".....", ".##..", ".##..", "..#..", ".#...",
-        ],
+        ',' => [".....", ".....", ".....", ".....", ".....", ".##..", ".##..", "..#..", ".#..."],
         _ => return None,
     };
     let mut g = [0u8; 9];
@@ -669,13 +612,7 @@ fn lower(c: char) -> Option<[u8; 9]> {
 fn text(cv: &mut Cv, th: &Theme, x: i32, y: i32, s: &str, c: Rgb) -> i32 {
     match th.font {
         Font::Crisp => {
-            hud::draw_text_crisp(
-                cv.f,
-                (cv.w as u32, cv.h as u32),
-                (x / 2, y / 2),
-                s,
-                [c[0], c[1], c[2], 255],
-            );
+            hud::draw_text_crisp(cv.f, (cv.w as u32, cv.h as u32), (x / 2, y / 2), s, [c[0], c[1], c[2], 255]);
             hud::text_width(s) * 2
         }
         Font::Mixed => mixed(cv, 2, x, y, s, c),
@@ -694,14 +631,7 @@ fn text_w(th: &Theme, s: &str) -> i32 {
 fn big(cv: &mut Cv, th: &Theme, k: i32, x: i32, y: i32, s: &str, c: Rgb) -> i32 {
     match th.font {
         Font::Crisp => {
-            hud::draw_text_scaled(
-                cv.f,
-                (cv.w as u32, cv.h as u32),
-                k,
-                (x / k, y / k),
-                s,
-                [c[0], c[1], c[2], 255],
-            );
+            hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), k, (x / k, y / k), s, [c[0], c[1], c[2], 255]);
             hud::text_width(s) * k
         }
         Font::Mixed => mixed(cv, k, x, y, s, c),
@@ -728,14 +658,7 @@ fn mixed(cv: &mut Cv, k: i32, x: i32, y: i32, s: &str, c: Rgb) -> i32 {
             }
         } else {
             let one = ch.encode_utf8(&mut buf);
-            hud::draw_text_scaled(
-                cv.f,
-                (cv.w as u32, cv.h as u32),
-                k,
-                (cx / k, y / k),
-                one,
-                [c[0], c[1], c[2], 255],
-            );
+            hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), k, (cx / k, y / k), one, [c[0], c[1], c[2], 255]);
         }
         cx += 6 * k;
     }
@@ -747,18 +670,7 @@ fn chunky(cv: &mut Cv, th: &Theme, k: i32, x: i32, y: i32, s: &str, c: Rgb) -> i
     let (x, y) = (x - x.rem_euclid(k) + k, y - y.rem_euclid(k) + k);
     let size = (cv.w as u32, cv.h as u32);
     let ik = [ink[0], ink[1], ink[2], 255];
-    for (ox, oy) in [
-        (-1, -1),
-        (0, -1),
-        (1, -1),
-        (-1, 0),
-        (1, 0),
-        (-1, 1),
-        (0, 1),
-        (1, 1),
-        (1, 2),
-        (0, 2),
-    ] {
+    for (ox, oy) in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1), (1, 2), (0, 2)] {
         hud::draw_text_scaled(cv.f, size, k, (x / k + ox, y / k + oy), s, ik);
     }
     hud::draw_text_scaled(cv.f, size, k, (x / k, y / k), s, [c[0], c[1], c[2], 255]);
@@ -931,23 +843,12 @@ fn icon(cv: &mut Cv, th: &Theme, t: Tool, x: i32, y: i32, k: i32, faded: bool) {
 }
 
 fn star(cv: &mut Cv, th: &Theme, x: i32, y: i32, k: i32, on: bool) {
-    let (fill, ink) = if on {
-        (th.hot, th.ink)
-    } else {
-        (mul(th.dim, 0.6), th.ink)
-    };
+    let (fill, ink) = if on { (th.hot, th.ink) } else { (mul(th.dim, 0.6), th.ink) };
     if let Some(ink) = ink {
         for (r, row) in STAR.iter().enumerate() {
             for (c, ch) in row.bytes().enumerate() {
                 if ch == b'#' {
-                    cv.rect(
-                        x + c as i32 * k - k / 2,
-                        y + r as i32 * k - k / 2,
-                        k * 2,
-                        k * 2,
-                        ink,
-                        1.0,
-                    );
+                    cv.rect(x + c as i32 * k - k / 2, y + r as i32 * k - k / 2, k * 2, k * 2, ink, 1.0);
                 }
             }
         }
@@ -1183,11 +1084,7 @@ fn hint(d: &Dish, view: &View, st: &Status) -> [String; 2] {
             Phase::Crossing(_) => {
                 return [
                     format!("Through {}", thousands(w.through)),
-                    format!(
-                        "In line {}, died {}",
-                        thousands(w.pouring.len() as u32),
-                        thousands(w.lost_on_way)
-                    ),
+                    format!("In line {}, died {}", thousands(w.pouring.len() as u32), thousands(w.lost_on_way)),
                 ]
             }
             _ if d.can_go() => return two("G: go now. She leaves", "through the crack"),
@@ -1280,15 +1177,7 @@ pub fn draw(d: &Dish, view: &View, scale: u32, frame: &mut [u8]) {
         chip(&mut cv, &th, x, y, &[words], th.hot);
     }
     // The debug corner: which look this is, by its blind letter only.
-    hud::draw_text(
-        cv.f,
-        fw,
-        fh,
-        fw as i32 - 8,
-        fh as i32 - 9,
-        view.style.letter(),
-        [90, 96, 100, 255],
-    );
+    hud::draw_text(cv.f, fw, fh, fw as i32 - 8, fh as i32 - 9, view.style.letter(), [90, 96, 100, 255]);
 }
 
 // ------------------------------------------------------------------- dish
@@ -1557,11 +1446,7 @@ fn background(th: &Theme, flash: bool) -> &'static [Rgb] {
         for y in 0..H {
             for x in 0..W {
                 let (e, _, _) = ellipse(x, y);
-                v.push(if e <= 1.0 {
-                    agar_colour(th, x, y)
-                } else {
-                    rim_colour(th, x, y, &calm)
-                });
+                v.push(if e <= 1.0 { agar_colour(th, x, y) } else { rim_colour(th, x, y, &calm) });
             }
         }
         v
@@ -1662,20 +1547,16 @@ fn rim_layer(th: &Theme, flash: bool, s: i32) -> std::sync::Arc<RimLayer> {
                             out += 1.0;
                         }
                     }
-                    let c = if out > 0.0 {
-                        sum.map(|v| (v / out) as u8)
-                    } else {
-                        [0; 3]
-                    };
+                    let c = if out > 0.0 { sum.map(|v| (v / out) as u8) } else { [0; 3] };
                     px.push((c, out / 4.0));
                 }
             }
             // All inside, or all one rim colour: a block draws it the same.
             let cell = &px[start..];
             let inside = cell.iter().all(|p| p.1 == 0.0);
-            let flat = cell
-                .iter()
-                .all(|p| p.1 == 1.0 && p.0.iter().zip(&cell[0].0).all(|(a, b)| a.abs_diff(*b) <= 2));
+            let flat = cell.iter().all(|p| {
+                p.1 == 1.0 && p.0.iter().zip(&cell[0].0).all(|(a, b)| a.abs_diff(*b) <= 2)
+            });
             if inside || flat {
                 px.truncate(start);
                 at[y * W + x] = u32::MAX;
@@ -1834,13 +1715,7 @@ const DRIED: [Rgb; 3] = [[40, 42, 36], [104, 100, 78], [170, 162, 128]];
 /// 2026-11-10: with flow on at 45 degrees, seed 2, 50 s, the whole network
 /// went a dull amber-brown); only tube with next to no food goes cold
 /// (`FOOD_COLD`).
-const FOOD_RAMP: [Rgb; 5] = [
-    [124, 76, 26],
-    [186, 114, 28],
-    [230, 156, 36],
-    [255, 210, 84],
-    [255, 248, 214],
-];
+const FOOD_RAMP: [Rgb; 5] = [[124, 76, 26], [186, 114, 28], [230, 156, 36], [255, 210, 84], [255, 248, 214]];
 /// Below this food level a flowing tube blends to the look's cold grey.
 const FOOD_COLD: f32 = 0.1;
 /// Food in a tube cell, in `CARRIED_FULL`s of walker load plus `SAP_FULL`s
@@ -1886,11 +1761,7 @@ fn fullness(d: &Dish, i: usize) -> f32 {
 /// ramp is the food it holds, cooling to grey only near none.
 fn ramp_tube(th: &Theme, v: f32, full: f32, fed: bool, flow: bool, shade: f32) -> Rgb {
     if !flow {
-        return if fed {
-            food_colour(th, v, FED_NO_FLOW, shade)
-        } else {
-            tube_colour(th, v, false, shade)
-        };
+        return if fed { food_colour(th, v, FED_NO_FLOW, shade) } else { tube_colour(th, v, false, shade) };
     }
     let warm = food_colour(th, v, full, shade);
     if full >= FOOD_COLD {
@@ -1994,13 +1865,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
     let flow = d.params.flow;
     // With food flowing, a tube's yellow follows the food in it, so a wave
     // of food is seen as a brighter band.
-    let flow_v = |v: f32, hun: f32| {
-        if flow {
-            (0.55 * v + 0.45 * (1.0 - hun)).clamp(0.0, 1.0)
-        } else {
-            v
-        }
-    };
+    let flow_v = |v: f32, hun: f32| if flow { (0.55 * v + 0.45 * (1.0 - hun)).clamp(0.0, 1.0) } else { v };
     let food_ramp = starve_look() == 3;
     let hunger_field = (starve_look() != 0 && !flow && !food_ramp).then(|| {
         // On the glow's half-size grid: hunger is soft by construction,
@@ -2021,10 +1886,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
         for a in [&mut num, &mut den] {
             blur(a, &mut tmp, HW, HH, 2);
         }
-        num.iter()
-            .zip(&den)
-            .map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 1.0 })
-            .collect::<Vec<f32>>()
+        num.iter().zip(&den).map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 1.0 }).collect::<Vec<f32>>()
     });
     // The food ramp's field: how full each cell looks (`fullness`),
     // averaged over tube cells on the glow's half-size grid and blurred
@@ -2048,10 +1910,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
         for a in [&mut num, &mut den] {
             blur(a, &mut tmp, HW, HH, 1);
         }
-        num.iter()
-            .zip(&den)
-            .map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 })
-            .collect::<Vec<f32>>()
+        num.iter().zip(&den).map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 }).collect::<Vec<f32>>()
     });
     // The starving glow: grey's own, an ember's faint red, or none for
     // dried slime, which is not lit; the food ramp's is its bottom stop.
@@ -2257,11 +2116,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
             if let (Some(o), false) = (fine, edge) {
                 for py in 0..s {
                     for px in 0..s {
-                        cv.put(
-                            px0 + px,
-                            py0 + py,
-                            smooth.as_ref().unwrap().over(o + (py * s + px) as usize, inside),
-                        );
+                        cv.put(px0 + px, py0 + py, smooth.as_ref().unwrap().over(o + (py * s + px) as usize, inside));
                     }
                 }
                 continue;
@@ -2275,9 +2130,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
             // the dish holds; only where the edge is drawn moves, by less
             // than a cell.
             let mark = |g: Ground| matches!(g, Ground::Salt | Ground::Scar | Ground::Wound);
-            if fine_tube
-                && (mark(d.ground[i]) || (d.ground[i] == Ground::Agar && tube.is_none() && !edge && fine.is_none()))
-            {
+            if fine_tube && (mark(d.ground[i]) || (d.ground[i] == Ground::Agar && tube.is_none() && !edge && fine.is_none())) {
                 let near = if mark(d.ground[i]) {
                     Some((d.ground[i], i))
                 } else {
@@ -2314,8 +2167,7 @@ fn dish(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
                     };
                     // Salt is drawn this way all through, not only at its edge:
                     // its grains are pixel-sized (two pixels), not a cell's.
-                    let border =
-                        g == Ground::Salt || (-1..=1).any(|dy| (-1..=1).any(|dx| same(xi + dx, yi + dy) == 0.0));
+                    let border = g == Ground::Salt || (-1..=1).any(|dy| (-1..=1).any(|dx| same(xi + dx, yi + dy) == 0.0));
                     if border {
                         let (gx, gy) = (gi % W, gi / W);
                         let ink = match g {
@@ -2438,8 +2290,7 @@ fn tube_insides(cv: &mut Cv, s: i32, centre: &[Rgb], has: &[bool], cells: &[usiz
         .map(|k| {
             let (r0, ay) = split(k / s);
             let (c0, ax) = split(k % s);
-            let w = [(1.0 - ax) * (1.0 - ay), ax * (1.0 - ay), (1.0 - ax) * ay, ax * ay]
-                .map(|v| (v * 256.0).round() as u32);
+            let w = [(1.0 - ax) * (1.0 - ay), ax * (1.0 - ay), (1.0 - ax) * ay, ax * ay].map(|v| (v * 256.0).round() as u32);
             (r0, c0, w)
         })
         .collect();
@@ -2510,11 +2361,7 @@ fn wet_field(d: &Dish) -> Option<Vec<f32>> {
             }
             // Measured against the room each way: 1 is soaked, -1 bone dry.
             let v = sum / n;
-            out[y * W + x] = if v > 0.0 {
-                v / (1.0 - base).max(1e-3)
-            } else {
-                v / base.max(1e-3)
-            };
+            out[y * W + x] = if v > 0.0 { v / (1.0 - base).max(1e-3) } else { v / base.max(1e-3) };
         }
     }
     Some(out)
@@ -2558,12 +2405,7 @@ fn sleep_field(d: &Dish) -> Option<Vec<f32>> {
     for a in [&mut num, &mut den] {
         blur(a, &mut tmp, HW, HH, 1);
     }
-    Some(
-        num.iter()
-            .zip(&den)
-            .map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 })
-            .collect(),
-    )
+    Some(num.iter().zip(&den).map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 }).collect())
 }
 
 /// The crust a sleeping branch dries to: the real mould's sclerotium,
@@ -2619,15 +2461,7 @@ fn stain_field(d: &Dish) -> Option<(u64, Vec<f32>)> {
             if d.ground[i] != Ground::Agar {
                 continue;
             }
-            let m = v[i - W - 1]
-                + v[i - W]
-                + v[i - W + 1]
-                + v[i - 1]
-                + v[i]
-                + v[i + 1]
-                + v[i + W - 1]
-                + v[i + W]
-                + v[i + W + 1];
+            let m = v[i - W - 1] + v[i - W] + v[i - W + 1] + v[i - 1] + v[i] + v[i + 1] + v[i + W - 1] + v[i + W] + v[i + W + 1];
             out[i] = m / 9.0;
         }
     }
@@ -2725,16 +2559,8 @@ fn specks(cv: &mut Cv, d: &Dish, th: &Theme, s: i32) {
     let sf = s as f32;
     let flow = d.params.flow;
     let want = d.params.want.max(1e-3);
-    let light: Rgb = if th.style == Style::Toy {
-        [255, 252, 236]
-    } else {
-        [255, 250, 226]
-    };
-    let dark: Rgb = if th.style == Style::Toy {
-        [92, 52, 18]
-    } else {
-        [40, 20, 6]
-    };
+    let light: Rgb = if th.style == Style::Toy { [255, 252, 236] } else { [255, 250, 226] };
+    let dark: Rgb = if th.style == Style::Toy { [92, 52, 18] } else { [40, 20, 6] };
     for w in &d.walkers {
         let x0 = (w.x * sf) as i32 - k / 2;
         let y0 = (w.y * sf) as i32 - k / 2;
@@ -2791,24 +2617,12 @@ fn field_on(th: &Theme) -> bool {
 /// a sixth.
 const FIELD_GAIN: f32 = 0.3;
 const FIELD_FED: [Rgb; 5] = [[0, 0, 0], [84, 40, 4], [190, 112, 12], [244, 180, 52], [255, 226, 150]];
-const FIELD_PALE: [Rgb; 5] = [
-    [0, 0, 0],
-    [40, 44, 52],
-    [96, 102, 112],
-    [150, 156, 166],
-    [196, 200, 208],
-];
+const FIELD_PALE: [Rgb; 5] = [[0, 0, 0], [40, 44, 52], [96, 102, 112], [150, 156, 166], [196, 200, 208]];
 /// Darker and redder than the fed ramp at every brightness: sleeping
 /// mould is a dry crust, not light (a paler first ramp read as cream once
 /// the sleepers' own specks were added over it).
 const FIELD_CRUST: [Rgb; 5] = [[0, 0, 0], [50, 22, 6], [104, 50, 14], [146, 80, 26], [170, 104, 42]];
-const FIELD_WILD: [Rgb; 5] = [
-    [0, 0, 0],
-    [52, 24, 92],
-    [112, 60, 186],
-    [170, 118, 240],
-    [222, 196, 255],
-];
+const FIELD_WILD: [Rgb; 5] = [[0, 0, 0], [52, 24, 92], [112, 60, 186], [170, 118, 240], [222, 196, 255]];
 const FIELD_WILD_PALE: [Rgb; 5] = [[0, 0, 0], [36, 32, 48], [80, 74, 100], [128, 122, 150], [172, 166, 196]];
 /// A walker's speck of light: the centre pixel, and its four neighbours
 /// at 60%.
@@ -2854,10 +2668,7 @@ fn field_tint(d: &Dish) -> Vec<f32> {
     for a in [&mut num, &mut den] {
         blur(a, &mut tmp, HW, HH, 1);
     }
-    num.iter()
-        .zip(&den)
-        .map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 })
-        .collect()
+    num.iter().zip(&den).map(|(&n, &m)| if m > 1e-4 { (n / m).clamp(0.0, 1.0) } else { 0.0 }).collect()
 }
 
 /// **The mould layer**: per cell, the light the mould gives there (yours,
@@ -2934,8 +2745,7 @@ fn field_mould(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, flash: bool) {
         .map(|k| {
             let (r0, ay) = split(k / s);
             let (c0, ax) = split(k % s);
-            let w = [(1.0 - ax) * (1.0 - ay), ax * (1.0 - ay), (1.0 - ax) * ay, ax * ay]
-                .map(|v| (v * 256.0).round() as u32);
+            let w = [(1.0 - ax) * (1.0 - ay), ax * (1.0 - ay), (1.0 - ax) * ay, ax * ay].map(|v| (v * 256.0).round() as u32);
             (r0, c0, w)
         })
         .collect();
@@ -2954,12 +2764,10 @@ fn field_mould(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, flash: bool) {
                 continue;
             }
             // Light reaches a cell from its own centre and its neighbours'.
-            let near = (-1..=1).any(|dy| {
-                (-1..=1).any(|dx| {
-                    let (nx, ny) = (x + dx, y + dy);
-                    nx >= 0 && ny >= 0 && (nx as usize) < W && (ny as usize) < H && lit[ny as usize * W + nx as usize]
-                })
-            });
+            let near = (-1..=1).any(|dy| (-1..=1).any(|dx| {
+                let (nx, ny) = (x + dx, y + dy);
+                nx >= 0 && ny >= 0 && (nx as usize) < W && (ny as usize) < H && lit[ny as usize * W + nx as usize]
+            }));
             if !near {
                 continue;
             }
@@ -2978,8 +2786,7 @@ fn field_mould(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, flash: bool) {
                     let (r0, c0, w) = table[(py * s + px) as usize];
                     let (a, b, c, e) = (n[r0][c0], n[r0][c0 + 1], n[r0 + 1][c0], n[r0 + 1][c0 + 1]);
                     let mut l: Rgb = [0, 1, 2].map(|k| {
-                        ((a[k] as u32 * w[0] + b[k] as u32 * w[1] + c[k] as u32 * w[2] + e[k] as u32 * w[3]) >> 8)
-                            .min(255) as u8
+                        ((a[k] as u32 * w[0] + b[k] as u32 * w[1] + c[k] as u32 * w[2] + e[k] as u32 * w[3]) >> 8).min(255) as u8
                     });
                     if band != u32::MAX {
                         // Only the part of the pixel inside the dish.
@@ -3094,22 +2901,14 @@ fn wild(cv: &mut Cv, r: &Dish, th: &Theme, s: i32, flash: bool) {
             if hi_n <= bloom {
                 continue;
             }
-            kind[i] = if lo_n > thr * 1.1 && rim.as_ref().is_none_or(|l| l.at[i] == u32::MAX) {
-                2
-            } else {
-                1
-            };
+            kind[i] = if lo_n > thr * 1.1 && rim.as_ref().is_none_or(|l| l.at[i] == u32::MAX) { 2 } else { 1 };
             let k = vof(t0.max(thr));
             let shade = ((tr(xi + 2, yi + 2) - tr(xi - 2, yi - 2)) / (t0.max(thr) + 6.0)).clamp(-1.0, 1.0);
             let mut c = mul(ramp(&WILD_RAMP, 0.15 + 0.85 * k), 0.85 + 0.15 * k);
             if !r.looks_fed(i) {
                 c = lerp(c, WILD_HUNGRY, 0.7);
             }
-            centre[i] = if shade > 0.0 {
-                lerp(c, [255, 255, 255], 0.18 * shade)
-            } else {
-                mul(c, 1.0 + 0.25 * shade)
-            };
+            centre[i] = if shade > 0.0 { lerp(c, [255, 255, 255], 0.18 * shade) } else { mul(c, 1.0 + 0.25 * shade) };
         }
     }
     // Inside cells: a blend between cell centres, pixel by pixel, as your
@@ -3212,13 +3011,7 @@ fn flakes(cv: &mut Cv, th: &Theme, cx: f32, cy: f32, sf: f32, c: Rgb, a: f32) {
             });
         }
         cv.disc(fx, fy, 1.35 * sf, c, a);
-        cv.disc(
-            fx - 0.35 * sf,
-            fy - 0.35 * sf,
-            0.55 * sf,
-            lerp(c, [255, 255, 255], 0.5),
-            a * 0.7,
-        );
+        cv.disc(fx - 0.35 * sf, fy - 0.35 * sf, 0.55 * sf, lerp(c, [255, 255, 255], 0.5), a * 0.7);
     }
 }
 
@@ -3271,13 +3064,7 @@ fn piles(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
                 cv.disc(cx + 3.0, cy + 4.0, rp + 3.0, ink, 0.3);
                 cv.disc(cx, cy, rp + 3.0, ink, 1.0);
                 grain_disc(cv, cx, cy, rp, mul(th.food, 0.55 + 0.45 * frac), 1.0);
-                cv.disc(
-                    cx - rp * 0.35,
-                    cy - rp * 0.38,
-                    rp * 0.32,
-                    lerp(th.food, [255, 255, 255], 0.5),
-                    0.55,
-                );
+                cv.disc(cx - rp * 0.35, cy - rp * 0.38, rp * 0.32, lerp(th.food, [255, 255, 255], 0.5), 0.55);
                 let r = rp + 2.3 * sf;
                 cv.ring(cx, cy, r, 9.0, ink, 1.0, None);
                 cv.ring(cx, cy, r, 4.0, [236, 226, 206], 1.0, None);
@@ -3311,14 +3098,7 @@ fn piles(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
             let secs = at.saturating_sub(d.t).div_ceil(sps).to_string();
             let w = text_w(th, &secs);
             if th.font == Font::Chunky {
-                hud::draw_text_scaled(
-                    cv.f,
-                    (cv.w as u32, cv.h as u32),
-                    2,
-                    ((cx as i32 - w / 2 + 2) / 2, (cy as i32 - 7) / 2),
-                    &secs,
-                    [c[0], c[1], c[2], 255],
-                );
+                hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((cx as i32 - w / 2 + 2) / 2, (cy as i32 - 7) / 2), &secs, [c[0], c[1], c[2], 255]);
             } else {
                 text(cv, th, cx as i32 - w / 2, cy as i32 - 7, &secs, c);
             }
@@ -3328,25 +3108,13 @@ fn piles(cv: &mut Cv, d: &Dish, th: &Theme, s: i32, st: &Status) {
         let age = d.t.saturating_sub(at);
         if age < 2 * sps {
             let f = age as f32 / (2 * sps) as f32;
-            cv.ring(
-                x * sf,
-                y * sf,
-                (6.0 + 14.0 * f) * sf,
-                4.0,
-                [255, 250, 220],
-                1.0 - f,
-                None,
-            );
+            cv.ring(x * sf, y * sf, (6.0 + 14.0 * f) * sf, 4.0, [255, 250, 220], 1.0 - f, None);
         }
     }
 }
 
 fn badge(cv: &mut Cv, th: &Theme, x: f32, y: f32, ok: bool) {
-    let (fill, mark) = if ok {
-        (th.hot, [30, 30, 20])
-    } else {
-        ([70, 70, 74], [230, 230, 230])
-    };
+    let (fill, mark) = if ok { (th.hot, [30, 30, 20]) } else { ([70, 70, 74], [230, 230, 230]) };
     if let Some(ink) = th.ink {
         cv.disc(x, y, 13.0, ink, 1.0);
     }
@@ -3383,15 +3151,7 @@ fn marks(cv: &mut Cv, d: &Dish, th: &Theme, s: i32) {
         if let Some(ink) = th.ink {
             cv.ring(cx, cy, r, 6.0, ink, 1.0 - f, None);
         }
-        cv.ring(
-            cx,
-            cy,
-            r,
-            3.0,
-            [255, 255, (230.0 * (1.0 - f) + 120.0 * f) as u8],
-            1.0 - 0.5 * f,
-            None,
-        );
+        cv.ring(cx, cy, r, 3.0, [255, 255, (230.0 * (1.0 - f) + 120.0 * f) as u8], 1.0 - 0.5 * f, None);
         if f < 0.5 {
             cv.ring(cx, cy, (1.0 + 4.0 * f) * sf, 2.0, [255, 255, 255], 1.0, None);
         }
@@ -3439,23 +3199,12 @@ fn chip(cv: &mut Cv, th: &Theme, x: i32, y: i32, lines: &[&str], c: Rgb) -> (i32
             cv.rbox(x, y, w, h, 5.0, Some((th.panel, 0.92)), Some((mul(c, 0.6), 1.0)));
         }
     }
-    let tc = if th.style == Style::Toy {
-        th.ink.unwrap_or([0, 0, 0])
-    } else {
-        c
-    };
+    let tc = if th.style == Style::Toy { th.ink.unwrap_or([0, 0, 0]) } else { c };
     for (k, l) in lines.iter().enumerate() {
         let y = y + 5 + k as i32 * line_h(th);
         if th.font == Font::Chunky {
             // Ink on cream: no outline.
-            hud::draw_text_scaled(
-                cv.f,
-                (cv.w as u32, cv.h as u32),
-                2,
-                ((x + 8) / 2, (y + 2) / 2),
-                l,
-                [tc[0], tc[1], tc[2], 255],
-            );
+            hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((x + 8) / 2, (y + 2) / 2), l, [tc[0], tc[1], tc[2], 255]);
         } else {
             text(cv, th, x + 8, y, l, tc);
         }
@@ -3568,23 +3317,8 @@ fn alarm(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32, st: &Status) {
             let shake = if st.flash { 3 } else { -3 };
             cv.rbox(cx - bw / 2 + 4, y + 5, bw, bh, 18.0, Some((ink, 0.4)), None);
             let back = if st.flash { [255, 250, 236] } else { [255, 214, 200] };
-            cv.rbox(
-                cx - bw / 2 + shake,
-                y,
-                bw,
-                bh,
-                18.0,
-                Some((back, 1.0)),
-                Some((ink, 4.0)),
-            );
-            hud::draw_text_scaled(
-                cv.f,
-                (cv.w as u32, cv.h as u32),
-                2,
-                ((cx - tw / 2 + shake + 2) / 2, (y + 10) / 2),
-                words,
-                [ink[0], ink[1], ink[2], 255],
-            );
+            cv.rbox(cx - bw / 2 + shake, y, bw, bh, 18.0, Some((back, 1.0)), Some((ink, 4.0)));
+            hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((cx - tw / 2 + shake + 2) / 2, (y + 10) / 2), words, [ink[0], ink[1], ink[2], 255]);
             chunky(cv, th, k, cx - w / 2 + shake, y + 10 + line_h(th), &n, th.storm);
         }
         Style::Glow => {
@@ -3593,25 +3327,10 @@ fn alarm(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32, st: &Status) {
                 cv.add(x, yy, th.storm, 0.35 * f * f);
             });
             text(cv, th, cx - tw / 2, y + 8, words, [255, 255, 255]);
-            mixed(
-                cv,
-                k,
-                cx - w / 2,
-                y + 12 + line_h(th),
-                &n,
-                if st.flash { [255, 255, 255] } else { th.storm },
-            );
+            mixed(cv, k, cx - w / 2, y + 12 + line_h(th), &n, if st.flash { [255, 255, 255] } else { th.storm });
         }
         _ => {
-            cv.rbox(
-                cx - bw / 2,
-                y,
-                bw,
-                bh,
-                8.0,
-                Some((mul(th.storm, 0.25), 0.94)),
-                Some((th.storm, 3.0)),
-            );
+            cv.rbox(cx - bw / 2, y, bw, bh, 8.0, Some((mul(th.storm, 0.25), 0.94)), Some((th.storm, 3.0)));
             text(cv, th, cx - tw / 2, y + 8, words, [255, 255, 255]);
             big(cv, th, k, cx - w / 2, y + 12 + line_h(th), &n, c);
         }
@@ -3698,11 +3417,7 @@ fn lamp(cv: &mut Cv, d: &Dish, th: &Theme, s: i32) {
 fn tip(cv: &mut Cv, th: &Theme, s: i32, (cx, cy): (f32, f32), r: f32, words: &str, c: Rgb) {
     let w = text_w(th, words) + 16;
     let x = (cx + r + 10.0) as i32;
-    let x = if x + w > cv.w - 4 {
-        (cx - r - 10.0) as i32 - w
-    } else {
-        x
-    };
+    let x = if x + w > cv.w - 4 { (cx - r - 10.0) as i32 - w } else { x };
     let y = ((cy - 12.0) as i32).clamp(4, H as i32 * s - 30);
     chip(cv, th, x, y, &[words], c);
 }
@@ -3738,11 +3453,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
     let Some((x, y)) = view.cursor else { return };
     let sf = s as f32;
     let (cx, cy) = (x * sf, y * sf);
-    let line = if th.style == Style::Toy {
-        th.ink.unwrap_or([0, 0, 0])
-    } else {
-        [235, 240, 250]
-    };
+    let line = if th.style == Style::Toy { th.ink.unwrap_or([0, 0, 0]) } else { [235, 240, 250] };
     if let Some(words) = not_now(d) {
         if view.tool != Tool::Lamp {
             refuse(cv, th, s, (cx, cy), words);
@@ -3759,11 +3470,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
             if d.water_left == 0 {
                 let every = d.water_regrow as u64 * STEPS_PER_SECOND as u64;
                 let sps = STEPS_PER_SECOND as u64;
-                let w = if every > 0 {
-                    (every - d.t % every).div_ceil(sps)
-                } else {
-                    0
-                };
+                let w = if every > 0 { (every - d.t % every).div_ceil(sps) } else { 0 };
                 refuse(cv, th, s, (cx, cy), &format!("No water: next in {w} s"));
                 return;
             }
@@ -3833,25 +3540,10 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
             let reach = !strays && near.is_some_and(|(dist, _)| dist <= OATS_PULL);
             // Toy draws its marks in ink: yellow on its pale agar vanished.
             let good = if th.style == Style::Toy { line } else { th.hot };
-            cv.ring(
-                cx,
-                cy,
-                pull,
-                2.5,
-                if reach { good } else { line },
-                0.55,
-                Some((24, 0.0)),
-            );
+            cv.ring(cx, cy, pull, 2.5, if reach { good } else { line }, 0.55, Some((24, 0.0)));
             if let Some((dist, (wx, wy))) = near {
                 let c = if reach { good } else { mul(line, 0.7) };
-                cv.seg(
-                    (wx * sf, wy * sf),
-                    (cx, cy),
-                    3.0,
-                    c,
-                    if reach { 0.95 } else { 0.5 },
-                    6.0,
-                );
+                cv.seg((wx * sf, wy * sf), (cx, cy), 3.0, c, if reach { 0.95 } else { 0.5 }, 6.0);
                 let words = if reach {
                     "It will reach these".to_string()
                 } else if strays && dist <= OATS_MAYBE {
@@ -3862,15 +3554,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
                     format!("Too far to pull: {} cells", dist.round() as i32)
                 };
                 flakes(cv, th, cx, cy, sf, th.oats, 0.55);
-                tip(
-                    cv,
-                    th,
-                    s,
-                    (cx, cy),
-                    pull.min(48.0),
-                    &words,
-                    if reach { th.hot } else { th.text },
-                );
+                tip(cv, th, s, (cx, cy), pull.min(48.0), &words, if reach { th.hot } else { th.text });
             } else {
                 flakes(cv, th, cx, cy, sf, th.oats, 0.55);
             }
@@ -3881,11 +3565,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
             } else {
                 (SNIP_LEN, d.snips_left, SNIP_R, "Cut")
             };
-            let c = if view.tool == Tool::Salt {
-                [240, 246, 255]
-            } else {
-                th.bad
-            };
+            let c = if view.tool == Tool::Salt { [240, 246, 255] } else { th.bad };
             match stroke {
                 Some((t, last, left)) if t == view.tool => {
                     // Mid-stroke: how far the stroke can still go.
@@ -3899,11 +3579,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
                     cv.rect(bx, by, (60.0 * left / len) as i32, 6, c, 1.0);
                 }
                 _ if have == 0 => {
-                    let w = if view.tool == Tool::Salt {
-                        "Salt used up"
-                    } else {
-                        "No snips left"
-                    };
+                    let w = if view.tool == Tool::Salt { "Salt used up" } else { "No snips left" };
                     refuse(cv, th, s, (cx, cy), w);
                 }
                 _ => {
@@ -3922,11 +3598,7 @@ fn preview(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
                             }
                         }
                         cv.ring(cx, cy, r * sf, 2.0, c, 0.9, None);
-                        let words = if hit > 0 {
-                            "Drag to cut this tube"
-                        } else {
-                            "No tube here"
-                        };
+                        let words = if hit > 0 { "Drag to cut this tube" } else { "No tube here" };
                         tip(cv, th, s, (cx, cy), r * sf, words, if hit > 0 { c } else { th.text });
                     } else {
                         cv.disc(cx, cy, r * sf, c, 0.6);
@@ -3955,11 +3627,7 @@ fn corners(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, st: &Status, s: i32) 
     }
     let bottom = H as i32 * s - 2 * line_h(th) - 14;
     let h = hint(d, view, st);
-    let hc = if d.phase == Phase::Growing && !st.alarm {
-        th.text
-    } else {
-        th.hot
-    };
+    let hc = if d.phase == Phase::Growing && !st.alarm { th.text } else { th.hot };
     let hc = if d.can_go() { exit_teal(th) } else { hc };
     if th.hud != Style::Glow {
         chip(cv, th, 6, bottom, &[&h[0], &h[1]], hc);
@@ -4108,17 +3776,9 @@ fn level_words(d: &Dish) -> Option<String> {
         // The bar already reads the time alive and the mould now.
         Win::Endless { .. } => {
             let fed = d.dish_piles().filter(|p| p.reached() && p.food > 0.0).count();
-            Some(format!(
-                "Eating {fed} pile{}  most mould {}",
-                if fed == 1 { "" } else { "s" },
-                d.peak_mould
-            ))
+            Some(format!("Eating {fed} pile{}  most mould {}", if fed == 1 { "" } else { "s" }, d.peak_mould))
         }
-        Win::Rival { .. } => Some(format!(
-            "You ate {}%  wild {}",
-            crate::mould::level::pct(d.food_share()),
-            d.wild_left
-        )),
+        Win::Rival { .. } => Some(format!("You ate {}%  wild {}", crate::mould::level::pct(d.food_share()), d.wild_left)),
     }
 }
 
@@ -4132,10 +3792,7 @@ fn phase_words(d: &Dish, st: &Status) -> String {
             format!("Storm! Score in {} s", end.saturating_sub(d.t).div_ceil(sps))
         }
         Phase::Growing if st.lesson => "Lesson: no storm".into(),
-        Phase::Growing
-            if d.level
-                .is_some_and(|l| matches!(l.win, super::level::Win::Endless { .. })) =>
-        {
+        Phase::Growing if d.level.is_some_and(|l| matches!(l.win, super::level::Win::Endless { .. })) => {
             // Asleep (`Params::wet`): the clock stops at the last moment
             // enough was awake (`Dish::awake_at`), and counts on if it wakes.
             if d.t > d.awake_at + sps {
@@ -4172,8 +3829,7 @@ fn timeline_start(d: &Dish) -> u64 {
     if d.level.is_some() {
         0
     } else {
-        d.storm_at
-            .saturating_sub(d.storm_warning.max(super::Dish::dish_steps()))
+        d.storm_at.saturating_sub(d.storm_warning.max(super::Dish::dish_steps()))
     }
 }
 
@@ -4210,11 +3866,7 @@ fn food_pips(cv: &mut Cv, th: &Theme, x: i32, y: i32, st: &Status) -> i32 {
 /// `Night`. (selected tile, key badge, timeline track)
 fn tones(th: &Theme) -> (Rgb, Rgb, Rgb) {
     if th.look == Style::Night {
-        (
-            lerp(th.panel, th.hot, 0.12),
-            lerp(th.panel, th.panel_edge, 0.32),
-            lerp(th.panel, th.panel_edge, 0.24),
-        )
+        (lerp(th.panel, th.hot, 0.12), lerp(th.panel, th.panel_edge, 0.32), lerp(th.panel, th.panel_edge, 0.24))
     } else {
         ([38, 42, 30], [44, 50, 56], [30, 36, 40])
     }
@@ -4319,14 +3971,7 @@ fn tiles(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32) {
             // the keys keep their places.
             cv.rbox(x, y, tw, 70, th.radius, None, Some((mul(th.panel_edge, 0.45), 1.0)));
             text(cv, th, x + 10, y + 8, &(k + 1).to_string(), mul(th.dim, 0.7));
-            text(
-                cv,
-                th,
-                x + 32,
-                y + 8,
-                if narrow { "None" } else { "Not here" },
-                mul(th.dim, 0.7),
-            );
+            text(cv, th, x + 32, y + 8, if narrow { "None" } else { "Not here" }, mul(th.dim, 0.7));
             continue;
         };
         let sel = *t == view.tool;
@@ -4335,23 +3980,8 @@ fn tiles(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32) {
         let fill = if sel { sel_fill } else { th.panel };
         let edge = if sel { (th.hot, 2.0) } else { (th.panel_edge, 1.0) };
         cv.rbox(x, y, tw, 70, th.radius, Some((fill, 1.0)), Some(edge));
-        cv.rbox(
-            x + 6,
-            y + 6,
-            18,
-            18,
-            4.0,
-            Some((if sel { th.hot } else { badge_fill }, 1.0)),
-            None,
-        );
-        text(
-            cv,
-            th,
-            x + 10,
-            y + 8,
-            &(k + 1).to_string(),
-            if sel { [20, 20, 20] } else { th.text },
-        );
+        cv.rbox(x + 6, y + 6, 18, 18, 4.0, Some((if sel { th.hot } else { badge_fill }, 1.0)), None);
+        text(cv, th, x + 10, y + 8, &(k + 1).to_string(), if sel { [20, 20, 20] } else { th.text });
         let nc = if sel {
             th.hot
         } else if spent {
@@ -4429,25 +4059,14 @@ fn hud_bench(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Statu
             let x = right + 20 + k as i32 * 96;
             star(cv, th, x + 10, y0 + 10, 4, stars[k]);
             let w = text_w(th, name);
-            text(
-                cv,
-                th,
-                x + 28 - w / 2,
-                y0 + 58,
-                name,
-                if stars[k] { th.text } else { th.dim },
-            );
+            text(cv, th, x + 28 - w / 2, y0 + 58, name, if stars[k] { th.text } else { th.dim });
         }
         return;
     }
     tiles(cv, d, view, th, y0);
     // Status: the storm, a timeline to it, the food joined, the mould.
     let ph = phase_words(d, st);
-    let pc = if st.alarm || matches!(d.phase, Phase::Storm(_)) {
-        th.storm
-    } else {
-        th.text
-    };
+    let pc = if st.alarm || matches!(d.phase, Phase::Storm(_)) { th.storm } else { th.text };
     text(cv, th, right, y0 + 10, &ph, pc);
     let bw = cv.w - right - 10;
     let by = y0 + 32;
@@ -4455,15 +4074,10 @@ fn hud_bench(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Statu
         cv.rbox(right, by, bw, 10, 3.0, Some((tones(th).2, 1.0)), None);
         let wf = warn_frac(d);
         let wx = right + (bw as f32 * (1.0 - wf)) as i32;
-        cv.band(
-            (wx as f32, (by + 5) as f32),
-            ((right + bw) as f32, (by + 5) as f32),
-            5.0,
-            |cv, _a, _c, x, y| {
-                let on = ((x + y) / 4).rem_euclid(2) == 0;
-                cv.mix(x, y, th.storm, if on { 0.8 } else { 0.3 });
-            },
-        );
+        cv.band((wx as f32, (by + 5) as f32), ((right + bw) as f32, (by + 5) as f32), 5.0, |cv, _a, _c, x, y| {
+            let on = ((x + y) / 4).rem_euclid(2) == 0;
+            cv.mix(x, y, th.storm, if on { 0.8 } else { 0.3 });
+        });
         cv.rbox(right, by, (bw as f32 * f) as i32, 10, 3.0, Some((th.dim, 0.9)), None);
         for t in ticks {
             let tx = right as f32 + bw as f32 * t;
@@ -4482,14 +4096,7 @@ fn hud_bench(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Statu
     let w = text(cv, th, right, fy - 7, "Food", th.text);
     let pw = food_pips(cv, th, right + w + 8, fy, st);
     let total = st.joined.len() as u32 + st.coming;
-    text(
-        cv,
-        th,
-        right + w + 18 + pw,
-        fy - 7,
-        &format!("{} of {} joined", st.reach, total),
-        th.dim,
-    );
+    text(cv, th, right + w + 18 + pw, fy - 7, &format!("{} of {} joined", st.reach, total), th.dim);
 }
 
 /// The Wanderer's bar: the tiles, then her dish, her size, the food left
@@ -4533,25 +4140,13 @@ fn hud_wander(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32) {
         (Phase::Over, Some(Outcome::Arrived { n, .. })) => (format!("N: next dish, with {}", thousands(n)), th.hot),
         (Phase::Over, _) => ("R: try again  N: new journey".to_string(), th.hot),
         _ if d.can_go() => (
-            format!(
-                "G: go. {} of {} would come",
-                thousands(w.joined),
-                thousands(d.walkers.len() as u32)
-            ),
+            format!("G: go. {} of {} would come", thousands(w.joined), thousands(d.walkers.len() as u32)),
             teal,
         ),
         _ => ("Lead her to the crack, then G".to_string(), th.dim),
     };
     if d.can_go() && th.glow > 0.0 {
-        cv.rbox(
-            right - 6,
-            y0 + 52,
-            bw + 12,
-            26,
-            8.0,
-            Some((teal, 0.12)),
-            Some((teal, 1.0)),
-        );
+        cv.rbox(right - 6, y0 + 52, bw + 12, 26, 8.0, Some((teal, 0.12)), Some((teal, 1.0)));
     }
     text(cv, th, right, y0 + 56, &line, c);
 }
@@ -4632,15 +4227,7 @@ fn menu(cv: &mut Cv, th: &Theme, m: &Menu) {
         } else {
             (mul(th.panel_edge, 0.45), 1.0)
         };
-        cv.rbox(
-            x,
-            y,
-            w,
-            h,
-            8.0,
-            Some((if sel { lerp(th.panel, th.hot, 0.08) } else { th.panel }, 1.0)),
-            Some(edge),
-        );
+        cv.rbox(x, y, w, h, 8.0, Some((if sel { lerp(th.panel, th.hot, 0.08) } else { th.panel }, 1.0)), Some(edge));
         let (name, lines) = entry_lines(e);
         let nc = if open { th.hot } else { th.dim };
         text(cv, th, x + 12, y + 5, &format!("{} {}", e + 1, title(name)), nc);
@@ -4677,11 +4264,7 @@ fn exit_label(cv: &mut Cv, d: &Dish, th: &Theme, s: i32) {
     let word = "The way on";
     let w = text_w(th, word) + 16;
     let y = ((wander::EXIT_Y - wander::EXIT_HALF) as i32 * s - line_h(th) - 18).max(4);
-    let c = if d.can_go() {
-        exit_teal(th)
-    } else {
-        mul(exit_teal(th), 0.6)
-    };
+    let c = if d.can_go() { exit_teal(th) } else { mul(exit_teal(th), 0.6) };
     chip(cv, th, cv.w - w - 4, y, &[word], c);
 }
 
@@ -4699,11 +4282,7 @@ fn arrival(cv: &mut Cv, d: &Dish, th: &Theme) {
                 format!("{name} arrived with {} of {}", thousands(n), thousands(of)),
                 th.hot,
                 vec![
-                    format!(
-                        "{pct}%. Left at {}, {} died in line",
-                        clock(at as u32),
-                        thousands(w.lost_on_way)
-                    ),
+                    format!("{pct}%. Left at {}, {} died in line", clock(at as u32), thousands(w.lost_on_way)),
                     format!("N: dish {} with {}   R: again", w.stretch + 1, thousands(n)),
                 ],
             )
@@ -4720,27 +4299,10 @@ fn arrival(cv: &mut Cv, d: &Dish, th: &Theme) {
     };
     let k = 3;
     let lh = line_h(th);
-    let tw = rest
-        .iter()
-        .map(|l| text_w(th, l))
-        .max()
-        .unwrap_or(0)
-        .max(big_w(th, k, &head));
+    let tw = rest.iter().map(|l| text_w(th, l)).max().unwrap_or(0).max(big_w(th, k, &head));
     let (w_, h) = (tw + 40, 7 * k + 2 * lh + 34);
     let x0 = (cv.w - w_) / 2;
-    card(
-        cv,
-        th,
-        x0,
-        8,
-        w_,
-        h,
-        Some(if matches!(w.outcome, Some(Outcome::Arrived { .. })) {
-            exit_teal(th)
-        } else {
-            th.bad
-        }),
-    );
+    card(cv, th, x0, 8, w_, h, Some(if matches!(w.outcome, Some(Outcome::Arrived { .. })) { exit_teal(th) } else { th.bad }));
     big(cv, th, k, x0 + 20, 20, &head, hc);
     text(cv, th, x0 + 20, 20 + 7 * k + 10, &rest[0], th.text);
     text(cv, th, x0 + 20, 20 + 7 * k + 10 + lh, &rest[1], th.dim);
@@ -4782,15 +4344,7 @@ fn hud_glow(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status
             });
         }
         cv.disc(cx, cy, r, [12, 20, 28], 1.0);
-        cv.ring(
-            cx,
-            cy,
-            r,
-            if sel { 3.0 } else { 1.5 },
-            if sel { th.hot } else { mul(th.panel_edge, 0.7) },
-            1.0,
-            None,
-        );
+        cv.ring(cx, cy, r, if sel { 3.0 } else { 1.5 }, if sel { th.hot } else { mul(th.panel_edge, 0.7) }, 1.0, None);
         icon(cv, th, *t, cx as i32 - 12, cy as i32 - 12, 2, spent);
         let key = (k + 1).to_string();
         text(cv, th, cx as i32 - 5, y0 + 4, &key, if sel { th.hot } else { th.dim });
@@ -4829,14 +4383,7 @@ fn hud_glow(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status
     text(cv, th, mx, y0 + 30, &hl, if st.alarm { th.storm } else { th.text });
     let w = food_pips(cv, th, mx, y0 + 66, st);
     let total = st.joined.len() as u32 + st.coming;
-    text(
-        cv,
-        th,
-        mx + w + 12,
-        y0 + 58,
-        &format!("{} of {} food joined, mould {}", st.reach, total, d.walkers.len()),
-        th.dim,
-    );
+    text(cv, th, mx + w + 12, y0 + 58, &format!("{} of {} food joined, mould {}", st.reach, total, d.walkers.len()), th.dim);
     // The storm dial.
     cv.ring(dcx, dcy, dr, 5.0, [20, 30, 40], 1.0, None);
     let label = match d.phase {
@@ -4846,11 +4393,7 @@ fn hud_glow(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status
     };
     if let Some((f, ticks)) = timeline(d) {
         let left = 1.0 - f;
-        let c = if st.alarm {
-            th.storm
-        } else {
-            lerp(th.storm, th.text, 0.4)
-        };
+        let c = if st.alarm { th.storm } else { lerp(th.storm, th.text, 0.4) };
         if st.alarm {
             cv.disc(dcx, dcy, dr - 4.0, th.storm, if st.flash { 0.55 } else { 0.25 });
         }
@@ -4862,23 +4405,9 @@ fn hud_glow(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status
         }
     }
     let lw = text_w(th, &label);
-    text(
-        cv,
-        th,
-        dcx as i32 - lw / 2,
-        dcy as i32 - 10,
-        &label,
-        if st.alarm { [255, 255, 255] } else { th.text },
-    );
+    text(cv, th, dcx as i32 - lw / 2, dcy as i32 - 10, &label, if st.alarm { [255, 255, 255] } else { th.text });
     let sw = text_w(th, "storm");
-    text(
-        cv,
-        th,
-        dcx as i32 - dr as i32 - sw - 10,
-        dcy as i32 - 10,
-        "storm",
-        th.dim,
-    );
+    text(cv, th, dcx as i32 - dr as i32 - sw - 10, dcy as i32 - 10, "storm", th.dim);
 }
 
 fn title(s: &str) -> String {
@@ -4933,60 +4462,21 @@ fn hud_toy(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status)
             cv.rbox(x - 4, y - 4, 122, 70, 15.0, Some(([255, 250, 236], 1.0)), None);
         }
         cv.rbox(x, y, 114, 62, 12.0, Some((fill, 1.0)), Some((ink, 3.0)));
-        cv.rbox(
-            x + 6,
-            y + 5,
-            102,
-            10,
-            5.0,
-            Some(([255, 255, 255], if sel { 0.4 } else { 0.18 })),
-            None,
-        );
-        cv.rbox(
-            x + 7,
-            y + 13,
-            42,
-            42,
-            8.0,
-            Some(([255, 250, 236], 1.0)),
-            Some((ink, 2.0)),
-        );
+        cv.rbox(x + 6, y + 5, 102, 10, 5.0, Some(([255, 255, 255], if sel { 0.4 } else { 0.18 })), None);
+        cv.rbox(x + 7, y + 13, 42, 42, 8.0, Some(([255, 250, 236], 1.0)), Some((ink, 2.0)));
         icon(cv, th, *t, x + 10, y + 16, 3, spent);
         // Key badge.
         cv.disc((x + 6) as f32, (y + 4) as f32, 14.0, ink, 1.0);
         cv.disc((x + 6) as f32, (y + 4) as f32, 11.5, [255, 250, 236], 1.0);
-        hud::draw_text_scaled(
-            cv.f,
-            (cv.w as u32, cv.h as u32),
-            2,
-            ((x + 2) / 2, (y - 2) / 2),
-            &(k + 1).to_string(),
-            [ink[0], ink[1], ink[2], 255],
-        );
+        hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((x + 2) / 2, (y - 2) / 2), &(k + 1).to_string(), [ink[0], ink[1], ink[2], 255]);
         match st_ {
             None => {
                 chunky(cv, th, 2, x + 54, y + 20, "Hold", [255, 255, 255]);
             }
             Some((have, of, grown)) => {
-                chunky(
-                    cv,
-                    th,
-                    3,
-                    x + 54,
-                    y + 10,
-                    &format!("x{have}"),
-                    if spent { [210, 200, 190] } else { [255, 255, 255] },
-                );
+                chunky(cv, th, 3, x + 54, y + 10, &format!("x{have}"), if spent { [210, 200, 190] } else { [255, 255, 255] });
                 if *t == Tool::Oats && have < of {
-                    cv.rbox(
-                        x + 56,
-                        y + 42,
-                        48,
-                        10,
-                        4.0,
-                        Some(([250, 244, 230], 1.0)),
-                        Some((ink, 2.0)),
-                    );
+                    cv.rbox(x + 56, y + 42, 48, 10, 4.0, Some(([250, 244, 230], 1.0)), Some((ink, 2.0)));
                     cv.rbox(x + 58, y + 44, (44.0 * grown) as i32, 6, 3.0, Some((th.hot, 1.0)), None);
                 }
             }
@@ -4995,49 +4485,16 @@ fn hud_toy(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status)
     // Status stickers.
     let sx = 516;
     let ph = phase_words(d, st);
-    let (bg, fg) = if st.alarm && st.flash {
-        (th.storm, [255, 255, 255])
-    } else {
-        ([252, 244, 222], ink)
-    };
+    let (bg, fg) = if st.alarm && st.flash { (th.storm, [255, 255, 255]) } else { ([252, 244, 222], ink) };
     cv.rbox(sx, y0 + 10, 236, 32, 10.0, Some((bg, 1.0)), Some((ink, 3.0)));
-    hud::draw_text_scaled(
-        cv.f,
-        (cv.w as u32, cv.h as u32),
-        2,
-        ((sx + 12) / 2, (y0 + 20) / 2),
-        &ph,
-        [fg[0], fg[1], fg[2], 255],
-    );
+    hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((sx + 12) / 2, (y0 + 20) / 2), &ph, [fg[0], fg[1], fg[2], 255]);
     let fx = sx + 248;
     let fw = cv.w - fx - 8;
-    cv.rbox(
-        fx,
-        y0 + 10,
-        fw,
-        32,
-        10.0,
-        Some(([252, 244, 222], 1.0)),
-        Some((ink, 3.0)),
-    );
-    hud::draw_text_scaled(
-        cv.f,
-        (cv.w as u32, cv.h as u32),
-        2,
-        ((fx + 10) / 2, (y0 + 20) / 2),
-        "FOOD",
-        [ink[0], ink[1], ink[2], 255],
-    );
+    cv.rbox(fx, y0 + 10, fw, 32, 10.0, Some(([252, 244, 222], 1.0)), Some((ink, 3.0)));
+    hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((fx + 10) / 2, (y0 + 20) / 2), "FOOD", [ink[0], ink[1], ink[2], 255]);
     let pw = food_pips(cv, th, fx + 64, y0 + 26, st);
     let total = st.joined.len() as u32 + st.coming;
-    hud::draw_text_scaled(
-        cv.f,
-        (cv.w as u32, cv.h as u32),
-        2,
-        ((fx + 80 + pw) / 2, (y0 + 20) / 2),
-        &format!("{}/{}", st.reach, total),
-        [ink[0], ink[1], ink[2], 255],
-    );
+    hud::draw_text_scaled(cv.f, (cv.w as u32, cv.h as u32), 2, ((fx + 80 + pw) / 2, (y0 + 20) / 2), &format!("{}/{}", st.reach, total), [ink[0], ink[1], ink[2], 255]);
     // The fuse to the storm, and the mould's size.
     let m = format!("Mould {}", d.walkers.len());
     chunky(cv, th, 2, sx, y0 + 52, &m, th.text);
@@ -5047,15 +4504,7 @@ fn hud_toy(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, y0: i32, st: &Status)
         let wf = warn_frac(d);
         let wx = bx + (bw as f32 * (1.0 - wf)) as i32;
         cv.rbox(wx, by + 2, bx + bw - wx - 2, 10, 5.0, Some((th.storm, 1.0)), None);
-        cv.rbox(
-            bx + 2,
-            by + 2,
-            (bw as f32 * f) as i32,
-            10,
-            5.0,
-            Some(([90, 70, 60], 1.0)),
-            None,
-        );
+        cv.rbox(bx + 2, by + 2, (bw as f32 * f) as i32, 10, 5.0, Some(([90, 70, 60], 1.0)), None);
         for t in ticks {
             let tx = bx as f32 + bw as f32 * t;
             cv.disc(tx, (by - 4) as f32, 6.0, ink, 1.0);
@@ -5078,50 +4527,18 @@ fn card(cv: &mut Cv, th: &Theme, x: i32, y: i32, w: i32, h: i32, edge: Option<Rg
             let ink = th.ink.unwrap_or([0, 0, 0]);
             cv.rbox(x + 5, y + 6, w, h, th.radius, Some((ink, 0.45)), None);
             cv.rbox(x, y, w, h, th.radius, Some((th.panel, 1.0)), Some((ink, 4.0)));
-            cv.rbox(
-                x + 6,
-                y + 6,
-                w - 12,
-                h - 12,
-                th.radius - 5.0,
-                None,
-                Some((edge.unwrap_or(th.panel_edge), 2.0)),
-            );
+            cv.rbox(x + 6, y + 6, w - 12, h - 12, th.radius - 5.0, None, Some((edge.unwrap_or(th.panel_edge), 2.0)));
         }
         Style::Glow => {
             let e = edge.unwrap_or(th.panel_edge);
             cv.rbox(x - 6, y - 6, w + 12, h + 12, th.radius + 6.0, None, Some((e, 6.0)));
-            cv.rbox(
-                x - 6,
-                y - 6,
-                w + 12,
-                h + 12,
-                th.radius + 6.0,
-                Some((th.panel, 0.0)),
-                None,
-            );
+            cv.rbox(x - 6, y - 6, w + 12, h + 12, th.radius + 6.0, Some((th.panel, 0.0)), None);
             cv.rbox(x, y, w, h, th.radius, Some((th.panel, th.panel_alpha)), Some((e, 1.5)));
             // Soften the outer glow: redraw the panel's surround faintly.
-            cv.rbox(
-                x - 6,
-                y - 6,
-                w + 12,
-                h + 12,
-                th.radius + 6.0,
-                None,
-                Some((th.hud_bg, 3.0)),
-            );
+            cv.rbox(x - 6, y - 6, w + 12, h + 12, th.radius + 6.0, None, Some((th.hud_bg, 3.0)));
         }
         _ => {
-            cv.rbox(
-                x,
-                y,
-                w,
-                h,
-                th.radius,
-                Some((th.panel, th.panel_alpha)),
-                Some((edge.unwrap_or(th.panel_edge), 1.0)),
-            );
+            cv.rbox(x, y, w, h, th.radius, Some((th.panel, th.panel_alpha)), Some((edge.unwrap_or(th.panel_edge), 1.0)));
             cv.rect(x + 1, y + 1, w - 2, 3, edge.unwrap_or(th.hot), 1.0);
         }
     }
@@ -5148,12 +4565,7 @@ fn banner(cv: &mut Cv, th: &Theme, b: &super::render::Banner, d: &Dish) {
         _ => None,
     };
     let lh = line_h(th);
-    let tw = lines
-        .iter()
-        .map(|l| text_w(th, l))
-        .max()
-        .unwrap_or(0)
-        .max(text_w(th, &head) + 16 * b.of as i32 + 16);
+    let tw = lines.iter().map(|l| text_w(th, l)).max().unwrap_or(0).max(text_w(th, &head) + 16 * b.of as i32 + 16);
     let icon_w = 48;
     let w = tw + icon_w + 32;
     let h = 3 * lh + 22;
@@ -5227,10 +4639,7 @@ fn brief(cv: &mut Cv, d: &Dish, view: &View, th: &Theme, s: i32) {
             };
             let mut rows = vec![];
             if w.stretch > 1 {
-                rows.push(Row::Line(
-                    format!("{} of her came this far.", thousands(w.came_in)),
-                    th.hot,
-                ));
+                rows.push(Row::Line(format!("{} of her came this far.", thousands(w.came_in)), th.hot));
             }
             rows.extend([
                 Row::Line(format!("{name} is your slime mould. The food"), th.text),
@@ -5309,10 +4718,7 @@ fn level_rows(d: &Dish, l: &super::level::Level, th: &Theme) -> Vec<Row> {
         // After "Tan: food": what water and the lamp do to the ground.
         let at = rows.len() - 2;
         rows.insert(at, Row::Line("Brown crust: asleep on dry ground".into(), CRUST_RAMP[2]));
-        rows.insert(
-            at + 1,
-            Row::Line("Blue: wet ground, which wakes it".into(), [120, 180, 230]),
-        );
+        rows.insert(at + 1, Row::Line("Blue: wet ground, which wakes it".into(), [120, 180, 230]));
     }
     for (k, line) in stars.into_iter().enumerate() {
         rows.push(Row::Stars(k as u32 + 1, line));
@@ -5323,36 +4729,20 @@ fn level_rows(d: &Dish, l: &super::level::Level, th: &Theme) -> Vec<Row> {
     // Each tool's key is its place on this dish's bar (`bar_slots`).
     let slots = bar_slots(d);
     let key = |tool: Tool| slots.iter().position(|&u| u == Some(tool)).map_or(0, |k| k + 1);
-    rows.push(Row::Tool(
-        Tool::Lamp,
-        key(Tool::Lamp),
-        "Lamp   hold: pushes the mould away".into(),
-    ));
+    rows.push(Row::Tool(Tool::Lamp, key(Tool::Lamp), "Lamp   hold: pushes the mould away".into()));
     if d.has_tool(Tool::Oats) {
         let back = if t.oats_regrow > 0 {
             format!(", 1 back each {} s", t.oats_regrow)
         } else {
             String::new()
         };
-        rows.push(Row::Tool(
-            Tool::Oats,
-            key(Tool::Oats),
-            format!("Oats {}{back}: it grows to them", t.oats),
-        ));
+        rows.push(Row::Tool(Tool::Oats, key(Tool::Oats), format!("Oats {}{back}: it grows to them", t.oats)));
     }
     if d.has_tool(Tool::Salt) {
-        rows.push(Row::Tool(
-            Tool::Salt,
-            key(Tool::Salt),
-            format!("Salt {}   drag: a wall", t.salt),
-        ));
+        rows.push(Row::Tool(Tool::Salt, key(Tool::Salt), format!("Salt {}   drag: a wall", t.salt)));
     }
     if d.has_tool(Tool::Snip) {
-        rows.push(Row::Tool(
-            Tool::Snip,
-            key(Tool::Snip),
-            format!("Snip {}   drag: cut a tube", t.snips),
-        ));
+        rows.push(Row::Tool(Tool::Snip, key(Tool::Snip), format!("Snip {}   drag: cut a tube", t.snips)));
     }
     if d.params.wet {
         rows.push(Row::Tool(
@@ -5574,13 +4964,7 @@ mod tests {
             .map(String::from),
         );
         for l in &super::super::level::DISHES {
-            words.extend([
-                title(l.name),
-                up(l.goal[0]),
-                up(l.goal[1]),
-                up(l.twist),
-                up(&l.stars_line()),
-            ]);
+            words.extend([title(l.name), up(l.goal[0]), up(l.goal[1]), up(l.twist), up(&l.stars_line())]);
         }
         for e in 0..super::super::level::ENTRIES {
             let (name, lines) = entry_lines(e);
@@ -5603,10 +4987,7 @@ mod tests {
 
     #[test]
     fn sentence_case_keeps_key_letters() {
-        let s = sentence(&[
-            "THAT'S THE GAME: JOIN ALL THE FOOD,",
-            "SHORT, AND STORM-PROOF. N: DISH 1",
-        ]);
+        let s = sentence(&["THAT'S THE GAME: JOIN ALL THE FOOD,", "SHORT, AND STORM-PROOF. N: DISH 1"]);
         assert_eq!(s[0], "That's the game: join all the food,");
         assert_eq!(s[1], "short, and storm-proof. N: dish 1");
     }
@@ -5615,10 +4996,7 @@ mod tests {
     fn styles_parse_by_name_and_letter_and_cycle() {
         for st in Style::ALL {
             assert_eq!(Style::parse(st.name()), Some(st));
-            assert_eq!(
-                Style::parse(st.letter()).filter(|_| st != Style::Classic),
-                (st != Style::Classic).then_some(st)
-            );
+            assert_eq!(Style::parse(st.letter()).filter(|_| st != Style::Classic), (st != Style::Classic).then_some(st));
         }
         let mut st = Style::Classic;
         for _ in 0..Style::ALL.len() {
@@ -5684,16 +5062,8 @@ mod tests {
         stale.pending.push((d.t + 2 * SPS, p));
         let mut growing = stale.clone();
         growing.phase = Phase::Growing;
-        assert_ne!(
-            frame(&growing, &night(), 4),
-            frame(&d, &night(), 4),
-            "the control: while growing, due food is drawn"
-        );
-        assert_eq!(
-            frame(&stale, &night(), 4),
-            frame(&d, &night(), 4),
-            "food due after the end was drawn"
-        );
+        assert_ne!(frame(&growing, &night(), 4), frame(&d, &night(), 4), "the control: while growing, due food is drawn");
+        assert_eq!(frame(&stale, &night(), 4), frame(&d, &night(), 4), "food due after the end was drawn");
     }
 
     /// Review 2, finding L1: the refusal under a tool names the phase; "the
@@ -5737,14 +5107,7 @@ mod tests {
         d.step();
         for style in Style::ALL.into_iter().filter(|s| *s != Style::Classic) {
             for scale in [1, 2] {
-                let _ = frame(
-                    &d,
-                    &View {
-                        style,
-                        ..View::default()
-                    },
-                    scale,
-                );
+                let _ = frame(&d, &View { style, ..View::default() }, scale);
             }
         }
     }
@@ -5759,18 +5122,12 @@ mod tests {
     #[test]
     fn the_water_dish_has_a_water_tile() {
         use crate::mould::render::{press_at, Press};
-        let k = crate::mould::level::DISHES
-            .iter()
-            .position(|l| l.tools.water > 0)
-            .expect("a dish with water");
+        let k = crate::mould::level::DISHES.iter().position(|l| l.tools.water > 0).expect("a dish with water");
         let d = Dish::from_level(&crate::mould::level::DISHES[k], 1);
         assert!(d.params.wet);
         let slots = bar_slots(&d);
         assert_eq!(slots, d.bar_tools().into_iter().map(Some).collect::<Vec<_>>());
-        let at = slots
-            .iter()
-            .position(|&t| t == Some(Tool::Water))
-            .expect("water on the bar");
+        let at = slots.iter().position(|&t| t == Some(Tool::Water)).expect("water on the bar");
         let y = H as f32 * 4.0 + 8.0 + 35.0;
         let x = 8.0 + at as f32 * 150.0 + 71.0;
         assert_eq!(press_at(&d, &night(), 4, x, y), Press::Tile(Tool::Water));
@@ -5786,47 +5143,15 @@ mod tests {
         for (k, t) in Tool::ALL.into_iter().enumerate() {
             let x = 8.0 + k as f32 * 150.0 + 71.0;
             assert_eq!(press_at(&d, &night(), 4, x, y), Press::Tile(t));
-            assert_eq!(
-                press_at(
-                    &d,
-                    &View {
-                        style: Style::Bench,
-                        ..night()
-                    },
-                    4,
-                    x,
-                    y
-                ),
-                Press::Tile(t)
-            );
-            assert_eq!(
-                press_at(&d, &View::default(), 4, x, y),
-                Press::Off,
-                "the old look's bar has no tiles"
-            );
+            assert_eq!(press_at(&d, &View { style: Style::Bench, ..night() }, 4, x, y), Press::Tile(t));
+            assert_eq!(press_at(&d, &View::default(), 4, x, y), Press::Off, "the old look's bar has no tiles");
         }
-        assert_eq!(
-            press_at(&d, &night(), 4, 8.0 + 146.0, y),
-            Press::Off,
-            "between two tiles"
-        );
+        assert_eq!(press_at(&d, &night(), 4, 8.0 + 146.0, y), Press::Off, "between two tiles");
         assert_eq!(press_at(&d, &night(), 4, 700.0, y), Press::Off, "the timeline");
         assert_eq!(press_at(&d, &night(), 4, 400.0, 200.0), Press::Dish(100.0, 50.0));
         // The Wanderer's bar is tiles in every look but the old one.
         let w = Dish::wanderer(1, 1, crate::mould::wander::FIRST_WALKERS);
-        assert_eq!(
-            press_at(
-                &w,
-                &View {
-                    style: Style::Toy,
-                    ..night()
-                },
-                4,
-                79.0,
-                y
-            ),
-            Press::Tile(Tool::Lamp)
-        );
+        assert_eq!(press_at(&w, &View { style: Style::Toy, ..night() }, 4, 79.0, y), Press::Tile(Tool::Lamp));
     }
 }
 
@@ -5843,10 +5168,7 @@ mod cost {
         let mut d = Dish::new(1);
         let (fw, fh) = frame_size(4);
         let mut buf = vec![0u8; (fw * fh * 4) as usize];
-        for (at, style) in [40, 87]
-            .into_iter()
-            .flat_map(|a| [Style::Night, Style::Bench, Style::Glow, Style::Toy].map(|s| (a, s)))
-        {
+        for (at, style) in [40, 87].into_iter().flat_map(|a| [Style::Night, Style::Bench, Style::Glow, Style::Toy].map(|s| (a, s))) {
             while d.t < at * STEPS_PER_SECOND as u64 {
                 d.step();
             }
@@ -5887,15 +5209,7 @@ mod cost {
                 hud_strip(&mut cv, &d, &view, &th, 4, &st);
                 lap(6, &mut at);
             }
-            let names = [
-                "status",
-                "dish",
-                "piles",
-                "marks+storm+lamp",
-                "preview",
-                "corners",
-                "hud",
-            ];
+            let names = ["status", "dish", "piles", "marks+storm+lamp", "preview", "corners", "hud"];
             let parts: Vec<String> = names
                 .iter()
                 .zip(t)
@@ -5918,11 +5232,7 @@ mod cost {
                 draw(&d, &view, 4, &mut buf);
             }
             let all = t2.elapsed().as_secs_f64() * 1e3 / hold;
-            println!(
-                "{at} s {:?}: {}, alarm {al:.2}; whole draw {all:.2}",
-                style,
-                parts.join(", ")
-            );
+            println!("{at} s {:?}: {}, alarm {al:.2}; whole draw {all:.2}", style, parts.join(", "));
         }
     }
 }

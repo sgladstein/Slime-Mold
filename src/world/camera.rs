@@ -50,14 +50,7 @@ impl Camera {
     /// than the screen (you scroll it), at the largest whole zoom that fits
     /// when it is smaller (a small dish fills the window as it always did).
     pub fn new(world: (usize, usize), screen: (u32, u32)) -> Self {
-        let mut c = Camera {
-            world: (world.0 as f32, world.1 as f32),
-            screen: (screen.0 as f32, screen.1 as f32),
-            x: 0.0,
-            y: 0.0,
-            zoom: 1.0,
-            inset: (0.0, 0.0),
-        };
+        let mut c = Camera { world: (world.0 as f32, world.1 as f32), screen: (screen.0 as f32, screen.1 as f32), x: 0.0, y: 0.0, zoom: 1.0, inset: (0.0, 0.0) };
         let fit = c.fit();
         c.zoom = if fit >= 1.0 { fit.floor().min(MAX_ZOOM) } else { 1.0 };
         c.centre_on((c.world.0 / 2.0, c.world.1 / 2.0));
@@ -104,20 +97,12 @@ impl Camera {
     /// world is centred, otherwise the view stops at the world's edge.
     pub fn clamp(&mut self) {
         let (w, h) = self.span();
-        self.x = if w >= self.world.0 {
-            (self.world.0 - w) / 2.0
-        } else {
-            self.x.clamp(0.0, self.world.0 - w)
-        };
+        self.x = if w >= self.world.0 { (self.world.0 - w) / 2.0 } else { self.x.clamp(0.0, self.world.0 - w) };
         // Vertically, the band between the UI's insets is what must stay on
         // the world (with no insets, the whole screen).
         let (top, bottom) = (self.inset.0 / self.zoom, self.inset.1 / self.zoom);
         let band = h - top - bottom;
-        self.y = if band >= self.world.1 {
-            (self.world.1 - band) / 2.0 - top
-        } else {
-            self.y.clamp(-top, self.world.1 - h + bottom)
-        };
+        self.y = if band >= self.world.1 { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, self.world.1 - h + bottom) };
     }
 
     /// The UI's insets changed (its panels' heights): keep the view legal.
@@ -217,20 +202,8 @@ impl Camera {
     /// a screen edge pans that way. Returns whether it moved.
     pub fn edge_scroll(&mut self, cursor: (f32, f32), dt: f32) -> bool {
         let step = PAN_SPEED * dt;
-        let dx = if cursor.0 < EDGE {
-            -step
-        } else if cursor.0 >= self.screen.0 - EDGE {
-            step
-        } else {
-            0.0
-        };
-        let dy = if cursor.1 < EDGE {
-            -step
-        } else if cursor.1 >= self.screen.1 - EDGE {
-            step
-        } else {
-            0.0
-        };
+        let dx = if cursor.0 < EDGE { -step } else if cursor.0 >= self.screen.0 - EDGE { step } else { 0.0 };
+        let dy = if cursor.1 < EDGE { -step } else if cursor.1 >= self.screen.1 - EDGE { step } else { 0.0 };
         let before = (self.x, self.y);
         self.pan((dx, dy));
         (self.x, self.y) != before
@@ -304,11 +277,7 @@ mod tests {
         for _ in 0..30 {
             c.wheel(-1, (640.0, 400.0));
         }
-        assert!(
-            (c.zoom - c.fit()).abs() < 1e-6 && c.sees_all(),
-            "zoomed out to {}",
-            c.zoom
-        );
+        assert!((c.zoom - c.fit()).abs() < 1e-6 && c.sees_all(), "zoomed out to {}", c.zoom);
     }
 
     #[test]
@@ -318,10 +287,7 @@ mod tests {
         c.set_inset(46.0, 160.0);
         c.centre_on((1000.0, 600.0));
         let p = c.to_screen((1000.0, 600.0));
-        assert!(
-            (p.0 - 640.0).abs() < 0.01 && (p.1 - (46.0 + (800.0 - 46.0 - 160.0) / 2.0)).abs() < 0.01,
-            "{p:?}"
-        );
+        assert!((p.0 - 640.0).abs() < 0.01 && (p.1 - (46.0 + (800.0 - 46.0 - 160.0) / 2.0)).abs() < 0.01, "{p:?}");
     }
 
     #[test]

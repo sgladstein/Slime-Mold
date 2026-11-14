@@ -35,8 +35,8 @@
 
 use super::*;
 use slime_mould::mould::larder_world::{Formation, NO_LINK, SQUADS_MAX};
-use slime_mould::world::ui::key_name;
 use slime_mould::world::ui::{SquadPanel, SquadRow};
+use slime_mould::world::ui::key_name;
 
 /// Squads overlap (and so can combine, `MERGE`) when their middles are no
 /// further apart than their two spreads and this many dish cells (owner
@@ -48,13 +48,7 @@ const OVERLAP_GAP: f32 = 4.0;
 pub(super) fn overlapping(g: &Game<GpuWorld>, q: usize) -> Vec<usize> {
     let spread = |r: usize| {
         let m = g.middle(r)?;
-        Some((
-            m,
-            g.members(r)
-                .iter()
-                .map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1))
-                .fold(0.0, f32::max),
-        ))
+        Some((m, g.members(r).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).fold(0.0, f32::max)))
     };
     let Some((m, a)) = spread(q) else { return Vec::new() };
     let mut near: Vec<(usize, f32)> = g
@@ -101,43 +95,19 @@ pub(super) fn squad_card_key(id: u32, key: KeyCode) -> Option<KeyCode> {
 pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
-        (
-            "WASD".to_string(),
-            "Steer your squad; the camera follows it".to_string(),
-        ),
-        (
-            "Hold left button".into(),
-            "Every soldier in it fires at the cursor at once".into(),
-        ),
-        (
-            "Right click".into(),
-            "Send it; on a crystal it guards it (slow pay, lasts)".into(),
-        ),
-        (
-            "Shift + right click".into(),
-            "Queue it: the squad goes there after what it is doing".into(),
-        ),
-        (
-            "Ctrl + right click".into(),
-            "On a crystal: drain it (fast, then it is gone)".into(),
-        ),
+        ("WASD".to_string(), "Steer your squad; the camera follows it".to_string()),
+        ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
+        ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
+        ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
+        ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
-        (
-            "Shift + drag".into(),
-            "Pull the soldiers in the box out into a new squad".into(),
-        ),
+        ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
-        (
-            "Ctrl + 1-9".into(),
-            "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into(),
-        ),
+        ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
         (k(GUARDS), "Guards while working: none, some, more".into()),
         (k(FORMATION), "Formation: blob, line, wedge, ring".into()),
-        (
-            "Wheel, middle drag".into(),
-            "Zoom, pan; Space brings the camera back".into(),
-        ),
+        ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
     .into_iter()
     .collect()
@@ -163,10 +133,7 @@ pub(super) struct SquadInput {
 
 impl SquadInput {
     pub(super) fn new() -> Self {
-        SquadInput {
-            follow: true,
-            ..SquadInput::default()
-        }
+        SquadInput { follow: true, ..SquadInput::default() }
     }
 
     /// Between two steps (`App::step`, before `Game::begin_step`): the
@@ -178,9 +145,7 @@ impl SquadInput {
     /// window then lost that step's shots (`App::catch_up`), and every
     /// frame waited for the GPU.
     pub(super) fn aim(&mut self, g: &mut Game<GpuWorld>) {
-        let (Some(q), Some(at)) = (g.active, self.want) else {
-            return;
-        };
+        let (Some(q), Some(at)) = (g.active, self.want) else { return };
         let sc = g.world.scale();
         if self.firing {
             if self.fire_at.is_none_or(|f| (f.0 - at.0).hypot(f.1 - at.1) > 0.75 * sc) {
@@ -216,10 +181,7 @@ impl App {
     /// ground behind it, and a click on the minimap fired at or sent the
     /// squad to the ground behind the minimap).
     fn cursor_world(&self) -> Option<(f32, f32)> {
-        self.controls
-            .cursor
-            .filter(|&c| !self.hud.over(c))
-            .and_then(|c| self.camera.world_at(c))
+        self.controls.cursor.filter(|&c| !self.hud.over(c)).and_then(|c| self.camera.world_at(c))
     }
 
     /// The world point the minimap shows under the cursor, if it is on it.
@@ -276,11 +238,7 @@ impl App {
                 if let Some(&o) = overlapping(g, q as usize).first() {
                     g.apply(Cmd::Merge(q, o as u8));
                 } else {
-                    self.hud.alert(
-                        "No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)",
-                        None,
-                        theme::WARN,
-                    );
+                    self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
                 }
             }
             GUARDS => {
@@ -288,8 +246,7 @@ impl App {
                 for r in g.linked(q as usize) {
                     g.apply(Cmd::Cover(r as u8, c));
                 }
-                self.hud
-                    .alert(&format!("Guards while working: {}", c.name()), None, theme::TEXT);
+                self.hud.alert(&format!("Guards while working: {}", c.name()), None, theme::TEXT);
             }
             FORMATION => {
                 let f = g.squads[q as usize].formation.next();
@@ -320,17 +277,9 @@ impl App {
                             self.hud.alert(&format!("Squad {} unlinked", n + 1), None, theme::TEXT);
                         } else if overlapping(g, q as usize).contains(&n) {
                             g.apply(Cmd::Link(q, n as u8));
-                            self.hud.alert(
-                                &format!("Squad {} linked with yours: you command them as one", n + 1),
-                                None,
-                                theme::TEXT,
-                            );
+                            self.hud.alert(&format!("Squad {} linked with yours: you command them as one", n + 1), None, theme::TEXT);
                         } else {
-                            self.hud.alert(
-                                &format!("Squad {} isn't touching yours: bring them together to link", n + 1),
-                                None,
-                                theme::WARN,
-                            );
+                            self.hud.alert(&format!("Squad {} isn't touching yours: bring them together to link", n + 1), None, theme::WARN);
                         }
                     }
                 } else {
@@ -373,18 +322,10 @@ impl App {
 
     /// The steering from the keys held, sent when it changes.
     fn send_steer(&mut self) {
-        let (Some(sq), Some(q)) = (self.sq.as_ref(), self.active()) else {
-            return;
-        };
+        let (Some(sq), Some(q)) = (self.sq.as_ref(), self.active()) else { return };
         let k = sq.keys;
         let d = ((k[3] as i32 - k[1] as i32) as f32, (k[2] as i32 - k[0] as i32) as f32);
-        if d != sq.steer
-            || (d != (0.0, 0.0)
-                && self
-                    .game
-                    .as_ref()
-                    .is_some_and(|g| g.squads[q as usize].steer == (0.0, 0.0)))
-        {
+        if d != sq.steer || (d != (0.0, 0.0) && self.game.as_ref().is_some_and(|g| g.squads[q as usize].steer == (0.0, 0.0))) {
             self.sq.as_mut().unwrap().steer = d;
             if let Some(g) = self.game.as_mut() {
                 g.apply(Cmd::Steer(q, d));
@@ -421,8 +362,7 @@ impl App {
             Button::Right => {
                 if down {
                     // On the minimap: where it shows, as in the RTS round.
-                    if let (Some(at), Some(q)) = (self.cursor_minimap().or_else(|| self.cursor_world()), self.active())
-                    {
+                    if let (Some(at), Some(q)) = (self.cursor_minimap().or_else(|| self.cursor_world()), self.active()) {
                         // On a crystal: stand by it and guard it; Ctrl drains it.
                         let o = match self.order_for(at) {
                             Order::Clear(x, y) if !self.ctrl => Order::Move(x, y),
@@ -431,11 +371,7 @@ impl App {
                         // Shift queues it (`Cmd::SquadQueue`).
                         let shift = self.shift;
                         if let Some(g) = self.game.as_mut() {
-                            g.apply(if shift {
-                                Cmd::SquadQueue(q, o)
-                            } else {
-                                Cmd::SquadOrder(q, o)
-                            });
+                            g.apply(if shift { Cmd::SquadQueue(q, o) } else { Cmd::SquadOrder(q, o) });
                         }
                     }
                 }
@@ -464,8 +400,7 @@ impl App {
             return;
         }
         let Some(n) = g.free_squad() else {
-            self.hud
-                .alert(&format!("At most {SQUADS_MAX} squads"), None, theme::BAD);
+            self.hud.alert(&format!("At most {SQUADS_MAX} squads"), None, theme::BAD);
             return;
         };
         for &k in &picked {
@@ -501,9 +436,7 @@ impl App {
     /// following (zoomed at the cursor, the camera moved, which read as a
     /// pan by the player and let go of the squad). True if it zoomed.
     pub(super) fn squad_zoom(&mut self, notches: i32) -> bool {
-        let Some(sq) = self.sq.as_mut().filter(|sq| sq.follow) else {
-            return false;
-        };
+        let Some(sq) = self.sq.as_mut().filter(|sq| sq.follow) else { return false };
         if self.game.is_none() || notches == 0 {
             return false;
         }
@@ -575,19 +508,7 @@ impl App {
 }
 
 fn digit(code: KeyCode) -> Option<usize> {
-    [
-        KeyCode::Digit1,
-        KeyCode::Digit2,
-        KeyCode::Digit3,
-        KeyCode::Digit4,
-        KeyCode::Digit5,
-        KeyCode::Digit6,
-        KeyCode::Digit7,
-        KeyCode::Digit8,
-        KeyCode::Digit9,
-    ]
-    .iter()
-    .position(|&k| k == code)
+    [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9].iter().position(|&k| k == code)
 }
 
 /// The squad tiles (`ui::SquadPanel`, owner 2026-11-14 08:22Z and 08:48Z,
@@ -615,12 +536,7 @@ impl App {
                     format!("working, {guards} on guard")
                 } else if sq.work.is_some() {
                     "working".to_string()
-                } else if sq.steer != (0.0, 0.0)
-                    || sq.dest.is_some_and(|d| {
-                        g.middle(q)
-                            .is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())
-                    })
-                {
+                } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) {
                     "moving".to_string()
                 } else {
                     "holding".to_string()
@@ -633,19 +549,7 @@ impl App {
                 }
                 let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
                 let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));
-                SquadRow {
-                    key: if q < 9 { format!("{}", q + 1) } else { "-".into() },
-                    name: format!("Squad {}", q + 1),
-                    soldiers: g.members(q).len(),
-                    hp: {
-                        let ms = g.members(q);
-                        ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32
-                    },
-                    note: Some(note.join(", ")),
-                    active: g.active == Some(q),
-                    near,
-                    linked,
-                }
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());

@@ -30,10 +30,7 @@ use slime_mould::mould::big::{BigDish, BigParams, SOIL_BARREN, SOIL_CLAY, SOIL_S
 /// Smooth keyed value noise in [0, 1] on dish cells, blobs `cell` across.
 fn patch_noise(seed: u64, x: f32, y: f32, cell: f32) -> f32 {
     let lattice = |i: i64, j: i64| {
-        let mut z = seed
-            ^ 0x9E37_79B9_7F4A_7C15
-            ^ (i as u64).wrapping_mul(0xBF58_476D_1CE4_E5B9)
-            ^ (j as u64).wrapping_mul(0x94D0_49BB_1331_11EB);
+        let mut z = seed ^ 0x9E37_79B9_7F4A_7C15 ^ (i as u64).wrapping_mul(0xBF58_476D_1CE4_E5B9) ^ (j as u64).wrapping_mul(0x94D0_49BB_1331_11EB);
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
         z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
         ((z ^ (z >> 31)) >> 40) as f32 / (1u64 << 24) as f32
@@ -50,10 +47,7 @@ fn patch_noise(seed: u64, x: f32, y: f32, cell: f32) -> f32 {
 fn main() {
     let mut seeds: Vec<u64> = (1..=16).collect();
     let (mut seconds, mut cover, mut threads, mut look) = (60u32, 0.3f32, 4usize, None::<String>);
-    let mut arms: Vec<String> = ["plain", "wet", "sand", "clay", "barren"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    let mut arms: Vec<String> = ["plain", "wet", "sand", "clay", "barren"].iter().map(|s| s.to_string()).collect();
     let t = BigParams::today();
     let (mut sand_keep, mut clay_keep, mut barren_upkeep) = (t.sand_keep, t.clay_keep, t.barren_upkeep);
     for a in std::env::args().skip(1) {
@@ -161,8 +155,7 @@ fn main() {
                                 px.0[2] = px.0[2].saturating_add(40);
                             }
                         }
-                        img.save(format!("{dir}/ground-s{seed}-{arm}-{}s.png", (t + 1) / ticks_per_s))
-                            .unwrap();
+                        img.save(format!("{dir}/ground-s{seed}-{arm}-{}s.png", (t + 1) / ticks_per_s)).unwrap();
                     }
                 }
             }

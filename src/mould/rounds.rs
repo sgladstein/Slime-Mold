@@ -98,40 +98,14 @@ pub enum Kind {
 }
 
 impl Card {
-    pub const ALL: [Card; 18] = [
-        Card::Blast,
-        Card::Bomb,
-        Card::Gas,
-        Card::Germ,
-        Card::Wide,
-        Card::Scatter,
-        Card::Quiet,
-        Card::Delay,
-        Card::Thick,
-        Card::Pierce,
-        Card::Split,
-        Card::Scorch,
-        Card::Bait,
-        Card::Mist,
-        Card::Range,
-        Card::Rate,
-        Card::Thrift,
-        Card::Smother,
-    ];
+    pub const ALL: [Card; 18] = [Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
             Card::Delay | Card::Thick => Kind::Trigger,
-            Card::Pierce
-            | Card::Split
-            | Card::Scorch
-            | Card::Bait
-            | Card::Mist
-            | Card::Range
-            | Card::Rate
-            | Card::Smother => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
     }
@@ -193,14 +167,7 @@ impl Card {
         match self {
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
-            Card::Wide
-            | Card::Scatter
-            | Card::Pierce
-            | Card::Split
-            | Card::Bait
-            | Card::Range
-            | Card::Rate
-            | Card::Smother => 2,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick => 1,
         }
@@ -275,11 +242,7 @@ pub fn fit(round: Vec<Card>, budget: u32) -> Result<Vec<Card>, Over> {
     if c <= budget && round.len() <= SLOTS {
         Ok(round)
     } else {
-        Err(Over {
-            cost: c,
-            budget,
-            cards: round.len(),
-        })
+        Err(Over { cost: c, budget, cards: round.len() })
     }
 }
 
@@ -411,15 +374,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
             Card::Quiet => quiet = true,
             Card::Delay | Card::Thick => trigger = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce
-            | Card::Split
-            | Card::Scorch
-            | Card::Bait
-            | Card::Mist
-            | Card::Range
-            | Card::Rate
-            | Card::Smother
-            | Card::Thrift => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
             Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let price = match c {
                     Card::Blast => r.kit.blast_price,
@@ -427,14 +382,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
                     Card::Gas => r.kit.gas_price,
                     _ => r.kit.germ_price,
                 };
-                out.push(Cast {
-                    payload: c,
-                    wide,
-                    scatter,
-                    quiet,
-                    trigger,
-                    price,
-                });
+                out.push(Cast { payload: c, wide, scatter, quiet, trigger, price });
                 (wide, scatter, quiet, trigger) = (0, false, false, None);
             }
         }
@@ -447,12 +395,7 @@ pub fn casts(round: &[Card], r: &RoundRules) -> Vec<Cast> {
 /// generation of pieces.
 pub fn flight(round: &[Card]) -> BulletMods {
     let n = |k: Card| round.iter().take(SLOTS).filter(|&&c| c == k).count() as u8;
-    BulletMods {
-        pierce: n(Card::Pierce),
-        split: n(Card::Split),
-        reach: n(Card::Range),
-        rate: n(Card::Rate),
-    }
+    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate) }
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
@@ -467,15 +410,7 @@ pub fn trails(round: &[Card]) -> [u8; 4] {
 /// trail the round has. None without trail cards. `smell` is a soldier's
 /// frame of food scent (`Rules::smell` x the world's `food_deposit` x
 /// `frame_ticks`), the bait's unit.
-pub fn trail_bursts(
-    n: [u8; 4],
-    from: (f32, f32),
-    to: (f32, f32),
-    r: &RoundRules,
-    scale: f32,
-    fine: f32,
-    smell: f32,
-) -> Vec<Burst> {
+pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules, scale: f32, fine: f32, smell: f32) -> Vec<Burst> {
     if n == [0; 4] {
         return Vec::new();
     }
@@ -485,28 +420,14 @@ pub fn trail_bursts(
     let discs = (len / gap).ceil().max(1.0) as usize;
     let f = |c: u8| (c as f32).sqrt();
     let rr = r.trail_r * f(n.into_iter().max().unwrap_or(0));
-    let crater = if n[0] > 0 {
-        (r.trail_crater_secs * fine).round().clamp(0.0, u16::MAX as f32) as u16
-    } else {
-        0
-    };
+    let crater = if n[0] > 0 { (r.trail_crater_secs * fine).round().clamp(0.0, u16::MAX as f32) as u16 } else { 0 };
     let bait = r.trail_bait * smell * n[1] as f32;
     let cloud = r.trail_cloud * n[2] as f32;
     (1..=discs)
         .map(|j| {
             let t = (j as f32 * gap).min(len) / len.max(1e-6);
             let at = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-            Burst {
-                at,
-                r: rr,
-                burn: n[0] > 0 && r.trail_burn,
-                crater,
-                crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 },
-                bait,
-                smother: n[3] > 0,
-                cloud,
-                ..Burst::default()
-            }
+            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, smother: n[3] > 0, cloud, ..Burst::default() }
         })
         .collect()
 }
@@ -524,57 +445,15 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst {
-        at,
-        r: 0.0,
-        kill: false,
-        burn: false,
-        alarm: 0.0,
-        alarm_r: 0.0,
-        crater: 0,
-        crater_r: 0.0,
-        gas: 0,
-        germ: false,
-        bait: 0.0,
-        smother: false,
-        fling: 0.0,
-        fling_steps: 0,
-        cloud: 0.0,
-    };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, cloud: 0.0 };
     let one = match c.payload {
-        Card::Blast => Burst {
-            r: k.blast_r * f,
-            kill: true,
-            alarm,
-            alarm_r: 2.0 * k.blast_r * f,
-            crater: steps(k.crater_secs),
-            crater_r: k.crater_r * f,
-            ..none
-        },
+        Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
         Card::Bomb => {
             let br = r.bomb_r * f;
-            Burst {
-                r: br,
-                kill: true,
-                alarm,
-                alarm_r: 2.0 * br,
-                crater: steps(r.bomb_crater_secs),
-                crater_r: r.bomb_crater_r * f,
-                fling: br * r.bomb_ring,
-                fling_steps: steps(r.bomb_secs).max(1),
-                ..none
-            }
+            Burst { r: br, kill: true, alarm, alarm_r: 2.0 * br, crater: steps(r.bomb_crater_secs), crater_r: r.bomb_crater_r * f, fling: br * r.bomb_ring, fling_steps: steps(r.bomb_secs).max(1), ..none }
         }
-        Card::Gas => Burst {
-            r: k.gas_r * f,
-            gas: steps(k.gas_secs),
-            ..none
-        },
-        _ => Burst {
-            r: k.germ_r * f,
-            germ: true,
-            ..none
-        },
+        Card::Gas => Burst { r: k.gas_r * f, gas: steps(k.gas_secs), ..none },
+        _ => Burst { r: k.germ_r * f, germ: true, ..none },
     };
     if !c.scatter {
         return vec![one];
@@ -585,14 +464,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         .map(|j| {
             let a = j as f32 * std::f32::consts::TAU / n as f32;
             let q = r.scatter_r;
-            Burst {
-                at: (at.0 + d * a.cos(), at.1 + d * a.sin()),
-                r: one.r * q,
-                alarm_r: one.alarm_r * q,
-                crater_r: one.crater_r * q,
-                fling: one.fling * q,
-                ..one
-            }
+            Burst { at: (at.0 + d * a.cos(), at.1 + d * a.sin()), r: one.r * q, alarm_r: one.alarm_r * q, crater_r: one.crater_r * q, fling: one.fling * q, ..one }
         })
         .collect()
 }
@@ -695,12 +567,7 @@ impl Rounds {
     /// A gun with these cards, unchecked (the window's test loadouts).
     pub fn new(round: Vec<Card>, rules: RoundRules) -> Self {
         let casts = casts(&round, &rules);
-        Rounds {
-            rules,
-            round,
-            casts,
-            ..Default::default()
-        }
+        Rounds { rules, round, casts, ..Default::default() }
     }
 
     /// A gun with these cards if they fit `rules.budget` (`fit`): how a
@@ -761,12 +628,7 @@ impl Rounds {
             }
             // Each hit by the soldier that fired it (`Shot::by`; until the
             // shots flew as bullets, 11-13, matched by where it left from).
-            let hits: Vec<(usize, (f32, f32))> = g
-                .last_shots
-                .iter()
-                .filter_map(|s| s.hit.zip(s.by))
-                .map(|(h, k)| (k, h))
-                .collect();
+            let hits: Vec<(usize, (f32, f32))> = g.last_shots.iter().filter_map(|s| s.hit.zip(s.by)).map(|(h, k)| (k, h)).collect();
             for (k, hit) in hits {
                 if k >= g.soldiers.len() || !g.soldiers[k].alive {
                     continue;
@@ -791,16 +653,8 @@ impl Rounds {
                             if self.pending.len() >= PENDING_MAX {
                                 self.dropped += 1;
                             } else {
-                                let secs = if tr == Card::Delay {
-                                    self.rules.delay_secs
-                                } else {
-                                    self.rules.thick_secs
-                                };
-                                self.pending.push(Pending {
-                                    cast: c,
-                                    at: hit,
-                                    due: t + (secs * tps as f32).round() as u64,
-                                });
+                                let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
+                                self.pending.push(Pending { cast: c, at: hit, due: t + (secs * tps as f32).round() as u64 });
                             }
                         }
                     }
@@ -823,8 +677,7 @@ impl Rounds {
         let near = |w: &W, p: (f32, f32)| w.walkers_in(p, rr);
         let mut go = Vec::new();
         self.pending.retain(|p| {
-            let fire =
-                t >= p.due || (p.cast.trigger == Some(Card::Thick) && near(&g.world, p.at) >= self.rules.thick_n);
+            let fire = t >= p.due || (p.cast.trigger == Some(Card::Thick) && near(&g.world, p.at) >= self.rules.thick_n);
             if fire {
                 go.push(*p);
             }
@@ -860,12 +713,7 @@ impl Rounds {
         let k = burst_rules(&self.rules.kit, fine);
         let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
         let mut burned = 0;
-        let legs: Vec<((f32, f32), (f32, f32))> = g
-            .last_shots
-            .iter()
-            .filter(|s| s.by.is_some())
-            .map(|s| (s.from, s.hit.unwrap_or(s.to)))
-            .collect();
+        let legs: Vec<((f32, f32), (f32, f32))> = g.last_shots.iter().filter(|s| s.by.is_some()).map(|s| (s.from, s.hit.unwrap_or(s.to))).collect();
         for (from, to) in legs {
             for b in trail_bursts(n, from, to, &self.rules, s, fine, smell) {
                 burned += g.world.burst(&b, &k).killed as usize;
@@ -884,23 +732,14 @@ impl Rounds {
         let s = g.world.scale();
         let t = g.world.ticks();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
-        let k = BurstRules {
-            fling_speed: self.rules.fling_speed,
-            ..burst_rules(&self.rules.kit, fine)
-        };
+        let k = BurstRules { fling_speed: self.rules.fling_speed, ..burst_rules(&self.rules.kit, fine) };
         for b in bursts(c, at, &self.rules, s, fine) {
             let out = g.world.burst(&b, &k);
             let killed = out.killed as usize;
             self.killed += killed;
             self.flung += out.flung as usize;
             g.killed += killed as u32;
-            self.pops.push(Pop {
-                burst: b,
-                payload: c.payload,
-                tick: t,
-                killed,
-                flung: out.flung as usize,
-            });
+            self.pops.push(Pop { burst: b, payload: c.payload, tick: t, killed, flung: out.flung as usize });
         }
     }
 }
@@ -919,35 +758,15 @@ mod tests {
         assert_eq!(cost(&ok), 10);
         assert!(Rounds::build(ok, r).is_ok(), "10 fits a 10 budget");
         let dear = vec![Card::Bomb, Card::Germ, Card::Blast];
-        assert_eq!(
-            Rounds::build(dear.clone(), r).err(),
-            Some(Over {
-                cost: 11,
-                budget: 10,
-                cards: 3
-            })
-        );
-        assert!(
-            Rounds::build(dear, RoundRules { budget: 11, ..r }).is_ok(),
-            "a bigger gun takes it"
-        );
+        assert_eq!(Rounds::build(dear.clone(), r).err(), Some(Over { cost: 11, budget: 10, cards: 3 }));
+        assert!(Rounds::build(dear, RoundRules { budget: 11, ..r }).is_ok(), "a bigger gun takes it");
         // Thrift (the owner's "reduce cost"): 2 off the next card.
         assert_eq!(cost(&parse("thrift+bomb+thrift+bomb").unwrap()), 4);
-        assert_eq!(
-            cost(&parse("thrift+thrift+bomb").unwrap()),
-            0,
-            "two thrifts stack, not below 0"
-        );
-        assert_eq!(
-            cost(&parse("blast+thrift").unwrap()),
-            3,
-            "a thrift with nothing after saves nothing"
-        );
+        assert_eq!(cost(&parse("thrift+thrift+bomb").unwrap()), 0, "two thrifts stack, not below 0");
+        assert_eq!(cost(&parse("blast+thrift").unwrap()), 3, "a thrift with nothing after saves nothing");
         let five = vec![Card::Quiet; 5];
         assert_eq!(fit(five, 99).err().map(|o| o.cards), Some(5), "at most SLOTS cards");
-        assert!(Card::ALL
-            .iter()
-            .all(|c| (c.cost() >= 1 || *c == Card::Thrift) && (1..=3).contains(&c.tier())));
+        assert!(Card::ALL.iter().all(|c| (c.cost() >= 1 || *c == Card::Thrift) && (1..=3).contains(&c.tier())));
     }
 
     #[test]
@@ -961,23 +780,12 @@ mod tests {
         assert_eq!(b.len(), 5);
         assert_eq!(b.last().unwrap().at, (10.0, 2.0));
         let one = b[0];
-        assert!(
-            !one.kill && one.burn && one.gas == 0 && one.fling == 0.0,
-            "scorch burns, counted later"
-        );
+        assert!(!one.kill && one.burn && one.gas == 0 && one.fling == 0.0, "scorch burns, counted later");
         let cold = RoundRules { trail_burn: false, ..r };
         assert!(!trail_bursts([1, 0, 0, 0], (0.0, 0.0), (9.0, 0.0), &cold, 1.0, 30.0, 1.0)[0].burn);
-        assert!(
-            !trail_bursts([0, 1, 1, 0], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0)[0].burn,
-            "only scorch burns"
-        );
+        assert!(!trail_bursts([0, 1, 1, 0], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0)[0].burn, "only scorch burns");
         assert_eq!(one.crater, (r.trail_crater_secs * 30.0) as u16);
-        assert!(
-            (one.bait - 2.0 * r.trail_bait).abs() < 1e-4
-                && one.alarm == 0.0
-                && (one.r - r.trail_r * 2f32.sqrt()).abs() < 1e-5,
-            "two baits: twice the scent, over the wider disc"
-        );
+        assert!((one.bait - 2.0 * r.trail_bait).abs() < 1e-4 && one.alarm == 0.0 && (one.r - r.trail_r * 2f32.sqrt()).abs() < 1e-5, "two baits: twice the scent, over the wider disc");
         assert!((one.cloud - r.trail_cloud).abs() < 1e-6 && one.crater_r == r.trail_r);
         assert!(trail_bursts([0; 4], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0).is_empty());
     }
@@ -999,11 +807,7 @@ mod tests {
         }
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
-        assert_eq!(
-            (rd.cast, rd.spent),
-            ([0; 4], 0.0),
-            "a trail casts nothing and costs no food"
-        );
+        assert_eq!((rd.cast, rd.spent), ([0; 4], 0.0), "a trail casts nothing and costs no food");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch
@@ -1027,54 +831,24 @@ mod tests {
         let (burned, killed) = run("scorch");
         let (none, plain) = run("none");
         assert_eq!(none, 0);
-        assert!(
-            burned > 0 && killed > plain,
-            "burned {burned}, killed {killed} vs plain {plain}"
-        );
+        assert!(burned > 0 && killed > plain, "burned {burned}, killed {killed} vs plain {plain}");
     }
 
     #[test]
     fn flight_cards_ride_every_bullet_and_cast_nothing() {
         let r = RoundRules::default();
         let round = parse("pierce+split+split+blast").unwrap();
-        assert_eq!(
-            flight(&round),
-            BulletMods {
-                pierce: 1,
-                split: 2,
-                reach: 0,
-                rate: 0
-            }
-        );
-        assert_eq!(
-            flight(&parse("range+range+pierce").unwrap()),
-            BulletMods {
-                pierce: 1,
-                split: 0,
-                reach: 2,
-                rate: 0
-            }
-        );
+        assert_eq!(flight(&round), BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 });
+        assert_eq!(flight(&parse("range+range+pierce").unwrap()), BulletMods { pierce: 1, split: 0, reach: 2, rate: 0 });
         assert_eq!(casts(&round, &r).len(), 1);
         assert_eq!(casts(&parse("split").unwrap(), &r), vec![]);
         assert!((recharge(&parse("pierce").unwrap(), &r) - (r.recharge + r.card_weight)).abs() < 1e-6);
         let mut g = Game::new(BigDish::new(race_params(1, 1, 500)), Rules::default(), 1);
         Rounds::new(round, r).arm(&mut g);
-        assert_eq!(
-            g.bullet_mods,
-            BulletMods {
-                pierce: 1,
-                split: 2,
-                reach: 0,
-                rate: 0
-            }
-        );
+        assert_eq!(g.bullet_mods, BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 });
         assert_eq!(g.gun_range(), g.rules.range);
         Rounds::new(parse("range+blast").unwrap(), r).arm(&mut g);
-        assert!(
-            (g.gun_range() - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4,
-            "one Range card stretches the reach"
-        );
+        assert!((g.gun_range() - g.rules.range * (1.0 + g.rules.range_card)).abs() < 1e-4, "one Range card stretches the reach");
     }
 
     #[test]
@@ -1084,10 +858,7 @@ mod tests {
         let c = casts(&round, &r);
         assert_eq!(c.len(), 2);
         assert_eq!((c[0].payload, c[0].wide, c[0].trigger), (Card::Blast, 1, None));
-        assert_eq!(
-            (c[1].payload, c[1].wide, c[1].trigger),
-            (Card::Gas, 0, Some(Card::Thick))
-        );
+        assert_eq!((c[1].payload, c[1].wide, c[1].trigger), (Card::Gas, 0, Some(Card::Thick)));
         // Cards after the last payload do nothing but still weigh.
         assert_eq!(casts(&parse("blast+quiet").unwrap(), &r).len(), 1);
         assert!(recharge(&parse("blast+quiet").unwrap(), &r) > recharge(&parse("blast").unwrap(), &r));
@@ -1130,22 +901,13 @@ mod tests {
         assert_eq!(a.world.hash(), b.world.hash(), "two games of one seed differ");
         let s = a.soldiers[0];
         let p = (s.x + 4.0, s.y);
-        let mut kit = Kit::new(KitRules {
-            carry_max: 0,
-            ..KitRules::default()
-        });
+        let mut kit = Kit::new(KitRules { carry_max: 0, ..KitRules::default() });
         assert!(kit.use_tool(&mut a, Tool::Blast(p)));
-        let r = RoundRules {
-            kit: kit.rules,
-            ..RoundRules::default()
-        };
+        let r = RoundRules { kit: kit.rules, ..RoundRules::default() };
         let fine = b.rules.tps as f32 * b.world.p.substeps as f32;
         let c = casts(&[Card::Blast], &r)[0];
         let k = burst_rules(&r.kit, fine);
-        let killed: usize = bursts(&c, p, &r, b.world.p.scale as f32, fine)
-            .iter()
-            .map(|x| b.world.burst(x, &k).killed as usize)
-            .sum();
+        let killed: usize = bursts(&c, p, &r, b.world.p.scale as f32, fine).iter().map(|x| b.world.burst(x, &k).killed as usize).sum();
         assert_eq!(killed, kit.killed[0]);
         // The larder smells of the bank, so both pay the price.
         b.bank -= c.price;
@@ -1178,58 +940,28 @@ mod tests {
         let fine = g.rules.tps as f32 * g.world.p.substeps as f32;
         let c = casts(&[Card::Bomb], &r)[0];
         assert_eq!(c.price, r.bomb_price);
-        let k = BurstRules {
-            fling_speed: r.fling_speed,
-            ..burst_rules(&r.kit, fine)
-        };
+        let k = BurstRules { fling_speed: r.fling_speed, ..burst_rules(&r.kit, fine) };
         let b = bursts(&c, p, &r, g.world.p.scale as f32, fine);
         assert_eq!(b.len(), 1);
         let living = World::living(&g.world);
         let from = g.world.walkers.clone();
         let out = g.world.burst(&b[0], &k);
-        let flung: Vec<usize> = (0..from.len())
-            .filter(|&j| g.world.flung.get(j) == Some(&true))
-            .collect();
-        assert!(
-            out.killed > 10 && out.flung as usize == flung.len() && flung.len() > 50,
-            "killed {}, flung {}",
-            out.killed,
-            out.flung
-        );
-        assert!(
-            flung.iter().all(|&j| g.world.life[j] == LIFE_SPORE),
-            "the flung are in flight"
-        );
+        let flung: Vec<usize> = (0..from.len()).filter(|&j| g.world.flung.get(j) == Some(&true)).collect();
+        assert!(out.killed > 10 && out.flung as usize == flung.len() && flung.len() > 50, "killed {}, flung {}", out.killed, out.flung);
+        assert!(flung.iter().all(|&j| g.world.life[j] == LIFE_SPORE), "the flung are in flight");
         let dist = |q: (f32, f32, f32)| (q.0 - p.0).hypot(q.1 - p.1);
         let ring = b[0].fling * g.world.p.scale as f32;
         // Their flight, then a few ticks to land on a free cell.
         for _ in 0..(r.bomb_secs * g.rules.tps as f32) as usize + 6 {
             g.step();
         }
-        let landed = flung
-            .iter()
-            .filter(|&&j| !g.world.flung[j] && g.world.life[j] == LIFE_WALKER)
-            .count();
-        let out_far = flung
-            .iter()
-            .filter(|&&j| dist(g.world.walkers[j]) > dist(from[j]) + 1.0)
-            .count();
-        let beyond = flung
-            .iter()
-            .filter(|&&j| g.world.lives(j) && dist(g.world.walkers[j]) > ring)
-            .count();
+        let landed = flung.iter().filter(|&&j| !g.world.flung[j] && g.world.life[j] == LIFE_WALKER).count();
+        let out_far = flung.iter().filter(|&&j| dist(g.world.walkers[j]) > dist(from[j]) + 1.0).count();
+        let beyond = flung.iter().filter(|&&j| g.world.lives(j) && dist(g.world.walkers[j]) > ring).count();
         eprintln!("bomb: killed {}, flung {}, landed {landed}, {out_far} further out, {beyond} beyond the ring; living {living} then {}", out.killed, flung.len(), World::living(&g.world));
         assert!(landed * 10 >= flung.len() * 9, "{landed} of {} landed", flung.len());
-        assert!(
-            out_far * 10 >= flung.len() * 8,
-            "{out_far} of {} thrown outward",
-            flung.len()
-        );
-        assert!(
-            beyond * 4 >= flung.len(),
-            "{beyond} of {} landed beyond the ring",
-            flung.len()
-        );
+        assert!(out_far * 10 >= flung.len() * 8, "{out_far} of {} thrown outward", flung.len());
+        assert!(beyond * 4 >= flung.len(), "{beyond} of {} landed beyond the ring", flung.len());
     }
 
     #[test]
@@ -1258,12 +990,7 @@ mod tests {
             lodged.after_step(&mut h);
         }
         assert!(rd.cast[0] > 0, "no blast cast in 60 s");
-        assert!(
-            rd.killed > 0,
-            "cast {:?} pops {:?}",
-            rd.cast,
-            &rd.pops[..rd.pops.len().min(3)]
-        );
+        assert!(rd.killed > 0, "cast {:?} pops {:?}", rd.cast, &rd.pops[..rd.pops.len().min(3)]);
         // Recharge 3 s a cast: at most one cast per soldier per 3 s.
         assert!(rd.cast[0] as usize <= g.soldiers.len() * 41, "{} casts", rd.cast[0]);
         assert!(lodged.cast[0] > 0 && lodged.pops.iter().all(|p| p.payload == Card::Blast));

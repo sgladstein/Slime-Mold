@@ -78,17 +78,7 @@ pub struct Mark {
 
 impl Mark {
     pub fn new(shape: Shape, at: (f32, f32), half: (f32, f32), colour: Rgba) -> Self {
-        Mark {
-            at,
-            offset: (0.0, 0.0),
-            half,
-            shape,
-            colour,
-            colour2: [0; 4],
-            fill: 0.0,
-            flags: 0,
-            extra: 0,
-        }
+        Mark { at, offset: (0.0, 0.0), half, shape, colour, colour2: [0; 4], fill: 0.0, flags: 0, extra: 0 }
     }
 }
 
@@ -105,12 +95,7 @@ pub const TURRET_DRY: u32 = 2;
 /// The colours teams are drawn in: team 0 (the local player) white, then
 /// sky blue, rose and lime. Mould species have their own colours in the
 /// world frame; these are only for marks.
-pub const TEAMS: [Rgba; 4] = [
-    [245, 245, 240, 255],
-    [110, 180, 255, 255],
-    [255, 120, 150, 255],
-    [170, 235, 110, 255],
-];
+pub const TEAMS: [Rgba; 4] = [[245, 245, 240, 255], [110, 180, 255, 255], [255, 120, 150, 255], [170, 235, 110, 255]];
 /// The selection ring and drag box: cream, the team's own colour (art
 /// direction rule 3), over a dark ring (`Marks::selected`). Heavy yellow
 /// rings 1.5 pixels wide hid a soldier on gold slime (art review
@@ -160,18 +145,12 @@ impl Marks {
 
     /// A filled disc `r` world cells across the radius.
     pub fn disc(&mut self, at: (f32, f32), r: f32, colour: Rgba, minimap: bool) {
-        self.push(Mark {
-            flags: WORLD | if minimap { MINIMAP } else { 0 },
-            ..Mark::new(Shape::Disc, at, (r, r), colour)
-        });
+        self.push(Mark { flags: WORLD | if minimap { MINIMAP } else { 0 }, ..Mark::new(Shape::Disc, at, (r, r), colour) });
     }
 
     /// A ring `r` world cells out, one pixel wide-ish.
     pub fn ring(&mut self, at: (f32, f32), r: f32, colour: Rgba) {
-        self.push(Mark {
-            flags: WORLD,
-            ..Mark::new(Shape::Ring, at, (r, r), colour)
-        });
+        self.push(Mark { flags: WORLD, ..Mark::new(Shape::Ring, at, (r, r), colour) });
     }
 
     /// A ring `r` screen pixels out (a selection ring that stays visible at
@@ -182,10 +161,7 @@ impl Marks {
 
     /// A ring `r` screen pixels out and `wide` pixels wide.
     pub fn ring_thin(&mut self, at: (f32, f32), r: f32, wide: f32, colour: Rgba) {
-        self.push(Mark {
-            fill: wide,
-            ..Mark::new(Shape::Ring, at, (r, r), colour)
-        });
+        self.push(Mark { fill: wide, ..Mark::new(Shape::Ring, at, (r, r), colour) });
     }
 
     /// A unit's selection: a thin cream ring `r` screen pixels out on a
@@ -206,13 +182,7 @@ impl Marks {
             return;
         }
         // Green, then amber under 60%, red (the warning colour) under 30%.
-        let colour = if hp > 0.6 {
-            HEALTH
-        } else if hp > 0.3 {
-            [240, 190, 70, 255]
-        } else {
-            [235, 80, 70, 255]
-        };
+        let colour = if hp > 0.6 { HEALTH } else if hp > 0.3 { [240, 190, 70, 255] } else { [235, 80, 70, 255] };
         self.bar(at, below, (10.0, 2.5), 1.0, HEALTH_GONE, HEALTH_GONE);
         self.bar(at, below, (9.0, 1.5), hp, colour, HEALTH_GONE);
     }
@@ -220,39 +190,25 @@ impl Marks {
     /// A filled square or rectangle, half-extents in world cells (a
     /// building).
     pub fn rect(&mut self, at: (f32, f32), half: (f32, f32), colour: Rgba, minimap: bool) {
-        self.push(Mark {
-            flags: WORLD | if minimap { MINIMAP } else { 0 },
-            ..Mark::new(Shape::Rect, at, half, colour)
-        });
+        self.push(Mark { flags: WORLD | if minimap { MINIMAP } else { 0 }, ..Mark::new(Shape::Rect, at, half, colour) });
     }
 
     /// A rectangle's outline between two world corners (the drag box).
     pub fn frame(&mut self, a: (f32, f32), b: (f32, f32), colour: Rgba) {
         let at = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
         let half = ((a.0 - b.0).abs() / 2.0, (a.1 - b.1).abs() / 2.0);
-        self.push(Mark {
-            flags: WORLD,
-            ..Mark::new(Shape::Frame, at, half, colour)
-        });
+        self.push(Mark { flags: WORLD, ..Mark::new(Shape::Frame, at, half, colour) });
     }
 
     /// A bar `fill` full (0-1), `half` pixels, `below` pixels under the
     /// anchor: a health bar.
     pub fn bar(&mut self, at: (f32, f32), below: f32, half: (f32, f32), fill: f32, colour: Rgba, back: Rgba) {
-        self.push(Mark {
-            offset: (0.0, below),
-            colour2: back,
-            fill: fill.clamp(0.0, 1.0),
-            ..Mark::new(Shape::Bar, at, half, colour)
-        });
+        self.push(Mark { offset: (0.0, below), colour2: back, fill: fill.clamp(0.0, 1.0), ..Mark::new(Shape::Bar, at, half, colour) });
     }
 
     /// A line between two world points, dashed every `dash` pixels (0 solid).
     pub fn line(&mut self, a: (f32, f32), b: (f32, f32), dash: f32, colour: Rgba) {
-        self.push(Mark {
-            fill: dash,
-            ..Mark::new(Shape::Line, a, b, colour)
-        });
+        self.push(Mark { fill: dash, ..Mark::new(Shape::Line, a, b, colour) });
     }
 
     /// Text at a world point, offset `offset` pixels, `scale` pixels a font
@@ -263,13 +219,7 @@ impl Marks {
             if c == ' ' {
                 continue;
             }
-            self.icon(
-                at,
-                (offset.0 + i as f32 * advance, offset.1),
-                crate::hud::glyph_rows(c),
-                scale,
-                colour,
-            );
+            self.icon(at, (offset.0 + i as f32 * advance, offset.1), crate::hud::glyph_rows(c), scale, colour);
         }
     }
 
@@ -284,22 +234,13 @@ impl Marks {
                 }
             }
         }
-        self.push(Mark {
-            offset,
-            colour2: (bits as u32).to_le_bytes(),
-            extra: (bits >> 32) as u32,
-            ..Mark::new(Shape::Glyph, at, (scale, scale), colour)
-        });
+        self.push(Mark { offset, colour2: (bits as u32).to_le_bytes(), extra: (bits >> 32) as u32, ..Mark::new(Shape::Glyph, at, (scale, scale), colour) });
     }
 
     /// A streak from `tail` to `head` (world points), its core `core_px`
     /// pixels across the radius: see `Shape::Streak`.
     pub fn streak(&mut self, head: (f32, f32), tail: (f32, f32), core_px: f32, glow: Rgba, core: Rgba) {
-        self.push(Mark {
-            colour2: core,
-            fill: core_px,
-            ..Mark::new(Shape::Streak, head, tail, glow)
-        });
+        self.push(Mark { colour2: core, fill: core_px, ..Mark::new(Shape::Streak, head, tail, glow) });
     }
 
     /// A soldier at `at`, `r` world cells across the radius, facing
@@ -313,17 +254,7 @@ impl Marks {
     /// its pack and a glow that grows with it) and `take` 0-1 the pulse at
     /// its hands while it takes from a crystal.
     #[allow(clippy::too_many_arguments)]
-    pub fn soldier_working(
-        &mut self,
-        at: (f32, f32),
-        r: f32,
-        facing: f32,
-        colour: Rgba,
-        flash: f32,
-        alive: bool,
-        carry: f32,
-        take: f32,
-    ) {
+    pub fn soldier_working(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32) {
         self.soldier_bitten(at, r, facing, colour, flash, alive, carry, take, 0.0, 0.0);
     }
 
@@ -334,30 +265,12 @@ impl Marks {
     /// the second colour's word, which a soldier does not use: the bite a
     /// byte, the angle 16 bits above it.
     #[allow(clippy::too_many_arguments)]
-    pub fn soldier_bitten(
-        &mut self,
-        at: (f32, f32),
-        r: f32,
-        facing: f32,
-        colour: Rgba,
-        flash: f32,
-        alive: bool,
-        carry: f32,
-        take: f32,
-        bite: f32,
-        toward: f32,
-    ) {
+    pub fn soldier_bitten(&mut self, at: (f32, f32), r: f32, facing: f32, colour: Rgba, flash: f32, alive: bool, carry: f32, take: f32, bite: f32, toward: f32) {
         let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = byte(flash) | if alive { 0 } else { 256 } | byte(carry) << 9 | byte(take) << 17;
         let turn = toward.rem_euclid(std::f32::consts::TAU) / std::f32::consts::TAU;
         let word = byte(bite) | ((turn * 65535.0).round() as u32) << 8;
-        self.push(Mark {
-            flags: WORLD | MINIMAP,
-            fill: facing,
-            extra,
-            colour2: word.to_le_bytes(),
-            ..Mark::new(Shape::Soldier, at, (r, r), colour)
-        });
+        self.push(Mark { flags: WORLD | MINIMAP, fill: facing, extra, colour2: word.to_le_bytes(), ..Mark::new(Shape::Soldier, at, (r, r), colour) });
     }
 
     /// A building of kind `kind` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren, 5 larder) at
@@ -371,16 +284,7 @@ impl Marks {
     /// A building as `building`, its lamp flaring by `pulse` 0-1 (the
     /// larder's cells as a load is banked).
     #[allow(clippy::too_many_arguments)]
-    pub fn building_pulse(
-        &mut self,
-        at: (f32, f32),
-        r: f32,
-        kind: u32,
-        built: f32,
-        health: f32,
-        working: bool,
-        pulse: f32,
-    ) {
+    pub fn building_pulse(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32) {
         self.building_facing(at, r, kind, built, health, working, pulse, 0.0);
     }
 
@@ -389,27 +293,11 @@ impl Marks {
     /// Only the pump turns; the facing rides in the second colour's word,
     /// as the turret's does.
     #[allow(clippy::too_many_arguments)]
-    pub fn building_facing(
-        &mut self,
-        at: (f32, f32),
-        r: f32,
-        kind: u32,
-        built: f32,
-        health: f32,
-        working: bool,
-        pulse: f32,
-        facing: f32,
-    ) {
+    pub fn building_facing(&mut self, at: (f32, f32), r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32) {
         let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | (working as u32) << 16 | ((pulse.clamp(0.0, 1.0) * 255.0).round() as u32) << 17;
-        self.push(Mark {
-            flags: WORLD | MINIMAP,
-            fill: kind as f32,
-            extra,
-            colour2: facing.to_bits().to_le_bytes(),
-            ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255])
-        });
+        self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
     /// A turret (building kind 0) as `building`, its head turned to
@@ -424,13 +312,7 @@ impl Marks {
         let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | ((shot.clamp(0.0, 1.0) * 255.0).round() as u32) << 17 | (state.min(3)) << 25;
-        self.push(Mark {
-            flags: WORLD | MINIMAP,
-            fill: 0.0,
-            extra,
-            colour2: facing.to_bits().to_le_bytes(),
-            ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255])
-        });
+        self.push(Mark { flags: WORLD | MINIMAP, fill: 0.0, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
     }
 
     /// The words the view pass reads, `MARK_WORDS` a mark.
@@ -478,11 +360,7 @@ mod tests {
         m.streak((10.0, 4.0), (7.0, 4.0), 2.5, [255, 120, 40, 210], [255, 236, 190, 255]);
         let w = m.words();
         assert_eq!(w[6], Shape::Streak as u32);
-        assert_eq!(
-            (f32::from_bits(w[4]), f32::from_bits(w[5])),
-            (7.0, 4.0),
-            "the tail is a world point"
-        );
+        assert_eq!((f32::from_bits(w[4]), f32::from_bits(w[5])), (7.0, 4.0), "the tail is a world point");
         assert_eq!(f32::from_bits(w[9]), 2.5, "the core's radius in pixels");
         assert_eq!(w[8], u32::from_le_bytes([255, 236, 190, 255]));
     }

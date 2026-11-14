@@ -70,11 +70,7 @@ fn thickest(g: &Game<BigDish>) -> (f32, f32) {
         }
     }
     blocks.sort_by_key(|b| std::cmp::Reverse(b.0));
-    blocks
-        .iter()
-        .map(|&(_, x, y)| (x as f32, y as f32))
-        .find(|&(x, y)| g.standable(x, y))
-        .unwrap_or(g.larder)
+    blocks.iter().map(|&(_, x, y)| (x as f32, y as f32)).find(|&(x, y)| g.standable(x, y)).unwrap_or(g.larder)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -91,15 +87,7 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
     // held at the larder for 240 s would otherwise starve, or lose the
     // round to the mould at the larder before the order (seeds 1, 2 and
     // 4 with 10 soldiers, 2026-11-13). The probe measures the bite.
-    let rules = Rules {
-        mass: Rules::mass_for(walkers, 2),
-        squad: n,
-        max_squad: n.max(40),
-        wade,
-        ration: 0.0,
-        overrun: 0.0,
-        ..Rules::default()
-    };
+    let rules = Rules { mass: Rules::mass_for(walkers, 2), squad: n, max_squad: n.max(40), wade, ration: 0.0, overrun: 0.0, ..Rules::default() };
     let base = rules.drain;
     let mut g = Game::new(BigDish::new(p), rules, seed);
     g.rules.drain = 0.0;
@@ -115,29 +103,10 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
     for k in 0..g.soldiers.len() {
         g.soldiers[k].hp = g.rules.hp;
         g.apply(Cmd::Stance(k, Stance::Defend));
-        g.apply(Cmd::Order(
-            k,
-            if fight {
-                Order::Fight(to.0, to.1)
-            } else {
-                Order::Move(to.0, to.1)
-            },
-        ));
+        g.apply(Cmd::Order(k, if fight { Order::Fight(to.0, to.1) } else { Order::Move(to.0, to.1) }));
     }
     let (start, killed0) = (g.mould, g.killed);
-    let mut row = Row {
-        seed,
-        drain,
-        walkers: start,
-        lost: Vec::new(),
-        first: None,
-        killed: 0,
-        end: 0,
-        touch_mean: 0.0,
-        touch_max: 0,
-        arrived: None,
-        bins: [0; 5],
-    };
+    let mut row = Row { seed, drain, walkers: start, lost: Vec::new(), first: None, killed: 0, end: 0, touch_mean: 0.0, touch_max: 0, arrived: None, bins: [0; 5] };
     let (mut tsum, mut tn) = (0u64, 0u64);
     let mut next = at + 10.0;
     while g.time() < at + secs && g.end.is_none() {
@@ -160,10 +129,7 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
             }] += 1;
         }
         if row.arrived.is_none() && !alive.is_empty() {
-            let (mx, my) = (
-                alive.iter().map(|s| s.x).sum::<f32>() / alive.len() as f32,
-                alive.iter().map(|s| s.y).sum::<f32>() / alive.len() as f32,
-            );
+            let (mx, my) = (alive.iter().map(|s| s.x).sum::<f32>() / alive.len() as f32, alive.iter().map(|s| s.y).sum::<f32>() / alive.len() as f32);
             if (mx - to.0).hypot(my - to.1) < 6.0 * sc {
                 row.arrived = Some(g.time() - at);
             }
@@ -180,12 +146,7 @@ fn run(seed: u64, shape: &str, drain: f32, n: usize, at: f32, secs: f32, fight: 
 }
 
 fn main() {
-    let (mut seeds, mut shape, mut drains, mut n) = (
-        (1u64..=4).collect::<Vec<_>>(),
-        "c".to_string(),
-        vec![1.0f32, 2.0, 4.0, 8.0],
-        40usize,
-    );
+    let (mut seeds, mut shape, mut drains, mut n) = ((1u64..=4).collect::<Vec<_>>(), "c".to_string(), vec![1.0f32, 2.0, 4.0, 8.0], 40usize);
     let (mut at, mut secs, mut fight, mut threads) = (240.0f32, 60.0f32, true, 4usize);
     let mut wade = Rules::default().wade;
     for a in std::env::args().skip(1) {
@@ -214,10 +175,7 @@ fn main() {
         Rules::mass_for(25_000, 2),
         if fight { "attack-move" } else { "move" }
     );
-    let jobs: Vec<(u64, f32)> = seeds
-        .iter()
-        .flat_map(|&s| drains.iter().map(move |&d| (s, d)))
-        .collect();
+    let jobs: Vec<(u64, f32)> = seeds.iter().flat_map(|&s| drains.iter().map(move |&d| (s, d))).collect();
     let (tx, rx) = mpsc::channel();
     let queue = std::sync::Arc::new(std::sync::Mutex::new(jobs));
     let mut hs = Vec::new();
@@ -232,12 +190,7 @@ fn main() {
     drop(tx);
     let mut rows: Vec<Row> = Vec::new();
     for r in rx {
-        let lost = r
-            .lost
-            .iter()
-            .map(|(t, d)| format!("+{t:.0}s {d}"))
-            .collect::<Vec<_>>()
-            .join(" ");
+        let lost = r.lost.iter().map(|(t, d)| format!("+{t:.0}s {d}")).collect::<Vec<_>>().join(" ");
         println!(
             "seed {:>2} drain x{:<4}: mould {} at the order; arrived {}; first death {}; lost {lost}; killed {}, mould left {}; touching mean {:.1}, most {}; soldier-frames touched 0/1-4/5-9/10-19/20+ {:?}",
             r.seed,
@@ -258,10 +211,7 @@ fn main() {
     }
     println!("\nsummary, soldiers lost of {n} at +{secs:.0} s:");
     for &d in &drains {
-        let mine: Vec<&Row> = seeds
-            .iter()
-            .filter_map(|&s| rows.iter().find(|r| r.seed == s && r.drain == d))
-            .collect();
+        let mine: Vec<&Row> = seeds.iter().filter_map(|&s| rows.iter().find(|r| r.seed == s && r.drain == d)).collect();
         let lost: Vec<usize> = mine.iter().map(|r| r.lost.last().map_or(0, |l| l.1)).collect();
         let mean = |f: &dyn Fn(&Row) -> f32| mine.iter().map(|r| f(r)).sum::<f32>() / mine.len().max(1) as f32;
         println!(
