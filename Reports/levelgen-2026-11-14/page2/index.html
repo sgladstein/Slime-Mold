@@ -1,0 +1,291 @@
+<title>Planet Layouts Round 2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a header with the route of eight planets, then one band a planet, two films side by side with their counts under each. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --crystal: #3fc6dc;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-size: 24px; line-height: 1.2; }
+p { margin: 0; max-width: 68ch; }
+code { font-family: var(--mono); font-size: 0.86em; color: var(--crystal); }
+.muted, .lede { color: var(--muted); }
+.top { display: grid; gap: 14px; }
+.top .eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.route { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.route a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: 6px; color: var(--fg); text-decoration: none; font: 500 13px/1 var(--body); }
+.route a span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; background: var(--line); font: 600 12px/1 var(--mono); }
+.route a:last-child span { background: var(--slime); color: var(--bg); }
+.route a:hover, .route a:focus-visible { border-color: var(--slime); outline: none; }
+.play { display: grid; gap: 6px; padding: 14px 16px; border-left: 3px solid var(--slime); background: var(--panel); }
+.planet { display: grid; gap: 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+.phead { display: flex; gap: 16px; align-items: flex-start; }
+.pnum { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 22px/1 var(--display); border-radius: 50%; }
+.what strong { font-weight: 600; color: var(--fg); }
+.what { color: var(--muted); margin-top: 4px; }
+.films { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.film { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.film img, .clip img { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+.cap-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+.pname { font: 600 17px/1.2 var(--display); }
+.nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; margin: 0; }
+.nums div { min-width: 0; }
+.nums dt { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.nums dd { margin: 0; font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.counts { width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.scroll { overflow-x: auto; }
+.survey { min-width: 760px; font-size: 13.5px; }
+.band { display: grid; gap: 14px; padding-top: 24px; border-top: 1px solid var(--line); }
+.clips { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.clip { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.clip figcaption { color: var(--muted); font-size: 13px; }
+.greys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.greys figure, .sheets figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+.greys img, .sheets img { width: 100%; height: auto; display: block; border-radius: 3px; }
+.greys figcaption, .sheets figcaption { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.sheets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 20px; }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+@media (max-width: 520px) { .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+<div class=wrap>
+  <header class=top>
+    <div class=eyebrow>Larder World · roguelike run</div>
+    <h1>Planet layouts, round 2</h1>
+    <p class=lede>The graphics lead's review of the first planets: in grey, Barrens, Canyon, Claypan and Spires were the same picture. Each biome now has one signature shape at zoom 1. Below, the same two seeds of each, filmed in the game for two minutes with nobody playing, with the round-1 and round-2 maps in grey beside them. Only the layout changed; the ground's materials are the terrain shaders'.</p>
+    <nav class=route aria-label="The run's planets"><a href="#planet-1"><span>1</span>Barrens</a><a href="#planet-2"><span>2</span>Marsh</a><a href="#planet-3"><span>3</span>Canyon</a><a href="#planet-4"><span>4</span>Dunes</a><a href="#planet-5"><span>5</span>Claypan</a><a href="#planet-6"><span>6</span>Thicket</a><a href="#planet-7"><span>7</span>Spires</a><a href="#planet-8"><span>8</span>Core</a></nav>
+    <div class=play>
+      <div><strong>Play one:</strong> on the start menu, <strong>Random planet</strong> lands on a new planet; the <strong>Planet</strong> option (Options page) picks which of the eight; <strong>N</strong> in the round rolls another.</div>
+      <div class=muted>From a command line: <code>larder-world map=planet:3:42</code> (planet 3, seed 42). The map editor opens one too: <code>larder-edit map=planet:3:42</code>.</div>
+    </div>
+  </header>
+  <section class=band>
+  <h2>The grey thumbnail test</h2>
+  <p class=lede>All sixteen planets at one second, in grey, small, before and after. The test from the art direction: each biome should be recognisable in a grey thumbnail.</p>
+  <div class=sheets><figure><img src="grey/sheet-r1.png" alt="Round 1, sixteen planets in grey" loading="lazy"><figcaption>Round 1 (#277)</figcaption></figure><figure><img src="grey/sheet-r2.png" alt="Round 2, sixteen planets in grey" loading="lazy"><figcaption>Round 2 (this change)</figcaption></figure></div>
+  <p class=muted>Rows: planets 1-2, 3-4, 5-6, 7-8; seed 1 then seed 2 of each. In the game the ground kinds differ little in grey value, so the layout shows mostly through rock and soft rock; the ground's own look is the terrain shaders' work.</p>
+  <h2>The layouts themselves</h2>
+  <p class=lede>The same sixteen maps drawn straight from their files in false colour, so the layout reads apart from the shaders: rock light grey, sand tan, clay brown, barren grey-green, wet blue, soft rock beige, crystals cyan, nests orange rings, the landing a white square.</p>
+  <div class=sheets><figure><img src="grey/layout-r2.png" alt="Round 2 layouts in false colour" loading="lazy"><figcaption>Round 2 layouts, false colour</figcaption></figure><figure><img src="grey/layout-r2-grey.png" alt="Round 2 layouts in false colour, grey" loading="lazy"><figcaption>The same, grey</figcaption></figure></div>
+</section>
+  <section class=planet id="planet-1">
+  <header class=phead>
+    <div class=pnum>1</div>
+    <div><h2>Barrens</h2><p class=what>Was: scattered barren patches that read as plain ground. Now: three wide barren bands right across the route, meandering, ragged at the edges. <strong>Each band starves the slime as it crosses.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-1-1.gif" width="531" height="328" alt="Planet 1, seed 1: Dreskor, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Dreskor</span><code>map=planet:1:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-1-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-1-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>3%</dd></div><div><dt>Ground</dt><dd>35% barren</dd></div><div><dt>Soft-rock walls</dt><dd>4</dd></div><div><dt>Walk to the slime</dt><dd>887 cells</dd></div><div><dt>Walk to a crystal</dt><dd>69 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>23.8k</td><td>21</td><td>99.0%</td></tr><tr><td>120 s</td><td>21.3k</td><td>27</td><td>97.8%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-1-2.gif" width="531" height="328" alt="Planet 1, seed 2: Yala, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Yala</span><code>map=planet:1:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-1-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-1-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>5%</dd></div><div><dt>Ground</dt><dd>28% barren</dd></div><div><dt>Soft-rock walls</dt><dd>4</dd></div><div><dt>Walk to the slime</dt><dd>813 cells</dd></div><div><dt>Walk to a crystal</dt><dd>71 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>27.5k</td><td>17</td><td>99.1%</td></tr><tr><td>120 s</td><td>34.4k</td><td>246</td><td>97.3%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-2">
+  <header class=phead>
+    <div class=pnum>2</div>
+    <div><h2>Marsh</h2><p class=what>Was: small scattered pools. Now: big pools from one broad noise, so they run together, on clay banks. <strong>It crawls.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-2-1.gif" width="531" height="328" alt="Planet 2, seed 1: Uldum, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Uldum</span><code>map=planet:2:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-2-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-2-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>3%</dd></div><div><dt>Ground</dt><dd>24% clay, 32% wet</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>819 cells</dd></div><div><dt>Walk to a crystal</dt><dd>58 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>27.2k</td><td>14</td><td>99.0%</td></tr><tr><td>120 s</td><td>32.3k</td><td>56</td><td>97.2%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-2-2.gif" width="531" height="328" alt="Planet 2, seed 2: Thathus, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Thathus</span><code>map=planet:2:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-2-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-2-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>3%</dd></div><div><dt>Ground</dt><dd>31% clay, 17% wet</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>855 cells</dd></div><div><dt>Walk to a crystal</dt><dd>87 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>27.3k</td><td>0</td><td>99.1%</td></tr><tr><td>120 s</td><td>25.5k</td><td>0</td><td>98.0%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-3">
+  <header class=phead>
+    <div class=pnum>3</div>
+    <div><h2>Canyon</h2><p class=what>Was: short rock stubs and mesas that read as debris. Now: two ridges right across the map, about 50-80 cells wide, each with one or two passes (sometimes one gated), and fewer, longer walls between bigger regions; no mesas. <strong>Chokepoints.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-3-1.gif" width="531" height="328" alt="Planet 3, seed 1: Drevix, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Drevix</span><code>map=planet:3:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-3-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-3-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>16%</dd></div><div><dt>Ground</dt><dd>24% sand</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>908 cells</dd></div><div><dt>Walk to a crystal</dt><dd>105 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>26.2k</td><td>40</td><td>99.1%</td></tr><tr><td>120 s</td><td>28.1k</td><td>258</td><td>97.7%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-3-2.gif" width="531" height="328" alt="Planet 3, seed 2: Drevon, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Drevon</span><code>map=planet:3:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-3-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-3-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>16</dd></div><div><dt>Rock</dt><dd>17%</dd></div><div><dt>Ground</dt><dd>19% sand</dd></div><div><dt>Soft-rock walls</dt><dd>8</dd></div><div><dt>Walk to the slime</dt><dd>856 cells</dd></div><div><dt>Walk to a crystal</dt><dd>71 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>27.3k</td><td>0</td><td>99.0%</td></tr><tr><td>120 s</td><td>31.8k</td><td>0</td><td>97.6%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-4">
+  <header class=phead>
+    <div class=pnum>4</div>
+    <div><h2>Dunes</h2><p class=what>Was: exact clay circles under the crystals. Now: islands a third bigger with ragged, noisy edges. <strong>It races, and holds on the islands.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-4-1.gif" width="531" height="328" alt="Planet 4, seed 1: Nezanus, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Nezanus</span><code>map=planet:4:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-4-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-4-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>22</dd></div><div><dt>Rock</dt><dd>2%</dd></div><div><dt>Ground</dt><dd>41% sand, 43% clay</dd></div><div><dt>Soft-rock walls</dt><dd>4</dd></div><div><dt>Walk to the slime</dt><dd>575 cells</dd></div><div><dt>Walk to a crystal</dt><dd>73 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>28.1k</td><td>12</td><td>98.8%</td></tr><tr><td>120 s</td><td>34.3k</td><td>92</td><td>97.3%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-4-2.gif" width="531" height="328" alt="Planet 4, seed 2: Ullukar, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Ullukar</span><code>map=planet:4:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-4-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-4-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>22</dd></div><div><dt>Rock</dt><dd>3%</dd></div><div><dt>Ground</dt><dd>38% sand, 42% clay</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>687 cells</dd></div><div><dt>Walk to a crystal</dt><dd>76 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>30.2k</td><td>14</td><td>98.6%</td></tr><tr><td>120 s</td><td>38.3k</td><td>103</td><td>96.9%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-5">
+  <header class=phead>
+    <div class=pnum>5</div>
+    <div><h2>Claypan</h2><p class=what>Was: mostly clay in soft patches. Now: clay nearly everywhere, cracked into polygons of plain ground, the cracks broken in places. <strong>It digs in.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-5-1.gif" width="531" height="328" alt="Planet 5, seed 1: Yathek, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Yathek</span><code>map=planet:5:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-5-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-5-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>8%</dd></div><div><dt>Ground</dt><dd>71% clay</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>672 cells</dd></div><div><dt>Walk to a crystal</dt><dd>60 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>26.3k</td><td>0</td><td>99.0%</td></tr><tr><td>120 s</td><td>28.1k</td><td>0</td><td>97.9%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-5-2.gif" width="531" height="328" alt="Planet 5, seed 2: Dreka, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Dreka</span><code>map=planet:5:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-5-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-5-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>8%</dd></div><div><dt>Ground</dt><dd>74% clay</dd></div><div><dt>Soft-rock walls</dt><dd>4</dd></div><div><dt>Walk to the slime</dt><dd>596 cells</dd></div><div><dt>Walk to a crystal</dt><dd>50 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>28.2k</td><td>0</td><td>98.9%</td></tr><tr><td>120 s</td><td>37.6k</td><td>0</td><td>97.1%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-6">
+  <header class=phead>
+    <div class=pnum>6</div>
+    <div><h2>Thicket</h2><p class=what>Was: straight gate bars and perfect arcs that read as UI. Now: every hedge, ring and gate a chain of short pieces that wobbles and changes thickness (11-21 cells). <strong>Walls to chew through.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-6-1.gif" width="531" height="328" alt="Planet 6, seed 1: Nedarro, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Nedarro</span><code>map=planet:6:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-6-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-6-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>5%</dd></div><div><dt>Ground</dt><dd>56% clay</dd></div><div><dt>Soft-rock walls</dt><dd>136</dd></div><div><dt>Walk to the slime</dt><dd>508 cells</dd></div><div><dt>Walk to a crystal</dt><dd>65 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>29.4k</td><td>0</td><td>98.7%</td></tr><tr><td>120 s</td><td>34.4k</td><td>316</td><td>97.0%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-6-2.gif" width="531" height="328" alt="Planet 6, seed 2: Karon, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Karon</span><code>map=planet:6:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-6-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-6-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>5%</dd></div><div><dt>Ground</dt><dd>53% clay</dd></div><div><dt>Soft-rock walls</dt><dd>125</dd></div><div><dt>Walk to the slime</dt><dd>636 cells</dd></div><div><dt>Walk to a crystal</dt><dd>95 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>28.6k</td><td>0</td><td>98.9%</td></tr><tr><td>120 s</td><td>31.3k</td><td>87</td><td>97.2%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-7">
+  <header class=phead>
+    <div class=pnum>7</div>
+    <div><h2>Spires</h2><p class=what>Was: a few rock blobs. Now: up to 210 small pillars (radius 7-15 cells), each ragged, plus a few mesas. <strong>Cover the slime grows behind.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-7-1.gif" width="531" height="328" alt="Planet 7, seed 1: Vekum, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Vekum</span><code>map=planet:7:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-7-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-7-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>9%</dd></div><div><dt>Ground</dt><dd>35% sand, 19% clay</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>511 cells</dd></div><div><dt>Walk to a crystal</dt><dd>73 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>29.4k</td><td>0</td><td>98.7%</td></tr><tr><td>120 s</td><td>42.3k</td><td>88</td><td>96.7%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-7-2.gif" width="531" height="328" alt="Planet 7, seed 2: Lothaskar, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Lothaskar</span><code>map=planet:7:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-7-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-7-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>17</dd></div><div><dt>Rock</dt><dd>11%</dd></div><div><dt>Ground</dt><dd>31% sand, 15% clay</dd></div><div><dt>Soft-rock walls</dt><dd>0</dd></div><div><dt>Walk to the slime</dt><dd>538 cells</dd></div><div><dt>Walk to a crystal</dt><dd>84 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>28.9k</td><td>4</td><td>99.0%</td></tr><tr><td>120 s</td><td>42.6k</td><td>159</td><td>97.1%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section><section class=planet id="planet-8">
+  <header class=phead>
+    <div class=pnum>8</div>
+    <div><h2>Core</h2><p class=what>Every ground at once, three nests, rings and gates; its soft rock grown like the Thicket&#x27;s. <strong>The core world, the last of eight.</strong></p></div>
+  </header>
+  <div class=films><figure class=film>
+  <img src="gif/planet-8-1.gif" width="531" height="328" alt="Planet 8, seed 1: Quamar, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Quamar</span><code>map=planet:8:1</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-8-1.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-8-1.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>21</dd></div><div><dt>Rock</dt><dd>8%</dd></div><div><dt>Ground</dt><dd>13% sand, 32% clay, 3% barren, 6% wet</dd></div><div><dt>Soft-rock walls</dt><dd>64</dd></div><div><dt>Walk to the slime</dt><dd>516 cells</dd></div><div><dt>Walk to a crystal</dt><dd>52 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>30.6k</td><td>0</td><td>98.8%</td></tr><tr><td>120 s</td><td>43.7k</td><td>48</td><td>97.1%</td></tr></tbody></table>
+  </figcaption>
+</figure><figure class=film>
+  <img src="gif/planet-8-2.gif" width="531" height="328" alt="Planet 8, seed 2: Lozo, the slime spreading over two minutes with nobody playing" loading="lazy">
+  <figcaption>
+    <div class=cap-head><span class=pname>Lozo</span><code>map=planet:8:2</code></div>
+    <div class=greys><figure><img src="grey/r1-planet-8-2.png" width="266" height="164" alt="Round 1, grey" loading="lazy"><figcaption>Round 1, grey</figcaption></figure><figure><img src="grey/r2-planet-8-2.png" width="266" height="164" alt="Round 2, grey" loading="lazy"><figcaption>Round 2, grey</figcaption></figure></div>
+    <dl class=nums><div><dt>Crystals</dt><dd>21</dd></div><div><dt>Rock</dt><dd>8%</dd></div><div><dt>Ground</dt><dd>7% sand, 39% clay, 5% barren, 8% wet</dd></div><div><dt>Soft-rock walls</dt><dd>132</dd></div><div><dt>Walk to the slime</dt><dd>572 cells</dd></div><div><dt>Walk to a crystal</dt><dd>58 cells</dd></div></dl>
+    <table class=counts><thead><tr><th>Time</th><th>Walkers</th><th>Killed by the idle squad</th><th>Charge left</th></tr></thead><tbody><tr><td>1 s</td><td>25.0k</td><td>0</td><td>100.0%</td></tr><tr><td>60 s</td><td>30.9k</td><td>5</td><td>98.7%</td></tr><tr><td>120 s</td><td>38.8k</td><td>70</td><td>97.0%</td></tr></tbody></table>
+  </figcaption>
+</figure></div>
+</section>
+  <section class=band>
+  <h2>Close in</h2>
+  <p class=lede>Near the landing at the game's opening zoom, a frame every quarter second: the slime's first explorers reaching the squad across each planet's ground.</p>
+  <div class=clips><figure class=clip><img src="clip/near-planet-3.gif" alt="near-planet-3" loading="lazy"><figcaption>Canyon (planet 3), seed 1, near the squad, 40-46 s at a quarter-second a frame</figcaption></figure><figure class=clip><img src="clip/near-planet-6.gif" alt="near-planet-6" loading="lazy"><figcaption>Thicket (planet 6), seed 1, near the squad, 40-46 s at a quarter-second a frame</figcaption></figure></div>
+</section>
+  <section class=band>
+    <h2>Every planet is checked before you land</h2>
+    <p class=lede>A planet that fails a check is rebuilt from the next attempt. The checks walk the map the way a squad does: every crystal and slime nest reachable from the landing, a crystal close to the landing, the far nest across the map on foot, half the crystals' charge open without breaking soft rock. Over 400 planets (seeds 1-50, planets 1-8) all passed within four attempts, 368 on the first, and a planet takes 65 ms to build, once a level. Medians, with the walking range in brackets (the map is 1,024 cells wide):</p>
+    <div class=scroll><table class=survey>
+<thead><tr><th>Biome</th><th>Crystals</th><th>Rock</th><th>Sand</th><th>Clay</th><th>Barren</th><th>Wet</th><th>Soft-rock pieces</th><th>Walk to the nearest nest</th><th>First try passes</th></tr></thead>
+<tbody>
+<tr><td>Barrens</td><td>16</td><td>6%</td><td>0%</td><td>0%</td><td>27%</td><td>0%</td><td>4</td><td>794 (643-942)</td><td>45/50</td></tr>
+<tr><td>Marsh</td><td>16</td><td>4%</td><td>0%</td><td>28%</td><td>0%</td><td>28%</td><td>4</td><td>790 (654-956)</td><td>49/50</td></tr>
+<tr><td>Canyon</td><td>16</td><td>14%</td><td>27%</td><td>0%</td><td>0%</td><td>0%</td><td>2</td><td>888 (630-1339)</td><td>47/50</td></tr>
+<tr><td>Dunes</td><td>22</td><td>3%</td><td>41%</td><td>42%</td><td>0%</td><td>0%</td><td>0</td><td>578 (484-770)</td><td>48/50</td></tr>
+<tr><td>Claypan</td><td>17</td><td>7%</td><td>0%</td><td>75%</td><td>0%</td><td>0%</td><td>4</td><td>610 (498-856)</td><td>50/50</td></tr>
+<tr><td>Thicket</td><td>17</td><td>6%</td><td>0%</td><td>46%</td><td>0%</td><td>0%</td><td>130</td><td>587 (494-900)</td><td>45/50</td></tr>
+<tr><td>Spires</td><td>17</td><td>9%</td><td>28%</td><td>20%</td><td>0%</td><td>0%</td><td>0</td><td>552 (492-885)</td><td>48/50</td></tr>
+<tr><td>Core</td><td>21</td><td>8%</td><td>14%</td><td>32%</td><td>5%</td><td>7%</td><td>90</td><td>542 (478-652)</td><td>36/50</td></tr>
+</tbody></table></div>
+  </section>
+  <section class=band>
+    <h2>Next</h2>
+    <ul>
+      <li><strong>Planets grow:</strong> 60% of today's map on planet 1, today's size by planet 3 or 4, six times the area on the core world. Every planet here is still today's size.</li>
+      <li><strong>The ground's materials</strong> (sand ripples, clay cracks, barren ash, a gloss on water) are the terrain thread's shader work.</li>
+    </ul>
+  </section>
+</div>
