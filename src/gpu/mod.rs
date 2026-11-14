@@ -56,6 +56,8 @@ pub const DRAW_BIRTH: u32 = 402;
 pub const CLAIM_BIRTH: u32 = 403;
 /// A cut-off walker's withering (big.rs `DRAW_WITHER`).
 pub const DRAW_WITHER: u32 = 404;
+/// Dense slime condensing's split (big.rs `DRAW_CONDENSE`).
+pub const DRAW_CONDENSE: u32 = 405;
 
 /// The life cycle's (big.rs `DRAW_FRUIT` and on).
 pub const DRAW_FRUIT: u32 = 114;
@@ -416,6 +418,12 @@ pub struct Settings {
     /// Steps a charge at a unit bolts before it creeps again
     /// (`BigParams::panic_dash`, 0 never).
     pub panic_dash: u32,
+    /// Dense slime condenses (`BigParams::condense`, `condense_crowd`,
+    /// `condense_r`; 11-14): steps a walker must be ripe, 0 off; needs
+    /// growth.
+    pub condense: u32,
+    pub condense_crowd: u32,
+    pub condense_r: u8,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -569,6 +577,9 @@ impl Settings {
             panic_lean: t.panic_lean,
             panic_creep: t.panic_creep,
             panic_dash: t.panic_dash,
+            condense: t.condense,
+            condense_crowd: t.condense_crowd,
+            condense_r: t.condense_r,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -822,6 +833,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "panic_lean" => s.panic_lean = int()?.min(127),
         "panic_creep" => s.panic_creep = f()?,
         "panic_dash" => s.panic_dash = int()?,
+        "condense" => s.condense = int()?.min(crate::mould::big::RIPE),
+        "condense_crowd" => s.condense_crowd = int()?,
+        "condense_r" => s.condense_r = int()?.clamp(1, 8) as u8,
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
@@ -964,6 +978,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         panic_lean: s.panic_lean,
         panic_creep: s.panic_creep,
         panic_dash: s.panic_dash,
+        condense: s.condense,
+        condense_crowd: s.condense_crowd,
+        condense_r: s.condense_r,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1097,9 +1114,17 @@ pub const GASLAY: usize = 52;
 pub const GASP: usize = 53;
 /// An explosion's fling (11-14, `Engine::fling`).
 pub const FLING: usize = 54;
+/// Dense slime condenses (11-14, `BigParams::condense`): ripeness before
+/// `life`, the mould's mass before the births, and the condensed walkers
+/// a cell before the frame's reads.
+pub const RIPEN: usize = 55;
+pub const MASSCLEAR: usize = 56;
+pub const MASSCOUNT: usize = 57;
+pub const DCLEAR: usize = 58;
+pub const DCOUNT: usize = 59;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 55] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling",
+pub const PASSES: [&str; 60] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount",
 ];
 
 impl Shared {
@@ -1208,6 +1233,10 @@ pub struct Engine {
     pub cloud_at: u64,
     pub withers: bool,
     pub reach: u32,
+    /// Dense slime condenses (`Settings::condense` with growth on): its
+    /// words sit in `news` from `dense_at` (bytes; `dense_words`).
+    pub condenses: bool,
+    pub dense_at: u64,
     /// The damage memory (binding 47, the squad toolkit's layout): the
     /// crater countdown a cell in fine steps (whole numbers in f32; the
     /// CPU's `BigDish::scorch`), then the tiers thread's scar, unused so
@@ -1456,7 +1485,8 @@ impl Engine {
         // Food's news, then the sleep gas's words (no binding of their
         // own: the device's 48 storage buffers a stage are all bound).
         let news_len = news_words(&d, cells as usize).len();
-        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d)].concat()), storage);
+        let gas_len = gas_words(&d).len();
+        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize)].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
@@ -1505,6 +1535,8 @@ impl Engine {
             cloud_at: 0,
             withers: false,
             reach: 1,
+            condenses: false,
+            dense_at: 4 * (news_len + gas_len) as u64,
             crater,
             crater_steps: 0,
             scorched: false,
@@ -1664,8 +1696,10 @@ impl Engine {
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
+        self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&dense_words(d, self.cells as usize)));
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
+        self.condenses = self.grows && d.p.condense > 0;
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1832,7 +1866,12 @@ impl Engine {
         b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
         b.extend(u32_bytes(&[s.lone_r as u32, s.fed_crowd as u32]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
-        b.extend(f32_bytes(&[s.fling_deposit, 0.0, 0.0, 0.0]));
+        // The fling row's spare words: dense slime condensing (11-14, the
+        // condense thread; off without growth).
+        let condense = if self.grows { s.condense.min(crate::mould::big::RIPE) } else { 0 };
+        b.extend(f32_bytes(&[s.fling_deposit]));
+        b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | ((s.condense_r.clamp(1, 8) as u32) << 16), stream(seed, DRAW_CONDENSE)]));
+        self.condenses = condense > 0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -1995,6 +2034,10 @@ impl Engine {
             if self.garden {
                 out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
+            // The condensed walkers a cell, which touch as two (`condense`).
+            if self.condenses {
+                out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
+            }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
                 out.extend([(UNITS1, squad::UNITS_MAX.div_ceil(64) as u32, s), (HARVEST1, 1, s)]);
@@ -2063,7 +2106,15 @@ impl Engine {
             tick.extend([(ESUM, n), (EGAIN, n)]);
         }
         if self.grows {
+            // Dense slime condenses: ripeness before `life`, which condenses
+            // the ripe; the mass after it, which `breed` reads.
+            if self.condenses {
+                tick.push((RIPEN, n));
+            }
             tick.push((LIFE, n));
+            if self.condenses {
+                tick.extend([(MASSCLEAR, 1), (MASSCOUNT, n)]);
+            }
             // A garden's birth caps count each side first (`capcount`).
             if self.garden {
                 tick.extend([(CAPCLEAR, 1), (CAPCOUNT, n)]);
@@ -2148,6 +2199,9 @@ impl Engine {
             self.dish.energy = e.iter().take(self.n as usize).map(|&v| v.max(0.0)).collect();
         }
         self.dish.ticks = self.done;
+        if self.condenses {
+            self.dish.dense = self.dense_of();
+        }
         // The life states, so the measure leaves the dead out.
         if self.cycles {
             (self.dish.life, self.dish.life_t) = self.life_of();
@@ -2600,6 +2654,27 @@ pub fn gas_words(d: &BigDish) -> Vec<u32> {
 /// The last step any of a dish's gas lasts to.
 fn gas_until(d: &BigDish) -> u64 {
     d.steps + d.gassed.iter().copied().max().unwrap_or(0) as u64
+}
+
+/// Dense slime's words a CPU dish starts the GPU's with (binding 48, after
+/// the sleep gas's; `engine.wgsl`'s `dense_base`): a header of
+/// `DENSE_HEAD` words, each slot's word (`BigDish::dense`, 0 while it has
+/// none), then a word a cell, clear.
+pub const DENSE_HEAD: usize = 4;
+pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
+    let mut w = vec![0u32; DENSE_HEAD];
+    w.extend((0..d.walkers.len()).map(|k| d.dense.get(k).copied().unwrap_or(0)));
+    w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
+    w
+}
+
+/// Each slot's condensing word as the GPU holds it (`BigDish::dense`).
+impl Engine {
+    pub fn dense_of(&self) -> Vec<u32> {
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let at = self.dense_at as usize + 4 * DENSE_HEAD;
+        b[at..at + 4 * self.n as usize].chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
+    }
 }
 
 pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {

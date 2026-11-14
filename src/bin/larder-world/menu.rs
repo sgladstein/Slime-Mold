@@ -36,7 +36,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 3] = ["panic", "wither", "energy_flow"];
+const ENGINE_OPTS: [&str; 4] = ["panic", "wither", "energy_flow", "condense"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -77,6 +77,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         ("panic", "Panic", &["0", "1", "2", "4"][..], "A cut-off part charges the squad or bolts for food; 0 is off"),
         ("wither", "Wither", &["0", "0.005", "0.01", "0.02"][..], "How fast a part cut off from food thins; 0 is off"),
         ("energy_flow", "Shared food", &["0", "0.025", "0.05", "0.1"][..], "How much food the body shares from its crystals; 0 is off"),
+        // Dense slime condenses (11-14, `BigParams::condense`): off by
+        // default for the owner's playtest; the steps a crowded or feeding
+        // walker takes to condense (300 is 10 game seconds).
+        ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off"),
     ];
     for (k, label, choices, note) in notes {
         let d = c_default(k);

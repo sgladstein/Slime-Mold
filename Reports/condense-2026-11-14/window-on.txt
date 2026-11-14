@@ -1,0 +1,26 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/look/c300k20/fork-farm-060s-all.png
+/tmp/claude-0/look/c300k20/fork-farm-060s-near.png
+  CPU: ground field 3.52 ms (once a game second), model and HUD 0.057 ms a frame
+  t 60 s: mould 17147, soldiers 16, bank 1196, harvested 5676, shots 563, killed 2535, took 96%, crystals left 0.770; squad at 208.9,115.7
+  squad: touching 0.8 mean, 3 most; health 67 mean
+/tmp/claude-0/look/c300k20/fork-farm-120s-all.png
+/tmp/claude-0/look/c300k20/fork-farm-120s-near.png
+  CPU: ground field 3.04 ms (once a game second), model and HUD 0.091 ms a frame
+  t 120 s: mould 17434, soldiers 12, bank 993, harvested 6281, shots 1179, killed 6017, took 90%, crystals left 0.724; squad at 240.0,107.0
+  squad: touching 0.2 mean, 1 most; health 65 mean
+/tmp/claude-0/look/c300k20/fork-farm-180s-all.png
+/tmp/claude-0/look/c300k20/fork-farm-180s-near.png
+  CPU: ground field 2.47 ms (once a game second), model and HUD 0.066 ms a frame
+  t 180 s: mould 24072, soldiers 12, bank 991, harvested 6281, shots 1743, killed 7197, took 85%, crystals left 0.706; squad at 240.8,107.1
+  squad: touching 0.2 mean, 1 most; health 52 mean
+/tmp/claude-0/look/c300k20/fork-farm-240s-all.png
+/tmp/claude-0/look/c300k20/fork-farm-240s-near.png
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.055 ms a frame
+  t 240 s: mould 27613, soldiers 8, bank 987, harvested 6281, shots 2233, killed 7940, took 80%, crystals left 0.688; squad at 256.9,99.4
+  squad: touching 0.4 mean, 1 most; health 52 mean
+/tmp/claude-0/look/c300k20/fork-farm-300s-all.png
+/tmp/claude-0/look/c300k20/fork-farm-300s-near.png
+  CPU: ground field 2.40 ms (once a game second), model and HUD 0.053 ms a frame
+  t 300 s: mould 26904, soldiers 3, bank 953, harvested 6281, shots 2536, killed 9112, took 75%, crystals left 0.671; squad at 254.9,97.5
+  squad: touching 0.3 mean, 1 most; health 47 mean

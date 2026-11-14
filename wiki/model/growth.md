@@ -4,6 +4,7 @@ kind: mechanism
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/condense-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/food-tubes-2026-11-11.md
   - Reports/growth-2026-11-11.md
@@ -13,10 +14,14 @@ sources:
   - Reports/slime-enemy-review-2026-11-12.md
 code:
   - BigDish::alive
+  - BigDish::dense
   - BigDish::energy
   - BigParams::birth_cost
   - BigParams::birth_energy
   - BigParams::capacity
+  - BigParams::condense
+  - BigParams::condense_crowd
+  - BigParams::condense_r
   - BigParams::energy_flow
   - BigParams::fed_crowd
   - BigParams::flow_loss
@@ -62,12 +67,33 @@ growth explores, then joins crystals with tubes: a median 19 of 22 on its
 main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 ([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
+**Condensing** (11-14, `BigParams::condense`, off by default; the
+`condense=` key and the start menu's Condense option): a walker is ripe on
+a step when it took crystal or the 5 x 5 square round it holds at least
+`condense_crowd` (20) walkers; after `condense` steps ripe (300 on the
+menu, 10 s) half the ripe walkers are absorbed and half condense
+(`BigDish::dense`), taking the absorbed one's energy. A condensed walker
+pays twice the upkeep, bites and holds a leg as two, and has two lives (a
+shot, blast, withering or starving breaks it first); births stop while the
+mass (a condensed walker counting two) fills the slots, so the freed
+ground does not refill. Both engines, twins exact. In the window (Fork,
+seed 1, farm) C has 26,904 walkers at 5:00 against 44,806 off and holds
+its crystals in bronze lobes instead of covering the map; at a crowd of 16
+the tubes between crystals broke into beads
+([condense](../../Reports/condense-2026-11-14/README.md)).
+
 ## Owner's word
 
 - 2026-11-11 14:06Z: "Crystal should run out which forces you to expand."
   (the Larder World ruling that needs growth; [decisions](../decisions.md)).
 - 2026-11-11 14:54Z (Larder thread), on crystals that run out: "If you do nothing, the
   slime should get much stronger than you and kill you."
+- 2026-11-14 08:07Z: "if the slime gets to a high enough density,
+  concentration in an area or it stays near an energy crystal long enough,
+  it reabsorbs itself and reduces its density/coverage by half but gets
+  twice as strong and healthy. This makes it more difficult and stops the
+  slime from just filling the map." 08:34Z, on its look: "especially during
+  the transformation process. It has to look cool" (condensing, above).
 
 ## Tried and rejected
 
