@@ -27,7 +27,11 @@ struct V {
     // The crystals drawn as hexagons (`View::set_crystals`), 0 for none.
     n_gems: u32,
     // Fine cells a cell each way (`prep`'s grid; 1 or 2 by the zoom).
-    fine: u32, _f1: u32, _f2: u32, _f3: u32,
+    fine: u32,
+    // The crystals' live charge (`View::set_charge`): crystal cells listed,
+    // the game seconds since the last frame, and 0 off, 1 on, 2 a first
+    // frame that only reads the charge.
+    n_list: u32, dt: f32, live: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -74,6 +78,12 @@ struct V {
 // hexagon its edge cuts through.
 @group(0) @binding(18) var<storage, read> gems: array<vec4<f32>>;
 @group(0) @binding(19) var<storage, read> gem_cell: array<u32>;
+// The crystals' live charge (`View::set_charge`): the engine's charge a
+// cell; each listed crystal cell's charge last frame and how fast it is
+// being taken (`drain`); the crystal cells listed.
+@group(0) @binding(21) var<storage, read> charge: array<f32>;
+@group(0) @binding(22) var<storage, read_write> heat: array<vec2<f32>>;
+@group(0) @binding(24) var<storage, read> gem_list: array<u32>;
 // Each shown cell's hard terrain (rock, wall, rubble), worked out by `prep`
 // for `terrain_over` (whole cells, rows `rw / fine` apart from cell ox, oy; `tidx`): byte 0 the cells'
 // occupancy smoothed over 3 x 3 (1 2 1), byte 1 the height (0-4 cells),
@@ -258,25 +268,77 @@ fn gem_near(x: f32, y: f32) -> u32 {
     return gem_cell[u32(y) * P.ww + u32(x)];
 }
 
-// The charge share of crystal k at (x, y): the cell's, or, at the edge
-// where the pixel's cell is not crystal, the next cell in towards the
-// centre's, so the edge is not dimmed by the soil beside it.
-fn gem_charge(k: u32, x: f32, y: f32) -> f32 {
-    var g = ground[cidx(i32(floor(x)), i32(floor(y)))];
-    if ((g & 15u) != CRYSTAL) {
-        let c = gems[k].xy;
-        let d = c - vec2<f32>(x, y);
-        let u = d / max(length(d), 1e-3);
-        var q = vec2<f32>(x, y) + u * 0.9;
-        g = ground[cidx(i32(floor(q.x)), i32(floor(q.y)))];
-        if ((g & 15u) != CRYSTAL) {
-            q = vec2<f32>(x, y) + u * 1.8;
-            g = ground[cidx(i32(floor(q.x)), i32(floor(q.y)))];
-            if ((g & 15u) != CRYSTAL) { return 0.0; }
+// ---- The crystals' state: charge, taking, spent ----
+//
+// What a crystal shows is its charge, cell by cell (owner's playtest
+// 11-14 04:53Z: "harvesting crystals could look way better"): it stands
+// as tall as its charge and glows with it, so the side being taken sinks
+// and dims first; a cell being taken glows white-hot by how fast it goes
+// (`drain`), whether a soldier or the mould is taking it; and a dry
+// crystal is a low grey stub of spent rock. With `View::set_charge` the
+// charge is the engine's, live each frame; without, the ground's share
+// (refreshed once a game second).
+
+// A crystal cell's share of its full charge (cell i of crystal k).
+fn cell_share(k: u32, i: u32) -> f32 {
+    if (P.live != 0u) { return clamp(charge[i] / max(gems[k].w, 1e-6), 0.0, 1.0); }
+    return byte(ground[i], 1u);
+}
+
+// How hot a crystal cell is: the share of its full charge taken a game
+// second, smoothed (`drain`); 0 without the live charge.
+fn cell_heat(i: u32) -> f32 {
+    if (P.live == 0u) { return 0.0; }
+    return heat[i].y;
+}
+
+// Crystal k's charge share and heat at (x, y): a cubic B-spline (`bc`) over
+// its own cells of the 4 x 4 round the point, so the soil beside it does not
+// dim its edge; at the edge, where none is crystal, the nearest cell in
+// towards the centre. Bilinear, a crystal harvested row by row (the
+// squad's take works through its cells in rows) showed each cell's step
+// at zoom 12 (2026-11-14).
+fn gem_state(k: u32, x: f32, y: f32) -> vec2<f32> {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let wx = bc(ux - floor(ux)); let wy = bc(uy - floor(uy));
+    var acc = vec2<f32>(0.0);
+    var wsum = 0.0;
+    for (var j = 0; j < 4; j++) {
+        for (var q = 0; q < 4; q++) {
+            let cx = ix - 1 + q; let cy = iy - 1 + j;
+            if (cx < 0 || cy < 0 || cx >= i32(P.ww) || cy >= i32(P.wh)) { continue; }
+            let i = cidx(cx, cy);
+            if ((ground[i] & 15u) != CRYSTAL) { continue; }
+            let w = wx[q] * wy[j];
+            acc += w * vec2<f32>(cell_share(k, i), cell_heat(i));
+            wsum += w;
         }
     }
-    return byte(g, 1u);
+    if (wsum > 1e-3) { return acc / wsum; }
+    let c = gems[k].xy;
+    let d = c - vec2<f32>(x, y);
+    let u = d / max(length(d), 1e-3);
+    for (var s = 1; s <= 2; s++) {
+        let q = vec2<f32>(x, y) + u * 0.9 * f32(s);
+        let i = cidx(i32(floor(q.x)), i32(floor(q.y)));
+        if ((ground[i] & 15u) == CRYSTAL) { return vec2<f32>(cell_share(k, i), cell_heat(i)); }
+    }
+    return vec2<f32>(0.0);
 }
+
+fn gem_charge(k: u32, x: f32, y: f32) -> f32 { return gem_state(k, x, y).x; }
+
+// A spent crystal keeps this share of its height: a low stub of grey rock,
+// not a hole.
+const GEM_STUB: f32 = 0.15;
+// The rate (share of a cell's full charge a game second) that lights a
+// cell half way.
+const GEM_HOT: f32 = 0.15;
+// How long a cell's heat lasts after the taking stops, game seconds.
+const GEM_TAU: f32 = 0.35;
+
+fn gem_tall(v: f32) -> f32 { return GEM_STUB + (1.0 - GEM_STUB) * v; }
 
 // A crystal's height at (x, y) above the ground (0 off any crystal).
 fn gem_height(x: f32, y: f32) -> f32 {
@@ -285,7 +347,26 @@ fn gem_height(x: f32, y: f32) -> f32 {
     let d = gem_in(k1 - 1u, x, y).x;
     if (d <= 0.0) { return 0.0; }
     let depth = min(d / (gems[k1 - 1u].z * 0.8660254), 1.0);
-    return (0.6 + 9.0 * depth) * gem_charge(k1 - 1u, x, y);
+    return (0.6 + 9.0 * depth) * gem_tall(gem_charge(k1 - 1u, x, y));
+}
+
+// Each listed crystal cell's heat: how fast its charge is going, a share of
+// its full charge a game second, held for GEM_TAU after it stops. A thread
+// a crystal cell; nothing changes on a frame with no game time.
+@compute @workgroup_size(256)
+fn drain(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let q = gid.x;
+    if (q >= P.n_list) { return; }
+    let i = gem_list[q];
+    let c = charge[i];
+    let hp = heat[i];
+    if (P.live == 2u) { heat[i] = vec2<f32>(c, 0.0); return; }
+    if (P.dt <= 0.0) { return; }
+    let k1 = gem_cell[i];
+    var full = 1.0;
+    if (k1 > 0u) { full = max(gems[k1 - 1u].w, 1e-6); }
+    let rate = max(hp.x - c, 0.0) / full / P.dt;
+    heat[i] = vec2<f32>(c, max(rate, hp.y * exp(-P.dt / GEM_TAU)));
 }
 
 fn height(x: f32, y: f32) -> f32 {
@@ -647,18 +728,23 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let gi = gem_in(k, x, y);
         // Antialiased to a pixel: `zoom` pixels a cell.
         let cover = clamp(gi.x * P.zoom + 0.5, 0.0, 1.0);
+        let st = gem_state(k, x, y);
+        let v = st.x;
+        // A cell being taken: white-hot by how fast its charge goes.
+        let hot = 1.0 - exp(-0.693 * st.y / GEM_HOT);
         if (cover > 0.0) {
             let a = gems[k].z * 0.8660254;
-            let v = gem_charge(k, x, y);
             let depth = clamp(gi.x / a, 0.0, 1.0);
-            // The pyramid's face: height (0.6 + 9 depth) v, so its slope
-            // is 9 v / a along the distance's gradient.
-            let s = 9.0 * v / a;
+            // The pyramid's face: height (0.6 + 9 depth) tall(v), so its
+            // slope is 9 tall(v) / a along the distance's gradient.
+            let s = 9.0 * gem_tall(v) / a;
             let gn = normalize(vec3<f32>(-s * gi.y, -s * gi.z, 1.0));
             var gs = 1.0 + 1.25 * (dot(gn, l) - l.z);
-            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0);
-            var alb = mix(vec3<f32>(26.0, 36.0, 44.0), vec3<f32>(30.0, 120.0, 140.0), v);
-            let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth);
+            // Charged, it is glassy cyan lit from inside; spent, matte grey
+            // rock (the only cyan in the world is charge).
+            let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.25 + 0.75 * v);
+            var alb = mix(vec3<f32>(84.0, 88.0, 92.0), vec3<f32>(30.0, 120.0, 140.0), v);
+            let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould feeding on it lies over it in its own colour: the
             // cells' material is the mould over the ground there, and its
             // thickness is the cells' height (4 th^0.65).
@@ -666,6 +752,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             alb = mix(alb, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.7);
             let gc = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7 + glow;
             c = mix(c, gc, cover);
+        }
+        if (cover < 1.0 && hot > 0.0) {
+            // Where its rim is being taken, the light spills a little onto
+            // the ground and whatever stands there (half a cell).
+            c += vec3<f32>(120.0, 220.0, 255.0) * hot * 0.6 * exp(min(gi.x, 0.0) / 0.5) * (1.0 - cover);
         }
     }
     return c;

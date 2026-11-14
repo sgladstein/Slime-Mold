@@ -1,0 +1,67 @@
+<title>Crystal Harvest Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · fork map · farm hand · llvmpipe · 2026-11-14</span>
+    <h1>Crystal harvest look</h1>
+    <p>After the playtest note "harvesting crystals could look way better", a crystal now shows its charge cell by cell, live every frame. It stands as tall as its charge and glows with it. The side being taken sinks and turns grey first, and the cells losing charge right now light up white-cyan, whether a soldier or the slime is taking it. A dry crystal is a low grey stub of spent stone.</p>
+    <p class="muted">Same round both sides: seed 1, the farm hand sends the squad to the crystal next to the larder, 3 to 20 game seconds. Before is main from this morning (crystals drawn from cells, charge refreshed once a second); after has the slime thread's hexagons (#230) with this change on top.</p>
+  </div>
+
+  <section>
+    <h2>Zoom 12: a squad harvests a crystal dry</h2>
+    <div class="pair">
+      <figure><img src="before-z12.gif" alt="Before: the crystal fades in cell steps once a second"><figcaption>Before: the crystal shrinks in cell steps, once a game second</figcaption></figure>
+      <figure><img src="after-z12.gif" alt="After: the crystal glows where it is being taken and greys from that side"><figcaption>After: a glow at each soldier's side while they take, the crystal sinks and greys from there, then a grey stub</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zoom 6 (the window's opening zoom)</h2>
+    <div class="pair">
+      <figure><img src="after-z6.gif" alt="After at zoom 6"><figcaption>After, at zoom 6</figcaption></figure>
+      <div class="lede">
+        <p>Everything here is read from the simulation:</p>
+        <ul>
+          <li>Height and colour come from each cell's charge, from the engine's own buffer every frame. A cubic spline over the cells keeps it smooth, so a crystal harvested row by row doesn't show cell steps.</li>
+          <li>The glow is how fast each cell is losing charge in game time. It lasts about a third of a second after the taking stops.</li>
+          <li>A crystal with no charge left keeps 15% of its height, so it reads as spent stone, not a hole.</li>
+        </ul>
+        <p class="muted">Cost on llvmpipe: none measurable (GPU tail p50 57.6-60.6 ms with it, 58.9-60.9 ms with the live reads off, bench 8 s farm hand 1280 x 800).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Not yet</h2>
+    <p>The soldier's side of harvesting (pose, a glowing carried load, a trail back to the larder) is the units thread's. It will publish each take's position and amount (<code>Game::last_takes</code>) so its effects and this glow read the same numbers.</p>
+  </section>
+</div>

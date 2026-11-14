@@ -5,6 +5,7 @@ status: current
 updated: 2026-11-14
 sources:
   - Reports/crisp-terrain-2026-11-14/README.md
+  - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/panic-look-2026-11-14/README.md
   - Reports/sharp-slime-2026-11-14/README.md
@@ -108,7 +109,7 @@ shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
 empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Since 2026-11-14 (the owner's playtest: "the slime looks very blurry", "the crystals are pixelated") the body is worked out below the cell: walkers are counted where they are on fine cells (`View::fine`, two a cell from zoom 6), with a sharp Gaussian at the frontier and a wide one in the body, a B-spline height, and Gaussian trail and colour, so a straight edge at zoom 12 rises over about a cell (2.58 before); crystals are their exact hexagons (`View::set_crystals`), antialiased to a pixel; llvmpipe frame +18% ([sharp slime](../../Reports/sharp-slime-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
-crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Since 11-14 every soldier can be counted at zoom 6
+crystals are hexagons. Rock, walls and rubble are drawn at the screen pixel from a smooth field of their cells (`look::mark_far` skips cells far from any), with a one-pixel antialiased edge and a short soft shadow at every zoom ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)). Crystals read the engine's charge per cell every frame (`View::set_charge`, `View::set_time`): each stands and glows by its charge, greys and sinks from the side being taken, and cells losing charge glow white-cyan, held about 0.35 game seconds; a dry crystal is a grey stub ([crystal harvest](../../Reports/crystal-harvest-2026-11-14/README.md)). Since 11-14 every soldier can be counted at zoom 6
 (elbow room `Rules::elbow`, outlined figures, `Marks::selected`, hurt-only
 `Marks::health`, a dead pose), and buildings and the larder show their
 state in the sprite (`Marks::building`, `Game::overrun_share`)

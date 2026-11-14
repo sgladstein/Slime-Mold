@@ -6,6 +6,7 @@ updated: 2026-11-14
 sources:
   - Reports/art-review-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
+  - Reports/crystal-harvest-2026-11-14/README.md
 code:
   - theme
 ---
@@ -46,7 +47,7 @@ one new one are on it.
    visible at any zoom. The slime's edge is where its walker density falls
    off, soft over at most two pixels at zoom 6 and closer; no blur wider
    than that anywhere in the world view. Rock, walls and rubble meet it
-   ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md)).
+   ([crisp terrain](../../Reports/crisp-terrain-2026-11-14/README.md); crystals show live charge and glow where taken, [crystal harvest](../../Reports/crystal-harvest-2026-11-14/README.md)).
 5. **The slime looks alive.** Thick parts raised and glossy (one key light,
    top left, a specular highlight), thin film translucent over the ground,
    grain only where walkers really are sparse (the frontier), and motion

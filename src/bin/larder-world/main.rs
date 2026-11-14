@@ -637,6 +637,13 @@ impl App {
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
             v.set_crystals(&gems, &e.dish.pile_of);
+            // Their charge live from the engine, so a crystal sinks, dims
+            // and greys where it is taken, and glows where it is being
+            // taken (the owner's playtest, 04:53Z: "harvesting crystals
+            // could look way better").
+            if !e.dish.pile_fill.is_empty() {
+                v.set_charge(Some((&e.charge, &e.dish.pile_fill)));
+            }
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -933,6 +940,9 @@ impl App {
     /// The frame's ground, marks, HUD and canvas, ready to record.
     fn prepare(&mut self) {
         self.refresh_ground();
+        if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
+            v.set_time(g.time());
+        }
         self.marks();
         let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
