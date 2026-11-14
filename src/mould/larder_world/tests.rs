@@ -320,7 +320,16 @@ fn a_scared_piece_sees_past_the_guns() {
     while g.world.ticks() < t + g.rules.tps as u64 {
         g.step();
     }
-    assert_eq!(g.world.p.panic_r, 36.0 + g.rules.panic_margin, "a range card moves it at the next count");
+    assert_eq!(g.world.p.panic_r, 36.0 + g.rules.panic_margin, "a longer range moves it at the next count");
+    // A rounds `Range` card stretches the gun (`gun_range`), and the reach with it.
+    g.bullet_mods.reach = 1;
+    let t = g.world.ticks();
+    while g.world.ticks() < t + g.rules.tps as u64 {
+        g.step();
+        g.bullet_mods.reach = 1;
+    }
+    assert!(g.gun_range() > 36.0);
+    assert_eq!(g.world.p.panic_r, g.gun_range() + g.rules.panic_margin, "a range card moves it too");
     let mut keep = race_world(1, 1, 1_000);
     keep.p.panic_r = 7.0;
     let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
