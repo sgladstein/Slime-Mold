@@ -49,6 +49,13 @@ one new one are on it.
    top left, a specular highlight), thin film translucent over the ground,
    grain only where walkers really are sparse (the frontier), and motion
    you can see in a two-second clip.
+   The states play hangs on read at zoom 6 within a second, all from the
+   data: a cut-off piece withering loses light and cools as its energy
+   drops while the fed body stays brightest; a panic lean shows as a
+   brighter, denser front facing its target; a shot's hole is clear the
+   moment it opens (it refills in about 2 s). Check: a three-frame strip
+   (fed, cut at +30 s, leaning) turned grey still shows the difference
+   (game designer review, 11-14). The slime sharpness thread owns these.
 6. **Units read at zoom 6.** Every soldier countable (figures never draw
    exactly on top of one another), its facing visible, selection a thin
    ring, health shown when hurt; the dead look dead; buildings show their
