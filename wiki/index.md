@@ -41,7 +41,7 @@ work; a thread working on one directly may change it.
 
 - [Larder World](world/larder.md): a squad against several mould species in a persistent GPU world with crystals; phases W0-W5; W1a fields done; the small-dish M1-M3 history.
 - [Planets](world/planets.md): the roguelike run's generated levels; eight biomes in a set order, each planet checked fair before play; `map=planet:DEPTH:SEED`, Random planet in the menu.
-- [Plants](world/plants.md): a new plant field (not the old grass); brainstorm done, first build to pick.
+- [Plants](world/plants.md): a new plant field in four kinds (not the old grass) and fire through it, CPU and GPU, drawn.
 - [Larder World maps](world/maps.md): designed worlds from a picture and an item list (WM1 loader, CPU and GPU); five maps each drawn for a different plan.
 - [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; on the Larder world four of five styles beat the scripted farm 15-16/16 held out.
 - [The player's own mould](world/own-mould.md): gardeners (owner, 11-12); soldiers grow a second species that fights the enemy by conversion; forms trade eating for fighting.
