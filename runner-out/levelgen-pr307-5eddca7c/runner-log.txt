@@ -1,0 +1,14 @@
+start 23:54:27Z free KB 3098504 gpu 0,0,0,0,0 % C free GB 47
+fetch exit=0
+worktree add exit=0
+head=5eddca7c9375948af620060302c308454aa8c703
+build exit=0 23:56:07Z free KB 3139120
+warmup start 23:56:07Z card 139 MHz, 405 MHz, 27, 6.51 W
+warmup exit=0 23:56:26Z card 1987 MHz, 4006 MHz, 33, 42.39 W
+run 1 (bench=30 seed=1 spread=0 map=planet:8:1:6 hand=every) start 23:56:31Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 32, 42.39 W free KB 3154584 edge 0
+run 1 exit=0 23:56:50Z
+run 2 (bench=30 seed=1 spread=0 map=planet:5:1:2 hand=every) start 23:56:55Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 36, 43.36 W free KB 3165764 edge 0
+run 2 exit=0 23:57:06Z
+run 3 (bench=30 seed=1 spread=0 map=planet:8:1:6 hand=rush) start 23:57:12Z gpu 0,0,0,0,0 % card 822 MHz, 810 MHz, 37, 8.35 W free KB 3171856 edge 0
+run 3 exit=0 23:57:29Z
+ALL DONE 23:57:29Z
