@@ -534,8 +534,11 @@ impl Brain {
         // harvests about 45,000, and on race seeds 1-4 at 25,000 walkers
         // the army starved by 640-813 s on 3 of 4, with the income check
         // on or off for the opening minute. The bank goes into turrets
-        // (below), which eat nothing.
-        while size < st.buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
+        // (below), which eat nothing. Without rations (the owner's playtest,
+        // 11-14 01:49Z: soldiers that starve are "bad") nothing stops a rich
+        // bank buying to the squad's most.
+        let buy_to = if v.rules.ration <= 0.0 && v.bank > st.spend * v.rules.soldier_cost { v.rules.max_squad } else { st.buy_to };
+        while size < buy_to.min(v.rules.max_squad) && bank - v.rules.soldier_cost >= st.reserve + v.ammo(size + 1, st.ammo) && feeds(size, bank) {
             out.push(Cmd::Buy);
             bank -= v.rules.soldier_cost;
             size += 1;
