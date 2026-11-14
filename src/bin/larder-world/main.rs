@@ -244,6 +244,9 @@ fn build_kind(id: u32) -> Option<Kind> {
 /// The sprite a building draws with (`Marks::building`: atlas tiles 4 + 2k
 /// for the body, 5 + 2k for the lamp). Another hand-numbered registry, so
 /// `command_ids_are_one_registry` checks these too: distinct, 0, 1, 2, ...
+/// The larder's sprite kind (`Marks::building`), after the buildings'.
+const LARDER_SPRITE: u32 = 5;
+
 fn sprite_kind(k: Kind) -> Option<u32> {
     match k {
         Kind::Turret => Some(0),

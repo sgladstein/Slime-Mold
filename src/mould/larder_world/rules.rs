@@ -139,6 +139,21 @@ pub struct Rules {
     pub drain: f32,
     /// Walkers within this many dish cells touch a soldier.
     pub touch: f32,
+    /// Elbow room: the least distance between two living soldiers'
+    /// centres, in `touch` radii (0 is off). Closer pairs step apart each
+    /// frame, at most a wading walk step, only onto standable ground
+    /// (`Game::elbow_room`). Before it (main at 3d31dd3) a squad walked
+    /// from the larder in one column at one speed and stood stacked: in
+    /// the `volley` clip at 0:23, 7 of 9 soldiers sat within one drawn
+    /// figure of each other and the window showed 2 (art review
+    /// 2026-11-14, rule 6: every soldier countable at zoom 6). At 1.3 the
+    /// window's figures (1.15 touch radii, shoulders 0.8 of that) still
+    /// overlapped in a five-soldier knot at zoom 6; 1.6 shows each one.
+    /// It goes with wider sunflower slots (`Game::slot`, 2.52 dish cells a
+    /// ring at 1.6, 1.5 with elbow room off), so a squad at rest is not
+    /// pushed off its slots. It spreads a squad's drain over more ground, so it is a
+    /// census baseline break, not a balance call.
+    pub elbow: f32,
     /// Wading (the owner, 2026-11-12 14:42Z: "soldiers should be heavily
     /// slowed down if they try to run into the thick slime"): a soldier
     /// with this many walkers touching it walks at half speed, and slower
@@ -400,6 +415,7 @@ impl Default for Rules {
             hp: 100.0,
             drain: 2.0,
             touch: 1.5,
+            elbow: 1.6,
             wade: 6.0,
             smell: 0.5,
             smell_r: 2.0,

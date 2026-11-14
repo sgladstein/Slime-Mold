@@ -300,9 +300,11 @@ impl Controls {
     /// zoom) and the drag box or burn line under way. The game draws the
     /// units; push these after them, so they draw on top.
     pub fn marks(&self, units: &[Unit], cam: &Camera, r: f32, out: &mut Marks) {
-        let ring = (r * cam.zoom).max(2.0) + 4.0;
+        // Just clear of the figure's body (0.8 of its radius in sprite A),
+        // thin, so the soldier inside stays the thing you see.
+        let ring = (r * cam.zoom * 0.95).max(2.0) + 2.0;
         for u in units.iter().filter(|u| u.alive && self.selected.contains(&u.id)) {
-            out.ring_px((u.x, u.y), ring, SELECTED);
+            out.selected((u.x, u.y), ring);
         }
         if let (Some(Drag::Select(from)), Some(c)) = (self.drag, self.cursor) {
             if (c.0 - from.0).hypot(c.1 - from.1) > DRAG_PX {
