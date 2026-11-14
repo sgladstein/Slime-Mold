@@ -5,6 +5,7 @@ status: current
 updated: 2026-11-14
 sources:
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/panic-look-2026-11-14/README.md
   - Reports/shot-damage-2026-11-12.md
   - Reports/soldier-controls-2026-11-12.md
   - Reports/start-menu-2026-11-14/README.md
@@ -43,6 +44,7 @@ code:
   - View::set_alive
   - View::set_body_density
   - View::set_look
+  - View::set_news
   - first_hit
 ---
 
@@ -99,7 +101,7 @@ blind A/B: "Neither. Both of those look like stamps"): the drawn
 thickness counts the living walkers near each cell (`BODY_N`), so a hit
 shows as the hole it really makes, open about half a second
 ([shot damage](../../Reports/shot-damage-2026-11-12.md)). With growth, `View::set_alive` takes the walkers' energy so
-empty and dead slots draw no speck. Soldiers are an SVG sprite (the owner's
+empty and dead slots draw no speck. With withering on, `View::set_news` reads each walker's news of food (2026-11-14, plan C8): a cut-off walker's speck is amber while it leans and red once it bolts, larger with the zoom, and the mould fades to ash by the share of nearby walkers cut off, so a starving piece greys before it thins ([starving mould](../../Reports/panic-look-2026-11-14/README.md)). Soldiers are an SVG sprite (the owner's
 pick of a blind A/B, 16:48Z) with facing, team helmet and muzzle flash;
 crystals are hexagons. Since 11-14 every soldier can be counted at zoom 6
 (elbow room `Rules::elbow`, outlined figures, `Marks::selected`, hurt-only

@@ -627,6 +627,12 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // Each walker's news of food (plan C8, 2026-11-14): a cut-off
+            // walker's speck amber while it leans, red once it bolts; the
+            // mould ashen by the share cut off. Only when the world withers
+            // (news is kept then).
+            let ws = &game.world.s;
+            v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
