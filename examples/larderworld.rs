@@ -2,7 +2,9 @@
 //! must lose to the mould, and a plan must beat both on paired seeds.
 //!
 //! ```text
-//! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
+//! cargo run --release --example larderworld -- census seeds=1-16 [hands=idle,random,farm,rush,wall cap=600 threads=4]   # shape C, census size
+//! cargo run --release --example larderworld -- census shape=c ...   # shape C at the window's size (scale 2, 25,000 walkers)
+//! cargo run --release --example larderworld -- census shape=a ...   # the old census mould (scale 2, 5,000 walkers, no keys)
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- slivers=1 seeds=1 map=fork walkers=25000 keys=...+panic:2   # what scared walkers bite
 //! cargo run --release --example larderworld -- census map=fork ...
@@ -161,10 +163,12 @@ const TRACE_EVERY: f32 = 30.0;
 const NEAR: f32 = 10.0;
 
 /// The mould's settings over the race world's, from the command line.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 struct Mould {
     /// `keys=k:v+k:v`: tier keys (`mould::tiers::set_key`) set after the
-    /// tier, to try a candidate before it is one. CPU only.
+    /// tier, to try a candidate before it is one; a shape's keys (`shape=`,
+    /// C by default) come first, so given keys win. Both engines (on the GPU
+    /// through `gpu::set`) since 2026-11-14.
     keys: Vec<(String, String)>,
     /// A mould tier (`tier=swarmer`: the alarm that shots lay draws the
     /// mould to the fight). CPU only.
@@ -209,6 +213,12 @@ struct Mould {
     /// when unset); 0.0002 keeps about 25,000 walkers alive, the density
     /// at which the mould stops looking like specks (one-body report).
     upkeep: Option<f32>,
+    /// The walker slots (`BigParams::capacity`; the race world's ten per
+    /// start walker when unset), from a shape's `capacity` key.
+    capacity: Option<usize>,
+    /// `crystal_charge=`: charge a fine crystal cell (the race world's 512
+    /// at any scale); the census-sized dish raises it (D1, below).
+    crystal_charge: Option<f32>,
 }
 
 impl Mould {
@@ -241,6 +251,12 @@ impl Mould {
         }
         if let Some(u) = self.upkeep {
             p.upkeep = u;
+        }
+        if let Some(c) = self.capacity {
+            p.capacity = c;
+        }
+        if let Some(c) = self.crystal_charge {
+            p.crystal_charge = c;
         }
         if let Some(t) = self.tier {
             t.apply(p);
@@ -282,6 +298,8 @@ fn main() {
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut sliver = false;
+    // `shape=` (D1): which shape on the shapes page plays; C by default.
+    let (mut shape, mut sized, mut flow_given) = (None::<String>, false, false);
     let mut rules = Rules::default();
     let mut mass = None::<f32>;
     let mut m = Mould::default();
@@ -299,8 +317,15 @@ fn main() {
                 let (a, b) = v.split_once('-').unwrap_or((v, v));
                 seeds = (a.parse().unwrap()..=b.parse().unwrap()).collect();
             }
-            "scale" => scale = v.parse().unwrap(),
-            "walkers" => walkers = v.parse().unwrap(),
+            "scale" => {
+                scale = v.parse().unwrap();
+                sized = true;
+            }
+            "shape" => shape = Some(v.to_string()),
+            "walkers" => {
+                walkers = v.parse().unwrap();
+                sized = true;
+            }
             "threads" => threads = v.parse().unwrap(),
             "cap" => cap = Some(v.parse().unwrap()),
             "hands" => hands = v.split(',').map(String::from).collect(),
@@ -321,6 +346,7 @@ fn main() {
             // (`Rules::mass_for`: 1 at 5,000 walkers on scale 2).
             "mass" => mass = Some(v.parse().unwrap()),
             "upkeep" => m.upkeep = Some(v.parse().unwrap()),
+            "crystal_charge" => m.crystal_charge = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "keys" => m.keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
@@ -347,7 +373,10 @@ fn main() {
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = Some(v == "1"),
-            "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "energy_flow" => {
+                m.energy_flow = v.parse().unwrap();
+                flow_given = true;
+            }
             "flow_loss" => m.flow_loss = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
@@ -384,6 +413,45 @@ fn main() {
             _ => panic!("unknown {k}"),
         }
     }
+    // **The census plays shape C by default** (cloud plan D1, 2026-11-14;
+    // the window's mould since #174): its keys (density, shared food,
+    // wither, panic) on a census-sized dish. With no `shape=`, `walkers=` or
+    // `scale=` it runs at scale 1 with a quarter of C's walkers, the same
+    // walkers per open cell as the window's scale 2, so `Rules::mass_for`
+    // gives the same 0.2 and runner time stays near the old 5,000-walker
+    // census. `shape=c` plays the window's full size (scale 2, 25,000);
+    // `shape=a` the old census (5,000 walkers, no keys). Given keys win.
+    // Checked once on 4 seeds that census-sized and window-sized C agree
+    // in direction (the D1 PR's commit message).
+    let shape_name = shape.clone().unwrap_or_else(|| "c".to_string());
+    let (shape_walkers, shape_keys) = slime_mould::mould::larder_world::shape_keys(&shape_name).unwrap_or_else(|| panic!("no shape {shape_name}"));
+    if !sized {
+        (scale, walkers) = if shape.is_some() { (2, shape_walkers) } else { (1, shape_walkers / 4) };
+        // A crystal's charge is per fine cell, so a scale-1 pile holds a
+        // quarter of the food: four times the charge a cell keeps the
+        // economy the window's. Without it the 4-seed check flipped
+        // strike against farm (farm ahead on 4 of 4 at census size, strike
+        // ahead on 4 of 4 at the window's size; strike's squad 14-27, not
+        // 30); with it strike leads on 4 of 4 on both, as the window does.
+        if shape.is_none() {
+            m.crystal_charge.get_or_insert(512.0 * 4.0);
+        }
+    }
+    let mut keys = Vec::new();
+    for &(k, v) in shape_keys {
+        match k {
+            "upkeep" => {
+                m.upkeep.get_or_insert(v.parse().unwrap());
+            }
+            // Slots in proportion to the walkers (C's 50,000 for 25,000).
+            "capacity" => m.capacity = Some(v.parse::<usize>().unwrap() * walkers / shape_walkers),
+            "energy_flow" if !flow_given => m.energy_flow = v.parse().unwrap(),
+            "energy_flow" => {}
+            _ => keys.push((k.to_string(), v.to_string())),
+        }
+    }
+    m.keys.splice(0..0, keys);
+    println!("shape {shape_name}{}", if shape.is_none() && !sized { " (census size)" } else { "" });
     if let Some(c) = cap {
         rules.cap = c;
     }
@@ -414,7 +482,7 @@ fn main() {
     // settings' text, so it changes with any Rules field without a list to
     // keep up to date.
     let settings = format!(
-        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}",
+        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}|{m:?}",
         m.tier.map_or("none", |t| t.name()),
         m.flee.unwrap_or(0.0),
         m.flee_keep.unwrap_or(0.0),
@@ -432,7 +500,7 @@ fn main() {
     if !m.keys.is_empty() {
         println!("keys {:?}", m.keys);
     }
-    assert!((m.tier.is_none() && m.keys.is_empty()) || engines == [false], "tier= and keys= play on the CPU only");
+    assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
     if sliver {
         for &seed in &seeds {
@@ -680,6 +748,17 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
         }
         if let Some(u) = mould.upkeep {
             s.upkeep = u;
+        }
+        if let Some(c) = mould.capacity {
+            s.capacity = c;
+        }
+        if let Some(c) = mould.crystal_charge {
+            s.crystal = c;
+        }
+        // A shape's keys (wither, panic: shape C) set on the GPU's own
+        // settings, as the window does.
+        for (k, v) in &mould.keys {
+            slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("keys=: {e}"));
         }
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
