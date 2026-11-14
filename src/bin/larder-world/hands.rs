@@ -82,6 +82,9 @@ pub(super) fn volley(g: &mut Game<GpuWorld>, free: bool) {
 }
 
 pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
+    if hand == "squads" {
+        return squads_hand(g);
+    }
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings);
     // `siren` the same with a siren in the lure's place (a tier's look).
@@ -250,5 +253,89 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
             _ => {}
         }
+    }
+}
+
+/// The look mode's `squads` hand (`mode=squads`, the squad mode's film),
+/// read off the game's own log, so it keeps no state of its own:
+/// 1. eight soldiers bought into the controlled squad, sent as a squad to
+///    the slimed crystal nearest the start (the anchor walks round walls);
+/// 2. thick slime in range, or slime on a soldier: a stop and a volley at
+///    the thickest of it (the aim follows it once a second) for 10 s;
+/// 3. a split toward the nearest crystal with no slime on it: that half,
+///    now controlled, goes to guard it, while the rest, let go, fight on
+///    by themselves (weaker: the boost is the controlled squad's);
+/// 4. 12 s later control goes back to the fighting half, which volleys
+///    again.
+pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let tps = g.rules.tps as f32;
+    let sc = g.world.scale();
+    while t < 1.0 && g.bank >= g.rules.soldier_cost && g.alive() < 8 {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    let Some(q) = g.active else { return };
+    let Some(m) = g.middle(q) else { return };
+    let when = |g: &Game<GpuWorld>, f: &dyn Fn(&Cmd) -> bool| g.log.iter().find(|(_, c)| f(c)).map(|(tk, _)| *tk as f32 / tps);
+    let fired = when(g, &|c| matches!(c, Cmd::Fire(_, Some(_))));
+    let split = when(g, &|c| matches!(c, Cmd::Split(..)));
+    let back = split.and_then(|s| g.log.iter().find(|(tk, c)| matches!(c, Cmd::Active(_)) && *tk as f32 / tps > s).map(|(tk, _)| *tk as f32 / tps));
+    // The thickest slime a member of `q` sees in range, and how thick.
+    let sight = |g: &Game<GpuWorld>, q: usize| {
+        g.members(q).iter().filter_map(|&k| g.soldiers[k].aim.map(|a| (g.soldiers[k].dense, a, (a.0 - g.soldiers[k].x).hypot(a.1 - g.soldiers[k].y)))).filter(|&(n, _, d)| n >= g.rules.aim_min && d <= g.rules.range * sc).max_by_key(|&(n, ..)| n).map(|(n, a, _)| (a, n))
+    };
+    let cs = g.world.crystals();
+    let slimed: Vec<bool> = (0..cs.len()).map(|i| g.world.walkers_in(cs[i].0, g.world.crystal_r(i) + 2.0 * sc) > 200).collect();
+    let near = |from: (f32, f32), want: bool| cs.iter().enumerate().skip(1).filter(|&(i, c)| c.1 > 0.0 && slimed[i] == want).map(|(_, c)| c.0).min_by(|a, b| (a.0 - from.0).hypot(a.1 - from.1).total_cmp(&(b.0 - from.0).hypot(b.1 - from.1)));
+    if std::env::var("SQ_DEBUG").is_ok() {
+        eprintln!("t {t:.1} q {q} n {} mid {m:?} dest {:?} fire {:?} sight {:?} fired {fired:?} split {split:?} back {back:?}", g.members(q).len(), g.squads[q].dest, g.squads[q].fire, sight(g, q));
+    }
+    match (fired, split, back) {
+        (None, ..) if t >= 1.0 => {
+            // Fire once sent and either arrived or bitten by more than a
+            // straggler (the thin film near the start is no target).
+            let touched = g.members(q).iter().map(|&k| g.soldiers[k].touching).sum::<u32>();
+            let sent = g.log.iter().any(|(_, c)| matches!(c, Cmd::SquadOrder(..)));
+            let arrived = sent && g.squads[q].dest.is_none();
+            match sight(g, q).filter(|_| (arrived && t >= 8.0) || touched >= 12) {
+                Some((a, _)) => {
+                    g.apply(Cmd::SquadOrder(q as u8, Order::Move(m.0, m.1)));
+                    g.apply(Cmd::Fire(q as u8, Some(a)));
+                }
+                None if g.squads[q].dest.is_none() => {
+                    if let Some(c) = near(g.larder, true).or(Some(g.core)) {
+                        g.apply(Cmd::SquadOrder(q as u8, Order::Move(c.0, c.1)));
+                    }
+                }
+                None => {}
+            }
+        }
+        (Some(f), None, _) => {
+            if let Some((a, _)) = sight(g, q) {
+                g.apply(Cmd::Fire(q as u8, Some(a)));
+            }
+            if t - f >= 10.0 {
+                if let Some(c) = near(m, false) {
+                    g.apply(Cmd::Split(q as u8, c));
+                    if let Some(n) = g.active {
+                        g.apply(Cmd::SquadOrder(n as u8, Order::Move(c.0, c.1)));
+                    }
+                }
+            }
+        }
+        (_, Some(s), None) if t - s >= 12.0 => {
+            // Back to the half that stayed to fight.
+            if let Some(&o) = g.live_squads().iter().find(|&&o| o != q) {
+                g.apply(Cmd::Active(o as u8));
+            }
+        }
+        (_, Some(_), Some(_)) => {
+            if let Some((a, _)) = sight(g, q) {
+                g.apply(Cmd::Fire(q as u8, Some(a)));
+            }
+        }
+        _ => {}
     }
 }

@@ -348,6 +348,10 @@ pub struct Rules {
     /// Game seconds a guarded crystal takes to pay what draining it whole
     /// would, and it goes on paying: past that, guarding is worth more.
     pub guard: f32,
+    /// Walkers on a crystal (whole) that stop its guard paying: shape C
+    /// lays a thin film nearly everywhere, so with 0 no crystal paid on
+    /// the Fork.
+    pub guard_walkers: u32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -455,6 +459,7 @@ impl Default for Rules {
             squads: false,
             larder: true,
             guard: 120.0,
+            guard_walkers: 8,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

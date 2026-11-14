@@ -327,7 +327,7 @@ impl<W: World> Game<W> {
 
     /// Once a game second, with no larder (`Rules::larder`): every crystal
     /// with charge left, a live soldier standing by it (not draining it)
-    /// and no walker on it pays a `Rules::guard`-th of the charge it has
+    /// and no more than `Rules::guard_walkers` walkers on it pays a `Rules::guard`-th of the charge it has
     /// left: a crystal half drained guards for half, one drained dry (it
     /// keeps crumbs) for nothing.
     pub(super) fn guard_pay(&mut self) {
@@ -344,7 +344,7 @@ impl<W: World> Game<W> {
             }
             let cr = self.world.crystal_r(i);
             let by = |s: &Soldier| s.alive && !matches!(s.order, Order::Clear(..)) && (s.x - c.0).hypot(s.y - c.1) <= cr + (RIM + 4.0) * sc;
-            if !self.soldiers.iter().any(by) || self.world.walkers_in(c, cr + sc) > 0 {
+            if !self.soldiers.iter().any(by) || self.world.walkers_in(c, cr + sc) > r.guard_walkers {
                 continue;
             }
             let pay = charge / r.charge / r.guard;
