@@ -51,3 +51,12 @@ pass touches only crystal cells. 1070 timing waits until the PC is free.
 The soldier's side of harvesting (pose, a carried glowing load) is the
 units thread's; it will publish each take (`Game::last_takes`) so its
 effects and this glow read the same numbers.
+
+## With the sharp slime, on main (after #230)
+
+Re-filmed once #230 (sharp slime) and main's point lights landed and main
+was merged in: `combined-z12.gif`, `combined-z6.gif` (the same harvest) and
+`combined-terrain-z12.gif` (the left ridge, rush hand, 2 to 8 s). Bench
+8 s farm hand 1280 x 800 on llvmpipe, GPU tail p50: main 54.1 / 54.3 ms,
+main with this branch (crisp terrain and live crystals) 59.6 / 60.4 ms,
+about +6 ms (11%), almost all of it the terrain edges.
