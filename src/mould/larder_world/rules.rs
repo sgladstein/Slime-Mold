@@ -290,6 +290,17 @@ pub struct Rules {
     /// tests, with no census (the owner's 17:26Z testing rule: a census
     /// is not a gate for a look). Any time works, not just whole seconds:
     /// the countdown is in fine steps (`World::fine_steps` a tick).
+    ///
+    /// **2 s since 2026-11-14, the owner's pick** (card, 01:05Z: "Shorter
+    /// craters, 2 s"), after playing shape C (11-12 22:18Z: "The craters
+    /// last too long"). The card's other choices were a crater that keeps
+    /// half the trail under it (`scorch_keep` 0.5, so thick mould closes
+    /// it soonest) and keeping 4.5 s. Two seconds answers "too long"
+    /// directly, and since aims see their slime (#198) a squad fires
+    /// about four times as often, so a hole under steady fire is renewed
+    /// before it closes; it closes about 2.5 s sooner once fire stops
+    /// (`Reports/larder-crater-2s-2026-11-14.md`). Set from the card
+    /// with smoke checks, no census (the 17:26Z testing rule).
     pub crater: f32,
     /// How far into the slime a shot's blast is centred, in strike radii
     /// (`squad::Frame::sink`): on along the shot's line from the first
@@ -407,7 +418,7 @@ impl Default for Rules {
             ration: 1.0,
             hunger: 1.0,
             seek: true,
-            crater: 4.5,
+            crater: 2.0,
             sink: 1.0,
             spread: 0.0,
             crystal_solid: true,
