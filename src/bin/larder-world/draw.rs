@@ -152,10 +152,15 @@ impl App {
         // carried food is banked there) and the core's ring (stand in it
         // with no mould near for 5 s to take it). Game objects, not the
         // simulation, so marks.
-        self.marks.rect(g.larder, (1.4 * sc, 1.4 * sc), [214, 196, 150, 255], true);
-        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
+        // The larder is a sprite in soldier A's style (art review
+        // 2026-11-14: it was a plain beige square), drawn from the game's
+        // state: its charge cells lit while the bank holds food, darkening
+        // as the mould holds it with the bank dry (the overrun count). The
+        // faint ring is the ground a walker must reach to hold it.
+        self.marks.building(g.larder, 1.6 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0);
+        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
         if self.larder_sel {
-            self.marks.ring(g.larder, 3.6 * sc, [255, 255, 255, 200]);
+            self.marks.selected(g.larder, 3.6 * sc * zoom);
         }
         if let Order::Move(x, y) | Order::Clear(x, y) = g.rally {
             if self.larder_sel || !self.controls.selected.is_empty() {
@@ -189,12 +194,20 @@ impl App {
             let wide = (g.rules.build.touch * sc * zoom).clamp(10.0, 40.0);
             let progress = |marks: &mut Marks, at: (f32, f32), below: f32| {
                 marks.bar(at, below, (wide, 2.0), b.built, [235, 235, 235, 255], [40, 40, 40, 220]);
-                let note = match (g.raise_left(k), g.raising(k)) {
-                    (Some(t), _) => format!("{}s", t.ceil() as u32),
-                    (None, (_, n)) if n > 0 => "on the way".into(),
-                    _ => "no builder".into(),
-                };
-                marks.label(at, (wide + 4.0, below - 5.0), &note, 1.5, [235, 235, 235, 230]);
+                // The seconds left as text; "on the way" and "no builder"
+                // as a figure striding, or standing struck through (art
+                // director, 11-14: two ghosts side by side ran their words
+                // into each other).
+                let (x, y) = (wide + 4.0, below - 5.0);
+                let ink = [235, 235, 235, 230];
+                match (g.raise_left(k), g.raising(k)) {
+                    (Some(t), _) => marks.label(at, (x, y), &format!("{}s", t.ceil() as u32), 1.5, ink),
+                    (None, (_, n)) if n > 0 => marks.icon(at, (x, y), WALKING, 1.5, ink),
+                    _ => {
+                        marks.icon(at, (x, y), STANDING, 1.5, [200, 200, 200, 200]);
+                        marks.icon(at, (x, y), SLASH, 1.5, [235, 80, 70, 255]);
+                    }
+                }
             };
             if let Kind::Wall { to } = b.kind {
                 // A wall is ground once whole; until then a faint dashed
@@ -214,7 +227,11 @@ impl App {
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             self.marks.building(b.at, half, kind, if b.up() { 1.0 } else { b.built }, b.hp / b.max_hp.max(1.0), working);
             let below = (half * zoom).max(2.0) + 5.0;
-            self.marks.bar(b.at, below, (7.0, 1.0), b.hp / b.max_hp.max(1.0), [90, 220, 110, 255], [70, 30, 30, 255]);
+            // Health once it stands (a ghost's lower hp is its progress,
+            // shown by the bar below and the sprite's seam).
+            if b.up() {
+                self.marks.health(b.at, below, b.hp / b.max_hp.max(1.0));
+            }
             if !b.up() {
                 progress(&mut self.marks, b.at, below + 4.0);
             }
@@ -336,15 +353,25 @@ impl App {
         // and at least 8 pixels across the radius, so it reads at any zoom
         // (at 0.9 dish cells, the stand-in's size, it was a 4-pixel dot at
         // the whole map's zoom).
-        let r = (g.rules.touch * sc).max(8.0 / zoom);
-        for (k, s) in g.soldiers.iter().enumerate() {
+        // Drawn 1.15 times that and at least 10 pixels since the art review
+        // (2026-11-14: a 20-pixel olive disc at zoom 6); elbow room
+        // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
+        // dead first, so the living are drawn over them.
+        let r = (g.rules.touch * sc * 1.15).max(10.0 / zoom);
+        let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
+        for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, at: (s.x, s.y), alive: s.alive });
             self.marks.soldier((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive);
+        }
+        // The bars after every figure, so a neighbour never hides one.
+        for s in &g.soldiers {
             if s.alive {
-                let below = (r * zoom).max(2.0) + 5.0;
-                self.marks.bar((s.x, s.y), below, (7.0, 1.0), s.hp / g.rules.hp, [90, 220, 110, 255], [70, 30, 30, 255]);
+                // Health only when hurt (art direction rule 6); a carried
+                // load always, under it.
+                let below = (r * zoom * 0.9).max(2.0) + 5.0;
+                self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
                 if s.carry > 0.0 {
-                    self.marks.bar((s.x, s.y), below + 3.0, (7.0, 0.8), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
+                    self.marks.bar((s.x, s.y), below + 4.0, (8.0, 1.0), s.carry / g.rules.carry, theme::ENERGY, [20, 40, 50, 255]);
                 }
             }
         }
@@ -660,7 +687,7 @@ impl App {
             ("Tab".into(), "Four times faster, or back".into()),
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
-            ("E".into(), "Tools page: blast, det cord, mine, sleep gas (germ not on the GPU yet); E again goes back".into()),
+            ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
         ];
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));

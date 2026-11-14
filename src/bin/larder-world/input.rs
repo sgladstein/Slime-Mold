@@ -8,8 +8,9 @@ impl App {
         self.game.as_ref().map(|g| g.soldiers.iter().enumerate().map(|(id, s)| Unit { id, team: 0, x: s.x, y: s.y, alive: s.alive }).collect()).unwrap_or_default()
     }
 
-    /// The next loadout this world can cast (the GPU world has no germ
-    /// yet), kept for the next game too: H, or the loadout panel's Swap.
+    /// The next loadout this world can cast (every card on the GPU world
+    /// too since 11-14), kept for the next game too: H, or the loadout
+    /// strip's button.
     pub(super) fn next_round(&mut self) {
         let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
             rounds::Card::Gas => g.world.has_gas(),

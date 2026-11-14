@@ -114,9 +114,12 @@ Each report's own "next steps" section has the reasons and numbers:
   thread, never as chat attachments, with the event counts beside each image.
   Every page made so far is listed in [`Reports/pages.md`](Reports/pages.md)
   with its archived source.
-- **Merging.** Merge a PR only when both CI jobs ("test + clippy" and "sound
-  device builds (organ)") are green on its exact head, with a merge commit.
-  PRs that change only `Reports/`, `handoff/`, `research/`, `wiki/` or `*.md` skip the
+- **Merging.** Label the PR `queue`; `.github/workflows/merge-queue.yml`
+  merges it onto current main (with up to four other queued PRs) as a merge
+  commit, runs both CI jobs ("test + clippy" and "sound device builds
+  (organ)") on that candidate, and fast-forwards main when green. GitHub's own
+  merge queue is for organization-owned repos only (2026-11-14). PRs that
+  change only `Reports/`, `handoff/`, `research/`, `wiki/` or `*.md` skip the
   two build jobs (PR #5), so they show as skipped, which is green.
 - **Reaching the repo from a session.** Add `sgladstein/Slime-Mold` to the
   session (`add_repo`); the crate is `slime-mould`, imported as

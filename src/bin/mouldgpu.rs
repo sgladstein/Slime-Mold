@@ -2935,7 +2935,7 @@ mod tests {
             // `scorch_disc`), which must match cell for cell.
             let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
             cpu.scorch_disc(x * k, y * k, 5.0 * k, 300);
-            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300);
+            e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300, 0.0);
             let crater_off = e.crater_of().iter().zip(&cpu.scorch).filter(|(a, b)| **a != **b as f32).count();
             assert!(cpu.scorch.contains(&300) && crater_off == 0, "{name}: the burst's crater, {crater_off} cells off");
             let side = (e.done % 2) as usize;
@@ -3191,6 +3191,9 @@ mod tests {
             ("hungry, no limit, Jenson's", hungry(small(3))),
             ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
             ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
+            // The toolkit's germ (2026-11-14): the sick pay `sick_upkeep`
+            // times the upkeep, long sick so the warm-up leaves some sick.
+            ("hungry, the sick pay five times the upkeep", Settings { sick: 400, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, sick_upkeep: 5.0, ..hungry(small(0)) }),
             // Every other walker set starving and the rest set to breed
             // (below), with room in the slots: births land in cells freed
             // by deaths in the same tick, some of them claimed by the
@@ -3263,7 +3266,11 @@ mod tests {
             let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
             // A child is its parent's kind (`mix_share`, bit 8).
             let kinds_off = if cpu.kind.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
-            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count() };
+            // Living slots only: a dead slot's counter is never read (a
+            // birth there sets it to 0), and the CPU counts it down while
+            // the GPU leaves it (seen with `sick` 400, 2026-11-14: 73 dead
+            // slots one apart, every living one exact).
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).enumerate().filter(|(k, (g, c))| cpu.lives(*k) && **g != **c as u32).count() };
             let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
             let alive = cpu.alive.iter().filter(|&&a| a).count();
@@ -4393,7 +4400,11 @@ mod tests {
         // The old bite (1 a walker): at the game's 2 (2026-11-12) the squad
         // dies by 20 s and the engines part on who died when, not on the
         // craters this test is about.
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, ..Rules::default() };
+        // Elbow room off (`Rules::elbow`, 2026-11-14), like solid crystals:
+        // a game-layer walk rule the same on both engines, but it moves
+        // where each soldier stands, and seed 3's chaos then parted the
+        // moulds past the bound (896 GPU against 1014 CPU at 30 s).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
@@ -4517,7 +4528,11 @@ mod tests {
         // (`twin_gap_over_seeds_is_chaos`, which plays the default rules).
         // The sink itself is twinned to the bit in one frame
         // (`the_squad_matches_the_cpu_for_one_frame`).
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, sink: 0.0, ..Rules::default() };
+        // Elbow room off (`Rules::elbow`, 2026-11-14), like solid crystals:
+        // a game-layer walk rule the same on both engines, but it moves
+        // where each soldier stands, and seed 3's chaos then parted the
+        // moulds past the bound (896 GPU against 1014 CPU at 30 s).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, elbow: 0.0, sink: 0.0, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);

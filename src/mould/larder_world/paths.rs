@@ -82,17 +82,29 @@ pub(super) fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f
 }
 
 /// Soldier `k`'s place round the point it was sent to, dish cells (M3's
-/// sunflower: a squad sent to one point spreads instead of stacking).
-pub(super) fn slot(k: usize) -> (f32, f32) {
+/// sunflower: a squad sent to one point spreads instead of stacking),
+/// `ring` dish cells a ring (`Game::slot`).
+pub(super) fn slot(k: usize, ring: f32) -> (f32, f32) {
     if k == 0 {
         return (0.0, 0.0);
     }
-    let r = 1.5 * (k as f32).sqrt();
+    let r = ring * (k as f32).sqrt();
     let a = k as f32 * 2.399_963;
     (r * a.cos(), r * a.sin())
 }
 
 impl<W: World> Game<W> {
+    /// Soldier `k`'s sunflower slot (`slot`), dish cells. The ring is 1.5,
+    /// or with elbow room (`Rules::elbow`, 2026-11-14) a little over the
+    /// separation (1.6 x touch 1.5 = 2.4, so 2.52), so the nearest two
+    /// slots (0 and 1) sit as far apart as elbow room asks and it never
+    /// pushes a squad at rest off its slots. With elbow room off the slots
+    /// are as before, so the engine twins (which turn it off) play as they
+    /// did: 2.5 there moved seed 3's core twin 8.6% apart at 25 s.
+    pub(super) fn slot(&self, k: usize) -> (f32, f32) {
+        slot(k, (self.rules.elbow * self.rules.touch * 1.05).max(1.5))
+    }
+
     /// Where soldier `k` is walking to now, fine cells, if anywhere.
     pub(super) fn goal(&self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
@@ -158,7 +170,7 @@ impl<W: World> Game<W> {
         let s = self.soldiers[k];
         let sc = self.s();
         let off = |p: (f32, f32)| {
-            let o = slot(k);
+            let o = self.slot(k);
             (p.0 + o.0 * sc, p.1 + o.1 * sc)
         };
         match s.order {
@@ -269,15 +281,7 @@ impl<W: World> Game<W> {
         };
         let (dx, dy) = (g.0 - s.x, g.1 - s.y);
         let d = dx.hypot(dy).max(1e-6);
-        // Thick slime holds a soldier back (`Rules::wade`).
-        let wade = if self.rules.wade > 0.0 {
-            // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
-            let x = s.touching as f32 / self.rules.wade;
-            1.0 / (1.0 + x * x)
-        } else {
-            1.0
-        };
-        let step = (self.rules.speed * self.s() * dt * wade).min(d);
+        let step = (self.rules.speed * self.s() * dt * self.wade(k)).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
         let ok = |x: f32, y: f32| if caught { self.world.open(x, y) } else { self.standable(x, y) };
         let to = if ok(nx, ny) {
@@ -292,6 +296,96 @@ impl<W: World> Game<W> {
         if let Some((x, y)) = to {
             self.soldiers[k].x = x;
             self.soldiers[k].y = y;
+        }
+    }
+
+    /// The share of full speed soldier `k` walks at: thick slime holds a
+    /// soldier back (`Rules::wade`).
+    pub(super) fn wade(&self, k: usize) -> f32 {
+        if self.rules.wade > 0.0 {
+            // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
+            let x = self.soldiers[k].touching as f32 / self.rules.wade;
+            1.0 / (1.0 + x * x)
+        } else {
+            1.0
+        }
+    }
+
+    /// Elbow room (`Rules::elbow`, art review 2026-11-14): two living
+    /// soldiers closer than `elbow` touch radii each step half the
+    /// overlap apart, at most a walk step at their wading speed (at least
+    /// half speed, so a knot in thick slime still opens), onto
+    /// standable ground only (else along one axis, else not at all), so a
+    /// squad walking in one column fans out and every soldier can be
+    /// counted. Pushes come from the positions before the pass, so the
+    /// result doesn't depend on visiting order; a pair on the very same
+    /// point splits along a fixed angle from their indices. O(n²): 40
+    /// soldiers are 780 pairs.
+    pub(super) fn elbow_room(&mut self, dt: f32) {
+        let r = self.rules;
+        if r.elbow <= 0.0 {
+            return;
+        }
+        let sc = self.s();
+        let min = r.elbow * r.touch * sc;
+        let n = self.soldiers.len();
+        let mut push = vec![(0.0f32, 0.0f32); n];
+        let mut any = false;
+        for i in 0..n {
+            let a = self.soldiers[i];
+            if !a.alive {
+                continue;
+            }
+            for j in i + 1..n {
+                let b = self.soldiers[j];
+                if !b.alive {
+                    continue;
+                }
+                let (dx, dy) = (a.x - b.x, a.y - b.y);
+                let d = dx.hypot(dy);
+                if d >= min {
+                    continue;
+                }
+                let (ux, uy) = if d > 1e-4 {
+                    (dx / d, dy / d)
+                } else {
+                    let t = (i * 31 + j) as f32 * 2.399_963;
+                    (t.cos(), t.sin())
+                };
+                let half = (min - d) / 2.0;
+                push[i].0 += ux * half;
+                push[i].1 += uy * half;
+                push[j].0 -= ux * half;
+                push[j].1 -= uy * half;
+                any = true;
+            }
+        }
+        if !any {
+            return;
+        }
+        for (k, p) in push.into_iter().enumerate() {
+            let s = self.soldiers[k];
+            let len = p.0.hypot(p.1);
+            // A soldier caught on a crystal walks out first (`walk`).
+            if len <= 0.0 || !s.alive || self.solid_at((s.x, s.y)).is_some() {
+                continue;
+            }
+            let cap = r.speed * sc * dt * self.wade(k).max(0.5);
+            let f = if len > cap { cap / len } else { 1.0 };
+            let (nx, ny) = (s.x + p.0 * f, s.y + p.1 * f);
+            let to = if self.standable(nx, ny) {
+                Some((nx, ny))
+            } else if self.standable(nx, s.y) {
+                Some((nx, s.y))
+            } else if self.standable(s.x, ny) {
+                Some((s.x, ny))
+            } else {
+                None
+            };
+            if let Some((x, y)) = to {
+                self.soldiers[k].x = x;
+                self.soldiers[k].y = y;
+            }
         }
     }
 

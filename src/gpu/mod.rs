@@ -229,6 +229,9 @@ pub struct Settings {
     pub sick_trail: f32,
     pub sick_reach: f32,
     pub sick_turn: f32,
+    /// A sick walker pays this times the upkeep (`BigParams::sick_upkeep`;
+    /// 1 costs nothing more).
+    pub sick_upkeep: f32,
     /// The walkers within `seed_r` of the middle fall sick `seed_at`
     /// seconds in (0: at the start, `BigParams::sick_seed_r`).
     pub seed_at: f32,
@@ -461,6 +464,7 @@ impl Settings {
             sick_trail: 1.0,
             sick_reach: 1.0,
             sick_turn: 1.0,
+            sick_upkeep: 1.0,
             seed_at: 4.0,
             seed_r: 40.0,
             species: 0,
@@ -703,6 +707,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "sick_trail" => s.sick_trail = f()?,
         "sick_reach" => s.sick_reach = f()?,
         "sick_turn" => s.sick_turn = f()?,
+        "sick_upkeep" => s.sick_upkeep = f()?,
         "seed_at" => s.seed_at = f()?,
         "seed_r" => s.seed_r = f()?,
         // The outside rules, with the CPU's names too.
@@ -844,6 +849,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         sick_trail: s.sick_trail,
         sick_reach: s.sick_reach,
         sick_turn: s.sick_turn,
+        sick_upkeep: s.sick_upkeep,
         sick_seed_r: if s.seed_at <= 0.0 { s.seed_r / scale as f32 } else { 0.0 },
         sensor_r: s.sensor_r,
         species: s.fields() as u8,
@@ -1648,7 +1654,7 @@ impl Engine {
             self.seeded = true;
         }
         b.extend(u32_bytes(&[s.sick, s.immune, infect, 0]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, 0.0, s.gas_death, 0.0]));
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, 0.0]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {
@@ -2201,7 +2207,7 @@ impl Engine {
     /// `struck` reads back the walkers killed so far.
     #[allow(clippy::too_many_arguments)]
     pub fn strike(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32) {
-        self.burst(shared, s, x, y, r, alarm, alarm_r, 0.0, 0);
+        self.burst(shared, s, x, y, r, alarm, alarm_r, 0.0, 0, 0.0);
     }
 
     /// **Sleep gas**, as the CPU's `BigDish::gas` (dish cells, the
@@ -2267,13 +2273,16 @@ impl Engine {
     /// CPU's `strike` then `scorch_disc`), in the same two passes: the
     /// `hit` pass writes the damage memory's first block (binding 47) as it
     /// clears the trail. From then on the trail pass counts the crater down.
+    /// With contagion on (`Settings::sick`), the `kill` pass also makes
+    /// every living walker within `germ_r` dish cells sick (the toolkit's
+    /// germ, the CPU's `BigDish::infect`), whatever `r` kills.
     #[allow(clippy::too_many_arguments)]
-    pub fn burst(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32, crater_r: f32, steps: u16) {
+    pub fn burst(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32, crater_r: f32, steps: u16, germ_r: f32) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         self.scorched |= steps > 0;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, crater_r * k, steps as f32, 0.0]));
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, crater_r * k, steps as f32, germ_r * k]));
         self.run(shared, &[(HIT, self.cells.div_ceil(256)), (KILL, self.n.div_ceil(256))]);
     }
 

@@ -135,7 +135,7 @@ fn the_window_plays_the_real_game() {
 
 /// **The tools page works in the window** (2026-11-12): soldiers take
 /// tools at the larder between steps, the page lists the five, the germ
-/// is greyed out on the GPU world (sleep gas runs there since 11-14), a
+/// is ready on the GPU world, as is the sleep gas (both since 11-14), a
 /// blast thrown near a soldier is paid, spends a held tool and leaves a
 /// crater, and a det cord and a sleep gas cloud do too.
 #[test]
@@ -150,7 +150,7 @@ fn the_window_uses_the_tools() {
     app.tools_page = true;
     let m = app.model(None, None);
     assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
-    assert!(m.commands[0].ready && !m.commands[3].ready && m.commands[4].ready, "blast and gas ready, germ not on the GPU");
+    assert!(m.commands[0].ready && m.commands[3].ready && m.commands[4].ready, "blast, germ and gas ready on the GPU");
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
     let s = g.soldiers[0];

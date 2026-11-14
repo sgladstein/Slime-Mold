@@ -138,7 +138,7 @@ use slime_mould::sound::world::{Ear, WorldListener};
 use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
-use slime_mould::world::marks::team_colour;
+use slime_mould::world::marks::{team_colour, SLASH, STANDING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
@@ -248,6 +248,9 @@ fn build_kind(id: u32) -> Option<Kind> {
 /// The sprite a building draws with (`Marks::building`: atlas tiles 4 + 2k
 /// for the body, 5 + 2k for the lamp). Another hand-numbered registry, so
 /// `command_ids_are_one_registry` checks these too: distinct, 0, 1, 2, ...
+/// The larder's sprite kind (`Marks::building`), after the buildings'.
+const LARDER_SPRITE: u32 = 5;
+
 fn sprite_kind(k: Kind) -> Option<u32> {
     match k {
         Kind::Turret => Some(0),
