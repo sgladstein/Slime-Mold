@@ -11,6 +11,7 @@ sources:
   - Reports/larder-world-tiers-2026-11-12.md
   - Reports/plan-matrix-2026-11-12.md
   - Reports/plan-matrix-tiers-2026-11-14.md
+  - Reports/plan-matrix-take-2026-11-14.md
 code:
   - Brain
   - Game::apply
@@ -31,6 +32,8 @@ The player AI plays Larder's soldier side for automated playtests. It gives only
 **On shape C before the playtest** (C4, [report](../../Reports/plan-matrix-c-2026-11-14.md)): a new style, **cut** (`Style::CUT`), attack-moves the strike's army to the middle of the roads from the mould's home to the held crystals nearest the larder. On seeds 301-308 at 25,000 walkers the strike lost its squad on 7 of 8; cut beat it 7-1 but, like boom, claim and fort, only stalemated (+0.33 to +0.34). No plan wiped the mould and none dominates.
 
 **With no food rule, every tier** ([report](../../Reports/plan-matrix-tiers-2026-11-14.md), census-size C on `2371bf0`, seeds 301-308): **take** (`Style::TAKE`: cut, claim what it cuts off, 40 soldiers, turrets) is best by median on 7 of 8 columns, while strike is best on Drifter. Nothing wipes plain C. Take wipes Swarmer 4/8, and Sporer and Sprawler 2-3/8. Boom, claim and fort never attack, so they only stalemate at about +0.15. Strike keeps its squad now that soldiers need no food. The D3 gates 'no plan best on more than half' and 'every plan best somewhere' fail; idle and random lose everywhere. Nothing survives Holm (120 tests, 8 seeds).
+
+**Take plus one specialty** ([report](../../Reports/plan-matrix-take-2026-11-14.md), the designer's follow-up, on main after #227's elbow room): four styles, `take_fort` (walls), `take_boom` (from 10:00 with 36), `take_claim` (16 turrets, 4 farmers) and `take_strike` (the core after `core_after` = 2 taken). **take_claim** wipes plain C on 6 of 8 seeds and is best on all 8 columns. Walls, a late start and a core strike all lose to plain take. Turrets hold the taken crystals while the soldiers cut.
 
 **Walkers weighed** (#199's audit; [report](../../Reports/ai-mass-2026-11-13.md)): the brain's walker thresholds (`dare`, `wall_alarm`, `HELD`) read walkers times `Rules::mass` (`View::weigh`), so they mean the same thickness on shape C's 25,000 walkers as on the 5,000 mould they were tuned on; the 5,000 census replays identically. On C (race 5-8) boom and claim score higher 4-0 and harvest more on every game; the strike's squad still dies on 3 of 4.
 
@@ -70,6 +73,7 @@ The small-dish AI (`src/mould/larder_ai.rs`, [report](../../Reports/larder-ai-20
 
 - [plan-matrix-c-2026-11-14.md](../../Reports/plan-matrix-c-2026-11-14.md).
 - [plan-matrix-tiers-2026-11-14.md](../../Reports/plan-matrix-tiers-2026-11-14.md).
+- [plan-matrix-take-2026-11-14.md](../../Reports/plan-matrix-take-2026-11-14.md).
 - [ai-mass-2026-11-13.md](../../Reports/ai-mass-2026-11-13.md).
 - [ai-rations-2026-11-12.md](../../Reports/ai-rations-2026-11-12.md).
 - [plan-matrix-2026-11-12.md](../../Reports/plan-matrix-2026-11-12.md).
