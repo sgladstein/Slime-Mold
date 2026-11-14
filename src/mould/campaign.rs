@@ -1120,8 +1120,9 @@ mod tests {
                 sc.spawn(move || ("Kill zone, zone+claim", play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0))),
                 // 6:16.
                 sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=8+buy_to=12", 540.0))),
-                // 5:47 (turrets by the farmed crystals; plain boom 5:50).
-                sc.spawn(move || ("Spore season, guard+boom", play("7-spore-season", "guard", "boom:buy_to=8", 420.0))),
+                // 2:50 (census v14: keep the spores off the two home
+                // crystals for a minute; farming alone never does).
+                sc.spawn(move || ("Spore season, pumps+boom", play("7-spore-season", "pumps", "boom:buy_to=12", 300.0))),
             ]
             .map(|h| h.join().unwrap())
         });
