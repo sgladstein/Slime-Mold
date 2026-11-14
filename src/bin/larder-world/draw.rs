@@ -88,9 +88,9 @@ pub(super) fn turret_state<W: World>(g: &Game<W>, b: &Building) -> u32 {
 
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
-fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[TurretLook], g: &Game<GpuWorld>, k: usize, half: f32) {
+fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
     let b = &g.buildings[k];
-    let look = looks.get(k).copied().unwrap_or(TurretLook { facing: 0.0, shot: 0.0 });
+    let look = looks.get(k).copied().unwrap_or_default();
     let built = if b.up() { 1.0 } else { b.built };
     marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, look.shot / TURRET_SHOT, turret_state(g, b));
     let fl = look.shot / TURRET_SHOT;
@@ -189,8 +189,10 @@ impl App {
         // 2026-11-14: it was a plain beige square), drawn from the game's
         // state: its charge cells lit while the bank holds food, darkening
         // as the mould holds it with the bank dry (the overrun count). The
-        // faint ring is the ground a walker must reach to hold it.
-        self.marks.building_pulse(g.larder, 1.6 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0, self.banked / BANKED);
+        // faint ring is the ground a walker must reach to hold it. Drawn
+        // 2.2 dish cells (was 1.6) since the buildings went soldier-scale
+        // (11-14), so the store stays bigger than an outpost.
+        self.marks.building_pulse(g.larder, 2.2 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0, self.banked / BANKED);
         self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
         } else {
             // No larder (the squad mode): each guarded crystal's ring, the
@@ -253,6 +255,8 @@ impl App {
             }
         }
         let mut turrets = Vec::new();
+        // The buildings' lights, lit after the frame's lights are cleared.
+        let mut glows: Vec<Light> = Vec::new();
         for (k, b) in g.buildings.iter().enumerate() {
             if !b.alive {
                 continue;
@@ -295,7 +299,10 @@ impl App {
                 continue;
             }
             let Some(kind) = sprite_kind(b.kind) else { continue };
-            let mut half = g.rules.build.touch * sc * 0.7;
+            // Every building soldier-scale (building looks, 11-14; they were
+            // 0.7 touch radii, smaller than a soldier's 1.15, and the turret
+            // went to a whole one first).
+            let half = (g.rules.build.touch * sc).max(11.0 / zoom);
             // A lure switched off is not working.
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             let built = if b.up() { 1.0 } else { b.built };
@@ -306,16 +313,69 @@ impl App {
                 // its head turned to its aim, kicking as it fires, its lamp
                 // the game's state (mould in reach, or a bank too low to pay
                 // for a shot).
-                half = (g.rules.build.touch * sc).max(11.0 / zoom);
                 // A standing one is drawn after the bullets, with its bar,
                 // below; a ghost here, under its progress bar.
                 if b.up() {
                     turrets.push((k, half));
                     continue;
                 }
-                turret_mark(&mut self.marks, &mut self.lights, &self.turrets, g, k, half);
+                turret_mark(&mut self.marks, &mut self.lights, &self.blooks, g, k, half);
             } else {
-                self.marks.building(b.at, half, kind, built, b.hp / b.max_hp.max(1.0), working);
+                let n = self.blooks.get(k).copied().unwrap_or_default();
+                let health = b.hp / b.max_hp.max(1.0);
+                match b.kind {
+                    // A burning lure's lamp, and its scent lit where the
+                    // engine's scent field really is (a scent light, lit
+                    // by the look's scent byte): it spreads while the lure
+                    // burns and fades with the field once it stops.
+                    Kind::Lure => {
+                        self.marks.building(b.at, half, kind, built, health, working);
+                        if working && b.up() {
+                            glows.push(Light { at: b.at, reach: g.rules.build.lure_r * sc * 1.6, lift: -2.0, colour: [150.0, 235.0, 80.0], strength: 1.3 });
+                        }
+                    }
+                    // Its hose turned into its crystal, and a line of charge
+                    // from the crystal's middle to the hose, as bright as
+                    // its draw this frame (`Building::drew`) is of a full
+                    // pump's (`pump_rate`): a crystal running dry dims it.
+                    Kind::Pump => {
+                        self.marks.building_facing(b.at, half, kind, built, health, working, 0.0, n.facing);
+                        if let (true, Some(c)) = (b.up(), b.crystal.and_then(|c| g.world.crystals().get(c).copied())) {
+                            let frame = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+                            let full = (b.drew / (g.rules.build.pump_rate * frame).max(1e-6)).clamp(0.0, 1.0);
+                            let tip = (b.at.0 + n.facing.cos() * half * 1.5, b.at.1 + n.facing.sin() * half * 1.5);
+                            if full > 0.0 {
+                                self.marks.line(c.0, tip, 0.0, [126, 232, 240, (90.0 + 165.0 * full) as u8]);
+                                glows.push(Light { at: c.0, reach: 5.0 * sc, lift: 3.0, colour: [92.0, 224.0, 232.0], strength: 0.8 * full });
+                            }
+                        }
+                    }
+                    // A mini larder: its cells and lamp flare as a carrier
+                    // banks a load there.
+                    Kind::Outpost => self.marks.building_pulse(b.at, half, kind, built, health, working, n.bank / BANKED),
+                    // A call from its real burst: the lamp and horns flare,
+                    // and a ring runs out to the alarm's reach
+                    // (`BuildRules::siren_r`) and fades, with a red light.
+                    Kind::Siren => {
+                        let f = n.call / SIREN_CALL;
+                        self.marks.building_pulse(b.at, half, kind, built, health, f > 0.0, f);
+                        if f > 0.0 {
+                            let reach = g.rules.build.siren_r * sc;
+                            // Two rings, the second a third of the call
+                            // behind, each easing out to the reach.
+                            for lag in [0.0, 0.3] {
+                                if 1.0 - f < lag {
+                                    continue;
+                                }
+                                let t = (1.0 - f - lag) / (1.0 - lag);
+                                let rr = half + (reach - half) * (1.0 - (1.0 - t) * (1.0 - t));
+                                self.marks.ring(b.at, rr, [255, 96, 64, (230.0 * (1.0 - t)) as u8]);
+                            }
+                            glows.push(Light { at: b.at, reach: reach * 0.6, lift: 4.0, colour: [255.0, 90.0, 60.0], strength: 1.2 * f });
+                        }
+                    }
+                    _ => self.marks.building(b.at, half, kind, built, health, working),
+                }
             }
             let below = (half * zoom).max(2.0) + 5.0;
             // Health once it stands (a ghost's lower hp is its progress,
@@ -378,6 +438,7 @@ impl App {
         // (Before 11-14: a 3-pixel disc and a line, the same for every
         // card; the owner's playtest: "really bad".)
         self.lights.clear();
+        self.lights.append(&mut glows);
         let t = g.world.ticks();
         let tps = g.rules.tps as f32;
         let travel = g.rules.bullet_speed * sc * 0.06;
@@ -411,7 +472,7 @@ impl App {
         // out of the barrels rather than lying over them (turret look,
         // 11-14).
         for (k, half) in turrets {
-            turret_mark(&mut self.marks, &mut self.lights, &self.turrets, g, k, half);
+            turret_mark(&mut self.marks, &mut self.lights, &self.blooks, g, k, half);
             let b = &g.buildings[k];
             self.marks.health(b.at, (half * zoom).max(2.0) + 5.0, b.hp / b.max_hp.max(1.0));
         }
@@ -442,6 +503,13 @@ impl App {
             if s.alive && fl > 0.0 {
                 self.lights.push(Light { at: (s.x, s.y), reach: 5.0 * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.7 * fl });
             }
+            // A bite: a brief hot light on the side the slime bit from
+            // (`step_notes`, from the real damage).
+            if let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flinch > 0.0) {
+                let f = l.flinch / FLINCH;
+                let at = (s.x + l.bite.cos() * g.rules.touch * sc, s.y + l.bite.sin() * g.rules.touch * sc);
+                self.lights.push(Light { at, reach: 3.5 * sc, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
+            }
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light
         // swelling as its fuse burns down (delay) or steady (thick).
@@ -463,11 +531,16 @@ impl App {
         let r = (g.rules.touch * sc * 1.15).max(10.0 / zoom);
         let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
-            let l = self.looks.get(k).copied().unwrap_or(Look { facing: 0.0, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive });
+            let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             // The load as charge in its pack, the take as light at its
             // hands (harvest look, 11-14; the carry bar is gone).
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
-            self.marks.soldier_working((s.x, s.y), r, l.facing, team_colour(0), l.flash / FLASH, s.alive, carry, l.take / TAKE);
+            // A flinch: the body jerks back from the bite, a fifth of its
+            // radius at once, easing home over `FLINCH`.
+            let jerk = if s.alive { (l.flinch / FLINCH).powi(2) * 0.2 * r } else { 0.0 };
+            let at = (s.x - l.bite.cos() * jerk, s.y - l.bite.sin() * jerk);
+            let bite = if s.alive { l.flinch / FLINCH } else { 0.0 };
+            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), l.flash / FLASH, s.alive, carry, l.take / TAKE, bite, l.bite);
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {

@@ -268,7 +268,7 @@ fn sprite_kind(k: Kind) -> Option<u32> {
         Kind::Pump => Some(2),
         Kind::Outpost => Some(3),
         // Its own sprite (#161): the horns, and the lens and sound arcs lit
-        // while it is on.
+        // as it calls.
         Kind::Siren => Some(4),
         // Drawn as a line, not a sprite.
         Kind::Wall { .. } => None,
@@ -408,16 +408,46 @@ struct Look {
     take: f32,
     at: (f32, f32),
     alive: bool,
+    /// Its health and load at the last step seen (`step_notes`), the
+    /// damage the slime has done since its last flinch, the seconds left
+    /// of that flinch (`FLINCH` long) and the way the bite came from
+    /// (building looks, 11-14: "a flinch and a brief light where slime
+    /// bites, from the real damage").
+    hp: f32,
+    carry: f32,
+    hurt: f32,
+    flinch: f32,
+    bite: f32,
 }
 
-/// What the window keeps of each turret beside the game (`Game::buildings`
-/// by index; other kinds keep one unused): where its head points and the
-/// seconds left of its last shot's kick and flash.
-#[derive(Clone, Copy)]
-struct TurretLook {
+impl Look {
+    fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
+        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0 }
+    }
+}
+
+/// What the window keeps of each building beside the game
+/// (`Game::buildings` by index): where a turret's head or a pump's hose
+/// points, the seconds left of a turret's last shot's kick and flash, of
+/// a siren's call (`SIREN_CALL`) and of an outpost's flare as a load is
+/// banked there (`BANKED`).
+#[derive(Clone, Copy, Default)]
+struct BuildingLook {
     facing: f32,
     shot: f32,
+    call: f32,
+    bank: f32,
 }
+
+/// How long a siren's call shows: its sound ring runs out to the alarm's
+/// reach (`BuildRules::siren_r`) in this long and fades.
+const SIREN_CALL: f32 = 0.7;
+/// The slime's damage to a soldier, hp, that makes one flinch: a soldier
+/// at the edge of a body flinches now and then, one wading in many times a
+/// second (each walker touching bites `Rules::drain` a second).
+const FLINCH_HP: f32 = 3.0;
+/// How long a flinch lasts, seconds.
+const FLINCH: f32 = 0.2;
 
 /// How long a turret's kick and muzzle flash last, seconds.
 const TURRET_SHOT: f32 = 0.16;
@@ -456,7 +486,7 @@ struct App {
     /// depth was most of each ground rebuild (3.9-6.1 ms on the cloud CPU).
     depth: Vec<u8>,
     looks: Vec<Look>,
-    turrets: Vec<TurretLook>,
+    blooks: Vec<BuildingLook>,
     tracers: Vec<Tracer>,
     /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
     /// filled with the marks (`draw.rs`).
@@ -492,10 +522,9 @@ struct App {
     hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
-    /// Seconds left of the larder's flare (`BANKED`), and the harvest
-    /// banked when it was last checked.
+    /// Seconds left of the larder's flare (`BANKED`), set by a carrier
+    /// banking there (`step_notes`).
     banked: f32,
-    harvested_seen: f32,
     /// Frame times (ms) since the last report, and when it was.
     frame_ms: Vec<f32>,
     steps: u32,
@@ -566,7 +595,7 @@ impl App {
             ground_walls: 0,
             depth: Vec::new(),
             looks: Vec::new(),
-            turrets: Vec::new(),
+            blooks: Vec::new(),
             tracers: Vec::new(),
             lights: Vec::new(),
             paused: false,
@@ -588,7 +617,6 @@ impl App {
             hungry: false,
             bank_log: Default::default(),
             banked: 0.0,
-            harvested_seen: 0.0,
             frame_ms: Vec::new(),
             steps: 0,
             finished: (0, 0),
@@ -771,8 +799,8 @@ impl App {
         }
         self.ground = Some(ground);
         (self.ground_at, self.ground_walls) = (0.0, 0);
-        self.looks = game.soldiers.iter().map(|s| Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive }).collect();
-        self.turrets.clear();
+        self.looks = game.soldiers.iter().map(Look::new).collect();
+        self.blooks.clear();
         self.tracers.clear();
         self.controls.selected.clear();
         self.controls.groups = Default::default();
@@ -780,7 +808,7 @@ impl App {
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
         self.bank_log.clear();
-        (self.banked, self.harvested_seen) = (0.0, 0.0);
+        self.banked = 0.0;
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
@@ -828,17 +856,17 @@ impl App {
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
+            l.flinch = (l.flinch - dt).max(0.0);
+        }
+        for b in &mut self.blooks {
+            b.call = (b.call - dt).max(0.0);
+            b.bank = (b.bank - dt).max(0.0);
         }
         // A step a command finished since the last frame (`catch_up`).
         self.catch_up();
         let Some(g) = self.game.as_mut() else { return };
-        turn_turrets(g, &mut self.turrets, dt);
+        turn_turrets(g, &mut self.blooks, dt);
         self.banked = (self.banked - dt).max(0.0);
-        // A load banked since the last frame flares the larder's cells.
-        if g.harvested > self.harvested_seen + 0.5 {
-            self.banked = BANKED;
-        }
-        self.harvested_seen = g.harvested;
         // A bought soldier (by the card or a replay) joins the notes.
         join_looks(g, &mut self.looks);
         let mission_over = self.mission.as_ref().is_some_and(|m| m.verdict.is_some());
@@ -854,7 +882,8 @@ impl App {
             self.rounds.after_step(g);
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
-            turret_fired(g, &mut self.turrets);
+            turret_fired(g, &mut self.blooks);
+        step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
             self.seen = g.world.ticks();
         } else if g.in_flight() {
             // Its next share of ticks (`GpuWorld::spread`).
@@ -879,7 +908,8 @@ impl App {
                 self.rounds.after_step(g);
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
-                turret_fired(g, &mut self.turrets);
+                turret_fired(g, &mut self.blooks);
+                step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
                 self.seen = g.world.ticks();
                 if g.end.is_some() {
                     break;
@@ -1027,7 +1057,8 @@ impl App {
         kit_between(&mut self.kit, g, &self.controls.selected);
         self.rounds.after_step(g);
         shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
-        turret_fired(g, &mut self.turrets);
+        turret_fired(g, &mut self.blooks);
+        step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
     }
 
     /// Once a drawn frame, after the steps: what the round should sound
@@ -1227,7 +1258,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
-    let mut turrets: Vec<(f32, f32)> = Vec::new();
+    let mut turrets: Vec<(Kind, (f32, f32))> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -1329,13 +1360,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let squad = cut.and_then(|c: Cut| c.squad);
                 cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
             }
-            "turret" => {
-                // `turret=X,Y` (11-14, the turret films): a turret standing
-                // whole at (X, Y) from the start, world units as `centre=`
-                // (paid for, not raised); repeat for more.
+            "turret" | "lure" | "pump" | "outpost" | "siren" => {
+                // `turret=X,Y` (11-14, the turret films; the other kinds for
+                // the building looks): one standing whole at (X, Y) from the
+                // start, world units as `centre=` (paid for, not raised);
+                // repeat for more.
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
-                let [x, y] = w.as_slice() else { return Err("turret=X,Y".into()) };
-                turrets.push((*x, *y));
+                let [x, y] = w.as_slice() else { return Err(format!("{k}=X,Y").into()) };
+                let kind = match k { "turret" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
+                turrets.push((kind, (*x, *y)));
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
@@ -1360,7 +1393,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }

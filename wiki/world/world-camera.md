@@ -4,6 +4,7 @@ kind: mechanism
 status: current
 updated: 2026-11-14
 sources:
+  - Reports/building-looks-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
   - Reports/crystal-harvest-2026-11-14/README.md
   - Reports/gun-card-hud-2026-11-14/README.md
@@ -45,12 +46,14 @@ code:
   - MAX_MARKS
   - MAX_ZOOM
   - Marks::building
+  - Marks::building_facing
   - Marks::building_pulse
   - Marks::health
   - Marks::icon
   - Marks::label
   - Marks::selected
   - Marks::soldier
+  - Marks::soldier_bitten
   - Marks::soldier_working
   - Marks::turret
   - NEXT_ROUND
@@ -146,7 +149,15 @@ pack fills cyan as it carries (`Marks::soldier_working`; no carry bar), and the
 larder flashes as a load is banked (`Marks::building_pulse`). A turret's head
 turns on its base to its aim and kicks with a muzzle flash as it fires, its
 lamp the game's state, and hovering one shows its reach (`Marks::turret`;
-[turret look](../../Reports/turret-look-2026-11-14/README.md))
+[turret look](../../Reports/turret-look-2026-11-14/README.md)). The other
+buildings show their work too, all soldier-scale: a burning lure lights the
+engine's real scent field green (a scent light, `Light` with lift below 0), a
+pump turns its hose into its crystal with a charge line as bright as its draw
+(`Marks::building_facing`, `Building::drew`), an outpost is a mini larder that
+flares when a load is banked there, and a siren's real call sends rings out to
+its alarm reach. A soldier the slime bites flinches every 3 hp of damage, the
+bitten side flushing hot (`Marks::soldier_bitten`;
+[building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the
 simulation uses height. One mark with a big box (a 480-pixel ring) cost the
 view 0.7 ms, since one workgroup walks a mark's whole box: draw big outlines

@@ -47,7 +47,10 @@ const LIGHTS_BINDING: u32 = 20;
 /// A point light (`View::set_lights`): something in the game that gives
 /// off light, lighting the world's own relief. `at` and `reach` in world
 /// cells, `lift` its height above the ground in cells, `colour` 0-255 and
-/// `strength` (1 about a lamp's worth at its centre).
+/// `strength` (1 about a lamp's worth at its centre). A `lift` below 0 is
+/// a scent light (a burning lure's, 11-14): `-lift` high, lighting each
+/// spot only as far as the engine's scent there, so the glow is the scent
+/// field itself.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Light {
     pub at: (f32, f32),
