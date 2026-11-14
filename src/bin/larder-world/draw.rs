@@ -764,6 +764,10 @@ fn card_face(c: rounds::Card, r: &RoundRules, split_n: usize) -> (Icon, CardKind
         C::Thick => (Icon::Thick, CardKind::Trigger, format!("The next payload lodges and waits until {} walkers crowd within {:.0} cells (at most {:.0} s): the mould sets off its own trap.", r.thick_n, r.thick_r, r.thick_secs)),
         C::Pierce => (Icon::Pierce, CardKind::Flight, "Every bullet flies on through one more slime hit, striking each.".into()),
         C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
+        // Trails (2026-11-14): each reuses the glyph of the field it lays.
+        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of crater along its flight for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
+        C::Alarm => (Icon::Alert, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of alarm along its flight: a fence the mould flees.", 2.0 * r.trail_r)),
+        C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
     }
 }
 

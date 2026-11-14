@@ -4518,6 +4518,43 @@ mod tests {
     /// gassed sleepers off it, and the soldiers' health must match
     /// exactly. The same run with no gas must hurt the squad more, so the
     /// calm is doing something.
+    /// **Trail cards on the engine as on the CPU** (the rounds' `Scorch`,
+    /// `Alarm`, `Mist`, 2026-11-14): one bullet leg's trail bursts
+    /// (`rounds::trail_bursts`, every trail at once) on the race world and
+    /// on the GPU world from the same dish (`Engine::inject`), through
+    /// `World::burst`; then the crater, the alarm and the gas cloud must
+    /// match cell for cell (alarm and cloud within 1e-6), and none kills.
+    #[test]
+    fn trail_bursts_lay_the_same_fields_on_the_engine_as_on_the_cpu() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{race_world, World};
+        use slime_mould::mould::rounds::{burst_rules, parse, trail_bursts, trails, RoundRules};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let mut cpu = race_world(seed, scale, walkers);
+        let mut gpu = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        gpu.e.inject(&cpu);
+        let r = RoundRules::default();
+        let fine = 15.0 * cpu.fine_steps() as f32;
+        let k = burst_rules(&r.kit, fine);
+        let s = cpu.scale();
+        let n = trails(&parse("scorch+alarm+mist").unwrap());
+        let bursts = trail_bursts(n, (60.0 * s, 100.0 * s), (90.0 * s, 110.0 * s), &r, s, fine);
+        assert!(bursts.len() >= 10, "{} discs", bursts.len());
+        for b in &bursts {
+            let (c, g) = (cpu.burst(b, &k), gpu.burst(b, &k));
+            assert_eq!((c.killed, g.killed), (0, 0), "a trail kills nothing");
+        }
+        let crater_cpu: Vec<f32> = cpu.scorch.iter().map(|&c| c as f32).collect();
+        let crater_off = gpu.e.crater_of().iter().zip(&crater_cpu).filter(|(a, b)| a != b).count();
+        let alarm_off = gpu.e.alarm_of().iter().zip(&cpu.alarm).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+        let cloud_off = gpu.e.gas_cloud_of().iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+        let laid = (crater_cpu.iter().filter(|&&c| c > 0.0).count(), cpu.alarm.iter().filter(|&&a| a > 0.0).count(), cpu.gas_cloud.iter().filter(|&&v| v > 0.0).count());
+        eprintln!("trail of {} discs: cells laid (crater, alarm, cloud) {laid:?}; off on the GPU {crater_off}, {alarm_off}, {cloud_off}", bursts.len());
+        assert!(laid.0 > 100 && laid.1 > 100 && laid.2 > 100, "every trail laid its field: {laid:?}");
+        assert_eq!((crater_off, alarm_off, cloud_off), (0, 0, 0));
+    }
+
     #[test]
     fn a_gassed_mould_spares_the_squad_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};

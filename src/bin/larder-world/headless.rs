@@ -229,7 +229,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
         if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting());
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {:.0} food spent, {} skipped for food, {} not on this world, {} lodged, {} trail bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.spent, rd.broke, rd.unsupported, rd.waiting(), rd.trailed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
