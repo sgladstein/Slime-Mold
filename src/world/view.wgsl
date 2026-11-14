@@ -21,6 +21,10 @@ struct V {
     // the cells the screen shows and a margin of 4 for the slope, shadow
     // and blend samples.
     ox: i32, oy: i32, rw: u32, rh: u32,
+    // Food's news (`View::set_news`): 1 when the engine's news and step are
+    // bound; a walker whose news is more than `lag` steps old is cut off
+    // from food (it withers and, with panic on, runs).
+    news_on: u32, lag: u32, lean: u32, _n1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -53,6 +57,13 @@ struct V {
 @group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
 @group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
 @group(0) @binding(14) var<storage, read> alive: array<f32>;
+// Food's news (`View::set_news`): the engine's binding 48 (the step each
+// walker last heard of food, its first `n_walk` words) and its state (the
+// step now, word 0); `cut` counts the cut-off walkers a world cell each
+// frame (`draw_specks`), for `prep`.
+@group(0) @binding(15) var<storage, read> news: array<u32>;
+@group(0) @binding(16) var<storage, read> state: array<u32>;
+@group(0) @binding(17) var<storage, read_write> cut: array<atomic<u32>>;
 // Point lights (`View::set_lights`, 2026-11-14; binding 20, after the
 // graphics thread's 15-19): two vec4s each, (x, y,
 // reach, lift) in world cells and (r, g, b, strength) in colour units.
@@ -139,6 +150,8 @@ const SOIL_HIGH: vec3<f32> = vec3<f32>(84.0, 74.0, 58.0);
 const SAND_RGB: vec3<f32> = vec3<f32>(150.0, 134.0, 92.0);
 const CLAY_RGB: vec3<f32> = vec3<f32>(104.0, 54.0, 38.0);
 const BARREN_RGB: vec3<f32> = vec3<f32>(78.0, 76.0, 72.0);
+// Mould cut off from food fades towards this (`cell_mat`'s `cut`).
+const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
@@ -210,7 +223,9 @@ struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, wound: f32, gem: f3
 // A cell's material: the engine's colour for agar (mould, scent, species,
 // germ, grass all in it), the ground kinds in their own colours, scaled by
 // their value where it is graded.
-fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
+// `cut`: the share of the walkers round the cell whose news of food is
+// stale (`View::set_news`), 0 without it.
+fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
         m.albedo = vec3<f32>(52.0, 54.0, 60.0); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.wound = 0.0; m.gem = 0.0;
@@ -227,7 +242,11 @@ fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
     // look carries it at full strength wherever there is mould, by the
     // thickness, so a thin film reads as slime, not as dim ground.
     let tint = max(c - AGAR_RGB, vec3<f32>(0.0));
-    let hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
+    var hue = tint / max(max(tint.x, max(tint.y, tint.z)), 1.0) * 240.0;
+    // A piece cut off from food (C8, 2026-11-14) goes ashen and dull as its
+    // walkers' news goes stale, before they wither: the share of stale
+    // walkers is the fade, so a piece greys as it starves, not on a timer.
+    hue = mix(hue, ASH_RGB, 0.75 * cut);
     // Bare ground is soil by the land's elevation, with the engine's tints
     // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
     // Flat land (elevation 0, every map until the simulation uses height)
@@ -238,7 +257,7 @@ fn cell_mat(ix: i32, iy: i32, th: f32) -> Mat {
     let soil = base + tint * 0.6;
     m.albedo = mix(soil, hue * (0.55 + 0.45 * th), clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
     m.glow = vec3<f32>(0.0);
-    m.gloss = 0.08 + 0.7 * sqrt(th);
+    m.gloss = (0.08 + 0.7 * sqrt(th)) * (1.0 - 0.6 * cut);
     m.wound = byte(lk, 2u);
     m.gem = 0.0;
     if (kind == WET) {
@@ -292,28 +311,36 @@ fn mc(ix: i32, iy: i32) -> Mat {
 // reading the 25 cells from the look for each cell cost the 1070 about
 // 0.5 ms at zoom 1 (1920 x 1080; 1.19 -> 1.68 ms, matched fast runs).
 var<workgroup> crowd: array<u32, 400>;
+// The cut-off walkers (`cut`) on the same tile, when news is bound.
+var<workgroup> stale: array<u32, 400>;
 
 @compute @workgroup_size(16, 16)
 fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
     let bx = P.ox + i32(wid.x * 16u) - 2;
     let by = P.oy + i32(wid.y * 16u) - 2;
     for (var k = li; k < 400u; k += 256u) {
-        crowd[k] = (look[cidx(bx + i32(k % 20u), by + i32(k / 20u))] >> 8u) & 255u;
+        let c = cidx(bx + i32(k % 20u), by + i32(k / 20u));
+        crowd[k] = (look[c] >> 8u) & 255u;
+        if (P.news_on == 1u) { stale[k] = atomicLoad(&cut[c]); } else { stale[k] = 0u; }
     }
     workgroupBarrier();
     if (gid.x >= P.rw || gid.y >= P.rh) { return; }
     let ix = P.ox + i32(gid.x); let iy = P.oy + i32(gid.y);
     let i = gid.y * P.rw + gid.x;
     var n = 0u;
+    var m = 0u;
     for (var dy = 0u; dy < 5u; dy++) {
         for (var dx = 0u; dx < 5u; dx++) {
-            n += crowd[(lid.y + dy) * 20u + lid.x + dx];
+            let t = (lid.y + dy) * 20u + lid.x + dx;
+            n += crowd[t];
+            m += stale[t];
         }
     }
+    let cut_share = clamp(f32(m) / max(f32(n), 1.0), 0.0, 1.0);
     // (`cidx` clamps, so `body` is safe off the world, where both ignore it.)
     let th = body(ix, iy, n);
     hcell[i] = cell_height(ix, iy, th);
-    mcell[i] = mat_pack(cell_mat(ix, iy, th));
+    mcell[i] = mat_pack(cell_mat(ix, iy, th, cut_share));
 }
 
 fn mat_at(x: f32, y: f32) -> Mat {
@@ -388,10 +415,36 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (P.lives != 0u && alive[k] < 0.0) { return; }
     let w = walkers[k];
     if (!(w.x >= 0.0 && w.y >= 0.0 && w.x < f32(P.ww) && w.y < f32(P.wh))) { return; }
+    // A speck a walker, coloured by its news of food (C8, 2026-11-14): calm
+    // (bits 0-9), cut off and leaning (10-19), cut off and bolting (20-29),
+    // the phases `panic_to` in the engine steers by; it also counts the
+    // cut-off walkers a cell for `prep`'s ashen fade.
+    var add = 1u;
+    if (P.news_on == 1u) {
+        let heard = news[k];
+        let now = state[0] + 1u;
+        let age = now - min(heard, now);
+        if (age > P.lag) {
+            let c = u32(floor(w.y)) * P.ww + u32(floor(w.x));
+            atomicAdd(&cut[c], 1u);
+            if (age > P.lag + P.lean) { add = 1u << 20u; } else { add = 1u << 10u; }
+        }
+    }
+    // (Counted before the screen test: `prep` reads a 2-cell rim past it.)
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);
     let px = i32(floor(s.x)); let py = i32(floor(s.y));
     if (px < 0 || py < 0 || px >= i32(P.sw) || py >= i32(P.sh)) { return; }
-    atomicAdd(&specks[u32(py) * P.stride + u32(px)], 4u);
+    // A cut-off walker's speck grows with the zoom (a pixel a walker was
+    // lost at zoom 6: 195 of them in a cut piece did not read), up to 4 x 4
+    // pixels; a calm one stays a pixel, so the body's grain is as before.
+    var d = 1;
+    if (add > 1u) { d = clamp(i32(P.zoom / 3.0), 1, 4); }
+    for (var dy = 0; dy < d; dy++) {
+        for (var dx = 0; dx < d; dx++) {
+            let qx = px + dx - d / 2; let qy = py + dy - d / 2;
+            if (qx >= 0 && qy >= 0 && qx < i32(P.sw) && qy < i32(P.sh)) { atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], add); }
+        }
+    }
 }
 
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
@@ -430,7 +483,12 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // Shaded from the fields, smooth between cells at any zoom.
             c = shaded(fx, fy, 1.5);
             let n = atomicExchange(&specks[y * P.stride + x], 0u);
-            c += vec3<f32>(255.0, 236.0, 180.0) * min(f32(n) * 0.012, 0.25);
+            c += vec3<f32>(255.0, 236.0, 180.0) * min(f32(n & 1023u) * 0.048, 0.25);
+            // Cut-off walkers' specks take their phase's colour outright
+            // (added light was lost on the bright body: no pixel of a
+            // bolting piece read red on the first film).
+            c = mix(c, vec3<f32>(255.0, 178.0, 40.0), min(f32((n >> 10u) & 1023u) * 0.4, 0.75));
+            c = mix(c, vec3<f32>(235.0, 52.0, 40.0), min(f32(n >> 20u) * 0.5, 0.85));
         } else if (fx >= 0.0 && fy >= 0.0 && fx < f32(P.ww) && fy < f32(P.wh)) {
             if (P.zoom >= 1.0) {
                 c = cell(fx, fy);

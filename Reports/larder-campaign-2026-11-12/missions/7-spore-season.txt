@@ -1,0 +1,21 @@
+# Mission 7: pumps against the Sporer (design table: "Hold 6 of the 8 outer crystals").
+# Seed-1 probes 2026-11-14 (main 1e96f11 + this branch): with rations on, every hand's squad
+# was wiped by 2:49-11:09; with rations off and the bite halved, no hand ever had more than 3
+# of the 8 outer crystals clear at once (`retake 6 60`: best 0.00; `retake 3 60`: 0.13). The
+# Sporer's spores land on every crystal with food, so the goal became the charge race: take
+# more of what is eaten than the mould does. Met at once, `take 0.6` fell at 0:41-0:51 to every
+# hand that farmed, before the spores flew, so the share is held for 5:00.
+# Census v13 (2026-11-14, seeds 1-4, CPU): boom with eight (boom:buy_to=8) wins 4/4 at
+# 5:40-5:50, with turrets by its crystals (guard+boom) 3/4 at 5:41-5:47, with pumps
+# (pumps+boom) 2/4; idle 0/4 (best 0.00), random 0/4 (wiped or overrun by 2:26-4:11). Tuning note: the
+# pump is not yet the verb that wins, and the race is led from the start, so the hold is
+# five minutes of farming; the design review should say whether the Sporer must contest it.
+name Spore season
+says Out-eat the spores: hold 60% of the charge eaten for 5:00
+map rim
+tier sporer
+verbs move harvest buy stance fire wall cut turret strike pump
+rule ration 0
+rule drain 0.5
+bonus stolen 0
+goal take 0.6 300

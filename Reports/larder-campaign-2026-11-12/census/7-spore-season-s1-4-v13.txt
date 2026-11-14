@@ -1,0 +1,51 @@
+mission 7-spore-season (Spore season): "Out-eat the spores: hold 60% of the charge eaten for 5:00", map rim, tier sporer , seeds 1-4, scale 2, walkers 5000
+on the CPU
+  idle s1: Cap 900s 0*
+  idle s3: Cap 900s 0*
+  idle s2: Cap 900s 0*
+  idle s4: Cap 900s 0*
+  random s1: SquadWiped 209s 0*
+  random s4: Overrun 146s 0*
+  random s3: SquadWiped 218s 0*
+  random s2: SquadWiped 251s 0*
+  boom:buy_to=8 s1: Goal 350s 2*
+  boom:buy_to=8 s2: Goal 340s 2*
+  boom:buy_to=8 s3: Goal 341s 2*
+  boom:buy_to=8 s4: Goal 350s 2*
+  pumps+boom:buy_to=8 s1: Goal 347s 2*
+  pumps+boom:buy_to=8 s3: Goal 341s 2*
+  guard+boom:buy_to=8 s1: Goal 347s 2*
+  guard+boom:buy_to=8 s2: Goal 341s 2*
+  guard+boom:buy_to=8 s3: Goal 341s 2*
+  pumps+boom:buy_to=8 s2: Cap 900s 1*
+  pumps+boom:buy_to=8 s4: Cap 900s 1*
+  guard+boom:buy_to=8 s4: Cap 900s 1*
+
+hand      seed  cause       at    stars best  dead  dead by phase (land/contact/pressure/climax)  longest dead/stuck/stall  decided  alive harvested killed  count least/most  out bins >=1/4/16, secs seen out  crystals reached
+boom:buy_to=8    1  Goal         350      2 1.00     0%     0%    0%    0%    0%                             0    0   12      349      8      4500   2436  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+boom:buy_to=8    2  Goal         340      2 1.00     0%     0%    0%    0%    0%                             0    0   12      339      8      5700   2533  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+boom:buy_to=8    3  Goal         341      2 1.00     0%     0%    0%    0%    0%                             0    0   12      340      8      5400   2509  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+boom:buy_to=8    4  Goal         350      2 1.00     0%     0%    0%    0%    0%                             0    0   12      349      8      5100   2383  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+guard+boom:buy_to=8    1  Goal         347      2 1.00     0%     0%    0%    0%    0%                             0    0   12      346      8      5400   2754  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+guard+boom:buy_to=8    2  Goal         341      2 1.00     0%     0%    0%    0%    0%                             0    0   12      340      8      6000   2393  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+guard+boom:buy_to=8    3  Goal         341      2 1.00     0%     0%    0%    0%    0%                             0    0   12      340      8      7200   2710  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+guard+boom:buy_to=8    4  Cap          900      1 0.87    51%     0%   31%   67%   76%                            74    0   74      900      8      3300   4913  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         1  Cap          900      0 0.00    76%    97%   85%   63%   73%                           238    0  238        0      3         0   4871  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         2  Cap          900      0 0.00    76%    99%  100%   63%   58%                           412    0  412        0      3         0   4705  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         3  Cap          900      0 0.00    89%    97%   92%   89%   80%                           246    0  245        0      3         0   4850  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+idle         4  Cap          900      0 0.00    81%    99%   93%   75%   67%                           256    0  251        0      3         0   4713  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+pumps+boom:buy_to=8    1  Goal         347      2 1.00     0%     0%    0%    0%    0%                             0    0   12      346      8      4500   2878  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+pumps+boom:buy_to=8    2  Cap          900      1 0.90    45%     0%   21%   73%   57%                           147    0  148      900      8      4500   6454  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+pumps+boom:buy_to=8    3  Goal         341      2 1.00     0%     0%    0%    0%    0%                             0    0   12      340      8      6000   2599  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+pumps+boom:buy_to=8    4  Cap          900      1 0.87    50%     0%   25%   80%   61%                            69    0   69      900      8      3300   5187  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       1  SquadWiped   209      0 0.00     3%     2%    5%    0%    0%                             3    8   47        0      0      1200   5778  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       2  SquadWiped   251      0 0.00    14%     8%   19%    0%    0%                            14    8  111        0      0         0   6880  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       3  SquadWiped   218      0 0.00     4%     0%    9%    0%    0%                             5    7   80        0      0       600   5711  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+random       4  Overrun      146      0 0.00     3%     0%   15%    0%    0%                             4    1   50        0      1       900   5688  inf/-inf  0/0/0 0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+by hand: goal met / seeds, median stars, mean best, mean dead share, worst stuck run, worst stall
+  boom:buy_to=8 4/4  stars 2  best 1.00  dead 0%  stuck 0 s  stall 12 s
+  guard+boom:buy_to=8 3/4  stars 2  best 0.97  dead 13%  stuck 0 s  stall 74 s
+  idle      0/4  stars 0  best 0.00  dead 80%  stuck 0 s  stall 412 s
+  pumps+boom:buy_to=8 2/4  stars 2  best 0.94  dead 24%  stuck 0 s  stall 148 s
+  random    0/4  stars 0  best 0.00  dead 6%  stuck 8 s  stall 111 s
