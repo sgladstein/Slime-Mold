@@ -22,15 +22,20 @@
 # farming alone 0/4 (best 0.63), idle 0/4 (0.20), random 0/4 (wiped or overrun by 2:56-3:55).
 # After elbow room (#227; census v15, main 30bf05e0) no plan is reliable: pumps and turrets
 # with eight (turtle+boom) 2/4 at 3:46-12:25, farming alone 2/4, pumps with eight 1/4, pumps
-# with twelve 0/4 (best 0.20), turrets alone 0/4; idle and random still 0/4. A tuning note:
-# the larder is going (squad-controls rework), which changes the economy pumps feed, so the
-# mission is re-tuned after that lands rather than now.
+# with twelve 0/4 (best 0.20), turrets alone 0/4; idle and random still 0/4. The larder
+# stays in this game (the squads work is a separate mode, owner 04:49Z), so re-tuned now.
+# Seed 1-2 probes: the landing crystal alone (5) for 1:00, every farming hand 2/2 and idle
+# 0/2 (best 0.32); both home crystals for 0:45, boom and turtle 2/2, pumps 1/2. So: the
+# landing crystal for a minute. Census v16 (seeds 1-4, main 30bf05e0): pumps and turrets
+# (turtle+boom) 4/4 at 3:43-9:01, farming alone (boom) 4/4 at 2:50-8:56, pumps alone 2/4;
+# idle 0/4 (best 0.32), random 0/4 (wiped by 2:30-4:07). Tuning note: the pump helps but
+# no longer decides it.
 name Spore season
-says Keep the spores off your two home crystals for a minute
+says Keep the spores off your landing crystal for a minute
 map rim
 tier sporer
 verbs move harvest buy stance fire wall cut turret strike pump
 rule ration 0
 rule drain 0.5
 bonus stolen 0
-goal clear 2 60 5 9
+goal clear 1 60 5

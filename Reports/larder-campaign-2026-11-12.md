@@ -25,7 +25,7 @@ Choices, all as recommended: only unlocked verbs carry between missions (the per
 | 4 | Cut the cord | Fork | Trunk (thick, heals) | Cutting a tube | "Starve the Trunk: cut its cords until it is a fifth of its size" (built 2026-11-14) [walkers now against its peak] | Trunk as a built tier; one body: cut pieces starve (Larder thread) |
 | 5 | Kill zone | Flats | Swarmer (floods where hit) | Turret | "Drive the swarm off the three middle crystals for a minute" [seconds all three are clear, once the swarm has been on them] (built 2026-11-14) | Turrets (buildings batch 1) |
 | 6 | The nest | Nest | Sleeper (dormant crust) | Strike | "Break the nest: cut the Sleeper to half its size" [walkers now against its peak] (built 2026-11-14) | Sleeper and strike in the GPU game |
-| 7 | Spore season | Rim | Sporer (spores fly to crystals) | Pump | "Keep the spores off your two home crystals for a minute" [seconds both are clear] (built 2026-11-14; was "Hold 6 of the 8 outer crystals", then a held charge race) | Pumps (buildings batch 1) |
+| 7 | Spore season | Rim | Sporer (spores fly to crystals) | Pump | "Keep the spores off your landing crystal for a minute" [seconds it is clear] (built 2026-11-14; was "Hold 6 of the 8 outer crystals", then a held charge race) | Pumps (buildings batch 1) |
 | 8 | Two moulds | Passes | Rival pair (sand fast, clay slow) | Lure | "Take 60% of the valley's charge" [take share] | Lure (buildings batch 1); the rivals as two species |
 
 Missions 1 to 3 are the first playable slice. Mission 4 is the owner's "cut-off hunk" (11-12 04:18Z) made into a lesson. Hunter, Converter and Mixes are a second chapter once they run in the world; the squad toolkit's verbs slot in as missions against the tier each counters. Mission 5's goal was a kill count until the design review pointed out that free shots and turrets reward turtling for it.
@@ -467,8 +467,13 @@ nest's with twelve (strike 4/4 at 3:40-4:29, turrets+strike 4/4 at
 
 Spore season is now a coin toss for every plan: pumps and turrets 2/4,
 farming alone 2/4, pumps with eight 1/4, pumps with twelve 0/4 (it was
-3/4); idle and random 0/4. The pump no longer decides it. Since the
-larder is going (the squad-controls rework: crystals become the squad's
-when taken), which changes the economy the pumps feed, Spore season is
-re-tuned after that lands. Raw output: `census/*-v15*.txt`.
+3/4); idle and random 0/4. The pump no longer decides it. Raw output: `census/*-v15*.txt`.
+
+**Spore season, third cut (census v16).** The larder stays in this game
+(the squads work is a separate mode, owner 04:49Z), so it is re-tuned now:
+"Keep the spores off your landing crystal for a minute" (`clear 1 60 5`).
+Seeds 1-4: pumps and turrets 4/4 at 3:43-9:01, farming alone 4/4 at
+2:50-8:56, pumps alone 2/4; idle 0/4 (best 0.32), random 0/4 (wiped by
+4:07). The pump helps but no longer decides it, a tuning note for the
+next pass.
 
