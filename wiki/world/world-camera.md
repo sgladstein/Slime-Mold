@@ -85,7 +85,8 @@ pauses; again, or Esc, goes back to play). A start menu (`StartMenu`,
 `world::start`, 2026-11-14) draws on the same canvas down the left of the
 screen, over a live dish: sandbox, the campaign's missions, an options
 page with each switch's default beside it, and the key card; the
-window opens on it when run with no arguments
+window opens on it when run with no arguments, and turning its map
+switches the dish behind it
 ([report](../../Reports/start-menu-2026-11-14/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
