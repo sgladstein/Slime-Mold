@@ -143,7 +143,18 @@ struct Row {
     /// alive, none fired or took food that second, and the bank cannot buy
     /// a soldier. The owner's playtest hit this when shots cost food.
     stuck: u32,
+    /// The mould's peak walkers, and every `TRACE_EVERY` game seconds the
+    /// bank, the live soldiers and the mould's walkers (C4's reviews,
+    /// 11-14: is a plan winning slowly or stuck on a plateau, and is the
+    /// hand hoarding food it could turn into pressure?).
+    peak: usize,
+    /// Buildings standing whole at the end.
+    built: usize,
+    trace: Vec<(f32, f32, usize, usize)>,
 }
+
+/// Game seconds between `Row::trace` samples.
+const TRACE_EVERY: f32 = 30.0;
 
 /// Dish cells round a soldier that count as near (`Row::near`): 10, two
 /// thirds of a soldier's range.
@@ -471,10 +482,13 @@ fn main() {
                     }
                     let r = play(*seed, scale, walkers, rules, &m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
-                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}; eaten {:.0}",
+                        "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}; eaten {:.0}; peak {}; built {}; trace {}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
                         r.end, r.t, r.score, r.alive, r.mould, r.bank, r.harvested, r.stolen, r.shots, r.killed, r.crystals_left, r.ms_tick, r.think_mean, r.think_us, r.score1, r.near, r.touch_at, r.stuck, r.core_at.map_or(String::new(), |t| format!(", core fell at {t:.0} s")),
-                        r.eaten
+                        r.eaten,
+                        r.peak,
+                        r.built,
+                        r.trace.iter().map(|(t, b, n, m)| format!("{t:.0}:{b:.0}/{n}/{m}")).collect::<Vec<_>>().join(" ")
                     );
                     out.lock().unwrap()[j] = r;
                 }
@@ -706,8 +720,14 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
     let mut ai = larder_world_ai::Hand::named(hand, &g);
     let (mut think_us, mut think_sum, mut thinks) = (0.0f64, 0.0f64, 0u32);
     let (mut near_sum, mut near_n, mut touch_at) = (0.0f64, 0u32, None::<f32>);
+    let (mut peak, mut trace, mut next_trace) = (0usize, Vec::new(), 0.0f32);
     let end = g.play(|g| {
         let t = g.time();
+        peak = peak.max(g.mould);
+        if t >= next_trace {
+            next_trace += TRACE_EVERY;
+            trace.push((t, g.bank, g.alive(), g.mould));
+        }
         {
             let live: Vec<(f32, f32)> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
             if !live.is_empty() {
@@ -819,6 +839,12 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
         // test the census ran here (it can count the round's last second,
         // which the plan never saw).
         stuck: g.stuck,
+        peak: peak.max(g.mould),
+        built: g.buildings.iter().filter(|b| b.alive && b.built >= 1.0).count(),
+        trace: {
+            trace.push((g.time(), g.bank, g.alive(), g.mould));
+            trace
+        },
     }
 }
 
