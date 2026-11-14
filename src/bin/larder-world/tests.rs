@@ -134,10 +134,10 @@ fn the_window_plays_the_real_game() {
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take
-/// tools at the larder between steps, the page lists the five, germ and
-/// gas are greyed out on the GPU world, a blast thrown near a soldier
-/// is paid, spends a held tool and leaves a crater, and a det cord
-/// does too.
+/// tools at the larder between steps, the page lists the five, the germ
+/// is greyed out on the GPU world (sleep gas runs there since 11-14), a
+/// blast thrown near a soldier is paid, spends a held tool and leaves a
+/// crater, and a det cord and a sleep gas cloud do too.
 #[test]
 fn the_window_uses_the_tools() {
     let Some((device, queue)) = gpu() else { return };
@@ -150,19 +150,20 @@ fn the_window_uses_the_tools() {
     app.tools_page = true;
     let m = app.model(None, None);
     assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
-    assert!(m.commands[0].ready && !m.commands[3].ready && !m.commands[4].ready, "blast ready, germ and gas not on the GPU");
+    assert!(m.commands[0].ready && !m.commands[3].ready && m.commands[4].ready, "blast and gas ready, germ not on the GPU");
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
     let s = g.soldiers[0];
     let k = g.world.scale();
     app.use_tool(Tool::Blast((s.x + 10.0 * k, s.y)));
     app.use_tool(Tool::Cord((s.x - 10.0 * k, s.y + 8.0 * k), (s.x + 10.0 * k, s.y + 8.0 * k)));
+    app.use_tool(Tool::Gas((s.x, s.y - 10.0 * k)));
     let g = app.game.as_ref().unwrap();
-    assert_eq!((app.kit.uses[0], app.kit.uses[2]), (1, 1), "the blast and the cord were used");
+    assert_eq!((app.kit.uses[0], app.kit.uses[2], app.kit.uses[4]), (1, 1, 1), "the blast, the cord and the gas were used");
     assert!(g.bank < 10_000.0, "and paid");
     let cratered = g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
     assert!(cratered > 0, "the blast left a crater");
-    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 2, "two held tools spent");
+    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 3, "three held tools spent");
 }
 
 /// A campaign mission plays its own map and rules, shows its goal as the
@@ -292,4 +293,41 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
     shot_marks(app.game.as_ref().unwrap(), &mut app.tracers, &mut app.looks, None);
     assert_eq!(app.looks.len(), app.game.as_ref().unwrap().soldiers.len());
     assert!(app.looks.last().unwrap().flash > 0.0, "the shot's flash on its soldier");
+}
+
+/// The start menu's Sandbox, untouched, plays the round the bare command
+/// line plays (shape C on Fork), and its options only add what was moved.
+#[test]
+fn the_menu_plays_the_command_lines_rounds() {
+    use slime_mould::world::start::StartEvent;
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None };
+    let mut cli = bare.clone();
+    default_shape(&mut cli);
+    let mut menu = start_menu(&bare);
+    assert!(menu.options.iter().all(|o| o.is_default()), "a bare command line presets nothing");
+    let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
+    assert_eq!((a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own), (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false));
+    // A mission keeps its own mould: no shape C keys, no map.
+    assert!(menu.missions.len() >= 3, "the campaign's missions are listed");
+    assert_eq!(menu.missions[0].stem, "1-landfall");
+    let m = round_args(&bare, false, &menu, &StartEvent::Mission(1));
+    assert_eq!((m.mission.as_deref(), m.walkers, m.keys.len()), (Some(menu.missions[1].stem.as_str()), 5000, 0));
+    // Options moved: they land as the command line's keys would.
+    for o in &mut menu.options {
+        o.at = o.choices.iter().position(|c| c == match o.key.as_str() { "panic" => "0", "bullet" => "0", "map" => "rim", "rounds" => "split", _ => o.value() }).unwrap();
+    }
+    let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
+    assert_eq!((a.map.as_deref(), a.bullet, LOADOUTS[a.round].0), (Some("rim"), Some(0.0), "split"));
+    assert_eq!(a.keys.last(), Some(&("panic".to_string(), "0".to_string())));
+    let m = round_args(&bare, false, &menu, &StartEvent::Mission(0));
+    assert_eq!(m.keys, vec![("panic".to_string(), "0".to_string())]);
+    // A command line's own value is the preset, and the page's value wins.
+    let mut given = bare.clone();
+    given.keys.push(("wither".into(), "0".into()));
+    let mut menu = start_menu(&given);
+    assert_eq!(menu.changed("wither"), Some("0"));
+    let w = menu.options.iter_mut().find(|o| o.key == "wither").unwrap();
+    w.at = w.default;
+    let a = round_args(&given, false, &menu, &StartEvent::Sandbox);
+    assert_eq!(a.keys.iter().filter(|k| k.0 == "wither").map(|k| k.1.as_str()).collect::<Vec<_>>(), vec!["0.01"], "reset to C's own");
 }
