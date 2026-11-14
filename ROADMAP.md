@@ -324,6 +324,45 @@ thread's readout buffer and living-walker pass add no `Params` row. The layout a
 `Engine::write_params` run in release builds, so a slipped row fails every
 GPU test instead of moving every offset after it.
 
+**Cloud plan picks (11-14 00:35Z; [plan](Reports/cloud-plan-2026-11-14.md)).**
+Settled by the technical lead, the game designer and the integration thread
+(tie-breaker) under the owner's 11-12 04:48Z rule:
+
+- **D1, census on shape C:** yes, one PR (integration). The census harness
+  takes C's rules (density, mass, shared food, wither, panic, drain) on a
+  census-sized map at the same walkers per open cell, so runner time stays
+  about what it is now; `shape=` and `walkers=` keep the full size. The PR
+  checks once, on 4 seeds, that census-sized C and window-scale C agree in
+  direction (who wins, rough mould size at 5:00), and marks a baseline
+  break. Threads re-baseline at their next census; no forced rerun.
+- **D2, `flow_loss`:** parked, not deleted (off on both engines). Withering
+  is the owner's pick for a cut-off piece; `flow_loss` cost about 30% of
+  C's size and the piece still died at once.
+- **D3, counter table for C4** (designer; a miss is a tuning note): C: cut
+  beats strike. Drifter: strike beats boom alone. Sprawler: fort beats
+  strike. Trunk: cut or claim beats a strike on bodies. Sporer: claiming
+  untaken crystals first beats a strike near food. Sleeper: bait then
+  strike beats a slow claim. Swarmer: fort or kill zone beats repeated open
+  strikes. Grudge: a spread boom or claim beats fort. Pass: no plan best on
+  more than half the tiers, every plan best somewhere, idle loses
+  everywhere, each counter beats random on at least 6 of 8 paired seeds.
+- **D4, mission 8:** becomes "Your own mould" (`own=1`) against the
+  Grudge on the Passes, with the lure verb and a take-share goal (the
+  campaign thread's proposal), built from what exists so missions 1-8 ship
+  on main. The rival pair moves to chapter 2: it needs its own design pass
+  (do the species fight each other?) and the GPU's per-species birth
+  counter (the player-mould thread's second PR) first, because three moulds
+  share one GPU birth pool today.
+- **D5, the start menu (C2):** menu, mission list, options with today's
+  defaults, the key card; plus restart and mission select from pause, a key
+  card showing only the verbs the mission has unlocked, and an "applies to
+  this build" line. Saves later.
+- **D6, the file split (C9):** first, before C2 and C10 branch. Prepared on
+  the integration branch, then a freeze of under 45 minutes on
+  `larder_world.rs` and `larder-world.rs` (freeze held from 11-14 00:36Z).
+  Moves only, one module per subsystem, no public renames; the test count
+  and the replay hash stay identical and the commit quotes both.
+
 **Spare `Params` words (11-13 04:30Z, technical lead).** `PARAMS_BYTES` is
 still 896: #183 (`fed_full`, `fed_crowd`) and #193 (`flow_loss` as `eloss`)
 spent padding words instead of growing the struct. The words still spare in
@@ -346,7 +385,7 @@ and 484 `panic` (f32), `wclock` bits 25-31 (the lean) and `Pile`'s spare
 word (`centre`), the slime-enemy thread's panic PR (11-13); then 488
 `panic_creep` (f32, the lean's pace), the slime-enemy thread's creep PR
 (11-13); then 492 `panic_dash` (u32, the charge's dash), the slime-enemy
-thread's dash PR (11-13). Still spare: **188**, **228/232/236**, **828**
+thread's dash PR (11-13); then each `Set`'s +44 `_p` as `cap` (u32, the species' birth cap, garden only), the player's own mould thread's cap PR (11-14). Still spare: **188**, **228/232/236**, **828**
 (five).
 
 ## Keeping this page true
