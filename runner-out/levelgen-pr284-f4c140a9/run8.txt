@@ -1,0 +1,11 @@
+runner note: GPU-idle check relaxed to under 10% (coordinator 11-14 19:09Z); idle samples before this run: 1,1,1,1,1 %; card 1012 MHz, 3802 MHz, 44, 29.13 W
+larder-world machine at the start: RAM 2.7 GB free of 8.0; GPU memory 1193 MB in use of 8192, 1% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, SearchApp.exe, StartMenuExperienceHost.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: planet:8:1:6 seed 1, 1256 x 784 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 30 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 234.9 MB for 1256 x 784 cells (239 bytes a cell), the biggest 16.4 MB
+  1800 frames, 450 game steps; 0.16 read-backs a step, 0.00 waits a step (0.04 ms a step waiting); steps finished once in 449, when the next was due 0
+  every frame (1800 of them), ms: frame p50 1.81 p95 5.15 max 337.73; step  p50 0.02 p95 0.89 max 313.46; prepare  p50 0.11 p95 0.17 max 30.53; record  p50 0.10 p95 0.17 max 1.33; GPU tail  p50 1.50 p95 3.90 max 29.15
+  frames with a step (450 of them), ms: frame p50 4.73 p95 5.31 max 337.73; step  p50 0.76 p95 1.15 max 313.46; prepare  p50 0.11 p95 0.15 max 0.68; record  p50 0.10 p95 0.13 max 1.33; GPU tail  p50 3.70 p95 4.22 max 29.15
+  GPU (timestamps, median of 450 steps): the step's ticks 2.11 ms, its drawing 0.24 ms
+  t 30 s: mould 25868, soldiers 4, buildings 0, harvested 0, shots 0, killed 0
+  machine at the end: RAM 2.6 GB free of 8.0; GPU memory 1396 MB in use of 8192, 1% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, SearchApp.exe, StartMenuExperienceHost.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, PhoneExperienceHost.exe, SystemSettings.exe
