@@ -4630,7 +4630,7 @@ mod tests {
         let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
             let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
-            let mods = BulletMods { pierce: 1, split: 1 };
+            let mods = BulletMods { pierce: 1, split: 1, reach: 0 };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
             for k in 0..cpu.soldiers.len() {

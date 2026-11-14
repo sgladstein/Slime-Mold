@@ -179,6 +179,10 @@ pub struct Bullet {
 pub struct BulletMods {
     pub pierce: u8,
     pub split: u8,
+    /// Copies of the `Range` card: each stretches every soldier's sight
+    /// and reach by `Rules::range_card` of `Rules::range`
+    /// (`Game::gun_range`).
+    pub reach: u8,
 }
 
 pub struct Game<W: World> {
@@ -409,6 +413,15 @@ impl<W: World> Game<W> {
 
     fn s(&self) -> f32 {
         self.world.scale()
+    }
+
+    /// How far a soldier sees and fires, dish cells: `Rules::range`
+    /// stretched by the rounds' `Range` cards (owner, 2026-11-14 08:39Z:
+    /// "there should be a range modifer card too"). Free fire, aims, the
+    /// burn line's stand-off and the squad mode's volleys all read this;
+    /// building reach and turrets keep `Rules::range` and `turret_range`.
+    pub fn gun_range(&self) -> f32 {
+        self.rules.range * (1.0 + self.rules.range_card * self.bullet_mods.reach as f32)
     }
 
     fn add_soldier(&mut self, a: f32) {
