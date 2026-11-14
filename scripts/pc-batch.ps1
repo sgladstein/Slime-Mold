@@ -21,7 +21,8 @@
 #
 # Why one commit for the twins: main at $Commit contains #181 (shots sink),
 # #183 (fed packing) and #198 (aims that see), whose 1070 twins never ran,
-# and everything merged after them, so one run covers all three.
+# and #208 (each side's birth cap), and everything merged after them, so
+# one run covers all four.
 #
 # Technical lead's review (11-14 00:52Z), all in: a GPU-free check and the
 # card's clocks in every timing file; 90 s cool-down before timing; A/B
@@ -97,17 +98,13 @@ Run "build" "cargo build --release --locked --bins"
 if (-not $DryRun) { Copy-Item "$env:CARGO_TARGET_DIR\release\larder-world.exe" "$bins\lw-main.exe" }
 
 # ---- Twins (compute; allowed whenever the PC is on and quiet) ----
-Run "twins-mouldgpu" "cargo test --release --locked --bin mouldgpu"
-Run "twins-lib-gpu" "cargo test --release --locked --lib gpu::"
-Run "twins-larder-world" "cargo test --release --locked --bin larder-world"
 Run "machine" "$bins\lw-main.exe bench=20 hand=farm"
 
-# Own-mould thread, PR #208 (a WGSL change): the whole suite at its head.
-# New test: gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu. The
-# skirmish bank test and the life-cycle twin fail on main too (known).
-$s = At "788db4ec" "$Tree-pr208"
-$shas += "pr208 $s"
-Run "twins-pr208" "cargo test --release --locked --no-fail-fast"
+# Own-mould thread, PR #208 (merged 11-14 01:02Z, a WGSL change): its
+# twin is the whole suite at the batch main, which holds it. New test:
+# gpu_garden_keeps_each_sides_birth_reserve_as_the_cpu. The skirmish bank
+# test and the life-cycle twin fail on main too (known).
+Run "twins-all" "cargo test --release --locked --no-fail-fast"
 
 # ---- Timing (only with -Timing; the PC to itself, checked) ----
 if ($Timing) {
@@ -176,7 +173,7 @@ Get-ChildItem $dir -Filter "*.txt" | Where-Object { $_.Name -ne "summary.txt" } 
 }
 # The worktrees go; the shared target and the exes stay for a rerun (delete
 # "$Tree-target" and "$Tree-bins" to free the space).
-foreach ($p in "$Tree-pr208", "$Tree-before", "$Tree-after") {
+foreach ($p in "$Tree-before", "$Tree-after") {
     if (-not $DryRun -and (Test-Path $p)) { git -C $Repo worktree remove --force $p }
 }
 "Done. Send back: $sum"
