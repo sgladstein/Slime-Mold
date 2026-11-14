@@ -60,11 +60,27 @@ fn main() {
     }
     std::fs::create_dir_all(&out).unwrap();
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        ..Default::default()
+    }))
+    .expect("no GPU adapter");
     println!("adapter: {}", adapter.get_info().name);
-    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: None, required_limits: adapter.limits(), ..Default::default() })).expect("no device");
+    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: None,
+        required_limits: adapter.limits(),
+        ..Default::default()
+    }))
+    .expect("no device");
     let shared = Shared::new(&device);
-    let mut s = Settings { seed, walkers, start: Start::Home, rock, wet, ..Settings::big_dish() };
+    let mut s = Settings {
+        seed,
+        walkers,
+        start: Start::Home,
+        rock,
+        wet,
+        ..Settings::big_dish()
+    };
     for (k, v) in &extra {
         set(&mut s, k, v).expect("a GPU setting");
     }
@@ -74,35 +90,85 @@ fn main() {
     let piles = e.dish.piles.clone();
     // Where the mould starts: its home pile, or the dish's middle for a
     // disc start (`start=disc disc=R`, R in fine cells).
-    let home = if s.start == Start::Disc { (w as f32 / scale as f32 / 2.0, h as f32 / scale as f32 / 2.0) } else { piles[0] };
-    let start_r = if s.start == Start::Disc { s.disc / scale as f32 } else { 0.0 };
+    let home = if s.start == Start::Disc {
+        (w as f32 / scale as f32 / 2.0, h as f32 / scale as f32 / 2.0)
+    } else {
+        piles[0]
+    };
+    let start_r = if s.start == Start::Disc {
+        s.disc / scale as f32
+    } else {
+        0.0
+    };
     // A wall across the way to the nearest pile: 24 dish cells long, 2
     // thick, square to the line, 70% of the way there (past the start blob).
     if wall {
-        let (k, &(px, py)) = piles.iter().enumerate().skip(1).filter(|(_, p)| (p.0 - home.0).hypot(p.1 - home.1) > start_r + 14.0).min_by(|a, b| (a.1 .0 - home.0).hypot(a.1 .1 - home.1).total_cmp(&(b.1 .0 - home.0).hypot(b.1 .1 - home.1))).unwrap();
+        let (k, &(px, py)) = piles
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|(_, p)| (p.0 - home.0).hypot(p.1 - home.1) > start_r + 14.0)
+            .min_by(|a, b| {
+                (a.1 .0 - home.0)
+                    .hypot(a.1 .1 - home.1)
+                    .total_cmp(&(b.1 .0 - home.0).hypot(b.1 .1 - home.1))
+            })
+            .unwrap();
         let (dx, dy) = (px - home.0, py - home.1);
         let d = dx.hypot(dy);
         let (ux, uy) = (dx / d, dy / d);
         // Past the start disc, short of the pile.
         let at = (0.7 * d).max(start_r + 6.0).min(d - 6.0) / d;
         let (cx, cy) = (home.0 + dx * at, home.1 + dy * at);
-        e.build_wall(&shared, &s, cx - uy * 12.0, cy + ux * 12.0, cx + uy * 12.0, cy - ux * 12.0, 2.0);
+        e.build_wall(
+            &shared,
+            &s,
+            cx - uy * 12.0,
+            cy + ux * 12.0,
+            cx + uy * 12.0,
+            cy - ux * 12.0,
+            2.0,
+        );
         println!("wall across the way to pile {k}, {d:.0} dish cells from home");
     }
     let crystal = dish_crystals(&e.dish);
     let hp = s.wall_hp;
     let look_ground = |e: &Engine| {
-        let g: Vec<u32> = read_back(&device, &queue, &e.ground).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
-        let hl: Vec<f32> = read_back(&device, &queue, &e.health).chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+        let g: Vec<u32> = read_back(&device, &queue, &e.ground)
+            .chunks_exact(4)
+            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
+            .collect();
+        let hl: Vec<f32> = read_back(&device, &queue, &e.health)
+            .chunks_exact(4)
+            .map(|c| f32::from_le_bytes(c.try_into().unwrap()))
+            .collect();
         let is_rock: Vec<bool> = g.iter().map(|&v| v & GROUND_ROCK != 0).collect();
         let is_wet: Vec<bool> = g.iter().map(|&v| v & GROUND_WET != 0).collect();
         let is_wall: Vec<bool> = g.iter().map(|&v| v & GROUND_WALL != 0).collect();
-        let share: Vec<f32> = hl.iter().map(|&x| if hp > 0.0 && x.is_finite() { x / hp } else { 1.0 }).collect();
-        ground(w, w * h, &Fields { rock: &is_rock, wet: &is_wet, wall: &is_wall, wall_share: &share, crystal: &crystal, ..Default::default() })
+        let share: Vec<f32> = hl
+            .iter()
+            .map(|&x| if hp > 0.0 && x.is_finite() { x / hp } else { 1.0 })
+            .collect();
+        ground(
+            w,
+            w * h,
+            &Fields {
+                rock: &is_rock,
+                wet: &is_wet,
+                wall: &is_wall,
+                wall_share: &share,
+                crystal: &crystal,
+                ..Default::default()
+            },
+        )
     };
     let codes = look_ground(&e);
     let open = codes.iter().filter(|&&c| c & 255 == 0 || c & 255 == 1).count();
-    println!("open ground: {open} cells ({} rock, {} wet)", codes.iter().filter(|&&c| c & 255 == 2).count(), codes.iter().filter(|&&c| c & 255 == 1).count());
+    println!(
+        "open ground: {open} cells ({} rock, {} wet)",
+        codes.iter().filter(|&&c| c & 255 == 2).count(),
+        codes.iter().filter(|&&c| c & 255 == 1).count()
+    );
     let mut ground_buf = ground_buffer(&device, &queue, &codes);
 
     let fps = STEPS_PER_SECOND as f32 / s.ticks as f32;
@@ -127,7 +193,10 @@ fn main() {
         if f % fps.round() as u32 != 0 {
             continue;
         }
-        let r: Vec<u32> = read_back(&device, &queue, &e.reached).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        let r: Vec<u32> = read_back(&device, &queue, &e.reached)
+            .chunks_exact(4)
+            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
+            .collect();
         for (k, fr) in first.iter_mut().enumerate() {
             if fr.is_nan() && r[k] != 0 {
                 *fr = t;
@@ -137,7 +206,10 @@ fn main() {
         if f % (5.0 * fps).round() as u32 == 0 {
             ground_buf = ground_buffer(&device, &queue, &look_ground(&e));
             view.set_look(&e.look, &ground_buf, &e.walkers, e.n);
-            let th: Vec<u8> = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
+            let th: Vec<u8> = read_back(&device, &queue, &e.look)
+                .chunks_exact(4)
+                .map(|c| c[0])
+                .collect();
             let covered = (0..w * h).filter(|&i| (codes[i] & 255 <= 1) && th[i] >= SEEN).count();
             let (_, bites, broken) = e.world_counts();
             println!("t {t:>4.0} s: piles reached {} of {}, open ground covered {:.1}%, wall bites {bites}, wall cells broken {broken}", r.iter().take(piles.len()).filter(|&&v| v != 0).count(), piles.len(), 100.0 * covered as f64 / open as f64);
@@ -149,13 +221,31 @@ fn main() {
         view.record(&mut enc, &cam, None);
         queue.submit([enc.finish()]);
         let pic = view.picture();
-        gif.push(image::imageops::resize(&pic, w as u32 / down, h as u32 / down, image::imageops::FilterType::Triangle));
+        gif.push(image::imageops::resize(
+            &pic,
+            w as u32 / down,
+            h as u32 / down,
+            image::imageops::FilterType::Triangle,
+        ));
     }
     for (k, (fr, p)) in first.iter().zip(&piles).enumerate() {
-        println!("pile {k} at ({:.0}, {:.0}), {:.0} dish cells from home: reached at {}", p.0, p.1, (p.0 - home.0).hypot(p.1 - home.1), if fr.is_nan() { "never".to_string() } else { format!("{fr:.0} s") });
+        println!(
+            "pile {k} at ({:.0}, {:.0}), {:.0} dish cells from home: reached at {}",
+            p.0,
+            p.1,
+            (p.0 - home.0).hypot(p.1 - home.1),
+            if fr.is_nan() {
+                "never".to_string()
+            } else {
+                format!("{fr:.0} s")
+            }
+        );
     }
     let delay = image::Delay::from_numer_denom_ms(100, 1);
-    let frames: Vec<image::Frame> = gif.into_iter().map(|img| image::Frame::from_parts(img, 0, 0, delay)).collect();
+    let frames: Vec<image::Frame> = gif
+        .into_iter()
+        .map(|img| image::Frame::from_parts(img, 0, 0, delay))
+        .collect();
     let file = std::fs::File::create(format!("{out}/spread.gif")).expect("gif file");
     let mut enc = image::codecs::gif::GifEncoder::new_with_speed(file, 10);
     enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();

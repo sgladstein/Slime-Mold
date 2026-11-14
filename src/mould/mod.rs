@@ -59,10 +59,10 @@
 pub mod big;
 pub mod campaign;
 pub mod fever;
+pub mod kit;
 pub mod larder;
 pub mod larder_ai;
 pub mod larder_world;
-pub mod kit;
 pub mod larder_world_ai;
 pub mod lesson;
 pub mod level;
@@ -1186,7 +1186,9 @@ fn lap(cost: &mut Option<Box<[f64; STEP_PASSES.len()]>>, at: &mut Option<std::ti
 /// "light" is the lamp, water and sleep ticks and the lamp's push; "census"
 /// runs on one step in `FED_EVERY`; "upkeep" is wounds, oats, the clock and
 /// the Wanderer.
-pub const STEP_PASSES: [&str; 8] = ["light", "food", "move", "flow", "diffuse", "census", "economy", "upkeep"];
+pub const STEP_PASSES: [&str; 8] = [
+    "light", "food", "move", "flow", "diffuse", "census", "economy", "upkeep",
+];
 
 #[inline]
 fn idx(x: usize, y: usize) -> usize {
@@ -1300,13 +1302,9 @@ impl Dish {
             order.swap(k, j);
         }
         let taken: Vec<(f32, f32)> = piles.iter().chain(std::iter::once(&far)).map(|p| (p.x, p.y)).collect();
-        if let Some(&k) = order
-            .iter()
-            .find(|&&k| {
-                taken.iter().all(|t| (t.0 - spots[k].0).hypot(t.1 - spots[k].1) >= 45.0)
-                    && !(wander && spots[k].0 > 215.0)
-            })
-        {
+        if let Some(&k) = order.iter().find(|&&k| {
+            taken.iter().all(|t| (t.0 - spots[k].0).hypot(t.1 - spots[k].1) >= 45.0) && !(wander && spots[k].0 > 215.0)
+        }) {
             let (x, y) = spots[k];
             pending.push((LATE_FOOD_SECONDS[1] as u64 * s, Pile { x, y, ..far.clone() }));
         }
@@ -1562,7 +1560,13 @@ impl Dish {
     pub fn bar_tools(&self) -> Vec<Tool> {
         Tool::EVERY
             .into_iter()
-            .filter(|&t| if t == Tool::Water { self.params.wet } else { self.has_tool(t) })
+            .filter(|&t| {
+                if t == Tool::Water {
+                    self.params.wet
+                } else {
+                    self.has_tool(t)
+                }
+            })
             .collect()
     }
 
@@ -1719,8 +1723,14 @@ impl Dish {
             (x - px).powi(2) + (y - py).powi(2)
         };
         let r2 = r * r;
-        let (x0, x1) = ((a.0.min(b.0) - r).floor().max(0.0) as usize, (a.0.max(b.0) + r).ceil().max(0.0) as usize);
-        let (y0, y1) = ((a.1.min(b.1) - r).floor().max(0.0) as usize, (a.1.max(b.1) + r).ceil().max(0.0) as usize);
+        let (x0, x1) = (
+            (a.0.min(b.0) - r).floor().max(0.0) as usize,
+            (a.0.max(b.0) + r).ceil().max(0.0) as usize,
+        );
+        let (y0, y1) = (
+            (a.1.min(b.1) - r).floor().max(0.0) as usize,
+            (a.1.max(b.1) + r).ceil().max(0.0) as usize,
+        );
         for y in y0..=y1.min(H - 1) {
             for x in x0..=x1.min(W - 1) {
                 if dist2(x as f32 + 0.5, y as f32 + 0.5) > r2 {
@@ -1812,7 +1822,12 @@ impl Dish {
         }
         // What the player did this step reaches the wild mould too.
         let t = self.t;
-        let snips: Vec<(f32, f32)> = self.snip_marks.iter().filter(|m| m.2 == t).map(|m| (m.0, m.1)).collect();
+        let snips: Vec<(f32, f32)> = self
+            .snip_marks
+            .iter()
+            .filter(|m| m.2 == t)
+            .map(|m| (m.0, m.1))
+            .collect();
         r.lamp = self.lamp;
         r.ground.copy_from_slice(&self.ground);
         if self.params.wet {
@@ -1966,7 +1981,11 @@ impl Dish {
             }
             // `fed` is u16::MAX off the fed tube, so with no supply limit
             // this is the old test (fed tube at all).
-            let fed = if self.fed[i] < self.params.supply { self.params.fight_fed } else { self.params.fight_unfed };
+            let fed = if self.fed[i] < self.params.supply {
+                self.params.fight_fed
+            } else {
+                self.params.fight_unfed
+            };
             // Fortified ground: one multiply, only inside a disc, so the
             // dice and the hashes are untouched without one.
             let dug = self
@@ -2043,7 +2062,14 @@ impl Dish {
                 if self.ground[i] == Ground::Agar && self.occ[i] == 0 {
                     self.occ[i] = 1;
                     let heading = self.rng.f32() * TAU;
-                    self.walkers.push(Walker { slept: u64::MAX, woke: u64::MAX, x, y, heading, food: 0.0 });
+                    self.walkers.push(Walker {
+                        slept: u64::MAX,
+                        woke: u64::MAX,
+                        x,
+                        y,
+                        heading,
+                        food: 0.0,
+                    });
                     placed += 1;
                 }
             }
@@ -2078,7 +2104,14 @@ impl Dish {
                 if self.ground[i] == Ground::Agar && self.occ[i] == 0 {
                     self.occ[i] = 1;
                     let heading = self.rng.f32() * TAU;
-                    self.walkers.push(Walker { slept: u64::MAX, woke: u64::MAX, x, y, heading, food });
+                    self.walkers.push(Walker {
+                        slept: u64::MAX,
+                        woke: u64::MAX,
+                        x,
+                        y,
+                        heading,
+                        food,
+                    });
                     placed += 1;
                 }
             }
@@ -2268,7 +2301,11 @@ impl Dish {
             }
             let d = (w.x - lx).hypot(w.y - ly).max(0.01);
             let (nx, ny) = (w.x + (w.x - lx) / d, w.y + (w.y - ly) / d);
-            let (nx, ny) = if self.params.fixed_point { (fix_down(nx), fix_down(ny)) } else { (nx, ny) };
+            let (nx, ny) = if self.params.fixed_point {
+                (fix_down(nx), fix_down(ny))
+            } else {
+                (nx, ny)
+            };
             if let Some(j) = cell(nx, ny) {
                 if j != i && self.ground[j] == Ground::Agar && self.occ[j] == 0 {
                     self.occ[i] = 0;
@@ -2290,7 +2327,10 @@ impl Dish {
             // of five of them; a pile running low smells less.
             let mut strength = fd * (0.3 + 0.7 * (p.food / p.full).min(1.0));
             // A beacon: one comparison per pile per step while any is lit.
-            let lit = self.beacons.iter().find(|b| (b.0 - p.x).abs() < 0.5 && (b.1 - p.y).abs() < 0.5);
+            let lit = self
+                .beacons
+                .iter()
+                .find(|b| (b.0 - p.x).abs() < 0.5 && (b.1 - p.y).abs() < 0.5);
             if let Some(b) = lit {
                 strength = fd * b.2;
             } else if p.reached() {
@@ -2322,7 +2362,11 @@ impl Dish {
     fn sense(&self, x: f32, y: f32) -> f32 {
         match cell(x, y) {
             Some(i) if self.ground[i] == Ground::Agar => {
-                let foe = if self.foe_trail.is_empty() { 0.0 } else { self.params.foe_repel * self.foe_trail[i] };
+                let foe = if self.foe_trail.is_empty() {
+                    0.0
+                } else {
+                    self.params.foe_repel * self.foe_trail[i]
+                };
                 self.trail[i] + self.scent[i] + self.params.wall_pull * self.wall[i]
                     - self.params.light_weight * self.light[i]
                     - foe
@@ -2358,7 +2402,11 @@ impl Dish {
         );
         let sleep_dep = dep * self.params.crust_trail;
         let fx = self.params.fixed_point;
-        let (sa, ra) = if fx { (snap_heading(sa), snap_heading(ra)) } else { (sa, ra) };
+        let (sa, ra) = if fx {
+            (snap_heading(sa), snap_heading(ra))
+        } else {
+            (sa, ra)
+        };
         // Off, this is `a.cos()` and `a.sin()`, bit for bit as before.
         let dir = |a: f32| if fx { fixed_dir(a) } else { (a.cos(), a.sin()) };
         for k in 0..n {
@@ -2371,7 +2419,11 @@ impl Dish {
                 }
                 continue;
             }
-            let (wx, wy, h) = if fx { (fix_down(w.x), fix_down(w.y), snap_heading(w.heading)) } else { (w.x, w.y, w.heading) };
+            let (wx, wy, h) = if fx {
+                (fix_down(w.x), fix_down(w.y), snap_heading(w.heading))
+            } else {
+                (w.x, w.y, w.heading)
+            };
             let ((c, s), (cl, sl), (cr, sr)) = (dir(h), dir(h - sa), dir(h + sa));
             let f = self.sense(wx + c * so, wy + s * so);
             let fl = self.sense(wx + cl * so, wy + sl * so);
@@ -2441,12 +2493,24 @@ impl Dish {
             }
             let d = (w.x - lx).hypot(w.y - ly).max(0.01);
             let (nx, ny) = (w.x + (w.x - lx) / d, w.y + (w.y - ly) / d);
-            let (nx, ny) = if self.params.fixed_point { (fix_down(nx), fix_down(ny)) } else { (nx, ny) };
+            let (nx, ny) = if self.params.fixed_point {
+                (fix_down(nx), fix_down(ny))
+            } else {
+                (nx, ny)
+            };
             if let Some(j) = cell(nx, ny) {
                 if j != i && self.ground[j] == Ground::Agar && self.occ[j] == 0 {
                     let key = keyed(seed, t, CLAIM_PUSH, k as u32);
                     self.claim[j] = self.claim[j].min(key);
-                    moves.push(Move { walker: k as u32, from: i as u32, to: j as u32, key, x: nx, y: ny, heading: w.heading });
+                    moves.push(Move {
+                        walker: k as u32,
+                        from: i as u32,
+                        to: j as u32,
+                        key,
+                        x: nx,
+                        y: ny,
+                        heading: w.heading,
+                    });
                 }
             }
         }
@@ -2477,7 +2541,11 @@ impl Dish {
         );
         let sleep_dep = dep * self.params.crust_trail;
         let fx = self.params.fixed_point;
-        let (sa, ra) = if fx { (snap_heading(sa), snap_heading(ra)) } else { (sa, ra) };
+        let (sa, ra) = if fx {
+            (snap_heading(sa), snap_heading(ra))
+        } else {
+            (sa, ra)
+        };
         // Off, this is `a.cos()` and `a.sin()`, bit for bit as before.
         let dir = |a: f32| if fx { fixed_dir(a) } else { (a.cos(), a.sin()) };
         let (seed, t) = (self.draw_seed(), self.t);
@@ -2491,7 +2559,11 @@ impl Dish {
             if w.asleep() {
                 continue;
             }
-            let (wx, wy, h) = if fx { (fix_down(w.x), fix_down(w.y), snap_heading(w.heading)) } else { (w.x, w.y, w.heading) };
+            let (wx, wy, h) = if fx {
+                (fix_down(w.x), fix_down(w.y), snap_heading(w.heading))
+            } else {
+                (w.x, w.y, w.heading)
+            };
             let ((c, s), (cl, sl), (cr, sr)) = (dir(h), dir(h - sa), dir(h + sa));
             let f = self.sense(wx + c * so, wy + s * so);
             let fl = self.sense(wx + cl * so, wy + sl * so);
@@ -2500,7 +2572,11 @@ impl Dish {
             if f > fl && f > fr {
                 // straight on
             } else if f < fl && f < fr {
-                h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
+                h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 {
+                    ra
+                } else {
+                    -ra
+                };
             } else if fl < fr {
                 h += ra;
             } else if fr < fl {
@@ -2515,7 +2591,15 @@ impl Dish {
                     if there != here {
                         self.claim[there] = self.claim[there].min(key);
                     }
-                    moves.push(Move { walker: k as u32, from: here as u32, to: there as u32, key, x: nx, y: ny, heading: h });
+                    moves.push(Move {
+                        walker: k as u32,
+                        from: here as u32,
+                        to: there as u32,
+                        key,
+                        x: nx,
+                        y: ny,
+                        heading: h,
+                    });
                 }
                 _ => blocked.push(k as u32),
             }
@@ -2642,7 +2726,11 @@ impl Dish {
         let tube = self.params.tube;
         // With food flowing there is no reach: the search only says which
         // tube is joined to eaten food, and which way along it is outward.
-        let reach = if self.params.flow { u16::MAX - 1 } else { self.params.feed_reach };
+        let reach = if self.params.flow {
+            u16::MAX - 1
+        } else {
+            self.params.feed_reach
+        };
         while let Some(i) = queue.pop_front() {
             let d = self.fed[i];
             if d >= reach {
@@ -2785,7 +2873,10 @@ impl Dish {
             }
             parent[ra.max(rb)] = ra.min(rb);
             let pair = (keys[a].min(keys[b]), keys[a].max(keys[b]));
-            let recent = self.last_joined.get(&pair).is_some_and(|&was| t.saturating_sub(was) <= forget);
+            let recent = self
+                .last_joined
+                .get(&pair)
+                .is_some_and(|&was| t.saturating_sub(was) <= forget);
             let was = |k: u64| self.eaten_pieces.iter().find(|e| e.0 == k).map(|e| e.1);
             let apart = matches!((was(keys[a]), was(keys[b])), (Some(pa), Some(pb)) if pa != pb);
             // Never at the census that builds the dish (nothing was eaten
@@ -2873,9 +2964,9 @@ impl Dish {
     /// walkers around it, 0 (nothing carried, or no walkers) to 1
     /// (`CARRIED_FULL` or more); `None` with flow off.
     pub fn carried_look(&self, i: usize) -> Option<f32> {
-        self.params
-            .flow
-            .then(|| (self.carried[i] / (self.walkers_seen[i] + 0.05) / CARRIED_FULL + self.sap[i] / SAP_FULL).clamp(0.0, 1.0))
+        self.params.flow.then(|| {
+            (self.carried[i] / (self.walkers_seen[i] + 0.05) / CARRIED_FULL + self.sap[i] / SAP_FULL).clamp(0.0, 1.0)
+        })
     }
 
     pub fn looks_fed(&self, i: usize) -> bool {
@@ -2900,7 +2991,9 @@ impl Dish {
         for p in self.piles.iter_mut() {
             if p.eaters > 0 && p.food > 0.0 {
                 let key = pile_key(p);
-                let Some(k) = self.census_keys.iter().position(|&c| c == key) else { continue };
+                let Some(k) = self.census_keys.iter().position(|&c| c == key) else {
+                    continue;
+                };
                 let e = p.bite_held(table, eat, self.params.hold);
                 p.food -= e;
                 food[self.piece_of_src[k] as usize] += e * (1.0 - self.tithe);
@@ -3118,7 +3211,12 @@ impl Dish {
                 let (x, y) = (i % W, i / W);
                 let mut to = [0usize; 4];
                 let mut m = 0;
-                for (ok, j) in [(x > 0, i.wrapping_sub(1)), (x + 1 < W, i + 1), (y > 0, i.wrapping_sub(W)), (y + 1 < H, i + W)] {
+                for (ok, j) in [
+                    (x > 0, i.wrapping_sub(1)),
+                    (x + 1 < W, i + 1),
+                    (y > 0, i.wrapping_sub(W)),
+                    (y + 1 < H, i + W),
+                ] {
                     if ok && cond[j] > 0.0 && self.fed[j] == want_d {
                         to[m] = j;
                         m += 1;
@@ -3239,7 +3337,8 @@ impl Dish {
             let mut loaders = vec![0u32; self.piles.len()];
             for (k, w) in self.walkers.iter().enumerate() {
                 for (j, p) in self.piles.iter().enumerate() {
-                    if p.eaters > 0 && p.food > 0.0 && (p.x - w.x).powi(2) + (p.y - w.y).powi(2) <= (p.r + 1.0).powi(2) {
+                    if p.eaters > 0 && p.food > 0.0 && (p.x - w.x).powi(2) + (p.y - w.y).powi(2) <= (p.r + 1.0).powi(2)
+                    {
                         on[k] = j;
                         loaders[j] += 1;
                         break;
@@ -3678,7 +3777,16 @@ impl Dish {
         h.u64(self.seed);
         h.u64(self.t);
         h.u64(self.rng.0);
-        for f in [&self.trail, &self.scent, &self.light, &self.carried, &self.walkers_seen, &self.sap, &self.wall, &self.wet] {
+        for f in [
+            &self.trail,
+            &self.scent,
+            &self.light,
+            &self.carried,
+            &self.walkers_seen,
+            &self.sap,
+            &self.wall,
+            &self.wet,
+        ] {
             h.floats(f);
         }
         h.u64(self.ground.len() as u64);
@@ -3710,7 +3818,13 @@ impl Dish {
         if self.tithe != 0.0 || self.tithed != 0.0 {
             h.floats(&[self.tithe, self.tithed]);
         }
-        for n in [self.oats_left, self.salt_left, self.snips_left, self.water_left, self.peak_mould] {
+        for n in [
+            self.oats_left,
+            self.salt_left,
+            self.snips_left,
+            self.water_left,
+            self.peak_mould,
+        ] {
             h.u64(n as u64);
         }
         // The tallies and the score through their `Debug`, which prints
@@ -4035,15 +4149,29 @@ mod tests {
     /// at the rim themselves).
     #[test]
     fn flowing_food_reaches_down_the_tube() {
-        let on = far_load(&Params { flow: true, ..Params::default() });
-        let off = far_load(&Params { flow: true, stream: 0.0, sap_speed: 0, ..Params::default() });
+        let on = far_load(&Params {
+            flow: true,
+            ..Params::default()
+        });
+        let off = far_load(&Params {
+            flow: true,
+            stream: 0.0,
+            sap_speed: 0,
+            ..Params::default()
+        });
         assert!(on > off * 1.5, "stream on {on:.3} vs off {off:.3}");
     }
 
     #[test]
     fn flow_is_deterministic() {
         let run = || {
-            let mut d = Dish::with_params(3, Params { flow: true, ..Params::default() });
+            let mut d = Dish::with_params(
+                3,
+                Params {
+                    flow: true,
+                    ..Params::default()
+                },
+            );
             for _ in 0..1200 {
                 d.step();
             }
@@ -4071,7 +4199,11 @@ mod tests {
         };
         let play = |kind: usize, seed: u64, random: bool| -> u64 {
             let mut d = build(kind, seed);
-            let mut hand: Box<dyn Player> = if random { Box::new(Random::new(seed)) } else { Box::new(Plan::new()) };
+            let mut hand: Box<dyn Player> = if random {
+                Box::new(Random::new(seed))
+            } else {
+                Box::new(Plan::new())
+            };
             while d.t < steps {
                 hand.act(&mut d);
                 for _ in 0..STEPS_PER_FRAME {
@@ -4089,7 +4221,11 @@ mod tests {
             // the check above would pass while proving nothing. (Not plan
             // against random: on some dishes neither hand has acted by 10 s,
             // and those two games really are the same.)
-            assert_ne!(play(kind, 2, false), play(kind, 3, false), "dish kind {kind}: seeds 2 and 3 gave one hash");
+            assert_ne!(
+                play(kind, 2, false),
+                play(kind, 3, false),
+                "dish kind {kind}: seeds 2 and 3 gave one hash"
+            );
         }
     }
 
@@ -4358,7 +4494,14 @@ mod tests {
             for (ox, oy) in disc(3.0) {
                 if let Some(i) = cell(c.0 + ox, c.1 + oy) {
                     d.occ[i] = 1;
-                    d.walkers.push(Walker { slept: u64::MAX, woke: u64::MAX, x: c.0 + ox, y: c.1 + oy, heading: 0.0, food: 1.0 });
+                    d.walkers.push(Walker {
+                        slept: u64::MAX,
+                        woke: u64::MAX,
+                        x: c.0 + ox,
+                        y: c.1 + oy,
+                        heading: 0.0,
+                        food: 1.0,
+                    });
                 }
             }
         }
@@ -4479,7 +4622,12 @@ mod tests {
         assert_eq!(a.state_hash(), b.state_hash(), "timing changed the dish");
         assert_eq!(a.trail, b.trail);
         assert_eq!(a.scent, b.scent);
-        let at = |d: &Dish| d.walkers.iter().map(|w| (w.x, w.y, w.heading, w.food)).collect::<Vec<_>>();
+        let at = |d: &Dish| {
+            d.walkers
+                .iter()
+                .map(|w| (w.x, w.y, w.heading, w.food))
+                .collect::<Vec<_>>()
+        };
         assert_eq!(at(&a), at(&b));
         assert!(a.step_cost.is_none());
         let c = b.step_cost.as_ref().unwrap();
@@ -4495,10 +4643,20 @@ mod tests {
     #[test]
     fn walkers_at_once_keep_one_to_a_cell() {
         let run = |at_once: bool| {
-            let mut d = Dish::with_params(7, Params { all_at_once: at_once, ..Params::default() });
+            let mut d = Dish::with_params(
+                7,
+                Params {
+                    all_at_once: at_once,
+                    ..Params::default()
+                },
+            );
             let (hx, hy) = (d.piles[0].x, d.piles[0].y);
             for t in 0..600 {
-                d.set_lamp(if (100..300).contains(&t) { Some((hx + 6.0, hy)) } else { None });
+                d.set_lamp(if (100..300).contains(&t) {
+                    Some((hx + 6.0, hy))
+                } else {
+                    None
+                });
                 d.step();
                 if at_once {
                     let mut seen = vec![false; W * H];
@@ -4527,16 +4685,36 @@ mod tests {
     fn fixed_point_keeps_the_dish_on_its_grid() {
         let on_grid = |v: f32| (v * FIX).fract() == 0.0;
         for at_once in [false, true] {
-            let mut d = Dish::with_params(7, Params { fixed_point: true, all_at_once: at_once, ..Params::default() });
+            let mut d = Dish::with_params(
+                7,
+                Params {
+                    fixed_point: true,
+                    all_at_once: at_once,
+                    ..Params::default()
+                },
+            );
             for _ in 0..300 {
                 d.step();
             }
-            assert!(d.trail.iter().chain(&d.scent).all(|&v| on_grid(v)), "a field off the grid");
+            assert!(
+                d.trail.iter().chain(&d.scent).all(|&v| on_grid(v)),
+                "a field off the grid"
+            );
             // A walker that has stepped sits on the grid; one blocked or
             // just born keeps its float until it next moves.
             let snapped = d.walkers.iter().filter(|w| on_grid(w.x) && on_grid(w.y)).count();
-            assert!(snapped * 2 > d.walkers.len(), "most walkers off the grid: {snapped} of {}", d.walkers.len());
-            let mut floats = Dish::with_params(7, Params { all_at_once: at_once, ..Params::default() });
+            assert!(
+                snapped * 2 > d.walkers.len(),
+                "most walkers off the grid: {snapped} of {}",
+                d.walkers.len()
+            );
+            let mut floats = Dish::with_params(
+                7,
+                Params {
+                    all_at_once: at_once,
+                    ..Params::default()
+                },
+            );
             for _ in 0..300 {
                 floats.step();
             }
@@ -4545,7 +4723,10 @@ mod tests {
         for a in [0.0, 0.3, -1.0, TAU, 100.0] {
             let s = snap_heading(a);
             let k = s / TAU * HEADINGS as f32;
-            assert!((k - k.round()).abs() < 1e-3 && (0.0..TAU).contains(&s), "{a} snapped to {s}");
+            assert!(
+                (k - k.round()).abs() < 1e-3 && (0.0..TAU).contains(&s),
+                "{a} snapped to {s}"
+            );
             let (c, sn) = fixed_dir(a);
             assert!(on_grid(c) && on_grid(sn));
         }

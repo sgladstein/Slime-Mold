@@ -58,7 +58,9 @@ pub enum Kind {
     /// player wants it (a turret line, away from a crystal) or to wake a
     /// Sleeper on the player's own clock.
     Siren,
-    Wall { to: (f32, f32) },
+    Wall {
+        to: (f32, f32),
+    },
 }
 
 impl Kind {
@@ -279,7 +281,10 @@ impl<W: World> Game<W> {
 
     /// Buildings standing or being raised.
     pub fn standing(&self) -> usize {
-        self.buildings.iter().filter(|b| b.alive && !matches!(b.kind, Kind::Wall { .. })).count()
+        self.buildings
+            .iter()
+            .filter(|b| b.alive && !matches!(b.kind, Kind::Wall { .. }))
+            .count()
     }
 
     /// Why a building can't go at `at` now, or None if it can.
@@ -305,7 +310,11 @@ impl<W: World> Game<W> {
             return Some("too many buildings");
         }
         let gap = self.rules.build.gap * sc;
-        if self.buildings.iter().any(|b| b.alive && !matches!(b.kind, Kind::Wall { .. }) && (b.at.0 - at.0).hypot(b.at.1 - at.1) < gap) {
+        if self
+            .buildings
+            .iter()
+            .any(|b| b.alive && !matches!(b.kind, Kind::Wall { .. }) && (b.at.0 - at.0).hypot(b.at.1 - at.1) < gap)
+        {
             return Some("too close to another building");
         }
         if kind == Kind::Pump && self.pump_crystal(at).is_none() {
@@ -317,7 +326,12 @@ impl<W: World> Game<W> {
     /// The crystal a pump at `at` would stand on: one whose disc holds the
     /// point.
     fn pump_crystal(&self, at: (f32, f32)) -> Option<usize> {
-        self.world.crystals().iter().enumerate().find(|(i, c)| (c.0 .0 - at.0).hypot(c.0 .1 - at.1) <= self.world.crystal_r(*i)).map(|(i, _)| i)
+        self.world
+            .crystals()
+            .iter()
+            .enumerate()
+            .find(|(i, c)| (c.0 .0 - at.0).hypot(c.0 .1 - at.1) <= self.world.crystal_r(*i))
+            .map(|(i, _)| i)
     }
 
     /// Place a building of `kind` at `at` (fine cells), paid now. True if
@@ -338,10 +352,29 @@ impl<W: World> Game<W> {
             Kind::Siren => b.siren_hp,
             Kind::Wall { .. } => self.world_wall_hp(),
         };
-        let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
+        let crystal = if kind == Kind::Pump {
+            self.pump_crystal(at)
+        } else {
+            None
+        };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0 });
+        self.buildings.push(Building {
+            kind,
+            at,
+            hp: GHOST_HP * hp,
+            max_hp: hp,
+            built: 0.0,
+            alive: true,
+            on: true,
+            working: false,
+            crystal,
+            ready: 0,
+            touching: 0,
+            aim: None,
+            dense: 0,
+            drew: 0.0,
+        });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -359,7 +392,9 @@ impl<W: World> Game<W> {
     /// and a wall writes its cells into the world. The soldier controls
     /// thread's build order calls this.
     pub fn raise(&mut self, k: usize, amount: f32) {
-        let Some(b) = self.buildings.get(k).copied() else { return };
+        let Some(b) = self.buildings.get(k).copied() else {
+            return;
+        };
         if !b.alive || b.built >= 1.0 {
             return;
         }
@@ -420,7 +455,14 @@ impl<W: World> Game<W> {
 
     /// The buildings' turn before the frame: their units (and a turret's
     /// shot) into the frame, a lure's food out of the bank.
-    pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>, dt: f32) {
+    pub(super) fn building_units(
+        &mut self,
+        units: &mut Vec<UnitIn>,
+        shots: &mut Vec<ShotIn>,
+        who: &mut Vec<Who>,
+        from: &mut Vec<Option<usize>>,
+        dt: f32,
+    ) {
         let r = self.rules;
         let b = r.build;
         let sc = self.s();
@@ -432,7 +474,12 @@ impl<W: World> Game<W> {
             if !bd.alive || matches!(bd.kind, Kind::Wall { .. }) {
                 continue;
             }
-            let mut u = UnitIn { x: bd.at.0, y: bd.at.1, touch: b.touch * sc, ..UnitIn::default() };
+            let mut u = UnitIn {
+                x: bd.at.0,
+                y: bd.at.1,
+                touch: b.touch * sc,
+                ..UnitIn::default()
+            };
             if !bd.up() {
                 // A ghost does nothing yet, but the mould can wear it.
                 units.push(u);
@@ -458,7 +505,11 @@ impl<W: World> Game<W> {
                                 // which covers the barrel.
                                 let m = (TURRET_MUZZLE * b.touch * sc).min(0.5 * d);
                                 let from = (bd.at.0 + dx / d * m, bd.at.1 + dy / d * m);
-                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
+                                shots.push(ShotIn {
+                                    from,
+                                    to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach),
+                                    r: strike,
+                                });
                                 self.buildings[k].ready = t + self.secs(b.turret_every);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -491,8 +542,19 @@ impl<W: World> Game<W> {
                     // Before the frame starts, so the world is idle: the
                     // call goes through the burst, the alarm's one writer.
                     if bd.on && bd.ready <= t {
-                        let burst = Burst { at: (bd.at.0 / sc, bd.at.1 / sc), alarm: b.siren_alarm, alarm_r: b.siren_r, ..Burst::default() };
-                        self.world.burst(&burst, &BurstRules { alarm_keep: b.siren_keep, ..BurstRules::default() });
+                        let burst = Burst {
+                            at: (bd.at.0 / sc, bd.at.1 / sc),
+                            alarm: b.siren_alarm,
+                            alarm_r: b.siren_r,
+                            ..Burst::default()
+                        };
+                        self.world.burst(
+                            &burst,
+                            &BurstRules {
+                                alarm_keep: b.siren_keep,
+                                ..BurstRules::default()
+                            },
+                        );
                         self.buildings[k].ready = t + self.secs(b.siren_every);
                         self.buildings[k].working = true;
                         self.sirens += 1;
@@ -500,7 +562,8 @@ impl<W: World> Game<W> {
                 }
                 Kind::Outpost => {
                     u.smell_r = 3.0 * sc;
-                    u.smell = self.world.food_deposit() * r.hoard * b.outpost_hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32;
+                    u.smell = self.world.food_deposit() * r.hoard * b.outpost_hoard * self.bank.max(0.0) / 10_000.0
+                        * r.frame_ticks as f32;
                 }
                 Kind::Wall { .. } => unreachable!(),
             }
@@ -550,7 +613,14 @@ impl<W: World> Game<W> {
     /// Where carriers can bank: the larder first, then each standing
     /// outpost (for the soldier controls thread's nearest drop-off).
     pub fn drop_offs(&self) -> Vec<(f32, f32)> {
-        std::iter::once(self.larder).chain(self.buildings.iter().filter(|b| b.kind == Kind::Outpost && b.up()).map(|b| b.at)).collect()
+        std::iter::once(self.larder)
+            .chain(
+                self.buildings
+                    .iter()
+                    .filter(|b| b.kind == Kind::Outpost && b.up())
+                    .map(|b| b.at),
+            )
+            .collect()
     }
 
     /// The turrets' shots of the last frame, for the window's tracers (they
@@ -569,7 +639,18 @@ mod tests {
     fn small(seed: u64) -> Game<BigDish> {
         // Whole when placed: these tests are of what buildings do; raising
         // them has its own tests (`BuildRules::raise` set in each).
-        Game::new(race_world(seed, 1, 1_000), Rules { start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
+        Game::new(
+            race_world(seed, 1, 1_000),
+            Rules {
+                start_bank: 1e6,
+                build: BuildRules {
+                    raise: 0.0,
+                    ..BuildRules::default()
+                },
+                ..Rules::default()
+            },
+            seed,
+        )
     }
 
     /// A soldier at `at`, so a building there is in reach.
@@ -594,7 +675,13 @@ mod tests {
 
     #[test]
     fn building_commands_round_trip_as_lines() {
-        for c in [Cmd::Build(Kind::Turret, (10.5, 20.25)), Cmd::Build(Kind::Lure, (1.0, 2.0)), Cmd::Build(Kind::Pump, (3.0, 4.5)), Cmd::Build(Kind::Wall { to: (7.0, 8.5) }, (5.0, 6.0)), Cmd::Toggle(3)] {
+        for c in [
+            Cmd::Build(Kind::Turret, (10.5, 20.25)),
+            Cmd::Build(Kind::Lure, (1.0, 2.0)),
+            Cmd::Build(Kind::Pump, (3.0, 4.5)),
+            Cmd::Build(Kind::Wall { to: (7.0, 8.5) }, (5.0, 6.0)),
+            Cmd::Toggle(3),
+        ] {
             assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
         }
     }
@@ -603,7 +690,11 @@ mod tests {
     fn a_building_needs_a_soldier_near_food_and_room() {
         let mut g = small(1);
         let far = open_near(&g, g.core);
-        assert_eq!(g.build_blocked(Kind::Turret, far), None, "anywhere: a soldier walks there");
+        assert_eq!(
+            g.build_blocked(Kind::Turret, far),
+            None,
+            "anywhere: a soldier walks there"
+        );
         g.rules.build.anywhere = false;
         assert_eq!(g.build_blocked(Kind::Turret, far), Some("no soldier in range"));
         g.rules.build.anywhere = true;
@@ -612,18 +703,33 @@ mod tests {
         assert!(g.apply(Cmd::Build(Kind::Turret, at)));
         assert_eq!(bank - g.bank, g.rules.build.turret_cost);
         assert!(g.buildings[0].up(), "whole at once while `raise` is 0");
-        assert_eq!(g.build_blocked(Kind::Lure, (at.0 + 1.0, at.1)), Some("too close to another building"));
+        assert_eq!(
+            g.build_blocked(Kind::Lure, (at.0 + 1.0, at.1)),
+            Some("too close to another building")
+        );
         // Off every crystal, in reach, away from the turret.
         let off = (0..64)
             .map(|i| {
                 let a = i as f32 * 0.7;
-                (g.larder.0 + (4.0 + i as f32 * 0.2) * a.cos(), g.larder.1 + (4.0 + i as f32 * 0.2) * a.sin())
+                (
+                    g.larder.0 + (4.0 + i as f32 * 0.2) * a.cos(),
+                    g.larder.1 + (4.0 + i as f32 * 0.2) * a.sin(),
+                )
             })
-            .find(|&p| g.world.open(p.0, p.1) && g.reachable(p) && g.crystal_at(p).is_none_or(|(i, c)| (c.0 - p.0).hypot(c.1 - p.1) > g.world.crystal_r(i)) && (p.0 - at.0).hypot(p.1 - at.1) > 3.0)
+            .find(|&p| {
+                g.world.open(p.0, p.1)
+                    && g.reachable(p)
+                    && g.crystal_at(p)
+                        .is_none_or(|(i, c)| (c.0 - p.0).hypot(c.1 - p.1) > g.world.crystal_r(i))
+                    && (p.0 - at.0).hypot(p.1 - at.1) > 3.0
+            })
             .expect("open ground off the crystals");
         assert_eq!(g.build_blocked(Kind::Pump, off), Some("a pump goes on a crystal"));
         g.bank = 10.0;
-        assert_eq!(g.build_blocked(Kind::Lure, open_near(&g, (g.larder.0 - 8.0, g.larder.1))), Some("not enough food"));
+        assert_eq!(
+            g.build_blocked(Kind::Lure, open_near(&g, (g.larder.0 - 8.0, g.larder.1))),
+            Some("not enough food")
+        );
     }
 
     #[test]
@@ -653,8 +759,18 @@ mod tests {
             g.step();
         }
         let b = g.buildings[0];
-        assert!(g.shots > 5 && g.killed > 0, "a turret by the core: {} shots, {} killed", g.shots, g.killed);
-        assert!(b.hp < b.max_hp || !b.alive, "the mould wore it: {} of {}", b.hp, b.max_hp);
+        assert!(
+            g.shots > 5 && g.killed > 0,
+            "a turret by the core: {} shots, {} killed",
+            g.shots,
+            g.killed
+        );
+        assert!(
+            b.hp < b.max_hp || !b.alive,
+            "the mould wore it: {} of {}",
+            b.hp,
+            b.max_hp
+        );
         // Shots cost what a soldier's do.
         assert!((g.spent - g.rules.build.turret_cost - g.shots as f32 * g.rules.price).abs() < 1e-2);
     }
@@ -675,8 +791,12 @@ mod tests {
             g.step();
             for s in g.turret_shots().filter(|s| s.fired) {
                 let out = (s.from.0 - at.0).hypot(s.from.1 - at.1);
-                let along = ((s.from.0 - at.0) * (s.to.0 - at.0) + (s.from.1 - at.1) * (s.to.1 - at.1)) / ((s.to.0 - at.0).hypot(s.to.1 - at.1) * out.max(1e-6));
-                assert!(out <= tip + 1e-3 && out > 0.0 && along > 0.999, "from {out} out (tip {tip}), along {along}");
+                let along = ((s.from.0 - at.0) * (s.to.0 - at.0) + (s.from.1 - at.1) * (s.to.1 - at.1))
+                    / ((s.to.0 - at.0).hypot(s.to.1 - at.1) * out.max(1e-6));
+                assert!(
+                    out <= tip + 1e-3 && out > 0.0 && along > 0.999,
+                    "from {out} out (tip {tip}), along {along}"
+                );
                 seen += 1;
             }
         }
@@ -687,7 +807,10 @@ mod tests {
     fn a_siren_calls_with_the_alarm_every_few_seconds_while_on() {
         let run = |on: bool| {
             let mut g = small(4);
-            let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
+            let at = open_near(
+                &g,
+                (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1),
+            );
             stand(&mut g, at);
             assert!(g.apply(Cmd::Build(Kind::Siren, at)));
             if !on {
@@ -698,14 +821,23 @@ mod tests {
                 g.step();
             }
             let i = at.1 as usize * g.world.w + at.0 as usize;
-            (g.sirens, g.world.alarm.get(i).copied().unwrap_or(0.0), g.world.alarm.len(), mould)
+            (
+                g.sirens,
+                g.world.alarm.get(i).copied().unwrap_or(0.0),
+                g.world.alarm.len(),
+                mould,
+            )
         };
         // Calls at 0, 4 and 8 s; the plain mould has no alarm until then.
         let (calls, alarm, len, _) = run(true);
         assert_eq!(calls, 3);
         assert!(len > 0 && alarm > 0.0, "the siren's alarm on its cell: {alarm}");
         let (calls, _, len, _) = run(false);
-        assert_eq!((calls, len), (0, 0), "a siren switched off calls nothing and turns no alarm on");
+        assert_eq!(
+            (calls, len),
+            (0, 0),
+            "a siren switched off calls nothing and turns no alarm on"
+        );
         // It kills nothing: the call is a burst with no kill.
         let mut g = small(4);
         let at = open_near(&g, g.core);
@@ -724,7 +856,10 @@ mod tests {
             // The burn is off by default (no upkeep); on, it still works.
             g.rules.build.lure_burn = 2.0;
             // Open ground between the bases, away from the crystals' scent.
-            let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
+            let at = open_near(
+                &g,
+                (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1),
+            );
             stand(&mut g, at);
             assert!(g.build(Kind::Lure, at));
             if !on {
@@ -738,8 +873,14 @@ mod tests {
         };
         let (scent_on, lured) = run(true);
         let (scent_off, lured_off) = run(false);
-        assert!((lured - 4.0 * 2.0).abs() < 0.2 && lured_off == 0.0, "burnt {lured} food in 4 s on, {lured_off} off");
-        assert!(scent_on > 2.0 * scent_off.max(1e-6), "scent at the lure {scent_on}, off {scent_off}");
+        assert!(
+            (lured - 4.0 * 2.0).abs() < 0.2 && lured_off == 0.0,
+            "burnt {lured} food in 4 s on, {lured_off} off"
+        );
+        assert!(
+            scent_on > 2.0 * scent_off.max(1e-6),
+            "scent at the lure {scent_on}, off {scent_off}"
+        );
     }
 
     /// No upkeep (owner, 2026-11-14 04:53Z: "There should be no
@@ -748,7 +889,10 @@ mod tests {
     #[test]
     fn standing_buildings_cost_nothing_to_keep() {
         let mut g = small(4);
-        let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
+        let at = open_near(
+            &g,
+            (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1),
+        );
         stand(&mut g, at);
         assert!(g.build(Kind::Lure, at));
         let siren = open_near(&g, (at.0 + 8.0, at.1));
@@ -781,7 +925,11 @@ mod tests {
         }
         let want = 10.0 * g.rules.build.pump_rate;
         // `Building::drew`, the window's draw line, is the pump's take.
-        assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
+        assert!(
+            (drew - g.pumped).abs() < 1e-3 * want,
+            "drew {drew}, pumped {}",
+            g.pumped
+        );
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
         // The squad's rations (`Rules::ration`) come out of the same bank.
         assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
@@ -825,7 +973,10 @@ mod tests {
         let mut placed = 0;
         for i in 0..400 {
             let a = i as f32 * 2.4;
-            let at = (g.larder.0 + (2.0 + 0.05 * i as f32) * a.cos(), g.larder.1 + (2.0 + 0.05 * i as f32) * a.sin());
+            let at = (
+                g.larder.0 + (2.0 + 0.05 * i as f32) * a.cos(),
+                g.larder.1 + (2.0 + 0.05 * i as f32) * a.sin(),
+            );
             if g.build(Kind::Lure, at) {
                 placed += 1;
             }
@@ -884,7 +1035,10 @@ mod tests {
             }
         }
         let (_, hp_half) = half.expect("it rose past half");
-        assert!(hp_half > ghost && hp_half < g.buildings[0].max_hp, "half-built is weaker: {hp_half}");
+        assert!(
+            hp_half > ghost && hp_half < g.buildings[0].max_hp,
+            "half-built is weaker: {hp_half}"
+        );
         assert!(g.buildings[0].up(), "a lone builder raises it in its time");
         g.step();
         assert_eq!(g.soldiers[0].order, Order::Hold, "then it holds");
@@ -936,7 +1090,10 @@ mod tests {
         }
         assert!(g.buildings[0].up(), "raised by the idle squad");
         assert!(g.world.wall.iter().any(|&w| w), "its cells are in the world once whole");
-        assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()), Some(Cmd::Order(2, Order::Build(7))));
+        assert_eq!(
+            Cmd::parse(&Cmd::Order(2, Order::Build(7)).to_line()),
+            Some(Cmd::Order(2, Order::Build(7)))
+        );
     }
 
     #[test]
@@ -955,9 +1112,15 @@ mod tests {
         assert_eq!(g.raise_left(0), None, "nobody raising it yet");
         assert_eq!(Cmd::parse(&Cmd::Send(0).to_line()), Some(Cmd::Send(0)));
         assert!(g.apply(Cmd::Send(0)));
-        let k = (0..g.soldiers.len()).find(|&k| g.soldiers[k].order == Order::Build(0)).expect("one soldier sent");
+        let k = (0..g.soldiers.len())
+            .find(|&k| g.soldiers[k].order == Order::Build(0))
+            .expect("one soldier sent");
         assert_eq!(g.raising(0), (0, 1), "on the way");
-        assert_eq!((g.soldiers[k].queued, g.soldiers[k].queue[0]), (1, Order::Move(x - 6.0, y)), "its walk is kept for after");
+        assert_eq!(
+            (g.soldiers[k].queued, g.soldiers[k].queue[0]),
+            (1, Order::Move(x - 6.0, y)),
+            "its walk is kept for after"
+        );
         let mut seen = None;
         for _ in 0..(g.rules.tps * 120) {
             g.step();

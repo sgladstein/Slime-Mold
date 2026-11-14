@@ -375,7 +375,6 @@ pub enum Verb {
     Fortify(usize),
 }
 
-
 /// **Scripted strategies**, for the rival and for the harness's
 /// round robin. Each thinks once a second and sees what a player sees: the
 /// piles, who is eating each, late food once it lands, its own bank and the
@@ -779,7 +778,11 @@ impl Skirmish {
         match v {
             Verb::Beacon(_) => self.rules.beacon_cost,
             Verb::Spore(_) => {
-                let recent = self.sides[s].spore_times.iter().filter(|&&t| t + 30 * SPS > self.dish.t).count();
+                let recent = self.sides[s]
+                    .spore_times
+                    .iter()
+                    .filter(|&&t| t + 30 * SPS > self.dish.t)
+                    .count();
                 self.rules.spore_cost * (1.0 + self.rules.spore_ramp * recent as f32)
             }
             Verb::Habit(_) => self.rules.habit_cost,
@@ -802,7 +805,12 @@ impl Skirmish {
                     continue;
                 }
                 let (px, py) = (cx + dx, cy + dy);
-                if px >= 0 && py >= 0 && (px as usize) < super::W && (py as usize) < super::H && fed[py as usize * super::W + px as usize] != u16::MAX {
+                if px >= 0
+                    && py >= 0
+                    && (px as usize) < super::W
+                    && (py as usize) < super::H
+                    && fed[py as usize * super::W + px as usize] != u16::MAX
+                {
                     return true;
                 }
             }
@@ -817,11 +825,11 @@ impl Skirmish {
         }
         match v {
             Verb::Beacon(i) => self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats),
-            Verb::Spore(i) => self
-                .dish
-                .piles
-                .get(i)
-                .is_some_and(|p| p.food > 0.0 && !p.oats && self.within_reach(s, (p.x, p.y), self.rules.spore_reach)),
+            Verb::Spore(i) => {
+                self.dish.piles.get(i).is_some_and(|p| {
+                    p.food > 0.0 && !p.oats && self.within_reach(s, (p.x, p.y), self.rules.spore_reach)
+                })
+            }
             Verb::Habit(h) => h != self.sides[s].habit && self.dish.t >= self.sides[s].ready_at,
             Verb::Rally(i) | Verb::Fortify(i) => {
                 self.dish.piles.get(i).is_some_and(|p| p.food > 0.0 && !p.oats) && self.eaters(s, i) > 0
@@ -869,7 +877,11 @@ impl Skirmish {
             Verb::Spore(i) => {
                 if self.rules.strike_delay > 0 {
                     // Paid now, lands later, in plain view.
-                    self.strikes.push(Strike { side: s, pile: i, lands: t + self.rules.strike_delay * SPS });
+                    self.strikes.push(Strike {
+                        side: s,
+                        pile: i,
+                        lands: t + self.rules.strike_delay * SPS,
+                    });
                 } else if !self.land_spore(s, i) {
                     return false;
                 }
@@ -919,7 +931,12 @@ impl Skirmish {
             for w in &mut walkers[k..] {
                 w.slept = t;
             }
-            self.spores.push(Spore { side: s, pile: i, landed: t, wakes: t + self.rules.spore_dormant * SPS });
+            self.spores.push(Spore {
+                side: s,
+                pile: i,
+                landed: t,
+                wakes: t + self.rules.spore_dormant * SPS,
+            });
         }
         if abroad {
             let d = &self.sides[1 - s];
@@ -1116,13 +1133,22 @@ impl Skirmish {
                 .iter()
                 .find(|k| k.side == o && sk.eaters(s, k.pile) > 0)
                 .map(|k| k.pile)
-                .or_else(|| sk.spores.iter().find(|p| p.side == o && sk.eaters(s, p.pile) > 0).map(|p| p.pile))
+                .or_else(|| {
+                    sk.spores
+                        .iter()
+                        .find(|p| p.side == o && sk.eaters(s, p.pile) > 0)
+                        .map(|p| p.pile)
+                })
         };
         // That, or an own pile the rival has a beacon or rally lit on.
         let attacked = |sk: &Skirmish| {
             landing(sk).or_else(|| {
                 let r = &sk.sides[o];
-                r.rallies.iter().chain(r.beacons.iter()).map(|b| b.0).find(|&i| sk.eaters(s, i) > sk.eaters(o, i))
+                r.rallies
+                    .iter()
+                    .chain(r.beacons.iter())
+                    .map(|b| b.0)
+                    .find(|&i| sk.eaters(s, i) > sk.eaters(o, i))
             })
         };
         let bank = self.sides[s].bank;
@@ -1168,7 +1194,9 @@ impl Skirmish {
             }
             Plan::Boom => {
                 let first = PILES.len();
-                if let Some(i) = nearest(self, &|sk: &Skirmish, i: usize| i >= first && sk.eaters(s, i) <= sk.eaters(o, i)) {
+                if let Some(i) = nearest(self, &|sk: &Skirmish, i: usize| {
+                    i >= first && sk.eaters(s, i) <= sk.eaters(o, i)
+                }) {
                     self.strike(s, i, &lit);
                 } else {
                     self.expand(s, &nearest, &lit, &free, bank);
@@ -1202,7 +1230,11 @@ impl Skirmish {
                 }
             }
             Plan::Keep | Plan::Ward => {
-                let shield = if plan == Plan::Ward { attacked(self) } else { landing(self) };
+                let shield = if plan == Plan::Ward {
+                    attacked(self)
+                } else {
+                    landing(self)
+                };
                 if let Some(i) = shield {
                     if !rallied(self, i) && self.act(s, Verb::Rally(i)) {
                         return;
@@ -1235,12 +1267,10 @@ impl Skirmish {
                     let p = &sk.dish.piles[i];
                     (p.x - 128.0).abs() <= 40.0 && sk.eaters(s, i) <= sk.eaters(o, i)
                 };
-                let target = (0..n)
-                    .filter(|&i| live(self, i) && band(self, i))
-                    .min_by(|&a, &b| {
-                        let d = |i: usize| (self.dish.piles[i].x - 128.0).abs();
-                        d(a).total_cmp(&d(b))
-                    });
+                let target = (0..n).filter(|&i| live(self, i) && band(self, i)).min_by(|&a, &b| {
+                    let d = |i: usize| (self.dish.piles[i].x - 128.0).abs();
+                    d(a).total_cmp(&d(b))
+                });
                 match target {
                     Some(i) => self.strike(s, i, &lit),
                     None => self.expand(s, &nearest, &lit, &free, bank),
@@ -1285,7 +1315,8 @@ impl Skirmish {
             }
             Plan::Guard => {
                 let landing = landing(self);
-                let contested = landing.or_else(|| (0..n).find(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0));
+                let contested = landing
+                    .or_else(|| (0..n).find(|&i| live(self, i) && self.eaters(s, i) > 0 && self.eaters(o, i) > 0));
                 if let Some(i) = contested {
                     if self.act(s, Verb::Spore(i)) {
                         return;
@@ -1322,14 +1353,7 @@ impl Skirmish {
     /// Expansion, for Boom and Centre once the middle is held: a spore on
     /// the free pile nearest home, else (with a spore's worth to spare) a
     /// beacon on the nearest free pile not yet lit.
-    fn expand(
-        &mut self,
-        s: usize,
-        nearest: &Nearest<'_>,
-        lit: &PileTest<'_>,
-        free: &PileTest<'_>,
-        bank: f32,
-    ) {
+    fn expand(&mut self, s: usize, nearest: &Nearest<'_>, lit: &PileTest<'_>, free: &PileTest<'_>, bank: f32) {
         if let Some(i) = nearest(self, free) {
             if self.act(s, Verb::Spore(i)) {
                 return;
@@ -1382,7 +1406,11 @@ fn late_food(dish: &mut Dish, seed: u64, count: u64) {
             } else {
                 (128.0, 14.0 + roll() * 132.0)
             };
-            let spots: Vec<(f32, f32)> = if pair { vec![(x, y), (256.0 - x, y)] } else { vec![(x, y)] };
+            let spots: Vec<(f32, f32)> = if pair {
+                vec![(x, y), (256.0 - x, y)]
+            } else {
+                vec![(x, y)]
+            };
             let clear = spots.iter().all(|&(x, y)| {
                 let agar = super::cell(x, y).is_some_and(|i| dish.ground[i] == super::Ground::Agar)
                     && super::cell(x, y - 5.0).is_some_and(|i| dish.ground[i] == super::Ground::Agar)
@@ -1393,7 +1421,13 @@ fn late_food(dish: &mut Dish, seed: u64, count: u64) {
             if clear {
                 for &(x, y) in &spots {
                     taken.push((x, y));
-                    let p = super::Pile { x, y, food: LATE_FOOD, full: LATE_FOOD, ..template.clone() };
+                    let p = super::Pile {
+                        x,
+                        y,
+                        food: LATE_FOOD,
+                        full: LATE_FOOD,
+                        ..template.clone()
+                    };
                     dish.pending.push((at, p));
                 }
                 break;
@@ -1409,7 +1443,11 @@ fn late_food(dish: &mut Dish, seed: u64, count: u64) {
 /// on at all, else the centre. Returns the target and the other side's
 /// home, whose road to the target a wall should cross.
 pub fn front(d: &Dish, actor_self: bool) -> ((f32, f32), (f32, f32)) {
-    let (mine, theirs) = if actor_self { (HOMES[0], HOMES[1]) } else { (HOMES[1], HOMES[0]) };
+    let (mine, theirs) = if actor_self {
+        (HOMES[0], HOMES[1])
+    } else {
+        (HOMES[1], HOMES[0])
+    };
     let near = |q: &&super::Pile| (q.x - mine.0).hypot(q.y - mine.1);
     // `eaters` are your mould's, `foe_eaters` the rival's.
     let other_on = |q: &super::Pile| if actor_self { q.foe_eaters } else { q.eaters };
@@ -1476,7 +1514,11 @@ mod tests {
         s.set_tithe(0, 0.25);
         run(&mut s, 10);
         let bank = s.sides[0].bank;
-        assert!(bank > 0.0 && (bank - s.dish.tithed).abs() < 0.01 * bank, "bank {bank}, tithed {}", s.dish.tithed);
+        assert!(
+            bank > 0.0 && (bank - s.dish.tithed).abs() < 0.01 * bank,
+            "bank {bank}, tithed {}",
+            s.dish.tithed
+        );
         s.sides[0].bank = SPORE_COST + BEACON_COST + HABIT_COST;
         s.sides[1].bank = SPORE_COST;
         let (mine, theirs) = (s.walkers(0), s.walkers(1));
@@ -1488,19 +1530,32 @@ mod tests {
         // pile is safe. Checking `can` first was not enough: every pile
         // passes it here; the miss is in placing. The `libm` crate would make
         // the CPU sim reproduce across machines if replays ever need it.
-        let order: Vec<usize> = std::iter::once(20).chain((0..s.dish.piles.len()).filter(|&i| i != 20)).collect();
-        let mine_at = order.iter().copied().find(|&i| s.act(0, Verb::Spore(i))).expect("no pile took my spore");
+        let order: Vec<usize> = std::iter::once(20)
+            .chain((0..s.dish.piles.len()).filter(|&i| i != 20))
+            .collect();
+        let mine_at = order
+            .iter()
+            .copied()
+            .find(|&i| s.act(0, Verb::Spore(i)))
+            .expect("no pile took my spore");
         std::iter::once(mine_at)
             .chain(order.iter().copied().filter(|&i| i != mine_at))
             .find(|&i| s.act(1, Verb::Spore(i)))
             .expect("no pile took the rival's spore");
         // A crowded pile takes fewer than the whole colony: the centre pile
         // at 0:40 on dish 2 took 60 of 150 once the moulds took turns.
-        assert!(s.walkers(0) > mine + SPORE_WALKERS / 4 && s.walkers(0) <= mine + SPORE_WALKERS, "{} placed", s.walkers(0) - mine);
+        assert!(
+            s.walkers(0) > mine + SPORE_WALKERS / 4 && s.walkers(0) <= mine + SPORE_WALKERS,
+            "{} placed",
+            s.walkers(0) - mine
+        );
         assert!(s.walkers(1) > theirs && s.walkers(1) <= theirs + SPORE_WALKERS);
         assert!(s.act(0, Verb::Beacon(19)));
         assert_eq!(s.dish.beacons.len(), 1);
-        assert!(s.dish.rival.as_ref().unwrap().beacons.is_empty(), "a beacon lit for both");
+        assert!(
+            s.dish.rival.as_ref().unwrap().beacons.is_empty(),
+            "a beacon lit for both"
+        );
         assert!(s.act(0, Verb::Habit(Habit::Cord)));
         assert!(s.sides[0].bank < 1.0);
         s.sides[0].bank = HABIT_COST;
@@ -1561,7 +1616,10 @@ mod tests {
         let last = s.dish.pending.iter().map(|p| p.0).max().unwrap();
         assert!(last > 150 * SPS && last <= 200 * SPS, "last drop at {}", last / SPS);
         // The drops the 2:30 game had come first, in the same places.
-        assert_eq!(&s.dish.pending.iter().map(|p| p.0).collect::<Vec<_>>()[..first.len()], &first[..]);
+        assert_eq!(
+            &s.dish.pending.iter().map(|p| p.0).collect::<Vec<_>>()[..first.len()],
+            &first[..]
+        );
     }
 
     #[test]
@@ -1576,7 +1634,10 @@ mod tests {
         s.regrow(SPS);
         assert!((s.dish.piles[i].food - step).abs() < 1e-3);
         s.regrow(25 * SPS);
-        assert!((s.dish.piles[i].food - 3.0 * step).abs() < 1e-3, "twice as fast once left alone 20 s");
+        assert!(
+            (s.dish.piles[i].food - 3.0 * step).abs() < 1e-3,
+            "twice as fast once left alone 20 s"
+        );
         let full = s.dish.piles[0].full;
         s.dish.piles[0].food = full;
         s.regrow(26 * SPS);
@@ -1587,12 +1648,18 @@ mod tests {
         let mut s = Skirmish::new(1, [None, None]);
         s.rules.regrow = 0.01;
         run(&mut s, 1);
-        let i = (0..s.dish.piles.len()).find(|&i| s.eaters(0, i) + s.eaters(1, i) == 0).unwrap();
+        let i = (0..s.dish.piles.len())
+            .find(|&i| s.eaters(0, i) + s.eaters(1, i) == 0)
+            .unwrap();
         s.dish.piles[i].food = 0.0;
         run(&mut s, 1);
         assert_eq!(s.eaters(0, i) + s.eaters(1, i), 0, "nobody there yet");
         assert!(s.dish.piles[i].food > 0.9 * step * SPS as f32, "it grew back");
-        assert_eq!(s.dish.rival.as_ref().unwrap().piles[i].food, s.dish.piles[i].food, "the rival sees it too");
+        assert_eq!(
+            s.dish.rival.as_ref().unwrap().piles[i].food,
+            s.dish.piles[i].food,
+            "the rival sees it too"
+        );
     }
 
     #[test]
@@ -1622,7 +1689,9 @@ mod tests {
         let mut s = Skirmish::new(2, [None, None]);
         s.rules.strike_delay = 5;
         run(&mut s, 30);
-        let theirs = (0..s.dish.piles.len()).find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0).unwrap();
+        let theirs = (0..s.dish.piles.len())
+            .find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0)
+            .unwrap();
         s.sides[0].bank = 2.0 * SPORE_COST;
         let before = s.walkers(0);
         assert!(s.act(0, Verb::Spore(theirs)));
@@ -1706,8 +1775,12 @@ mod tests {
         let mut s = Skirmish::new(2, [None, None]);
         s.rules.spore_ramp = 0.5;
         run(&mut s, 30);
-        let mine = (0..s.dish.piles.len()).find(|&i| s.eaters(0, i) > 0 && s.eaters(1, i) == 0).unwrap();
-        let theirs = (0..s.dish.piles.len()).find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0).unwrap();
+        let mine = (0..s.dish.piles.len())
+            .find(|&i| s.eaters(0, i) > 0 && s.eaters(1, i) == 0)
+            .unwrap();
+        let theirs = (0..s.dish.piles.len())
+            .find(|&i| s.eaters(1, i) > 0 && s.eaters(0, i) == 0)
+            .unwrap();
         s.sides[0].bank = 2.0 * RALLY_COST;
         assert!(!s.act(0, Verb::Rally(theirs)), "a rally where you do not eat");
         assert!(s.act(0, Verb::Rally(mine)));
@@ -1728,8 +1801,16 @@ mod tests {
         assert_eq!(s.sides[0].bank, 0.0, "the second at half again, and never below zero");
         assert!(!s.act(0, Verb::Spore(theirs)));
         assert_eq!(s.price(0, Verb::Spore(theirs)), 2.0 * SPORE_COST);
-        assert_eq!(s.price(1, Verb::Spore(mine)), SPORE_COST, "the rival pays for your burst");
+        assert_eq!(
+            s.price(1, Verb::Spore(mine)),
+            SPORE_COST,
+            "the rival pays for your burst"
+        );
         run(&mut s, 31);
-        assert_eq!(s.price(0, Verb::Spore(theirs)), SPORE_COST, "the price never came back down");
+        assert_eq!(
+            s.price(0, Verb::Spore(theirs)),
+            SPORE_COST,
+            "the price never came back down"
+        );
     }
 }

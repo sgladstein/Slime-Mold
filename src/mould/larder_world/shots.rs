@@ -24,7 +24,12 @@ impl<W: World> Game<W> {
     /// ended early at the first wall or rock (`World::open`, checked a fine
     /// cell at a time, so a bullet never jumps a thin wall). Returns the
     /// legs and, for each, who fired it and whether it was fired now.
-    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[Option<usize>], dt: f32) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>) {
+    pub(super) fn fly(
+        &mut self,
+        fired: Vec<ShotIn>,
+        by: &[Option<usize>],
+        dt: f32,
+    ) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>) {
         let r = self.rules;
         if r.bullet_speed <= 0.0 {
             return (fired, by.iter().map(|&b| (b, true)).collect());
@@ -36,8 +41,21 @@ impl<W: World> Game<W> {
             }
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
-            let m = if b.is_some() { self.bullet_mods } else { BulletMods::default() };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split });
+            let m = if b.is_some() {
+                self.bullet_mods
+            } else {
+                BulletMods::default()
+            };
+            self.bullets.push(Bullet {
+                at: s.from,
+                dir: (dx / d, dy / d),
+                left: d,
+                r: s.r,
+                by: b,
+                fresh: true,
+                pierce: m.pierce,
+                split: m.split,
+            });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
@@ -82,7 +100,9 @@ impl<W: World> Game<W> {
         self.bullets.retain_mut(|b| {
             let q = k;
             k += 1;
-            let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else { return false };
+            let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else {
+                return false;
+            };
             b.fresh = false;
             if let Some(h) = o.hit {
                 // On a wall a leg ends with no hit; only slime gets here.
@@ -99,10 +119,24 @@ impl<W: World> Game<W> {
                     let a0 = b.dir.1.atan2(b.dir.0);
                     let rr = b.r * r.split_r;
                     for j in 0..n {
-                        let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
+                        let a = a0
+                            + if n > 1 {
+                                (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan
+                            } else {
+                                0.0
+                            };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1 });
+                        pieces.push(Bullet {
+                            at,
+                            dir,
+                            left: r.split_range * sc,
+                            r: rr,
+                            by: b.by,
+                            fresh: false,
+                            pierce: 0,
+                            split: b.split - 1,
+                        });
                     }
                 }
                 return false;

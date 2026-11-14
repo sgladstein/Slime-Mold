@@ -85,7 +85,12 @@ fn main() {
             _ => panic!("unknown {k}"),
         }
     }
-    println!("mouldhand seed={seed} level={level:?} tag={tag} scale={scale} sensor_angle={:.1} flow={} spared={}", params.sensor_angle.to_degrees(), params.flow, params.spared);
+    println!(
+        "mouldhand seed={seed} level={level:?} tag={tag} scale={scale} sensor_angle={:.1} flow={} spared={}",
+        params.sensor_angle.to_degrees(),
+        params.flow,
+        params.spared
+    );
     let mut acts: Vec<(f32, Act)> = Vec::new();
     for line in script.lines() {
         let line = line.split('#').next().unwrap().trim();
@@ -96,8 +101,16 @@ fn main() {
         let f = |i: usize| w[i].parse::<f32>().unwrap_or_else(|_| panic!("bad line {line}"));
         let t = f(0);
         let act = match w[1] {
-            "lamp" => Act::Lamp { a: (f(2), f(3)), b: (f(2), f(3)), dur: f(4) },
-            "sweep" => Act::Lamp { a: (f(2), f(3)), b: (f(4), f(5)), dur: f(6) },
+            "lamp" => Act::Lamp {
+                a: (f(2), f(3)),
+                b: (f(2), f(3)),
+                dur: f(4),
+            },
+            "sweep" => Act::Lamp {
+                a: (f(2), f(3)),
+                b: (f(4), f(5)),
+                dur: f(6),
+            },
             "oats" => Act::Oats(f(2), f(3)),
             "salt" => Act::Stroke(Tool::Salt, (f(2), f(3)), (f(4), f(5))),
             "snip" => Act::Stroke(Tool::Snip, (f(2), f(3)), (f(4), f(5))),
@@ -109,18 +122,41 @@ fn main() {
     println!("{} actions", acts.len());
 
     let mut d = match level {
-        Some(k) => Dish::from_level_with(&DISHES[k], seed, Params { stray_reach: STRAY_REACH, ..params.clone() }),
+        Some(k) => Dish::from_level_with(
+            &DISHES[k],
+            seed,
+            Params {
+                stray_reach: STRAY_REACH,
+                ..params.clone()
+            },
+        ),
         None => Dish::with_params(seed, params.clone()),
     };
-    println!("piles at start: {:?}", d.piles.iter().map(|p| (p.x as i32, p.y as i32, p.oats)).collect::<Vec<_>>());
-    println!("pending: {:?}", d.pending.iter().map(|(t, p)| (t / STEPS_PER_SECOND as u64, p.x as i32, p.y as i32)).collect::<Vec<_>>());
+    println!(
+        "piles at start: {:?}",
+        d.piles
+            .iter()
+            .map(|p| (p.x as i32, p.y as i32, p.oats))
+            .collect::<Vec<_>>()
+    );
+    println!(
+        "pending: {:?}",
+        d.pending
+            .iter()
+            .map(|(t, p)| (t / STEPS_PER_SECOND as u64, p.x as i32, p.y as i32))
+            .collect::<Vec<_>>()
+    );
     println!("spared: {:?}", d.spared);
     let sps = STEPS_PER_SECOND as u64;
     let mut next = 0usize;
     let mut lamp: Option<(f32, Act)> = None;
     let mut frames = Vec::new();
     let mut frame = 0u32;
-    let mut view = View { keys: false, style, ..View::default() };
+    let mut view = View {
+        keys: false,
+        style,
+        ..View::default()
+    };
     let mut over_at: Option<u64> = None;
     let mut ever = vec![0.0f32; d.trail.len()];
     let end_free = Dish::dish_steps() + Dish::storm_steps() + 3 * sps;
@@ -139,7 +175,10 @@ fn main() {
                     view.tool = Tool::Oats;
                     view.cursor = Some((x, y));
                     let ok = d.place_oats(x, y);
-                    println!("  {secs:6.1}s oats at {x},{y}: {}", if ok { "placed" } else { "REFUSED" });
+                    println!(
+                        "  {secs:6.1}s oats at {x},{y}: {}",
+                        if ok { "placed" } else { "REFUSED" }
+                    );
                 }
                 Act::Stroke(tool, a, b) => {
                     view.tool = tool;
@@ -152,7 +191,11 @@ fn main() {
                         }
                         d.end_stroke();
                     }
-                    println!("  {secs:6.1}s {} {a:?}->{b:?}: {}", tool.name(), if ok { "done" } else { "REFUSED" });
+                    println!(
+                        "  {secs:6.1}s {} {a:?}->{b:?}: {}",
+                        tool.name(),
+                        if ok { "done" } else { "REFUSED" }
+                    );
                 }
             }
         }
@@ -234,7 +277,9 @@ fn main() {
         }
         if on_second && s.is_multiple_of(5) {
             let m = d.measure();
-            let grey = (0..d.trail.len()).filter(|&i| d.trail[i] > d.params.tube && d.fed[i] == u16::MAX).count();
+            let grey = (0..d.trail.len())
+                .filter(|&i| d.trail[i] > d.params.tube && d.fed[i] == u16::MAX)
+                .count();
             let tube = (0..d.trail.len()).filter(|&i| d.trail[i] > d.params.tube).count();
             println!(
                 "t={s:3}s walkers {:5} joined {}/{} ratio {:.2} tube {tube} unfed-tube {grey} oats {} salt {} snips {} on_patch {:?}",
@@ -265,17 +310,32 @@ fn main() {
         }
     }
     if let Some(s) = &d.score {
-        println!("SCORE stars {:?} reach {}/{} after {} ratio {:.2} joined_at {:?} on_patch {:?}", s.stars, s.reach, s.piles, s.after, s.ratio(), s.joined_at, s.on_patch);
+        println!(
+            "SCORE stars {:?} reach {}/{} after {} ratio {:.2} joined_at {:?} on_patch {:?}",
+            s.stars,
+            s.reach,
+            s.piles,
+            s.after,
+            s.ratio(),
+            s.joined_at,
+            s.on_patch
+        );
     }
     if let Some(c) = &d.card {
         println!("CARD stars {} | {} | {}", c.stars, c.amount, c.why);
     }
     let c = &d.counts;
-    println!("COUNTS births {} starved {} hungry {} snipped {} stormed {} oats {} snips {} joins {}", c.births, c.starved, c.hungry, c.snipped, c.stormed, c.oats_placed, c.snips_used, c.snaps);
+    println!(
+        "COUNTS births {} starved {} hungry {} snipped {} stormed {} oats {} snips {} joins {}",
+        c.births, c.starved, c.hungry, c.snipped, c.stormed, c.oats_placed, c.snips_used, c.snaps
+    );
     if !frames.is_empty() {
         let delay = image::Delay::from_numer_denom_ms(gif_every * 1000 / 60, 1);
         let n = frames.len();
-        let fr: Vec<image::Frame> = frames.into_iter().map(|img| image::Frame::from_parts(img, 0, 0, delay)).collect();
+        let fr: Vec<image::Frame> = frames
+            .into_iter()
+            .map(|img| image::Frame::from_parts(img, 0, 0, delay))
+            .collect();
         let file = std::fs::File::create(format!("{out}/{tag}.gif")).unwrap();
         let mut enc = image::codecs::gif::GifEncoder::new_with_speed(file, 10);
         enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();

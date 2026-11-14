@@ -82,7 +82,12 @@ const MINIMAP_H: f32 = 3.0 * CELL + 2.0 * CELL_GAP + 2.0 * CARD_PAD;
 /// The loadout strip's width: its slots, the name and state, and Swap.
 fn loadout_w(l: &Loadout, s: f32) -> f32 {
     let slots = l.slots.max(l.cards.len()).max(1) as f32;
-    2.0 * 6.0 * s + slots * 34.0 * s + (slots - 1.0) * 4.0 * s + 8.0 * s + 112.0 * s + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
+    2.0 * 6.0 * s
+        + slots * 34.0 * s
+        + (slots - 1.0) * 4.0 * s
+        + 8.0 * s
+        + 112.0 * s
+        + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
 }
 
 /// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
@@ -163,7 +168,22 @@ pub struct Command {
 
 impl Command {
     pub fn new(id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode) -> Self {
-        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None }
+        Command {
+            id,
+            slot,
+            icon,
+            name: name.into(),
+            key,
+            cost: None,
+            cost_icon: Icon::Crystal,
+            ready: true,
+            on: false,
+            cooldown: 0.0,
+            wait: None,
+            target: Target::Instant,
+            about: String::new(),
+            why_not: None,
+        }
     }
 }
 
@@ -406,11 +426,20 @@ pub enum MenuItem {
 #[derive(Clone, Debug, PartialEq)]
 pub enum HudEvent {
     /// An instant command.
-    Command { id: u32 },
+    Command {
+        id: u32,
+    },
     /// A targeted command, placed at a world point.
-    Point { id: u32, at: (f32, f32) },
+    Point {
+        id: u32,
+        at: (f32, f32),
+    },
     /// A line command, dragged between two world points.
-    Line { id: u32, from: (f32, f32), to: (f32, f32) },
+    Line {
+        id: u32,
+        from: (f32, f32),
+        to: (f32, f32),
+    },
     /// A card was clicked: select that unit alone (Shift: drop it).
     SelectOnly(usize),
     Deselect(usize),
@@ -420,7 +449,9 @@ pub enum HudEvent {
     Idle,
     Menu(MenuItem),
     /// A command was pressed that is not ready; the hud shows why.
-    NotReady { id: u32 },
+    NotReady {
+        id: u32,
+    },
     /// The squad panel: take command of the squad on row `r`.
     Squad(usize),
     /// The squad panel: the squad on row `r` joins the one you command.
@@ -528,7 +559,28 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now() }
+        Hud {
+            scale: 1.0,
+            hits: Vec::new(),
+            hover: None,
+            pressed: None,
+            targeting: None,
+            menu: None,
+            help_direct: false,
+            alerts: Vec::new(),
+            commands: Vec::new(),
+            bottom: 0.0,
+            minimap_box: None,
+            minimap: None,
+            top: 0.0,
+            world: (1.0, 1.0),
+            end: false,
+            took: [false; 3],
+            ghost_ok: true,
+            ghost_note: None,
+            cycle: None,
+            started: Instant::now(),
+        }
     }
 
     /// The menu is open (the game should pause).
@@ -582,7 +634,12 @@ impl Hud {
     pub fn alert(&mut self, text: &str, at: Option<(f32, f32)>, colour: Rgba) {
         // The same words again refresh the old one rather than stack.
         self.alerts.retain(|a| a.text != text);
-        self.alerts.push(Alert { text: text.into(), at, colour, when: Instant::now() });
+        self.alerts.push(Alert {
+            text: text.into(),
+            at,
+            colour,
+            when: Instant::now(),
+        });
         if self.alerts.len() > ALERTS_MAX {
             self.alerts.remove(0);
         }
@@ -593,7 +650,9 @@ impl Hud {
     }
 
     fn activate(&mut self, index: usize, out: &mut Vec<HudEvent>) {
-        let Some(c) = self.commands.get(index).cloned() else { return };
+        let Some(c) = self.commands.get(index).cloned() else {
+            return;
+        };
         if !c.ready {
             if let Some(w) = &c.why_not {
                 self.alert(w, None, WARN);
@@ -603,7 +662,14 @@ impl Hud {
         }
         match c.target {
             Target::Instant => out.push(HudEvent::Command { id: c.id }),
-            t => self.targeting = Some(Targeting { index, id: c.id, target: t, from: None }),
+            t => {
+                self.targeting = Some(Targeting {
+                    index,
+                    id: c.id,
+                    target: t,
+                    from: None,
+                })
+            }
         }
     }
 
@@ -635,7 +701,11 @@ impl Hud {
                     self.targeting = Some(Targeting { from: None, ..t });
                 } else {
                     out.push(HudEvent::Line { id: t.id, from, to });
-                    self.targeting = if shift { Some(Targeting { from: None, ..t }) } else { None };
+                    self.targeting = if shift {
+                        Some(Targeting { from: None, ..t })
+                    } else {
+                        None
+                    };
                 }
                 return (true, out);
             }
@@ -746,7 +816,11 @@ impl Hud {
         }
         match h {
             Hit::Command(i) => self.activate(i, &mut out),
-            Hit::Card(id) => out.push(if shift { HudEvent::Deselect(id) } else { HudEvent::SelectOnly(id) }),
+            Hit::Card(id) => out.push(if shift {
+                HudEvent::Deselect(id)
+            } else {
+                HudEvent::SelectOnly(id)
+            }),
             Hit::Group(g) => out.push(HudEvent::Group(g)),
             Hit::Idle => out.push(HudEvent::Idle),
             Hit::Cycle => out.extend(self.cycle.map(|id| HudEvent::Command { id })),
@@ -845,7 +919,15 @@ impl Hud {
     /// world marks). `minimap`: whether the view shows one (then the UI
     /// frames it, bottom right; the game passes `minimap_box` on to the
     /// view).
-    pub fn draw(&mut self, m: &Model, controls: &Controls, cam: &Camera, minimap: bool, c: &mut Canvas, world: &mut Marks) {
+    pub fn draw(
+        &mut self,
+        m: &Model,
+        controls: &Controls,
+        cam: &Camera,
+        minimap: bool,
+        c: &mut Canvas,
+        world: &mut Marks,
+    ) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
         let s = c.ui.px(c.screen);
         self.scale = s;
@@ -884,9 +966,16 @@ impl Hud {
             let mm_h = (MINIMAP_H * s).max(panel_h);
             let ih = mm_h - 2.0 * pad;
             // (min then max, not `clamp`, which panics in a narrow window.)
-            let iw = (ih * cam.world.0 / cam.world.1).min((360.0 * s).min(sw * 0.25)).max(ih * 0.6);
+            let iw = (ih * cam.world.0 / cam.world.1)
+                .min((360.0 * s).min(sw * 0.25))
+                .max(ih * 0.6);
             let f = Rect::new(right - iw - 2.0 * pad, base - mm_h, iw + 2.0 * pad, mm_h);
-            let bx = ((f.x + pad).round() as u32, (f.y + pad).round() as u32, iw.round() as u32, ih.round() as u32);
+            let bx = (
+                (f.x + pad).round() as u32,
+                (f.y + pad).round() as u32,
+                iw.round() as u32,
+                ih.round() as u32,
+            );
             let mm = super::view::minimap_in((cam.world.0 as usize, cam.world.1 as usize), bx);
             self.minimap_box = Some(bx);
             self.minimap = Some(mm);
@@ -895,9 +984,19 @@ impl Hud {
             // A panel round the minimap, open over it (the minimap is the
             // view's, drawn before the canvas).
             c.panel_with_hole(f, radius, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE, hole);
-            c.outline(Rect::new(hole.x - 1.0, hole.y - 1.0, hole.w + 2.0, hole.h + 2.0), 2.0, 1.0, [255, 255, 255, 40]);
+            c.outline(
+                Rect::new(hole.x - 1.0, hole.y - 1.0, hole.w + 2.0, hole.h + 2.0),
+                2.0,
+                1.0,
+                [255, 255, 255, 40],
+            );
             // Clicks on the frame are the UI's; inside, the controls'.
-            for r in [Rect::new(f.x, f.y, f.w, hole.y - f.y), Rect::new(f.x, hole.bottom(), f.w, f.bottom() - hole.bottom()), Rect::new(f.x, f.y, hole.x - f.x, f.h), Rect::new(hole.right(), f.y, f.right() - hole.right(), f.h)] {
+            for r in [
+                Rect::new(f.x, f.y, f.w, hole.y - f.y),
+                Rect::new(f.x, hole.bottom(), f.w, f.bottom() - hole.bottom()),
+                Rect::new(f.x, f.y, hole.x - f.x, f.h),
+                Rect::new(hole.right(), f.y, f.right() - hole.right(), f.h),
+            ] {
                 self.hits.push((r, Hit::Panel));
             }
             right = f.x - 8.0 * s;
@@ -909,7 +1008,9 @@ impl Hud {
         // card (one card row tall, owner 08:33Z). Where that leaves the
         // selection under 240 units the strip goes back over the panels.
         let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, s));
-        let gun = gun_w.map(|w| Rect::new(8.0 * s, top_of, w, panel_h)).filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
+        let gun = gun_w
+            .map(|w| Rect::new(8.0 * s, top_of, w, panel_h))
+            .filter(|g| card.x - 8.0 * s - (g.right() + 8.0 * s) >= 240.0 * s);
         let left = gun.map_or(8.0 * s, |g| g.right() + 8.0 * s);
         let sel = Rect::new(left, top_of, (card.x - 8.0 * s - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
@@ -917,14 +1018,26 @@ impl Hud {
         // panel that only said "Nothing selected").
         let empty = m.info.is_none() && m.selection.is_empty() && m.squads.is_none();
         // The loadout strip (about 312 units wide) takes the rest of the row.
-        let sel_drawn = if empty { Rect::new(sel.x, base - COLLAPSED * s, (sel.w - 320.0 * s).clamp(150.0 * s, 330.0 * s).min(sel.w), COLLAPSED * s) } else { sel };
+        let sel_drawn = if empty {
+            Rect::new(
+                sel.x,
+                base - COLLAPSED * s,
+                (sel.w - 320.0 * s).clamp(150.0 * s, 330.0 * s).min(sel.w),
+                COLLAPSED * s,
+            )
+        } else {
+            sel
+        };
 
         self.top_bar(m, c, s);
         self.selection_panel(m, controls, sel_drawn, c, s);
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
+        let tip = m
+            .loadout
+            .as_ref()
+            .and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, s));
         self.command_card(m, card, c, s);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
@@ -961,7 +1074,13 @@ impl Hud {
         // Resources: a pill of icon, value and rate each.
         let mut widths = Vec::new();
         for r in &m.resources {
-            let w = 18.0 * s + 6.0 * s + c.atlas.measure(Weight::SemiBold, px, &r.value) + r.rate.as_ref().map(|t| 6.0 * s + c.atlas.measure(Weight::Medium, small, t)).unwrap_or(0.0);
+            let w = 18.0 * s
+                + 6.0 * s
+                + c.atlas.measure(Weight::SemiBold, px, &r.value)
+                + r.rate
+                    .as_ref()
+                    .map(|t| 6.0 * s + c.atlas.measure(Weight::Medium, small, t))
+                    .unwrap_or(0.0);
             widths.push(w);
         }
         let inner: f32 = widths.iter().sum::<f32>() + (widths.len().saturating_sub(1)) as f32 * 20.0 * s;
@@ -989,12 +1108,25 @@ impl Hud {
         let menu = Rect::new(sw - 8.0 * s - h, y, h, h);
         let hot = self.hover.is_some_and(|p| menu.contains(p));
         c.shadow(menu, h / 2.0, 16.0 * s, 4.0 * s, SHADOW);
-        let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+        let (t, b) = if hot {
+            (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+        } else {
+            (PANEL_TOP, PANEL_BOTTOM)
+        };
         c.panel(menu, h / 2.0, t, b, 1.0, EDGE);
-        c.icon(Icon::Menu, (menu.x + (h - 18.0 * s) / 2.0, y + (h - 18.0 * s) / 2.0), 18.0 * s, TEXT);
+        c.icon(
+            Icon::Menu,
+            (menu.x + (h - 18.0 * s) / 2.0, y + (h - 18.0 * s) / 2.0),
+            18.0 * s,
+            TEXT,
+        );
         self.hits.push((menu, Hit::MenuButton));
         let cw = c.atlas.measure(Weight::SemiBold, px, &m.clock);
-        let chip = m.speed.as_ref().map(|t| c.atlas.measure(Weight::SemiBold, small, &t.to_uppercase()) + 16.0 * s).unwrap_or(0.0);
+        let chip = m
+            .speed
+            .as_ref()
+            .map(|t| c.atlas.measure(Weight::SemiBold, small, &t.to_uppercase()) + 16.0 * s)
+            .unwrap_or(0.0);
         let w = 14.0 * s + 18.0 * s + 6.0 * s + cw + if chip > 0.0 { 10.0 * s + chip } else { 0.0 } + 14.0 * s;
         let pill = Rect::new(menu.x - 8.0 * s - w, y, w, h);
         self.glass(pill, h / 2.0, c, s);
@@ -1005,15 +1137,34 @@ impl Hud {
         if let Some(sp) = &m.speed {
             let r = Rect::new(x, y + 9.0 * s, chip, h - 18.0 * s);
             c.rrect(r, r.h / 2.0, alpha(WARN, 0.18));
-            c.text(Weight::SemiBold, small, (r.x + r.w / 2.0, base - 1.0 * s), Align::Centre, &sp.to_uppercase(), WARN);
+            c.text(
+                Weight::SemiBold,
+                small,
+                (r.x + r.w / 2.0, base - 1.0 * s),
+                Align::Centre,
+                &sp.to_uppercase(),
+                WARN,
+            );
         }
         // The objective, centred.
         if let Some(obj) = &m.objective {
             let ow = c.atlas.measure(Weight::Medium, 13.0 * s, obj) + 40.0 * s;
             let r = Rect::new((sw - ow) / 2.0, y + 3.0 * s, ow, h - 6.0 * s);
             self.glass(r, r.h / 2.0, c, s);
-            c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text(Weight::Medium, 13.0 * s, (r.x + 30.0 * s, base - 1.0 * s), Align::Left, obj, TEXT);
+            c.icon(
+                Icon::Target,
+                (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0),
+                14.0 * s,
+                ACCENT,
+            );
+            c.text(
+                Weight::Medium,
+                13.0 * s,
+                (r.x + 30.0 * s, base - 1.0 * s),
+                Align::Left,
+                obj,
+                TEXT,
+            );
         }
     }
 
@@ -1022,7 +1173,14 @@ impl Hud {
         let r = Rect::new(at.0, at.1, w, 24.0 * s);
         c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, SHADOW);
         c.panel(r, 6.0 * s, [36, 42, 50, 245], [28, 33, 40, 245], 1.0, EDGE);
-        c.text(Weight::Medium, 12.0 * s, (r.x + 8.0 * s, r.y + 16.0 * s), Align::Left, text, TEXT);
+        c.text(
+            Weight::Medium,
+            12.0 * s,
+            (r.x + 8.0 * s, r.y + 16.0 * s),
+            Align::Left,
+            text,
+            TEXT,
+        );
     }
 
     fn selection_panel(&mut self, m: &Model, controls: &Controls, r: Rect, c: &mut Canvas, s: f32) {
@@ -1042,7 +1200,14 @@ impl Hud {
             let chip = Rect::new(x, y, w, chip_h);
             self.chip(chip, Hit::Idle, false, c, s);
             c.icon(Icon::Idle, (chip.x + 8.0 * s, chip.y + 4.0 * s), 16.0 * s, WARN);
-            c.text(Weight::SemiBold, 12.0 * s, (chip.x + 28.0 * s, chip.y + 16.5 * s), Align::Left, &label, TEXT);
+            c.text(
+                Weight::SemiBold,
+                12.0 * s,
+                (chip.x + 28.0 * s, chip.y + 16.5 * s),
+                Align::Left,
+                &label,
+                TEXT,
+            );
             if self.hover.is_some_and(|p| chip.contains(p)) {
                 self.tip_small("Idle soldiers: select the next", (chip.x, chip.y - 30.0 * s), c, s);
             }
@@ -1057,16 +1222,46 @@ impl Hud {
             let label = format!("{}", g + 1);
             let count = format!("{}", members.len());
             // The group's key, then a soldier and how many.
-            let w = 9.0 * s + c.atlas.measure(Weight::SemiBold, 12.0 * s, &label) + 8.0 * s + 12.0 * s + 3.0 * s + c.atlas.measure(Weight::Medium, 11.5 * s, &count) + 10.0 * s;
+            let w = 9.0 * s
+                + c.atlas.measure(Weight::SemiBold, 12.0 * s, &label)
+                + 8.0 * s
+                + 12.0 * s
+                + 3.0 * s
+                + c.atlas.measure(Weight::Medium, 11.5 * s, &count)
+                + 10.0 * s;
             let chip = Rect::new(x, y, w, chip_h);
             let on = !controls.selected.is_empty() && controls.selected == *members;
             self.chip(chip, Hit::Group(g), on, c, s);
-            let lw = c.text(Weight::SemiBold, 12.0 * s, (chip.x + 9.0 * s, chip.y + 16.5 * s), Align::Left, &label, if on { ACCENT } else { TEXT });
+            let lw = c.text(
+                Weight::SemiBold,
+                12.0 * s,
+                (chip.x + 9.0 * s, chip.y + 16.5 * s),
+                Align::Left,
+                &label,
+                if on { ACCENT } else { TEXT },
+            );
             let ix = chip.x + 17.0 * s + lw;
             c.icon(Icon::Soldier, (ix, chip.y + 6.0 * s), 12.0 * s, MUTED);
-            c.text(Weight::Medium, 11.5 * s, (ix + 15.0 * s, chip.y + 16.5 * s), Align::Left, &count, MUTED);
+            c.text(
+                Weight::Medium,
+                11.5 * s,
+                (ix + 15.0 * s, chip.y + 16.5 * s),
+                Align::Left,
+                &count,
+                MUTED,
+            );
             if self.hover.is_some_and(|p| chip.contains(p)) {
-                self.tip_small(&format!("Group {}: {} soldiers. {} selects it, twice to look", g + 1, members.len(), g + 1), (chip.x, chip.y - 30.0 * s), c, s);
+                self.tip_small(
+                    &format!(
+                        "Group {}: {} soldiers. {} selects it, twice to look",
+                        g + 1,
+                        members.len(),
+                        g + 1
+                    ),
+                    (chip.x, chip.y - 30.0 * s),
+                    c,
+                    s,
+                );
             }
             x += w + 6.0 * s;
         }
@@ -1084,8 +1279,23 @@ impl Hud {
             // The collapsed strip: one line.
             let mid = r.y + r.h / 2.0;
             c.icon(Icon::Soldier, (r.x + 14.0 * s, mid - 9.0 * s), 18.0 * s, FAINT);
-            let tw = c.text(Weight::SemiBold, 13.0 * s, (r.x + 40.0 * s, mid + 4.5 * s), Align::Left, "Nothing selected", MUTED);
-            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 48.0 * s + tw, mid + 4.5 * s), Align::Left, "click or drag to select", r.w - 62.0 * s - tw, FAINT);
+            let tw = c.text(
+                Weight::SemiBold,
+                13.0 * s,
+                (r.x + 40.0 * s, mid + 4.5 * s),
+                Align::Left,
+                "Nothing selected",
+                MUTED,
+            );
+            c.text_fit(
+                Weight::Medium,
+                12.0 * s,
+                (r.x + 48.0 * s + tw, mid + 4.5 * s),
+                Align::Left,
+                "click or drag to select",
+                r.w - 62.0 * s - tw,
+                FAINT,
+            );
             return;
         }
         // Every selected unit as a card.
@@ -1093,9 +1303,27 @@ impl Hud {
         let mean = m.selection.iter().map(|q| q.hp).sum::<f32>() / n as f32;
         let hurt = m.selection.iter().filter(|q| q.hp < 0.6).count();
         let head = format!("{n} selected");
-        let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
-        let sub = if hurt > 0 { format!("{:.0}% health on average, {hurt} hurt", mean * 100.0) } else { format!("{:.0}% health on average", mean * 100.0) };
-        c.text(Weight::Medium, 12.5 * s, (inner.x + hw + 12.0 * s, inner.y + 14.0 * s), Align::Left, &sub, MUTED);
+        let hw = c.text(
+            Weight::SemiBold,
+            15.0 * s,
+            (inner.x, inner.y + 14.0 * s),
+            Align::Left,
+            &head,
+            TEXT,
+        );
+        let sub = if hurt > 0 {
+            format!("{:.0}% health on average, {hurt} hurt", mean * 100.0)
+        } else {
+            format!("{:.0}% health on average", mean * 100.0)
+        };
+        c.text(
+            Weight::Medium,
+            12.5 * s,
+            (inner.x + hw + 12.0 * s, inner.y + 14.0 * s),
+            Align::Left,
+            &sub,
+            MUTED,
+        );
         let cw = 54.0 * s;
         let cgap = 7.0 * s;
         let top = inner.y + 26.0 * s;
@@ -1110,15 +1338,31 @@ impl Hud {
             let cell = Rect::new(inner.x + i as f32 * (cw + cgap), top + j as f32 * (cw + cgap), cw, cw);
             if k == room - 1 && n > room {
                 c.rrect(cell, 8.0 * s, [255, 255, 255, 14]);
-                c.text(Weight::SemiBold, 14.0 * s, (cell.x + cw / 2.0, cell.y + cw / 2.0 + 5.0 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
+                c.text(
+                    Weight::SemiBold,
+                    14.0 * s,
+                    (cell.x + cw / 2.0, cell.y + cw / 2.0 + 5.0 * s),
+                    Align::Centre,
+                    &format!("+{}", n - room + 1),
+                    MUTED,
+                );
                 break;
             }
             let hot = self.hover.is_some_and(|p| cell.contains(p));
-            let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            let (t, b) = if hot {
+                (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+            } else {
+                (BUTTON_TOP, BUTTON_BOTTOM)
+            };
             c.panel(cell, 8.0 * s, t, b, 1.0, EDGE);
             let col = super::marks::team_colour(q.team);
             c.icon(q.icon, (cell.x + 6.0 * s, cell.y + 7.0 * s), 26.0 * s, col);
-            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
+            c.bar(
+                Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s),
+                q.hp,
+                health_colour(q.hp),
+                TRACK,
+            );
             if let Some(b) = q.badge {
                 // The weapon, big enough to read (it was 12 px).
                 c.icon(b, (cell.right() - 21.0 * s, cell.y + 5.0 * s), 17.0 * s, TEXT);
@@ -1142,7 +1386,16 @@ impl Hud {
             let mut x = inner.x;
             for (icon, n) in kinds {
                 c.icon(icon, (x, foot + 2.0 * s), 16.0 * s, MUTED);
-                x += 20.0 * s + c.text(Weight::SemiBold, 12.5 * s, (x + 20.0 * s, foot + 15.0 * s), Align::Left, &format!("{n}"), TEXT) + 14.0 * s;
+                x += 20.0 * s
+                    + c.text(
+                        Weight::SemiBold,
+                        12.5 * s,
+                        (x + 20.0 * s, foot + 15.0 * s),
+                        Align::Left,
+                        &format!("{n}"),
+                        TEXT,
+                    )
+                    + 14.0 * s;
             }
         }
     }
@@ -1155,8 +1408,19 @@ impl Hud {
     fn squad_tiles(&mut self, p: &SquadPanel, inner: Rect, c: &mut Canvas, s: f32) {
         let mine = p.rows.iter().find(|q| q.active);
         let n = p.rows.len();
-        let head = if n == 1 { "1 squad".to_string() } else { format!("{n} squads") };
-        let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
+        let head = if n == 1 {
+            "1 squad".to_string()
+        } else {
+            format!("{n} squads")
+        };
+        let hw = c.text(
+            Weight::SemiBold,
+            15.0 * s,
+            (inner.x, inner.y + 14.0 * s),
+            Align::Left,
+            &head,
+            TEXT,
+        );
         // The buttons from the right end of the header line.
         let bh = 22.0 * s;
         let mut bx = inner.right();
@@ -1188,7 +1452,15 @@ impl Hud {
         if let Some(q) = mine {
             let sub = format!("commanding {}, {} soldiers", q.name, q.soldiers);
             let left = inner.x + hw + 12.0 * s;
-            c.text_fit(Weight::Medium, 12.5 * s, (left, inner.y + 14.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
+            c.text_fit(
+                Weight::Medium,
+                12.5 * s,
+                (left, inner.y + 14.0 * s),
+                Align::Left,
+                &sub,
+                (bx - left - 6.0 * s).max(0.0),
+                MUTED,
+            );
         }
         let ch = 54.0 * s;
         let cw = 72.0 * s;
@@ -1205,7 +1477,14 @@ impl Hud {
             let cell = Rect::new(inner.x + i as f32 * (cw + cgap), top + j as f32 * (ch + cgap), cw, ch);
             if k == room - 1 && n > room {
                 c.rrect(cell, 8.0 * s, [255, 255, 255, 14]);
-                c.text(Weight::SemiBold, 14.0 * s, (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * s), Align::Centre, &format!("+{}", n - room + 1), MUTED);
+                c.text(
+                    Weight::SemiBold,
+                    14.0 * s,
+                    (cell.x + cw / 2.0, cell.y + ch / 2.0 + 5.0 * s),
+                    Align::Centre,
+                    &format!("+{}", n - room + 1),
+                    MUTED,
+                );
                 break;
             }
             // Top right: the link toggle; left of it, the + while the
@@ -1216,35 +1495,118 @@ impl Hud {
             let on_link = can_link && self.hover.is_some_and(|h| link.contains(h));
             let on_plus = !q.active && q.near && self.hover.is_some_and(|h| plus.contains(h));
             let hot = self.hover.is_some_and(|h| cell.contains(h)) && !on_plus && !on_link;
-            let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
-            let edge = if q.active { ACCENT } else if q.linked { alpha(ACCENT, 0.55) } else { EDGE };
-            c.panel(cell, 8.0 * s, t, b, if q.active || q.linked { 2.0 * s } else { 1.0 }, edge);
+            let (t, b) = if hot {
+                (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+            } else {
+                (BUTTON_TOP, BUTTON_BOTTOM)
+            };
+            let edge = if q.active {
+                ACCENT
+            } else if q.linked {
+                alpha(ACCENT, 0.55)
+            } else {
+                EDGE
+            };
+            c.panel(
+                cell,
+                8.0 * s,
+                t,
+                b,
+                if q.active || q.linked { 2.0 * s } else { 1.0 },
+                edge,
+            );
             self.hits.push((cell, Hit::Squad(k)));
             // The hotkey, top left; the soldiers, big; their health along the foot.
-            c.text(Weight::SemiBold, 12.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
+            c.text(
+                Weight::SemiBold,
+                12.0 * s,
+                (cell.x + 7.0 * s, cell.y + 15.0 * s),
+                Align::Left,
+                &q.key,
+                if q.active { ACCENT } else { MUTED },
+            );
             let ink = if q.active { ACCENT } else { TEXT };
             c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
-            c.text(Weight::SemiBold, 17.0 * s, (cell.x + 32.0 * s, cell.y + 36.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
-            c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
+            c.text(
+                Weight::SemiBold,
+                17.0 * s,
+                (cell.x + 32.0 * s, cell.y + 36.0 * s),
+                Align::Left,
+                &format!("{}", q.soldiers),
+                ink,
+            );
+            c.bar(
+                Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s),
+                q.hp,
+                health_colour(q.hp),
+                TRACK,
+            );
             if can_link {
-                let (t, b) = if on_link { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
-                c.panel(link, 4.0 * s, t, b, 1.0, if q.linked { alpha(ACCENT, 0.8) } else { EDGE });
-                c.icon(Icon::Group, (link.x + 2.0 * s, link.y + 2.0 * s), 13.0 * s, if q.linked { ACCENT } else if on_link { TEXT } else { MUTED });
+                let (t, b) = if on_link {
+                    (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+                } else {
+                    (PANEL_TOP, PANEL_BOTTOM)
+                };
+                c.panel(
+                    link,
+                    4.0 * s,
+                    t,
+                    b,
+                    1.0,
+                    if q.linked { alpha(ACCENT, 0.8) } else { EDGE },
+                );
+                c.icon(
+                    Icon::Group,
+                    (link.x + 2.0 * s, link.y + 2.0 * s),
+                    13.0 * s,
+                    if q.linked {
+                        ACCENT
+                    } else if on_link {
+                        TEXT
+                    } else {
+                        MUTED
+                    },
+                );
                 self.hits.push((link, Hit::SquadLink(k)));
             }
             if !q.active && q.near {
-                let (t, b) = if on_plus { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+                let (t, b) = if on_plus {
+                    (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+                } else {
+                    (PANEL_TOP, PANEL_BOTTOM)
+                };
                 c.panel(plus, 4.0 * s, t, b, 1.0, EDGE);
-                c.text(Weight::SemiBold, 13.0 * s, (plus.x + plus.w / 2.0, plus.y + 13.0 * s), Align::Centre, "+", if on_plus { GOOD } else { MUTED });
+                c.text(
+                    Weight::SemiBold,
+                    13.0 * s,
+                    (plus.x + plus.w / 2.0, plus.y + 13.0 * s),
+                    Align::Centre,
+                    "+",
+                    if on_plus { GOOD } else { MUTED },
+                );
                 self.hits.push((plus, Hit::SquadInto(k)));
             }
             let state = q.note.as_deref().unwrap_or("");
             if on_link {
-                tip = Some((if q.linked { format!("{} is linked with yours: click to unlink", q.name) } else { format!("Link {} with yours: they move and take orders together, each with its own guns and settings", q.name) }, link));
+                tip = Some((
+                    if q.linked {
+                        format!("{} is linked with yours: click to unlink", q.name)
+                    } else {
+                        format!("Link {} with yours: they move and take orders together, each with its own guns and settings", q.name)
+                    },
+                    link,
+                ));
             } else if on_plus {
                 tip = Some((format!("{} joins the squad you command", q.name), plus));
             } else if hot {
-                let what = if q.active { format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers) } else { format!("{}: {} soldiers, {state}. Click to command it (key {})", q.name, q.soldiers, q.key) };
+                let what = if q.active {
+                    format!("{}: {} soldiers, {state}. You command it", q.name, q.soldiers)
+                } else {
+                    format!(
+                        "{}: {} soldiers, {state}. Click to command it (key {})",
+                        q.name, q.soldiers, q.key
+                    )
+                };
                 tip = Some((what, cell));
             }
         }
@@ -1258,7 +1620,11 @@ impl Hud {
     fn chip(&mut self, r: Rect, hit: Hit, on: bool, c: &mut Canvas, s: f32) {
         let hot = self.hover.is_some_and(|p| r.contains(p));
         c.shadow(r, r.h / 2.0, 10.0 * s, 2.0 * s, SHADOW);
-        let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
+        let (t, b) = if hot {
+            (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+        } else {
+            (PANEL_TOP, PANEL_BOTTOM)
+        };
         c.panel(r, r.h / 2.0, t, b, 1.0, if on { alpha(ACCENT, 0.8) } else { EDGE });
         self.hits.push((r, hit));
     }
@@ -1266,18 +1632,53 @@ impl Hud {
     fn info_draw(&mut self, info: &Info, r: Rect, c: &mut Canvas, s: f32) {
         let tile = (r.h - 4.0 * s).min(88.0 * s);
         let t = Rect::new(r.x, r.y + 2.0 * s, tile, tile);
-        c.panel(t, 10.0 * s, [36, 44, 54, 255], [22, 27, 34, 255], 1.5 * s, alpha(info.colour, 0.55));
+        c.panel(
+            t,
+            10.0 * s,
+            [36, 44, 54, 255],
+            [22, 27, 34, 255],
+            1.5 * s,
+            alpha(info.colour, 0.55),
+        );
         c.icon(info.icon, (t.x + tile * 0.2, t.y + tile * 0.2), tile * 0.6, info.colour);
         let x = t.right() + 16.0 * s;
         let w = r.right() - x;
-        c.text_fit(Weight::SemiBold, 18.0 * s, (x, r.y + 18.0 * s), Align::Left, &info.title, w, TEXT);
-        c.text_fit(Weight::Medium, 12.5 * s, (x, r.y + 36.0 * s), Align::Left, &info.subtitle, w, MUTED);
+        c.text_fit(
+            Weight::SemiBold,
+            18.0 * s,
+            (x, r.y + 18.0 * s),
+            Align::Left,
+            &info.title,
+            w,
+            TEXT,
+        );
+        c.text_fit(
+            Weight::Medium,
+            12.5 * s,
+            (x, r.y + 36.0 * s),
+            Align::Left,
+            &info.subtitle,
+            w,
+            MUTED,
+        );
         let mut y = r.y + 50.0 * s;
         if let Some((f, words)) = &info.hp {
             c.icon(Icon::Heart, (x, y - 1.0 * s), 14.0 * s, health_colour(*f));
             let bw = (w - 110.0 * s).max(60.0 * s);
-            c.bar(Rect::new(x + 20.0 * s, y + 3.0 * s, bw, 7.0 * s), *f, health_colour(*f), TRACK);
-            c.text(Weight::SemiBold, 12.5 * s, (x + 28.0 * s + bw, y + 11.0 * s), Align::Left, words, TEXT);
+            c.bar(
+                Rect::new(x + 20.0 * s, y + 3.0 * s, bw, 7.0 * s),
+                *f,
+                health_colour(*f),
+                TRACK,
+            );
+            c.text(
+                Weight::SemiBold,
+                12.5 * s,
+                (x + 28.0 * s + bw, y + 11.0 * s),
+                Align::Left,
+                words,
+                TEXT,
+            );
             y += 24.0 * s;
         }
         let colw = w / 2.0;
@@ -1289,10 +1690,26 @@ impl Hud {
                 break;
             }
             let lw = c.text(Weight::Medium, 12.0 * s, (sx, sy), Align::Left, label, MUTED);
-            c.text_fit(Weight::SemiBold, 12.5 * s, (sx + lw + 8.0 * s, sy), Align::Left, value, colw - lw - 16.0 * s, TEXT);
+            c.text_fit(
+                Weight::SemiBold,
+                12.5 * s,
+                (sx + lw + 8.0 * s, sy),
+                Align::Left,
+                value,
+                colw - lw - 16.0 * s,
+                TEXT,
+            );
         }
         if let Some(n) = &info.note {
-            c.text_fit(Weight::Medium, 12.0 * s, (x, r.bottom() - 2.0 * s), Align::Left, n, w, WARN);
+            c.text_fit(
+                Weight::Medium,
+                12.0 * s,
+                (x, r.bottom() - 2.0 * s),
+                Align::Left,
+                n,
+                w,
+                WARN,
+            );
         }
     }
 
@@ -1318,7 +1735,11 @@ impl Hud {
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let down = hot && self.pressed == Some(Hit::Command(k));
             let aiming = self.targeting.is_some_and(|t| t.id == cmd.id);
-            let (mut t, mut bt) = if hot && !down { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            let (mut t, mut bt) = if hot && !down {
+                (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+            } else {
+                (BUTTON_TOP, BUTTON_BOTTOM)
+            };
             if down {
                 (t, bt) = (BUTTON_BOTTOM, BUTTON_TOP);
             }
@@ -1326,27 +1747,62 @@ impl Hud {
                 t = [36, 62, 84, 255];
                 bt = [24, 40, 56, 255];
             }
-            let edge = if aiming || cmd.on { alpha(ACCENT, 0.9) } else { [255, 255, 255, 30] };
+            let edge = if aiming || cmd.on {
+                alpha(ACCENT, 0.9)
+            } else {
+                [255, 255, 255, 30]
+            };
             c.panel(b, 10.0 * s, t, bt, if cmd.on || aiming { 1.5 * s } else { 1.0 }, edge);
             let dim = if cmd.ready { 1.0 } else { 0.38 };
             let ic = 22.0 * s;
-            c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, alpha(if cmd.on { ACCENT } else { TEXT }, dim));
+            c.icon(
+                cmd.icon,
+                (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s),
+                ic,
+                alpha(if cmd.on { ACCENT } else { TEXT }, dim),
+            );
             // The hotkey, top left.
             if let Some(k) = key_name(cmd.key) {
-                c.text(Weight::SemiBold, 10.0 * s, (b.x + 4.5 * s, b.y + 11.5 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
+                c.text(
+                    Weight::SemiBold,
+                    10.0 * s,
+                    (b.x + 4.5 * s, b.y + 11.5 * s),
+                    Align::Left,
+                    &k,
+                    alpha(TEXT, 0.72 * dim.max(0.6)),
+                );
             }
             if let Some(cost) = &cmd.cost {
                 let cw = c.atlas.measure(Weight::SemiBold, 9.5 * s, cost);
                 let cx = b.right() - 4.0 * s - cw;
-                c.text(Weight::SemiBold, 9.5 * s, (cx, b.bottom() - 3.5 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
-                c.icon(cmd.cost_icon, (cx - 10.0 * s, b.bottom() - 12.0 * s), 8.5 * s, alpha(ENERGY, dim.max(0.6)));
+                c.text(
+                    Weight::SemiBold,
+                    9.5 * s,
+                    (cx, b.bottom() - 3.5 * s),
+                    Align::Left,
+                    cost,
+                    alpha(if cmd.ready { ENERGY } else { BAD }, 0.95),
+                );
+                c.icon(
+                    cmd.cost_icon,
+                    (cx - 10.0 * s, b.bottom() - 12.0 * s),
+                    8.5 * s,
+                    alpha(ENERGY, dim.max(0.6)),
+                );
             }
             if cmd.cooldown > 0.0 {
                 // A dark wipe over the part still to go (a ring round the
                 // edge read as a broken border), and the time left.
                 c.ring(b, 10.0 * s, cell, cmd.cooldown.min(1.0), [0, 0, 0, 150]);
                 if let Some(wt) = &cmd.wait {
-                    c.text(Weight::SemiBold, 15.0 * s, (b.x + cell / 2.0, b.y + cell / 2.0 + 5.0 * s), Align::Centre, wt, TEXT);
+                    c.text(
+                        Weight::SemiBold,
+                        15.0 * s,
+                        (b.x + cell / 2.0, b.y + cell / 2.0 + 5.0 * s),
+                        Align::Centre,
+                        wt,
+                        TEXT,
+                    );
                 }
             }
             self.hits.push((b, Hit::Command(k)));
@@ -1369,7 +1825,16 @@ impl Hud {
     /// glyph. Returns the hovered card (or `usize::MAX` for the name and
     /// state, whose tooltip is the whole loadout) and its rectangle.
     #[allow(clippy::too_many_arguments)]
-    fn loadout_draw(&mut self, l: &Loadout, panel: Option<Rect>, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
+    fn loadout_draw(
+        &mut self,
+        l: &Loadout,
+        panel: Option<Rect>,
+        sel: Rect,
+        collapsed: bool,
+        card: Rect,
+        c: &mut Canvas,
+        s: f32,
+    ) -> Option<(usize, Rect)> {
         let pad = 6.0 * s;
         let cell = 34.0 * s;
         let gap = 4.0 * s;
@@ -1387,7 +1852,11 @@ impl Hud {
         } else if collapsed && sel.w >= w + 158.0 * s {
             Rect::new(sel.right() - w, sel.bottom() - h, w, h)
         } else {
-            let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s { sel } else { card };
+            let on = if sel.w >= 120.0 * s && sel.w >= w + 150.0 * s {
+                sel
+            } else {
+                card
+            };
             Rect::new((on.right() - w).max(8.0 * s), on.y - 6.0 * s - h, w, h)
         };
         if r.y < self.top + 8.0 * s {
@@ -1411,19 +1880,46 @@ impl Hud {
             if k.next {
                 c.shadow(b, 7.0 * s, 10.0 * s, 0.0, alpha(k.colour, 0.5));
             }
-            let shade = |a: Rgba, f: f32| -> Rgba { [(a[0] as f32 * f) as u8, (a[1] as f32 * f) as u8, (a[2] as f32 * f) as u8, 255] };
+            let shade = |a: Rgba, f: f32| -> Rgba {
+                [
+                    (a[0] as f32 * f) as u8,
+                    (a[1] as f32 * f) as u8,
+                    (a[2] as f32 * f) as u8,
+                    255,
+                ]
+            };
             let edge = if k.next { k.colour } else { alpha(frame, 0.55 * dim) };
-            c.panel(b, 7.0 * s, shade(frame, 0.30 * dim), shade(frame, 0.12 * dim), if k.next { 2.0 * s } else { 1.0 * s }, edge);
+            c.panel(
+                b,
+                7.0 * s,
+                shade(frame, 0.30 * dim),
+                shade(frame, 0.12 * dim),
+                if k.next { 2.0 * s } else { 1.0 * s },
+                edge,
+            );
             // The kind's stripe along the top, as a card's frame.
-            c.rrect(Rect::new(b.x + 5.0 * s, b.y + 3.0 * s, b.w - 10.0 * s, 2.0 * s), 1.0 * s, alpha(frame, 0.9 * dim));
+            c.rrect(
+                Rect::new(b.x + 5.0 * s, b.y + 3.0 * s, b.w - 10.0 * s, 2.0 * s),
+                1.0 * s,
+                alpha(frame, 0.9 * dim),
+            );
             let ic = 20.0 * s;
             if let Some(icon) = k.icon {
-                c.icon(icon, (b.x + (b.w - ic) / 2.0, b.y + (b.h - ic) / 2.0 + 1.5 * s), ic, alpha(k.colour, dim));
+                c.icon(
+                    icon,
+                    (b.x + (b.w - ic) / 2.0, b.y + (b.h - ic) / 2.0 + 1.5 * s),
+                    ic,
+                    alpha(k.colour, dim),
+                );
             }
             if k.next {
                 // A notch above the lit cast.
                 let nx = b.x + b.w / 2.0;
-                c.rrect(Rect::new(nx - 5.0 * s, b.y - 4.0 * s, 10.0 * s, 2.5 * s), 1.25 * s, k.colour);
+                c.rrect(
+                    Rect::new(nx - 5.0 * s, b.y - 4.0 * s, 10.0 * s, 2.5 * s),
+                    1.25 * s,
+                    k.colour,
+                );
             }
             if self.hover.is_some_and(|p| b.contains(p)) {
                 tip = Some((i, b));
@@ -1433,11 +1929,24 @@ impl Hud {
         let cards_w = slots as f32 * cell + (slots - 1) as f32 * gap;
         let ready = l.charging <= 0.0;
         if !l.cards.is_empty() {
-            c.bar(Rect::new(r.x + pad, y + cell + 3.0 * s, cards_w, 2.5 * s), (1.0 - l.charging).clamp(0.0, 1.0), if ready { GOOD } else { WARN }, TRACK);
+            c.bar(
+                Rect::new(r.x + pad, y + cell + 3.0 * s, cards_w, 2.5 * s),
+                (1.0 - l.charging).clamp(0.0, 1.0),
+                if ready { GOOD } else { WARN },
+                TRACK,
+            );
         }
         // The name and the state.
         let tx = r.x + pad + cards_w + 8.0 * s;
-        c.text_fit(Weight::SemiBold, 13.0 * s, (tx, y + 14.0 * s), Align::Left, &l.name, info_w, TEXT);
+        c.text_fit(
+            Weight::SemiBold,
+            13.0 * s,
+            (tx, y + 14.0 * s),
+            Align::Left,
+            &l.name,
+            info_w,
+            TEXT,
+        );
         let (state, col) = if l.cards.is_empty() {
             ("Plain shots".to_string(), MUTED)
         } else if ready {
@@ -1445,7 +1954,15 @@ impl Hud {
         } else {
             (format!("Recharging {:.1} s", l.charging * l.recharge), WARN)
         };
-        c.text_fit(Weight::Medium, 11.0 * s, (tx, y + 30.0 * s), Align::Left, &state, info_w, col);
+        c.text_fit(
+            Weight::Medium,
+            11.0 * s,
+            (tx, y + 30.0 * s),
+            Align::Left,
+            &state,
+            info_w,
+            col,
+        );
         let words = Rect::new(tx - 4.0 * s, r.y, info_w + 4.0 * s, r.h);
         if tip.is_none() && self.hover.is_some_and(|p| words.contains(p)) {
             tip = Some((usize::MAX, words));
@@ -1453,10 +1970,21 @@ impl Hud {
         if let Some((_, key)) = l.cycle {
             let b = Rect::new(r.right() - pad - swap, y + (cell - swap) / 2.0, swap, swap);
             let hot = self.hover.is_some_and(|p| b.contains(p));
-            let (t, bt) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+            let (t, bt) = if hot {
+                (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+            } else {
+                (BUTTON_TOP, BUTTON_BOTTOM)
+            };
             c.panel(b, 6.0 * s, t, bt, 1.0, [255, 255, 255, 30]);
             let k = key_name(key).unwrap_or_else(|| "~".into());
-            c.text(Weight::SemiBold, 12.0 * s, (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s), Align::Centre, &k, TEXT);
+            c.text(
+                Weight::SemiBold,
+                12.0 * s,
+                (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s),
+                Align::Centre,
+                &k,
+                TEXT,
+            );
             self.hits.push((b, Hit::Cycle));
             if hot {
                 tip = Some((usize::MAX - 1, b));
@@ -1490,10 +2018,25 @@ impl Hud {
         c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, EDGE);
         let mut y = r.y + 26.0 * s;
         c.icon(Icon::Rifle, (r.x + 14.0 * s, y - 14.0 * s), 16.0 * s, MUTED);
-        c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &l.name, TEXT);
+        c.text(
+            Weight::SemiBold,
+            15.0 * s,
+            (r.x + 38.0 * s, y),
+            Align::Left,
+            &l.name,
+            TEXT,
+        );
         y += 22.0 * s;
         for t in &lines {
-            c.text_fit(Weight::Medium, 12.5 * s, (r.x + 14.0 * s, y), Align::Left, t, w - 28.0 * s, MUTED);
+            c.text_fit(
+                Weight::Medium,
+                12.5 * s,
+                (r.x + 14.0 * s, y),
+                Align::Left,
+                t,
+                w - 28.0 * s,
+                MUTED,
+            );
             y += 18.0 * s;
         }
     }
@@ -1510,17 +2053,38 @@ impl Hud {
         let r = Rect::new(x, (b.y - 14.0 * s - h).max(8.0 * s), w, h);
         let frame = k.kind.colour(k.colour);
         c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
-        c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, alpha(frame, 0.6));
+        c.panel(
+            r,
+            10.0 * s,
+            [34, 40, 49, 248],
+            [24, 29, 36, 250],
+            1.0,
+            alpha(frame, 0.6),
+        );
         let mut y = r.y + 26.0 * s;
         if let Some(icon) = k.icon {
             c.icon(icon, (r.x + 14.0 * s, y - 15.0 * s), 18.0 * s, k.colour);
         }
-        c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &k.name, TEXT);
+        c.text(
+            Weight::SemiBold,
+            15.0 * s,
+            (r.x + 38.0 * s, y),
+            Align::Left,
+            &k.name,
+            TEXT,
+        );
         let kind = k.kind.label().to_uppercase();
         let kw = c.atlas.measure(Weight::SemiBold, 10.5 * s, &kind) + 12.0 * s;
         let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
         c.rrect(kr, 5.0 * s, alpha(frame, 0.18));
-        c.text(Weight::SemiBold, 10.5 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &kind, frame);
+        c.text(
+            Weight::SemiBold,
+            10.5 * s,
+            (kr.x + kw / 2.0, y - 1.0 * s),
+            Align::Centre,
+            &kind,
+            frame,
+        );
         if let Some(cost) = &k.cost {
             let cw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
             let cx = kr.x - 10.0 * s - cw;
@@ -1533,7 +2097,15 @@ impl Hud {
             y += 18.0 * s;
         }
         if k.idle {
-            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it only slows the recharge", w - 28.0 * s, WARN);
+            c.text_fit(
+                Weight::SemiBold,
+                12.0 * s,
+                (r.x + 14.0 * s, y + 4.0 * s),
+                Align::Left,
+                "After the last payload: it only slows the recharge",
+                w - 28.0 * s,
+                WARN,
+            );
         }
     }
 
@@ -1542,24 +2114,48 @@ impl Hud {
         let px = 12.5 * s;
         let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &cmd.about);
         let why = if cmd.ready { None } else { cmd.why_not.clone() };
-        let h = 18.0 * s + 22.0 * s + if cmd.about.is_empty() { 0.0 } else { lines.len() as f32 * 18.0 * s + 8.0 * s } + if why.is_some() { 20.0 * s } else { 0.0 } + 10.0 * s;
+        let h = 18.0 * s
+            + 22.0 * s
+            + if cmd.about.is_empty() {
+                0.0
+            } else {
+                lines.len() as f32 * 18.0 * s + 8.0 * s
+            }
+            + if why.is_some() { 20.0 * s } else { 0.0 }
+            + 10.0 * s;
         // Not `clamp`: it panics when the card is narrower than the tip.
         let x = (b.x + b.w / 2.0 - w / 2.0).min(card.right() - w).max(8.0 * s);
         let r = Rect::new(x, card.y - h - 10.0 * s, w, h);
         c.shadow(r, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
         c.panel(r, 10.0 * s, [34, 40, 49, 248], [24, 29, 36, 250], 1.0, EDGE);
         let mut y = r.y + 26.0 * s;
-        c.text(Weight::SemiBold, 15.0 * s, (r.x + 14.0 * s, y), Align::Left, &cmd.name, TEXT);
+        c.text(
+            Weight::SemiBold,
+            15.0 * s,
+            (r.x + 14.0 * s, y),
+            Align::Left,
+            &cmd.name,
+            TEXT,
+        );
         if let Some(k) = key_name(cmd.key) {
             let kw = c.atlas.measure(Weight::SemiBold, 11.0 * s, &k) + 12.0 * s;
             let kr = Rect::new(r.right() - 14.0 * s - kw, y - 15.0 * s, kw, 20.0 * s);
             c.rrect(kr, 5.0 * s, [255, 255, 255, 24]);
             c.outline(kr, 5.0 * s, 1.0, [255, 255, 255, 40]);
-            c.text(Weight::SemiBold, 11.0 * s, (kr.x + kw / 2.0, y - 1.0 * s), Align::Centre, &k, TEXT);
+            c.text(
+                Weight::SemiBold,
+                11.0 * s,
+                (kr.x + kw / 2.0, y - 1.0 * s),
+                Align::Centre,
+                &k,
+                TEXT,
+            );
         }
         if let Some(cost) = &cmd.cost {
             let kw = c.atlas.measure(Weight::SemiBold, 12.0 * s, cost);
-            let off = key_name(cmd.key).map(|k| c.atlas.measure(Weight::SemiBold, 11.0 * s, &k) + 26.0 * s).unwrap_or(0.0);
+            let off = key_name(cmd.key)
+                .map(|k| c.atlas.measure(Weight::SemiBold, 11.0 * s, &k) + 26.0 * s)
+                .unwrap_or(0.0);
             let cx = r.right() - 14.0 * s - off - kw;
             c.icon(cmd.cost_icon, (cx - 16.0 * s, y - 12.0 * s), 13.0 * s, ENERGY);
             c.text(Weight::SemiBold, 12.0 * s, (cx, y - 1.0 * s), Align::Left, cost, ENERGY);
@@ -1573,7 +2169,15 @@ impl Hud {
             y += 6.0 * s;
         }
         if let Some(wn) = why {
-            c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + 14.0 * s, y), Align::Left, &wn, w - 28.0 * s, BAD);
+            c.text_fit(
+                Weight::SemiBold,
+                12.5 * s,
+                (r.x + 14.0 * s, y),
+                Align::Left,
+                &wn,
+                w - 28.0 * s,
+                BAD,
+            );
         }
         let hint = match cmd.target {
             Target::Instant => None,
@@ -1581,7 +2185,14 @@ impl Hud {
             _ => Some("Click to place it"),
         };
         if let (Some(hn), true) = (hint, cmd.ready) {
-            c.text(Weight::Medium, 11.0 * s, (r.right() - 14.0 * s, r.bottom() - 9.0 * s), Align::Right, hn, FAINT);
+            c.text(
+                Weight::Medium,
+                11.0 * s,
+                (r.right() - 14.0 * s, r.bottom() - 9.0 * s),
+                Align::Right,
+                hn,
+                FAINT,
+            );
         }
     }
 
@@ -1596,10 +2207,33 @@ impl Hud {
             let w = c.atlas.measure(Weight::Medium, 13.0 * s, &a.text) + 46.0 * s;
             let r = Rect::new(8.0 * s, y, w, 32.0 * s);
             c.shadow(r, 8.0 * s, 12.0 * s, 3.0 * s, alpha(SHADOW, fade));
-            c.panel(r, 8.0 * s, alpha(PANEL_TOP, fade), alpha(PANEL_BOTTOM, fade), 1.0, alpha(EDGE, fade));
-            c.rrect(Rect::new(r.x, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, alpha(a.colour, fade));
-            c.icon(Icon::Alert, (r.x + 12.0 * s, r.y + 8.0 * s), 16.0 * s, alpha(a.colour, fade));
-            c.text(Weight::Medium, 13.0 * s, (r.x + 34.0 * s, r.y + 21.0 * s), Align::Left, &a.text, alpha(TEXT, fade));
+            c.panel(
+                r,
+                8.0 * s,
+                alpha(PANEL_TOP, fade),
+                alpha(PANEL_BOTTOM, fade),
+                1.0,
+                alpha(EDGE, fade),
+            );
+            c.rrect(
+                Rect::new(r.x, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s),
+                1.5 * s,
+                alpha(a.colour, fade),
+            );
+            c.icon(
+                Icon::Alert,
+                (r.x + 12.0 * s, r.y + 8.0 * s),
+                16.0 * s,
+                alpha(a.colour, fade),
+            );
+            c.text(
+                Weight::Medium,
+                13.0 * s,
+                (r.x + 34.0 * s, r.y + 21.0 * s),
+                Align::Left,
+                &a.text,
+                alpha(TEXT, fade),
+            );
             y += 38.0 * s;
             // A ping where it happened: a ring that opens over a second, on
             // the world and the minimap.
@@ -1609,16 +2243,25 @@ impl Hud {
                     let r = 6.0 + 30.0 * k;
                     // In screen pixels, so it reads at any zoom; the flag
                     // adds its dot on the minimap.
-                    world.push(Mark { flags: MINIMAP, ..Mark::new(Shape::Ring, at, (r, r), alpha(a.colour, 1.0 - k)) });
+                    world.push(Mark {
+                        flags: MINIMAP,
+                        ..Mark::new(Shape::Ring, at, (r, r), alpha(a.colour, 1.0 - k))
+                    });
                 }
             }
         }
     }
 
     fn ghost(&mut self, m: &Model, cam: &Camera, c: &mut Canvas, world: &mut Marks, s: f32) {
-        let (Some(t), Some(p)) = (self.targeting, self.hover) else { return };
+        let (Some(t), Some(p)) = (self.targeting, self.hover) else {
+            return;
+        };
         let Some(at) = self.aim(p, cam) else { return };
-        let col = if m.ghost_ok { [96, 230, 150, 255] } else { [245, 96, 96, 255] };
+        let col = if m.ghost_ok {
+            [96, 230, 150, 255]
+        } else {
+            [245, 96, 96, 255]
+        };
         let fill = alpha(col, 0.28);
         match t.target {
             Target::Point { radius } => {
@@ -1659,29 +2302,89 @@ impl Hud {
     /// and a line of stats.
     fn hover_card(&mut self, info: &Info, p: (f32, f32), c: &mut Canvas, s: f32) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let stats = info.stats.iter().map(|(l, v)| format!("{l} {v}")).collect::<Vec<_>>().join("  ·  ");
-        let w = (c.atlas.measure(Weight::SemiBold, 14.0 * s, &info.title).max(c.atlas.measure(Weight::Medium, 12.0 * s, &stats)).max(c.atlas.measure(Weight::Medium, 12.0 * s, &info.subtitle)) + 28.0 * s).max(200.0 * s);
-        let h = 22.0 * s + 18.0 * s + if info.hp.is_some() { 18.0 * s } else { 0.0 } + if stats.is_empty() { 0.0 } else { 18.0 * s } + 12.0 * s;
+        let stats = info
+            .stats
+            .iter()
+            .map(|(l, v)| format!("{l} {v}"))
+            .collect::<Vec<_>>()
+            .join("  ·  ");
+        let w = (c
+            .atlas
+            .measure(Weight::SemiBold, 14.0 * s, &info.title)
+            .max(c.atlas.measure(Weight::Medium, 12.0 * s, &stats))
+            .max(c.atlas.measure(Weight::Medium, 12.0 * s, &info.subtitle))
+            + 28.0 * s)
+            .max(200.0 * s);
+        let h = 22.0 * s
+            + 18.0 * s
+            + if info.hp.is_some() { 18.0 * s } else { 0.0 }
+            + if stats.is_empty() { 0.0 } else { 18.0 * s }
+            + 12.0 * s;
         // Below right of the cursor, kept on the screen and off the panels.
         let x = (p.0 + 20.0 * s).min(sw - w - 8.0 * s).max(8.0 * s);
-        let y = (p.1 + 20.0 * s).min(self.bottom - h - 8.0 * s).min(sh - h - 8.0 * s).max(self.top + 8.0 * s);
+        let y = (p.1 + 20.0 * s)
+            .min(self.bottom - h - 8.0 * s)
+            .min(sh - h - 8.0 * s)
+            .max(self.top + 8.0 * s);
         let r = Rect::new(x, y, w, h);
         c.shadow(r, 10.0 * s, 14.0 * s, 3.0 * s, SHADOW);
-        c.panel(r, 10.0 * s, [34, 40, 49, 245], [24, 29, 36, 248], 1.0, alpha(info.colour, 0.5));
+        c.panel(
+            r,
+            10.0 * s,
+            [34, 40, 49, 245],
+            [24, 29, 36, 248],
+            1.0,
+            alpha(info.colour, 0.5),
+        );
         let mut ty = r.y + 22.0 * s;
         c.icon(info.icon, (r.x + 12.0 * s, ty - 14.0 * s), 16.0 * s, info.colour);
-        c.text(Weight::SemiBold, 14.0 * s, (r.x + 34.0 * s, ty), Align::Left, &info.title, TEXT);
+        c.text(
+            Weight::SemiBold,
+            14.0 * s,
+            (r.x + 34.0 * s, ty),
+            Align::Left,
+            &info.title,
+            TEXT,
+        );
         ty += 18.0 * s;
-        c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &info.subtitle, w - 28.0 * s, MUTED);
+        c.text_fit(
+            Weight::Medium,
+            12.0 * s,
+            (r.x + 14.0 * s, ty),
+            Align::Left,
+            &info.subtitle,
+            w - 28.0 * s,
+            MUTED,
+        );
         if let Some((f, words)) = &info.hp {
             ty += 18.0 * s;
             let ww = c.atlas.measure(Weight::SemiBold, 12.0 * s, words);
-            c.bar(Rect::new(r.x + 14.0 * s, ty - 8.0 * s, w - 40.0 * s - ww, 6.0 * s), *f, health_colour(*f), TRACK);
-            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 14.0 * s, ty), Align::Right, words, TEXT);
+            c.bar(
+                Rect::new(r.x + 14.0 * s, ty - 8.0 * s, w - 40.0 * s - ww, 6.0 * s),
+                *f,
+                health_colour(*f),
+                TRACK,
+            );
+            c.text(
+                Weight::SemiBold,
+                12.0 * s,
+                (r.right() - 14.0 * s, ty),
+                Align::Right,
+                words,
+                TEXT,
+            );
         }
         if !stats.is_empty() {
             ty += 18.0 * s;
-            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &stats, w - 28.0 * s, MUTED);
+            c.text_fit(
+                Weight::Medium,
+                12.0 * s,
+                (r.x + 14.0 * s, ty),
+                Align::Left,
+                &stats,
+                w - 28.0 * s,
+                MUTED,
+            );
         }
     }
 
@@ -1704,7 +2407,14 @@ impl Hud {
             (false, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
         };
         c.panel(r, 9.0 * s, t, b, 1.0, [255, 255, 255, 34]);
-        c.text(Weight::SemiBold, 14.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.0 * s), Align::Centre, label, TEXT);
+        c.text(
+            Weight::SemiBold,
+            14.0 * s,
+            (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.0 * s),
+            Align::Centre,
+            label,
+            TEXT,
+        );
         self.hits.push((r, hit));
     }
 
@@ -1713,33 +2423,69 @@ impl Hud {
             MenuPage::Main => {
                 let w = 340.0 * s;
                 let bh = 42.0 * s;
-                let mut items: Vec<(&str, Hit, bool)> = vec![("Resume", Hit::Menu(MenuItem::Resume), true), ("Controls", Hit::Help, false), ("Restart", Hit::Menu(MenuItem::Restart), false)];
+                let mut items: Vec<(&str, Hit, bool)> = vec![
+                    ("Resume", Hit::Menu(MenuItem::Resume), true),
+                    ("Controls", Hit::Help, false),
+                    ("Restart", Hit::Menu(MenuItem::Restart), false),
+                ];
                 if m.main_menu {
                     items.push(("Main menu", Hit::Menu(MenuItem::MainMenu), false));
                 }
                 items.push(("Quit", Hit::Menu(MenuItem::Quit), false));
                 let h = 84.0 * s + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
-                c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
-                c.text(Weight::Medium, 12.5 * s, (r.x + w / 2.0, r.y + 64.0 * s), Align::Centre, "Esc to resume", MUTED);
+                c.text(
+                    Weight::SemiBold,
+                    22.0 * s,
+                    (r.x + w / 2.0, r.y + 44.0 * s),
+                    Align::Centre,
+                    "Paused",
+                    TEXT,
+                );
+                c.text(
+                    Weight::Medium,
+                    12.5 * s,
+                    (r.x + w / 2.0, r.y + 64.0 * s),
+                    Align::Centre,
+                    "Esc to resume",
+                    MUTED,
+                );
                 let mut y = r.y + 84.0 * s;
                 for (label, hit, primary) in items {
-                    self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, hit, primary, c, s);
+                    self.wide_button(
+                        Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh),
+                        label,
+                        hit,
+                        primary,
+                        c,
+                        s,
+                    );
                     y += bh + 10.0 * s;
                 }
             }
             MenuPage::Help => {
                 let mut rows: Vec<(String, String)> = if let Some(base) = &m.help_base {
                     base.clone()
-                } else { vec![
-                    ("Left click / drag".into(), "Select soldiers".into()),
-                    ("Right click".into(), "Move, or work the crystal or mould clicked".into()),
-                    ("Shift".into(), "Add to the selection, or keep placing".into()),
-                    ("Ctrl + 1-9".into(), "Make a group; 1-9 selects it, twice to look".into()),
-                    ("Wheel, middle drag".into(), "Zoom, pan; the screen's edge scrolls".into()),
-                    ("Minimap".into(), "Click to look there; right click to send".into()),
-                    ("Space".into(), "Look at the newest alert".into()),
-                ] };
+                } else {
+                    vec![
+                        ("Left click / drag".into(), "Select soldiers".into()),
+                        (
+                            "Right click".into(),
+                            "Move, or work the crystal or mould clicked".into(),
+                        ),
+                        ("Shift".into(), "Add to the selection, or keep placing".into()),
+                        (
+                            "Ctrl + 1-9".into(),
+                            "Make a group; 1-9 selects it, twice to look".into(),
+                        ),
+                        (
+                            "Wheel, middle drag".into(),
+                            "Zoom, pan; the screen's edge scrolls".into(),
+                        ),
+                        ("Minimap".into(), "Click to look there; right click to send".into()),
+                        ("Space".into(), "Look at the newest alert".into()),
+                    ]
+                };
                 // Every game's card ends the same.
                 rows.push(("Esc".into(), "Cancel placing, or this menu".into()));
                 rows.push(("F1 or ?".into(), "This key card".into()));
@@ -1754,14 +2500,41 @@ impl Hud {
                 let lh = 24.0 * s;
                 let h = 80.0 * s + rows.len() as f32 * lh + 70.0 * s;
                 let r = self.modal(w, h, c, s);
-                c.text(Weight::SemiBold, 20.0 * s, (r.x + 28.0 * s, r.y + 42.0 * s), Align::Left, "Controls", TEXT);
+                c.text(
+                    Weight::SemiBold,
+                    20.0 * s,
+                    (r.x + 28.0 * s, r.y + 42.0 * s),
+                    Align::Left,
+                    "Controls",
+                    TEXT,
+                );
                 let mut y = r.y + 76.0 * s;
                 for (k, what) in &rows {
                     c.text(Weight::SemiBold, 13.0 * s, (r.x + 28.0 * s, y), Align::Left, k, ACCENT);
-                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + 200.0 * s, y), Align::Left, what, w - 228.0 * s, TEXT);
+                    c.text_fit(
+                        Weight::Medium,
+                        13.0 * s,
+                        (r.x + 200.0 * s, y),
+                        Align::Left,
+                        what,
+                        w - 228.0 * s,
+                        TEXT,
+                    );
                     y += lh;
                 }
-                self.wide_button(Rect::new(r.x + w - 24.0 * s - 120.0 * s, r.bottom() - 24.0 * s - 38.0 * s, 120.0 * s, 38.0 * s), "Back", Hit::Back, true, c, s);
+                self.wide_button(
+                    Rect::new(
+                        r.x + w - 24.0 * s - 120.0 * s,
+                        r.bottom() - 24.0 * s - 38.0 * s,
+                        120.0 * s,
+                        38.0 * s,
+                    ),
+                    "Back",
+                    Hit::Back,
+                    true,
+                    c,
+                    s,
+                );
             }
         }
     }
@@ -1772,20 +2545,56 @@ impl Hud {
         let buttons = if main_menu { 3.0 } else { 2.0 };
         let h = 96.0 * s + lines.len() as f32 * 22.0 * s + buttons * (bh + 10.0 * s) + 20.0 * s;
         let r = self.modal(w, h, c, s);
-        c.text(Weight::SemiBold, 24.0 * s, (r.x + w / 2.0, r.y + 50.0 * s), Align::Centre, title, TEXT);
+        c.text(
+            Weight::SemiBold,
+            24.0 * s,
+            (r.x + w / 2.0, r.y + 50.0 * s),
+            Align::Centre,
+            title,
+            TEXT,
+        );
         let mut y = r.y + 84.0 * s;
         for l in lines {
-            c.text_fit(Weight::Medium, 13.5 * s, (r.x + w / 2.0, y), Align::Centre, l, w - 48.0 * s, MUTED);
+            c.text_fit(
+                Weight::Medium,
+                13.5 * s,
+                (r.x + w / 2.0, y),
+                Align::Centre,
+                l,
+                w - 48.0 * s,
+                MUTED,
+            );
             y += 22.0 * s;
         }
         y += 10.0 * s;
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Play again", Hit::Menu(MenuItem::Restart), true, c, s);
+        self.wide_button(
+            Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh),
+            "Play again",
+            Hit::Menu(MenuItem::Restart),
+            true,
+            c,
+            s,
+        );
         let mut y = y + bh + 10.0 * s;
         if main_menu {
-            self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Main menu", Hit::Menu(MenuItem::MainMenu), false, c, s);
+            self.wide_button(
+                Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh),
+                "Main menu",
+                Hit::Menu(MenuItem::MainMenu),
+                false,
+                c,
+                s,
+            );
             y += bh + 10.0 * s;
         }
-        self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), "Quit", Hit::Menu(MenuItem::Quit), false, c, s);
+        self.wide_button(
+            Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh),
+            "Quit",
+            Hit::Menu(MenuItem::Quit),
+            false,
+            c,
+            s,
+        );
     }
 
     /// Where a command's button was last drawn.
@@ -1874,8 +2683,14 @@ mod tests {
         fn new(screen: (u32, u32)) -> Self {
             let m = Model {
                 commands: vec![
-                    Command { target: Target::Point { radius: 4.0 }, ..Command::new(POINT, (0, 0), Icon::Attack, "Point", KeyCode::KeyA) },
-                    Command { target: Target::Line { width: 2.0 }, ..Command::new(WALL, (2, 2), Icon::Wall, "Wall", KeyCode::KeyV) },
+                    Command {
+                        target: Target::Point { radius: 4.0 },
+                        ..Command::new(POINT, (0, 0), Icon::Attack, "Point", KeyCode::KeyA)
+                    },
+                    Command {
+                        target: Target::Line { width: 2.0 },
+                        ..Command::new(WALL, (2, 2), Icon::Wall, "Wall", KeyCode::KeyV)
+                    },
                     Command::new(NOW, (0, 1), Icon::Stop, "Now", KeyCode::KeyS),
                 ],
                 ghost_ok: true,
@@ -1883,7 +2698,14 @@ mod tests {
             };
             let mut cam = Camera::new((2048, 1280), screen);
             cam.zoom_to(2.0, (screen.0 as f32 / 2.0, screen.1 as f32 / 2.0));
-            let mut r = Rig { hud: Hud::new(), c: Canvas::new(screen), cam, k: Controls::new(0), m, marks: Marks::default() };
+            let mut r = Rig {
+                hud: Hud::new(),
+                c: Canvas::new(screen),
+                cam,
+                k: Controls::new(0),
+                m,
+                marks: Marks::default(),
+            };
             r.draw();
             r
         }
@@ -1891,7 +2713,8 @@ mod tests {
         fn draw(&mut self) {
             self.c.clear();
             self.marks.clear();
-            self.hud.draw(&self.m, &self.k, &self.cam, true, &mut self.c, &mut self.marks);
+            self.hud
+                .draw(&self.m, &self.k, &self.cam, true, &mut self.c, &mut self.marks);
         }
 
         fn centre(&self, id: u32) -> (f32, f32) {
@@ -1915,11 +2738,25 @@ mod tests {
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
 
     fn loadout() -> Loadout {
-        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), cost: (kind == CardKind::Payload).then(|| "60".into()), next, idle };
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard {
+            icon: Some(Icon::Blast),
+            name: name.into(),
+            kind,
+            colour: [255, 150, 60, 255],
+            about: format!("{name} does a thing to the mould where the shot lands, at length."),
+            cost: (kind == CardKind::Payload).then(|| "60".into()),
+            next,
+            idle,
+        };
         Loadout {
             name: "Lull".into(),
             whose: "Soldier 1".into(),
-            cards: vec![card("Quiet", CardKind::Modifier, false, false), card("Gas", CardKind::Payload, false, false), card("Quiet", CardKind::Modifier, true, false), card("Blast", CardKind::Payload, true, false)],
+            cards: vec![
+                card("Quiet", CardKind::Modifier, false, false),
+                card("Gas", CardKind::Payload, false, false),
+                card("Quiet", CardKind::Modifier, true, false),
+                card("Blast", CardKind::Payload, true, false),
+            ],
             slots: 4,
             recharge: 5.0,
             charging: 0.4,
@@ -1933,13 +2770,28 @@ mod tests {
         let mut r = Rig::new((1920, 1080));
         r.m.loadout = Some(loadout());
         r.draw();
-        let swap = r.hud.hits.iter().find(|(_, h)| *h == Hit::Cycle).map(|(b, _)| *b).expect("a swap button");
+        let swap = r
+            .hud
+            .hits
+            .iter()
+            .find(|(_, h)| *h == Hit::Cycle)
+            .map(|(b, _)| *b)
+            .expect("a swap button");
         r.at((swap.x + swap.w / 2.0, swap.y + swap.h / 2.0));
         assert!(r.click(Button::Left, true).0);
-        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW + 10 }]));
+        assert_eq!(
+            r.click(Button::Left, false),
+            (true, vec![HudEvent::Command { id: NOW + 10 }])
+        );
         // A card is the panel's: hovered it draws its tooltip, a click on
         // it is not a click on the world.
-        let strip = r.hud.hits.iter().find(|(b, h)| *h == Hit::Panel && b.contains((swap.x, swap.y))).map(|(b, _)| *b).expect("the strip");
+        let strip = r
+            .hud
+            .hits
+            .iter()
+            .find(|(b, h)| *h == Hit::Panel && b.contains((swap.x, swap.y)))
+            .map(|(b, _)| *b)
+            .expect("the strip");
         r.at((strip.x + 20.0 * r.hud.scale, swap.y + swap.h / 2.0));
         let before = r.c.len();
         r.draw();
@@ -1973,30 +2825,77 @@ mod tests {
             for user in crate::world::settings::STEPS {
                 let mut r = Rig::new(screen);
                 r.c.ui.user = user;
-                r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }; 3];
+                r.m.selection = vec![
+                    Card {
+                        id: 0,
+                        icon: Icon::Soldier,
+                        team: 0,
+                        hp: 1.0,
+                        badge: None
+                    };
+                    3
+                ];
                 r.m.loadout = Some(loadout());
                 r.draw();
-                assert!(r.hud.scale >= last, "{screen:?} at {user}: {} after {last}", r.hud.scale);
+                assert!(
+                    r.hud.scale >= last,
+                    "{screen:?} at {user}: {} after {last}",
+                    r.hud.scale
+                );
                 last = r.hud.scale;
                 let (sw, sh) = (screen.0 as f32 + 0.5, screen.1 as f32 + 0.5);
                 for (b, h) in &r.hud.hits {
-                    assert!(b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw && b.bottom() <= sh, "{screen:?} at {user}: {h:?} {b:?} off the screen");
+                    assert!(
+                        b.x >= -0.5 && b.y >= -0.5 && b.right() <= sw && b.bottom() <= sh,
+                        "{screen:?} at {user}: {h:?} {b:?} off the screen"
+                    );
                 }
-                assert!(screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34, "{screen:?} at {user}: the bottom bar is too tall");
+                assert!(
+                    screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34,
+                    "{screen:?} at {user}: the bottom bar is too tall"
+                );
             }
-            assert!(last > Rig::new(screen).hud.scale * 1.3, "{screen:?}: the biggest size grows the HUD");
+            assert!(
+                last > Rig::new(screen).hud.scale * 1.3,
+                "{screen:?}: the biggest size grows the HUD"
+            );
         }
     }
 
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
-        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false };
-        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()) };
+        let row = |k: &str, n: usize, active: bool| SquadRow {
+            key: k.into(),
+            name: format!("Squad {k}"),
+            soldiers: n,
+            hp: 0.8,
+            note: Some("holding".into()),
+            active,
+            near: k == "3",
+            linked: false,
+        };
+        let panel = SquadPanel {
+            rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)],
+            split_key: Some("X".into()),
+            combine_key: Some("G".into()),
+            split_off: None,
+            combine_off: None,
+            cover: "some".into(),
+            cover_key: Some("I".into()),
+        };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
             r.m.squads = Some(panel.clone());
             r.draw();
-            let find = |r: &Rig, h: Hit| r.hud.hits.iter().rev().find(|(_, x)| *x == h).map(|(b, _)| *b).unwrap_or_else(|| panic!("{screen:?}: no {h:?}"));
+            let find = |r: &Rig, h: Hit| {
+                r.hud
+                    .hits
+                    .iter()
+                    .rev()
+                    .find(|(_, x)| *x == h)
+                    .map(|(b, _)| *b)
+                    .unwrap_or_else(|| panic!("{screen:?}: no {h:?}"))
+            };
             let press = |r: &mut Rig, b: Rect| {
                 r.at((b.x + b.w / 2.0, b.y + b.h / 2.0));
                 r.draw();
@@ -2006,18 +2905,36 @@ mod tests {
             // Each squad is a tile in the bottom bar's middle panel.
             for i in 0..3 {
                 let b = find(&r, Hit::Squad(i));
-                assert!(b.y >= r.hud.bottom && b.bottom() <= screen.1 as f32 && b.right() <= screen.0 as f32 && b.x >= 0.0, "{screen:?}: tile {i} at {b:?}");
+                assert!(
+                    b.y >= r.hud.bottom && b.bottom() <= screen.1 as f32 && b.right() <= screen.0 as f32 && b.x >= 0.0,
+                    "{screen:?}: tile {i} at {b:?}"
+                );
             }
-            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(0) && *h != Hit::SquadLink(0)), "the squad you command has no + or link");
-            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(1)), "a squad that doesn't overlap yours has no +");
-            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadLink(1)), "a squad not touching yours can't be linked");
+            assert!(
+                r.hud
+                    .hits
+                    .iter()
+                    .all(|(_, h)| *h != Hit::SquadInto(0) && *h != Hit::SquadLink(0)),
+                "the squad you command has no + or link"
+            );
+            assert!(
+                r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadInto(1)),
+                "a squad that doesn't overlap yours has no +"
+            );
+            assert!(
+                r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadLink(1)),
+                "a squad not touching yours can't be linked"
+            );
             let b = find(&r, Hit::SquadLink(2));
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadLink(2)]));
             let b = find(&r, Hit::SquadCover);
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCover]));
             let b = find(&r, Hit::Squad(1));
             // Left of the +, so the tile itself.
-            assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(1)]));
+            assert_eq!(
+                press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)),
+                (true, vec![HudEvent::Squad(1)])
+            );
             let b = find(&r, Hit::SquadInto(2));
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadInto(2)]));
             let b = find(&r, Hit::SquadSplit);
@@ -2026,7 +2943,10 @@ mod tests {
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCombine]));
             // A button that would do nothing is greyed and takes the click
             // for nothing.
-            r.m.squads = Some(SquadPanel { combine_off: Some("No other squad".into()), ..panel.clone() });
+            r.m.squads = Some(SquadPanel {
+                combine_off: Some("No other squad".into()),
+                ..panel.clone()
+            });
             r.draw();
             assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadCombine));
         }
@@ -2036,19 +2956,43 @@ mod tests {
     fn the_bottom_panels_cover_at_most_about_15_percent_and_collapse_when_empty() {
         for screen in [(1920, 1080), (1280, 800), (2560, 1440)] {
             let mut r = Rig::new(screen);
-            r.m.selection = vec![Card { id: 0, icon: Icon::Soldier, team: 0, hp: 1.0, badge: None }];
+            r.m.selection = vec![Card {
+                id: 0,
+                icon: Icon::Soldier,
+                team: 0,
+                hp: 1.0,
+                badge: None,
+            }];
             r.draw();
             let share = (screen.1 as f32 - r.hud.bottom) / screen.1 as f32;
             // 15% before the owner's 08:33Z ask (one squad row, two command
             // rows); 10.5% after.
-            assert!(share <= 0.11, "{screen:?}: the bar is {:.1}% of the screen", share * 100.0);
-            assert!((Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01 && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01, "insets match the drawn layout");
+            assert!(
+                share <= 0.11,
+                "{screen:?}: the bar is {:.1}% of the screen",
+                share * 100.0
+            );
+            assert!(
+                (Hud::insets(r.c.screen, r.c.ui).1 - (screen.1 as f32 - r.hud.bottom)).abs() < 0.01
+                    && (Hud::insets(r.c.screen, r.c.ui).0 - r.hud.top).abs() < 0.01,
+                "insets match the drawn layout"
+            );
             // With nothing selected, no panel reaches above the collapsed
             // strip except the command card and minimap.
-            let full = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            let full = r
+                .hud
+                .hits
+                .iter()
+                .filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale)
+                .count();
             r.m.selection.clear();
             r.draw();
-            let empty = r.hud.hits.iter().filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale).count();
+            let empty = r
+                .hud
+                .hits
+                .iter()
+                .filter(|(b, h)| *h == Hit::Panel && b.h >= 100.0 * r.hud.scale)
+                .count();
             assert_eq!(empty + 1, full, "{screen:?}: the selection panel collapses");
         }
     }
@@ -2059,7 +3003,11 @@ mod tests {
             let mut r = Rig::new(screen);
             r.m.loadout = Some(loadout());
             r.draw();
-            r.m.loadout = Some(Loadout { cards: vec![], cycle: None, ..loadout() });
+            r.m.loadout = Some(Loadout {
+                cards: vec![],
+                cycle: None,
+                ..loadout()
+            });
             r.draw();
             // More cards than slots still draws every card.
             let mut l = loadout();
@@ -2086,7 +3034,10 @@ mod tests {
         let mut r = Rig::new((1920, 1080));
         r.at(r.centre(NOW));
         assert!(r.click(Button::Left, true).0);
-        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW }]));
+        assert_eq!(
+            r.click(Button::Left, false),
+            (true, vec![HudEvent::Command { id: NOW }])
+        );
     }
 
     #[test]
@@ -2113,7 +3064,9 @@ mod tests {
         r.at((mm.0 as f32 + mm.2 as f32 / 2.0, mm.1 as f32 + mm.3 as f32 / 2.0));
         let (took, ev) = r.click(Button::Left, true);
         assert!(took);
-        let [HudEvent::Point { id: POINT, at }] = ev.as_slice() else { panic!("{ev:?}") };
+        let [HudEvent::Point { id: POINT, at }] = ev.as_slice() else {
+            panic!("{ev:?}")
+        };
         assert!((at.0 - 1024.0).abs() < 8.0 && (at.1 - 640.0).abs() < 8.0, "{at:?}");
     }
 
@@ -2189,7 +3142,12 @@ mod tests {
             assert_eq!(r.hud.hits.iter().any(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)), on);
             r.m.end = Some(("Over".into(), vec![]));
             r.draw();
-            let b = r.hud.hits.iter().find(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu)).map(|(b, _)| *b);
+            let b = r
+                .hud
+                .hits
+                .iter()
+                .find(|(_, h)| *h == Hit::Menu(MenuItem::MainMenu))
+                .map(|(b, _)| *b);
             assert_eq!(b.is_some(), on, "end screen");
             if let Some(b) = b {
                 r.at((b.x + 4.0, b.y + 4.0));

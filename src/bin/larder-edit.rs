@@ -79,13 +79,28 @@ fn open(spec: &str, seed: u64) -> Result<Map, String> {
 fn fit(size: (u32, u32), ui: f32) -> EditView {
     let (panel, status) = map_edit::chrome(ui);
     let left = panel + 8.0;
-    EditView::fit((left, 8.0, (size.0 as f32 - left - 8.0).max(64.0), (size.1 as f32 - status - 16.0).max(64.0)))
+    EditView::fit((
+        left,
+        8.0,
+        (size.0 as f32 - left - 8.0).max(64.0),
+        (size.1 as f32 - status - 16.0).max(64.0),
+    ))
 }
 
 /// The font has no lower-case-only marks such as `_` or `\`; a message
 /// (often a path) says them as the nearest it has.
 fn printable(s: &str) -> String {
-    s.chars().map(|c| if slime_mould::hud::has_crisp_glyph(c) { c } else if c == '\\' { '/' } else { '-' }).collect()
+    s.chars()
+        .map(|c| {
+            if slime_mould::hud::has_crisp_glyph(c) {
+                c
+            } else if c == '\\' {
+                '/'
+            } else {
+                '-'
+            }
+        })
+        .collect()
 }
 
 struct App {
@@ -118,7 +133,25 @@ impl App {
     fn new(ed: Editor, name: String, dir: PathBuf, play_keys: Vec<String>, user: f32) -> Self {
         let size = (1280, 800);
         let ui = UiSize { user, dpi: 1.0 };
-        App { ed, name, dir, play_keys, view: fit(size, ui.fixed()), window: None, pixels: None, size, cursor: None, stroke: None, wall_from: None, pan: None, ctrl: false, message: "paint, place, then ENTER to play".into(), clear_armed: false, ui, result: Ok(()) }
+        App {
+            ed,
+            name,
+            dir,
+            play_keys,
+            view: fit(size, ui.fixed()),
+            window: None,
+            pixels: None,
+            size,
+            cursor: None,
+            stroke: None,
+            wall_from: None,
+            pan: None,
+            ctrl: false,
+            message: "paint, place, then ENTER to play".into(),
+            clear_armed: false,
+            ui,
+            result: Ok(()),
+        }
     }
 
     /// Fits the view again, as F does (after a resize or a new UI size).
@@ -171,14 +204,24 @@ impl App {
         if !self.save() {
             return;
         }
-        let spec = format!("map={}/{}", self.dir.display().to_string().replace('\\', "/"), self.name);
+        let spec = format!(
+            "map={}/{}",
+            self.dir.display().to_string().replace('\\', "/"),
+            self.name
+        );
         let mut args = vec![spec];
         args.extend(self.play_keys.iter().cloned());
-        let beside = std::env::current_exe().ok().map(|e| e.with_file_name(format!("larder-world{}", std::env::consts::EXE_SUFFIX)));
+        let beside = std::env::current_exe()
+            .ok()
+            .map(|e| e.with_file_name(format!("larder-world{}", std::env::consts::EXE_SUFFIX)));
         let started = match beside.filter(|p| p.exists()) {
             Some(exe) => std::process::Command::new(exe).args(&args).spawn(),
             // Not built yet: cargo builds and runs it.
-            None => std::process::Command::new("cargo").current_dir(repo()).args(["run", "--release", "--bin", "larder-world", "--"]).args(&args).spawn(),
+            None => std::process::Command::new("cargo")
+                .current_dir(repo())
+                .args(["run", "--release", "--bin", "larder-world", "--"])
+                .args(&args)
+                .spawn(),
         };
         self.message = match started {
             Ok(_) => printable(&format!("playing {}", self.name)),
@@ -188,7 +231,13 @@ impl App {
 
     fn redraw(&mut self) {
         let Some(p) = self.pixels.as_mut() else { return };
-        let o = Overlay { cursor: self.cursor.map(|c| self.view.to_map(c)), wall_from: self.wall_from, name: &self.name, message: &self.message, ui: self.ui.fixed() };
+        let o = Overlay {
+            cursor: self.cursor.map(|c| self.view.to_map(c)),
+            wall_from: self.wall_from,
+            name: &self.name,
+            message: &self.message,
+            ui: self.ui.fixed(),
+        };
         map_edit::draw(&self.ed, &self.view, p.frame_mut(), self.size, &o);
         if let Err(e) = p.render() {
             self.result = Err(format!("render failed: {e}"));
@@ -222,10 +271,18 @@ impl App {
                 self.save();
             }
             KeyCode::KeyZ if self.ctrl => {
-                self.message = if self.ed.undo() { "undone".into() } else { "nothing to undo".into() };
+                self.message = if self.ed.undo() {
+                    "undone".into()
+                } else {
+                    "nothing to undo".into()
+                };
             }
             KeyCode::KeyY if self.ctrl => {
-                self.message = if self.ed.redo() { "redone".into() } else { "nothing to redo".into() };
+                self.message = if self.ed.redo() {
+                    "redone".into()
+                } else {
+                    "nothing to redo".into()
+                };
             }
             KeyCode::Equal | KeyCode::NumpadAdd if self.ctrl => self.resize_ui(1),
             KeyCode::Minus | KeyCode::NumpadSubtract if self.ctrl => self.resize_ui(-1),
@@ -297,7 +354,9 @@ impl ApplicationHandler for App {
             return;
         }
         let first = PhysicalSize::new(self.size.0, self.size.1);
-        let attributes = Window::default_attributes().with_title(format!("Larder World map editor: {}", self.name)).with_inner_size(first);
+        let attributes = Window::default_attributes()
+            .with_title(format!("Larder World map editor: {}", self.name))
+            .with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(e) => {
@@ -307,7 +366,13 @@ impl ApplicationHandler for App {
         };
         let size = window.inner_size();
         self.size = (size.width.max(1), size.height.max(1));
-        match PixelsBuilder::new(self.size.0, self.size.1, SurfaceTexture::new(self.size.0, self.size.1, Arc::clone(&window))).build() {
+        match PixelsBuilder::new(
+            self.size.0,
+            self.size.1,
+            SurfaceTexture::new(self.size.0, self.size.1, Arc::clone(&window)),
+        )
+        .build()
+        {
             Ok(p) => {
                 let info = p.adapter().get_info();
                 println!("larder-edit: {} ({:?})", info.name, info.backend);
@@ -342,7 +407,10 @@ impl ApplicationHandler for App {
             }
             WindowEvent::Resized(size) if size.width > 0 && size.height > 0 => {
                 if let Some(p) = self.pixels.as_mut() {
-                    if let Err(e) = p.resize_buffer(size.width, size.height).and_then(|_| p.resize_surface(size.width, size.height)) {
+                    if let Err(e) = p
+                        .resize_buffer(size.width, size.height)
+                        .and_then(|_| p.resize_surface(size.width, size.height))
+                    {
                         self.result = Err(format!("resize failed: {e}"));
                         return event_loop.exit();
                     }
@@ -369,7 +437,9 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::LineDelta(_, y) => y,
                     MouseScrollDelta::PixelDelta(p) => p.y as f32 / 40.0,
                 };
-                let at = self.cursor.unwrap_or((self.size.0 as f32 / 2.0, self.size.1 as f32 / 2.0));
+                let at = self
+                    .cursor
+                    .unwrap_or((self.size.0 as f32 / 2.0, self.size.1 as f32 / 2.0));
                 self.view.zoom_at(1.2f32.powf(notches), at);
             }
             WindowEvent::MouseInput { state, button, .. } => {
@@ -388,17 +458,41 @@ impl ApplicationHandler for App {
             _ => return,
         }
         if let Some(w) = &self.window {
-            w.set_title(&format!("Larder World map editor: {}{}", self.name, if self.ed.dirty { " *" } else { "" }));
+            w.set_title(&format!(
+                "Larder World map editor: {}{}",
+                self.name,
+                if self.ed.dirty { " *" } else { "" }
+            ));
             w.request_redraw();
         }
     }
 }
 
 /// The window's picture of `ed`, without a window.
-fn picture(ed: &Editor, name: &str, message: &str, size: (u32, u32), cursor: Option<(f32, f32)>, wall_from: Option<(f32, f32)>, ui: f32) -> image::RgbaImage {
+fn picture(
+    ed: &Editor,
+    name: &str,
+    message: &str,
+    size: (u32, u32),
+    cursor: Option<(f32, f32)>,
+    wall_from: Option<(f32, f32)>,
+    ui: f32,
+) -> image::RgbaImage {
     let mut frame = vec![0u8; size.0 as usize * size.1 as usize * 4];
     let view = fit(size, ui);
-    map_edit::draw(ed, &view, &mut frame, size, &Overlay { cursor, wall_from, name, message, ui });
+    map_edit::draw(
+        ed,
+        &view,
+        &mut frame,
+        size,
+        &Overlay {
+            cursor,
+            wall_from,
+            name,
+            message,
+            ui,
+        },
+    );
     image::RgbaImage::from_raw(size.0, size.1, frame).expect("frame size")
 }
 
@@ -413,7 +507,8 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
         let view = fit(size, ui);
         let c = cursor.map(|p| view.to_screen(p));
         let img = picture(ed, name, msg, size, c.map(|s| view.to_map(s)), None, ui);
-        img.save(dir.join(format!("frame-{n:03}.png"))).map_err(|e| e.to_string())?;
+        img.save(dir.join(format!("frame-{n:03}.png")))
+            .map_err(|e| e.to_string())?;
         n += 1;
         Ok(())
     };
@@ -450,7 +545,11 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
     shot(&ed, "4 barren: no births", Some((512.0, 120.0)))?;
     // Crystals, starts, the landing, a wall.
     ed.tool = Tool::Crystal;
-    for (p, r, charge) in [((160.0, 110.0), 30.0, 384.0), ((420.0, 300.0), 24.0, 256.0), ((80.0, 560.0), 36.0, 512.0)] {
+    for (p, r, charge) in [
+        ((160.0, 110.0), 30.0, 384.0),
+        ((420.0, 300.0), 24.0, 256.0),
+        ((80.0, 560.0), 36.0, 512.0),
+    ] {
         (ed.crystal_r, ed.charge) = (r, charge);
         ed.begin();
         ed.click(p);
@@ -473,7 +572,12 @@ fn demo(dir: &Path, name: &str, size: (u32, u32), ui: f32) -> Result<(), String>
     ed.map.save(&out, name)?;
     ed.dirty = false;
     shot(&ed, &printable(&format!("saved {name}: ready to play")), None)?;
-    println!("larder-edit: {n} frames in {}; map {}/{name} (problems: {:?})", dir.display(), out.display(), ed.problems());
+    println!(
+        "larder-edit: {n} frames in {}; map {}/{name} (problems: {:?})",
+        dir.display(),
+        out.display(),
+        ed.problems()
+    );
     Ok(())
 }
 
@@ -482,7 +586,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut look, mut demo_dir, mut play_keys) = (None::<String>, None::<String>, Vec::new());
     let mut ui = None;
     for a in std::env::args().skip(1) {
-        let (k, v) = a.split_once('=').ok_or_else(|| format!("expected key=value, got {a}"))?;
+        let (k, v) = a
+            .split_once('=')
+            .ok_or_else(|| format!("expected key=value, got {a}"))?;
         match k {
             "map" => spec = Some(v.to_string()),
             "name" => name = Some(v.to_string()),
@@ -505,7 +611,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let size = (1280, 800);
     if let Some(d) = demo_dir {
         // The pictures at `ui=` or 100%, never a size saved on this machine.
-        demo(Path::new(&d), name.as_deref().unwrap_or("demo"), size, ui.unwrap_or(1.0))?;
+        demo(
+            Path::new(&d),
+            name.as_deref().unwrap_or("demo"),
+            size,
+            ui.unwrap_or(1.0),
+        )?;
         return Ok(());
     }
     let map = match &spec {
@@ -514,7 +625,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     // A planet's spec has colons (`planet:3:42`), which Windows refuses in
     // a file name: saved as `planet-3-42`.
-    let name = name.unwrap_or_else(|| spec.as_deref().map(|s| s.rsplit(['/', '\\']).next().unwrap_or(s).replace(':', "-")).unwrap_or_else(|| "new".into()));
+    let name = name.unwrap_or_else(|| {
+        spec.as_deref()
+            .map(|s| s.rsplit(['/', '\\']).next().unwrap_or(s).replace(':', "-"))
+            .unwrap_or_else(|| "new".into())
+    });
     let dir = dir.unwrap_or_else(|| repo().join("maps"));
     assert_eq!(map.ground.len(), MAP_W * MAP_H);
     let ed = Editor::new(map);

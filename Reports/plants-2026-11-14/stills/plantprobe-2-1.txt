@@ -1,0 +1,15 @@
+planet 2 (Uldum), 512 x 320 fine cells, 149451 open
+secs sum cover% | meadow jungle reeds scrub | plant step ms (every 8 ticks)
+0 2779 2.2 | 1549 895 836 0 | 0.000 | burning 0 fire-killed 0 living 3000
+20 63139 73.1 | 55973 17632 35707 0 | 2.557 | burning 0 fire-killed 0 living 4195
+30 87032 86.1 | 63896 27309 37410 0 | 2.507 | burning 0 fire-killed 0 living 4990
+fire at 40 s round (174, 51): 307 cells lit; trail under walkers p10 1.52 p25 2.25 p50 4.21 p90 9.40
+40 100122 92.0 | 66537 32792 38102 0 | 2.507 | burning 307 fire-killed 0 living 5405
+41 100731 92.3 | 66703 33131 38144 0 | 2.507 | burning 1015 fire-killed 0 living 5405
+42 101073 92.1 | 66027 33424 38182 0 | 2.492 | burning 1398 fire-killed 0 living 5471
+44 101209 91.3 | 64374 33877 38269 0 | 2.436 | burning 1606 fire-killed 2 living 5573
+47 102050 90.8 | 62841 34441 38409 0 | 2.507 | burning 1016 fire-killed 10 living 5796
+50 102712 90.2 | 61631 34648 38559 0 | 2.508 | burning 1051 fire-killed 15 living 6094
+60 101401 86.8 | 57654 33172 38917 0 | 2.471 | burning 1329 fire-killed 263 living 6563
+90 94733 81.2 | 53445 27995 39852 0 | 2.492 | burning 1235 fire-killed 452 living 7565
+120 78256 70.3 | 43372 19902 41776 0 | 2.570 | burning 1215 fire-killed 501 living 7669

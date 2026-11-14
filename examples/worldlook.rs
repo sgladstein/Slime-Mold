@@ -23,8 +23,8 @@
 
 use pixels::wgpu;
 use slime_mould::gpu::*;
-use slime_mould::mould::STEPS_PER_SECOND;
 use slime_mould::mould::big::terrain_noise;
+use slime_mould::mould::STEPS_PER_SECOND;
 use slime_mould::world::look::{dish_crystals, first_hit, ground, ground_buffer, Fields, Ground, Shot};
 use slime_mould::world::marks::team_colour;
 use slime_mould::world::{Camera, Marks, View};
@@ -97,13 +97,31 @@ fn main() {
     }
     std::fs::create_dir_all(&out).unwrap();
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        ..Default::default()
+    }))
+    .expect("no GPU adapter");
     println!("adapter: {}", adapter.get_info().name);
     let timestamps = adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY);
-    let feats = if timestamps { wgpu::Features::TIMESTAMP_QUERY } else { wgpu::Features::empty() };
-    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: None, required_features: feats, required_limits: adapter.limits(), ..Default::default() })).expect("no device");
+    let feats = if timestamps {
+        wgpu::Features::TIMESTAMP_QUERY
+    } else {
+        wgpu::Features::empty()
+    };
+    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: None,
+        required_features: feats,
+        required_limits: adapter.limits(),
+        ..Default::default()
+    }))
+    .expect("no device");
     let shared = Shared::new(&device);
-    let s = Settings { seed, walkers, ..Settings::big_dish() };
+    let s = Settings {
+        seed,
+        walkers,
+        ..Settings::big_dish()
+    };
     let scale = 8usize;
     let mut e = Engine::new(&device, &queue, &shared, &s, scale);
     let (w, h) = (e.dish.w, e.dish.h);
@@ -151,7 +169,8 @@ fn main() {
         let pr = e.dish.p.pile_r + 4.0;
         for i in 0..w * h {
             let (x, y) = (((i % w) as f32 + 0.5) / sc, ((i / w) as f32 + 0.5) / sc);
-            let clear = e.dish.piles.iter().all(|&(px, py)| (px - x).hypot(py - y) > pr) && (x - fx / sc).hypot(y - fy / sc) > 26.0;
+            let clear = e.dish.piles.iter().all(|&(px, py)| (px - x).hypot(py - y) > pr)
+                && (x - fx / sc).hypot(y - fy / sc) > 26.0;
             if !clear || !e.dish.agar[i] || is_wall[i] {
                 continue;
             }
@@ -163,10 +182,25 @@ fn main() {
         }
     }
     e.block(&rock);
-    println!("terrain: {} rock cells, {} wet", rock.len(), wet.iter().filter(|&&b| b).count());
+    println!(
+        "terrain: {} rock cells, {} wet",
+        rock.len(),
+        wet.iter().filter(|&&b| b).count()
+    );
     // Crystals: the dish's piles.
     let crystal = dish_crystals(&e.dish);
-    let codes = ground(w, w * h, &Fields { agar: &e.dish.agar, wall: &is_wall, wall_share: &share, crystal: &crystal, wet: &wet, ..Default::default() });
+    let codes = ground(
+        w,
+        w * h,
+        &Fields {
+            agar: &e.dish.agar,
+            wall: &is_wall,
+            wall_share: &share,
+            crystal: &crystal,
+            wet: &wet,
+            ..Default::default()
+        },
+    );
     assert_eq!(codes[cells[0]] & 255, Ground::Wall as u32);
     let ground_buf = ground_buffer(&device, &queue, &codes);
 
@@ -187,10 +221,26 @@ fn main() {
     let mut squad: Vec<Soldier> = (0..9)
         .map(|k| {
             let a = -2.4 + k as f32 * 0.6;
-            Soldier { x: fx - 2.0 * sc + a * 2.4 * sc, y: fy + 5.5 * sc + (a * 0.5).powi(2) * sc, facing: -std::f32::consts::FRAC_PI_2, wait: (k as f32 * 0.037) % 0.3, since: 9.0, team: 0, facing0: -std::f32::consts::FRAC_PI_2 }
+            Soldier {
+                x: fx - 2.0 * sc + a * 2.4 * sc,
+                y: fy + 5.5 * sc + (a * 0.5).powi(2) * sc,
+                facing: -std::f32::consts::FRAC_PI_2,
+                wait: (k as f32 * 0.037) % 0.3,
+                since: 9.0,
+                team: 0,
+                facing0: -std::f32::consts::FRAC_PI_2,
+            }
         })
         .collect();
-    squad.push(Soldier { x: fx + 9.0 * sc, y: fy - 1.0 * sc, facing: 2.6, wait: 9e9, since: 9.0, team: 1, facing0: 2.6 });
+    squad.push(Soldier {
+        x: fx + 9.0 * sc,
+        y: fy - 1.0 * sc,
+        facing: 2.6,
+        wait: 9e9,
+        since: 9.0,
+        team: 1,
+        facing0: 2.6,
+    });
     let range = 16.0 * sc;
     let mut tracers: Vec<Tracer> = Vec::new();
     let screen_gif = (640u32, 400u32);
@@ -212,9 +262,15 @@ fn main() {
         // The first cut read thickness back every third frame, so a shot
         // could pass a tube that grew in since; now every frame by default.
         if f % every == 0 {
-            thick = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
+            thick = read_back(&device, &queue, &e.look)
+                .chunks_exact(4)
+                .map(|c| c[0])
+                .collect();
         }
-        seen = read_back(&device, &queue, &e.look).chunks_exact(4).map(|c| c[0]).collect();
+        seen = read_back(&device, &queue, &e.look)
+            .chunks_exact(4)
+            .map(|c| c[0])
+            .collect();
         let mut hits = Vec::new();
         for (k, so) in squad.iter_mut().enumerate() {
             so.since += dt;
@@ -230,7 +286,14 @@ fn main() {
             let a = so.facing0 + ((rnd & 0xffff) as f32 / 65535.0 - 0.5) * 1.6;
             let muzzle = (so.x + a.cos() * 1.6 * 0.9 * sc, so.y + a.sin() * 1.6 * 0.9 * sc);
             let end = (so.x + a.cos() * range, so.y + a.sin() * range);
-            let shot = first_hit(w, h, muzzle, end, |i| thick[i] >= hit, |i| !e.dish.agar[i] && !is_wall[i]);
+            let shot = first_hit(
+                w,
+                h,
+                muzzle,
+                end,
+                |i| thick[i] >= hit,
+                |i| !e.dish.agar[i] && !is_wall[i],
+            );
             fired += 1;
             so.facing = a;
             so.since = 0.0;
@@ -257,7 +320,11 @@ fn main() {
                     through += 1;
                 }
             }
-            tracers.push(Tracer { from: muzzle, to, age: 0.0 });
+            tracers.push(Tracer {
+                from: muzzle,
+                to,
+                age: 0.0,
+            });
         }
         e.set_hits(&hits);
         run(&mut e, 1);
@@ -328,12 +395,21 @@ fn main() {
         m.soldier(at, 0.9 * sc, -1.2, team_colour(0), 0.0, true);
         m.soldier((at.0 + 3.0 * sc, at.1), 0.9 * sc, -0.6, team_colour(0), 1.0, true);
         m.soldier((at.0 - 3.0 * sc, at.1), 0.9 * sc, 2.4, team_colour(1), 0.0, true);
-        m.soldier((at.0 - 6.0 * sc, at.1 + 1.0 * sc), 0.9 * sc, 0.5, team_colour(0), 0.0, false);
+        m.soldier(
+            (at.0 - 6.0 * sc, at.1 + 1.0 * sc),
+            0.9 * sc,
+            0.5,
+            team_colour(0),
+            0.0,
+            false,
+        );
         sv.set_marks(&m);
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         sv.record(&mut enc, &cam, None);
         queue.submit([enc.finish()]);
-        sv.picture().save(format!("{out}/soldiers-z{}.png", zoom as u32)).unwrap();
+        sv.picture()
+            .save(format!("{out}/soldiers-z{}.png", zoom as u32))
+            .unwrap();
         // The same ground with no soldiers, for comparing sprite art on it.
         sv.set_marks(&Marks::default());
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -370,15 +446,27 @@ fn time_view(device: &wgpu::Device, queue: &wgpu::Queue, view: &View, cam: &Came
         queue.submit([enc.finish()]);
         return "no timestamps".into();
     }
-    let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: None, ty: wgpu::QueryType::Timestamp, count: 2 });
-    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: None, size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    let qs = device.create_query_set(&wgpu::QuerySetDescriptor {
+        label: None,
+        ty: wgpu::QueryType::Timestamp,
+        count: 2,
+    });
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor {
+        label: None,
+        size: 16,
+        usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
+        mapped_at_creation: false,
+    });
     let mut times = Vec::new();
     for _ in 0..21 {
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         view.record(&mut enc, cam, Some((&qs, Some(0), Some(1))));
         enc.resolve_query_set(&qs, 0..2, &resolve, 0);
         queue.submit([enc.finish()]);
-        let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+        let t: Vec<u64> = read_back(device, queue, &resolve)
+            .chunks_exact(8)
+            .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
+            .collect();
         times.push(t[1].saturating_sub(t[0]) as f64 * queue.get_timestamp_period() as f64 / 1e6);
     }
     times.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -387,7 +475,10 @@ fn time_view(device: &wgpu::Device, queue: &wgpu::Queue, view: &View, cam: &Came
 
 fn write_gif(path: &str, shots: Vec<image::RgbaImage>, ms: u32) {
     let delay = image::Delay::from_numer_denom_ms(ms, 1);
-    let frames: Vec<image::Frame> = shots.into_iter().map(|img| image::Frame::from_parts(img, 0, 0, delay)).collect();
+    let frames: Vec<image::Frame> = shots
+        .into_iter()
+        .map(|img| image::Frame::from_parts(img, 0, 0, delay))
+        .collect();
     let file = std::fs::File::create(path).expect("gif file");
     let mut enc = image::codecs::gif::GifEncoder::new_with_speed(file, 10);
     enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();

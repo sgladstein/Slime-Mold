@@ -37,11 +37,14 @@
 //! taken enemy core sets the enemy's cap to 0: its births stop, the
 //! player's go on.
 
-use super::kit::KitRules;
 use super::big::{BigDish, BigParams, SpeciesSet, LIFE_DEAD, LIFE_SPORE};
+use super::kit::KitRules;
 use super::larder_world::{race_params, race_world, Soldier, World};
 use super::map::Map;
-use super::squad::{self, cell_of, disc, path, r2, Frame, FrameOut, ShotIn, ShotOut, UnitIn, UnitOut, BIN, PATH_MAX, R_MAX, SHOTS_MAX, SHOT_ALARM, SHOT_ALARM_R, UNITS_MAX};
+use super::squad::{
+    self, cell_of, disc, path, r2, Frame, FrameOut, ShotIn, ShotOut, UnitIn, UnitOut, BIN, PATH_MAX, R_MAX, SHOTS_MAX,
+    SHOT_ALARM, SHOT_ALARM_R, UNITS_MAX,
+};
 
 /// The player's species id: the last of the engine's four slots
 /// (`gpu::MAX_SPECIES`), so new enemy tiers fill 1 and 2 without moving it
@@ -82,7 +85,13 @@ pub struct Tend {
 
 impl Default for Tend {
     fn default() -> Self {
-        Tend { r: 3.0, road: 30.0, feed: 20.0, charge: 64.0, tps: 15 }
+        Tend {
+            r: 3.0,
+            road: 30.0,
+            feed: 20.0,
+            charge: 64.0,
+            tps: 15,
+        }
     }
 }
 
@@ -120,12 +129,35 @@ pub fn garden_world(seed: u64, scale: usize, walkers: usize, sets: Option<(Speci
     p.species_convert_per = true;
     // Half the slots a side; the unused species 1 and 2 hold none.
     let half = p.capacity.max(p.walkers) / 2;
-    p.species_cap = (0..SPECIES).map(|s| if s == 0 || s == OWN { half } else { 0 }).collect();
+    p.species_cap = (0..SPECIES)
+        .map(|s| if s == 0 || s == OWN { half } else { 0 })
+        .collect();
     let base = SpeciesSet::from_params(&p);
     let (e, o) = sets.unwrap_or((base, base));
-    p.species_sets = (0..SPECIES).map(|s| if s == OWN { o } else if s == 0 { e } else { base }).collect();
+    p.species_sets = (0..SPECIES)
+        .map(|s| {
+            if s == OWN {
+                o
+            } else if s == 0 {
+                e
+            } else {
+                base
+            }
+        })
+        .collect();
     let dish = garden_dish(p, &m, walkers);
-    Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 }
+    Garden {
+        dish,
+        tasks: Vec::new(),
+        tend: Tend::default(),
+        roads: 0,
+        fed: 0.0,
+        cut: 0,
+        own_ate: 0.0,
+        enemy_ate: 0.0,
+        turned_own: 0,
+        turned_enemy: 0,
+    }
 }
 
 /// Conversion between the two moulds: a walker joins the other side where
@@ -139,7 +171,16 @@ pub const CONVERT_R: u32 = 4;
 pub fn garden_map(seed: u64, scale: usize, walkers: usize) -> Map {
     let mut m = Map::of_dish(&race_world(seed, scale, walkers));
     let home = m.items.crystals[0];
-    let far = *m.items.crystals.iter().max_by(|a, b| (a.x - home.x).hypot(a.y - home.y).total_cmp(&(b.x - home.x).hypot(b.y - home.y))).expect("a crystal");
+    let far = *m
+        .items
+        .crystals
+        .iter()
+        .max_by(|a, b| {
+            (a.x - home.x)
+                .hypot(a.y - home.y)
+                .total_cmp(&(b.x - home.x).hypot(b.y - home.y))
+        })
+        .expect("a crystal");
     m.items.moulds = vec![(home.x, home.y), (far.x, far.y)];
     m.items.landing = Some((far.x, far.y));
     m
@@ -166,7 +207,10 @@ pub fn garden_dish(p: BigParams, m: &Map, walkers: usize) -> BigDish {
 /// draws on, so it widens the first rather than stacking on its points).
 /// Returns the map to build on and the walkers a side.
 pub fn garden_map_on(m: &Map, walkers: usize) -> Result<(Map, usize), String> {
-    let land = m.items.landing.ok_or("own mould: the map has no landing for the player's mould")?;
+    let land = m
+        .items
+        .landing
+        .ok_or("own mould: the map has no landing for the player's mould")?;
     let starts: Vec<(f32, f32)> = m.items.moulds.clone();
     if starts.is_empty() {
         return Err("own mould: the map has no mould start for the enemy".into());
@@ -178,7 +222,17 @@ pub fn garden_map_on(m: &Map, walkers: usize) -> Result<(Map, usize), String> {
     // landing it starved from 5,000 to 240-520 walkers in its first 30 s
     // (census v3, seed 1) before any hand could feed it, and only a hand
     // that fed from the first second (random) kept it.
-    let own = m.items.crystals.iter().map(|c| (c.x, c.y)).min_by(|a, b| (a.0 - land.0).hypot(a.1 - land.1).total_cmp(&(b.0 - land.0).hypot(b.1 - land.1))).unwrap_or(land);
+    let own = m
+        .items
+        .crystals
+        .iter()
+        .map(|c| (c.x, c.y))
+        .min_by(|a, b| {
+            (a.0 - land.0)
+                .hypot(a.1 - land.1)
+                .total_cmp(&(b.0 - land.0).hypot(b.1 - land.1))
+        })
+        .unwrap_or(land);
     let mut m = m.clone();
     m.items.moulds = starts.iter().copied().chain(std::iter::repeat_n(own, k)).collect();
     Ok((m, side))
@@ -195,7 +249,9 @@ pub fn garden_params(mut p: BigParams, side: usize) -> BigParams {
     p.species_convert_r = CONVERT_R;
     p.species_convert_per = true;
     let half = p.capacity.max(p.walkers) / 2;
-    p.species_cap = (0..SPECIES).map(|s| if s == 0 || s == OWN { half } else { 0 }).collect();
+    p.species_cap = (0..SPECIES)
+        .map(|s| if s == 0 || s == OWN { half } else { 0 })
+        .collect();
     p
 }
 
@@ -214,7 +270,11 @@ pub fn garden_dish_on(p: BigParams, m: &Map, side: usize) -> Result<BigDish, Str
     let mut n = [0usize; 2];
     for k in 0..dish.walkers.len() {
         let w = (dish.walkers[k].0, dish.walkers[k].1);
-        let near = homes.iter().copied().min_by(|a, b| d2(w, *a).total_cmp(&d2(w, *b))).unwrap_or(land);
+        let near = homes
+            .iter()
+            .copied()
+            .min_by(|a, b| d2(w, *a).total_cmp(&d2(w, *b)))
+            .unwrap_or(land);
         let own = near == land;
         dish.spec[k] = if own { OWN } else { 0 };
         // Spare slots (dead, for births) take a side too but are not placed.
@@ -222,9 +282,15 @@ pub fn garden_dish_on(p: BigParams, m: &Map, side: usize) -> Result<BigDish, Str
             n[own as usize] += 1;
         }
     }
-    let caps = (dish.p.species_cap.first().copied().unwrap_or(usize::MAX), dish.p.species_cap.get(OWN as usize).copied().unwrap_or(usize::MAX));
+    let caps = (
+        dish.p.species_cap.first().copied().unwrap_or(usize::MAX),
+        dish.p.species_cap.get(OWN as usize).copied().unwrap_or(usize::MAX),
+    );
     if n != [side, side] {
-        return Err(format!("own mould: placed {} enemy and {} own walkers, not {side} each", n[0], n[1]));
+        return Err(format!(
+            "own mould: placed {} enemy and {} own walkers, not {side} each",
+            n[0], n[1]
+        ));
     }
     if n[0] > caps.0 || n[1] > caps.1 {
         return Err(format!("own mould: placed {n:?} over the caps {caps:?}"));
@@ -238,7 +304,18 @@ pub fn garden_dish_on(p: BigParams, m: &Map, side: usize) -> Result<BigDish, Str
 pub fn garden_on_map(p: BigParams, m: &Map, walkers: usize) -> Result<Garden, String> {
     let (m, side) = garden_map_on(m, walkers)?;
     let dish = garden_dish_on(garden_params(p, side), &m, side)?;
-    Ok(Garden { dish, tasks: Vec::new(), tend: Tend::default(), roads: 0, fed: 0.0, cut: 0, own_ate: 0.0, enemy_ate: 0.0, turned_own: 0, turned_enemy: 0 })
+    Ok(Garden {
+        dish,
+        tasks: Vec::new(),
+        tend: Tend::default(),
+        roads: 0,
+        fed: 0.0,
+        cut: 0,
+        own_ate: 0.0,
+        enemy_ate: 0.0,
+        turned_own: 0,
+        turned_enemy: 0,
+    })
 }
 
 impl Garden {
@@ -252,12 +329,21 @@ impl Garden {
     pub fn cord(&mut self, a: (f32, f32), b: (f32, f32), r: &KitRules, tps: u32) -> (usize, usize) {
         let d = &mut self.dish;
         let s = d.p.scale as f32;
-        let before = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k)).fold((0usize, 0usize), |(o, e), k| if d.spec[k] == OWN { (o + 1, e) } else { (o, e + 1) });
+        let before = |d: &BigDish| {
+            (0..d.walkers.len())
+                .filter(|&k| d.lives(k))
+                .fold(
+                    (0usize, 0usize),
+                    |(o, e), k| if d.spec[k] == OWN { (o + 1, e) } else { (o, e + 1) },
+                )
+        };
         let (o0, e0) = before(d);
         d.enable_alarm(r.alarm_keep);
         let len = (a.0 - b.0).hypot(a.1 - b.1);
         let n = (len / (r.cord_every * s)).ceil().max(1.0) as usize;
-        let steps = (r.crater_secs * tps as f32 * d.p.substeps as f32).round().min(u16::MAX as f32) as u16;
+        let steps = (r.crater_secs * tps as f32 * d.p.substeps as f32)
+            .round()
+            .min(u16::MAX as f32) as u16;
         for j in 0..=n {
             let f = j as f32 / n as f32;
             let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
@@ -323,7 +409,11 @@ impl Garden {
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
         // Enemy walkers a cell, for the walker-in-a-crater stop.
-        let occ = if self.dish.scorch.is_empty() { Vec::new() } else { self.enemy_occ() };
+        let occ = if self.dish.scorch.is_empty() {
+            Vec::new()
+        } else {
+            self.enemy_occ()
+        };
         let hits: Vec<u32> = shots
             .iter()
             .map(|s| {
@@ -332,14 +422,23 @@ impl Garden {
                 used += cells.len();
                 // As `squad::shots`: an enemy walker standing in a crater
                 // stops the shot though the crater holds no trail.
-                let stops = |i: usize| self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0);
+                let stops = |i: usize| {
+                    self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0)
+                };
                 for (j, &i) in cells.iter().enumerate() {
                     if !self.dish.agar[i as usize] {
                         return NONE;
                     }
                     if stops(i as usize) {
                         // The sink (`squad::sink`), on the enemy's slime.
-                        return squad::sink(w, cells, j, squad::sink_r2(sink, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
+                        return squad::sink(
+                            w,
+                            cells,
+                            j,
+                            squad::sink_r2(sink, r2(s.r.min(R_MAX))),
+                            &self.dish.agar,
+                            stops,
+                        );
                     }
                 }
                 NONE
@@ -351,7 +450,10 @@ impl Garden {
             if hit == NONE {
                 return false;
             }
-            let (dx, dy) = ((c % w) as i64 - (hit as usize % w) as i64, (c / w) as i64 - (hit as usize / w) as i64);
+            let (dx, dy) = (
+                (c % w) as i64 - (hit as usize % w) as i64,
+                (c / w) as i64 - (hit as usize / w) as i64,
+            );
             dx * dx + dy * dy <= r2s[q] as i64
         };
         let mut killed = vec![0u32; shots.len()];
@@ -413,7 +515,10 @@ impl Garden {
         }
         hits.iter()
             .zip(killed)
-            .map(|(&hit, killed)| ShotOut { hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)), killed })
+            .map(|(&hit, killed)| ShotOut {
+                hit: (hit != NONE).then(|| ((hit as usize % w) as f32 + 0.5, (hit as usize / w) as f32 + 0.5)),
+                killed,
+            })
             .collect()
     }
 
@@ -437,7 +542,10 @@ impl Garden {
                 let mut best = (0u32, None);
                 for by in by0..=by1 {
                     for bx in bx0..=bx1 {
-                        let (mx, my) = (bx * BIN as i64 + BIN as i64 / 2 - cx, by * BIN as i64 + BIN as i64 / 2 - cy);
+                        let (mx, my) = (
+                            bx * BIN as i64 + BIN as i64 / 2 - cx,
+                            by * BIN as i64 + BIN as i64 / 2 - cy,
+                        );
                         if mx * mx + my * my > s2 {
                             continue;
                         }
@@ -499,7 +607,9 @@ impl Garden {
             Task::Cut => {
                 let inside: std::collections::HashSet<usize> = cells.iter().copied().collect();
                 for k in 0..d.walkers.len() {
-                    let on = d.lives(k) && d.spec[k] == OWN && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD));
+                    let on = d.lives(k)
+                        && d.spec[k] == OWN
+                        && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD));
                     if on && inside.contains(&(d.walkers[k].1 as usize * w + d.walkers[k].0 as usize)) {
                         d.kill(k);
                         self.cut += 1;
@@ -544,7 +654,13 @@ impl World for Garden {
         for _ in 0..ticks {
             if self.dish.p.species_convert > 0.0 {
                 was.clear();
-                was.extend((0..self.dish.walkers.len()).map(|k| if self.dish.lives(k) { self.dish.spec[k] } else { u8::MAX }));
+                was.extend((0..self.dish.walkers.len()).map(|k| {
+                    if self.dish.lives(k) {
+                        self.dish.spec[k]
+                    } else {
+                        u8::MAX
+                    }
+                }));
             }
             self.dish.tick();
             for (k, &s) in was.iter().enumerate() {
@@ -574,7 +690,16 @@ impl World for Garden {
         let took = squad::harvest(&mut self.dish, &f.units);
         let w = self.dish.w;
         FrameOut {
-            units: reads.into_iter().zip(took).map(|((touching, b, dense), took)| UnitOut { touching, target: b.map(|b| squad::block_centre(w, b)), took, dense }).collect(),
+            units: reads
+                .into_iter()
+                .zip(took)
+                .map(|((touching, b, dense), took)| UnitOut {
+                    touching,
+                    target: b.map(|b| squad::block_centre(w, b)),
+                    took,
+                    dense,
+                })
+                .collect(),
             shots,
         }
     }
@@ -691,7 +816,10 @@ pub(crate) mod tests {
         let s = d.p.scale as f32;
         let land = *d.homes.last().unwrap();
         let landing = d.landing.unwrap();
-        assert!((land.0 - landing.0).hypot(land.1 - landing.1) < 40.0, "the player's start is by the landing");
+        assert!(
+            (land.0 - landing.0).hypot(land.1 - landing.1) < 40.0,
+            "the player's start is by the landing"
+        );
         let near = |w: (f32, f32, f32), h: (f32, f32)| (w.0 - h.0 * s).hypot(w.1 - h.1 * s);
         let enemy_starts: Vec<(f32, f32)> = m.items.moulds.iter().map(|&q| Map::dish(q)).collect();
         for k in (0..d.walkers.len()).filter(|&k| d.lives(k)) {
@@ -699,10 +827,16 @@ pub(crate) mod tests {
             let to_land = near(w, land);
             let to_enemy = enemy_starts.iter().map(|&h| near(w, h)).fold(f32::MAX, f32::min);
             if d.spec[k] == OWN {
-                assert!(to_land < to_enemy && to_land < 40.0 * s, "own walker {k} {to_land} from the landing");
+                assert!(
+                    to_land < to_enemy && to_land < 40.0 * s,
+                    "own walker {k} {to_land} from the landing"
+                );
             } else {
                 assert_eq!(d.spec[k], 0);
-                assert!(to_enemy < to_land && to_enemy < 40.0 * s, "enemy walker {k} {to_enemy} from its start");
+                assert!(
+                    to_enemy < to_land && to_enemy < 40.0 * s,
+                    "enemy walker {k} {to_enemy} from its start"
+                );
             }
         }
         assert!(own <= d.p.species_cap[OWN as usize] && enemy <= d.p.species_cap[0]);
@@ -726,7 +860,11 @@ pub(crate) mod tests {
         assert_eq!(game.mould, enemy);
         // The larder is on the player's home crystal.
         let d = &game.world.dish;
-        let k = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] == OWN).map(|k| d.walkers[k]).map(|w| (w.0 - game.larder.0).hypot(w.1 - game.larder.1)).fold(0.0f32, f32::max);
+        let k = (0..d.walkers.len())
+            .filter(|&k| d.lives(k) && d.spec[k] == OWN)
+            .map(|k| d.walkers[k])
+            .map(|w| (w.0 - game.larder.0).hypot(w.1 - game.larder.1))
+            .fold(0.0f32, f32::max);
         assert!(k < 40.0, "the player's mould starts by the larder: farthest {k}");
     }
 
@@ -749,7 +887,14 @@ pub(crate) mod tests {
     #[test]
     fn tasks_act_on_the_players_mould_only() {
         let mut g = garden();
-        let own_at = g.dish.walkers.iter().zip(&g.dish.spec).find(|(_, &s)| s == OWN).map(|(w, _)| (w.0, w.1)).unwrap();
+        let own_at = g
+            .dish
+            .walkers
+            .iter()
+            .zip(&g.dish.spec)
+            .find(|(_, &s)| s == OWN)
+            .map(|(w, _)| (w.0, w.1))
+            .unwrap();
         let soldier = |x: f32, y: f32| {
             let mut s = Game::new(garden(), Rules::default(), 5).soldiers[0];
             s.x = x;
@@ -766,12 +911,18 @@ pub(crate) mod tests {
         g.set_task(0, Task::Feed);
         let cost = g.tend(&s, 100.0, 15);
         let c1: f64 = g.dish.charge.iter().map(|&c| c as f64).sum();
-        assert!((cost - 20.0).abs() < 1e-3 && (c1 - c0 - 20.0 * 64.0).abs() < 1.0, "cost {cost}, charge {c0} -> {c1}");
+        assert!(
+            (cost - 20.0).abs() < 1e-3 && (c1 - c0 - 20.0 * 64.0).abs() < 1.0,
+            "cost {cost}, charge {c0} -> {c1}"
+        );
         let (own0, enemy0) = g.counts_by_side();
         g.set_task(0, Task::Cut);
         g.tend(&s, 0.0, 15);
         let (own1, enemy1) = g.counts_by_side();
-        assert!(own1 < own0 && enemy1 == enemy0, "own {own0} -> {own1}, enemy {enemy0} -> {enemy1}");
+        assert!(
+            own1 < own0 && enemy1 == enemy0,
+            "own {own0} -> {own1}, enemy {enemy0} -> {enemy1}"
+        );
         assert_eq!(g.dish.species_trail[OWN as usize][i], 0.0);
     }
 
@@ -787,7 +938,10 @@ pub(crate) mod tests {
         for _ in 0..20 {
             game.step();
         }
-        assert!(game.soldiers.iter().all(|s| s.alive && s.hp == Rules::default().hp), "soldiers drained in their own mould");
+        assert!(
+            game.soldiers.iter().all(|s| s.alive && s.hp == Rules::default().hp),
+            "soldiers drained in their own mould"
+        );
         assert_eq!(game.killed, 0, "shots on the player's mould");
         assert!(game.world.counts_by_side().0 > start / 2);
     }
@@ -802,7 +956,9 @@ pub(crate) mod tests {
         }
         let w = g.dish.w;
         let slime = squad::slime_trail(6.0);
-        let at = (0..w * g.dish.h).find(|&i| g.enemy_trail(i) >= slime && g.dish.species_trail[OWN as usize][i] < 0.1).expect("enemy slime");
+        let at = (0..w * g.dish.h)
+            .find(|&i| g.enemy_trail(i) >= slime && g.dish.species_trail[OWN as usize][i] < 0.1)
+            .expect("enemy slime");
         let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
         let shot = [ShotIn { from: to, to, r: 2.0 }];
         let mut plain = g.clone();
@@ -821,7 +977,12 @@ pub(crate) mod tests {
         for _ in 0..30 {
             g.dish.tick();
         }
-        let pick = |g: &Garden, own: bool| (0..g.dish.walkers.len()).find(|&k| g.dish.lives(k) && (g.dish.spec[k] == OWN) == own).map(|k| (g.dish.walkers[k].0, g.dish.walkers[k].1)).unwrap();
+        let pick = |g: &Garden, own: bool| {
+            (0..g.dish.walkers.len())
+                .find(|&k| g.dish.lives(k) && (g.dish.spec[k] == OWN) == own)
+                .map(|k| (g.dish.walkers[k].0, g.dish.walkers[k].1))
+                .unwrap()
+        };
         let (a, b) = (pick(&g, true), pick(&g, false));
         let (own, enemy) = g.cord(a, b, &KitRules::default(), 15);
         assert!(own > 0 && enemy > 0, "own {own} enemy {enemy}");

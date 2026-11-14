@@ -30,11 +30,13 @@
 
 use std::time::Instant;
 
-use slime_mould::mould::play::{Dump, Fresh, Idle, IdleGo, LampOnly, Leader, Plan, Player, Random, Shepherd};
-use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
 use slime_mould::mould::look::Style;
+use slime_mould::mould::play::{Dump, Fresh, Idle, IdleGo, LampOnly, Leader, Plan, Player, Random, Shepherd};
 use slime_mould::mould::render::{self, View};
-use slime_mould::mould::{Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND, STEP_PASSES};
+use slime_mould::mould::wander::{Outcome, FIRST_WALKERS};
+use slime_mould::mould::{
+    Dish, Ground, Params, Phase, Score, Tool, LAMP_R, STEPS_PER_FRAME, STEPS_PER_SECOND, STEP_PASSES,
+};
 
 struct Args {
     seeds: Vec<u64>,
@@ -162,15 +164,27 @@ fn parse() -> Args {
             "style" => a.style = Style::parse(v).unwrap_or_else(|| panic!("style: unknown {v}")),
             "grey" => {
                 let n: u8 = v.parse().unwrap();
-                assert!((n as usize) < slime_mould::mould::look::STARVE_LOOKS.len(), "grey: 0 grey, 1 embers, 2 dried, 3 food ramp");
+                assert!(
+                    (n as usize) < slime_mould::mould::look::STARVE_LOOKS.len(),
+                    "grey: 0 grey, 1 embers, 2 dried, 3 food ramp"
+                );
                 slime_mould::mould::look::STARVE_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
-                println!("starving mould drawn as {}", slime_mould::mould::look::STARVE_LOOKS[n as usize]);
+                println!(
+                    "starving mould drawn as {}",
+                    slime_mould::mould::look::STARVE_LOOKS[n as usize]
+                );
             }
             "specks" => {
                 let n: u8 = v.parse().unwrap();
-                assert!((n as usize) < slime_mould::mould::look::WALKER_LOOKS.len(), "specks: 0 off, 1 grains, 2 glints");
+                assert!(
+                    (n as usize) < slime_mould::mould::look::WALKER_LOOKS.len(),
+                    "specks: 0 off, 1 grains, 2 glints"
+                );
                 slime_mould::mould::look::WALKER_LOOK.store(n, std::sync::atomic::Ordering::Relaxed);
-                println!("walkers drawn as {}", slime_mould::mould::look::WALKER_LOOKS[n as usize]);
+                println!(
+                    "walkers drawn as {}",
+                    slime_mould::mould::look::WALKER_LOOKS[n as usize]
+                );
             }
             "smooth" => slime_mould::mould::look::SMOOTH.store(v == "1", std::sync::atomic::Ordering::Relaxed),
             "stain" => slime_mould::mould::look::STAIN.store(v == "1", std::sync::atomic::Ordering::Relaxed),
@@ -302,7 +316,10 @@ impl Player for Opener {
         let sps = STEPS_PER_SECOND as u64;
         let r = d.rival.as_ref().unwrap();
         let n = r.walkers.len().max(1) as f32;
-        let (cx, cy) = (r.walkers.iter().map(|w| w.x).sum::<f32>() / n, r.walkers.iter().map(|w| w.y).sum::<f32>() / n);
+        let (cx, cy) = (
+            r.walkers.iter().map(|w| w.x).sum::<f32>() / n,
+            r.walkers.iter().map(|w| w.y).sum::<f32>() / n,
+        );
         match self.kind {
             // The lamp held on the wild mould's middle all game.
             "camp" => {
@@ -388,13 +405,37 @@ fn player(name: &str, seed: u64) -> Box<dyn Player> {
         "guard" => Box::new(Guard),
         "sleeper" => Box::new(Sleeper::new()),
         "warden" => Box::new(Warden::new()),
-        "camp" => Box::new(Opener { kind: "camp", done: false }),
-        "camphome" => Box::new(Opener { kind: "camphome", done: false }),
-        "nestsnip" => Box::new(Opener { kind: "nestsnip", done: false }),
-        "nestsalt" => Box::new(Opener { kind: "nestsalt", done: false }),
-        "jail" => Box::new(Opener { kind: "jail", done: false }),
-        "strike" => Box::new(Opener { kind: "strike", done: false }),
-        "prune" => Box::new(Pruner { seed: seed | 1, frame: 0, from: 15, every: 30, len: 26.0 }),
+        "camp" => Box::new(Opener {
+            kind: "camp",
+            done: false,
+        }),
+        "camphome" => Box::new(Opener {
+            kind: "camphome",
+            done: false,
+        }),
+        "nestsnip" => Box::new(Opener {
+            kind: "nestsnip",
+            done: false,
+        }),
+        "nestsalt" => Box::new(Opener {
+            kind: "nestsalt",
+            done: false,
+        }),
+        "jail" => Box::new(Opener {
+            kind: "jail",
+            done: false,
+        }),
+        "strike" => Box::new(Opener {
+            kind: "strike",
+            done: false,
+        }),
+        "prune" => Box::new(Pruner {
+            seed: seed | 1,
+            frame: 0,
+            from: 15,
+            every: 30,
+            len: 26.0,
+        }),
         _ => panic!("unknown player {name}"),
     }
 }
@@ -425,7 +466,16 @@ impl Warden {
     fn new() -> Self {
         let w = std::env::var("WARDEN").unwrap_or_else(|_| "salt,oats,snip,lamp".into());
         let has = |k: &str| w.split(',').any(|x| x == k);
-        Warden { salt: has("salt"), ring: has("ring"), oats: has("oats"), snip: has("snip"), lamp: has("lamp"), next_oat: 0, next_snip: 0, lamp_until: 0 }
+        Warden {
+            salt: has("salt"),
+            ring: has("ring"),
+            oats: has("oats"),
+            snip: has("snip"),
+            lamp: has("lamp"),
+            next_oat: 0,
+            next_snip: 0,
+            lamp_until: 0,
+        }
     }
 }
 
@@ -463,9 +513,17 @@ impl Player for Warden {
         // `ring`: once this mould is on the middle pile and the wild one is
         // not, the one wall goes round it (radius 9.5: 60 cells).
         if self.ring && d.salt_left > 0 {
-            let mine = d.walkers.iter().filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 9.0).count();
+            let mine = d
+                .walkers
+                .iter()
+                .filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 9.0)
+                .count();
             let r = d.rival.as_ref().unwrap();
-            let theirs = r.walkers.iter().filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 12.0).count();
+            let theirs = r
+                .walkers
+                .iter()
+                .filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 12.0)
+                .count();
             if mine > 40 && theirs < 5 {
                 let rr = 9.5f32;
                 if d.begin_stroke(Tool::Salt, mid.0 + rr, mid.1) {
@@ -484,8 +542,15 @@ impl Player for Warden {
         let tube = d.params.tube;
         // The pile the wild one eats most from and this one least.
         if self.lamp && d.lamp.is_none() {
-            let piles: Vec<(f32, f32, f32)> = d.piles.iter().filter(|p| !p.oats && p.food > 0.0).map(|p| (p.x, p.y, p.r)).collect();
-            let near = |ws: &[slime_mould::mould::Walker], x: f32, y: f32, pr: f32| ws.iter().filter(|w| (w.x - x).hypot(w.y - y) < pr + 4.0).count() as i32;
+            let piles: Vec<(f32, f32, f32)> = d
+                .piles
+                .iter()
+                .filter(|p| !p.oats && p.food > 0.0)
+                .map(|p| (p.x, p.y, p.r))
+                .collect();
+            let near = |ws: &[slime_mould::mould::Walker], x: f32, y: f32, pr: f32| {
+                ws.iter().filter(|w| (w.x - x).hypot(w.y - y) < pr + 4.0).count() as i32
+            };
             let hit = piles
                 .iter()
                 .map(|&(x, y, pr)| (x, y, near(&r.walkers, x, y, pr) - 2 * near(&d.walkers, x, y, pr)))
@@ -527,9 +592,16 @@ impl Player for Warden {
             }
         }
         if self.oats && d.oats_left > 0 && d.t >= self.next_oat {
-            let reached = d.piles.iter().any(|p| !p.oats && (p.x - mid.0).hypot(p.y - mid.1) < 1.0 && p.reached());
+            let reached = d
+                .piles
+                .iter()
+                .any(|p| !p.oats && (p.x - mid.0).hypot(p.y - mid.1) < 1.0 && p.reached());
             let r = d.rival.as_ref().unwrap();
-            let wild_there = r.walkers.iter().filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 14.0).count();
+            let wild_there = r
+                .walkers
+                .iter()
+                .filter(|w| (w.x - mid.0).hypot(w.y - mid.1) < 14.0)
+                .count();
             if !reached {
                 // Ahead of this mould's fed tube nearest the middle.
                 let mut from: Option<((f32, f32), f32)> = None;
@@ -573,7 +645,10 @@ struct Sleeper {
 
 impl Sleeper {
     fn new() -> Self {
-        let k = slime_mould::mould::level::DISHES.iter().position(|l| l.key == "alive").unwrap();
+        let k = slime_mould::mould::level::DISHES
+            .iter()
+            .position(|l| l.key == "alive")
+            .unwrap();
         Sleeper {
             route: slime_mould::mould::play::Route::for_level(k),
             bake_until: 0,
@@ -599,7 +674,11 @@ impl Player for Sleeper {
             d.set_lamp(None);
         }
         self.route.act(d);
-        let every = if envf("HLAG", 0.0) > 0.0 { (envf("HLAG", 0.0) * sps as f32) as u64 } else { sps / 2 };
+        let every = if envf("HLAG", 0.0) > 0.0 {
+            (envf("HLAG", 0.0) * sps as f32) as u64
+        } else {
+            sps / 2
+        };
         if !d.t.is_multiple_of(every) {
             return;
         }
@@ -613,7 +692,12 @@ impl Player for Sleeper {
                 .filter(|p| !p.reached() && p.food > 0.0)
                 .map(|p| (p.x, p.y))
                 .min_by(|a, b| {
-                    let g = |q: &(f32, f32)| asleep.iter().map(|s| (s.0 - q.0).hypot(s.1 - q.1)).fold(f32::INFINITY, f32::min);
+                    let g = |q: &(f32, f32)| {
+                        asleep
+                            .iter()
+                            .map(|s| (s.0 - q.0).hypot(s.1 - q.1))
+                            .fold(f32::INFINITY, f32::min)
+                    };
                     g(a).total_cmp(&g(b))
                 });
             if let Some(t) = target {
@@ -647,9 +731,20 @@ impl Player for Sleeper {
             .chain(d.pending.iter().filter(|(at, _)| *at <= d.t + 5 * sps).map(|(_, p)| p))
             .any(|p| !p.reached() && p.food > 0.0 && fed.iter().any(|w| (w.0 - p.x).hypot(w.1 - p.y) < p.r + 35.0));
         if std::env::var("SLEEPTRACE").is_ok() && left < 0.2 {
-            println!("    t={} left {left:.2} near_food {near_food} awake {} asleep {} fed {}", d.t / sps, awake.len(), asleep.len(), fed.len());
+            println!(
+                "    t={} left {left:.2} near_food {near_food} awake {} asleep {} fed {}",
+                d.t / sps,
+                awake.len(),
+                asleep.len(),
+                fed.len()
+            );
         }
-        if self.baked_at.is_none_or(|t| d.t > t + 2 * sps) && left < 0.15 && !near_food && asleep.len() < awake.len() && awake.len() > 20 {
+        if self.baked_at.is_none_or(|t| d.t > t + 2 * sps)
+            && left < 0.15
+            && !near_food
+            && asleep.len() < awake.len()
+            && awake.len() > 20
+        {
             // On the thickest awake mould (most awake walkers within 8).
             let at = awake
                 .iter()
@@ -738,7 +833,10 @@ impl Player for Pruner {
         }
         let base = d.measure().reach;
         for _ in 0..16 {
-            self.seed = self.seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            self.seed = self
+                .seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             let i = cand[(self.seed >> 33) as usize % cand.len()];
             let (x, y) = ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5);
             for k in 0..4 {
@@ -785,7 +883,12 @@ fn frame_of(d: &Dish, scale: u32, style: Style) -> image::RgbaImage {
             if v == "sleepers" {
                 let s: Vec<_> = d.walkers.iter().filter(|w| w.asleep()).collect();
                 let n = s.len() as f32;
-                return (n > 0.0).then(|| (s.iter().map(|w| w.x).sum::<f32>() / n, s.iter().map(|w| w.y).sum::<f32>() / n));
+                return (n > 0.0).then(|| {
+                    (
+                        s.iter().map(|w| w.x).sum::<f32>() / n,
+                        s.iter().map(|w| w.y).sum::<f32>() / n,
+                    )
+                });
             }
             let (x, y) = v.split_once(',')?;
             Some((x.parse().ok()?, y.parse().ok()?))
@@ -895,7 +998,10 @@ fn run(seed: u64, who: &str, a: &Args) -> Run {
             Some((lo.parse::<u64>().ok()?, hi.parse::<u64>().ok()?))
         });
         let secs_now = d.t / STEPS_PER_SECOND as u64;
-        if a.gif.is_some() && frame.is_multiple_of(a.every) && in_window.is_none_or(|(lo, hi)| secs_now >= lo && secs_now < hi) {
+        if a.gif.is_some()
+            && frame.is_multiple_of(a.every)
+            && in_window.is_none_or(|(lo, hi)| secs_now >= lo && secs_now < hi)
+        {
             shots.push(frame_of(&d, a.scale, a.style));
         }
         // Stills also just after each late pile turns up and during the
@@ -916,13 +1022,33 @@ fn run(seed: u64, who: &str, a: &Args) -> Run {
                 // field over tube cells, as percentiles.
                 let pct = |mut v: Vec<f32>| -> String {
                     v.sort_by(|a, b| a.total_cmp(b));
-                    let at = |q: f32| v.get(((v.len().max(1) - 1) as f32 * q) as usize).copied().unwrap_or(0.0);
-                    format!("p10 {:.3} p50 {:.3} p90 {:.3} max {:.3} zero {}", at(0.1), at(0.5), at(0.9), at(1.0), v.iter().filter(|&&x| x <= 0.0).count())
+                    let at = |q: f32| {
+                        v.get(((v.len().max(1) - 1) as f32 * q) as usize)
+                            .copied()
+                            .unwrap_or(0.0)
+                    };
+                    format!(
+                        "p10 {:.3} p50 {:.3} p90 {:.3} max {:.3} zero {}",
+                        at(0.1),
+                        at(0.5),
+                        at(0.9),
+                        at(1.0),
+                        v.iter().filter(|&&x| x <= 0.0).count()
+                    )
                 };
                 let loads: Vec<f32> = d.walkers.iter().map(|w| w.food).collect();
-                let field: Vec<f32> = (0..d.trail.len()).filter(|&i| d.trail[i] > d.params.tube).map(|i| d.carried[i]).collect();
-                let sap: Vec<f32> = (0..d.trail.len()).filter(|&i| d.trail[i] > d.params.tube).map(|i| d.sap[i]).collect();
-                let wall: Vec<f32> = (0..d.trail.len()).filter(|&i| d.trail[i] > d.params.tube).map(|i| d.wall[i]).collect();
+                let field: Vec<f32> = (0..d.trail.len())
+                    .filter(|&i| d.trail[i] > d.params.tube)
+                    .map(|i| d.carried[i])
+                    .collect();
+                let sap: Vec<f32> = (0..d.trail.len())
+                    .filter(|&i| d.trail[i] > d.params.tube)
+                    .map(|i| d.sap[i])
+                    .collect();
+                let wall: Vec<f32> = (0..d.trail.len())
+                    .filter(|&i| d.trail[i] > d.params.tube)
+                    .map(|i| d.wall[i])
+                    .collect();
                 let bands = [0u16, 20, 40, 70, 100, 150, u16::MAX];
                 let mut by = vec![(0.0f32, 0u32); bands.len() - 1];
                 for w in &d.walkers {
@@ -933,9 +1059,25 @@ fn run(seed: u64, who: &str, a: &Args) -> Run {
                         by[b].1 += 1;
                     }
                 }
-                let by: Vec<String> = by.iter().zip(bands.windows(2)).map(|((s, n), r)| format!("{}+:{:.2}/{}", r[0], if *n > 0 { s / *n as f32 } else { 0.0 }, n)).collect();
-                println!("    flow t={}s load by tube distance (band: mean load/walkers) {}", d.t / sps, by.join(" "));
-                println!("    flow t={}s walkers {} loads [{}] carried-on-tube [{}] sap [{}] wall [{}]", d.t / sps, d.walkers.len(), pct(loads), pct(field), pct(sap), pct(wall));
+                let by: Vec<String> = by
+                    .iter()
+                    .zip(bands.windows(2))
+                    .map(|((s, n), r)| format!("{}+:{:.2}/{}", r[0], if *n > 0 { s / *n as f32 } else { 0.0 }, n))
+                    .collect();
+                println!(
+                    "    flow t={}s load by tube distance (band: mean load/walkers) {}",
+                    d.t / sps,
+                    by.join(" ")
+                );
+                println!(
+                    "    flow t={}s walkers {} loads [{}] carried-on-tube [{}] sap [{}] wall [{}]",
+                    d.t / sps,
+                    d.walkers.len(),
+                    pct(loads),
+                    pct(field),
+                    pct(sap),
+                    pct(wall)
+                );
             }
             if let Some(dir) = &a.look {
                 frame_of(&d, a.scale, a.style)
@@ -1201,10 +1343,7 @@ fn verbs(a: &Args, dir: &str) {
         // The thickest tube away from the piles, and the tube's direction.
         let mut best = (0.0f32, 0usize);
         for (i, &t) in d.trail.iter().enumerate() {
-            let (x, y) = (
-                (i % slime_mould::mould::W) as f32,
-                (i / slime_mould::mould::W) as f32,
-            );
+            let (x, y) = ((i % slime_mould::mould::W) as f32, (i / slime_mould::mould::W) as f32);
             if t > best.0 && d.piles.iter().all(|p| (p.x - x).hypot(p.y - y) > p.r + LAMP_R + 4.0) {
                 best = (t, i);
             }
@@ -1752,7 +1891,11 @@ fn looks(a: &Args, dir: &str) {
                     if !open || on_pile {
                         continue;
                     }
-                    let near = d.walkers.iter().map(|w| (w.x - x).hypot(w.y - y)).fold(f32::INFINITY, f32::min);
+                    let near = d
+                        .walkers
+                        .iter()
+                        .map(|w| (w.x - x).hypot(w.y - y))
+                        .fold(f32::INFINITY, f32::min);
                     if (near - 44.0).abs() < far.0 {
                         far = ((near - 44.0).abs(), (x, y));
                     }
@@ -1793,7 +1936,10 @@ fn looks(a: &Args, dir: &str) {
                 name: "esc-armed",
                 what: "the first Esc on a dish: a second within 2 s quits",
                 dish: d.clone(),
-                view: View { quit_armed: true, ..base },
+                view: View {
+                    quit_armed: true,
+                    ..base
+                },
             });
             // (f) A snip held over the trunk, not yet pressed.
             let mut snip = d.clone();
@@ -1810,7 +1956,12 @@ fn looks(a: &Args, dir: &str) {
             });
         }
         // The first join after 10 s, a tenth of a second into its flash.
-        if !joined && d.t > 10 * sps && d.snaps.iter().any(|&(_, _, at)| (at + sps / 10..at + sps / 4).contains(&d.t)) {
+        if !joined
+            && d.t > 10 * sps
+            && d.snaps
+                .iter()
+                .any(|&(_, _, at)| (at + sps / 10..at + sps / 4).contains(&d.t))
+        {
             joined = true;
             moments.push(Moment {
                 name: "join-flash",
@@ -1873,7 +2024,14 @@ fn looks(a: &Args, dir: &str) {
             pour_at.get_or_insert(at);
         }
         if pour_at.is_some() && frame.is_multiple_of(6) {
-            pour_gif.push(half(&draw_view(&wd, &View { style: Style::GAME, ..base }, scale)));
+            pour_gif.push(half(&draw_view(
+                &wd,
+                &View {
+                    style: Style::GAME,
+                    ..base
+                },
+                scale,
+            )));
         }
         if pour_at.is_some_and(|at| wd.t == at + 3 * sps) {
             moments.push(Moment {
@@ -1935,7 +2093,13 @@ fn looks(a: &Args, dir: &str) {
 
     let mut counts = String::new();
     for (k, m) in moments.iter().enumerate() {
-        let line = format!("{}  {:<14} {}\n    {}\n", (b'a' + k as u8) as char, m.name, m.what, moment_counts(&m.dish));
+        let line = format!(
+            "{}  {:<14} {}\n    {}\n",
+            (b'a' + k as u8) as char,
+            m.name,
+            m.what,
+            moment_counts(&m.dish)
+        );
         print!("{line}");
         counts.push_str(&line);
     }
@@ -1943,9 +2107,13 @@ fn looks(a: &Args, dir: &str) {
         let tag = tag(*style);
         let mut tiles = Vec::new();
         for (k, m) in moments.iter().enumerate() {
-            let v = View { style: *style, ..m.view };
+            let v = View {
+                style: *style,
+                ..m.view
+            };
             let img = draw_view(&m.dish, &v, scale);
-            img.save(format!("{dir}/{tag}-{}-{}.png", (b'a' + k as u8) as char, m.name)).unwrap();
+            img.save(format!("{dir}/{tag}-{}-{}.png", (b'a' + k as u8) as char, m.name))
+                .unwrap();
             tiles.push(half(&img));
         }
         sheet(&tiles, 4).save(format!("{dir}/{tag}-sheet.png")).unwrap();
@@ -1988,7 +2156,12 @@ fn draw_view(d: &Dish, v: &View, scale: u32) -> image::RgbaImage {
 }
 
 fn half(img: &image::RgbaImage) -> image::RgbaImage {
-    image::imageops::resize(img, img.width() / 2, img.height() / 2, image::imageops::FilterType::Triangle)
+    image::imageops::resize(
+        img,
+        img.width() / 2,
+        img.height() / 2,
+        image::imageops::FilterType::Triangle,
+    )
 }
 
 /// Tiles in a grid, `cols` wide, with a 6-pixel gutter.
@@ -2129,7 +2302,12 @@ fn cut(a: &Args, dir: &str) {
                 if wounds > 0 {
                     wound_open = k;
                 }
-                row.push(format!("{:.1}s grey {g} joined {} mould {} wound {wounds}", k as f32 / sps as f32, d.measure().reach, d.walkers.len()));
+                row.push(format!(
+                    "{:.1}s grey {g} joined {} mould {} wound {wounds}",
+                    k as f32 / sps as f32,
+                    d.measure().reach,
+                    d.walkers.len()
+                ));
             }
             if dir != "1" && [0, 1, 2, 4, 8].iter().any(|&s| k == s * sps + 1) {
                 frame_of(&d, a.scale, a.style)
@@ -2200,7 +2378,11 @@ fn level_dish(k: usize, seed: u64, a: &Args) -> Dish {
             .piles
             .iter()
             .map(|p| (p.x, p.y))
-            .max_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1)))
+            .max_by(|a, b| {
+                (a.0 - home.0)
+                    .hypot(a.1 - home.1)
+                    .total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))
+            })
             .unwrap();
         d.add_rival(far);
     }
@@ -2235,8 +2417,16 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
                 for w in &d.walkers {
                     mine.insert(w.y as usize * W + w.x as usize);
                 }
-                let shared = r.walkers.iter().filter(|w| mine.contains(&(w.y as usize * W + w.x as usize))).count();
-                let off = r.walkers.iter().filter(|w| r.ground[w.y as usize * W + w.x as usize] != slime_mould::mould::Ground::Agar).count();
+                let shared = r
+                    .walkers
+                    .iter()
+                    .filter(|w| mine.contains(&(w.y as usize * W + w.x as usize)))
+                    .count();
+                let off = r
+                    .walkers
+                    .iter()
+                    .filter(|w| r.ground[w.y as usize * W + w.x as usize] != slime_mould::mould::Ground::Agar)
+                    .count();
                 let food_diff: f32 = d.piles.iter().zip(&r.piles).map(|(a, b)| (a.food - b.food).abs()).sum();
                 if shared > 0 || off > 0 || food_diff > 1e-3 || d.piles.len() != r.piles.len() {
                     println!("    INVAR t={} shared cells {shared} wild off agar {off} pile food diff {food_diff:.3} piles {}/{}", d.t, d.piles.len(), r.piles.len());
@@ -2252,7 +2442,13 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
         // (review 2's untested guess: sleepers within reach of a far pile).
         if std::env::var("PILETRACE").is_ok() && d.arrived.len() > seen_arrivals {
             for &(x, y, t) in &d.arrived[seen_arrivals..] {
-                let near = |sleep: bool| d.walkers.iter().filter(|w| w.asleep() == sleep).map(|w| (w.x - x).hypot(w.y - y)).fold(f32::INFINITY, f32::min);
+                let near = |sleep: bool| {
+                    d.walkers
+                        .iter()
+                        .filter(|w| w.asleep() == sleep)
+                        .map(|w| (w.x - x).hypot(w.y - y))
+                        .fold(f32::INFINITY, f32::min)
+                };
                 let asleep = d.walkers.iter().filter(|w| w.asleep()).count();
                 let gap = prev_pile.map_or(f32::NAN, |(px, py): (f32, f32)| (px - x).hypot(py - y));
                 println!(
@@ -2271,13 +2467,26 @@ fn level_run(k: usize, seed: u64, who: &str, a: &Args, gif: Option<&str>) -> Dis
         }
         // `LEVELTRACE=1`: every 10 s, the mould, the food it is on, and how
         // far its nearest walker is from each pile that still has food.
-        if std::env::var("LEVELTRACE").is_ok() && d.t.is_multiple_of(10 * STEPS_PER_SECOND as u64) && d.phase == Phase::Growing {
+        if std::env::var("LEVELTRACE").is_ok()
+            && d.t.is_multiple_of(10 * STEPS_PER_SECOND as u64)
+            && d.phase == Phase::Growing
+        {
             let piles: Vec<String> = d
                 .dish_piles()
                 .filter(|p| p.food > 0.0)
                 .map(|p| {
-                    let g = d.walkers.iter().map(|w| (w.x - p.x).hypot(w.y - p.y) - p.r).fold(f32::INFINITY, f32::min).max(0.0);
-                    format!("{}{:.0}%@{:.0}", if p.reached() { "*" } else { "" }, p.food / p.full * 100.0, g)
+                    let g = d
+                        .walkers
+                        .iter()
+                        .map(|w| (w.x - p.x).hypot(w.y - p.y) - p.r)
+                        .fold(f32::INFINITY, f32::min)
+                        .max(0.0);
+                    format!(
+                        "{}{:.0}%@{:.0}",
+                        if p.reached() { "*" } else { "" },
+                        p.food / p.full * 100.0,
+                        g
+                    )
                 })
                 .collect();
             println!(
@@ -2324,7 +2533,9 @@ fn levels(a: &Args, which: &[usize]) {
     let hands = if a.players_given {
         a.players.clone()
     } else {
-        ["idle", "random", "plan", "fresh", "intended"].map(String::from).to_vec()
+        ["idle", "random", "plan", "fresh", "intended"]
+            .map(String::from)
+            .to_vec()
     };
     let mut table: Vec<(usize, String, Vec<u32>)> = Vec::new();
     for &k in which {
@@ -2352,7 +2563,9 @@ fn levels(a: &Args, which: &[usize]) {
             let mut row = Vec::new();
             for &seed in &a.seeds {
                 let gif = match (&a.gif, who.as_str()) {
-                    (Some(dir), "intended") if seed == a.seeds[0] => Some(format!("{dir}/dish{}-{}-intended.gif", k + 1, l.key)),
+                    (Some(dir), "intended") if seed == a.seeds[0] => {
+                        Some(format!("{dir}/dish{}-{}-intended.gif", k + 1, l.key))
+                    }
                     _ => None,
                 };
                 let t0 = Instant::now();
@@ -2392,9 +2605,17 @@ fn levels(a: &Args, which: &[usize]) {
             table.push((k, who.clone(), row));
         }
     }
-    println!("\n== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed {:?}) ==", a.seeds);
+    println!(
+        "\n== ship bar: do nothing 0, random at most 1, intended 3 (stars per seed {:?}) ==",
+        a.seeds
+    );
     for &k in which {
-        let row = |who: &str| table.iter().find(|(kk, w, _)| *kk == k && w == who).map(|(_, _, r)| r.clone());
+        let row = |who: &str| {
+            table
+                .iter()
+                .find(|(kk, w, _)| *kk == k && w == who)
+                .map(|(_, _, r)| r.clone())
+        };
         let mut cells = Vec::new();
         for who in &hands {
             if let Some(r) = row(who) {
@@ -2451,11 +2672,19 @@ fn levels(a: &Args, which: &[usize]) {
 fn rival_cost(a: &Args) {
     let (w, h) = render::frame_size(4);
     let mut buf = vec![0u8; (w * h * 4) as usize];
-    let view = View { style: a.style, ..View::default() };
+    let view = View {
+        style: a.style,
+        ..View::default()
+    };
     for &seed in &a.seeds {
         let mut alone = Dish::with_params(seed, a.params.clone());
         let mut two = Dish::with_params(seed, a.params.clone());
-        let far = two.piles.iter().map(|p| (p.x, p.y)).max_by(|p, q| p.0.total_cmp(&q.0)).unwrap();
+        let far = two
+            .piles
+            .iter()
+            .map(|p| (p.x, p.y))
+            .max_by(|p, q| p.0.total_cmp(&q.0))
+            .unwrap();
         two.add_rival(far);
         let (mut sum, mut worst) = ([0.0f64; 2], [0.0f64; 2]);
         let frames = 90 * STEPS_PER_SECOND / STEPS_PER_FRAME;
@@ -2915,7 +3144,9 @@ fn wander(a: &Args) {
             if w != who {
                 continue;
             }
-            let cells: Vec<String> = (0..a.dishes as usize).map(|k| j.get(k).map_or("-".into(), show)).collect();
+            let cells: Vec<String> = (0..a.dishes as usize)
+                .map(|k| j.get(k).map_or("-".into(), show))
+                .collect();
             println!("  seed {seed}: {}", cells.join(" | "));
             fracs.push(match j[0].outcome {
                 Some(Outcome::Arrived { n, of }) => n as f32 / of as f32,

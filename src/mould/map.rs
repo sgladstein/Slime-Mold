@@ -81,12 +81,25 @@ impl Items {
             }
             let mut words = line.split_whitespace();
             let kind = words.next().unwrap_or("");
-            let v: Vec<f32> = words.map(|w| w.parse::<f32>().map_err(|e| format!("line {}: {w:?}: {e}", n + 1))).collect::<Result<_, _>>()?;
-            let want = |k: usize| if v.len() == k { Ok(()) } else { Err(format!("line {}: `{kind}` takes {k} numbers, got {}", n + 1, v.len())) };
+            let v: Vec<f32> = words
+                .map(|w| w.parse::<f32>().map_err(|e| format!("line {}: {w:?}: {e}", n + 1)))
+                .collect::<Result<_, _>>()?;
+            let want = |k: usize| {
+                if v.len() == k {
+                    Ok(())
+                } else {
+                    Err(format!("line {}: `{kind}` takes {k} numbers, got {}", n + 1, v.len()))
+                }
+            };
             match kind {
                 "crystal" => {
                     want(4)?;
-                    it.crystals.push(Crystal { x: v[0], y: v[1], r: v[2], charge: v[3] });
+                    it.crystals.push(Crystal {
+                        x: v[0],
+                        y: v[1],
+                        r: v[2],
+                        charge: v[3],
+                    });
                 }
                 "mould" => {
                     want(2)?;
@@ -98,7 +111,12 @@ impl Items {
                 }
                 "wall" => {
                     want(6)?;
-                    it.walls.push(Wall { a: (v[0], v[1]), b: (v[2], v[3]), thick: v[4], hp: v[5] });
+                    it.walls.push(Wall {
+                        a: (v[0], v[1]),
+                        b: (v[2], v[3]),
+                        thick: v[4],
+                        hp: v[5],
+                    });
                 }
                 _ => return Err(format!("line {}: unknown item `{kind}`", n + 1)),
             }
@@ -130,9 +148,16 @@ impl Map {
     pub fn load(dir: &Path, name: &str) -> Result<Map, String> {
         let png = dir.join(format!("{name}.png"));
         let txt = dir.join(format!("{name}.txt"));
-        let img = image::open(&png).map_err(|e| format!("{}: {e}", png.display()))?.to_rgba8();
+        let img = image::open(&png)
+            .map_err(|e| format!("{}: {e}", png.display()))?
+            .to_rgba8();
         if (img.width() as usize, img.height() as usize) != (MAP_W, MAP_H) {
-            return Err(format!("{}: {} x {}, want {MAP_W} x {MAP_H}", png.display(), img.width(), img.height()));
+            return Err(format!(
+                "{}: {} x {}, want {MAP_W} x {MAP_H}",
+                png.display(),
+                img.width(),
+                img.height()
+            ));
         }
         let ground = img.pixels().map(|p| p.0[1]).collect();
         let mut plants: Vec<u8> = img.pixels().map(|p| p.0[2]).collect();
@@ -148,7 +173,12 @@ impl Map {
     pub fn save(&self, dir: &Path, name: &str) -> Result<(), String> {
         let img = image::RgbaImage::from_fn(MAP_W as u32, MAP_H as u32, |x, y| {
             let i = y as usize * MAP_W + x as usize;
-            image::Rgba([0, self.ground[i], if self.plants.is_empty() { 0 } else { self.plants[i] }, 255])
+            image::Rgba([
+                0,
+                self.ground[i],
+                if self.plants.is_empty() { 0 } else { self.plants[i] },
+                255,
+            ])
         });
         let png = dir.join(format!("{name}.png"));
         img.save(&png).map_err(|e| format!("{}: {e}", png.display()))?;
@@ -215,8 +245,20 @@ impl Map {
                 .collect()
         };
         let k = MAP_SCALE;
-        let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
-        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new() };
+        let crystals = (0..d.piles.len())
+            .map(|p| Crystal {
+                x: d.piles[p].0 * k,
+                y: d.piles[p].1 * k,
+                r: d.pile_rs[p] * k,
+                charge: d.pile_fill[p],
+            })
+            .collect();
+        let items = Items {
+            crystals,
+            moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(),
+            landing: d.landing.map(|(x, y)| (x * k, y * k)),
+            walls: Vec::new(),
+        };
         Map { ground, plants, items }
     }
 }
@@ -229,9 +271,28 @@ mod tests {
     fn items_parse_and_write_back() {
         let text = "# a test\ncrystal 512 600 12 384\nmould 512 590\n\nlanding 512 180  # the squad\nwall 100 100 200 120 8 400\n";
         let it = Items::parse(text).unwrap();
-        assert_eq!(it.crystals, vec![Crystal { x: 512.0, y: 600.0, r: 12.0, charge: 384.0 }]);
-        assert_eq!((it.moulds.clone(), it.landing), (vec![(512.0, 590.0)], Some((512.0, 180.0))));
-        assert_eq!(it.walls, vec![Wall { a: (100.0, 100.0), b: (200.0, 120.0), thick: 8.0, hp: 400.0 }]);
+        assert_eq!(
+            it.crystals,
+            vec![Crystal {
+                x: 512.0,
+                y: 600.0,
+                r: 12.0,
+                charge: 384.0
+            }]
+        );
+        assert_eq!(
+            (it.moulds.clone(), it.landing),
+            (vec![(512.0, 590.0)], Some((512.0, 180.0)))
+        );
+        assert_eq!(
+            it.walls,
+            vec![Wall {
+                a: (100.0, 100.0),
+                b: (200.0, 120.0),
+                thick: 8.0,
+                hp: 400.0
+            }]
+        );
         assert_eq!(Items::parse(&it.text()).unwrap(), it);
         assert!(Items::parse("crystal 1 2 3").unwrap_err().contains("takes 4"));
         assert!(Items::parse("tree 1 2").unwrap_err().contains("unknown item"));
@@ -242,7 +303,11 @@ mod tests {
     fn a_world_at_scale_two_takes_every_other_cell() {
         let mut ground = vec![0u8; MAP_W * MAP_H];
         ground[3 * MAP_W + 5] = G_ROCK;
-        let m = Map { ground, plants: Vec::new(), items: Items::default() };
+        let m = Map {
+            ground,
+            plants: Vec::new(),
+            items: Items::default(),
+        };
         // Fine cell (2, 1) at scale 2 covers map cells 4-5 x 2-3; its
         // centre is map cell (5, 3).
         assert_eq!(m.ground_fine(2, 2, 1), G_ROCK);
@@ -264,12 +329,27 @@ mod tests {
             let mut a = race_world(7, scale, 1500);
             let m = Map::of_dish(&a);
             // Through the text, as a saved map would be.
-            let m = Map { items: Items::parse(&m.items.text()).unwrap(), ..m };
+            let m = Map {
+                items: Items::parse(&m.items.text()).unwrap(),
+                ..m
+            };
             let mut b = BigDish::with_map(race_params(7, scale, 1500), &m);
-            assert_eq!((a.piles.clone(), a.pile_rs.clone(), a.pile_fill.clone(), a.homes.clone()), (b.piles.clone(), b.pile_rs.clone(), b.pile_fill.clone(), b.homes.clone()));
-            assert!(a.rock == b.rock && a.wet == b.wet && a.agar == b.agar && a.scent_agar == b.scent_agar, "scale {scale}: ground");
-            assert!(a.pile_of == b.pile_of && a.pile_full == b.pile_full, "scale {scale}: crystals");
-            assert!(a.rock.iter().filter(|&&r| r).count() > a.w * a.h / 100, "rock to compare");
+            assert_eq!(
+                (a.piles.clone(), a.pile_rs.clone(), a.pile_fill.clone(), a.homes.clone()),
+                (b.piles.clone(), b.pile_rs.clone(), b.pile_fill.clone(), b.homes.clone())
+            );
+            assert!(
+                a.rock == b.rock && a.wet == b.wet && a.agar == b.agar && a.scent_agar == b.scent_agar,
+                "scale {scale}: ground"
+            );
+            assert!(
+                a.pile_of == b.pile_of && a.pile_full == b.pile_full,
+                "scale {scale}: crystals"
+            );
+            assert!(
+                a.rock.iter().filter(|&&r| r).count() > a.w * a.h / 100,
+                "rock to compare"
+            );
             for _ in 0..30 {
                 a.tick();
                 b.tick();
@@ -292,26 +372,56 @@ mod tests {
         assert_eq!(d.homes, vec![Map::dish(start)]);
         assert_eq!(d.landing, Some(Map::dish(landing)));
         let near = |c: &Crystal| (c.x - start.0).hypot(c.y - start.1);
-        let first = m.items.crystals.iter().min_by(|a, b| near(a).total_cmp(&near(b))).unwrap();
+        let first = m
+            .items
+            .crystals
+            .iter()
+            .min_by(|a, b| near(a).total_cmp(&near(b)))
+            .unwrap();
         assert_eq!(d.piles[0], Map::dish((first.x, first.y)));
         assert_eq!((d.pile_rs[0], d.pile_fill[0]), (first.r / MAP_SCALE, first.charge));
         // A crystal's cells hold its own charge; bigger crystals more cells.
         for pi in 0..d.piles.len() {
-            let cells: Vec<usize> = d.pile_cells.iter().map(|&i| i as usize).filter(|&i| d.pile_of[i] as usize == pi + 1).collect();
+            let cells: Vec<usize> = d
+                .pile_cells
+                .iter()
+                .map(|&i| i as usize)
+                .filter(|&i| d.pile_of[i] as usize == pi + 1)
+                .collect();
             assert!(!cells.is_empty(), "crystal {pi} has cells");
             assert!(cells.iter().all(|&i| d.charge[i] == d.pile_fill[pi]));
         }
         // The blob sits on the start.
         let s = p.scale as f32;
-        let (mx, my) = d.walkers.iter().take(3000).fold((0.0, 0.0), |a, w| (a.0 + w.0 / 3000.0, a.1 + w.1 / 3000.0));
-        assert!((mx / s - d.homes[0].0).hypot(my / s - d.homes[0].1) < 3.0, "blob at ({}, {}), home {:?}", mx / s, my / s, d.homes);
+        let (mx, my) = d
+            .walkers
+            .iter()
+            .take(3000)
+            .fold((0.0, 0.0), |a, w| (a.0 + w.0 / 3000.0, a.1 + w.1 / 3000.0));
+        assert!(
+            (mx / s - d.homes[0].0).hypot(my / s - d.homes[0].1) < 3.0,
+            "blob at ({}, {}), home {:?}",
+            mx / s,
+            my / s,
+            d.homes
+        );
         // The Nest's 34 walls stand with 400 health.
         let walls = d.wall.iter().filter(|&&w| w).count();
         assert!(walls > 500, "{walls} wall cells");
         assert!(d.wall.iter().zip(&d.wall_health).all(|(&w, &h)| !w || h == 400.0));
-        assert!(d.walkers.iter().take(3000).all(|&(x, y, _)| !d.wall[y as usize * d.w + x as usize]));
+        assert!(d
+            .walkers
+            .iter()
+            .take(3000)
+            .all(|&(x, y, _)| !d.wall[y as usize * d.w + x as usize]));
         // Maps need crystals switched on.
-        let off = BigDish::with_map(BigParams { crystal_charge: 0.0, ..p.clone() }, &m);
+        let off = BigDish::with_map(
+            BigParams {
+                crystal_charge: 0.0,
+                ..p.clone()
+            },
+            &m,
+        );
         assert!(off.charge.is_empty());
         // The maps' rock and wet are the world's (wet only on open agar).
         let mut rocks = 0;
@@ -319,11 +429,21 @@ mod tests {
             let m = Map::load(&dir, name).unwrap();
             let d = BigDish::with_map(p.clone(), &m);
             let count = |v: &[bool]| v.iter().filter(|&&r| r).count();
-            let want = |bit: u8| (0..d.w * d.h).filter(|&i| m.ground_fine(2, i % d.w, i / d.w) & bit != 0 && (bit == G_ROCK || d.agar[i] || d.wall[i])).count();
+            let want = |bit: u8| {
+                (0..d.w * d.h)
+                    .filter(|&i| {
+                        m.ground_fine(2, i % d.w, i / d.w) & bit != 0 && (bit == G_ROCK || d.agar[i] || d.wall[i])
+                    })
+                    .count()
+            };
             assert_eq!(count(&d.rock), want(G_ROCK), "{name}: rock");
             assert_eq!(count(&d.wet), want(G_WET), "{name}: wet");
             let soil = |k: u8| d.soil.iter().filter(|&&v| v == k).count();
-            let want_soil = |k: u8| (0..d.w * d.h).filter(|&i| m.ground_fine(2, i % d.w, i / d.w) >> 4 == k).count();
+            let want_soil = |k: u8| {
+                (0..d.w * d.h)
+                    .filter(|&i| m.ground_fine(2, i % d.w, i / d.w) >> 4 == k)
+                    .count()
+            };
             for k in 1..=3 {
                 assert_eq!(soil(k), want_soil(k), "{name}: soil {k}");
             }
@@ -339,7 +459,12 @@ mod tests {
         let d = BigDish::with_map(race_params(1, 2, 5000), &m);
         assert_eq!(d.homes.len(), 2);
         for &(hx, hy) in &d.homes {
-            let near = d.walkers.iter().zip(&d.alive).filter(|&(w, &a)| a && (w.0 / s - hx).hypot(w.1 / s - hy) < 40.0).count();
+            let near = d
+                .walkers
+                .iter()
+                .zip(&d.alive)
+                .filter(|&(w, &a)| a && (w.0 / s - hx).hypot(w.1 / s - hy) < 40.0)
+                .count();
             assert_eq!(near, 2500, "start ({hx}, {hy})");
         }
     }
@@ -355,7 +480,10 @@ mod tests {
             if path.extension().is_some_and(|x| x == "txt") {
                 let name = path.file_stem().unwrap().to_str().unwrap().to_string();
                 let m = Map::load(&dir, &name).unwrap_or_else(|e| panic!("{e}"));
-                assert!(!m.items.crystals.is_empty() && !m.items.moulds.is_empty() && m.items.landing.is_some(), "{name}");
+                assert!(
+                    !m.items.crystals.is_empty() && !m.items.moulds.is_empty() && m.items.landing.is_some(),
+                    "{name}"
+                );
                 n += 1;
             }
         }

@@ -549,7 +549,10 @@ impl Game {
         // The bins are counted once a step; empty the one just shot so the
         // next soldier aims elsewhere (M2b: stacked squads all fired on one
         // bin, already emptied, while the mould closed in round them).
-        let (bx, by) = ((at.0.max(0.0) as usize / BIN).min(BW - 1), (at.1.max(0.0) as usize / BIN).min(BH - 1));
+        let (bx, by) = (
+            (at.0.max(0.0) as usize / BIN).min(BW - 1),
+            (at.1.max(0.0) as usize / BIN).min(BH - 1),
+        );
         self.bins[by * BW + bx] = 0;
         true
     }
@@ -839,7 +842,11 @@ impl Game {
             && (at.0 as usize) < W - 1
             && (at.1 as usize) < H - 1
             && self.dish.ground[at.1 as usize * W + at.0 as usize] == Ground::Agar
-            && self.dish.piles.iter().all(|p| (p.x - at.0).hypot(p.y - at.1) > p.r + 3.0)
+            && self
+                .dish
+                .piles
+                .iter()
+                .all(|p| (p.x - at.0).hypot(p.y - at.1) > p.r + 3.0)
     }
 
     /// **A turret** at `at`, within range of a soldier. True if built.
@@ -1004,7 +1011,11 @@ impl Game {
                 // M2) put the squad in the mould: in M2b's first look a
                 // striker's 18 soldiers died in 47 s on a 446-walker mould,
                 // each body a 400-food pile for it.
-                let stop = if self.dish.piles[pi].eaters > 0 { self.rules.range - 2.0 } else { 2.0 };
+                let stop = if self.dish.piles[pi].eaters > 0 {
+                    self.rules.range - 2.0
+                } else {
+                    2.0
+                };
                 let o = slot(k);
                 self.walk(k, (x + o.0, y + o.1), stop);
                 // At the pile: on or beside it, wherever its formation slot
@@ -1239,7 +1250,10 @@ mod tests {
                     g.apply(Cmd::Buy);
                 }
                 90 => {
-                    g.apply(Cmd::Order(2, Order::Burn((s.x - 9.1, s.y - 5.0), (s.x - 9.1, s.y + 5.0))));
+                    g.apply(Cmd::Order(
+                        2,
+                        Order::Burn((s.x - 9.1, s.y - 5.0), (s.x - 9.1, s.y + 5.0)),
+                    ));
                 }
                 200 => {
                     g.apply(Cmd::Order(3, Order::Attack));
@@ -1249,13 +1263,25 @@ mod tests {
             g.step();
         }
         let text = g.replay_text(4);
-        let mut again = Game::replay(&text, Rules { start_bank: 5000.0, ..Rules::default() }).expect("parses");
+        let mut again = Game::replay(
+            &text,
+            Rules {
+                start_bank: 5000.0,
+                ..Rules::default()
+            },
+        )
+        .expect("parses");
         // The bank was set by hand above, before any command: the replay
         // starts with it in the rules instead.
         assert_eq!(again.dish.t, g.dish.t);
         assert_eq!(again.dish.state_hash(), g.dish.state_hash());
         assert_eq!(again.bought, 1);
-        for c in [Cmd::Order(2, Order::Burn((1.5, 2.25), (3.0, 4.0))), Cmd::Bait((9.75, 3.0), 300.0), Cmd::Stance(0, Stance::HoldFire), Cmd::Turret((7.0, 8.0))] {
+        for c in [
+            Cmd::Order(2, Order::Burn((1.5, 2.25), (3.0, 4.0))),
+            Cmd::Bait((9.75, 3.0), 300.0),
+            Cmd::Stance(0, Stance::HoldFire),
+            Cmd::Turret((7.0, 8.0)),
+        ] {
             assert_eq!(Cmd::parse(&c.to_line()), Some(c));
         }
         again.step();

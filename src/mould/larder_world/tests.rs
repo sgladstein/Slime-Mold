@@ -5,7 +5,17 @@ use super::*;
 
 fn small(seed: u64) -> Game<BigDish> {
     // Buildings whole when placed (raising has its own tests).
-    Game::new(race_world(seed, 1, 1_000), Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
+    Game::new(
+        race_world(seed, 1, 1_000),
+        Rules {
+            build: BuildRules {
+                raise: 0.0,
+                ..BuildRules::default()
+            },
+            ..Rules::default()
+        },
+        seed,
+    )
 }
 
 #[test]
@@ -32,12 +42,18 @@ fn bullets_fly_over_frames_and_land_later() {
             }
         }
         assert!(g.bullets.len() <= squad::SHOTS_MAX);
-        assert!(g.bullets.iter().all(|b| b.left > 0.0 && b.left <= range + 1.0 && !b.fresh));
+        assert!(g
+            .bullets
+            .iter()
+            .all(|b| b.left > 0.0 && b.left <= range + 1.0 && !b.fresh));
         if g.end.is_some() {
             break;
         }
     }
-    assert!(fired > 0 && flown > 0 && late_hits > 0, "fired {fired} flown {flown} late hits {late_hits}");
+    assert!(
+        fired > 0 && flown > 0 && late_hits > 0,
+        "fired {fired} flown {flown} late hits {late_hits}"
+    );
     assert_eq!(g.shots, fired, "shots counts bullets fired, not legs");
 }
 
@@ -48,19 +64,50 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     // Past `SHOTS_MAX` in flight the newest are dropped, so a frame
     // never hands the engines more legs than they take.
     let from = g.soldiers[0];
-    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
+    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40)
+        .map(|_| ShotIn {
+            from: (from.x, from.y),
+            to: (from.x + 10.0 * sc, from.y),
+            r: 1.0,
+        })
+        .collect();
     let by = vec![Some(0); many.len()];
     let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
-    assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
+    assert_eq!(
+        (legs.len(), who.len(), g.bullets.len()),
+        (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX)
+    );
     assert_eq!(g.bullets_dropped, 40);
     // A leg ends at the first closed cell on its way, and the bullet
     // with it.
     g.bullets.clear();
     let (w, h) = g.world.size();
-    let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
+    let wall = (0..w * h)
+        .map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5))
+        .find(|&(x, y)| {
+            !g.world.open(x, y)
+                && g.world.open(x - 3.0, y)
+                && g.world.open(x - 2.0, y)
+                && g.world.open(x - 1.0, y)
+                && x > 4.0
+        })
+        .expect("a wall or rock cell with open ground west of it");
     let start = (wall.0 - 3.0, wall.1);
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[None], 1.0);
-    assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
+    let (legs, _) = g.fly(
+        vec![ShotIn {
+            from: start,
+            to: (start.0 + 20.0, start.1),
+            r: 1.0,
+        }],
+        &[None],
+        1.0,
+    );
+    assert!(
+        (legs[0].to.0 - wall.0).abs() <= 1.0,
+        "leg {:?} wall {:?}",
+        legs[0],
+        wall
+    );
     g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
     assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
 }
@@ -70,9 +117,25 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let mut g = small(1);
     let sc = g.s();
     let r = g.rules;
-    let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
-    let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1 };
+    let leg = |from: (f32, f32)| ShotIn {
+        from,
+        to: (from.0 + 4.0, from.1),
+        r: 2.0,
+    };
+    let hit = |at: (f32, f32)| squad::ShotOut {
+        hit: Some(at),
+        killed: 1,
+    };
+    let b = Bullet {
+        at: (50.0, 50.0),
+        dir: (1.0, 0.0),
+        left: 30.0,
+        r: 2.0,
+        by: Some(0),
+        fresh: true,
+        pierce: 1,
+        split: 1,
+    };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -81,7 +144,10 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     assert_eq!(g.bullets.len(), 1);
     let p = g.bullets[0];
     assert_eq!((p.pierce, p.split, p.fresh), (0, 1, false));
-    assert!((p.at.0 - (52.0 + gap)).abs() < 1e-4 && (p.left - (30.0 - 2.0 - gap)).abs() < 1e-4, "{p:?}");
+    assert!(
+        (p.at.0 - (52.0 + gap)).abs() < 1e-4 && (p.left - (30.0 - 2.0 - gap)).abs() < 1e-4,
+        "{p:?}"
+    );
     // Split: the spent bullet goes, `split_n` pieces fan round its
     // heading from the hit, each `split_range` long and smaller.
     g.landed(&[leg(p.at)], &[hit((60.0, 50.0))]);
@@ -92,12 +158,23 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
         let a = q.dir.1.atan2(q.dir.0);
         assert!(a.abs() <= r.split_fan + 1e-4 && q.at.0 > 60.0, "piece {j} {q:?}");
     }
-    assert!(g.bullets[0].dir.1 < 0.0 && g.bullets[r.split_n as usize - 1].dir.1 > 0.0, "fanned both ways");
+    assert!(
+        g.bullets[0].dir.1 < 0.0 && g.bullets[r.split_n as usize - 1].dir.1 > 0.0,
+        "fanned both ways"
+    );
     // A piece that hits makes nothing more, and a miss on a wall (no
     // hit) never splits.
     let n = g.bullets.len();
     let legs: Vec<ShotIn> = g.bullets.iter().map(|q| leg(q.at)).collect();
-    let outs: Vec<squad::ShotOut> = (0..n).map(|i| if i == 0 { hit(legs[0].from) } else { squad::ShotOut { hit: None, killed: 0 } }).collect();
+    let outs: Vec<squad::ShotOut> = (0..n)
+        .map(|i| {
+            if i == 0 {
+                hit(legs[0].from)
+            } else {
+                squad::ShotOut { hit: None, killed: 0 }
+            }
+        })
+        .collect();
     g.landed(&legs, &outs);
     assert_eq!(g.bullets.len(), n - 1);
 }
@@ -108,17 +185,42 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2 };
+    let b = |i: usize| Bullet {
+        at: (10.0 + i as f32, 40.0),
+        dir: (1.0, 0.0),
+        left: 30.0,
+        r: 1.0,
+        by: Some(i % 4),
+        fresh: false,
+        pierce: 0,
+        split: 2,
+    };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
-    let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
+    let legs: Vec<ShotIn> = g
+        .bullets
+        .iter()
+        .map(|q| ShotIn {
+            from: q.at,
+            to: (q.at.0 + 1.0, q.at.1),
+            r: 1.0,
+        })
+        .collect();
     // Every second one hits; the others fly on and keep their places.
-    let outs: Vec<squad::ShotOut> = (0..legs.len()).map(|i| squad::ShotOut { hit: (i % 2 == 0).then_some(legs[i].to), killed: 0 }).collect();
+    let outs: Vec<squad::ShotOut> = (0..legs.len())
+        .map(|i| squad::ShotOut {
+            hit: (i % 2 == 0).then_some(legs[i].to),
+            killed: 0,
+        })
+        .collect();
     g.landed(&legs, &outs);
     let kept = squad::SHOTS_MAX / 2;
     let n = g.rules.split_n as usize;
     assert_eq!(g.bullets.len(), squad::SHOTS_MAX);
     assert_eq!(g.bullets_dropped as usize, kept * n - (squad::SHOTS_MAX - kept));
-    assert!(g.bullets[..kept].iter().enumerate().all(|(i, q)| q.split == 2 && q.at.0 == 10.0 + (2 * i + 1) as f32 + 1.0));
+    assert!(g.bullets[..kept]
+        .iter()
+        .enumerate()
+        .all(|(i, q)| q.split == 2 && q.at.0 == 10.0 + (2 * i + 1) as f32 + 1.0));
     // The pieces after them are the first parents' pieces, in order.
     for (j, q) in g.bullets[kept..].iter().enumerate() {
         let parent = 2 * (j / n);
@@ -147,7 +249,12 @@ fn split_and_pierce_bullets_hit_more_and_play_the_same_twice() {
         }
         (g.shots, later, g.killed, g.mould)
     };
-    let both = BulletMods { pierce: 1, split: 2, reach: 0, rate: 0 };
+    let both = BulletMods {
+        pierce: 1,
+        split: 2,
+        reach: 0,
+        rate: 0,
+    };
     let a = run(both);
     assert_eq!(a, run(both), "the same seed played twice");
     let plain = run(BulletMods::default());
@@ -200,17 +307,38 @@ fn commands_round_trip_as_lines() {
 #[test]
 fn a_soldier_at_the_core_smells_like_a_lure() {
     let units = |kind: CoreKind, pull: f32| {
-        let mut g = Game::new(race_world(1, 1, 1_000), Rules { core_pull: 8.0, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, 1);
+        let mut g = Game::new(
+            race_world(1, 1, 1_000),
+            Rules {
+                core_pull: 8.0,
+                build: BuildRules {
+                    raise: 0.0,
+                    ..BuildRules::default()
+                },
+                ..Rules::default()
+            },
+            1,
+        );
         (g.core_rule.kind, g.core_rule.pull) = (kind, pull);
         let sc = g.s();
         (g.soldiers[0].x, g.soldiers[0].y) = (g.core.0 + g.rules.core_r * sc, g.core.1);
         g.begin_step();
         let f = &g.flight.as_ref().expect("a frame in flight").f;
-        (f.units[0].smell, f.units[0].smell_r, f.units[1].smell, f.units[1].smell_r, g.rules, sc)
+        (
+            f.units[0].smell,
+            f.units[0].smell_r,
+            f.units[1].smell,
+            f.units[1].smell_r,
+            g.rules,
+            sc,
+        )
     };
     for kind in [CoreKind::Fixed, CoreKind::Headless] {
         let (near, near_r, far, far_r, r, sc) = units(kind, 8.0);
-        assert!(far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near, "{kind:?}: near the core {near}, far {far}");
+        assert!(
+            far > 0.0 && (near - 8.0 * far).abs() <= 1e-3 * near,
+            "{kind:?}: near the core {near}, far {far}"
+        );
         assert_eq!((near_r, far_r), (r.build.lure_r * sc, r.smell_r * sc));
     }
     let (near, near_r, far, _, r, sc) = units(CoreKind::Headless, 0.0);
@@ -233,7 +361,11 @@ fn a_held_core_falls_unless_the_mould_is_headless() {
         }
         (g.core_down.is_some(), g.world.p.birth_energy.is_finite())
     };
-    assert_eq!(hold(CoreKind::Fixed), (true, false), "held 5 s: the core falls and births stop");
+    assert_eq!(
+        hold(CoreKind::Fixed),
+        (true, false),
+        "held 5 s: the core falls and births stop"
+    );
     assert_eq!(hold(CoreKind::Headless), (false, true), "no core to hold");
 }
 
@@ -247,7 +379,11 @@ fn thick_slime_slows_a_soldier() {
         let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
         let sc = g.s();
         // A goal well past one step, on open ground beside the larder.
-        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+        let to = (0..16)
+            .map(|k| k as f32 / 16.0 * std::f32::consts::TAU)
+            .map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin()))
+            .find(|&p| g.clear_line((x, y), p))
+            .expect("open ground by the larder");
         g.soldiers[0].order = Order::Move(to.0, to.1);
         g.soldiers[0].touching = touching;
         g.walk(0, 1.0 / g.rules.tps as f32);
@@ -257,7 +393,10 @@ fn thick_slime_slows_a_soldier() {
     assert!(free > 0.0, "it walked");
     for (touching, share) in [(2, 0.9), (6, 0.5), (12, 0.2)] {
         let d = moved(touching, 6.0);
-        assert!((d / free - share).abs() < 0.01, "{touching} touching: {d} against {free}");
+        assert!(
+            (d / free - share).abs() < 0.01,
+            "{touching} touching: {d} against {free}"
+        );
     }
     assert_eq!(moved(12, 0.0), free, "wade 0 is off");
     // Whole walkers at any density (2026-11-13): shape C's mass of 0.2
@@ -266,23 +405,46 @@ fn thick_slime_slows_a_soldier() {
     g.rules.mass = 0.2;
     let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
     let sc = g.s();
-    let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+    let to = (0..16)
+        .map(|k| k as f32 / 16.0 * std::f32::consts::TAU)
+        .map(|a| (x + 6.0 * sc * a.cos(), y + 6.0 * sc * a.sin()))
+        .find(|&p| g.clear_line((x, y), p))
+        .expect("open ground by the larder");
     g.soldiers[0].order = Order::Move(to.0, to.1);
     g.soldiers[0].touching = 6;
     g.walk(0, 1.0 / g.rules.tps as f32);
     let d = (g.soldiers[0].x - x).hypot(g.soldiers[0].y - y);
-    assert!((d / free - 0.5).abs() < 0.01, "mass 0.2, 6 touching: {d} against {free}");
+    assert!(
+        (d / free - 0.5).abs() < 0.01,
+        "mass 0.2, 6 touching: {d} against {free}"
+    );
 }
 
 /// A tier with no core of its own keeps the rules' (`Core::of`).
 #[test]
 fn a_tier_without_a_core_keeps_the_rules_core() {
-    let r = Rules { core_pull: 3.0, core_secs: 7.0, ..Rules::default() };
+    let r = Rules {
+        core_pull: 3.0,
+        core_secs: 7.0,
+        ..Rules::default()
+    };
     for t in super::super::tiers::Tier::ALL {
         let g = Game::new(race_world(1, 1, 1_000), r, 1).with_tier(Some(t));
-        assert_eq!(g.core_rule, t.core().unwrap_or(Core { kind: CoreKind::Headless, secs: 7.0, pull: 3.0 }), "{}", t.name());
+        assert_eq!(
+            g.core_rule,
+            t.core().unwrap_or(Core {
+                kind: CoreKind::Headless,
+                secs: 7.0,
+                pull: 3.0
+            }),
+            "{}",
+            t.name()
+        );
     }
-    assert_eq!(Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule, Core::of(&r));
+    assert_eq!(
+        Game::new(race_world(1, 1, 1_000), r, 1).with_tier(None).core_rule,
+        Core::of(&r)
+    );
 }
 
 /// The broken mould (`Rules::broken`): under 3% of its peak, its upkeep
@@ -294,9 +456,16 @@ fn a_broken_mould_starves_until_it_grows_back() {
     assert!(up > 0.0 && g.broken.is_none());
     g.peak = g.mould * 100;
     g.check_broken();
-    assert_eq!((g.broken.map(|b| b.1), g.world.upkeep()), (Some(up), up * g.rules.broken_starve));
+    assert_eq!(
+        (g.broken.map(|b| b.1), g.world.upkeep()),
+        (Some(up), up * g.rules.broken_starve)
+    );
     g.check_broken();
-    assert_eq!(g.world.upkeep(), up * g.rules.broken_starve, "it starves once, not 50 x 50");
+    assert_eq!(
+        g.world.upkeep(),
+        up * g.rules.broken_starve,
+        "it starves once, not 50 x 50"
+    );
     g.peak = g.mould;
     g.check_broken();
     assert_eq!((g.broken, g.world.upkeep()), (None, up));
@@ -320,7 +489,11 @@ fn a_scared_piece_sees_past_the_guns() {
     while g.world.ticks() < t + g.rules.tps as u64 {
         g.step();
     }
-    assert_eq!(g.world.p.panic_r, 36.0 + g.rules.panic_margin, "a longer range moves it at the next count");
+    assert_eq!(
+        g.world.p.panic_r,
+        36.0 + g.rules.panic_margin,
+        "a longer range moves it at the next count"
+    );
     // A rounds `Range` card stretches the gun (`gun_range`), and the reach with it.
     g.bullet_mods.reach = 1;
     let t = g.world.ticks();
@@ -329,10 +502,21 @@ fn a_scared_piece_sees_past_the_guns() {
         g.bullet_mods.reach = 1;
     }
     assert!(g.gun_range() > 36.0);
-    assert_eq!(g.world.p.panic_r, g.gun_range() + g.rules.panic_margin, "a range card moves it too");
+    assert_eq!(
+        g.world.p.panic_r,
+        g.gun_range() + g.rules.panic_margin,
+        "a range card moves it too"
+    );
     let mut keep = race_world(1, 1, 1_000);
     keep.p.panic_r = 7.0;
-    let g = Game::new(keep, Rules { panic_margin: -1.0, ..Rules::default() }, 1);
+    let g = Game::new(
+        keep,
+        Rules {
+            panic_margin: -1.0,
+            ..Rules::default()
+        },
+        1,
+    );
     assert_eq!(g.world.p.panic_r, 7.0);
 }
 
@@ -385,7 +569,12 @@ fn a_clearing_soldier_carries_charge_home() {
     // From the cells: the pile's total is summed a tick late (the next
     // tick's eating), and the frame's last take is after the ticks.
     let d = &g.world;
-    let now: f64 = d.pile_cells.iter().filter(|&&i| d.pile_of[i as usize] as usize == k + 1).map(|&i| d.charge[i as usize] as f64).sum();
+    let now: f64 = d
+        .pile_cells
+        .iter()
+        .filter(|&&i| d.pile_of[i as usize] as usize == k + 1)
+        .map(|&i| d.charge[i as usize] as f64)
+        .sum();
     let gone = before - now as f32;
     let held = (g.harvested + g.soldiers[0].carry) * g.rules.charge;
     assert!(gone >= held * 0.999, "the crystal lost {gone}, the squad holds {held}");
@@ -406,8 +595,18 @@ fn takes_are_listed_each_step_for_the_harvest_look() {
     for _ in 0..(g.rules.tps * 5) {
         let held = g.soldiers[0].carry + g.harvested;
         g.step();
-        let took: f32 = g.last_takes.iter().filter(|t| t.by == Some(0)).map(|t| t.took).sum::<f32>() / g.rules.charge;
-        assert!(g.last_takes.iter().all(|t| t.took > 0.0 && t.crystal == k), "{:?}", g.last_takes.len());
+        let took: f32 = g
+            .last_takes
+            .iter()
+            .filter(|t| t.by == Some(0))
+            .map(|t| t.took)
+            .sum::<f32>()
+            / g.rules.charge;
+        assert!(
+            g.last_takes.iter().all(|t| t.took > 0.0 && t.crystal == k),
+            "{:?}",
+            g.last_takes.len()
+        );
         let gained = g.soldiers[0].carry + g.harvested - held;
         assert!((gained - took).abs() < 1e-3, "carried in {gained}, listed {took}");
         seen += (took > 0.0) as usize;
@@ -433,13 +632,20 @@ fn soldiers_stand_round_a_crystal_not_on_it() {
     for _ in 0..(g.rules.tps * 40) {
         g.step();
         for s in g.soldiers.iter().filter(|s| s.alive) {
-            assert!(g.solid_at((s.x, s.y)).is_none(), "a soldier on a crystal at {:?}", (s.x, s.y));
+            assert!(
+                g.solid_at((s.x, s.y)).is_none(),
+                "a soldier on a crystal at {:?}",
+                (s.x, s.y)
+            );
         }
     }
     let s = g.soldiers[0];
     let (_, r) = g.solid_at(c).expect("the crystal still has charge");
     let d = (s.x - c.0).hypot(s.y - c.1);
-    assert!(d >= r && d <= r + 3.0 * sc, "the mover stands {d} from the centre, rim {r}");
+    assert!(
+        d >= r && d <= r + 3.0 * sc,
+        "the mover stands {d} from the centre, rim {r}"
+    );
     assert!(g.harvested > 0.0, "nothing banked from the rim");
     // With the rule off the mover walks onto the crystal's middle.
     let mut w = small(2);
@@ -450,7 +656,11 @@ fn soldiers_stand_round_a_crystal_not_on_it() {
         w.step();
     }
     let s = w.soldiers[0];
-    assert!((s.x - c.0).hypot(s.y - c.1) < 2.0 * sc, "off, it stands {} from the centre", (s.x - c.0).hypot(s.y - c.1));
+    assert!(
+        (s.x - c.0).hypot(s.y - c.1) < 2.0 * sc,
+        "off, it stands {} from the centre",
+        (s.x - c.0).hypot(s.y - c.1)
+    );
 }
 
 #[test]
@@ -477,13 +687,22 @@ fn a_crystal_run_dry_sends_its_carrier_home_to_hold() {
         }
     }
     d.pile_charge[k] = sum;
-    assert!(sum / g.rules.charge < 0.5 * g.rules.carry, "{sum} charge is not a short crystal");
+    assert!(
+        sum / g.rules.charge < 0.5 * g.rules.carry,
+        "{sum} charge is not a short crystal"
+    );
     g.apply(Cmd::Order(0, Order::Clear(c.0, c.1)));
     g.apply(Cmd::Stance(0, Stance::HoldFire));
     for _ in 0..(g.rules.tps * 30) {
         g.step();
     }
-    assert!(g.harvested >= 0.9 * sum / g.rules.charge, "banked {} of the crystal's {}, carrying {}", g.harvested, sum / g.rules.charge, g.soldiers[0].carry);
+    assert!(
+        g.harvested >= 0.9 * sum / g.rules.charge,
+        "banked {} of the crystal's {}, carrying {}",
+        g.harvested,
+        sum / g.rules.charge,
+        g.soldiers[0].carry
+    );
     assert!(g.soldiers[0].carry < 1.0, "still carrying {}", g.soldiers[0].carry);
     assert_eq!(g.soldiers[0].order, Order::Hold, "it holds at the larder");
     // With the rule off it waits on the crystal with its part load (W2b).
@@ -503,7 +722,12 @@ fn a_crystal_run_dry_sends_its_carrier_home_to_hold() {
     for _ in 0..(w.rules.tps * 30) {
         w.step();
     }
-    assert!(w.harvested == 0.0 && w.soldiers[0].carry > 0.5 * sum / w.rules.charge, "without the rule: banked {}, carrying {}", w.harvested, w.soldiers[0].carry);
+    assert!(
+        w.harvested == 0.0 && w.soldiers[0].carry > 0.5 * sum / w.rules.charge,
+        "without the rule: banked {}, carrying {}",
+        w.harvested,
+        w.soldiers[0].carry
+    );
 }
 
 #[test]
@@ -534,9 +758,18 @@ fn the_stalemate_scores_the_charge_taken_and_the_moulds_size() {
     let small_mould = score(&mut farm, 0.6, start / 4);
     let same = score(&mut farm, 0.6, start);
     let big_mould = score(&mut farm, 0.6, start * 3);
-    assert!(small_mould > same && same > big_mould, "{small_mould} {same} {big_mould}");
-    assert!((same - 0.05).abs() < 1e-6, "a mould its starting size adds nothing: {same}");
-    assert!(score(&mut farm, 1.0, 1) < 0.5 && score(&mut farm, 0.0, start * 1000) > -0.5, "inside the stalemate band");
+    assert!(
+        small_mould > same && same > big_mould,
+        "{small_mould} {same} {big_mould}"
+    );
+    assert!(
+        (same - 0.05).abs() < 1e-6,
+        "a mould its starting size adds nothing: {same}"
+    );
+    assert!(
+        score(&mut farm, 1.0, 1) < 0.5 && score(&mut farm, 0.0, start * 1000) > -0.5,
+        "inside the stalemate band"
+    );
     assert_eq!(farm.score_w2b(), Some(0.0), "W2b's score is the held share less a half");
 }
 
@@ -564,7 +797,22 @@ impl Later {
 
 fn later(seed: u64) -> Game<Later> {
     // As `small`'s rules (buildings whole when placed).
-    Game::new(Later { d: race_world(seed, 1, 1_000), out: None, polls: Default::default(), touch: None }, Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() }, seed)
+    Game::new(
+        Later {
+            d: race_world(seed, 1, 1_000),
+            out: None,
+            polls: Default::default(),
+            touch: None,
+        },
+        Rules {
+            build: BuildRules {
+                raise: 0.0,
+                ..BuildRules::default()
+            },
+            ..Rules::default()
+        },
+        seed,
+    )
 }
 
 impl World for Later {
@@ -670,7 +918,10 @@ fn walkers_count_whole_on_soldiers_and_by_mass_on_the_larder_and_buildings() {
                 .find(|q| g.world.open(q.0, q.1))
                 .expect("open ground")
         };
-        let (t, o) = (open(&g, (g.larder.0 + 8.0, g.larder.1)), open(&g, (g.larder.0 - 8.0, g.larder.1)));
+        let (t, o) = (
+            open(&g, (g.larder.0 + 8.0, g.larder.1)),
+            open(&g, (g.larder.0 - 8.0, g.larder.1)),
+        );
         assert!(g.build(Kind::Turret, t) && g.build(Kind::Outpost, o));
         let to = (g.core.0, g.core.1);
         g.apply(Cmd::Order(0, Order::Move(to.0, to.1)));
@@ -681,7 +932,15 @@ fn walkers_count_whole_on_soldiers_and_by_mass_on_the_larder_and_buildings() {
         let at = (g.soldiers[0].x, g.soldiers[0].y);
         g.step();
         let stride = (g.soldiers[0].x - at.0).hypot(g.soldiers[0].y - at.1);
-        (g.soldiers.iter().map(|s| s.hp).collect::<Vec<_>>(), stride, g.stolen, g.buildings[0].hp, g.buildings[0].max_hp, g.larder_touch, body)
+        (
+            g.soldiers.iter().map(|s| s.hp).collect::<Vec<_>>(),
+            stride,
+            g.stolen,
+            g.buildings[0].hp,
+            g.buildings[0].max_hp,
+            g.larder_touch,
+            body,
+        )
     };
     let r = Rules::default();
     let dt = r.frame_ticks as f32 / r.tps as f32;
@@ -691,14 +950,27 @@ fn walkers_count_whole_on_soldiers_and_by_mass_on_the_larder_and_buildings() {
     for mass in [1.0f32, 0.2] {
         let (hp, stride, stolen, turret, max, held, body) = run(mass, n);
         let bite = 2.0 * r.drain * n as f32 * dt;
-        assert!(hp.iter().all(|&h| (r.hp - h - bite).abs() < 1e-3), "mass {mass}: whole bite {bite}, health {hp:?}");
+        assert!(
+            hp.iter().all(|&h| (r.hp - h - bite).abs() < 1e-3),
+            "mass {mass}: whole bite {bite}, health {hp:?}"
+        );
         let slow = open_stride / (1.0 + (n as f32 / r.wade).powi(2));
-        assert!((stride - slow).abs() < 0.02 * open_stride, "mass {mass}: whole wading, stride {stride} against {slow}");
+        assert!(
+            (stride - slow).abs() < 0.02 * open_stride,
+            "mass {mass}: whole wading, stride {stride} against {slow}"
+        );
         // The larder and the outpost, two frames each.
         let steal = 2.0 * 2.0 * r.steal * mass * n as f32 * dt;
-        assert!((stolen - steal).abs() < 1e-3, "mass {mass}: stolen {stolen} against {steal}");
+        assert!(
+            (stolen - steal).abs() < 1e-3,
+            "mass {mass}: stolen {stolen} against {steal}"
+        );
         let wear = 2.0 * r.build.drain * mass * n as f32 * dt;
-        assert!((max - turret - wear).abs() < 1e-3, "mass {mass}: turret wear {} against {wear}", max - turret);
+        assert!(
+            (max - turret - wear).abs() < 1e-3,
+            "mass {mass}: turret wear {} against {wear}",
+            max - turret
+        );
         assert_eq!(held, n, "the larder reads them, held at any mass");
         bodies.push(body);
     }
@@ -733,7 +1005,10 @@ fn a_step_in_halves_plays_as_a_whole_one() {
         a.step();
         b.begin_step();
         assert!(b.in_flight() || b.end.is_some());
-        assert!(!b.in_flight() || b.settled_ticks() == n * a.rules.frame_ticks as u64, "a running step's tick is the one it began on");
+        assert!(
+            !b.in_flight() || b.settled_ticks() == n * a.rules.frame_ticks as u64,
+            "a running step's tick is the one it began on"
+        );
         for c in cmd(n + 1) {
             assert_eq!(a.apply(c), b.apply(c), "command {c:?} at {}", n + 1);
             assert!(!b.in_flight(), "a command finishes the running step");
@@ -753,7 +1028,11 @@ fn a_step_in_halves_plays_as_a_whole_one() {
         }
         if gassed > 0 {
             let at: Vec<(f32, f32)> = a.soldiers.iter().map(|s| (s.x, s.y)).collect();
-            calm += a.world.gassed_near(&at, a.rules.touch * a.world.scale()).iter().sum::<u32>();
+            calm += a
+                .world
+                .gassed_near(&at, a.rules.touch * a.world.scale())
+                .iter()
+                .sum::<u32>();
         }
         // Some steps finish at once, the rest when the next begins.
         if n % 3 == 0 {
@@ -764,12 +1043,24 @@ fn a_step_in_halves_plays_as_a_whole_one() {
     }
     b.finish_step();
     assert!(running > 300, "steps left running into the next: {running}");
-    assert!(gassed > 0 && calm > 0, "the gas slept walkers ({gassed}) by the soldiers ({calm} calm touches)");
+    assert!(
+        gassed > 0 && calm > 0,
+        "the gas slept walkers ({gassed}) by the soldiers ({calm} calm touches)"
+    );
     assert_eq!(a.log, b.log, "the same commands at the same ticks");
     assert_eq!(a.world.hash(), b.world.hash(), "the same world");
     assert_eq!(format!("{:?}", a.soldiers), format!("{:?}", b.soldiers));
-    assert_eq!((a.bank, a.killed, a.shots, a.harvested, a.walls, a.mould), (b.bank, b.killed, b.shots, b.harvested, b.walls, b.mould));
-    assert!(a.killed > 0 && a.walls == 1 && a.soldiers.len() > 4, "the commands acted: killed {}, walls {}, soldiers {}", a.killed, a.walls, a.soldiers.len());
+    assert_eq!(
+        (a.bank, a.killed, a.shots, a.harvested, a.walls, a.mould),
+        (b.bank, b.killed, b.shots, b.harvested, b.walls, b.mould)
+    );
+    assert!(
+        a.killed > 0 && a.walls == 1 && a.soldiers.len() > 4,
+        "the commands acted: killed {}, walls {}, soldiers {}",
+        a.killed,
+        a.walls,
+        a.soldiers.len()
+    );
 }
 
 /// The window's pacing (`App::step` in `larder-world`) for `secs` game
@@ -779,7 +1070,13 @@ fn a_step_in_halves_plays_as_a_whole_one() {
 /// frame from real second `from` to `to` (the window's clicks); `due(g)`
 /// runs just before each step begins (a paced replay's commands). Ends
 /// on whole steps.
-fn paced(g: &mut Game<Later>, fps: f32, secs: f32, mut click: impl FnMut(&mut Game<Later>, f32, f32), mut due: impl FnMut(&mut Game<Later>)) {
+fn paced(
+    g: &mut Game<Later>,
+    fps: f32,
+    secs: f32,
+    mut click: impl FnMut(&mut Game<Later>, f32, f32),
+    mut due: impl FnMut(&mut Game<Later>),
+) {
     let (dt, step) = (1.0 / fps, g.rules.frame_ticks as f32 / g.rules.tps as f32);
     let end = (secs * g.rules.tps as f32) as u64;
     let (mut owed, mut frame) = (0.0f32, 0u32);
@@ -824,13 +1121,19 @@ fn a_replay_is_the_same_game_at_any_frame_rate() {
     let secs = 20.0;
     let record = |fps: f32| {
         let mut g = later(seed);
-        paced(&mut g, fps, secs, |g, from, to| {
-            for (_, cs) in clicks.iter().filter(|(t, _)| *t >= from && *t < to) {
-                for &c in cs {
-                    g.apply(c);
+        paced(
+            &mut g,
+            fps,
+            secs,
+            |g, from, to| {
+                for (_, cs) in clicks.iter().filter(|(t, _)| *t >= from && *t < to) {
+                    for &c in cs {
+                        g.apply(c);
+                    }
                 }
-            }
-        }, |_| {});
+            },
+            |_| {},
+        );
         g
     };
     let same = |a: &Game<Later>, b_hash: u64, b_bank: f32, b_soldiers: &str, what: &str| {
@@ -841,26 +1144,50 @@ fn a_replay_is_the_same_game_at_any_frame_rate() {
     let mut ticks = Vec::new();
     for fps in [60.0, 23.0] {
         let a = record(fps);
-        assert_eq!(a.log.len(), 8, "{fps} fps: every click logged ({:?}, ended {:?})", a.log, a.end.map(|e| e.band()));
+        assert_eq!(
+            a.log.len(),
+            8,
+            "{fps} fps: every click logged ({:?}, ended {:?})",
+            a.log,
+            a.end.map(|e| e.band())
+        );
         assert!(a.walls == 1 && a.soldiers.len() > 4, "{fps} fps: the clicks acted");
         ticks.push(a.log.iter().map(|l| l.0).collect::<Vec<u64>>());
         let mut b = small(seed);
         assert!(Game::replay(&mut b, &a.replay_text(seed)));
         assert_eq!(a.world.ticks(), b.world.ticks(), "{fps} fps: the replay's end");
-        same(&a, b.world.hash(), b.bank, &format!("{:?}", b.soldiers), &format!("recorded at {fps} fps, replayed in whole steps"));
+        same(
+            &a,
+            b.world.hash(),
+            b.bank,
+            &format!("{:?}", b.soldiers),
+            &format!("recorded at {fps} fps, replayed in whole steps"),
+        );
         if fps == 60.0 {
             for back in [23.0, 144.0] {
                 let mut c = later(seed);
                 let mut next = 0;
-                paced(&mut c, back, secs, |_, _, _| {}, |g| {
-                    while next < a.log.len() && a.log[next].0 == g.world.ticks() {
-                        g.apply(a.log[next].1);
-                        next += 1;
-                    }
-                });
+                paced(
+                    &mut c,
+                    back,
+                    secs,
+                    |_, _, _| {},
+                    |g| {
+                        while next < a.log.len() && a.log[next].0 == g.world.ticks() {
+                            g.apply(a.log[next].1);
+                            next += 1;
+                        }
+                    },
+                );
                 assert_eq!(next, a.log.len(), "played back at {back} fps: every command");
                 assert_eq!(c.log, a.log, "played back at {back} fps: the same log");
-                same(&c, a.world.hash(), a.bank, &format!("{:?}", a.soldiers), &format!("played back at {back} fps"));
+                same(
+                    &c,
+                    a.world.hash(),
+                    a.bank,
+                    &format!("{:?}", a.soldiers),
+                    &format!("played back at {back} fps"),
+                );
             }
         }
     }
@@ -881,7 +1208,12 @@ fn stuck_seconds_count_a_squad_that_can_do_nothing() {
     for _ in 0..(g.rules.tps * 10) {
         g.step();
     }
-    assert!(g.stuck >= 9 && g.stuck_run == g.stuck, "stuck {} run {}", g.stuck, g.stuck_run);
+    assert!(
+        g.stuck >= 9 && g.stuck_run == g.stuck,
+        "stuck {} run {}",
+        g.stuck,
+        g.stuck_run
+    );
     // A bank that can buy a soldier is a way out.
     g.bank = g.rules.soldier_cost;
     for _ in 0..g.rules.tps {
@@ -1008,8 +1340,18 @@ fn a_starving_squad_harvests_as_a_fed_one_and_feeds_itself() {
         hungry |= starving.hungry;
         ate_again |= hungry && !starving.hungry;
     }
-    assert!(hungry && ate_again && starving.harvested > 0.0, "it starved, banked a load and ate again");
-    assert!(starving.soldiers.iter().zip(&fed.soldiers).any(|(s, f)| s.alive && s.hp < f.hp), "and the hunger showed on its health");
+    assert!(
+        hungry && ate_again && starving.harvested > 0.0,
+        "it starved, banked a load and ate again"
+    );
+    assert!(
+        starving
+            .soldiers
+            .iter()
+            .zip(&fed.soldiers)
+            .any(|(s, f)| s.alive && s.hp < f.hp),
+        "and the hunger showed on its health"
+    );
     // The reserve: a wiped squad on an empty bank gets a recruit at full
     // health, who harvests and pays its own ration.
     let mut g = small(7);
@@ -1040,9 +1382,16 @@ fn density_holds_from_small_worlds_to_big_ones() {
     // with four times the walkers its density is the same.
     let (a, b) = (small(1), Game::new(race_world(1, 2, 4_000), Rules::default(), 1));
     assert!(a.density > 0.0 && a.start_mould == 1_000 && b.start_mould == 4_000);
-    assert!((b.density / a.density - 1.0).abs() < 0.05, "{} against {}", b.density, a.density);
+    assert!(
+        (b.density / a.density - 1.0).abs() < 0.05,
+        "{} against {}",
+        b.density,
+        a.density
+    );
     let (w, h) = a.world.size();
-    let open = (0..w * h).filter(|&i| a.world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).count();
+    let open = (0..w * h)
+        .filter(|&i| a.world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5))
+        .count();
     assert!(open < w * h, "rock and the rim are not open ground");
 }
 
@@ -1075,7 +1424,10 @@ fn a_wall_costs_by_length_and_needs_a_soldier_near() {
     // With `BuildRules::anywhere` (the default) a far wall is a ghost a
     // soldier walks to; the old rule wants both ends in range.
     g.rules.build.anywhere = false;
-    assert!(!g.apply(Cmd::Wall(far, (far.0, far.1 + 10.0))), "a wall far from every soldier");
+    assert!(
+        !g.apply(Cmd::Wall(far, (far.0, far.1 + 10.0))),
+        "a wall far from every soldier"
+    );
     g.rules.build.anywhere = true;
     let bank = g.bank;
     assert!(g.apply(Cmd::Wall((x - 10.0, y - 5.0), (x - 10.0, y + 5.0))));
@@ -1124,7 +1476,11 @@ fn queued_orders_run_in_turn_and_read_back_from_a_replay() {
     for _ in 0..(g.rules.tps * 10) {
         g.step();
     }
-    assert_eq!(g.soldiers[0].order, Order::Fight(b.0, b.1), "the move arrived and the queue moved on");
+    assert_eq!(
+        g.soldiers[0].order,
+        Order::Fight(b.0, b.1),
+        "the move arrived and the queue moved on"
+    );
     assert_eq!(g.soldiers[0].queued, 0);
     // A plain order drops the queue.
     g.apply(Cmd::Queue(0, Order::Move(a.0, a.1)));
@@ -1133,8 +1489,18 @@ fn queued_orders_run_in_turn_and_read_back_from_a_replay() {
     g.apply(Cmd::Rally(Order::Clear(a.0, a.1)));
     g.bank = 1e6;
     assert!(g.apply(Cmd::Buy));
-    assert_eq!(g.soldiers.last().unwrap().order, Order::Clear(a.0, a.1), "a bought soldier takes the rally order");
-    for c in [Cmd::Rally(Order::Move(5.5, 6.0)), Cmd::Rally(Order::Hold), Cmd::Queue(3, Order::Fight(1.5, 2.25)), Cmd::Queue(1, Order::Clear(3.0, 4.0)), Cmd::Order(2, Order::Fight(7.0, 8.5))] {
+    assert_eq!(
+        g.soldiers.last().unwrap().order,
+        Order::Clear(a.0, a.1),
+        "a bought soldier takes the rally order"
+    );
+    for c in [
+        Cmd::Rally(Order::Move(5.5, 6.0)),
+        Cmd::Rally(Order::Hold),
+        Cmd::Queue(3, Order::Fight(1.5, 2.25)),
+        Cmd::Queue(1, Order::Clear(3.0, 4.0)),
+        Cmd::Order(2, Order::Fight(7.0, 8.5)),
+    ] {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
     }
 }
@@ -1173,9 +1539,14 @@ fn a_harvester_at_a_dry_crystal_goes_on_to_the_next() {
         }
     }
     assert!(went_home, "it banked what it had first");
-    let Order::Clear(x, y) = g.soldiers[0].order else { panic!("{:?}", g.soldiers[0].order) };
+    let Order::Clear(x, y) = g.soldiers[0].order else {
+        panic!("{:?}", g.soldiers[0].order)
+    };
     let next = g.crystal_at((x, y)).unwrap().0;
-    assert!(next != i && next != 0, "on to another crystal, not the mould's home: {next}");
+    assert!(
+        next != i && next != 0,
+        "on to another crystal, not the mould's home: {next}"
+    );
     // With the rule off it holds at the larder, as before.
     let mut h = small(7);
     h.rules.seek = false;
@@ -1229,10 +1600,17 @@ fn an_aim_spread_turns_the_shots_within_the_spread() {
             let sc = a.s();
             for (p, q) in a.last_shots.iter().zip(&b.last_shots) {
                 assert_eq!(p.from, q.from);
-                let (u, v) = ((p.to.0 - p.from.0, p.to.1 - p.from.1), (q.to.0 - q.from.0, q.to.1 - q.from.1));
+                let (u, v) = (
+                    (p.to.0 - p.from.0, p.to.1 - p.from.1),
+                    (q.to.0 - q.from.0, q.to.1 - q.from.1),
+                );
                 assert!((u.0.hypot(u.1) - v.0.hypot(v.1)).abs() < 1e-3, "as long");
                 let turn = (u.0 * v.1 - u.1 * v.0).atan2(u.0 * v.0 + u.1 * v.1).abs();
-                let k = a.soldiers.iter().position(|s| (s.x, s.y) == p.from).expect("its soldier");
+                let k = a
+                    .soldiers
+                    .iter()
+                    .position(|s| (s.x, s.y) == p.from)
+                    .expect("its soldier");
                 let at = aims[k].expect("its target");
                 let d = (at.0 - p.from.0).hypot(at.1 - p.from.1).max(0.1);
                 assert!(turn <= (2.5 * sc / d).atan() + 1e-4, "turned {turn} at {d}");
@@ -1259,7 +1637,11 @@ fn stacked_soldiers_step_apart_onto_open_ground() {
         }
         let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
         let sc = g.s();
-        let to = (0..16).map(|k| k as f32 / 16.0 * std::f32::consts::TAU).map(|a| (x + 12.0 * sc * a.cos(), y + 12.0 * sc * a.sin())).find(|&p| g.clear_line((x, y), p)).expect("open ground by the larder");
+        let to = (0..16)
+            .map(|k| k as f32 / 16.0 * std::f32::consts::TAU)
+            .map(|a| (x + 12.0 * sc * a.cos(), y + 12.0 * sc * a.sin()))
+            .find(|&p| g.clear_line((x, y), p))
+            .expect("open ground by the larder");
         for k in 0..g.soldiers.len() {
             g.apply(Cmd::Stance(k, Stance::HoldFire));
             (g.soldiers[k].x, g.soldiers[k].y) = (x, y);
@@ -1270,7 +1652,11 @@ fn stacked_soldiers_step_apart_onto_open_ground() {
         for _ in 0..(g.rules.tps * 8) {
             g.step();
             for s in g.soldiers.iter().filter(|s| s.alive) {
-                assert!(g.standable(s.x, s.y), "a soldier on unstandable ground at {:?}", (s.x, s.y));
+                assert!(
+                    g.standable(s.x, s.y),
+                    "a soldier on unstandable ground at {:?}",
+                    (s.x, s.y)
+                );
             }
         }
         let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
@@ -1342,7 +1728,11 @@ fn squads(seed: u64) -> Game<BigDish> {
 /// Furthest any of squad `q` stands from its middle, dish cells.
 fn spread_of(g: &Game<BigDish>, q: usize) -> f32 {
     let m = g.middle(q).unwrap();
-    g.members(q).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).fold(0.0, f32::max) / g.s()
+    g.members(q)
+        .iter()
+        .map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1))
+        .fold(0.0, f32::max)
+        / g.s()
 }
 
 /// Walks squad 0 off the crystal it starts round (its members start on
@@ -1353,7 +1743,14 @@ fn off_the_crystal(g: &mut Game<BigDish>) {
     let to = (0..64)
         .map(|i| i as f32 / 64.0 * std::f32::consts::TAU)
         .map(|a| (m.0 + 25.0 * sc * a.cos(), m.1 + 25.0 * sc * a.sin()))
-        .find(|&p| g.standable(p.0, p.1) && g.solid_at(p).is_none() && (0..8).all(|j| { let a = j as f32 * 0.785; g.standable(p.0 + 6.0 * sc * a.cos(), p.1 + 6.0 * sc * a.sin()) }))
+        .find(|&p| {
+            g.standable(p.0, p.1)
+                && g.solid_at(p).is_none()
+                && (0..8).all(|j| {
+                    let a = j as f32 * 0.785;
+                    g.standable(p.0 + 6.0 * sc * a.cos(), p.1 + 6.0 * sc * a.sin())
+                })
+        })
         .expect("open ground near the start");
     g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
     for _ in 0..8 * g.rules.tps / g.rules.frame_ticks {
@@ -1371,7 +1768,11 @@ fn a_steered_squad_moves_together_and_settles_when_let_go() {
     off_the_crystal(&mut g);
     let settled = spread_of(&g, 0);
     // A blob of 8 has its last place gap x sqrt(7) out (`Game::gap`).
-    assert!(settled < 3.0 * g.gap(), "a settled blob of 8 stands {settled} cells wide (gap {})", g.gap());
+    assert!(
+        settled < 3.0 * g.gap(),
+        "a settled blob of 8 stands {settled} cells wide (gap {})",
+        g.gap()
+    );
     let start = g.middle(0).unwrap();
     // Steer toward the mould's home for 6 s.
     let to = g.core;
@@ -1397,7 +1798,10 @@ fn a_steered_squad_moves_together_and_settles_when_let_go() {
         g.step();
     }
     let after = g.middle(0).unwrap();
-    assert!((after.0 - still.0).hypot(after.1 - still.1) < 0.5 * g.s(), "a let-go squad stays put");
+    assert!(
+        (after.0 - still.0).hypot(after.1 - still.1) < 0.5 * g.s(),
+        "a let-go squad stays put"
+    );
 }
 
 #[test]
@@ -1410,13 +1814,21 @@ fn a_squad_sent_somewhere_goes_at_the_pace_of_its_slowest() {
     }
     let start = g.middle(0).unwrap();
     let dest = (start.0 + 40.0 * g.s(), start.1);
-    let dest = if g.standable(dest.0, dest.1) { dest } else { (start.0 - 40.0 * g.s(), start.1) };
+    let dest = if g.standable(dest.0, dest.1) {
+        dest
+    } else {
+        (start.0 - 40.0 * g.s(), start.1)
+    };
     g.apply(Cmd::SquadOrder(0, Order::Move(dest.0, dest.1)));
     g.rules.wade = 6.0;
     off_the_crystal(&mut g);
     let start = g.middle(0).unwrap();
     let dest = (start.0 + 40.0 * g.s(), start.1);
-    let dest = if g.standable(dest.0, dest.1) { dest } else { (start.0 - 40.0 * g.s(), start.1) };
+    let dest = if g.standable(dest.0, dest.1) {
+        dest
+    } else {
+        (start.0 - 40.0 * g.s(), start.1)
+    };
     g.apply(Cmd::SquadOrder(0, Order::Move(dest.0, dest.1)));
     let slow = g.members(0)[0];
     for _ in 0..3 * g.rules.tps / g.rules.frame_ticks {
@@ -1429,7 +1841,10 @@ fn a_squad_sent_somewhere_goes_at_the_pace_of_its_slowest() {
     let m = g.middle(0).unwrap();
     let s = g.soldiers[slow];
     let gap = (m.0 - s.x).hypot(m.1 - s.y) / g.s();
-    eprintln!("slow soldier {gap} cells from the middle; squad spread {}", spread_of(&g, 0));
+    eprintln!(
+        "slow soldier {gap} cells from the middle; squad spread {}",
+        spread_of(&g, 0)
+    );
     assert!(gap < STRAY_TEST, "the squad left its slow soldier {gap} cells behind");
 }
 
@@ -1467,7 +1882,10 @@ fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster(
     g.apply(Cmd::Active(0));
     let lead = count(&mut g);
     // Twice the rate, less the first wait on the old beat.
-    assert!(lead as f32 >= 1.6 * plain as f32, "controlled {lead} shots against {plain}");
+    assert!(
+        lead as f32 >= 1.6 * plain as f32,
+        "controlled {lead} shots against {plain}"
+    );
     // Let go of fire: no more volleys.
     g.apply(Cmd::Fire(0, None));
     assert!(g.squads[0].fire.is_none());
@@ -1508,7 +1926,11 @@ fn split_join_and_merge_move_soldiers_between_squads() {
     for _ in 0..4 * g.rules.tps / g.rules.frame_ticks {
         g.step();
     }
-    assert!(spread_of(&g, 0) < 4.0 * g.gap(), "the merged squad gathers into one blob: {}", spread_of(&g, 0));
+    assert!(
+        spread_of(&g, 0) < 4.0 * g.gap(),
+        "the merged squad gathers into one blob: {}",
+        spread_of(&g, 0)
+    );
 }
 
 #[test]
@@ -1562,7 +1984,19 @@ fn no_larder(seed: u64) -> Game<BigDish> {
 /// A crystal off the mould's home with charge, nearest the squad.
 fn near_crystal(g: &Game<BigDish>) -> (usize, (f32, f32)) {
     let m = g.middle(0).unwrap();
-    g.world.crystals().iter().enumerate().skip(1).filter(|c| c.1 .1 > 0.0).map(|(i, c)| (i, c.0)).min_by(|a, b| (a.1 .0 - m.0).hypot(a.1 .1 - m.1).total_cmp(&(b.1 .0 - m.0).hypot(b.1 .1 - m.1))).unwrap()
+    g.world
+        .crystals()
+        .iter()
+        .enumerate()
+        .skip(1)
+        .filter(|c| c.1 .1 > 0.0)
+        .map(|(i, c)| (i, c.0))
+        .min_by(|a, b| {
+            (a.1 .0 - m.0)
+                .hypot(a.1 .1 - m.1)
+                .total_cmp(&(b.1 .0 - m.0).hypot(b.1 .1 - m.1))
+        })
+        .unwrap()
 }
 
 #[test]
@@ -1574,12 +2008,20 @@ fn with_no_larder_a_drained_crystal_banks_at_once_and_a_guarded_one_pays_without
     let bank0 = g.bank;
     for _ in 0..30 * g.rules.tps / g.rules.frame_ticks {
         g.step();
-        assert!(g.soldiers.iter().all(|s| s.carry == 0.0 && !s.homing), "nothing is carried");
+        assert!(
+            g.soldiers.iter().all(|s| s.carry == 0.0 && !s.homing),
+            "nothing is carried"
+        );
         if g.soldiers.iter().all(|s| matches!(s.order, Order::Clear(..))) {
             assert!(!g.guarded.contains(&i), "a crystal being drained is not guarded");
         }
     }
-    assert!(g.harvested > 0.0 && g.bank > bank0, "draining banked {} (bank {bank0} -> {})", g.harvested, g.bank);
+    assert!(
+        g.harvested > 0.0 && g.bank > bank0,
+        "draining banked {} (bank {bank0} -> {})",
+        g.harvested,
+        g.bank
+    );
     // Guard: the same crystal held, nobody harvesting, pays each second and
     // keeps its charge.
     let mut g = no_larder(7);
@@ -1598,11 +2040,17 @@ fn with_no_larder_a_drained_crystal_banks_at_once_and_a_guarded_one_pays_without
             seconds += 1;
             let want = g.world.crystals()[i].1 / g.rules.charge / g.rules.guard;
             let got = g.guard_paid - paid0;
-            assert!((got - want).abs() < 0.01 * want + 1e-4, "guarding paid {got} in a second, want {want}");
+            assert!(
+                (got - want).abs() < 0.01 * want + 1e-4,
+                "guarding paid {got} in a second, want {want}"
+            );
             checked += 1;
         }
     }
-    assert!(seconds >= 5 && checked > 0, "the squad by the crystal guarded it {seconds} of 20 s");
+    assert!(
+        seconds >= 5 && checked > 0,
+        "the squad by the crystal guarded it {seconds} of 20 s"
+    );
     // The squad takes none of it (the mould may eat some).
     let _ = charge;
     assert_eq!(g.harvested, 0.0);
@@ -1637,7 +2085,12 @@ fn builders_stand_beside_their_wall_and_walk_on_once_it_stands() {
         assert!(g.buildings[w].built >= 1.0, "seed {seed}: the wall rose");
         walled += 1;
         for (k, s) in g.soldiers.iter().enumerate() {
-            assert!(g.standable(s.x, s.y), "seed {seed}: builder {k} shut in its wall at ({}, {})", s.x, s.y);
+            assert!(
+                g.standable(s.x, s.y),
+                "seed {seed}: builder {k} shut in its wall at ({}, {})",
+                s.x,
+                s.y
+            );
         }
         // West past the wall, round its ends.
         let to = (x - 25.0, y);
@@ -1649,7 +2102,12 @@ fn builders_stand_beside_their_wall_and_walk_on_once_it_stands() {
         }
         for (k, s) in g.soldiers.iter().enumerate() {
             let d = (s.x - to.0).hypot(s.y - to.1);
-            assert!(d < 12.0, "seed {seed}: soldier {k} {d} cells short at ({}, {})", s.x, s.y);
+            assert!(
+                d < 12.0,
+                "seed {seed}: soldier {k} {d} cells short at ({}, {})",
+                s.x,
+                s.y
+            );
         }
     }
     assert!(walled >= 4, "{walled} of 5 seeds built the wall");
@@ -1675,7 +2133,12 @@ fn a_soldier_shut_in_a_wall_walks_out_and_a_move_into_one_stops_beside_it() {
         g.step();
     }
     let s = g.soldiers[0];
-    assert!(g.standable(s.x, s.y) && (s.x - (x - 24.0)).hypot(s.y - y) < 4.0, "out and there: ({}, {})", s.x, s.y);
+    assert!(
+        g.standable(s.x, s.y) && (s.x - (x - 24.0)).hypot(s.y - y) < 4.0,
+        "out and there: ({}, {})",
+        s.x,
+        s.y
+    );
     // Sent into the wall's middle: it ends beside it, not frozen.
     let start = (s.x, s.y);
     g.apply(Cmd::Order(0, Order::Move(at.0, at.1)));
@@ -1683,7 +2146,12 @@ fn a_soldier_shut_in_a_wall_walks_out_and_a_move_into_one_stops_beside_it() {
         g.step();
     }
     let s = g.soldiers[0];
-    assert!(g.standable(s.x, s.y) && (s.x - at.0).hypot(s.y - at.1) < 4.0, "beside the wall: ({}, {}) from {start:?}", s.x, s.y);
+    assert!(
+        g.standable(s.x, s.y) && (s.x - at.0).hypot(s.y - at.1) < 4.0,
+        "beside the wall: ({}, {}) from {start:?}",
+        s.x,
+        s.y
+    );
 }
 
 /// Owner's playtest (2026-11-14 04:44Z): four soldiers sent to harvest a
@@ -1709,7 +2177,11 @@ fn a_soldier_holding_tools_goes_to_the_crystal_it_is_sent_to() {
         .iter()
         .map(|c| c.0)
         .filter(|c| (c.0 - home.0).hypot(c.1 - home.1) > 30.0)
-        .min_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1)))
+        .min_by(|a, b| {
+            (a.0 - home.0)
+                .hypot(a.1 - home.1)
+                .total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))
+        })
         .expect("a crystal away from the larder");
     let d0 = (g.soldiers[0].x - far.0).hypot(g.soldiers[0].y - far.1);
     g.apply(Cmd::Order(0, Order::Clear(far.0, far.1)));
@@ -1718,7 +2190,12 @@ fn a_soldier_holding_tools_goes_to_the_crystal_it_is_sent_to() {
     }
     let s = g.soldiers[0];
     let d = (s.x - far.0).hypot(s.y - far.1);
-    assert!(!s.homing && d < d0 - 5.0, "walked {} toward the crystal, homing {}", d0 - d, s.homing);
+    assert!(
+        !s.homing && d < d0 - 5.0,
+        "walked {} toward the crystal, homing {}",
+        d0 - d,
+        s.homing
+    );
     // A load heavier than the whole carry: an empty soldier still goes out
     // rather than shuttling to the larder and back.
     let mut g = small(3);
@@ -1755,7 +2232,10 @@ fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
                 g.step();
             }
             let pressed = g.middle(0).unwrap();
-            assert!(g.squads[0].anchor.is_some_and(|p| g.world.open(p.0, p.1)), "seed {seed} heading {dir}: the anchor left the ground");
+            assert!(
+                g.squads[0].anchor.is_some_and(|p| g.world.open(p.0, p.1)),
+                "seed {seed} heading {dir}: the anchor left the ground"
+            );
             g.apply(Cmd::Steer(0, (-d.0, -d.1)));
             for _ in 0..frames(4, &g) {
                 g.step();
@@ -1767,7 +2247,10 @@ fn a_squad_steered_into_rock_or_the_edge_comes_back_out() {
             }
         }
     }
-    assert!(stuck.is_empty(), "squads that did not come back (seed, heading, cells): {stuck:?}");
+    assert!(
+        stuck.is_empty(),
+        "squads that did not come back (seed, heading, cells): {stuck:?}"
+    );
 }
 
 /// Owner's playtest (2026-11-14 08:01Z): "The soldiers are constantly
@@ -1794,7 +2277,10 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
             g.apply(Cmd::Active(0));
             g.apply(Cmd::Formation(0, f));
             off_the_crystal(&mut g);
-            assert!(g.squads[0].dest.is_none(), "{f:?} seed {seed}: still walking 8 s after it was sent 25 cells");
+            assert!(
+                g.squads[0].dest.is_none(),
+                "{f:?} seed {seed}: still walking 8 s after it was sent 25 cells"
+            );
             let sc = g.s();
             let frames = 5 * g.rules.tps / g.rules.frame_ticks;
             let m = g.middle(0).unwrap();
@@ -1807,7 +2293,13 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
                     }
                     let before: Vec<_> = g.soldiers.iter().map(|s| (s.x, s.y)).collect();
                     g.step();
-                    w += g.soldiers.iter().zip(&before).filter(|(s, _)| s.alive).map(|(s, b)| (s.x - b.0).hypot(s.y - b.1)).sum::<f32>();
+                    w += g
+                        .soldiers
+                        .iter()
+                        .zip(&before)
+                        .filter(|(s, _)| s.alive)
+                        .map(|(s, b)| (s.x - b.0).hypot(s.y - b.1))
+                        .sum::<f32>();
                 }
                 w / sc
             };
@@ -1818,7 +2310,10 @@ fn a_formation_holds_its_places_when_the_cursor_circles_or_a_member_falls() {
             g.soldiers[k].alive = false;
             death += walked(&mut g, false);
         }
-        assert!(circling < 1.0, "{f:?}: the cursor circling walked the squad {circling} cells");
+        assert!(
+            circling < 1.0,
+            "{f:?}: the cursor circling walked the squad {circling} cells"
+        );
         assert!(death < 100.0, "{f:?}: a death walked the squad {death} cells");
     }
 }
@@ -1832,11 +2327,20 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
     let sc = g.s();
     let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
     let d = 1.25 * g.rules.range * sc;
-    let far = [(1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0), (0.7, 0.7), (-0.7, 0.7), (0.7, -0.7), (-0.7, -0.7)]
-        .into_iter()
-        .map(|(u, v): (f32, f32)| (x + u * d, y + v * d))
-        .find(|&p| g.clear_line((x, y), p))
-        .expect("an open line 30 cells out");
+    let far = [
+        (1.0, 0.0),
+        (-1.0, 0.0),
+        (0.0, 1.0),
+        (0.0, -1.0),
+        (0.7, 0.7),
+        (-0.7, 0.7),
+        (0.7, -0.7),
+        (-0.7, -0.7),
+    ]
+    .into_iter()
+    .map(|(u, v): (f32, f32)| (x + u * d, y + v * d))
+    .find(|&p| g.clear_line((x, y), p))
+    .expect("an open line 30 cells out");
     {
         let s = &mut g.soldiers[0];
         s.order = Order::Fight(far.0, far.1);
@@ -1844,12 +2348,21 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
         s.dense = 50;
     }
     assert!(!g.engaged(0), "30 cells is past the plain range");
-    g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
-    assert!((g.gun_range() - 48.0).abs() < 1e-4, "one card doubles the range (owner: 2-4x)");
+    g.bullet_mods = BulletMods {
+        reach: 1,
+        ..BulletMods::default()
+    };
+    assert!(
+        (g.gun_range() - 48.0).abs() < 1e-4,
+        "one card doubles the range (owner: 2-4x)"
+    );
     assert!(g.engaged(0), "one Range card reaches 48 cells");
     // Fired legs: free fire with the card flies out to 48 cells.
     let mut g = small(3);
-    g.bullet_mods = BulletMods { reach: 1, ..BulletMods::default() };
+    g.bullet_mods = BulletMods {
+        reach: 1,
+        ..BulletMods::default()
+    };
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Order(k, Order::Attack));
     }
@@ -1863,7 +2376,10 @@ fn a_range_card_lets_soldiers_engage_further_and_shoot_further() {
             break;
         }
     }
-    assert!(longest > g.rules.range * g.s(), "a bullet flew past the plain range: {longest} of {reach}");
+    assert!(
+        longest > g.rules.range * g.s(),
+        "a bullet flew past the plain range: {longest} of {reach}"
+    );
 }
 
 // Building (2026-11-14, owner 08:10Z: queue builds; start raising once in
@@ -1883,7 +2399,13 @@ fn room_near(g: &Game<BigDish>, p: (f32, f32)) -> (f32, f32) {
             let a = k as f32 / 16.0 * std::f32::consts::TAU;
             (p.0 + r as f32 * sc * a.cos(), p.1 + r as f32 * sc * a.sin())
         })
-        .find(|&q| g.build_blocked(Kind::Turret, q).is_none() && (0..8).all(|j| { let a = j as f32 * 0.785; g.standable(q.0 + 6.0 * sc * a.cos(), q.1 + 6.0 * sc * a.sin()) }))
+        .find(|&q| {
+            g.build_blocked(Kind::Turret, q).is_none()
+                && (0..8).all(|j| {
+                    let a = j as f32 * 0.785;
+                    g.standable(q.0 + 6.0 * sc * a.cos(), q.1 + 6.0 * sc * a.sin())
+                })
+        })
         .expect("open ground")
 }
 
@@ -1915,7 +2437,12 @@ fn builders_raise_from_reach_and_stay_on_the_side_they_came_from() {
         g.step();
         if first.is_none() && g.buildings[0].built > 0.0 {
             // The nearest builder when it began: about `reach` out, not at the ghost.
-            first = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - at.0).hypot(s.y - at.1)).reduce(f32::min);
+            first = g
+                .soldiers
+                .iter()
+                .filter(|s| s.alive)
+                .map(|s| (s.x - at.0).hypot(s.y - at.1))
+                .reduce(f32::min);
         }
         if g.buildings[0].up() {
             break;
@@ -1923,7 +2450,12 @@ fn builders_raise_from_reach_and_stay_on_the_side_they_came_from() {
     }
     assert!(g.buildings[0].up(), "the squad raised it");
     let first = first.unwrap();
-    assert!(first > reach - 1.5 * sc, "raising began {:.1} cells out (reach {})", first / sc, g.rules.build.reach);
+    assert!(
+        first > reach - 1.5 * sc,
+        "raising began {:.1} cells out (reach {})",
+        first / sc,
+        g.rules.build.reach
+    );
     // Every builder on the side it came from (toward the larder), none
     // past the ghost or round it toward the mould, and none on it.
     let back = (from.0 - at.0, from.1 - at.1);
@@ -1931,7 +2463,11 @@ fn builders_raise_from_reach_and_stay_on_the_side_they_came_from() {
         let d = (s.x - at.0).hypot(s.y - at.1);
         let side = ((s.x - at.0) * back.0 + (s.y - at.1) * back.1) / back.0.hypot(back.1);
         assert!(side > 0.0, "soldier {k} stands {:.1} cells on the far side", -side / sc);
-        assert!(d >= (g.rules.build.touch + 1.0) * sc - 0.5, "soldier {k} on the ghost ({:.1} cells)", d / sc);
+        assert!(
+            d >= (g.rules.build.touch + 1.0) * sc - 0.5,
+            "soldier {k} on the ghost ({:.1} cells)",
+            d / sc
+        );
     }
 }
 
@@ -1952,7 +2488,11 @@ fn shift_queued_builds_rise_in_turn_by_one_builder() {
         assert!(g.apply(Cmd::Queue(0, Order::Build(i))));
         sites.push(at);
     }
-    assert_eq!((g.soldiers[0].order, g.soldiers[0].queued), (Order::Build(0), 2), "the first at once, two queued");
+    assert_eq!(
+        (g.soldiers[0].order, g.soldiers[0].queued),
+        (Order::Build(0), 2),
+        "the first at once, two queued"
+    );
     // The others go far off, out of the idle soldiers' pickup range.
     let mut done = Vec::new();
     for _ in 0..frames(&g, 60.0) {
@@ -1996,7 +2536,10 @@ fn a_squad_sent_off_keeps_a_build_queued_for_when_it_gets_there() {
         g.step();
     }
     assert!(g.squads[0].dest.is_some(), "still on its way");
-    assert!(g.members(0).iter().all(|&k| g.soldiers[k].queued == 1), "the build stays queued while it walks");
+    assert!(
+        g.members(0).iter().all(|&k| g.soldiers[k].queued == 1),
+        "the build stays queued while it walks"
+    );
     for _ in 0..frames(&g, 30.0) {
         g.step();
         if g.buildings[0].up() {
@@ -2036,7 +2579,11 @@ fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
     for _ in 0..frames(&g, 6.0) {
         g.step();
     }
-    assert!(g.buildings[0].built > 0.0 && !g.buildings[0].up(), "half up: {}", g.buildings[0].built);
+    assert!(
+        g.buildings[0].built > 0.0 && !g.buildings[0].up(),
+        "half up: {}",
+        g.buildings[0].built
+    );
     let before = g.bank;
     assert_eq!(g.ghost_at((a.0 + 0.5 * sc, a.1)), Some(0));
     assert!(g.apply(Cmd::Unbuild(0)));
@@ -2045,7 +2592,11 @@ fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
     assert_eq!(g.ghost_at(a), None, "gone");
     assert!(!g.apply(Cmd::Unbuild(0)), "only once");
     g.step();
-    assert_eq!(g.soldiers[0].order, Order::Build(1), "its builder goes on down its queue");
+    assert_eq!(
+        g.soldiers[0].order,
+        Order::Build(1),
+        "its builder goes on down its queue"
+    );
     assert_eq!(Cmd::parse(&Cmd::Unbuild(3).to_line()), Some(Cmd::Unbuild(3)));
     // A standing building is not sold back.
     g.rules.build.raise = 0.0;
@@ -2084,7 +2635,11 @@ fn a_squad_sent_past_a_dead_end_goes_round_it() {
                 continue;
             }
             let n = g.buildings.len();
-            let walls = [(at(14.0, -8.0), at(14.0, 8.0)), (at(6.0, -8.0), at(14.0, -8.0)), (at(6.0, 8.0), at(14.0, 8.0))];
+            let walls = [
+                (at(14.0, -8.0), at(14.0, 8.0)),
+                (at(6.0, -8.0), at(14.0, -8.0)),
+                (at(6.0, 8.0), at(14.0, 8.0)),
+            ];
             if walls.iter().all(|&(a, b)| g.apply(Cmd::Wall(a, b))) {
                 sent = Some(to);
                 break;
@@ -2105,7 +2660,10 @@ fn a_squad_sent_past_a_dead_end_goes_round_it() {
         tried.push((seed, best));
     }
     assert!(tried.len() >= 2, "the cup stood on too few seeds: {tried:?}");
-    assert!(tried.iter().all(|&(_, best)| best < 6.0), "(seed, nearest the squad came in cells): {tried:?}");
+    assert!(
+        tried.iter().all(|&(_, best)| best < 6.0),
+        "(seed, nearest the squad came in cells): {tried:?}"
+    );
 }
 
 /// The `Rate` card (owner's notes, 11-14 15:06Z: "2-4x ... rate of
@@ -2114,10 +2672,20 @@ fn a_squad_sent_past_a_dead_end_goes_round_it() {
 fn a_rate_card_fires_twice_as_often() {
     let mut g = small(1);
     let plain = g.shot_gap(0);
-    g.bullet_mods = BulletMods { rate: 1, ..BulletMods::default() };
+    g.bullet_mods = BulletMods {
+        rate: 1,
+        ..BulletMods::default()
+    };
     assert_eq!(g.shot_gap(0), (plain as f32 / 2.0).round().max(1.0) as u64);
-    g.bullet_mods = BulletMods { rate: 3, ..BulletMods::default() };
-    assert_eq!(g.shot_gap(0), (plain as f32 / 4.0).round().max(1.0) as u64, "three cards, four times");
+    g.bullet_mods = BulletMods {
+        rate: 3,
+        ..BulletMods::default()
+    };
+    assert_eq!(
+        g.shot_gap(0),
+        (plain as f32 / 4.0).round().max(1.0) as u64,
+        "three cards, four times"
+    );
 }
 
 /// Open ground `d` dish cells from squad 0's middle.
@@ -2152,7 +2720,11 @@ fn a_squad_does_its_queued_orders_in_turn() {
     let m = g.middle(0).unwrap();
     assert!(went_a, "the squad never reached its first point");
     assert_eq!(g.squads[0].queued, 0, "the queued move started");
-    assert!((m.0 - b.0).hypot(m.1 - b.1) < 4.0 * g.s(), "the squad stands {} cells from its queued point", (m.0 - b.0).hypot(m.1 - b.1) / g.s());
+    assert!(
+        (m.0 - b.0).hypot(m.1 - b.1) < 4.0 * g.s(),
+        "the squad stands {} cells from its queued point",
+        (m.0 - b.0).hypot(m.1 - b.1) / g.s()
+    );
     // A plain order drops the queue; an idle squad starts a queued one at once.
     g.apply(Cmd::SquadQueue(0, Order::Move(a.0, a.1)));
     assert_eq!((g.squads[0].queued, g.squads[0].dest), (0, Some(a)));
@@ -2180,7 +2752,10 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     // Settings stay each squad's own.
     g.apply(Cmd::Formation(0, Formation::Line));
     g.apply(Cmd::Cover(b as u8, Cover::Never));
-    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Line, Formation::Blob));
+    assert_eq!(
+        (g.squads[0].formation, g.squads[b].formation),
+        (Formation::Line, Formation::Blob)
+    );
     assert_eq!((g.squads[0].cover, g.squads[b].cover), (Cover::Some, Cover::Never));
     // One order moves both, each by where it stands in the link.
     let (m0, mb) = (g.middle(0).unwrap(), g.middle(b).unwrap());
@@ -2189,7 +2764,10 @@ fn linked_squads_take_orders_together_and_keep_their_own_settings() {
     let (d0, db) = (g.squads[0].dest.unwrap(), g.squads[b].dest.unwrap());
     let apart = |p: (f32, f32), q: (f32, f32)| (p.0 - q.0, p.1 - q.1);
     let (was, now) = (apart(m0, mb), apart(d0, db));
-    assert!((was.0 - now.0).abs() < 1e-3 && (was.1 - now.1).abs() < 1e-3, "the link keeps its shape: {was:?} then {now:?}");
+    assert!(
+        (was.0 - now.0).abs() < 1e-3 && (was.1 - now.1).abs() < 1e-3,
+        "the link keeps its shape: {was:?} then {now:?}"
+    );
     g.apply(Cmd::Steer(0, (1.0, 0.0)));
     assert_eq!(g.squads[b].steer, (1.0, 0.0), "steering one steers its link");
     g.apply(Cmd::Steer(0, (0.0, 0.0)));
@@ -2223,7 +2801,11 @@ fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower(
     assert_eq!(guards(&g), 3, "a third of 8 on guard");
     for k in g.members(0) {
         let s = g.soldiers[k];
-        assert_eq!(s.cover, matches!(s.order, Order::Fight(..) | Order::Move(..)), "a defender walks to its post and fights there, a worker drains");
+        assert_eq!(
+            s.cover,
+            matches!(s.order, Order::Fight(..) | Order::Move(..)),
+            "a defender walks to its post and fights there, a worker drains"
+        );
     }
     let worker = g.members(0).into_iter().find(|&k| !g.soldiers[k].cover).unwrap();
     let boost = g.work_boost(worker);
@@ -2244,8 +2826,13 @@ fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower(
     g.rules.cover.near = 0;
     g.apply(Cmd::Cover(0, Cover::Some));
     for k in g.members(0).into_iter().filter(|&k| g.soldiers[k].cover) {
-        let (Order::Fight(x, y) | Order::Move(x, y)) = g.soldiers[k].order else { unreachable!() };
-        assert!(g.world.walkers_in((x, y), 2.0 * g.s()) <= g.rules.cover.thin.max(g.world.walkers_in(c, 2.0 * g.s())), "a post in the slime");
+        let (Order::Fight(x, y) | Order::Move(x, y)) = g.soldiers[k].order else {
+            unreachable!()
+        };
+        assert!(
+            g.world.walkers_in((x, y), 2.0 * g.s()) <= g.rules.cover.thin.max(g.world.walkers_in(c, 2.0 * g.s())),
+            "a post in the slime"
+        );
     }
     // Sent elsewhere, the work ends and the defenders come in.
     let to = open_near(&g, 20.0);

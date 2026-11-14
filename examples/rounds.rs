@@ -74,7 +74,14 @@ fn farm_hand(g: &mut Game<BigDish>, farmed: &mut Vec<usize>) {
     let l = g.larder;
     let r = g.rules;
     let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
+    let mut cs: Vec<(f32, f32)> = g
+        .world
+        .crystals()
+        .iter()
+        .filter(|c| c.1 >= dry)
+        .map(|c| c.0)
+        .filter(|c| *c != g.core)
+        .collect();
     cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
     if g.bank > g.rules.soldier_cost + RESERVE && g.alive() < FARM_MAX {
         g.apply(Cmd::Buy);
@@ -108,7 +115,9 @@ fn farm_hand(g: &mut Game<BigDish>, farmed: &mut Vec<usize>) {
 fn random_round(seed: u64) -> Vec<Card> {
     let mut rng = Rng::new(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ 0x5EED);
     let n = 1 + rng.below(4) as usize;
-    (0..n).map(|_| Card::ALL[rng.below(Card::ALL.len() as u32) as usize]).collect()
+    (0..n)
+        .map(|_| Card::ALL[rng.below(Card::ALL.len() as u32) as usize])
+        .collect()
 }
 
 fn loadout(name: &str, seed: u64) -> Vec<Card> {
@@ -164,7 +173,10 @@ fn play(seed: u64, tier: &str, load: &str, hand: &str, rules: Rules, rr: RoundRu
         // effect: what the rounds did is only in the mould).
         if let Some(dir) = look {
             let t = g.time();
-            let from: f32 = std::env::var("LOOK_FROM").ok().and_then(|v| v.parse().ok()).unwrap_or(30.0);
+            let from: f32 = std::env::var("LOOK_FROM")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(30.0);
             if (from..from + 60.0).contains(&t) {
                 if frame.is_multiple_of(5) {
                     let mut im = g.world.image(1);
@@ -218,11 +230,35 @@ fn holm(tests: &[(String, usize, usize, f64)]) -> Vec<bool> {
 
 fn main() {
     let mut seeds: Vec<u64> = (5..=20).collect();
-    let mut tiers: Vec<String> = ["none", "swarmer", "sleeper", "sporer", "wary", "grudge"].iter().map(|s| s.to_string()).collect();
-    let mut loads: Vec<String> = ["none", "blast", "gas", "germ", "wide+blast", "scatter+blast", "quiet+blast", "delay+blast", "thick+blast", "trap", "lull", "plague", "shock", "rand"].iter().map(|s| s.to_string()).collect();
+    let mut tiers: Vec<String> = ["none", "swarmer", "sleeper", "sporer", "wary", "grudge"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let mut loads: Vec<String> = [
+        "none",
+        "blast",
+        "gas",
+        "germ",
+        "wide+blast",
+        "scatter+blast",
+        "quiet+blast",
+        "delay+blast",
+        "thick+blast",
+        "trap",
+        "lull",
+        "plague",
+        "shock",
+        "rand",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
     let (mut threads, mut look) = (4usize, None::<String>);
     let mut hand = "farm".to_string();
-    let mut rules = Rules { cap: 600.0, ..Rules::default() };
+    let mut rules = Rules {
+        cap: 600.0,
+        ..Rules::default()
+    };
     let mut rr = RoundRules::default();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -277,7 +313,8 @@ fn main() {
         }
     });
     let out = out.into_inner().unwrap();
-    let get = |t: &str, s: u64, l: &str| out[jobs.iter().position(|(a, b, c)| a == t && *b == s && c == l).unwrap()].clone();
+    let get =
+        |t: &str, s: u64, l: &str| out[jobs.iter().position(|(a, b, c)| a == t && *b == s && c == l).unwrap()].clone();
     let mean = |t: &str, l: &str| seeds.iter().map(|&s| get(t, s, l).score).sum::<f32>() / seeds.len() as f32;
     let pair = |t: &str, a: &str, b: &str| {
         let (mut w, mut l) = (0, 0);
@@ -302,7 +339,13 @@ fn main() {
         for t in &tiers {
             let rows: Vec<Row> = seeds.iter().map(|&s| get(t, s, l)).collect();
             let e = |b: &str| rows.iter().filter(|r| r.end == b).count();
-            print!(" {:>+7.3} ({:>2}/{:>2}/{:>2})", mean(t, l), e("mould wiped"), e("cap"), e("squad wiped"));
+            print!(
+                " {:>+7.3} ({:>2}/{:>2}/{:>2})",
+                mean(t, l),
+                e("mould wiped"),
+                e("cap"),
+                e("squad wiped")
+            );
         }
         println!();
     }
@@ -331,9 +374,15 @@ fn main() {
         }
     }
     let holds = holm(&tests);
-    println!("\nreadings 1-2, paired by seed (higher / lower; sign test, Holm over {}):", tests.len());
+    println!(
+        "\nreadings 1-2, paired by seed (higher / lower; sign test, Holm over {}):",
+        tests.len()
+    );
     for (i, (name, w, l, p)) in tests.iter().enumerate() {
-        println!("  {name:>40}: {w:>2} / {l:>2}, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
+        println!(
+            "  {name:>40}: {w:>2} / {l:>2}, p {p:.4}{}",
+            if holds[i] { ", holds" } else { "" }
+        );
     }
     // Reading 3: the best loadout per tier, and each other against it.
     println!("\nreading 3, per tier: the best loadout by mean, and each other against it (higher / lower, p):");

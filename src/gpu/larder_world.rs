@@ -35,12 +35,12 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use super::{read_back, Curve, Engine, Hand, Settings, Shared, Stamps, Start, MAX_PILES, WSTAT_BYTES};
-use pixels::wgpu;
 use crate::mould::big::{BigDish, BigParams};
 use crate::mould::larder_world::{race_params, Soldier, World};
 use crate::mould::map::Map;
 use crate::mould::own_mould::{self, Task, Tend};
 use crate::mould::squad::{self, Frame, FrameOut, SHOTS_MAX, UNITS_MAX};
+use pixels::wgpu;
 
 /// The CPU race world's settings on the engine (`larder_world::race_params`).
 pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
@@ -232,8 +232,23 @@ pub fn garden_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
 pub fn garden_settings_on(s: Settings, side: usize) -> Settings {
     let s = Settings { walkers: 2 * side, ..s };
     let half = s.capacity.max(s.walkers) / 2;
-    let species_cap = (0..own_mould::SPECIES as usize).map(|sp| if sp == 0 || sp == own_mould::OWN as usize { half } else { 0 }).collect();
-    Settings { species: own_mould::SPECIES, avoid: 0.0, convert: own_mould::CONVERT, convert_r: own_mould::CONVERT_R, species_cap, ..s }
+    let species_cap = (0..own_mould::SPECIES as usize)
+        .map(|sp| {
+            if sp == 0 || sp == own_mould::OWN as usize {
+                half
+            } else {
+                0
+            }
+        })
+        .collect();
+    Settings {
+        species: own_mould::SPECIES,
+        avoid: 0.0,
+        convert: own_mould::CONVERT,
+        convert_r: own_mould::CONVERT_R,
+        species_cap,
+        ..s
+    }
 }
 
 impl GpuWorld {
@@ -242,16 +257,32 @@ impl GpuWorld {
     /// the enemy alone and the soldiers' tasks as tend entries. `s` is
     /// `garden_settings` with any changes; a grazing world is refused (the
     /// player's walkers a cell are counted into the grazing count).
-    pub fn garden(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, seed: u64, scale: usize, walkers: usize) -> Result<Self, String> {
+    pub fn garden(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        s: Settings,
+        seed: u64,
+        scale: usize,
+        walkers: usize,
+    ) -> Result<Self, String> {
         if s.graze != 0.0 {
-            return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
+            return Err(format!(
+                "a garden can't graze (graze {}): its count of the player's walkers uses the grazing count",
+                s.graze
+            ));
         }
         if s.species != own_mould::SPECIES {
-            return Err(format!("a garden runs {} species slots, not {}", own_mould::SPECIES, s.species));
+            return Err(format!(
+                "a garden runs {} species slots, not {}",
+                own_mould::SPECIES,
+                s.species
+            ));
         }
         let m = own_mould::garden_map(seed, scale, walkers);
         let shared = Shared::new(device);
-        let mut e = Engine::made_with(device, queue, &shared, &s, scale, |p| own_mould::garden_dish(p, &m, walkers));
+        let mut e = Engine::made_with(device, queue, &shared, &s, scale, |p| {
+            own_mould::garden_dish(p, &m, walkers)
+        });
         e.garden = true;
         let mut g = Self::of(e, shared, s, scale);
         g.garden = Some(GpuGarden::default());
@@ -264,9 +295,19 @@ impl GpuWorld {
     /// world's settings with any tier's keys; the garden's species slots,
     /// conversion and caps go on top (`garden_settings_on`), with
     /// `walkers` a side rounded as `own_mould::garden_map_on`.
-    pub fn garden_on_map(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize, m: &Map, walkers: usize) -> Result<Self, String> {
+    pub fn garden_on_map(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        s: Settings,
+        scale: usize,
+        m: &Map,
+        walkers: usize,
+    ) -> Result<Self, String> {
         if s.graze != 0.0 {
-            return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
+            return Err(format!(
+                "a garden can't graze (graze {}): its count of the player's walkers uses the grazing count",
+                s.graze
+            ));
         }
         let (m, side) = own_mould::garden_map_on(m, walkers)?;
         let s = garden_settings_on(s, side);
@@ -315,9 +356,39 @@ impl GpuWorld {
 
     fn of(e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
         let size = RO_GRID + 4 * e.grid_max() as u64;
-        let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
+        let buf = e.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("readout"),
+            size,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let ro = Readout {
+            buf,
+            ready: Arc::new(AtomicBool::new(false)),
+            busy: false,
+            sub: RefCell::new(None),
+        };
+        let mut g = GpuWorld {
+            e,
+            shared,
+            s,
+            sub: scale as u32,
+            crystals: Vec::new(),
+            living: 0,
+            garden: None,
+            own: 0,
+            broken: 0,
+            ro,
+            want: Cell::new(0),
+            grid: None,
+            stamps: None,
+            profile: None,
+            spread: 0,
+            later: RefCell::new(VecDeque::new()),
+            waits: 0,
+            wait_ms: 0.0,
+            struck: 0,
+        };
         g.read_now();
         g
     }
@@ -355,7 +426,11 @@ impl GpuWorld {
         let (w, h) = (self.e.dish.w, self.e.dish.h);
         let gw = w.div_ceil(bin);
         let mut out = vec![0u32; gw * h.div_ceil(bin)];
-        for (i, b) in read_back(&self.e.device, &self.e.queue, &self.e.occ).chunks_exact(4).take(w * h).enumerate() {
+        for (i, b) in read_back(&self.e.device, &self.e.queue, &self.e.occ)
+            .chunks_exact(4)
+            .take(w * h)
+            .enumerate()
+        {
             let n = u32::from_le_bytes(b.try_into().unwrap());
             if n > 0 {
                 out[(i / w / bin) * gw + (i % w) / bin] += n;
@@ -418,12 +493,24 @@ impl GpuWorld {
         if !self.frame_ready() {
             let t0 = Instant::now();
             let index = self.ro.sub.borrow_mut().take();
-            self.e.device.poll(wgpu::PollType::Wait { submission_index: index, timeout: None }).expect("poll");
+            self.e
+                .device
+                .poll(wgpu::PollType::Wait {
+                    submission_index: index,
+                    timeout: None,
+                })
+                .expect("poll");
             self.waits += 1;
             self.wait_ms += t0.elapsed().as_secs_f64() * 1e3;
         }
         assert!(self.ro.ready.load(Ordering::Acquire), "the readout mapped");
-        let words: Vec<u32> = self.ro.buf.get_mapped_range(..).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        let words: Vec<u32> = self
+            .ro
+            .buf
+            .get_mapped_range(..)
+            .chunks_exact(4)
+            .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
+            .collect();
         self.ro.buf.unmap();
         self.ro.ready.store(false, Ordering::Release);
         self.ro.busy = false;
@@ -438,20 +525,42 @@ impl GpuWorld {
         sq[squad::U_OUT..squad::S_IN].copy_from_slice(&words[at(RO_UNITS)..at(RO_SHOTS)]);
         sq[squad::S_OUT..squad::PATH].copy_from_slice(&words[at(RO_SHOTS)..at(RO_KILLS)]);
         let (nunits, nshots, _) = self.e.squad;
-        let out = squad::unpack(self.e.dish.w, &sq, &words[at(RO_KILLS)..at(RO_PILES)], nunits as usize, nshots as usize);
+        let out = squad::unpack(
+            self.e.dish.w,
+            &sq,
+            &words[at(RO_KILLS)..at(RO_PILES)],
+            nunits as usize,
+            nshots as usize,
+        );
         let piles = &words[at(RO_PILES)..at(RO_WSTAT)];
-        let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
+        let sums = (0..self.e.npiles as usize)
+            .map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2]))
+            .collect();
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid }
+        Read {
+            out,
+            sums,
+            broken: st[1],
+            living: st[4],
+            own: st[5],
+            grid,
+        }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
     /// and the mirror's open ground once more wall cells have broken.
     fn keep(&mut self, r: &mut Read) {
         let k = self.e.dish.p.scale as f32;
-        self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
+        self.crystals = self
+            .e
+            .dish
+            .piles
+            .iter()
+            .zip(&r.sums)
+            .map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum))
+            .collect();
         self.living = r.living as usize;
         self.own = r.own as usize;
         if let Some(g) = r.grid.take() {
@@ -473,7 +582,10 @@ impl GpuWorld {
         // start has not written yet.
         self.e.grid = self.grid_square(true);
         self.e.write_params(&self.s, Hand::default(), 0);
-        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("readout") });
+        let mut enc = self
+            .e
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("readout") });
         self.record_readout(&mut enc);
         self.submit(enc);
         let mut r = self.take();
@@ -512,7 +624,9 @@ impl World for GpuWorld {
         if n > 0 && self.profile.is_some() {
             let t = self.e.record_timed(&self.shared, n, self.s.curve == Curve::Soft);
             self.profile.as_mut().unwrap().push(t);
-            let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world readout") });
+            let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("larder world readout"),
+            });
             self.record_readout(&mut enc);
             self.submit(enc);
             return None;
@@ -527,8 +641,11 @@ impl World for GpuWorld {
                 let ticks = n * (k + 1) / shares - sent;
                 sent += ticks;
                 let last = k + 1 == shares;
-                let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world share") });
-                self.e.record_share(&self.shared, &mut enc, ticks, (k == 0, last), soft, None);
+                let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("larder world share"),
+                });
+                self.e
+                    .record_share(&self.shared, &mut enc, ticks, (k == 0, last), soft, None);
                 if last {
                     self.record_readout(&mut enc);
                 }
@@ -540,7 +657,9 @@ impl World for GpuWorld {
             }
             return None;
         }
-        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("larder world") });
+        let mut enc = self.e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("larder world"),
+        });
         let qs = self.stamps.as_ref().and_then(|st| st.take());
         self.e.record(&self.shared, &mut enc, n, soft, qs);
         let stamped = qs.is_some() && n > 0;
@@ -600,7 +719,18 @@ impl World for GpuWorld {
         let mut out = squad::BurstOut::default();
         if b.kill || b.burn || b.alarm > 0.0 || b.crater > 0 {
             let r = if b.kill || b.burn { b.r } else { 0.0 };
-            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
+            self.e.burst(
+                &self.shared,
+                &self.s,
+                b.at.0,
+                b.at.1,
+                r,
+                b.alarm,
+                b.alarm_r,
+                b.crater_r,
+                b.crater,
+                0.0,
+            );
             // Only a kill moves the count: a shock or a crater alone (the
             // rounds' trails, a burst a bullet a frame) skips the read-back,
             // and a burn waits for `burned`, once a frame.
@@ -615,7 +745,16 @@ impl World for GpuWorld {
         if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
             self.s.fling_speed = k.fling_speed;
             let sc = self.e.dish.p.scale as f32;
-            out.flung = self.e.fling(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv);
+            out.flung = self.e.fling(
+                &self.shared,
+                &self.s,
+                b.at.0,
+                b.at.1,
+                r / sc,
+                rr / sc,
+                b.fling_steps,
+                inv,
+            );
         }
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
@@ -627,7 +766,14 @@ impl World for GpuWorld {
             }
         }
         if b.bait > 0.0 || b.smother {
-            self.e.lay_scent(&self.shared, &self.s, b.at.0, b.at.1, b.r, (if b.smother { 0.0 } else { 1.0 }, b.bait));
+            self.e.lay_scent(
+                &self.shared,
+                &self.s,
+                b.at.0,
+                b.at.1,
+                b.r,
+                (if b.smother { 0.0 } else { 1.0 }, b.bait),
+            );
         }
         if b.cloud > 0.0 && k.gas_keep > 0.0 {
             (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
@@ -645,7 +791,8 @@ impl World for GpuWorld {
                 self.s.germ = k.sick_deposit;
                 self.s.germ_keep = k.sick_keep;
             }
-            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
+            self.e
+                .burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
         }
         out
     }
@@ -721,7 +868,9 @@ impl World for GpuWorld {
                         continue;
                     }
                     let each = cost * g.tend.charge / cells as f32;
-                    self.e.tends.push([cx as u32, cy as u32, 2, r2, 0, each.to_bits(), 0, 0]);
+                    self.e
+                        .tends
+                        .push([cx as u32, cy as u32, 2, r2, 0, each.to_bits(), 0, 0]);
                     g.fed += cost;
                     spent += cost;
                 }
@@ -832,7 +981,11 @@ mod tests {
 
     /// `exact` on software Vulkan, `card` on a real GPU (`ON_CARD`).
     fn tol<T>(exact: T, card: T) -> T {
-        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) { card } else { exact }
+        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
+            card
+        } else {
+            exact
+        }
     }
 
     /// A GPU, or None (the test passes, saying so) where there is none; CI
@@ -850,8 +1003,15 @@ mod tests {
             }
         };
         let info = adapter.get_info();
-        ON_CARD.store(info.device_type != wgpu::DeviceType::Cpu, std::sync::atomic::Ordering::Relaxed);
-        let desc = wgpu::DeviceDescriptor { label: Some("readout"), required_limits: adapter.limits(), ..Default::default() };
+        ON_CARD.store(
+            info.device_type != wgpu::DeviceType::Cpu,
+            std::sync::atomic::Ordering::Relaxed,
+        );
+        let desc = wgpu::DeviceDescriptor {
+            label: Some("readout"),
+            required_limits: adapter.limits(),
+            ..Default::default()
+        };
         Some(block_on(adapter.request_device(&desc)).expect("device"))
     }
 
@@ -886,19 +1046,44 @@ mod tests {
             assert!(self.g.waits <= w0 + 1, "frame {}: one wait at most", self.frames);
             assert_eq!(out, self.g.e.squad_out(), "frame {}: the squad's output", self.frames);
             let k = self.g.scale();
-            let sums: Vec<((f32, f32), f32)> = self.g.e.dish.piles.iter().zip(self.g.e.world_counts().0).map(|(&(x, y), (sum, _))| ((x * k, y * k), sum)).collect();
+            let sums: Vec<((f32, f32), f32)> = self
+                .g
+                .e
+                .dish
+                .piles
+                .iter()
+                .zip(self.g.e.world_counts().0)
+                .map(|(&(x, y), (sum, _))| ((x * k, y * k), sum))
+                .collect();
             assert_eq!(self.g.crystals(), sums, "frame {}: the crystals", self.frames);
-            assert_eq!(self.g.living(), self.g.e.alive(), "frame {}: the living walkers", self.frames);
+            assert_eq!(
+                self.g.living(),
+                self.g.e.alive(),
+                "frame {}: the living walkers",
+                self.frames
+            );
             let (bin, t) = (self.bin, self.g.ticks());
             let &(b, at, _) = self.g.grid.as_ref().expect("a grid summed on the GPU");
-            assert!(b == bin && at <= t && t - at < GRID_EVERY, "frame {}: the grid's square {b} and tick {at} at tick {t}", self.frames);
+            assert!(
+                b == bin && at <= t && t - at < GRID_EVERY,
+                "frame {}: the grid's square {b} and tick {at} at tick {t}",
+                self.frames
+            );
             if at == t {
                 self.sums += 1;
-                assert_eq!(self.g.mould_grid(bin), Some(self.g.grid_now(bin)), "frame {}: the mould grid", self.frames);
+                assert_eq!(
+                    self.g.mould_grid(bin),
+                    Some(self.g.grid_now(bin)),
+                    "frame {}: the mould grid",
+                    self.frames
+                );
             }
             if self.g.e.cycles {
                 let (life, _) = self.g.e.life_of();
-                let (dead, living) = (life.iter().filter(|&&l| l == crate::mould::big::LIFE_DEAD).count(), self.g.living());
+                let (dead, living) = (
+                    life.iter().filter(|&&l| l == crate::mould::big::LIFE_DEAD).count(),
+                    self.g.living(),
+                );
                 self.dead = self.dead.max(dead);
                 // With growth a dead slot's energy is -1, so `alive` skips
                 // it as the count does.
@@ -986,9 +1171,24 @@ mod tests {
             let bin = 4 * scale;
             assert_eq!(g.mould_grid(bin), Some(g.grid_now(bin)), "the first ask is read back");
             assert!(g.grid.is_none() && g.want.get() == bin);
-            let rules = Rules { cap: 45.0, ..Rules::default() };
+            let rules = Rules {
+                cap: 45.0,
+                ..Rules::default()
+            };
             assert_eq!(g.living(), g.e.alive(), "the count at the start");
-            let mut game = Game::new(Checked { g, bin, frames: 0, sums: 0, hits: 0, touched: 0, dead: 0 }, rules, seed);
+            let mut game = Game::new(
+                Checked {
+                    g,
+                    bin,
+                    frames: 0,
+                    sums: 0,
+                    hits: 0,
+                    touched: 0,
+                    dead: 0,
+                },
+                rules,
+                seed,
+            );
             for k in 0..game.soldiers.len() {
                 game.apply(Cmd::Order(k, Order::Attack));
             }
@@ -997,10 +1197,23 @@ mod tests {
             }
             let c = &game.world;
             let name = tier.map_or("plain", |t| t.name());
-            eprintln!("{name}: {} frames, {} grid sums, {} shots that killed, {} touches, {} waits ({:.1} ms), up to {} dead", c.frames, c.sums, c.hits, c.touched, c.g.waits, c.g.wait_ms, c.dead);
+            eprintln!(
+                "{name}: {} frames, {} grid sums, {} shots that killed, {} touches, {} waits ({:.1} ms), up to {} dead",
+                c.frames, c.sums, c.hits, c.touched, c.g.waits, c.g.wait_ms, c.dead
+            );
             // The first frame (a new square), then each whole game second.
-            assert_eq!(c.sums as u64, 1 + c.frames as u64 / GRID_EVERY, "{name}: the grid summed once a game second");
-            assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
+            assert_eq!(
+                c.sums as u64,
+                1 + c.frames as u64 / GRID_EVERY,
+                "{name}: the grid summed once a game second"
+            );
+            assert!(
+                c.frames > 100 && c.hits > 0 && c.touched > 0,
+                "{name}: the squad fought ({} frames, {} hits, {} touches)",
+                c.frames,
+                c.hits,
+                c.touched
+            );
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
     }
@@ -1017,7 +1230,11 @@ mod tests {
     fn a_step_in_shares_is_the_same_game() {
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 2, 5_000);
-        let rules = Rules { cap: 20.0, frame_ticks: 2, ..Rules::default() };
+        let rules = Rules {
+            cap: 20.0,
+            frame_ticks: 2,
+            ..Rules::default()
+        };
         let play = |shares: u32| {
             let mut g = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
             g.spread = shares;
@@ -1040,7 +1257,15 @@ mod tests {
                     std::hint::black_box(game.world.hash());
                 }
                 game.finish_step();
-                log.push((game.world.ticks(), game.mould, game.world.living(), game.harvested.to_bits(), game.shots, game.killed, game.alive()));
+                log.push((
+                    game.world.ticks(),
+                    game.mould,
+                    game.world.living(),
+                    game.harvested.to_bits(),
+                    game.shots,
+                    game.killed,
+                    game.alive(),
+                ));
                 n += 1;
             }
             (log, game.world.hash(), split)
@@ -1048,11 +1273,22 @@ mod tests {
         let (whole, hash, split) = play(1);
         assert_eq!(split, 0, "whole steps leave no shares");
         let (shots, killed) = (whole.last().unwrap().4, whole.last().unwrap().5);
-        eprintln!("shares: {} steps, {shots} shots, {killed} killed, hash {hash:016x}", whole.len());
-        assert!(whole.len() > 100 && shots > 0 && killed > 0, "the squad fought ({} steps, {shots} shots, {killed} killed)", whole.len());
+        eprintln!(
+            "shares: {} steps, {shots} shots, {killed} killed, hash {hash:016x}",
+            whole.len()
+        );
+        assert!(
+            whole.len() > 100 && shots > 0 && killed > 0,
+            "the squad fought ({} steps, {shots} shots, {killed} killed)",
+            whole.len()
+        );
         for shares in [2, 4] {
             let (log, h, split) = play(shares);
-            assert_eq!(split as u32, shares - 1, "{shares} shares: the later ones wait for frame_more");
+            assert_eq!(
+                split as u32,
+                shares - 1,
+                "{shares} shares: the later ones wait for frame_more"
+            );
             assert_eq!(log, whole, "{shares} shares: the same steps");
             assert_eq!(h, hash, "{shares} shares: the same world at the end");
         }
@@ -1070,12 +1306,23 @@ mod tests {
         use crate::mould::larder_world::race_world;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 2_000);
-        let rules = Rules { cap: 30.0, ..Rules::default() };
-        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let rules = Rules {
+            cap: 30.0,
+            ..Rules::default()
+        };
+        let mut gpu = Game::new(
+            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
+            rules,
+            seed,
+        );
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let home = gpu.world.crystals()[0].0;
         assert_eq!(home, cpu.world.crystals()[0].0);
-        let free = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let free = KitRules {
+            carry_max: 0,
+            reach: 1_000.0,
+            ..KitRules::default()
+        };
         let (mut kg, mut kc) = (Kit::new(free), Kit::new(free));
         for g in [&mut gpu.bank, &mut cpu.bank] {
             *g = 10_000.0;
@@ -1084,19 +1331,42 @@ mod tests {
         // Within 1%: the kill test is a float distance (the GPU's sqrt, the
         // CPU's hypot), so a walker on the rim can fall either way (113
         // against 112 on seed 5). The crater is whole cells, so exact.
-        assert!(kc.killed[0] > 50 && kg.killed[0].abs_diff(kc.killed[0]) * 100 <= kc.killed[0], "the blast killed {} on the GPU, {} on the CPU", kg.killed[0], kc.killed[0]);
+        assert!(
+            kc.killed[0] > 50 && kg.killed[0].abs_diff(kc.killed[0]) * 100 <= kc.killed[0],
+            "the blast killed {} on the GPU, {} on the CPU",
+            kg.killed[0],
+            kc.killed[0]
+        );
         let cratered = |g: &Game<GpuWorld>| g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
         let after_blast = cratered(&gpu);
-        assert_eq!(after_blast, cpu.world.scorch.iter().filter(|&&c| c > 0).count(), "the blast's crater");
+        assert_eq!(
+            after_blast,
+            cpu.world.scorch.iter().filter(|&&c| c > 0).count(),
+            "the blast's crater"
+        );
         let bank = gpu.bank;
         // The sleep gas works since 11-14 (`Engine::gas`) and is paid.
-        assert!(kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank < bank && kg.gassed > 0, "the gas on the GPU: {} gassed", kg.gassed);
+        assert!(
+            kg.use_tool(&mut gpu, Tool::Gas(home)) && gpu.bank < bank && kg.gassed > 0,
+            "the gas on the GPU: {} gassed",
+            kg.gassed
+        );
         let k = gpu.world.scale();
-        assert!(kg.use_tool(&mut gpu, Tool::Cord((home.0 + 20.0 * k, home.1 - 10.0 * k), (home.0 + 20.0 * k, home.1 + 10.0 * k))));
+        assert!(kg.use_tool(
+            &mut gpu,
+            Tool::Cord(
+                (home.0 + 20.0 * k, home.1 - 10.0 * k),
+                (home.0 + 20.0 * k, home.1 + 10.0 * k)
+            )
+        ));
         assert!(cratered(&gpu) > after_blast, "the cord's craters");
         // A mine on a fresh world, on the mould's home: the frames' grid
         // (one square a dish cell) sets it off.
-        let mut g2 = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut g2 = Game::new(
+            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
+            rules,
+            seed,
+        );
         g2.bank = 10_000.0;
         let mut km = Kit::new(free);
         assert!(km.use_tool(&mut g2, Tool::Mine(home)));
@@ -1106,8 +1376,19 @@ mod tests {
             g2.step();
             fired = km.frame(&mut g2);
         }
-        assert_eq!(fired, 1, "the mine (trigger {}) went off by {:.0} s", km.mine_trigger(&g2), g2.time());
-        eprintln!("GPU kit: blast {} killed, mine {} killed at {:.1} s", kg.killed[0], km.killed[1], g2.time());
+        assert_eq!(
+            fired,
+            1,
+            "the mine (trigger {}) went off by {:.0} s",
+            km.mine_trigger(&g2),
+            g2.time()
+        );
+        eprintln!(
+            "GPU kit: blast {} killed, mine {} killed at {:.1} s",
+            kg.killed[0],
+            km.killed[1],
+            g2.time()
+        );
     }
 
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a
@@ -1118,29 +1399,64 @@ mod tests {
     /// thins the mould against the same world with no germ, on both.
     #[test]
     fn the_germ_runs_on_the_gpu_world() {
-        use crate::mould::kit::{Kit, KitRules, Tool};
         use crate::mould::big::BigDish;
+        use crate::mould::kit::{Kit, KitRules, Tool};
         use crate::mould::larder_world::race_world;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 2_000);
-        let rules = Rules { cap: 60.0, ..Rules::default() };
-        let gpu_world = || Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let rules = Rules {
+            cap: 60.0,
+            ..Rules::default()
+        };
+        let gpu_world = || {
+            Game::new(
+                GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
+                rules,
+                seed,
+            )
+        };
         let (mut gpu, mut gpu_none) = (gpu_world(), gpu_world());
-        let (mut cpu, mut cpu_none) = (Game::new(race_world(seed, scale, walkers), rules, seed), Game::new(race_world(seed, scale, walkers), rules, seed));
+        let (mut cpu, mut cpu_none) = (
+            Game::new(race_world(seed, scale, walkers), rules, seed),
+            Game::new(race_world(seed, scale, walkers), rules, seed),
+        );
         let home = gpu.world.crystals()[0].0;
-        let free = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let free = KitRules {
+            carry_max: 0,
+            reach: 1_000.0,
+            ..KitRules::default()
+        };
         let (mut kg, mut kc) = (Kit::new(free), Kit::new(free));
         gpu.bank = 10_000.0;
         cpu.bank = 10_000.0;
         assert!(gpu.world.has_germ());
         assert!(kg.use_tool(&mut gpu, Tool::Germ(home)) && kc.use_tool(&mut cpu, Tool::Germ(home)));
         let immune = gpu.world.s.immune;
-        let gpu_sick = |g: &Game<GpuWorld>| read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.sick).chunks_exact(4).take(g.world.e.n as usize).filter(|c| u32::from_le_bytes((*c).try_into().unwrap()) > immune).count();
-        let cpu_sick = |g: &Game<BigDish>| g.world.sick.iter().filter(|&&c| c as u32 > g.world.p.immune_steps as u32).count();
+        let gpu_sick = |g: &Game<GpuWorld>| {
+            read_back(&g.world.e.device, &g.world.e.queue, &g.world.e.sick)
+                .chunks_exact(4)
+                .take(g.world.e.n as usize)
+                .filter(|c| u32::from_le_bytes((*c).try_into().unwrap()) > immune)
+                .count()
+        };
+        let cpu_sick = |g: &Game<BigDish>| {
+            g.world
+                .sick
+                .iter()
+                .filter(|&&c| c as u32 > g.world.p.immune_steps as u32)
+                .count()
+        };
         let (sg, sc) = (gpu_sick(&gpu), cpu_sick(&cpu));
         eprintln!("germ: {sg} sick on the GPU, {sc} on the CPU");
-        assert!(sc > 50 && sg.abs_diff(sc) * 100 <= sc, "the germ made {sg} sick on the GPU, {sc} on the CPU");
-        assert_eq!((immune, gpu.world.s.sick_upkeep), (cpu.world.p.immune_steps as u32, cpu.world.p.sick_upkeep), "the same contagion settings");
+        assert!(
+            sc > 50 && sg.abs_diff(sc) * 100 <= sc,
+            "the germ made {sg} sick on the GPU, {sc} on the CPU"
+        );
+        assert_eq!(
+            (immune, gpu.world.s.sick_upkeep),
+            (cpu.world.p.immune_steps as u32, cpu.world.p.sick_upkeep),
+            "the same contagion settings"
+        );
         // Twenty game seconds: the sick pay 60 times the upkeep and die,
         // and the germ they lay catches more.
         let secs = 20.0;
@@ -1157,16 +1473,30 @@ mod tests {
             }
             most.0 = most.0.max(gpu_sick(&gpu));
         }
-        eprintln!("germ: GPU world {:.2} s with contagion on, {:.2} s off, for {secs} game s", took[0], took[1]);
+        eprintln!(
+            "germ: GPU world {:.2} s with contagion on, {:.2} s off, for {secs} game s",
+            took[0], took[1]
+        );
         while cpu.time() < secs {
             cpu.step();
             cpu_none.step();
             most.1 = most.1.max(cpu_sick(&cpu));
         }
-        let (lg, lgn, lc, lcn) = (gpu.world.living(), gpu_none.world.living(), cpu.world.living(), cpu_none.world.living());
+        let (lg, lgn, lc, lcn) = (
+            gpu.world.living(),
+            gpu_none.world.living(),
+            cpu.world.living(),
+            cpu_none.world.living(),
+        );
         eprintln!("germ after {secs} s: GPU {lg} living against {lgn} with none (most sick {}), CPU {lc} against {lcn} (most sick {})", most.0, most.1);
-        assert!(most.0 > sg && most.1 > sc, "the sickness spread (most sick {most:?}, from {sg} and {sc})");
-        assert!(lg * 10 < lgn * 9 && lc * 10 < lcn * 9, "the germ thinned the mould: GPU {lg} against {lgn}, CPU {lc} against {lcn}");
+        assert!(
+            most.0 > sg && most.1 > sc,
+            "the sickness spread (most sick {most:?}, from {sg} and {sc})"
+        );
+        assert!(
+            lg * 10 < lgn * 9 && lc * 10 < lcn * 9,
+            "the germ thinned the mould: GPU {lg} against {lgn}, CPU {lc} against {lcn}"
+        );
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar
@@ -1176,7 +1506,10 @@ mod tests {
     fn race_settings_give_the_race_worlds_params() {
         for (seed, scale, walkers) in [(1, 2, 5_000), (7, 1, 1_000), (3, 4, 20_000)] {
             let cpu = race_params(seed, scale, walkers);
-            let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&race_settings(seed, scale, walkers), scale) };
+            let gpu = BigParams {
+                substeps: cpu.substeps,
+                ..engine_params(&race_settings(seed, scale, walkers), scale)
+            };
             assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "seed {seed} scale {scale}");
         }
     }
@@ -1192,8 +1525,16 @@ mod tests {
         use crate::mould::big::BigDish;
         use std::path::Path;
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
-        let maps: Vec<(&str, Option<Map>)> = std::iter::once(("the noise world", None)).chain(["fork", "nest", "rim", "flats", "passes"].into_iter().map(|n| (n, Some(Map::load(&dir, n).unwrap())))).collect();
-        let tiers: Vec<Option<Tier>> = std::iter::once(None).chain(Tier::ALL.iter().copied().map(Some)).collect();
+        let maps: Vec<(&str, Option<Map>)> = std::iter::once(("the noise world", None))
+            .chain(
+                ["fork", "nest", "rim", "flats", "passes"]
+                    .into_iter()
+                    .map(|n| (n, Some(Map::load(&dir, n).unwrap()))),
+            )
+            .collect();
+        let tiers: Vec<Option<Tier>> = std::iter::once(None)
+            .chain(Tier::ALL.iter().copied().map(Some))
+            .collect();
         let mut checked = 0;
         for (scale, walkers) in [(1, 1250), (2, 5000), (2, 25000), (4, 20000), (8, 80000), (8, 100000)] {
             for (name, m) in &maps {
@@ -1229,7 +1570,15 @@ mod tests {
         use crate::mould::own_mould::garden_world;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 1_000);
-        let gpu = GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap();
+        let gpu = GpuWorld::garden(
+            &device,
+            &queue,
+            garden_settings(seed, scale, walkers),
+            seed,
+            scale,
+            walkers,
+        )
+        .unwrap();
         let cpu = garden_world(seed, scale, walkers, None);
         assert_eq!(gpu.counts_by_side(), cpu.counts_by_side());
         assert_eq!(gpu.e.dish.landing, cpu.dish.landing);
@@ -1253,7 +1602,10 @@ mod tests {
         use crate::mould::own_mould::garden_world;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 1_000);
-        let f = Frame { slime: 1.0, ..Frame::default() };
+        let f = Frame {
+            slime: 1.0,
+            ..Frame::default()
+        };
         let run = |cap: Option<usize>, stop: bool| {
             let mut s = garden_settings(seed, scale, walkers);
             let mut cpu = garden_world(seed, scale, walkers, None);
@@ -1278,7 +1630,10 @@ mod tests {
                 // births race on the card's atomics in another order.
                 let (g, c) = (gpu.counts_by_side(), cpu.counts_by_side());
                 let near = |a: usize, b: usize| a.abs_diff(b) <= tol(0, b / 100 + 2);
-                assert!(near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1), "the engines part: {g:?} on the GPU, {c:?} on the CPU");
+                assert!(
+                    near(g.0, c.0) && near(g.1, c.1) && near(g.0 + g.1, c.0 + c.1),
+                    "the engines part: {g:?} on the GPU, {c:?} on the CPU"
+                );
                 most = most.max(gpu.counts_by_side().1);
             }
             (gpu.counts_by_side(), most)
@@ -1286,20 +1641,39 @@ mod tests {
         let ((own_free, _), most_free) = run(None, false);
         assert!(most_free > walkers + 50, "the uncapped enemy grew only to {most_free}");
         let ((own, _), most) = run(Some(walkers), false);
-        assert!(most <= walkers + walkers / 10, "capped at {walkers}, the enemy reached {most}");
+        assert!(
+            most <= walkers + walkers / 10,
+            "capped at {walkers}, the enemy reached {most}"
+        );
         // Seed 5 at 20 frames: free 1,116; capped 1,027; stopped 1,027 (the
         // last few dozen came over by conversion, not birth: the player's
         // mould fell from 1,000 to 980 in every run, as it isn't sown here).
-        assert!(most_free > most + 50, "the cap held nothing back ({most_free} free, {most} capped)");
-        assert!(own + 5 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
+        assert!(
+            most_free > most + 50,
+            "the cap held nothing back ({most_free} free, {most} capped)"
+        );
+        assert!(
+            own + 5 >= own_free,
+            "the player's mould lost by the enemy's cap ({own} against {own_free})"
+        );
         let ((own_stop, _), most_stop) = run(None, true);
-        assert!(most_stop <= walkers + walkers / 10, "with its births stopped the enemy reached {most_stop}");
+        assert!(
+            most_stop <= walkers + walkers / 10,
+            "with its births stopped the enemy reached {most_stop}"
+        );
         // The cap's overshoot is bounded by one step's births (the count
         // runs before them): what the capped enemy gained over the
         // births-stopped one (conversion alike in both) is a step's parents
         // at most; at seed 5 it is 0.
-        assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
-        assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
+        assert!(
+            most <= most_stop + walkers / 20,
+            "the capped enemy passed its cap by {} over the stopped one",
+            most - most_stop.min(most)
+        );
+        assert!(
+            own_stop + 5 >= own_free,
+            "stopping the enemy's births stopped the player's ({own_stop})"
+        );
     }
 
     /// **The garden on a designed map, both engines** (mission 8, the tech
@@ -1315,23 +1689,36 @@ mod tests {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
         let m = Map::load(&dir, "passes").unwrap();
         let (seed, scale, walkers) = (3, 1, 1_000);
-        let mut gpu = GpuWorld::garden_on_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m, walkers).unwrap();
+        let mut gpu =
+            GpuWorld::garden_on_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m, walkers).unwrap();
         let mut cpu = garden_on_map(race_params(seed, scale, walkers), &m, walkers).unwrap();
         let (g, c) = (&gpu.e.dish, &cpu.dish);
         assert_eq!(g.walkers.len(), c.walkers.len());
         assert_eq!(g.spec, c.spec, "each walker's side");
-        assert!(g.walkers.iter().zip(&c.walkers).all(|(a, b)| a == b), "each walker's place");
+        assert!(
+            g.walkers.iter().zip(&c.walkers).all(|(a, b)| a == b),
+            "each walker's place"
+        );
         assert_eq!(g.landing, c.landing);
         assert_eq!(gpu.counts_by_side(), (walkers, walkers));
         assert_eq!(gpu.counts_by_side(), cpu.counts_by_side());
-        let f = Frame { slime: 1.0, ..Frame::default() };
+        let f = Frame {
+            slime: 1.0,
+            ..Frame::default()
+        };
         for i in 0..5 {
             let _ = gpu.frame(&f, 15);
             let _ = cpu.frame(&f, 15);
-            assert_eq!(gpu.counts_by_side(), cpu.counts_by_side(), "frame {i}: the engines part");
+            assert_eq!(
+                gpu.counts_by_side(),
+                cpu.counts_by_side(),
+                "frame {i}: the engines part"
+            );
         }
         // Planted: a swapped walker on one engine is seen.
-        let k = (0..cpu.dish.walkers.len()).find(|&k| cpu.dish.lives(k) && cpu.dish.spec[k] == OWN).unwrap();
+        let k = (0..cpu.dish.walkers.len())
+            .find(|&k| cpu.dish.lives(k) && cpu.dish.spec[k] == OWN)
+            .unwrap();
         cpu.dish.spec[k] = 0;
         assert_ne!(gpu.counts_by_side(), cpu.counts_by_side(), "a swapped side went unseen");
     }
@@ -1340,7 +1727,10 @@ mod tests {
     #[test]
     fn a_garden_refuses_a_grazing_world() {
         let Some((device, queue)) = test_gpu() else { return };
-        let s = Settings { graze: 1.0, ..garden_settings(5, 1, 500) };
+        let s = Settings {
+            graze: 1.0,
+            ..garden_settings(5, 1, 500)
+        };
         let e = GpuWorld::garden(&device, &queue, s, 5, 1, 500).err().expect("refused");
         assert!(e.contains("graze"), "{e}");
     }
@@ -1354,27 +1744,62 @@ mod tests {
         use crate::mould::squad::ShotIn;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 1_000);
-        let mut gpu = GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap();
+        let mut gpu = GpuWorld::garden(
+            &device,
+            &queue,
+            garden_settings(seed, scale, walkers),
+            seed,
+            scale,
+            walkers,
+        )
+        .unwrap();
         let mut cpu = garden_world(seed, scale, walkers, None);
         let l = cpu.landing().unwrap();
         let home = cpu.crystals()[0].0;
         // A few ticks so both moulds lay trail.
-        let f0 = Frame { slime: 1.0, ..Frame::default() };
+        let f0 = Frame {
+            slime: 1.0,
+            ..Frame::default()
+        };
         let _ = gpu.frame(&f0, 15);
         let _ = cpu.frame(&f0, 15);
         assert_eq!(gpu.counts_by_side().0, cpu.counts_by_side().0);
-        let over = Frame { shots: vec![ShotIn { from: l, to: (l.0 + 12.0, l.1), r: 3.0 }], slime: 1.0, ..Frame::default() };
+        let over = Frame {
+            shots: vec![ShotIn {
+                from: l,
+                to: (l.0 + 12.0, l.1),
+                r: 3.0,
+            }],
+            slime: 1.0,
+            ..Frame::default()
+        };
         // The line does cross the player's slime (else this proves nothing).
         let (w, h) = cpu.size();
-        let crossed = squad::path(w, h, l, (l.0 + 12.0, l.1)).iter().filter(|&&i| cpu.dish.species_trail[crate::mould::own_mould::OWN as usize][i as usize] >= 1.0).count();
+        let crossed = squad::path(w, h, l, (l.0 + 12.0, l.1))
+            .iter()
+            .filter(|&&i| cpu.dish.species_trail[crate::mould::own_mould::OWN as usize][i as usize] >= 1.0)
+            .count();
         assert!(crossed > 0, "the shot's line crosses no slime of the player's");
         let (g, c) = (gpu.frame(&over, 0), cpu.frame(&over, 0));
         assert_eq!(g.shots[0].hit, None, "the GPU's shot stopped on the player's mould");
         assert_eq!(c.shots[0].hit, None, "the CPU's shot stopped on the player's mould");
         let own = gpu.counts_by_side().0;
-        let into = Frame { shots: vec![ShotIn { from: (home.0 - 30.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
+        let into = Frame {
+            shots: vec![ShotIn {
+                from: (home.0 - 30.0, home.1),
+                to: home,
+                r: 3.0,
+            }],
+            slime: 1.0,
+            ..Frame::default()
+        };
         let (g, c) = (gpu.frame(&into, 0), cpu.frame(&into, 0));
-        assert!(g.shots[0].killed > 0 && c.shots[0].killed > 0, "kills: GPU {}, CPU {}", g.shots[0].killed, c.shots[0].killed);
+        assert!(
+            g.shots[0].killed > 0 && c.shots[0].killed > 0,
+            "kills: GPU {}, CPU {}",
+            g.shots[0].killed,
+            c.shots[0].killed
+        );
         assert_eq!(g.shots[0].hit, c.shots[0].hit, "the same hit cell");
         assert_eq!(gpu.counts_by_side().0, own, "the player's mould untouched");
     }
@@ -1386,7 +1811,19 @@ mod tests {
         use crate::mould::own_mould::{garden_world, Task, OWN};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 1_000);
-        let mut gpu = Game::new(GpuWorld::garden(&device, &queue, garden_settings(seed, scale, walkers), seed, scale, walkers).unwrap(), Rules::default(), seed);
+        let mut gpu = Game::new(
+            GpuWorld::garden(
+                &device,
+                &queue,
+                garden_settings(seed, scale, walkers),
+                seed,
+                scale,
+                walkers,
+            )
+            .unwrap(),
+            Rules::default(),
+            seed,
+        );
         let mut cpu = Game::new(garden_world(seed, scale, walkers, None), Rules::default(), seed);
         // Soldier 0 lays a road, soldier 1 feeds, standing still.
         gpu.world.garden.as_mut().unwrap().set_task(0, Task::Road);
@@ -1400,7 +1837,11 @@ mod tests {
         gpu.step();
         cpu.step();
         let fed = gpu.world.garden.as_ref().unwrap().fed;
-        assert!((fed - cpu.world.fed).abs() < 1e-3 && fed > 0.0, "fed: GPU {fed}, CPU {}", cpu.world.fed);
+        assert!(
+            (fed - cpu.world.fed).abs() < 1e-3 && fed > 0.0,
+            "fed: GPU {fed}, CPU {}",
+            cpu.world.fed
+        );
         assert_eq!(gpu.world.garden.as_ref().unwrap().roads, cpu.world.roads);
         let s0 = gpu.soldiers[0];
         let (w, h) = gpu.world.size();
@@ -1412,6 +1853,9 @@ mod tests {
         let c1g: f64 = gpu.world.e.charge_of().iter().map(|&c| c as f64).sum();
         let c1c: f64 = cpu.world.dish.charge.iter().map(|&c| c as f64).sum();
         let (dg, dc) = (c1g - c0g, c1c - c0c);
-        assert!((dg - dc).abs() < 0.02 * dc.abs().max(100.0), "charge change: GPU {dg:.1}, CPU {dc:.1}");
+        assert!(
+            (dg - dc).abs() < 0.02 * dc.abs().max(100.0),
+            "charge change: GPU {dg:.1}, CPU {dc:.1}"
+        );
     }
 }

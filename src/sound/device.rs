@@ -38,8 +38,12 @@ impl Device {
     /// and the caller then simply runs silent.
     pub fn open(seed: u64) -> Result<Device, String> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or_else(|| "no output device".to_string())?;
-        let supported = device.default_output_config().map_err(|e| format!("no output config: {e}"))?;
+        let device = host
+            .default_output_device()
+            .ok_or_else(|| "no output device".to_string())?;
+        let supported = device
+            .default_output_config()
+            .map_err(|e| format!("no output config: {e}"))?;
         let format = supported.sample_format();
         let config = supported.config();
         let (tx, rx) = sync_channel(CHANNEL);
@@ -52,7 +56,11 @@ impl Device {
             other => return Err(format!("unsupported sample format {other:?}")),
         }?;
         stream.play().map_err(|e| format!("could not start the stream: {e}"))?;
-        Ok(Device { _stream: stream, tx, dropped: 0 })
+        Ok(Device {
+            _stream: stream,
+            tx,
+            dropped: 0,
+        })
     }
 
     pub fn send(&mut self, cmds: impl IntoIterator<Item = SoundCmd>) {
@@ -65,7 +73,12 @@ impl Device {
     }
 }
 
-fn build<T>(device: &cpal::Device, config: cpal::StreamConfig, mut bank: VoiceBank, rx: Receiver<SoundCmd>) -> Result<cpal::Stream, String>
+fn build<T>(
+    device: &cpal::Device,
+    config: cpal::StreamConfig,
+    mut bank: VoiceBank,
+    rx: Receiver<SoundCmd>,
+) -> Result<cpal::Stream, String>
 where
     T: SizedSample + FromSample<f32>,
 {

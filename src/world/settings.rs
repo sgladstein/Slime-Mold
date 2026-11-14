@@ -81,7 +81,11 @@ pub fn parse_size(v: &str) -> Option<f32> {
 
 /// The next step from `user` up (`by` > 0) or down, held at the ends.
 pub fn step(user: f32, by: i32) -> f32 {
-    let near = STEPS.iter().enumerate().min_by(|a, b| (a.1 - user).abs().total_cmp(&(b.1 - user).abs())).map_or(2, |(i, _)| i) as i32;
+    let near = STEPS
+        .iter()
+        .enumerate()
+        .min_by(|a, b| (a.1 - user).abs().total_cmp(&(b.1 - user).abs()))
+        .map_or(2, |(i, _)| i) as i32;
     STEPS[(near + by).clamp(0, STEPS.len() as i32 - 1) as usize]
 }
 
@@ -94,7 +98,9 @@ pub fn path() -> Option<PathBuf> {
     let dir = if cfg!(windows) {
         env("APPDATA")?.join("Larder World")
     } else {
-        env("XDG_CONFIG_HOME").or_else(|| env("HOME").map(|h| h.join(".config")))?.join("larder-world")
+        env("XDG_CONFIG_HOME")
+            .or_else(|| env("HOME").map(|h| h.join(".config")))?
+            .join("larder-world")
     };
     Some(dir.join("settings.txt"))
 }
@@ -106,18 +112,30 @@ pub fn get(key: &str) -> Option<String> {
 
 fn get_in(p: &std::path::Path, key: &str) -> Option<String> {
     let text = std::fs::read_to_string(p).ok()?;
-    text.lines().rev().find_map(|l| l.split_once('=').filter(|(k, _)| k.trim() == key).map(|(_, v)| v.trim().to_string()))
+    text.lines().rev().find_map(|l| {
+        l.split_once('=')
+            .filter(|(k, _)| k.trim() == key)
+            .map(|(_, v)| v.trim().to_string())
+    })
 }
 
 /// Saves `key=value`, keeping the file's other lines. A failure is
 /// returned for a word on stderr; the game goes on either way.
 pub fn set(key: &str, value: &str) -> Result<(), String> {
-    set_in(&path().ok_or("no config folder (set LARDER_SETTINGS=PATH)")?, key, value)
+    set_in(
+        &path().ok_or("no config folder (set LARDER_SETTINGS=PATH)")?,
+        key,
+        value,
+    )
 }
 
 fn set_in(p: &std::path::Path, key: &str, value: &str) -> Result<(), String> {
     let old = std::fs::read_to_string(p).unwrap_or_default();
-    let mut lines: Vec<String> = old.lines().filter(|l| l.split_once('=').is_none_or(|(k, _)| k.trim() != key)).map(String::from).collect();
+    let mut lines: Vec<String> = old
+        .lines()
+        .filter(|l| l.split_once('=').is_none_or(|(k, _)| k.trim() != key))
+        .map(String::from)
+        .collect();
     lines.push(format!("{key}={value}"));
     if let Some(d) = p.parent() {
         std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
@@ -144,7 +162,15 @@ mod tests {
     #[test]
     fn at_100_percent_on_a_plain_screen_the_size_is_the_old_one() {
         let old = |sh: f32| ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0;
-        for screen in [(640, 400), (1280, 800), (1600, 900), (1920, 1080), (2560, 1440), (3840, 2160), (1920, 1123)] {
+        for screen in [
+            (640, 400),
+            (1280, 800),
+            (1600, 900),
+            (1920, 1080),
+            (2560, 1440),
+            (3840, 2160),
+            (1920, 1123),
+        ] {
             assert_eq!(UiSize::default().px(screen), old(screen.1 as f32), "{screen:?}");
         }
     }

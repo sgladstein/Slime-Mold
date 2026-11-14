@@ -45,8 +45,20 @@ mod tests {
         let bytes = encode(&[0.0, 1.0, -1.0, 0.5], 2, 48_000);
         assert_eq!(bytes.len(), 44 + 8);
         assert_eq!(&bytes[0..4], b"RIFF");
-        assert_eq!(u32::from_le_bytes(bytes[40..44].try_into().unwrap()), 8, "data chunk length");
-        assert_eq!(i16::from_le_bytes(bytes[46..48].try_into().unwrap()), 32767, "full scale");
-        assert_eq!(i16::from_le_bytes(bytes[48..50].try_into().unwrap()), -32767, "clamped, symmetric");
+        assert_eq!(
+            u32::from_le_bytes(bytes[40..44].try_into().unwrap()),
+            8,
+            "data chunk length"
+        );
+        assert_eq!(
+            i16::from_le_bytes(bytes[46..48].try_into().unwrap()),
+            32767,
+            "full scale"
+        );
+        assert_eq!(
+            i16::from_le_bytes(bytes[48..50].try_into().unwrap()),
+            -32767,
+            "clamped, symmetric"
+        );
     }
 }

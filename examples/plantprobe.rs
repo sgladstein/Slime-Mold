@@ -73,7 +73,12 @@ fn stand_in(m: &mut Map, seed: u32) {
 /// The plant kinds' colours (a stand-in for the look, which is the graphics
 /// lead's): meadow yellow-green, jungle deep green, reeds blue-green, scrub
 /// olive brown.
-const COL: [[f32; 3]; KINDS] = [[150.0, 200.0, 70.0], [30.0, 120.0, 45.0], [70.0, 170.0, 150.0], [150.0, 140.0, 70.0]];
+const COL: [[f32; 3]; KINDS] = [
+    [150.0, 200.0, 70.0],
+    [30.0, 120.0, 45.0],
+    [70.0, 170.0, 150.0],
+    [150.0, 140.0, 70.0],
+];
 
 fn still(d: &BigDish, path: &PathBuf) {
     let img = image::RgbImage::from_fn(d.w as u32, d.h as u32, |x, y| {
@@ -94,6 +99,12 @@ fn still(d: &BigDish, path: &PathBuf) {
                 *v += (t - *v) * p;
             }
         }
+        if !d.fire.is_empty() && d.fire[i] > 0.0 {
+            let f = d.fire[i];
+            for (v, t) in c.iter_mut().zip([255.0, 110.0, 20.0]) {
+                *v += (t - *v) * f;
+            }
+        }
         if !d.scorch.is_empty() && d.scorch[i] > 0 {
             c = [c[0] * 0.4, c[1] * 0.4, c[2] * 0.4];
         }
@@ -103,12 +114,24 @@ fn still(d: &BigDish, path: &PathBuf) {
         }
         image::Rgb(c.map(|v| v.clamp(0.0, 255.0) as u8))
     });
-    let img = image::imageops::resize(&img, d.w as u32 * 2, d.h as u32 * 2, image::imageops::FilterType::Nearest);
+    let img = image::imageops::resize(
+        &img,
+        d.w as u32 * 2,
+        d.h as u32 * 2,
+        image::imageops::FilterType::Nearest,
+    );
     img.save(path).unwrap();
 }
 
 fn main() -> Result<(), String> {
-    let (mut seed, mut depth, mut secs, mut out, mut at) = (1u64, 1u32, 120u32, PathBuf::from("plantprobe"), vec![0u32, 20, 25, 30, 60, 90, 120]);
+    let mut fire_at = 40u32;
+    let (mut seed, mut depth, mut secs, mut out, mut at) = (
+        1u64,
+        1u32,
+        120u32,
+        PathBuf::from("plantprobe"),
+        vec![0u32, 20, 30, 40, 41, 42, 44, 47, 50, 60, 90, 120],
+    );
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or(format!("expected key=value, got {a}"))?;
         let num = |v: &str| v.parse::<u64>().map_err(|e| format!("{k}: {e}"));
@@ -117,8 +140,14 @@ fn main() -> Result<(), String> {
             "depth" => depth = num(v)? as u32,
             "secs" => secs = num(v)? as u32,
             "out" => out = PathBuf::from(v),
-            "at" => at = v.split(',').map(|s| s.parse().map_err(|e| format!("at: {e}"))).collect::<Result<_, String>>()?,
-            _ => return Err(format!("unknown key {k} (seed, depth, secs, out, at)")),
+            "fire" => fire_at = num(v)? as u32,
+            "at" => {
+                at = v
+                    .split(',')
+                    .map(|s| s.parse().map_err(|e| format!("at: {e}")))
+                    .collect::<Result<_, String>>()?
+            }
+            _ => return Err(format!("unknown key {k} (seed, depth, secs, out, at, fire)")),
         }
     }
     std::fs::create_dir_all(&out).map_err(|e| e.to_string())?;
@@ -126,8 +155,17 @@ fn main() -> Result<(), String> {
     stand_in(&mut m, seed as u32);
     let mut d = BigDish::with_map(race_params(seed, 2, 3000), &m);
     let open = d.agar.iter().filter(|&&a| a).count().max(1);
-    println!("planet {} ({}), {} x {} fine cells, {open} open", depth, levelgen::planet(seed, depth).name, d.w, d.h);
-    println!("secs sum cover% | meadow jungle reeds scrub | plant step ms (every {} ticks)", d.p.plant_every);
+    println!(
+        "planet {} ({}), {} x {} fine cells, {open} open",
+        depth,
+        levelgen::planet(seed, depth).name,
+        d.w,
+        d.h
+    );
+    println!(
+        "secs sum cover% | meadow jungle reeds scrub | plant step ms (every {} ticks)",
+        d.p.plant_every
+    );
     let tps = slime_mould::mould::STEPS_PER_SECOND;
     let mut costs = Vec::new();
     for t in 0..=secs * tps {
@@ -140,6 +178,29 @@ fn main() -> Result<(), String> {
                     d.scorch_disc(64.0 * k as f32 + 20.0, 80.0, 8.0, 2400);
                 }
             }
+            if s == fire_at {
+                // A ring of eight lights 25 dish cells round the slime's
+                // middle: whatever stands in plants there burns toward it.
+                let sc = d.p.scale as f32;
+                let live: Vec<(f32, f32)> = (0..d.walkers.len())
+                    .filter(|&k| d.alive.get(k).copied().unwrap_or(true))
+                    .map(|k| (d.walkers[k].0 / sc, d.walkers[k].1 / sc))
+                    .collect();
+                let n = live.len().max(1) as f32;
+                let (cx, cy) = live.iter().fold((0.0, 0.0), |a, w| (a.0 + w.0 / n, a.1 + w.1 / n));
+                let mut lit = 0;
+                for k in 0..8 {
+                    let a = k as f32 * std::f32::consts::FRAC_PI_4;
+                    lit += d.ignite(cx + 25.0 * a.cos(), cy + 25.0 * a.sin(), 3.0);
+                }
+                let mut tr: Vec<f32> = live
+                    .iter()
+                    .map(|&(x, y)| d.trail[(y * sc) as usize * d.w + (x * sc) as usize])
+                    .collect();
+                tr.sort_by(f32::total_cmp);
+                let q = |f: f32| tr.get((f * tr.len() as f32) as usize).copied().unwrap_or(0.0);
+                println!("fire at {s} s round ({cx:.0}, {cy:.0}): {lit} cells lit; trail under walkers p10 {:.2} p25 {:.2} p50 {:.2} p90 {:.2}", q(0.1), q(0.25), q(0.5), q(0.9));
+            }
             if at.contains(&s) {
                 let on = d.plant.iter().filter(|&&p| p > 0.05).count();
                 let mut kinds = [0usize; KINDS];
@@ -150,7 +211,20 @@ fn main() -> Result<(), String> {
                 }
                 costs.sort_by(f64::total_cmp);
                 let ms = costs.get(costs.len() / 2).copied().unwrap_or(0.0);
-                println!("{s} {:.0} {:.1} | {} {} {} {} | {ms:.3}", d.plant.iter().sum::<f32>(), 100.0 * on as f32 / open as f32, kinds[0], kinds[1], kinds[2], kinds[3]);
+                let living = (0..d.walkers.len())
+                    .filter(|&k| d.alive.get(k).copied().unwrap_or(true))
+                    .count();
+                println!(
+                    "{s} {:.0} {:.1} | {} {} {} {} | {ms:.3} | burning {} fire-killed {} living {living}",
+                    d.plant.iter().sum::<f32>(),
+                    100.0 * on as f32 / open as f32,
+                    kinds[0],
+                    kinds[1],
+                    kinds[2],
+                    kinds[3],
+                    d.burning,
+                    d.fire_killed
+                );
                 still(&d, &out.join(format!("plants-{depth}-{seed}-{s:03}s.png")));
             }
         }
@@ -161,8 +235,22 @@ fn main() -> Result<(), String> {
             // the side so the timing doesn't move the run.
             if t % 30 == 0 {
                 let (w, h) = (d.w, d.h);
-                let g = plants::Ground { w, h, cap: &d.plant_cap, agar: &d.agar, pile_of: &d.pile_of, wet: &d.wet, scorch: &d.scorch };
-                let r = plants::Rates { grow: d.p.plant_grow, spread: d.p.plant_spread, wet: d.p.plant_wet, scorch: d.p.plant_scorch, kinds: d.p.plant_kinds };
+                let g = plants::Ground {
+                    w,
+                    h,
+                    cap: &d.plant_cap,
+                    agar: &d.agar,
+                    pile_of: &d.pile_of,
+                    wet: &d.wet,
+                    scorch: &d.scorch,
+                };
+                let r = plants::Rates {
+                    grow: d.p.plant_grow,
+                    spread: d.p.plant_spread,
+                    wet: d.p.plant_wet,
+                    scorch: d.p.plant_scorch,
+                    kinds: d.p.plant_kinds,
+                };
                 // (One step's cost; the world runs it every `plant_every` ticks.)
                 let (mut to, mut kind) = (vec![0.0; w * h], d.plant_kind.clone());
                 let t1 = Instant::now();

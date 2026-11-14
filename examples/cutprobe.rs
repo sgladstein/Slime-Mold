@@ -254,7 +254,12 @@ fn choose_cuts(d: &BigDish, n: usize, cutw: f32) -> Vec<Cut> {
         if cuts.len() >= n {
             break;
         }
-        let Some(tip) = (0..w * h).filter(|&i| body[i] && dist[i] != u32::MAX && !used[i]).max_by_key(|&i| (dist[i], i)) else { break };
+        let Some(tip) = (0..w * h)
+            .filter(|&i| body[i] && dist[i] != u32::MAX && !used[i])
+            .max_by_key(|&i| (dist[i], i))
+        else {
+            break;
+        };
         let mut kept = None;
         for back in [15.0f32, 25.0, 35.0, 50.0] {
             let steps = (back * s as f32) as u32;
@@ -280,7 +285,10 @@ fn choose_cuts(d: &BigDish, n: usize, cutw: f32) -> Vec<Cut> {
                     behind = parent[behind];
                 }
             }
-            let (dx, dy) = ((ahead % w) as f32 - (behind % w) as f32, (ahead / w) as f32 - (behind / w) as f32);
+            let (dx, dy) = (
+                (ahead % w) as f32 - (behind % w) as f32,
+                (ahead / w) as f32 - (behind / w) as f32,
+            );
             let dl = dx.hypot(dy).max(1.0);
             let (ux, uy) = (dx / dl, dy / dl);
             let rloc = 12.0 * s as f32;
@@ -299,7 +307,9 @@ fn choose_cuts(d: &BigDish, n: usize, cutw: f32) -> Vec<Cut> {
             if pl == 0 || lab[start] == pl {
                 continue;
             }
-            let size = (0..d.walkers.len()).filter(|&k| holds(d, k) && lab[cell_of(d, k)] == pl).count();
+            let size = (0..d.walkers.len())
+                .filter(|&k| holds(d, k) && lab[cell_of(d, k)] == pl)
+                .count();
             if size >= 100 && size * 10 < total * 4 {
                 kept = Some((Cut { cells, tip, back }, lab, pl));
                 break;
@@ -327,7 +337,6 @@ fn choose_cuts(d: &BigDish, n: usize, cutw: f32) -> Vec<Cut> {
     }
     cuts
 }
-
 
 /// Ring cuts: up to `n` hunks of the body, each the walkers within `r`
 /// dish cells of a centre 30 or more dish cells (by the body) from home,
@@ -384,7 +393,10 @@ fn choose_rings(d: &BigDish, n: usize, r: f32, gap: f32, unfed: f32) -> Vec<Cut>
             break;
         }
         let (x, y) = ((i % w) as f32, (i / w) as f32);
-        if cuts.iter().any(|k| ((k.tip % w) as f32 - x).hypot((k.tip / w) as f32 - y) < 30.0 * s) {
+        if cuts
+            .iter()
+            .any(|k| ((k.tip % w) as f32 - x).hypot((k.tip / w) as f32 - y) < 30.0 * s)
+        {
             continue;
         }
         let (r0, r1) = (r * s, (r + gap) * s);
@@ -394,7 +406,11 @@ fn choose_rings(d: &BigDish, n: usize, r: f32, gap: f32, unfed: f32) -> Vec<Cut>
                 dd > r0 && dd <= r1
             })
             .collect();
-        cuts.push(Cut { cells, tip: i, back: c as f32 });
+        cuts.push(Cut {
+            cells,
+            tip: i,
+            back: c as f32,
+        });
     }
     cuts
 }
@@ -441,7 +457,10 @@ fn sample(d: &BigDish, tag: &[u8], t: f32) -> Sample {
         }
     }
     if n == 0 {
-        return Sample { t, ..Default::default() };
+        return Sample {
+            t,
+            ..Default::default()
+        };
     }
     let (cx, cy) = ((sx / n as f64) as f32, (sy / n as f64) as f32);
     let mut r2 = 0f64;
@@ -464,8 +483,22 @@ fn sample(d: &BigDish, tag: &[u8], t: f32) -> Sample {
     let frag = count[1..].iter().filter(|&&c| c >= min).count();
     let lcs = *count[1..].iter().max().unwrap_or(&0) as f32 / n as f32;
     let near_main = dilate(&main, w, h, s);
-    let touching = (0..d.walkers.len()).filter(|&k| holds(d, k) && tag[k] == 1 && near_main[cell_of(d, k)]).count();
-    Sample { t, n, frag, lcs, rms: rms / s as f32, compact: rms / disc.max(0.5), cx: cx / s as f32, cy: cy / s as f32, touching, took, energy: (en / n as f64) as f32 }
+    let touching = (0..d.walkers.len())
+        .filter(|&k| holds(d, k) && tag[k] == 1 && near_main[cell_of(d, k)])
+        .count();
+    Sample {
+        t,
+        n,
+        frag,
+        lcs,
+        rms: rms / s as f32,
+        compact: rms / disc.max(0.5),
+        cx: cx / s as f32,
+        cy: cy / s as f32,
+        touching,
+        took,
+        energy: (en / n as f64) as f32,
+    }
 }
 
 /// New slots alive since the last tick take the tag of a tagged walker on
@@ -504,7 +537,12 @@ fn tag_births(d: &BigDish, tag: &mut [u8], was: &mut [bool], last: &mut [usize],
                 for dy in -r..=r {
                     for dx in -r..=r {
                         let (nx, ny) = (x + dx, y + dy);
-                        if nx >= 0 && ny >= 0 && (nx as usize) < w && (ny as usize) < d.h && grid[ny as usize * w + nx as usize] > 0 {
+                        if nx >= 0
+                            && ny >= 0
+                            && (nx as usize) < w
+                            && (ny as usize) < d.h
+                            && grid[ny as usize * w + nx as usize] > 0
+                        {
                             t = grid[ny as usize * w + nx as usize];
                             break 'f;
                         }
@@ -533,7 +571,11 @@ fn image(d: &BigDish, tag: &[u8]) -> image::RgbaImage {
         }
         if !d.charge.is_empty() && d.pile_of[i] > 0 && d.charge[i] > 0.0 {
             let f = (d.charge[i] / d.pile_fill[d.pile_of[i] as usize - 1]).min(1.0);
-            c = [(30.0 + 40.0 * f) as u8, (60.0 + 120.0 * f) as u8, (80.0 + 170.0 * f) as u8];
+            c = [
+                (30.0 + 40.0 * f) as u8,
+                (60.0 + 120.0 * f) as u8,
+                (80.0 + 170.0 * f) as u8,
+            ];
         }
         let t = (d.trail[i] / 40.0).min(1.0);
         for (ch, add) in c.iter_mut().zip([110.0, 90.0, 40.0]) {
@@ -572,7 +614,17 @@ struct Run {
     react: f32,
 }
 
-fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone: bool, look: Option<(&str, String)>, series: &mut Option<std::fs::File>, key: &str) -> Run {
+fn follow(
+    grown: &BigDish,
+    cut: &Cut,
+    after: u64,
+    wound: u64,
+    half: bool,
+    alone: bool,
+    look: Option<(&str, String)>,
+    series: &mut Option<std::fs::File>,
+    key: &str,
+) -> Run {
     let mut d = grown.clone();
     let (w, h) = (d.w, d.h);
     let mut cutm = vec![false; w * h];
@@ -589,7 +641,17 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
     let occ: Vec<bool> = d.occupancy().iter().map(|&o| o > 0).collect();
     let (lab, _) = label(&dilate(&occ, w, h, d.p.scale), w, h);
     let pl = lab[cut.tip];
-    let mut tag: Vec<u8> = (0..d.walkers.len()).map(|k| if !d.lives(k) { 0 } else if pl > 0 && lab[cell_of(&d, k)] == pl { 1 } else { 2 }).collect();
+    let mut tag: Vec<u8> = (0..d.walkers.len())
+        .map(|k| {
+            if !d.lives(k) {
+                0
+            } else if pl > 0 && lab[cell_of(&d, k)] == pl {
+                1
+            } else {
+                2
+            }
+        })
+        .collect();
     // With `alone`, the rest of the mould is removed: the hunk has the world
     // to itself, so whatever it reaches it found.
     if alone {
@@ -601,10 +663,14 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
         }
     }
     let mut was: Vec<bool> = (0..d.walkers.len()).map(|k| d.lives(k)).collect();
-    let mut last: Vec<usize> = (0..d.walkers.len()).map(|k| if d.lives(k) { cell_of(&d, k) } else { 0 }).collect();
+    let mut last: Vec<usize> = (0..d.walkers.len())
+        .map(|k| if d.lives(k) { cell_of(&d, k) } else { 0 })
+        .collect();
     let mut grid = vec![0u8; w * h];
     // Fed: some of its walkers stand on crystal with charge at the cut.
-    let fed0 = !d.charge.is_empty() && (0..d.walkers.len()).any(|k| tag[k] == 1 && holds(&d, k) && d.pile_of[cell_of(&d, k)] > 0 && d.charge[cell_of(&d, k)] > 0.0);
+    let fed0 = !d.charge.is_empty()
+        && (0..d.walkers.len())
+            .any(|k| tag[k] == 1 && holds(&d, k) && d.pile_of[cell_of(&d, k)] > 0 && d.charge[cell_of(&d, k)] > 0.0);
     let s0 = sample(&d, &tag, 0.0);
     let n0 = s0.n;
     let mut samples = vec![s0.clone()];
@@ -622,7 +688,9 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
         .cells
         .iter()
         .copied()
-        .filter(|&i| d.agar[i] && (!half || ((i % w) as f32 - tx) * (hx - tx) + ((i / w) as f32 - ty) * (hy - ty) > 0.0))
+        .filter(|&i| {
+            d.agar[i] && (!half || ((i % w) as f32 - tx) * (hx - tx) + ((i / w) as f32 - ty) * (hy - ty) > 0.0)
+        })
         .collect();
     if wound > 0 {
         for &i in &healed {
@@ -640,11 +708,16 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
         // A film (`CUTPROBE_FILM=1`): a frame every third of a game second.
         if let Some((dir, name)) = &look {
             if std::env::var("CUTPROBE_FILM").is_ok() && tk.is_multiple_of(TPS / 3) {
-                image(&d, &tag).save(format!("{dir}/{name}-f{:04}.png", tk / (TPS / 3))).expect("png");
+                image(&d, &tag)
+                    .save(format!("{dir}/{name}-f{:04}.png", tk / (TPS / 3)))
+                    .expect("png");
             }
         }
         if tk <= TPS && !d.took.is_empty() {
-            first_took += (0..d.walkers.len()).filter(|&k| tag[k] == 1 && holds(&d, k)).map(|k| d.took[k]).sum::<f32>();
+            first_took += (0..d.walkers.len())
+                .filter(|&k| tag[k] == 1 && holds(&d, k))
+                .map(|k| d.took[k])
+                .sum::<f32>();
         }
         if tk.is_multiple_of(TPS) {
             let t = (tk / TPS) as f32;
@@ -653,7 +726,9 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
             samples.push(s);
             if let Some((dir, name)) = &look {
                 if (tk / TPS).is_multiple_of(10) {
-                    image(&d, &tag).save(format!("{dir}/{name}-t{:03}.png", tk / TPS)).expect("png");
+                    image(&d, &tag)
+                        .save(format!("{dir}/{name}-t{:03}.png", tk / TPS))
+                        .expect("png");
                 }
             }
             if dead {
@@ -670,7 +745,10 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
     let mut fate = ("alive".to_string(), after as f32);
     let mut prev_touch = false;
     // Reaction: the first second its centre has moved 3 dish cells.
-    let react = samples.iter().find(|x| x.n > 0 && (x.cx - s0.cx).hypot(x.cy - s0.cy) >= 3.0).map_or(-1.0, |x| x.t);
+    let react = samples
+        .iter()
+        .find(|x| x.n > 0 && (x.cx - s0.cx).hypot(x.cy - s0.cy) >= 3.0)
+        .map_or(-1.0, |x| x.t);
     for s in &samples[1..] {
         if s.n == 0 {
             fate = ("starve".into(), s.t);
@@ -689,7 +767,12 @@ fn follow(grown: &BigDish, cut: &Cut, after: u64, wound: u64, half: bool, alone:
     if let Some(f) = series {
         use std::io::Write;
         for s in &samples {
-            writeln!(f, "{key},{},{},{},{:.3},{:.2},{:.2},{:.1},{:.1},{},{:.3},{:.3}", s.t, s.n, s.frag, s.lcs, s.rms, s.compact, s.cx, s.cy, s.touching, s.took, s.energy).unwrap();
+            writeln!(
+                f,
+                "{key},{},{},{},{:.3},{:.2},{:.2},{:.1},{:.1},{},{:.3},{:.3}",
+                s.t, s.n, s.frag, s.lcs, s.rms, s.compact, s.cx, s.cy, s.touching, s.took, s.energy
+            )
+            .unwrap();
         }
     }
     let last = alive.last().cloned().cloned().unwrap_or_default();
@@ -732,7 +815,8 @@ fn sign_p(a: usize, b: usize) -> f64 {
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
-    let (mut scale, mut walkers, mut grow, mut after, mut ncuts, mut cutw, mut wound, mut ring) = (2usize, 5_000usize, 60u64, 120u64, 3usize, 3.0f32, 0u64, 0.0f32);
+    let (mut scale, mut walkers, mut grow, mut after, mut ncuts, mut cutw, mut wound, mut ring) =
+        (2usize, 5_000usize, 60u64, 120u64, 3usize, 3.0f32, 0u64, 0.0f32);
     let (mut unfed, mut half, mut alone) = (0.0f32, false, false);
     let mut map = None::<Map>;
     let mut arms: Vec<(String, Vec<(String, String)>)> = Vec::new();
@@ -788,7 +872,9 @@ fn main() {
     }
     println!("cutprobe race world scale {scale} walkers {walkers}, grow {grow} s, follow {after} s, {ncuts} cuts a seed, seeds {seeds:?}");
     println!("arms: {arms:?}");
-    println!("arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms");
+    println!(
+        "arm seed cut | n0 back fed | lcs20 frag_mean lcs_mean rms20 compact20 | life fate at moved | grown cut_ms"
+    );
     // results[arm][(seed, cut)]
     let mut results: Vec<Vec<((u64, usize), Run)>> = vec![Vec::new(); arms.len()];
     for &seed in &seeds {
@@ -815,7 +901,16 @@ fn main() {
                 let mut dd = d.clone();
                 dd.p.energy_flow = 0.0;
                 let s = sample(&d, &all, 0.0);
-                let (lab, nl) = label(&dilate(&d.occupancy().iter().map(|&o| o > 0).collect::<Vec<_>>(), d.w, d.h, d.p.scale), d.w, d.h);
+                let (lab, nl) = label(
+                    &dilate(
+                        &d.occupancy().iter().map(|&o| o > 0).collect::<Vec<_>>(),
+                        d.w,
+                        d.h,
+                        d.p.scale,
+                    ),
+                    d.w,
+                    d.h,
+                );
                 let mut count = vec![0usize; nl as usize + 1];
                 for k in 0..d.walkers.len() {
                     if holds(&d, k) {
@@ -823,19 +918,33 @@ fn main() {
                     }
                 }
                 let parts = count[1..].iter().filter(|&&c| c * 100 >= alive).count();
-                let fed = (0..d.pile_charge.len()).filter(|&i| d.pile_charge[i] < 0.99 * d.pile_full[i]).count();
-                let lone = (0..d.walkers.len()).filter(|&k| holds(&d, k) && count[lab[cell_of(&d, k)] as usize] < 5).count();
+                let fed = (0..d.pile_charge.len())
+                    .filter(|&i| d.pile_charge[i] < 0.99 * d.pile_full[i])
+                    .count();
+                let lone = (0..d.walkers.len())
+                    .filter(|&k| holds(&d, k) && count[lab[cell_of(&d, k)] as usize] < 5)
+                    .count();
                 println!("{name} {seed} grown | alive {alive} parts1% {parts} lcs {:.2} lone {:.2} rms {:.1} | crystals eaten from {fed} of {}", s.lcs, lone as f32 / alive as f32, s.rms, d.pile_charge.len());
             }
-            let cuts = if ring > 0.0 { choose_rings(&d, ncuts, ring, cutw, unfed) } else { choose_cuts(&d, ncuts, cutw) };
+            let cuts = if ring > 0.0 {
+                choose_rings(&d, ncuts, ring, cutw, unfed)
+            } else {
+                choose_cuts(&d, ncuts, cutw)
+            };
             if let Some(dir) = &look {
                 let tag: Vec<u8> = vec![2; d.walkers.len()];
-                image(&d, &tag).save(format!("{dir}/{name}-s{seed}-grown.png")).expect("png");
+                image(&d, &tag)
+                    .save(format!("{dir}/{name}-s{seed}-grown.png"))
+                    .expect("png");
             }
             for (ci, cut) in cuts.iter().enumerate() {
                 let key = format!("{name},{seed},{ci}");
                 let lk = look.as_ref().map(|dir| (dir.as_str(), format!("{name}-s{seed}-c{ci}")));
-                println!("cut {name} {seed} {ci} at fine cell ({}, {})", cut.tip % d.w, cut.tip / d.w);
+                println!(
+                    "cut {name} {seed} {ci} at fine cell ({}, {})",
+                    cut.tip % d.w,
+                    cut.tip / d.w
+                );
                 let r = follow(&d, cut, after, wound, half, alone, lk, &mut series, &key);
                 println!(
                     "{name} {seed} {ci} | {} {:.0} {} | {:.2} {:.2} {:.2} {:.1} {:.2} | {:.0} {} {:.0} {:.1} react {:.0} | {alive} {grow_ms:.2}",
@@ -870,7 +979,11 @@ fn main() {
             continue;
         }
         // Pair by (seed, cut index): the cut lands on each arm's own mould.
-        for (label, f) in [("lcs20", (|r: &Run| r.lcs20) as fn(&Run) -> f32), ("life", |r: &Run| r.life), ("compact20", |r: &Run| -r.compact20)] {
+        for (label, f) in [
+            ("lcs20", (|r: &Run| r.lcs20) as fn(&Run) -> f32),
+            ("life", |r: &Run| r.life),
+            ("compact20", |r: &Run| -r.compact20),
+        ] {
             let (mut up, mut down) = (0, 0);
             for (k, r) in rs {
                 if let Some((_, b)) = results[0].iter().find(|(kk, _)| kk == k) {
@@ -882,7 +995,11 @@ fn main() {
                     }
                 }
             }
-            println!("  vs {}: {label} better {up} worse {down}, p {:.4}", arms[0].0, sign_p(up, down));
+            println!(
+                "  vs {}: {label} better {up} worse {down}, p {:.4}",
+                arms[0].0,
+                sign_p(up, down)
+            );
         }
     }
 }

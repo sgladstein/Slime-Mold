@@ -23,9 +23,18 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
     let mut out: Vec<(u32, String, Mission)> = Vec::new();
     for e in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
         let p = e.path();
-        let Some(stem) = p.file_stem().and_then(|s| s.to_str()).filter(|_| p.extension().is_some_and(|x| x == "txt")) else { continue };
+        let Some(stem) = p
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .filter(|_| p.extension().is_some_and(|x| x == "txt"))
+        else {
+            continue;
+        };
         let n = stem.split('-').next().and_then(|d| d.parse().ok()).unwrap_or(u32::MAX);
-        match std::fs::read_to_string(&p).map_err(|e| e.to_string()).and_then(|t| Mission::parse(&t)) {
+        match std::fs::read_to_string(&p)
+            .map_err(|e| e.to_string())
+            .and_then(|t| Mission::parse(&t))
+        {
             Ok(m) => out.push((n, stem.to_string(), m)),
             Err(e) => eprintln!("larder-world: {}: {e}", p.display()),
         }
@@ -47,7 +56,10 @@ const DISH_OPTS: [&str; 2] = ["map", "own"];
 
 /// The dish options' values, to tell when one moved.
 fn dish_key(m: &StartMenu) -> Vec<String> {
-    DISH_OPTS.iter().filter_map(|k| m.option(k).map(|o| o.value().to_string())).collect()
+    DISH_OPTS
+        .iter()
+        .filter_map(|k| m.option(k).map(|o| o.value().to_string()))
+        .collect()
 }
 
 /// The value a key last took in `keys` (the last wins, as `gpu::set` plays them).
@@ -58,7 +70,12 @@ fn key_value<'a>(keys: &'a [(String, String)], k: &str) -> Option<&'a str> {
 /// The options page for the command line's `base` (its values preset).
 pub(super) fn options(base: &Args) -> Vec<Opt> {
     let (_, c) = shape_keys(DEFAULT_SHAPE).expect("the default shape");
-    let c_default = |k: &str| c.iter().find(|(n, _)| *n == k).map(|(_, v)| v.to_string()).unwrap_or_else(|| "0".into());
+    let c_default = |k: &str| {
+        c.iter()
+            .find(|(n, _)| *n == k)
+            .map(|(_, v)| v.to_string())
+            .unwrap_or_else(|| "0".into())
+    };
     let map_now = base.map.clone().unwrap_or_else(|| "noise".into());
     let maps: Vec<&str> = MAPS.iter().copied().chain(["noise"]).collect();
     // The GPU world casts no germ yet (H skips those loadouts too); gas
@@ -75,17 +92,42 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         Opt::new("bullet", "Bullet speed", &["0", "30", "45", "60", "90"], &num(bullet), &base.bullet.map_or(num(bullet), num), "Dish cells a game second a shot flies; 0 is the instant ray"),
     ];
     let notes = [
-        ("panic", "Panic", &["0", "1", "2", "4"][..], "A cut-off part charges the squad or bolts for food; 0 is off"),
-        ("wither", "Wither", &["0", "0.005", "0.01", "0.02"][..], "How fast a part cut off from food thins; 0 is off"),
-        ("energy_flow", "Shared food", &["0", "0.025", "0.05", "0.1"][..], "How much food the body shares from its crystals; 0 is off"),
+        (
+            "panic",
+            "Panic",
+            &["0", "1", "2", "4"][..],
+            "A cut-off part charges the squad or bolts for food; 0 is off",
+        ),
+        (
+            "wither",
+            "Wither",
+            &["0", "0.005", "0.01", "0.02"][..],
+            "How fast a part cut off from food thins; 0 is off",
+        ),
+        (
+            "energy_flow",
+            "Shared food",
+            &["0", "0.025", "0.05", "0.1"][..],
+            "How much food the body shares from its crystals; 0 is off",
+        ),
         // Dense slime condenses (11-14, `BigParams::condense`): off by
         // default for the owner's playtest; the steps a crowded or feeding
         // walker takes to condense (300 is 10 game seconds).
-        ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off"),
+        (
+            "condense",
+            "Condense",
+            &["0", "150", "300", "600"][..],
+            "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off",
+        ),
         // Condensed slime breaks away (11-14, `BigParams::roam`): off by
         // default; how often (steps) a condensed piece may leave for an
         // untouched crystal. Needs Condense.
-        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off"),
+        (
+            "roam",
+            "Breakaway",
+            &["0", "150", "300", "600"][..],
+            "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off",
+        ),
     ];
     for (k, label, choices, note) in notes {
         let d = c_default(k);
@@ -96,7 +138,14 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // once and is saved; not a round's setting, so `round_args` skips it.
     let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
     let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
-    o.push(Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
+    o.push(Opt::new(
+        "ui",
+        "UI and text size",
+        &sizes,
+        "100%",
+        &settings::percent(ui_user()),
+        "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere",
+    ));
     o
 }
 
@@ -135,12 +184,30 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     .iter()
     .map(|&(k, v)| (k.to_string(), v.to_string()))
     .collect();
-    let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
+    let mut squad = vec![(
+        "Squad mode".to_string(),
+        "Options: Control, squads (or mode=squads)".to_string(),
+    )];
     squad.extend(squad_help());
     // The card's letters as `squad_card_key` moves them.
-    let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
-    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(BURN, KeyCode::KeyF)), "The card for the squad: attack-move, drain, burn".into()));
-    squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+    let k = |id: u32, key: KeyCode| {
+        squad_card_key(id, key)
+            .and_then(slime_mould::world::ui::key_name)
+            .unwrap_or_default()
+    };
+    squad.push((
+        format!(
+            "{}, {}, {}",
+            k(ATTACK, KeyCode::KeyA),
+            k(HARVEST, KeyCode::KeyG),
+            k(BURN, KeyCode::KeyF)
+        ),
+        "The card for the squad: attack-move, drain, burn".into(),
+    ));
+    squad.push((
+        format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)),
+        "Mine, sleep gas (A, S and D steer)".into(),
+    ));
     if squads {
         squad.push(("RTS round".into(), "Options: Control, rts".into()));
         squad.into_iter().chain(rts).collect()
@@ -153,7 +220,18 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
 pub(super) fn start_menu(base: &Args) -> StartMenu {
     let entries = missions()
         .into_iter()
-        .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
+        .map(|(stem, m)| Entry {
+            stem,
+            detail: format!(
+                "{}{}",
+                title_case(&m.map),
+                m.tier
+                    .as_ref()
+                    .map_or(String::new(), |t| format!(", {}", title_case(t)))
+            ),
+            name: m.name,
+            says: m.says,
+        })
         .collect();
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
@@ -236,7 +314,9 @@ impl App {
     /// Sandbox would start with today's options), the camera on the whole
     /// map.
     pub(super) fn open_menu(&mut self) -> Result<(), String> {
-        let Some((base, chosen)) = self.base.clone() else { return Ok(()) };
+        let Some((base, chosen)) = self.base.clone() else {
+            return Ok(());
+        };
         let menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
         self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
@@ -252,17 +332,27 @@ impl App {
         self.camera.set_inset(0.0, 0.0);
         let z = self.camera.fit();
         self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
-        self.camera.centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
+        self.camera
+            .centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
     }
 
     /// A key or a click on the menu (`input`): what it picked, after the
     /// dish behind is started again if it turned a world option (`DISH_OPTS`).
-    pub(super) fn menu_input(&mut self, input: impl FnOnce(&mut StartMenu) -> Vec<StartEvent>) -> Result<Vec<StartEvent>, String> {
-        let Some(m) = self.menu.as_mut() else { return Ok(Vec::new()) };
+    pub(super) fn menu_input(
+        &mut self,
+        input: impl FnOnce(&mut StartMenu) -> Vec<StartEvent>,
+    ) -> Result<Vec<StartEvent>, String> {
+        let Some(m) = self.menu.as_mut() else {
+            return Ok(Vec::new());
+        };
         let before = dish_key(m);
         let picks = input(m);
         // The UI size option, applied the moment it turns.
-        if let Some(v) = m.option("ui").and_then(|o| settings::parse_size(o.value())).filter(|&v| v != ui_user()) {
+        if let Some(v) = m
+            .option("ui")
+            .and_then(|o| settings::parse_size(o.value()))
+            .filter(|&v| v != ui_user())
+        {
             self.set_ui(v);
         }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
@@ -299,7 +389,9 @@ impl App {
                 }
             }
             pick => {
-                let (Some((base, chosen)), Some(menu)) = (self.base.clone(), self.menu.take()) else { return Ok(false) };
+                let (Some((base, chosen)), Some(menu)) = (self.base.clone(), self.menu.take()) else {
+                    return Ok(false);
+                };
                 self.args = round_args(&base, chosen, &menu, &pick);
                 if pick == StartEvent::RandomPlanet {
                     self.args.seed = fresh_seed();
@@ -330,13 +422,19 @@ impl App {
 /// The Planet option's value for the command line's map: its depth when
 /// the map is a planet, else the first.
 fn planet_now(base: &Args) -> String {
-    base.map.as_deref().and_then(|m| slime_mould::mould::levelgen::spec_planet(m, base.seed)).and_then(Result::ok).map_or("1".into(), |p| p.depth.min(8).to_string())
+    base.map
+        .as_deref()
+        .and_then(|m| slime_mould::mould::levelgen::spec_planet(m, base.seed))
+        .and_then(Result::ok)
+        .map_or("1".into(), |p| p.depth.min(8).to_string())
 }
 
 /// A seed for a new planet: the clock's, kept to six digits so the title's
 /// "seed 482913" can be typed back as `seed=` to play the planet again.
 pub(super) fn fresh_seed() -> u64 {
-    let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64);
+    let t = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(1, |d| d.as_nanos() as u64);
     t % 1_000_000
 }
 
@@ -347,5 +445,9 @@ fn launch_editor() -> Result<(), String> {
     if !exe.exists() {
         return Err("No map editor built: cargo build --release --bin larder-edit".into());
     }
-    std::process::Command::new(&exe).current_dir(env!("CARGO_MANIFEST_DIR")).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
+    std::process::Command::new(&exe)
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("The map editor did not start: {e}"))
 }

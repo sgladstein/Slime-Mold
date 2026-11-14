@@ -65,8 +65,8 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
-use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::kit::KitRules;
+use slime_mould::mould::larder_world::{Cmd, End, Game, Order, Rules, Stance, World};
 use slime_mould::mould::own_mould::{garden_world, Garden, Task, OWN};
 
 const RESERVE: f32 = 600.0;
@@ -89,7 +89,10 @@ struct Opts {
 fn opts() -> Opts {
     let mut o = Opts {
         seeds: (1..=32).collect(),
-        hands: ["idle", "random", "farm", "road", "feed", "grow"].iter().map(|s| s.to_string()).collect(),
+        hands: ["idle", "random", "farm", "road", "feed", "grow"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         cap: 300.0,
         walkers: 2500,
         threads: 4,
@@ -128,7 +131,14 @@ fn by_distance(g: &Game<Garden>) -> Vec<(f32, f32)> {
     let l = g.larder;
     let r = g.rules;
     let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core && *c != l).collect();
+    let mut cs: Vec<(f32, f32)> = g
+        .world
+        .crystals()
+        .iter()
+        .filter(|c| c.1 >= dry)
+        .map(|c| c.0)
+        .filter(|c| *c != g.core && *c != l)
+        .collect();
     cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
     cs
 }
@@ -296,14 +306,21 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
                     continue;
                 }
                 let s = g.soldiers[k];
-                let to = if h.back { g.larder } else { h.target.or(free.get(k % free.len().max(1)).copied()).unwrap_or(g.larder) };
+                let to = if h.back {
+                    g.larder
+                } else {
+                    h.target
+                        .or(free.get(k % free.len().max(1)).copied())
+                        .unwrap_or(g.larder)
+                };
                 if h.target.is_none() && !h.back {
                     h.target = Some(to);
                 }
                 if s.order != Order::Move(to.0, to.1) {
                     g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
                 }
-                g.world.set_task(k, if g.bank > RESERVE { Task::Feed } else { Task::Road });
+                g.world
+                    .set_task(k, if g.bank > RESERVE { Task::Feed } else { Task::Road });
                 if k == 0 && (s.x - to.0).hypot(s.y - to.1) < 3.0 * g.world.scale() {
                     if h.back {
                         h.back = false;
@@ -338,7 +355,13 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
             let sc = g.world.scale();
             let at = front_of(g, 0.0);
             let (own, enemy) = cells_near(g, at, 12.0 * sc);
-            h.pick = if enemy > own { "fire" } else if g.bank > RESERVE { "sow" } else { "road" };
+            h.pick = if enemy > own {
+                "fire"
+            } else if g.bank > RESERVE {
+                "sow"
+            } else {
+                "road"
+            };
             let to = if h.pick == "road" { front_of(g, 15.0) } else { at };
             let (task, stance) = match h.pick {
                 "fire" => (Task::None, Stance::Free),
@@ -353,7 +376,12 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
                 }
             }
             if std::env::var_os("GARDEN_TRACE").is_some() {
-                eprintln!("front t {:.0}: own {own} enemy {enemy} near the line, bank {:.0} -> {}", g.time(), g.bank, h.pick);
+                eprintln!(
+                    "front t {:.0}: own {own} enemy {enemy} near the line, bank {:.0} -> {}",
+                    g.time(),
+                    g.bank,
+                    h.pick
+                );
             }
         }
         "feed" => {
@@ -362,7 +390,8 @@ fn act(name: &str, g: &mut Game<Garden>, h: &mut Hand, start_own: usize) {
             if g.soldiers[0].order != Order::Move(l.0, l.1) {
                 g.apply(Cmd::Order(0, Order::Move(l.0, l.1)));
             }
-            g.world.set_task(0, if g.bank > RESERVE { Task::Feed } else { Task::None });
+            g.world
+                .set_task(0, if g.bank > RESERVE { Task::Feed } else { Task::None });
         }
         _ => panic!("unknown hand {name}"),
     }
@@ -386,7 +415,10 @@ struct Out {
 type Look<'a> = &'a mut dyn FnMut(&Game<Garden>, u32);
 
 fn play(o: &Opts, seed: u64, hand: &str, mut look: Option<Look>) -> Out {
-    let rules = Rules { cap: o.cap, ..Rules::default() };
+    let rules = Rules {
+        cap: o.cap,
+        ..Rules::default()
+    };
     let mut g = Game::new(world(o, seed), rules, seed);
     let start_own = g.world.counts_by_side().0;
     let start: f64 = g.world.dish.charge.iter().map(|&c| c as f64).sum();
@@ -421,7 +453,17 @@ fn play(o: &Opts, seed: u64, hand: &str, mut look: Option<Look>) -> Out {
         Some(End::MouldWiped(_)) => "enemy wiped",
         _ => "cap",
     };
-    Out { share, own, enemy, soldiers: g.alive(), end, roads: g.world.roads, fed: g.world.fed, cut: g.world.cut, turned: (g.world.turned_own, g.world.turned_enemy) }
+    Out {
+        share,
+        own,
+        enemy,
+        soldiers: g.alive(),
+        end,
+        roads: g.world.roads,
+        fed: g.world.fed,
+        cut: g.world.cut,
+        turned: (g.world.turned_own, g.world.turned_enemy),
+    }
 }
 
 fn picture(g: &Game<Garden>) -> image::RgbaImage {
@@ -442,8 +484,17 @@ fn picture(g: &Game<Garden>) -> image::RgbaImage {
             [16.0, 16.0, 20.0]
         };
         // The player's mould in green, the enemy's in amber.
-        let px = [base[0] + enemy * 220.0 + own * 40.0, base[1] + enemy * 140.0 + own * 210.0, base[2] + enemy * 20.0 + own * 90.0];
-        image::Rgba([px[0].min(255.0) as u8, px[1].min(255.0) as u8, px[2].min(255.0) as u8, 255])
+        let px = [
+            base[0] + enemy * 220.0 + own * 40.0,
+            base[1] + enemy * 140.0 + own * 210.0,
+            base[2] + enemy * 20.0 + own * 90.0,
+        ];
+        image::Rgba([
+            px[0].min(255.0) as u8,
+            px[1].min(255.0) as u8,
+            px[2].min(255.0) as u8,
+            255,
+        ])
     });
     for s in g.soldiers.iter().filter(|s| s.alive) {
         for dy in -1i32..=1 {
@@ -526,7 +577,10 @@ fn front_of(g: &Game<Garden>, past: f32) -> (f32, f32) {
 
 /// One arm of the front probe: (cells at the branch, at +20 s, at +40 s).
 fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
-    let rules = Rules { cap: at + 41.0, ..Rules::default() };
+    let rules = Rules {
+        cap: at + 41.0,
+        ..Rules::default()
+    };
     let mut g = Game::new(world(o, seed), rules, seed);
     let start_own = g.world.counts_by_side().0;
     let mut h = Hand::default();
@@ -572,14 +626,20 @@ fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
             if !s0.alive {
                 cord = false;
             } else if (s0.x - mid.0).hypot(s0.y - mid.1) <= kit.reach * sc {
-                let (a, b) = ((mid.0 - uy * 8.0 * sc, mid.1 + ux * 8.0 * sc), (mid.0 + uy * 8.0 * sc, mid.1 - ux * 8.0 * sc));
+                let (a, b) = (
+                    (mid.0 - uy * 8.0 * sc, mid.1 + ux * 8.0 * sc),
+                    (mid.0 + uy * 8.0 * sc, mid.1 - ux * 8.0 * sc),
+                );
                 let price = kit.cord_price * 16.0;
                 if g.bank >= price {
                     g.bank -= price;
                     g.spent += price;
                     let tps = g.rules.tps;
                     let (own, enemy) = g.world.cord(a, b, &kit, tps);
-                    eprintln!("cord seed {seed}: fired at {:.1} s, killed own {own}, enemy {enemy}", g.time());
+                    eprintln!(
+                        "cord seed {seed}: fired at {:.1} s, killed own {own}, enemy {enemy}",
+                        g.time()
+                    );
                 } else {
                     eprintln!("cord seed {seed}: bank {:.0} under {price}", g.bank);
                 }
@@ -605,7 +665,10 @@ fn front_arm(o: &Opts, seed: u64, arm: &str, at: f32) -> [(usize, usize); 3] {
 
 fn front(o: &Opts) {
     let mut at = 150.0f32;
-    let mut arms: Vec<String> = ["none", "sow", "shoot", "road", "cut"].iter().map(|s| s.to_string()).collect();
+    let mut arms: Vec<String> = ["none", "sow", "shoot", "road", "cut"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
     for a in std::env::args().skip(1) {
         if let Some(v) = a.strip_prefix("at=") {
             at = v.parse().unwrap();
@@ -615,7 +678,9 @@ fn front(o: &Opts) {
         }
     }
     println!("front: branch at {at} s from sow2, arms {arms:?}, seeds {:?}", o.seeds);
-    let jobs: Vec<(usize, u64)> = (0..arms.len()).flat_map(|a| o.seeds.iter().map(move |&s| (a, s))).collect();
+    let jobs: Vec<(usize, u64)> = (0..arms.len())
+        .flat_map(|a| o.seeds.iter().map(move |&s| (a, s)))
+        .collect();
     let next = AtomicUsize::new(0);
     let res = Mutex::new(Vec::new());
     std::thread::scope(|sc| {
@@ -634,12 +699,35 @@ fn front(o: &Opts) {
     });
     let r = res.into_inner().unwrap();
     let get = |a: usize, s: u64| r.iter().find(|x| x.0 == a && x.1 == s).map(|x| x.2).unwrap();
-    let Some(none) = arms.iter().position(|a| a == "none") else { return };
+    let Some(none) = arms.iter().position(|a| a == "none") else {
+        return;
+    };
     let n = o.seeds.len() as f64;
     println!("\nsummary: mean cells (player / enemy) at the branch, +20 s, +40 s");
     for (a, name) in arms.iter().enumerate() {
-        let m = |j: usize, side: usize| o.seeds.iter().map(|&s| { let c = get(a, s)[j]; if side == 0 { c.0 } else { c.1 } } as f64).sum::<f64>() / n;
-        println!("{name:>6}: {:.0} / {:.0}, {:.0} / {:.0}, {:.0} / {:.0}", m(0, 0), m(0, 1), m(1, 0), m(1, 1), m(2, 0), m(2, 1));
+        let m = |j: usize, side: usize| {
+            o.seeds
+                .iter()
+                .map(|&s| {
+                    let c = get(a, s)[j];
+                    if side == 0 {
+                        c.0
+                    } else {
+                        c.1
+                    }
+                } as f64)
+                .sum::<f64>()
+                / n
+        };
+        println!(
+            "{name:>6}: {:.0} / {:.0}, {:.0} / {:.0}, {:.0} / {:.0}",
+            m(0, 0),
+            m(0, 1),
+            m(1, 0),
+            m(1, 1),
+            m(2, 0),
+            m(2, 1)
+        );
     }
     let mut tests = Vec::new();
     for j in [1usize, 2] {
@@ -648,14 +736,26 @@ fn front(o: &Opts) {
                 if a == none {
                     continue;
                 }
-                let mut d: Vec<f64> = o.seeds.iter().map(|&s| {
-                    let (x, y) = (get(a, s)[j], get(none, s)[j]);
-                    if side == 0 { x.0 as f64 - y.0 as f64 } else { x.1 as f64 - y.1 as f64 }
-                }).collect();
+                let mut d: Vec<f64> = o
+                    .seeds
+                    .iter()
+                    .map(|&s| {
+                        let (x, y) = (get(a, s)[j], get(none, s)[j]);
+                        if side == 0 {
+                            x.0 as f64 - y.0 as f64
+                        } else {
+                            x.1 as f64 - y.1 as f64
+                        }
+                    })
+                    .collect();
                 let hi = d.iter().filter(|&&v| v > 0.0).count();
                 let lo = d.iter().filter(|&&v| v < 0.0).count();
                 d.sort_by(|a, b| a.total_cmp(b));
-                let label = format!("+{}s {} cells {name} vs none", 20 * j, if side == 0 { "player" } else { "enemy" });
+                let label = format!(
+                    "+{}s {} cells {name} vs none",
+                    20 * j,
+                    if side == 0 { "player" } else { "enemy" }
+                );
                 tests.push((label, hi, lo, sign_p(hi, lo), d[d.len() / 2], j == 1));
             }
         }
@@ -672,8 +772,15 @@ fn front(o: &Opts) {
     }
     println!("\npaired against none: higher / lower, p, median difference (Holm over the +20 s tests)");
     for (k, t) in tests.iter().enumerate() {
-        let h = match holm[k] { Some(true) => "  holds under Holm", Some(false) => "", None => "  (not in the family)" };
-        println!("{:>34}  {:>2} / {:>2}  p {:.4}  median {:+.0}{h}", t.0, t.1, t.2, t.3, t.4);
+        let h = match holm[k] {
+            Some(true) => "  holds under Holm",
+            Some(false) => "",
+            None => "  (not in the family)",
+        };
+        println!(
+            "{:>34}  {:>2} / {:>2}  p {:.4}  median {:+.0}{h}",
+            t.0, t.1, t.2, t.3, t.4
+        );
     }
 }
 
@@ -684,7 +791,10 @@ fn main() {
         front(&o);
         return;
     }
-    println!("garden: cap {} s, walkers {} a side, hunt {}, hands {:?}, seeds {:?}", o.cap, o.walkers, o.hunt, o.hands, o.seeds);
+    println!(
+        "garden: cap {} s, walkers {} a side, hunt {}, hands {:?}, seeds {:?}",
+        o.cap, o.walkers, o.hunt, o.hands, o.seeds
+    );
     if let Some(dir) = o.look.clone() {
         std::fs::create_dir_all(&dir).unwrap();
         for &seed in &o.seeds {
@@ -693,7 +803,10 @@ fn main() {
                     let (own, enemy) = g.world.counts_by_side();
                     let path = format!("{dir}/{hand}-s{seed}-t{t:03}.png");
                     picture(g).save(&path).unwrap();
-                    println!("look {hand} seed {seed} t {t}s own {own} enemy {enemy} bank {:.0} -> {path}", g.bank);
+                    println!(
+                        "look {hand} seed {seed} t {t}s own {own} enemy {enemy} bank {:.0} -> {path}",
+                        g.bank
+                    );
                 };
                 let out = play(&o, seed, hand, Some(&mut save));
                 println!("end {hand} seed {seed}: {out:?}");
@@ -701,7 +814,9 @@ fn main() {
         }
         return;
     }
-    let jobs: Vec<(usize, u64)> = (0..o.hands.len()).flat_map(|h| o.seeds.iter().map(move |&s| (h, s))).collect();
+    let jobs: Vec<(usize, u64)> = (0..o.hands.len())
+        .flat_map(|h| o.seeds.iter().map(move |&s| (h, s)))
+        .collect();
     let next = AtomicUsize::new(0);
     let res = Mutex::new(Vec::new());
     std::thread::scope(|sc| {
@@ -745,12 +860,17 @@ fn main() {
     let mut tests = Vec::new();
     for (h, name) in o.hands.iter().enumerate() {
         for ctrl in ["idle", "random"] {
-            let Some(c) = o.hands.iter().position(|x| x == ctrl) else { continue };
+            let Some(c) = o.hands.iter().position(|x| x == ctrl) else {
+                continue;
+            };
             if c == h {
                 continue;
             }
             let mut d: Vec<f64> = o.seeds.iter().map(|&s| get(h, s).share - get(c, s).share).collect();
-            let (up, down) = (d.iter().filter(|&&x| x > 0.0).count(), d.iter().filter(|&&x| x < 0.0).count());
+            let (up, down) = (
+                d.iter().filter(|&&x| x > 0.0).count(),
+                d.iter().filter(|&&x| x < 0.0).count(),
+            );
             d.sort_by(|a, b| a.total_cmp(b));
             tests.push((name.clone(), ctrl, up, down, sign_p(up, down), d[d.len() / 2]));
         }
@@ -758,15 +878,24 @@ fn main() {
     println!("\npaired on the moulds' balance at the cap (player's walkers less the enemy's): higher / lower, p, median difference");
     for (h, name) in o.hands.iter().enumerate() {
         for ctrl in ["idle", "random", "farm"] {
-            let Some(c) = o.hands.iter().position(|x| x == ctrl) else { continue };
+            let Some(c) = o.hands.iter().position(|x| x == ctrl) else {
+                continue;
+            };
             if c == h {
                 continue;
             }
             let bal = |h: usize, s: u64| get(h, s).own as f64 - get(h, s).enemy as f64;
             let mut d: Vec<f64> = o.seeds.iter().map(|&s| bal(h, s) - bal(c, s)).collect();
-            let (up, down) = (d.iter().filter(|&&x| x > 0.0).count(), d.iter().filter(|&&x| x < 0.0).count());
+            let (up, down) = (
+                d.iter().filter(|&&x| x > 0.0).count(),
+                d.iter().filter(|&&x| x < 0.0).count(),
+            );
             d.sort_by(|a, b| a.total_cmp(b));
-            println!("{name:>7} vs {ctrl:<6} {up:>2} / {down:>2}  p {:.4}  median diff {:+.0}", sign_p(up, down), d[d.len() / 2]);
+            println!(
+                "{name:>7} vs {ctrl:<6} {up:>2} / {down:>2}  p {:.4}  median diff {:+.0}",
+                sign_p(up, down),
+                d[d.len() / 2]
+            );
         }
     }
     let m = tests.len();
@@ -781,6 +910,15 @@ fn main() {
         }
     }
     for (i, t) in tests.iter().enumerate() {
-        println!("{:>7} vs {:<6} {:>2} / {:>2}  p {:.4}  median diff {:+.3}{}", t.0, t.1, t.2, t.3, t.4, t.5, if holm[i] { "  (Holm)" } else { "" });
+        println!(
+            "{:>7} vs {:<6} {:>2} / {:>2}  p {:.4}  median diff {:+.3}{}",
+            t.0,
+            t.1,
+            t.2,
+            t.3,
+            t.4,
+            t.5,
+            if holm[i] { "  (Holm)" } else { "" }
+        );
     }
 }

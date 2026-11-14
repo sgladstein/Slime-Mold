@@ -74,7 +74,11 @@ pub fn minimap_rect(world: (usize, usize), screen: (u32, u32)) -> Option<(u32, u
         return None;
     }
     let (ww, wh) = (world.0 as f32, world.1 as f32);
-    let (w, h) = if ww >= wh { (side, ((side as f32) * wh / ww).round().max(1.0) as u32) } else { (((side as f32) * ww / wh).round().max(1.0) as u32, side) };
+    let (w, h) = if ww >= wh {
+        (side, ((side as f32) * wh / ww).round().max(1.0) as u32)
+    } else {
+        (((side as f32) * ww / wh).round().max(1.0) as u32, side)
+    };
     Some((screen.0 - w - MINIMAP_MARGIN, screen.1 - h - MINIMAP_MARGIN, w, h))
 }
 
@@ -93,7 +97,8 @@ pub fn minimap_in(world: (usize, usize), bx: (u32, u32, u32, u32)) -> (u32, u32,
 pub fn minimap_world(rect: (u32, u32, u32, u32), world: (usize, usize), at: (f32, f32)) -> Option<(f32, f32)> {
     let (x, y, w, h) = rect;
     let (u, v) = (at.0 - x as f32, at.1 - y as f32);
-    (u >= 0.0 && v >= 0.0 && u < w as f32 && v < h as f32).then(|| (u / w as f32 * world.0 as f32, v / h as f32 * world.1 as f32))
+    (u >= 0.0 && v >= 0.0 && u < w as f32 && v < h as f32)
+        .then(|| (u / w as f32 * world.0 as f32, v / h as f32 * world.1 as f32))
 }
 
 pub struct View {
@@ -192,34 +197,110 @@ pub struct View {
 }
 
 fn storage(dev: &wgpu::Device, label: &str, bytes: u64) -> wgpu::Buffer {
-    dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16), usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false })
+    dev.create_buffer(&wgpu::BufferDescriptor {
+        label: Some(label),
+        size: bytes.max(16),
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
+        mapped_at_creation: false,
+    })
 }
 
 impl View {
     /// A view of `world_frame` (`world.0 x world.1` RGBA `u32`s) on a screen
     /// `screen` pixels.
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, world_frame: &wgpu::Buffer, world: (usize, usize), screen: (u32, u32)) -> Self {
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        world_frame: &wgpu::Buffer,
+        world: (usize, usize),
+        screen: (u32, u32),
+    ) -> Self {
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("view"),
+            source: wgpu::ShaderSource::Wgsl(SHADER.into()),
+        });
         let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None },
+            ty: wgpu::BindingType::Buffer {
+                ty,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
             count: None,
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro)];
-        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
+        let entries = [
+            entry(0, wgpu::BufferBindingType::Uniform),
+            entry(1, ro),
+            entry(2, ro),
+            entry(3, ro),
+            entry(4, rw),
+            entry(5, ro),
+            entry(6, rw),
+            entry(7, ro),
+            entry(8, ro),
+            entry(9, ro),
+            entry(10, rw),
+            entry(11, ro),
+            entry(12, rw),
+            entry(13, rw),
+            entry(14, ro),
+            entry(15, ro),
+            entry(16, ro),
+            entry(17, rw),
+            entry(18, ro),
+            entry(19, ro),
+            entry(LIGHTS_BINDING, ro),
+            entry(21, ro),
+            entry(22, rw),
+            entry(23, rw),
+            entry(24, ro),
+            entry(25, ro),
+            entry(26, ro),
+        ];
+        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("view"),
+            entries: &entries,
+        });
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("view"),
+            bind_group_layouts: &[Some(&bgl)],
+            immediate_size: 0,
+        });
         let pipe = |entry_point: &str| {
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some(entry_point), layout: Some(&layout), module: &module, entry_point: Some(entry_point), compilation_options: Default::default(), cache: None })
+            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some(entry_point),
+                layout: Some(&layout),
+                module: &module,
+                entry_point: Some(entry_point),
+                compilation_options: Default::default(),
+                cache: None,
+            })
         };
-        let pipes = [pipe("base"), pipe("draw_marks"), pipe("compose"), pipe("draw_specks"), pipe("prep"), pipe("drain")];
-        let params = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view params"), size: PARAMS_BYTES as u64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let pipes = [
+            pipe("base"),
+            pipe("draw_marks"),
+            pipe("compose"),
+            pipe("draw_specks"),
+            pipe("prep"),
+            pipe("drain"),
+        ];
+        let params = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("view params"),
+            size: PARAMS_BYTES as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
         let marks = storage(device, "marks", (MAX_MARKS * MARK_WORDS * 4) as u64);
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
-        let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
+        let (look, ground, walkers) = (
+            storage(device, "look", 16),
+            storage(device, "ground", 16),
+            storage(device, "walkers", 16),
+        );
         let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 8);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
@@ -228,9 +309,45 @@ impl View {
         let (news, state) = (storage(device, "news", 16), storage(device, "state", 16));
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
-        let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
+        let (charge, heat, gem_list) = (
+            storage(device, "charge", 16),
+            storage(device, "crystal heat", 16),
+            storage(device, "crystal list", 16),
+        );
         let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1]]);
+        let group = Self::bind(
+            device,
+            &bgl,
+            [
+                &params,
+                world_frame,
+                &overlay,
+                &marks,
+                &out,
+                &vis,
+                &top,
+                &look,
+                &ground,
+                &walkers,
+                &specks,
+                &atlas,
+                &hcell,
+                &mcell,
+                &alive,
+                &news,
+                &state,
+                &fgrid,
+                &gems,
+                &gem_cell,
+                &lights,
+                &charge,
+                &heat,
+                &tcell,
+                &gem_list,
+                &germ[0],
+                &germ[1],
+            ],
+        );
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -314,7 +431,11 @@ impl View {
     /// most its own size in cells, plus the margin (`MARGIN` each side).
     fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        (storage(dev, "cell heights", n * 4), storage(dev, "cell materials", n * 8), storage(dev, "cell terrain", n * 4))
+        (
+            storage(dev, "cell heights", n * 4),
+            storage(dev, "cell materials", n * 8),
+            storage(dev, "cell terrain", n * 4),
+        )
     }
 
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
@@ -341,12 +462,55 @@ impl View {
     /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
     fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 27]) -> wgpu::BindGroup {
         let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
-        let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
-        dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
+        let entries: Vec<wgpu::BindGroupEntry> = bufs
+            .iter()
+            .enumerate()
+            .map(|(i, b)| wgpu::BindGroupEntry {
+                binding: binding(i),
+                resource: b.as_entire_binding(),
+            })
+            .collect();
+        dev.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("view"),
+            layout: bgl,
+            entries: &entries,
+        })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1]]);
+        self.group = Self::bind(
+            &self.device,
+            &self.bgl,
+            [
+                &self.params,
+                &self.world_frame,
+                &self.overlay,
+                &self.marks,
+                &self.out,
+                &self.vis,
+                &self.top,
+                &self.look,
+                &self.ground,
+                &self.walkers,
+                &self.specks,
+                &self.atlas,
+                &self.hcell,
+                &self.mcell,
+                &self.alive,
+                &self.news,
+                &self.state,
+                &self.fgrid,
+                &self.gems,
+                &self.gem_cell,
+                &self.lights,
+                &self.charge,
+                &self.heat,
+                &self.tcell,
+                &self.gem_list,
+                &self.germ[0],
+                &self.germ[1],
+            ],
+        );
     }
 
     /// A new world frame (a restart made a new engine).
@@ -370,7 +534,8 @@ impl View {
     /// buffers, so they follow the engine with no copy; set again after a
     /// restart (`set_world` drops them).
     pub fn set_look(&mut self, look: &wgpu::Buffer, ground: &wgpu::Buffer, walkers: &wgpu::Buffer, n_walk: u32) {
-        (self.look, self.ground, self.walkers, self.n_walk, self.shade) = (look.clone(), ground.clone(), walkers.clone(), n_walk, true);
+        (self.look, self.ground, self.walkers, self.n_walk, self.shade) =
+            (look.clone(), ground.clone(), walkers.clone(), n_walk, true);
         self.rebind();
     }
 
@@ -438,16 +603,25 @@ impl View {
         }
         let g: Vec<f32> = gems.iter().flat_map(|&((x, y), r)| [x, y, r, 0.0]).collect();
         self.gems = storage(&self.device, "crystals", (g.len() * 4) as u64);
-        self.queue.write_buffer(&self.gems, 0, &g.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        self.queue.write_buffer(
+            &self.gems,
+            0,
+            &g.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         self.gem_words = g;
         // The crystal cells listed, for `drain`.
-        let list: Vec<u32> = (0..w * h).filter(|&i| crystal[i] as usize >= 1 && crystal[i] as usize <= gems.len()).map(|i| i as u32).collect();
+        let list: Vec<u32> = (0..w * h)
+            .filter(|&i| crystal[i] as usize >= 1 && crystal[i] as usize <= gems.len())
+            .map(|i| i as u32)
+            .collect();
         self.gem_list = storage(&self.device, "crystal list", (list.len() * 4) as u64);
-        self.queue.write_buffer(&self.gem_list, 0, &crate::gpu::u32_bytes(&list));
+        self.queue
+            .write_buffer(&self.gem_list, 0, &crate::gpu::u32_bytes(&list));
         self.n_list = list.len() as u32;
         self.clear_charge();
         self.gem_cell = storage(&self.device, "crystal cells", (near.len() * 4) as u64);
-        self.queue.write_buffer(&self.gem_cell, 0, &crate::gpu::u32_bytes(&near));
+        self.queue
+            .write_buffer(&self.gem_cell, 0, &crate::gpu::u32_bytes(&near));
         self.n_gems = gems.len() as u32;
         self.rebind();
     }
@@ -465,7 +639,11 @@ impl View {
                 for (k, &f) in full.iter().enumerate() {
                     self.gem_words[4 * k + 3] = f;
                 }
-                self.queue.write_buffer(&self.gems, 0, &self.gem_words.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+                self.queue.write_buffer(
+                    &self.gems,
+                    0,
+                    &self.gem_words.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+                );
                 self.charge = buf.clone();
                 self.heat = storage(&self.device, "crystal heat", (self.world.0 * self.world.1 * 8) as u64);
                 self.live.set(2);
@@ -505,7 +683,10 @@ impl View {
 
     fn clear_charge(&mut self) {
         if self.live.get() != 0 {
-            (self.charge, self.heat) = (storage(&self.device, "charge", 16), storage(&self.device, "crystal heat", 16));
+            (self.charge, self.heat) = (
+                storage(&self.device, "charge", 16),
+                storage(&self.device, "crystal heat", 16),
+            );
             self.live.set(0);
         }
     }
@@ -559,7 +740,11 @@ impl View {
     /// Back to drawing the world frame as it is (the shading off).
     pub fn clear_look(&mut self) {
         if self.shade {
-            (self.look, self.ground, self.walkers) = (storage(&self.device, "look", 16), storage(&self.device, "ground", 16), storage(&self.device, "walkers", 16));
+            (self.look, self.ground, self.walkers) = (
+                storage(&self.device, "look", 16),
+                storage(&self.device, "ground", 16),
+                storage(&self.device, "walkers", 16),
+            );
             (self.n_walk, self.shade) = (0, false);
             self.rebind();
         }
@@ -585,7 +770,11 @@ impl View {
     pub fn set_overlay(&mut self, rgba: Option<&[u8]>) {
         match rgba {
             Some(b) => {
-                assert_eq!(b.len(), self.screen.0 as usize * self.screen.1 as usize * 4, "a screen-sized overlay");
+                assert_eq!(
+                    b.len(),
+                    self.screen.0 as usize * self.screen.1 as usize * 4,
+                    "a screen-sized overlay"
+                );
                 self.queue.write_buffer(&self.overlay, 0, b);
                 self.has_overlay = true;
             }
@@ -624,7 +813,21 @@ impl View {
     pub fn set_lights(&mut self, lights: &[Light]) {
         let n = lights.len().min(MAX_LIGHTS);
         if n > 0 {
-            let words: Vec<f32> = lights[..n].iter().flat_map(|l| [l.at.0, l.at.1, l.reach, l.lift, l.colour[0], l.colour[1], l.colour[2], l.strength]).collect();
+            let words: Vec<f32> = lights[..n]
+                .iter()
+                .flat_map(|l| {
+                    [
+                        l.at.0,
+                        l.at.1,
+                        l.reach,
+                        l.lift,
+                        l.colour[0],
+                        l.colour[1],
+                        l.colour[2],
+                        l.strength,
+                    ]
+                })
+                .collect();
             let bytes: Vec<u8> = words.iter().flat_map(|x| x.to_le_bytes()).collect();
             self.queue.write_buffer(&self.lights, 0, &bytes);
         }
@@ -655,23 +858,52 @@ impl View {
     /// Records the passes for camera `cam` (after the engine's draw).
     /// With `stamp`, timestamps at the first pass's start and the last
     /// pass's end, at the indices given.
-    pub fn record(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>) {
+    pub fn record(
+        &self,
+        enc: &mut wgpu::CommandEncoder,
+        cam: &Camera,
+        stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>,
+    ) {
         let mm = self.minimap_rect(cam).unwrap_or((0, 0, 0, 0));
         let mut b: Vec<u8> = Vec::with_capacity(PARAMS_BYTES);
-        for v in [self.screen.0, self.screen.1, self.stride, self.world.0 as u32, self.world.1 as u32, self.n_marks, self.has_vis as u32, self.has_overlay as u32] {
+        for v in [
+            self.screen.0,
+            self.screen.1,
+            self.stride,
+            self.world.0 as u32,
+            self.world.1 as u32,
+            self.n_marks,
+            self.has_vis as u32,
+            self.has_overlay as u32,
+        ] {
             b.extend(v.to_le_bytes());
         }
         for v in [cam.x, cam.y, cam.zoom, f32::from_bits(self.n_lights)] {
             b.extend(v.to_le_bytes());
         }
-        for v in [mm.0, mm.1, mm.2, mm.3, self.shade as u32, self.n_walk, self.lives as u32, self.body_density.to_bits()] {
+        for v in [
+            mm.0,
+            mm.1,
+            mm.2,
+            mm.3,
+            self.shade as u32,
+            self.n_walk,
+            self.lives as u32,
+            self.body_density.to_bits(),
+        ] {
             b.extend(v.to_le_bytes());
         }
         // The shown cells and a margin: what `prep` works out.
-        let (ox, oy) = (cam.x.floor() as i32 - MARGIN as i32, cam.y.floor() as i32 - MARGIN as i32);
+        let (ox, oy) = (
+            cam.x.floor() as i32 - MARGIN as i32,
+            cam.y.floor() as i32 - MARGIN as i32,
+        );
         let zoom = cam.zoom.max(1.0);
         let k = Self::fine(zoom);
-        let (rw, rh) = (((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k, ((self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k);
+        let (rw, rh) = (
+            ((self.screen.0 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k,
+            ((self.screen.1 as f32 / zoom).ceil() as u32 + 2 * MARGIN + 2) * k,
+        );
         b.extend(ox.to_le_bytes());
         b.extend(oy.to_le_bytes());
         b.extend(rw.to_le_bytes());
@@ -679,12 +911,30 @@ impl View {
         // The game seconds since the last frame, for `drain` (0 on a frame
         // with no game time: the heat holds).
         let live = self.live.get();
-        let dt = if live == 1 { (self.game_t - self.last_t.get()).max(0.0) } else { 0.0 };
+        let dt = if live == 1 {
+            (self.game_t - self.last_t.get()).max(0.0)
+        } else {
+            0.0
+        };
         self.last_t.set(self.game_t);
-        for v in [self.news_on as u32, self.lag, self.lean, self.n_gems, k, self.n_list * (live > 0) as u32, dt.to_bits(), live] {
+        for v in [
+            self.news_on as u32,
+            self.lag,
+            self.lean,
+            self.n_gems,
+            k,
+            self.n_list * (live > 0) as u32,
+            dt.to_bits(),
+            live,
+        ] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
+        for v in [
+            self.dense_at,
+            self.ripe_at,
+            Self::fine_half(self.screen),
+            self.stride * self.screen.1,
+        ] {
             b.extend(v.to_le_bytes());
         }
         for v in [self.alarm_side, self.alarm_full.to_bits(), 0, 0] {
@@ -719,9 +969,16 @@ impl View {
         let last = passes.len() - 1;
         for (q, &(p, (x, y))) in passes.iter().enumerate() {
             let writes = stamp
-                .map(|(qs, begin, end)| wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin.filter(|_| q == 0), end_of_pass_write_index: end.filter(|_| q == last) })
+                .map(|(qs, begin, end)| wgpu::ComputePassTimestampWrites {
+                    query_set: qs,
+                    beginning_of_pass_write_index: begin.filter(|_| q == 0),
+                    end_of_pass_write_index: end.filter(|_| q == last),
+                })
                 .filter(|w| w.beginning_of_pass_write_index.is_some() || w.end_of_pass_write_index.is_some());
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("view"), timestamp_writes: writes });
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("view"),
+                timestamp_writes: writes,
+            });
             pass.set_pipeline(&self.pipes[p]);
             pass.set_bind_group(0, &self.group, &[]);
             pass.dispatch_workgroups(x, y, 1);
@@ -731,9 +988,25 @@ impl View {
     /// Copies the result into a texture the screen's size (the window's).
     pub fn copy_to(&self, enc: &mut wgpu::CommandEncoder, texture: &wgpu::Texture) {
         enc.copy_buffer_to_texture(
-            wgpu::TexelCopyBufferInfo { buffer: &self.out, layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(self.stride * 4), rows_per_image: Some(self.screen.1) } },
-            wgpu::TexelCopyTextureInfo { texture, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All },
-            wgpu::Extent3d { width: self.screen.0, height: self.screen.1, depth_or_array_layers: 1 },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &self.out,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(self.stride * 4),
+                    rows_per_image: Some(self.screen.1),
+                },
+            },
+            wgpu::TexelCopyTextureInfo {
+                texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::Extent3d {
+                width: self.screen.0,
+                height: self.screen.1,
+                depth_or_array_layers: 1,
+            },
         );
     }
 
@@ -767,13 +1040,19 @@ mod tests {
                 return None;
             }
         };
-        let desc = wgpu::DeviceDescriptor { label: Some("view"), required_limits: adapter.limits(), ..Default::default() };
+        let desc = wgpu::DeviceDescriptor {
+            label: Some("view"),
+            required_limits: adapter.limits(),
+            ..Default::default()
+        };
         Some(crate::gpu::block_on(adapter.request_device(&desc)).expect("device"))
     }
 
     /// A world whose every cell's colour says where it is: red x, green y.
     fn coded(dev: &wgpu::Device, q: &wgpu::Queue, w: usize, h: usize) -> wgpu::Buffer {
-        let px: Vec<u8> = (0..w * h).flat_map(|i| [(i % w) as u8, (i / w) as u8, 7, 255]).collect();
+        let px: Vec<u8> = (0..w * h)
+            .flat_map(|i| [(i % w) as u8, (i / w) as u8, 7, 255])
+            .collect();
         let b = storage(dev, "world", px.len() as u64);
         q.write_buffer(&b, 0, &px);
         b
@@ -815,7 +1094,10 @@ mod tests {
         // A white disc at world (cam middle), and a 2-pixel overlay square at (0, 0).
         let mut marks = Marks::default();
         marks.disc(cam.centre(), 3.0, [255, 255, 255, 255], true);
-        marks.push(Mark { flags: 0, ..Mark::new(Shape::Rect, cam.to_world((300.0, 10.0)), (2.0, 2.0), [0, 0, 255, 255]) });
+        marks.push(Mark {
+            flags: 0,
+            ..Mark::new(Shape::Rect, cam.to_world((300.0, 10.0)), (2.0, 2.0), [0, 0, 255, 255])
+        });
         view.set_marks(&marks);
         let mut ov = vec![0u8; 320 * 200 * 4];
         ov[..4].copy_from_slice(&[9, 9, 9, 255]);
@@ -824,7 +1106,11 @@ mod tests {
         view.record(&mut enc, &cam, None);
         q.submit([enc.finish()]);
         let pic = view.picture();
-        assert_eq!(pic.get_pixel(160, 100).0, [255, 255, 255, 255], "the disc at the middle");
+        assert_eq!(
+            pic.get_pixel(160, 100).0,
+            [255, 255, 255, 255],
+            "the disc at the middle"
+        );
         assert_eq!(pic.get_pixel(300, 10).0, [0, 0, 255, 255], "the rect");
         assert_eq!(pic.get_pixel(0, 0).0, [9, 9, 9, 255], "the overlay on top");
         let (mx, my, mw, mh) = view.minimap_rect(&cam).expect("a minimap");
@@ -873,9 +1159,15 @@ mod tests {
         };
         let look_b = buf("look", &look.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
         let ground = buf("ground", &vec![0u8; w * h * 4]);
-        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let walk_b = buf(
+            "walkers",
+            &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         let news_b = buf("news", &news.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
-        let state = buf("state", &[now, 0, 0, 0].iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let state = buf(
+            "state",
+            &[now, 0, 0, 0].iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         let screen = (384, 240);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground, &walk_b, news.len() as u32);
@@ -899,14 +1191,29 @@ mod tests {
         let on = shot(&view);
         let (a_off, a_on) = (at(&off, 16.1, 20.1), at(&on, 16.1, 20.1));
         let (b_off, b_on) = (at(&off, 48.1, 20.1), at(&on, 48.1, 20.1));
-        assert!((sat(a_on) - sat(a_off)).abs() <= 2, "the calm piece keeps its colour: {a_off:?} {a_on:?}");
-        assert!(sat(b_on) + 30 < sat(b_off), "the cut-off piece greys: {b_off:?} {b_on:?}");
+        assert!(
+            (sat(a_on) - sat(a_off)).abs() <= 2,
+            "the calm piece keeps its colour: {a_off:?} {a_on:?}"
+        );
+        assert!(
+            sat(b_on) + 30 < sat(b_off),
+            "the cut-off piece greys: {b_off:?} {b_on:?}"
+        );
         let bolt = at(&on, 48.5, 20.5);
-        assert!(bolt[0] as i32 > bolt[1] as i32 + 100, "a bolting walker is red: {bolt:?}");
+        assert!(
+            bolt[0] as i32 > bolt[1] as i32 + 100,
+            "a bolting walker is red: {bolt:?}"
+        );
         let leaning = at(&on, 32.5, 10.5);
-        assert!(leaning[0] > 200 && leaning[1] > 120 && (leaning[2] as i32) < leaning[1] as i32 - 60, "a leaning walker is amber: {leaning:?}");
+        assert!(
+            leaning[0] > 200 && leaning[1] > 120 && (leaning[2] as i32) < leaning[1] as i32 - 60,
+            "a leaning walker is amber: {leaning:?}"
+        );
         let calm = at(&on, 16.5, 20.5);
-        assert!((calm[0] as i32) < calm[1] as i32 + 100, "a calm walker is not red: {calm:?}");
+        assert!(
+            (calm[0] as i32) < calm[1] as i32 + 100,
+            "a calm walker is not red: {calm:?}"
+        );
     }
 
     /// Crystals at screen resolution (2026-11-14, the owner's playtest:
@@ -970,7 +1277,11 @@ mod tests {
             let (mut lo, mut hi) = (0.0f32, r * 1.2);
             for _ in 0..40 {
                 let m = 0.5 * (lo + hi);
-                if inside(c.0 + ux * m, c.1 + uy * m) > 0.0 { lo = m } else { hi = m }
+                if inside(c.0 + ux * m, c.1 + uy * m) > 0.0 {
+                    lo = m
+                } else {
+                    hi = m
+                }
             }
             let at = |d: f32| (c.0 + ux * (lo + d), c.1 + uy * (lo + d));
             let (xi, yi) = at(-0.33);
@@ -1011,7 +1322,10 @@ mod tests {
         let look_b = buf("look", &vec![0u8; w * h * 4]);
         let ground_b = buf("ground", &vec![0u8; w * h * 4]);
         let walk_b = buf("walkers", &[0u8; 16]);
-        let (live, empty) = (buf("germ live", &f32s(&germ)), buf("germ empty", &f32s(&vec![0.0; 3 * w * h])));
+        let (live, empty) = (
+            buf("germ live", &f32s(&germ)),
+            buf("germ empty", &f32s(&vec![0.0; 3 * w * h])),
+        );
         let screen = (384, 240);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground_b, &walk_b, 0);
@@ -1035,10 +1349,19 @@ mod tests {
         view.set_alarm(Some([&empty, &live]), full);
         view.set_alarm_side(1);
         let [mid, edge, out] = spots(&frame(&view));
-        assert!(edge > edge0 + 60 && edge > mid + 30, "the front lifts most: edge {edge0} -> {edge}, middle {mid}");
-        assert!(mid >= mid0 && (out - out0).abs() <= 6, "middle {mid0} -> {mid}, outside {out0} -> {out}");
+        assert!(
+            edge > edge0 + 60 && edge > mid + 30,
+            "the front lifts most: edge {edge0} -> {edge}, middle {mid}"
+        );
+        assert!(
+            mid >= mid0 && (out - out0).abs() <= 6,
+            "middle {mid0} -> {mid}, outside {out0} -> {out}"
+        );
         view.set_alarm_side(0);
-        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "the other side holds no alarm");
+        assert!(
+            (spots(&frame(&view))[1] - edge0).abs() <= 6,
+            "the other side holds no alarm"
+        );
         view.set_alarm(None, 0.0);
         assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "none bound, none shown");
     }
@@ -1107,16 +1430,26 @@ mod tests {
         assert!(wet[2] > wet[0] + 40, "the full half is cyan: {wet:?}");
         assert!((dry[2] - dry[0]).abs() < 30, "the drained half is grey: {dry:?}");
         // A quarter of the full half's charge taken in 0.1 game seconds.
-        let taken: Vec<f32> = charge.iter().enumerate().map(|(i, &v)| if (i % w) as f32 >= c.0 { v * 0.75 } else { v }).collect();
+        let taken: Vec<f32> = charge
+            .iter()
+            .enumerate()
+            .map(|(i, &v)| if (i % w) as f32 >= c.0 { v * 0.75 } else { v })
+            .collect();
         q.write_buffer(&charge_b, 0, &f32s(&taken));
         let lit = frame(&mut view, 0.1);
         let p = at(&lit, c.0 + 0.5 * a, c.1);
         let before = at(&pic, c.0 + 0.5 * a, c.1);
-        assert!(p.iter().sum::<i32>() > before.iter().sum::<i32>() + 60, "taking lights it: {before:?} -> {p:?}");
+        assert!(
+            p.iter().sum::<i32>() > before.iter().sum::<i32>() + 60,
+            "taking lights it: {before:?} -> {p:?}"
+        );
         // No more taking: two game seconds on, the light is gone.
         let calm = frame(&mut view, 2.1);
         let p2 = at(&calm, c.0 + 0.5 * a, c.1);
-        assert!(p2.iter().sum::<i32>() < p.iter().sum::<i32>() - 60, "the light fades: {p:?} -> {p2:?}");
+        assert!(
+            p2.iter().sum::<i32>() < p.iter().sum::<i32>() - 60,
+            "the light fades: {p:?} -> {p2:?}"
+        );
     }
 
     /// The slime's edge is as sharp as its walkers (2026-11-14, the owner's
@@ -1128,7 +1461,15 @@ mod tests {
     fn the_slime_edge_is_as_sharp_as_its_walkers() {
         let Some((dev, q)) = test_gpu() else { return };
         let (w, h) = (64usize, 40usize);
-        let px: Vec<u8> = (0..w * h).flat_map(|i| if i % w < 32 { [200u8, 160, 60, 255] } else { [12, 22, 26, 255] }).collect();
+        let px: Vec<u8> = (0..w * h)
+            .flat_map(|i| {
+                if i % w < 32 {
+                    [200u8, 160, 60, 255]
+                } else {
+                    [12, 22, 26, 255]
+                }
+            })
+            .collect();
         let world = storage(&dev, "world", px.len() as u64);
         q.write_buffer(&world, 0, &px);
         let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
@@ -1145,7 +1486,10 @@ mod tests {
         };
         let look_b = buf("look", &crate::gpu::u32_bytes(&look));
         let ground = buf("ground", &vec![0u8; w * h * 4]);
-        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let walk_b = buf(
+            "walkers",
+            &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         let screen = (384, 240);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
@@ -1168,9 +1512,17 @@ mod tests {
         };
         let (body, bare) = (col(26.2), col(38.2));
         assert!(body > bare + 40.0, "body {body} against bare {bare}");
-        let at = |share: f32| (0..200).map(|i| 26.0 + i as f32 * 0.06).find(|&x| col(x) < bare + share * (body - bare)).unwrap_or(38.0);
+        let at = |share: f32| {
+            (0..200)
+                .map(|i| 26.0 + i as f32 * 0.06)
+                .find(|&x| col(x) < bare + share * (body - bare))
+                .unwrap_or(38.0)
+        };
         let width = at(0.1) - at(0.9);
-        assert!(width < 1.5, "the edge rises over {width:.2} cells (body {body}, bare {bare})");
+        assert!(
+            width < 1.5,
+            "the edge rises over {width:.2} cells (body {body}, bare {bare})"
+        );
     }
 
     /// A lone walker on bare ground reads plainly (owner's playtest, 11-14
@@ -1183,7 +1535,15 @@ mod tests {
         let (w, h) = (64usize, 40usize);
         // Agar, with the engine's mould colour round the lone walker (as the
         // engine tints a cell with mould on it).
-        let px: Vec<u8> = (0..w * h).flat_map(|i| if (i % w).abs_diff(44) <= 2 && (i / w).abs_diff(20) <= 2 { [200u8, 160, 60, 255] } else { [12, 22, 26, 255] }).collect();
+        let px: Vec<u8> = (0..w * h)
+            .flat_map(|i| {
+                if (i % w).abs_diff(44) <= 2 && (i / w).abs_diff(20) <= 2 {
+                    [200u8, 160, 60, 255]
+                } else {
+                    [12, 22, 26, 255]
+                }
+            })
+            .collect();
         let world = storage(&dev, "world", px.len() as u64);
         q.write_buffer(&world, 0, &px);
         // A body of 4 walkers a cell over x 4..20, and one walker alone at
@@ -1193,7 +1553,12 @@ mod tests {
             for x in 4..20 {
                 look[y * w + x] = 255 | (4 << 8);
                 for k in 0..4 {
-                    walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                    walk.extend([
+                        x as f32 + 0.2 + 0.2 * k as f32,
+                        y as f32 + 0.3 + 0.13 * k as f32,
+                        0.0,
+                        0.0,
+                    ]);
                 }
             }
         }
@@ -1206,7 +1571,10 @@ mod tests {
         };
         let look_b = buf("look", &crate::gpu::u32_bytes(&look));
         let ground = buf("ground", &vec![0u8; w * h * 4]);
-        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let walk_b = buf(
+            "walkers",
+            &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         let screen = (384, 240);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
@@ -1236,7 +1604,10 @@ mod tests {
         }
         // Flat, its film is lit all round it: 60.5 against bare 42.1, where
         // the dome's shaded flank came down to 44.6 against 40.3.
-        assert!(lee > bare + 10.0, "the darkest pixel round a lone walker {lee} against bare ground {bare}");
+        assert!(
+            lee > bare + 10.0,
+            "the darkest pixel round a lone walker {lee} against bare ground {bare}"
+        );
         // In the body: the brightest and dimmest of a cell's pixels differ
         // by less than the lone walker stands above bare ground.
         let mut vals = Vec::new();
@@ -1246,7 +1617,11 @@ mod tests {
             }
         }
         let spread = vals.iter().cloned().fold(f32::MIN, f32::max) - vals.iter().cloned().fold(f32::MAX, f32::min);
-        assert!(spread < 0.6 * (lone - bare), "the body's grain spread {spread} against the lone walker's {}", lone - bare);
+        assert!(
+            spread < 0.6 * (lone - bare),
+            "the body's grain spread {spread} against the lone walker's {}",
+            lone - bare
+        );
     }
 
     /// Walkers on a crater (trail wiped, the engine's colour bare agar)
@@ -1270,7 +1645,12 @@ mod tests {
                 if body {
                     look[y * w + x] = if gold { 255 } else { 0 } | (4 << 8);
                     for k in 0..4 {
-                        walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                        walk.extend([
+                            x as f32 + 0.2 + 0.2 * k as f32,
+                            y as f32 + 0.3 + 0.13 * k as f32,
+                            0.0,
+                            0.0,
+                        ]);
                     }
                 }
             }
@@ -1284,7 +1664,10 @@ mod tests {
         };
         let look_b = buf("look", &crate::gpu::u32_bytes(&look));
         let ground = buf("ground", &vec![0u8; w * h * 4]);
-        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let walk_b = buf(
+            "walkers",
+            &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>(),
+        );
         let screen = (288, 192);
         let mut view = View::new(&dev, &q, &world, (w, h), screen);
         view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
@@ -1314,7 +1697,13 @@ mod tests {
         };
         let lum = |c: [f32; 3]| 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
         let (hole, bare) = (mean(22.0, 16.0), mean(44.0, 16.0));
-        assert!(lum(hole) > lum(bare) + 25.0, "the crater's walkers {hole:?} against bare ground {bare:?}");
-        assert!(hole[0] > hole[2] + 30.0 && hole[1] > hole[2], "the crater's walkers are mould-coloured: {hole:?}");
+        assert!(
+            lum(hole) > lum(bare) + 25.0,
+            "the crater's walkers {hole:?} against bare ground {bare:?}"
+        );
+        assert!(
+            hole[0] > hole[2] + 30.0 && hole[1] > hole[2],
+            "the crater's walkers are mould-coloured: {hole:?}"
+        );
     }
 }

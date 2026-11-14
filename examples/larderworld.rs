@@ -95,7 +95,9 @@ use slime_mould::gpu::block_on;
 use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
 use slime_mould::mould::big::BigDish;
 use slime_mould::mould::big::BigParams;
-use slime_mould::mould::larder_world::{race_params, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
+use slime_mould::mould::larder_world::{
+    race_params, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP,
+};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
 use slime_mould::mould::plans;
@@ -275,24 +277,40 @@ impl Mould {
 
 /// FNV-1a, 64 bits: a stable hash of the census's settings text.
 fn fnv(b: &[u8]) -> u64 {
-    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3))
+    b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| {
+        (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3)
+    })
 }
 
 /// The commit the census ran on, with `+dirty` for uncommitted changes, or
 /// `unknown` outside a git checkout.
 fn commit() -> String {
-    let git = |args: &[&str]| std::process::Command::new("git").args(args).current_dir(env!("CARGO_MANIFEST_DIR")).output().ok().filter(|o| o.status.success());
+    let git = |args: &[&str]| {
+        std::process::Command::new("git")
+            .args(args)
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+    };
     let Some(head) = git(&["rev-parse", "--short=9", "HEAD"]) else {
         return "unknown".into();
     };
     let dirty = git(&["status", "--porcelain", "--untracked-files=no"]).is_some_and(|o| !o.stdout.is_empty());
-    format!("{}{}", String::from_utf8_lossy(&head.stdout).trim(), if dirty { "+dirty" } else { "" })
+    format!(
+        "{}{}",
+        String::from_utf8_lossy(&head.stdout).trim(),
+        if dirty { "+dirty" } else { "" }
+    )
 }
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=4).collect();
     let (mut scale, mut walkers, mut threads, mut cap) = (2usize, 5_000usize, 4usize, None::<f32>);
-    let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
+    let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut sliver = false;
     // `shape=` (D1): which shape on the shapes page plays; C by default.
@@ -346,7 +364,16 @@ fn main() {
             "crystal_charge" => m.crystal_charge = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
-            "keys" => m.keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
+            "keys" => {
+                m.keys = v
+                    .split('+')
+                    .map(|kv| {
+                        kv.split_once(':')
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .expect("keys=k:v+k:v")
+                    })
+                    .collect()
+            }
             "flee" => m.flee = Some(v.parse().unwrap()),
             "flee_keep" => m.flee_keep = Some(v.parse().unwrap()),
             // `crater=S`: game seconds of crater each hit lays
@@ -424,9 +451,14 @@ fn main() {
     // Checked once on 4 seeds that census-sized and window-sized C agree
     // in direction (the D1 PR's commit message).
     let shape_name = shape.clone().unwrap_or_else(|| "c".to_string());
-    let (shape_walkers, shape_keys) = slime_mould::mould::larder_world::shape_keys(&shape_name).unwrap_or_else(|| panic!("no shape {shape_name}"));
+    let (shape_walkers, shape_keys) =
+        slime_mould::mould::larder_world::shape_keys(&shape_name).unwrap_or_else(|| panic!("no shape {shape_name}"));
     if !sized {
-        (scale, walkers) = if shape.is_some() { (2, shape_walkers) } else { (1, shape_walkers / 4) };
+        (scale, walkers) = if shape.is_some() {
+            (2, shape_walkers)
+        } else {
+            (1, shape_walkers / 4)
+        };
         // A crystal's charge is per fine cell, so a scale-1 pile holds a
         // quarter of the food: four times the charge a cell keeps the
         // economy the window's. Without it the 4-seed check flipped
@@ -451,16 +483,32 @@ fn main() {
         }
     }
     m.keys.splice(0..0, keys);
-    println!("shape {shape_name}{}", if shape.is_none() && !sized { " (census size)" } else { "" });
+    println!(
+        "shape {shape_name}{}",
+        if shape.is_none() && !sized {
+            " (census size)"
+        } else {
+            ""
+        }
+    );
     if let Some(c) = cap {
         rules.cap = c;
     }
     rules.mass = mass.unwrap_or(Rules::mass_for(walkers, scale));
     if (m.energy_flow, m.hunger_scent) != (0.0, 0.0) || m.crystal_eat.is_some() {
-        println!("one body: energy_flow {} hunger_scent {} crystal_eat {:?} flow_loss {}", m.energy_flow, m.hunger_scent, m.crystal_eat, m.flow_loss);
+        println!(
+            "one body: energy_flow {} hunger_scent {} crystal_eat {:?} flow_loss {}",
+            m.energy_flow, m.hunger_scent, m.crystal_eat, m.flow_loss
+        );
     }
-    let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
-    let names = engines.iter().map(|&g| engine_name(g)).collect::<Vec<_>>().join(" and ");
+    let world = map
+        .as_ref()
+        .map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
+    let names = engines
+        .iter()
+        .map(|&g| engine_name(g))
+        .collect::<Vec<_>>()
+        .join(" and ");
     println!(
         "larderworld {world}, scale {scale} walkers {walkers} cap {} s, tps {}, seeds {:?}; on {names}; tier {}; flee {}{}{}; rules {rules:?}",
         rules.cap,
@@ -568,11 +616,23 @@ fn main() {
         if engines.len() > 1 {
             println!("\n==== on {} ====", engine_name(on_gpu));
         }
-        let get = |seed: u64, hand: &str| out[jobs.iter().position(|(s, h, g)| *s == seed && h == hand && *g == on_gpu).unwrap()].clone();
+        let get = |seed: u64, hand: &str| {
+            out[jobs
+                .iter()
+                .position(|(s, h, g)| *s == seed && h == hand && *g == on_gpu)
+                .unwrap()]
+            .clone()
+        };
         report(&hands, &seeds, &get);
     }
     if engines.len() > 1 {
-        let get = |seed: u64, hand: &str, g: bool| out[jobs.iter().position(|(s, h, e)| *s == seed && h == hand && *e == g).unwrap()].clone();
+        let get = |seed: u64, hand: &str, g: bool| {
+            out[jobs
+                .iter()
+                .position(|(s, h, e)| *s == seed && h == hand && *e == g)
+                .unwrap()]
+            .clone()
+        };
         compare(&hands, &seeds, &get);
     }
 }
@@ -588,9 +648,18 @@ fn engine_name(on_gpu: bool) -> &'static str {
 /// A GPU device with the adapter's limits (the engine binds 48 buffers).
 fn gpu() -> (wgpu::Device, wgpu::Queue) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        ..Default::default()
+    }))
+    .expect("no GPU adapter");
     eprintln!("larderworld: GPU {}", adapter.get_info().name);
-    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("larderworld"), required_limits: adapter.limits(), ..Default::default() })).expect("GPU device")
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: Some("larderworld"),
+        required_limits: adapter.limits(),
+        ..Default::default()
+    }))
+    .expect("GPU device")
 }
 
 /// **The two engines' spreads** (`gpu=both`): each hand's scores on the
@@ -609,10 +678,26 @@ fn compare(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str, bool) -> Row
     }
     let holds = holm(&tests.iter().map(|t| t.4).collect::<Vec<_>>());
     for (i, (h, ma, mb, md, p)) in tests.iter().enumerate() {
-        println!("  {h:>16}: CPU {ma:+.3}, GPU {mb:+.3}, difference {md:+.3}; p {p:.4}{}", if holds[i] { ", differs" } else { "" });
+        println!(
+            "  {h:>16}: CPU {ma:+.3}, GPU {mb:+.3}, difference {md:+.3}; p {p:.4}{}",
+            if holds[i] { ", differs" } else { "" }
+        );
     }
-    let ends = |g: bool, b: &str| -> usize { hands.iter().map(|h| seeds.iter().filter(|&&s| get(s, h, g).end == b).count()).sum() };
-    println!("  ends, CPU / GPU: mould wiped {} / {}, cap {} / {}, squad wiped {} / {}", ends(false, "mould wiped"), ends(true, "mould wiped"), ends(false, "cap"), ends(true, "cap"), ends(false, "squad wiped"), ends(true, "squad wiped"));
+    let ends = |g: bool, b: &str| -> usize {
+        hands
+            .iter()
+            .map(|h| seeds.iter().filter(|&&s| get(s, h, g).end == b).count())
+            .sum()
+    };
+    println!(
+        "  ends, CPU / GPU: mould wiped {} / {}, cap {} / {}, squad wiped {} / {}",
+        ends(false, "mould wiped"),
+        ends(true, "mould wiped"),
+        ends(false, "cap"),
+        ends(true, "cap"),
+        ends(false, "squad wiped"),
+        ends(true, "squad wiped")
+    );
 }
 
 fn median(v: &[f64]) -> f64 {
@@ -629,7 +714,11 @@ fn median(v: &[f64]) -> f64 {
 /// correction and a continuity correction (fine from about 8 a side).
 fn mann_whitney_p(a: &[f64], b: &[f64]) -> f64 {
     let (n1, n2) = (a.len() as f64, b.len() as f64);
-    let mut all: Vec<(f64, bool)> = a.iter().map(|&x| (x, false)).chain(b.iter().map(|&x| (x, true))).collect();
+    let mut all: Vec<(f64, bool)> = a
+        .iter()
+        .map(|&x| (x, false))
+        .chain(b.iter().map(|&x| (x, true)))
+        .collect();
     all.sort_by(|x, y| x.0.total_cmp(&y.0));
     let n = all.len();
     let (mut r1, mut ties) = (0.0, 0.0);
@@ -660,7 +749,10 @@ fn normal_cdf(z: f64) -> f64 {
     // Abramowitz and Stegun 7.1.26 for erf, |error| under 1.5e-7.
     let x = z / std::f64::consts::SQRT_2;
     let t = 1.0 / (1.0 + 0.327_591_1 * x.abs());
-    let y = 1.0 - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t + 0.254_829_592) * t * (-x * x).exp();
+    let y = 1.0
+        - (((((1.061_405_429 * t - 1.453_152_027) * t) + 1.421_413_741) * t - 0.284_496_736) * t + 0.254_829_592)
+            * t
+            * (-x * x).exp();
     0.5 * (1.0 + if x >= 0.0 { y } else { -y })
 }
 
@@ -696,7 +788,10 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
     }
     let mut tests = Vec::new();
     for h in hands.iter().filter(|h| *h != "idle" && *h != "random") {
-        let scripted = ["farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard", "army"].contains(&h.as_str());
+        let scripted = [
+            "farm", "rush", "wall", "ring", "turtle", "killzone", "pumps", "guard", "army",
+        ]
+        .contains(&h.as_str());
         for base in ["idle", "random", "farm"] {
             if base == "farm" && scripted {
                 continue;
@@ -730,14 +825,27 @@ fn report(hands: &[String], seeds: &[u64], get: &dyn Fn(u64, &str) -> Row) {
     }
     println!("\npaired by seed (score higher / lower, ties left out; sign test, Holm over {m}):");
     for (i, (name, w, l, p)) in tests.iter().enumerate() {
-        println!("  {name:>16}: {w} higher, {l} lower, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
+        println!(
+            "  {name:>16}: {w} higher, {l} lower, p {p:.4}{}",
+            if holds[i] { ", holds" } else { "" }
+        );
     }
 }
 
 /// One game: on the CPU big dish, or with `gpu` on the GPU engine
 /// (`GpuWorld`, the race world's settings and the same map).
 #[allow(clippy::too_many_arguments)]
-fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, hand: &str, map: Option<&Map>, look: Option<(&str, f32)>, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
+fn play(
+    seed: u64,
+    scale: usize,
+    walkers: usize,
+    rules: Rules,
+    mould: &Mould,
+    hand: &str,
+    map: Option<&Map>,
+    look: Option<(&str, f32)>,
+    gpu: Option<&(wgpu::Device, wgpu::Queue)>,
+) -> Row {
     if let Some((device, queue)) = gpu {
         let mut s = race_settings(seed, scale, walkers);
         (s.alarm_keep, s.alarm_weight) = mould.alarm((s.alarm_keep, s.alarm_weight));
@@ -764,7 +872,14 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
         };
-        return play_on(mould.game(world, rules, seed), seed, hand, None, &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(), &|_, _, _| None);
+        return play_on(
+            mould.game(world, rules, seed),
+            seed,
+            hand,
+            None,
+            &|w: &GpuWorld| w.e.dish.pile_full.iter().sum(),
+            &|_, _, _| None,
+        );
     }
     let mut p = race_params(seed, scale, walkers);
     mould.apply(&mut p);
@@ -777,8 +892,26 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
         picture(g, path);
         counts(g, hand, seed);
     };
-    let near = |d: &BigDish, live: &[(f32, f32)], r: f32| Some((0..d.walkers.len()).filter(|&k| d.lives(k) && live.iter().any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)).count());
-    play_on(mould.game(world, rules, seed), seed, hand, look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }), &|w: &BigDish| w.pile_full.iter().sum(), &near)
+    let near = |d: &BigDish, live: &[(f32, f32)], r: f32| {
+        Some(
+            (0..d.walkers.len())
+                .filter(|&k| {
+                    d.lives(k)
+                        && live
+                            .iter()
+                            .any(|&(x, y)| (d.walkers[k].0 - x).hypot(d.walkers[k].1 - y) <= r)
+                })
+                .count(),
+        )
+    };
+    play_on(
+        mould.game(world, rules, seed),
+        seed,
+        hand,
+        look.map(|(dir, every)| -> Look<BigDish> { (dir, every, &draw) }),
+        &|w: &BigDish| w.pile_full.iter().sum(),
+        &near,
+    )
 }
 
 /// Living walkers within a radius (fine cells) of any of the points, where
@@ -792,7 +925,14 @@ type Look<'a, W> = (&'a str, f32, &'a dyn Fn(&Game<W>, &str));
 /// picture every so many game seconds and at the end. `full` is the
 /// crystals' full charge (`pile_full`: the GPU world's from its CPU mirror,
 /// which builds the same walls).
-fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>>, full: &dyn Fn(&W) -> f32, near: Near<W>) -> Row {
+fn play_on<W: World>(
+    mut g: Game<W>,
+    seed: u64,
+    hand: &str,
+    look: Option<Look<W>>,
+    full: &dyn Fn(&W) -> f32,
+    near: Near<W>,
+) -> Row {
     let start = std::time::Instant::now();
     let mut shot = -1.0f32;
     let mut farmed: Vec<usize> = Vec::new();
@@ -848,7 +988,9 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
                     }
                 }
                 farm_hand(g, &mut farmed);
-                let idle: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && g.soldiers[k].stance != Stance::Free).collect();
+                let idle: Vec<usize> = (0..g.soldiers.len())
+                    .filter(|&k| g.soldiers[k].alive && g.soldiers[k].stance != Stance::Free)
+                    .collect();
                 for k in idle {
                     g.apply(Cmd::Stance(k, Stance::Free));
                 }
@@ -955,7 +1097,10 @@ fn random_hand<W: World>(g: &mut Game<W>) {
             let p = point(g);
             let a = g.rng.f32() * std::f32::consts::TAU;
             let l = 5.0 * g.world.scale();
-            Order::Burn((p.0 - a.cos() * l, p.1 - a.sin() * l), (p.0 + a.cos() * l, p.1 + a.sin() * l))
+            Order::Burn(
+                (p.0 - a.cos() * l, p.1 - a.sin() * l),
+                (p.0 + a.cos() * l, p.1 + a.sin() * l),
+            )
         }
         _ => Order::Attack,
     };
@@ -971,7 +1116,10 @@ fn random_hand<W: World>(g: &mut Game<W>) {
         let (a, b) = (g.rng.f32() * std::f32::consts::TAU, g.rng.f32() * std::f32::consts::TAU);
         let m = (s.x + r * a.cos(), s.y + r * a.sin());
         let l = 5.0 * g.world.scale();
-        g.apply(Cmd::Wall((m.0 - l * b.cos(), m.1 - l * b.sin()), (m.0 + l * b.cos(), m.1 + l * b.sin())));
+        g.apply(Cmd::Wall(
+            (m.0 - l * b.cos(), m.1 - l * b.sin()),
+            (m.0 + l * b.cos(), m.1 + l * b.sin()),
+        ));
     }
     // Buildings are in random's pool too (the technical lead, 11-12: a
     // random hand that cannot place a turret is no control for the hands
@@ -1056,7 +1204,10 @@ fn wall_road<W: World>(g: &mut Game<W>) {
     let (dx, dy) = (l.0 - c.0, l.1 - c.1);
     let d = dx.hypot(dy).max(1.0);
     let h = WALL_LEN * g.world.scale() / 2.0;
-    let (a, b) = ((m.0 - dy / d * h, m.1 + dx / d * h), (m.0 + dy / d * h, m.1 - dx / d * h));
+    let (a, b) = (
+        (m.0 - dy / d * h, m.1 + dx / d * h),
+        (m.0 + dy / d * h, m.1 - dx / d * h),
+    );
     if g.apply(Cmd::Wall(a, b)) {
         plans::send_builder(g);
     } else {
@@ -1065,7 +1216,10 @@ fn wall_road<W: World>(g: &mut Game<W>) {
         // second.
         // It stands 3 dish cells on the larder's side, off the wall's line,
         // with both ends in range (`WALL_LEN` is short of twice the range).
-        let at = (m.0 + dx / d * 3.0 * g.world.scale(), m.1 + dy / d * 3.0 * g.world.scale());
+        let at = (
+            m.0 + dx / d * 3.0 * g.world.scale(),
+            m.1 + dy / d * 3.0 * g.world.scale(),
+        );
         if let Some(k) = (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive) {
             if g.soldiers[k].order != Order::Move(at.0, at.1) {
                 g.apply(Cmd::Order(k, Order::Move(at.0, at.1)));
@@ -1234,7 +1388,13 @@ fn slivers(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould,
             was[q] = g.soldiers[q].alive;
         }
     }
-    println!("slivers seed {seed}: {:?} at {:.0} s, soldiers {}, mould {}", g.end, g.time(), g.alive(), g.world.living());
+    println!(
+        "slivers seed {seed}: {:?} at {:.0} s, soldiers {}, mould {}",
+        g.end,
+        g.time(),
+        g.alive(),
+        g.world.living()
+    );
     for l in lines {
         println!("{l}");
     }
@@ -1242,7 +1402,10 @@ fn slivers(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould,
     let td: f64 = deaths.iter().sum();
     let th: f64 = held.iter().sum();
     println!("  most scared at once {most}, biggest fragment {biggest}; scared walker-seconds {th:.0}");
-    println!("  {:>6} {:>12} {:>8} {:>10} {:>8} {:>12}", "size", "bite-frames", "share", "deaths", "share", "scared-secs");
+    println!(
+        "  {:>6} {:>12} {:>8} {:>10} {:>8} {:>12}",
+        "size", "bite-frames", "share", "deaths", "share", "scared-secs"
+    );
     for i in 0..7 {
         println!(
             "  {:>6} {:>12.0} {:>7.1}% {:>10.2} {:>7.1}% {:>12.0}",
@@ -1305,13 +1468,21 @@ fn picture(g: &Game<BigDish>, path: &str) {
         let n = (end.0 - sh.from.0).hypot(end.1 - sh.from.1).ceil().max(1.0) as i32;
         for k in 0..=n {
             let t = k as f32 / n as f32;
-            put((sh.from.0 + (end.0 - sh.from.0) * t) as i32, (sh.from.1 + (end.1 - sh.from.1) * t) as i32, c);
+            put(
+                (sh.from.0 + (end.0 - sh.from.0) * t) as i32,
+                (sh.from.1 + (end.1 - sh.from.1) * t) as i32,
+                c,
+            );
         }
     }
     let r = 4.0 * g.world.scale();
     for i in 0..64 {
         let a = i as f32 / 64.0 * std::f32::consts::TAU;
-        put((g.larder.0 + r * a.cos()) as i32, (g.larder.1 + r * a.sin()) as i32, [255, 220, 60, 255]);
+        put(
+            (g.larder.0 + r * a.cos()) as i32,
+            (g.larder.1 + r * a.sin()) as i32,
+            [255, 220, 60, 255],
+        );
     }
     img.save(path).expect("save png");
 }

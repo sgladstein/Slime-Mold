@@ -171,7 +171,14 @@ pub fn draw_text(frame: &mut [u8], width: u32, height: u32, x: i32, y: i32, text
 /// logical `WIDTH`x`HEIGHT` (`render::Hud`, and `Renderer::pixel_budget` for
 /// why the buffer grows at all). `(x, y)` and the advance stay in logical
 /// pixels; only the output lattice changes.
-pub fn draw_text_scaled(frame: &mut [u8], (width, height): (u32, u32), scale: i32, (x, y): (i32, i32), text: &str, colour: [u8; 4]) {
+pub fn draw_text_scaled(
+    frame: &mut [u8],
+    (width, height): (u32, u32),
+    scale: i32,
+    (x, y): (i32, i32),
+    text: &str,
+    colour: [u8; 4],
+) {
     let s = scale.max(1);
     let mut cursor_x = x;
     for c in text.chars() {
@@ -263,7 +270,14 @@ type Coverage = Option<(i32, i32, u32, u32, Vec<u8>)>;
 /// small on my screen"): the crisp font above is drawn at exactly twice the
 /// dot font, so it could only double. Each glyph is rasterized once a size
 /// (a cache a thread), and blended as `draw_text_crisp` blends.
-pub fn draw_text_inter(frame: &mut [u8], (width, height): (u32, u32), at: (f32, f32), px: f32, text: &str, colour: [u8; 4]) -> f32 {
+pub fn draw_text_inter(
+    frame: &mut [u8],
+    (width, height): (u32, u32),
+    at: (f32, f32),
+    px: f32,
+    text: &str,
+    colour: [u8; 4],
+) -> f32 {
     use ab_glyph::{Font, FontRef, PxScale, ScaleFont};
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -379,7 +393,11 @@ mod tests {
         draw_text(&mut frame, w, h, 0, 0, "I", white);
 
         let expected_bits: u32 = glyph_for('I').iter().map(|row| row.count_ones()).sum();
-        assert_eq!(count_lit(&frame, white) as u32, expected_bits, "lit pixel count should match the glyph's own bit count");
+        assert_eq!(
+            count_lit(&frame, white) as u32,
+            expected_bits,
+            "lit pixel count should match the glyph's own bit count"
+        );
 
         // And spot-check actual positions: 'I' at (0,0) should light the
         // full top row (columns 0-4, row 0) and leave (5, 0) (past the
@@ -390,7 +408,11 @@ mod tests {
             assert_eq!(&frame[i..i + 4], white, "column {col} of I's top row should be lit");
         }
         let past_glyph = (5 * 4) as usize; // row 0, column 5
-        assert_ne!(&frame[past_glyph..past_glyph + 4], white, "one column past the glyph should be dark");
+        assert_ne!(
+            &frame[past_glyph..past_glyph + 4],
+            white,
+            "one column past the glyph should be dark"
+        );
     }
 
     #[test]
@@ -423,7 +445,11 @@ mod tests {
     #[test]
     fn the_crisp_font_has_every_glyph_the_dot_font_has_and_no_more() {
         for c in (0x20u8..0x7f).map(char::from) {
-            assert_eq!(has_glyph(c), has_crisp_glyph(c), "{c:?} is in one font and not the other");
+            assert_eq!(
+                has_glyph(c),
+                has_crisp_glyph(c),
+                "{c:?} is in one font and not the other"
+            );
         }
     }
 
@@ -442,7 +468,10 @@ mod tests {
                 for x in 0..w as i32 {
                     if frame[((y * w as i32 + x) * 4 + 3) as usize] != 0 {
                         lit += 1;
-                        assert!((2..13).contains(&x) && (2..16).contains(&y), "{c:?} inks ({x}, {y}), outside its cell");
+                        assert!(
+                            (2..13).contains(&x) && (2..16).contains(&y),
+                            "{c:?} inks ({x}, {y}), outside its cell"
+                        );
                     }
                 }
             }
@@ -469,9 +498,12 @@ mod tests {
         let text = "HELLO";
         draw_text(&mut frame, w, h, 0, 0, text, white);
 
-        let rightmost_lit = (0..w as i32)
-            .rev()
-            .find(|&x| (0..h as i32).any(|y| { let i = ((y * w as i32 + x) * 4) as usize; frame[i..i + 4] == white }));
+        let rightmost_lit = (0..w as i32).rev().find(|&x| {
+            (0..h as i32).any(|y| {
+                let i = ((y * w as i32 + x) * 4) as usize;
+                frame[i..i + 4] == white
+            })
+        });
         // The reported width should be at least as wide as the rightmost
         // actually-lit pixel plus one (a trailing glyph can legitimately
         // have blank columns on its own right edge, e.g. most letters do,

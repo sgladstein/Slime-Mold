@@ -196,7 +196,12 @@ pub fn rasterize(icon: Icon, side: u32) -> Vec<u8> {
     // Strokes a little heavier at small sizes, so a 16-pixel icon still
     // reads (2 units is 1.3 pixels there).
     let width = if side < 20 { 2.3 } else { 2.0 };
-    let stroke = Stroke { width, line_cap: LineCap::Round, line_join: LineJoin::Round, ..Stroke::default() };
+    let stroke = Stroke {
+        width,
+        line_cap: LineCap::Round,
+        line_join: LineJoin::Round,
+        ..Stroke::default()
+    };
     for d in icon.paths() {
         let (fill, d) = match d.strip_prefix('F') {
             Some(rest) => (true, rest),
@@ -220,7 +225,11 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split] {
+        for i in [
+            Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu,
+            Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group,
+            Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split,
+        ] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

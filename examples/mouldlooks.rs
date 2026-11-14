@@ -33,7 +33,10 @@ fn pct(mut v: Vec<f32>, ps: &[f32]) -> String {
         return "-".into();
     }
     v.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    ps.iter().map(|p| format!("p{:.0} {:.2}", p * 100.0, v[((v.len() - 1) as f32 * p) as usize])).collect::<Vec<_>>().join("  ")
+    ps.iter()
+        .map(|p| format!("p{:.0} {:.2}", p * 100.0, v[((v.len() - 1) as f32 * p) as usize]))
+        .collect::<Vec<_>>()
+        .join("  ")
 }
 
 fn frame(d: &Dish, scale: u32, look: (u8, u8, bool), field: bool) -> (image::RgbaImage, f64) {
@@ -44,7 +47,11 @@ fn frame(d: &Dish, scale: u32, look: (u8, u8, bool), field: bool) -> (image::Rgb
     STAIN.store(look.2, Relaxed);
     let (w, h) = render::frame_size(scale);
     let mut buf = vec![0u8; (w * h * 4) as usize];
-    let view = View { keys: false, style: Style::GAME, ..View::default() };
+    let view = View {
+        keys: false,
+        style: Style::GAME,
+        ..View::default()
+    };
     let t0 = Instant::now();
     render::draw(d, &view, scale, &mut buf);
     let ms = t0.elapsed().as_secs_f64() * 1e3;
@@ -84,7 +91,11 @@ fn main() {
     }
     println!("flow={flow} angle={angle} seed={seed} scale={scale} at={at:?} gif={gif:?} tools={tools} idle={idle} level={level:?} out={out}");
     std::fs::create_dir_all(&out).unwrap();
-    let p = Params { flow, sensor_angle: angle.to_radians(), ..Params::default() };
+    let p = Params {
+        flow,
+        sensor_angle: angle.to_radians(),
+        ..Params::default()
+    };
     let mut d = match level {
         Some(k) => Dish::from_level(&slime_mould::mould::level::DISHES[k - 1], seed),
         None => Dish::with_params(seed, p),
@@ -141,9 +152,14 @@ fn main() {
         let on_second = d.t.is_multiple_of(sps);
         if on_second && at.contains(&sec) {
             let thr = d.params.tube * 0.5;
-            let tube: Vec<usize> = (0..d.trail.len()).filter(|&i| d.ground[i] == Ground::Agar && d.trail[i] > thr).collect();
+            let tube: Vec<usize> = (0..d.trail.len())
+                .filter(|&i| d.ground[i] == Ground::Agar && d.trail[i] > thr)
+                .collect();
             let fed = tube.iter().filter(|&&i| d.looks_fed(i)).count();
-            let lvl: Vec<f32> = tube.iter().filter_map(|&i| slime_mould::mould::look::food_level(&d, i)).collect();
+            let lvl: Vec<f32> = tube
+                .iter()
+                .filter_map(|&i| slime_mould::mould::look::food_level(&d, i))
+                .collect();
             println!(
                 "t={sec}s walkers {} tube cells {} fed {} ({:.0}%)  food level on tube: {}",
                 d.walkers.len(),
@@ -172,13 +188,18 @@ fn main() {
         }
     }
     for (k, (name, _, _, _)) in LOOKS.iter().enumerate() {
-        println!("draw {name:>7}: mean {:.2} ms over {} frames (scale {scale})", cost[k].0 / cost[k].1.max(1) as f64, cost[k].1);
+        println!(
+            "draw {name:>7}: mean {:.2} ms over {} frames (scale {scale})",
+            cost[k].0 / cost[k].1.max(1) as f64,
+            cost[k].1
+        );
         if !gifs[k].is_empty() {
             let f = std::fs::File::create(format!("{out}/{tag}-gif{}-{name}.gif", gif.unwrap())).unwrap();
             let mut enc = image::codecs::gif::GifEncoder::new_with_speed(f, 10);
             enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();
             let delay = image::Delay::from_numer_denom_ms(33, 1);
-            enc.encode_frames(gifs[k].drain(..).map(|im| image::Frame::from_parts(im, 0, 0, delay))).unwrap();
+            enc.encode_frames(gifs[k].drain(..).map(|im| image::Frame::from_parts(im, 0, 0, delay)))
+                .unwrap();
         }
     }
     STARVE_LOOK.store(3, Relaxed);
