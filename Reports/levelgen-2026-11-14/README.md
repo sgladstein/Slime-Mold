@@ -460,21 +460,123 @@ neighbouring cells, 1,801 runs at 4x and 2,914 at 6x): its read-back alone
 took up to 12.8 and 20.8 ms here, nearly all of the refresh. The gather is
 one dispatch and one copy whatever the cells' shape.
 
-**Still to do.** A wall going up still reads and rebuilds every cell (the
-old cost, at most once per wall). Planets stay at 2x until the 1070 times
-this build (the bench's new lines answer the technical lead's question on
-the one-off 327 ms step at 6x); then `GROW_CAP` goes to 6.
+**Still to do** (then): a wall going up still read and rebuilt every cell,
+and planets stayed at 2x until the 1070 timed this build. Both are in
+*Walking maps at 6x* below.
 
 **The river look in grey.** The ground thread's river look (#292) and the
 plants reached main, so the graphics lead's thumbnail test again, seed 1 of
 planets 1-8 at 1 s, 266 x 164 each (`raw/make_grey3.py`):
 `page3/grey/sheet-water.png` and `sheet-water-colour.png`.
 
+## Walking maps at 6x (21:30-22:30Z)
+
+The 1070 rerun of the sparse refresh (the PC runner, head 36ad7613)
+cleared the frame's prepare (2.0-2.6 ms at every size) and showed what was
+left: a game step's max after the first second, 22, 70, 94 and 210 ms at
+1x, 2x, 4x and 6x, the same with the walkers' spread off. It was the
+soldiers' walking maps. A map is the whole world, built the step a soldier
+first needs it; it tested every crystal at every cell (`standable` walks
+the crystal list) and ran a binary-heap Dijkstra, and every soldier's
+formation slot is its own goal, so a squad's new order cost a map a
+soldier in one step. The technical lead's plan, in parts, each timed at 6x
+(planet 8 seed 1, `bench=10 spread=0`, software Vulkan in the cloud, so the
+GPU's frame runs on the same four cores; game-step max over the frames
+that ran a step):
+
+| Part | One map at 6x (alone) | Rushing hand | Every-command hand |
+| --- | --- | --- | --- |
+| before | about 167 ms | 186 ms | 34 ms |
+| an open-cell grid and a bucket queue | 28 ms | 44 ms | 54 ms |
+| a slice a step, shared and stale maps | 4-5 ms a step | 12 ms | 18 ms |
+
+- **The grid** (`standable_cells`): the world's open cells in one pass
+  (`World::open_cells`; the dish answers from its own arrays), then each
+  solid crystal's disc cleared over its own box by `solid_at`'s own test,
+  so the same cells (`standable_cells_are_standable_at_each_middle`, deep
+  water included): 104 ms per cell before, 7.9 ms, 1.9 ms with the dish's
+  grid.
+- **The bucket queue** (`MapBuild`): steps cost 5 or 7, so a ring of 8
+  buckets holds every distance still to take and no heap is needed: the
+  heap's own distances on random mazes, sliced or whole
+  (`the_walking_map_ring_matches_the_heap`), in 26-28 ms against 62-64.
+- **A slice a step** (`Game::pump_maps`, once at the start of a step):
+  131,072 cells (`MAP_POPS`) across the maps being built, at most one
+  started a step, asked goals first; a 1x map is one step or two, a 6x
+  planet's six or seven. A soldier or squad asks (`Game::map_for`) and
+  waits while its map is built. A built map whose goal is within 4 dish
+  cells and a straight walk from the asker's goal serves it, so a squad's
+  slots share one map (a steered squad's moving point takes one half a
+  lead off). An ask not renewed by the next step is dropped.
+- **Stale, not dropped**: a wall going up, and every `PATHS_EVERY` (30 s),
+  makes every map stale; each is rebuilt in turn, walked last first, and
+  walked meanwhile, where before all were dropped at once and every
+  soldier built again in the same step. The cache keeps 48 maps or 16M
+  cells (64 MB) and drops the one walked longest ago; it started again
+  from empty at 48 before.
+
+**Rejected: one whole map a step** (`MAPS_A_STEP` 1): the rushing hand's
+max stayed at 44 ms, one 6x map's worth, over a frame. A grid kept between
+maps was not built: the solid discs shrink with every bite of a crystal, so
+it would rarely be the same twice; each build makes its own (1.9 ms at 6x).
+The every-command hand's 119 ms frames are its commands, not a step: a wall
+or building reads the dish back at once, which waits on the GPU's frame,
+about 110 ms on software Vulkan and about 2 ms on the 1070.
+
+**Walls without the whole ground.** A wall going up rebuilt every cell's
+ground code (the 25-32 ms hitch at 6x). Now its cells join the gathered
+ones and only the 32-cell tiles it touches are re-marked, each grown by
+the `FAR` mark's reach (`look::mark_far_box`, prefix sums over the box,
+the world's edge as hard). The sparse refresh's test now raises three
+walls at 6 s (across a crystal, on open ground, along the world's edge)
+and every refresh still equals a whole rebuild.
+
+## Plants that tell the biomes apart (22:00-22:40Z)
+
+The plants thread's thumbnails showed almost every planet green edge to
+edge, Barrens, Cave and Highlands too (graphics lead, 21:56Z: plants should
+help tell biomes apart, cover from about 5% to 80%). Two `Sow` dials:
+`clumps` sows on the fine noise (clumps about 20 map cells across) instead
+of the canopy's 140-cell patches, and `soils` names the soils anything but
+reeds grows on. Share of all map cells (rock included) with plants, seeds
+1-3, main at 8941373 against this branch (`examples/planets` maps; the test
+`plants_tell_the_biomes_apart` holds the new spread):
+
+| Biome | Before | After | What grows |
+| --- | --- | --- | --- |
+| meadow | 76.6% | 76.4% | grass over three quarters, a few jungle copses |
+| barrens | 44.0% | 10.6% | scrub in sparse clumps; oases lush |
+| fen | 64.0% | 63.7% | reed beds round every pool and lake, grass between |
+| river valley | 77.8% | 77.6% | reeds along the banks, scrub on the dunes |
+| jungle | 79.4% | 79.1% | canopy over most of it, grass in the clearings |
+| highlands | 22.8% | 19.3% | grass in patches on the clay only, reeds at pools |
+| cave | 8.7% | 4.1% | reeds at the pools and a clump or two |
+| core | 68.2% | 67.8% | grass, canopy and scrub mixed |
+
+**Edges that fade** (terrain look thread, 22:15Z: at zoom 24 the Fen and
+Jungle beds still showed 1-cell steps every ~7 cells, from the map's own
+data). The view draws a patch's edge where its density crosses 0.2
+between cells; the generator stepped from 0.25-0.4 to nothing at a patch's
+edge, so the line ran along the cells' own staircase. Every edge now fades
+to nothing over a few cells: a patch over 0.06 of the canopy noise (about
+6 map cells) or 0.15 of the fine one, the reeds over their last 4 map cells
+(a fringe into the water over its outer half), the clearings round
+crystals and the landing over 6. Where reeds meet grass or grass meets
+jungle both fade, leaving a seam about a game cell wide. Drawn from the
+map data at zoom 12 (`raw/plant_edges.py`), the reed fringe along the
+Fen's ridges and the jungle beds' borders run smooth where they stepped.
+
+**Moisture.** Each planet's map now carries its biome's `moisture BASE
+SPREAD` line (#295, agreed with the plants thread): meadow 0.25 0.3,
+barrens 0 0.2, fen 0.5 0.3, river valley 0.3 0.3, jungle 0.4 0.3,
+highlands 0.1 0.2, cave 0.35 0.2, core 0.2 0.35 (`Biome::moisture`).
+
 ## Next
 
-1. **Planets to the owner's 6x** once the 1070 has timed the sparse
-   refresh; the plants thread's `moisture` line in every planet (#295); a
-   three-agent adversarial review (owner, 19:12Z and 19:32Z).
+1. **Planets to the owner's 6x** once the 1070 has timed the walking maps;
+   a three-agent adversarial review (owner, 19:12Z and 19:32Z); the core
+   world's few large open arenas with hedges round the nests (graphics
+   lead).
 2. **Every strategy can win**: the check that each nest has an open
    approach and a choke, after a short read on how StarCraft map
    generators score chokepoints and fairness (owner's question, 17:24Z).
