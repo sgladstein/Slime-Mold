@@ -72,8 +72,8 @@
 //!   was the one tool measured to turn games).
 //! - **ring** (buildings, 2026-11-12; the design review's risk that free
 //!   shots and turrets bring back the held ring of fire): farm, and from
-//!   5 s a turret `RING` dish cells from the larder whenever the bank holds
-//!   a turret over `RESERVE`, round the larder, up to `RING_N`.
+//!   5 s a turret `plans::RING` dish cells from the larder whenever the bank holds
+//!   a turret over `RESERVE`, round the larder, up to `plans::RING_N`.
 //! - **turtle**: farm, and a pump on each crystal a soldier is clearing
 //!   (the soldier is on it, so it is in reach) with a turret beside it, as
 //!   the bank allows over `RESERVE`.
@@ -82,7 +82,7 @@
 //!   spends what farm banks on guns that walk.
 //! - **pumps** and **guard**: the turtle's halves alone, pumps without
 //!   turrets, and a turret by each farmed crystal without pumps.
-//! - **killzone**: farm, and a lure `ZONE` dish cells from the larder on
+//! - **killzone**: farm, and a lure `plans::ZONE` dish cells from the larder on
 //!   the road to the core with a turret either side of the road halfway
 //!   there, as the bank allows over `RESERVE`; the lure pulls the mould
 //!   into the turrets' fire.
@@ -98,16 +98,13 @@ use slime_mould::mould::big::BigParams;
 use slime_mould::mould::larder_world::{race_params, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
+use slime_mould::mould::plans;
 use slime_mould::mould::tiers::Tier;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
 const WALL_LEN: f32 = 26.0;
 const WALL_AT: f32 = 0.6;
-
-const RING: f32 = 7.0;
-const RING_N: usize = 6;
-const ZONE: f32 = 13.0;
 
 #[derive(Clone, Default)]
 struct Row {
@@ -832,11 +829,11 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
             "rush" => rush_hand(g),
             "ring" => {
                 farm_hand(g, &mut farmed);
-                ring_hand(g);
+                plans::ring(g, RESERVE);
             }
             "turtle" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, true, true);
+                plans::turtle(g, true, true, RESERVE);
             }
             "army" => {
                 // Farm, but spend the bank on soldiers: up to the squad's
@@ -855,15 +852,15 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
             }
             "pumps" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, true, false);
+                plans::turtle(g, true, false, RESERVE);
             }
             "guard" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, false, true);
+                plans::turtle(g, false, true, RESERVE);
             }
             "killzone" => {
                 farm_hand(g, &mut farmed);
-                zone_hand(g);
+                plans::zone(g, RESERVE);
             }
             "wall" => {
                 // Until the wall stands, one soldier walks to it and the
@@ -998,20 +995,8 @@ fn random_hand<W: World>(g: &mut Game<W>) {
     }
 }
 
-/// Crystals with charge, nearest the larder first (the core last of all).
-fn by_distance<W: World>(g: &Game<W>) -> Vec<(f32, f32)> {
-    let l = g.larder;
-    // A crystal under one frame's full ask is dry: the soldier the game
-    // sent home from it (`Rules::home_dry`) is not sent back for crumbs.
-    let r = g.rules;
-    let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
-    cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
-    cs
-}
-
 fn farm_hand<W: World>(g: &mut Game<W>, farmed: &mut Vec<usize>) {
-    let cs = by_distance(g);
+    let cs = plans::by_distance(g);
     if g.bank > g.rules.soldier_cost + RESERVE && g.alive() < FARM_MAX {
         g.apply(Cmd::Buy);
     }
@@ -1060,124 +1045,6 @@ fn rush_hand<W: World>(g: &mut Game<W>) {
     }
 }
 
-/// A building of `kind` at `at`, if the bank holds its price over
-/// `RESERVE` (the farm hand's spare) and it can go there now.
-fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32)) -> bool {
-    let ok = g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at));
-    if ok {
-        send_builder(g);
-    }
-    ok
-}
-
-/// The newest building, if still a ghost (`BuildRules::raise` > 0): the
-/// nearest live soldier goes to raise it (`Order::Build`), as a player
-/// would send one; the farm hand leaves it be until it stands.
-fn send_builder<W: World>(g: &mut Game<W>) {
-    let Some(b) = g.buildings.len().checked_sub(1) else { return };
-    let bd = g.buildings[b];
-    if bd.built >= 1.0 {
-        return;
-    }
-    let d = |k: usize| (g.soldiers[k].x - bd.at.0).hypot(g.soldiers[k].y - bd.at.1);
-    if let Some(k) = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).min_by(|&a, &b| d(a).total_cmp(&d(b))) {
-        g.apply(Cmd::Order(k, Order::Build(b)));
-    }
-}
-
-/// An open cell within 3 dish cells of `p`, nearest first.
-fn open_by<W: World>(g: &Game<W>, p: (f32, f32)) -> Option<(f32, f32)> {
-    let s = g.world.scale();
-    (0..=6).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-        let a = k as f32 / 12.0 * std::f32::consts::TAU;
-        (p.0 + 0.5 * r as f32 * s * a.cos(), p.1 + 0.5 * r as f32 * s * a.sin())
-    }).find(|q| g.world.open(q.0, q.1))
-}
-
-fn alive_kind<W: World>(g: &Game<W>, kind: Kind) -> usize {
-    g.buildings.iter().filter(|b| b.alive && b.kind == kind).count()
-}
-
-fn ring_hand<W: World>(g: &mut Game<W>) {
-    if g.time() < 5.0 || alive_kind(g, Kind::Turret) >= RING_N {
-        return;
-    }
-    let s = g.world.scale();
-    let (c, l) = (g.core, g.larder);
-    let a0 = (c.1 - l.1).atan2(c.0 - l.0);
-    // The first faces the core, then alternately either side of it.
-    for i in 0..RING_N {
-        let k = (i as f32 / 2.0).ceil() * if i % 2 == 0 { 1.0 } else { -1.0 };
-        let a = a0 + k * std::f32::consts::TAU / RING_N as f32;
-        if let Some(at) = open_by(g, (l.0 + RING * s * a.cos(), l.1 + RING * s * a.sin())) {
-            if spare_build(g, Kind::Turret, at) {
-                return;
-            }
-        }
-    }
-}
-
-/// The turtle's two halves can be played alone: `pumps` (pumps, no
-/// turrets) and `guard` (a turret by each farmed crystal, no pumps).
-fn turtle_hand<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool) {
-    let s = g.world.scale();
-    let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
-        Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
-        _ => None,
-    }).collect();
-    for c in sites {
-        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
-        if pumps && !pumped {
-            if let Some(at) = open_by(g, c) {
-                if spare_build(g, Kind::Pump, at) {
-                    return;
-                }
-            }
-            continue;
-        }
-        let guarded = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
-        if turrets && !guarded {
-            let (dx, dy) = (g.core.0 - c.0, g.core.1 - c.1);
-            let d = dx.hypot(dy).max(1.0);
-            if let Some(at) = open_by(g, (c.0 + dx / d * 4.0 * s, c.1 + dy / d * 4.0 * s)) {
-                if spare_build(g, Kind::Turret, at) {
-                    return;
-                }
-            }
-        }
-    }
-}
-
-fn zone_hand<W: World>(g: &mut Game<W>) {
-    if g.time() < 5.0 {
-        return;
-    }
-    let s = g.world.scale();
-    let (c, l) = (g.core, g.larder);
-    let (dx, dy) = (c.0 - l.0, c.1 - l.1);
-    let d = dx.hypot(dy).max(1.0);
-    let (ux, uy) = (dx / d, dy / d);
-    let half = 0.5 * ZONE * s;
-    let wants = [
-        (Kind::Turret, (l.0 + ux * half - uy * 4.0 * s, l.1 + uy * half + ux * 4.0 * s)),
-        (Kind::Turret, (l.0 + ux * half + uy * 4.0 * s, l.1 + uy * half - ux * 4.0 * s)),
-        (Kind::Lure, (l.0 + ux * ZONE * s, l.1 + uy * ZONE * s)),
-    ];
-    for (kind, p) in wants {
-        let have = g.buildings.iter().any(|b| b.alive && b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * s);
-        if have {
-            continue;
-        }
-        if let Some(at) = open_by(g, p) {
-            if spare_build(g, kind, at) {
-                return;
-            }
-        }
-        // In order: the turrets before the lure.
-        return;
-    }
-}
-
 /// A wall across the core-to-larder line, `WALL_AT` of the way to the
 /// larder, built by sending soldier 0 there first if it is out of range.
 fn wall_road<W: World>(g: &mut Game<W>) {
@@ -1188,7 +1055,7 @@ fn wall_road<W: World>(g: &mut Game<W>) {
     let h = WALL_LEN * g.world.scale() / 2.0;
     let (a, b) = ((m.0 - dy / d * h, m.1 + dx / d * h), (m.0 + dy / d * h, m.1 - dx / d * h));
     if g.apply(Cmd::Wall(a, b)) {
-        send_builder(g);
+        plans::send_builder(g);
     } else {
         // Out of range: walk the first live soldier there (soldier 0 stands
         // on the point itself, the others round it) and try again next
