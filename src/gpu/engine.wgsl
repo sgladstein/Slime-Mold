@@ -1005,6 +1005,10 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
+    // A side can pass its cap by at most one step's births (every parent
+    // in the step that read "under" divides), on both engines alike. Keep
+    // it so: an atomic counter here would make who is born depend on the
+    // order the threads run, and the twin with the CPU would break.
     if (garden()) {
         let sp = species_of(k);
         let held = select(atomicLoad(&wstat[6]), atomicLoad(&wstat[7]), sp == OWN_SP);

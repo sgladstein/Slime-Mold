@@ -1070,6 +1070,11 @@ mod tests {
         assert!(own + 5 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
         let ((own_stop, _), most_stop) = run(None, true);
         assert!(most_stop <= walkers + walkers / 10, "with its births stopped the enemy reached {most_stop}");
+        // The cap's overshoot is bounded by one step's births (the count
+        // runs before them): what the capped enemy gained over the
+        // births-stopped one (conversion alike in both) is a step's parents
+        // at most; at seed 5 it is 0.
+        assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
         assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
     }
 
