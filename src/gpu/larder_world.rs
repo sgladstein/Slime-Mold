@@ -757,6 +757,11 @@ impl World for GpuWorld {
         self.s.upkeep = up;
     }
 
+    /// Written to the GPU with the next step's params (`panic_r2`).
+    fn set_panic_r(&mut self, r: f32) {
+        self.s.panic_r = r;
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }
@@ -930,6 +935,9 @@ mod tests {
         }
         fn set_upkeep(&mut self, up: f32) {
             self.g.set_upkeep(up)
+        }
+        fn set_panic_r(&mut self, r: f32) {
+            self.g.set_panic_r(r)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()

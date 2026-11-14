@@ -45,9 +45,9 @@ th { color: var(--muted); font-weight: 600; }
       <div class="key"><b>WASD</b>Steer the squad you control. The camera follows; Space brings it back after you pan away.</div>
       <div class="key"><b>Hold left mouse</b>Every soldier in the squad fires at the cursor on the same beat. The squad faces the cursor.</div>
       <div class="key"><b>Right click</b>Send the squad there in formation. On a crystal it stands guard; Ctrl + right click drains it.</div>
-      <div class="key"><b>1-9 · wheel</b>Switch squads. Each squad's number floats over it, and the one you control has a star. Ctrl + wheel zooms.</div>
-      <div class="key"><b>X</b>Split. The half nearer the cursor becomes a new squad, and control moves to it.</div>
-      <div class="key"><b>Shift + drag · G</b>Pull the boxed soldiers out into a new squad. G merges the nearest squad within 24 cells.</div>
+      <div class="key"><b>1-9 · Ctrl + wheel</b>Switch squads. A squad keeps its number while it lives; it floats over it, and the one you control has a star. The plain wheel zooms.</div>
+      <div class="key"><b>Y</b>Split. The half nearer the cursor becomes a new squad, and control moves to it.</div>
+      <div class="key"><b>Shift + drag · J</b>Pull the boxed soldiers out into a new squad. J merges the nearest squad within 24 cells.</div>
       <div class="key"><b>T</b>Formation: blob (the default), line, wedge or ring.</div>
       <div class="key"><b>B</b>Buy a soldier. It joins the squad you control, at its side.</div>
     </div>
@@ -86,15 +86,15 @@ th { color: var(--muted); font-weight: 600; }
 
   <section style="display:grid; gap:10px">
     <h2>The squads, a tile each</h2>
-    <img src="squad-tiles-crop.png" alt="The bottom middle panel in squad mode: 2 squads, commanding Squad 2 with 4 soldiers; tile 1 with 4 soldiers, a health bar and a plus button; tile 2 outlined in blue; Split X and Combine G buttons at the right of the header line" style="width:100%; border-radius:6px; border:1px solid var(--line)">
+    <img src="squad-tiles-crop.png" alt="The bottom middle panel in squad mode: 2 squads, commanding Squad 2 with 4 soldiers; tile 1 with 4 soldiers, a health bar and a plus button; tile 2 outlined in blue; Split Y and Combine J buttons at the right of the header line" style="width:100%; border-radius:6px; border:1px solid var(--line)">
     <p class="note">In squad mode the bottom middle panel shows a tile per squad, where the RTS round shows a card per soldier. A tile has the squad's hotkey, its soldiers and their health; the squad you command is outlined. Click a tile to command that squad; the + on a tile brings that squad into yours. <b>Split</b> sends the front half off as a new squad you command, and <b>Combine</b> brings the nearest squad in, however far. A button that can't act is greyed, and its tooltip says why. Hovering a tile says what the squad is doing (holding, moving or firing).</p>
-    <p class="note">Fork, seed 1, 24 s, 1600x900: the squad of 8 split into two squads of 4. The model and HUD together take 0.06 ms a frame on software Vulkan.</p>
+    <p class="note">Fork, seed 1, 24 s, 1600x900: the squad of 8 split into two squads of 4. The model and HUD together take 0.06 ms a frame on software Vulkan. A squad keeps its number while it lives, as a control group does.</p>
     <img src="squad-tiles-24s.jpg" alt="The whole screen at 24 s in squad mode" style="width:100%; border-radius:6px; border:1px solid var(--line)">
   </section>
 
   <section style="display:grid; gap:8px">
     <h2>Crystals without the larder <span class="pill">drain or guard</span></h2>
     <p>Squad mode has no larder. A squad <b>guarding</b> a crystal (standing by it, with at most 8 walkers on it) earns 1/120 of the crystal's remaining charge every second, and that never uses the crystal up, so guarding pays more in the long run. A squad <b>draining</b> a crystal banks its charge as it takes it, nothing is carried, and the crystal is gone for the slime too. Guarded crystals get a green ring.</p>
-    <p class="note">Not built yet: a short call-in delay for bought soldiers and moving the card's letter keys off WASD (in this mode the squad keys win: X splits rather than setting Defend, and G merges rather than harvesting). The numbers (2x fire rate, 1.4x strike, the 120 s guard, 0.75 squad pace) are first guesses, to be retuned after you play it.</p>
+    <p class="note">Not built yet: a short call-in delay for bought soldiers. The numbers (2x fire rate, 1.4x strike, the 120 s guard, 0.75 squad pace) are first guesses, to be retuned after you play it.</p>
   </section>
 </main>

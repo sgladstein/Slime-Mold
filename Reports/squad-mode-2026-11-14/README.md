@@ -109,8 +109,10 @@ middle panel (laid out by #250) shows the squads (`ui::SquadPanel`, drawn by
 `Hud::squad_tiles`, built by `App::squad_panel` in
 `src/bin/larder-world/squadmode.rs`):
 
-- A tile a live squad, in hotkey order (tile r is key r + 1, as the digit
-  keys pick), the size of a soldier's card but wider: hotkey, soldiers,
+- A tile a live squad, in id order; its key is its id + 1 and stays while
+  the squad lives (the digit keys and the numbers over the squads agree; they
+  first followed the live squads' order, so a squad's key changed when a
+  lower one died, merged or split: the bug sweep's review). The size of a soldier's card but wider: hotkey, soldiers,
   their mean health. The squad you command is outlined. Hovering says its
   state (formation if not blob; firing, moving or holding).
 - A click on a tile takes command of it. The + on another tile brings that
@@ -121,6 +123,8 @@ middle panel (laid out by #250) shows the squads (`ui::SquadPanel`, drawn by
   joins yours, however far (the key keeps its 24-cell reach). A button that
   can't act (a squad of one, 16 squads, no other squad) is greyed with the
   reason as its tooltip.
+- No Outpost on the build page without the larder: with nothing carried
+  home it only smelt of the bank and let the mould eat from it.
 - Cost: model and HUD 0.062 ms a frame on llvmpipe (Fork, 1600x900, two
   squads).
 
@@ -132,8 +136,16 @@ whatever held it.
 
 ## Open
 
-- A call-in delay for bought soldiers (answer 10), and moving the command card's letters off the squad keys (X, G and the
-  WASD letters on the card are dead in this mode).
+- A call-in delay for bought soldiers (answer 10).
+- Keys, after the owner's playtest (08:01Z; [bug sweep](../bug-sweep-2026-11-14.md)):
+  the card's letters came second to the squad's, so G merged instead of
+  harvesting and X split instead of defending, and the wheel switched
+  squads instead of zooming. Now the card's keys come first, split is
+  **Y**, join is **J**, the wheel zooms (about the squad while the camera
+  follows it) and **Ctrl + wheel** switches; the card's WASD letters moved
+  to R (attack-move, mine), F (gas) and U (sow). Answer 4's X and G are a
+  two-line change back (`squadmode::SPLIT`, `MERGE`) if the owner prefers
+  them, with the card's Defend and Drain moved instead.
 - Retune the numbers after a playtest: the rate and strike boost, the guard
   rate, the pace, the merge reach.
 - The player AI doesn't play this mode yet.
