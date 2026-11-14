@@ -138,7 +138,10 @@ reads only the crystal and wall cells (`Gather`, 2026-11-14; [levelgen
 report](../../Reports/levelgen-2026-11-14/README.md), *A sparse ground refresh*),
 and a wall going up rebuilds only the 32-cell tiles it touches, their `FAR`
 marks redone over each tile and its reach (`look::mark_far_box`; *Walking
-maps at 6x*). Shots (`Engine::set_hits`)
+maps at 6x*). A command's read-backs copy only the words they read
+(`gpu::read_back_range`): the gas press read the engine's whole `news`
+buffer twice, 115 ms at 6x on software Vulkan, now 9 ms (*The 1070 at 6x,
+and the gas press*). Shots (`Engine::set_hits`)
 stop at the first slime or rock on their line (`first_hit`) and cut there,
 leaving a fading burn. The view draws no wound (the owner, 04:38Z, on a
 blind A/B: "Neither. Both of those look like stamps"): the drawn
