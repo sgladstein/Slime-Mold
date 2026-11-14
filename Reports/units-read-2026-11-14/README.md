@@ -55,7 +55,9 @@ both came out black; a ghost's cream line only showed after the fix.
 
 llvmpipe, `bench=30 hand=volley`, 1280 x 800, squad on screen: GPU tail
 p50 37.6 -> 40.2 ms, frame p50 47.0 -> 49.9 ms. No 1070 timing (the PC is
-busy). Elbow room is O(n²): 780 pairs at 40 soldiers.
+busy). Elbow room is O(n²): 780 pairs at 40 soldiers, 0.012 ms a call
+on the CPU (40 soldiers packed in a 3.5 x 3 cell knot, 2,000 calls,
+release build), once a game frame.
 
 ## Engine twins
 
