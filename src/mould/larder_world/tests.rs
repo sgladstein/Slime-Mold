@@ -2330,7 +2330,7 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
                 to: east,
                 r: 1.0,
             }],
-            &[Some(0)],
+            &[(Some(0), 0)],
             10.0,
         );
         assert_eq!(legs[0].to, east, "the bullet flew over the water");
@@ -2365,6 +2365,8 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
         // No building in deep water.
         assert!(!g.world.open(deep.0, deep.1));
     }
+}
+
 // Guns (owner 2026-11-14 16:46Z: "The squad owns the gun. Each gun defines
 // the budget and slot count and range, spread, rate of fire as actual
 // numbers").
