@@ -115,9 +115,38 @@ click, Enter and Esc); `mould::run::tests` (7: cards fit the carried gun's
 budget and slots and leave it when a smaller gun is carried; deeper shops
 sell guns with bigger budgets, 40 runs a depth; the first gun is carried).
 
+## Rolled bullets in the shop (2026-11-14 19:40Z)
+
+Built on the gun thread's rolled bullets (#291, `Ammo::roll`: a shell, a
+set, damage, speed, range and spread at 0.25-4x, a budget cost that follows
+the roll; the owner, 18:05Z, made the payloads bullets).
+
+- Each shop offers `AMMO_OFFER` (2) rolled bullets beside `OFFER` (3)
+  modifier, trigger and flight cards (plus `draw`'s). The fixed payload
+  cards (blast, gas, bomb) are no longer sold: a bullet is rolled instead.
+  Shells: plain, blast and gas from planet 1, the bomb from planet 4
+  (`shells_at`); no germ (the GPU world casts none yet).
+- Price in points (`ammo_price`): `(40 + 20 x the shell's base cost) x
+  grade^1.5 x (1 + 0.1 x (depth - 1))`, in tens. Its budget cost in the gun
+  is the roll's own (`Card::cost`).
+- A bullet card shows the shell's icon, the set's glyph in the corner (as
+  the HUD's loadout strip badges it), its name ("Needle bullet", "Slug
+  bomb") and its budget cost as pips; the detail box gives its numbers.
+- **Walkers per open cell** (the technical lead, 19:23Z): at level start a
+  run's walkers, set from the planet's area, are scaled to its open cells
+  (`open_scale`: cells not rock over the area times `REF_OPEN` 0.93, the
+  mean open share of planets 1-8 of seeds 1-6, 0.84 to 0.98). Counts from
+  a base of 5,000: planet 1 at 0.6 area about 3,000; 2x area planets 6-8
+  20,000 to 24,000; a 6x core world would be about 72,000.
+
+Checks: `mould::run::tests::every_shop_rolls_bullets_and_prices_them_by_the_roll`
+(2 bullets a shop at depths 1-8 over 20 seeds, no germ, no bomb before 4,
+no fixed payload card; a bought bullet goes into the gun and its text reads
+back through `rounds::parse`).
+
 ## Pictures
 
-[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the second shop (after planet 1; three planets in; the Buildings and Tools folders; 1280x720 with dev mode), then the first build's start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
+[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: rolled bullets in the shop (three planets in; after planet 1), the second shop (after planet 1; three planets in; the Buildings and Tools folders; 1280x720 with dev mode), then the first build's start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
 
 ## Checks
 

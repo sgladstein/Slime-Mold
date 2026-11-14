@@ -1,5 +1,5 @@
-# Mission 4: the Trunk on the Fork, the mission that teaches rations (the design review:
-# rations stay on here, so a squad must be fed while it fights). Census v13 (2026-11-14,
+# Mission 4: the Trunk on the Fork, once the mission that taught rations (the design
+# review); rations were removed from the game on 2026-11-14 (owner: no upkeep). Census v13 (2026-11-14,
 # seeds 1-4, CPU): a strike from 3:00 with ten (strike:strike_at=180+strike_army=10+buy_to=14)
 # wins 4/4 at 5:27-8:37 and with three cutters burning the cords to each farmed crystal
 # (cut+strike) 4/4 at 4:26-7:53, all 3 stars; boom 0/4 (best 0.07), idle 0/4 (0.08, wiped or

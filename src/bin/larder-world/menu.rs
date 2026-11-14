@@ -121,7 +121,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Right click", "Move; on a crystal, harvest it"),
         ("Shift + order", "Queue it after the current orders"),
         ("Ctrl + 1-9, 1-9", "Make a group, select it (twice: look)"),
-        ("Wheel, middle drag", "Zoom, pan; arrows and the screen edge pan"),
+        ("Wheel, middle drag", "Zoom, pan; arrows, the screen edge and WASD while paused pan"),
         ("A, click", "Attack-move; on the core, attack it"),
         ("S", "Stop"),
         ("G", "Harvest"),
@@ -228,6 +228,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.tint = kind.colour(draw::payload_colour(c));
                     s.cost = c.cost();
                     s.about = format!("{}, budget {}. {}", kind.label(), c.cost(), row.about.replacen(c.about(), &words, 1));
+                    if let rounds::Card::Ammo(a) = c {
+                        // A rolled bullet: its set as a badge, its numbers.
+                        s.badge = Some(draw::ammo_icon(a.set));
+                        s.about = format!("{}: {}. {}", a.title(), a.line(), row.about.replacen(c.about(), &words, 1));
+                    }
                 }
                 Face::Gun(g) => {
                     s.icon = draw::gun_icon(g.kind);
@@ -449,6 +454,25 @@ impl App {
                         if !r.pick(p) {
                             if let Some(m) = self.menu.as_mut() {
                                 m.notice = Some(format!("{}: {}", row.name, if row.ready { "can't be done" } else { "not enough points, or locked" }));
+                            }
+                        }
+                    }
+                }
+                self.show_shop();
+            }
+            // A bullet card dragged (or Q/E) to another slot of the gun;
+            // one for sale is bought on the way.
+            StartEvent::Move(i, slot) => {
+                if let Some(r) = self.run.as_mut() {
+                    if let Some(row) = r.shop().get(i) {
+                        let done = match row.pick {
+                            Pick::Card(ci) => r.pick(Pick::Move(ci, slot)),
+                            Pick::Offer(k) => r.buy_into(k, slot),
+                            _ => true,
+                        };
+                        if !done {
+                            if let Some(m) = self.menu.as_mut() {
+                                m.notice = Some(format!("{}: over the gun's budget or slots, or not enough points", row.name));
                             }
                         }
                     }

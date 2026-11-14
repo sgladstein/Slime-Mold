@@ -257,7 +257,8 @@ struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32,
 // radii are whole numbers, so both sides test the same integers. `kills`
 // counts the walkers each shot killed.
 struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
-struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32 };
+// `heat`: fire's heat on the unit's cell (11-14, `squad::UnitOut::heat`).
+struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32, heat: f32, _s0: u32, _s1: u32, _s2: u32 };
 // A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
@@ -442,6 +443,8 @@ const SOIL: u32 = 16u;
 // on every cell, so charge the gardeners spread on open ground is eaten as
 // the CPU's eat does (on the CPU any cell's charge is food).
 const GARDEN: u32 = 32u;
+// The dish has plants (`plant_words` in `news`; mod.rs `WORLD_PLANTS`).
+const PLANTS: u32 = 64u;
 const OWN_SP: u32 = 3u;
 const PILE_BITS: u32 = 0xFFu;
 const WET: u32 = 0x100u;
@@ -2359,6 +2362,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         SQ.uout[u].touching = rsum[0];
         SQ.uout[u].aim = rbi[0];
         SQ.uout[u].dense = rbest[0];
+        SQ.uout[u].heat = unit_heat(un.x, un.y);
     }
 }
 
@@ -2507,6 +2511,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     SQ.uout[u].touching = touching;
     SQ.uout[u].aim = bi;
     SQ.uout[u].dense = best;
+    SQ.uout[u].heat = unit_heat(un.x, un.y);
 }
 
 // The harvest: in unit order, each unit with `take` takes up to that much
@@ -3149,16 +3154,18 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
 // **Plants** (2026-11-14, the CPU's `mould::plants`): in `news` after the
 // condensing block, `PLANT_HEAD` words of numbers (`plant_words` in
 // mod.rs: the rates a plant step, fire's, char's, each plant kind's cap,
-// pace, dry and burn, and up to four lights for `ignite`), then seven
-// blocks a cell: the soil's capacity (0 on crystals, rock, rim), the plant
-// kind, the plants (A current, B the step's out), fire's heat (A, B) and
-// the char. Absent when the dish has no plants (the passes don't run).
+// pace, dry and burn, up to four lights for `ignite`, and in word 45 the
+// fire steps run, 46-48 flicker, ember and full), then eight blocks a cell: the soil's capacity (0 on
+// crystals, rock, rim), the plant kind, the plants (A current, B the
+// step's out), fire's heat (A, B), the char and the moisture. Absent when the dish has no plants (the passes don't run).
 // Every `plant_every` game ticks, after the tick's passes, as the CPU's
 // `plant_tick` after its tick: `plant` (A to B, kinds in place), `fire`
 // (heat A to B, eating plants B, char in place), `pcopy` (B to A) and
 // `firekill` (walkers on hot cells die as `strike` kills them). The
 // numbers are the CPU's, summed in the same order.
-const PLANT_HEAD: u32 = 48u;
+const PLANT_HEAD: u32 = 64u;
+// (Word 49 on: up to three lights for `ignite`, four words each; words
+// 32-44 held them, three words each, until 11-14.)
 fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + P.w * P.h; }
 fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
@@ -3172,6 +3179,25 @@ const PB_B: u32 = 3u;
 const PB_FA: u32 = 4u;
 const PB_FB: u32 = 5u;
 const PB_CHAR: u32 = 6u;
+const PB_MOIST: u32 = 7u;
+// Block 8: how fresh each cell's fire is, 1 when it catches and x
+// FRESH_KEEP a fire step while it burns, so the view can draw the
+// advancing edge hottest (graphics lead 11-14 21:26Z: "the advancing
+// edge should be the brightest line on screen"). The heat itself
+// flickers step to step, so its rise is noise, not the front. The view
+// reads it; the game does not, and the CPU keeps no copy.
+const PB_FRESH: u32 = 8u;
+const FRESH_KEEP: f32 = 0.85;
+// A cell's chance this fire step, 0-1 (`plants::roll`).
+fn froll(i: u32, t: u32) -> f32 {
+    var h = (i * 0x9E3779B1u) ^ (t * 0x85EBCA77u);
+    h ^= h >> 15u;
+    h *= 0x2C1B3C6Du;
+    h ^= h >> 12u;
+    h *= 0x297A2D39u;
+    h ^= h >> 15u;
+    return f32(h >> 8u) * (1.0 / 16777216.0);
+}
 fn pwet(i: u32) -> bool { return world(WETS) && (ground[i] & WET) != 0u; }
 fn pcap_of(i: u32, k: u32) -> f32 {
     let dry = select(pf(24u + k), 1.0, pwet(i));
@@ -3221,16 +3247,25 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wet = pwet(i) || trail_out[i] >= pf(8u) || agar[i] == 0u;
     let heat = pget(PB_FA, i);
     let p = pget(PB_B, i);
+    // Moisture and the chance (owner 11-14 19:18Z; `plants::fire_step`).
+    let m = pget(PB_MOIST, i);
+    let dice = froll(i, pw(45u));
     var to = 0.0;
     var ate = 0.0;
     if (wet) {
         to = 0.0;
+        pset(PB_FRESH, i, 0.0);
     } else if (heat > 0.0) {
-        let eat = min(pf(5u) * heat, p);
+        let slow = 1.0 - pf(14u) * m;
+        let eat = min(pf(5u) * heat * slow, p);
         pset(PB_B, i, p - eat);
         ate = eat;
-        to = select(min(heat + pf(4u), 1.0), heat * 0.5, p - eat < pf(7u));
+        let top = (1.0 - pf(15u) * m) * min(p / pf(48u), 1.0);
+        if (p - eat < pf(7u)) { to = heat * pf(47u); }
+        else if (dice < pf(13u) * (m * m)) { to = 0.0; }
+        else { to = min(heat + pf(4u), top) * (1.0 - pf(46u) * dice); }
         if (to < 0.01) { to = 0.0; }
+        pset(PB_FRESH, i, select(0.0, pget(PB_FRESH, i) * FRESH_KEEP, to > 0.0));
     } else {
         let x = i % P.w; let y = i / P.w;
         var n = 0.0;
@@ -3239,11 +3274,13 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (y > 0u) { n += pget(PB_FA, i - P.w); }
         if (y + 1u < P.h) { n += pget(PB_FA, i + P.w); }
         let burn = pf(28u + (atomicLoad(&news[pblk(PB_KIND, i)]) & 3u));
-        if (p >= pf(7u) && n * 0.25 * p * burn >= pf(6u)) { to = pf(4u); }
+        let dry = 1.0 - m;
+        if (p >= pf(7u) && dice < pf(6u) * (n * 0.25) * p * burn * dry) { to = pf(4u); }
+        pset(PB_FRESH, i, select(0.0, 1.0, to > 0.0));
     }
     pset(PB_FB, i, to);
     let ch = pget(PB_CHAR, i);
-    let clear = select(pget(PB_B, i) * pf(12u), 0.0, to > 0.0);
+    let clear = select(max(pget(PB_B, i) - pf(7u), 0.0) * pf(12u), 0.0, to > 0.0);
     pset(PB_CHAR, i, max(min(ch * pf(11u) + ate * pf(10u), 1.0) - clear, 0.0));
 }
 
@@ -3258,6 +3295,8 @@ fn pcopy(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
+    // Fire steps run, after this step's `fire` read it.
+    if (k == 0u) { atomicAdd(&news[plant_base() + 45u], 1u); }
     if (k >= P.n || !lives(k)) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
@@ -3281,9 +3320,18 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h || agar[i] == 0u || pwet(i) || pget(PB_A, i) < pf(7u)) { return; }
     let x = i32(i % P.w); let y = i32(i / P.w);
-    for (var q = 0u; q < min(pw(32u), 4u); q++) {
-        let cx = pf(33u + 3u * q); let cy = pf(34u + 3u * q); let r = pf(35u + 3u * q);
+    // Lights from word 49: x, y, r and the share of cells lit (by the
+    // chance `plants::roll` keyed as `BigDish::ignite` keys it).
+    let dice = froll(i, pw(45u) ^ 0x1617u);
+    for (var q = 0u; q < min(pw(49u), 3u); q++) {
+        let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
         let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
-        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r) { pset(PB_FA, i, 1.0); return; }
+        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && dice < pf(53u + 4u * q)) { pset(PB_FA, i, 1.0); pset(PB_FRESH, i, 1.0); return; }
     }
+}
+
+// Fire's heat on a unit's cell (`squad::heats`): 0 without plants.
+fn unit_heat(x: u32, y: u32) -> f32 {
+    if (!world(PLANTS)) { return 0.0; }
+    return pget(PB_FA, y * P.w + x);
 }

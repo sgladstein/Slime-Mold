@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)]) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -34,6 +34,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
     // window shows it (the menu's pictures).
+    let mut shop_run = None;
     if let Some((p, flag)) = menu_page {
         let mut m = start_menu(&app.args);
         // The run's shop (`run=SEED menu=shop`): as after its first planet
@@ -56,15 +57,26 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 r.pick(slime_mould::mould::run::Pick::Gun(1));
                 // A fresh offer, one more card (the gun is full: it goes
                 // in the bag), and a fresh offer again.
-                r.restock();
+                // Fresh draws (dev mode's redraw, so they differ).
+                let reroll = |r: &mut Run| {
+                    let dev = std::mem::replace(&mut r.dev, true);
+                    r.pick(slime_mould::mould::run::Pick::DevReroll);
+                    r.dev = dev;
+                };
+                reroll(&mut r);
                 r.pick(slime_mould::mould::run::Pick::Offer(0));
-                r.restock();
+                reroll(&mut r);
                 for p in [r.shop().iter().find(|x| x.name == "Armour").map(|x| x.pick), r.shop().iter().find(|x| x.name == "Turrets").map(|x| x.pick)].into_iter().flatten() {
                     r.pick(p);
                 }
             }
             m.shop = Some(shop_of(&r));
             m.run_live = true;
+            // The run the shop shows is the app's, so a drag (`drag=`)
+            // changes it as the window's would.
+            if !drags.is_empty() {
+                shop_run = Some(r);
+            }
         }
         m.show(p);
         match flag {
@@ -73,6 +85,24 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             _ => {}
         }
         app.menu = Some(m);
+    }
+    if shop_run.is_some() {
+        app.run = shop_run;
+    }
+    // `drag=`: where each drag starts and ends on the screen, found once
+    // the shop is laid out (the slots stay put as cards move).
+    let mut drag_path: Vec<((f32, f32), (f32, f32))> = Vec::new();
+    if !drags.is_empty() {
+        app.prepare();
+        let m = app.menu.as_ref().ok_or("drag= needs menu=shop..")?;
+        let at = |s: &str| match s.parse::<usize>() {
+            Ok(k) => m.slot_at(k.saturating_sub(1)),
+            Err(_) if s == "bag" => m.bag_at(),
+            Err(_) => m.card_at(s),
+        };
+        for (a, b) in drags {
+            drag_path.push((at(a).ok_or_else(|| format!("drag=: no {a} in the shop"))?, at(b).ok_or_else(|| format!("drag=: no {b} in the shop"))?));
+        }
     }
     if wav.is_some() {
         app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
@@ -111,7 +141,42 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
-    for &t in at {
+    for (fi, &t) in at.iter().enumerate() {
+        // `drag=`: frame `fi`'s share of its drag: the pointer on the card,
+        // pressed, carried (eased) to its place, let go at seven tenths,
+        // then resting there.
+        if !drag_path.is_empty() {
+            let per = at.len().div_ceil(drag_path.len()).max(4);
+            let (k, j) = (fi / per, fi % per);
+            if let (Some(&(a, b)), Some(m)) = (drag_path.get(k), app.menu.as_mut()) {
+                let held = (per as f32 * 0.7) as usize;
+                let u = ((j as f32 - 1.0) / (held as f32 - 2.0).max(1.0)).clamp(0.0, 1.0);
+                let e = u * u * (3.0 - 2.0 * u);
+                let p = (a.0 + (b.0 - a.0) * e, a.1 + (b.1 - a.1) * e - 30.0 * (std::f32::consts::PI * e).sin());
+                let mut events = Vec::new();
+                match j {
+                    0 => m.moved(Some(a)),
+                    1 => {
+                        m.moved(Some(a));
+                        m.button(slime_mould::world::Button::Left, true);
+                    }
+                    j if j < held => m.moved(Some(p)),
+                    j if j == held => {
+                        m.moved(Some(b));
+                        events = m.button(slime_mould::world::Button::Left, false);
+                    }
+                    _ => m.moved(Some(b)),
+                }
+                println!("drag: frame {fi} pointer {:.0},{:.0} {}", if j == 0 { a.0 } else if j < held { p.0 } else { b.0 }, if j == 0 { a.1 } else if j < held { p.1 } else { b.1 }, if (1..held).contains(&j) { "down" } else { "up" });
+                for ev in events {
+                    println!("drag: {ev:?}");
+                    app.menu_event(ev)?;
+                    if let Some(r) = app.run.as_ref() {
+                        println!("drag: the gun fires {}", r.gun_text());
+                    }
+                }
+            }
+        }
         // A mission's verdict stops the steps, as the game's end does.
         while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
             let g = app.game.as_mut().unwrap();
@@ -356,7 +421,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             println!("    {} at ({:.0}, {:.0}): hp {:.0} / {:.0}, built {:.1}, {}{}", b.kind.name(), b.at.0, b.at.1, b.hp, b.max_hp, b.built, if b.alive { "standing" } else { "worn down" }, if b.working { ", working" } else { "" });
         }
         if !g.buildings.is_empty() {
-            println!("    pumped {:.0} food, lures burnt {:.0}", g.pumped, g.lured);
+            println!("    pumped {:.0} food", g.pumped);
         }
     }
     if let (Some(path), Some((bank, tape))) = (wav, app.tape.as_ref()) {
@@ -404,7 +469,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
         let from = s.from;
-        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
+        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0, r: s.r });
         if !s.fired {
             continue;
         }

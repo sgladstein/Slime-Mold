@@ -107,6 +107,9 @@ pub const WORLD_TERRAIN: u32 = 8;
 pub const WORLD_SOIL: u32 = 16;
 /// The gardeners' world (`own_mould`; the shader's `GARDEN`): species 3 is the player's.
 pub const WORLD_GARDEN: u32 = 32;
+/// The dish has plants (`plant_words`; the shader's `PLANTS`), for the
+/// units' fire reads.
+pub const WORLD_PLANTS: u32 = 64;
 /// A cell's `ground` bits (engine.wgsl): its crystal's pile (index + 1) in
 /// the low byte, then wet, wall, a wall that lets scent through, rock, and
 /// the soil kind in bits 12-15 (the map's G byte is bits 8-15, so its high
@@ -1858,6 +1861,9 @@ impl Engine {
         if self.garden {
             world |= WORLD_GARDEN;
         }
+        if self.plants {
+            world |= WORLD_PLANTS;
+        }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
         b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         // Real asserts, not debug ones (2026-11-12, game integration): six
@@ -2245,17 +2251,18 @@ impl Engine {
     /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells),
     /// as the CPU's `BigDish::ignite`; nothing without plants. Runs on its
     /// own, between ticks.
-    pub fn ignite(&mut self, shared: &Shared, lights: &[(f32, f32, f32)]) {
+    pub fn ignite(&mut self, shared: &Shared, lights: &[(f32, f32, f32, f32)]) {
         if !self.plants || lights.is_empty() {
             return;
         }
         let k = self.dish.p.scale as f32;
-        for chunk in lights.chunks(4) {
+        for chunk in lights.chunks(3) {
+            // The count in word 49, then x, y, r and the share lit from 50.
             let mut w = vec![chunk.len() as u32];
-            for &(x, y, r) in chunk {
-                w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits()]);
+            for &(x, y, r, share) in chunk {
+                w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits(), share.to_bits()]);
             }
-            self.queue.write_buffer(&self.news, self.plant_at + 4 * 32, &u32_bytes(&w));
+            self.queue.write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
             self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
         }
         // Kills mark the dead as the CPU's do (its kill makes `life`).
@@ -2827,7 +2834,7 @@ impl Engine {
 /// numbers, then seven blocks a cell (soil capacity, 0 on crystals; kind;
 /// plants A and B; fire A and B; char), or none without plants. Rates are
 /// a plant step's, as the CPU's `plant_rates` and `fire_rates` give them.
-pub const PLANT_HEAD: usize = 48;
+pub const PLANT_HEAD: usize = 64;
 pub fn plant_words(d: &BigDish) -> Vec<u32> {
     let mut w = vec![0u32; PLANT_HEAD];
     if d.plant.is_empty() {
@@ -2835,13 +2842,20 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     }
     let p = &d.p;
     let k = p.plant_every.max(1) as f32;
-    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_catch, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear];
+    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_spread, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear, p.fire_out, p.fire_smoulder, p.fire_cool];
     for (o, v) in head.iter().enumerate() {
         w[o] = v.to_bits();
     }
     for (q, kd) in p.plant_kinds.iter().enumerate() {
         (w[16 + q], w[20 + q], w[24 + q], w[28 + q]) = (kd.cap.to_bits(), kd.pace.to_bits(), kd.dry.to_bits(), kd.burn.to_bits());
     }
+    // Word 45: fire steps run (`BigDish::fire_steps`), which keys each
+    // cell's chance; the `firekill` pass counts it on.
+    w[45] = d.fire_steps;
+    // Words 46-47: fire's flicker and ember keep.
+    (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
+    // Word 48: the plants at which a fire can burn at full heat.
+    w[48] = p.fire_full.to_bits();
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
@@ -2852,6 +2866,11 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(fire(&d.fire));
     w.extend(std::iter::repeat_n(0u32, c));
     w.extend(fire(&d.char));
+    // Block 7: moisture (`plants::moisture`).
+    w.extend(fire(&d.moist));
+    // Block 8: how fresh each cell's fire is (engine.wgsl's `PB_FRESH`,
+    // for the view's advancing edge; the CPU keeps no copy).
+    w.extend(std::iter::repeat_n(0u32, c));
     w
 }
 

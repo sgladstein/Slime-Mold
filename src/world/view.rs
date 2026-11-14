@@ -322,7 +322,7 @@ impl View {
     /// 11-14).
     fn cell_buffers(dev: &wgpu::Device, screen: (u32, u32)) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let n = (screen.0 + 2 * MARGIN + 2) as u64 * (screen.1 + 2 * MARGIN + 2) as u64;
-        (storage(dev, "cell heights", n * 12), storage(dev, "cell materials", n * 8), storage(dev, "cell terrain", n * 4))
+        (storage(dev, "cell heights", n * 12), storage(dev, "cell materials", n * 16), storage(dev, "cell terrain", n * 4))
     }
 
     /// `prep`'s fine cells, at most as many as `cell_buffers`' cells: the
@@ -671,11 +671,15 @@ impl View {
 
     /// The minimap's rectangle this frame, if drawn.
     pub fn minimap_rect(&self, cam: &Camera) -> Option<(u32, u32, u32, u32)> {
-        if !self.minimap || cam.sees_all() {
+        if !self.minimap {
             return None;
         }
+        // A HUD that frames the minimap shows it at every zoom (Larder
+        // World's bar, 11-14 20:19Z); unframed (mouldgpu) it hides once the
+        // whole world is on screen, as before.
         match self.minimap_box {
             Some(b) => Some(minimap_in(self.world, b)),
+            None if cam.sees_all() => None,
             None => minimap_rect(self.world, self.screen),
         }
     }

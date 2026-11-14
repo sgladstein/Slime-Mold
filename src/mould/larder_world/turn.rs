@@ -221,7 +221,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast }).collect();
+        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast, r: i.r }).collect();
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
@@ -285,6 +285,14 @@ impl<W: World> Game<W> {
                             }
                         }
                     }
+                    if u.heat > 0.0 {
+                        s.hp -= r.fire_hurt * u.heat * dt;
+                        if s.hp <= 0.0 {
+                            s.alive = false;
+                            s.hp = 0.0;
+                            s.carry = 0.0;
+                        }
+                    }
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
                             self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
@@ -320,7 +328,6 @@ impl<W: World> Game<W> {
             self.check_broken();
             self.keep_panic_reach();
         }
-        self.feed(dt);
         self.campaign_rules(now - t);
         self.check_end();
     }
@@ -354,34 +361,6 @@ impl<W: World> Game<W> {
                 self.broken = None;
             }
             _ => {}
-        }
-    }
-
-    /// `Rules::ration` and `Rules::hunger`: every live soldier eats from
-    /// the bank; for what it can't pay, the squad loses hit points.
-    pub(super) fn feed(&mut self, dt: f32) {
-        let r = self.rules;
-        let alive = self.alive();
-        self.hungry = false;
-        if r.ration <= 0.0 || alive == 0 {
-            return;
-        }
-        let need = r.ration * alive as f32 * dt;
-        let paid = need.min(self.bank.max(0.0));
-        self.bank -= paid;
-        self.eaten += paid;
-        let short = 1.0 - paid / need;
-        if short <= 1e-6 {
-            return;
-        }
-        self.hungry = true;
-        for s in self.soldiers.iter_mut().filter(|s| s.alive) {
-            s.hp -= r.hunger * short * dt;
-            if s.hp <= 0.0 {
-                s.alive = false;
-                s.hp = 0.0;
-                s.carry = 0.0;
-            }
         }
     }
 

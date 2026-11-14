@@ -187,7 +187,7 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // `hold` and `push` (2026-11-13, the wading and arming clips; the owner,
     // 15:55Z: "this is really hard to judge when the soliders are just
     // running into the slime"): eight soldiers, bought at once with 400
-    // food kept for rations, either stand at the larder on free fire as
+    // food kept back (once for rations, removed 11-14), either stand at the larder on free fire as
     // the mould comes up the stem, or walk into the body from 3 s.
     // `hold@X,Y` stands them at (X, Y) instead, world units as `centre=`.
     let post = hand.strip_prefix("hold@").and_then(|p| p.split_once(',')).and_then(|(x, y)| Some((x.parse::<f32>().ok()?, y.parse::<f32>().ok()?)));

@@ -86,6 +86,37 @@ pub(super) fn turret_state<W: World>(g: &Game<W>, b: &Building) -> u32 {
     }
 }
 
+/// An order line from `from` through each order's point: the first as a
+/// line, each queued one (Shift) a fainter line ending in a small ring, so a
+/// queue of moves reads as the whole path. Red for fighting (attack-move,
+/// the core), white else. `homing`: the first order is a harvest carrying
+/// home, so it heads for the larder. A first order closer than a dish
+/// cell (a squad settling where it was let go) draws nothing.
+fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: impl Iterator<Item = (Order, bool)>, homing: bool, sc: f32) {
+    let mut from = from;
+    for (n, (o, queued)) in orders.enumerate() {
+        let to = match o {
+            Order::Move(x, y) | Order::Fight(x, y) => Some((x, y)),
+            Order::Clear(..) if n == 0 && homing => Some(g.larder),
+            Order::Clear(x, y) => Some((x, y)),
+            Order::Attack => Some(g.core),
+            Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Order::Build(b) => g.buildings.get(b).map(|b| b.at),
+            Order::Hold => None,
+        };
+        let Some(to) = to else { continue };
+        if n == 0 && !queued && (to.0 - from.0).hypot(to.1 - from.1) < sc {
+            continue;
+        }
+        let later = n > 0 || queued;
+        let a = if later { 150 } else { 210 };
+        let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 20] };
+        marks.line(from, to, 2.0, colour);
+        marks.ring(to, if later { 1.0 } else { 1.4 } * sc, colour);
+        from = to;
+    }
+}
+
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
 fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
@@ -97,7 +128,7 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
     if fl > 0.0 {
         let sc = g.world.scale();
         let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
-        lights.push(Light { at: m, reach: 6.0 * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.9 * fl });
+        lights.push(Light { at: m, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
     }
 }
 
@@ -401,30 +432,33 @@ impl App {
             if let Order::Burn(a, b) = s.order {
                 self.marks.line(a, b, 4.0, [255, 150, 60, 200]);
             }
-            if self.controls.selected.contains(&k) {
-                // The order, then the queue (Shift) as a chain of lines,
-                // fainter down the queue; red for fighting, white else.
-                let mut from = (s.x, s.y);
+            // In the squad mode the squad's own line is drawn below, one
+            // for the squad rather than one per soldier.
+            if self.controls.selected.contains(&k) && !g.rules.squads {
                 let orders = std::iter::once(s.order).chain(s.queue[..s.queued as usize].iter().copied());
-                for (n, o) in orders.enumerate() {
-                    let to = match o {
-                        Order::Move(x, y) | Order::Fight(x, y) => Some((x, y)),
-                        Order::Clear(..) if n == 0 && s.homing => Some(g.larder),
-                        Order::Clear(x, y) => Some((x, y)),
-                        Order::Attack => Some(g.core),
-                        Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
-                        Order::Build(b) => g.buildings.get(b).map(|b| b.at),
-                        Order::Hold => None,
-                    };
-                    let Some(to) = to else { continue };
-                    let a = if n == 0 { 120 } else { 80 };
-                    let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 30] };
-                    self.marks.line(from, to, 2.0, colour);
-                    if n > 0 {
-                        self.marks.ring(to, 1.0 * sc, colour);
-                    }
-                    from = to;
-                }
+                order_chain(&mut self.marks, g, (s.x, s.y), orders.map(|o| (o, false)), s.homing, sc);
+            }
+        }
+        // The controlled squad's order and its queue (Shift), and those of
+        // the squads linked to it, as one chain each (owner's playtest,
+        // 2026-11-14 20:12Z and 20:15Z: "there should be a line showing
+        // where the selected squad is moving ... same with attack move and
+        // other commands ... if I set up three moves, I should see the full
+        // path"). Before, a squad sent somewhere drew nothing: its soldiers
+        // hold no order of their own while the squad moves (`Squad::dest`),
+        // and a drain drew a line from every soldier.
+        if let Some(q) = g.active.filter(|_| g.rules.squads) {
+            for r in g.linked(q) {
+                let (Some(mid), sq) = (g.middle(r), &g.squads[r]) else { continue };
+                let lead = g.members(r).first().map(|&k| g.soldiers[k].order);
+                let now = match (sq.dest, sq.work, lead) {
+                    (Some((x, y)), _, _) if sq.steer == (0.0, 0.0) => Some(if sq.fight { Order::Fight(x, y) } else { Order::Move(x, y) }),
+                    (None, Some(o), _) => Some(o),
+                    (None, None, Some(o @ (Order::Attack | Order::Burn(..)))) => Some(o),
+                    _ => None,
+                };
+                let orders = now.map(|o| (o, false)).into_iter().chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
+                order_chain(&mut self.marks, g, mid, orders, false, sc);
             }
         }
         // A shot's line, only while shots are rays: with bullets flying
@@ -474,7 +508,15 @@ impl App {
                     self.marks.streak(h, (h.0 - b.dir.0 * len * 0.6, h.1 - b.dir.1 * len * 0.6), core * 0.6, glow, look.core);
                 }
             }
-            self.lights.push(Light { at: b.at, reach: 7.0 * sc * wide, lift: 3.0, colour: look.light, strength: if quiet { 0.35 } else { 0.9 } });
+            // The bullet's own light: its strike's disc (`Bullet::r`), what
+            // it kills (owner 20:22Z: "only the size of the damage. The same
+            // for all affects"). It reached 7 cells at 0.9 until 11-14, then
+            // 2.5 (#296); with every shot
+            // carrying a card (no recharge, #288) and pierce flying on
+            // through the body, each hit swept a disc 14 cells across over
+            // the slime (owner 20:09Z: "each bullet that hit has a huge wave
+            // that goes out. it is too much").
+            self.lights.push(Light { at: b.at, reach: b.r, lift: 3.0, colour: look.light, strength: if quiet { 0.2 } else { 0.5 } });
         }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
@@ -500,17 +542,22 @@ impl App {
             // A bomb's light reaches its throw ring and grows with the walkers
             // thrown, so the flash and the spray read as one (#225).
             let thrown = (p.flung as f32 / 400.0).min(1.0);
-            self.lights.push(Light { at, reach: 3.0 * p.burst.fling.max(p.burst.r) * sc, lift: 4.0, colour: look.light, strength: f * f * (1.6 + (p.killed as f32 / 120.0).min(2.0) + thrown) });
+            // Its own radius, what it kills, sleeps or sickens (owner 20:22Z:
+            // "the blast light affect should only be the size of the damage.
+            // The same for all affects"); a bomb's throw ring is not damage.
+            // Was 3 radii after Noita's 8, then 1.5 (#296): every shot now
+            // casts, so a payload squad lit the whole front each volley.
+            self.lights.push(Light { at, reach: p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
         }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
         for tr in self.tracers.iter().filter(|tr| tr.hit) {
-            self.lights.push(Light { at: tr.to, reach: 4.0 * sc, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.8 * (1.0 - tr.age / TRACER) });
+            self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.5 * (1.0 - tr.age / TRACER) });
         }
         for (k, s) in g.soldiers.iter().enumerate() {
             let fl = self.looks.get(k).map_or(0.0, |l| l.flash / FLASH);
             if s.alive && fl > 0.0 {
-                self.lights.push(Light { at: (s.x, s.y), reach: 5.0 * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.7 * fl });
+                self.lights.push(Light { at: (s.x, s.y), reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.5 * fl });
             }
             // A bite: a brief hot light on the side the slime bit from
             // (`step_notes`, from the real damage).
@@ -527,7 +574,7 @@ impl App {
             let left = due.saturating_sub(t) as f32 / tps;
             let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
             self.marks.streak(at, at, (0.18 * sc * zoom).clamp(1.2, 4.0), [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8], look.core);
-            self.lights.push(Light { at, reach: 3.0 * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
+            self.lights.push(Light { at, reach: MUZZLE_LIGHT * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
         }
         // A soldier is drawn its touch wide (walkers that close drain it),
         // and at least 8 pixels across the radius, so it reads at any zoom
@@ -577,20 +624,14 @@ impl App {
         let took = g.take_share();
         let mut m = Model {
             resources: vec![
-                // The rate is the bank's net change, so it counts the squad's rations
-                // (PR 4); when it is falling and the bank would be dry within a
-                // minute it says when (the design review, 11-12 21:51Z: show the
-                // drain before soldiers start losing health).
+                // The rate is the bank's net change; when it is falling and the
+                // bank would be dry within a minute it says when (the design
+                // review, 11-12 21:51Z). Nothing costs food to keep (owner,
+                // 11-14), so a fall is spending, healing or the mould eating.
                 Resource {
                     icon: Icon::Crystal,
                     colour: theme::ENERGY,
-                    // Rations off by default since 2026-11-14 (owner): then the
-                    // label leaves out the squad's keep.
-                    label: if r.ration > 0.0 {
-                        format!("Food: crystal charge carried home. The squad eats {:.0} a second; soldiers, shots and walls cost it", r.ration * g.alive() as f32)
-                    } else {
-                        "Food: crystal charge carried home. Soldiers, walls and buildings cost it".to_string()
-                    },
+                    label: "Food: crystal charge carried home. Soldiers, walls and buildings cost it once".to_string(),
                     value: format!("{:.0}", g.bank),
                     rate: rate.map(|v| match g.bank / -v {
                         dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
@@ -807,7 +848,7 @@ impl App {
             };
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
-                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, if b.lure_burn > 0.0 { format!("Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Burns {:.0} food a second while on.", b.lure_burn) } else { "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string() }),
+                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
                 place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
@@ -1143,6 +1184,15 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
 
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;
+/// How far a light with no damage of its own reaches, in cells: a
+/// soldier's or turret's muzzle, a lodged cast's ember. Every light that
+/// does damage reaches only as far as its damage: a bullet and a hit their
+/// strike (`Bullet::r`, `Shot::r`), a burst its radius (owner 20:22Z).
+/// Until 11-14 a bullet's lit 7 cells, a hit's 4, a muzzle's 5, a turret's
+/// 6 and a burst 3 radii, which over the slime read as a wave from every
+/// hit once every shot carried a card (owner 20:09Z: "it is too much");
+/// #296 cut them to 2.5 cells and 1.5 radii.
+const MUZZLE_LIGHT: f32 = 1.0;
 
 /// A payload's colours: the streak's glow and hot core, and its light.
 pub(super) struct CardLook {

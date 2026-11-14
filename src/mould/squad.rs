@@ -244,13 +244,17 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
     }
     // Fire in the plants (`BigDish::ignite`, 2026-11-14): a burn (the
-    // scorch round's line) lights what it touches; a blast lights a ring
-    // two dish cells past its crater, whose own cells the scorch strips.
+    // scorch round's line) lights a share of what it touches; a blast a
+    // smaller share out to a dish cell past its crater. Since #288 a blast
+    // round blasts every other shot, and lighting the whole ring two cells
+    // past every crater kept a squad's front on fire (gun thread, 11-14
+    // 20:14Z; the owner: "each bullet that hit has a huge wave that goes
+    // out"); a few sparks catch or don't by the ground's moisture.
     if b.burn {
-        d.ignite(b.at.0, b.at.1, b.r);
+        d.ignite(b.at.0, b.at.1, b.r, d.p.fire_light_burn);
     }
     if b.crater > 0 {
-        d.ignite(b.at.0, b.at.1, b.crater_r + 2.0);
+        d.ignite(b.at.0, b.at.1, b.crater_r + 1.0, d.p.fire_light_blast);
     }
     if let Some((r, rr, inv)) = b.fling_ring(s) {
         d.p.fling_speed = k.fling_speed;
@@ -299,6 +303,24 @@ pub struct UnitOut {
     /// Walkers in that block, so a game can hold fire at a thin one
     /// (`larder_world::Rules::aim_min`).
     pub dense: u32,
+    /// Fire's heat on the unit's cell (`BigDish::fire`, 0-1; 0 without
+    /// plants): burning ground hurts soldiers (owner 11-14 19:18Z, "It
+    /// should hurt the player too"; `Rules::fire_hurt`).
+    pub heat: f32,
+}
+
+/// Fire's heat at each unit's cell (`UnitOut::heat`).
+pub fn heats(d: &BigDish, units: &[UnitIn]) -> Vec<f32> {
+    units
+        .iter()
+        .map(|u| {
+            if d.fire.is_empty() {
+                return 0.0;
+            }
+            let (cx, cy) = cell_of(d.w, d.h, u.x, u.y);
+            d.fire[cy as usize * d.w + cx as usize]
+        })
+        .collect()
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -656,9 +678,10 @@ pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
     }
     let reads = read(d, &f.units);
     let took = harvest(d, &f.units);
+    let heat = heats(d, &f.units);
     let w = d.w;
     FrameOut {
-        units: reads.into_iter().zip(took).map(|((touching, b, dense), took)| UnitOut { touching, target: b.map(|b| block_centre(w, b)), took, dense }).collect(),
+        units: reads.into_iter().zip(took).zip(heat).map(|(((touching, b, dense), took), heat)| UnitOut { touching, target: b.map(|b| block_centre(w, b)), took, dense, heat }).collect(),
         shots,
     }
 }
@@ -666,10 +689,13 @@ pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
 // ------------------------------------------------- the GPU's buffer layout
 
 /// Word offsets in the GPU's squad buffer: units in (8 words each), units
-/// out (4), shots in (4), shots out (4), then the shots' cells.
+/// out (`U_OUT_W`), shots in (4), shots out (4), then the shots' cells.
 pub const U_IN: usize = 0;
 pub const U_OUT: usize = U_IN + UNITS_MAX * 8;
-pub const S_IN: usize = U_OUT + UNITS_MAX * 4;
+/// Words a unit's out: touching, aim, took, dense, fire's heat (11-14,
+/// was 4), three spare (engine.wgsl's `SqUnitOut`).
+pub const U_OUT_W: usize = 8;
+pub const S_IN: usize = U_OUT + UNITS_MAX * U_OUT_W;
 pub const S_OUT: usize = S_IN + SHOTS_MAX * 4;
 pub const PATH: usize = S_OUT + SHOTS_MAX * 4;
 pub const WORDS: usize = PATH + PATH_MAX;
@@ -692,7 +718,7 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
         b[U_IN + 8 * k..U_IN + 8 * k + 8].copy_from_slice(&[cx as u32, cy as u32, r2(u.touch), r2(u.sight), r2(u.take_r), u.take.to_bits(), r2(u.smell_r), u.smell.to_bits()]);
     }
     for k in 0..UNITS_MAX {
-        b[U_OUT + 4 * k + 1] = NONE;
+        b[U_OUT + U_OUT_W * k + 1] = NONE;
     }
     let mut cells: Vec<u32> = Vec::new();
     for (q, s) in shots.iter().enumerate() {
@@ -714,8 +740,8 @@ pub fn unpack(w: usize, words: &[u32], kills: &[u32], nunits: usize, nshots: usi
     FrameOut {
         units: (0..nunits)
             .map(|k| {
-                let o = &words[U_OUT + 4 * k..U_OUT + 4 * k + 4];
-                UnitOut { touching: o[0], target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)), took: f32::from_bits(o[2]), dense: o[3] }
+                let o = &words[U_OUT + U_OUT_W * k..U_OUT + U_OUT_W * k + 5];
+                UnitOut { touching: o[0], target: (o[1] != NONE).then(|| block_centre(w, o[1] as usize)), took: f32::from_bits(o[2]), dense: o[3], heat: f32::from_bits(o[4]) }
             })
             .collect(),
         shots: (0..nshots)

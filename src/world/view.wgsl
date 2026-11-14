@@ -77,7 +77,7 @@ struct V {
 // worked each one out from the fields itself, which made the look cost
 // 1.8-2.0 ms against 0.3 ms plain on the GTX 1070 at 1080p.
 @group(0) @binding(12) var<storage, read_write> hcell: array<f32>;
-@group(0) @binding(13) var<storage, read_write> mcell: array<vec2<u32>>;
+@group(0) @binding(13) var<storage, read_write> mcell: array<vec4<u32>>;
 @group(0) @binding(14) var<storage, read> alive: array<f32>;
 // Food's news (`View::set_news`): the engine's binding 48 (the step each
 // walker last heard of food, its first `n_walk` words) and its state (the
@@ -190,13 +190,33 @@ fn plant_d(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast
 fn plant_k(i: u32) -> u32 { return pblock(1u, i) & 3u; }
 fn plant_heat(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(4u, i)); }
 fn plant_char(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(6u, i)); }
-// Meadow pale yellow-green, jungle deep cool green, reeds olive-teal,
-// scrub dusty brown-green.
+// How fresh a cell's fire is (the engine's `PB_FRESH`, 1 as it catches).
+fn plant_fresh(i: u32) -> f32 { return bitcast<f32>(pblock(8u, i)); }
+// Heat and freshness at world point (x, y), bilinear: a crown's flame
+// takes them at its centre (`plant_kind_layer`).
+fn heat_lin(x: f32, y: f32) -> vec2<f32> {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - floor(fx); let ty = fy - floor(fy);
+    let a = cidx(ix, iy); let b = cidx(ix + 1, iy); let c = cidx(ix, iy + 1); let d = cidx(ix + 1, iy + 1);
+    let h = mix(mix(plant_heat(a), plant_heat(b), tx), mix(plant_heat(c), plant_heat(d), tx), ty);
+    let f = mix(mix(plant_fresh(a), plant_fresh(b), tx), mix(plant_fresh(c), plant_fresh(d), tx), ty);
+    return vec2<f32>(h, f);
+}
+// Muted dark blue-green, each kind told apart by value (graphics lead,
+// 11-14: below the slime's thin film in value, darker and bluer than the
+// team olive, no gold): jungle darkest (a raised mass whose lit crowns
+// read), reeds teal, meadow a little lighter, scrub dusty. Before
+// (18:20Z to 21:30Z) meadow was (68, 76, 48), an olive that the owner
+// called "mostly just green blobs" (19:26Z). Green, hue about 130-150
+// (graphics lead 21:56Z): the first per-pixel cut, jungle (18,42,40) and
+// reeds (32,56,54), sat at hue ~175 by the crystals' cyan, which is
+// theirs alone (art rule 3), and took their pop on the thumbnails.
 fn plant_rgb(k: u32) -> vec3<f32> {
-    if (k == 1u) { return vec3<f32>(22.0, 50.0, 40.0); }
-    if (k == 2u) { return vec3<f32>(42.0, 60.0, 50.0); }
-    if (k == 3u) { return vec3<f32>(60.0, 57.0, 40.0); }
-    return vec3<f32>(68.0, 76.0, 48.0);
+    if (k == 1u) { return vec3<f32>(20.0, 42.0, 28.0); }
+    if (k == 2u) { return vec3<f32>(34.0, 56.0, 40.0); }
+    if (k == 3u) { return vec3<f32>(54.0, 54.0, 42.0); }
+    return vec3<f32>(40.0, 60.0, 40.0);
 }
 // Each kind's height at full density (jungle tall, meadow low).
 // (Graphics lead's review 11-14 18:20Z: the first heights, 0.6, 0.4, 0.2
@@ -212,51 +232,194 @@ fn plant_cover(d: f32) -> f32 { return 1.0 - exp(-3.0 * d); }
 // plants that burnt there, so jungle leaves darker ground than meadow).
 // The first cut mixed toward (11, 11, 12) and read as holes, next to the
 // black spots the owner already asked about in the mould.
-const CHAR_RGB: vec3<f32> = vec3<f32>(40.0, 35.0, 30.0);
-// The plants round cell (ix, iy) through a 3 x 3 Gaussian (1 2 1): their
-// cover, their colour (weighted by density) and the fire's heat. The
-// graphics lead's review (11-14 18:20Z): read cell by cell, plant edges
-// were stair-stepped at the cell and the fire a one-cell stroke; the
-// prep's bilinear blend between cells only ramped each step over a cell.
-// Blurred, an edge is a soft curve and the fire a halo. The density is
-// blurred before the cover's curve, so a lone dense cell stays faint.
-struct PlantLook { rgb: vec3<f32>, cover: f32, heat: f32 }
-fn plant_look(ix: i32, iy: i32) -> PlantLook {
-    var o: PlantLook;
-    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.heat = 0.0;
+// Graphics lead 11-14 21:26Z: the brown read as a muddy blur; char is a
+// near-black grey with a crisp edge (`shaded`), lighter than the first
+// cut's (11, 11, 12), which read as holes.
+const CHAR_RGB: vec3<f32> = vec3<f32>(25.0, 24.0, 23.0);
+// The plants' fields at world point (`x`, `y`) in cells: the cubic
+// B-spline of the 4 x 4 cells round it (as `cells_height` samples the
+// height), per pixel, so nothing is stair-stepped at the owner's zoom 24
+// (11-14 20:21Z: "the graphics quality should match that"). `d` is each
+// kind's density (meadow, jungle, reeds, scrub), with the fire's heat
+// and the char in the same 16 reads. Before (18:20Z to 21:30Z) the plants
+// were mixed into each cell's material through a 3 x 3 Gaussian and
+// blended between cells: soft blobs with no texture.
+struct PlantPx { d: vec4<f32>, heat: f32, char: f32, fresh: f32 }
+fn plant_px(x: f32, y: f32) -> PlantPx {
+    var o: PlantPx;
+    o.d = vec4<f32>(0.0); o.heat = 0.0; o.char = 0.0; o.fresh = 0.0;
     if (P.plant_at == 0u) { return o; }
-    var d = 0.0;
-    var c = vec3<f32>(0.0);
-    var cw = 0.0;
-    for (var dy = -1; dy <= 1; dy++) {
-        for (var dx = -1; dx <= 1; dx++) {
-            let x = clamp(ix + dx, 0, i32(P.ww) - 1);
-            let y = clamp(iy + dy, 0, i32(P.wh) - 1);
-            let j = cidx(x, y);
-            let w = f32((2 - abs(dx)) * (2 - abs(dy))) / 16.0;
-            let pd = plant_d(j);
-            d += w * pd;
-            c += w * pd * plant_rgb(plant_k(j));
-            cw += w * pd;
-            o.heat += w * plant_heat(j);
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let wx = bspline(fx - floor(fx)); let wy = bspline(fy - floor(fy));
+    for (var j = 0; j < 4; j++) {
+        for (var q = 0; q < 4; q++) {
+            let w = wx[q] * wy[j];
+            let c = cidx(ix - 1 + q, iy - 1 + j);
+            let d = plant_d(c);
+            if (d > 0.0) {
+                let k = plant_k(c);
+                o.d += w * d * vec4<f32>(f32(k == 0u), f32(k == 1u), f32(k == 2u), f32(k == 3u));
+            }
+            let hc = plant_heat(c);
+            o.heat += w * hc;
+            if (hc > 0.0) { o.fresh += w * plant_fresh(c); }
+            o.char += w * plant_char(c);
         }
     }
-    o.cover = plant_cover(d);
-    o.rgb = c / max(cw, 1e-4);
     return o;
 }
-// Flame from fire's heat: deep ember to orange to yellow-white (no pure
-// red: red is the bolting walkers').
-// The colour goes by heat^1.5, so most of a front is ember to orange and
-// only heat near 1 turns yellow, capped below the slime's own highlight
-// (graphics lead's review 18:20Z: a yellow-white ribbon competed with the
-// slime's gold; before that a white line).
-fn flame(h: f32) -> vec3<f32> {
-    let ember = vec3<f32>(110.0, 34.0, 8.0);
-    let orange = vec3<f32>(225.0, 100.0, 22.0);
-    let yellow = vec3<f32>(250.0, 170.0, 60.0);
-    let k = pow(clamp(h, 0.0, 1.0), 1.5);
-    return select(mix(orange, yellow, (k - 0.7) / 0.3), mix(ember, orange, k / 0.7), k < 0.7) * smoothstep(0.0, 0.15, h);
+
+// One kind's plants at (x, y) as round crowns on a jittered grid `s`
+// cells apart (squashed `stretch` times along y for reeds), each crown's
+// radius `r0` of the spacing times the square root of the kind's density
+// there, so the share of ground a kind covers follows its density: a
+// thin stand is scattered tufts with ground between, a full one closes
+// up, and as fire eats the plants each crown shrinks and goes. The
+// crown's own dome lights it (`lit`), so a canopy reads as a raised mass
+// of lit crowns and shaded gaps. `a` is the crown's cover, antialiased
+// over about a pixel; `tone` is the crown's own hash (a little value and
+// hue each). No stamp or sprite: a crown's size is the field's value.
+struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
+// `lobe` ruffles each crown's outline (five to eight lobes, so a grass tuft is
+// spiky and a tree's crown leafy, not a pebble: the first cut's round
+// domes read as cobbles, and seven deep lobes on every tuft as stars);
+// `relief` is how strongly its dome is lit.
+fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lobe: f32, relief: f32) -> Crown {
+    var o: Crown;
+    o.a = 0.0; o.lit = 1.0; o.tone = 0.5; o.dome = 0.0; o.at = vec2<f32>(x, y);
+    let q = vec2<f32>(x, y / stretch) / s;
+    let qi = floor(q);
+    let rr = r0 * sqrt(min(dk, 1.0));
+    let aa = 1.2 / (P.zoom * s);
+    let l = normalize(LIGHT);
+    var top = -1.0;
+    for (var j = -1; j <= 1; j++) {
+        for (var i = -1; i <= 1; i++) {
+            let c = qi + vec2<f32>(f32(i), f32(j));
+            let h1 = hash2(c + seed);
+            let h2 = hash2(c + seed + 17.3);
+            let h3 = hash2(c + seed + 41.9);
+            let r = rr * (0.6 + 0.4 * h3);
+            let ctr = c + 0.15 + 0.7 * vec2<f32>(h1, h2);
+            let rel = q - ctr;
+            let dd = length(rel);
+            if (dd > r * (1.0 + lobe) + aa) { continue; }
+            let re = r * (1.0 + lobe * sin((5.0 + floor(4.0 * h2)) * atan2(rel.y, rel.x) + 6.2831853 * h1));
+            let a = clamp((re - dd) / aa + 0.5, 0.0, 1.0);
+            if (a <= 0.0) { continue; }
+            let u = min(dd / max(re, 1e-4), 1.0);
+            let dome = sqrt(1.0 - u * u);
+            o.a = max(o.a, a);
+            // The highest dome over this point is the crown seen.
+            if (dome > top) {
+                top = dome;
+                let n = normalize(vec3<f32>(rel / max(r, 1e-4), max(dome, 0.05)));
+                o.lit = (1.0 + relief * (dot(n, l) - l.z)) * (1.0 - 0.35 * relief * (1.0 - dome));
+                o.tone = h3;
+                o.dome = dome;
+                o.at = vec2<f32>(ctr.x * s, ctr.y * s * stretch);
+            }
+        }
+    }
+    return o;
+}
+
+// The plant layer at (x, y): each kind's crowns, lower kinds first
+// (meadow, scrub, reeds, jungle by `plant_h`), so a canopy stands over
+// the grass. `rgb` is premultiplied by `cover`. Where a kind's crowns
+// would be under 2-3 pixels (they would alias), they fade to the
+// kind's mean cover and colour (the far view).
+// `fl` and `fc` are the crowns' own flames (premultiplied, and their
+// cover), `fw` how much of the cover is drawn as crowns (not the far
+// view's mean), for `shaded`'s mix with the smooth flame.
+struct PlantLayer { rgb: vec3<f32>, cover: f32, fl: vec3<f32>, fc: f32, fw: f32 }
+fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f32, s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, hot: bool) {
+    if (dk <= 0.003) { return; }
+    let f = smoothstep(1.6, 3.2, s * P.zoom);
+    var a = plant_cover(dk);
+    var col = plant_rgb(k);
+    var fa = 0.0;
+    var fl = vec3<f32>(0.0);
+    if (f > 0.0) {
+        let cr = crowns(x, y, s, r0, stretch, dk, f32(k) * 101.0 + 7.0, lobe, relief);
+        let tint = mix(vec3<f32>(1.06, 1.0, 0.9), vec3<f32>(0.92, 1.0, 1.08), cr.tone);
+        a = mix(a, cr.a, f);
+        col = mix(col, col * tint * cr.lit * (0.85 + 0.3 * cr.tone), f);
+        // A burning crown: its flame from the heat at its centre, so each
+        // crown flares, shrinks and goes out on its own and a front has
+        // the plants' own tongues and gaps (graphics lead 21:26Z). A fresh
+        // fire burns a step hotter (toward yellow), the crown's top
+        // hottest.
+        if (hot && cr.a > 0.0) {
+            let hf = heat_lin(cr.at.x, cr.at.y);
+            let h = (hf.x + 0.3 * hf.y * step(0.01, hf.x)) * (0.8 + 0.25 * cr.dome);
+            fa = cr.a * f * flame_cover(hf.x);
+            fl = flame_body(h) * fa;
+        }
+    }
+    (*o).rgb = (*o).rgb * (1.0 - a) + col * a;
+    (*o).cover = (*o).cover + a * (1.0 - (*o).cover);
+    (*o).fl = (*o).fl * (1.0 - a) + fl;
+    (*o).fc = (*o).fc * (1.0 - a) + fa;
+    (*o).fw = (*o).fw * (1.0 - a) + a * f;
+}
+fn plant_layer(x: f32, y: f32, d: vec4<f32>, hot: bool) -> PlantLayer {
+    var o: PlantLayer;
+    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.fl = vec3<f32>(0.0); o.fc = 0.0; o.fw = 0.0;
+    // Meadow: fine spiky tufts about half a cell apart, closing up when
+    // full, lit softly.
+    plant_kind_layer(&o, x, y, 0u, d.x, 0.45, 0.8, 1.0, 0.2, 0.35, hot);
+    // Scrub: small bushes a cell apart, sand between even when full.
+    plant_kind_layer(&o, x, y, 3u, d.w, 1.1, 0.5, 1.0, 0.25, 0.6, hot);
+    // Reeds: narrow stems, long along y.
+    plant_kind_layer(&o, x, y, 2u, d.z, 0.4, 0.6, 2.4, 0.15, 0.4, hot);
+    // Jungle: crowns about 1.7 cells apart, a closed canopy when full.
+    plant_kind_layer(&o, x, y, 1u, d.y, 1.7, 0.85, 1.0, 0.12, 0.9, hot);
+    return o;
+}
+
+// The flames as light: one continuous blackbody ramp of the heat, so
+// every pixel has its own value. Graphics lead 11-14 21:01Z: three layers
+// with 0.03-wide steps (the deep-zoom cut of 20:40Z) read as lava or flat
+// paint, and a step on a field is a thresholded edge (owner, 2026-11-09/10).
+// The engine's heat follows the fuel left (flicker takes up to 35% off
+// each step), so the fresh front is hottest. Smoothed, a burning band's
+// heat sits mostly at 0.5-0.7 and maps to orange (luminance 100-140 with
+// the ground under it, below the slime's highlight); yellow toward 0.85,
+// near white only near 1, and the fading embers behind (heat * 0.95 a
+// step) fall to dull red. With orange at 0.75 the bulk read red and dim
+// (median luminance 82, 21:20Z cut).
+// Before: `flame` mapped heat^1.5 ember-orange-yellow with yellow from
+// 0.85, and the bulk read near white in grey (20:10Z review).
+fn flame_body(h: f32) -> vec3<f32> {
+    let t = clamp(h, 0.0, 1.0);
+    let ember = vec3<f32>(60.0, 12.0, 3.0);
+    let red = vec3<f32>(160.0, 36.0, 8.0);
+    let orange = vec3<f32>(222.0, 96.0, 20.0);
+    let yellow = vec3<f32>(248.0, 172.0, 68.0);
+    let white = vec3<f32>(255.0, 232.0, 190.0);
+    if (t < 0.4) { return mix(ember, red, t / 0.4); }
+    if (t < 0.62) { return mix(red, orange, (t - 0.4) / 0.22); }
+    if (t < 0.85) { return mix(orange, yellow, (t - 0.62) / 0.23); }
+    return mix(yellow, white, smoothstep(0.85, 1.0, t));
+}
+
+// How much the flame's body covers a pixel: a steep but continuous rise
+// over heat 0.12-0.2, so at the owner's deep zoom (24 px a cell; 11-14
+// 20:21Z: "the fire is blurry. The assumption should be that I am
+// playing zoomed in") the flames' edge is a few pixels wide and the
+// B-spline's lumps read as tongues. The cover from 0.08 to 0.38 (21:10Z
+// cut) read soft and blobby at zoom 12.
+fn flame_cover(h: f32) -> f32 { return smoothstep(0.12, 0.2, h); }
+
+// The warm light a fire spills on the ground and slime around it: the
+// same heat field's faint tail (the B-spline reaches about 2 cells past a
+// burning cell), added as light, never as a drawn halo. From heat 0.04,
+// so the dying embers behind a front (graphics lead 21:26Z: "a muddy
+// brown blur") add next to none.
+fn flame_spill(h: f32) -> vec3<f32> {
+    return vec3<f32>(120.0, 44.0, 10.0) * (0.4 * smoothstep(0.04, 0.3, h));
 }
 
 // How tall the land's full elevation stands, in cells: about a fat tube's
@@ -387,7 +550,7 @@ fn cell_height(ix: i32, iy: i32, th: f32) -> vec2<f32> {
     // texture from the field's own variation.
     if (kind != ROCK && kind != WALL && kind != RUBBLE) {
         // Through the same 3 x 3 Gaussian (1 2 1) as their colour
-        // (`plant_look`). Read cell by cell, a row of reeds along a bank,
+        // (as `plant_look` smoothed it then). Read cell by cell, a row of reeds along a bank,
         // its density varying cell to cell, stood as a string of beads,
         // each with a lit and a shaded flank: at zoom 12-24 the waterline
         // read as a dark stepped edge (owner, 11-14 20:21Z: "the edges
@@ -606,7 +769,9 @@ fn cells_height(x: f32, y: f32) -> f32 {
 
 // `body`: the wide walker count (`prep`'s `wide`, 0-1) in the byte the
 // wound had (no wound is drawn, see `shaded`), for the specks' light.
-struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, body: f32, gem: f32 };
+// `vis`: how much of the ground shows through the slime (1 bare, 0.05
+// under an opaque body), so `shaded` lays the plants and char under it.
+struct Mat { albedo: vec3<f32>, glow: vec3<f32>, gloss: f32, body: f32, gem: f32, vis: f32 };
 
 // A cell's material: the engine's colour for agar (mould, scent, species,
 // germ, grass all in it), the ground kinds in their own colours, scaled by
@@ -665,7 +830,7 @@ fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32, dense: f32) -> Mat {
 fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
-        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0;
+        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0; m.vis = 1.0;
         return m;
     }
     let i = cidx(ix, iy);
@@ -700,12 +865,8 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u));
     let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
-    // Burnt ground, then the plants over the soil, before the slime.
-    let pl = plant_look(ix, iy);
-    let pc = pl.cover;
-    let prgb = pl.rgb;
-    base = mix(base, CHAR_RGB * (0.6 + 0.8 * base / max(SOIL_HIGH, vec3<f32>(1.0))), plant_char(i));
-    if (kind != WET) { base = mix(base, prgb, pc); }
+    // Burnt ground and the plants are laid per pixel in `shaded`
+    // (`plant_px`), under the slime by `vis`.
     let soil = base + tint * 0.6;
     // The slime's material (art director, 2026-11-14: "it still reads as
     // sand against the olive ground"). Before, the body was the hue at 55%
@@ -743,6 +904,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // film only, where its thickness grades it.
     let opaque = smoothstep(0.05, 0.35, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
+    // How much of the ground shows through the slime here, for the
+    // plants and char that `shaded` lays per pixel under it.
+    m.vis = 1.0 - 0.95 * opaque;
     m.glow = vec3<f32>(0.0);
     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
     m.body = 0.0;
@@ -753,10 +917,13 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         // Deep water's darkness is drawn at the pixel (`soil_detail`): a
         // darker cell colour here showed the cells' bilinear blend as a
         // stair inside the water.
-        // Reeds (or any plant) on the water lie over it by their cover.
-        let water = mix(WET_RGB, prgb, pc) + tint * 0.4;
-        m.albedo = mix(water, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
-        m.gloss = max(m.gloss * (1.0 - pc), 0.75 * (1.0 - pc));
+        // Reeds (or any plant) on the water lie over it per pixel
+        // (`shaded`), and dull its gloss by their cover.
+        let water = WET_RGB + tint * 0.4;
+        let over = clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85;
+        m.albedo = mix(water, m.albedo, over);
+        m.vis = 1.0 - over;
+        m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
         // Under hard terrain, the soil: `terrain_over` lays the rock, wall
         // or rubble over it with an edge of its own, so the cells next to
@@ -774,18 +941,24 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         m.gem = 1.0;
     }
     // Fire: its heat glows (an emissive, so it lights the dark).
-    let fh = pl.heat;
-    if (fh > 0.0) { m.glow = max(m.glow, flame(fh)); m.albedo = mix(m.albedo, flame(fh), 0.35 * fh); }
+    // The halo's colour, with the cell's own heat over it: the flames'
+    // flicker and embers (`plants::Fire::flicker`, `ember`) show cell by
+    // cell inside the glow (owner 11-14 19:26Z, "The fire should also look
+    // better": with the halo alone a front read as a soft orange smear).
+    // Fire is drawn per pixel in `shaded` (`plant_px`, `flame_body`): a
+    // cell-level halo here (the 3 x 3 Gaussian, 18:20Z to 21:01Z) showed
+    // as stair-steps at zoom 12 once the flame was light, not paint.
     return m;
 }
 
 // A material in two u32s: albedo and gloss, glow and body, a byte each
 // (albedo and glow in colour units, gloss and body 0-1 as 0-255). `gem`
 // is not drawn and not kept.
-fn mat_pack(m: Mat) -> vec2<u32> {
+fn mat_pack(m: Mat) -> vec4<u32> {
     let a = vec4<u32>(vec4<f32>(clamp(m.albedo, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.gloss, 0.0, 1.0) * 255.0) + 0.5);
     let g = vec4<u32>(vec4<f32>(clamp(m.glow, vec3<f32>(0.0), vec3<f32>(255.0)), clamp(m.body, 0.0, 1.0) * 255.0) + 0.5);
-    return vec2<u32>(a.x | a.y << 8u | a.z << 16u | a.w << 24u, g.x | g.y << 8u | g.z << 16u | g.w << 24u);
+    let v = u32(clamp(m.vis, 0.0, 1.0) * 255.0 + 0.5);
+    return vec4<u32>(a.x | a.y << 8u | a.z << 16u | a.w << 24u, g.x | g.y << 8u | g.z << 16u | g.w << 24u, v, 0u);
 }
 
 fn mc(ix: i32, iy: i32) -> Mat {
@@ -796,6 +969,7 @@ fn mc(ix: i32, iy: i32) -> Mat {
     m.glow = unpack(p.y);
     m.body = byte(p.y, 3u);
     m.gem = 0.0;
+    m.vis = f32(p.z & 255u) / 255.0;
     return m;
 }
 
@@ -1007,7 +1181,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     var h = vec2<f32>(0.0);
     var gcol = vec3<f32>(0.0);
     var mt: Mat;
-    mt.albedo = vec3<f32>(0.0); mt.glow = vec3<f32>(0.0); mt.gloss = 0.0; mt.body = wide; mt.gem = 0.0;
+    mt.albedo = vec3<f32>(0.0); mt.glow = vec3<f32>(0.0); mt.gloss = 0.0; mt.body = wide; mt.gem = 0.0; mt.vis = 0.0;
     let cs = colour_at(wx, wy);
     for (var q = 0; q < 4; q++) {
         let wq = w4[q];
@@ -1016,7 +1190,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         h += wq * cell_height(cx, cy, th_h);
         gcol += wq * ground_cell(cx, cy).col;
         let mq = cell_mat_c(cx, cy, tm, cut_share, dense_share, cs);
-        mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss;
+        mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.vis += wq * mq.vis;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
     hcell[i] = h.x;
@@ -1038,6 +1212,7 @@ fn mat_at(x: f32, y: f32) -> Mat {
     m.gloss = mix(mix(a.gloss, b.gloss, tx), mix(c.gloss, d.gloss, tx), ty);
     m.body = mix(mix(a.body, b.body, tx), mix(c.body, d.body, tx), ty);
     m.gem = mix(mix(a.gem, b.gem, tx), mix(c.gem, d.gem, tx), ty);
+    m.vis = mix(mix(a.vis, b.vis, tx), mix(c.vis, d.vis, tx), ty);
     return m;
 }
 
@@ -1072,12 +1247,11 @@ fn vnoise(p: vec2<f32>) -> f32 {
 // The share of sand, clay, barren and wet ground at (x, y), a cubic
 // B-spline over the 4 x 4 cells round (no cell stair in a patch's edge),
 // and the wet share's gradient (per cell), for the water's crisp edge.
-struct Soil { w: vec4<f32>, wg: vec2<f32>, deep: f32, bridge: f32, bg: vec2<f32>, pd: f32, prgb: vec3<f32>, pg: vec2<f32>, pk: vec4<f32> };
+struct Soil { w: vec4<f32>, wg: vec2<f32>, deep: f32, bridge: f32, bg: vec2<f32> };
 fn soil_share(x: f32, y: f32) -> Soil {
     var o: Soil;
     o.w = vec4<f32>(0.0); o.wg = vec2<f32>(0.0);
     o.deep = 0.0; o.bridge = 0.0; o.bg = vec2<f32>(0.0);
-    o.pd = 0.0; o.prgb = vec3<f32>(0.0); o.pg = vec2<f32>(0.0); o.pk = vec4<f32>(0.0);
     let ux = x - 0.5; let uy = y - 0.5;
     let ix = i32(floor(ux)); let iy = i32(floor(uy));
     let fx = ux - floor(ux); let fy = uy - floor(uy);
@@ -1100,31 +1274,7 @@ fn soil_share(x: f32, y: f32) -> Soil {
             // ground kinds thread, #285).
             if (k == WET && sk == SOIL_DEEP) { o.deep += wt; }
             if (k != WET && sk == SOIL_BRIDGE) { o.bridge += wt; o.bg += dw; }
-            // The plants' density on the same spline, so a patch's edge is
-            // a smooth curve at deep zoom, not the cells' steps.
-            if (P.plant_at != 0u) {
-                let j = cidx(cx, cy);
-                let pd = plant_d(j);
-                if (pd > 0.0) {
-                    o.pd += wt * pd;
-                    o.pg += pd * dw;
-                    let kk = plant_k(j);
-                    o.pk += wt * pd * vec4<f32>(vec4<u32>(0u, 1u, 2u, 3u) == vec4<u32>(kk));
-                }
-            }
         }
-    }
-    // The plants' colour: each kind's share of the density sharpened at
-    // the pixel (as the soils' are in `soil_detail`), so where jungle meets
-    // meadow the line is a curve, crisp at any zoom; a density-weighted
-    // mean faded one into the other over two or three cells.
-    let pt = dot(o.pk, vec4<f32>(1.0));
-    if (pt > 1e-4) {
-        let a = o.pk / pt;
-        let am = max(max(a.x, a.y), max(a.z, a.w));
-        let ea = exp((a - vec4<f32>(am)) * clamp(3.4 * P.zoom, 2.0, 80.0));
-        let ls = ea / dot(ea, vec4<f32>(1.0));
-        o.prgb = plant_rgb(0u) * ls.x + plant_rgb(1u) * ls.y + plant_rgb(2u) * ls.z + plant_rgb(3u) * ls.w;
     }
     return o;
 }
@@ -1152,8 +1302,9 @@ fn deep_depth(x: f32, y: f32) -> f32 {
 }
 
 // The bare ground's colour at a cell as `cell_mat_c` makes it (soil by
-// kind and elevation, char, plants; water with its reeds), with no tint.
-struct GroundB { col: vec3<f32>, prgb: vec3<f32>, pc: f32, char: f32, elev: f32 };
+// kind and elevation; water), with no tint. (Plants and char are drawn at
+// the pixel over it since the plants thread's crowns.)
+struct GroundB { col: vec3<f32>, elev: f32 };
 fn ground_cell(ix: i32, iy: i32) -> GroundB {
     var o: GroundB;
     let cx = clamp(ix, 0, i32(P.ww) - 1); let cy = clamp(iy, 0, i32(P.wh) - 1);
@@ -1164,11 +1315,7 @@ fn ground_cell(ix: i32, iy: i32) -> GroundB {
     o.elev = byte(g, 3u);
     var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * o.elev);
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
-    let pl = plant_look(cx, cy);
-    o.pc = pl.cover; o.prgb = pl.rgb;
-    o.char = plant_char(i);
-    base = mix(base, CHAR_RGB * (0.6 + 0.8 * base / max(SOIL_HIGH, vec3<f32>(1.0))), o.char);
-    if (kind == WET) { base = mix(WET_RGB, o.prgb, o.pc); } else { base = mix(base, o.prgb, o.pc); }
+    if (kind == WET) { base = WET_RGB; }
     o.col = base;
     return o;
 }
@@ -1198,16 +1345,16 @@ fn ground_est(x: f32, y: f32) -> vec3<f32> {
     let tx = f.x - floor(f.x); let ty = f.y - floor(f.y);
     return mix(mix(hg(ix, iy), hg(ix + 1, iy), tx), mix(hg(ix, iy + 1), hg(ix + 1, iy + 1), tx), ty);
 }
-// The land's elevation (x) and char (y) at (x, y), bilinear over the four
-// cells round, for the plain soil's colour and the burn.
-fn ground_ec(x: f32, y: f32) -> vec2<f32> {
+// The land's elevation at (x, y), bilinear over the four cells round, for
+// the plain soil's colour.
+fn ground_elev(x: f32, y: f32) -> f32 {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
     let tx = fx - floor(fx); let ty = fy - floor(fy);
-    var e = array<vec2<f32>, 4>();
+    var e = array<f32, 4>();
     for (var q = 0; q < 4; q++) {
         let i = cidx(clamp(ix + (q & 1), 0, i32(P.ww) - 1), clamp(iy + (q >> 1u), 0, i32(P.wh) - 1));
-        e[q] = vec2<f32>(byte(ground[i], 3u), plant_char(i));
+        e[q] = byte(ground[i], 3u);
     }
     return mix(mix(e[0], e[1], tx), mix(e[2], e[3], tx), ty);
 }
@@ -1221,7 +1368,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     if (bare <= 0.03) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
     let so = soil_share(x, y);
     let w = so.w;
-    if (dot(w, vec4<f32>(1.0)) + so.bridge + so.pd <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    if (dot(w, vec4<f32>(1.0)) + so.bridge <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
     var mul = 1.0;
     var add = vec3<f32>(0.0);
     // The water's crisp cover (its edge where the smooth wet share crosses
@@ -1247,15 +1394,9 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     let am = max(max(a.x, a.y), max(a.z, a.w));
     let ea = exp((a - vec4<f32>(am)) * sharp);
     let ls = ea / dot(ea, vec4<f32>(1.0));
-    // Each soil's texture by its crisp share on the land.
-    // (Faded under the plants' cover; a meadow's ground shows a little
-    // through it.) The plants' cover, its patch edge crisp: where the
-    // smooth density crosses 0.2, antialiased over about a pixel (the
-    // spline alone faded a patch out over two or three cells, which read
-    // as blur at zoom 12).
-    let pedge = clamp(0.5 + (so.pd - 0.2) / max(length(so.pg), 1e-3) * P.zoom, 0.0, 1.0);
-    let pc = plant_cover(max(so.pd, 0.2)) * pedge;
-    let ws = ls.xyz * (1.0 - cw) * (1.0 - 0.75 * pc);
+    // Each soil's texture by its crisp share on the land. (The plants'
+    // crowns are drawn over it by their own cover, `plant_layer`.)
+    let ws = ls.xyz * (1.0 - cw);
     // Sand: wind ripples about 1.6 cells apart, the flank toward the
     // light lighter. Low-frequency noise in their phase bends them and
     // stretches or squeezes their spacing (art lead, 11-14: straight even
@@ -1321,15 +1462,11 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     }
     // What the cells' material already gives here (`cell_mat_c`'s bare
     // ground, blended between the four cells round: `est`), and what this
-    // pixel should be (`want`); the difference is added. The plants, char
-    // and elevation come from the same four cells (plants are already
-    // smoothed over 3 x 3 cells), so only the soils' and water's edges are
-    // redrawn.
+    // pixel should be (`want`); the difference is added, so the soils' and
+    // water's edges are redrawn at the pixel. (Plants and char are drawn
+    // over all this in `shaded`.)
     let est = ground_est(x, y);
-    let ec = ground_ec(x, y);
-    var land = SAND_RGB * ls.x + CLAY_RGB * ls.y + BARREN_RGB * ls.z + mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * ec.x) * ls.w;
-    land = mix(land, CHAR_RGB * (0.6 + 0.8 * land / max(SOIL_HIGH, vec3<f32>(1.0))), ec.y);
-    land = mix(land, so.prgb, pc);
+    let land = SAND_RGB * ls.x + CLAY_RGB * ls.y + BARREN_RGB * ls.z + mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * ground_elev(x, y)) * ls.w;
     var want = land;
     // Wet: the water's edge is where the smooth wet share crosses one
     // half, worked out at the pixel (one pixel antialiased, as rock's), so
@@ -1352,8 +1489,6 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         // and square blobs.)
         let p = vec2<f32>(x, y);
         water *= 1.0 + 0.3 * (vnoise(p / 8.0 + 9.0) - 0.5) * (0.3 + 0.7 * depth);
-        // Reeds (or any plant) on the water lie over it by their cover.
-        water = mix(water, so.prgb, pc);
         if (w.w >= 0.999) {
             want = water;
         } else {
@@ -1439,6 +1574,24 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let th_here = film_th(x, y);
     let sd = soil_detail(x, y, exp(-30.0 * th_here));
     m.albedo = (m.albedo + sd.yzw) * sd.x;
+    // Burnt ground, then the plants, at this pixel and under the slime
+    // (`vis`): one B-spline of the plant fields (`plant_px`), which the
+    // fire below shares.
+    let pp = plant_px(x, y);
+    var pl: PlantLayer;
+    pl.fl = vec3<f32>(0.0); pl.fc = 0.0; pl.fw = 0.0;
+    if (P.plant_at != 0u) {
+        // Char: near-black grey with a crisp edge (a narrow rise of the
+        // per-pixel char, a few pixels at zoom 24), a little ash grain.
+        pl = plant_layer(x, y, pp.d, pp.heat > 0.002);
+        let pv = pl.cover * m.vis;
+        m.albedo = m.albedo * (1.0 - pv) + pl.rgb * m.vis;
+        m.gloss *= 1.0 - pv;
+        // Over the plants too: what is left of a burnt stand is stubble.
+        let ch = smoothstep(0.06, 0.3, pp.char) * (0.85 + 0.15 * smoothstep(0.3, 0.8, pp.char));
+        let ash = CHAR_RGB * (0.9 + 0.2 * vnoise(vec2<f32>(x, y) * 2.3));
+        m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * m.vis);
+    }
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
     let dx = cells_height(x + e, y) - hc0;
@@ -1485,6 +1638,35 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
     let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
     var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
+    // The fire's body, at this pixel (`flame_body` of the B-spline heat):
+    // worked out in `prep` per fine cell it stair-stepped at the owner's
+    // zoom 24 (11-14 20:21Z). The heat comes with the plants' own reads.
+    if (P.plant_at != 0u) {
+        // Emission over the darkened ground (graphics lead 21:01Z).
+        // Zoomed in, the flames are the burning crowns' own (`plant_layer`)
+        // and, where the plants are gone, ember points: the heat still in
+        // the char as scattered glowing grains whose size follows the heat,
+        // so they shrink and go as it fades (graphics lead 21:26Z: the
+        // smooth heat alone read as a soft orange blob). Zoomed out (a crown
+        // or grain under about 3 pixels) the smooth heat's flame stands in.
+        let hf = pp.heat;
+        let ez = smoothstep(2.5, 5.0, 0.6 * P.zoom);
+        var fl = pl.fl;
+        var fc = pl.fc;
+        let rest = 1.0 - pl.fw;
+        if (hf > 0.002 && rest > 0.0) {
+            let sc = flame_cover(hf) * rest * (1.0 - ez);
+            fl += flame_body(hf) * sc * (1.0 - fc);
+            fc += sc * (1.0 - fc);
+            if (ez > 0.0) {
+                let em = crowns(x, y, 0.6, 0.35, 1.0, hf, 913.0, 0.0, 0.5);
+                let ea = em.a * ez * rest * smoothstep(0.02, 0.1, hf);
+                fl += flame_body(min(hf * (0.9 + 0.4 * em.dome) + 0.3 * pp.fresh, 1.0)) * ea * (1.0 - fc);
+                fc += ea * (1.0 - fc);
+            }
+        }
+        c = c * (1.0 - 0.6 * fc) + fl + flame_spill(hf) * (1.0 - fc);
+    }
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's
     // own height is in `to`, so a tube's flank toward a bullet lights and

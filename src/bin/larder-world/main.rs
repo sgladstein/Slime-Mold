@@ -67,6 +67,10 @@
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
 //! that tooltip (a loadout card's, 2026-11-14); `select=0` selects nobody.
+//! `drag=FROM>TO[/FROM>TO..]` with `menu=shop..` films bullet cards dragged
+//! in the shop, one drag to an equal share of the frames: FROM a gun slot
+//! (counted from 1, as the shop numbers them) or the name of a card out of
+//! the gun, TO a slot or `bag` (the gun's cards, 2026-11-14).
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
 //! out round (X, Y), out of the ground at game second T and holds it (for
 //! HOLD seconds, then puts it back), and prints the walkers inside each
@@ -413,9 +417,6 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
-    /// `ration=R`: food a game second each soldier eats (`Rules::ration`;
-    /// 0, the default since 2026-11-14, is off; 1 plays the PR 4 economy).
-    ration: Option<f32>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -440,6 +441,9 @@ struct Tracer {
     to: (f32, f32),
     hit: bool,
     age: f32,
+    /// The strike's radius, fine cells (`Shot::r`): a hit lights only
+    /// what it kills (owner 20:22Z).
+    r: f32,
 }
 
 /// What the window keeps of each soldier beside the game: the way it
@@ -563,8 +567,6 @@ struct App {
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
-    /// `Game::hungry` last frame, to tell the player once when the squad starts starving.
-    hungry: bool,
     /// Bank samples (game second, bank) for the food rate.
     bank_log: std::collections::VecDeque<(f32, f32)>,
     /// Seconds left of the larder's flare (`BANKED`), set by a carrier
@@ -671,7 +673,6 @@ impl App {
             robbed_at: None,
             stolen: 0.0,
             broke: false,
-            hungry: false,
             bank_log: Default::default(),
             banked: 0.0,
             frame_ms: Vec::new(),
@@ -777,6 +778,13 @@ impl App {
                     }
                     None => Map::load(&dir, &name)?,
                 };
+                // A run's walkers go on the planet's open cells
+                // (`run::open_scale`), not its whole area.
+                let mut s = s;
+                if a.run.is_some() {
+                    s.walkers = ((s.walkers as f32) * slime_mould::mould::run::open_scale(&m)).round().max(1.0) as _;
+                    walkers = s.walkers;
+                }
                 // Plants (11-14): the stand-in on a map without its own,
                 // until levelgen writes each biome's (`plants=0` off).
                 if s.plants {
@@ -809,9 +817,6 @@ impl App {
         rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
         if let Some(w) = a.wade {
             rules.wade = w;
-        }
-        if let Some(b) = a.ration {
-            rules.ration = b;
         }
         if let Some(b) = a.sink {
             rules.sink = b;
@@ -1137,11 +1142,6 @@ impl App {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
         self.broke = broke;
-        // Rations (`Rules::ration`): told once each time the bank runs dry.
-        if g.hungry && !self.hungry {
-            self.hud.alert(&format!("Out of food: the squad is starving ({:.0} food a second to feed it)", g.rules.ration * g.alive() as f32), Some(g.larder), theme::BAD);
-        }
-        self.hungry = g.hungry;
         self.bank_log.push_back((t, g.bank));
         while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
             self.bank_log.pop_front();
@@ -1226,6 +1226,9 @@ impl App {
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
         if !self.in_menu() {
+            // WASD pans only while paused (`Controls::wasd_pan`): set here
+            // too, so a key held through P stops panning as play resumes.
+            self.controls.wasd_pan &= self.paused && self.game.as_ref().is_some_and(|g| g.end.is_none());
             self.controls.update(&mut self.camera, dt);
             self.squad_frame(dt);
         }
@@ -1281,7 +1284,9 @@ impl App {
             v.set_alarm_side((g.world.e.done % 2) as u32);
         }
         self.marks();
-        let minimap = self.view.as_ref().is_some_and(|v| v.minimap) && !self.camera.sees_all();
+        // Always, zoomed out too, so the bottom bar never rearranges with the
+        // zoom (owner, 11-14 20:19Z); M still hides it.
+        let minimap = self.view.as_ref().is_some_and(|v| v.minimap);
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
@@ -1376,7 +1381,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1384,6 +1389,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bank = None;
     let mut centre = None;
     let mut hover = None;
+    let mut drags: Vec<(String, String)> = Vec::new();
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
@@ -1436,7 +1442,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
-            "ration" => args.ration = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -1478,6 +1483,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // `select=0`: the no-window pictures with nothing selected (the
             // HUD's collapsed selection panel).
             "select" => select = v != "0",
+            "drag" => {
+                for d in v.split('/') {
+                    let (a, b) = d.split_once('>').ok_or("drag=FROM>TO[/FROM>TO..]: a slot (from 1) or a card's name, to a slot or bag")?;
+                    drags.push((a.to_string(), b.to_string()));
+                }
+            }
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).
@@ -1534,7 +1545,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1561,7 +1572,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select, &drags)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

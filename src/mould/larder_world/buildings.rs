@@ -159,10 +159,10 @@ pub struct BuildRules {
     /// takes, not a standing beacon.
     pub lure_smell: f32,
     pub lure_r: f32,
-    /// Food a second a lure burns while on. 0 since 2026-11-14: the owner
-    /// ruled "There should be no maintenance costs in this game" (04:53Z),
-    /// so a lure costs its price once. 2 was the old burn.
-    pub lure_burn: f32,
+    // The lure's burn (`lure_burn`, food a second while on, 2 at first)
+    // was 0 from 2026-11-14 04:53Z (owner: "There should be no maintenance
+    // costs in this game") and removed later that day: a lure costs its
+    // price once.
     pub pump_cost: f32,
     pub pump_hp: f32,
     /// Food a second a pump draws from its crystal.
@@ -230,7 +230,6 @@ impl Default for BuildRules {
             lure_hp: 150.0,
             lure_smell: 8.0,
             lure_r: 6.0,
-            lure_burn: 0.0,
             pump_cost: 500.0,
             pump_hp: 200.0,
             pump_rate: 5.0,
@@ -468,11 +467,7 @@ impl<W: World> Game<W> {
                     }
                 }
                 Kind::Lure => {
-                    let burn = b.lure_burn * dt;
-                    if bd.on && self.bank >= burn {
-                        self.bank -= burn;
-                        self.spent += burn;
-                        self.lured += burn;
+                    if bd.on {
                         u.smell_r = b.lure_r * sc;
                         u.smell = self.world.food_deposit() * r.smell * b.lure_smell * r.frame_ticks as f32;
                         self.buildings[k].working = true;
@@ -718,11 +713,9 @@ mod tests {
     }
 
     #[test]
-    fn a_lure_burns_food_and_lays_scent_while_on() {
+    fn a_lure_lays_scent_while_on() {
         let run = |on: bool| {
             let mut g = small(4);
-            // The burn is off by default (no upkeep); on, it still works.
-            g.rules.build.lure_burn = 2.0;
             // Open ground between the bases, away from the crystals' scent.
             let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
             stand(&mut g, at);
@@ -734,11 +727,9 @@ mod tests {
                 g.step();
             }
             let i = at.1 as usize * g.world.w + at.0 as usize;
-            (g.world.scent[i], g.lured)
+            g.world.scent[i]
         };
-        let (scent_on, lured) = run(true);
-        let (scent_off, lured_off) = run(false);
-        assert!((lured - 4.0 * 2.0).abs() < 0.2 && lured_off == 0.0, "burnt {lured} food in 4 s on, {lured_off} off");
+        let (scent_on, scent_off) = (run(true), run(false));
         assert!(scent_on > 2.0 * scent_off.max(1e-6), "scent at the lure {scent_on}, off {scent_off}");
     }
 
@@ -764,7 +755,7 @@ mod tests {
             working |= g.buildings[0].working;
         }
         assert!(working, "the lure gave off scent");
-        assert_eq!((g.lured, g.eaten, g.spent - spent), (0.0, 0.0, 0.0), "upkeep paid");
+        assert_eq!(g.spent - spent, 0.0, "upkeep paid");
     }
 
     #[test]
@@ -783,8 +774,7 @@ mod tests {
         // `Building::drew`, the window's draw line, is the pump's take.
         assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
-        // The squad's rations (`Rules::ration`) come out of the same bank.
-        assert!(g.bank + g.eaten > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
+        assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
         assert!(g.take_share() > 0.5, "the pump's take is the squad's");
     }
 
