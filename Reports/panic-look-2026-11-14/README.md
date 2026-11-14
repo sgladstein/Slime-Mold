@@ -59,7 +59,8 @@ loads a second 20 x 20 tile. The 1070 timing waits for the PC.
 ## Wiring
 
 `View::set_news(Some((&e.news, &e.state)), s.wither_lag, s.panic_lean)`
-after `set_alive` when the engine withers. The window's call
-(`src/bin/larder-world.rs`) was held out of the first PR while the
-integration thread split that file (freeze 00:36Z-02:40Z, 11-14); the
-films were made with it patched in locally.
+after `set_alive` when the engine withers, in the window
+(`src/bin/larder-world/main.rs`). It went in after the integration
+thread's split of that file (#210, 11-14 01:13Z); the films were made
+with the same call patched into the file before the split, and the
+re-check after it gives the same 192 red pixels at +7.5 s.
