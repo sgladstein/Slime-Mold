@@ -287,10 +287,11 @@ impl<W: World> Game<W> {
     }
 
     /// A scared piece's reach, past the gun's range (`Rules::panic_margin`):
-    /// at the start and once a game second, so a range card moves it.
+    /// at the start and once a game second, so a range card moves it
+    /// (`gun_range`, which the rounds' `Range` cards stretch).
     pub(super) fn keep_panic_reach(&mut self) {
         if self.rules.panic_margin >= 0.0 {
-            self.world.set_panic_r(self.rules.range + self.rules.panic_margin);
+            self.world.set_panic_r(self.gun_range() + self.rules.panic_margin);
         }
     }
 
