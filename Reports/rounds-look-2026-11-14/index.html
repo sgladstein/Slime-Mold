@@ -1,0 +1,88 @@
+<title>Rounds in Flight</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column of film pairs, captioned by their counts, on the game's own dark ground. Single dark look on purpose (the films are dark). */
+:root {
+  --bg: #16140f; --panel: #211e17; --fg: #ece6d6; --muted: #a39b87; --line: #3a3427;
+  --blast: #ff8a3d; --gas: #b28cff; --plain: #ffd28a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 12px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 16px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: grid; min-width: 0; }
+figure img { display: block; width: 100%; height: auto; image-rendering: auto; }
+figcaption { padding: 10px 14px 12px; display: grid; gap: 4px; }
+.tag { font: 600 0.72rem/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; }
+.counts { font: 0.82rem/1.5 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.blast { color: var(--blast); } .gas { color: var(--gas); } .plain { color: var(--plain); }
+ul { margin: 0; padding-left: 1.2em; max-width: 72ch; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 0.9em; }
+</style>
+<div class="wrap">
+  <header class="lede">
+    <h1>Rounds in flight</h1>
+    <p>Each bullet is now a light that flies over the real slime. It is drawn along the distance it covers in a frame, in its payload's colour: blast orange, gas violet, germ green. Plain shots, and shots fired while the gun recharges, are pale gold. When a burst goes off, it lights its area for about a tenth of a second. After that, only what it did stays: the hole in the body and the crater. This follows how Noita lights a spell (see the research report). The simulation is unchanged. The before and after films have the same casts and kills, frame for frame.</p>
+    <p class="muted">Fork map, seed 1. Eight soldiers stand at (150, 195) on free fire with 20,000 food banked, so every round can be paid for. Each film runs from 0:19 to 0:22 game time at 15 frames a second, through the window's own view on llvmpipe. The counts under each film cover those three seconds.</p>
+  </header>
+
+  <section>
+    <h2>Blast: before and after</h2>
+    <div class="pair">
+      <figure><img src="before-blast.gif" alt="Blast round before: small flat bullets and thin lines"><figcaption><span class="tag muted">Before (main)</span><span class="counts">8 casts · 303 walkers killed by rounds · 23 shots · 495 kills in all</span></figcaption></figure>
+      <figure><img src="blast.gif" alt="Blast round after: orange streaks, and each burst lights the slime round it"><figcaption><span class="tag blast">After</span><span class="counts">8 casts · 303 walkers killed by rounds · 23 shots · 495 kills in all</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sleep gas: before and after</h2>
+    <div class="pair">
+      <figure><img src="before-gas.gif" alt="Gas round before"><figcaption><span class="tag muted">Before (main)</span><span class="counts">7 casts · 0 killed by rounds · 23 shots · 197 kills in all</span></figcaption></figure>
+      <figure><img src="gas.gif" alt="Gas round after: violet light where a gas cloud lands"><figcaption><span class="tag gas">After</span><span class="counts">7 casts · 0 killed by rounds · 23 shots · 197 kills in all</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sleep gas as a cloud</h2>
+    <p>A gas round now leaves a real cloud. It is a field that spreads through the agar, halves every 4 seconds, and stops at walls. Any walker on a cell with enough cloud falls asleep and stays asleep until the cloud thins. The violet haze is that field drawn as it is. The mould that wanders into it goes to sleep, and the sleepers inside it stay asleep. Before this change the gas put its disc to sleep in one frame and left nothing to see. That is the "before" film above.</p>
+    <p class="muted">Same scene and seed as above, gas rounds on free fire, 0:19 to 0:25. The engine's CPU and GPU versions match exactly in the twin test: the cloud on every cell, which walkers sleep, and how long each stays gassed.</p>
+    <div class="pair">
+      <figure><img src="gas-cloud.gif" alt="Violet gas cloud drifting over the slime in front of the squad"><figcaption><span class="tag gas">Cloud, zoom 4.5</span><span class="counts">14 casts · 0 killed by rounds · mould 24,581 → 24,226 walkers</span></figcaption></figure>
+      <figure><img src="gas-cloud-wide.gif" alt="Wider view: the cloud stops at the wall's edge"><figcaption><span class="tag gas">Cloud, zoom 2.5 (held by the wall)</span><span class="counts">14 casts · 0 killed by rounds · mould 24,581 → 24,226 walkers</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Each card's look</h2>
+    <p class="muted">The cards change the bullet itself. Wide makes it bigger, with a wider light. Scatter flies three heads. Pierce is a long thin lance. Quiet is dimmer. A lodged cast (delay or thick) glows where it waits, and a delay's glow swells as its fuse burns down.</p>
+    <div class="pair">
+      <figure><img src="plain.gif" alt="Plain shots"><figcaption><span class="tag plain">Plain</span><span class="counts">0 casts · 23 shots · 243 kills</span></figcaption></figure>
+      <figure><img src="wide.gif" alt="Wide blast"><figcaption><span class="tag blast">Wide + blast</span><span class="counts">2 casts · 196 killed by rounds · 23 shots · 378 kills</span></figcaption></figure>
+      <figure><img src="scatter.gif" alt="Scatter blast"><figcaption><span class="tag blast">Scatter + blast</span><span class="counts">6 casts · 258 killed by rounds · 23 shots · 443 kills</span></figcaption></figure>
+      <figure><img src="lance.gif" alt="Pierce, split, blast"><figcaption><span class="tag blast">Lance (pierce + split + blast)</span><span class="counts">7 casts · 178 killed by rounds · 23 shots · 492 kills</span></figcaption></figure>
+      <figure><img src="delay.gif" alt="Delay blast"><figcaption><span class="tag blast">Delay + blast</span><span class="counts">7 casts · 155 killed by rounds · 23 shots · 431 kills</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is drawn, and from what</h2>
+    <ul>
+      <li>Bullets come from <code>Game::bullets</code>: where each one is, its heading, and its pierce and split cards. The colour comes from the cast its soldier's next hit makes (<code>Rounds::next_cast</code>).</li>
+      <li>The lights (<code>View::set_lights</code>, up to 64 a frame) light the shaded world through its own height and gloss. A thick tube's flank toward a burst lights up and its far flank stays dark. Bare agar lights only faintly.</li>
+      <li>Burst lights come from <code>Rounds::pops</code> (each burst's real centre and radius), at 3 radii for 0.12 s, brighter the more walkers it killed. Muzzle flashes and plain hits light up too.</li>
+      <li>The grey ray line under each shot is gone while bullets fly. The bullet's own streak shows the path.</li>
+    </ul>
+    <p class="muted">Next in this thread: trail cards that lay real fields along the flight. Two other threads cover explosion cards, which break the mould and throw it, and the loadout panel in the HUD.</p>
+  </section>
+</div>

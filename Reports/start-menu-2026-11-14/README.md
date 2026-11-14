@@ -33,6 +33,15 @@ Page: https://claude.ai/artifact/C6wF9cqX9EVFPQLnUAyVhS (source `page/`).
   menu** (`MenuItem::MainMenu`), which saves the replay and returns to the
   menu, on the options as they were left, over a fresh dish.
 
+## The dish follows the map (11-14, after the owner's playtest)
+
+The owner, 05:04Z: "when you switch the map in the menu it should switch in
+the background". Turning the sandbox map, or your own mould, on the options
+page now starts the dish behind the menu again on that world
+(`DISH_OPTS` in `menu.rs`; a game-mode option goes in the same list). Other
+options, and moving between rows, leave the dish playing. Test:
+`turning_the_map_on_the_menu_switches_the_dish_behind` (llvmpipe).
+
 ## Checks
 
 - `world::start` tests: keyboard walk, options turn and reset, F1/? from
