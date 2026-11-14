@@ -34,17 +34,40 @@
 //! Every action is a `Cmd`, so a squad round replays like any other.
 
 use super::*;
-use slime_mould::mould::larder_world::{Formation, SQUADS_MAX};
+use slime_mould::mould::larder_world::{Formation, NO_LINK, SQUADS_MAX};
 use slime_mould::world::ui::{SquadPanel, SquadRow};
 use slime_mould::world::ui::key_name;
 
-/// Squads whose middles are this close (dish cells) merge on `MERGE`.
-const MERGE_REACH: f32 = 24.0;
+/// Squads overlap (and so can combine, `MERGE`) when their middles are no
+/// further apart than their two spreads and this many dish cells (owner
+/// 2026-11-14 15:06Z: combine "should only appear when squads overlap";
+/// before, any squad within 24 cells of yours could be combined).
+const OVERLAP_GAP: f32 = 4.0;
+
+/// The squads overlapping squad `q` (`OVERLAP_GAP`), nearest first.
+pub(super) fn overlapping(g: &Game<GpuWorld>, q: usize) -> Vec<usize> {
+    let spread = |r: usize| {
+        let m = g.middle(r)?;
+        Some((m, g.members(r).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).fold(0.0, f32::max)))
+    };
+    let Some((m, a)) = spread(q) else { return Vec::new() };
+    let mut near: Vec<(usize, f32)> = g
+        .live_squads()
+        .into_iter()
+        .filter(|&r| r != q)
+        .filter_map(|r| spread(r).map(|(c, b)| (r, (c.0 - m.0).hypot(c.1 - m.1), b)))
+        .filter(|&(_, d, b)| d <= a + b + OVERLAP_GAP * g.world.scale())
+        .map(|(r, d, _)| (r, d))
+        .collect();
+    near.sort_by(|x, y| x.1.total_cmp(&y.1));
+    near.into_iter().map(|x| x.0).collect()
+}
 
 /// The squad's own keys after the card's (`App::squad_key`).
 pub(super) const SPLIT: KeyCode = KeyCode::KeyY;
 pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
+pub(super) const GUARDS: KeyCode = KeyCode::KeyI;
 
 /// The bearing (radians) the cursor must swing round the controlled
 /// squad's middle before a line or wedge turns to it again (`aim`).
@@ -75,11 +98,14 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("WASD".to_string(), "Steer your squad; the camera follows it".to_string()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
+        ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
-        (k(MERGE), "Join the nearest squad into yours".into()),
+        (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
+        ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
+        (k(GUARDS), "Guards while working: none, some, more".into()),
         (k(FORMATION), "Formation: blob, line, wedge, ring".into()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
@@ -194,7 +220,7 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | FORMATION) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | FORMATION | GUARDS) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
         }
@@ -209,18 +235,24 @@ impl App {
                 }
             }
             MERGE => {
-                let Some(m) = g.middle(q as usize) else { return true };
-                let reach = MERGE_REACH * g.world.scale();
-                let other = g.live_squads().into_iter().filter(|&o| o != q as usize).filter_map(|o| g.middle(o).map(|c| (o, (c.0 - m.0).hypot(c.1 - m.1)))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1));
-                if let Some((o, _)) = other {
+                if let Some(&o) = overlapping(g, q as usize).first() {
                     g.apply(Cmd::Merge(q, o as u8));
                 } else {
-                    self.hud.alert(&format!("No squad within {MERGE_REACH:.0} cells to join"), None, theme::WARN);
+                    self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
                 }
+            }
+            GUARDS => {
+                let c = g.squads[q as usize].cover.next();
+                for r in g.linked(q as usize) {
+                    g.apply(Cmd::Cover(r as u8, c));
+                }
+                self.hud.alert(&format!("Guards while working: {}", c.name()), None, theme::TEXT);
             }
             FORMATION => {
                 let f = g.squads[q as usize].formation.next();
-                g.apply(Cmd::Formation(q, f));
+                for r in g.linked(q as usize) {
+                    g.apply(Cmd::Formation(r as u8, f));
+                }
                 self.hud.alert(&format!("Formation: {}", f.name()), None, theme::TEXT);
                 if let Some(sq) = self.sq.as_mut() {
                     // A line or wedge turns to the cursor at once.
@@ -233,7 +265,24 @@ impl App {
                 // live squads' order, so a squad's key changed whenever a
                 // lower one died, merged or split; bug sweep's review, 11-14).
                 let Some(n) = digit(code) else { return false };
-                if !g.members(n).is_empty() {
+                if g.members(n).is_empty() {
+                    return true;
+                }
+                if self.ctrl {
+                    // Ctrl + its number: link it with yours, or unlink it.
+                    if n != q as usize {
+                        let on = g.linked(q as usize).contains(&n);
+                        if on {
+                            g.apply(Cmd::Unlink(n as u8));
+                            self.hud.alert(&format!("Squad {} unlinked", n + 1), None, theme::TEXT);
+                        } else if overlapping(g, q as usize).contains(&n) {
+                            g.apply(Cmd::Link(q, n as u8));
+                            self.hud.alert(&format!("Squad {} linked with yours: you command them as one", n + 1), None, theme::TEXT);
+                        } else {
+                            self.hud.alert(&format!("Squad {} isn't touching yours: bring them together to link", n + 1), None, theme::WARN);
+                        }
+                    }
+                } else {
                     self.switch_to(n as u8);
                 }
             }
@@ -254,7 +303,7 @@ impl App {
 
     fn switch_to(&mut self, q: u8) {
         let Some(g) = self.game.as_mut() else { return };
-        if g.active == Some(q as usize) {
+        if g.active.is_some_and(|a| g.linked(a).contains(&(q as usize))) {
             // Again: the camera comes to it.
             if let Some(sq) = self.sq.as_mut() {
                 sq.follow = true;
@@ -319,8 +368,10 @@ impl App {
                             Order::Clear(x, y) if !self.ctrl => Order::Move(x, y),
                             o => o,
                         };
+                        // Shift queues it (`Cmd::SquadQueue`).
+                        let shift = self.shift;
                         if let Some(g) = self.game.as_mut() {
-                            g.apply(Cmd::SquadOrder(q, o));
+                            g.apply(if shift { Cmd::SquadQueue(q, o) } else { Cmd::SquadOrder(q, o) });
                         }
                     }
                 }
@@ -469,6 +520,7 @@ impl App {
         self.sq.as_ref()?;
         let g = self.game.as_ref()?;
         let live = g.live_squads();
+        let overlap = g.active.map(|a| overlapping(g, a)).unwrap_or_default();
         let rows = live
             .iter()
             .map(|&q| {
@@ -477,8 +529,27 @@ impl App {
                 if sq.formation != Formation::Blob {
                     note.push(sq.formation.name().to_string());
                 }
-                note.push(if sq.fire.is_some() { "firing" } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) { "moving" } else { "holding" }.to_string());
-                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q) }
+                let guards = g.members(q).iter().filter(|&&k| g.soldiers[k].cover).count();
+                note.push(if sq.fire.is_some() {
+                    "firing".to_string()
+                } else if sq.work.is_some() && guards > 0 {
+                    format!("working, {guards} on guard")
+                } else if sq.work.is_some() {
+                    "working".to_string()
+                } else if sq.steer != (0.0, 0.0) || sq.dest.is_some_and(|d| g.middle(q).is_some_and(|m| (m.0 - d.0).hypot(m.1 - d.1) > 4.0 * g.world.scale())) {
+                    "moving".to_string()
+                } else {
+                    "holding".to_string()
+                });
+                if sq.queued > 0 {
+                    note.push(format!("{} queued", sq.queued));
+                }
+                if sq.link != NO_LINK {
+                    note.push("linked".into());
+                }
+                let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
+                let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());
@@ -493,7 +564,15 @@ impl App {
             } else {
                 None
             },
-            combine_off: (live.len() < 2).then(|| "No other squad to combine with".into()),
+            combine_off: if live.len() < 2 {
+                Some("No other squad to combine with".into())
+            } else if overlap.is_empty() {
+                Some("No squad overlaps yours: bring one over to combine, or link it (its tile's corner)".into())
+            } else {
+                None
+            },
+            cover: g.active.map_or("some", |a| g.squads[a].cover.name()).to_string(),
+            cover_key: key_name(GUARDS),
         })
     }
 
@@ -509,8 +588,24 @@ impl App {
                 }
             }
             HudEvent::SquadInto(r) => {
-                if let Some(&o) = live.get(r).filter(|&&o| o != q) {
+                if let Some(&o) = live.get(r).filter(|&&o| o != q && overlapping(g, q).contains(&o)) {
                     g.apply(Cmd::Merge(q as u8, o as u8));
+                }
+            }
+            HudEvent::SquadLink(r) => {
+                if let Some(&o) = live.get(r).filter(|&&o| o != q) {
+                    if g.linked(q).contains(&o) {
+                        g.apply(Cmd::Unlink(o as u8));
+                    } else if overlapping(g, q).contains(&o) {
+                        g.apply(Cmd::Link(q as u8, o as u8));
+                    }
+                }
+            }
+            HudEvent::SquadCover => {
+                // The whole link: it is commanded as one.
+                let c = g.squads[q].cover.next();
+                for r in g.linked(q) {
+                    g.apply(Cmd::Cover(r as u8, c));
                 }
             }
             HudEvent::SquadSplit => {
@@ -523,10 +618,8 @@ impl App {
                 }
             }
             HudEvent::SquadCombine => {
-                // The nearest other squad, however far: it walks over.
-                let Some(m) = g.middle(q) else { return };
-                let other = live.iter().copied().filter(|&o| o != q).filter_map(|o| g.middle(o).map(|c| (o, (c.0 - m.0).hypot(c.1 - m.1)))).min_by(|a, b| a.1.total_cmp(&b.1));
-                if let Some((o, _)) = other {
+                // The nearest squad overlapping yours.
+                if let Some(&o) = overlapping(g, q).first() {
                     g.apply(Cmd::Merge(q as u8, o as u8));
                 }
             }

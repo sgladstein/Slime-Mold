@@ -48,6 +48,7 @@ impl<W: World> Game<W> {
             if !self.soldiers[k].alive {
                 continue;
             }
+            let was = (self.soldiers[k].x, self.soldiers[k].y);
             self.walk(k, dt);
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
@@ -93,7 +94,7 @@ impl<W: World> Game<W> {
                     // From its rim (`Rules::crystal_solid`), with the slot's room.
                     let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
                     if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
-                        take = (r.harvest * dt).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
+                        take = (r.harvest * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
                 }
@@ -104,6 +105,7 @@ impl<W: World> Game<W> {
             // nothing else; the others fire on their own clocks.
             let volley = self.volley(k, t);
             let firing = self.squads[q].fire.is_some();
+            let mut shot = false;
             if (volley.is_some() || (!firing && s.ready <= t)) && self.bank >= r.price {
                 let aim = if firing { volley } else { self.target(k) };
                 if let Some(at) = aim {
@@ -119,7 +121,11 @@ impl<W: World> Game<W> {
                         }
                         shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: strike });
                         shooters.push(Some(k));
-                        self.soldiers[k].ready = t + self.shot_gap(q);
+                        // A worker of a squad shoots less often (`CoverRules::work_fire`).
+                        let gap = self.shot_gap(q);
+                        let gap = if r.squads && self.working(k) { ((gap as f32 / r.cover.work_fire.max(0.01)).round() as u64).max(1) } else { gap };
+                        self.soldiers[k].ready = t + gap;
+                        shot = true;
                         self.bank -= r.price;
                         self.spent += r.price;
                     }
@@ -139,6 +145,8 @@ impl<W: World> Game<W> {
             });
             who.push(Who::Soldier(k));
             from.push(at_crystal);
+            let s = self.soldiers[k];
+            self.heal(k, (s.x - was.0).hypot(s.y - was.1), shot, dt);
         }
         self.volley_done(t);
         // The player's own mould's gardeners (`own_mould`; nothing here
@@ -280,6 +288,7 @@ impl<W: World> Game<W> {
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
             self.guard_pay();
+            self.cover_turn();
             self.count_stuck();
             self.check_broken();
             self.keep_panic_reach();

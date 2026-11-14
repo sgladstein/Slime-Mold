@@ -1540,6 +1540,12 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Merge(0, 5),
         Cmd::Active(2),
         Cmd::Formation(1, Formation::Wedge),
+        Cmd::SquadQueue(2, Order::Move(1.5, 2.5)),
+        Cmd::SquadQueue(0, Order::Build(3)),
+        Cmd::Link(0, 3),
+        Cmd::Unlink(3),
+        Cmd::Cover(1, Cover::More),
+        Cmd::Cover(1, Cover::Never),
     ];
     for c in cs {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
@@ -2100,4 +2106,174 @@ fn a_squad_sent_past_a_dead_end_goes_round_it() {
     }
     assert!(tried.len() >= 2, "the cup stood on too few seeds: {tried:?}");
     assert!(tried.iter().all(|&(_, best)| best < 6.0), "(seed, nearest the squad came in cells): {tried:?}");
+}
+
+/// Open ground `d` dish cells from squad 0's middle.
+fn open_near(g: &Game<BigDish>, d: f32) -> (f32, f32) {
+    let m = g.middle(0).unwrap();
+    let sc = g.s();
+    (0..64)
+        .map(|i| i as f32 / 64.0 * std::f32::consts::TAU)
+        .map(|a| (m.0 + d * sc * a.cos(), m.1 + d * sc * a.sin()))
+        .find(|&p| g.standable(p.0, p.1) && g.solid_at(p).is_none())
+        .expect("open ground")
+}
+
+#[test]
+fn a_squad_does_its_queued_orders_in_turn() {
+    let mut g = squads(7);
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    off_the_crystal(&mut g);
+    let a = open_near(&g, 14.0);
+    let b = open_near(&g, 26.0);
+    g.apply(Cmd::SquadOrder(0, Order::Move(a.0, a.1)));
+    assert!(g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1))));
+    assert_eq!(g.squads[0].queued, 1);
+    let mut went_a = false;
+    for _ in 0..16 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+        let m = g.middle(0).unwrap();
+        went_a |= (m.0 - a.0).hypot(m.1 - a.1) < 3.0 * g.s();
+    }
+    let m = g.middle(0).unwrap();
+    assert!(went_a, "the squad never reached its first point");
+    assert_eq!(g.squads[0].queued, 0, "the queued move started");
+    assert!((m.0 - b.0).hypot(m.1 - b.1) < 4.0 * g.s(), "the squad stands {} cells from its queued point", (m.0 - b.0).hypot(m.1 - b.1) / g.s());
+    // A plain order drops the queue; an idle squad starts a queued one at once.
+    g.apply(Cmd::SquadQueue(0, Order::Move(a.0, a.1)));
+    assert_eq!((g.squads[0].queued, g.squads[0].dest), (0, Some(a)));
+    g.apply(Cmd::SquadQueue(0, Order::Move(b.0, b.1)));
+    g.apply(Cmd::SquadOrder(0, Order::Move(a.0, a.1)));
+    assert_eq!(g.squads[0].queued, 0);
+}
+
+#[test]
+fn linked_squads_take_orders_together_and_keep_their_own_settings() {
+    let mut g = squads(8);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let b = g.active.unwrap();
+    assert_eq!(g.squads[b].link, NO_LINK, "a split half starts unlinked");
+    assert!(!g.leads(0), "the half left behind has no lead edge");
+    assert!(g.apply(Cmd::Link(b as u8, 0)));
+    assert_eq!(g.linked(0), vec![0, b]);
+    assert!(g.leads(0), "linked with the controlled squad: the lead's edge");
+    // Settings stay each squad's own.
+    g.apply(Cmd::Formation(0, Formation::Line));
+    g.apply(Cmd::Cover(b as u8, Cover::Never));
+    assert_eq!((g.squads[0].formation, g.squads[b].formation), (Formation::Line, Formation::Blob));
+    assert_eq!((g.squads[0].cover, g.squads[b].cover), (Cover::Some, Cover::Never));
+    // One order moves both, each by where it stands in the link.
+    let (m0, mb) = (g.middle(0).unwrap(), g.middle(b).unwrap());
+    let to = open_near(&g, 20.0);
+    g.apply(Cmd::SquadOrder(b as u8, Order::Move(to.0, to.1)));
+    let (d0, db) = (g.squads[0].dest.unwrap(), g.squads[b].dest.unwrap());
+    let apart = |p: (f32, f32), q: (f32, f32)| (p.0 - q.0, p.1 - q.1);
+    let (was, now) = (apart(m0, mb), apart(d0, db));
+    assert!((was.0 - now.0).abs() < 1e-3 && (was.1 - now.1).abs() < 1e-3, "the link keeps its shape: {was:?} then {now:?}");
+    g.apply(Cmd::Steer(0, (1.0, 0.0)));
+    assert_eq!(g.squads[b].steer, (1.0, 0.0), "steering one steers its link");
+    g.apply(Cmd::Steer(0, (0.0, 0.0)));
+    // A link is commanded as one: no picking a squad inside it.
+    assert!(!g.apply(Cmd::Active(0)));
+    assert_eq!(g.active, Some(b));
+    // Unlinked, an order moves one only.
+    assert!(g.apply(Cmd::Unlink(0)));
+    assert!(g.apply(Cmd::Active(0)), "unlinked, it can be commanded alone");
+    assert_eq!((g.squads[0].link, g.squads[b].link), (NO_LINK, NO_LINK));
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    assert_eq!(g.squads[0].dest, Some(to));
+    assert_ne!(g.squads[b].dest, Some(to));
+}
+
+#[test]
+fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower() {
+    let mut g = no_larder(9);
+    g.bank = 1e6;
+    while g.members(0).len() < 8 {
+        assert!(g.apply(Cmd::Buy));
+    }
+    let (_, c) = near_crystal(&g);
+    let n = g.members(0).len();
+    assert_eq!(n, 8);
+    // Any slime counts as near (the dish's own may be far from this crystal).
+    g.rules.cover.near = 0;
+    g.apply(Cmd::SquadOrder(0, Order::Clear(c.0, c.1)));
+    assert_eq!(g.squads[0].work, Some(Order::Clear(c.0, c.1)));
+    let guards = |g: &Game<BigDish>| g.members(0).into_iter().filter(|&k| g.soldiers[k].cover).count();
+    assert_eq!(guards(&g), 3, "a third of 8 on guard");
+    for k in g.members(0) {
+        let s = g.soldiers[k];
+        assert_eq!(s.cover, matches!(s.order, Order::Fight(..) | Order::Move(..)), "a defender walks to its post and fights there, a worker drains");
+    }
+    let worker = g.members(0).into_iter().find(|&k| !g.soldiers[k].cover).unwrap();
+    let boost = g.work_boost(worker);
+    // 8 x (1 - 0.6 x 3/8) / 5: the squad's rate falls 22.5%, not 37.5%.
+    assert!((boost - 1.24).abs() < 1e-4, "workers' boost {boost}");
+    g.apply(Cmd::Cover(0, Cover::More));
+    assert_eq!(guards(&g), 4);
+    g.apply(Cmd::Cover(0, Cover::Never));
+    assert_eq!(guards(&g), 0);
+    assert_eq!(g.work_boost(worker), 1.0);
+    // With nothing near (the default threshold, set out of reach), nobody guards.
+    g.apply(Cmd::Cover(0, Cover::Some));
+    assert_eq!(guards(&g), 3);
+    g.rules.cover.near = u32::MAX;
+    g.apply(Cmd::Cover(0, Cover::Some));
+    assert_eq!(guards(&g), 0, "no slime near: everyone works");
+    // Defenders never stand in thick slime: a post has at most `thin` walkers by it.
+    g.rules.cover.near = 0;
+    g.apply(Cmd::Cover(0, Cover::Some));
+    for k in g.members(0).into_iter().filter(|&k| g.soldiers[k].cover) {
+        let (Order::Fight(x, y) | Order::Move(x, y)) = g.soldiers[k].order else { unreachable!() };
+        assert!(g.world.walkers_in((x, y), 2.0 * g.s()) <= g.rules.cover.thin.max(g.world.walkers_in(c, 2.0 * g.s())), "a post in the slime");
+    }
+    // Sent elsewhere, the work ends and the defenders come in.
+    let to = open_near(&g, 20.0);
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    assert_eq!(g.squads[0].work, None);
+    assert_eq!(guards(&g), 0);
+}
+
+#[test]
+fn a_resting_soldier_by_a_held_crystal_heals_for_food() {
+    let run = |rate: f32| {
+        let mut g = no_larder(10);
+        g.rules.heal.rate = rate;
+        g.rules.heal.away = 0.0;
+        g.bank = 1000.0;
+        let k = g.members(0)[0];
+        g.soldiers[k].hp = 50.0;
+        for _ in 0..10 * g.rules.tps / g.rules.frame_ticks {
+            g.step();
+        }
+        (g.soldiers[k].hp, g.healed, g.guarded.len())
+    };
+    let (hp, healed, held) = run(HealRules::default().rate);
+    let (hp0, healed0, _) = run(0.0);
+    eprintln!("healing: hp {hp} (off {hp0}), healed {healed}, crystals held {held}");
+    assert!(held > 0, "the squad holds the crystal it starts round");
+    assert_eq!((hp0, healed0), (50.0, 0.0), "no healing with the rate at 0");
+    assert!(hp > 80.0, "rested 10 s by a held crystal: {hp} hp");
+    assert!(healed > 30.0);
+    // Away from a held crystal, a sixth as fast.
+    let mut g = no_larder(10);
+    g.guarded.clear();
+    g.rules.guard = 0.0;
+    g.bank = 1000.0;
+    let k = g.members(0)[0];
+    g.soldiers[k].hp = 50.0;
+    for _ in 0..10 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let hp = g.soldiers[k].hp;
+    assert!(g.guarded.is_empty());
+    assert!(hp > 55.0 && hp < 70.0, "rested 10 s away from a held crystal: {hp} hp");
 }
