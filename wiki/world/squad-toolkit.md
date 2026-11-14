@@ -16,6 +16,7 @@ sources:
   - Reports/rolled-bullets-2026-11-14.md
   - Reports/rounds-2026-11-12.md
   - Reports/rounds-look-2026-11-14/index.html
+  - Reports/shot-lights-2026-11-14.md
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
@@ -150,7 +151,9 @@ which cards"; at the toolkit's prices eight soldiers on gas and blast spent a 2,
 leaning the rolls) and damage plus 0.25-4x speed, range and spread multipliers, each its own normal draw; damage
 scales the strike's and the burst's radius as its square root (`Ammo::reach`); its cost (shell base × grade^1.5 ×
 luck) comes out of the gun's budget. `Ammo::roll(seed, depth)` is the shop's roll; the old payload cards and
-`Card::Plain` are the standard bullets.
+`Card::Plain` are the standard bullets. A shot's lights (`SHOT_LIGHT`, 2.5 cells; a burst 1.5 radii) were cut
+from 7 cells a bullet after the owner's 20:09Z playtest ("each bullet that hit has a huge wave that goes out. it
+is too much"; [report](../../Reports/shot-lights-2026-11-14.md)).
 The `range` flight card (11-14 08:39Z, owner's ask) stretches every soldier's sight and
 reach by `Rules::range_card` (1 of `Rules::range` a copy since the 15:06Z notes' "2-4x
 distance", was 0.5), through `Game::gun_range`: 48 cells with one, 72 with two; building

@@ -619,6 +619,10 @@ impl World for Garden {
         World::open(&self.dish, x, y)
     }
 
+    fn clear(&self, x: f32, y: f32) -> bool {
+        World::clear(&self.dish, x, y)
+    }
+
     /// The enemy's births stop (its cap goes to 0); the player's mould
     /// keeps growing.
     fn stop_births(&mut self) {

@@ -2293,6 +2293,80 @@ fn a_resting_soldier_by_a_held_crystal_heals_for_food() {
     assert!(hp > 55.0 && hp < 70.0, "rested 10 s away from a held crystal: {hp} hp");
 }
 
+/// Deep water (new ground kinds, 2026-11-14): no soldier stands in it, so
+/// one sent across the river walks round to the ford and never sets foot
+/// in the deep; shots fly over it; a bridge carries soldiers too.
+#[test]
+fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
+    for (ford, bridge, lane) in [(true, false, (280.0, 360.0)), (false, true, (440.0, 472.0))] {
+        let m = crate::mould::map::river(ford, bridge);
+        let mut g = Game::new(
+            BigDish::with_map(race_params(1, 2, 500), &m),
+            Rules {
+                build: BuildRules {
+                    raise: 0.0,
+                    ..BuildRules::default()
+                },
+                ..Rules::default()
+            },
+            1,
+        );
+        // Map cells to fine cells at scale 2.
+        let f = |p: (f32, f32)| (p.0 / 2.0, p.1 / 2.0);
+        let (deep, west, east) = (f((510.0, 100.0)), f((400.0, 520.0)), f((640.0, 520.0)));
+        assert!(
+            !g.world.open(deep.0, deep.1) && g.world.clear(deep.0, deep.1),
+            "deep water: no ground, but clear to fire over"
+        );
+        assert!(
+            g.clear_line(west, east) && !g.walk_line(west, east),
+            "a shot crosses the river, a soldier can't walk it"
+        );
+        // A bullet across the river flies its whole leg.
+        g.bullets.clear();
+        let (legs, _) = g.fly(
+            vec![ShotIn {
+                from: west,
+                to: east,
+                r: 1.0,
+            }],
+            &[(Some(0), 0)],
+            10.0,
+        );
+        assert_eq!(legs[0].to, east, "the bullet flew over the water");
+        g.soldiers[0].x = west.0;
+        g.soldiers[0].y = west.1;
+        g.soldiers[0].order = Order::Move(east.0, east.1);
+        let dt = 1.0 / g.rules.tps as f32;
+        let mut crossed_at = None;
+        for _ in 0..(120 * g.rules.tps) {
+            g.walk(0, dt);
+            let s = g.soldiers[0];
+            assert!(g.world.open(s.x, s.y), "soldier in deep water at ({}, {})", s.x, s.y);
+            if crossed_at.is_none() && s.x >= 240.0 && s.x < 272.0 {
+                crossed_at = Some(s.y * 2.0);
+            }
+            if (s.x - east.0).hypot(s.y - east.1) < 2.0 {
+                break;
+            }
+        }
+        let s = g.soldiers[0];
+        assert!(
+            (s.x - east.0).hypot(s.y - east.1) < 2.0,
+            "ford {ford} bridge {bridge}: the soldier got across, at ({}, {})",
+            s.x,
+            s.y
+        );
+        let y = crossed_at.expect("it crossed the river");
+        assert!(
+            y >= lane.0 && y < lane.1,
+            "crossed at map y {y}, not on the ford or bridge {lane:?}"
+        );
+        // No building in deep water.
+        assert!(!g.world.open(deep.0, deep.1));
+    }
+}
+
 // Guns (owner 2026-11-14 16:46Z: "The squad owns the gun. Each gun defines
 // the budget and slot count and range, spread, rate of fire as actual
 // numbers").

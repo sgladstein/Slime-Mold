@@ -324,10 +324,11 @@ impl<W: World> Game<W> {
         squad::path(w, h, a, b).into_iter().all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
     }
 
-    /// Whether every cell on the line from `a` to `b` is open ground.
+    /// Whether every cell on the line from `a` to `b` is clear to fire
+    /// across (`World::clear`: open ground or deep water).
     pub fn clear_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
         let (w, h) = self.world.size();
-        squad::path(w, h, a, b).into_iter().all(|i| self.world.open((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+        squad::path(w, h, a, b).into_iter().all(|i| self.world.clear((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
     }
 
     /// Walk soldier `k` toward its goal for `dt` game seconds: straight

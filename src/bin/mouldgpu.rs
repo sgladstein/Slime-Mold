@@ -2081,7 +2081,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE, SOIL_BARREN, SOIL_CLAY, SOIL_SAND};
+    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE, SOIL_BARREN, SOIL_CLAY, SOIL_DEEP, SOIL_SAND};
     use slime_mould::mould::tiers::Tier;
 
     #[test]
@@ -3631,12 +3631,14 @@ mod tests {
                 }
             }
         };
-        // Soil in four bands across the dish, sand, clay, barren and plain,
-        // laid before the warm-up (the inject carries it to the GPU).
+        // Soil in five bands across the dish, sand, clay, barren, deep
+        // water (wet too, as a map writes it) and plain, laid before the
+        // warm-up (the inject carries it to the GPU).
         let soil: Build = |cpu, t| {
             if t == 0 {
                 let w = cpu.w;
-                cpu.soil = (0..w * cpu.h).map(|i| [SOIL_SAND, SOIL_CLAY, SOIL_BARREN, 0][(i % w) * 4 / w]).collect();
+                cpu.soil = (0..w * cpu.h).map(|i| [SOIL_SAND, SOIL_CLAY, SOIL_BARREN, SOIL_DEEP, 0][(i % w) * 5 / w]).collect();
+                cpu.wet = cpu.soil.iter().map(|&k| k == SOIL_DEEP).collect();
             }
         };
         let none: Build = |_, _| {};
@@ -3865,8 +3867,8 @@ mod tests {
             }
             if !cpu.soil.is_empty() {
                 let on = |k: u8| (0..n).filter(|&q| cpu.lives(q) && cpu.soil[cpu.walkers[q].1 as usize * cpu.w + cpu.walkers[q].0 as usize] == k).count();
-                let kinds = [on(SOIL_SAND), on(SOIL_CLAY), on(SOIL_BARREN), on(0)];
-                eprintln!("{name}: living walkers on sand, clay, barren, plain {kinds:?}; {births} born in the tick");
+                let kinds = [on(SOIL_SAND), on(SOIL_CLAY), on(SOIL_BARREN), on(SOIL_DEEP), on(0)];
+                eprintln!("{name}: living walkers on sand, clay, barren, deep water, plain {kinds:?}; {births} born in the tick");
                 assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
                 assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
             }

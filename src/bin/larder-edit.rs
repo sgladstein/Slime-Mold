@@ -204,6 +204,8 @@ impl App {
             KeyCode::Digit4 => Some(Tool::Paint(Brush::Barren)),
             KeyCode::Digit5 => Some(Tool::Paint(Brush::Rock)),
             KeyCode::Digit6 => Some(Tool::Paint(Brush::Wet)),
+            KeyCode::Digit7 => Some(Tool::Paint(Brush::Deep)),
+            KeyCode::Digit8 => Some(Tool::Paint(Brush::Bridge)),
             KeyCode::KeyC => Some(Tool::Crystal),
             KeyCode::KeyM => Some(Tool::Mould),
             KeyCode::KeyL => Some(Tool::Landing),

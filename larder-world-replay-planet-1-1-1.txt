@@ -1,0 +1,2 @@
+larderworld replay seed 1 end 0
+0 arm 0 rifle 1 24 1 0 1 10 4 1

@@ -51,7 +51,7 @@ impl<W: World> Game<W> {
             for j in 1..=n {
                 let t = (j as f32).min(len);
                 let p = (b.at.0 + b.dir.0 * t, b.at.1 + b.dir.1 * t);
-                if !self.world.open(p.0, p.1) {
+                if !self.world.clear(p.0, p.1) {
                     to = p;
                     // Nothing left past the wall: the leg ends on it and
                     // the bullet with it (`landed`).

@@ -1,0 +1,72 @@
+<title>River Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+</style>
+
+
+<div class="wrap">
+  <div class="lede">
+    <span class="tag">Larder World · River map (#285) and Fen (#289) · seed 1 · llvmpipe · 2026-11-14</span>
+    <h1>The river look</h1>
+    <p>Deep water now deepens toward its middle. A shallow margin shows the bed at its edge, and a thin waterline and damp bank run along the shore. A bridge is a plank deck, with rails and posts, a lit edge and a shadow on the water. All water is a clear step darker than the ground, so lakes and rivers read as hollows even in a grey thumbnail. Soft rock is down to a warm mid-grey, under the slime. Everything is drawn from each cell's ground kind, with no painted line.</p>
+    <p class="muted">Before is the ground kinds thread's own build of the new River map. After is the same build with this change. The map's shape (channel, margin, banks, fords, pond, creek) is theirs.</p>
+  </div>
+
+  <section>
+    <h2>River at zoom 6</h2>
+    <div class="pair">
+      <figure><img src="river-old-z6.gif" alt="Before: flat blue river, grey bridge strip"><figcaption>Before: one flat blue, and the bridge is a pale strip</figcaption></figure>
+      <figure><img src="river-new-z6.gif" alt="After: deep dark channel, shallow margin, plank bridge"><figcaption>After: dark deep channel, lighter shallows at the banks, plank bridge with rails</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>River at zoom 12: the bridge and the shore</h2>
+    <div class="pair">
+      <figure><img src="river-old-z12.gif" alt="Before at zoom 12"><figcaption>Before</figcaption></figure>
+      <figure><img src="river-new-z12.gif" alt="After at zoom 12"><figcaption>After: planks laid across the way over, lit rail on the light side, the deck's shadow on the water, waterline and damp sand at the shore</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Water darker than ground (art lead's note on the round 3 planets)</h2>
+    <div class="pair">
+      <figure><img src="fen-old-z6.gif" alt="Fen before"><figcaption>Fen before: water close to the ground's value</figcaption></figure>
+      <figure><img src="fen-new-z6.gif" alt="Fen after"><figcaption>Fen after: water a clear step darker, with a lit shore</figcaption></figure>
+    </div>
+    <p>Grey thumbnails, 266 x 164. Top row: Meadow, Barrens, Fen, Valley. Bottom row: Jungle, Highlands, Caves, Core.</p>
+    <figure><img src="thumbs-old.png" alt="Round 3 planets before, grey"><figcaption>Before</figcaption></figure>
+    <figure><img src="thumbs-new.png" alt="Round 3 planets after, grey"><figcaption>After: Fen's lakes, the Valley's river and Meadow's streams read as dark hollows, and Jungle's hedges sit under the slime</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Cost</h2>
+    <p>On llvmpipe (River, bench 8 s, idle hand, 1280 x 800, GPU tail p50), it goes from about 82 ms to about 94.5 ms, roughly +12.5 ms. The first cut was +20 ms; the depth rings now use fixed offsets and fewer points, and the shore work is skipped inside the water. Turning soil detail off altogether puts this map at 78 ms, so the ground's texture is about 16 ms of the frame here. It hasn't been timed on the GTX 1070 yet.</p>
+    <p class="muted">Tried and dropped: glitter streaks (they read as rain), noise flecks (they read as angular chips), and a raised deck height (it faded the wood to grey).</p>
+  </section>
+</div>
