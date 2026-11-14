@@ -1,0 +1,45 @@
+== larder-world bench=3 map=planet:1:1 seed=1
+larder-world machine at the start: RAM 15.0 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:1:1 seed 1, 400 x 248 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 71.6 MB for 400 x 248 cells (722 bytes a cell), the biggest 8.4 MB
+  180 frames, 45 game steps; 0.04 read-backs a step, 0.04 waits a step (0.71 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 78.21 p95 98.03 max 110.94; step  p50 0.14 p95 0.85 max 21.57; prepare  p50 0.20 p95 0.35 max 2.71; record  p50 0.27 p95 15.38 max 26.78; GPU tail  p50 70.67 p95 85.13 max 109.19
+  frames with a step (45 of them), ms: frame p50 85.47 p95 102.91 max 105.56; step  p50 0.68 p95 14.29 max 21.57; prepare  p50 0.18 p95 0.35 max 0.92; record  p50 11.69 p95 17.74 max 22.32; GPU tail  p50 70.67 p95 81.28 max 86.87
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+== larder-world bench=3 map=planet:3:1 seed=1
+larder-world machine at the start: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:3:1 seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 84.1 MB for 512 x 320 cells (514 bytes a cell), the biggest 8.4 MB
+  180 frames, 45 game steps; 0.04 read-backs a step, 0.04 waits a step (0.94 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 82.40 p95 107.15 max 133.20; step  p50 0.14 p95 1.03 max 37.99; prepare  p50 0.21 p95 0.58 max 4.18; record  p50 1.24 p95 18.06 max 25.87; GPU tail  p50 74.21 p95 91.19 max 106.53
+  frames with a step (45 of them), ms: frame p50 90.78 p95 114.63 max 133.20; step  p50 0.75 p95 16.58 max 37.99; prepare  p50 0.17 p95 0.61 max 4.18; record  p50 14.78 p95 19.16 max 25.87; GPU tail  p50 73.36 p95 91.77 max 98.83
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+== larder-world bench=3 map=planet:5:1:2 seed=1
+larder-world machine at the start: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:5:1:2 seed 1, 728 x 456 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 116.6 MB for 728 x 456 cells (351 bytes a cell), the biggest 8.4 MB
+  180 frames, 45 game steps; 0.09 read-backs a step, 0.04 waits a step (1.71 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 83.52 p95 113.25 max 180.36; step  p50 0.16 p95 0.89 max 78.94; prepare  p50 0.20 p95 0.31 max 8.69; record  p50 0.28 p95 29.30 max 41.15; GPU tail  p50 71.37 p95 86.56 max 127.61
+  frames with a step (45 of them), ms: frame p50 98.15 p95 126.19 max 180.36; step  p50 0.73 p95 2.89 max 78.94; prepare  p50 0.18 p95 0.59 max 1.02; record  p50 24.02 p95 31.86 max 41.15; GPU tail  p50 70.83 p95 89.60 max 93.46
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+== larder-world bench=3 map=planet:7:1:4 seed=1
+larder-world machine at the start: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:7:1:4 seed 1, 1024 x 640 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 179.1 MB for 1024 x 640 cells (273 bytes a cell), the biggest 11.1 MB
+  180 frames, 45 game steps; 0.09 read-backs a step, 0.04 waits a step (3.16 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 93.92 p95 135.60 max 343.12; step  p50 0.17 p95 1.07 max 220.34; prepare  p50 0.21 p95 0.39 max 30.08; record  p50 0.30 p95 49.93 max 61.33; GPU tail  p50 80.15 p95 91.27 max 123.89
+  frames with a step (45 of them), ms: frame p50 122.83 p95 144.68 max 343.12; step  p50 0.82 p95 2.72 max 220.34; prepare  p50 0.19 p95 0.53 max 1.54; record  p50 40.37 p95 50.92 max 59.18; GPU tail  p50 80.88 p95 90.93 max 106.59
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+== larder-world bench=3 map=planet:8:1:6 seed=1
+larder-world machine at the start: RAM 15.1 GB free of 15.7; GPU memory and use unknown (no nvidia-smi); no list of the GPU's programs
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+larder-world bench: planet:8:1:6 seed 1, 1256 x 784 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand rush, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 234.9 MB for 1256 x 784 cells (239 bytes a cell), the biggest 16.4 MB
+  180 frames, 45 game steps; 0.09 read-backs a step, 0.04 waits a step (3.45 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 111.16 p95 151.82 max 399.47; step  p50 0.20 p95 1.05 max 244.26; prepare  p50 0.21 p95 0.48 max 28.48; record  p50 0.21 p95 65.95 max 78.73; GPU tail  p50 78.13 p95 89.82 max 112.04
+  frames with a step (45 of them), ms: frame p50 138.10 p95 160.84 max 399.47; step  p50 0.80 p95 2.11 max 244.26; prepare  p50 0.19 p95 0.48 max 1.28; record  p50 58.92 p95 69.07 max 78.73; GPU tail  p50 78.13 p95 89.61 max 97.60
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)

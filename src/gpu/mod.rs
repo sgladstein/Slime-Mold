@@ -1422,11 +1422,15 @@ impl Engine {
         let n = d.walkers.len() as u32;
         let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC;
         let buf = |label: &str, bytes: &[u8], usage: wgpu::BufferUsages| {
+            note_bytes(bytes.len().max(16) as u64);
             let b = dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.len().max(16) as u64, usage, mapped_at_creation: false });
             queue.write_buffer(&b, 0, bytes);
             b
         };
-        let zeros = |label: &str, bytes: usize| dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16) as u64, usage: storage, mapped_at_creation: false });
+        let zeros = |label: &str, bytes: usize| {
+            note_bytes(bytes.max(16) as u64);
+            dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16) as u64, usage: storage, mapped_at_creation: false })
+        };
         let params = buf("params", &[0u8; PARAMS_BYTES], wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
         let state = buf("state", &u32_bytes(&[0, 1f32.to_bits(), 0, 0]), storage);
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
@@ -2848,6 +2852,31 @@ thread_local! {
 /// test can say how often it waited on the GPU (`larder-world -- bench`).
 pub fn reads() -> usize {
     READS.with(|r| r.get())
+}
+
+thread_local! {
+    static BYTES: std::cell::Cell<(u64, u64)> = const { std::cell::Cell::new((0, 0)) };
+}
+
+/// Counts `n` bytes of a storage buffer made for the world (the engine's,
+/// the view's, the canvas's, the ground look's), for `buffer_bytes`.
+pub fn note_bytes(n: u64) {
+    BYTES.with(|b| b.set((b.get().0 + n, b.get().1.max(n))));
+}
+
+/// Bytes of the world's storage buffers this thread has made: the cell
+/// budget's measure as planets grow (levelgen report, *Bigger planets*;
+/// `larder-world -- bench` prints it). A count at creation, not an
+/// allocator report, which wgpu does not give on every backend; screen
+/// buffers and textures the size of the window are not in it.
+pub fn buffer_bytes() -> u64 {
+    BYTES.with(|b| b.get().0)
+}
+
+/// The biggest one of them, bytes: the buffer that meets the adapter's
+/// `max_storage_buffer_binding_size` first.
+pub fn biggest_buffer() -> u64 {
+    BYTES.with(|b| b.get().1)
 }
 
 /// `src` copied to a new staging buffer and waited for: it empties the
