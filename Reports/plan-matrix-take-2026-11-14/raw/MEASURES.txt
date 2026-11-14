@@ -1,0 +1,9 @@
+Take-specialty matrix. Named before the run (2026-11-14 05:47Z). Asked by the designer (04:27Z): each plan is take plus one specialty, so "best somewhere" says which specialty wins on which tier. One more C-plus-tiers run at today's size, then stop until the owner's playtest.
+Code: this commit (on main 30bf05e: #224 census-size C, #220 no rations, #213, #234). Specialties:
+  take_fort = take + 8 walls; take_boom = take from 10:00 once 36 stand; take_claim = take with 16 turrets and 4 kept farming; take_strike = take, then the core after 2 crystals taken.
+World: larderworld census at census size (no shape=/walkers=/scale=), race world, cap 900 s, seeds 301-308; plain C then drifter, sprawler, trunk, sporer, sleeper, swarmer, grudge.
+Hands: idle, random, strike, take, take_fort, take_boom, take_claim, take_strike.
+
+DECIDING MEASURE: per column, the best specialty by median vs plain take, paired by seed, sign test. The question is answered "specialties matter" if some specialty beats take on at least 6 of 8 seeds on at least 2 columns, and no one specialty is best on more than half the columns.
+Carried over: some plan wipes plain C on >= 4 of 8 (failed in #234); idle and random lose everywhere.
+Holm over each column's 4 specialty-vs-take tests (32 tests). A miss is a tuning note, not a veto.
