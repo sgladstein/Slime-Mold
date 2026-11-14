@@ -20,9 +20,12 @@ so it never pointed at what it shot, and only a small lamp lit when it fired.
 - **The shot kicks and lights.** For 0.16 s (`TURRET_SHOT`) the head kicks
   back along the barrels by up to 0.22 radii, the muzzle flash shows, and a
   light at the muzzle lights the ground, as a soldier's flash does.
-  Standing turrets are drawn after the bullets, so a turret's bullet (which
-  the game starts at its middle) comes out of the barrels instead of lying
-  over them. In ray mode the tracer starts at the muzzle.
+  The game now starts a turret's shot at its barrel tip
+  (`TURRET_MUZZLE`, 1.7 touch radii out along its aim, at most half the
+  way to the aim so mould at its foot is still hit; agreed with the gun
+  rounds thread, nothing in rounds keys on a shot's start), and standing
+  turrets are drawn after the bullets, so the bullet comes out of the
+  barrels. Test `a_turret_shot_leaves_from_its_barrel_tip`.
 - **State in the sprite.** A lamp on the head's back: dark when idle (no
   mould in reach), amber when tracking, red with the head greyed when the
   bank can't pay for a shot (`Rules::price`; shots are free by default, so
@@ -40,9 +43,10 @@ so it never pointed at what it shot, and only a small lamp lit when it fired.
 
 ## Tried and changed
 
-- The bullet streak first lay over the barrels: the game starts a turret's
-  bullet at its middle. Drawing the turret over the bullets fixed it
-  without moving the game's bullet.
+- The bullet streak first lay over the barrels: the game started a
+  turret's bullet at its middle. Drawing the turret over the bullets hid
+  it; the art director then asked for the shot to start at the barrel tip
+  in the game, which is in this PR too.
 - The muzzle light was first pushed before the frame clears its lights,
   so it never showed; it is now pushed with the turret after the bullets.
 

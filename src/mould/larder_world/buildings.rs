@@ -107,6 +107,11 @@ impl Building {
     }
 }
 
+/// How far out a turret's shot starts, in its touch radii: the tip of the
+/// barrels the window draws (`Marks::turret`, the head one touch radius
+/// with barrels to 1.7).
+pub const TURRET_MUZZLE: f32 = 1.7;
+
 /// The buildings' numbers. Distances in dish cells, times in game seconds,
 /// food from the bank, as `Rules`. First numbers for play, to be set by
 /// the census: a turret is a tougher, faster-firing soldier that cannot
@@ -394,7 +399,15 @@ impl<W: World> Game<W> {
                             let d = dx.hypot(dy).max(0.1);
                             let reach = b.turret_range * sc;
                             if d <= reach + 4.0 && self.clear_line(bd.at, aim) {
-                                shots.push(ShotIn { from: bd.at, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
+                                // From the barrel tip, not the turret's middle
+                                // (art director, 11-14: the drawn head's barrels
+                                // reach 1.7 touch radii), capped at half the way
+                                // to the aim so mould at its foot is still hit.
+                                // The line was checked clear from the middle,
+                                // which covers the barrel.
+                                let m = (TURRET_MUZZLE * b.touch * sc).min(0.5 * d);
+                                let from = (bd.at.0 + dx / d * m, bd.at.1 + dy / d * m);
+                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
                                 self.buildings[k].ready = t + self.secs(b.turret_every);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -591,6 +604,30 @@ mod tests {
         assert!(b.hp < b.max_hp || !b.alive, "the mould wore it: {} of {}", b.hp, b.max_hp);
         // Shots cost what a soldier's do.
         assert!((g.spent - g.rules.build.turret_cost - g.shots as f32 * g.rules.price).abs() < 1e-2);
+    }
+
+    #[test]
+    fn a_turret_shot_leaves_from_its_barrel_tip() {
+        // The window draws the barrels to `TURRET_MUZZLE` touch radii; the
+        // shot starts there (art director, 11-14), on the line to its aim,
+        // and never past half the way, so mould at its foot is still hit.
+        let mut g = small(1);
+        let at = open_near(&g, (g.core.0 + 10.0, g.core.1));
+        stand(&mut g, at);
+        g.soldiers[0].stance = Stance::HoldFire;
+        assert!(g.build(Kind::Turret, at));
+        let tip = TURRET_MUZZLE * g.rules.build.touch * g.s();
+        let mut seen = 0;
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+            for s in g.turret_shots().filter(|s| s.fired) {
+                let out = (s.from.0 - at.0).hypot(s.from.1 - at.1);
+                let along = ((s.from.0 - at.0) * (s.to.0 - at.0) + (s.from.1 - at.1) * (s.to.1 - at.1)) / ((s.to.0 - at.0).hypot(s.to.1 - at.1) * out.max(1e-6));
+                assert!(out <= tip + 1e-3 && out > 0.0 && along > 0.999, "from {out} out (tip {tip}), along {along}");
+                seen += 1;
+            }
+        }
+        assert!(seen > 3, "{seen} turret shots");
     }
 
     #[test]

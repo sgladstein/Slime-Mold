@@ -131,7 +131,7 @@ use slime_mould::mould::own_mould::Task;
 use slime_mould::gpu::{block_on, read_back};
 use slime_mould::mould::kit::{Kit, KitRules, Tool};
 use slime_mould::mould::rounds::{self, RoundRules, Rounds};
-use slime_mould::mould::larder_world::{Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::map::Map;
 use slime_mould::mould::tiers::Tier;

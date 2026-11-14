@@ -405,9 +405,10 @@ impl App {
             }
             self.lights.push(Light { at: b.at, reach: 7.0 * sc * wide, lift: 3.0, colour: look.light, strength: if quiet { 0.35 } else { 0.9 } });
         }
-        // Turrets over the bullets, so a shot leaves from inside the
-        // barrels rather than lying over them (turret look, 11-14: a turret's
-        // bullet starts at its middle, the game's place for it).
+        // Turrets over the bullets, so a shot leaving the barrel tip
+        // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
+        // out of the barrels rather than lying over them (turret look,
+        // 11-14).
         for (k, half) in turrets {
             turret_mark(&mut self.marks, &mut self.lights, &self.turrets, g, k, half);
             let b = &g.buildings[k];

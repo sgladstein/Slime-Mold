@@ -68,7 +68,7 @@ pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, SQUADS_MAX};
-pub use buildings::{BuildRules, Building, Kind};
+pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
 use buildings::Who;
 
 use super::big::{BigDish, BigParams, LIFE_DEAD};

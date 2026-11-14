@@ -358,17 +358,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
     for s in &g.last_shots {
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
-        // A turret's first leg leaves from its muzzle, not its middle, so
-        // the streak doesn't lie over its barrels (turret look, 11-14; the
-        // muzzle as `draw` puts it, 1.8 of the turret's drawn radius out).
-        let mut from = s.from;
-        if s.by.is_none() && s.fired {
-            let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
-            let (d, m) = (dx.hypot(dy), 1.8 * g.rules.build.touch * g.world.scale());
-            if d > m {
-                from = (s.from.0 + dx / d * m, s.from.1 + dy / d * m);
-            }
-        }
+        let from = s.from;
         tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0 });
         if !s.fired {
             continue;
@@ -405,7 +395,10 @@ fn join_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<TurretLook>) {
 pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<TurretLook>) {
     join_turrets(g, turrets);
     for s in g.turret_shots().filter(|s| s.fired) {
-        if let Some(k) = g.buildings.iter().position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < 0.5) {
+        // The game starts a turret's shot at its barrel tip
+        // (`TURRET_MUZZLE` touch radii out, less for mould at its foot).
+        let tip = TURRET_MUZZLE * g.rules.build.touch * g.world.scale() + 0.5;
+        if let Some(k) = g.buildings.iter().position(|b| b.kind == Kind::Turret && b.alive && (b.at.0 - s.from.0).hypot(b.at.1 - s.from.1) < tip) {
             turrets[k] = TurretLook { facing: (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), shot: TURRET_SHOT };
         }
     }
