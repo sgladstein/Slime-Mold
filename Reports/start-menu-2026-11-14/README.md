@@ -27,7 +27,7 @@ Page: https://claude.ai/artifact/C6wF9cqX9EVFPQLnUAyVhS (source `page/`).
   plain. Values given on the command line with `menu=1` are the presets.
   An option at its default adds nothing to the round, so a mission keeps
   its own mould unless one is moved. Rounds lists only loadouts the GPU
-  world can cast (no gas or germ yet, as H skips them).
+  world can cast (no germ yet, as H skips them; gas since #211).
 - **In play**: F1 or ? opens the HUD's controls page and pauses; again, or
   Esc, goes back to play. The Esc menu and the end screen have **Main
   menu** (`MenuItem::MainMenu`), which saves the replay and returns to the
