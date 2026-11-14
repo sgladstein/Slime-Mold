@@ -214,16 +214,16 @@ fn plant_cover(d: f32) -> f32 { return 1.0 - exp(-3.0 * d); }
 // black spots the owner already asked about in the mould.
 const CHAR_RGB: vec3<f32> = vec3<f32>(40.0, 35.0, 30.0);
 // The plants round cell (ix, iy) through a 3 x 3 Gaussian (1 2 1): their
-// cover, their colour (weighted by density) and the fire's heat. The
+// cover and their colour (weighted by density). The
 // graphics lead's review (11-14 18:20Z): read cell by cell, plant edges
-// were stair-stepped at the cell and the fire a one-cell stroke; the
+// were stair-stepped at the cell; the
 // prep's bilinear blend between cells only ramped each step over a cell.
-// Blurred, an edge is a soft curve and the fire a halo. The density is
+// Blurred, an edge is a soft curve. The density is
 // blurred before the cover's curve, so a lone dense cell stays faint.
-struct PlantLook { rgb: vec3<f32>, cover: f32, heat: f32 }
+struct PlantLook { rgb: vec3<f32>, cover: f32 }
 fn plant_look(ix: i32, iy: i32) -> PlantLook {
     var o: PlantLook;
-    o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.heat = 0.0;
+    o.rgb = vec3<f32>(0.0); o.cover = 0.0;
     if (P.plant_at == 0u) { return o; }
     var d = 0.0;
     var c = vec3<f32>(0.0);
@@ -238,54 +238,52 @@ fn plant_look(ix: i32, iy: i32) -> PlantLook {
             d += w * pd;
             c += w * pd * plant_rgb(plant_k(j));
             cw += w * pd;
-            o.heat += w * plant_heat(j);
         }
     }
     o.cover = plant_cover(d);
     o.rgb = c / max(cw, 1e-4);
     return o;
 }
-// Flame from fire's heat: deep ember to orange to yellow-white (no pure
-// red: red is the bolting walkers').
-// The colour goes by heat^1.5, so most of a front is ember to orange and
-// only heat near 1 turns yellow, capped below the slime's own highlight
-// (graphics lead's review 18:20Z: a yellow-white ribbon competed with the
-// slime's gold; before that a white line).
-// Most of a band is orange (luminance about 120, under the slime's
-// highlight and the soldiers' and bullets' light); yellow only over heat
-// 0.9, the fresh front (the engine's heat follows the fuel left, so the
-// front is hottest and the inside dims to embers). Graphics lead 11-14
-// 20:10Z: with yellow from 0.7 the band read near white in grey.
-fn flame(h: f32) -> vec3<f32> {
-    let ember = vec3<f32>(100.0, 30.0, 8.0);
-    let orange = vec3<f32>(215.0, 92.0, 20.0);
-    let yellow = vec3<f32>(245.0, 160.0, 55.0);
-    let k = pow(clamp(h, 0.0, 1.0), 1.5);
-    return select(mix(orange, yellow, (k - 0.85) / 0.15), mix(ember, orange, k / 0.85), k < 0.85) * smoothstep(0.0, 0.15, h);
-}
-
-// The flames' body from the smooth heat: a steep rise from heat 0.2 to
-// 0.3, so at the owner's deep zoom (24 px a cell; 11-14 20:21Z: "the fire
-// is blurry. The assumption should be that I am playing zoomed in") each
-// flame has a crisp edge, the B-spline's round lumps read as tongues, and
-// the colour inside still follows the heat. Below 0.2 only the halo's
-// spill shows (`cell_mat_c`), so embers glow dim and soft.
-// Three crisp layers by heat (contours of the one smooth field, each
-// edge 0.03 of heat wide, a pixel or two at zoom 24): deep red-orange from
-// 0.25, orange from 0.5, a yellow core over 0.8; the hottest is the
-// smallest. A wide smoothstep (0.2-0.3, the first cut) still read soft at
-// zoom 24 and the colours ran together.
+// The flames as light: one continuous blackbody ramp of the heat, so
+// every pixel has its own value. Graphics lead 11-14 21:01Z: three layers
+// with 0.03-wide steps (the deep-zoom cut of 20:40Z) read as lava or flat
+// paint, and a step on a field is a thresholded edge (owner, 2026-11-09/10).
+// The engine's heat follows the fuel left (flicker takes up to 35% off
+// each step), so the fresh front is hottest. Smoothed, a burning band's
+// heat sits mostly at 0.5-0.7 and maps to orange (luminance 100-140 with
+// the ground under it, below the slime's highlight); yellow toward 0.85,
+// near white only near 1, and the fading embers behind (heat * 0.95 a
+// step) fall to dull red. With orange at 0.75 the bulk read red and dim
+// (median luminance 82, 21:20Z cut).
+// Before: `flame` mapped heat^1.5 ember-orange-yellow with yellow from
+// 0.85, and the bulk read near white in grey (20:10Z review).
 fn flame_body(h: f32) -> vec3<f32> {
-    let red = vec3<f32>(165.0, 48.0, 14.0);
-    let orange = vec3<f32>(215.0, 92.0, 20.0);
-    let yellow = vec3<f32>(245.0, 160.0, 55.0);
-    var c = mix(red, orange, smoothstep(0.485, 0.515, h));
-    c = mix(c, yellow, smoothstep(0.785, 0.815, h));
-    return c;
+    let t = clamp(h, 0.0, 1.0);
+    let ember = vec3<f32>(60.0, 12.0, 3.0);
+    let red = vec3<f32>(160.0, 36.0, 8.0);
+    let orange = vec3<f32>(222.0, 96.0, 20.0);
+    let yellow = vec3<f32>(248.0, 172.0, 68.0);
+    let white = vec3<f32>(255.0, 232.0, 190.0);
+    if (t < 0.4) { return mix(ember, red, t / 0.4); }
+    if (t < 0.62) { return mix(red, orange, (t - 0.4) / 0.22); }
+    if (t < 0.85) { return mix(orange, yellow, (t - 0.62) / 0.23); }
+    return mix(yellow, white, smoothstep(0.85, 1.0, t));
 }
 
-// How much of a pixel the flames cover (their outer edge, `flame_body`).
-fn flame_cover(h: f32) -> f32 { return smoothstep(0.235, 0.265, h); }
+// How much the flame's body covers a pixel: a steep but continuous rise
+// over heat 0.12-0.2, so at the owner's deep zoom (24 px a cell; 11-14
+// 20:21Z: "the fire is blurry. The assumption should be that I am
+// playing zoomed in") the flames' edge is a few pixels wide and the
+// B-spline's lumps read as tongues. The cover from 0.08 to 0.38 (21:10Z
+// cut) read soft and blobby at zoom 12.
+fn flame_cover(h: f32) -> f32 { return smoothstep(0.12, 0.2, h); }
+
+// The warm light a fire spills on the ground and slime around it: the
+// same heat field's faint tail (the B-spline reaches about 2 cells past a
+// burning cell), added as light, never as a drawn halo.
+fn flame_spill(h: f32) -> vec3<f32> {
+    return vec3<f32>(120.0, 44.0, 10.0) * (0.55 * smoothstep(0.0, 0.2, h));
+}
 
 // Fire's heat at world point (`x`, `y`) in cells: the cubic B-spline of
 // the 4 x 4 cells round it, as `cells_height` samples the height.
@@ -785,17 +783,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // flicker and embers (`plants::Fire::flicker`, `ember`) show cell by
     // cell inside the glow (owner 11-14 19:26Z, "The fire should also look
     // better": with the halo alone a front read as a soft orange smear).
-    // Here the halo (3 x 3 Gaussian) only, dimmed; `prep` lays the heat
-    // itself over it, sampled with the slime height's cubic B-spline at the
-    // fine cell (graphics lead 11-14 20:10Z: nearest-cell heat showed the
-    // flicker as squares). The ground under a flame darkens toward ash, so
-    // the light is the glow alone: lit albedo plus glow saturated the band
-    // to near white in grey (same review).
-    let fh = pl.heat;
-    if (fh > 0.0) {
-        m.glow = max(m.glow, 0.4 * flame(fh));
-        m.albedo = mix(m.albedo, CHAR_RGB * 0.6, 0.6 * min(fh * 2.0, 1.0));
-    }
+    // Fire is drawn per pixel in `shaded` (`heat_at`, `flame_body`): a
+    // cell-level halo here (the 3 x 3 Gaussian, 18:20Z to 21:01Z) showed
+    // as stair-steps at zoom 12 once the flame was light, not paint.
     return m;
 }
 
@@ -1367,9 +1357,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // worked out in `prep` per fine cell it stair-stepped at the owner's
     // zoom 24 (11-14 20:21Z). Only where the halo glows (`m.glow`), so
     // the 16 heat reads are spent only near a fire.
-    if (P.plant_at != 0u && m.glow.x > 2.0) {
+    if (P.plant_at != 0u) {
+        // Emission over the darkened ground (graphics lead 21:01Z).
         let hf = heat_at(x, y);
-        c = mix(c, flame_body(hf), flame_cover(hf));
+        let fc = flame_cover(hf);
+        c = c * (1.0 - 0.6 * fc) + flame_body(hf) * fc + flame_spill(hf) * (1.0 - fc);
     }
     // Each point light on this surface: diffuse on its albedo, a highlight
     // by its gloss, falling to nothing at the light's reach. The surface's

@@ -50,7 +50,7 @@ ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
     <h2>Close up at zoom 12</h2>
     <figure>
       <img src="fire-near.gif" alt="Zoomed in: a ragged ring of flickering orange cells around dark burnt ground with embers, creeping slowly outward.">
-      <figcaption>The same run from 1 to 45 s at zoom 12. The flames are drawn per pixel from the smooth heat field in three crisp layers: deep red-orange, orange, and a yellow core where it is hottest. Each cell's heat flickers step by step, the band dims behind the front as the plants burn, and damp patches don't burn.</figcaption>
+      <figcaption>The same run from 1 to 45 s at zoom 12. The flames are light drawn per pixel from the smooth heat field, on one continuous ramp from dull ember red through orange to yellow, with near white only at the very hottest. The ground under them darkens, and the heat's own faint tail spills a warm glow just outside. Each cell's heat flickers step by step, the band dims behind the front as the plants burn, and damp patches don't burn.</figcaption>
     </figure>
   </section>
 
@@ -63,7 +63,7 @@ ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
       <li><b>Shots.</b> A blast lights a few sparks (12% of the cells out to a cell past its crater), not a ring of fire on every hit. A scorch round lights 40% of its disc.</li>
       <li><b>Soldiers.</b> A soldier standing in fire loses 25 health a second at full heat, so about 4 s in the hottest flames kills.</li>
       <li><b>Slime.</b> Thick slime still doesn't burn, so fire takes the slime's thin edge, not its body.</li>
-      <li><b>GPU match and cost.</b> The GPU matches the CPU exactly: plants, fire, char, kills, and the heat under a soldier. The llvmpipe frame on planet 2 is 58.8 ms at the median. The GTX 1070 has not been timed yet.</li>
+      <li><b>GPU match and cost.</b> The GPU matches the CPU exactly: plants, fire, char, kills, and the heat under a soldier. The llvmpipe frame on planet 2 is 56.6 ms at the median. The GTX 1070 has not been timed yet.</li>
     </ul>
   </section>
 </main>

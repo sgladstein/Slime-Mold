@@ -29,10 +29,13 @@ edge, not its body (probe: 501 killed in 80 s while it grew 5,405 to
 7,669). Char comes from the plants that burnt (`char_gain` 1), so a
 jungle leaves darker ground than a meadow. Drawn in view.wgsl to the
 graphics lead's spec and review (18:20Z: plants and heat read through a
-3 x 3 Gaussian so edges are soft and fire a halo; colour by heat^1.5,
-capped at (250, 170, 60); char a warm grey-brown; heights jungle 1.2,
+3 x 3 Gaussian so edges are soft; char a warm grey-brown; heights jungle 1.2,
 reeds 0.8, scrub 0.4, meadow 0.25); +3 ms a frame on
 llvmpipe ([page](https://claude.ai/artifact/5pChXx8qdHxa3qwwP27HdY)).
+Fire is drawn per pixel from the cubic B-spline of the heat as light on
+darkened ground: one continuous ember-red-orange-yellow ramp, a cover
+rising over heat 0.12-0.2 (crisp at zoom 24) and the heat's tail as a
+warm spill (graphics lead 21:01Z; three hard layers read as paint).
 Maps carry plants in the PNG's B channel (kind << 6 | density 1-63).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
