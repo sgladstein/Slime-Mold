@@ -1028,10 +1028,14 @@ fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, Str
         C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
         C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet burns the mould along its flight, {:.0} cells wide, and leaves a line of crater for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
-        C::Bait => (Icon::Crystal, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
+        C::Bait => (Icon::Bait, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
         C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
         // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
         C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
+        // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
+        C::Rate => (Icon::Fast, CardKind::Flight, format!("Every soldier fires {:.0} times as often a card, volleys too.", 1.0 + w.rate_card)),
+        C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less of the gun's budget. Does nothing in a fight.", rounds::THRIFT)),
+        C::Smother => (Icon::Close, CardKind::Flight, format!("Every bullet wipes the food scent along its flight, {:.0} cells wide: the mould there loses the way to its food until the scent spreads back.", 2.0 * r.trail_r)),
     }
 }
 

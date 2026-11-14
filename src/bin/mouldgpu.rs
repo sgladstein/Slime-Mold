@@ -4670,6 +4670,18 @@ mod tests {
         eprintln!("trail of {} discs: cells laid (crater, bait, cloud) {laid:?}; off on the GPU {crater_off}, {scent_off}, {cloud_off}", bursts.len());
         assert!(laid.0 > 100 && laid.1 > 100 && laid.2 > 100, "every trail laid its field: {laid:?}");
         assert_eq!((crater_off, scent_off, cloud_off), (0, 0, 0));
+        // Smother (11-14, "disrupt scent"): the scent on the bait's line
+        // wiped on both.
+        let b = slime_mould::mould::squad::Burst { at: bursts[3].at, r: 3.0, smother: true, ..Default::default() };
+        let (at, sc) = ((b.at.0 * s) as usize, s as usize);
+        let i = at.min(cpu.w - 1) + (b.at.1 * s) as usize * cpu.w;
+        assert!(cpu.scent[i] > 0.0, "bait under the smother");
+        cpu.burst(&b, &k);
+        gpu.burst(&b, &k);
+        assert_eq!(cpu.scent[i], 0.0, "smothered");
+        let _ = sc;
+        let off = gpu.e.scent_of().iter().zip(&cpu.scent).filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0)).count();
+        assert_eq!(off, 0, "the smother on both engines");
     }
 
     #[test]
@@ -4742,7 +4754,7 @@ mod tests {
         let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
             let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
             let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
-            let mods = BulletMods { pierce: 1, split: 1, reach: 0 };
+            let mods = BulletMods { pierce: 1, split: 1, reach: 0, rate: 0 };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
             for k in 0..cpu.soldiers.len() {
