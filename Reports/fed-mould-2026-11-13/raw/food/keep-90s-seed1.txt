@@ -1,0 +1,11 @@
+foodprobe: race world scale 2, 25000 walkers, upkeep 0.0002, grow 180 s, keys [("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")] then []
+seed 1 at  30 s: 26645 walkers, mean energy 0.68; eats 13.51 a step against upkeep 5.33; eats from 22 crystals, the top five [1.88, 1.87, 1.87, 1.87, 1.87] a step; crystals left 0.998
+seed 1 at  60 s: 30158 walkers, mean energy 0.85; eats 16.07 a step against upkeep 6.03; eats from 23 crystals, the top five [1.88, 1.88, 1.88, 1.88, 1.88] a step; crystals left 0.995
+seed 1 at  90 s: 34292 walkers, mean energy 1.01; eats 17.92 a step against upkeep 6.86; eats from 23 crystals, the top five [1.88, 1.88, 1.88, 1.88, 1.88] a step; crystals left 0.991
+seed 1 at 120 s: 38330 walkers, mean energy 1.16; eats 21.57 a step against upkeep 7.67; eats from 23 crystals, the top five [1.88, 1.88, 1.88, 1.88, 1.88] a step; crystals left 0.987
+seed 1 at 150 s: 45257 walkers, mean energy 1.28; eats 27.66 a step against upkeep 9.05; eats from 23 crystals, the top five [1.88, 1.88, 1.88, 1.88, 1.88] a step; crystals left 0.982
+seed 1 at 180 s: 49993 walkers, mean energy 1.49; eats 29.81 a step against upkeep 10.00; eats from 23 crystals, the top five [1.88, 1.88, 1.88, 1.88, 1.88] a step; crystals left 0.976
+seed 1: keep  1 crystals (6% of the food it ate): 49982 49991 49997 49993 49998 49996 50000 49998 49999; 49999 of 49993 (100%)
+seed 1: keep  2 crystals (13% of the food it ate): 49983 49998 49998 50000 49999 49999 50000 49999 50000; 50000 of 49993 (100%)
+seed 1: keep  4 crystals (26% of the food it ate): 49995 49996 50000 49999 49999 49999 50000 50000 49999; 49999 of 49993 (100%)
+seed 1: keep  8 crystals (52% of the food it ate): 49992 49993 49999 49999 49998 49998 49999 50000 50000; 50000 of 49993 (100%)
