@@ -2,7 +2,9 @@
 //! must lose to the mould, and a plan must beat both on paired seeds.
 //!
 //! ```text
-//! cargo run --release --example larderworld -- census seeds=1-16 [scale=2 walkers=5000 hands=idle,random,farm,rush,wall cap=600 threads=4]
+//! cargo run --release --example larderworld -- census seeds=1-16 [hands=idle,random,farm,rush,wall cap=600 threads=4]   # shape C, census size
+//! cargo run --release --example larderworld -- census shape=c ...   # shape C at the window's size (scale 2, 25,000 walkers)
+//! cargo run --release --example larderworld -- census shape=a ...   # the old census mould (scale 2, 5,000 walkers, no keys)
 //! cargo run --release --example larderworld -- look=DIR seeds=1 hands=farm [every=60]
 //! cargo run --release --example larderworld -- slivers=1 seeds=1 map=fork walkers=25000 keys=...+panic:2   # what scared walkers bite
 //! cargo run --release --example larderworld -- census map=fork ...
@@ -70,8 +72,8 @@
 //!   was the one tool measured to turn games).
 //! - **ring** (buildings, 2026-11-12; the design review's risk that free
 //!   shots and turrets bring back the held ring of fire): farm, and from
-//!   5 s a turret `RING` dish cells from the larder whenever the bank holds
-//!   a turret over `RESERVE`, round the larder, up to `RING_N`.
+//!   5 s a turret `plans::RING` dish cells from the larder whenever the bank holds
+//!   a turret over `RESERVE`, round the larder, up to `plans::RING_N`.
 //! - **turtle**: farm, and a pump on each crystal a soldier is clearing
 //!   (the soldier is on it, so it is in reach) with a turret beside it, as
 //!   the bank allows over `RESERVE`.
@@ -80,7 +82,7 @@
 //!   spends what farm banks on guns that walk.
 //! - **pumps** and **guard**: the turtle's halves alone, pumps without
 //!   turrets, and a turret by each farmed crystal without pumps.
-//! - **killzone**: farm, and a lure `ZONE` dish cells from the larder on
+//! - **killzone**: farm, and a lure `plans::ZONE` dish cells from the larder on
 //!   the road to the core with a turret either side of the road halfway
 //!   there, as the bank allows over `RESERVE`; the lure pulls the mould
 //!   into the turrets' fire.
@@ -96,16 +98,13 @@ use slime_mould::mould::big::BigParams;
 use slime_mould::mould::larder_world::{race_params, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World, FLEE_KEEP};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
+use slime_mould::mould::plans;
 use slime_mould::mould::tiers::Tier;
 
 const RESERVE: f32 = 600.0;
 const FARM_MAX: usize = 8;
 const WALL_LEN: f32 = 26.0;
 const WALL_AT: f32 = 0.6;
-
-const RING: f32 = 7.0;
-const RING_N: usize = 6;
-const ZONE: f32 = 13.0;
 
 #[derive(Clone, Default)]
 struct Row {
@@ -161,10 +160,12 @@ const TRACE_EVERY: f32 = 30.0;
 const NEAR: f32 = 10.0;
 
 /// The mould's settings over the race world's, from the command line.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 struct Mould {
     /// `keys=k:v+k:v`: tier keys (`mould::tiers::set_key`) set after the
-    /// tier, to try a candidate before it is one. CPU only.
+    /// tier, to try a candidate before it is one; a shape's keys (`shape=`,
+    /// C by default) come first, so given keys win. Both engines (on the GPU
+    /// through `gpu::set`) since 2026-11-14.
     keys: Vec<(String, String)>,
     /// A mould tier (`tier=swarmer`: the alarm that shots lay draws the
     /// mould to the fight). CPU only.
@@ -209,6 +210,12 @@ struct Mould {
     /// when unset); 0.0002 keeps about 25,000 walkers alive, the density
     /// at which the mould stops looking like specks (one-body report).
     upkeep: Option<f32>,
+    /// The walker slots (`BigParams::capacity`; the race world's ten per
+    /// start walker when unset), from a shape's `capacity` key.
+    capacity: Option<usize>,
+    /// `crystal_charge=`: charge a fine crystal cell (the race world's 512
+    /// at any scale); the census-sized dish raises it (D1, below).
+    crystal_charge: Option<f32>,
 }
 
 impl Mould {
@@ -241,6 +248,12 @@ impl Mould {
         }
         if let Some(u) = self.upkeep {
             p.upkeep = u;
+        }
+        if let Some(c) = self.capacity {
+            p.capacity = c;
+        }
+        if let Some(c) = self.crystal_charge {
+            p.crystal_charge = c;
         }
         if let Some(t) = self.tier {
             t.apply(p);
@@ -282,6 +295,8 @@ fn main() {
     let mut hands: Vec<String> = ["idle", "random", "farm", "rush", "wall"].iter().map(|s| s.to_string()).collect();
     let (mut look, mut every, mut census) = (None::<String>, 60.0f32, false);
     let mut sliver = false;
+    // `shape=` (D1): which shape on the shapes page plays; C by default.
+    let (mut shape, mut sized, mut flow_given) = (None::<String>, false, false);
     let mut rules = Rules::default();
     let mut mass = None::<f32>;
     let mut m = Mould::default();
@@ -299,8 +314,15 @@ fn main() {
                 let (a, b) = v.split_once('-').unwrap_or((v, v));
                 seeds = (a.parse().unwrap()..=b.parse().unwrap()).collect();
             }
-            "scale" => scale = v.parse().unwrap(),
-            "walkers" => walkers = v.parse().unwrap(),
+            "scale" => {
+                scale = v.parse().unwrap();
+                sized = true;
+            }
+            "shape" => shape = Some(v.to_string()),
+            "walkers" => {
+                walkers = v.parse().unwrap();
+                sized = true;
+            }
             "threads" => threads = v.parse().unwrap(),
             "cap" => cap = Some(v.parse().unwrap()),
             "hands" => hands = v.split(',').map(String::from).collect(),
@@ -321,6 +343,7 @@ fn main() {
             // (`Rules::mass_for`: 1 at 5,000 walkers on scale 2).
             "mass" => mass = Some(v.parse().unwrap()),
             "upkeep" => m.upkeep = Some(v.parse().unwrap()),
+            "crystal_charge" => m.crystal_charge = Some(v.parse().unwrap()),
             "smell_r" => rules.smell_r = v.parse().unwrap(),
             "tier" => m.tier = Some(Tier::from_name(v).unwrap_or_else(|| panic!("no tier {v}"))),
             "keys" => m.keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
@@ -347,7 +370,10 @@ fn main() {
             "scorch_full" => m.scorch_full = Some(v.parse().unwrap()),
             "scorch_keep" => m.scorch_keep = Some(v.parse().unwrap()),
             "scorch_cone" => m.scorch_cone = Some(v == "1"),
-            "energy_flow" => m.energy_flow = v.parse().unwrap(),
+            "energy_flow" => {
+                m.energy_flow = v.parse().unwrap();
+                flow_given = true;
+            }
             "flow_loss" => m.flow_loss = v.parse().unwrap(),
             "hunger_scent" => m.hunger_scent = v.parse().unwrap(),
             "crystal_eat" => m.crystal_eat = Some(v.parse().unwrap()),
@@ -384,6 +410,45 @@ fn main() {
             _ => panic!("unknown {k}"),
         }
     }
+    // **The census plays shape C by default** (cloud plan D1, 2026-11-14;
+    // the window's mould since #174): its keys (density, shared food,
+    // wither, panic) on a census-sized dish. With no `shape=`, `walkers=` or
+    // `scale=` it runs at scale 1 with a quarter of C's walkers, the same
+    // walkers per open cell as the window's scale 2, so `Rules::mass_for`
+    // gives the same 0.2 and runner time stays near the old 5,000-walker
+    // census. `shape=c` plays the window's full size (scale 2, 25,000);
+    // `shape=a` the old census (5,000 walkers, no keys). Given keys win.
+    // Checked once on 4 seeds that census-sized and window-sized C agree
+    // in direction (the D1 PR's commit message).
+    let shape_name = shape.clone().unwrap_or_else(|| "c".to_string());
+    let (shape_walkers, shape_keys) = slime_mould::mould::larder_world::shape_keys(&shape_name).unwrap_or_else(|| panic!("no shape {shape_name}"));
+    if !sized {
+        (scale, walkers) = if shape.is_some() { (2, shape_walkers) } else { (1, shape_walkers / 4) };
+        // A crystal's charge is per fine cell, so a scale-1 pile holds a
+        // quarter of the food: four times the charge a cell keeps the
+        // economy the window's. Without it the 4-seed check flipped
+        // strike against farm (farm ahead on 4 of 4 at census size, strike
+        // ahead on 4 of 4 at the window's size; strike's squad 14-27, not
+        // 30); with it strike leads on 4 of 4 on both, as the window does.
+        if shape.is_none() {
+            m.crystal_charge.get_or_insert(512.0 * 4.0);
+        }
+    }
+    let mut keys = Vec::new();
+    for &(k, v) in shape_keys {
+        match k {
+            "upkeep" => {
+                m.upkeep.get_or_insert(v.parse().unwrap());
+            }
+            // Slots in proportion to the walkers (C's 50,000 for 25,000).
+            "capacity" => m.capacity = Some(v.parse::<usize>().unwrap() * walkers / shape_walkers),
+            "energy_flow" if !flow_given => m.energy_flow = v.parse().unwrap(),
+            "energy_flow" => {}
+            _ => keys.push((k.to_string(), v.to_string())),
+        }
+    }
+    m.keys.splice(0..0, keys);
+    println!("shape {shape_name}{}", if shape.is_none() && !sized { " (census size)" } else { "" });
     if let Some(c) = cap {
         rules.cap = c;
     }
@@ -414,7 +479,7 @@ fn main() {
     // settings' text, so it changes with any Rules field without a list to
     // keep up to date.
     let settings = format!(
-        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}",
+        "{world}|{scale}|{walkers}|{}|{}|{}|{:?}|{names}|{rules:?}|{m:?}",
         m.tier.map_or("none", |t| t.name()),
         m.flee.unwrap_or(0.0),
         m.flee_keep.unwrap_or(0.0),
@@ -432,7 +497,7 @@ fn main() {
     if !m.keys.is_empty() {
         println!("keys {:?}", m.keys);
     }
-    assert!((m.tier.is_none() && m.keys.is_empty()) || engines == [false], "tier= and keys= play on the CPU only");
+    assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
     if sliver {
         for &seed in &seeds {
@@ -681,6 +746,17 @@ fn play(seed: u64, scale: usize, walkers: usize, rules: Rules, mould: &Mould, ha
         if let Some(u) = mould.upkeep {
             s.upkeep = u;
         }
+        if let Some(c) = mould.capacity {
+            s.capacity = c;
+        }
+        if let Some(c) = mould.crystal_charge {
+            s.crystal = c;
+        }
+        // A shape's keys (wither, panic: shape C) set on the GPU's own
+        // settings, as the window does.
+        for (k, v) in &mould.keys {
+            slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("keys=: {e}"));
+        }
         let world = match map {
             Some(m) => GpuWorld::with_map(device, queue, s, scale, m),
             None => GpuWorld::new(device, queue, s, scale),
@@ -753,11 +829,11 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
             "rush" => rush_hand(g),
             "ring" => {
                 farm_hand(g, &mut farmed);
-                ring_hand(g);
+                plans::ring(g, RESERVE);
             }
             "turtle" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, true, true);
+                plans::turtle(g, true, true, RESERVE);
             }
             "army" => {
                 // Farm, but spend the bank on soldiers: up to the squad's
@@ -776,15 +852,15 @@ fn play_on<W: World>(mut g: Game<W>, seed: u64, hand: &str, look: Option<Look<W>
             }
             "pumps" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, true, false);
+                plans::turtle(g, true, false, RESERVE);
             }
             "guard" => {
                 farm_hand(g, &mut farmed);
-                turtle_hand(g, false, true);
+                plans::turtle(g, false, true, RESERVE);
             }
             "killzone" => {
                 farm_hand(g, &mut farmed);
-                zone_hand(g);
+                plans::zone(g, RESERVE);
             }
             "wall" => {
                 // Until the wall stands, one soldier walks to it and the
@@ -919,20 +995,8 @@ fn random_hand<W: World>(g: &mut Game<W>) {
     }
 }
 
-/// Crystals with charge, nearest the larder first (the core last of all).
-fn by_distance<W: World>(g: &Game<W>) -> Vec<(f32, f32)> {
-    let l = g.larder;
-    // A crystal under one frame's full ask is dry: the soldier the game
-    // sent home from it (`Rules::home_dry`) is not sent back for crumbs.
-    let r = g.rules;
-    let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
-    cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
-    cs
-}
-
 fn farm_hand<W: World>(g: &mut Game<W>, farmed: &mut Vec<usize>) {
-    let cs = by_distance(g);
+    let cs = plans::by_distance(g);
     if g.bank > g.rules.soldier_cost + RESERVE && g.alive() < FARM_MAX {
         g.apply(Cmd::Buy);
     }
@@ -981,124 +1045,6 @@ fn rush_hand<W: World>(g: &mut Game<W>) {
     }
 }
 
-/// A building of `kind` at `at`, if the bank holds its price over
-/// `RESERVE` (the farm hand's spare) and it can go there now.
-fn spare_build<W: World>(g: &mut Game<W>, kind: Kind, at: (f32, f32)) -> bool {
-    let ok = g.bank >= g.build_price(kind, at) + RESERVE && g.build_blocked(kind, at).is_none() && g.apply(Cmd::Build(kind, at));
-    if ok {
-        send_builder(g);
-    }
-    ok
-}
-
-/// The newest building, if still a ghost (`BuildRules::raise` > 0): the
-/// nearest live soldier goes to raise it (`Order::Build`), as a player
-/// would send one; the farm hand leaves it be until it stands.
-fn send_builder<W: World>(g: &mut Game<W>) {
-    let Some(b) = g.buildings.len().checked_sub(1) else { return };
-    let bd = g.buildings[b];
-    if bd.built >= 1.0 {
-        return;
-    }
-    let d = |k: usize| (g.soldiers[k].x - bd.at.0).hypot(g.soldiers[k].y - bd.at.1);
-    if let Some(k) = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).min_by(|&a, &b| d(a).total_cmp(&d(b))) {
-        g.apply(Cmd::Order(k, Order::Build(b)));
-    }
-}
-
-/// An open cell within 3 dish cells of `p`, nearest first.
-fn open_by<W: World>(g: &Game<W>, p: (f32, f32)) -> Option<(f32, f32)> {
-    let s = g.world.scale();
-    (0..=6).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-        let a = k as f32 / 12.0 * std::f32::consts::TAU;
-        (p.0 + 0.5 * r as f32 * s * a.cos(), p.1 + 0.5 * r as f32 * s * a.sin())
-    }).find(|q| g.world.open(q.0, q.1))
-}
-
-fn alive_kind<W: World>(g: &Game<W>, kind: Kind) -> usize {
-    g.buildings.iter().filter(|b| b.alive && b.kind == kind).count()
-}
-
-fn ring_hand<W: World>(g: &mut Game<W>) {
-    if g.time() < 5.0 || alive_kind(g, Kind::Turret) >= RING_N {
-        return;
-    }
-    let s = g.world.scale();
-    let (c, l) = (g.core, g.larder);
-    let a0 = (c.1 - l.1).atan2(c.0 - l.0);
-    // The first faces the core, then alternately either side of it.
-    for i in 0..RING_N {
-        let k = (i as f32 / 2.0).ceil() * if i % 2 == 0 { 1.0 } else { -1.0 };
-        let a = a0 + k * std::f32::consts::TAU / RING_N as f32;
-        if let Some(at) = open_by(g, (l.0 + RING * s * a.cos(), l.1 + RING * s * a.sin())) {
-            if spare_build(g, Kind::Turret, at) {
-                return;
-            }
-        }
-    }
-}
-
-/// The turtle's two halves can be played alone: `pumps` (pumps, no
-/// turrets) and `guard` (a turret by each farmed crystal, no pumps).
-fn turtle_hand<W: World>(g: &mut Game<W>, pumps: bool, turrets: bool) {
-    let s = g.world.scale();
-    let sites: Vec<(f32, f32)> = g.soldiers.iter().filter(|q| q.alive).filter_map(|q| match q.order {
-        Order::Clear(x, y) => g.crystal_at((x, y)).map(|(_, c)| c),
-        _ => None,
-    }).collect();
-    for c in sites {
-        let pumped = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Pump && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 3.0 * s);
-        if pumps && !pumped {
-            if let Some(at) = open_by(g, c) {
-                if spare_build(g, Kind::Pump, at) {
-                    return;
-                }
-            }
-            continue;
-        }
-        let guarded = g.buildings.iter().any(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - c.0).hypot(b.at.1 - c.1) < 6.0 * s);
-        if turrets && !guarded {
-            let (dx, dy) = (g.core.0 - c.0, g.core.1 - c.1);
-            let d = dx.hypot(dy).max(1.0);
-            if let Some(at) = open_by(g, (c.0 + dx / d * 4.0 * s, c.1 + dy / d * 4.0 * s)) {
-                if spare_build(g, Kind::Turret, at) {
-                    return;
-                }
-            }
-        }
-    }
-}
-
-fn zone_hand<W: World>(g: &mut Game<W>) {
-    if g.time() < 5.0 {
-        return;
-    }
-    let s = g.world.scale();
-    let (c, l) = (g.core, g.larder);
-    let (dx, dy) = (c.0 - l.0, c.1 - l.1);
-    let d = dx.hypot(dy).max(1.0);
-    let (ux, uy) = (dx / d, dy / d);
-    let half = 0.5 * ZONE * s;
-    let wants = [
-        (Kind::Turret, (l.0 + ux * half - uy * 4.0 * s, l.1 + uy * half + ux * 4.0 * s)),
-        (Kind::Turret, (l.0 + ux * half + uy * 4.0 * s, l.1 + uy * half - ux * 4.0 * s)),
-        (Kind::Lure, (l.0 + ux * ZONE * s, l.1 + uy * ZONE * s)),
-    ];
-    for (kind, p) in wants {
-        let have = g.buildings.iter().any(|b| b.alive && b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * s);
-        if have {
-            continue;
-        }
-        if let Some(at) = open_by(g, p) {
-            if spare_build(g, kind, at) {
-                return;
-            }
-        }
-        // In order: the turrets before the lure.
-        return;
-    }
-}
-
 /// A wall across the core-to-larder line, `WALL_AT` of the way to the
 /// larder, built by sending soldier 0 there first if it is out of range.
 fn wall_road<W: World>(g: &mut Game<W>) {
@@ -1109,7 +1055,7 @@ fn wall_road<W: World>(g: &mut Game<W>) {
     let h = WALL_LEN * g.world.scale() / 2.0;
     let (a, b) = ((m.0 - dy / d * h, m.1 + dx / d * h), (m.0 + dy / d * h, m.1 - dx / d * h));
     if g.apply(Cmd::Wall(a, b)) {
-        send_builder(g);
+        plans::send_builder(g);
     } else {
         // Out of range: walk the first live soldier there (soldier 0 stands
         // on the point itself, the others round it) and try again next

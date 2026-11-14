@@ -7,6 +7,9 @@
 //!
 //! cargo run --release --example campaign -- mission=1-landfall seeds=1-8 [hands=idle,random,boom,claim,late,fort,strike scale=2 walkers=5000 threads=4]
 //!
+//! A hand `PLAN+STYLE` plays a style with a scripted plan on top
+//! (`gaps`, or one of `mould::plans::named`: `cut+boom`, `guard+boom`).
+//!
 //! `gpu=1` plays each round on the GPU engine (`gpu::larder_world::GpuWorld`,
 //! the window's world) instead of the CPU big dish, and `gpu=both` on both,
 //! the rows marked by engine and the summary given for each (GPU thread,
@@ -24,7 +27,8 @@ use slime_mould::mould::campaign::{self, decided_at, Goal, Mission, Tracker, BIN
 use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
 use slime_mould::mould::larder_world_ai;
 use slime_mould::mould::map::Map;
-use slime_mould::mould::tiers::Tier;
+use slime_mould::mould::plans;
+use slime_mould::mould::tiers::{self, Tier};
 use std::path::Path;
 
 struct Row {
@@ -60,6 +64,7 @@ struct Row {
 fn main() {
     let (mut mission, mut seeds, mut hands, mut scale, mut walkers, mut threads) = (String::from("1-landfall"), (1u64, 8u64), String::from("idle,random,boom,claim,late,fort,strike"), 2usize, 5000usize, 4usize);
     let mut engines = vec![false];
+    let mut keys: Vec<(String, String)> = Vec::new();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').unwrap_or((&a, ""));
         match k {
@@ -72,6 +77,9 @@ fn main() {
             "scale" => scale = v.parse().unwrap(),
             "walkers" => walkers = v.parse().unwrap(),
             "threads" => threads = v.parse().unwrap(),
+            // `keys=energy_flow:0.05+wither:0.01`: mould keys over the tier
+            // (`tiers::set_key`, CPU only), to try a tier change first.
+            "keys" => keys = v.split('+').filter(|k| !k.is_empty()).map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=K:V+K:V")).collect(),
             "gpu" => {
                 engines = match v {
                     "0" => vec![false],
@@ -98,6 +106,9 @@ fn main() {
         seeds.0,
         seeds.1
     );
+    if !keys.is_empty() {
+        println!("keys over the tier: {keys:?}");
+    }
     let mut jobs: Vec<(String, u64, bool)> = Vec::new();
     for h in hands.split(',') {
         for s in seeds.0..=seeds.1 {
@@ -120,7 +131,7 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
-                    let r = play(&m, &map, tier, *s, scale, walkers, h, dev.as_ref().filter(|_| *on_gpu));
+                    let r = play(&m, &map, tier, &keys, *s, scale, walkers, h, dev.as_ref().filter(|_| *on_gpu));
                     eprintln!("  {h} s{s}{}: {} {:.0}s {}*", if *on_gpu { " GPU" } else { "" }, r.cause, r.at, r.stars);
                     rows.lock().unwrap().push(r);
                 }
@@ -200,13 +211,16 @@ fn gpu() -> (wgpu::Device, wgpu::Queue) {
 /// One round on the CPU big dish, or with `gpu` on the GPU engine (the
 /// same map, params and tier as the window's `GpuWorld::with_map`).
 #[allow(clippy::too_many_arguments)]
-fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, walkers: usize, hand: &str, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
+fn play(m: &Mission, map: &Map, tier: Option<Tier>, keys: &[(String, String)], seed: u64, scale: usize, walkers: usize, hand: &str, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
     let rules = m.rules(Rules::default());
     match gpu {
         None => {
             let mut p = race_params(seed, scale, walkers);
             if let Some(t) = tier {
                 t.apply(&mut p);
+            }
+            for (k, v) in keys {
+                tiers::set_key(&mut p, k, v).unwrap();
             }
             let mut world = BigDish::with_map(p, map);
             world.threads = 1;
@@ -217,6 +231,7 @@ fn play(m: &Mission, map: &Map, tier: Option<Tier>, seed: u64, scale: usize, wal
             if let Some(t) = tier {
                 t.settings(&mut s).unwrap();
             }
+            assert!(keys.is_empty(), "keys= is CPU only");
             play_on(Game::new(GpuWorld::with_map(device, queue, s, scale, map), rules, seed), m, seed, hand, true)
         }
     }
@@ -226,10 +241,19 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
     let mut tr = Tracker::new(m.clone(), &g);
     // `gaps+STYLE`: the Rim's wall plan (one soldier walls each gap of the
     // ring, then STYLE plays everyone); the mission 3 verb's own hand.
-    let (gaps, style) = match hand.strip_prefix("gaps+") {
-        Some(st) => (true, st),
-        None => (false, hand),
+    // `PLAN+STYLE` for the other plans (`mould::plans::named`: ring, pumps,
+    // guard, turtle, zone, cut): STYLE farms each second, then the plan
+    // builds or gives its few soldiers their orders, keeping STYLE's
+    // reserve.
+    // (A style's own knobs are joined by `+` too, `strike:strike_at=180+keep=2`,
+    // so only a known plan name before the first `+` is a plan.)
+    let (pre, style) = match hand.split_once('+') {
+        Some((p, st)) if p == "gaps" || plans::named(p).is_some() => (p, st),
+        _ => ("", hand),
     };
+    let gaps = pre == "gaps";
+    let plan = plans::named(pre);
+    let reserve = larder_world_ai::Style::named(style).map_or(400.0, |s| s.reserve);
     let mut ai = larder_world_ai::Hand::named(style, &g);
     let mut walled = [false; 4];
     let tps = g.rules.tps as u64;
@@ -241,6 +265,9 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
             _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => campaign::wall_rim_gaps(&mut g, &mut walled),
             _ => {
                 ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(&mut g);
+                if let Some(p) = plan {
+                    p.play(&mut g, reserve);
+                }
             }
         }
         let s = g.world.ticks() / tps;

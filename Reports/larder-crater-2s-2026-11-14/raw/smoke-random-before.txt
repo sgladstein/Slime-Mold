@@ -1,0 +1,20 @@
+larderworld the race world, scale 2 walkers 25000 cap 600 s, tps 15, seeds [5, 6, 7, 8, 9, 10, 11, 12]; on the CPU; tier none; flee 0 (default); rules Rules { tps: 15, frame_ticks: 1, speed: 10.0, range: 15.0, strike: 2.5, shot_every: 1.0, bullet_speed: 45.0, split_n: 3, split_fan: 0.5, split_range: 6.0, split_r: 0.7, pierce_gap: 2.0, price: 0.0, hp: 100.0, drain: 2.0, touch: 1.5, wade: 6.0, smell: 0.5, smell_r: 2.0, harvest: 30.0, carry: 300.0, charge: 64.0, defend: 7.5, aim_min: 1, core_r: 5.0, core_secs: 5.0, core_pull: 8.0, cap: 600.0, start_bank: 2000.0, squad: 4, soldier_cost: 400.0, max_squad: 40, wall_cost: 20.0, wall_width: 2.0, hoard: 1.0, steal: 1.0, home_dry: true, build: BuildRules { max: 40, gap: 2.5, raise: 8.0, turret_cost: 500.0, turret_hp: 300.0, turret_range: 15.0, turret_every: 0.5, lure_cost: 300.0, lure_hp: 150.0, lure_smell: 8.0, lure_r: 6.0, lure_burn: 2.0, pump_cost: 500.0, pump_hp: 200.0, pump_rate: 5.0, pump_smell: 0.0, outpost_cost: 400.0, outpost_hp: 300.0, outpost_hoard: 0.25, siren_cost: 300.0, siren_hp: 150.0, siren_every: 4.0, siren_alarm: 150.0, siren_r: 15.0, siren_keep: 0.95, touch: 2.0, drain: 1.0, anywhere: true }, overrun: 20.0, reserve: 0.0, ration: 1.0, hunger: 1.0, seek: true, crater: 2.0, sink: 1.0, spread: 0.0, crystal_solid: true, mass: 0.2, broken: 0.03, broken_starve: 50.0 }
+provenance: harness larderworld, commit 181b3083b, seeds 5-12 (8), cap 600 s, settings hash 0ae64098cf16756e
+keys [("capacity", "50000"), ("energy_flow", "0.05")]
+random seed  5: squad wiped at    73 s, score -1.878; soldiers  0, mould  35463, bank     51, harvested      0, stolen    17, shots    81, killed    596, crystals left 0.992; 15.77 ms a tick, think 0 us mean, 0 at most; score1 -1.878; near 130, touched at 27 s, stuck 12 s; eaten 233
+random seed  6: squad wiped at    97 s, score -1.838; soldiers  0, mould  36006, bank     25, harvested      0, stolen     0, shots    82, killed    844, crystals left 0.988; 16.11 ms a tick, think 0 us mean, 0 at most; score1 -1.838; near 145, touched at 21 s, stuck 19 s; eaten 275
+random seed  7: squad wiped at    76 s, score -1.873; soldiers  0, mould  32805, bank     54, harvested    600, stolen    10, shots   123, killed    961, crystals left 0.980; 14.49 ms a tick, think 0 us mean, 0 at most; score1 -1.873; near 153, touched at 26 s, stuck 11 s; eaten 236
+random seed  8: squad wiped at   114 s, score -1.809; soldiers  0, mould  40309, bank    305, harvested    858, stolen     2, shots   200, killed   1426, crystals left 0.972; 15.06 ms a tick, think 0 us mean, 0 at most; score1 -1.809; near 131, touched at 12 s, stuck 0 s; eaten 351
+random seed  9: squad wiped at    88 s, score -1.853; soldiers  0, mould  30779, bank    351, harvested      0, stolen    22, shots    96, killed    997, crystals left 0.992; 14.80 ms a tick, think 0 us mean, 0 at most; score1 -1.853; near 149, touched at 13 s, stuck 7 s; eaten 228
+random seed 11: squad wiped at   119 s, score -1.802; soldiers  0, mould  40610, bank     60, harvested   1200, stolen    10, shots   276, killed   2679, crystals left 0.961; 16.43 ms a tick, think 0 us mean, 0 at most; score1 -1.802; near 344, touched at 10 s, stuck 10 s; eaten 430
+random seed 10: squad wiped at   170 s, score -1.717; soldiers  0, mould  48871, bank     13, harvested   2400, stolen     1, shots   361, killed   2304, crystals left 0.936; 18.15 ms a tick, think 0 us mean, 0 at most; score1 -1.717; near 160, touched at 20 s, stuck 1 s; eaten 686
+random seed 12: squad wiped at    85 s, score -1.858; soldiers  0, mould  32765, bank    119, harvested      0, stolen     8, shots   109, killed   1269, crystals left 0.992; 16.33 ms a tick, think 0 us mean, 0 at most; score1 -1.858; near 173, touched at 15 s, stuck 15 s; eaten 273
+
+by hand (mean score; ends):
+  random: mean -1.829; mould wiped 0, cap 0, squad wiped 8; near 173 walkers, first touch 18 s; stuck 9 s a game, 0 games stuck a minute or more
+
+paired by seed (score higher / lower, ties left out; sign test, Holm over 0):
+
+real	1m43.740s
+user	2m59.611s
+sys	0m19.090s

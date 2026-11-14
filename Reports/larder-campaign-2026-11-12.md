@@ -22,10 +22,10 @@ Choices, all as recommended: only unlocked verbs carry between missions (the per
 | 1 | Landfall | Flats | Drifter (slow, grazing) | Harvest and hire | "Grow your squad to 8 soldiers" [squad size] | Drifter as a built tier (`graze_weight` exists; mould tiers thread) |
 | 2 | First contact | Fork | Drifter | Fire and stances | "Clear the west fork crystal and hold it for 60 s" [seconds held with no walker on it] | Free shots; soldiers smell like prey (Larder thread) |
 | 3 | The gaps | Rim | Sprawler (fast, thin) | Walls | "Keep the mould inside the Rim until 10:00" [time with no walker outside the ring] | Sprawler as a built tier (`explore_spread` exists); soldiers build walls (controls thread) |
-| 4 | Cut the cord | Fork | Trunk (thick, heals) | Cutting a tube | "Starve the mould to a fifth of its size" [walkers now against its peak] | Trunk as a built tier; one body: cut pieces starve (Larder thread) |
-| 5 | Kill zone | Flats | Swarmer (floods where hit) | Turret | "Drive the swarm off the three middle islands" [middle islands with no mould] | Turrets (buildings batch 1) |
-| 6 | The nest | Nest | Sleeper (dormant crust) | Strike | "Break the nest before it wakes" [crust walkers left; the wake time is the clock] | Sleeper and strike in the GPU game |
-| 7 | Spore season | Rim | Sporer (spores fly to crystals) | Pump | "Hold 6 of the 8 outer crystals at 12:00" [outer crystals with no mould] | Pumps (buildings batch 1) |
+| 4 | Cut the cord | Fork | Trunk (thick, heals) | Cutting a tube | "Starve the Trunk: cut its cords until it is a fifth of its size" (built 2026-11-14) [walkers now against its peak] | Trunk as a built tier; one body: cut pieces starve (Larder thread) |
+| 5 | Kill zone | Flats | Swarmer (floods where hit) | Turret | "Drive the swarm off the three middle crystals for a minute" [seconds all three are clear, once the swarm has been on them] (built 2026-11-14) | Turrets (buildings batch 1) |
+| 6 | The nest | Nest | Sleeper (dormant crust) | Strike | "Break the nest: cut the Sleeper to half its size" [walkers now against its peak] (built 2026-11-14) | Sleeper and strike in the GPU game |
+| 7 | Spore season | Rim | Sporer (spores fly to crystals) | Pump | "Out-eat the spores: hold 60% of the charge eaten for 5:00" [take share, then seconds held] (built 2026-11-14; was "Hold 6 of the 8 outer crystals") | Pumps (buildings batch 1) |
 | 8 | Two moulds | Passes | Rival pair (sand fast, clay slow) | Lure | "Take 60% of the valley's charge" [take share] | Lure (buildings batch 1); the rivals as two species |
 
 Missions 1 to 3 are the first playable slice. Mission 4 is the owner's "cut-off hunk" (11-12 04:18Z) made into a lesson. Hunter, Converter and Mixes are a second chapter once they run in the world; the squad toolkit's verbs slot in as missions against the tier each counters. Mission 5's goal was a kill count until the design review pointed out that free shots and turrets reward turtling for it.
@@ -359,3 +359,73 @@ teaching mission if the goal names them, so it now reads "Wall the gaps:
 keep the mould inside the Rim for 5:00". From mission 4 on, at least two
 plans should win each mission (the several-strategies bar). Random's 2/4
 on First contact is acceptable for mission 2.
+
+
+## Missions 4-7 built (census v13, 2026-11-14)
+
+Asked by the cloud plan (`Reports/cloud-plan-2026-11-14.md`, C3): build
+missions 4-7 from what is on `main`, each with two winning plans, each
+mission's census under an hour. The question each census answers is
+mission difficulty: does at least one scripted plan that uses the
+mission's verb win, does a second one, and do idle and random lose. CPU
+world, scale 2, 5,000 walkers, seeds 1-4, after the file split (#210).
+Raw output: `census/{4-cut-the-cord,5-kill-zone,6-the-nest,7-spore-season}-s1-4-v13.txt`;
+the seed-1 probes that chose the rules are in each mission file's
+comment.
+
+**Plans the census can play.** The world census's scripted building
+plans (turrets by the farmed crystals, pumps, a ring, a kill zone) moved
+from `examples/larderworld.rs` into the library (`mould::plans`), and a
+new one cuts the cords: for each crystal a soldier farms, a cut across the
+line to the core, kept burning by one of three cutters while mould lies on
+it. The campaign census takes `PLAN+STYLE` (`cut+strike:...`): the player
+AI's style farms each second and the plan builds or gives its soldiers
+their orders on top. `keys=` tries mould keys over a tier (CPU only).
+
+| Mission | Goal | Plan A | Plan B | boom | idle | random |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 Cut the cord (Fork, Trunk, rations on) | `shrink 0.2` | strike from 3:00 with ten: 4/4, 5:27-8:37 | cut + strike: 4/4, 4:26-7:53 | 0/4 (0.07) | 0/4 (0.08) | 0/4 (0.61) |
+| 5 Kill zone (Flats, Swarmer) | `retake 3 60 1 2 3` | claim from 2:00 with ten: 4/4, 3:52-6:49 | kill zone + claim: 4/4, 4:12-6:51 | 1/4 | 0/4 (0.00) | 0/4 (0.00) |
+| 6 The nest (Nest, Sleeper, rations off) | `shrink 0.5` | strike from 2:00 with eight: 4/4, 5:07-9:29 | turrets + strike: 3/4, 4:44-5:35 | 0/4 (0.25) | 0/4 (0.24) | 0/4 (0.22) |
+| 7 Spore season (Rim, Sporer, rations off, bite 0.5) | `take 0.6 300` | boom with eight: 4/4, 5:40-5:50 | turrets + boom: 3/4, 5:41-5:47 | (plan A) | 0/4 (0.00) | 0/4 (0.00) |
+
+Smoke checks: idle and random lose all 16 rounds of each mission; no
+round of a winning plan ends before 3:52; no stuck run reaches the 30 s
+backstop for a winning plan (idle's and random's do, which ends their
+round). Every mission file plays 60 s in the window's CI smoke test.
+
+**What changed from the design, and why.**
+
+- **Cut the cord** keeps rations on: it is the mission that teaches them
+  (design review, 01:33Z). Farming with the cuts alone never shrank the
+  Trunk (seed 1, best 0.08); the cut wins with a strike. Giving the Trunk
+  shape C's one-body keys (`energy_flow` 0.05, `wither` 0.01) made it
+  bigger, so the strike reached only 0.83 on seed 1: the tier keeps its
+  keys, and "cut pieces starve" is still a promise the mission's text
+  makes more than the census shows.
+- **Kill zone** counts the three middle crystals clear for a minute once
+  the swarm has been on them. Every winning plan claims them; the kill
+  zone's turrets and lure win too but lose more soldiers (2 stars, not 3).
+- **The nest**: with rations on every hand ran out of food by 3:02-7:44
+  (the Nest's outer crystals hold 160-192), so they are off, and the best
+  cut on seed 1 was to 0.38 of the peak, so the goal is half.
+- **Spore season**: no hand ever had more than 3 of the 8 outer crystals
+  clear at once (spores land on every crystal with food), so "hold 6 of
+  8" became the charge race the design gave mission 8. The `take` goal
+  now counts only once a tenth of the map's charge is gone (`TAKE_FROM`)
+  and can be held (`goal take F SECS`): met at once, `take 0.6` fell at
+  0:41-0:51 to every farming hand. **Tuning note:** the squad leads the
+  race from the start and pumps win only 2/4, so the mission is five
+  minutes of farming; whether the Sporer should contest it is for the
+  design review.
+
+**Checks in the code.** `missions_4_to_7_plans_still_win` (`#[ignore]`d,
+with the other full one) plays one plan a mission on seed 1;
+`a_held_take_waits` checks the held take in CI; `the_campaign_files_parse`
+checks `Mission::list`, the start menu's list (campaign order by the
+file's number).
+
+Mission 8 (your own mould against the Grudge on the Passes, D4) is next:
+the window's `own=1` plays only the race world today, so it needs the
+mission and map path first.
+

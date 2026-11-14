@@ -2,7 +2,7 @@
 title: Sound
 kind: look
 status: current
-updated: 2026-11-12
+updated: 2026-11-14
 sources:
   - Reports/larder-sound-2026-11-12.md
   - Reports/mould-sound-2026-11-10.md
@@ -11,10 +11,15 @@ code:
   - FULL_KILL
   - LOUDNESS_LAW
   - Listener::hear
+  - PIECE_MIN
+  - PIECE_SHARE
+  - Pieces
+  - SETTLE
   - SHOTS_VOICED
   - TEXTURE_RATE_CAP
   - VoiceBank
   - WorldListener
+  - WorldListener::bangs
   - density
   - full_kill
   - kill_weight
@@ -47,6 +52,11 @@ body, from its size, its natural change (hunger and growth), its eating and
 gunfire. O toggles all sound in `larder-world`, K the voice; 2-3.5 us a
 frame, no new GPU read-back.
 
+Since 2026-11-14 (cloud plan C7): bullets zip past, sirens wail, kit
+blasts thud, and the mould's cut-off pieces (`sound::pieces`, `Pieces`)
+tear, wither, rejoin and snarl as they charge, each with its own fainter
+voice; 21-23 us a frame (C7 section of the report).
+
 
 ## Owner's word
 
@@ -61,6 +71,10 @@ frame, no new GPU read-back.
   rebaselined 3-6 times a game. Events are found by their step stamp.
 - One fight burst a frame on The Wild One (1,251 bursts): gathered a quarter
   second.
+- Pieces on the campaign's square (4 fine cells at scale 2): a 6-wide cut
+  never parted them; a 0.5 s settle: 21 tears in 3 minutes, 16 back in the
+  body within 3 s; a 4% floor: no 220-walker piece at shape C's density
+  ([report](../../Reports/larder-sound-2026-11-12.md), C7 section).
 
 ## Open
 
@@ -72,6 +86,9 @@ frame, no new GPU read-back.
 - The owner's ears on the [Mould Sound page](https://claude.ai/artifact/6GXBj1swj93DzdytbUjqvA):
   is the bed too loud for the tools; does any sound feel wrong.
 - The lamp's sizzle is silent while `Params::burn` is 0.
+- The new sounds (C7) await the owner's ears on the Larder Sound page
+  (version 3). A warning before a panic charge needs the GPU's stale-news
+  count in the readout; the snarl is the charge itself.
 
 ## Sources
 

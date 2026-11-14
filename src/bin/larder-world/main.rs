@@ -335,6 +335,9 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
+    /// `ration=R`: food a game second each soldier eats (`Rules::ration`;
+    /// 0, the default since 2026-11-14, is off; 1 plays the PR 4 economy).
+    ration: Option<f32>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -605,6 +608,9 @@ impl App {
         if let Some(w) = a.wade {
             rules.wade = w;
         }
+        if let Some(b) = a.ration {
+            rules.ration = b;
+        }
         if let Some(b) = a.sink {
             rules.sink = b;
         }
@@ -627,6 +633,12 @@ impl App {
             v.set_world(&e.frame, size);
             v.set_look(&e.look, &ground, &e.walkers, e.n);
             v.set_alive(e.grows.then_some(&e.energy));
+            // Each walker's news of food (plan C8, 2026-11-14): a cut-off
+            // walker's speck amber while it leans, red once it bolts; the
+            // mould ashen by the share cut off. Only when the world withers
+            // (news is kept then).
+            let ws = &game.world.s;
+            v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -656,6 +668,12 @@ impl App {
         self.listener = Some(WorldListener::new(&game));
         if let Some(l) = self.listener.as_mut() {
             l.voice = voice && self.args.voice;
+            // A mission's tracker reads the mould grid at `BIN`: the
+            // pieces read the same square, so the GPU world packs one grid
+            // into its readout and never reads one back (cloud plan C7).
+            if self.mission.is_some() {
+                l.piece_bin = BIN;
+            }
         }
         self.game = Some(game);
         if let Some(tr) = &self.mission {
@@ -845,6 +863,8 @@ impl App {
             return;
         }
         let t0 = Instant::now();
+        // The kit's blasts (mines, thrown charges), heard where they went off.
+        l.bangs(&self.kit.bangs);
         let cmds = l.hear(g, ear, dt.min(0.25), self.paused);
         self.hear_us.push(t0.elapsed().as_secs_f32() * 1e6);
         if let Some(sp) = self.speaker.as_mut().filter(|_| self.sound_on) {
@@ -1001,7 +1021,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1048,6 +1068,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
+            "ration" => args.ration = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -1115,7 +1136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink, ration; look, hand, at, screen, sound, holes, centre, cut, hover, select; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
             },
         }
     }
