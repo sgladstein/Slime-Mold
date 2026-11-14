@@ -864,4 +864,65 @@ mod tests {
         let width = at(0.1) - at(0.9);
         assert!(width < 1.5, "the edge rises over {width:.2} cells (body {body}, bare {bare})");
     }
+
+    /// A lone walker on bare ground reads plainly (owner's playtest, 11-14
+    /// 04:50Z: "single individual walkers should be brighter"), while a
+    /// walker inside a thick body adds only a calm grain: the speck's light
+    /// falls with the walkers round it.
+    #[test]
+    fn a_lone_walker_is_bright_and_the_body_stays_calm() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        // A body of 4 walkers a cell over x 4..20, and one walker alone at
+        // (44.5, 20.5) with a faint trail under it.
+        let (mut look, mut walk) = (vec![0u32; w * h], Vec::new());
+        for y in 4..36 {
+            for x in 4..20 {
+                look[y * w + x] = 255 | (4 << 8);
+                for k in 0..4 {
+                    walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                }
+            }
+        }
+        look[20 * w + 44] = 60 | (1 << 8);
+        walk.extend([44.5f32, 20.5, 0.0, 0.0]);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground, &walk_b, (walk.len() / 4) as u32);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((32.0, 20.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let lum = |x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32
+        };
+        let (lone, bare) = (lum(44.5, 20.5), lum(52.5, 20.5));
+        assert!(lone > bare + 90.0, "a lone walker {lone} on bare ground {bare}");
+        // In the body: the brightest and dimmest of a cell's pixels differ
+        // by less than the lone walker stands above bare ground.
+        let mut vals = Vec::new();
+        for j in 0..6 {
+            for i in 0..6 {
+                vals.push(lum(12.0 + i as f32 / 6.0, 20.0 + j as f32 / 6.0));
+            }
+        }
+        let spread = vals.iter().cloned().fold(f32::MIN, f32::max) - vals.iter().cloned().fold(f32::MAX, f32::min);
+        assert!(spread < 0.6 * (lone - bare), "the body's grain spread {spread} against the lone walker's {}", lone - bare);
+    }
 }
