@@ -23,13 +23,14 @@ impl<W: World> Game<W> {
     /// newest are dropped) and each bullet's leg is one frame's flight,
     /// ended early at the first wall or rock (`World::open`, checked a fine
     /// cell at a time, so a bullet never jumps a thin wall). Returns the
-    /// legs and, for each, who fired it and whether it was fired now.
-    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[Option<usize>], dt: f32) -> (Vec<ShotIn>, Vec<(Option<usize>, bool)>) {
+    /// legs and, for each, who fired it, whether it was fired now and the
+    /// cast it carries (`by` gives who and the cast of each fired shot).
+    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[(Option<usize>, u8)], dt: f32) -> (Vec<ShotIn>, Vec<LegBy>) {
         let r = self.rules;
         if r.bullet_speed <= 0.0 {
-            return (fired, by.iter().map(|&b| (b, true)).collect());
+            return (fired, by.iter().map(|&(b, c)| (b, true, c)).collect());
         }
-        for (s, &b) in fired.iter().zip(by) {
+        for (s, &(b, cast)) in fired.iter().zip(by) {
             if self.bullets.len() >= squad::SHOTS_MAX {
                 self.bullets_dropped += 1;
                 continue;
@@ -37,7 +38,7 @@ impl<W: World> Game<W> {
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
             let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split });
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, cast });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
@@ -49,7 +50,7 @@ impl<W: World> Game<W> {
             for j in 1..=n {
                 let t = (j as f32).min(len);
                 let p = (b.at.0 + b.dir.0 * t, b.at.1 + b.dir.1 * t);
-                if !self.world.open(p.0, p.1) {
+                if !self.world.clear(p.0, p.1) {
                     to = p;
                     // Nothing left past the wall: the leg ends on it and
                     // the bullet with it (`landed`).
@@ -58,7 +59,7 @@ impl<W: World> Game<W> {
                 }
             }
             legs.push(ShotIn { from: b.at, to, r: b.r });
-            who.push((b.by, b.fresh));
+            who.push((b.by, b.fresh, b.cast));
         }
         (legs, who)
     }
@@ -102,7 +103,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1 });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0 });
                     }
                 }
                 return false;

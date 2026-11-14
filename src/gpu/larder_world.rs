@@ -758,8 +758,11 @@ impl World for GpuWorld {
     }
 
     fn open(&self, x: f32, y: f32) -> bool {
-        let d = &self.e.dish;
-        x >= 0.0 && y >= 0.0 && (x as usize) < d.w && (y as usize) < d.h && d.agar[y as usize * d.w + x as usize]
+        World::open(&self.e.dish, x, y)
+    }
+
+    fn clear(&self, x: f32, y: f32) -> bool {
+        World::clear(&self.e.dish, x, y)
     }
 
     fn stop_births(&mut self) {
@@ -952,6 +955,9 @@ mod tests {
         }
         fn open(&self, x: f32, y: f32) -> bool {
             self.g.open(x, y)
+        }
+        fn clear(&self, x: f32, y: f32) -> bool {
+            self.g.clear(x, y)
         }
         fn stop_births(&mut self) {
             self.g.stop_births()

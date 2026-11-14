@@ -191,8 +191,10 @@ use menu::*;
 use slime_mould::world::start::StartMenu;
 use headless::*;
 
-/// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order.
-const MAPS: [&str; 5] = ["fork", "nest", "rim", "flats", "passes"];
+/// The designed maps (`Reports/larder-maps-2026-11-11.md`, v2), N's order;
+/// then the River, the first map with deep water (new ground kinds,
+/// 2026-11-14, `Reports/ground-kinds-2026-11-14/`): two fords and a bridge.
+const MAPS: [&str; 6] = ["fork", "nest", "rim", "flats", "passes", "river"];
 
 // Command ids (the HUD echoes them back). One table holds every id, so two
 // threads adding a button can't both take the same number without the
@@ -829,6 +831,9 @@ impl App {
             // Every soldier starts in squad 0 (a split's new half takes
             // the standard rifle, `Squad::offshoot`).
             game.apply(Cmd::Arm(0, Some(gun_of(spec, a.seed, depth)?)));
+        } else if let Some(r) = &a.run {
+            // A run lands with the gun it carries (`Run::carried`).
+            game.apply(Cmd::Arm(0, Some(r.carried())));
         }
         let mut kit = KitRules::default();
         if let Some(r) = &a.run {
@@ -1423,7 +1428,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys|shop".into());
+                    return Err("menu=0|1|main|campaign|options|keys|shop (shop-mid, shop-build, shop-tools: a run three planets in, a folder open)".into());
                 }
                 menu_flag = Some(v.to_string());
             }
@@ -1527,7 +1532,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(dir) = look {
-        let page = menu_flag.as_deref().and_then(page_named);
+        let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
         return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select)?);
     }
     let event_loop = EventLoop::new()?;

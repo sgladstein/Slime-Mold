@@ -1,0 +1,126 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-002s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-002s-near.png
+  CPU: ground field 6.04 ms (once a game second), model and HUD 0.100 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,95.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-004s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-004s-near.png
+  CPU: ground field 3.72 ms (once a game second), model and HUD 0.060 ms a frame
+  t 4 s: mould 24907, soldiers 4, bank 2000, harvested 0, shots 5, killed 93, took 0%, crystals left 0.999; squad at 256.0,135.0
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-006s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-006s-near.png
+  CPU: ground field 5.98 ms (once a game second), model and HUD 0.105 ms a frame
+  t 6 s: mould 24838, soldiers 4, bank 2000, harvested 0, shots 13, killed 185, took 0%, crystals left 0.999; squad at 256.0,170.6
+  squad: touching 5.5 mean, 10 most; health 92 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-008s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-008s-near.png
+  CPU: ground field 6.20 ms (once a game second), model and HUD 0.115 ms a frame
+  t 8 s: mould 24706, soldiers 4, bank 1999, harvested 0, shots 21, killed 361, took 0%, crystals left 0.999; squad at 256.0,190.3
+  squad: touching 13.5 mean, 17 most; health 61 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-010s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-010s-near.png
+  CPU: ground field 6.09 ms (once a game second), model and HUD 0.107 ms a frame
+  t 10 s: mould 24643, soldiers 2, bank 1994, harvested 0, shots 28, killed 484, took 0%, crystals left 0.999; squad at 257.6,198.9
+  squad: touching 18.5 mean, 23 most; health 25 mean
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-012s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-012s-near.png
+  CPU: ground field 3.82 ms (once a game second), model and HUD 0.063 ms a frame
+  t 12 s: mould 24684, soldiers 0, bank 1984, harvested 0, shots 30, killed 528, took 0%, crystals left 0.998
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-014s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-014s-near.png
+  CPU: ground field 5.24 ms (once a game second), model and HUD 0.104 ms a frame
+  t 14 s: mould 24764, soldiers 0, bank 1972, harvested 0, shots 30, killed 528, took 0%, crystals left 0.998
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-016s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-016s-near.png
+  CPU: ground field 5.06 ms (once a game second), model and HUD 0.092 ms a frame
+  t 16 s: mould 24850, soldiers 0, bank 1961, harvested 0, shots 30, killed 528, took 0%, crystals left 0.997
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-018s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-018s-near.png
+  CPU: ground field 5.60 ms (once a game second), model and HUD 0.102 ms a frame
+  t 18 s: mould 24943, soldiers 0, bank 1949, harvested 0, shots 30, killed 528, took 0%, crystals left 0.997
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-020s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-020s-near.png
+  CPU: ground field 3.59 ms (once a game second), model and HUD 0.059 ms a frame
+  t 20 s: mould 25040, soldiers 0, bank 1938, harvested 0, shots 30, killed 528, took 0%, crystals left 0.997
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-022s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-022s-near.png
+  CPU: ground field 5.31 ms (once a game second), model and HUD 0.079 ms a frame
+  t 22 s: mould 25147, soldiers 0, bank 1927, harvested 0, shots 30, killed 528, took 0%, crystals left 0.996
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-024s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-024s-near.png
+  CPU: ground field 3.69 ms (once a game second), model and HUD 0.064 ms a frame
+  t 24 s: mould 25241, soldiers 0, bank 1917, harvested 0, shots 30, killed 528, took 0%, crystals left 0.996
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-026s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-026s-near.png
+  CPU: ground field 3.52 ms (once a game second), model and HUD 0.053 ms a frame
+  t 26 s: mould 25346, soldiers 0, bank 1908, harvested 0, shots 30, killed 528, took 0%, crystals left 0.995
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-028s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-028s-near.png
+  CPU: ground field 5.42 ms (once a game second), model and HUD 0.091 ms a frame
+  t 28 s: mould 25445, soldiers 0, bank 1898, harvested 0, shots 30, killed 528, took 0%, crystals left 0.995
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-030s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-030s-near.png
+  CPU: ground field 3.59 ms (once a game second), model and HUD 0.056 ms a frame
+  t 30 s: mould 25534, soldiers 0, bank 1889, harvested 0, shots 30, killed 528, took 0%, crystals left 0.994
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-032s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-032s-near.png
+  CPU: ground field 3.46 ms (once a game second), model and HUD 0.059 ms a frame
+  t 32 s: mould 25620, soldiers 0, bank 1881, harvested 0, shots 30, killed 528, took 0%, crystals left 0.994
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-034s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-034s-near.png
+  CPU: ground field 5.12 ms (once a game second), model and HUD 0.084 ms a frame
+  t 34 s: mould 25693, soldiers 0, bank 1872, harvested 0, shots 30, killed 528, took 0%, crystals left 0.994
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-036s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-036s-near.png
+  CPU: ground field 4.88 ms (once a game second), model and HUD 0.088 ms a frame
+  t 36 s: mould 25760, soldiers 0, bank 1864, harvested 0, shots 30, killed 528, took 0%, crystals left 0.993
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-038s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-038s-near.png
+  CPU: ground field 4.02 ms (once a game second), model and HUD 0.065 ms a frame
+  t 38 s: mould 25853, soldiers 0, bank 1857, harvested 0, shots 30, killed 528, took 0%, crystals left 0.993
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-040s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-040s-near.png
+  CPU: ground field 3.63 ms (once a game second), model and HUD 0.090 ms a frame
+  t 40 s: mould 25948, soldiers 0, bank 1850, harvested 0, shots 30, killed 528, took 0%, crystals left 0.992
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-042s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-042s-near.png
+  CPU: ground field 5.77 ms (once a game second), model and HUD 0.110 ms a frame
+  t 42 s: mould 26055, soldiers 0, bank 1844, harvested 0, shots 30, killed 528, took 0%, crystals left 0.992
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-044s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-044s-near.png
+  CPU: ground field 5.88 ms (once a game second), model and HUD 0.102 ms a frame
+  t 44 s: mould 26150, soldiers 0, bank 1837, harvested 0, shots 30, killed 528, took 0%, crystals left 0.991
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-046s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-046s-near.png
+  CPU: ground field 5.54 ms (once a game second), model and HUD 0.109 ms a frame
+  t 46 s: mould 26246, soldiers 0, bank 1831, harvested 0, shots 30, killed 528, took 0%, crystals left 0.991
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-048s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-048s-near.png
+  CPU: ground field 5.14 ms (once a game second), model and HUD 0.090 ms a frame
+  t 48 s: mould 26348, soldiers 0, bank 1825, harvested 0, shots 30, killed 528, took 0%, crystals left 0.990
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-050s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-050s-near.png
+  CPU: ground field 5.69 ms (once a game second), model and HUD 0.088 ms a frame
+  t 50 s: mould 26448, soldiers 0, bank 1820, harvested 0, shots 30, killed 528, took 0%, crystals left 0.990
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-052s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-052s-near.png
+  CPU: ground field 5.55 ms (once a game second), model and HUD 0.095 ms a frame
+  t 52 s: mould 26567, soldiers 0, bank 1814, harvested 0, shots 30, killed 528, took 0%, crystals left 0.989
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-054s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-054s-near.png
+  CPU: ground field 3.77 ms (once a game second), model and HUD 0.066 ms a frame
+  t 54 s: mould 26692, soldiers 0, bank 1809, harvested 0, shots 30, killed 528, took 0%, crystals left 0.989
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-056s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-056s-near.png
+  CPU: ground field 3.52 ms (once a game second), model and HUD 0.055 ms a frame
+  t 56 s: mould 26815, soldiers 0, bank 1803, harvested 0, shots 30, killed 528, took 0%, crystals left 0.988
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-058s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-058s-near.png
+  CPU: ground field 5.26 ms (once a game second), model and HUD 0.088 ms a frame
+  t 58 s: mould 26936, soldiers 0, bank 1798, harvested 0, shots 30, killed 528, took 0%, crystals left 0.988
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-060s-all.png
+/tmp/claude-0/-home-user/7d51dd1e-5bb7-5c12-bed6-eba7455627e6/scratchpad/film/rush/Reports_ground-kinds-2026-11-14_maps_river-rush-060s-near.png
+  CPU: ground field 5.76 ms (once a game second), model and HUD 0.097 ms a frame
+  t 60 s: mould 27087, soldiers 0, bank 1794, harvested 0, shots 30, killed 528, took 0%, crystals left 0.987

@@ -13,7 +13,8 @@
 
 use super::*;
 use slime_mould::mould::run::{self as run, Pick};
-use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopRow, StartEvent, StartMenu};
+use slime_mould::mould::run::{Face, Group};
+use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -192,20 +193,103 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let gun = r.gun_text();
-    let mut lines = vec![
-        format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers),
-        format!("Gun: {} (budget {} of {})", if gun == "none" { "plain shots".to_string() } else { gun }, slime_mould::mould::rounds::cost(&r.gun()), r.budget()),
-    ];
+    let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
     if r.depth == run::PLANETS {
         lines.push("The slime's home world: beat it and the run is won".into());
     }
+    // The cards' words and colours as the HUD's loadout strip shows them,
+    // with the run's own rules.
+    let mut rules = Rules::default();
+    r.rules(&mut rules);
+    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    let gun = r.carried();
+    let rows = r
+        .shop()
+        .into_iter()
+        .map(|row| {
+            let (group, area) = match row.group {
+                Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
+                Group::Build | Group::Tools | Group::Dev => (row.group.name().to_string(), ShopArea::Folder),
+                Group::Guns => ("Guns".to_string(), ShopArea::Guns),
+                _ => (if row.price.is_empty() { "In the bag" } else { "For sale" }.to_string(), ShopArea::Cards),
+            };
+            let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
+            (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
+            match row.face {
+                Face::Item(key) => {
+                    s.icon = item_icon(key);
+                    let max = run::ITEMS.iter().find(|i| i.key == key).map_or(1, |i| i.max);
+                    s.level = (r.level_of(key), max);
+                }
+                Face::Card(c) => {
+                    let (icon, kind, words) = draw::card_face(c, &rr, &rules);
+                    s.icon = icon;
+                    s.tint = kind.colour(draw::payload_colour(c));
+                    s.cost = c.cost();
+                    s.about = format!("{}, budget {}. {}", kind.label(), c.cost(), row.about.replacen(c.about(), &words, 1));
+                }
+                Face::Gun(g) => {
+                    s.icon = draw::gun_icon(g.kind);
+                    // No gun is labelled lucky (owner 18:18Z).
+                    s.tint = theme::TEXT;
+                    s.bars = gun_bars(&g);
+                    s.about = format!("{}. {}", g.kind.about(), row.about);
+                }
+                Face::Dev => s.icon = Icon::Fast,
+            }
+            s
+        })
+        .collect();
     Shop {
         heading: format!("{} next: {}", l.mission.name, l.mission.says),
         lines,
         purse: format!("{} points", r.points),
-        rows: r.shop().into_iter().map(|row| ShopRow { group: row.group.name().into(), name: row.name, about: row.about, price: row.price, state: row.state, ready: row.ready }).collect(),
+        rows,
+        slots: gun.slots,
+        budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
+        folder_icons: vec![(Group::Build.name().into(), Icon::Turret), (Group::Tools.name().into(), Icon::Grenade), (Group::Dev.name().into(), Icon::Fast)],
     }
+}
+
+/// An upgrade's icon: the command card's own for what it unlocks.
+fn item_icon(key: &str) -> Icon {
+    match key {
+        "hp" => Icon::Heart,
+        "strike" => Icon::Attack,
+        "rate" => Icon::Fast,
+        "range" => Icon::Eye,
+        "squad" => Icon::Recruit,
+        "bank" => Icon::Crystal,
+        "harvest" => Icon::Upgrade,
+        "walls" => Icon::Wall,
+        "turret" => Icon::Turret,
+        "lure" => Icon::Bait,
+        "pump" => Icon::Crystal,
+        "outpost" => Icon::Hold,
+        "siren" => Icon::Alert,
+        "blast" => Icon::Grenade,
+        "mine" => Icon::Target,
+        "cord" => Icon::Burn,
+        "gas" => Icon::Pause,
+        "draw" => Icon::Menu,
+        _ => Icon::Upgrade,
+    }
+}
+
+/// A gun's numbers as the shop's bars, each against about the best a run
+/// finds.
+fn gun_bars(g: &slime_mould::mould::guns::Gun) -> Vec<(String, f32, String)> {
+    let mut b = vec![
+        ("Range".to_string(), g.range / 48.0, format!("{:.0}", g.range)),
+        ("Rate".to_string(), g.rate / 3.0, format!("{:.1}/s", g.rate)),
+        ("Aim".to_string(), 1.0 - g.spread / 8.0, format!("{:.1}", g.spread)),
+    ];
+    if g.shots > 1 {
+        b.push(("Shots".to_string(), g.shots as f32 / 6.0, format!("{}", g.shots)));
+    }
+    b.push(("Budget".to_string(), g.budget as f32 / 30.0, format!("{}", g.budget)));
+    b.push(("Slots".to_string(), g.slots as f32 / 6.0, format!("{}", g.slots)));
+    b
 }
 
 /// A page by its `menu=` name.
@@ -215,7 +299,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" => Page::Options,
         "keys" => Page::Keys,
-        "shop" => Page::Shop,
+        "shop" | "shop-mid" | "shop-build" | "shop-tools" => Page::Shop,
         _ => return None,
     })
 }

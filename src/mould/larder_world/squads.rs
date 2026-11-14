@@ -220,12 +220,12 @@ impl Default for Squad {
 
 impl Squad {
     /// A new squad made from this one (a split, a soldier joining a free
-    /// id): its formation and settings, nothing it was doing, no link, and
-    /// the standard rifle with the army's round: a gun is loot, so a split
-    /// does not copy a lucky one (17:40Z; the gun thread's default while
-    /// the owner decides). `Cmd::Merge` hands a gun back.
+    /// id): its formation and settings, its gun and its cards, nothing it
+    /// was doing and no link. Owner 18:05Z: "Both halves get a copy of the
+    /// gun." (From 17:40Z to then the new half took the standard rifle and
+    /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, ..Squad::default() }
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, ..Squad::default() }
     }
 }
 
