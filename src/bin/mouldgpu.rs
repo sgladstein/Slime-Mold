@@ -4472,7 +4472,11 @@ mod tests {
         // 1020, but once the fleeing mould collapses (25-30 s) the moulds
         // part by 15.6% (920 against 1064), past the 8%; shots landing a
         // few frames later give the chaos more room.
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, ..Rules::default() };
+        // Range 15, the default this twin was set at: at the 24 of 11-14
+        // the squad clears the mould to about 800 walkers by 30 s, where
+        // the 8% band is under 70 walkers and the engines' drift (808 /
+        // 894) crosses it. The range is game side, the same on both.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, ..Rules::default() };
         let flee = || {
             let mut p = race_params(seed, scale, walkers);
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);

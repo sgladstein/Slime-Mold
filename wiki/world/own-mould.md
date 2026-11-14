@@ -4,6 +4,7 @@ kind: design
 status: open
 updated: 2026-11-14
 sources:
+  - Reports/larder-campaign-2026-11-12.md
   - Reports/player-mould-2026-11-12.md
   - Reports/species-gpu-2026-11-11.md
   - Reports/species-sets-2026-11-11.md
@@ -14,12 +15,15 @@ code:
   - BigParams::species_convert_per
   - BigParams::species_convert_r
   - GpuWorld::garden
+  - GpuWorld::garden_on_map
   - SpeciesSet
   - WORLD_GARDEN
+  - World::own_living
   - World::tend
   - garden_settings
   - own_mould::Garden
   - own_mould::Garden::cord
+  - own_mould::garden_on_map
 ---
 
 # The player's own mould (gardeners)
@@ -34,8 +38,13 @@ it fights the enemy mould by conversion. It is built on the CPU
 det cord on the tools page, `hand=sow`). Sowing grows it, a road pushes it forward, fire with craters
 burns the enemy back; the enemy is not yet smaller for long. Each side
 holds at most half the slots on both engines (`species_cap`, on the GPU
-since 11-14), so a mission on `own=1` plays the same on either. Next: an
-attacker's edge in conversion. Detail below
+since 11-14), so a mission on `own=1` plays the same on either. It also goes on a
+designed map (`own_mould::garden_on_map` and `GpuWorld::garden_on_map`,
+11-14): the map's mould starts are the enemy's, the player's mould starts on
+the crystal by the landing, each walker's side set where it was placed;
+campaign mission 8 (Two moulds, `own` in a mission file) plays on it
+([campaign report, *Mission 8 built*](../../Reports/larder-campaign-2026-11-12.md)).
+Next: an attacker's edge in conversion. Detail below
 ([report](../../Reports/player-mould-2026-11-12.md), window
 [page](https://claude.ai/artifact/SLmH8k3C797UCo3949RcMn)).
 

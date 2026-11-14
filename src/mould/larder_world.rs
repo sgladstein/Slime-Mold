@@ -142,6 +142,20 @@ pub struct Shot {
     pub fired: bool,
 }
 
+/// One take from a crystal in the last frame, as the window draws it
+/// (`Game::last_takes`; art direction 2026-11-14, harvesting that looks
+/// busy): who took (a soldier, or None for a building such as a pump),
+/// from which crystal, where the taker stands (fine cells) and how much
+/// charge. The soldier's working pulse and the crystal's working spot
+/// both read this one list, so they light together.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Take {
+    pub by: Option<usize>,
+    pub crystal: usize,
+    pub at: (f32, f32),
+    pub took: f32,
+}
+
 /// A shot in flight (`Rules::bullet_speed`): where it is, its heading, the
 /// fine cells of its range left, its strike radius, and who fired it.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -225,6 +239,8 @@ pub struct Game<W: World> {
     pub end: Option<End>,
     /// The last frame's shots, for the window's tracers.
     pub last_shots: Vec<Shot>,
+    /// The last frame's takes from crystals (`Take`), for the window.
+    pub last_takes: Vec<Take>,
     /// Shots in flight (`Rules::bullet_speed`), oldest first; at most
     /// `squad::SHOTS_MAX`, and a shot fired past that is dropped (the
     /// newest go: the old ones are about to land).
@@ -354,6 +370,7 @@ impl<W: World> Game<W> {
             reserve_ticks: 0,
             end: None,
             last_shots: Vec::new(),
+            last_takes: Vec::new(),
             bullets: Vec::new(),
             bullet_mods: BulletMods::default(),
             bullets_dropped: 0,
