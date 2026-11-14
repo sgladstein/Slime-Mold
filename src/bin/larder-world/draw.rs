@@ -578,16 +578,21 @@ impl App {
                 about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
                 ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
             },
-            Command {
-                target: Target::Point { radius: 2.0 * sc },
-                ready: true,
-                about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
-                // (1, 3) unless sowing has it: at (2, 2) it lay under the
-                // build page's button, so only R reached it (bug sweep,
-                // 2026-11-14).
-                ..Command::new(RALLY, if g.world.garden.is_some() { (2, 2) } else { (1, 3) }, Icon::Move, "Rally point", KeyCode::KeyR)
-            },
         ];
+        // The rally point at (1, 3), or on the build page with the larder's
+        // other places when sowing has that slot (own=1 fills the main
+        // page). It lay at (2, 2), under the Build button, so only R
+        // reached it (bug sweep, 2026-11-14).
+        let rally = Command {
+            target: Target::Point { radius: 2.0 * sc },
+            ready: true,
+            about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
+            ..Command::new(RALLY, if g.world.garden.is_some() { (1, 2) } else { (1, 3) }, Icon::Move, "Rally point", KeyCode::KeyR)
+        };
+        let mut rally = Some(rally);
+        if g.world.garden.is_none() {
+            cmds.extend(rally.take());
+        }
         // The player's own mould (own=1): Sow on the main page (the free slot),
         // Road on the tools page beside the det cord (main's slots are full).
         let mut road: Option<Command> = None;
@@ -647,6 +652,7 @@ impl App {
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
+            cmds.extend(rally.take());
         }
         // The squad mode: the card's letters off WASD (`squad_card_key`),
         // its words for a game with no larder.

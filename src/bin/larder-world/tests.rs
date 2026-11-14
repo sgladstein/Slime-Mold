@@ -531,3 +531,30 @@ fn the_squad_cameras_follow_keeps_the_squad_in_the_middle() {
     assert!(worst < 3.0, "the camera fell {worst:.1} cells behind the squad");
     assert!((0.0..640.0).contains(&sx) && (0.0..400.0).contains(&sy), "the squad left the screen");
 }
+
+/// **No two commands on a page share a slot or a key** (bug sweep,
+/// 2026-11-14: the Rally point sat at (2, 2) under the Build button, so
+/// only its key reached it). Every page, in the RTS round and the squad
+/// mode, with and without the player's own mould.
+#[test]
+fn every_command_card_page_has_its_own_slots_and_keys() {
+    let Some((device, queue)) = gpu() else { return };
+    for (squads, own) in [(false, false), (false, true), (true, false), (true, true)] {
+        let mut args = squad_args(squads);
+        if own {
+            (args.own, args.map) = (true, None);
+        }
+        let mut app = offscreen(args, (640, 400), &device, &queue).unwrap();
+        for (build, tools) in [(false, false), (true, false), (false, true)] {
+            (app.build_page, app.tools_page) = (build, tools);
+            let cmds = app.model(None, None).commands;
+            let page = format!("squads {squads}, own {own}, build {build}, tools {tools}");
+            for (i, a) in cmds.iter().enumerate() {
+                for b in &cmds[i + 1..] {
+                    assert_ne!(a.slot, b.slot, "{page}: {} and {} share a slot", a.name, b.name);
+                    assert_ne!(a.key, b.key, "{page}: {} and {} share a key", a.name, b.name);
+                }
+            }
+        }
+    }
+}
