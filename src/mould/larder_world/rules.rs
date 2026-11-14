@@ -242,8 +242,9 @@ pub struct Rules {
     /// food for this many game seconds straight. 0 is off. **20 s by
     /// default since PR 4** (the economy; integration, 11-12 17:10Z: the
     /// owner ruled on 11-11 that an idle player should lose, and idle
-    /// survived 46 of 48 games): with `Rules::ration` an idle squad's bank
-    /// runs dry, and a mould at the larder then takes the round. Before PR
+    /// survived 46 of 48 games): a mould at the larder eats the bank dry
+    /// and then takes the round. (It was paired with the rations, removed
+    /// 2026-11-14, which also emptied an idle squad's bank.) Before PR
     /// 4 a campaign mission turned it on.
     pub overrun: f32,
     /// **Reserve recruit** (the same pick): while fewer than 2 soldiers live
@@ -252,39 +253,14 @@ pub struct Rules {
     /// With it on, a wiped squad is no loss while a recruit can still come.
     /// 0, the default, is off.
     pub reserve: f32,
-    /// **Rations** (PR 4, the economy): food a game second each live
-    /// soldier eats from the bank (`Game::eaten`). Why: food didn't bind.
-    /// Farm, wall and fort ended 15-minute games with 83-85% of their
-    /// harvest unspent, and strike won by banking behind a 30-soldier army
-    /// it never paid to keep (integration, 11-12 17:10Z, from the one-body
-    /// thread's slime-enemy review). An army now costs its keep: farm's 8
-    /// soldiers eat 8 a second of the about 55 they bank, and strike's 30
-    /// eat 30. Paid each step; what the bank can't pay, the squad goes
-    /// hungry for (`Rules::hunger`). 0 is off.
-    ///
-    /// 1, from smoke runs on race seeds 5-8 (11-12 20:20Z): at 1 idle's
-    /// squad starves by 570-600 s on all 4, farm and fort hold to the cap,
-    /// and strike wins 2, loses 1 and stalemates 1 (it had stalemated all
-    /// 4). At 2 idle starves by 340-350 s, but strike starves its 30
-    /// soldiers on 3 of 4 and fort on 1: an army costing 4.5 times its
-    /// price over a game was too steep for a first default.
-    ///
-    /// **0, off, since 2026-11-14** (owner, after a playtest, 01:49Z: "I
-    /// don't know when it was decided that I have to keep my solider fed or
-    /// they die, but that is bad. The whole game is just trying to harvest
-    /// crystals then I am have no time to attack the slime."). Food buys
-    /// soldiers, walls and buildings; it no longer keeps soldiers alive.
-    /// `ration=1` (window and census) plays the PR 4 economy.
-    pub ration: f32,
-    /// Hit points a game second every soldier loses while the bank can't
-    /// pay the rations (a share of it for a part-paid step; `Game::hungry`).
-    /// Hunger costs only hit points: a starving soldier walks, fires and
-    /// harvests at full speed, so a farm that runs dry recovers as soon as
-    /// a carrier banks, and the need falls as the squad shrinks. Slowing
-    /// hungry soldiers would spiral (slower carriers bank less, so starve
-    /// more; integration's check, 19:59Z). At 1 a full-health soldier
-    /// lasts 100 s of an empty bank.
-    pub hunger: f32,
+    // Rations and hunger (`ration`, `hunger`; PR 4, the economy: food a
+    // second each soldier ate from the bank, and hit points lost when it
+    // couldn't pay) were removed on 2026-11-14 after being off by default
+    // since 01:49Z (owner: "I don't know when it was decided that I have to
+    // keep my solider fed or they die, but that is bad"; 04:53Z: "There
+    // should be no maintenance costs in this game"). Food buys soldiers,
+    // walls, buildings and heals; nothing costs food to keep.
+    // `Reports/dead-ends.md` has the numbers.
     /// A carrier back from a dry crystal with nothing queued walks on to
     /// the nearest crystal with charge left (`Game::seek`), the mould's
     /// home excepted, rather than holding at the larder (owner, 11-12
@@ -507,8 +483,6 @@ impl Default for Rules {
             build: BuildRules::default(),
             overrun: 20.0,
             reserve: 0.0,
-            ration: 0.0,
-            hunger: 1.0,
             seek: true,
             crater: 2.0,
             sink: 1.0,

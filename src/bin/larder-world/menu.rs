@@ -121,7 +121,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Right click", "Move; on a crystal, harvest it"),
         ("Shift + order", "Queue it after the current orders"),
         ("Ctrl + 1-9, 1-9", "Make a group, select it (twice: look)"),
-        ("Wheel, middle drag", "Zoom, pan; arrows and the screen edge pan"),
+        ("Wheel, middle drag", "Zoom, pan; arrows, the screen edge and WASD while paused pan"),
         ("A, click", "Attack-move; on the core, attack it"),
         ("S", "Stop"),
         ("G", "Harvest"),
@@ -228,6 +228,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.tint = kind.colour(draw::payload_colour(c));
                     s.cost = c.cost();
                     s.about = format!("{}, budget {}. {}", kind.label(), c.cost(), row.about.replacen(c.about(), &words, 1));
+                    if let rounds::Card::Ammo(a) = c {
+                        // A rolled bullet: its set as a badge, its numbers.
+                        s.badge = Some(draw::ammo_icon(a.set));
+                        s.about = format!("{}: {}. {}", a.title(), a.line(), row.about.replacen(c.about(), &words, 1));
+                    }
                 }
                 Face::Gun(g) => {
                     s.icon = draw::gun_icon(g.kind);

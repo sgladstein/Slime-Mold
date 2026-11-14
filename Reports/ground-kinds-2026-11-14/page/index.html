@@ -44,20 +44,20 @@ code { font-family: var(--mono); font-size: 0.9em; }
   </section>
 
   <section>
-    <h2>The River, idle squad, 0 to 150 s</h2>
+    <h2>The River, idle squad, 5 to 150 s</h2>
     <img src="river-idle.gif" alt="Whole River map over 150 seconds: the slime holds the south bank and sends a thin tongue up the bridge">
-    <p>A new sixth sandbox map (<code>map=river</code>, also in the menu): a deep river across the middle, fords near each edge, a bridge in the middle. Seed 1, shape C. The slime holds the south bank and reaches north only up the bridge; its edge thins where it presses into the water. Counts from the film: walkers 25,323 at 15 s, 25,513 at 90 s, 25,063 at 150 s; crystals left 0.965 at 150 s.</p>
+    <p>The River map, version 2 (<code>map=river</code>, also in the menu), on main with the terrain thread's water and plank materials. The river's course and width wander. A dark deep channel sits inside a lighter shallow margin, with sand and clay banks. There are two long shallow fords with sand bars, plus a pond, a creek and a plank bridge. Seed 1, shape C, nobody playing. Counts from the film: walkers 24,962 at 15 s, 22,383 at 90 s and 21,057 at 150 s. The idle squad fired 76 shots and killed 124. Crystals left: 0.967 at 150 s.</p>
   </section>
 
   <section>
     <h2>A rush, close in, 2 to 16 s</h2>
     <img src="river-rush-near.gif" alt="Four soldiers walk down to the bridge and onto the south bank, into the slime">
-    <p>The rush hand sends the squad at the core: its path goes over the bridge, the nearest crossing, and never into the deep. It fired 30 shots and killed 528 walkers before the squad fell at 12 s on the slime's own bank.</p>
+    <p>The rush hand sends the squad at the core: its path goes over the bridge, the nearest crossing, and never into the deep. It fired 38 shots and killed 501 walkers before the squad fell at 12 s on the slime's own bank.</p>
   </section>
 
   <section>
     <h2>What's checked</h2>
     <p>A soldier sent across a river crosses only on the ford or bridge and never stands in deep water; a bullet flies its whole leg across water; walkers in deep water drift less than 0.7 as far as on wet ground and none is born there. The GPU engine matches the CPU for one tick on soil bands that include deep water (1,053 walkers in it, 0 off). The map editor has Deep (7) and Bridge (8) brushes and warns when water cuts the landing off a crystal or nest.</p>
-    <p class="note">The look is a stand-in: deep water draws as ordinary wet today, so fords don't yet show. The terrain thread is giving deep water and bridges their own materials.</p>
+    <p class="note">The films were re-made at 20:18Z on main, after #285 and the terrain thread's #292 had merged. The first version of this page showed the flat stand-in look the owner rejected at 18:01Z.</p>
   </section>
 </main>

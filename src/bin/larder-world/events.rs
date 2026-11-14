@@ -111,6 +111,19 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
+                // Paused, WASD pans the camera as the arrows do (owner's
+                // playtest, 2026-11-14 20:12Z); unpaused it steers the squad
+                // and is the card's letters, as before. A key let go while
+                // paused still lets go of a steer held from before the pause.
+                self.controls.wasd_pan = self.paused && self.game.as_ref().is_some_and(|g| g.end.is_none());
+                if self.controls.wasd_pan && !self.hud.menu_open() && slime_mould::world::controls::wasd_index(code).is_some() {
+                    if !pressed {
+                        self.squad_key(code, false, event.repeat, true);
+                    }
+                    let units = self.units();
+                    self.controls.key(code, pressed, event.repeat, &units, &mut self.camera);
+                    return;
+                }
                 // The squad mode's steering (WASD) and Space come before the
                 // card's letters, and its own letters after them
                 // (`squad_key`; bug sweep, 2026-11-14: they all came first,
