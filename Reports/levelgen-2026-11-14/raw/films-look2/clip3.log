@@ -1,0 +1,126 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-040s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-040s-near.png
+  CPU: ground field 13.39 ms (once a game second), model and HUD 0.058 ms a frame
+  t 40 s: mould 25585, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40250ms-near.png
+  CPU: ground field 3.92 ms (once a game second), model and HUD 0.049 ms a frame
+  t 40 s: mould 25585, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40500ms-near.png
+  CPU: ground field 5.63 ms (once a game second), model and HUD 0.082 ms a frame
+  t 41 s: mould 25585, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-40750ms-near.png
+  CPU: ground field 7.00 ms (once a game second), model and HUD 0.116 ms a frame
+  t 41 s: mould 25585, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-041s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-041s-near.png
+  CPU: ground field 9.20 ms (once a game second), model and HUD 0.115 ms a frame
+  t 41 s: mould 25600, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41250ms-near.png
+  CPU: ground field 7.00 ms (once a game second), model and HUD 0.108 ms a frame
+  t 41 s: mould 25600, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41500ms-near.png
+  CPU: ground field 3.90 ms (once a game second), model and HUD 0.062 ms a frame
+  t 42 s: mould 25600, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-41750ms-near.png
+  CPU: ground field 5.37 ms (once a game second), model and HUD 0.100 ms a frame
+  t 42 s: mould 25600, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-042s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-042s-near.png
+  CPU: ground field 6.48 ms (once a game second), model and HUD 0.083 ms a frame
+  t 42 s: mould 25622, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42250ms-near.png
+  CPU: ground field 3.89 ms (once a game second), model and HUD 0.056 ms a frame
+  t 42 s: mould 25622, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42500ms-near.png
+  CPU: ground field 4.97 ms (once a game second), model and HUD 0.053 ms a frame
+  t 43 s: mould 25622, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-42750ms-near.png
+  CPU: ground field 4.70 ms (once a game second), model and HUD 0.120 ms a frame
+  t 43 s: mould 25622, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-043s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-043s-near.png
+  CPU: ground field 3.71 ms (once a game second), model and HUD 0.050 ms a frame
+  t 43 s: mould 25643, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43250ms-near.png
+  CPU: ground field 5.60 ms (once a game second), model and HUD 0.272 ms a frame
+  t 43 s: mould 25643, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43500ms-near.png
+  CPU: ground field 7.93 ms (once a game second), model and HUD 0.055 ms a frame
+  t 44 s: mould 25643, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-43750ms-near.png
+  CPU: ground field 7.91 ms (once a game second), model and HUD 0.252 ms a frame
+  t 44 s: mould 25643, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-044s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-044s-near.png
+  CPU: ground field 6.02 ms (once a game second), model and HUD 0.086 ms a frame
+  t 44 s: mould 25665, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44250ms-near.png
+  CPU: ground field 4.66 ms (once a game second), model and HUD 0.054 ms a frame
+  t 44 s: mould 25665, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.994; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44500ms-near.png
+  CPU: ground field 3.62 ms (once a game second), model and HUD 0.056 ms a frame
+  t 45 s: mould 25665, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-44750ms-near.png
+  CPU: ground field 5.63 ms (once a game second), model and HUD 0.062 ms a frame
+  t 45 s: mould 25665, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-045s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-045s-near.png
+  CPU: ground field 5.26 ms (once a game second), model and HUD 0.334 ms a frame
+  t 45 s: mould 25691, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45250ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45250ms-near.png
+  CPU: ground field 4.54 ms (once a game second), model and HUD 0.051 ms a frame
+  t 45 s: mould 25691, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45500ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45500ms-near.png
+  CPU: ground field 3.77 ms (once a game second), model and HUD 0.068 ms a frame
+  t 46 s: mould 25691, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45750ms-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-45750ms-near.png
+  CPU: ground field 5.60 ms (once a game second), model and HUD 0.081 ms a frame
+  t 46 s: mould 25691, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-046s-all.png
+/tmp/claude-0/-home-user/1b1457c7-c5ca-5b76-8a11-b0d6a22bd68a/scratchpad/film2/clip3/planet-3-1-idle-046s-near.png
+  CPU: ground field 5.06 ms (once a game second), model and HUD 0.085 ms a frame
+  t 46 s: mould 25706, soldiers 4, bank 2000, harvested 0, shots 12, killed 13, took 0%, crystals left 0.993; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 99 mean

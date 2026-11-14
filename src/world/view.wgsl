@@ -194,12 +194,18 @@ const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
 // trapped; barren: no births, upkeep x 3; Reports/larder-maps-2026-11-11.md,
 // *Which ground the mould feels*), so each reads as its own ground.
 // Each still dark and muted beside plain ground (35,38,42 flat), told
-// apart by value and a slight cast: sand paler and faintly warm, clay a
-// dull red-brown, barren a flat ash grey. Before 2026-11-14 sand was
-// (150,134,92), brighter than thin slime, and clay a saturated brick.
-const SAND_RGB: vec3<f32> = vec3<f32>(70.0, 68.0, 60.0);
-const CLAY_RGB: vec3<f32> = vec3<f32>(56.0, 38.0, 34.0);
-const BARREN_RGB: vec3<f32> = vec3<f32>(50.0, 50.0, 50.0);
+// apart by value and its own texture (`soil_detail`), so a planet's
+// biome reads from a grey thumbnail (art lead, 11-14): sand just above
+// the ground with wind ripples, clay darker with crack lines, barren a
+// lighter ash grey with a dry speckle, water darker still. Before
+// 2026-11-14 sand was (150,134,92), brighter than thin slime, and clay a
+// saturated brick; #247's flat (70,68,60)/(56,38,34)/(50,50,50) read as
+// one grey on the planets (Reports/soil-materials-2026-11-14).
+const SAND_RGB: vec3<f32> = vec3<f32>(50.0, 48.0, 42.0);
+const CLAY_RGB: vec3<f32> = vec3<f32>(38.0, 28.0, 26.0);
+const BARREN_RGB: vec3<f32> = vec3<f32>(64.0, 64.0, 62.0);
+// Standing water: deep and dark (`cell_mat_c`, `soil_detail`).
+const WET_RGB: vec3<f32> = vec3<f32>(10.0, 24.0, 34.0);
 // Mould cut off from food fades towards this (`cell_mat`'s `cut`).
 const ASH_RGB: vec3<f32> = vec3<f32>(120.0, 112.0, 104.0);
 // Condensed mould's colour (`cell_mat_c`'s `dense`): a deep bronze-brown,
@@ -597,7 +603,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     if (kind == WET) {
         // Standing water over the soil: dark blue-green, glossy (darker
         // since 2026-11-14 with the ground); mould in it keeps its own colour.
-        m.albedo = mix(vec3<f32>(14.0, 30.0, 42.0) + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
+        m.albedo = mix(WET_RGB + tint * 0.4, m.albedo, clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85);
         m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
         // Under hard terrain, the soil: `terrain_over` lays the rock, wall
@@ -877,8 +883,116 @@ fn mat_at(x: f32, y: f32) -> Mat {
 var<private> under_body: f32;
 
 // The shaded colour at world point (x, y); `e` is the slope's sample step.
+// ---- Soil materials (art lead, 11-14, review issue 7 on the planets) ----
+//
+// The soil kinds were flat colours, so the planets' biomes (built from
+// them) looked alike in a grey thumbnail and zoom 6 was a flat field. Each
+// soil now has a material read from the soil field at the pixel: the
+// bilinear share of each kind over the four cells round it, so a patch's
+// texture fades out over its own edge, not on a cell line. The patterns
+// are fixed in world cells (they do not crawl with the camera) and fade
+// out where they would alias (under about 3 pixels a feature) and under
+// the mould, whose film covers them.
+fn hash2(p: vec2<f32>) -> f32 {
+    let q = fract(p * vec2<f32>(0.1031, 0.1030));
+    let r = q + dot(q, q.yx + 33.33);
+    return fract((r.x + r.y) * r.x);
+}
+
+// The share of sand, clay, barren and wet ground at (x, y), a cubic
+// B-spline over the 4 x 4 cells round (no cell stair in a patch's edge),
+// and the wet share's gradient (per cell), for the water's crisp edge.
+struct Soil { w: vec4<f32>, wg: vec2<f32> };
+fn soil_share(x: f32, y: f32) -> Soil {
+    var o: Soil;
+    o.w = vec4<f32>(0.0); o.wg = vec2<f32>(0.0);
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let fx = ux - floor(ux); let fy = uy - floor(uy);
+    let wx = bc(fx); let wy = bc(fy);
+    let dx = bcd(fx); let dy = bcd(fy);
+    for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 4; i++) {
+            let cx = clamp(ix - 1 + i, 0, i32(P.ww) - 1); let cy = clamp(iy - 1 + j, 0, i32(P.wh) - 1);
+            let g = ground[cidx(cx, cy)];
+            let k = g & 15u;
+            let sk = (g >> 4u) & 7u;
+            var e = vec4<f32>(0.0);
+            if (k == WET) { e.w = 1.0; }
+            else if (sk == 1u) { e.x = 1.0; } else if (sk == 2u) { e.y = 1.0; } else if (sk == 3u) { e.z = 1.0; }
+            o.w += e * wx[i] * wy[j];
+            o.wg += e.w * vec2<f32>(dx[i] * wy[j], wx[i] * dy[j]);
+        }
+    }
+    return o;
+}
+
+// What each soil does to the ground's albedo at (x, y), `bare` the share
+// not under mould: (multiplier, added light).
+fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
+    if (bare <= 0.01) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    let so = soil_share(x, y);
+    let w = so.w;
+    if (dot(w, vec4<f32>(1.0)) <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    var mul = 1.0;
+    var add = vec3<f32>(0.0);
+    // Sand: wind ripples about 1.6 cells apart, slightly wavy, the flank
+    // toward the light lighter.
+    if (w.x > 0.0) {
+        let ph = (x * 0.82 + y * 0.42 + 0.7 * sin(y * 0.31 + x * 0.13)) / 1.6;
+        let r = sin(6.2831853 * ph);
+        let fade = smoothstep(2.0, 5.0, 1.6 * P.zoom);
+        // and long dune swells about 14 cells apart under them, which a
+        // whole-map view still shows.
+        let dune = sin(6.2831853 * (x * 0.55 + y * 0.3 + 2.0 * sin(y * 0.05)) / 14.0);
+        mul *= 1.0 + (0.14 * r * fade + 0.16 * dune) * w.x * bare;
+    }
+    // Clay: dried into plates about 3 cells across, dark cracks between,
+    // a pixel or so wide (the second-nearest minus nearest jittered point).
+    if (w.y > 0.0) {
+        let p = vec2<f32>(x, y) / 3.0;
+        let pi = floor(p);
+        var d1 = 9.0; var d2 = 9.0;
+        for (var j = -1; j <= 1; j++) {
+            for (var i = -1; i <= 1; i++) {
+                let c = pi + vec2<f32>(f32(i), f32(j));
+                let o = c + vec2<f32>(hash2(c * 1.7 + 3.1), hash2(c * 2.3 + 7.9)) * 0.8 + 0.1;
+                let d = length(p - o);
+                if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+            }
+        }
+        let gap = (d2 - d1) * 3.0 * P.zoom;
+        let crack = (1.0 - smoothstep(0.6, 1.6, gap)) * smoothstep(3.0, 8.0, 3.0 * P.zoom);
+        let plate = 0.92 + 0.16 * hash2(floor(p * 7.0));
+        mul *= mix(1.0, (1.0 - 0.6 * crack) * mix(1.0, plate, smoothstep(3.0, 8.0, P.zoom)), w.y * bare);
+    }
+    // Barren: dry ash with a speckle of grains half a cell across.
+    if (w.z > 0.0) {
+        let q = floor(vec2<f32>(x, y) * 2.0);
+        let h = hash2(q);
+        let sp = select(0.0, 0.25, h > 0.86) - select(0.0, 0.2, h < 0.1);
+        let fade = smoothstep(1.5, 3.0, P.zoom / 2.0);
+        mul *= 1.0 + sp * w.z * fade * bare;
+    }
+    // Wet: the water's edge is where the smooth wet share crosses one
+    // half, worked out at the pixel (one pixel antialiased, as rock's), so
+    // a pond is a curve, not the cells' stair the material's blend drew;
+    // the land just outside it is a lighter shore about half a cell wide.
+    if (w.w > 0.001 && w.w < 0.999) {
+        let gl = max(length(so.wg), 1e-3);
+        let d = (w.w - 0.5) / gl;
+        let cw = clamp(0.5 + d * P.zoom, 0.0, 1.0);
+        let land_w = max(1.0 - w.w, 1e-3);
+        let plain = max(1.0 - w.x - w.y - w.z - w.w, 0.0);
+        let land = (SAND_RGB * w.x + CLAY_RGB * w.y + BARREN_RGB * w.z + mix(SOIL_LOW, SOIL_HIGH, 0.5) * plain) / land_w;
+        add += (cw - w.w) * (WET_RGB - land) * bare;
+        add += vec3<f32>(22.0, 34.0, 38.0) * exp(min(d, 0.0) / 0.35) * (1.0 - cw) * bare;
+    }
+    return vec4<f32>(mul, add);
+}
+
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
-    let m = mat_at(x, y);
+    var m = mat_at(x, y);
     under_body = m.body;
     // No wound is drawn (owner, 2026-11-12 04:38Z, on a blind A/B of the
     // old ember burn and a char where walkers died: "Neither. Both of
@@ -892,6 +1006,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // plaid in the dense body (2026-11-14); the wider difference smooths it.
     // A crystal's own faces are worked out in its block below.
     let hc0 = cells_height(x, y);
+    // The soil's own material where the ground is bare (the mould's film,
+    // thickness by the inverse of the height curve, covers it).
+    let th_here = -log(1.0 - clamp(hc0 * 0.2, 0.0, 0.999) * (1.0 - exp(-2.6))) / 2.6;
+    let sd = soil_detail(x, y, exp(-30.0 * th_here));
+    m.albedo = m.albedo * sd.x + sd.yzw;
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
     let dx = cells_height(x + e, y) - hc0;
@@ -1128,7 +1247,7 @@ fn ter_cell(p: u32) -> vec4<f32> {
     let kind = (p >> 16u) & 255u;
     let v = byte(p, 3u);
     let h = byte(p, 1u) * 4.0;
-    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(70.0, 72.0, 76.0), vec3<f32>(118.0, 116.0, 110.0), v), h); }
+    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(92.0, 94.0, 98.0), vec3<f32>(138.0, 136.0, 130.0), v), h); }
     // Health is the wall's brightness as well as its height.
     if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(70.0, 58.0, 48.0), vec3<f32>(168.0, 156.0, 132.0), v), h); }
     if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(92.0, 82.0, 70.0) * (0.7 + 0.3 * v), h); }
@@ -1212,11 +1331,16 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
     // a little steeper the taller the terrain.
     let inward = t.grad / gl;
     let k = 1.0 - smoothstep(0.0, TER_BEVEL, d);
-    let n = normalize(vec3<f32>(-inward * k * (0.35 + 0.15 * t.h), 1.0));
+    // Raised: the bevel tilts enough that the side toward the light is lit
+    // and the far side shaded (11-14, art lead: rock read as a flat
+    // cutout at barren's value; the tilt was 0.35 + 0.15 h), and a thin
+    // rim along the lit edge catches the key light.
+    let n = normalize(vec3<f32>(-inward * k * (0.8 + 0.2 * t.h), 1.0));
     let shade = 1.0 + 1.25 * (dot(n, l) - l.z);
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     let spec = pow(max(dot(n, half_v), 0.0), 20.0) * 0.08;
-    let top = t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec;
+    let lit_edge = max(dot(-inward, normalize(l.xy)), 0.0) * (1.0 - smoothstep(0.0, 2.0, d * P.zoom));
+    let top = t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec + vec3<f32>(60.0, 58.0, 52.0) * lit_edge;
     return mix(c, top, cov);
 }
 
