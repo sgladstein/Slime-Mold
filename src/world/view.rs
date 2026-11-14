@@ -26,16 +26,17 @@ pub const SHADER: &str = include_str!("view.wgsl");
 /// `sprites/render.js` (the owner's pick, 2026-11-11 16:48Z).
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
-/// Bytes in the uniform (36 words).
-const PARAMS_BYTES: usize = 144;
+/// Bytes in the uniform (40 words).
+const PARAMS_BYTES: usize = 160;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
 /// The bindings after the first twenty, in `bind`'s order: 20 the lights,
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
-/// cells (`tcell`) and the crystal cells listed.
-const BINDINGS_AFTER: [u32; 5] = [LIGHTS_BINDING, 21, 22, 23, 24];
+/// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
+/// germ fields, whose second block is the alarm (`set_alarm`).
+const BINDINGS_AFTER: [u32; 7] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26];
 
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
@@ -149,6 +150,11 @@ pub struct View {
     charge: wgpu::Buffer,
     heat: wgpu::Buffer,
     gem_list: wgpu::Buffer,
+    /// The engine's germ fields, both sides (bindings 25-26; `set_alarm`),
+    /// which is current (`set_alarm_side`), and the alarm that reads full.
+    germ: [wgpu::Buffer; 2],
+    alarm_side: u32,
+    alarm_full: f32,
     n_list: u32,
     gem_words: Vec<f32>,
     live: std::cell::Cell<u32>,
@@ -202,7 +208,7 @@ impl View {
         };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
-        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro)];
+        let entries = [entry(0, wgpu::BufferBindingType::Uniform), entry(1, ro), entry(2, ro), entry(3, ro), entry(4, rw), entry(5, ro), entry(6, rw), entry(7, ro), entry(8, ro), entry(9, ro), entry(10, rw), entry(11, ro), entry(12, rw), entry(13, rw), entry(14, ro), entry(15, ro), entry(16, ro), entry(17, rw), entry(18, ro), entry(19, ro), entry(LIGHTS_BINDING, ro), entry(21, ro), entry(22, rw), entry(23, rw), entry(24, ro), entry(25, ro), entry(26, ro)];
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("view"), entries: &entries });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("view"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
@@ -223,7 +229,8 @@ impl View {
         let fgrid = Self::fine_buffer(device, screen);
         let (gems, gem_cell) = (storage(device, "crystals", 16), storage(device, "crystal cells", 16));
         let (charge, heat, gem_list) = (storage(device, "charge", 16), storage(device, "crystal heat", 16), storage(device, "crystal list", 16));
-        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list]);
+        let germ = [storage(device, "germ 0", 16), storage(device, "germ 1", 16)];
+        let group = Self::bind(device, &bgl, [&params, world_frame, &overlay, &marks, &out, &vis, &top, &look, &ground, &walkers, &specks, &atlas, &hcell, &mcell, &alive, &news, &state, &fgrid, &gems, &gem_cell, &lights, &charge, &heat, &tcell, &gem_list, &germ[0], &germ[1]]);
         View {
             device: device.clone(),
             queue: queue.clone(),
@@ -256,6 +263,9 @@ impl View {
             charge,
             heat,
             gem_list,
+            germ,
+            alarm_side: 0,
+            alarm_full: 0.0,
             n_list: 0,
             gem_words: Vec::new(),
             live: std::cell::Cell::new(0),
@@ -329,14 +339,14 @@ impl View {
     }
 
     /// The bind group: `bufs` in binding order, 0-19 then `BINDINGS_AFTER`.
-    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 25]) -> wgpu::BindGroup {
+    fn bind(dev: &wgpu::Device, bgl: &wgpu::BindGroupLayout, bufs: [&wgpu::Buffer; 27]) -> wgpu::BindGroup {
         let binding = |i: usize| if i < 20 { i as u32 } else { BINDINGS_AFTER[i - 20] };
         let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: binding(i), resource: b.as_entire_binding() }).collect();
         dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("view"), layout: bgl, entries: &entries })
     }
 
     fn rebind(&mut self) {
-        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list]);
+        self.group = Self::bind(&self.device, &self.bgl, [&self.params, &self.world_frame, &self.overlay, &self.marks, &self.out, &self.vis, &self.top, &self.look, &self.ground, &self.walkers, &self.specks, &self.atlas, &self.hcell, &self.mcell, &self.alive, &self.news, &self.state, &self.fgrid, &self.gems, &self.gem_cell, &self.lights, &self.charge, &self.heat, &self.tcell, &self.gem_list, &self.germ[0], &self.germ[1]]);
     }
 
     /// A new world frame (a restart made a new engine).
@@ -463,6 +473,34 @@ impl View {
             }
             _ => self.clear_charge(),
         }
+    }
+
+    /// Shows the engine's alarm field (2026-11-14, the art director: a
+    /// siren's call drawn from the real field, not rings timed from the
+    /// call): `germ` the engine's two germ fields (`gpu::Engine::germ`),
+    /// whose second block of cells is the alarm, and `full` the alarm that
+    /// reads at full strength (a siren's `siren_alarm`). The view draws it
+    /// over the world as a faint red haze with a brighter front where the
+    /// field falls off, so a call spreads and fades as the engine spreads
+    /// and decays it, and a shot's alarm shows too. `None` hides it. Each
+    /// frame `set_alarm_side` says which side is current.
+    pub fn set_alarm(&mut self, germ: Option<[&wgpu::Buffer; 2]>, full: f32) {
+        match germ {
+            Some([a, b]) => {
+                self.germ = [a.clone(), b.clone()];
+                self.alarm_full = full.max(1e-3);
+            }
+            None => {
+                self.germ = [storage(&self.device, "germ 0", 16), storage(&self.device, "germ 1", 16)];
+                self.alarm_full = 0.0;
+            }
+        }
+        self.rebind();
+    }
+
+    /// Which germ field is current (`Engine::done` % 2), each frame.
+    pub fn set_alarm_side(&mut self, side: u32) {
+        self.alarm_side = side & 1;
     }
 
     fn clear_charge(&mut self) {
@@ -647,6 +685,9 @@ impl View {
             b.extend(v.to_le_bytes());
         }
         for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.alarm_side, self.alarm_full.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {
@@ -939,6 +980,67 @@ mod tests {
             checked += 1;
         }
         assert_eq!(checked, 40);
+    }
+
+    /// The engine's alarm field shows (`set_alarm`, 11-14): a disc of
+    /// alarm on the current germ side lifts the ground most at its edge,
+    /// where the field falls off, less inside, nothing far outside; the
+    /// other side or no alarm bound shows nothing.
+    #[test]
+    fn the_alarm_field_shows_its_front_on_the_current_side() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let (c, r, full) = ((32.0f32, 20.0f32), 10.0f32, 150.0f32);
+        let mut germ = vec![0.0f32; 3 * w * h];
+        for y in 0..h {
+            for x in 0..w {
+                if (x as f32 + 0.5 - c.0).hypot(y as f32 + 0.5 - c.1) <= r {
+                    germ[w * h + y * w + x] = full;
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
+        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let (live, empty) = (buf("germ live", &f32s(&germ)), buf("germ empty", &f32s(&vec![0.0; 3 * w * h])));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on(c);
+        let frame = |view: &View| {
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let lum = |pic: &image::RgbaImage, x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            p[0] as i32 + p[1] as i32 + p[2] as i32
+        };
+        let bare = frame(&view);
+        let spots = |pic: &image::RgbaImage| [lum(pic, c.0, c.1), lum(pic, c.0 + r, c.1), lum(pic, c.0 + r + 8.0, c.1)];
+        let [mid0, edge0, out0] = spots(&bare);
+        view.set_alarm(Some([&empty, &live]), full);
+        view.set_alarm_side(1);
+        let [mid, edge, out] = spots(&frame(&view));
+        assert!(edge > edge0 + 60 && edge > mid + 30, "the front lifts most: edge {edge0} -> {edge}, middle {mid}");
+        assert!(mid >= mid0 && (out - out0).abs() <= 6, "middle {mid0} -> {mid}, outside {out0} -> {out}");
+        view.set_alarm_side(0);
+        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "the other side holds no alarm");
+        view.set_alarm(None, 0.0);
+        assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "none bound, none shown");
     }
 
     /// A crystal shows its live charge (the owner's playtest, 2026-11-14
