@@ -134,6 +134,9 @@ pub struct View {
     /// Dense slime condenses (`set_dense`): where each walker's condensing
     /// word starts in the bound `news` (words; 0 off).
     dense_at: u32,
+    /// The plants' first cell block in `news` (words; 0 off,
+    /// `set_plants`).
+    plant_at: u32,
     ripe_at: u32,
     lag: u32,
     lean: u32,
@@ -254,6 +257,7 @@ impl View {
             fgrid,
             news_on: false,
             dense_at: 0,
+            plant_at: 0,
             ripe_at: 0,
             lag: 0,
             lean: 0,
@@ -540,11 +544,31 @@ impl View {
     }
 
     fn clear_news(&mut self) {
-        if self.news_on || self.dense_at > 0 {
+        if self.news_on || self.dense_at > 0 || self.plant_at > 0 {
             (self.news, self.state) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16));
             self.news_on = false;
             self.dense_at = 0;
+            self.plant_at = 0;
         }
+    }
+
+    /// Draws the plants (`mould::plants`, 11-14) from the engine's fields:
+    /// `news` the engine's (`set_news` takes it too; `state` with it) and
+    /// `at` the word where its plant blocks start (`gpu::Engine::plant_at`
+    /// / 4 + `gpu::PLANT_HEAD`): the plants as a ground layer between the
+    /// soil and the slime, fire's heat as glowing flame, the char as burnt
+    /// ground. `None` hides them.
+    pub fn set_plants(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32) {
+        match news {
+            Some((n, s)) => {
+                if !self.news_on && self.dense_at == 0 {
+                    (self.news, self.state) = (n.clone(), s.clone());
+                }
+                self.plant_at = at;
+            }
+            None => self.plant_at = 0,
+        }
+        self.rebind();
     }
 
     /// The world's living walkers a cell (living walkers over its cells),
@@ -687,7 +711,7 @@ impl View {
         for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.alarm_side, self.alarm_full.to_bits(), 0, 0] {
+        for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {

@@ -315,6 +315,10 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
         scorch_cone: true,
         scorch_full: 150,
         scorch_keep: 0.0,
+        // The game ticks 15 times a game second (`Rules::tps`), an eighth
+        // of the dish's 120, so the plants step every tick: 15 plant steps
+        // a second either way (their rates are a plant step's).
+        plant_every: 1,
         seed,
         ..BigParams::today()
     }

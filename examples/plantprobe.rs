@@ -3,7 +3,9 @@
 //! biome), the slime on it, three craters at 20 s, and stills of the plant
 //! field with the slime over it.
 //!
-//! `cargo run --release --example plantprobe -- [seed=1] [depth=1] [secs=90] [out=DIR] [at=0,20,30,60,90]`
+//! `cargo run --release --example plantprobe -- [seed=1] [depth=1] [secs=90] [out=DIR] [at=0,20,30,60,90] [fire=40] [save=DIR]`
+//!
+//! `save=DIR` writes the planet with its stand-in plants as a map and stops.
 //!
 //! Prints a line a still: seconds, the plant field's sum and the share of
 //! open cells with plants on, each kind's cells, and the CPU cost of one
@@ -45,12 +47,12 @@ fn noise(x: usize, y: usize, cell: usize, s: u32) -> f32 {
     top * (1.0 - fy) + bot * fy
 }
 
-fn stand_in(m: &mut Map, seed: u32) {
+fn stand_in(m: &mut Map, seed: u32, share: f32) {
     m.plants = (0..MAP_W * MAP_H)
         .map(|i| {
             let (x, y) = (i % MAP_W, i / MAP_W);
             let g = m.ground[i];
-            if g & G_ROCK != 0 || unit(hash(x as u32, y as u32, seed ^ 77)) > 1.0 / 40.0 {
+            if g & G_ROCK != 0 || unit(hash(x as u32, y as u32, seed ^ 77)) > share {
                 return 0;
             }
             if g & G_WET != 0 {
@@ -129,6 +131,7 @@ fn still(d: &BigDish, path: &PathBuf) {
 
 fn main() -> Result<(), String> {
     let mut fire_at = 40u32;
+    let mut save: Option<PathBuf> = None;
     let (mut seed, mut depth, mut secs, mut out, mut at) = (
         1u64,
         1u32,
@@ -145,18 +148,28 @@ fn main() -> Result<(), String> {
             "secs" => secs = num(v)? as u32,
             "out" => out = PathBuf::from(v),
             "fire" => fire_at = num(v)? as u32,
+            "save" => save = Some(PathBuf::from(v)),
             "at" => {
                 at = v
                     .split(',')
                     .map(|s| s.parse().map_err(|e| format!("at: {e}")))
                     .collect::<Result<_, String>>()?
             }
-            _ => return Err(format!("unknown key {k} (seed, depth, secs, out, at, fire)")),
+            _ => return Err(format!("unknown key {k} (seed, depth, secs, out, at, fire, save)")),
         }
     }
     std::fs::create_dir_all(&out).map_err(|e| e.to_string())?;
     let mut m = levelgen::level(seed, depth);
-    stand_in(&mut m, seed as u32);
+    // A saved map starts full grown; the probe's run from one cell in 40.
+    stand_in(&mut m, seed as u32, if save.is_some() { 1.0 } else { 1.0 / 40.0 });
+    // `save=DIR`: the planet with its stand-in plants as the loader's
+    // files, for the game (`larder-world map=DIR/plants-DEPTH-SEED`).
+    if let Some(dir) = &save {
+        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        m.save(dir, &format!("plants-{depth}-{seed}"))?;
+        println!("saved {}", dir.join(format!("plants-{depth}-{seed}.png")).display());
+        return Ok(());
+    }
     let mut d = BigDish::with_map(race_params(seed, 2, 3000), &m);
     let open = d.agar.iter().filter(|&&a| a).count().max(1);
     println!(
@@ -170,7 +183,8 @@ fn main() -> Result<(), String> {
         "secs sum cover% | meadow jungle reeds scrub | plant step ms (every {} ticks)",
         d.p.plant_every
     );
-    let tps = slime_mould::mould::STEPS_PER_SECOND;
+    // The race world's game ticks a second (`larder_world::Rules::tps`).
+    let tps = slime_mould::mould::larder_world::Rules::default().tps;
     let mut costs = Vec::new();
     for t in 0..=secs * tps {
         if t % tps == 0 {

@@ -1006,6 +1006,8 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
+        // The race world's plant step, every game tick (`race_params`).
+        plant_every: 1,
         seed: s.seed,
         ..t
     }
