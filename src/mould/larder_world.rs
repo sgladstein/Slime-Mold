@@ -273,6 +273,10 @@ pub struct Game<W: World> {
     pub squads: Vec<Squad>,
     /// The squad the player controls (`Cmd::Active`), if any.
     pub active: Option<usize>,
+    /// Crystals guarded at the last count (`Rules::larder` off), and what
+    /// guarding has paid in all.
+    pub guarded: Vec<usize>,
+    pub guard_paid: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -365,6 +369,8 @@ impl<W: World> Game<W> {
             rally: Order::Hold,
             squads: vec![Squad::default(); SQUADS_MAX],
             active: None,
+            guarded: Vec::new(),
+            guard_paid: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.solid = g.solid_now();

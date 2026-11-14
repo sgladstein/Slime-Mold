@@ -336,6 +336,18 @@ pub struct Rules {
     /// soldiers joining it. Off, the game plays as before (squad commands
     /// still apply, but nothing sends them).
     pub squads: bool,
+    /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
+    /// rid of the whole larder system"), a crystal is *drained* or
+    /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
+    /// charge as it takes it, nothing carried, until it runs dry for both
+    /// sides; and a crystal with soldiers standing by it and no walker on
+    /// it is guarded, paying `guard` into the bank without being used up
+    /// (owner 04:28Z: "guarding has to be more valuable in the long run").
+    /// No larder to rob or smell; bought soldiers start by the squad.
+    pub larder: bool,
+    /// Game seconds a guarded crystal takes to pay what draining it whole
+    /// would, and it goes on paying: past that, guarding is worth more.
+    pub guard: f32,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
     /// the target. 0 (the default) aims dead on and draws no random
@@ -441,6 +453,8 @@ impl Default for Rules {
             sink: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
+            larder: true,
+            guard: 120.0,
             spread: 0.0,
             crystal_solid: true,
             mass: 1.0,

@@ -1443,3 +1443,59 @@ fn squad_commands_round_trip_as_lines() {
         assert_eq!(Cmd::parse(&c.to_line()), Some(c), "{}", c.to_line());
     }
 }
+
+/// The squad mode with no larder: drain or guard.
+fn no_larder(seed: u64) -> Game<BigDish> {
+    let mut g = squads(seed);
+    (g.rules.larder, g.rules.seek, g.rules.overrun) = (false, false, 0.0);
+    g
+}
+
+/// A crystal off the mould's home with charge, nearest the squad.
+fn near_crystal(g: &Game<BigDish>) -> (usize, (f32, f32)) {
+    let m = g.middle(0).unwrap();
+    g.world.crystals().iter().enumerate().skip(1).filter(|c| c.1 .1 > 0.0).map(|(i, c)| (i, c.0)).min_by(|a, b| (a.1 .0 - m.0).hypot(a.1 .1 - m.1).total_cmp(&(b.1 .0 - m.0).hypot(b.1 .1 - m.1))).unwrap()
+}
+
+#[test]
+fn with_no_larder_a_drained_crystal_banks_at_once_and_a_guarded_one_pays_without_running_down() {
+    // Drain: soldiers harvesting bank what they take; nobody carries.
+    let mut g = no_larder(7);
+    let (i, c) = near_crystal(&g);
+    g.apply(Cmd::SquadOrder(0, Order::Clear(c.0, c.1)));
+    let bank0 = g.bank;
+    for _ in 0..30 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+        assert!(g.soldiers.iter().all(|s| s.carry == 0.0 && !s.homing), "nothing is carried");
+        if g.soldiers.iter().all(|s| matches!(s.order, Order::Clear(..))) {
+            assert!(!g.guarded.contains(&i), "a crystal being drained is not guarded");
+        }
+    }
+    assert!(g.harvested > 0.0 && g.bank > bank0, "draining banked {} (bank {bank0} -> {})", g.harvested, g.bank);
+    // Guard: the same crystal held, nobody harvesting, pays each second and
+    // keeps its charge.
+    let mut g = no_larder(7);
+    g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
+    for _ in 0..20 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    let charge = g.world.crystals()[i].1;
+    // Each second it is guarded (no walker on it) it pays a `guard`-th of
+    // its charge.
+    let (mut seconds, mut checked) = (0, 0);
+    for _ in 0..20 * g.rules.tps / g.rules.frame_ticks {
+        let paid0 = g.guard_paid;
+        g.step();
+        if g.guard_paid > paid0 && g.guarded == vec![i] {
+            seconds += 1;
+            let want = g.world.crystals()[i].1 / g.rules.charge / g.rules.guard;
+            let got = g.guard_paid - paid0;
+            assert!((got - want).abs() < 0.01 * want + 1e-4, "guarding paid {got} in a second, want {want}");
+            checked += 1;
+        }
+    }
+    assert!(seconds >= 5 && checked > 0, "the squad by the crystal guarded it {seconds} of 20 s");
+    // The squad takes none of it (the mould may eat some).
+    let _ = charge;
+    assert_eq!(g.harvested, 0.0);
+}

@@ -146,8 +146,29 @@ impl App {
         // carried food is banked there) and the core's ring (stand in it
         // with no mould near for 5 s to take it). Game objects, not the
         // simulation, so marks.
+        if g.rules.larder {
         self.marks.rect(g.larder, (1.4 * sc, 1.4 * sc), [214, 196, 150, 255], true);
         self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 140]);
+        } else {
+            // No larder (the squad mode): each guarded crystal's ring, the
+            // game's count of who holds it (`Game::guarded`).
+            for &i in &g.guarded {
+                let c = g.world.crystals()[i].0;
+                self.marks.ring(c, g.world.crystal_r(i) + 2.0 * sc, [94, 214, 132, 170]);
+            }
+        }
+        if g.rules.squads {
+            // Each squad's number over its middle (the key that controls
+            // it), the controlled one bright.
+            for (n, q) in g.live_squads().into_iter().enumerate() {
+                if let Some(m) = g.middle(q) {
+                    let lit = g.active == Some(q);
+                    let colour = if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
+                    let label = format!("{}{}", n + 1, if lit { " *" } else { "" });
+                    self.marks.label(m, (-4.0, -(4.0 * sc * zoom).clamp(14.0, 60.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
+                }
+            }
+        }
         if self.larder_sel {
             self.marks.ring(g.larder, 3.6 * sc, [255, 255, 255, 200]);
         }

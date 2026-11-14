@@ -137,7 +137,9 @@ impl<W: World> Game<W> {
         let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);
         self.bank -= tended;
         self.spent += tended;
-        // The larder: smells of the bank, and reads who touches it.
+        // The larder: smells of the bank, and reads who touches it (none
+        // without one, `Rules::larder`).
+        if r.larder {
         units.push(UnitIn {
             x: self.larder.0,
             y: self.larder.1,
@@ -150,6 +152,7 @@ impl<W: World> Game<W> {
         });
         who.push(Who::Larder);
         from.push(None);
+        }
         // Turrets, lures and pumps: units that do not move (`buildings`).
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
@@ -196,6 +199,12 @@ impl<W: World> Game<W> {
                     s.aim = u.target;
                     s.dense = u.dense;
                     s.carry += u.took / r.charge;
+                    if !r.larder {
+                        // Drained straight into the bank: nothing to carry.
+                        self.bank += s.carry;
+                        self.harvested += s.carry;
+                        s.carry = 0.0;
+                    }
                     // A crystal run dry sends its carrier home with what it
                     // has (`Rules::home_dry`, on): the frame gave under half
                     // its ask and the whole crystal holds less than one
@@ -219,7 +228,7 @@ impl<W: World> Game<W> {
                             if s.carry > 0.0 {
                                 s.homing = true;
                                 s.dry = true;
-                            } else if r.seek || s.queued > 0 {
+                            } else if r.seek || s.queued > 0 || !r.larder {
                                 // Empty-handed at a dry crystal (sent to
                                 // one, or it ran dry on the first take):
                                 // on at once, nothing to bank.
@@ -256,6 +265,7 @@ impl<W: World> Game<W> {
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
+            self.guard_pay();
             self.count_stuck();
             self.check_broken();
         }
@@ -312,6 +322,35 @@ impl<W: World> Game<W> {
                 s.hp = 0.0;
                 s.carry = 0.0;
             }
+        }
+    }
+
+    /// Once a game second, with no larder (`Rules::larder`): every crystal
+    /// with charge left, a live soldier standing by it (not draining it)
+    /// and no walker on it pays a `Rules::guard`-th of the charge it has
+    /// left: a crystal half drained guards for half, one drained dry (it
+    /// keeps crumbs) for nothing.
+    pub(super) fn guard_pay(&mut self) {
+        let r = self.rules;
+        self.guarded.clear();
+        if r.larder || r.guard <= 0.0 {
+            return;
+        }
+        let sc = self.s();
+        let cs = self.world.crystals();
+        for (i, &(c, charge)) in cs.iter().enumerate() {
+            if charge <= 0.0 {
+                continue;
+            }
+            let cr = self.world.crystal_r(i);
+            let by = |s: &Soldier| s.alive && !matches!(s.order, Order::Clear(..)) && (s.x - c.0).hypot(s.y - c.1) <= cr + (RIM + 4.0) * sc;
+            if !self.soldiers.iter().any(by) || self.world.walkers_in(c, cr + sc) > 0 {
+                continue;
+            }
+            let pay = charge / r.charge / r.guard;
+            self.bank += pay;
+            self.guard_paid += pay;
+            self.guarded.push(i);
         }
     }
 
