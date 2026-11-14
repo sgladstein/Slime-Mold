@@ -107,8 +107,40 @@ pub struct Planet {
     pub depth: u32,
     pub name: String,
     pub biome: Biome,
-    /// Map cells, as `MAP_W` x `MAP_H` (fixed until maps carry a size).
+    /// Map cells (`size_at`): 60% of the designed maps' area on planet 1,
+    /// six times it on the core world.
     pub size: (usize, usize),
+}
+
+/// Each planet's map area as a share of the designed maps' (1024 x 640):
+/// the owner's "first planet about 60% of today's map, today's size by
+/// planet 3 or 4, up to 6 the area for the core world" (2026-11-14 15:33Z).
+/// Past the core world, the core world's. `GROW_CAP` holds it at today's
+/// size for now.
+pub const AREA: [f32; 8] = [0.6, 0.8, 1.0, 1.4, 2.0, 2.8, 4.0, 6.0];
+
+/// The biggest share `size_at` gives until the 1070 has timed the bigger
+/// worlds: the technical lead (2026-11-14 16:42Z), "Before the default
+/// changes, book one 1070 timing ... at 1x, 2x, 4x and 6x area". Smaller
+/// planets cost less than today's and need no timing. `planet:D:S:AREA`
+/// asks for any share up to `AREA_MAX` (that timing, and dev play).
+pub const GROW_CAP: f32 = 1.0;
+
+/// The biggest share a `planet:D:S:AREA` spec may ask for.
+pub const AREA_MAX: f32 = 6.0;
+
+/// The map size at `depth`, map cells: `AREA`'s share of 1024 x 640 (at
+/// most `GROW_CAP`), the same shape.
+pub fn size_at(depth: u32) -> (usize, usize) {
+    size_of(AREA[(depth.clamp(1, AREA.len() as u32) - 1) as usize].min(GROW_CAP))
+}
+
+/// A map `area` times 1024 x 640's area, the same shape, each side a
+/// multiple of 16 map cells (4 dish cells).
+pub fn size_of(area: f32) -> (usize, usize) {
+    let k = area.sqrt();
+    let side = |v: usize| ((v as f32 * k / 16.0 + 0.5).floor() as usize).max(4) * 16;
+    (side(MAP_W), side(MAP_H))
 }
 
 /// The planet at `depth` (from 1) of the run with `seed`.
@@ -116,7 +148,7 @@ pub fn planet(seed: u64, depth: u32) -> Planet {
     let mut r = Rng::new(seed, depth, STREAM_PLANET);
     let biome = Biome::at(depth);
     let name = planet_name(&mut r);
-    Planet { seed, depth, name, biome, size: (MAP_W, MAP_H) }
+    Planet { seed, depth, name, biome, size: size_at(depth) }
 }
 
 /// The map of the planet at `depth` of the run with `seed`.
@@ -124,9 +156,10 @@ pub fn level(seed: u64, depth: u32) -> Map {
     generate(&planet(seed, depth))
 }
 
-/// A `map=` value naming a planet: `planet` (depth 1), `planet:DEPTH` or
-/// `planet:DEPTH:SEED`, the seed otherwise `seed` (the window's `seed=`).
-/// `None` when `s` names no planet.
+/// A `map=` value naming a planet: `planet` (depth 1), `planet:DEPTH`,
+/// `planet:DEPTH:SEED` or `planet:DEPTH:SEED:AREA`, the seed otherwise
+/// `seed` (the window's `seed=`) and the area (a share of today's map, to
+/// `AREA_MAX`) otherwise the depth's. `None` when `s` names no planet.
 pub fn spec(s: &str, seed: u64) -> Option<Result<(Planet, Map), String>> {
     Some(spec_planet(s, seed)?.map(|p| {
         let m = generate(&p);
@@ -142,8 +175,8 @@ pub fn spec_planet(s: &str, seed: u64) -> Option<Result<Planet, String>> {
     }
     let read = || -> Result<Planet, String> {
         let words: Vec<&str> = rest.split(':').skip(1).collect();
-        if words.len() > 2 {
-            return Err(format!("{s}: planet, planet:DEPTH or planet:DEPTH:SEED"));
+        if words.len() > 3 {
+            return Err(format!("{s}: planet, planet:DEPTH, planet:DEPTH:SEED or planet:DEPTH:SEED:AREA"));
         }
         let depth = match words.first() {
             Some(d) => d.parse::<u32>().map_err(|e| format!("{s}: depth {d:?}: {e}"))?,
@@ -156,7 +189,17 @@ pub fn spec_planet(s: &str, seed: u64) -> Option<Result<Planet, String>> {
             Some(v) => v.parse::<u64>().map_err(|e| format!("{s}: seed {v:?}: {e}"))?,
             None => seed,
         };
-        Ok(planet(seed, depth))
+        let p = planet(seed, depth);
+        match words.get(2) {
+            Some(v) => {
+                let area = v.parse::<f32>().map_err(|e| format!("{s}: area {v:?}: {e}"))?;
+                if !(0.25..=AREA_MAX).contains(&area) {
+                    return Err(format!("{s}: area {area} (a share of today's map) runs from 0.25 to {AREA_MAX}"));
+                }
+                Ok(Planet { size: size_of(area), ..p })
+            }
+            None => Ok(p),
+        }
     };
     Some(read())
 }
@@ -277,6 +320,19 @@ impl Field {
         Field { gw, v }
     }
 
+    /// The least and greatest value over cells `x0..x1` x `y0..y1`: the
+    /// samples `at` reads there bound it.
+    fn range(&self, x0: usize, y0: usize, x1: usize, y1: usize) -> (f32, f32) {
+        let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+        for gy in y0 / STEP..=(y1 - 1) / STEP + 1 {
+            for gx in x0 / STEP..=(x1 - 1) / STEP + 1 {
+                let v = self.v[gy * self.gw + gx];
+                (lo, hi) = (lo.min(v), hi.max(v));
+            }
+        }
+        (lo, hi)
+    }
+
     fn at(&self, x: usize, y: usize) -> f32 {
         let (gx, gy, tx, ty) = (x / STEP, y / STEP, (x % STEP) as f32 / STEP as f32, (y % STEP) as f32 / STEP as f32);
         let i = gy * self.gw + gx;
@@ -371,7 +427,12 @@ impl Recipe {
             Biome::Spires => Recipe { open: 0.85, front: 0.3, ridge: 11.0, outcrop: 0.78, pillars: 210, ..base },
             Biome::Core => Recipe { regions: 15, open: 0.6, front: 0.7, gate: 0.35, ring: 0.6, hedges: 5, nests: nests.max(3), small: 14, big: 3, ..base },
         };
-        Recipe { pass: (r.pass.0 * narrow, r.pass.1 * narrow), ..r }
+        // More of everything on a bigger map, at the same density: regions
+        // (so the same spacing), crystals, hedges. Big contested crystals
+        // grow with the route's length, not the area.
+        let area = (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32;
+        let more = |n: usize, k: f32| (n as f32 * k + 0.5).floor() as usize;
+        Recipe { pass: (r.pass.0 * narrow, r.pass.1 * narrow), regions: more(r.regions, area), small: more(r.small, area), big: more(r.big, area.sqrt()), hedges: more(r.hedges, area), ..r }
     }
 }
 
@@ -521,23 +582,65 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let mut region = vec![0u16; n];
     let mut second = vec![0u16; n];
     let mut border = vec![0f32; n];
-    for y in 0..h {
-        for x in 0..w {
-            let px = x as f32 + 0.5 + warp_x.at(x, y);
-            let py = y as f32 + 0.5 + warp_y.at(x, y);
-            let (mut d1, mut d2, mut i1, mut i2) = (f32::MAX, f32::MAX, 0usize, 0usize);
-            for (k, s) in sites.iter().enumerate() {
-                let d = (px - s.0) * (px - s.0) + (py - s.1) * (py - s.1);
-                if d < d1 {
-                    (d2, i2, d1, i1) = (d1, i1, d, k);
-                } else if d < d2 {
-                    (d2, i2) = (d, k);
+    // Tile by tile, only the sites that can be one of a cell's nearest two:
+    // the warped points of a tile lie in a box (the warp is bilinear, so its
+    // samples bound it; padded a cell for rounding), and a site whose
+    // nearest approach to the box is farther than the second-nearest
+    // site's farthest cannot be either. The candidates keep their order, so
+    // the result is the full scan's to the bit, ties included; on the core
+    // world (90 sites, 3.9 million cells) the full scan was most of a
+    // second.
+    const TILE: usize = 16;
+    let mut cand: Vec<usize> = Vec::with_capacity(ns);
+    let mut far: Vec<f32> = Vec::with_capacity(ns);
+    for ty in (0..h).step_by(TILE) {
+        for tx in (0..w).step_by(TILE) {
+            let (x1, y1) = ((tx + TILE).min(w), (ty + TILE).min(h));
+            let (wx0, wx1) = warp_x.range(tx, ty, x1, y1);
+            let (wy0, wy1) = warp_y.range(tx, ty, x1, y1);
+            let bx = (tx as f32 + 0.5 + wx0 - 1.0, (x1 - 1) as f32 + 0.5 + wx1 + 1.0);
+            let by = (ty as f32 + 0.5 + wy0 - 1.0, (y1 - 1) as f32 + 0.5 + wy1 + 1.0);
+            far.clear();
+            far.extend(sites.iter().map(|s| {
+                let dx = (s.0 - bx.0).abs().max((s.0 - bx.1).abs());
+                let dy = (s.1 - by.0).abs().max((s.1 - by.1).abs());
+                dx * dx + dy * dy
+            }));
+            let (mut f1, mut f2) = (f32::MAX, f32::MAX);
+            for &f in &far {
+                if f < f1 {
+                    (f2, f1) = (f1, f);
+                } else if f < f2 {
+                    f2 = f;
                 }
             }
-            let i = y * w + x;
-            region[i] = i1 as u16;
-            second[i] = i2 as u16;
-            border[i] = (d2 - d1) / (2.0 * dist(sites[i1], sites[i2]).max(1.0));
+            cand.clear();
+            cand.extend((0..ns).filter(|&k| {
+                let s = sites[k];
+                let dx = (bx.0 - s.0).max(0.0).max(s.0 - bx.1);
+                let dy = (by.0 - s.1).max(0.0).max(s.1 - by.1);
+                dx * dx + dy * dy <= f2
+            }));
+            for y in ty..y1 {
+                for x in tx..x1 {
+                    let px = x as f32 + 0.5 + warp_x.at(x, y);
+                    let py = y as f32 + 0.5 + warp_y.at(x, y);
+                    let (mut d1, mut d2, mut i1, mut i2) = (f32::MAX, f32::MAX, 0usize, 0usize);
+                    for &k in &cand {
+                        let s = sites[k];
+                        let d = (px - s.0) * (px - s.0) + (py - s.1) * (py - s.1);
+                        if d < d1 {
+                            (d2, i2, d1, i1) = (d1, i1, d, k);
+                        } else if d < d2 {
+                            (d2, i2) = (d, k);
+                        }
+                    }
+                    let i = y * w + x;
+                    region[i] = i1 as u16;
+                    second[i] = i2 as u16;
+                    border[i] = (d2 - d1) / (2.0 * dist(sites[i1], sites[i2]).max(1.0));
+                }
+            }
         }
     }
 
@@ -1066,7 +1169,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
 
-    Map { ground, items }
+    Map { w, h, ground, items }
 }
 
 // ---------------------------------------------------------------------
@@ -1349,7 +1452,20 @@ mod tests {
         assert_eq!(got, PINNED, "{got:#x?}");
     }
 
-    const PINNED: [u64; 8] = [0x7b16b50331815e22, 0xdabafad24ca5e405, 0x895c6bd83729fb94, 0x541168edb6b5c412, 0xd371f7d68cb4c9ab, 0x87690491285c2bc8, 0x0d055ecd77802455, 0xf99757c24e1b2738];
+    // Depths 3-8 (today's size under `GROW_CAP`) kept their round-2 pins
+    // through the tiled region scan, which finds the same nearest sites
+    // as the full scan; depths 1 and 2 are new, at 60% and 80% of the area.
+    const PINNED: [u64; 8] = [0xa2c197f14fe7fa44, 0x5d98173a8152f995, 0x895c6bd83729fb94, 0x541168edb6b5c412, 0xd371f7d68cb4c9ab, 0x87690491285c2bc8, 0x0d055ecd77802455, 0xf99757c24e1b2738];
+
+    /// The core world at the owner's 6x area, pinned too: the bigger maps
+    /// run more of the generator's loops, on every machine the same.
+    #[test]
+    fn a_big_planet_is_pinned() {
+        let (_, m) = spec("planet:8:1:6", 1).unwrap().unwrap();
+        assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
+    }
+
+    const PINNED_BIG: u64 = 0x9902743b209a58ff;
 
     #[test]
     fn biomes_come_in_the_set_order_with_the_core_world_last() {
@@ -1375,11 +1491,28 @@ mod tests {
                 let m = generate(&p);
                 assert_eq!(print(&m), print(&build(&p, k)));
                 let s = stats(&p, &m);
-                assert!(s.crystals >= 12 && s.unreachable == 0, "seed {seed} depth {depth}: {s:?}");
+                // Planet 1 is 60% of today's area and carries that share
+                // of the small crystals (`Recipe::of`), so 11 and up.
+                assert!(s.crystals >= 10 && s.unreachable == 0, "seed {seed} depth {depth}: {s:?}");
             }
         }
         // Most planets pass on their first or second attempt.
         assert!(attempts <= 54 * 3, "{attempts} attempts for 54 planets");
+    }
+
+    /// Planets of every biome pass their checks at the owner's sizes, the
+    /// core world's 6x area included, not only at today's.
+    #[test]
+    fn bigger_planets_pass_their_checks() {
+        for depth in 1..=8 {
+            for area in [0.6, 2.0, 6.0] {
+                let p = Planet { size: size_of(area), ..planet(3, depth) };
+                let k = (0..ATTEMPTS).find(|&a| check(&p, &build(&p, a)).is_empty());
+                assert!(k.is_some(), "depth {depth} area {area}: {:?}", check(&p, &build(&p, 0)));
+                let s = stats(&p, &generate(&p));
+                assert!(s.unreachable == 0 && s.crystals as f32 >= 10.0 * area.min(1.0), "depth {depth} area {area}: {s:?}");
+            }
+        }
     }
 
     #[test]
@@ -1439,7 +1572,9 @@ mod tests {
         assert_eq!((p.seed, p.depth), (9, 4));
         assert!(spec("planet:0", 1).unwrap().is_err());
         assert!(spec("planet:x", 1).unwrap().is_err());
-        assert!(spec("planet:1:2:3", 1).unwrap().is_err());
+        assert!(spec("planet:1:2:3:4", 1).unwrap().is_err());
+        assert!(spec("planet:1:2:9", 1).unwrap().is_err());
+        assert_eq!(spec_planet("planet:3:9:2", 1).unwrap().unwrap().size, size_of(2.0));
         assert_eq!(spec_planet("planet:3:9", 1).unwrap().unwrap(), planet(9, 3));
     }
 

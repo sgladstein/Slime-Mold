@@ -11,7 +11,9 @@ Code: `src/mould/levelgen.rs`; harness: `examples/planets.rs`.
 - 15:22Z: "We should have a full separate thread for Procedurally generated levels. That is a huge task".
 - 15:25Z: "My current story behind the roguelike/levels/world. Is that the slime is taking over planets and each level is a new planet as we move towards the core slime world. This is just head cannon right now, but it could guide our level design".
 - 15:33Z, answers to this thread's questions: level length "15/20 minutes to 1 hour+" with "a lot of variability"; size "first planet about 60% of today's map, today's size by planet 3 or 4, up to 6 the area for the core world"; biomes in a "Set order"; the designed maps "will not come at all. They can be played in sandbox"; twists before landing "Yes"; a Random planet button "Yes" with "a dev mode to control what level planet i go to"; unfair starts "Maybe, not sure yet. slime, size for sure"; and "some planets that have remains of bases or even start with some soliders, but those should be rare ... more of a rescue the human planet".
-- 16:50Z, after round 1's page: "we need way more variability between biomes. There should be some with plants and water in many of them. They should look really different terrain. Some are open, some have lots of rock making different areas, etc. think about how this affects strategy. There should be different crystal distributions and sizes" ([brainstorm](levelgen-2026-11-14/biomes-brainstorm.md)).
+- 16:50Z, after round 1's page: "we need way more variability between biomes. There should be some with plants and water in many of them. They should look really different terrain. Some are open, some have lots of rock making different areas, etc. think about how this affects strategy. There should be different crystal distributions and sizes" ([brainstorm](biomes-brainstorm.md)).
+- 17:02Z, answers to the brainstorm's questions: plants "fully new from the old grass"; deep water that stops soldiers, "I like that idea"; dials and named biomes, "your rec for now"; the crystal pattern "rolls its own, but some biomes are more likely to get certain patterns"; "any maps should be beatable by any strategy"; open early and mazes later, "That makes sense"; "New ground. Yes!" ([plan](biomes-plan.md)).
+- 17:24Z: "Do we need any additional research on world/level gen or have we done enough?" Answered: enough to build; one targeted read (how StarCraft map generators score chokepoints and fairness) when the every-strategy check is written.
 - Earlier (project chat, 15:21Z): the roguelike stays separate from the campaign for now; maps get bigger as the run goes deeper.
 
 ## The interface (agreed with the run thread, 15:25-15:40Z)
@@ -98,9 +100,9 @@ to a floor of 70%.
 ## Numbers: 400 planets
 
 `cargo run --release --example planets -- seeds=1-50 depths=1-8`
-([raw](levelgen-2026-11-14/raw/planets-seeds-1-50-look2.txt); seeds 1-4
-alone: [raw](levelgen-2026-11-14/raw/planets-seeds-1-4-look2.txt); the first
-layouts' numbers: [raw](levelgen-2026-11-14/raw/planets-seeds-1-50.txt)).
+([raw](raw/planets-seeds-1-50-look2.txt); seeds 1-4
+alone: [raw](raw/planets-seeds-1-4-look2.txt); the first
+layouts' numbers: [raw](raw/planets-seeds-1-50.txt)).
 Medians over 50 seeds each, ranges in brackets; walks in map cells (the map
 is 1024 wide). Soft-rock pieces count each wall item.
 
@@ -210,18 +212,75 @@ drawn straight from the map files in false colour.
 
 The owner, after seeing round 1 (16:50Z), asked for much more variety
 between biomes (plants and water in many, open against rocky, crystal
-patterns and sizes): [brainstorm](levelgen-2026-11-14/biomes-brainstorm.md),
+patterns and sizes): [brainstorm](biomes-brainstorm.md),
 questions in the thread.
+
+## Bigger planets: maps carry their own size
+
+The owner's sizes (15:33Z) are `AREA`: 0.6, 0.8, 1, 1.4, 2, 2.8, 4 and 6
+times today's 1024 x 640 for planets 1-8. A map now carries its own size:
+`Map { w, h, .. }` (any multiple of 4 from 64 to 4096 map cells),
+`BigParams::dish` (today's 256 x 160 dish cells unless a map says
+otherwise), the GPU world, the camera and the editor all take it from the
+map. The generator scales with the area: regions, small crystals and hedges
+with the area, big crystals with its square root, so a bigger planet has
+the same density and a longer route.
+
+**Held at today's size above 1x** (`GROW_CAP` 1.0) until the 1070 has timed
+the bigger worlds, as the technical lead asked (16:42Z): planets 1 and 2
+are smaller now (800 x 496 and 912 x 576), planets 3-8 today's size.
+`map=planet:D:S:AREA` asks for any area to 6 for that timing and for dev
+play (`larder-world map=planet:8:1:6`).
+
+**GPU memory, measured.** `larder-world -- bench` now prints the bytes of
+every storage buffer the engine, the view, the canvas and the ground look
+make (`gpu::buffer_bytes`, counted at creation; screen-sized textures not
+in it). Seed 1, default settings (25,000 walkers, 50,000 slots, scale 2) on
+llvmpipe ([raw](raw/sizes-bench-llvmpipe.txt)):
+
+| Planet (area) | Map cells | Dish fine cells | GPU buffers | Biggest buffer |
+| --- | --- | --- | --- | --- |
+| 1 (0.6x) | 800 x 496 | 400 x 248 | 71.6 MB | 8.4 MB |
+| 3 (1x, today) | 1024 x 640 | 512 x 320 | 84.1 MB | 8.4 MB |
+| 5 at 2x | 1456 x 912 | 728 x 456 | 116.6 MB | 8.4 MB |
+| 7 at 4x | 2048 x 1280 | 1024 x 640 | 179.1 MB | 11.1 MB |
+| 8 at 6x | 2512 x 1568 | 1256 x 784 | 234.9 MB | 16.4 MB |
+
+A straight line through the five rows: about 54 MB that does not grow
+with the map, plus 184 bytes a fine cell. The core world at 6x needs 235 MB of the 1070's 8 GB, and its biggest
+buffer is 16 MB, far under the 128 MiB a storage binding may be by default
+(the game asks for the adapter's own limits, which are higher). Memory does
+not stop 6x; the step's and the draw's time per frame are what the 1070
+timing measures. The player's own mould adds per-cell blocks; it was not in
+these runs.
+
+**Generation time.** The region scan was the cost at 6x (1.1 s): a cell
+now looks only at the sites that can be nearest inside its 16 x 16 tile
+(each tile's warped box, padded), in the same order, so it finds the same
+site as the full scan. Planets 3-8 at today's size kept their pinned
+fingerprints exactly through the change. Planet 8 at 6x builds in about
+0.5 s, once a level.
+
+**Seen.** Planet 1 and planet 8 at 6x play headless with nobody playing
+(30 s, no errors). On planet 1 the same 25,000 walkers cover about a third
+of the smaller map by 30 s; on the 6x core world they are a corner of it.
+Walkers per planet are the run thread's (the slime's tier), so they scale
+there.
+
+**Still to do before the default grows:** the 1070 timing (1x, 2x, 4x, 6x;
+step and draw ms), and the technical lead's other point, that only the
+grown region should cost (live bounds or tiles), if the timing shows the
+big worlds' empty cells cost frames.
 
 ## Next
 
-1. **Biomes with far more variety**, from the owner's answers to the
-   [brainstorm](levelgen-2026-11-14/biomes-brainstorm.md)'s questions.
-2. **Planets grow** (the owner's 60% to 6x): `Map` carries its own size,
-   `BigDish` and the GPU world take it from the map, the generator scales its
-   regions, nests and crystals with area. 6x the area is 6x the cells for the
-   engine and the soldiers' walking maps (each map 655 KB and about 15 ms
-   to build at today's size), so the biggest size is timed on the 1070 first.
+1. **Biomes with far more variety**, from the owner's answers
+   ([plan](biomes-plan.md)): dials and named biomes, crystal patterns
+   rolled with biome odds, a new set order (open early, mazes late),
+   rivers, lakes, rocky rooms, caves and oases. Plants are the plants
+   thread's and new ground (deep water first) the ground thread's; this
+   thread writes them into the maps (soil kinds 4 and 5, plants in B).
+2. **Planets grow**: the 1070 timing, then `GROW_CAP` up.
 3. **Twists** shown before landing (Flooded, Rich crystals, ...).
 4. **Rescue planets**, rare: base ruins and stranded soldiers as new map
    items, with a rescue goal from the run thread.
