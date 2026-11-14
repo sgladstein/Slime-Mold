@@ -36,7 +36,10 @@ Code: `src/mould/levelgen.rs`; harness: `examples/planets.rs`.
 
 ## How a planet is made
 
-Recipes over regions, not raw noise:
+Recipes over regions, not raw noise. Since round 3 a biome is a named range
+on a few **dials**, and each planet rolls its value on each (`Recipe::of`,
+from its own random stream, so a failed attempt redraws the layout, not the
+kind of planet): openness, water, soil and crystal pattern.
 
 1. **Sites.** The landing near an edge (a short edge four times in five, so
    the slime is a long way off), the first nest across the map, more nests
@@ -49,55 +52,72 @@ Recipes over regions, not raw noise:
    the lines a squad has to get through. Borders along the route are mostly
    open. Off the tree, the recipe's odds decide ridge, pass, or a pass shut
    with soft rock (wall items, which the slime and shots wear down).
-4. **Rock.** Ridges along shut borders, their width varied by noise; a pass
-   is a slot through the ridge. On the Canyon, *fronts*: long ridges right
-   across the map, across the route, at even steps between the landing and
-   the far nest, each with one or two passes. Mesas in the fields, never
-   within 120 cells of a site; on Spires, many small ragged pillars.
-5. **Soil and water.** Each biome's signature shape, independent of the
-   regions: barren bands across the route, broad pools, sand patches, clay
-   cracked into polygons (a jittered grid's Voronoi borders). Plain ground
-   round the landing (150 cells) and clay round the nests on the biomes that
-   hold the slime at home, as the designed maps do, both with ragged edges.
-6. **Crystals.** A rich home crystal under each nest (the slime starts on
-   it), a medium one 85-140 cells from the landing toward the middle, one to
-   three big contested ones midway, small ones scattered; none on rock or
-   wet ground.
-7. **Soft rock.** Gates across some passes; on Thicket and Core a ring
+4. **Rock, by openness.** *Open*: few ridges, no mesas. *Outcrops*: ridges
+   and mesas. *Pillars*: many small ragged pillars (round 2's Spires).
+   *Ridges*: long ridges right across the map with a pass or two (round
+   2's Canyon fronts). *Rooms*: nearly every border a whole, wide ridge,
+   joined by passes. *Caves*: rock everywhere but a cavern round each site
+   and a tunnel along each passable border. A pass is a slot through the
+   ridge plus a disc as wide as the widest ridge, cleared of every ridge's
+   rock; a short open border on the spanning tree is cut the same way.
+5. **Water.** *Pools* (round 2's Marsh), *lakes* with a deep middle,
+   *rivers* right across the route with shallow fords and sand banks, or
+   narrow wandering *streams*. Deep water is written as shallow wet until
+   the ground thread's deep water (soil kind 4, which soldiers cannot stand
+   in) is on main; the fords and rims are shallow already.
+6. **Soil.** *Sand* patches, *dunes* (sand with clay islands under the
+   crystals), barren *bands* across the route, barren everywhere but the
+   *oases*, *clay* patches, *cracked* clay (a jittered grid's Voronoi
+   borders) or *mixed*. Plain ground round the landing (150 cells), clay
+   round the nests where the soil or water holds the slime at home, both
+   with ragged edges.
+7. **Crystals, by pattern.** Always a rich home crystal under each nest
+   and a medium one 85-140 cells from the landing, in the landing's own
+   region. Then *scattered* (big ones midway, small anywhere), *fields* (a
+   big crystal ringed by three to five small ones), *veins* (lines of small
+   crystals across the route), *jackpot* (one giant, radius 56-70, a few
+   small), *oases* (a cluster at each oasis) or *richer farther* (radius
+   12 to 40 and charge 96 to 512 rising toward the slime). None on rock or
+   water.
+8. **Soft rock.** Gates across some passes; on Jungle and Core a ring
    round each nest with its gap facing the landing (the Nest's shape), and
-   curved hedges. Each is a chain of short pieces that wobbles and changes
-   thickness (11-21 cells), so it reads as grown.
-8. **The checks** (`levelgen::check`), on a 4-cell walking grid narrowed by
+   curved hedges, kept off the passes. Each is a chain of short pieces that
+   wobbles and changes thickness (11-21 cells), so it reads as grown.
+9. **The checks** (`levelgen::check`), on a 4-cell walking grid narrowed by
    one cell so a pass a squad can't get through counts as shut: every
    crystal and nest reachable from the landing (breaking soft rock allowed);
    the far nest at least 0.6 of the map's width away on foot and every nest
    0.45; a crystal within 200 cells' walk of the landing; half the charge
-   reachable without breaking soft rock; rock under 30%; every nest placed.
-   A failed attempt is rebuilt from the next attempt's stream (24 tries,
-   then an open plan with no ridges, which no seed has needed).
+   reachable without breaking soft rock; rock under 30% (40% for ridges and
+   rooms, 72% for caves); every nest placed. A failed attempt is rebuilt
+   from the next attempt's stream (24 tries, then an open plan with no
+   ridges, which no seed has needed).
 
-## The eight biomes, in the set order
+## The eight biomes, in the set order (round 3)
 
-The ground kinds are the ones the simulation already plays and the soil test
-measured ([larder maps, *Which ground the mould feels*](larder-maps-2026-11-11.md)):
+From the owner's answers (17:02Z): dials plus named biomes, the crystal
+pattern rolled with biome odds, open and readable early, mazes and caves
+later ([plan](biomes-plan.md)). Round 2's seven shapes are dial values now.
+The ground kinds are the ones the simulation already plays
+([larder maps, *Which ground the mould feels*](../larder-maps-2026-11-11.md)):
 wet and barren ground halve the slime, sand spreads it (about 60% bigger),
-clay holds it in place.
+clay holds it in place. Weights in brackets.
 
-| Planet | Biome | What it is | Why there |
-| --- | --- | --- | --- |
-| 1 | Barrens | Three wide barren bands right across the route | Starves it: the easy first planet |
-| 2 | Marsh | Big wet pools that run together, on clay banks | Slows it |
-| 3 | Canyon | Two long ridges right across the map (three past planet 8), each with one or two passes | Chokepoints |
-| 4 | Dunes | Sand everywhere, big ragged clay islands under the crystals (the Flats' idea) | The slime races; first planet with two nests |
-| 5 | Claypan | Clay nearly everywhere, cracked into polygons of plain ground | The slime digs in and is slow to leave |
-| 6 | Thicket | Grown soft-rock hedges and walled nests | Walls to chew through, rings at home |
-| 7 | Spires | Many small rock pillars and a few mesas on sand and clay | Cover the slime grows behind (the tiers page's "grows round cover" idea), so the squad has to move |
-| 8 | Core | Every ground, three nests, rings and gates | The core world |
+| Planet | Biome | Openness | Water | Soil | Crystal pattern |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Meadow | open (3), outcrops (2), pillars (1) | pools (2), dry, streams | plain (2), sand, clay | scattered (3), fields (3), richer (2), veins, jackpot |
+| 2 | Barrens | open (2), outcrops (2), pillars (1) | dry | bands or oases | oases with oasis soil; else scattered (2), veins (2), richer (2), jackpot |
+| 3 | Fen | open, outcrops | lakes, pools | clay (2), plain | veins (3), fields (2), scattered (2), richer |
+| 4 | River valley | ridges (2), outcrops (1) | rivers (one, or two two times in five) | dunes (2), sand | fields (3), veins (2), richer (2), scattered |
+| 5 | Jungle | outcrops (2), open (1) | streams (2), pools (1) | clay (2), plain | scattered (3), fields (2), jackpot, richer; nine hedges, rings, gates |
+| 6 | Highlands | rooms (3), ridges (1) | dry (2), pools (1) | cracks (2), clay | fields (3), jackpot (2), richer (2), scattered |
+| 7 | Caves | caves | pools (2), dry | plain, clay, sand | veins (3), jackpot (2), scattered (2), fields |
+| 8 | Core | outcrops, pillars, ridges, rooms | any | mixed | any; three nests, rings and hedges |
 
 Past planet 8 the order repeats (for longer runs). Passes narrow 3% a planet
 to a floor of 70%.
 
-## Numbers: 400 planets
+## Numbers: 400 planets (round 2)
 
 `cargo run --release --example planets -- seeds=1-50 depths=1-8`
 ([raw](raw/planets-seeds-1-50-look2.txt); seeds 1-4
@@ -272,16 +292,81 @@ step and draw ms), and the technical lead's other point, that only the
 grown region should cost (live bounds or tiles), if the timing shows the
 big worlds' empty cells cost frames.
 
+## Round 3: biomes that play differently
+
+From the owner's answers to the [brainstorm](biomes-brainstorm.md) (17:02Z)
+and the [plan](biomes-plan.md): the eight biomes above, each a named range on
+the dials, in a new order (open early, mazes late). New in the generator:
+rocky rooms, caves (caverns and tunnels), lakes, rivers with fords, streams,
+oases, and six crystal patterns rolled with each biome's odds. Plants (the
+plants thread's new field) and deep water and other new ground (the ground
+thread's) are written into the maps when each is on main: plants in the
+PNG's B channel (kind in the top two bits, density in the low six), deep
+water as soil kind 4 with the wet bit, a bridge as kind 5.
+
+**Numbers: 400 planets.** `cargo run --release --example planets --
+seeds=1-50 depths=1-8` ([raw](raw/planets-seeds-1-50-look3.txt); the survey
+now prints each planet's dials). Medians over 50 seeds, ranges in brackets.
+
+| Biome | Crystals | Rock | Sand | Clay | Barren | Wet | Soft-rock pieces | Walk to nearest nest | Walk to nearest crystal | Charge open without breaking soft rock | First attempt passes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| meadow | 11 (6-18) | 2% | 0% | 22% | 0% | 8% | 8 | 563 (488-632) | 57 | 100% | 45/50 |
+| barrens | 14 (9-20) | 5% | 0% | 5% | 51% | 0% | 0 | 676 (548-798) | 75 | 100% | 44/50 |
+| fen | 15 (6-22) | 3% | 0% | 35% | 0% | 26% | 0 | 781 (620-950) | 64 | 100% | 50/50 |
+| river valley | 15 (10-22) | 10% | 37% | 29% | 0% | 5% | 0 | 595 (484-917) | 67 | 100% | 49/50 |
+| jungle | 17 (11-17) | 4% | 0% | 33% | 0% | 6% | 130 | 587 (486-796) | 60 | 100% | 47/50 |
+| highlands | 12 (11-17) | 16% | 0% | 57% | 0% | 0% | 4 | 654 (488-1052) | 64 | 100% | 42/50 |
+| cave | 11 (6-16) | 50% | 0% | 18% | 0% | 4% | 12 | 597 (490-909) | 54 | 100% | 44/50 |
+| core | 15 (10-21) | 9% | 12% | 34% | 4% | 5% | 82 | 536 (483-777) | 62 | 100% | 33/50 |
+
+- Every one of the 400 passed its checks within four attempts, 354 on the
+  first; none used the fallback. 75 ms a planet (median; at most 408 ms).
+- The patterns came up as weighted: on the 50 Barrens, 27 oases worlds
+  (barren 50-67% of the ground) and 23 with bands; on the 50 cave planets, 22 veins,
+  16 jackpots, 11 scattered, 1 fields.
+- Planet 1 now has 6-18 crystals: a jackpot meadow has its giant and few
+  others, by design. The check's floor stays six.
+
+**Tried and changed.**
+- *Rocky rooms walled the landing in.* With gates at 0.2 (0.35 on the core
+  world, with rings round the nests), 14 of 100 highlands and core worlds
+  (seeds 1-50) took 4 to 19 attempts and one used the fallback (2.0 s).
+  Three causes, each seen on a rendered failing attempt: a pass slot,
+  square to the line between the two sites, ran along a ridge the warp had
+  bent instead of through it; a neighbouring ridge reached into a slot at a
+  corner; a short open border on the spanning tree (where three regions
+  meet) was shut by its neighbours' ridges. Now every pass, and every open
+  tree border, is cut through every ridge's rock with a disc as wide as the
+  widest ridge; rooms gate a pass at 0.08 (core rooms 0.1, no rings);
+  hedges keep 30 cells off passes; the landing's crystal is in the
+  landing's own region. Then all 100 passed within four attempts, 75 first.
+- *Veins started off the map.* A vein began at a random point and stopped
+  at the map's edge, leaving 6-7 crystals on a planet; it now grows both
+  ways from a point midway (9-22 crystals).
+- *Caves too open.* Caverns 0.45-0.65 of the site spacing left 28-36%
+  rock, more like open ground with holes; at 0.32-0.5, tunnels 0.6 of a
+  pass, 50% rock (cap 72% for caves).
+
+**Seen** ([page](https://claude.ai/artifact/8YTtSxUEGnXivr6VejCaNU), source
+`page3/`): films of planets 1-8, seeds 1 and 2, two minutes with nobody
+playing (`raw/films-look3.sh`, logs in `raw/films-look3/`), each with the
+dials it rolled; and a contact sheet of seeds 1-3 of every planet in false
+colour and grey, straight from the map files (`raw/biome_sheet.py` on
+[`raw/planets-seeds-1-3-look3.txt`](raw/planets-seeds-1-3-look3.txt)).
+Each biome reads apart at a glance on the sheet: meadow streams, barren
+bands, fen lakes, the valley's river, the jungle's hedges and rings, the
+highlands' rooms on cracked clay, the caverns, the core's mix.
+
 ## Next
 
-1. **Biomes with far more variety**, from the owner's answers
-   ([plan](biomes-plan.md)): dials and named biomes, crystal patterns
-   rolled with biome odds, a new set order (open early, mazes late),
-   rivers, lakes, rocky rooms, caves and oases. Plants are the plants
-   thread's and new ground (deep water first) the ground thread's; this
-   thread writes them into the maps (soil kinds 4 and 5, plants in B).
-2. **Planets grow**: the 1070 timing, then `GROW_CAP` up.
-3. **Twists** shown before landing (Flooded, Rich crystals, ...).
-4. **Rescue planets**, rare: base ruins and stranded soldiers as new map
+1. **Deep water, plants and new ground in the maps** as the ground and
+   plants threads land them (soil kinds 4 and 5, plants in B), and the
+   graphics lead's review of round 3.
+2. **Every strategy can win**: the check that each nest has an open
+   approach and a choke, after a short read on how StarCraft map
+   generators score chokepoints and fairness (owner's question, 17:24Z).
+3. **Planets grow**: the 1070 timing, then `GROW_CAP` up.
+4. **Twists** shown before landing (Flooded, Rich crystals, ...).
+5. **Rescue planets**, rare: base ruins and stranded soldiers as new map
    items, with a rescue goal from the run thread.
-5. The owner's play.
+6. The owner's play.

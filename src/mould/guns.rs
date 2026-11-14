@@ -269,8 +269,8 @@ fn rng(seed: u64, depth: u32) -> Rng {
     Rng::new(seed ^ (depth as u64).wrapping_mul(0xA24B_AED4_963E_E407) ^ 0x6775_6e73)
 }
 
-/// A standard normal draw (Box-Muller).
-fn normal(r: &mut Rng) -> f32 {
+/// A standard normal draw (Box-Muller); the bullets roll by it too.
+pub(super) fn normal(r: &mut Rng) -> f32 {
     let u = 1.0 - r.f32();
     let v = r.f32();
     (-2.0 * u.ln()).sqrt() * (std::f32::consts::TAU * v).cos()

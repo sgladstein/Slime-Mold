@@ -1,0 +1,18 @@
+crystal 914 331 36 512
+crystal 127 261 24 192
+crystal 413 127 31 512
+crystal 439 408 33 512
+crystal 543 292 21 192
+crystal 229 475 23 96
+crystal 649 343 22 96
+crystal 947 101 23 96
+crystal 949 450 23 96
+crystal 104 495 21 96
+crystal 50 104 19 192
+crystal 700 103 23 96
+crystal 550 65 21 192
+crystal 969 236 21 96
+crystal 844 129 19 96
+crystal 799 407 22 192
+mould 914 331
+landing 106.90782 170.44318

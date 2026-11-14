@@ -243,6 +243,15 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     if b.crater > 0 {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
     }
+    // Fire in the plants (`BigDish::ignite`, 2026-11-14): a burn (the
+    // scorch round's line) lights what it touches; a blast lights a ring
+    // two dish cells past its crater, whose own cells the scorch strips.
+    if b.burn {
+        d.ignite(b.at.0, b.at.1, b.r);
+    }
+    if b.crater > 0 {
+        d.ignite(b.at.0, b.at.1, b.crater_r + 2.0);
+    }
     if let Some((r, rr, inv)) = b.fling_ring(s) {
         d.p.fling_speed = k.fling_speed;
         out.flung = d.fling(b.at.0 * s, b.at.1 * s, r, rr, b.fling_steps, inv) as u32;
