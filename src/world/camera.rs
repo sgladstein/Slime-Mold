@@ -126,6 +126,19 @@ impl Camera {
         self.clamp();
     }
 
+    /// The world point `centre_on` puts in the middle of the band between
+    /// the UI's insets: its inverse, so a camera eased toward a point
+    /// (`focus` plus a share of the way to it, then `centre_on`) gets
+    /// there. `centre` is the screen's middle, which is not: easing from it
+    /// left the squad mode's follow short of the squad by the insets'
+    /// offset over the share, about 100 cells below it at zoom 4 (bug sweep,
+    /// 2026-11-14).
+    pub fn focus(&self) -> (f32, f32) {
+        let (sw, _) = self.span();
+        let band_mid = (self.inset.0 + (self.screen.1 - self.inset.0 - self.inset.1) / 2.0) / self.zoom;
+        (self.x + sw / 2.0, self.y + band_mid)
+    }
+
     /// The world point at the screen's middle.
     pub fn centre(&self) -> (f32, f32) {
         let (sw, sh) = self.span();

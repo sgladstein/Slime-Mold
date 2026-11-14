@@ -98,8 +98,12 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
-                // The squad mode's keys come before the card's letters.
-                if self.squad_key(code, pressed, event.repeat) {
+                // The squad mode's steering (WASD) and Space come before the
+                // card's letters, and its own letters after them
+                // (`squad_key`; bug sweep, 2026-11-14: they all came first,
+                // so G merged instead of harvesting). The menus take
+                // every key while they are up.
+                if (!pressed || !self.hud.menu_open()) && self.squad_key(code, pressed, event.repeat, true) {
                     return;
                 }
                 // The game UI first: its command keys, Esc for its menu,
@@ -110,6 +114,9 @@ impl ApplicationHandler for App {
                     if took {
                         return;
                     }
+                }
+                if self.squad_key(code, pressed, event.repeat, false) {
+                    return;
                 }
                 let units = self.units();
                 // The controls: arrows pan, digits are groups, F+drag a burn.
@@ -151,7 +158,7 @@ impl ApplicationHandler for App {
                 if self.in_menu() {
                     return;
                 }
-                if self.squad_wheel(notches) {
+                if self.squad_wheel(notches) || self.squad_zoom(notches) {
                     return;
                 }
                 self.controls.wheel(notches, &mut self.camera);

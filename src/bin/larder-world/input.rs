@@ -48,6 +48,16 @@ impl App {
         }
     }
 
+    /// In the squad mode, order `o` to the controlled squad as one; false
+    /// in the RTS round (or with no squad controlled).
+    pub(super) fn squad_order(&mut self, o: Order) -> bool {
+        let q = self.game.as_ref().filter(|g| g.rules.squads && self.sq.is_some()).and_then(|g| g.active);
+        match (q, self.game.as_mut()) {
+            (Some(q), Some(g)) => g.apply(Cmd::SquadOrder(q as u8, o)),
+            _ => false,
+        }
+    }
+
     /// Right click: harvest a crystal under it, else walk there.
     pub(super) fn order_at(&mut self, ids: &[usize], at: (f32, f32)) {
         let o = self.order_for(at);
@@ -154,6 +164,7 @@ impl App {
                 }
                 HudEvent::Command { id } => match id {
                     NEXT_ROUND => self.next_round(),
+                    STOP if self.squad_order(Order::Hold) => {}
                     STOP => self.order_all(&sel, |_| Order::Hold),
                     HOLD_FIRE | DEFEND | FREE => {
                         let st = match id {
@@ -204,6 +215,11 @@ impl App {
                     }
                     _ => {}
                 },
+                // In the squad mode the card's orders go to the controlled
+                // squad as one (`Cmd::SquadOrder`), as its right click does;
+                // given soldier by soldier, a squad on the move took them
+                // back at its next step (bug sweep, 2026-11-14).
+                HudEvent::Point { id: HARVEST, at } if self.squad_order(Order::Clear(at.0, at.1)) => {}
                 HudEvent::Point { id: HARVEST, at } => self.order_all(&sel, |_| Order::Clear(at.0, at.1)),
                 HudEvent::Point { id: RALLY, at } => self.rally(at),
                 // A then click: on the core's ring, attack the core; else
@@ -211,7 +227,10 @@ impl App {
                 HudEvent::Point { id: ATTACK, at } => {
                     let Some(g) = &self.game else { return Ok(false) };
                     let on_core = (at.0 - g.core.0).hypot(at.1 - g.core.1) <= g.rules.core_r * g.world.scale() * 1.5;
-                    self.order_all(&sel, |_| if on_core { Order::Attack } else { Order::Fight(at.0, at.1) });
+                    let o = if on_core { Order::Attack } else { Order::Fight(at.0, at.1) };
+                    if !self.squad_order(o) {
+                        self.order_all(&sel, |_| o);
+                    }
                 }
                 HudEvent::Point { id, at } if build_kind(id).is_some() => {
                     if let Some(g) = self.game.as_mut() {
@@ -254,12 +273,13 @@ impl App {
     /// Uses a toolkit tool now, between steps (a running step finishes
     /// first, as a command does), and says why not if it can't.
     pub(super) fn use_tool(&mut self, t: Tool) {
-        let Some(g) = self.game.as_mut() else { return };
-        if g.in_flight() {
-            g.finish_step();
-            kit_between(&mut self.kit, g, &self.controls.selected);
-            self.rounds.after_step(g);
+        if self.game.as_ref().is_some_and(|g| g.in_flight()) {
+            if let Some(g) = self.game.as_mut() {
+                g.finish_step();
+            }
+            self.catch_up();
         }
+        let Some(g) = self.game.as_mut() else { return };
         let k = &self.kit;
         let at = match t {
             Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => p,

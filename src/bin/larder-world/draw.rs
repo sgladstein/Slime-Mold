@@ -582,7 +582,10 @@ impl App {
                 target: Target::Point { radius: 2.0 * sc },
                 ready: true,
                 about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
-                ..Command::new(RALLY, (2, 2), Icon::Move, "Rally point", KeyCode::KeyR)
+                // (1, 3) unless sowing has it: at (2, 2) it lay under the
+                // build page's button, so only R reached it (bug sweep,
+                // 2026-11-14).
+                ..Command::new(RALLY, if g.world.garden.is_some() { (2, 2) } else { (1, 3) }, Icon::Move, "Rally point", KeyCode::KeyR)
             },
         ];
         // The player's own mould (own=1): Sow on the main page (the free slot),
@@ -645,6 +648,26 @@ impl App {
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
         }
+        // The squad mode: the card's letters off WASD (`squad_card_key`),
+        // its words for a game with no larder.
+        if self.sq.is_some() {
+            cmds = cmds
+                .into_iter()
+                .filter_map(|mut c| {
+                    c.key = squad_card_key(c.id, c.key)?;
+                    match c.id {
+                        HARVEST => {
+                            c.name = "Drain a crystal".into();
+                            c.about = "The squad drains the crystal into the bank, fast, until it is gone for both sides. Ctrl + right click does the same; a plain right click guards it instead.".into();
+                        }
+                        ATTACK => c.about = "Send the squad there, stopping to fire at any mould in reach on the way; on the core, attack it.".into(),
+                        BUY => c.about = "A new soldier joins the squad you control, at its side.".into(),
+                        _ => {}
+                    }
+                    Some(c)
+                })
+                .collect();
+        }
         for c in &mut cmds {
             if c.ready {
                 c.why_not = None;
@@ -702,7 +725,17 @@ impl App {
         } else if let Some(end) = g.end {
             m.end = Some(end_screen(end, g));
         }
-        m.help = vec![
+        m.help = if self.sq.is_some() {
+            m.help_base = Some(squad_help());
+            vec![
+                ("Place a building".into(), "The squad walks there and raises it".into()),
+                ("P".into(), "Pause".into()),
+                ("Tab".into(), "Four times faster, or back".into()),
+                ("N".into(), "Start the next map".into()),
+                ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+                ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
+            ]
+        } else { vec![
             ("Right click".into(), "Move there; on a crystal, harvest it".into()),
             ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
             ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
@@ -713,7 +746,7 @@ impl App {
             ("N".into(), "Start the next map".into()),
             ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
             ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
-        ];
+        ] };
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
         m
