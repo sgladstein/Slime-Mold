@@ -37,7 +37,10 @@ impl ApplicationHandler for App {
         // A placeholder world frame until the round starts.
         let frame = pixels.device().create_buffer(&wgpu::BufferDescriptor { label: Some("no world"), size: 16, usage: wgpu::BufferUsages::STORAGE, mapped_at_creation: false });
         self.view = Some(View::new(pixels.device(), pixels.queue(), &frame, (1, 1), (w, h)));
-        self.canvas = Some(Canvas::new((w, h)));
+        // The UI size: the saved or `ui=` size over the window's DPI scale.
+        let mut canvas = Canvas::new((w, h));
+        canvas.ui = UiSize { user: ui_user(), dpi: window.scale_factor() as f32 };
+        self.canvas = Some(canvas);
         self.canvas_pass = Some(CanvasPass::new(pixels.device(), pixels.queue()));
         self.gpu = Some((pixels.device().clone(), pixels.queue().clone()));
         self.pixels = Some(pixels);
@@ -81,6 +84,12 @@ impl ApplicationHandler for App {
                     }
                 }
             }
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                // Dragged to a screen with another DPI scale.
+                if let Some(c) = self.canvas.as_mut() {
+                    c.ui.dpi = scale_factor as f32;
+                }
+            }
             WindowEvent::ModifiersChanged(m) => {
                 self.shift = m.state().shift_key();
                 self.ctrl = m.state().control_key();
@@ -89,6 +98,10 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput { event, .. } => {
                 let PhysicalKey::Code(code) = event.physical_key else { return };
                 let pressed = event.state == ElementState::Pressed;
+                // Ctrl + and Ctrl - size the UI, in play and on the menu.
+                if pressed && self.ctrl && self.ui_key(code) {
+                    return;
+                }
                 // The start menu takes every key while it is up.
                 if self.in_menu() {
                     let repeat = event.repeat && !matches!(code, KeyCode::ArrowUp | KeyCode::ArrowDown);

@@ -83,6 +83,11 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         let now = key_value(&base.keys, k).map_or(d.clone(), str::to_string);
         o.push(Opt::new(k, label, choices, &d, &now, note));
     }
+    // The UI's size (owner, 11-14 08:07Z): turned here it takes effect at
+    // once and is saved; not a round's setting, so `round_args` skips it.
+    let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
+    let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
+    o.push(Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     o
 }
 
@@ -116,6 +121,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
         ("F1 or ?", "The key card"),
+        ("Ctrl + / Ctrl -", "Bigger or smaller UI and text (saved)"),
     ]
     .iter()
     .map(|&(k, v)| (k.to_string(), v.to_string()))
@@ -234,6 +240,11 @@ impl App {
         let Some(m) = self.menu.as_mut() else { return Ok(Vec::new()) };
         let before = dish_key(m);
         let picks = input(m);
+        // The UI size option, applied the moment it turns.
+        if let Some(v) = m.option("ui").and_then(|o| settings::parse_size(o.value())).filter(|&v| v != ui_user()) {
+            self.set_ui(v);
+        }
+        let Some(m) = self.menu.as_mut() else { return Ok(picks) };
         if picks.is_empty() && dish_key(m) != before {
             self.open_menu()?;
         }

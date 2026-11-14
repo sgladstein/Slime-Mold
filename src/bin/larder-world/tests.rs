@@ -370,7 +370,7 @@ fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
     for screen in [(1280, 800), (1920, 1080)] {
         let app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, ration: None, round: 0, bullet: None, squads: false }, screen, &device, &queue).unwrap();
         let g = app.game.as_ref().unwrap();
-        let (top, bottom) = Hud::insets(screen);
+        let (top, bottom) = Hud::insets(screen, app.canvas.as_ref().unwrap().ui);
         let y = app.camera.to_screen(g.larder).1;
         assert!(y > top + 40.0 && y < screen.1 as f32 - bottom - 40.0, "{screen:?}: the larder at y {y:.0}, the band {top:.0}..{:.0}", screen.1 as f32 - bottom);
     }

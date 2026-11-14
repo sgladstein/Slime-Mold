@@ -298,7 +298,11 @@ impl StartMenu {
     /// Draws the page on `c` (cleared by the caller).
     pub fn draw(&mut self, c: &mut Canvas) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let s = ((sh / 1080.0).clamp(0.7, 2.4) * 20.0).round() / 20.0;
+        // The UI size (`UiSize::px`), held where the options page, the
+        // tallest, would run off the bottom (at 150% on a 900-line window
+        // its last rows, the UI size among them, did); at 100% it never is.
+        let s = c.ui.px(c.screen).min(sh / (330.0 + 62.0 * self.options.len() as f32));
+        let s = (s * 20.0 + 1e-3).floor() / 20.0;
         self.hits.clear();
         // A shade down the left, fading out, so the panel reads over the dish.
         let shade_w = (720.0 * s).min(sw);
@@ -597,6 +601,26 @@ mod tests {
         m.key(KeyCode::Slash, true);
         m.key(KeyCode::Escape, true);
         assert_eq!(m.page, Page::Options);
+    }
+
+    /// At every UI size the options page's last row and its buttons stay
+    /// on the screen (they ran off at 150% on 900 lines before the cap).
+    #[test]
+    fn every_ui_size_keeps_the_options_page_on_screen() {
+        for screen in [(1280, 800), (1600, 900), (1920, 1080)] {
+            for user in crate::world::settings::STEPS {
+                let mut m = menu();
+                m.show(Page::Options);
+                let mut c = Canvas::new(screen);
+                c.ui.user = user;
+                m.draw(&mut c);
+                let last = m.options.len() - 1;
+                for h in [Hit::Reset(last), Hit::Back, Hit::ResetAll] {
+                    let r = m.rect_of(h).unwrap();
+                    assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {h:?} {r:?}");
+                }
+            }
+        }
     }
 
     #[test]
