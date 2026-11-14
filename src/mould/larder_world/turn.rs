@@ -81,7 +81,10 @@ impl<W: World> Game<W> {
                             self.after_dry(k, skip);
                         }
                     }
-                } else if s.carry >= r.carry - s.load {
+                } else if s.carry > 0.0 && s.carry >= r.carry - s.load {
+                    // Never home empty-handed: with tools filling its carry
+                    // (`Soldier::load`) a soldier would walk to the larder,
+                    // bank nothing and turn round, for ever.
                     self.soldiers[k].homing = true;
                 } else if let Some((i, c)) = self.crystal_at((x, y)) {
                     // From its rim (`Rules::crystal_solid`), with the slot's room.

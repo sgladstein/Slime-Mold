@@ -146,6 +146,10 @@ impl<W: World> Game<W> {
             Cmd::Order(k, o) if k < self.soldiers.len() => {
                 self.soldiers[k].order = o;
                 self.soldiers[k].homing = false;
+                // A new order forgets the last crystal running dry: kept,
+                // the next trip home to bank left the new crystal as if it
+                // were the dry one (2026-11-14).
+                self.soldiers[k].dry = false;
                 self.soldiers[k].queued = 0;
                 true
             }

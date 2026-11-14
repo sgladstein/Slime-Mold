@@ -150,7 +150,9 @@ pub struct BuildRules {
     /// takes, not a standing beacon.
     pub lure_smell: f32,
     pub lure_r: f32,
-    /// Food a second a lure burns while on.
+    /// Food a second a lure burns while on. 0 since 2026-11-14: the owner
+    /// ruled "There should be no maintenance costs in this game" (04:53Z),
+    /// so a lure costs its price once. 2 was the old burn.
     pub lure_burn: f32,
     pub pump_cost: f32,
     pub pump_hp: f32,
@@ -207,7 +209,7 @@ impl Default for BuildRules {
             lure_hp: 150.0,
             lure_smell: 8.0,
             lure_r: 6.0,
-            lure_burn: 2.0,
+            lure_burn: 0.0,
             pump_cost: 500.0,
             pump_hp: 200.0,
             pump_rate: 5.0,
@@ -629,6 +631,8 @@ mod tests {
     fn a_lure_burns_food_and_lays_scent_while_on() {
         let run = |on: bool| {
             let mut g = small(4);
+            // The burn is off by default (no upkeep); on, it still works.
+            g.rules.build.lure_burn = 2.0;
             // Open ground between the bases, away from the crystals' scent.
             let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
             stand(&mut g, at);
@@ -646,6 +650,31 @@ mod tests {
         let (scent_off, lured_off) = run(false);
         assert!((lured - 4.0 * 2.0).abs() < 0.2 && lured_off == 0.0, "burnt {lured} food in 4 s on, {lured_off} off");
         assert!(scent_on > 2.0 * scent_off.max(1e-6), "scent at the lure {scent_on}, off {scent_off}");
+    }
+
+    /// No upkeep (owner, 2026-11-14 04:53Z: "There should be no
+    /// maintenance costs in this game"): a lure left on costs nothing once
+    /// it is paid for, and nothing else standing drains the bank.
+    #[test]
+    fn standing_buildings_cost_nothing_to_keep() {
+        let mut g = small(4);
+        let at = open_near(&g, (0.6 * g.larder.0 + 0.4 * g.core.0, 0.6 * g.larder.1 + 0.4 * g.core.1));
+        stand(&mut g, at);
+        assert!(g.build(Kind::Lure, at));
+        let siren = open_near(&g, (at.0 + 8.0, at.1));
+        stand(&mut g, siren);
+        assert!(g.build(Kind::Siren, siren));
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+        }
+        let spent = g.spent;
+        let mut working = false;
+        for _ in 0..(g.rules.tps * 6) {
+            g.step();
+            working |= g.buildings[0].working;
+        }
+        assert!(working, "the lure gave off scent");
+        assert_eq!((g.lured, g.eaten, g.spent - spent), (0.0, 0.0, 0.0), "upkeep paid");
     }
 
     #[test]

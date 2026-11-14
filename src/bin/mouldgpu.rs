@@ -4486,7 +4486,9 @@ mod tests {
         // a game-layer walk rule the same on both engines, but it moves
         // where each soldier stands, and seed 3's chaos then parted the
         // moulds past the bound (896 GPU against 1014 CPU at 30 s).
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, ..Rules::default() };
+        // Wall corners (`Rules::corners`, 2026-11-14) off for the same
+        // reason: 951 GPU against 1049 CPU at 30 s with them on.
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, ..Rules::default() };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
@@ -4708,7 +4710,10 @@ mod tests {
         let (seed, scale, walkers) = (3, 2, 5_000);
         // The old bite (1 a walker): at the game's 2 the builder dies before
         // the turret stands, and it never fires on either engine.
-        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
+        let mut rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
+        // A lure's burn is off by default (no upkeep, owner 2026-11-14); on
+        // here so the twin still checks the bank's share of it.
+        rules.build.lure_burn = 2.0;
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {

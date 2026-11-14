@@ -269,7 +269,7 @@ impl<W: World> Game<W> {
             return straight;
         }
         for _ in 0..lead.ceil() as usize {
-            let n = downhill(w, h, map, at);
+            let n = downhill(w, h, map, at, self.rules.corners);
             if n == at {
                 break;
             }

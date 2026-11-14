@@ -160,9 +160,15 @@ impl Default for KitRules {
             // loud plan fell to the farm hand's level on every tier (+0.18
             // to +0.27) and plague led all of them; weight 100 or 50 made
             // no difference (the cost is the trips home, not the carry).
+            // Weight 0 since 2026-11-14: in the window a soldier selected at
+            // the larder took 5 tools (250 of its 300 carry) without a
+            // sign, so it went home after 50 food and walked straight back
+            // to the larder when sent to harvest. The owner read it as
+            // soldiers refusing a harvest order. `tool_weight=50` (kitplans)
+            // plays the old rule.
             carry_max: 5,
             carry_each: 1,
-            tool_weight: 50.0,
+            tool_weight: 0.0,
             restock_r: 6.0,
             alarm_keep: 0.95,
             mine_density: MINE_DENSITY,
