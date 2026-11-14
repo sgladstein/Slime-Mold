@@ -12,10 +12,13 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
+    if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
+        g.bank = b;
+    }
     if wav.is_some() {
         app.tape = Some((VoiceBank::new(48_000, app.args.seed), Vec::new()));
     }

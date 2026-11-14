@@ -8,6 +8,7 @@ sources:
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/noita-spell-look-2026-11-14.md
   - Reports/rounds-2026-11-12.md
+  - Reports/rounds-look-2026-11-14/index.html
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
@@ -89,7 +90,10 @@ After the owner's 11-14 playtest ("the bullets are really bad"; "shouldn't just 
 flashy effects") the rounds' look follows Noita: what a card changes in the world
 is its look ([research and plan](../../Reports/noita-spell-look-2026-11-14.md)):
 bullets as lights on the real slime, blasts that fling live mould, gas as a
-drifting field, trail cards that lay real fields, and a loadout panel.
+drifting field, trail cards that lay real fields, and a loadout panel. Steps 1-2 are
+built ([films](../../Reports/rounds-look-2026-11-14/index.html)): each bullet is a streak
+in its payload's colour and a light on the real slime (`View::set_lights`), and a burst
+lights its area for 0.12 s; the simulation is unchanged.
 
 ## Owner's word
 

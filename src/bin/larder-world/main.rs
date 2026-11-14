@@ -56,7 +56,8 @@
 //! [sound=FILE.wav]` plays without a window and saves the window's picture
 //! at those game seconds (`headless`), and with `sound=` what the round
 //! sounded like to an ear on the squad, to the last of those seconds;
-//! `holes=1` also times how long each hit's hole stays open; `centre=X,Y[,ZOOM]`
+//! `holes=1` also times how long each hit's hole stays open; `bank=N` starts
+//! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `cut=T,X,Y,R[,HOLD[,WIDTH]]` takes a ring WIDTH world units wide (6), R
@@ -133,7 +134,7 @@ use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::team_colour;
 use slime_mould::world::ui::{theme, Card, Command, Ghost, Info, MenuItem, Model, Resource, Site, Target};
-use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, View};
+use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
@@ -380,6 +381,9 @@ struct App {
     depth: Vec<u8>,
     looks: Vec<Look>,
     tracers: Vec<Tracer>,
+    /// This frame's point lights (bullets, bursts, muzzles, lodged casts),
+    /// filled with the marks (`draw.rs`).
+    lights: Vec<Light>,
     paused: bool,
     menu_paused: bool,
     fast: bool,
@@ -466,6 +470,7 @@ impl App {
             depth: Vec::new(),
             looks: Vec::new(),
             tracers: Vec::new(),
+            lights: Vec::new(),
             paused: false,
             menu_paused: false,
             fast: false,
@@ -895,6 +900,7 @@ impl App {
         if let Some(v) = self.view.as_mut() {
             v.minimap_box = self.hud.minimap_box;
             v.set_marks(&self.marks);
+            v.set_lights(&self.lights);
         }
     }
 
@@ -950,6 +956,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
     let mut holes = false;
+    let mut bank = None;
     let mut centre = None;
     let mut cut = None;
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
@@ -1004,6 +1011,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "squad1" => squad1 = v != "0",
             "spread" => spread = v != "0",
             "holes" => holes = v != "0",
+            // `bank=N`: the no-window round starts with N food in the bank
+            // (films of rounds, whose casts are paid from it).
+            "bank" => bank = Some(v.parse::<f32>()?),
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
@@ -1050,7 +1060,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if let Some(dir) = look {
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
