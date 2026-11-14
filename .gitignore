@@ -5,3 +5,8 @@ __pycache__/
 # player's knobs, written next to wherever the game was run from.
 /mould-tune.txt
 /.claude/settings.local.json
+# Replays the game writes beside wherever it runs (larder-world's
+# `larder-world-replay-MAP-SEED.txt`). One was committed in #192, so every
+# game on Flats seed 1 modified a tracked file and play.cmd stopped
+# updating ("You have local changes"); 2026-11-14.
+/larder-world-replay-*.txt
