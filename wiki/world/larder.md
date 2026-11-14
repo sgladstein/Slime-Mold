@@ -2,8 +2,9 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-13
+updated: 2026-11-14
 sources:
+  - Reports/cloud-plan-2026-11-14.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/gpu-readout-2026-11-12.md
   - Reports/larder-build-plan-2026-11-11.md
@@ -308,6 +309,7 @@ owner's playtest.
 
 ## Open
 
+- **While there are no playtests and no 1070** (owner, 2026-11-14 00:28Z): the cloud work, what waits for play or the PC, and the picks the reviewers settle are in [cloud-plan-2026-11-14.md](../../Reports/cloud-plan-2026-11-14.md).
 - **Maps** (owner, 19:29Z: "We will want maps though. That should be part of the plan"). Height is parked after the owner's 20:06Z challenge; ground is tested before it goes on a map. On 16 paired seeds every soil kind changes the mould: slow (wet) and barren ground halve it, sand makes it spread further, clay traps it (`BigParams::sand_keep`, `clay_keep`, `barren_upkeep`, off unless a map sets `BigDish::soil`). Five flat maps (Rim, Fork, Flats, Nest, Passes) wait on the map loader and the W2b harness ([report, *Which ground the mould feels*](../../Reports/larder-maps-2026-11-11.md), [page](https://claude.ai/artifact/XPwkBkTAzsWq3Wg37pff7K)).
 - Larder World, phase by phase, per the roadmap; the open questions there (world size, whether two soldier teams are allies or rivals, fog of war) are the owner's; how a campaign mission ends and what carries are decided (11-12 04:44Z).
 - The M3 window stays playable (`cargo run --release --bin larder -- 17`). Hunger barely acts on the small dish and needs a lower bar or should go.
