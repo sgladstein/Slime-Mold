@@ -6,6 +6,9 @@
 # stuck 7:31-10:17), random 0/4 (0.61). Farming with cuts alone (cut+boom) never shrank it
 # (seed 1, best 0.08), and the one-body keys (energy_flow 0.05, wither 0.01) made it bigger,
 # so the strike only reached 0.83: the Trunk keeps its keys.
+# After elbow room (#227, soldiers keep 1.6 touch radii apart; census v15, main 30bf05e0):
+# both plans fell to 0/4 (best 0.89 and 0.63) with ten striking; with fourteen (strike_at=180
+# +strike_army=14+buy_to=18) strike 4/4 at 4:07-5:36 and cut+strike 4/4 at 4:39-5:57.
 name Cut the cord
 says Starve the Trunk: cut its cords until it is a fifth of its size
 map fork
