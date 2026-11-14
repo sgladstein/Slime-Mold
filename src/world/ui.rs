@@ -245,6 +245,9 @@ impl CardKind {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct GunCard {
     pub icon: Option<Icon>,
+    /// A small glyph in its corner: a rolled bullet's set (slug, needle,
+    /// buckshot, standard) beside its payload's glyph.
+    pub badge: Option<Icon>,
     pub name: String,
     pub kind: CardKind,
     /// The glyph's colour: the colour of the payload it goes with, as its
@@ -1426,6 +1429,10 @@ impl Hud {
             if let Some(icon) = k.icon {
                 c.icon(icon, (b.x + (b.w - ic) / 2.0, b.y + (b.h - ic) / 2.0 + 1.5 * s), ic, alpha(k.colour, dim));
             }
+            if let Some(badge) = k.badge {
+                let bs = 12.0 * s;
+                c.icon(badge, (b.right() - bs - 2.0 * s, b.bottom() - bs - 2.0 * s), bs, alpha(TEXT, 0.9 * dim));
+            }
             if k.next {
                 // A notch above the lit cast.
                 let nx = b.x + b.w / 2.0;
@@ -1918,7 +1925,7 @@ mod tests {
     const WORLD_SPOT: (f32, f32) = (700.0, 400.0);
 
     fn loadout() -> Loadout {
-        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), next, idle };
+        let card = |name: &str, kind: CardKind, next: bool, idle: bool| GunCard { icon: Some(Icon::Blast), badge: None, name: name.into(), kind, colour: [255, 150, 60, 255], about: format!("{name} does a thing to the mould where the shot lands, at length."), next, idle };
         Loadout {
             name: "Lull".into(),
             whose: "Soldier 1".into(),

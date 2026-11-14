@@ -60,6 +60,13 @@ pub enum Icon {
     Carbine,
     LongGun,
     Scattergun,
+    // The bullets (`mould::bullets`, owner 16:46Z, and the roguelike
+    // shop's "Guns and bullets should have icons"): a plain bullet, and
+    // the three sets that lean its rolls.
+    Bullet,
+    Slug,
+    Needle,
+    Buckshot,
 }
 
 impl Icon {
@@ -122,6 +129,14 @@ impl Icon {
             // A long barrel under a scope: slow and far.
             Icon::LongGun => &["M1.5 15.5 L3.5 12 L22.5 12", "M3.5 12 L3.5 15 L9 15 L10 18.5 L12 18.5 L11.5 15 L15 15 L15 12", "M7 7.5 L13.5 7.5 L13.5 9.5 L7 9.5 Z", "M10 9.5 L10 12"],
             // A wide muzzle and the fan of shot leaving it.
+            // A round-nosed bullet on its case.
+            Icon::Bullet => &["M4 9 L13 9 C17.5 9 20.5 10.5 21 12 C20.5 13.5 17.5 15 13 15 L4 15 Z", "M8.5 9 L8.5 15"],
+            // A short, fat, flat-nosed slug: heavy.
+            Icon::Slug => &["M5 6.5 L14 6.5 C17.5 6.5 19.5 8 19.5 10 L19.5 14 C19.5 16 17.5 17.5 14 17.5 L5 17.5 Z", "M9.5 6.5 L9.5 17.5"],
+            // A long dart with fins: light, fast and far.
+            Icon::Needle => &["M5 12 L22 12", "M17 10.5 L22 12 L17 13.5", "M2 9 L6 12 L2 15"],
+            // A spray of pellets.
+            Icon::Buckshot => &["FO6.5 12 2", "FO12 7 2", "FO12.5 17 2", "FO18 10.5 2", "FO18.5 15.5 1.6"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
     }
@@ -231,7 +246,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

@@ -452,6 +452,10 @@ pub struct Settings {
     pub scorch_keep: f32,
     pub scorch_full: u16,
     pub scorch_cone: bool,
+    /// Plants on a map that has none (`plants::stand_in`, 11-14): until
+    /// levelgen writes each biome's, the game grows the stand-in on any
+    /// designed map or planet without plants of its own (`plants=0` off).
+    pub plants: bool,
     pub seed: u64,
 }
 
@@ -603,6 +607,7 @@ impl Settings {
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
+            plants: true,
             seed: 1,
         }
     }
@@ -862,6 +867,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
+        "plants" => s.plants = b()?,
         "seed" => s.seed = v.parse().map_err(|e| format!("{key}={v}: {e}"))?,
         _ => return Err(format!("unknown control {key}")),
     }
@@ -1010,6 +1016,8 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
+        // The race world's plant step, every game tick (`race_params`).
+        plant_every: 1,
         seed: s.seed,
         ..t
     }
@@ -1145,9 +1153,16 @@ pub const DCLEAR: usize = 58;
 pub const DCOUNT: usize = 59;
 /// Bait laid (11-14, `Engine::lay_scent`).
 pub const BAITLAY: usize = 60;
+/// Plants and their fire (11-14, `mould::plants`; engine.wgsl's `plant`
+/// and on).
+pub const PLANT: usize = 61;
+pub const FIRE: usize = 62;
+pub const PCOPY: usize = 63;
+pub const FIREKILL: usize = 64;
+pub const IGNITE: usize = 65;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 61] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay",
+pub const PASSES: [&str; 66] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite",
 ];
 
 impl Shared {
@@ -1260,6 +1275,16 @@ pub struct Engine {
     /// words sit in `news` from `dense_at` (bytes; `dense_words`).
     pub condenses: bool,
     pub dense_at: u64,
+    /// Plants (`plant_words`): their words sit in `news` from `plant_at`
+    /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
+    /// then the fire passes run every plant step, as the CPU's), and a
+    /// plant step every `plant_every` game ticks of `plant_sub` engine
+    /// ticks each (the GPU world's `scale` fine steps a game tick).
+    pub plant_at: u64,
+    pub plants: bool,
+    pub fire_on: bool,
+    pub plant_every: u64,
+    pub plant_sub: u64,
     /// The damage memory (binding 47, the squad toolkit's layout): the
     /// crater countdown a cell in fine steps (whole numbers in f32; the
     /// CPU's `BigDish::scorch`), then the tiers thread's scar, unused so
@@ -1513,7 +1538,8 @@ impl Engine {
         // own: the device's 48 storage buffers a stage are all bound).
         let news_len = news_words(&d, cells as usize).len();
         let gas_len = gas_words(&d).len();
-        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize)].concat()), storage);
+        let dense_len = dense_words(&d, cells as usize).len();
+        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d)].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
@@ -1564,6 +1590,11 @@ impl Engine {
             reach: 1,
             condenses: false,
             dense_at: 4 * (news_len + gas_len) as u64,
+            plant_at: 4 * (news_len + gas_len + dense_len) as u64,
+            plants: !d.plant.is_empty(),
+            fire_on: !d.fire.is_empty(),
+            plant_every: d.p.plant_every.max(1) as u64,
+            plant_sub: d.p.substeps.max(1) as u64,
             crater,
             crater_steps: 0,
             scorched: false,
@@ -1724,6 +1755,11 @@ impl Engine {
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
         self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&dense_words(d, self.cells as usize)));
+        assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
+        if self.plants {
+            self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
+        }
+        self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.condenses = self.grows && d.p.condense > 0;
@@ -2066,6 +2102,7 @@ impl Engine {
         for _ in 0..ticks {
             let s = side(self.done);
             out.extend(tick.iter().map(|&(p, g)| (p, g, s)));
+            out.extend(self.plant_passes(self.done).into_iter().map(|(p, g)| (p, g, s)));
             self.done += 1;
         }
         let ticked = start..out.len();
@@ -2183,6 +2220,61 @@ impl Engine {
             tick.push((GASP, n));
         }
         tick
+    }
+
+    /// The plants' passes after engine tick `done` (none unless it ends a
+    /// game tick the CPU's `plant_tick` steps on: tick `done / plant_sub`
+    /// a multiple of `plant_every`).
+    pub fn plant_passes(&self, done: u64) -> Vec<(usize, u32)> {
+        let (sub, every) = (self.plant_sub.max(1), self.plant_every.max(1));
+        if !self.plants || done % sub != sub - 1 || !(done / sub).is_multiple_of(every) {
+            return Vec::new();
+        }
+        let cells = self.cells.div_ceil(256);
+        let mut v = vec![(PLANT, cells)];
+        if self.fire_on {
+            v.push((FIRE, cells));
+        }
+        v.push((PCOPY, cells));
+        if self.fire_on {
+            v.push((FIREKILL, self.n.div_ceil(256)));
+        }
+        v
+    }
+
+    /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells),
+    /// as the CPU's `BigDish::ignite`; nothing without plants. Runs on its
+    /// own, between ticks.
+    pub fn ignite(&mut self, shared: &Shared, lights: &[(f32, f32, f32)]) {
+        if !self.plants || lights.is_empty() {
+            return;
+        }
+        let k = self.dish.p.scale as f32;
+        for chunk in lights.chunks(4) {
+            let mut w = vec![chunk.len() as u32];
+            for &(x, y, r) in chunk {
+                w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits()]);
+            }
+            self.queue.write_buffer(&self.news, self.plant_at + 4 * 32, &u32_bytes(&w));
+            self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
+        }
+        // Kills mark the dead as the CPU's do (its kill makes `life`).
+        self.cycles = true;
+        self.fire_on = true;
+    }
+
+    /// The plants now (density, kind, fire's heat, char), read back: the
+    /// CPU's `plant`, `plant_kind`, `fire`, `char`. Empty without plants.
+    pub fn plants_of(&self) -> (Vec<f32>, Vec<u8>, Vec<f32>, Vec<f32>) {
+        if !self.plants {
+            return Default::default();
+        }
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let c = self.cells as usize;
+        let at = self.plant_at as usize + 4 * PLANT_HEAD;
+        let word = |blk: usize, i: usize| u32::from_le_bytes(b[at + 4 * (blk * c + i)..at + 4 * (blk * c + i) + 4].try_into().unwrap());
+        let f = |blk: usize| (0..c).map(|i| f32::from_bits(word(blk, i))).collect::<Vec<f32>>();
+        (f(2), (0..c).map(|i| word(1, i) as u8).collect(), f(4), f(6))
     }
 
     /// The drawing's passes: the soft curve's histogram and reference first.
@@ -2729,6 +2821,38 @@ impl Engine {
         let at = self.dense_at as usize + 4 * DENSE_HEAD;
         b[at..at + 4 * self.n as usize].chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
     }
+}
+
+/// The plants' words (engine.wgsl's `plant_base` on): `PLANT_HEAD` words of
+/// numbers, then seven blocks a cell (soil capacity, 0 on crystals; kind;
+/// plants A and B; fire A and B; char), or none without plants. Rates are
+/// a plant step's, as the CPU's `plant_rates` and `fire_rates` give them.
+pub const PLANT_HEAD: usize = 48;
+pub fn plant_words(d: &BigDish) -> Vec<u32> {
+    let mut w = vec![0u32; PLANT_HEAD];
+    if d.plant.is_empty() {
+        return w;
+    }
+    let p = &d.p;
+    let k = p.plant_every.max(1) as f32;
+    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_catch, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear];
+    for (o, v) in head.iter().enumerate() {
+        w[o] = v.to_bits();
+    }
+    for (q, kd) in p.plant_kinds.iter().enumerate() {
+        (w[16 + q], w[20 + q], w[24 + q], w[28 + q]) = (kd.cap.to_bits(), kd.pace.to_bits(), kd.dry.to_bits(), kd.burn.to_bits());
+    }
+    let c = d.w * d.h;
+    let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
+    w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
+    w.extend(d.plant_kind.iter().map(|&k| k as u32));
+    w.extend(d.plant.iter().map(|v| v.to_bits()));
+    w.extend(std::iter::repeat_n(0u32, c));
+    let fire = |v: &[f32]| if v.is_empty() { vec![0u32; c] } else { v.iter().map(|x| x.to_bits()).collect() };
+    w.extend(fire(&d.fire));
+    w.extend(std::iter::repeat_n(0u32, c));
+    w.extend(fire(&d.char));
+    w
 }
 
 pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {

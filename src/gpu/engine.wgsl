@@ -3145,3 +3145,145 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + cell(wk.x, wk.y)], 1u);
 }
+
+// **Plants** (2026-11-14, the CPU's `mould::plants`): in `news` after the
+// condensing block, `PLANT_HEAD` words of numbers (`plant_words` in
+// mod.rs: the rates a plant step, fire's, char's, each plant kind's cap,
+// pace, dry and burn, and up to four lights for `ignite`), then seven
+// blocks a cell: the soil's capacity (0 on crystals, rock, rim), the plant
+// kind, the plants (A current, B the step's out), fire's heat (A, B) and
+// the char. Absent when the dish has no plants (the passes don't run).
+// Every `plant_every` game ticks, after the tick's passes, as the CPU's
+// `plant_tick` after its tick: `plant` (A to B, kinds in place), `fire`
+// (heat A to B, eating plants B, char in place), `pcopy` (B to A) and
+// `firekill` (walkers on hot cells die as `strike` kills them). The
+// numbers are the CPU's, summed in the same order.
+const PLANT_HEAD: u32 = 48u;
+fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + P.w * P.h; }
+fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
+fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
+fn pblk(b: u32, i: u32) -> u32 { return plant_base() + PLANT_HEAD + b * P.w * P.h + i; }
+fn pget(b: u32, i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[pblk(b, i)])); }
+fn pset(b: u32, i: u32, v: f32) { atomicStore(&news[pblk(b, i)], bitcast<u32>(v)); }
+const PB_CAP: u32 = 0u;
+const PB_KIND: u32 = 1u;
+const PB_A: u32 = 2u;
+const PB_B: u32 = 3u;
+const PB_FA: u32 = 4u;
+const PB_FB: u32 = 5u;
+const PB_CHAR: u32 = 6u;
+fn pwet(i: u32) -> bool { return world(WETS) && (ground[i] & WET) != 0u; }
+fn pcap_of(i: u32, k: u32) -> f32 {
+    let dry = select(pf(24u + k), 1.0, pwet(i));
+    return pget(PB_CAP, i) * pf(16u + k) * dry;
+}
+
+@compute @workgroup_size(256)
+fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    if (pget(PB_CAP, i) <= 0.0 || agar[i] == 0u) { pset(PB_B, i, 0.0); return; }
+    let p = pget(PB_A, i);
+    if (crater_at(i) > 0.0) { pset(PB_B, i, p * (1.0 - pf(3u))); return; }
+    let x = i % P.w; let y = i / P.w;
+    var n = 0.0;
+    var best = 0.0;
+    var bk = atomicLoad(&news[pblk(PB_KIND, i)]);
+    for (var q = 0u; q < 4u; q++) {
+        var ok = false; var j = 0u;
+        if (q == 0u) { ok = x > 0u; j = i - 1u; }
+        if (q == 1u) { ok = x + 1u < P.w; j = i + 1u; }
+        if (q == 2u) { ok = y > 0u; j = i - P.w; }
+        if (q == 3u) { ok = y + 1u < P.h; j = i + P.w; }
+        if (ok) {
+            let v = pget(PB_A, j);
+            n += v;
+            let kj = atomicLoad(&news[pblk(PB_KIND, j)]);
+            if (v > best || (v == best && v > 0.0 && kj < bk)) { best = v; bk = kj; }
+        }
+    }
+    if (p <= 0.0) {
+        if (n <= 0.0) { pset(PB_B, i, 0.0); return; }
+        atomicStore(&news[pblk(PB_KIND, i)], bk);
+    }
+    let k = atomicLoad(&news[pblk(PB_KIND, i)]) & 3u;
+    let c = pcap_of(i, k);
+    if (c <= 0.0) { pset(PB_B, i, 0.0); return; }
+    let pace = pf(20u + k) * select(1.0, pf(2u), pwet(i));
+    let room = 1.0 - p / c;
+    pset(PB_B, i, clamp(p + (pf(0u) * p + pf(1u) * (n * 0.25)) * room * pace, 0.0, c));
+}
+
+@compute @workgroup_size(256)
+fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    let wet = pwet(i) || trail_out[i] >= pf(8u) || agar[i] == 0u;
+    let heat = pget(PB_FA, i);
+    let p = pget(PB_B, i);
+    var to = 0.0;
+    var ate = 0.0;
+    if (wet) {
+        to = 0.0;
+    } else if (heat > 0.0) {
+        let eat = min(pf(5u) * heat, p);
+        pset(PB_B, i, p - eat);
+        ate = eat;
+        to = select(min(heat + pf(4u), 1.0), heat * 0.5, p - eat < pf(7u));
+        if (to < 0.01) { to = 0.0; }
+    } else {
+        let x = i % P.w; let y = i / P.w;
+        var n = 0.0;
+        if (x > 0u) { n += pget(PB_FA, i - 1u); }
+        if (x + 1u < P.w) { n += pget(PB_FA, i + 1u); }
+        if (y > 0u) { n += pget(PB_FA, i - P.w); }
+        if (y + 1u < P.h) { n += pget(PB_FA, i + P.w); }
+        let burn = pf(28u + (atomicLoad(&news[pblk(PB_KIND, i)]) & 3u));
+        if (p >= pf(7u) && n * 0.25 * p * burn >= pf(6u)) { to = pf(4u); }
+    }
+    pset(PB_FB, i, to);
+    let ch = pget(PB_CHAR, i);
+    let clear = select(pget(PB_B, i) * pf(12u), 0.0, to > 0.0);
+    pset(PB_CHAR, i, max(min(ch * pf(11u) + ate * pf(10u), 1.0) - clear, 0.0));
+}
+
+@compute @workgroup_size(256)
+fn pcopy(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h) { return; }
+    pset(PB_A, i, pget(PB_B, i));
+    pset(PB_FA, i, pget(PB_FB, i));
+}
+
+@compute @workgroup_size(256)
+fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let st = state(k);
+    if (st == L_SPORE || st == L_DEAD) { return; }
+    let wk = walkers[k];
+    let c = cell(wk.x, wk.y);
+    if (c == NONE || pget(PB_FA, c) < pf(9u)) { return; }
+    atomicAdd(&wstat[3], 1u);
+    if (is_dense(k)) { set_dense(k, 0u); return; }
+    atomicSub(&occ[c], 1u);
+    atomicStore(&claim[c], NONE);
+    energy[k] = -1.0;
+    if (cycles()) { spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u); }
+}
+
+// Lights (`Engine::ignite`, the CPU's `BigDish::ignite`): the header's
+// word 32 lights, each (x, y, r) in fine cells from word 33; a cell lights
+// when its offset from the light's floored centre is within r (the CPU's
+// loop over whole offsets) and it has fuel off the wet.
+@compute @workgroup_size(256)
+fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let i = gid.x;
+    if (i >= P.w * P.h || agar[i] == 0u || pwet(i) || pget(PB_A, i) < pf(7u)) { return; }
+    let x = i32(i % P.w); let y = i32(i / P.w);
+    for (var q = 0u; q < min(pw(32u), 4u); q++) {
+        let cx = pf(33u + 3u * q); let cy = pf(34u + 3u * q); let r = pf(35u + 3u * q);
+        let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
+        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r) { pset(PB_FA, i, 1.0); return; }
+    }
+}

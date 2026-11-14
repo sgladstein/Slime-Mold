@@ -313,7 +313,10 @@ impl GpuWorld {
         Self::of(e, shared, s, scale)
     }
 
-    fn of(e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
+    fn of(mut e: Engine, shared: Shared, s: Settings, scale: usize) -> Self {
+        // A game tick is `scale` engine ticks (the module's head), so the
+        // plants step at the same game ticks as the CPU's.
+        e.plant_sub = scale as u64;
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
@@ -610,6 +613,17 @@ impl World for GpuWorld {
                 self.struck = now;
             }
         }
+        // Fire in the plants, after the strike and crater as on the CPU
+        // (`squad::burst`): a burn lights its disc, a blast a ring two
+        // dish cells past its crater.
+        let mut lights = Vec::new();
+        if b.burn {
+            lights.push((b.at.0, b.at.1, b.r));
+        }
+        if b.crater > 0 {
+            lights.push((b.at.0, b.at.1, b.crater_r + 2.0));
+        }
+        self.e.ignite(&self.shared, &lights);
         // An explosion's fling (`Engine::fling`, 11-14), after the kill as
         // on the CPU.
         if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
@@ -1185,6 +1199,56 @@ mod tests {
             let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&race_settings(seed, scale, walkers), scale) };
             assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "seed {seed} scale {scale}");
         }
+    }
+
+    /// **Plants and their fire run on the GPU as on the CPU** (2026-11-14,
+    /// `mould::plants`): a map with plants of all four kinds, sparse so
+    /// they spread, run side by side; a burn lit at 3 s. The plants,
+    /// kinds, fire and char match at every check (exact on llvmpipe, a
+    /// little slack on a card), and fire kills count in `burned` on both.
+    #[test]
+    fn plants_and_fire_run_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| if i % 7 == 0 { pack((i / 1024 / 160) as u8, 1.0) } else { 0 }).collect();
+        let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        assert!(!cpu.plant.is_empty() && gpu.e.plants);
+        let home = cpu.homes[0];
+        let burn = squad::Burst { at: (home.0 + 12.0, home.1), r: 6.0, burn: true, ..Default::default() };
+        let k = squad::BurstRules::default();
+        let (mut killed, mut fired) = ((0, 0), 0);
+        for sec in 1..=6 {
+            let f = Frame::default();
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 60);
+            }
+            if sec == 3 {
+                // A burn's own kills: the CPU's in its out, the GPU's
+                // with fire's in `burned`.
+                killed.0 += World::burst(&mut cpu, &burn, &k).killed;
+                World::burst(&mut gpu, &burn, &k);
+            }
+            killed.0 += World::burned(&mut cpu);
+            killed.1 += World::burned(&mut gpu);
+            let (p, kd, fire, ch) = gpu.e.plants_of();
+            let diff = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+            let same_kind = kd.iter().zip(&cpu.plant_kind).filter(|(a, b)| a == b).count() as f32 / kd.len() as f32;
+            let cfire = if cpu.fire.is_empty() { vec![0.0; p.len()] } else { cpu.fire.clone() };
+            let cchar = if cpu.char.is_empty() { vec![0.0; p.len()] } else { cpu.char.clone() };
+            let (dp, df, dc) = (diff(&p, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar));
+            fired = fired.max(cpu.burning);
+            eprintln!("plants {sec} s: sum CPU {:.1} GPU {:.1}; max diff plants {dp:.2e} fire {df:.2e} char {dc:.2e}; kinds same {same_kind:.5}; burning {}; killed {killed:?}", cpu.plant.iter().sum::<f32>(), p.iter().sum::<f32>(), cpu.burning);
+            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
+            assert!(same_kind >= tol(1.0, 0.99), "{sec} s: kinds {same_kind}");
+        }
+        assert!(fired > 0, "the burn lit the plants");
+        assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
     }
 
     /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU

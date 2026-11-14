@@ -188,6 +188,14 @@ impl World for BigDish {
         self.p.birth_energy = f32::INFINITY;
     }
 
+    /// Walkers the plants' fire killed since the last call (a burst's own
+    /// kills are counted in `burst`).
+    fn burned(&mut self) -> u32 {
+        let n = self.fire_killed - self.fire_told;
+        self.fire_told = self.fire_killed;
+        n as u32
+    }
+
     fn upkeep(&self) -> f32 {
         self.p.upkeep
     }
@@ -318,6 +326,10 @@ pub fn race_params(seed: u64, scale: usize, walkers: usize) -> BigParams {
         scorch_cone: true,
         scorch_full: 150,
         scorch_keep: 0.0,
+        // The game ticks 15 times a game second (`Rules::tps`), an eighth
+        // of the dish's 120, so the plants step every tick: 15 plant steps
+        // a second either way (their rates are a plant step's).
+        plant_every: 1,
         seed,
         ..BigParams::today()
     }

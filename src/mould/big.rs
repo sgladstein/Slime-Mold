@@ -1012,6 +1012,49 @@ pub struct BigParams {
     /// dark rim (graphics thread's render of the disc, 11-12 10:11Z).
     /// Blasts (`scorch_disc`) keep their flat disc. Off by default.
     pub scorch_cone: bool,
+    /// Plants (`mould::plants`, 2026-11-14; owner 17:02Z: fully new, not
+    /// the grass above): a field a fine cell that grows toward its
+    /// capacity and spreads into its neighbours, once a tick. On where a
+    /// map's B channel holds any plants or `plant_fill` > 0, else empty.
+    /// `plant_grow` and `plant_spread` are a tick's rates (the rule in
+    /// `plants.rs`), `plant_wet` the pace on wet ground, `plant_scorch` the
+    /// share a scorched cell loses a tick, `plant_cap` the capacity a soil
+    /// kind, `plant_kinds` each plant kind's own (`plants::KIND`). Why these numbers: a cell beside full growth fills in about
+    /// 15 s and a front crosses a 10-cell graze in about half a minute
+    /// (`plants::tests`), slow enough that a stripped patch stays a patch
+    /// for a fight, fast enough to see it close in a level.
+    pub plant_grow: f32,
+    pub plant_spread: f32,
+    pub plant_wet: f32,
+    pub plant_scorch: f32,
+    pub plant_fill: f32,
+    /// Ticks between plant steps (each step's rates times this): the rule
+    /// on 512 x 320 cells costs about 0.9 ms of CPU, so once a tick would be
+    /// a tenth of the CPU world's time; every 8 ticks (15 a second) is
+    /// still smooth, as the field moves a cell in seconds.
+    pub plant_every: u32,
+    /// Fire through the plants (`plants::fire_step`, `ignite`), stepped
+    /// with them: `fire_heat`, `fire_eat`, `fire_catch`, `fire_fuel` and
+    /// `fire_damp` as `plants::Fire`'s (rates a plant step); a walker on a
+    /// cell at `fire_kill` heat or more dies. Nothing burns until
+    /// something lights it. Why these numbers (`examples/plantprobe.rs`,
+    /// planet 2 seed 1, eight lights 25 dish cells round the slime at 40
+    /// s): `fire_catch` 0.2 went out in 4 s; `fire_damp` 1 left the body
+    /// unburnt (trail under walkers p10 1.52; 2 killed in 50 s); at 3 the
+    /// fire took 501 walkers in 80 s while the slime grew 5,405 to 7,669,
+    /// its thin edge and stragglers, not its body (owner 11-14 17:29Z).
+    pub fire_heat: f32,
+    pub fire_eat: f32,
+    pub fire_catch: f32,
+    pub fire_fuel: f32,
+    pub fire_damp: f32,
+    pub fire_kill: f32,
+    /// Char, burnt ground (`plants::Fire::char_gain` and on).
+    pub char_gain: f32,
+    pub char_keep: f32,
+    pub char_clear: f32,
+    pub plant_cap: [f32; crate::mould::plants::SOIL_KINDS],
+    pub plant_kinds: [crate::mould::plants::Kind; crate::mould::plants::KINDS],
     /// A rectangular world, three dish cells in from the edge, instead of
     /// the dish's ellipse: a world, not a dish (owner, 11-11 14:01Z).
     pub rect: bool,
@@ -1222,6 +1265,23 @@ impl BigParams {
             scorch_keep: 0.1,
             scorch_full: 30,
             scorch_cone: false,
+            plant_grow: 0.0007,
+            plant_spread: 0.0015,
+            plant_wet: 2.0,
+            plant_scorch: 0.05,
+            plant_fill: 0.0,
+            plant_every: 8,
+            fire_heat: 0.15,
+            fire_eat: 0.05,
+            fire_catch: 0.08,
+            fire_fuel: 0.05,
+            fire_damp: 3.0,
+            fire_kill: 0.5,
+            char_gain: 1.0,
+            char_keep: 0.999,
+            char_clear: 0.02,
+            plant_cap: crate::mould::plants::SOIL_CAP,
+            plant_kinds: crate::mould::plants::KIND,
             rect: false,
             wall_hp: 400.0,
             wall_bite: 1.0,
@@ -1371,6 +1431,22 @@ pub struct BigDish {
     pub soil: Vec<u8>,
     /// Fine steps of scorch left a fine cell (`scorch_disc`), else empty.
     pub scorch: Vec<u16>,
+    /// Plant density a fine cell (`BigParams::plant_grow`), else empty;
+    /// each cell's soil capacity (`plants::soil_capacity`) and plant kind.
+    pub plant: Vec<f32>,
+    pub plant_cap: Vec<f32>,
+    pub plant_kind: Vec<u8>,
+    /// Fire's heat a fine cell (`ignite`), empty until the first; cells
+    /// burning after the last plant step, and walkers fire has killed.
+    pub fire: Vec<f32>,
+    fire_next: Vec<f32>,
+    /// Burnt ground a fine cell, 0-1 (`plants::Fire::char_gain`), made
+    /// with `fire`.
+    pub char: Vec<f32>,
+    pub burning: usize,
+    pub fire_killed: u64,
+    /// Fire's kills the game has been told of (`World::burned`).
+    pub fire_told: u64,
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
     /// dormant walker is not woken by scent, only by alarm.
     pub gassed: Vec<u16>,
@@ -1599,6 +1675,15 @@ impl BigDish {
             wet: Vec::new(),
             soil: Vec::new(),
             scorch: Vec::new(),
+            plant: Vec::new(),
+            plant_cap: Vec::new(),
+            plant_kind: Vec::new(),
+            fire: Vec::new(),
+            fire_next: Vec::new(),
+            char: Vec::new(),
+            burning: 0,
+            fire_killed: 0,
+            fire_told: 0,
             gassed: Vec::new(),
             flung: Vec::new(),
             gas_cloud: Vec::new(),
@@ -1675,7 +1760,132 @@ impl BigDish {
             let (cx, cy) = (d.p.dish.0 as f32 / 2.0, d.p.dish.1 as f32 / 2.0);
             d.infect(cx, cy, d.p.sick_seed_r);
         }
+        d.place_plants(map);
         d
+    }
+
+    /// The plant field's start (`BigParams::plant_grow`): a map's B channel
+    /// where it has any, else `plant_fill` everywhere, each capped by its
+    /// cell's capacity; empty (plants off) when neither gives any.
+    fn place_plants(&mut self, map: Option<&Map>) {
+        use crate::mould::plants as pl;
+        let has_map = map.is_some_and(|m| !m.plants.is_empty());
+        if !has_map && self.p.plant_fill <= 0.0 {
+            return;
+        }
+        let (w, s) = (self.w, self.p.scale);
+        self.plant_cap = pl::soil_capacity(&self.agar, &self.soil, &self.p.plant_cap);
+        let (fill, n) = (self.p.plant_fill, self.w * self.h);
+        let start: Vec<(u8, f32)> = (0..n)
+            .map(|i| match map {
+                Some(m) if has_map => pl::unpack(m.plant_fine(s, i % w, i / w)),
+                _ => (pl::MEADOW, fill),
+            })
+            .collect();
+        self.plant_kind = start.iter().map(|&(k, _)| k).collect();
+        let g = pl::Ground { w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &[] };
+        let r = self.plant_rates();
+        self.plant = (0..n)
+            .map(|i| {
+                let crystal = !self.pile_of.is_empty() && self.pile_of[i] != 0;
+                if crystal || !self.agar[i] {
+                    0.0
+                } else {
+                    start[i].1.min(pl::cap_of(&g, &r, i, start[i].0))
+                }
+            })
+            .collect();
+    }
+
+    fn plant_rates(&self) -> crate::mould::plants::Rates {
+        let k = self.p.plant_every.max(1) as f32;
+        crate::mould::plants::Rates { grow: self.p.plant_grow * k, spread: self.p.plant_spread * k, wet: self.p.plant_wet, scorch: (self.p.plant_scorch * k).min(1.0), kinds: self.p.plant_kinds }
+    }
+
+    /// One tick of the plants (`plants::step`), where they are on.
+    fn plant_tick(&mut self) {
+        if self.plant.is_empty() || !self.ticks.is_multiple_of(self.p.plant_every.max(1) as u64) {
+            return;
+        }
+        let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
+        let r = self.plant_rates();
+        crate::mould::plants::step(&g, r, &self.plant, &mut self.scratch, &mut self.plant_kind);
+        std::mem::swap(&mut self.plant, &mut self.scratch);
+        // Once lit, fire steps every plant step (the char fades after the
+        // flames), as the GPU runs it.
+        if !self.fire.is_empty() {
+            self.fire_tick();
+        }
+    }
+
+    fn fire_rates(&self) -> crate::mould::plants::Fire {
+        crate::mould::plants::Fire { heat: self.p.fire_heat, eat: self.p.fire_eat, catch: self.p.fire_catch, fuel: self.p.fire_fuel, damp: self.p.fire_damp, char_gain: self.p.char_gain, char_keep: self.p.char_keep, char_clear: self.p.char_clear }
+    }
+
+    /// Fire's step, after the plants' (they grow, then burn), then the
+    /// walkers on cells hot enough die (as `strike` kills them).
+    fn fire_tick(&mut self) {
+        let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
+        let (r, f) = (self.plant_rates(), self.fire_rates());
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next);
+        std::mem::swap(&mut self.fire, &mut self.fire_next);
+        let kill = self.p.fire_kill;
+        for k in 0..self.walkers.len() {
+            if !self.lives(k) || matches!(self.life.get(k), Some(&(LIFE_SPORE | LIFE_DEAD))) {
+                continue;
+            }
+            let (wx, wy, _) = self.walkers[k];
+            let Some(i) = self.cell(wx, wy) else { continue };
+            if self.fire[i] < kill {
+                continue;
+            }
+            self.fire_killed += 1;
+            if self.is_dense(k) {
+                self.dense[k] = 0;
+                continue;
+            }
+            if self.life.is_empty() {
+                self.life = vec![LIFE_WALKER; self.walkers.len()];
+                self.life_t = vec![0; self.walkers.len()];
+            }
+            self.occ[i] -= 1;
+            self.life[k] = LIFE_DEAD;
+            if !self.alive.is_empty() {
+                self.alive[k] = false;
+            }
+        }
+    }
+
+    /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells):
+    /// every cell there with fuel starts at full heat. Returns cells lit; 0
+    /// on a world without plants.
+    pub fn ignite(&mut self, x: f32, y: f32, r: f32) -> usize {
+        if self.plant.is_empty() {
+            return 0;
+        }
+        if self.fire.is_empty() {
+            self.fire = vec![0.0; self.w * self.h];
+            self.fire_next = vec![0.0; self.w * self.h];
+            self.char = vec![0.0; self.w * self.h];
+        }
+        let s = self.p.scale as f32;
+        let (cx, cy, rr) = (x * s, y * s, r * s);
+        let n = rr.ceil() as i64;
+        let mut lit = 0;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if (dx * dx + dy * dy) as f32 > rr * rr {
+                    continue;
+                }
+                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
+                if self.agar[i] && self.plant[i] >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) {
+                    self.fire[i] = 1.0;
+                    lit += 1;
+                }
+            }
+        }
+        self.burning += lit;
+        lit
     }
 
     /// Contagion: every walker within `r` dish cells of (`x`, `y`, dish
@@ -3836,6 +4046,7 @@ impl BigDish {
         if self.p.scent_coarse {
             self.scent_step();
         }
+        self.plant_tick();
         self.update_reached();
         self.ticks += 1;
     }
@@ -4008,10 +4219,10 @@ impl BigDish {
             eat(y.to_bits());
             eat(a.to_bits());
         }
-        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(self.species_trail.iter().flatten()) {
+        for v in self.trail.iter().chain(&self.scent).chain(&self.germ).chain(&self.scar).chain(&self.grass).chain(&self.charge).chain(&self.wall_health).chain(&self.plant).chain(&self.fire).chain(&self.char).chain(self.species_trail.iter().flatten()) {
             eat(v.to_bits());
         }
-        for &c in self.spec.iter().chain(&self.kind) {
+        for &c in self.spec.iter().chain(&self.kind).chain(&self.plant_kind) {
             eat(c as u32);
         }
         for &c in self.sick.iter().chain(&self.age).chain(&self.life_t) {
