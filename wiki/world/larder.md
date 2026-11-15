@@ -2,7 +2,7 @@
 title: Larder, the mould as the enemy (Larder World)
 kind: design
 status: open
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
@@ -22,6 +22,7 @@ sources:
   - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-wading-2026-11-13.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/levelgen-review-2026-11-15/README.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-shooter-2026-11-11.md
   - Reports/rts-research-2026-11-10.md
@@ -156,7 +157,12 @@ Since 2026-11-14 the maps are built a slice a step (`MapBuild`,
 seven steps), a soldier waits for a new one, a squad's slots share one, and
 a wall going up leaves the old maps walked until each is rebuilt: a game
 step's max at 6x went from 186 to 12 ms ([report, *Walking maps at
-6x*](../../Reports/levelgen-2026-11-14/README.md)).
+6x*](../../Reports/levelgen-2026-11-14/README.md)). Since 2026-11-15 a
+steered squad takes any map within `STEER_NEAR` of its moving goal, the
+cache holds 34 maps at 6x, and a map being built when a wall goes up
+finishes and then goes stale: a squad steered round rock at 6x gets past
+in 16.4 s (never in 60 s before) ([report, *The technical findings,
+fixed*](../../Reports/levelgen-review-2026-11-15/README.md)).
 On held-out seeds 5-20 idle and random lose on 16 of 16 and farm and wall
 beat both 16-0; no hand wipes the mould, a farm holds 27-64% of the
 contested crystals at the cap, one wall adds nothing over farming, and a

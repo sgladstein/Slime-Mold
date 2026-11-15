@@ -58,6 +58,7 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         smell: p.scent_offset,
         start: if p.blob { Start::Home } else { Start::Spread },
         haze: p.haze,
+        start_shape: p.start_shape,
         // Contagion is off (`sick` 0); these only make the params equal.
         immune: p.immune_steps as u32,
         catch_at: p.sick_catch,
@@ -158,6 +159,12 @@ pub struct GpuWorld {
     own: usize,
     /// Wall cells broken as of the mirror's last agar read.
     broken: u32,
+    /// The mirror's wall cells and a gather of their words, so `keep`
+    /// reads back only their agar when one breaks; None until the first
+    /// break, and again after a wall goes up (its cells are new).
+    walls: Option<(Vec<u32>, super::Gather)>,
+    /// A wall went up since `walls` was made.
+    walls_new: bool,
     ro: Readout,
     /// The mould grid's square the game last asked for (`World::mould_grid`),
     /// which the GPU then sums once a game second (`GRID_EVERY`), and the
@@ -320,7 +327,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
         g.read_now();
         g
     }
@@ -461,10 +468,24 @@ impl GpuWorld {
             self.grid = Some((self.e.grid as usize, self.ticks(), g));
         }
         if r.broken != self.broken {
-            // Rare (a cell turns to rubble once), so a read-back of its own.
-            let agar = read_back(&self.e.device, &self.e.queue, &self.e.agar);
-            for (a, b) in self.e.dish.agar.iter_mut().zip(agar.chunks_exact(4)) {
-                *a = u32::from_le_bytes(b.try_into().unwrap()) != 0;
+            // Rare (a cell turns to rubble once), so a read-back of its own,
+            // of the wall cells' agar alone: only the walls pass opens agar
+            // on the GPU, and only at a wall cell. Until 2026-11-15 this
+            // read the whole buffer (3.9 MB at 6x, about 3 ms on the 1070 by
+            // the technical review's estimate, its finding 6) whenever the
+            // count moved, and the core world rings every nest with hedges.
+            if self.walls_new || self.walls.is_none() {
+                let d = &self.e.dish;
+                let cells: Vec<u32> = (0..d.w * d.h).filter(|&i| d.wall.get(i).copied().unwrap_or(false)).map(|i| i as u32).collect();
+                let old = self.walls.take();
+                self.walls = super::Gather::new(&self.e.device, &self.e.queue, &cells, old.as_ref().map(|w| &w.1)).map(|g| (cells, g));
+                self.walls_new = false;
+            }
+            if let Some((cells, g)) = &self.walls {
+                let (agar, _) = g.read(&self.e.device, &self.e.queue, &self.e.agar, &self.e.agar);
+                for (&i, b) in cells.iter().zip(agar.chunks_exact(4)) {
+                    self.e.dish.agar[i as usize] = u32::from_le_bytes(b.try_into().unwrap()) != 0;
+                }
             }
             self.broken = r.broken;
         }
@@ -685,6 +706,7 @@ impl World for GpuWorld {
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
         self.e.build_wall(&self.shared, &self.s, a.0, a.1, b.0, b.1, width);
         self.e.dish.build_wall(a.0, a.1, b.0, b.1, width);
+        self.walls_new = true;
         // Evicted walkers can die, and the wall's cells are no longer open.
         self.read_now();
     }
@@ -1027,6 +1049,43 @@ mod tests {
             assert_eq!(c.sums as u64, 1 + c.frames as u64 / GRID_EVERY, "{name}: the grid summed once a game second");
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
+        }
+    }
+
+    /// **A wall worn to rubble opens in the mirror** (2026-11-15): a wall
+    /// built on a race world, bitten to nothing on the GPU, opens there,
+    /// and the frame's `keep` reads the wall cells' agar back (a gather of
+    /// those cells alone, the technical review's finding 6), so the
+    /// mirror's open ground equals the whole buffer read back. A second
+    /// wall renews the gathered cells.
+    #[test]
+    fn a_wall_worn_to_rubble_opens_in_the_mirror() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale) = (5, 1);
+        let mut s = race_settings(seed, scale, 500);
+        (s.wall_hp, s.wall_bite) = (2.0, 1.0);
+        let g = GpuWorld::new(&device, &queue, s, scale);
+        let (w, h) = g.size();
+        let mut game = Game::new(g, Rules::default(), seed);
+        let gpu_agar = |g: &GpuWorld| read_back(&g.e.device, &g.e.queue, &g.e.agar).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap()) != 0).collect::<Vec<bool>>();
+        for (k, y) in [(0, 0.25), (1, 0.75)] {
+            let g = &mut game.world;
+            let walls = |g: &GpuWorld| (0..w * h).filter(|&i| g.e.dish.wall.get(i).copied().unwrap_or(false)).collect::<Vec<usize>>();
+            let before = walls(g);
+            let (x, y) = (w as f32 * 0.5, h as f32 * y);
+            g.build_wall((x - 8.0, y), (x + 8.0, y), 2.0);
+            let new: Vec<usize> = walls(g).into_iter().filter(|i| !before.contains(i)).collect();
+            assert!(!new.is_empty() && new.iter().all(|&i| !g.e.dish.agar[i]), "wall {k}: built and shut");
+            let mut bites = vec![0u32; w * h];
+            for &i in &new {
+                bites[i] = 1_000;
+            }
+            g.e.queue.write_buffer(&g.e.bites, 0, &super::super::u32_bytes(&bites));
+            game.step();
+            let g = &game.world;
+            let opened = new.iter().filter(|&&i| g.e.dish.agar[i]).count();
+            assert_eq!(opened, new.len(), "wall {k}: every bitten cell opened in the mirror");
+            assert!(gpu_agar(g) == g.e.dish.agar, "wall {k}: the mirror's agar is the GPU's");
         }
     }
 
@@ -1382,7 +1441,11 @@ mod tests {
         // last few dozen came over by conversion, not birth: the player's
         // mould fell from 1,000 to 980 in every run, as it isn't sown here).
         assert!(most_free > most + 50, "the cap held nothing back ({most_free} free, {most} capped)");
-        assert!(own + 5 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
+        // 15, was 5: with organic starts (2026-11-15, `start_shape`) the
+        // two moulds meet along a different edge, and conversion there
+        // differs between the capped and free runs by 13 of 1,000 on seed 5
+        // (994 against 1,007); the cap itself takes nothing of the player's.
+        assert!(own + 15 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
         let ((own_stop, _), most_stop) = run(None, true);
         assert!(most_stop <= walkers + walkers / 10, "with its births stopped the enemy reached {most_stop}");
         // The cap's overshoot is bounded by one step's births (the count
@@ -1390,7 +1453,8 @@ mod tests {
         // births-stopped one (conversion alike in both) is a step's parents
         // at most; at seed 5 it is 0.
         assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
-        assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
+        // 15 as above (organic starts: 994 against 1,007 at seed 5).
+        assert!(own_stop + 15 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
     }
 
     /// **The garden on a designed map, both engines** (mission 8, the tech
@@ -1463,7 +1527,11 @@ mod tests {
         assert_eq!(g.shots[0].hit, None, "the GPU's shot stopped on the player's mould");
         assert_eq!(c.shots[0].hit, None, "the CPU's shot stopped on the player's mould");
         let own = gpu.counts_by_side().0;
-        let into = Frame { shots: vec![ShotIn { from: (home.0 - 30.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
+        // From just outside the home's middle: since starts are organic
+        // (2026-11-15, `start_shape`) a shot from 30 cells out can stop on
+        // the start's thin fraying rim, where trail lies but no walker is
+        // within its reach (0 killed on both engines, seed 5).
+        let into = Frame { shots: vec![ShotIn { from: (home.0 - 4.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
         let (g, c) = (gpu.frame(&into, 0), cpu.frame(&into, 0));
         assert!(g.shots[0].killed > 0 && c.shots[0].killed > 0, "kills: GPU {}, CPU {}", g.shots[0].killed, c.shots[0].killed);
         assert_eq!(g.shots[0].hit, c.shots[0].hit, "the same hit cell");

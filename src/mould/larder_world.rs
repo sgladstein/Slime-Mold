@@ -103,6 +103,9 @@ struct Paths {
     /// Whether the last map started was an asked goal's: with both asked
     /// and stale maps waiting, starts take turns (`pump_maps`).
     asked_last: bool,
+    /// Whether the map being built went stale while it was built (a wall
+    /// went up): it joins `stale` when done.
+    build_stale: bool,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
@@ -271,6 +274,10 @@ pub struct Game<W: World> {
     /// otherwise (`with_tier`).
     pub core_rule: Core,
     pub first_touch: Option<f32>,
+    /// The world's ticks when the game began: 0 unless the slime grew
+    /// alone first (`head_start`). `time` counts from here, so the clock,
+    /// the goals and the end screen start at 0:00 on landing.
+    pub landed: u64,
     /// Walkers touching the larder at the last frame (it is held while any
     /// do).
     pub larder_touch: u32,
@@ -372,6 +379,23 @@ struct Flight {
     out: Option<FrameOut>,
 }
 
+/// Grows the slime alone on `world` for `secs` game seconds at `rules`'
+/// pace, before a `Game` lands on it: frames with no unit and no shot,
+/// so it spreads, lays its trail, eats crystals and burns plants as it
+/// would with nobody there. `Game::new` then counts its clock from the
+/// world's ticks (`Game::landed`). The roguelike run's big planets
+/// (`run::head_start`, the planet review's finding 5, 11-15).
+///
+/// A replay (`Game::replay`) needs the same head start on its fresh world:
+/// its command ticks are the world's.
+pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
+    let frames = (secs.max(0.0) * rules.tps as f32 / rules.frame_ticks.max(1) as f32).round() as u32;
+    for _ in 0..frames {
+        let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink };
+        world.frame(&f, rules.frame_ticks);
+    }
+}
+
 /// The squad's base on a world: the crystal farthest from the home one
 /// (crystal 0), so the race starts at opposite ends.
 pub fn far_crystal(world: &impl World) -> (f32, f32) {
@@ -392,6 +416,7 @@ impl<W: World> Game<W> {
         let density = mould as f32 / open.max(1) as f32;
         let start_charge: Vec<f32> = world.crystals().iter().map(|c| c.1).collect();
         let taken = vec![0.0; start_charge.len()];
+        let world_ticks = world.ticks();
         let mut g = Game {
             world,
             rules,
@@ -413,6 +438,7 @@ impl<W: World> Game<W> {
             core_clear: 0,
             core_rule: Core::of(&rules),
             first_touch: None,
+            landed: world_ticks,
             larder_touch: 0,
             stuck: 0,
             stuck_run: 0,
@@ -565,9 +591,9 @@ impl<W: World> Game<W> {
         });
     }
 
-    /// Game seconds since the start.
+    /// Game seconds since the start (the landing, `Game::landed`).
     pub fn time(&self) -> f32 {
-        self.world.ticks() as f32 / self.rules.tps as f32
+        (self.world.ticks() - self.landed) as f32 / self.rules.tps as f32
     }
 
     /// How far the mould is through overrunning the larder (`Rules::overrun`),

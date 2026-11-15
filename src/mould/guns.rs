@@ -105,10 +105,12 @@ impl GunKind {
 
     pub fn about(self) -> &'static str {
         match self {
-            GunKind::Rifle => "Steady: a shot a second, dead on, at middle range.",
-            GunKind::Carbine => "Fast and short: twice the shots, a little wild, more slots for cheap cards.",
-            GunKind::Long => "Slow and far: a shot every two seconds from far off, a big budget in few slots.",
-            GunKind::Scatter => "Wide and slow: a fan of bullets each shot, close in.",
+            // Short (owner 11-15 02:57Z: "simplified and clarified"); the
+            // shop's bars give the numbers.
+            GunKind::Rifle => "Steady and accurate at middle range.",
+            GunKind::Carbine => "Fast and short, a little wild. More slots.",
+            GunKind::Long => "Slow and far. A big budget in few slots.",
+            GunKind::Scatter => "A fan of bullets each shot, close in.",
         }
     }
 
