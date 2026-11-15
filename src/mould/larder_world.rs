@@ -255,6 +255,8 @@ pub struct Game<W: World> {
     /// Shots fired (with bullets, once a bullet, not once a leg).
     pub shots: u32,
     pub killed: u32,
+    /// Walkers the plants' fire killed (`World::burned`; in `killed` too).
+    pub fire_killed: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -435,6 +437,7 @@ impl<W: World> Game<W> {
             stolen: 0.0,
             shots: 0,
             killed: 0,
+            fire_killed: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,

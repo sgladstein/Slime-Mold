@@ -1,0 +1,165 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 3.85 ms (once a game second), model and HUD 0.418 ms a frame
+  t 28 s: mould 18592, soldiers 9, bank 329, harvested 0, shots 335, killed 6816, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 767 condensed or thick walkers, mass 19359
+  squad: touching 1.1 mean, 4 most; health 50 mean
+  CPU: ground field 3.25 ms (once a game second), model and HUD 0.201 ms a frame
+  t 28 s: mould 18592, soldiers 9, bank 329, harvested 0, shots 341, killed 6958, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 771 condensed or thick walkers, mass 19363
+  squad: touching 1.0 mean, 6 most; health 49 mean
+  CPU: ground field 2.33 ms (once a game second), model and HUD 0.138 ms a frame
+  t 29 s: mould 18592, soldiers 9, bank 329, harvested 0, shots 343, killed 7014, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 779 condensed or thick walkers, mass 19371
+  squad: touching 1.3 mean, 8 most; health 48 mean
+  CPU: ground field 4.76 ms (once a game second), model and HUD 0.366 ms a frame
+  t 29 s: mould 18592, soldiers 9, bank 329, harvested 0, shots 349, killed 7117, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 780 condensed or thick walkers, mass 19372
+  squad: touching 1.0 mean, 4 most; health 48 mean
+  CPU: ground field 2.18 ms (once a game second), model and HUD 0.201 ms a frame
+  t 29 s: mould 18367, soldiers 9, bank 329, harvested 0, shots 350, killed 7119, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 783 condensed or thick walkers, mass 19150
+  squad: touching 1.9 mean, 5 most; health 47 mean
+  CPU: ground field 5.83 ms (once a game second), model and HUD 0.131 ms a frame
+  t 29 s: mould 18367, soldiers 9, bank 329, harvested 0, shots 355, killed 7189, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 787 condensed or thick walkers, mass 19154
+  squad: touching 1.8 mean, 5 most; health 46 mean
+  CPU: ground field 3.79 ms (once a game second), model and HUD 0.174 ms a frame
+  t 30 s: mould 18367, soldiers 9, bank 329, harvested 0, shots 358, killed 7229, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 792 condensed or thick walkers, mass 19159
+  squad: touching 1.2 mean, 5 most; health 45 mean
+  CPU: ground field 8.44 ms (once a game second), model and HUD 0.340 ms a frame
+  t 30 s: mould 18367, soldiers 9, bank 329, harvested 0, shots 362, killed 7278, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 795 condensed or thick walkers, mass 19162
+  squad: touching 1.9 mean, 5 most; health 44 mean
+  CPU: ground field 2.29 ms (once a game second), model and HUD 0.144 ms a frame
+  t 30 s: mould 18255, soldiers 9, bank 329, harvested 0, shots 365, killed 7331, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 799 condensed or thick walkers, mass 19054
+  squad: touching 2.4 mean, 7 most; health 44 mean
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.173 ms a frame
+  t 30 s: mould 18255, soldiers 9, bank 329, harvested 0, shots 369, killed 7374, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 804 condensed or thick walkers, mass 19059
+  squad: touching 3.3 mean, 13 most; health 42 mean
+  CPU: ground field 3.22 ms (once a game second), model and HUD 0.093 ms a frame
+  t 31 s: mould 18255, soldiers 9, bank 329, harvested 0, shots 372, killed 7484, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 809 condensed or thick walkers, mass 19064
+  squad: touching 2.2 mean, 6 most; health 41 mean
+  CPU: ground field 2.79 ms (once a game second), model and HUD 0.094 ms a frame
+  t 31 s: mould 18255, soldiers 9, bank 329, harvested 0, shots 375, killed 7537, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 816 condensed or thick walkers, mass 19071
+  squad: touching 1.9 mean, 8 most; health 40 mean
+  CPU: ground field 5.55 ms (once a game second), model and HUD 0.141 ms a frame
+  t 31 s: mould 18091, soldiers 9, bank 329, harvested 0, shots 379, killed 7613, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 817 condensed or thick walkers, mass 18908
+  squad: touching 1.1 mean, 4 most; health 40 mean
+  CPU: ground field 3.80 ms (once a game second), model and HUD 0.346 ms a frame
+  t 31 s: mould 18091, soldiers 9, bank 329, harvested 0, shots 382, killed 7652, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 822 condensed or thick walkers, mass 18913
+  squad: touching 1.8 mean, 12 most; health 39 mean
+  CPU: ground field 4.63 ms (once a game second), model and HUD 0.159 ms a frame
+  t 32 s: mould 18091, soldiers 9, bank 329, harvested 0, shots 385, killed 7752, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 823 condensed or thick walkers, mass 18914
+  squad: touching 2.3 mean, 9 most; health 38 mean
+  CPU: ground field 3.45 ms (once a game second), model and HUD 0.138 ms a frame
+  t 32 s: mould 18091, soldiers 9, bank 329, harvested 0, shots 390, killed 7839, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 827 condensed or thick walkers, mass 18918
+  squad: touching 4.3 mean, 12 most; health 36 mean
+  CPU: ground field 3.44 ms (once a game second), model and HUD 0.392 ms a frame
+  t 32 s: mould 17920, soldiers 9, bank 329, harvested 0, shots 394, killed 7998, took 0%, crystals left 0.997; squad at 256.6,249.2
+  dense: 831 condensed or thick walkers, mass 18751
+  squad: touching 5.3 mean, 13 most; health 33 mean
+  CPU: ground field 1.95 ms (once a game second), model and HUD 0.095 ms a frame
+  t 32 s: mould 17920, soldiers 8, bank 329, harvested 0, shots 397, killed 8082, took 0%, crystals left 0.997; squad at 255.5,249.9
+  dense: 835 condensed or thick walkers, mass 18755
+  squad: touching 6.1 mean, 16 most; health 33 mean
+  CPU: ground field 7.26 ms (once a game second), model and HUD 0.149 ms a frame
+  t 33 s: mould 17920, soldiers 7, bank 329, harvested 0, shots 402, killed 8269, took 0%, crystals left 0.997; squad at 256.3,251.6
+  dense: 837 condensed or thick walkers, mass 18757
+  squad: touching 3.3 mean, 16 most; health 34 mean
+  CPU: ground field 3.87 ms (once a game second), model and HUD 0.467 ms a frame
+  t 33 s: mould 17920, soldiers 7, bank 329, harvested 0, shots 405, killed 8338, took 0%, crystals left 0.997; squad at 256.2,251.5
+  dense: 838 condensed or thick walkers, mass 18758
+  squad: touching 0.7 mean, 3 most; health 33 mean
+  CPU: ground field 22.37 ms (once a game second), model and HUD 0.271 ms a frame
+  t 33 s: mould 17803, soldiers 7, bank 329, harvested 0, shots 405, killed 8338, took 0%, crystals left 0.997; squad at 256.0,251.0
+  dense: 840 condensed or thick walkers, mass 18643
+  squad: touching 1.7 mean, 6 most; health 32 mean
+  CPU: ground field 2.20 ms (once a game second), model and HUD 0.205 ms a frame
+  t 33 s: mould 17803, soldiers 7, bank 329, harvested 0, shots 408, killed 8399, took 0%, crystals left 0.997; squad at 255.8,250.4
+  dense: 840 condensed or thick walkers, mass 18643
+  squad: touching 1.0 mean, 4 most; health 32 mean
+  CPU: ground field 2.17 ms (once a game second), model and HUD 0.107 ms a frame
+  t 34 s: mould 17803, soldiers 7, bank 329, harvested 0, shots 411, killed 8421, took 0%, crystals left 0.997; squad at 255.8,250.2
+  dense: 845 condensed or thick walkers, mass 18648
+  squad: touching 1.0 mean, 3 most; health 31 mean
+  CPU: ground field 4.35 ms (once a game second), model and HUD 0.152 ms a frame
+  t 34 s: mould 17803, soldiers 6, bank 329, harvested 0, shots 415, killed 8497, took 0%, crystals left 0.997; squad at 254.8,249.2
+  dense: 847 condensed or thick walkers, mass 18650
+  squad: touching 0.8 mean, 2 most; health 36 mean
+  CPU: ground field 3.27 ms (once a game second), model and HUD 0.144 ms a frame
+  t 34 s: mould 17769, soldiers 6, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.997; squad at 255.3,248.9
+  dense: 851 condensed or thick walkers, mass 18620
+  squad: touching 1.5 mean, 5 most; health 36 mean
+  CPU: ground field 2.73 ms (once a game second), model and HUD 0.114 ms a frame
+  t 59 s: mould 21569, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1877 condensed or thick walkers, mass 23446
+  squad: touching 0.0 mean, 0 most; health 43 mean
+  CPU: ground field 2.89 ms (once a game second), model and HUD 0.131 ms a frame
+  t 59 s: mould 21569, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1895 condensed or thick walkers, mass 23464
+  squad: touching 0.0 mean, 0 most; health 43 mean
+  CPU: ground field 5.60 ms (once a game second), model and HUD 0.138 ms a frame
+  t 60 s: mould 21569, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1915 condensed or thick walkers, mass 23484
+  squad: touching 0.0 mean, 0 most; health 43 mean
+  CPU: ground field 6.34 ms (once a game second), model and HUD 0.162 ms a frame
+  t 60 s: mould 21569, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1941 condensed or thick walkers, mass 23510
+  squad: touching 0.3 mean, 1 most; health 43 mean
+  CPU: ground field 2.36 ms (once a game second), model and HUD 0.102 ms a frame
+  t 60 s: mould 21732, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1953 condensed or thick walkers, mass 23685
+  squad: touching 0.0 mean, 0 most; health 43 mean
+  CPU: ground field 3.45 ms (once a game second), model and HUD 0.122 ms a frame
+  t 60 s: mould 21732, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.992; squad at 255.0,231.9
+  dense: 1971 condensed or thick walkers, mass 23703
+  squad: touching 4.0 mean, 11 most; health 42 mean
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.086 ms a frame
+  t 61 s: mould 21732, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 255.0,231.9
+  dense: 1991 condensed or thick walkers, mass 23723
+  squad: touching 9.0 mean, 19 most; health 38 mean
+  CPU: ground field 3.60 ms (once a game second), model and HUD 0.141 ms a frame
+  t 61 s: mould 21732, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 255.0,231.9
+  dense: 2015 condensed or thick walkers, mass 23747
+  squad: touching 13.7 mean, 24 most; health 32 mean
+  CPU: ground field 3.02 ms (once a game second), model and HUD 0.190 ms a frame
+  t 61 s: mould 21949, soldiers 3, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 255.0,231.9
+  dense: 2030 condensed or thick walkers, mass 23979
+  squad: touching 15.7 mean, 23 most; health 26 mean
+  CPU: ground field 5.69 ms (once a game second), model and HUD 0.506 ms a frame
+  t 61 s: mould 21949, soldiers 2, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 256.2,229.9
+  dense: 2048 condensed or thick walkers, mass 23997
+  squad: touching 16.0 mean, 18 most; health 29 mean
+  CPU: ground field 3.50 ms (once a game second), model and HUD 0.140 ms a frame
+  t 62 s: mould 21949, soldiers 2, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 256.0,230.3
+  dense: 2069 condensed or thick walkers, mass 24018
+  squad: touching 19.0 mean, 20 most; health 20 mean
+  CPU: ground field 2.11 ms (once a game second), model and HUD 0.104 ms a frame
+  t 62 s: mould 21949, soldiers 1, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 256.0,233.1
+  dense: 2085 condensed or thick walkers, mass 24034
+  squad: touching 24.0 mean, 24 most; health 23 mean
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.096 ms a frame
+  t 62 s: mould 22213, soldiers 1, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991; squad at 256.0,233.1
+  dense: 2095 condensed or thick walkers, mass 24308
+  squad: touching 28.0 mean, 28 most; health 12 mean
+  CPU: ground field 3.97 ms (once a game second), model and HUD 0.320 ms a frame
+  t 62 s: mould 22213, soldiers 0, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991, ended: squad wiped
+  dense: 2119 condensed or thick walkers, mass 24332
+  CPU: ground field 3.50 ms (once a game second), model and HUD 0.116 ms a frame
+  t 62 s: mould 22213, soldiers 0, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991, ended: squad wiped
+  dense: 2119 condensed or thick walkers, mass 24332
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.155 ms a frame
+  t 62 s: mould 22213, soldiers 0, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991, ended: squad wiped
+  dense: 2119 condensed or thick walkers, mass 24332
+  CPU: ground field 6.48 ms (once a game second), model and HUD 0.404 ms a frame
+  t 62 s: mould 22213, soldiers 0, bank 329, harvested 0, shots 416, killed 8504, took 0%, crystals left 0.991, ended: squad wiped
+  dense: 2119 condensed or thick walkers, mass 24332

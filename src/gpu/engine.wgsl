@@ -163,7 +163,12 @@ struct Params {
     // `wet_step` (`BigParams::deep_step`). Three words kept for the next
     // ground kinds.
     deep_step: f32, _g1: f32, _g2: f32, _g3: f32,
-    // The spray row (gun look, 2026-11-15; Params grew from 944 to 960):
+    // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
+    // Params grew from 944 to 960): the steps between surges (0 off), the
+    // creep's and the lunge's steps, and the lunge's haste. The reach is
+    // panic's (`panic_r2`), the creep's pace `panic_creep`.
+    surge_every: u32, surge_lean: u32, surge_dash: u32, surge_haste: f32,
+    // The spray row (gun look, 2026-11-15; Params grew from 960 to 976, after the surge row):
     // a shot's spray (`squad::Frame::spray`): its longest flight in fine
     // steps (0 off), its first speed in dish cells a fine step and the
     // flight's reciprocal (`big::spray_inv`); then the fine steps a tick
@@ -640,7 +645,7 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
         let c = piles[(dense_word(k) >> ROAM_SHIFT) & 63u].centre;
         return vec3<f32>(f32(c & 0xFFFFu) + 0.5, f32(c >> 16u) + 0.5, 1.0);
     }
-    if (P.panic <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    if (P.panic <= 0.0) { return surge_to(here); }
     let heard = atomicLoad(&news[k]);
     // The age of its news (S.t + 1 is never before it).
     let age = S.t + 1u - min(heard, S.t + 1u);
@@ -648,7 +653,7 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     let lean = (P.wclock >> 25u) & 0x7Fu;
     var haste = 0.0;
     if (age > lag + lean) { haste = P.panic; } else if (age > lag) { haste = P.panic_creep; }
-    if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    if (haste <= 0.0) { return surge_to(here); }
     let cx = i32(here % P.w);
     let cy = i32(here / P.w);
     var best = -1;
@@ -672,6 +677,35 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
             let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
             if (best < 0 || d2 < best) { best = d2; bx = px; by = py; }
         }
+    }
+    if (best < 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, haste);
+}
+
+// The body surges (`BigParams::surge_every`, the CPU's `surge_haste` and
+// `nearest_threat`): on one clock for the dish, the first a whole period
+// in, a calm walker (not panicking, not breaking away) within `panic_r2` of
+// a unit runs for the nearest (ties to the first), at `panic_creep` of its
+// pace for `surge_lean` steps, then at `surge_haste` for `surge_dash`.
+// (x, y, haste); (-1, -1, 0) when calm. The units are searched only while
+// the clock is in a surge.
+fn surge_to(here: u32) -> vec3<f32> {
+    let t = S.t + 1u;
+    if (P.surge_every == 0u || t < P.surge_every) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let ph = t % P.surge_every;
+    var haste = 0.0;
+    if (ph < P.surge_lean) { haste = P.panic_creep; } else if (ph - P.surge_lean < P.surge_dash) { haste = P.surge_haste; }
+    if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let cx = i32(here % P.w);
+    let cy = i32(here / P.w);
+    var best = -1;
+    var bx = 0;
+    var by = 0;
+    for (var u = 0u; u < P.nunits; u++) {
+        let dx = i32(SQ.units[u].x) - cx;
+        let dy = i32(SQ.units[u].y) - cy;
+        let d2 = dx * dx + dy * dy;
+        if (u32(d2) <= P.panic_r2 && (best < 0 || d2 < best)) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
     }
     if (best < 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, haste);

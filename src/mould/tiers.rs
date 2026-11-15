@@ -260,6 +260,11 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "roam_far" => p.roam_far = f()?,
         "roam_share" => p.roam_share = f()?,
         "thicken" => p.thicken = f()?,
+        // The body surges (`BigParams::surge_every`, both engines since 11-15).
+        "surge" => p.surge_every = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
+        "surge_lean" => p.surge_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
+        "surge_dash" => p.surge_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
+        "surge_haste" => p.surge_haste = f()?,
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
