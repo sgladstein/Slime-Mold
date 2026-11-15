@@ -1,0 +1,43 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts
+4 1 Nezanus river-valley [Outcrops Rivers Dunes veins] 0 201 | 14 9% 53% 18% 0% 4% 12 | 613 946 144 | 100% | 6/22 6/22 | 
+4 2 Ullukar river-valley [Ridges Rivers Dunes richer-farther] 0 226 | 22 13% 36% 32% 0% 3% 0 | 643 935 56 | 100% | 6/20 6/20 | 
+4 3 Veskenar river-valley [Ridges Rivers Dunes scattered] 0 288 | 22 12% 45% 30% 0% 1% 0 | 685 898 68 | 100% | 6/20 6/20 | 
+4 4 Phelae river-valley [Ridges Rivers Sand richer-farther] 3 971 | 22 13% 14% 0% 0% 2% 0 | 617 977 84 | 100% | 8/22 6/22 | 1 crystals cannot be reached / nest 1: no way round 16 wide / nest 0: the direct way is wider than 10
+4 5 Verrith river-valley [Ridges Rivers Sand fields] 0 193 | 15 10% 24% 0% 0% 4% 4 | 608 949 93 | 100% | 6/20 8/20 | 
+4 6 Dredix river-valley [Outcrops Rivers Dunes veins] 0 196 | 7 7% 55% 16% 0% 4% 4 | 678 871 137 | 100% | 8/24 6/18 | 
+4 7 Quado river-valley [Outcrops Rivers Dunes fields] 0 193 | 15 8% 53% 24% 0% 3% 4 | 852 989 120 | 100% | 6/22 6/22 | 
+4 8 Aro river-valley [Ridges Rivers Dunes veins] 1 544 | 16 13% 49% 19% 0% 4% 4 | 665 911 76 | 100% | 6/20 6/20 | nest 1: no way round 16 wide
+4 9 Berzen river-valley [Ridges Rivers Dunes richer-farther] 0 186 | 22 10% 41% 35% 0% 2% 0 | 625 959 49 | 100% | 6/20 6/20 | 
+4 10 Ixris river-valley [Ridges Rivers Dunes richer-farther] 0 233 | 22 13% 36% 31% 0% 4% 4 | 716 931 85 | 100% | 8/18 6/20 | 
+4 11 Karra river-valley [Ridges Rivers Dunes veins] 0 274 | 11 13% 51% 15% 0% 2% 0 | 652 858 129 | 100% | 8/22 6/22 | 
+4 12 Qualunus river-valley [Ridges Rivers Sand veins] 0 260 | 10 14% 17% 0% 0% 2% 0 | 629 1025 137 | 100% | 6/20 6/20 | 
+4 13 Quathith river-valley [Ridges Rivers Dunes fields] 0 295 | 14 11% 44% 23% 0% 3% 4 | 589 980 52 | 100% | 6/20 8/20 | 
+4 14 Muko river-valley [Ridges Rivers Dunes veins] 0 260 | 10 11% 48% 17% 0% 7% 0 | 673 1004 148 | 100% | 6/20 6/20 | 
+4 15 Gridezor river-valley [Ridges Rivers Dunes veins] 0 207 | 12 14% 47% 17% 0% 4% 0 | 713 1041 104 | 100% | 6/22 6/22 | 
+4 16 Zole river-valley [Outcrops Rivers Sand fields] 0 184 | 12 8% 23% 0% 0% 4% 4 | 632 909 82 | 100% | 6/22 6/22 | 
+4 17 Drerae river-valley [Outcrops Rivers Sand fields] 1 358 | 16 9% 26% 0% 0% 9% 0 | 714 881 91 | 100% | 6/20 6/20 | nearest crystal 205 cells' walk from the landing
+4 18 Thadarum river-valley [Ridges Rivers Dunes fields] 0 190 | 13 11% 44% 24% 0% 3% 0 | 620 940 88 | 100% | 8/22 6/22 | 
+4 19 Lorrukar river-valley [Ridges Rivers Dunes fields] 0 200 | 14 11% 44% 23% 0% 3% 0 | 655 857 80 | 100% | 8/22 6/22 | 
+4 20 Grizen river-valley [Ridges Rivers Dunes veins] 0 206 | 11 12% 45% 17% 0% 7% 4 | 684 922 125 | 100% | 6/20 6/20 | 
+20 planets, 283 ms each on average
+8 1 Quamar core [Rooms Dry Mixed fields] 0 683 | 43 13% 17% 23% 7% 0% 244 | 1427 1544 195 | 100% | 6/20 6/22 6/20 | 
+8 2 Lozo core [Ridges Streams Mixed jackpot] 0 650 | 61 6% 13% 24% 6% 6% 281 | 1492 2212 183 | 100% | 8/22 6/26 6/26 | 
+8 3 Ulren core [Pillars Streams Mixed jackpot] 0 739 | 61 10% 20% 20% 5% 9% 244 | 1277 2196 176 | 100% | 6/26 6/26 8/26 | 
+8 4 Zoremor core [Pillars Lakes Mixed veins] 0 858 | 47 10% 16% 22% 3% 23% 258 | 1273 2223 180 | 100% | 6/18 8/24 6/22 | 
+8 5 Ixvek core [Rooms Rivers Mixed jackpot] 0 866 | 61 13% 21% 19% 5% 4% 266 | 1305 2128 110 | 99% | 8/20 6/20 8/20 | 
+8 6 Vethix core [Outcrops Dry Mixed fields] 0 519 | 51 5% 25% 23% 7% 0% 323 | 1289 2163 196 | 100% | 6/24 8/24 6/24 | 
+8 7 Zothunus core [Outcrops Pools Mixed fields] 0 699 | 44 5% 10% 25% 2% 39% 237 | 1374 2187 104 | 100% | 8/26 8/30 6/24 | 
+8 8 Berskothor core [Rooms Streams Mixed jackpot] 1 1241 | 61 13% 21% 18% 6% 3% 209 | 1304 2234 100 | 100% | 6/20 6/20 6/18 | nest 0: the direct way is wider than 10
+8 9 Grimon core [Pillars Pools Mixed scattered] 0 992 | 95 9% 9% 29% 2% 29% 116 | 1356 2245 136 | 100% | 8/22 6/22 8/20 | 
+8 10 Berssum core [Ridges Dry Mixed veins] 1 1137 | 43 5% 27% 18% 7% 0% 336 | 1326 2216 155 | 100% | 6/26 6/32 6/30 | nest 0: the direct way is wider than 10
+8 11 Ixkis core [Outcrops Rivers Mixed fields] 1 2173 | 50 4% 20% 23% 7% 4% 338 | 1365 2021 143 | 100% | 6/20 6/22 6/22 | nest 0: the direct way is wider than 10
+8 12 Orvizek core [Ridges Rivers Mixed richer-farther] 0 957 | 95 6% 22% 23% 5% 5% 250 | 1550 2328 120 | 100% | 6/20 6/20 6/18 | 
+8 13 Avivae core [Pillars Streams Mixed scattered] 0 843 | 95 9% 19% 24% 6% 3% 215 | 1415 2012 84 | 100% | 8/24 8/20 6/26 | 
+8 14 Orrrar core [Rooms Dry Mixed veins] 0 549 | 40 12% 17% 22% 6% 0% 267 | 1520 2135 184 | 99% | 8/22 6/24 6/20 | 
+8 15 Orrrae core [Pillars Dry Mixed richer-farther] 0 623 | 95 8% 24% 20% 7% 0% 272 | 1324 2172 68 | 100% | 8/26 6/22 8/28 | 
+8 16 Quasson core [Outcrops Rivers Mixed fields] 0 815 | 51 4% 28% 17% 7% 3% 329 | 1371 2150 156 | 100% | 8/22 8/22 6/22 | 
+8 17 Zoskimon core [Rooms Rivers Mixed scattered] 0 1082 | 95 12% 19% 22% 6% 3% 197 | 1450 2342 196 | 99% | 8/20 6/20 6/18 | 
+8 18 Yakis core [Ridges Streams Mixed fields] 0 820 | 45 6% 20% 26% 7% 3% 333 | 1265 2159 194 | 100% | 8/30 6/26 6/30 | 
+8 19 Muske core [Pillars Lakes Mixed richer-farther] 0 1219 | 94 9% 13% 22% 3% 25% 77 | 1384 1940 72 | 100% | 8/22 6/22 6/20 | 
+8 20 Grissaskis core [Ridges Streams Mixed jackpot] 0 916 | 61 5% 17% 25% 5% 7% 293 | 1295 2162 144 | 100% | 6/30 6/30 10/30 | 
+20 planets, 919 ms each on average
