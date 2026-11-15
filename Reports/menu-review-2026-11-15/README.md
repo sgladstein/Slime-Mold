@@ -40,8 +40,12 @@ adds this report fixes both, with tests: Heal was outside the header's fit and
 drew over "1 squad" at 150% (`the_squad_header_keeps_clear_at_every_size`),
 and a card dropped in a scrolled shop went to the wrong slot because the
 slot list was filtered to the visible ones
-(`a_drop_after_scrolling_lands_in_its_own_slot`). See
-[the UI-size report](../ui-scale-2026-11-15/README.md#review-fixes).
+(`a_drop_after_scrolling_lands_in_its_own_slot`). The squad header now
+measures and draws one list of five buttons, drops Guards, then Heal, then
+Combine when short, and draws no button left of the header word; the shop
+keeps every slot in its list, and a drop outside the page's visible band
+(under the title or the fixed buttons) does nothing, the bag included. The
+UI-size work they review is [its own report](../ui-scale-2026-11-15/README.md).
 
 ## Questions for the owner
 
