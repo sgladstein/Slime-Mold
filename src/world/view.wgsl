@@ -1601,6 +1601,66 @@ fn ground_elev(x: f32, y: f32) -> f32 {
 
 // What each soil does to the ground's albedo at (x, y), `bare` the share
 // not under mould: (multiplier, added light).
+// The plain soil's micro-look on each biome (`soil_detail`), a signed
+// share of its colour. Every grid is turned off the cells' axes (value
+// noise on the axes shows squares at zoom 24) and costs one to three
+// value noises a pixel; the highlands' gravel adds one 3 x 3 cell search.
+fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
+    let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
+    let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
+    if (fl == 1u) {
+        // Barrens: dry grit, fine pale and dark specks, and faint wind
+        // streaks drawn out along one direction.
+        let n = vnoise(q1 * 3.2 + 9.0);
+        let speck = 0.10 * smoothstep(0.66, 0.86, n) - 0.08 * smoothstep(0.66, 0.86, 1.0 - n);
+        let streak = 0.05 * (vnoise(vec2<f32>(q2.x * 0.25, q2.y * 2.2) + 4.0) - 0.5) * 2.0;
+        return speck + streak;
+    }
+    if (fl == 2u) {
+        // Fen: mud, darker wet blotches a couple of cells across, with a
+        // few wet glints in them.
+        let b = smoothstep(0.42, 0.72, vnoise(q1 / 1.5 + 3.0));
+        let glint = smoothstep(0.86, 0.96, vnoise(q2 * 3.4 + 15.0));
+        return -0.14 * b + 0.16 * glint * b;
+    }
+    if (fl == 3u) {
+        // Valley: river silt laid in soft bands, bent, with pale pebbles.
+        let band = 0.06 * sin(6.2831853 * (q2.x / 2.3 + 1.4 * vnoise(p / 9.0 + 2.0)));
+        let peb = 0.12 * smoothstep(0.78, 0.9, vnoise(q1 * 1.4 + 40.0));
+        return band + peb;
+    }
+    if (fl == 4u) {
+        // Jungle: dark humus, a dense two-scale mottle of leaf litter.
+        let m = 0.6 * vnoise(q1 * 0.9 + 1.0) + 0.4 * vnoise(q2 * 2.6 + 6.0);
+        let fleck = smoothstep(0.8, 0.92, vnoise(q2 * 1.7 + 30.0));
+        return 0.26 * (m - 0.5) - 0.12 * fleck;
+    }
+    if (fl == 5u) {
+        // Highlands: gravel, stones about two thirds of a cell, each its
+        // own shade, dark gaps between.
+        let g = q1 / 0.7;
+        let gi = floor(g);
+        var d1 = 9.0; var d2 = 9.0; var c1 = gi;
+        for (var j = -1; j <= 1; j++) {
+            for (var i = -1; i <= 1; i++) {
+                let c = gi + vec2<f32>(f32(i), f32(j));
+                let o = c + vec2<f32>(hash2(c * 1.3 + 5.1), hash2(c * 2.9 + 1.7)) * 0.8 + 0.1;
+                let d = length(g - o);
+                if (d < d1) { d2 = d1; d1 = d; c1 = c; } else if (d < d2) { d2 = d; }
+            }
+        }
+        let gap = (d2 - d1) * 0.7 * P.zoom;
+        return 0.16 * (hash2(c1 * 4.1 + 2.3) - 0.5) - 0.22 * (1.0 - smoothstep(0.6, 2.0, gap));
+    }
+    if (fl == 6u) {
+        // Caves: stone dust, a faint fine grain over broad pale and dark
+        // drifts.
+        return 0.10 * (vnoise(q2 / 6.0 + 8.0) - 0.5) + 0.07 * (vnoise(q1 * 2.8 + 13.0) - 0.5);
+    }
+    // Meadow and the core world: loam, soft crumbs at two scales.
+    return 0.13 * (vnoise(q1 * 1.6 + 2.0) - 0.5) + 0.09 * (vnoise(q2 * 3.1 + 19.0) - 0.5);
+}
+
 fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // Under slime thick enough that the texture has faded out (most of a
     // big body), nothing to do (art lead 11-14: early-outs; cost both ways
@@ -1635,7 +1695,12 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         so = soil_share(x, y);
     }
     let w = so.w;
-    if (dot(w, vec4<f32>(1.0)) + so.bridge <= 0.001) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
+    if (dot(w, vec4<f32>(1.0)) + so.bridge <= 0.001) {
+        // Plain soil alone (most of most maps): its biome's look only.
+        let wp = bare * smoothstep(3.0, 8.0, P.zoom);
+        if (wp > 0.001) { return vec4<f32>(1.0 + wp * PLAIN_AMP * plain_look(P.flora, vec2<f32>(x, y)), 0.0, 0.0, 0.0); }
+        return vec4<f32>(1.0, 0.0, 0.0, 0.0);
+    }
     var mul = 1.0;
     var add = vec3<f32>(0.0);
     // The water's crisp cover (its edge where the smooth wet share crosses
@@ -1726,6 +1791,17 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
         let sp = (0.2 * smoothstep(0.6, 0.85, n) - 0.15 * smoothstep(0.6, 0.85, 1.0 - n)) * clump;
         let fade = smoothstep(2.0, 4.0, P.zoom);
         mul *= 1.0 + sp * ws.z * fade * bare;
+    }
+    // Plain soil: each planet's own ground up close (art lead's planet
+    // review 11-15, item 3: the planets' plain ground was one flat colour
+    // at zoom 12). The map's biome is `P.flora` (the plants thread's
+    // per-map value, `levelgen::Biome as u8`; one uniform for both). A
+    // signed change of at most about an eighth, so the ground keeps its
+    // value band (20-45 in grey); it comes in from zoom 3 to 8, below
+    // which it would alias, and lies under the slime by `bare`.
+    let wl = ls.w * (1.0 - cw) * bare * smoothstep(3.0, 8.0, P.zoom);
+    if (wl > 0.001) {
+        mul *= 1.0 + wl * PLAIN_AMP * plain_look(P.flora, vec2<f32>(x, y));
     }
     // What the cells' material already gives here (`cell_mat_c`'s bare
     // ground, blended between the four cells round: `est`), and what this
@@ -2505,6 +2581,9 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
+// The micro-look's strength: the first cut (one) read only as a faint
+// grain at zoom 12 over ground at about 40 in grey.
+const PLAIN_AMP: f32 = 2.0;
 const FILM_LIFT_A: f32 = 0.01;
 const FILM_LIFT_B: f32 = 0.05;
 const OFF_MAP_RGB: vec3<f32> = vec3<f32>(12.0, 13.0, 16.0);

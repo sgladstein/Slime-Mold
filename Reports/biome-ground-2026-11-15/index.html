@@ -1,0 +1,48 @@
+<title>Planet Ground Looks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr; gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.85rem} th,td{padding:4px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap} th:first-child,td:first-child{text-align:left} .tw{overflow-x:auto} .pair{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+</style>
+<div class="wrap">
+<div class="lede"><span class="tag">Larder World · planets 1-7 · seed 1 · zoom 12 · llvmpipe · 2026-11-15</span>
+<h1>Each planet's own ground</h1>
+<p>Up close, plain soil was one flat colour on every planet. Now each biome has its own ground: meadow loam, barrens grit, fen mud, valley silt, jungle humus, highland gravel and cave dust. The biome comes from the map's own flora value, which the plant forms also use. Plain ground stays in its value band, with a median grey of 34-46 on all 14 planet-seeds; the fen's mud is the darkest. On llvmpipe the cost is within the noise.</p></div>
+<section><h2>Plain ground in grey (p10 / p50 / p90)</h2><div class="tw"><table><tr><th>Planet</th><th>Look off</th><th>Look on</th></tr>
+<tr><td>Meadow 1</td><td>33/46/61</td><td>32/46/56</td></tr><tr><td>Fen 1</td><td>42/48/51</td><td>29/34/42</td></tr><tr><td>Fen 2</td><td>42/48/51</td><td>29/36/48</td></tr><tr><td>Valley 1</td><td>38/43/53</td><td>40/44/55</td></tr><tr><td>Jungle 1</td><td>24/40/55</td><td>19/42/51</td></tr><tr><td>Jungle 2</td><td>25/38/53</td><td>18/39/52</td></tr><tr><td>Caves 1-2</td><td>42/42/53</td><td>42/42/55-56</td></tr></table></div>
+<p class="muted">The other maps show no change in this measure, which reads a few cells at their middle pixel. The stills below show the texture on them.</p></section>
+<section><h2>Meadow: loam</h2><div class="pair"><figure><img src="meadow-z12-before.png" alt="Meadow: loam before"><figcaption>Before</figcaption></figure><figure><img src="meadow-z12-after.png" alt="Meadow: loam after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Barrens: grit and wind streaks</h2><div class="pair"><figure><img src="barrens-z12-before.png" alt="Barrens: grit and wind streaks before"><figcaption>Before</figcaption></figure><figure><img src="barrens-z12-after.png" alt="Barrens: grit and wind streaks after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Fen: wet mud with glints</h2><div class="pair"><figure><img src="fen-z12-before.png" alt="Fen: wet mud with glints before"><figcaption>Before</figcaption></figure><figure><img src="fen-z12-after.png" alt="Fen: wet mud with glints after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Valley: river silt and pebbles</h2><div class="pair"><figure><img src="valley-z12-before.png" alt="Valley: river silt and pebbles before"><figcaption>Before</figcaption></figure><figure><img src="valley-z12-after.png" alt="Valley: river silt and pebbles after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Jungle: humus under the canopy</h2><div class="pair"><figure><img src="jungle-z12-before.png" alt="Jungle: humus under the canopy before"><figcaption>Before</figcaption></figure><figure><img src="jungle-z12-after.png" alt="Jungle: humus under the canopy after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Highlands: gravel</h2><div class="pair"><figure><img src="highlands-z12-before.png" alt="Highlands: gravel before"><figcaption>Before</figcaption></figure><figure><img src="highlands-z12-after.png" alt="Highlands: gravel after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Caves: stone dust</h2><div class="pair"><figure><img src="caves-z12-before.png" alt="Caves: stone dust before"><figcaption>Before</figcaption></figure><figure><img src="caves-z12-after.png" alt="Caves: stone dust after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Highlands at zoom 12, 2-8 s</h2><div class="pair"><figure><img src="highlands-z12-before.gif" alt="highlands before"><figcaption>Before</figcaption></figure><figure><img src="highlands-z12-after.gif" alt="highlands after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Barrens at zoom 12, 2-8 s</h2><div class="pair"><figure><img src="barrens-z12-before.gif" alt="barrens before"><figcaption>Before</figcaption></figure><figure><img src="barrens-z12-after.gif" alt="barrens after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Fen at zoom 12, 2-8 s</h2><div class="pair"><figure><img src="fen-z12-before.gif" alt="fen before"><figcaption>Before</figcaption></figure><figure><img src="fen-z12-after.gif" alt="fen after"><figcaption>After</figcaption></figure></div></section>
+
+</div>
