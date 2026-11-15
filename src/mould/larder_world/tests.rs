@@ -744,8 +744,11 @@ impl World for Later {
     fn set_surge_at(&mut self, at: u32) {
         World::set_surge_at(&mut self.d, at)
     }
-    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32) {
-        World::set_raid(&mut self.d, at, to, r, share)
+    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32, field: Vec<u32>) {
+        World::set_raid(&mut self.d, at, to, r, share, field)
+    }
+    fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+        World::raid_ground(&self.d)
     }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)

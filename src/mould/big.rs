@@ -60,6 +60,9 @@ const DRAW_CONDENSE: u32 = 405;
 /// Which walkers in a raid's reach raid (`BigParams::raid_share`), keyed
 /// on the raid's first step.
 pub const DRAW_RAID: u32 = 406;
+/// A raid's walking distance is kept on blocks of this many fine cells a
+/// side (`BigDish::raid_paths`).
+pub const RAID_BLOCK: usize = 2;
 /// A slot's condensing word (`BigDish::dense`): its ripeness, steps, in
 /// the low 16 bits, and `DENSE` once it has condensed (then the low bits
 /// count the steps since, for the look). The GPU's
@@ -1587,6 +1590,16 @@ pub struct BigDish {
     /// `DENSE`), made with the first growth step it is on; empty while
     /// off. A dead slot's word is stale until a birth clears it.
     pub dense: Vec<u32>,
+    /// **A raid's way round walls** (`BigParams::raid_at`, 2026-11-15):
+    /// each `RAID_BLOCK` block's walking distance to the raid's target
+    /// (`u32::MAX` where no way reaches), made by `raid_paths` when the
+    /// game sets a raid. A raider
+    /// steers to the sensor reading the least distance, so it walks round
+    /// walls and rock instead of piling against them. Empty: raiders steer
+    /// straight at the target. The GPU holds the same words in `news`
+    /// after the dense cells (`dense_words`), and a raider standing
+    /// where no way reaches steers straight.
+    pub raid_field: Vec<u32>,
     /// Walkers absorbed by condensing so far, and walkers that condensed.
     pub absorbed: u64,
     pub condensed: u64,
@@ -1903,6 +1916,7 @@ impl BigDish {
             heard: Vec::new(),
             news: Vec::new(),
             dense: Vec::new(),
+            raid_field: Vec::new(),
             absorbed: 0,
             condensed: 0,
             thickened: 0,
@@ -2595,6 +2609,26 @@ impl BigDish {
         best.map(|b| b.1)
     }
 
+    /// Makes `raid_field` for the raid's target (`BigParams::raid_to`), on
+    /// blocks of `RAID_BLOCK` x `RAID_BLOCK` fine cells: a block is open
+    /// when every cell in it is agar (so a thin wall never leaks), and the
+    /// distance runs over open blocks, 8 neighbours, straight steps 2 and
+    /// diagonal 3 (a diagonal may not cut a closed corner), by a bucket
+    /// queue. Cleared when no raid is set. Why blocks: on the fine cells a
+    /// heap Dijkstra took 62-65 ms on planet 8 (1256 x 784; the levelgen
+    /// thread's 6x hitch rule, 11-15), a step's hitch once a raid.
+    pub fn raid_paths(&mut self) {
+        self.raid_field = if self.p.raid_at == 0 { Vec::new() } else { raid_field_for(&self.agar, self.w, self.h, self.p.raid_to) };
+    }
+
+    /// The raid's walking distance at fine cell `i` (`raid_field`'s
+    /// block), `u32::MAX` where none reaches.
+    pub fn raid_dist(&self, i: usize) -> u32 {
+        let b = RAID_BLOCK;
+        let bw = self.w.div_ceil(b);
+        self.raid_field.get(((i / self.w) / b) * bw + (i % self.w) / b).copied().unwrap_or(u32::MAX)
+    }
+
     /// The raid's haste on the step being made (`BigParams::raid_at`):
     /// `panic_creep` through its lean, `raid_haste` through its run, else 0.
     pub fn raid_haste(&self) -> f32 {
@@ -3168,11 +3202,18 @@ impl BigDish {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
             }
             // A raid (`raid_at`): a raider runs for the raid's target, by
-            // its sensors' direction alone (it does not panic, above).
+            // its sensors alone (it does not panic, above): down the raid's
+            // walking distance (`raid_field`) where there is one, else
+            // straight at it.
+            let mut by_field = false;
             if scared.is_none() {
                 if let Some((tx, ty)) = self.raid_of(k) {
                     scared = Some((tx, ty, true));
                     st *= raid;
+                    // Down the walking distance, unless the walker stands
+                    // where none reaches (a block a wall or rock closes):
+                    // then straight.
+                    by_field = !self.raid_field.is_empty() && self.raid_dist(here) < u32::MAX;
                 }
             }
             // The body surges (`surge_every`): a walker joined to it (not
@@ -3188,6 +3229,7 @@ impl BigDish {
                 let read = |a: f32| {
                     let (c, s) = (a.cos(), a.sin());
                     match self.cell(x + c * so, y + s * so) {
+                        Some(i) if self.agar[i] && by_field => -(self.raid_dist(i) as f32),
                         Some(i) if self.agar[i] => c * (tx - x) + s * (ty - y),
                         _ => -1.0e6,
                     }
@@ -4944,6 +4986,80 @@ pub(crate) fn start_shape(seed: u64, at: u32) -> Shape {
     let ms: f32 = 1.0 + lobes.iter().map(|&(a, _)| a * a / 2.0).sum::<f32>();
     Shape { lobes, rim: 0.45, norm: 1.0 / ms.sqrt() }
 }
+
+/// A raid's walking distance (`BigDish::raid_paths`) on ground `agar`
+/// (`w` x `h` fine cells) to fine cell `to` (x | y << 16): a free
+/// function so the game can build it off the frame (`Game::time_raids`).
+pub fn raid_field_for(agar: &[bool], w: usize, h: usize, to: u32) -> Vec<u32> {
+    let b = RAID_BLOCK;
+    let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
+    // Row by row over the fine cells (a block's cells are in `b` rows).
+    let mut open = vec![true; bw * bh];
+    for (i, &a) in agar.iter().enumerate() {
+        if !a {
+            open[((i / w) / b) * bw + (i % w) / b] = false;
+        }
+    }
+    let (tx, ty) = (((to & 0xFFFF) as usize).min(w - 1) / b, ((to >> 16) as usize).min(h - 1) / b);
+    // The search runs on a grid one closed block wider on every side,
+    // so no step needs a bounds check.
+    let pw = bw + 2;
+    let mut pad = vec![false; pw * (bh + 2)];
+    for y in 0..bh {
+        pad[(y + 1) * pw + 1..(y + 1) * pw + 1 + bw].copy_from_slice(&open[y * bw..(y + 1) * bw]);
+    }
+    let mut pd = vec![u32::MAX; pad.len()];
+    // A target in a closed block (by rock, a wall or a crystal's rim):
+    // start from the nearest open one.
+    let start = (0..bw * bh).filter(|&q| open[q]).min_by_key(|&q| {
+        let (x, y) = ((q % bw) as i64 - tx as i64, (q / bw) as i64 - ty as i64);
+        x * x + y * y
+    });
+    if let Some(start) = start {
+        let start = (start / bw + 1) * pw + start % bw + 1;
+        let p = pw as isize;
+        // (offset, cost, the two sides a diagonal passes).
+        let steps: [(isize, u32, isize, isize); 8] = [(-1, 2, 0, 0), (1, 2, 0, 0), (-p, 2, 0, 0), (p, 2, 0, 0), (-p - 1, 3, -p, -1), (-p + 1, 3, -p, 1), (p - 1, 3, p, -1), (p + 1, 3, p, 1)];
+        // Edges cost 2 or 3, so four buckets in a ring hold every
+        // distance still to settle.
+        let mut ring: [Vec<u32>; 4] = Default::default();
+        pd[start] = 0;
+        ring[0].push(start as u32);
+        let (mut at, mut left) = (0u32, 1usize);
+        while left > 0 {
+            let slot = (at % 4) as usize;
+            let now = std::mem::take(&mut ring[slot]);
+            left -= now.len();
+            for &q in &now {
+                let q = q as isize;
+                if pd[q as usize] != at {
+                    continue;
+                }
+                for &(o, c, s1, s2) in &steps {
+                    let j = (q + o) as usize;
+                    if !pad[j] || (c == 3 && (!pad[(q + s1) as usize] || !pad[(q + s2) as usize])) {
+                        continue;
+                    }
+                    let nd = at + c;
+                    if nd < pd[j] {
+                        pd[j] = nd;
+                        ring[(nd % 4) as usize].push(j as u32);
+                        left += 1;
+                    }
+                }
+            }
+            ring[slot] = now;
+            ring[slot].clear();
+            at += 1;
+        }
+    }
+    let mut d = vec![u32::MAX; bw * bh];
+    for y in 0..bh {
+        d[y * bw..(y + 1) * bw].copy_from_slice(&pd[(y + 1) * pw + 1..(y + 1) * pw + 1 + bw]);
+    }
+    d
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -102,7 +102,15 @@ pub trait World {
     /// A raid (`BigParams::raid_at`): from step `at` the walkers within
     /// `r` dish cells of `to` (fine cells) whose draw is under `share` run
     /// for it; `at` 0 is none. A world with no raids ignores it.
-    fn set_raid(&mut self, _at: u32, _to: (f32, f32), _r: f32, _share: f32) {}
+    /// `field` is its walking distance (`big::raid_field_for` on
+    /// `raid_ground`), empty to steer straight.
+    fn set_raid(&mut self, _at: u32, _to: (f32, f32), _r: f32, _share: f32, _field: Vec<u32>) {}
+    /// The ground a raid walks (the slime's agar, `w` x `h` fine cells),
+    /// copied so the game can build the raid's way round walls off the
+    /// frame; None for a world with no raids.
+    fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+        None
+    }
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -255,11 +263,16 @@ impl World for BigDish {
         self.p.surge_at = at;
     }
 
-    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32) {
+    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32, field: Vec<u32>) {
         self.p.raid_at = at;
         self.p.raid_to = raid_cell(to, (self.w, self.h));
         self.p.raid_r = r;
         self.p.raid_share = share;
+        self.raid_field = field;
+    }
+
+    fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
+        Some((self.agar.clone(), self.w, self.h))
     }
 
     fn food_deposit(&self) -> f32 {

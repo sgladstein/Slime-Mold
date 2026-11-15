@@ -4126,6 +4126,9 @@ mod tests {
         // panic and the walkers out of the raid's draw still do; all seven
         // raid words differ from their neighbours.
         let raid = Settings { raid_at: 1, raid_r: 30.0, raid_share: 0.5, raid_lean: 3, raid_len: 7, raid_haste: 1.5, ..scared.clone() };
+        // And the same raid steered down its walking distance round the
+        // wall (`BigDish::raid_paths`, the field in `news`; lean 4 marks it).
+        let raid_walls = Settings { raid_lean: 4, raid_r: 1_000.0, ..raid.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4154,6 +4157,7 @@ mod tests {
             ("plain, a cut-off part charges and the body surges", surge_scared, 0, 0.0, 0, 1.0),
             ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
             ("plain, a raid on a crystal while a cut-off part charges", raid, 0, 0.0, 0, 1.0),
+            ("plain, a raid round walls (its walking distance)", raid_walls, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4194,6 +4198,10 @@ mod tests {
                 s.raid_to = slime_mould::mould::larder_world::raid_cell(c, (cpu.w, cpu.h));
                 (cpu.p.raid_at, cpu.p.raid_to, cpu.p.raid_r, cpu.p.raid_share) = (s.raid_at, s.raid_to, s.raid_r, s.raid_share);
                 assert_eq!(cpu.raid_haste(), s.raid_haste, "{name}: the frame's first step runs");
+                if s.raid_lean == 4 {
+                    cpu.raid_paths();
+                    assert!(cpu.raid_field.iter().filter(|&&d| d < u32::MAX).count() > cpu.raid_field.len() / 2, "{name}: the field reaches most of the dish");
+                }
             }
             if s.surge_at == 0 && s.raid_at == 0 && s.surge_every > 0 {
                 // The frame's first step (t0) at the lunge's first: t0 % every

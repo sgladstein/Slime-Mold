@@ -184,9 +184,10 @@ struct Params {
     // Params grew from 976 to 1008): the raid's first step (0 none), its
     // target (a fine cell, x | y << 16), its reach squared in whole fine
     // cells and its draw's stream; its share, the lean's steps (low half)
-    // and the run's (high), the run's haste, a spare word.
+    // and the run's (high), the run's haste, and whether raiders follow the
+// walking distance (`raid_dist`, after the dense cells in `news`).
     raid_at: u32, raid_to: u32, raid_r2: u32, s_raid: u32,
-    raid_share: f32, raid_ld: u32, raid_haste: f32, _r1: u32,
+    raid_share: f32, raid_ld: u32, raid_haste: f32, raid_field: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -754,6 +755,23 @@ fn raid_to(k: u32, here: u32) -> vec3<f32> {
     return vec3<f32>(f32(P.raid_to & 0xFFFFu) + 0.5, f32(P.raid_to >> 16u) + 0.5, haste);
 }
 
+// A raid's walking distance to its target at cell `i` (`BigDish::
+// raid_field`, 11-15), after the dense cells in `news`.
+// Kept on blocks of `RAID_BLOCK` fine cells a side (big.rs's).
+const RAID_BLOCK: u32 = 2u;
+fn raid_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + q]);
+}
+// A raider's sensor down that distance (the CPU's `by_field`): the least
+// distance reads highest; a wall is still a wall.
+fn raid_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return -f32(raid_dist(i));
+}
+
 // A panicking walker's sensor: how far heading `a` points toward the
 // target `g`; a wall is still a wall.
 fn panic_at(x: f32, y: f32, a: f32, so: f32, g: vec3<f32>) -> f32 {
@@ -854,7 +872,11 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let scared = goal.x >= 0.0;
     if (scared) { st *= goal.z; }
     var f: f32; var fl: f32; var fr: f32;
-    if (scared) {
+    if (scared && P.raid_field != 0u && raid_to(k, here).z > 0.0 && raid_dist(here) != 0xFFFFFFFFu) {
+        f = raid_at_sensor(wk.x, wk.y, h, so);
+        fl = raid_at_sensor(wk.x, wk.y, h - sa, so);
+        fr = raid_at_sensor(wk.x, wk.y, h + sa, so);
+    } else if (scared) {
         f = panic_at(wk.x, wk.y, h, so, goal);
         fl = panic_at(wk.x, wk.y, h - sa, so, goal);
         fr = panic_at(wk.x, wk.y, h + sa, so, goal);
@@ -3332,7 +3354,7 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
 const PLANT_HEAD: u32 = 64u;
 // (Word 49 on: up to three lights for `ignite`, four words each; words
 // 32-44 held them, three words each, until 11-14.)
-fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + P.w * P.h; }
+fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h; }
 fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
 fn pblk(b: u32, i: u32) -> u32 { return plant_base() + PLANT_HEAD + b * P.w * P.h + i; }

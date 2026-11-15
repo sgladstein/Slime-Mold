@@ -112,7 +112,7 @@ pub const RAID_AT: usize = 976;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
-fn raid_row(s: &Settings, scale: f32) -> [u32; 8] {
+fn raid_row(s: &Settings, scale: f32, field: bool) -> [u32; 8] {
     let sm = crate::mould::big::SURGE_MAX;
     let r = (s.raid_r.max(0.0) * scale).min(60_000.0);
     let on = s.raid_at > 0 && s.raid_r > 0.0 && s.raid_share > 0.0;
@@ -124,7 +124,7 @@ fn raid_row(s: &Settings, scale: f32) -> [u32; 8] {
         s.raid_share.to_bits(),
         s.raid_lean.min(sm) | s.raid_len.min(sm) << 16,
         s.raid_haste.max(crate::mould::big::PANIC_CREEP_MIN).to_bits(),
-        0,
+        field as u32,
     ]
 }
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
@@ -1890,6 +1890,9 @@ impl Engine {
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
         self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&dense_words(d, self.cells as usize)));
+        // The raid's way round walls goes with it (`raid_row` reads
+        // whether the mirror holds one).
+        self.dish.raid_field = d.raid_field.clone();
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
             self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
@@ -2101,7 +2104,7 @@ impl Engine {
         assert_eq!(b.len(), SPRAY_AT, "Params rows before the spray row moved");
         b.extend(u32_bytes(&self.spray_row()));
         assert_eq!(b.len(), RAID_AT, "Params rows before the raid row moved");
-        b.extend(u32_bytes(&raid_row(s, self.dish.p.scale as f32)));
+        b.extend(u32_bytes(&raid_row(s, self.dish.p.scale as f32, !self.dish.raid_field.is_empty())));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -3008,11 +3011,26 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut w = vec![0u32; DENSE_HEAD];
     w.extend((0..d.walkers.len()).map(|k| d.dense.get(k).copied().unwrap_or(0)));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
+    // A raid's walking distance after the dense cells (`BigDish::
+    // raid_field`, 11-15; engine.wgsl's `raid_dist`), zeros with none.
+    // Blocks (`RAID_BLOCK`), fewer than the cells the region holds.
+    w.extend(d.raid_field.iter().take(cells));
+    w.resize(DENSE_HEAD + d.walkers.len() + 2 * cells, 0);
     w
 }
 
 /// Each slot's condensing word as the GPU holds it (`BigDish::dense`).
 impl Engine {
+    /// Writes the mirror dish's raid walking distance (`BigDish::
+    /// raid_field`) to `news` after the dense cells; zeros with none.
+    pub fn write_raid_field(&self) {
+        let cells = self.cells as usize;
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + cells) as u64;
+        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
+        w.resize(cells, 0);
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
+    }
+
     pub fn dense_of(&self) -> Vec<u32> {
         let b = read_back(&self.device, &self.queue, &self.news);
         let at = self.dense_at as usize + 4 * DENSE_HEAD;

@@ -97,19 +97,66 @@ pub struct Raid {
 }
 
 /// The game's raid state.
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct Raids {
     /// Food eaten since the last raid.
     pub meter: f32,
     /// Every raid sent, oldest first.
     pub sent: Vec<Raid>,
     pub(super) last_stand_done: bool,
+    /// A raid decided and waiting a game second for its way round walls,
+    /// which a worker thread builds (`big::raid_field_for`: 7-8 ms on
+    /// planet 8, too long for one step by the levelgen thread's hitch rule).
+    pending: Option<(Raid, Way)>,
+}
+
+/// A raid's way round walls being built.
+#[derive(Debug)]
+enum Way {
+    Ready(Vec<u32>),
+    #[cfg(not(target_arch = "wasm32"))]
+    Building(std::thread::JoinHandle<Vec<u32>>),
+}
+
+impl Way {
+    /// Built off the frame where threads exist (the native game), at once
+    /// on the web build.
+    fn start(ground: Option<(Vec<bool>, usize, usize)>, to: u32) -> Way {
+        let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Way::Building(std::thread::spawn(move || crate::mould::big::raid_field_for(&agar, w, h, to)))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Way::Ready(crate::mould::big::raid_field_for(&agar, w, h, to))
+        }
+    }
+
+    fn finish(self) -> Vec<u32> {
+        match self {
+            Way::Ready(f) => f,
+            #[cfg(not(target_arch = "wasm32"))]
+            Way::Building(j) => j.join().unwrap_or_default(),
+        }
+    }
 }
 
 impl<W: World> Game<W> {
     /// Once a game second: start a raid when the meter is full (or the
     /// longest wait has passed), or the last stand.
     pub(super) fn time_raids(&mut self) {
+        // A raid decided a game second ago goes now, with its way round
+        // walls: always a second later, so the game is the same however
+        // fast the thread was.
+        if let Some((mut d, way)) = self.raids.pending.take() {
+            let field = way.finish();
+            let fine = self.world.fine_steps().max(1) as u64;
+            d.tick = self.world.ticks();
+            self.world.set_raid((d.tick * fine + 1).min(u32::MAX as u64 - 1) as u32, d.to, d.reach, d.share, field);
+            self.raids.sent.push(d);
+            return;
+        }
         let r = self.rules.raid;
         let now = self.world.ticks();
         let secs = |s: f32| (s.max(0.0) * self.rules.tps as f32).round() as u64;
@@ -187,16 +234,14 @@ impl<W: World> Game<W> {
             .map(|b| b.0)
     }
 
-    /// Sends a raid at `to` (fine cells): `size` of the slime's mass (an
+    /// Decides a raid at `to` (fine cells): `size` of the slime's mass (an
     /// infinite size sends the whole slime), `share` of the walkers in the
-    /// reach.
+    /// reach. It goes at the next game second (`time_raids`).
     fn send_raid(&mut self, aim: RaidAim, to: (f32, f32), size: f32, share: f32, last_stand: bool) {
         let (reach, held) = if size.is_finite() { self.raid_reach(to, size * self.world.mass() as f32 / share.max(1e-3)) } else { (1.0e4, self.world.mass() as u32) };
-        let fine = self.world.fine_steps().max(1) as u64;
-        let step = self.world.ticks() * fine;
-        self.world.set_raid((step + 1).min(u32::MAX as u64 - 1) as u32, to, reach, share);
+        let way = Way::start(self.world.raid_ground(), super::raid_cell(to, self.world.size()));
         self.raids.meter = 0.0;
-        self.raids.sent.push(Raid { tick: self.world.ticks(), aim, to, reach, held, share, last_stand });
+        self.raids.pending = Some((Raid { tick: self.world.ticks(), aim, to, reach, held, share, last_stand }, way));
     }
 
     /// The smallest reach round `to` (dish cells) whose squares of the
