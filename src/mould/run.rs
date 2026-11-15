@@ -154,11 +154,26 @@ pub fn head_start(area: f32) -> f32 {
     (60.0 * (area.sqrt() - 1.0)).max(0.0).round()
 }
 
-/// The goal: the slime down to this share of its peak. Gentler early
-/// (a quarter), down to a tenth from planet 6.
-pub fn shrink_goal(depth: u32) -> f32 {
-    (0.25 - 0.03 * (depth.saturating_sub(1)) as f32).max(0.10)
+/// The goal: the slime down to this share of its peak, on every planet.
+///
+/// Why 2% (owner, 11-15 03:02Z: "right now how it's set up I feel like I
+/// keep winning before I've actually killed everything"): it was a
+/// quarter on planet 1 down to a tenth from planet 6, so a planet was won
+/// with a tenth to a quarter of the slime still on the map. 2% is under
+/// the broken line (`Rules::broken`, 3% of the game's peak, which counts
+/// from the landing and so sits higher than this goal's peak, counted from
+/// 60 s): before the goal is met the slime is broken and its stragglers
+/// off food starve in a second or two (the owner's earlier "having to kill
+/// the few random stragglers spread across the map to win is annoying",
+/// 11-12 22:06Z), so what is left to shoot is the slime still on its
+/// crystals. Difficulty by depth comes from the tier and the walkers now,
+/// not from a gentler goal.
+pub fn shrink_goal(_depth: u32) -> f32 {
+    WIN_SHARE
 }
+
+/// `shrink_goal` on every planet.
+pub const WIN_SHARE: f32 = 0.02;
 
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {
@@ -473,7 +488,7 @@ impl Run {
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: format!("Beat the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
+            says: format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
