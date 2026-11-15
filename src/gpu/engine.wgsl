@@ -168,6 +168,14 @@ struct Params {
     // creep's and the lunge's steps, and the lunge's haste. The reach is
     // panic's (`panic_r2`), the creep's pace `panic_creep`.
     surge_every: u32, surge_lean: u32, surge_dash: u32, surge_haste: f32,
+    // The spray row (gun look, 2026-11-15; Params grew from 960 to 976, after the surge row):
+    // a shot's spray (`squad::Frame::spray`): its longest flight in fine
+    // steps (0 off), its first speed in dish cells a fine step and the
+    // flight's reciprocal (`big::spray_inv`); then the fine steps a tick
+    // (`BigParams::substeps`, the low byte), for a flung walker's flight a
+    // tick, and above it the share of the kills that spray
+    // (`big::spray_share_q`, of 65,536; `spray_picked`).
+    spray_steps: u32, spray_st: f32, spray_inv: f32, tick_steps: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -422,6 +430,11 @@ const DOZE: u32 = 0x1000u;
 // CPU's `BigDish::flung`), not fruited: it flies straight at `fling_st`
 // and lands with no rest. `alight` clears it.
 const FLUNG: u32 = 0x2000u;
+// `DOOM` (bit 14, gun look 2026-11-15): a flung spore that is a shot's
+// spray droplet (the CPU's `BigDish::doomed`): a struck walker thrown out of
+// the hit (`strike`). It slows to a stop, lays nothing, and dies where it
+// lands (`fly`).
+const DOOM: u32 = 0x4000u;
 fn state(k: u32) -> u32 { if (!cycles()) { return L_WALKER; } return (spec[k] >> 9u) & 3u; }
 // An ordinary walker (the CPU's `active`): living, and not a spore,
 // dormant or dead.
@@ -2131,6 +2144,19 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     SQ.sout[q].hit = hit;
 }
 
+// A spray droplet's own flight and pace (the CPU's `big::spray_timer`,
+// `big::spray_pace`), keyed on its slot alone: the longer half of `steps`,
+// and 0.35 to 1 of the spray's first speed.
+fn spray_hash(k: u32) -> u32 { return lowbias32(k ^ 0x5BD1E995u); }
+fn spray_timer(k: u32, steps: u32) -> u32 {
+    let s = max(steps, 1u);
+    return s - spray_hash(k) % ((s + 1u) / 2u);
+}
+fn spray_pace(k: u32) -> f32 { return 0.35 + 0.65 * unit(spray_hash(k)); }
+// Whether slot `k`'s kill sprays at the row's share (the CPU's
+// `big::spray_picked`): its own hash, apart from the flight's and pace's.
+fn spray_picked(k: u32) -> bool { return (lowbias32(k ^ 0x68E31DA4u) >> 16u) < (P.tick_steps >> 8u); }
+
 // Whether cell c is inside shot q's strike.
 fn struck(c: u32, q: u32) -> bool {
     let hit = SQ.sout[q].hit;
@@ -2166,9 +2192,30 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
             }
             atomicSub(&occ[c], 1u);
             atomicStore(&claim[c], NONE);
+            atomicAdd(&kills[q], 1u);
+            // **The spray** (`squad::Frame::spray`, gun look 2026-11-15):
+            // it flies out of the hit as a droplet, straight out from the
+            // hit cell's middle, mirrored back across the shot's line when
+            // that points the way the shot went (from its first cell), for
+            // its own share of `spray_steps` (`spray_timer`), and dies where
+            // it lands. Kills are counted here, as without it.
+            if (P.spray_steps > 0u && spray_picked(k)) {
+                let hit = SQ.sout[q].hit;
+                let s = SQ.shots[q];
+                let hx = i32(hit % P.w); let hy = i32(hit / P.w);
+                let tm = spray_timer(k, P.spray_steps);
+                let f0 = SQ.path[s.start];
+                let fw = vec2<f32>(f32(hx - i32(f0 % P.w)), f32(hy - i32(f0 / P.w)));
+                var v = vec2<f32>(wk.x - (f32(hx) + 0.5), wk.y - (f32(hy) + 0.5));
+                let dt = v.x * fw.x + v.y * fw.y;
+                let ff = fw.x * fw.x + fw.y * fw.y;
+                if (dt > 0.0 && ff > 0.0) { v -= (2.0 * dt / ff) * fw; }
+                spec[k] = (spec[k] & 0x1FFu) | (L_SPORE << 9u) | FLUNG | DOOM | (tm << 16u);
+                walkers[k] = vec4<f32>(wk.x, wk.y, atan2(v.y, v.x), 1.0);
+                return;
+            }
             energy[k] = -1.0;
             if (cycles()) { spec[k] = (spec[k] & 0xFFFF01FFu) | (L_DEAD << 9u); }
-            atomicAdd(&kills[q], 1u);
             return;
         }
     }
@@ -2665,8 +2712,8 @@ fn fate(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let here = cell(wk.x, wk.y);
     let c = P.w * P.h;
-    // A flung spore stays flung until it lands.
-    var mark = w & FLUNG;
+    // A flung spore stays flung (and a spray droplet doomed) until it lands.
+    var mark = w & (FLUNG | DOOM);
     if ((w & FRUIT) != 0u) {
         // It leaves its cell and takes a new heading; it flies from the
         // next tick.
@@ -2756,21 +2803,40 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
     // It flies `spore_speed` x `step` ignoring the crowd, or, off the agar,
-    // stays with a new heading.
-    let sst = select(P.spore_st, P.fling_st, flung);
+    // stays with a new heading. A spray droplet (`DOOM`) slows as it flies:
+    // its pace x the first speed x (0.4 + 0.6 x its steps left x the
+    // flight's reciprocal) (the CPU's f32 products).
+    let doom = (w & DOOM) != 0u;
+    var sst = select(P.spore_st, P.fling_st, flung);
+    if (doom) { sst = P.spray_st * spray_pace(k) * (0.4 + 0.6 * f32(tt) * P.spray_inv); }
     let nx = wk.x + cos(h) * sst;
     let ny = wk.y + sin(h) * sst;
     let j = cell(nx, ny);
-    // A flung walker's fourth word is 1 while it flies, so the view draws
-    // it as a hot speck (`draw_specks`); `alight` puts it back to 0.
-    let fw = select(0.0, 1.0, flung);
+    // A flung walker's fourth word is its flight a tick at this speed (dish
+    // cells, over 0) while it flies, so the view draws it as a hot droplet
+    // drawn out along that flight (`draw_specks`); `alight` puts it back to
+    // 0. (It was 1 until the gun look, 11-15, the view's speck a square.)
+    let fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
     walkers[k] = at;
     let i = cell(at.x, at.y);
     let c = P.w * P.h;
-    atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + i + 2u * nblk() * c], select(1u, 65536u, flung));
     let t2 = max(tt, 1u) - 1u;
+    // A spray droplet lays nothing and dies where it lands: its slot is
+    // freed as a strike frees it (it left its cell when it was thrown).
+    if (doom) {
+        if (t2 == 0u) {
+            energy[k] = -1.0;
+            spec[k] = (w & 0x1FFu) | (L_DEAD << 9u);
+            walkers[k].w = 0.0;
+        } else {
+            spec[k] = (w & 0xFFFFu) | (t2 << 16u);
+        }
+        tally(k);
+        return;
+    }
+    atomicAdd(&bdep[blk(species_of(k), kind_of(k)) * c + i + 2u * nblk() * c], select(1u, 65536u, flung));
     spec[k] = (w & 0xFFFFu) | (t2 << 16u);
     // It lands with its timer out, or homing over `spore_land` of scent:
     // on agar under its species' crowd limit, the lowest keyed claim

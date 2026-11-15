@@ -348,6 +348,25 @@ pub struct Rules {
     /// (its first name): the mould's bite is its damage to soldiers
     /// (`drain`).
     pub sink: f32,
+    /// **The spray** (gun look, 2026-11-15, the owner 08:30Z: "The gun
+    /// graphics need work. They should really be one of the draws of the
+    /// game. They need to be really satisfying."): every walker a shot
+    /// kills flies out of the hit as a droplet, back toward the shooter,
+    /// for up to `spray_secs`, the furthest `spray_reach` cells, slowing to
+    /// a stop, and dies where it lands (`squad::Frame::spray`). Noita's
+    /// splash, the world's own matter in flight: each hit visibly blows
+    /// slime out of the body, with nothing drawn on the slime (the owner's
+    /// 11-12 ruling against stamps), and the kills are as without it. 0
+    /// seconds: none (`spray=0` in the window). (A first version threw the
+    /// living mould past the strike and let it live: 22% fewer kills by 30
+    /// s, 1 to 29 walkers in the air, too few to see; `Reports/dead-ends.md`.)
+    pub spray_secs: f32,
+    pub spray_reach: f32,
+    /// The share of a shot's kills that spray (`squad::Frame::spray_share`;
+    /// `spray_share=` in the window): 1 throws every kill. Asked of the
+    /// owner as a blind A/B (the whole-game review, 11-15, wanted a few
+    /// walkers a hit), so a choice, not a measured default.
+    pub spray_share: f32,
     /// The controlled squad's edge (`squads`, owner 2026-11-14 04:08Z:
     /// "whoever you are actively controlling is stronger"; 04:18Z: faster
     /// fire and harder hits, seen in the bullets and the holes).
@@ -539,6 +558,9 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
+            spray_secs: 0.3,
+            spray_reach: 5.0,
+            spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
             funnel: true,
