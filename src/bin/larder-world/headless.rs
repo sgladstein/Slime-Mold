@@ -89,6 +89,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     if shop_run.is_some() {
         app.run = shop_run;
     }
+    // `hover=X,Y` over a menu page: its pointer there (the shop's detail
+    // box describes the card under it).
+    if let (Some(m), Some(p), true) = (app.menu.as_mut(), hover, drags.is_empty()) {
+        m.moved(Some(p));
+    }
     // `drag=`: where each drag starts and ends on the screen, found once
     // the shop is laid out (the slots stay put as cards move).
     let mut drag_path: Vec<((f32, f32), (f32, f32))> = Vec::new();

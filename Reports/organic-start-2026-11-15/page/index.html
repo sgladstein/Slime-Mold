@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organic Mould Start</title>
+<style>
+:root{--bg:#f6f4ef;--fg:#1d1c1a;--mute:#6b665d;--card:#fff;--line:#e2ddd3;--acc:#a26b00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151412;--fg:#ece8df;--mute:#a39d90;--card:#1f1d1a;--line:#34302a;--acc:#e0a63a}}
+:root[data-theme="dark"]{--bg:#151412;--fg:#ece8df;--mute:#a39d90;--card:#1f1d1a;--line:#34302a;--acc:#e0a63a}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:1.6rem;margin:0 0 6px}h2{font-size:1.1rem;margin:28px 0 8px}
+p,li{color:var(--fg)}.mute{color:var(--mute)}
+figure{margin:16px 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+figure img{width:100%;height:auto;display:block;image-rendering:pixelated;border-radius:6px}
+figcaption{font-size:.92rem;color:var(--mute);margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.95rem}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+th{color:var(--mute);font-weight:600}.n{font-variant-numeric:tabular-nums}
+</style></head><body><main>
+<h1>The mould's start: organic, not a disc</h1>
+<p class="mute">Planet review item 10: "every start is a perfect gold disc." Each film shows the start <b>before</b> (left) and <b>now</b> (right), from 0.2 s to 12 s, idle hand, seed 3.</p>
+<p>Every Larder-world start now gets its own outline from the seed and its place on the map. It has lobes, a ragged rim and a denser middle, and covers the same area as the old disc. No mould is placed within 12 cells of the squad's landing. The walkers are the same simulation as before. Only where they start changed.</p>
+<figure><img src="start-planet_2_1_1.gif" alt="Planet 2:1:1 start, before and now"><figcaption>Planet 2:1:1. Mould at 60 s: 31,767 before, 32,200 now; squad alive in both.</figcaption></figure>
+<figure><img src="start-planet_2_2_1.gif" alt="Planet 2:2:1 start, before and now"><figcaption>Planet 2:2:1.</figcaption></figure>
+<figure><img src="start-fork.gif" alt="The Fork start, before and now"><figcaption>The Fork. Mould at 60 s: 29,566 before, 30,137 now; squad overrun by 60 s in both, as on main.</figcaption></figure>
+<h2>How round is it?</h2>
+<p>Test <code>a_start_is_an_organic_shape_not_a_disc</code> places 500 walkers on open ground and takes how far they reach in 24 directions. The figure below is how much that reach varies around the start. A circle is 0.</p>
+<table><tr><th>Seed</th><th class="n">Disc (before)</th><th class="n">Organic (now)</th></tr>
+<tr><td>1</td><td class="n">0.023</td><td class="n">0.216</td></tr>
+<tr><td>2</td><td class="n">0.027</td><td class="n">0.287</td></tr>
+<tr><td>3</td><td class="n">0.024</td><td class="n">0.207</td></tr></table>
+<p class="mute">A first try at a quarter of this strength still read as a disc at the whole map's zoom. Four timing-sensitive tests that assumed the disc keep it or were retuned (see the report in <code>Reports/organic-start-2026-11-15/</code>).</p>
+</main></body></html>

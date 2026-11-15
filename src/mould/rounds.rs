@@ -187,29 +187,33 @@ impl Card {
         }
     }
 
-    /// What the card does, in a line (the HUD's loadout panel).
+    /// What the card does, in a few words (the shop and the HUD say its
+    /// kind beside it, and the window's `card_face` puts in the numbers).
+    /// The owner, 11-15 02:57Z: "The text for all the gun cards is too
+    /// much. They should be simplified and clarified"; until then each
+    /// line led with its kind's jargon (payload, modifier, trigger, flight).
     pub fn about(self) -> &'static str {
         match self {
-            Card::Plain => "Bullet: a plain shot, its strike only",
-            Card::Ammo(_) => "Bullet: rolled, with its own damage, speed, range and spread",
-            Card::Blast => "Payload: kills the mould in a disc, leaves a crater and lays alarm",
-            Card::Gas => "Payload: puts the mould in a disc to sleep; sleepers in gas may die",
-            Card::Germ => "Payload: infects the mould in a disc; the sickness spreads through it",
-            Card::Bomb => "Payload: kills a small core and throws the live mould round it outward",
-            Card::Wide => "Modifier: the next payload reaches 1.6 times as far",
-            Card::Scatter => "Modifier: the next payload lands as three smaller ones round the hit",
-            Card::Quiet => "Modifier: the next payload lays no alarm",
-            Card::Delay => "Trigger: the next payload lodges and goes off 3 s later",
-            Card::Thick => "Trigger: the next payload lodges until the mould is thick round it",
-            Card::Pierce => "Flight: every bullet flies on through one slime hit",
-            Card::Split => "Flight: every bullet splits where it lands",
-            Card::Scorch => "Trail: every bullet burns the mould along its flight and leaves a line of crater it shuns",
-            Card::Bait => "Trail: every bullet leaves a line of food scent that every mould follows",
-            Card::Mist => "Trail: every bullet leaves a thin gas cloud that puts the mould to sleep",
-            Card::Range => "Flight: every soldier sees and shoots twice as far a card",
-            Card::Rate => "Flight: every soldier fires twice as often a card",
-            Card::Thrift => "Modifier: the next card costs 2 less of the gun's budget",
-            Card::Smother => "Trail: every bullet wipes the food scent along its flight, so the mould loses the way",
+            Card::Plain => "Just its hit.",
+            Card::Ammo(_) => "Its own damage, speed, range and spread.",
+            Card::Blast => "Kills slime where it hits and leaves a crater.",
+            Card::Gas => "Puts slime where it hits to sleep.",
+            Card::Germ => "Infects slime where it hits; the sickness spreads.",
+            Card::Bomb => "Kills slime where it hits and throws the rest outward.",
+            Card::Wide => "Its hit is wider.",
+            Card::Scatter => "Its hit becomes three smaller ones.",
+            Card::Quiet => "It doesn't alarm the slime.",
+            Card::Delay => "It goes off a few seconds after landing.",
+            Card::Thick => "It waits until slime crowds round it.",
+            Card::Pierce => "Bullets go through one slime hit.",
+            Card::Split => "Bullets split where they land.",
+            Card::Scorch => "Bullets burn a line the slime avoids.",
+            Card::Bait => "Bullets leave a scent line the slime follows.",
+            Card::Mist => "Bullets leave a thin sleeping gas.",
+            Card::Range => "Shoots twice as far.",
+            Card::Rate => "Fires twice as often.",
+            Card::Thrift => "The next card costs less budget.",
+            Card::Smother => "Bullets wipe the scent slime follows to food.",
         }
     }
 
@@ -1209,7 +1213,10 @@ mod tests {
         attack(&mut p);
         p.bank = 0.0;
         let mut free = Rounds::new(vec![Card::Blast], RoundRules::default());
-        for _ in 0..15 * 10 {
+        // 20 s, was 10: with organic starts (2026-11-15, `start_shape`) seed
+        // 2's squad had cast no blast by 10 s, the mould's edge lying
+        // elsewhere; the claim is about the bank, not the walk.
+        for _ in 0..15 * 20 {
             p.step();
             free.after_step(&mut p);
         }
