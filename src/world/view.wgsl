@@ -929,14 +929,13 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // the bronze orange, the panic's colour.
     let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
     let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
-    var gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
-    // The gel lifted to at least 90 in grey with its own light (rule 2:
-    // the thin film from 80, above rock 50-60 and soft rock 60-72; to 100
-    // so it stays above 80 on its shaded flank; the
-    // planet review 11-15 measured its 10th percentile at 49-86, under
-    // rock on every planet). Over pale ground it is already above that.
-    let gel_l = dot(gel, vec3<f32>(0.299, 0.587, 0.114));
-    gel += vivid * max(100.0 - gel_l, 0.0) / max(lum, 1.0);
+    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
+    // Tried and reverted 11-15: lifting the gel to 100 grey with its own
+    // light (rule 2, film from 80). It barely moved the review's film p10,
+    // whose low end is the veins' shaded far flank (the shade floor in
+    // `shaded` fixed that), and it widened the slime's edge from 0.96 to
+    // 1.74 cells (the_slime_edge_is_as_sharp_as_its_walkers), because the
+    // faint tail past the walkers lit up.
     // The gel comes in faster (was 1 - exp(-14 th)): a frontier film a
     // few hundredths thick was a third gel, 57 in grey over ground at 40,
     // under rock (the review 11-15: film 10th percentile 49-86).

@@ -25,46 +25,46 @@ The measure is the reviewer's own, `measure.py` on branch `claude/project-thread
 
 | Planet, seed | film p10 | slime p50 | thick p90 | rock | soft rock | crystal | brightest ground p90 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 meadow, 1 | 71 / 70 | 97 / 93 | 149 / 149 | 98 / 56 | 123 / 66 | 109 / 131 | 81 / 74 |
-| 1 meadow, 2 | 68 / 71 | 97 / 104 | 134 / 142 | - / - | 123 / 39 | 126 / 101 | 51 / 56 |
-| 2 barrens, 1 | 86 / 93 | 127 / 141 | 182 / 194 | 98 / 56 | 123 / 59 | 121 / 114 | 59 / 60 |
-| 2 barrens, 2 | 85 / 85 | 127 / 126 | 181 / 179 | 98 / 56 | - / - | 113 / 114 | 60 / 60 |
-| 3 fen, 1 | 66 / 72 | 114 / 116 | 160 / 163 | 98 / 51 | 122 / 58 | 123 / 120 | 51 / 56 |
-| 3 fen, 2 | 66 / 83 | 108 / 116 | 172 / 172 | 98 / 56 | 123 / 67 | 111 / 119 | 59 / 56 |
-| 4 valley, 1 | 65 / 71 | 107 / 109 | 180 / 183 | 98 / 56 | 123 / 65 | 122 / 113 | 57 / 99 |
-| 4 valley, 2 | 74 / 78 | 151 / 153 | 190 / 193 | 98 / 56 | - / - | 102 / 128 | 57 / 59 |
-| 5 jungle, 1 | 49 / 56 | 114 / 113 | 190 / 191 | 98 / 41 | 123 / 51 | 116 / 112 | 87 / 64 |
-| 5 jungle, 2 | 51 / 55 | 114 / 113 | 190 / 191 | 98 / 49 | 123 / 44 | 106 / 116 | 123 / 68 |
-| 6 highlands, 1 | 63 / 67 | 111 / 114 | 193 / 192 | 98 / 56 | 107 / 59 | 106 / 120 | 51 / 51 |
-| 6 highlands, 2 | 64 / 68 | 112 / 114 | 194 / 193 | 98 / 56 | 123 / 66 | 96 / 118 | 49 / 49 |
-| 7 caves, 1 | 56 / 68 | 120 / 118 | 196 / 194 | 98 / 56 | 98 / 56 | 93 / 109 | 61 / 56 |
-| 7 caves, 2 | 51 / 64 | 100 / 104 | 193 / 191 | 98 / 56 | 98 / 56 | 94 / 105 | 56 / 56 |
+| 1 meadow, 1 | 71 / 69 | 97 / 92 | 149 / 149 | 98 / 56 | 123 / 66 | 109 / 131 | 81 / 74 |
+| 1 meadow, 2 | 68 / 74 | 97 / 101 | 134 / 137 | - / - | 123 / 39 | 126 / 101 | 51 / 56 |
+| 2 barrens, 1 | 86 / 92 | 127 / 137 | 182 / 194 | 98 / 56 | 123 / 59 | 121 / 114 | 59 / 60 |
+| 2 barrens, 2 | 85 / 84 | 127 / 124 | 181 / 175 | 98 / 56 | - / - | 113 / 114 | 60 / 60 |
+| 3 fen, 1 | 66 / 72 | 114 / 114 | 160 / 161 | 98 / 51 | 122 / 58 | 123 / 120 | 51 / 56 |
+| 3 fen, 2 | 66 / 81 | 108 / 113 | 172 / 169 | 98 / 56 | 123 / 67 | 111 / 119 | 59 / 56 |
+| 4 valley, 1 | 65 / 69 | 107 / 110 | 180 / 183 | 98 / 56 | 123 / 65 | 122 / 113 | 57 / 99 |
+| 4 valley, 2 | 74 / 76 | 151 / 153 | 190 / 193 | 98 / 56 | - / - | 102 / 128 | 57 / 59 |
+| 5 jungle, 1 | 49 / 57 | 114 / 115 | 190 / 191 | 98 / 41 | 123 / 51 | 116 / 112 | 87 / 64 |
+| 5 jungle, 2 | 51 / 55 | 114 / 114 | 190 / 191 | 98 / 49 | 123 / 44 | 106 / 116 | 123 / 68 |
+| 6 highlands, 1 | 63 / 66 | 111 / 114 | 193 / 192 | 98 / 56 | 107 / 59 | 106 / 120 | 51 / 51 |
+| 6 highlands, 2 | 64 / 67 | 112 / 114 | 194 / 194 | 98 / 56 | 123 / 66 | 96 / 118 | 49 / 49 |
+| 7 caves, 1 | 56 / 66 | 120 / 117 | 196 / 195 | 98 / 56 | 98 / 56 | 93 / 109 | 61 / 56 |
+| 7 caves, 2 | 51 / 63 | 100 / 102 | 193 / 192 | 98 / 56 | 98 / 56 | 94 / 105 | 56 / 56 |
 
 **How it moved:**
 
 - **Rock** went from 98 to 41-56.
 - **Soft rock** went from 98-123 to 39-67. The 39-51 values are damaged soft rock, which darkens as it should.
 - **Crystals** are at 110 or above on 11 of 14 planet-seeds, up from 6 of 14. They are still under on meadow 2 (101), caves 1 (109) and caves 2 (105).
-- **The film p10** now beats rock and soft rock on every planet-seed. Highlands 2 is narrow, 68 against 66.
+- **The film p10** now beats rock and soft rock on every planet-seed. Highlands 2 is narrow, 67 against 66.
 
-**Why the film p10 is low.** The review's film p10 counts the veins' cast shadow on the ground beside them. Over pixels that are actually slime-coloured (R-B > 45 at 60 s), the film p10/p25 went as below; 10 of 14 are now at 80 or above:
+**Why the film p10 is low.** The review's film p10 counts the veins' cast shadow on the ground beside them. Over pixels that are actually slime-coloured (R-B > 45 at 60 s), the film p10/p25 went as below; 9 of 14 are now at 80 or above (4 of 14 before):
 
 | Planet, seed | Slime-coloured film p10/p25, before -> after |
 | --- | --- |
-| 1-1 | 82/92 -> 83/94 |
-| 1-2 | 82/91 -> 81/95 |
-| 2-1 | 97/115 -> 100/120 |
-| 2-2 | 90/107 -> 95/110 |
-| 3-1 | 79/101 -> 87/105 |
-| 3-2 | 83/100 -> 87/104 |
-| 4-1 | 76/95 -> 80/93 |
-| 4-2 | 108/134 -> 107/134 |
-| 5-1 | 71/100 -> 78/100 |
-| 5-2 | 68/91 -> 72/94 |
-| 6-1 | 70/86 -> 74/93 |
-| 6-2 | 76/107 -> 81/108 |
-| 7-1 | 74/102 -> 84/103 |
-| 7-2 | 68/88 -> 77/92 |
+| 1-1 | 82/92 -> 81/91 |
+| 1-2 | 82/91 -> 82/92 |
+| 2-1 | 97/115 -> 99/116 |
+| 2-2 | 90/107 -> 93/109 |
+| 3-1 | 79/101 -> 86/102 |
+| 3-2 | 83/100 -> 85/100 |
+| 4-1 | 76/95 -> 78/95 |
+| 4-2 | 108/134 -> 107/133 |
+| 5-1 | 71/100 -> 79/101 |
+| 5-2 | 68/91 -> 73/95 |
+| 6-1 | 70/86 -> 74/92 |
+| 6-2 | 76/107 -> 80/108 |
+| 7-1 | 74/102 -> 81/102 |
+| 7-2 | 68/88 -> 75/90 |
 
 **Water and ground** (cell-class medians, after): shallow water is 38 and deep water 15-16, a 22 gap; shallow was 22 before. Bare ground is 41-51, and plant ground about 50. Valley 1's "brightest ground p90" of 99 is its small clay class (2.8k px, p50 49), whose top tenth picks up bright pixels at its edges; every other ground class there stays at 56 or below.
 
@@ -75,8 +75,7 @@ The measure is the reviewer's own, `measure.py` on branch `claude/project-thread
 - **Crystal faces:** the charged colour is brighter, `(38,142,165)`, and the face light is compressed while charged, so shaded faces stay above 110.
 - **Thin film:**
   - The film reaches full cover faster (`exp(-40 th)`, was `-14`).
-  - The gel is lifted to about 100 luma.
-  - The film gets a shade floor. The low end was the far flank of the frontier veins, shaded down to about 0.4; lifting the gel alone did not move p10.
+  - The film gets a shade floor. The low end was the far flank of the frontier veins, shaded down to about 0.4; lifting the gel to 100 grey barely moved p10 and widened the slime's edge from 0.96 to 1.74 cells (the edge-sharpness test failed), so it was reverted.
 - **Shallow water** is `WET_RGB` `(14,33,41)`, was `(5,14,22)`; deep water is unchanged.
 - **#1, far view.** Below zoom 1, the boxed view and the minimap now draw from a per-cell `far_cell`, which uses the shaded view's materials: soil, water depth, plants, hard terrain and crystals. They used the old flat palette before. See `far-view.png` (planet 8 at zoom 0.86).
 - **#7, backdrop.** Off the map is `OFF_MAP_RGB` `(12,13,16)`, darker than cave rock (about 55), with a 1.5-cell fade.
