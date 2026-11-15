@@ -64,8 +64,12 @@ came after the count).
 - **Expanding sub-menus (an accordion):** none of the three found a
   professional shop that uses one. Tabs, or folders that open in place,
   give the grouping without moving things under the cursor.
-- **The size cap only checks width** (strategy): a 21:9 monitor at 200%
-  gives 1280 x 540 units, and 1000 x 422 at the cap.
+- **Wide screens** (strategy): a 21:9 monitor at 200% gives 1280 x 540
+  units. The report's further claim, that the cap checks only width and
+  gives 1000 x 422 at its limit, is wrong: `UiSize::px` caps the size at
+  the smaller of height / 540 and width / 1000, so the screen is never
+  under 540 units tall (checked 11-15). The brief had left the height out.
+  The worst cases are 1000 x 562 (16:9) and 1280 x 540 (21:9).
 - **Options is mostly game rules** (two of three): the mould's rules may
   belong on a setup page at the start of Sandbox or Random planet. That is
   a question for the owner.

@@ -62,7 +62,7 @@ code { font-size:.88em }
       <li><b>Options gets tabs, one-line rows and a note pane.</b> Keys becomes one of its tabs; F1 still opens it in play.</li>
       <li><b>Every list gets a maximum</b>: the bag, the cards on offer, a gun's slots. Nothing fits one screen if a row can grow without end.</li>
       <li><b>A test that draws every page at the worst sizes</b> and fails if anything is cut off or would need to scroll, so a new setting can't quietly bring the scrolling back.</li>
-      <li><b>The UI size cap has a hole:</b> it only checks the width. A 21:9 monitor at 200% gives 1280 × 540 units, and 1000 × 422 at the cap. The cap must keep the height at 565 too.</li>
+      <li><b>Wide screens are shorter.</b> The UI size is capped so the screen stays at least 1000 units wide and 540 tall, so a 21:9 monitor at 200% gives 1280 × 540, 25 units shorter than these mockups. Each layout here has that much to spare, and the fit test will cover it.</li>
     </ol>
     <p class="note">On the sub-menus that expand and shrink: none of the three found a professional game that uses them for a shop. They move things under the cursor and hide what's on offer. Tabs, or folders that open in place, give the same grouping without that.</p>
   </section>
@@ -172,7 +172,7 @@ code { font-size:.88em }
   <section>
     <h2>What I'd build, in order</h2>
     <ol>
-      <li>The fit test, at 1000 × 565, 1280 × 720, 1280 × 540 (21:9) and 1920 × 1080, and the height check on the size cap.</li>
+      <li>The fit test, at 1000 × 562, 1280 × 540 (21:9), 1280 × 720 and 1920 × 1080.</li>
       <li>The shared frame: the one-line header, the bottom bar and the info pane.</li>
       <li>The main menu, Options, the shop and the armory, one at a time, each with before and after GIFs at 200% and 125%.</li>
       <li>The command card and the Build page.</li>
