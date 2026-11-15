@@ -788,6 +788,27 @@ fn wander(r: &mut Rng, w: f32, h: f32, from: (f32, f32), dir: (f32, f32), piece:
     pts
 }
 
+/// The dunes' clay islands under the crystals, as on the Flats: big and
+/// ragged, since exact circles read as decals or holes (graphics lead,
+/// 2026-11-14). Not on rock, deep water or a bridge: their kind is the
+/// whole soil nibble, and clay over deep water (0x41 to 0x21) made wet clay
+/// a soldier can wade, an unplanned ford `cut_fords` never saw (bug check,
+/// 2026-11-15: 26 of 32 dune planets over seeds 1-40).
+fn clay_islands(ground: &mut [u8], w: usize, h: usize, crystals: &[Crystal], soil_b: &Field, fine: &Field) {
+    for c in crystals {
+        let m = c.r * 2.4;
+        for y in ((c.y - m * 1.4).max(0.0) as usize)..((c.y + m * 1.4) as usize).min(h) {
+            for x in ((c.x - m * 1.4).max(0.0) as usize)..((c.x + m * 1.4) as usize).min(w) {
+                let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6 + (fine.at(x, y) - 0.5) * 1.2;
+                let i = y * w + x;
+                if d < 1.0 && ground[i] & G_ROCK == 0 && ground[i] != G_DEEP && ground[i] != G_BRIDGE {
+                    ground[i] = (ground[i] & 0x0F) | G_CLAY;
+                }
+            }
+        }
+    }
+}
+
 fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let rc = recipe.unwrap_or_else(|| Recipe::of(p));
     let (w, h) = p.size;
@@ -1462,8 +1483,14 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             if dl < 150.0 + ragged {
                 (soil, water) = (0, 0);
             }
-            if water > 0 && (dn < 100.0 || dl < 170.0) {
+            // No water by the nests or the landing, and no bridge either:
+            // a bridge cell has no water of its own, so clearing only the
+            // water left planks on dry land there (bug check, 2026-11-15).
+            if dn < 100.0 || dl < 170.0 {
                 water = 0;
+                if soil == G_BRIDGE {
+                    soil = 0;
+                }
             }
             if ground[i] & G_ROCK == 0 {
                 ground[i] = match water {
@@ -1711,20 +1738,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
 
     // Dunes: clay islands under the crystals, as on the Flats.
     if rc.soil == Soil::Dunes {
-        for c in &items.crystals {
-            // Big and ragged: exact circles read as decals or holes
-            // (graphics lead, 2026-11-14).
-            let m = c.r * 2.4;
-            for y in ((c.y - m * 1.4).max(0.0) as usize)..((c.y + m * 1.4) as usize).min(h) {
-                for x in ((c.x - m * 1.4).max(0.0) as usize)..((c.x + m * 1.4) as usize).min(w) {
-                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6 + (fine.at(x, y) - 0.5) * 1.2;
-                    let i = y * w + x;
-                    if d < 1.0 && ground[i] & G_ROCK == 0 {
-                        ground[i] = (ground[i] & 0x0F) | G_CLAY;
-                    }
-                }
-            }
-        }
+        clay_islands(&mut ground, w, h, &items.crystals, &soil_b, &fine);
     }
 
     // Soft rock: gates across passes, rings round nests, hedges. Each is a
@@ -2415,9 +2429,32 @@ mod tests {
     // that tell the biomes apart, their edges faded (11-14 22:30Z), and
     // the core world's arenas and nest hedges (23:30Z), and planets 6-8 at
     // their full 2.8x, 4x and 6x (`GROW_CAP` 6; planet 8 is the big pin
-    // below). Round 2's depths 3-8 had kept their pins through the tiled
-    // region scan, which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xb1627ecda86170b9, 0xb4183e35b474ba49, 0x4bbbb8f96e6ea1d0, 0x3115a9964abbe8ea, 0x6a8d5a9e7fc09b42];
+    // below). Then planet 4 (river valley): no dune clay over deep water
+    // or bridges, no bridge planks by the nests (bug check, 11-15). Round
+    // 2's depths 3-8 had kept their pins through the tiled region scan,
+    // which finds the same nearest sites as the full scan.
+    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xe2ddd9586ec43882, 0xb4183e35b474ba49, 0x4bbbb8f96e6ea1d0, 0x3115a9964abbe8ea, 0x6a8d5a9e7fc09b42];
+
+    /// The dunes' clay islands leave rock, deep water and bridges as they
+    /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
+    #[test]
+    fn clay_islands_keep_deep_water_and_bridges() {
+        let (w, h) = (64, 64);
+        let flat = Field::new(w, h, |_, _| 0.5);
+        let mut ground = vec![0u8; w * h];
+        let at = |x: usize, y: usize| y * w + x;
+        ground[at(30, 32)] = G_DEEP;
+        ground[at(31, 32)] = G_BRIDGE;
+        ground[at(33, 32)] = G_ROCK;
+        ground[at(34, 32)] = G_WET;
+        clay_islands(&mut ground, w, h, &[Crystal { x: 32.0, y: 32.0, r: 4.0, charge: 0.0 }], &flat, &flat);
+        assert_eq!(ground[at(30, 32)], G_DEEP);
+        assert_eq!(ground[at(31, 32)], G_BRIDGE);
+        assert_eq!(ground[at(33, 32)], G_ROCK);
+        assert_eq!(ground[at(34, 32)], G_WET | G_CLAY, "shallow water takes the clay under it");
+        assert_eq!(ground[at(32, 30)], G_CLAY);
+        assert_eq!(ground[at(2, 2)], 0, "outside the island");
+    }
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.

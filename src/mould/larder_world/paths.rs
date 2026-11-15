@@ -67,7 +67,7 @@ pub fn distance_map(w: usize, h: usize, goal: usize, open: impl Fn(usize) -> boo
 /// in about a third of the time on a 6x planet's world (11-14), where a
 /// soldier's new map was a step's 210 ms max on the 1070.
 pub struct MapBuild {
-    goal: usize,
+    pub(super) goal: usize,
     ok: Vec<bool>,
     dist: Vec<u32>,
     ring: [Vec<usize>; 8],
@@ -327,21 +327,26 @@ impl<W: World> Game<W> {
                 let ok = self.standable_cells();
                 let map = distance_map(w, h, gi, |i| ok[i]);
                 self.paths.maps.insert(gi, (map, step));
+                self.trim_maps();
             }
             self.paths.maps.get_mut(&gi).expect("a built map").1 = step;
             return Some(gi);
         }
+        // The goal's own map first. A goal on a cell's edge is as near the
+        // next cell's middle, and that map's straight walk can fail (a wall
+        // went up in the line): taking only the nearest map, as at first,
+        // left the goal asked for and rebuilt every step while its own map
+        // sat in the cache (bug check, 2026-11-15).
+        if let Some(m) = self.paths.maps.get_mut(&gi) {
+            m.1 = step;
+            return Some(gi);
+        }
         let close = |k: usize| k == gi || (by(k) <= near && self.walk_line(mid(k), g));
-        // The nearest built map, ties to the lower cell (the cache is a hash
-        // map: its order is not the same run to run).
-        let built = self
-            .paths
-            .maps
-            .keys()
-            .copied()
-            .filter(|&k| k == gi || by(k) <= near)
-            .min_by(|&a, &b| by(a).total_cmp(&by(b)).then(a.cmp(&b)))
-            .filter(|&k| close(k));
+        // The nearest built map that serves, ties to the lower cell (the
+        // cache is a hash map: its order is not the same run to run).
+        let mut near_maps: Vec<usize> = self.paths.maps.keys().copied().filter(|&k| by(k) <= near).collect();
+        near_maps.sort_unstable_by(|&a, &b| by(a).total_cmp(&by(b)).then(a.cmp(&b)));
+        let built = near_maps.into_iter().find(|&k| close(k));
         if let Some(k) = built {
             self.paths.maps.get_mut(&k).expect("a built map").1 = step;
             return Some(k);
@@ -385,7 +390,15 @@ impl<W: World> Game<W> {
                 if started {
                     break;
                 }
-                let next = if self.paths.asked.is_empty() {
+                // Asked goals and stale maps take turns while both wait:
+                // asks first always, as at first, starved the stale maps in
+                // a long fight whose goals move every step, so a map made
+                // stale by a new wall kept routing soldiers into it (bug
+                // check, 2026-11-15).
+                let ask = !self.paths.asked.is_empty() && (self.paths.stale.is_empty() || !self.paths.asked_last);
+                let next = if ask {
+                    Some(self.paths.asked.remove(0).0)
+                } else {
                     // The stale map walked last first, ties to the lower cell.
                     let maps = &self.paths.maps;
                     let at = (0..self.paths.stale.len()).max_by_key(|&i| {
@@ -393,10 +406,9 @@ impl<W: World> Game<W> {
                         (maps.get(&k).map_or(0, |m| m.1), std::cmp::Reverse(k))
                     });
                     at.map(|i| self.paths.stale.swap_remove(i))
-                } else {
-                    Some(self.paths.asked.remove(0).0)
                 };
                 let Some(gi) = next else { break };
+                self.paths.asked_last = ask;
                 started = true;
                 self.paths.building = Some(MapBuild::new(w, h, gi, self.standable_cells()));
             }
@@ -409,17 +421,24 @@ impl<W: World> Game<W> {
             let read = self.paths.maps.get(&b.goal).map_or(step, |m| m.1);
             self.paths.stale.retain(|&k| k != b.goal);
             self.paths.maps.insert(b.goal, (b.dist, read));
-            // Past the cache's size, the map read longest ago goes.
-            let most = (MAP_CELLS_MAX / (w * h).max(1)).clamp(4, MAPS_MAX);
-            while self.paths.maps.len() > most {
-                let maps = &self.paths.maps;
-                let old = maps.iter().map(|(&k, m)| (m.1, k)).min().expect("maps").1;
-                self.paths.maps.remove(&old);
-                self.paths.stale.retain(|&k| k != old);
-            }
+            self.trim_maps();
             if pops == 0 {
                 break;
             }
+        }
+    }
+
+    /// Past the cache's size (`MAPS_MAX` maps, `MAP_CELLS_MAX` cells), the
+    /// map read longest ago goes, ties to the lower cell. At the old pace
+    /// too (`Rules::map_pops`), which had lost its trim (bug check,
+    /// 2026-11-15).
+    fn trim_maps(&mut self) {
+        let (w, h) = self.world.size();
+        let most = (MAP_CELLS_MAX / (w * h).max(1)).clamp(4, MAPS_MAX);
+        while self.paths.maps.len() > most {
+            let old = self.paths.maps.iter().map(|(&k, m)| (m.1, k)).min().expect("maps").1;
+            self.paths.maps.remove(&old);
+            self.paths.stale.retain(|&k| k != old);
         }
     }
 
