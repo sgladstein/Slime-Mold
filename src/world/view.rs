@@ -148,9 +148,11 @@ pub struct View {
     look: wgpu::Buffer,
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
-    /// Two screens of words: the walkers' specks (`draw_specks`), then the
+    /// Three screens of words: the walkers' specks (`draw_specks`), then the
     /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
-    /// their own so the specks' calm/lean/bolt fields keep their room.
+    /// their own so the specks' calm/lean/bolt fields keep their room, then
+    /// the flung walkers' droplets (the bold spray, 11-15: a layer and a
+    /// heat a pixel, by `atomicMax`).
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -276,7 +278,7 @@ impl View {
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
-        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 8);
+        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 12);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
@@ -667,7 +669,7 @@ impl View {
     pub fn resize(&mut self, screen: (u32, u32)) {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
-        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 8);
+        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 12);
         (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;

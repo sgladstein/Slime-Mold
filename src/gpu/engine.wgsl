@@ -2828,7 +2828,11 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // cells, over 0) while it flies, so the view draws it as a hot droplet
     // drawn out along that flight (`draw_specks`); `alight` puts it back to
     // 0. (It was 1 until the gun look, 11-15, the view's speck a square.)
-    let fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
+    // A shot's spray droplet writes it below 0 (the bold spray, 11-15), so
+    // the view draws a killed walker's droplet hot and a blast's living
+    // throw in the mould's own gold.
+    var fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
+    if (doom) { fw = -fw; }
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
     walkers[k] = at;

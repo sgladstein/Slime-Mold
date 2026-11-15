@@ -366,6 +366,9 @@ pub struct Rules {
     /// seconds: none (`spray=0` in the window). (A first version threw the
     /// living mould past the strike and let it live: 22% fewer kills by 30
     /// s, 1 to 29 walkers in the air, too few to see; `Reports/dead-ends.md`.)
+    /// 0.3 s and 5 cells until the bold spray (11-15: the owner saw no
+    /// difference between all of a hit's kills flying and a quarter); now
+    /// 0.45 s and 7, drawn hot in their own layer (`view.wgsl`).
     pub spray_secs: f32,
     pub spray_reach: f32,
     /// The share of a shot's kills that spray (`squad::Frame::spray_share`;
@@ -593,8 +596,8 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
-            spray_secs: 0.3,
-            spray_reach: 5.0,
+            spray_secs: 0.45,
+            spray_reach: 7.0,
             spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,

@@ -2749,21 +2749,45 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // spray of squares (the square was 2 zoom / 4 + 1 pixels a side: 13 x
     // 13 at zoom 24). A shot's spray droplet slows to a stop, so its tail
     // shortens as it lands.
-    if (w.w > 0.0) {
-        let rh = max(P.zoom / 4.0, 0.75);
-        let len = max(clamp(0.8 * w.w, 0.5, 3.0) * P.zoom, 2.0);
+    // The bold spray (11-15, the owner 21:37Z on the share A/B: "I see no
+    // difference"): the droplets added 6 calm walkers a pixel, and a calm
+    // walker's light falls to under 0.02 in the body (`base`), so over the
+    // slime a droplet all but vanished and the two shares differed in 5 of
+    // 30 frames. Now each droplet is drawn in its own screen of words (the
+    // specks' third, `atomicMax` of a layer and a heat): a head zoom / 3.2
+    // pixels across the radius and its tail, inside a dark rim zoom / 12
+    // pixels wide (at least one), so it reads over the bright body and
+    // the dark ground alike. A shot's spray droplet (the engine writes its
+    // flight below 0) is a killed walker blown out: white-hot while it is
+    // fast, cooling to deep orange as it slows to land. A blast's throw is
+    // living mould and keeps its gold.
+    if (w.w != 0.0) {
+        let spray = w.w < 0.0;
+        let fl = abs(w.w);
+        let rh = max(P.zoom / 3.2, 1.0);
+        let rim = max(P.zoom / 12.0, 1.0);
+        let len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
         let dir = vec2<f32>(cos(w.z), sin(w.z));
         let tail = s - dir * len;
-        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + 1.0)));
-        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + 1.0)));
+        // Heat by its flight a tick: about 0.9 cells for the fastest
+        // droplet as it leaves (`spray_reach` 7 over 0.45 s; its tail at
+        // zoom 12 about 9 pixels), under 0.2 as the slowest lands.
+        var heat = 0u;
+        if (spray) { heat = u32(round(255.0 * clamp((fl - 0.2) / 0.6, 0.0, 1.0))); }
+        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + rim + 1.0)));
+        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + rim + 1.0)));
         for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
             for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
                 let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
                 let t = clamp(dot(s - p, dir) / len, 0.0, 1.0);
                 let r = rh * (1.0 - 0.7 * t);
-                if (distance(p, s - dir * (t * len)) <= r) {
-                    atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], select(6u, 3u, t > 0.5));
-                }
+                let d = distance(p, s - dir * (t * len));
+                // The layer: 2 the droplet, 1 its rim; the tail cooler
+                // than the head.
+                var v = 0u;
+                if (d <= r) { v = (2u << 8u) | u32(f32(heat) * (1.0 - 0.5 * t)); }
+                else if (d <= r + rim) { v = 1u << 8u; }
+                if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
             }
         }
         return;
@@ -2784,6 +2808,13 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): its
+// rim, a blast's living throw, and a shot's spray from fast (hot) to
+// landing (cool).
+const DROP_RIM: vec3<f32> = vec3<f32>(34.0, 18.0, 6.0);
+const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
+const DROP_HOT: vec3<f32> = vec3<f32>(255.0, 246.0, 214.0);
+const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
 // The micro-look's strength: the first cut (one) read only as a faint
@@ -2886,6 +2917,16 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // warm-white outright, as the phases below do.
             let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);
             c = mix(c, ABSORB_RGB, min(f32(hot) * 0.3, 0.9));
+            // A flung walker's droplet (`draw_specks`, the bold spray): its
+            // dark rim, then the droplet, a spray's by its heat.
+            let drop = atomicExchange(&specks[2u * P.shalf + y * P.stride + x], 0u);
+            if ((drop >> 8u) == 1u) { c = mix(c, DROP_RIM, 0.8); }
+            if ((drop >> 8u) == 2u) {
+                let hh = f32(drop & 255u) / 255.0;
+                var dc = DROP_GOLD;
+                if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
+                c = mix(c, dc, 0.95);
+            }
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a
             // bolting piece read red on the first film).
