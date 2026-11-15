@@ -147,10 +147,7 @@ pub const MAX_SPECIES: u8 = 4;
 /// Piles the GPU tracks (the dish's seven and food dropped with F); F does
 /// nothing once they are all used.
 pub const MAX_PILES: usize = 64;
-const _: () = assert!(
-    MAX_PILES == crate::mould::big::PANIC_PILES,
-    "a panicking walker looks over the same piles on both engines"
-);
+const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking walker looks over the same piles on both engines");
 
 /// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
 /// the eviction's moves, the struck, the living walkers, the own mould's,
@@ -508,8 +505,7 @@ impl Settings {
     /// These settings with the flinch folded into the alarm
     /// (`big::flinch_alarm`), as `BigDish` folds its params when made.
     pub fn flinched(mut self) -> Self {
-        (self.alarm_keep, self.alarm_weight) =
-            crate::mould::big::flinch_alarm(self.alarm_keep, self.alarm_weight, self.flinch);
+        (self.alarm_keep, self.alarm_weight) = crate::mould::big::flinch_alarm(self.alarm_keep, self.alarm_weight, self.flinch);
         self
     }
 
@@ -692,10 +688,7 @@ impl Settings {
     /// Whether the species have their own settings (`sets`): two species
     /// or more, and any field set.
     pub fn per_species(&self) -> bool {
-        self.fields() > 0
-            && self.sets[..self.fields() as usize]
-                .iter()
-                .any(|k| *k != SpeciesKnobs::default())
+        self.fields() > 0 && self.sets[..self.fields() as usize].iter().any(|k| *k != SpeciesKnobs::default())
     }
 
     /// Whether any walker explores: the global stage or a species' own.
@@ -763,27 +756,13 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
     // `amp` or `amp:power`, as examples/bigdish.rs takes the `*_mod`s.
     let pair = || -> Result<[f32; 2], String> {
         let (a, e) = v.split_once(':').unwrap_or((v, "1"));
-        Ok([
-            a.parse().map_err(|e| format!("{key}={v}: {e}"))?,
-            e.parse().map_err(|e| format!("{key}={v}: {e}"))?,
-        ])
+        Ok([a.parse().map_err(|e| format!("{key}={v}: {e}"))?, e.parse().map_err(|e| format!("{key}={v}: {e}"))?])
     };
     let b = || on_off(key, v);
-    let pick = |names: &[&str]| {
-        names
-            .iter()
-            .position(|&n| n == v)
-            .ok_or_else(|| format!("{key}={v}: one of {}", names.join(", ")))
-    };
+    let pick = |names: &[&str]| names.iter().position(|&n| n == v).ok_or_else(|| format!("{key}={v}: one of {}", names.join(", ")));
     // A species' own setting: `s0.reach=40` (species 0 to 3).
-    if let Some((sp, field)) = key
-        .split_once('.')
-        .and_then(|(a, f)| Some((a.strip_prefix('s')?.parse::<usize>().ok()?, f)))
-    {
-        let k = s
-            .sets
-            .get_mut(sp)
-            .ok_or_else(|| format!("{key}: species 0 to {}", MAX_SPECIES - 1))?;
+    if let Some((sp, field)) = key.split_once('.').and_then(|(a, f)| Some((a.strip_prefix('s')?.parse::<usize>().ok()?, f))) {
+        let k = s.sets.get_mut(sp).ok_or_else(|| format!("{key}: species 0 to {}", MAX_SPECIES - 1))?;
         match field {
             "sensor_angle" => k.sensor_angle = Some(f()?),
             "turn" | "rotate_angle" => k.turn = Some(f()?),
@@ -817,9 +796,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "knee" => s.knee = f()?,
         "gamma" => s.gamma = f()?,
         "ticks" => s.ticks = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 32),
-        "start" => {
-            s.start = [Start::Spread, Start::Home, Start::Home, Start::Disc][pick(&["spread", "blob", "home", "disc"])?]
-        }
+        "start" => s.start = [Start::Spread, Start::Home, Start::Home, Start::Disc][pick(&["spread", "blob", "home", "disc"])?],
         "disc" => s.disc = f()?,
         "haze" => s.haze = f()?,
         "trail_scale" | "sense_scale" => s.trail_scale = f()?,
@@ -902,14 +879,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_relay" => s.alarm_relay = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
-        "tier" => crate::mould::tiers::Tier::from_name(v)
-            .ok_or_else(|| {
-                format!(
-                    "tier={v}: one of {}",
-                    crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")
-                )
-            })?
-            .settings(s)?,
+        "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
         "upkeep" => s.upkeep = f()?,
         "start_energy" => s.start_energy = f()?,
         "birth_energy" => s.birth_energy = f()?,
@@ -988,11 +958,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         scent_coarse: false,
         blob: s.start != Start::Spread,
         respawn: s.respawn,
-        blob_r: if s.start == Start::Disc {
-            s.disc / scale as f32
-        } else {
-            0.0
-        },
+        blob_r: if s.start == Start::Disc { s.disc / scale as f32 } else { 0.0 },
         haze: if s.start == Start::Spread { 0.0 } else { s.haze },
         start_shape: s.start_shape,
         sense_scale: s.trail_scale,
@@ -1143,10 +1109,7 @@ pub fn u32_bytes(v: &[u32]) -> Vec<u8> {
 }
 
 pub fn floats(bytes: &[u8]) -> Vec<f32> {
-    bytes
-        .chunks_exact(4)
-        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-        .collect()
+    bytes.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()
 }
 
 /// What the mouse is doing this frame, in fine cells.
@@ -1276,112 +1239,26 @@ pub const FIREKILL: usize = 64;
 pub const IGNITE: usize = 65;
 /// Every entry point, in pipeline order.
 pub const PASSES: [&str; 66] = [
-    "sense",
-    "walk",
-    "trail",
-    "scent",
-    "histogram",
-    "top",
-    "draw",
-    "jump",
-    "land",
-    "convert",
-    "life",
-    "breed",
-    "born",
-    "eat",
-    "pilesum",
-    "flow",
-    "walls",
-    "build",
-    "evict",
-    "settle",
-    "unclaim",
-    "shots",
-    "strike",
-    "cut",
-    "smell",
-    "units",
-    "harvest",
-    "rows",
-    "fate",
-    "fly",
-    "alight",
-    "hit",
-    "kill",
-    "shout",
-    "esum",
-    "egain",
-    "count",
-    "smell1",
-    "units1",
-    "harvest1",
-    "tend",
-    "ownclear",
-    "owncount",
-    "ngather",
-    "nspread",
-    "nab",
-    "nba",
-    "nhear",
-    "capclear",
-    "capcount",
-    "gas",
-    "calm",
-    "gaslay",
-    "gasp",
-    "fling",
-    "ripen",
-    "massclear",
-    "masscount",
-    "dclear",
-    "dcount",
-    "baitlay",
-    "plant",
-    "fire",
-    "pcopy",
-    "firekill",
-    "ignite",
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite",
 ];
 
 impl Shared {
     pub fn new(dev: &wgpu::Device) -> Self {
-        let module = dev.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("sandbox"),
-            source: wgpu::ShaderSource::Wgsl(SHADER.into()),
-        });
+        let module = dev.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("sandbox"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
         let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer {
-                ty,
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
+            ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None },
             count: None,
         };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
         let ro = wgpu::BufferBindingType::Storage { read_only: true };
         let mut entries = vec![entry(0, wgpu::BufferBindingType::Uniform)];
         for b in 1..BINDINGS {
-            entries.push(entry(
-                b,
-                if matches!(b, 9 | 16 | 17 | 38 | 41 | 44) {
-                    ro
-                } else {
-                    rw
-                },
-            ));
+            entries.push(entry(b, if matches!(b, 9 | 16 | 17 | 38 | 41 | 44) { ro } else { rw }));
         }
-        let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("sandbox"),
-            entries: &entries,
-        });
-        let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("sandbox"),
-            bind_group_layouts: &[Some(&bgl)],
-            immediate_size: 0,
-        });
+        let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("sandbox"), entries: &entries });
+        let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("sandbox"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let build = |constants: &[(&str, f64)]| {
             PASSES
                 .iter()
@@ -1391,20 +1268,13 @@ impl Shared {
                         layout: Some(&layout),
                         module: &module,
                         entry_point: Some(entry_point),
-                        compilation_options: wgpu::PipelineCompilationOptions {
-                            constants,
-                            ..Default::default()
-                        },
+                        compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
                         cache: None,
                     })
                 })
                 .collect()
         };
-        Shared {
-            bgl,
-            pipes: build(&[]),
-            plain: build(&[("OUTSIDE", 0.0)]),
-        }
+        Shared { bgl, pipes: build(&[]), plain: build(&[("OUTSIDE", 0.0)]) }
     }
 }
 
@@ -1607,14 +1477,7 @@ pub struct Engine {
 /// The agar cells of the dish `make` builds from `s` (one walker placed,
 /// so it costs a grid, not a mould).
 pub fn agar_cells(s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> usize {
-    make(BigParams {
-        walkers: 1,
-        ..big_params(s, scale, false)
-    })
-    .agar
-    .iter()
-    .filter(|&&a| a)
-    .count()
+    make(BigParams { walkers: 1, ..big_params(s, scale, false) }).agar.iter().filter(|&&a| a).count()
 }
 
 /// Whether the one-walker-a-cell limit holds for `walkers` starting on a
@@ -1644,39 +1507,18 @@ impl Engine {
     }
 
     /// The engine on a designed world (`BigDish::with_map`, ROADMAP WM1).
-    pub fn with_map(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        shared: &Shared,
-        s: &Settings,
-        scale: usize,
-        m: &Map,
-    ) -> Self {
+    pub fn with_map(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, m: &Map) -> Self {
         Self::made(device, queue, shared, s, scale, |p| BigDish::with_map(p, m))
     }
 
     /// The engine on the dish `make` builds from the settings' params: a
     /// designed world with its own start, such as the gardeners'
     /// (`own_mould::garden_dish`), whose walkers' species the dish sets.
-    pub fn made_with(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        shared: &Shared,
-        s: &Settings,
-        scale: usize,
-        make: impl Fn(BigParams) -> BigDish,
-    ) -> Self {
+    pub fn made_with(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
         Self::made(device, queue, shared, s, scale, make)
     }
 
-    fn made(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        shared: &Shared,
-        s: &Settings,
-        scale: usize,
-        make: impl Fn(BigParams) -> BigDish,
-    ) -> Self {
+    fn made(device: &wgpu::Device, queue: &wgpu::Queue, shared: &Shared, s: &Settings, scale: usize, make: impl Fn(BigParams) -> BigDish) -> Self {
         let agar_cells = agar_cells(s, scale, &make);
         let crowd_ok = crowd_holds(s.walkers, agar_cells);
         if !crowd_ok && wants_crowd(s) {
@@ -1684,39 +1526,22 @@ impl Engine {
             // slime-enemy thread found it silent, 2026-11-12).
             eprintln!("gpu: the one-walker-a-cell limit is OFF: {} walkers start on {} agar cells, and it holds only up to half ({})", s.walkers, agar_cells, agar_cells / 2);
         }
-        let d = make(BigParams {
-            species_sets: species_sets(s, crowd_ok),
-            ..big_params(s, scale, s.crowd && crowd_ok)
-        });
+        let d = make(BigParams { species_sets: species_sets(s, crowd_ok), ..big_params(s, scale, s.crowd && crowd_ok) });
         let dev = device;
         let cells = (d.w * d.h) as u32;
         let n = d.walkers.len() as u32;
         let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC;
         let buf = |label: &str, bytes: &[u8], usage: wgpu::BufferUsages| {
             note_bytes(bytes.len().max(16) as u64);
-            let b = dev.create_buffer(&wgpu::BufferDescriptor {
-                label: Some(label),
-                size: bytes.len().max(16) as u64,
-                usage,
-                mapped_at_creation: false,
-            });
+            let b = dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.len().max(16) as u64, usage, mapped_at_creation: false });
             queue.write_buffer(&b, 0, bytes);
             b
         };
         let zeros = |label: &str, bytes: usize| {
             note_bytes(bytes.max(16) as u64);
-            dev.create_buffer(&wgpu::BufferDescriptor {
-                label: Some(label),
-                size: bytes.max(16) as u64,
-                usage: storage,
-                mapped_at_creation: false,
-            })
+            dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.max(16) as u64, usage: storage, mapped_at_creation: false })
         };
-        let params = buf(
-            "params",
-            &[0u8; PARAMS_BYTES],
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        );
+        let params = buf("params", &[0u8; PARAMS_BYTES], wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
         let state = buf("state", &u32_bytes(&[0, 1f32.to_bits(), 0, 0]), storage);
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
         let walkers = buf("walkers", &f32_bytes(&flat), storage);
@@ -1746,11 +1571,7 @@ impl Engine {
         let hud = zeros("hud", cells as usize * 4);
         // Contagion's buffers are always there (a u32 a walker and three
         // fields), so it can be switched on as the dish runs.
-        let counters: Vec<u32> = if d.sick.is_empty() {
-            vec![0; n as usize]
-        } else {
-            d.sick.iter().map(|&c| c as u32).collect()
-        };
+        let counters: Vec<u32> = if d.sick.is_empty() { vec![0; n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
         let sick = buf("sick", &u32_bytes(&counters), storage);
         let sdep = zeros("sdep", blocks * cells as usize * 4);
         // The life cycle's share of them (always there, as a strike can
@@ -1759,16 +1580,10 @@ impl Engine {
         // `bdep`'s third and fourth halves spores' and sleepers' deposits.
         let gdep = zeros("gdep", 3 * cells as usize * 4);
         // The third block (11-14) is the gas cloud.
-        let germ = [
-            zeros("germ0", 3 * cells as usize * 4),
-            zeros("germ1", 3 * cells as usize * 4),
-        ];
+        let germ = [zeros("germ0", 3 * cells as usize * 4), zeros("germ1", 3 * cells as usize * 4)];
         let edep = zeros("edep", 2 * blocks * cells as usize * 4);
         let bdep = zeros("bdep", 4 * blocks * cells as usize * 4);
-        let species = [
-            zeros("species0", nsp as usize * cells as usize * 4),
-            zeros("species1", nsp as usize * cells as usize * 4),
-        ];
+        let species = [zeros("species0", nsp as usize * cells as usize * 4), zeros("species1", nsp as usize * cells as usize * 4)];
         let age = zeros("age", n as usize * 4);
         // Grass starts full on the agar (the CPU's, made only with grazing
         // on; here always, so grazing can be switched on as the dish runs);
@@ -1805,85 +1620,15 @@ impl Engine {
         let news_len = news_words(&d, cells as usize).len();
         let gas_len = gas_words(&d).len();
         let dense_len = dense_words(&d, cells as usize).len();
-        let news = buf(
-            "news",
-            &u32_bytes(
-                &[
-                    news_words(&d, cells as usize),
-                    gas_words(&d),
-                    dense_words(&d, cells as usize),
-                    plant_words(&d),
-                ]
-                .concat(),
-            ),
-            storage,
-        );
+        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d)].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
-                &params,
-                &state,
-                &walkers,
-                &intent,
-                &icell,
-                &occ,
-                &claim,
-                &dep,
-                &agar,
-                &lay,
-                &trail[a],
-                &trail[b],
-                &scent[a],
-                &scent[b],
-                &hist,
-                &frame,
-                &hud,
-                &pile,
-                &reached,
-                &sick,
-                &sdep,
-                &gdep,
-                &germ[a],
-                &germ[b],
-                &edep,
-                &bdep,
-                &species[a],
-                &species[b],
-                &age,
-                &grass,
-                &gcount,
-                &spec,
-                &energy,
-                &share,
-                &ground,
-                &charge,
-                &health,
-                &bites,
-                &pcell,
-                &piles,
-                &wstat,
-                &wb,
-                &sq,
-                &kills,
-                &hits,
-                &look,
-                &body,
-                &crater,
-                &news,
+                &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b], &hist, &frame, &hud, &pile, &reached, &sick, &sdep, &gdep, &germ[a], &germ[b], &edep, &bdep, &species[a],
+                &species[b], &age, &grass, &gcount, &spec, &energy, &share, &ground, &charge, &health, &bites, &pcell, &piles, &wstat, &wb, &sq, &kills, &hits, &look, &body, &crater, &news,
             ];
-            let entries: Vec<wgpu::BindGroupEntry> = bufs
-                .iter()
-                .enumerate()
-                .map(|(i, b)| wgpu::BindGroupEntry {
-                    binding: i as u32,
-                    resource: b.as_entire_binding(),
-                })
-                .collect();
-            dev.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("sandbox"),
-                layout: &shared.bgl,
-                entries: &entries,
-            })
+            let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
+            dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("sandbox"), layout: &shared.bgl, entries: &entries })
         };
         let groups = [group(true), group(false)];
         let (cycles, alarmed) = (!d.life.is_empty(), !d.alarm.is_empty());
@@ -1996,11 +1741,7 @@ impl Engine {
         let mut lay = vec![0.0f32; d.w * d.h];
         let mut pile = vec![0u32; d.w * d.h];
         let s = d.p.scale as f32;
-        let dish = d
-            .piles
-            .iter()
-            .zip(&d.pile_rs)
-            .map(|(&(x, y), &r)| (x * s, y * s, r * s, food));
+        let dish = d.piles.iter().zip(&d.pile_rs).map(|(&(x, y), &r)| (x * s, y * s, r * s, food));
         let dropped = self.dropped.iter().map(|&(x, y)| (x, y, d.p.pile_r * s, true));
         for (pi, (cx, cy, r, lays)) in dish.chain(dropped).enumerate().take(MAX_PILES) {
             let n = r.ceil() as i32;
@@ -2037,11 +1778,7 @@ impl Engine {
     /// twin test: one GPU tick from it should match one `BigDish::tick`.
     /// The dish must have this engine's settings.
     pub fn inject(&mut self, d: &BigDish) {
-        assert_eq!(
-            (d.w, d.h, d.walkers.len() as u32, d.sw, d.sh),
-            (self.dish.w, self.dish.h, self.n, d.w, d.h),
-            "a dish of this engine's size, on the fine scent grid"
-        );
+        assert_eq!((d.w, d.h, d.walkers.len() as u32, d.sw, d.sh), (self.dish.w, self.dish.h, self.n, d.w, d.h), "a dish of this engine's size, on the fine scent grid");
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
         self.queue.write_buffer(&self.walkers, 0, &f32_bytes(&flat));
         self.queue.write_buffer(&self.occ, 0, &u32_bytes(&occupancy(d)));
@@ -2051,34 +1788,17 @@ impl Engine {
         let side = (d.steps % 2) as usize;
         self.queue.write_buffer(&self.trail[side], 0, &f32_bytes(&d.trail));
         self.queue.write_buffer(&self.scent[side], 0, &f32_bytes(&d.scent));
-        self.queue
-            .write_buffer(&self.state, 0, &u32_bytes(&[d.steps as u32, 1f32.to_bits(), 0, 0]));
+        self.queue.write_buffer(&self.state, 0, &u32_bytes(&[d.steps as u32, 1f32.to_bits(), 0, 0]));
         let mut reached = vec![0u32; MAX_PILES];
         for (r, &hit) in reached.iter_mut().zip(&d.reached) {
             *r = hit as u32;
         }
         self.queue.write_buffer(&self.reached, 0, &u32_bytes(&reached));
-        let counters: Vec<u32> = if d.sick.is_empty() {
-            vec![0; self.n as usize]
-        } else {
-            d.sick.iter().map(|&c| c as u32).collect()
-        };
+        let counters: Vec<u32> = if d.sick.is_empty() { vec![0; self.n as usize] } else { d.sick.iter().map(|&c| c as u32).collect() };
         self.queue.write_buffer(&self.sick, 0, &u32_bytes(&counters));
-        let mut germ = if d.germ.is_empty() {
-            vec![0.0; self.cells as usize]
-        } else {
-            d.germ.clone()
-        };
-        germ.extend(if d.alarm.is_empty() {
-            vec![0.0; self.cells as usize]
-        } else {
-            d.alarm.clone()
-        });
-        germ.extend(if d.gas_cloud.is_empty() {
-            vec![0.0; self.cells as usize]
-        } else {
-            d.gas_cloud.clone()
-        });
+        let mut germ = if d.germ.is_empty() { vec![0.0; self.cells as usize] } else { d.germ.clone() };
+        germ.extend(if d.alarm.is_empty() { vec![0.0; self.cells as usize] } else { d.alarm.clone() });
+        germ.extend(if d.gas_cloud.is_empty() { vec![0.0; self.cells as usize] } else { d.gas_cloud.clone() });
         self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
         // The life states come with the spec words below; a dish that has
         // them switches them on here.
@@ -2089,20 +1809,12 @@ impl Engine {
             self.clouded = true;
             self.cloud_until = u64::MAX;
         }
-        assert_eq!(
-            d.species_trail.len(),
-            self.nsp as usize,
-            "a dish with this engine's species"
-        );
+        assert_eq!(d.species_trail.len(), self.nsp as usize, "a dish with this engine's species");
         if self.nsp > 0 {
             let fields: Vec<f32> = d.species_trail.iter().flatten().copied().collect();
             self.queue.write_buffer(&self.species[side], 0, &f32_bytes(&fields));
         }
-        let ages: Vec<u32> = if d.age.is_empty() {
-            vec![0; self.n as usize]
-        } else {
-            d.age.iter().map(|&a| a as u32).collect()
-        };
+        let ages: Vec<u32> = if d.age.is_empty() { vec![0; self.n as usize] } else { d.age.iter().map(|&a| a as u32).collect() };
         self.queue.write_buffer(&self.age, 0, &u32_bytes(&ages));
         self.exploring = !d.age.is_empty();
         self.queue.write_buffer(&self.grass, 0, &f32_bytes(&grass_of(d)));
@@ -2116,26 +1828,18 @@ impl Engine {
         self.queue.write_buffer(&self.health, 0, &f32_bytes(&wd.health));
         self.queue.write_buffer(&self.pcell, 0, &u32_bytes(&wd.pcell));
         self.queue.write_buffer(&self.piles, 0, &u32_bytes(&wd.piles));
-        self.queue
-            .write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
+        self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
         self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
         self.walled = !d.wall.is_empty();
         self.ground_world = ground_bits(d);
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
         self.queue.write_buffer(&self.spec, 0, &u32_bytes(&spec_words(d)));
-        self.queue
-            .write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
-        self.queue
-            .write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
-        self.queue.write_buffer(
-            &self.news,
-            self.dense_at,
-            &u32_bytes(&dense_words(d, self.cells as usize)),
-        );
+        self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
+        self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&dense_words(d, self.cells as usize)));
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
-            self.queue
-                .write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
+            self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
         }
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
@@ -2160,67 +1864,22 @@ impl Engine {
         let pull = if hand.pull && hand.at.is_some() { PULL } else { 0.0 };
         let wipe = (hand.wipe && hand.at.is_some()) as u32;
         let t = &self.dish.p;
-        let mut b = u32_bytes(&[
-            w,
-            h,
-            self.n,
-            crowd,
-            stream(seed, DRAW_TURN),
-            stream(seed, DRAW_BLOCKED),
-            stream(seed, CLAIM_MOVE),
-            stream(seed, DRAW_JUMP),
-        ]);
+        let mut b = u32_bytes(&[w, h, self.n, crowd, stream(seed, DRAW_TURN), stream(seed, DRAW_BLOCKED), stream(seed, CLAIM_MOVE), stream(seed, DRAW_JUMP)]);
         // Food smelled at the reach when `smell` is 0, as `BigParams::scent_offset`.
         let smell = if s.smell > 0.0 { s.smell } else { s.reach };
-        b.extend(f32_bytes(&[
-            s.sensor_angle.to_radians(),
-            s.turn.to_radians(),
-            s.reach,
-            smell,
-            s.step,
-            deposit,
-            s.keep,
-            t.scent_keep,
-        ]));
+        b.extend(f32_bytes(&[s.sensor_angle.to_radians(), s.turn.to_radians(), s.reach, smell, s.step, deposit, s.keep, t.scent_keep]));
         b.extend(f32_bytes(&[s.respawn, pull, bx, by, br, s.knee, s.gamma]));
-        b.extend(u32_bytes(&[
-            stream(seed, DRAW_PULL),
-            wipe,
-            (s.colour == Colour::Grey) as u32,
-            (s.field == Field::Walkers) as u32,
-            (s.curve == Curve::Soft) as u32,
-        ]));
+        b.extend(u32_bytes(&[stream(seed, DRAW_PULL), wipe, (s.colour == Colour::Grey) as u32, (s.field == Field::Walkers) as u32, (s.curve == Curve::Soft) as u32]));
         b.extend(f32_bytes(&[t.tube, t.fed_scent]));
         b.extend(u32_bytes(&[s.cap as u32, stream(seed, DRAW_WANDER)]));
         // The looks: angles in radians, as `BigParams`.
-        let (am, tm) = (
-            [s.angle_by[0].to_radians(), s.angle_by[1]],
-            [s.turn_by[0].to_radians(), s.turn_by[1]],
-        );
-        b.extend(f32_bytes(&[
-            s.trail_scale,
-            s.reach_by[0],
-            s.reach_by[1],
-            am[0],
-            am[1],
-            tm[0],
-            tm[1],
-            s.step_by[0],
-            s.step_by[1],
-            s.floor,
-            s.wander,
-            s.catch_at,
-        ]));
+        let (am, tm) = ([s.angle_by[0].to_radians(), s.angle_by[1]], [s.turn_by[0].to_radians(), s.turn_by[1]]);
+        b.extend(f32_bytes(&[s.trail_scale, s.reach_by[0], s.reach_by[1], am[0], am[1], tm[0], tm[1], s.step_by[0], s.step_by[1], s.floor, s.wander, s.catch_at]));
         // Infect: the mouse's disc, or the middle once `seed_at` has come.
         let (mut infect, mut ix, mut iy, mut ir) = (0u32, 0.0f32, 0.0f32, 0.0f32);
         if let (true, Some((x, y))) = (hand.infect, hand.at) {
             (infect, ix, iy, ir) = (1, x, y, br);
-        } else if s.sick_on()
-            && s.seed_at > 0.0
-            && !self.seeded
-            && ticks > 0
-            && self.done as f32 >= s.seed_at * STEPS_PER_SECOND as f32
-        {
+        } else if s.sick_on() && s.seed_at > 0.0 && !self.seeded && ticks > 0 && self.done as f32 >= s.seed_at * STEPS_PER_SECOND as f32 {
             (infect, ix, iy, ir) = (1, w as f32 / 2.0, h as f32 / 2.0, s.seed_r);
             self.seeded = true;
         }
@@ -2228,20 +1887,7 @@ impl Engine {
         // no tick spreads an empty one.
         let cloud_keep = if self.clouded { s.gas_keep } else { 0.0 };
         b.extend(u32_bytes(&[s.sick, s.immune, infect, cloud_keep.to_bits()]));
-        b.extend(f32_bytes(&[
-            s.germ,
-            s.germ_keep,
-            s.sick_speed,
-            s.sick_trail,
-            s.sick_reach,
-            s.sick_turn,
-            ix,
-            iy,
-            ir,
-            s.sick_upkeep,
-            s.gas_death,
-            s.step * s.fling_speed,
-        ]));
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, s.step * s.fling_speed]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {
@@ -2257,43 +1903,19 @@ impl Engine {
         let (explore, blocked, graze) = if sets.is_empty() {
             (s.explore as u32, s.blocked_lay, s.graze)
         } else {
-            (
-                sets.iter().map(|t| t.explore_steps as u32).max().unwrap_or(0),
-                sets.iter().map(|t| t.blocked_deposit).fold(0.0, f32::max),
-                any(|t| t.graze_weight),
-            )
+            (sets.iter().map(|t| t.explore_steps as u32).max().unwrap_or(0), sets.iter().map(|t| t.blocked_deposit).fold(0.0, f32::max), any(|t| t.graze_weight))
         };
         b.extend(u32_bytes(&[self.nsp, s.cycle as u32, explore, stream(seed, DRAW_SIZE)]));
-        b.extend(f32_bytes(&[
-            s.avoid,
-            s.next,
-            s.prev,
-            s.explorer_trail,
-            s.explore_spread,
-            blocked,
-        ]));
+        b.extend(f32_bytes(&[s.avoid, s.next, s.prev, s.explorer_trail, s.explore_spread, blocked]));
         b.extend(u32_bytes(&[s.blocked_keep as u32]));
         b.extend(f32_bytes(&[s.blocked_reset, s.chance, s.size_spread]));
-        b.extend(u32_bytes(&[
-            s.sensor_r as u32,
-            stream(seed, DRAW_CHANCE),
-            stream(seed, DRAW_KEEP),
-        ]));
+        b.extend(u32_bytes(&[s.sensor_r as u32, stream(seed, DRAW_CHANCE), stream(seed, DRAW_KEEP)]));
         b.extend(f32_bytes(&[s.convert, graze, s.graze_eat, s.graze_regrow, s.boost]));
         // Growth: its upkeep as the dish was made with (off stays off).
-        let upkeep = if self.grows {
-            s.upkeep.max(f32::MIN_POSITIVE)
-        } else {
-            0.0
-        };
+        let upkeep = if self.grows { s.upkeep.max(f32::MIN_POSITIVE) } else { 0.0 };
         b.extend(f32_bytes(&[upkeep, s.birth_energy, s.birth_cost, s.starve]));
         let mask = self.n.max(2).next_power_of_two() - 1;
-        b.extend(u32_bytes(&[
-            stream(seed, DRAW_STARVE),
-            stream(seed, DRAW_BIRTH),
-            stream(seed, CLAIM_BIRTH),
-            mask,
-        ]));
+        b.extend(u32_bytes(&[stream(seed, DRAW_STARVE), stream(seed, DRAW_BIRTH), stream(seed, CLAIM_BIRTH), mask]));
         // Withering's chance and draw borrow the growth row's two spare
         // words (360, 364; the slime-enemy thread, 2026-11-13).
         b.extend(f32_bytes(&[s.wither]));
@@ -2322,16 +1944,7 @@ impl Engine {
             world |= WORLD_PLANTS;
         }
         b.extend(u32_bytes(&[world, self.npiles, self.npc, self.grid]));
-        b.extend(f32_bytes(&[
-            t.crystal_charge,
-            s.crystal_eat,
-            s.crystal_flow,
-            s.crystal_regrow,
-            s.wet_step,
-            s.wall_bite,
-            s.wall_scent,
-            t.wall_hp,
-        ]));
+        b.extend(f32_bytes(&[t.crystal_charge, s.crystal_eat, s.crystal_flow, s.crystal_regrow, s.wet_step, s.wall_bite, s.wall_scent, t.wall_hp]));
         // Real asserts, not debug ones (2026-11-12, game integration): six
         // threads append rows here, CI and the census run release builds,
         // and a row that slips moves every offset after it without a
@@ -2339,18 +1952,8 @@ impl Engine {
         // New rows go after the soil row, in the merge order in ROADMAP.md
         // ("Larder World: shared rules and merge order").
         assert_eq!(b.len(), SQUAD_AT, "Params rows before the squad row moved");
-        b.extend(u32_bytes(&[
-            self.squad.0,
-            self.squad.1,
-            self.squad.2.to_bits(),
-            squad::SHOT_ALARM.to_bits(),
-        ]));
-        b.extend(u32_bytes(&[
-            self.n_hits,
-            self.ntend,
-            (squad::TEND - squad::PATH) as u32,
-            self.shot_sink.to_bits(),
-        ]));
+        b.extend(u32_bytes(&[self.squad.0, self.squad.1, self.squad.2.to_bits(), squad::SHOT_ALARM.to_bits()]));
+        b.extend(u32_bytes(&[self.n_hits, self.ntend, (squad::TEND - squad::PATH) as u32, self.shot_sink.to_bits()]));
         // The species block (2026-11-11): whether each species has its own
         // settings, the walker kinds, conversion's square; the second
         // kind's multipliers; then a set a species (`Set` in engine.wgsl),
@@ -2366,23 +1969,11 @@ impl Engine {
         let panic_r2 = (pr.max(0.0) * pr.max(0.0)).floor() as u32;
         let panic = if self.grows { s.panic } else { 0.0 };
         b.extend(u32_bytes(&[!sets.is_empty() as u32, self.kinds, s.convert_r, panic_r2]));
-        b.extend(f32_bytes(&[
-            s.mix_reach,
-            s.mix_angle,
-            s.mix_turn,
-            s.mix_step,
-            s.mix_deposit,
-            panic,
-            s.panic_creep.max(crate::mould::big::PANIC_CREEP_MIN),
-        ]));
+        b.extend(f32_bytes(&[s.mix_reach, s.mix_angle, s.mix_turn, s.mix_step, s.mix_deposit, panic, s.panic_creep.max(crate::mould::big::PANIC_CREEP_MIN)]));
         b.extend(u32_bytes(&[s.panic_dash.min(crate::mould::big::PANIC_DASH_MAX)]));
         // Each species' birth cap borrows its set's spare word (+44, `cap`;
         // the player's own mould thread, 11-14): u32::MAX is none.
-        let cap_of = |sp: usize| {
-            s.species_cap
-                .get(sp)
-                .map_or(u32::MAX, |&c| c.min(u32::MAX as usize - 1) as u32)
-        };
+        let cap_of = |sp: usize| s.species_cap.get(sp).map_or(u32::MAX, |&c| c.min(u32::MAX as usize - 1) as u32);
         for sp in 0..MAX_SPECIES as usize {
             let Some(t) = sets.get(sp) else {
                 b.extend([0u8; 44]);
@@ -2390,17 +1981,7 @@ impl Engine {
                 continue;
             };
             let sso = if s.smell > 0.0 { s.smell } else { t.sensor_offset };
-            b.extend(f32_bytes(&[
-                t.sensor_angle,
-                t.sensor_offset,
-                t.rotate_angle,
-                t.step,
-                sso,
-                t.deposit,
-                t.keep,
-                t.blocked_deposit,
-                t.graze_weight,
-            ]));
+            b.extend(f32_bytes(&[t.sensor_angle, t.sensor_offset, t.rotate_angle, t.step, sso, t.deposit, t.keep, t.blocked_deposit, t.graze_weight]));
             b.extend(u32_bytes(&[t.crowd as u32, t.explore_steps as u32, cap_of(sp)]));
         }
         // The life cycle: on for good once spores or dormancy are, as the
@@ -2410,47 +1991,14 @@ impl Engine {
         self.cycles |= s.spore_rate > 0.0 || s.spore_burst > 0.0 || s.sleep_rate > 0.0;
         if s.alarm_keep > 0.0 && !self.alarmed {
             for g in &self.germ {
-                self.queue
-                    .write_buffer(g, self.cells as u64 * 4, &vec![0u8; self.cells as usize * 4]);
+                self.queue.write_buffer(g, self.cells as u64 * 4, &vec![0u8; self.cells as usize * 4]);
             }
             self.alarmed = true;
         }
-        b.extend(u32_bytes(&[
-            self.cycles as u32,
-            self.alarmed as u32,
-            stream(seed, DRAW_FRUIT),
-            stream(seed, DRAW_SLEEP),
-        ]));
-        b.extend(u32_bytes(&[
-            stream(seed, CLAIM_LAND),
-            stream(seed, DRAW_SPORE_H),
-            s.spore_steps as u32,
-            s.spore_rest as u32,
-            s.wake_steps as u32,
-            s.sleep_rest as u32,
-            stream(seed, DRAW_SLEEP_DIE),
-            wither_clock(s),
-        ]));
-        b.extend(f32_bytes(&[
-            s.spore_rate,
-            s.spore_scent,
-            s.spore_alarm,
-            s.spore_burst,
-            s.step * s.spore_speed,
-            s.spore_reach,
-            s.spore_deposit,
-            s.spore_land,
-        ]));
-        b.extend(f32_bytes(&[
-            s.sleep_rate,
-            s.sleep_deposit,
-            s.wake_scent,
-            s.wake_alarm,
-            s.alarm_keep,
-            s.alarm_weight,
-            s.alarm_relay,
-            s.sleep_death,
-        ]));
+        b.extend(u32_bytes(&[self.cycles as u32, self.alarmed as u32, stream(seed, DRAW_FRUIT), stream(seed, DRAW_SLEEP)]));
+        b.extend(u32_bytes(&[stream(seed, CLAIM_LAND), stream(seed, DRAW_SPORE_H), s.spore_steps as u32, s.spore_rest as u32, s.wake_steps as u32, s.sleep_rest as u32, stream(seed, DRAW_SLEEP_DIE), wither_clock(s)]));
+        b.extend(f32_bytes(&[s.spore_rate, s.spore_scent, s.spore_alarm, s.spore_burst, s.step * s.spore_speed, s.spore_reach, s.spore_deposit, s.spore_land]));
+        b.extend(f32_bytes(&[s.sleep_rate, s.sleep_deposit, s.wake_scent, s.wake_alarm, s.alarm_keep, s.alarm_weight, s.alarm_relay, s.sleep_death]));
         assert_eq!(b.len(), STRIKE_AT, "Params rows before the strike row moved");
         b.extend([0u8; 32]);
         // Soil (WM3, 2026-11-12): the dish's own rates, as the CPU reads
@@ -2460,11 +2008,7 @@ impl Engine {
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
         b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, s.fed_full]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
-        b.extend(f32_bytes(&[
-            t.scorch_keep,
-            t.scorch_full.max(1) as f32,
-            self.crater_steps as f32,
-        ]));
+        b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
         b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
@@ -2474,20 +2018,12 @@ impl Engine {
         // condense thread; off without growth). `ccrowd`'s top byte is
         // thickening (11-15, the slime-enemy thread, `BigParams::thicken`)
         // in tenths of a birth's energy; the radius keeps bits 16-23.
-        let condense = if self.grows {
-            s.condense.min(crate::mould::big::RIPE)
-        } else {
-            0
-        };
+        let condense = if self.grows { s.condense.min(crate::mould::big::RIPE) } else { 0 };
         let thick = if self.grows { thick_tenths(s.thicken) } else { 0 };
         let r = s.condense_r.clamp(1, 8) as u32;
         assert!(r <= 0xFF, "condense_r fits ccrowd's bits 16-23");
         b.extend(f32_bytes(&[s.fling_deposit]));
-        b.extend(u32_bytes(&[
-            condense,
-            s.condense_crowd.min(0xFFFF) | (r << 16) | (thick << 24),
-            stream(seed, DRAW_CONDENSE),
-        ]));
+        b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | (r << 16) | (thick << 24), stream(seed, DRAW_CONDENSE)]));
         self.condenses = condense > 0 || thick > 0;
         // The breakaway row (11-14, the condense thread; Params grew from
         // 912 to 928 for it): steps between chances to leave (0 off), how
@@ -2498,11 +2034,7 @@ impl Engine {
         // Condensed or thickened slime may break away (11-15: the CPU's
         // `roam_of`; until then only condensed, and with thickening alone the
         // CPU marked breakaways the GPU never made).
-        let roam = if condense > 0 || thick > 0 {
-            s.roam.min(crate::mould::big::RIPE)
-        } else {
-            0
-        };
+        let roam = if condense > 0 || thick > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));
@@ -2511,11 +2043,7 @@ impl Engine {
         b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
-        b.extend(u32_bytes(&[
-            s.surge_every,
-            s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16,
-            s.surge_at,
-        ]));
+        b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
         b.extend(f32_bytes(&[s.surge_haste]));
         assert_eq!(b.len(), SPRAY_AT, "Params rows before the spray row moved");
         b.extend(u32_bytes(&self.spray_row()));
@@ -2594,14 +2122,7 @@ impl Engine {
     /// Records a frame: `ticks` ticks, then the drawing. With `stamps`
     /// (and at least one tick), GPU timestamps at the first tick's start
     /// (0), the last tick's end (1) and the drawing's end (2).
-    pub fn record(
-        &mut self,
-        shared: &Shared,
-        enc: &mut wgpu::CommandEncoder,
-        ticks: u32,
-        soft: bool,
-        stamps: Option<&wgpu::QuerySet>,
-    ) {
+    pub fn record(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, soft: bool, stamps: Option<&wgpu::QuerySet>) {
         self.record_share(shared, enc, ticks, (true, true), soft, stamps);
     }
 
@@ -2611,15 +2132,7 @@ impl Engine {
     /// and the last closed, runs the same passes in the same order as
     /// `record` (bar the drawing, which every share ends with); stamps as
     /// `record`'s.
-    pub fn record_share(
-        &mut self,
-        shared: &Shared,
-        enc: &mut wgpu::CommandEncoder,
-        ticks: u32,
-        (open, close): (bool, bool),
-        soft: bool,
-        stamps: Option<&wgpu::QuerySet>,
-    ) {
+    pub fn record_share(&mut self, shared: &Shared, enc: &mut wgpu::CommandEncoder, ticks: u32, (open, close): (bool, bool), soft: bool, stamps: Option<&wgpu::QuerySet>) {
         let stamps = if ticks > 0 { stamps } else { None };
         let (passes, ticked) = self.frame_passes(ticks, soft, open, close);
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
@@ -2630,17 +2143,8 @@ impl Engine {
             } else {
                 (p == DRAW).then_some(2)
             };
-            let writes = stamps.and_then(|qs| {
-                (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites {
-                    query_set: qs,
-                    beginning_of_pass_write_index: begin,
-                    end_of_pass_write_index: end,
-                })
-            });
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: None,
-                timestamp_writes: writes,
-            });
+            let writes = stamps.and_then(|qs| (begin.is_some() || end.is_some()).then_some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin, end_of_pass_write_index: end }));
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: writes });
             pass.set_pipeline(&pipes[p]);
             pass.set_bind_group(0, &self.groups[side], &[]);
             pass.dispatch_workgroups(groups, 1, 1);
@@ -2663,13 +2167,7 @@ impl Engine {
     /// ticks' passes are in it. Moves `done` on by `ticks`; `open` takes
     /// the squad's frame and its start, `close` its end (a frame in
     /// shares, `record_share`).
-    fn frame_passes(
-        &mut self,
-        ticks: u32,
-        soft: bool,
-        open: bool,
-        close: bool,
-    ) -> (Vec<(usize, u32, usize)>, std::ops::Range<usize>) {
+    fn frame_passes(&mut self, ticks: u32, soft: bool, open: bool, close: bool) -> (Vec<(usize, u32, usize)>, std::ops::Range<usize>) {
         let (nunits, nshots, _) = self.squad;
         if open {
             self.squad_on = std::mem::take(&mut self.squad_due);
@@ -2686,17 +2184,10 @@ impl Engine {
                 if self.ntend > 0 {
                     out.push((TEND, 1, s));
                 }
-                out.extend([
-                    (OWNCLEAR, self.cells.div_ceil(256), s),
-                    (OWNCOUNT, self.n.div_ceil(256), s),
-                ]);
+                out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
             if nshots > 0 {
-                out.extend([
-                    (SHOTS, nshots.div_ceil(256), s),
-                    (STRIKE, self.n.div_ceil(256), s),
-                    (CUT, nshots, s),
-                ]);
+                out.extend([(SHOTS, nshots.div_ceil(256), s), (STRIKE, self.n.div_ceil(256), s), (CUT, nshots, s)]);
                 if self.alarmed {
                     out.push((SHOUT, 1, s));
                 }
@@ -2717,10 +2208,7 @@ impl Engine {
         let s = side(self.done);
         if close && due && nunits > 0 {
             if self.garden {
-                out.extend([
-                    (OWNCLEAR, self.cells.div_ceil(256), s),
-                    (OWNCOUNT, self.n.div_ceil(256), s),
-                ]);
+                out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
             // The condensed walkers a cell, which touch as two (`condense`).
             if self.condenses {
@@ -2867,8 +2355,7 @@ impl Engine {
             for &(x, y, r, share) in chunk {
                 w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits(), share.to_bits()]);
             }
-            self.queue
-                .write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
+            self.queue.write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
             self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
         }
         // Kills mark the dead as the CPU's do (its kill makes `life`).
@@ -2885,13 +2372,7 @@ impl Engine {
         let b = read_back(&self.device, &self.queue, &self.news);
         let c = self.cells as usize;
         let at = self.plant_at as usize + 4 * PLANT_HEAD;
-        let word = |blk: usize, i: usize| {
-            u32::from_le_bytes(
-                b[at + 4 * (blk * c + i)..at + 4 * (blk * c + i) + 4]
-                    .try_into()
-                    .unwrap(),
-            )
-        };
+        let word = |blk: usize, i: usize| u32::from_le_bytes(b[at + 4 * (blk * c + i)..at + 4 * (blk * c + i) + 4].try_into().unwrap());
         let f = |blk: usize| (0..c).map(|i| f32::from_bits(word(blk, i))).collect::<Vec<f32>>();
         (f(2), (0..c).map(|i| word(1, i) as u8).collect(), f(4), f(6))
     }
@@ -2912,15 +2393,7 @@ impl Engine {
     /// pass, by name. It runs the tick, so the dish moves on by one.
     pub fn profile(&mut self, shared: &Shared, soft: bool) -> Vec<(&'static str, f64)> {
         let tick = self.tick_passes();
-        let passes: Vec<(usize, u32, usize)> = tick
-            .iter()
-            .map(|&(p, g)| (p, g, (self.done % 2) as usize))
-            .chain(
-                self.draw_passes(soft)
-                    .into_iter()
-                    .map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize)),
-            )
-            .collect();
+        let passes: Vec<(usize, u32, usize)> = tick.iter().map(|&(p, g)| (p, g, (self.done % 2) as usize)).chain(self.draw_passes(soft).into_iter().map(|(p, g)| (p, g, ((self.done + 1) % 2) as usize))).collect();
         self.done += 1;
         self.time_passes(shared, &passes)
     }
@@ -2930,56 +2403,28 @@ impl Engine {
     fn time_passes(&self, shared: &Shared, passes: &[(usize, u32, usize)]) -> Vec<(&'static str, f64)> {
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let count = 2 * passes.len() as u32;
-        let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor {
-            label: Some("profile"),
-            ty: wgpu::QueryType::Timestamp,
-            count,
-        });
-        let resolve = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("profile"),
-            size: count as u64 * 8,
-            usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-        let mut enc = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("profile"), ty: wgpu::QueryType::Timestamp, count });
+        let resolve = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("profile"), size: count as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         for (q, &(p, groups, side)) in passes.iter().enumerate() {
-            let writes = wgpu::ComputePassTimestampWrites {
-                query_set: &qs,
-                beginning_of_pass_write_index: Some(2 * q as u32),
-                end_of_pass_write_index: Some(2 * q as u32 + 1),
-            };
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: None,
-                timestamp_writes: Some(writes),
-            });
+            let writes = wgpu::ComputePassTimestampWrites { query_set: &qs, beginning_of_pass_write_index: Some(2 * q as u32), end_of_pass_write_index: Some(2 * q as u32 + 1) };
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: Some(writes) });
             pass.set_pipeline(&pipes[p]);
             pass.set_bind_group(0, &self.groups[side], &[]);
             pass.dispatch_workgroups(groups, 1, 1);
         }
         enc.resolve_query_set(&qs, 0..count, &resolve, 0);
         self.queue.submit([enc.finish()]);
-        let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve)
-            .chunks_exact(8)
-            .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
-            .collect();
+        let t: Vec<u64> = read_back(&self.device, &self.queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
         let period = self.queue.get_timestamp_period() as f64;
-        passes
-            .iter()
-            .enumerate()
-            .map(|(q, &(p, ..))| (PASSES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6))
-            .collect()
+        passes.iter().enumerate().map(|(q, &(p, ..))| (PASSES[p], t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period / 1e6)).collect()
     }
 
     /// Reads the dish back into the CPU dish and measures it.
     pub fn measure(&mut self) -> crate::mould::big::BigMeasure {
         let side = (self.done % 2) as usize;
         self.dish.trail = floats(&read_back(&self.device, &self.queue, &self.trail[side]));
-        self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers))
-            .chunks_exact(4)
-            .map(|c| (c[0], c[1], c[2]))
-            .collect();
+        self.dish.walkers = floats(&read_back(&self.device, &self.queue, &self.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
         if self.grows {
             let e = floats(&read_back(&self.device, &self.queue, &self.energy));
             self.dish.alive = e.iter().take(self.n as usize).map(|&v| v >= 0.0).collect();
@@ -3023,30 +2468,18 @@ impl Engine {
     /// a dead slot holds -1) and without the struck dead (life cycle).
     /// With both off, every walker.
     pub fn alive(&self) -> usize {
-        let dead = if self.cycles {
-            self.life_of().0.iter().filter(|&&l| l == LIFE_DEAD).count()
-        } else {
-            0
-        };
+        let dead = if self.cycles { self.life_of().0.iter().filter(|&&l| l == LIFE_DEAD).count() } else { 0 };
         if !self.grows {
             return self.n as usize - dead;
         }
         // With growth a struck walker's slot is empty, so not counted twice.
-        floats(&read_back(&self.device, &self.queue, &self.energy))
-            .iter()
-            .take(self.n as usize)
-            .filter(|&&v| v >= 0.0)
-            .count()
+        floats(&read_back(&self.device, &self.queue, &self.energy)).iter().take(self.n as usize).filter(|&&v| v >= 0.0).count()
     }
 
     /// The share of walkers sick now (counter over `immune`).
     pub fn sick_share(&self, s: &Settings) -> f64 {
         let c = read_back(&self.device, &self.queue, &self.sick);
-        let sick = c
-            .chunks_exact(4)
-            .take(self.n as usize)
-            .filter(|b| u32::from_le_bytes((*b).try_into().unwrap()) > s.immune)
-            .count();
+        let sick = c.chunks_exact(4).take(self.n as usize).filter(|b| u32::from_le_bytes((*b).try_into().unwrap()) > s.immune).count();
         sick as f64 / self.n.max(1) as f64
     }
 
@@ -3062,33 +2495,16 @@ impl Engine {
         let k = self.dish.p.scale as f32;
         let (w, h) = (self.dish.w, self.dish.h);
         let (ax, ay, bx, by, r) = (ax * k, ay * k, bx * k, by * k, (width * k / 2.0).max(0.5));
-        let (x0, x1) = (
-            (ax.min(bx) - r).floor().max(0.0) as usize,
-            ((ax.max(bx) + r).ceil() as usize).min(w - 1),
-        );
-        let (y0, y1) = (
-            (ay.min(by) - r).floor().max(0.0) as usize,
-            ((ay.max(by) + r).ceil() as usize).min(h - 1),
-        );
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
         if x1 < x0 || y1 < y0 {
             return;
         }
         let (bw, bh) = ((x1 - x0 + 1) as u32, (y1 - y0 + 1) as u32);
-        let hp = if self.dish.p.wall_hp > 0.0 {
-            self.dish.p.wall_hp
-        } else {
-            f32::INFINITY
-        };
+        let hp = if self.dish.p.wall_hp > 0.0 { self.dish.p.wall_hp } else { f32::INFINITY };
         let reach = (16.0 * k).ceil() as u32;
         let mut wb = f32_bytes(&[ax, ay, bx, by, r, hp]);
-        wb.extend(u32_bytes(&[
-            x0 as u32,
-            y0 as u32,
-            bw,
-            bh,
-            (s.wall_scent > 0.0) as u32,
-            reach,
-        ]));
+        wb.extend(u32_bytes(&[x0 as u32, y0 as u32, bw, bh, (s.wall_scent > 0.0) as u32, reach]));
         self.queue.write_buffer(&self.wb, 0, &wb);
         self.walled = true;
         self.write_params(s, Hand::default(), 0);
@@ -3096,14 +2512,9 @@ impl Engine {
         let group = &self.groups[(self.done % 2) as usize];
         let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
         let submit = |passes: &[(usize, u32)]| {
-            let mut enc = self
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("wall") });
+            let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("wall") });
             for &(p, groups) in passes {
-                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                    label: None,
-                    timestamp_writes: None,
-                });
+                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
                 pass.set_pipeline(&pipes[p]);
                 pass.set_bind_group(0, group, &[]);
                 pass.dispatch_workgroups(groups, 1, 1);
@@ -3127,14 +2538,9 @@ impl Engine {
     pub fn run(&self, shared: &Shared, passes: &[(usize, u32)]) {
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
         let group = &self.groups[(self.done % 2) as usize];
-        let mut enc = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("run") });
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("run") });
         for &(p, groups) in passes {
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: None,
-                timestamp_writes: None,
-            });
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes: None });
             pass.set_pipeline(&pipes[p]);
             pass.set_bind_group(0, group, &[]);
             pass.dispatch_workgroups(groups, 1, 1);
@@ -3166,14 +2572,9 @@ impl Engine {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(
-            &self.params,
-            STRIKE_AT as u64,
-            &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]),
-        );
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
         let before = self.gas_word(2);
-        self.queue
-            .write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
         self.run(shared, &[(GAS, self.n.div_ceil(256))]);
         if steps > 0 {
             self.gas_until = self.gas_until.max(self.done + steps as u64);
@@ -3192,11 +2593,7 @@ impl Engine {
     pub fn lay_scent(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, (keep, amount): (f32, f32)) {
         let k = self.dish.p.scale as f32;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(
-            &self.params,
-            STRIKE_AT as u64,
-            &f32_bytes(&[x * k, y * k, r * k, amount, keep, 0.0, 0.0, 0.0]),
-        );
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, amount, keep, 0.0, 0.0, 0.0]));
         self.run(shared, &[(BAITLAY, self.cells.div_ceil(256))]);
     }
 
@@ -3205,16 +2602,8 @@ impl Engine {
         self.cycles = true;
         self.clouded = true;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(
-            &self.params,
-            STRIKE_AT as u64,
-            &f32_bytes(&[x * k, y * k, r * k, dose, 0.0, 0.0, 0.0, 0.0]),
-        );
-        self.queue.write_buffer(
-            &self.news,
-            self.gas_at + 16,
-            &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]),
-        );
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, dose, 0.0, 0.0, 0.0, 0.0]));
+        self.queue.write_buffer(&self.news, self.gas_at + 16, &u32_bytes(&[s.gas_linger as u32, s.gas_sleep.to_bits()]));
         self.run(shared, &[(GASLAY, self.cells.div_ceil(256))]);
         // How long `calm` must keep looking: the cloud's top can only fall
         // by `gas_keep` a step once laid (a 3x3 mean never raises it), so
@@ -3225,11 +2614,7 @@ impl Engine {
         self.cloud_top = self.cloud_top * keep.powi(since.min(1 << 20)) + dose.max(0.0);
         self.cloud_at = self.done;
         if self.cloud_until != u64::MAX {
-            let left = if self.cloud_top <= s.gas_sleep || keep <= 0.0 {
-                0
-            } else {
-                ((s.gas_sleep / self.cloud_top).ln() / keep.ln()).ceil() as u64 + 1
-            };
+            let left = if self.cloud_top <= s.gas_sleep || keep <= 0.0 { 0 } else { ((s.gas_sleep / self.cloud_top).ln() / keep.ln()).ceil() as u64 + 1 };
             self.cloud_until = self.cloud_until.max(self.done + left + s.gas_linger as u64 + 1);
         }
     }
@@ -3256,20 +2641,12 @@ impl Engine {
         // Word 2 (walkers gassed so far) is kept.
         // Words 2-7 (walkers gassed so far, the flung count, the cloud's
         // linger and sleep level) are kept.
-        self.queue
-            .write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
-        self.queue.write_buffer(
-            &self.news,
-            self.gas_at + 4 * GAS_HEAD as u64,
-            &u32_bytes(&words[GAS_HEAD..]),
-        );
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&words[..2]));
+        self.queue.write_buffer(&self.news, self.gas_at + 4 * GAS_HEAD as u64, &u32_bytes(&words[GAS_HEAD..]));
         self.run(shared, &[(CALM, self.n.div_ceil(256))]);
         let calm = self.gas_at + 4 * (GAS_HEAD + 4 * squad::UNITS_MAX) as u64;
         let b = read_back_range(&self.device, &self.queue, &self.news, calm, 4 * n as u64);
-        let mut out: Vec<u32> = b
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect();
+        let mut out: Vec<u32> = b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
         out.resize(at.len(), 0);
         out
     }
@@ -3277,15 +2654,7 @@ impl Engine {
     /// Fine steps of gas left each slot now (the CPU's `gassed`), read back.
     pub fn gassed_of(&self) -> Vec<u16> {
         let b = read_back(&self.device, &self.queue, &self.news);
-        b[self.gas_at as usize + GAS_SLOTS * 4..]
-            .chunks_exact(4)
-            .take(self.n as usize)
-            .map(|c| {
-                u32::from_le_bytes(c.try_into().unwrap())
-                    .saturating_sub(self.done as u32)
-                    .min(u16::MAX as u32) as u16
-            })
-            .collect()
+        b[self.gas_at as usize + GAS_SLOTS * 4..].chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()).saturating_sub(self.done as u32).min(u16::MAX as u32) as u16).collect()
     }
 
     /// A strike that also lays a crater of `steps` fine steps within
@@ -3297,37 +2666,12 @@ impl Engine {
     /// every living walker within `germ_r` dish cells sick (the toolkit's
     /// germ, the CPU's `BigDish::infect`), whatever `r` kills.
     #[allow(clippy::too_many_arguments)]
-    pub fn burst(
-        &mut self,
-        shared: &Shared,
-        s: &Settings,
-        x: f32,
-        y: f32,
-        r: f32,
-        alarm: f32,
-        alarm_r: f32,
-        crater_r: f32,
-        steps: u16,
-        germ_r: f32,
-    ) {
+    pub fn burst(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, alarm: f32, alarm_r: f32, crater_r: f32, steps: u16, germ_r: f32) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         self.scorched |= steps > 0;
         self.write_params(s, Hand::default(), 0);
-        self.queue.write_buffer(
-            &self.params,
-            STRIKE_AT as u64,
-            &f32_bytes(&[
-                x * k,
-                y * k,
-                r * k,
-                alarm,
-                alarm_r * k,
-                crater_r * k,
-                steps as f32,
-                germ_r * k,
-            ]),
-        );
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, alarm, alarm_r * k, crater_r * k, steps as f32, germ_r * k]));
         self.run(shared, &[(HIT, self.cells.div_ceil(256)), (KILL, self.n.div_ceil(256))]);
     }
 
@@ -3341,15 +2685,8 @@ impl Engine {
     /// Each slot's life state and timer (the CPU's `life`, `life_t`), read
     /// back from the `spec` words.
     pub fn life_of(&self) -> (Vec<u8>, Vec<u16>) {
-        let w: Vec<u32> = read_back(&self.device, &self.queue, &self.spec)
-            .chunks_exact(4)
-            .take(self.n as usize)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect();
-        (
-            w.iter().map(|&w| ((w >> 9) & 3) as u8).collect(),
-            w.iter().map(|&w| (w >> 16) as u16).collect(),
-        )
+        let w: Vec<u32> = read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        (w.iter().map(|&w| ((w >> 9) & 3) as u8).collect(), w.iter().map(|&w| (w >> 16) as u16).collect())
     }
 
     /// Each slot's flung mark (the CPU's `flung`, engine.wgsl's `FLUNG`),
@@ -3361,11 +2698,7 @@ impl Engine {
     /// Whether each slot's `spec` word has `bit` (`FLUNG` 0x2000, `DOOM`
     /// 0x4000: the CPU's `flung` and `doomed`), read back.
     fn marked(&self, bit: u32) -> Vec<bool> {
-        read_back(&self.device, &self.queue, &self.spec)
-            .chunks_exact(4)
-            .take(self.n as usize)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()) & bit != 0)
-            .collect()
+        read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()) & bit != 0).collect()
     }
 
     /// The spray row (`SPRAY_AT`): the longest flight, the first speed and
@@ -3376,12 +2709,7 @@ impl Engine {
         let inv = crate::mould::big::spray_inv(self.spray.0 as u16);
         let ticks = self.dish.p.substeps.clamp(1, 255) as u32;
         assert!(self.spray.2 <= 65536, "the spray's share is a fraction of 65,536");
-        [
-            self.spray.0,
-            self.spray.1.to_bits(),
-            inv.to_bits(),
-            ticks | (self.spray.2 << 8),
-        ]
+        [self.spray.0, self.spray.1.to_bits(), inv.to_bits(), ticks | (self.spray.2 << 8)]
     }
 
     /// **An explosion's fling** (the CPU's `BigDish::fling`; dish cells,
@@ -3392,17 +2720,7 @@ impl Engine {
     /// (`squad::Burst::fling_ring`). Switches the life states on. Runs on
     /// its own, between ticks; returns the walkers flung (a read-back).
     #[allow(clippy::too_many_arguments)]
-    pub fn fling(
-        &mut self,
-        shared: &Shared,
-        s: &Settings,
-        x: f32,
-        y: f32,
-        r: f32,
-        rr: f32,
-        steps: u16,
-        inv: f32,
-    ) -> u32 {
+    pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32) -> u32 {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         // So `measure` reads the marks back.
@@ -3411,11 +2729,7 @@ impl Engine {
         }
         self.write_params(s, Hand::default(), 0);
         // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
-        self.queue.write_buffer(
-            &self.params,
-            STRIKE_AT as u64,
-            &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, 0.0, steps as f32, 0.0]),
-        );
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, 0.0, steps as f32, 0.0]));
         let before = self.gas_word(3);
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
         self.gas_word(3).wrapping_sub(before)
@@ -3432,11 +2746,7 @@ impl Engine {
     /// Species `sp`'s trail a cell now, read back (the CPU's
     /// `species_trail[sp]`).
     pub fn species_trail_of(&self, sp: usize) -> Vec<f32> {
-        let g = floats(&read_back(
-            &self.device,
-            &self.queue,
-            &self.species[(self.done % 2) as usize],
-        ));
+        let g = floats(&read_back(&self.device, &self.queue, &self.species[(self.done % 2) as usize]));
         let c = self.cells as usize;
         g[sp * c..(sp + 1) * c].to_vec()
     }
@@ -3448,29 +2758,17 @@ impl Engine {
 
     /// The gas cloud now (the CPU's `gas_cloud`), read back.
     pub fn gas_cloud_of(&self) -> Vec<f32> {
-        let g = floats(&read_back(
-            &self.device,
-            &self.queue,
-            &self.germ[(self.done % 2) as usize],
-        ));
+        let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[2 * self.cells as usize..3 * self.cells as usize].to_vec()
     }
 
     /// The food scent now (the CPU's `scent`), read back.
     pub fn scent_of(&self) -> Vec<f32> {
-        floats(&read_back(
-            &self.device,
-            &self.queue,
-            &self.scent[(self.done % 2) as usize],
-        ))
+        floats(&read_back(&self.device, &self.queue, &self.scent[(self.done % 2) as usize]))
     }
 
     pub fn alarm_of(&self) -> Vec<f32> {
-        let g = floats(&read_back(
-            &self.device,
-            &self.queue,
-            &self.germ[(self.done % 2) as usize],
-        ));
+        let g = floats(&read_back(&self.device, &self.queue, &self.germ[(self.done % 2) as usize]));
         g[self.cells as usize..2 * self.cells as usize].to_vec()
     }
 
@@ -3494,10 +2792,7 @@ impl Engine {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
         let pipes = if self.outside { &shared.pipes } else { &shared.plain };
-        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-            label: Some("count"),
-            timestamp_writes: None,
-        });
+        let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("count"), timestamp_writes: None });
         pass.set_pipeline(&pipes[COUNT]);
         pass.set_bind_group(0, &self.groups[(self.done % 2) as usize], &[]);
         let threads = if self.grid > 0 { self.n.max(self.cells) } else { self.n };
@@ -3523,10 +2818,7 @@ impl Engine {
     /// growth on (a struck walker's slot is emptied). `squad_out` reads the
     /// results back.
     pub fn set_squad(&mut self, f: &squad::Frame) {
-        assert!(
-            f.shots.is_empty() || self.grows,
-            "shots kill by emptying slots: growth must be on"
-        );
+        assert!(f.shots.is_empty() || self.grows, "shots kill by emptying slots: growth must be on");
         let (words, nunits, nshots) = squad::pack(self.dish.w, self.dish.h, f);
         self.queue.write_buffer(&self.sq, 0, &u32_bytes(&words));
         // The gardeners' entries (`GpuWorld::tend` set them; taken here, so
@@ -3535,37 +2827,20 @@ impl Engine {
         assert!(tends.len() <= squad::TEND_MAX, "{} tend entries", tends.len());
         if !tends.is_empty() {
             let flat: Vec<u32> = tends.iter().flatten().copied().collect();
-            self.queue
-                .write_buffer(&self.sq, (squad::TEND * 4) as u64, &u32_bytes(&flat));
+            self.queue.write_buffer(&self.sq, (squad::TEND * 4) as u64, &u32_bytes(&flat));
         }
         self.ntend = tends.len() as u32;
         self.queue.write_buffer(&self.kills, 0, &[0u8; squad::SHOTS_MAX * 4]);
         self.squad = (nunits, nshots, f.slime);
         self.squad_due = true;
-        self.queue.write_buffer(
-            &self.params,
-            SQUAD_AT as u64,
-            &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]),
-        );
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64, &u32_bytes(&[nunits, nshots, f.slime.to_bits(), squad::SHOT_ALARM.to_bits()]));
         // The sink squared, as `squad::sink_r2` multiplies it (0 off).
         self.shot_sink = if f.sink > 0.0 { f.sink * f.sink } else { 0.0 };
-        self.queue.write_buffer(
-            &self.params,
-            SQUAD_AT as u64 + 28,
-            &u32_bytes(&[self.shot_sink.to_bits()]),
-        );
+        self.queue.write_buffer(&self.params, SQUAD_AT as u64 + 28, &u32_bytes(&[self.shot_sink.to_bits()]));
         // The spray (gun look, 2026-11-15). A droplet is a flung spore, so
         // the life states go on with the first frame that has shots, as
         // `squad::shots` turns the CPU's on.
-        self.spray = if f.spray > 0 {
-            (
-                f.spray as u32,
-                f.spray_speed,
-                crate::mould::big::spray_share_q(f.spray_share),
-            )
-        } else {
-            (0, 0.0, 65536)
-        };
+        self.spray = if f.spray > 0 { (f.spray as u32, f.spray_speed, crate::mould::big::spray_share_q(f.spray_share)) } else { (0, 0.0, 65536) };
         if self.spray.0 > 0 && nshots > 0 {
             self.cycles = true;
             if self.dish.flung.is_empty() {
@@ -3575,15 +2850,10 @@ impl Engine {
                 self.dish.doomed = vec![false; self.n as usize];
             }
         }
-        self.queue
-            .write_buffer(&self.params, SPRAY_AT as u64, &u32_bytes(&self.spray_row()));
+        self.queue.write_buffer(&self.params, SPRAY_AT as u64, &u32_bytes(&self.spray_row()));
         self.crater_steps = f.crater as u32;
         self.scorched |= f.crater > 0;
-        self.queue.write_buffer(
-            &self.params,
-            CRATER_AT as u64 + 8,
-            &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]),
-        );
+        self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]));
     }
 
     /// The last squad frame's results (`set_squad`), read back.
@@ -3595,22 +2865,9 @@ impl Engine {
     }
 
     pub fn squad_out(&self) -> squad::FrameOut {
-        let words: Vec<u32> = read_back(&self.device, &self.queue, &self.sq)
-            .chunks_exact(4)
-            .take(squad::PATH)
-            .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
-            .collect();
-        let kills: Vec<u32> = read_back(&self.device, &self.queue, &self.kills)
-            .chunks_exact(4)
-            .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
-            .collect();
-        squad::unpack(
-            self.dish.w,
-            &words,
-            &kills,
-            self.squad.0 as usize,
-            self.squad.1 as usize,
-        )
+        let words: Vec<u32> = read_back(&self.device, &self.queue, &self.sq).chunks_exact(4).take(squad::PATH).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        let kills: Vec<u32> = read_back(&self.device, &self.queue, &self.kills).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+        squad::unpack(self.dish.w, &words, &kills, self.squad.0 as usize, self.squad.1 as usize)
     }
 
     /// The Larder World read back: each pile's charge and cells still
@@ -3619,9 +2876,7 @@ impl Engine {
     pub fn world_counts(&self) -> (Vec<(f32, u32)>, u32, u32) {
         let piles = read_back(&self.device, &self.queue, &self.piles);
         let word = |b: &[u8], i: usize| u32::from_le_bytes(b[4 * i..4 * i + 4].try_into().unwrap());
-        let sums = (0..self.npiles as usize)
-            .map(|p| (f32::from_bits(word(&piles, p * 8 + 4)), word(&piles, p * 8 + 2)))
-            .collect();
+        let sums = (0..self.npiles as usize).map(|p| (f32::from_bits(word(&piles, p * 8 + 4)), word(&piles, p * 8 + 2))).collect();
         let st = read_back(&self.device, &self.queue, &self.wstat);
         (sums, word(&st, 0), word(&st, 1))
     }
@@ -3648,12 +2903,7 @@ pub fn occupancy(d: &BigDish) -> Vec<u32> {
 pub fn spec_words(d: &BigDish) -> Vec<u32> {
     (0..d.walkers.len())
         .map(|k| {
-            d.spec.get(k).map_or(0, |&c| c as u32)
-                | d.kind.get(k).map_or(0, |&c| (c as u32) << 8)
-                | d.life.get(k).map_or(0, |&c| (c as u32) << 9)
-                | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16)
-                | d.flung.get(k).map_or(0, |&f| (f as u32) << 13)
-                | d.doomed.get(k).map_or(0, |&f| (f as u32) << 14)
+            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16) | d.flung.get(k).map_or(0, |&f| (f as u32) << 13) | d.doomed.get(k).map_or(0, |&f| (f as u32) << 14)
         })
         .collect()
 }
@@ -3711,10 +2961,7 @@ impl Engine {
     pub fn dense_of(&self) -> Vec<u32> {
         let b = read_back(&self.device, &self.queue, &self.news);
         let at = self.dense_at as usize + 4 * DENSE_HEAD;
-        b[at..at + 4 * self.n as usize]
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect()
+        b[at..at + 4 * self.n as usize].chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
     }
 }
 
@@ -3730,30 +2977,12 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     }
     let p = &d.p;
     let k = p.plant_every.max(1) as f32;
-    let head = [
-        p.plant_grow * k,
-        p.plant_spread * k,
-        p.plant_wet,
-        (p.plant_scorch * k).min(1.0),
-        p.fire_heat,
-        p.fire_eat,
-        p.fire_spread,
-        p.fire_fuel,
-        p.fire_damp,
-        p.fire_kill,
-        p.char_gain,
-        p.char_keep,
-        p.char_clear,
-        p.fire_out,
-        p.fire_smoulder,
-        p.fire_cool,
-    ];
+    let head = [p.plant_grow * k, p.plant_spread * k, p.plant_wet, (p.plant_scorch * k).min(1.0), p.fire_heat, p.fire_eat, p.fire_spread, p.fire_fuel, p.fire_damp, p.fire_kill, p.char_gain, p.char_keep, p.char_clear, p.fire_out, p.fire_smoulder, p.fire_cool];
     for (o, v) in head.iter().enumerate() {
         w[o] = v.to_bits();
     }
     for (q, kd) in p.plant_kinds.iter().enumerate() {
-        (w[16 + q], w[20 + q], w[24 + q], w[28 + q]) =
-            (kd.cap.to_bits(), kd.pace.to_bits(), kd.dry.to_bits(), kd.burn.to_bits());
+        (w[16 + q], w[20 + q], w[24 + q], w[28 + q]) = (kd.cap.to_bits(), kd.pace.to_bits(), kd.dry.to_bits(), kd.burn.to_bits());
     }
     // Word 45: fire steps run (`BigDish::fire_steps`), which keys each
     // cell's chance; the `firekill` pass counts it on.
@@ -3768,13 +2997,7 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     w.extend(d.plant_kind.iter().map(|&k| k as u32));
     w.extend(d.plant.iter().map(|v| v.to_bits()));
     w.extend(std::iter::repeat_n(0u32, c));
-    let fire = |v: &[f32]| {
-        if v.is_empty() {
-            vec![0u32; c]
-        } else {
-            v.iter().map(|x| x.to_bits()).collect()
-        }
-    };
+    let fire = |v: &[f32]| if v.is_empty() { vec![0u32; c] } else { v.iter().map(|x| x.to_bits()).collect() };
     w.extend(fire(&d.fire));
     w.extend(std::iter::repeat_n(0u32, c));
     w.extend(fire(&d.char));
@@ -3787,11 +3010,7 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
 }
 
 pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {
-    let mut words: Vec<u32> = if d.news.len() == d.walkers.len() {
-        d.news.iter().map(|&t| t as u32).collect()
-    } else {
-        vec![d.steps as u32 + 1; d.walkers.len()]
-    };
+    let mut words: Vec<u32> = if d.news.len() == d.walkers.len() { d.news.iter().map(|&t| t as u32).collect() } else { vec![d.steps as u32 + 1; d.walkers.len()] };
     words.resize(d.walkers.len() + 3 * cells, 0);
     words
 }
@@ -3803,21 +3022,14 @@ pub fn news_words(d: &BigDish, cells: usize) -> Vec<u32> {
 pub fn wither_clock(s: &Settings) -> u32 {
     let reach = s.wither_reach.max(1) as u32;
     // Bits 25-31: a cut-off part's lean (`panic_lean`, 2026-11-13).
-    s.wither_lag.min(0xFFFF)
-        | (s.wither_every.clamp(1, 255) << 16)
-        | ((reach.is_multiple_of(2) as u32) << 24)
-        | (s.panic_lean.min(crate::mould::big::PANIC_LEAN_MAX) << 25)
+    s.wither_lag.min(0xFFFF) | (s.wither_every.clamp(1, 255) << 16) | ((reach.is_multiple_of(2) as u32) << 24) | (s.panic_lean.min(crate::mould::big::PANIC_LEAN_MAX) << 25)
 }
 
 pub fn energies(d: &BigDish) -> Vec<f32> {
     if d.energy.is_empty() {
         return vec![0.0; d.walkers.len()];
     }
-    d.energy
-        .iter()
-        .zip(&d.alive)
-        .map(|(&e, &a)| if a { e } else { -1.0 })
-        .collect()
+    d.energy.iter().zip(&d.alive).map(|(&e, &a)| if a { e } else { -1.0 }).collect()
 }
 
 /// The grass a CPU dish starts the GPU's with: its own, or with none full
@@ -3855,9 +3067,7 @@ pub fn ground_bits(d: &BigDish) -> u32 {
     let wet = d.wet.iter().any(|&v| v);
     let rock = d.rock.iter().any(|&v| v);
     let soil = d.soil.iter().any(|&k| k != 0);
-    (if wet { WORLD_WETS } else { 0 })
-        | (if wet || rock { WORLD_TERRAIN } else { 0 })
-        | (if soil { WORLD_SOIL } else { 0 })
+    (if wet { WORLD_WETS } else { 0 }) | (if wet || rock { WORLD_TERRAIN } else { 0 }) | (if soil { WORLD_SOIL } else { 0 })
 }
 
 pub fn world_data(d: &BigDish) -> WorldData {
@@ -3867,11 +3077,7 @@ pub fn world_data(d: &BigDish) -> WorldData {
     // `scent_wall` is a cell's.
     let ground = (0..cells)
         .map(|i| {
-            let mut g = if d.pile_of.is_empty() {
-                0
-            } else {
-                d.pile_of[i] as u32 & GROUND_PILE
-            };
+            let mut g = if d.pile_of.is_empty() { 0 } else { d.pile_of[i] as u32 & GROUND_PILE };
             if on(&d.wet, i) {
                 g |= GROUND_WET;
             }
@@ -3890,32 +3096,14 @@ pub fn world_data(d: &BigDish) -> WorldData {
             g
         })
         .collect();
-    let charge = if d.charge.is_empty() {
-        vec![0.0; cells]
-    } else {
-        d.charge.clone()
-    };
+    let charge = if d.charge.is_empty() { vec![0.0; cells] } else { d.charge.clone() };
     // A wall built with `wall_hp` 0 never breaks: infinite health.
-    let health = (0..cells)
-        .map(|i| {
-            if !on(&d.wall, i) {
-                0.0
-            } else if d.wall_health.is_empty() {
-                f32::INFINITY
-            } else {
-                d.wall_health[i]
-            }
-        })
-        .collect();
+    let health = (0..cells).map(|i| if !on(&d.wall, i) { 0.0 } else if d.wall_health.is_empty() { f32::INFINITY } else { d.wall_health[i] }).collect();
     let mut piles = vec![0u32; MAX_PILES * 8];
     for p in 0..MAX_PILES {
         piles[p * 8 + 5] = 1f32.to_bits();
     }
-    let npiles = if d.charge.is_empty() {
-        0
-    } else {
-        d.piles.len().min(MAX_PILES)
-    };
+    let npiles = if d.charge.is_empty() { 0 } else { d.piles.len().min(MAX_PILES) };
     // Each pile's run of the list: the cells still in it bound it (one a
     // wall took out of its pile stays listed, skipped by its 0).
     let (mut start, mut end) = (vec![u32::MAX; MAX_PILES], vec![0u32; MAX_PILES]);
@@ -3937,14 +3125,7 @@ pub fn world_data(d: &BigDish) -> WorldData {
         piles[p * 8 + 5] = d.crystal_left(p).to_bits();
         piles[p * 8 + 6] = d.pile_fill[p].to_bits();
     }
-    WorldData {
-        ground,
-        charge,
-        health,
-        pcell: d.pile_cells.clone(),
-        piles,
-        npiles: npiles as u32,
-    }
+    WorldData { ground, charge, health, pcell: d.pile_cells.clone(), piles, npiles: npiles as u32 }
 }
 
 thread_local! {
@@ -3988,12 +3169,7 @@ pub fn biggest_buffer() -> u64 {
 pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer) -> Vec<u8> {
     READS.with(|r| r.set(r.get() + 1));
     let size = src.size();
-    let staging = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("read back"),
-        size,
-        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
+    let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     enc.copy_buffer_to_buffer(src, 0, &staging, 0, size);
     queue.submit([enc.finish()]);
@@ -4013,12 +3189,7 @@ pub fn read_back(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer)
 pub fn read_back_range(device: &wgpu::Device, queue: &wgpu::Queue, src: &wgpu::Buffer, at: u64, len: u64) -> Vec<u8> {
     READS.with(|r| r.set(r.get() + 1));
     let size = len.max(4).next_multiple_of(4);
-    let staging = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("read back"),
-        size,
-        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
+    let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     enc.copy_buffer_to_buffer(src, at, &staging, 0, size);
     queue.submit([enc.finish()]);
@@ -4077,100 +3248,39 @@ impl Gather {
             None => Self::pipeline(device),
         };
         let bytes = cells.len() as u64 * 4;
-        let idx = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("gather cells"),
-            size: bytes,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let idx = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gather cells"), size: bytes, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         queue.write_buffer(&idx, 0, &u32_bytes(cells));
-        let out = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("gathered"),
-            size: 2 * bytes,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-        let staging = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("gathered read"),
-            size: 2 * bytes,
-            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let out = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered"), size: 2 * bytes, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let staging = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gathered read"), size: 2 * bytes, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         note_bytes(3 * bytes);
-        Some(Gather {
-            pipe,
-            bgl,
-            idx,
-            out,
-            staging,
-            n: cells.len() as u32,
-        })
+        Some(Gather { pipe, bgl, idx, out, staging, n: cells.len() as u32 })
     }
 
     fn pipeline(device: &wgpu::Device) -> (wgpu::ComputePipeline, wgpu::BindGroupLayout) {
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("gather"),
-            source: wgpu::ShaderSource::Wgsl(GATHER.into()),
-        });
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("gather"), source: wgpu::ShaderSource::Wgsl(GATHER.into()) });
         let entry = |binding: u32, read_only: bool| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Storage { read_only },
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
+            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only }, has_dynamic_offset: false, min_binding_size: None },
             count: None,
         };
-        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("gather"),
-            entries: &[entry(0, true), entry(1, true), entry(2, true), entry(3, false)],
-        });
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("gather"),
-            bind_group_layouts: &[Some(&bgl)],
-            immediate_size: 0,
-        });
-        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("gather"),
-            layout: Some(&layout),
-            module: &module,
-            entry_point: Some("gather"),
-            compilation_options: Default::default(),
-            cache: None,
-        });
+        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("gather"), entries: &[entry(0, true), entry(1, true), entry(2, true), entry(3, false)] });
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("gather"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("gather"), layout: Some(&layout), module: &module, entry_point: Some("gather"), compilation_options: Default::default(), cache: None });
         (pipe, bgl)
     }
 
     /// `a`'s and `b`'s words at the cells, in the cells' order, waited for.
-    pub fn read(
-        &self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        a: &wgpu::Buffer,
-        b: &wgpu::Buffer,
-    ) -> (Vec<u8>, Vec<u8>) {
+    pub fn read(&self, device: &wgpu::Device, queue: &wgpu::Queue, a: &wgpu::Buffer, b: &wgpu::Buffer) -> (Vec<u8>, Vec<u8>) {
         READS.with(|r| r.set(r.get() + 1));
         let group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("gather"),
             layout: &self.bgl,
             entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: self.idx.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: a.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: b.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: self.out.as_entire_binding(),
-                },
+                wgpu::BindGroupEntry { binding: 0, resource: self.idx.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: a.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: b.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 3, resource: self.out.as_entire_binding() },
             ],
         });
         // Workgroups in rows of at most 65,535 (a dispatch's limit).
@@ -4178,10 +3288,7 @@ impl Gather {
         let (gx, gy) = (groups.min(65_535), groups.div_ceil(65_535));
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("gather") });
         {
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("gather"),
-                timestamp_writes: None,
-            });
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("gather"), timestamp_writes: None });
             pass.set_pipeline(&self.pipe);
             pass.set_bind_group(0, &group, &[]);
             pass.dispatch_workgroups(gx, gy, 1);
@@ -4227,36 +3334,10 @@ impl Stamps {
     /// With `view`, a fourth stamp (index 3) the view pass writes.
     pub fn with_view(device: &wgpu::Device, queue: &wgpu::Queue, view: bool) -> Self {
         let n = 3 + view as u32;
-        let qs = device.create_query_set(&wgpu::QuerySetDescriptor {
-            label: Some("frame"),
-            ty: wgpu::QueryType::Timestamp,
-            count: n,
-        });
-        let resolve = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("resolve"),
-            size: n as u64 * 8,
-            usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-        let read = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("stamps"),
-            size: n as u64 * 8,
-            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        Stamps {
-            qs,
-            resolve,
-            read,
-            ready: Arc::new(AtomicBool::new(false)),
-            busy: false,
-            period: queue.get_timestamp_period() as f64,
-            sim_ms: 0.0,
-            draw_ms: 0.0,
-            view_ms: 0.0,
-            all: Vec::new(),
-            view,
-        }
+        let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("frame"), ty: wgpu::QueryType::Timestamp, count: n });
+        let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: n as u64 * 8, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("stamps"), size: n as u64 * 8, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        Stamps { qs, resolve, read, ready: Arc::new(AtomicBool::new(false)), busy: false, period: queue.get_timestamp_period() as f64, sim_ms: 0.0, draw_ms: 0.0, view_ms: 0.0, all: Vec::new(), view }
     }
 
     /// The query set to write this frame, if the last reading is in.
@@ -4286,12 +3367,7 @@ impl Stamps {
         if !self.busy || !self.ready.load(Ordering::Acquire) {
             return;
         }
-        let t: Vec<u64> = self
-            .read
-            .get_mapped_range(..)
-            .chunks_exact(8)
-            .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
-            .collect();
+        let t: Vec<u64> = self.read.get_mapped_range(..).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
         self.read.unmap();
         self.ready.store(false, Ordering::Release);
         self.busy = false;
@@ -4317,12 +3393,7 @@ impl Stamps {
             v.sort_by(|a, b| a.partial_cmp(b).unwrap());
             v.get(v.len() / 2).copied().unwrap_or(0.0)
         };
-        (
-            mid(self.all.iter().map(|r| r.0).collect()),
-            mid(self.all.iter().map(|r| r.1).collect()),
-            mid(self.all.iter().map(|r| r.2).collect()),
-            self.all.len(),
-        )
+        (mid(self.all.iter().map(|r| r.0).collect()), mid(self.all.iter().map(|r| r.1).collect()), mid(self.all.iter().map(|r| r.2).collect()), self.all.len())
     }
 }
 

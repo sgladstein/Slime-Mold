@@ -38,23 +38,8 @@ impl<W: World> Game<W> {
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
             let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
-            let speed = if cast > 0 {
-                m.ammo.get(cast as usize - 1).map_or(1.0, |a| a.speed())
-            } else {
-                1.0
-            };
-            self.bullets.push(Bullet {
-                at: s.from,
-                dir: (dx / d, dy / d),
-                left: d,
-                r: s.r,
-                by: b,
-                fresh: true,
-                pierce: m.pierce,
-                split: m.split,
-                cast,
-                speed,
-            });
+            let speed = if cast > 0 { m.ammo.get(cast as usize - 1).map_or(1.0, |a| a.speed()) } else { 1.0 };
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, cast, speed });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
@@ -99,9 +84,7 @@ impl<W: World> Game<W> {
         self.bullets.retain_mut(|b| {
             let q = k;
             k += 1;
-            let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else {
-                return false;
-            };
+            let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else { return false };
             b.fresh = false;
             if let Some(h) = o.hit {
                 // On a wall a leg ends with no hit; only slime gets here.
@@ -118,26 +101,10 @@ impl<W: World> Game<W> {
                     let a0 = b.dir.1.atan2(b.dir.0);
                     let rr = b.r * r.split_r;
                     for j in 0..n {
-                        let a = a0
-                            + if n > 1 {
-                                (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan
-                            } else {
-                                0.0
-                            };
+                        let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet {
-                            at,
-                            dir,
-                            left: r.split_range * sc,
-                            r: rr,
-                            by: b.by,
-                            fresh: false,
-                            pierce: 0,
-                            split: b.split - 1,
-                            cast: 0,
-                            speed: b.speed,
-                        });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed });
                     }
                 }
                 return false;

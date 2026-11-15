@@ -130,36 +130,16 @@ impl GunKind {
             GunKind::Long => (40.0, 0.5, 0.3, 1, 12, 3),
             GunKind::Scatter => (13.0, 0.6, 5.0, 4, 9, 3),
         };
-        Gun {
-            kind: self,
-            depth: 1,
-            range,
-            rate,
-            spread,
-            shots,
-            budget,
-            slots,
-            grade: 1.0,
-        }
+        Gun { kind: self, depth: 1, range, rate, spread, shots, budget, slots, grade: 1.0 }
     }
 
     /// The kind's average at `depth` (from 1): budget and stats grown as
     /// the module says.
     pub fn average_at(self, depth: u32) -> Gun {
         let d = depth.max(1) as f32 - 1.0;
-        let (b, s) = (
-            (1.0 + DEPTH_BUDGET * d).min(DEPTH_BUDGET_MAX),
-            (1.0 + DEPTH_STAT * d).min(DEPTH_STAT_MAX),
-        );
+        let (b, s) = ((1.0 + DEPTH_BUDGET * d).min(DEPTH_BUDGET_MAX), (1.0 + DEPTH_STAT * d).min(DEPTH_STAT_MAX));
         let a = self.average();
-        Gun {
-            depth: depth.max(1),
-            range: a.range * s,
-            rate: a.rate * s,
-            spread: a.spread / s,
-            budget: (a.budget as f32 * b).round() as u32,
-            ..a
-        }
+        Gun { depth: depth.max(1), range: a.range * s, rate: a.rate * s, spread: a.spread / s, budget: (a.budget as f32 * b).round() as u32, ..a }
     }
 }
 
@@ -231,11 +211,7 @@ impl Gun {
 
     /// One line of its numbers.
     pub fn line(&self) -> String {
-        let shots = if self.shots > 1 {
-            format!(", {} bullets a shot", self.shots)
-        } else {
-            String::new()
-        };
+        let shots = if self.shots > 1 { format!(", {} bullets a shot", self.shots) } else { String::new() };
         format!(
             "{:.0} cells, {:.1} shots/s, spread {:.1}{shots}, budget {}, {} slots",
             self.range, self.rate, self.spread, self.budget, self.slots
@@ -321,20 +297,9 @@ fn roll_with(kind: GunKind, depth: u32, r: &mut Rng) -> Gun {
     let spread = a.spread * (-SIGMA[2] * zs).exp();
     let budget = ((a.budget as f32 * (SIGMA[3] * zb).exp()).round() as u32).max(2);
     let deeper = (DEPTH_SLOTS * (depth.max(1) - 1) as f32).min(DEPTH_SLOTS_MAX);
-    let slots = (a.slots as f32 + deeper + SLOT_SIGMA * zn)
-        .round()
-        .clamp(SLOTS_MIN as f32, SLOTS_MAX as f32) as u32;
-    let shots = if kind == GunKind::Scatter {
-        (a.shots as f32 + SHOT_SIGMA * zk).round().clamp(2.0, SHOTS_MAX as f32) as u32
-    } else {
-        1
-    };
-    let mut parts = vec![
-        range / a.range,
-        rate / a.rate,
-        budget as f32 / a.budget as f32,
-        slots as f32 / a.slots as f32,
-    ];
+    let slots = (a.slots as f32 + deeper + SLOT_SIGMA * zn).round().clamp(SLOTS_MIN as f32, SLOTS_MAX as f32) as u32;
+    let shots = if kind == GunKind::Scatter { (a.shots as f32 + SHOT_SIGMA * zk).round().clamp(2.0, SHOTS_MAX as f32) as u32 } else { 1 };
+    let mut parts = vec![range / a.range, rate / a.rate, budget as f32 / a.budget as f32, slots as f32 / a.slots as f32];
     if a.spread > 0.0 {
         parts.push(a.spread / spread.max(1e-3));
     }
@@ -342,17 +307,7 @@ fn roll_with(kind: GunKind, depth: u32, r: &mut Rng) -> Gun {
         parts.push(shots as f32 / a.shots as f32);
     }
     let grade = (parts.iter().map(|p| p.ln()).sum::<f32>() / parts.len() as f32).exp();
-    Gun {
-        kind,
-        depth: a.depth,
-        range,
-        rate,
-        spread,
-        shots,
-        budget,
-        slots,
-        grade,
-    }
+    Gun { kind, depth: a.depth, range, rate, spread, shots, budget, slots, grade }
 }
 
 #[cfg(test)]
@@ -360,9 +315,7 @@ mod tests {
     use super::*;
 
     fn many(kind: Option<GunKind>, depth: u32, n: u64) -> Vec<Gun> {
-        (0..n)
-            .map(|s| kind.map_or_else(|| Gun::roll(s, depth), |k| Gun::roll_kind(k, s, depth)))
-            .collect()
+        (0..n).map(|s| kind.map_or_else(|| Gun::roll(s, depth), |k| Gun::roll_kind(k, s, depth))).collect()
     }
 
     #[test]
@@ -370,16 +323,9 @@ mod tests {
         let r = Rules::default();
         let g = Gun::standard(&r);
         assert_eq!(g.kind, GunKind::Rifle);
-        assert_eq!(
-            (g.range, g.rate, g.spread, g.shots, g.budget, g.slots),
-            (r.range, 1.0 / r.shot_every, r.spread, 1, 10, SLOTS as u32)
-        );
+        assert_eq!((g.range, g.rate, g.spread, g.shots, g.budget, g.slots), (r.range, 1.0 / r.shot_every, r.spread, 1, 10, SLOTS as u32));
         let a = GunKind::Rifle.average();
-        assert_eq!(
-            (a.range, a.rate, a.spread, a.budget, a.slots),
-            (g.range, g.rate, g.spread, g.budget, g.slots),
-            "the rifle's average is that gun"
-        );
+        assert_eq!((a.range, a.rate, a.spread, a.budget, a.slots), (g.range, g.rate, g.spread, g.budget, g.slots), "the rifle's average is that gun");
     }
 
     #[test]
@@ -396,46 +342,21 @@ mod tests {
             let gs = many(Some(kind), 1, 4000);
             let mean = |f: &dyn Fn(&Gun) -> f32| gs.iter().map(f).sum::<f32>() / gs.len() as f32;
             // exp(sigma z) has mean exp(sigma^2 / 2), a percent or two over.
-            assert!(
-                (mean(&|g| g.range) / a.range - 1.0).abs() < 0.04,
-                "{kind:?} range {}",
-                mean(&|g| g.range)
-            );
-            assert!(
-                (mean(&|g| g.rate) / a.rate - 1.0).abs() < 0.05,
-                "{kind:?} rate {}",
-                mean(&|g| g.rate)
-            );
-            assert!(
-                (mean(&|g| g.budget as f32) / a.budget as f32 - 1.0).abs() < 0.06,
-                "{kind:?} budget {}",
-                mean(&|g| g.budget as f32)
-            );
+            assert!((mean(&|g| g.range) / a.range - 1.0).abs() < 0.04, "{kind:?} range {}", mean(&|g| g.range));
+            assert!((mean(&|g| g.rate) / a.rate - 1.0).abs() < 0.05, "{kind:?} rate {}", mean(&|g| g.rate));
+            assert!((mean(&|g| g.budget as f32) / a.budget as f32 - 1.0).abs() < 0.06, "{kind:?} budget {}", mean(&|g| g.budget as f32));
             for g in &gs {
                 assert!(g.range > 0.0 && g.rate > 0.0 && g.spread >= 0.0, "{g:?}");
-                assert!(
-                    (SLOTS_MIN..=SLOTS_MAX).contains(&g.slots) && (1..=SHOTS_MAX).contains(&g.shots) && g.budget >= 2,
-                    "{g:?}"
-                );
+                assert!((SLOTS_MIN..=SLOTS_MAX).contains(&g.slots) && (1..=SHOTS_MAX).contains(&g.shots) && g.budget >= 2, "{g:?}");
                 assert_eq!(g.shots > 1, kind == GunKind::Scatter && g.shots > 1);
-                assert_eq!(
-                    Gun::from_words(&g.to_words().split(' ').collect::<Vec<_>>()),
-                    Some(*g),
-                    "the text form round-trips"
-                );
+                assert_eq!(Gun::from_words(&g.to_words().split(' ').collect::<Vec<_>>()), Some(*g), "the text form round-trips");
             }
             // Some better, some worse, both ways by a fifth now and then.
-            assert!(
-                gs.iter().any(|g| g.range > a.range * 1.2) && gs.iter().any(|g| g.range < a.range * 0.8),
-                "{kind:?} range never strays"
-            );
+            assert!(gs.iter().any(|g| g.range > a.range * 1.2) && gs.iter().any(|g| g.range < a.range * 0.8), "{kind:?} range never strays");
             if kind == GunKind::Scatter {
                 // Owner 18:08Z: "2-6 bullets per shot". Rounded from a
                 // normal draw round 4: 2 and 6 one gun in 14 each.
-                assert!(
-                    (2..=6).all(|n| gs.iter().any(|g| g.shots == n)),
-                    "the scattergun's fan is 2 to 6"
-                );
+                assert!((2..=6).all(|n| gs.iter().any(|g| g.shots == n)), "the scattergun's fan is 2 to 6");
                 let mid = gs.iter().filter(|g| (3..=5).contains(&g.shots)).count();
                 assert!(mid * 10 > gs.len() * 8, "most fans are 3 to 5: {mid}");
             }
@@ -453,68 +374,33 @@ mod tests {
         // Over 6,000 rolls at depth 1 (18:07Z, the normal curve alone):
         // median 0.995, 90% 1.105, 92% 1.115, 99% 1.205, best 1.33. With
         // the 1-in-6 lifts (17:40Z) they were 0.99, 1.14, 1.15 and 1.28.
-        assert!(
-            (at(0.5) - 1.0).abs() < 0.02,
-            "the kind's numbers stay the average: median {}",
-            at(0.5)
-        );
-        assert!(
-            at(0.9) > 1.07 && at(0.9) < 1.14 && at(0.1) < 0.93,
-            "most guns near average: 10% {} 90% {}",
-            at(0.1),
-            at(0.9)
-        );
+        assert!((at(0.5) - 1.0).abs() < 0.02, "the kind's numbers stay the average: median {}", at(0.5));
+        assert!(at(0.9) > 1.07 && at(0.9) < 1.14 && at(0.1) < 0.93, "most guns near average: 10% {} 90% {}", at(0.1), at(0.9));
         assert!(at(0.99) > 1.15, "a great gun now and then: 99% {}", at(0.99));
         // Luck is a stat at a time: some guns have one great number and
         // others average, so a great range turns up on an ordinary gun.
         let long = GunKind::Long.average();
-        assert!(
-            gs.iter()
-                .any(|g| g.grade < 1.05 && g.kind == GunKind::Long && g.range > long.range * 1.25),
-            "a great range on an ordinary gun"
-        );
+        assert!(gs.iter().any(|g| g.grade < 1.05 && g.kind == GunKind::Long && g.range > long.range * 1.25), "a great range on an ordinary gun");
         assert!(gs.iter().all(|g| !g.title().contains("lucky")));
         // The lines #283 wrote, with a lucky flag, still read.
         let g = gs[0];
-        let old = format!(
-            "{} {} {} {} {} {} {} {} 1 {}",
-            g.kind.key(),
-            g.depth,
-            g.range,
-            g.rate,
-            g.spread,
-            g.shots,
-            g.budget,
-            g.slots,
-            g.grade
-        );
+        let old = format!("{} {} {} {} {} {} {} {} 1 {}", g.kind.key(), g.depth, g.range, g.rate, g.spread, g.shots, g.budget, g.slots, g.grade);
         assert_eq!(Gun::from_words(&old.split(' ').collect::<Vec<_>>()), Some(g));
     }
 
     #[test]
     fn guns_from_deeper_planets_have_bigger_budgets_and_better_stats() {
         let mean = |depth: u32, f: &dyn Fn(&Gun) -> f32| many(None, depth, 3000).iter().map(f).sum::<f32>() / 3000.0;
-        let (b1, b5, b10) = (
-            mean(1, &|g| g.budget as f32),
-            mean(5, &|g| g.budget as f32),
-            mean(10, &|g| g.budget as f32),
-        );
+        let (b1, b5, b10) = (mean(1, &|g| g.budget as f32), mean(5, &|g| g.budget as f32), mean(10, &|g| g.budget as f32));
         assert!(b1 < b5 && b5 < b10, "budget by depth: {b1} {b5} {b10}");
         assert!(b10 > 1.8 * b1, "{b10} against {b1}");
         let (s1, s10) = (mean(1, &|g| g.slots as f32), mean(10, &|g| g.slots as f32));
         assert!(s10 > s1 + 0.2, "slots {s1} then {s10}");
         for kind in GunKind::ALL {
             let (a, d) = (kind.average_at(1), kind.average_at(10));
-            assert!(
-                d.range > a.range && d.rate > a.rate && d.spread <= a.spread && d.budget > a.budget,
-                "{kind:?}"
-            );
+            assert!(d.range > a.range && d.rate > a.rate && d.spread <= a.spread && d.budget > a.budget, "{kind:?}");
         }
-        assert_eq!(
-            GunKind::Long.average_at(40).range,
-            GunKind::Long.average().range * DEPTH_STAT_MAX,
-            "capped"
-        );
+        assert_eq!(GunKind::Long.average_at(40).range, GunKind::Long.average().range * DEPTH_STAT_MAX, "capped");
     }
 
     #[test]
@@ -525,36 +411,17 @@ mod tests {
         assert!(l.fits().is_ok(), "4 rate cards cost 8 in 5 slots");
         l.cards.push(Card::Quiet);
         assert!(l.fits().is_err(), "a ninth point is over");
-        l.cards = vec![
-            Card::Thrift,
-            Card::Rate,
-            Card::Thrift,
-            Card::Rate,
-            Card::Quiet,
-            Card::Quiet,
-        ];
+        l.cards = vec![Card::Thrift, Card::Rate, Card::Thrift, Card::Rate, Card::Quiet, Card::Quiet];
         assert!(l.fits().is_err(), "six cards in five slots");
         l.gun.slots = 6;
-        assert!(
-            l.fits().is_ok(),
-            "a sixth slot holds it: cost {}",
-            super::super::rounds::cost(&l.cards)
-        );
-        let rifle = Loadout {
-            gun: Gun::standard(&Rules::default()),
-            cards: vec![Card::Bomb, Card::Germ, Card::Quiet],
-        };
+        assert!(l.fits().is_ok(), "a sixth slot holds it: cost {}", super::super::rounds::cost(&l.cards));
+        let rifle = Loadout { gun: Gun::standard(&Rules::default()), cards: vec![Card::Bomb, Card::Germ, Card::Quiet] };
         assert!(rifle.fits().is_ok());
     }
 
     #[test]
     fn each_kind_is_what_the_owner_named() {
-        let (r, c, l, s) = (
-            GunKind::Rifle.average(),
-            GunKind::Carbine.average(),
-            GunKind::Long.average(),
-            GunKind::Scatter.average(),
-        );
+        let (r, c, l, s) = (GunKind::Rifle.average(), GunKind::Carbine.average(), GunKind::Long.average(), GunKind::Scatter.average());
         assert!(c.rate > r.rate && c.range < r.range, "fast and short");
         assert!(l.rate < r.rate && l.range > r.range, "slow and far");
         assert!(s.rate < r.rate && s.shots >= 2 && s.spread > c.spread, "wide and slow");

@@ -84,14 +84,7 @@ fn by_distance(g: &Game<BigDish>) -> Vec<(f32, f32)> {
     let l = g.larder;
     let r = g.rules;
     let dry = r.harvest * r.frame_ticks as f32 / r.tps as f32 * r.charge;
-    let mut cs: Vec<(f32, f32)> = g
-        .world
-        .crystals()
-        .iter()
-        .filter(|c| c.1 >= dry)
-        .map(|c| c.0)
-        .filter(|c| *c != g.core)
-        .collect();
+    let mut cs: Vec<(f32, f32)> = g.world.crystals().iter().filter(|c| c.1 >= dry).map(|c| c.0).filter(|c| *c != g.core).collect();
     cs.sort_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)));
     cs
 }
@@ -162,10 +155,7 @@ fn random_hand(g: &mut Game<BigDish>) {
             let p = random_point(g);
             let a = g.rng.f32() * std::f32::consts::TAU;
             let l = 5.0 * g.world.scale();
-            Order::Burn(
-                (p.0 - a.cos() * l, p.1 - a.sin() * l),
-                (p.0 + a.cos() * l, p.1 + a.sin() * l),
-            )
+            Order::Burn((p.0 - a.cos() * l, p.1 - a.sin() * l), (p.0 + a.cos() * l, p.1 + a.sin() * l))
         }
         _ => Order::Attack,
     };
@@ -238,11 +228,7 @@ fn densest_in_reach(g: &Game<BigDish>, kit: &Kit) -> Option<((f32, f32), u32)> {
             continue;
         }
         let c = (((i % gw) * b + b / 2) as f32, ((i / gw) * b + b / 2) as f32);
-        if g.world.open(c.0, c.1)
-            && g.soldiers
-                .iter()
-                .any(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= reach)
-        {
+        if g.world.open(c.0, c.1) && g.soldiers.iter().any(|s| s.alive && (s.x - c.0).hypot(s.y - c.1) <= reach) {
             best = Some((c, n));
         }
     }
@@ -275,10 +261,7 @@ fn loud(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan) {
     let skip: Vec<usize> = st.decoy.into_iter().chain(st.runner).collect();
     farm_hand(g, &mut st.farmed, &skip, Stance::Free);
     // A runner carries blasts to the mould's body, one each 3 s.
-    if g.time() - st.last_cord >= 3.0
-        && g.bank > TOOL_RESERVE + kit.rules.blast_price
-        && sortie(g, kit, st, Tool::Blast)
-    {
+    if g.time() - st.last_cord >= 3.0 && g.bank > TOOL_RESERVE + kit.rules.blast_price && sortie(g, kit, st, Tool::Blast) {
         st.last_cord = g.time();
     }
     // The minefield round the larder: four places, each re-laid when empty.
@@ -351,13 +334,7 @@ fn plague(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan) {
 /// goes back to farming. Returns whether the tool was used this call.
 fn sortie(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan, tool: fn((f32, f32)) -> Tool) -> bool {
     let Some((a, _)) = densest(g) else { return false };
-    let Some(k) = st
-        .runner
-        .filter(|&k| g.soldiers[k].alive)
-        .or_else(|| (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && Some(k) != st.decoy))
-    else {
-        return false;
-    };
+    let Some(k) = st.runner.filter(|&k| g.soldiers[k].alive).or_else(|| (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && Some(k) != st.decoy)) else { return false };
     st.runner = Some(k);
     // With the carry rule an empty runner fetches tools from the larder
     // first (`play` restocks it there to `carry_max`).
@@ -383,11 +360,7 @@ fn sortie(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan, tool: fn((f32, f3
         let (dx, dy) = (a.0 - x.x, a.1 - x.y);
         let d = dx.hypot(dy).max(1.0);
         let stop = 0.7 * kit.rules.reach * g.world.scale();
-        let to = if d > stop {
-            (a.0 - dx / d * stop, a.1 - dy / d * stop)
-        } else {
-            (x.x, x.y)
-        };
+        let to = if d > stop { (a.0 - dx / d * stop, a.1 - dy / d * stop) } else { (x.x, x.y) };
         if g.soldiers[k].order != Order::Move(to.0, to.1) {
             g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
         }
@@ -417,20 +390,11 @@ fn siege(g: &mut Game<BigDish>, kit: &mut Kit, st: &mut Plan) {
         return;
     }
     let (l, c, s) = (g.larder, g.core, g.world.scale());
-    let Some(&(_, a, _)) = aims(g, kit).iter().min_by(|x, y| {
-        (x.1 .0 - l.0)
-            .hypot(x.1 .1 - l.1)
-            .total_cmp(&(y.1 .0 - l.0).hypot(y.1 .1 - l.1))
-    }) else {
-        return;
-    };
+    let Some(&(_, a, _)) = aims(g, kit).iter().min_by(|x, y| (x.1 .0 - l.0).hypot(x.1 .1 - l.1).total_cmp(&(y.1 .0 - l.0).hypot(y.1 .1 - l.1))) else { return };
     let (dx, dy) = (a.0 - c.0, a.1 - c.1);
     let d = dx.hypot(dy).max(1.0);
     let half = 12.0 * s;
-    let (p, q) = (
-        (a.0 - dy / d * half, a.1 + dx / d * half),
-        (a.0 + dy / d * half, a.1 - dx / d * half),
-    );
+    let (p, q) = ((a.0 - dy / d * half, a.1 + dx / d * half), (a.0 + dy / d * half, a.1 - dx / d * half));
     if g.bank > TOOL_RESERVE && kit.use_tool(g, Tool::Cord(p, q)) {
         st.started = true;
         st.last_cord = g.time();
@@ -471,11 +435,7 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
             // used). Smell needs none.
             if kit.rules.carry_max > 0 {
                 for k in 0..g.soldiers.len() {
-                    let n = if st.runner == Some(k) || st.decoy == Some(k) {
-                        kit.rules.carry_max
-                    } else {
-                        kit.rules.carry_each
-                    };
+                    let n = if st.runner == Some(k) || st.decoy == Some(k) { kit.rules.carry_max } else { kit.rules.carry_each };
                     if n > 0 {
                         kit.restock(&mut g, k, n);
                     }
@@ -498,10 +458,7 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
             if let Some(dir) = look {
                 if g.time() - shot >= 60.0 {
                     shot = g.time();
-                    g.world
-                        .image(1)
-                        .save(format!("{dir}/{tier}-{hand}-s{seed}-{:04.0}s.png", g.time()))
-                        .unwrap();
+                    g.world.image(1).save(format!("{dir}/{tier}-{hand}-s{seed}-{:04.0}s.png", g.time())).unwrap();
                 }
             }
         }
@@ -525,19 +482,10 @@ fn play(seed: u64, tier: &str, hand: &str, rules: Rules, kr: KitRules, map: Opti
 
 fn main() {
     let mut seeds: Vec<u64> = (1..=8).collect();
-    let mut tiers: Vec<String> = ["none", "swarmer", "sleeper", "sporer"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
-    let mut hands: Vec<String> = ["idle", "random", "randkit", "farm", "loud", "quiet", "plague", "siege"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    let mut tiers: Vec<String> = ["none", "swarmer", "sleeper", "sporer"].iter().map(|s| s.to_string()).collect();
+    let mut hands: Vec<String> = ["idle", "random", "randkit", "farm", "loud", "quiet", "plague", "siege"].iter().map(|s| s.to_string()).collect();
     let (mut threads, mut look) = (4usize, None::<String>);
-    let mut rules = Rules {
-        cap: 600.0,
-        ..Rules::default()
-    };
+    let mut rules = Rules { cap: 600.0, ..Rules::default() };
     let mut map = None::<(String, Map)>;
     // A map grows the window's plants on each seed (`plants::stand_in`,
     // 2026-11-15; before, the census played designed maps bare).
@@ -577,13 +525,8 @@ fn main() {
     if let Some(d) = &look {
         std::fs::create_dir_all(d).unwrap();
     }
-    let world = map
-        .as_ref()
-        .map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
-    println!(
-        "kitplans {world}, cap {} s, seeds {seeds:?}, tiers {tiers:?}; rules {rules:?}; kit {:?}",
-        rules.cap, kr
-    );
+    let world = map.as_ref().map_or("the race world".to_string(), |(n, _)| format!("map {n}"));
+    println!("kitplans {world}, cap {} s, seeds {seeds:?}, tiers {tiers:?}; rules {rules:?}; kit {:?}", rules.cap, kr);
     let mapr = map.as_ref().map(|(_, m)| m);
     let mut jobs: Vec<(String, u64, String)> = Vec::new();
     for t in &tiers {
@@ -615,8 +558,7 @@ fn main() {
         }
     });
     let out = out.into_inner().unwrap();
-    let get =
-        |t: &str, s: u64, h: &str| out[jobs.iter().position(|(a, b, c)| a == t && *b == s && c == h).unwrap()].clone();
+    let get = |t: &str, s: u64, h: &str| out[jobs.iter().position(|(a, b, c)| a == t && *b == s && c == h).unwrap()].clone();
     println!("\npayoff table (mean score; ends mould wiped / cap / squad wiped):");
     print!("{:>8}", "");
     for t in &tiers {
@@ -629,20 +571,12 @@ fn main() {
             let rows: Vec<Row> = seeds.iter().map(|&s| get(t, s, h)).collect();
             let mean = rows.iter().map(|r| r.score).sum::<f32>() / rows.len() as f32;
             let e = |b: &str| rows.iter().filter(|r| r.end == b).count();
-            print!(
-                " {mean:>+8.3} ({}/{}/{})     ",
-                e("mould wiped"),
-                e("cap"),
-                e("squad wiped")
-            );
+            print!(" {mean:>+8.3} ({}/{}/{})     ", e("mould wiped"), e("cap"), e("squad wiped"));
         }
         println!();
     }
     // Gate 1: each plan against idle, random and randkit, per tier.
-    let plans: Vec<&String> = hands
-        .iter()
-        .filter(|h| ["loud", "quiet", "plague", "siege", "farm"].contains(&h.as_str()))
-        .collect();
+    let plans: Vec<&String> = hands.iter().filter(|h| ["loud", "quiet", "plague", "siege", "farm"].contains(&h.as_str())).collect();
     let mut tests = Vec::new();
     for t in &tiers {
         for h in &plans {
@@ -676,10 +610,7 @@ fn main() {
     }
     println!("\ngate 1, paired by seed (higher / lower; sign test, Holm over {m}):");
     for (i, (name, w, l, p)) in tests.iter().enumerate() {
-        println!(
-            "  {name:>28}: {w} / {l}, p {p:.4}{}",
-            if holds[i] { ", holds" } else { "" }
-        );
+        println!("  {name:>28}: {w} / {l}, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
     }
     // Gate 2: per tier, the best plan, and each other plan against it.
     // The score jumps between bands (wipe, cap, squad lost), so a mean over
@@ -694,16 +625,9 @@ fn main() {
             .filter(|h| h != &best)
             .map(|h| {
                 let (mut w, mut l) = (0, 0);
-                let mut d: Vec<f32> = seeds
-                    .iter()
-                    .map(|&s| get(t, s, h).score - get(t, s, best).score)
-                    .collect();
+                let mut d: Vec<f32> = seeds.iter().map(|&s| get(t, s, h).score - get(t, s, best).score).collect();
                 d.sort_by(f32::total_cmp);
-                let med = if d.len() % 2 == 1 {
-                    d[d.len() / 2]
-                } else {
-                    (d[d.len() / 2 - 1] + d[d.len() / 2]) / 2.0
-                };
+                let med = if d.len() % 2 == 1 { d[d.len() / 2] } else { (d[d.len() / 2 - 1] + d[d.len() / 2]) / 2.0 };
                 for &s in &seeds {
                     let (a, b) = (get(t, s, h).score, get(t, s, best).score);
                     if a > b {

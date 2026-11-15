@@ -18,20 +18,12 @@ use slime_mould::mould::levelgen::{self, ATTEMPTS};
 
 fn range(v: &str) -> Result<Vec<u64>, String> {
     let (a, b) = v.split_once('-').unwrap_or((v, v));
-    let (a, b): (u64, u64) = (
-        a.parse().map_err(|e| format!("{v}: {e}"))?,
-        b.parse().map_err(|e| format!("{v}: {e}"))?,
-    );
+    let (a, b): (u64, u64) = (a.parse().map_err(|e| format!("{v}: {e}"))?, b.parse().map_err(|e| format!("{v}: {e}"))?);
     Ok((a..=b).collect())
 }
 
 fn main() -> Result<(), String> {
-    let (mut seeds, mut depths, mut out, mut attempt) = (
-        vec![1, 2, 3],
-        (1..=8).collect::<Vec<u64>>(),
-        None::<PathBuf>,
-        None::<u32>,
-    );
+    let (mut seeds, mut depths, mut out, mut attempt) = (vec![1, 2, 3], (1..=8).collect::<Vec<u64>>(), None::<PathBuf>, None::<u32>);
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').ok_or(format!("expected key=value, got {a}"))?;
         match k {
@@ -90,11 +82,7 @@ fn main() -> Result<(), String> {
                 s.to_first,
                 s.to_crystal,
                 pc(s.open_share),
-                levelgen::doors(&p, &m)
-                    .iter()
-                    .map(|(d, r)| format!("{d}/{r}"))
-                    .collect::<Vec<_>>()
-                    .join(" "),
+                levelgen::doors(&p, &m).iter().map(|(d, r)| format!("{d}/{r}")).collect::<Vec<_>>().join(" "),
                 why.join(" / ")
             );
             if let Some(d) = &out {
@@ -103,10 +91,6 @@ fn main() -> Result<(), String> {
             }
         }
     }
-    println!(
-        "{} planets, {:.0} ms each on average",
-        total.0,
-        total.1 / total.0.max(1) as f64
-    );
+    println!("{} planets, {:.0} ms each on average", total.0, total.1 / total.0.max(1) as f64);
     Ok(())
 }

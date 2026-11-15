@@ -31,8 +31,8 @@ pub mod ui;
 pub mod view;
 
 pub use camera::Camera;
-pub use canvas::{Canvas, CanvasPass};
 pub use controls::{Button, Controls, UiCommand, Unit};
 pub use marks::{Mark, Marks, Shape};
+pub use canvas::{Canvas, CanvasPass};
 pub use ui::{Hud, HudEvent, Model};
 pub use view::{Light, View};

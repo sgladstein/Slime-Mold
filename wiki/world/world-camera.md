@@ -18,7 +18,6 @@ sources:
   - Reports/menu-review-2026-11-15/README.md
   - Reports/one-screen-menus-2026-11-15/README.md
   - Reports/panic-look-2026-11-14/README.md
-  - Reports/scent-view-2026-11-15/README.md
   - Reports/sharp-slime-2026-11-14/README.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/shot-damage-2026-11-12.md
@@ -195,7 +194,7 @@ frame mint), and over open ground only, so a wall face draws no bright
 edge ([alarm look](../../Reports/alarm-look-2026-11-15/README.md), a
 blind A/B of four strengths for the owner; on the GTX 1070 the change cost
 the view's base pass 0.16 ms on planet 4, most of it the wall-aware
-sample, and since the flinch PR a strength of 0 samples nothing). F2 turns on the scent view (`View::scent`, 2026-11-15; owner: "Is there a way for me to view the mold scent?"): the world dims under the two fields a walker smells, the food scent in blue with contour lines one to three pixels wide at any zoom and the trail in pink, crystals and rock left readable ([scent view](../../Reports/scent-view-2026-11-15/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
+sample, and since the flinch PR a strength of 0 samples nothing). A soldier the slime bites flinches every 3 hp of damage, the
 bitten side flushing hot (`Marks::soldier_bitten`;
 [building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the

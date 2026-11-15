@@ -80,10 +80,7 @@ fn densest(g: &Game<BigDish>, ok: impl Fn((f32, f32)) -> bool) -> (f32, f32) {
 }
 
 fn walkers_within(d: &BigDish, p: (f32, f32), r: f32) -> usize {
-    (0..d.walkers.len())
-        .filter(|&k| d.lives(k) && (d.life.is_empty() || d.life[k] != slime_mould::mould::big::LIFE_DEAD))
-        .filter(|&k| (d.walkers[k].0 - p.0).hypot(d.walkers[k].1 - p.1) <= r)
-        .count()
+    (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.life.is_empty() || d.life[k] != slime_mould::mould::big::LIFE_DEAD)).filter(|&k| (d.walkers[k].0 - p.0).hypot(d.walkers[k].1 - p.1) <= r).count()
 }
 
 fn hole(d: &BigDish, p: (f32, f32), r: f32) -> usize {
@@ -161,10 +158,7 @@ fn picture(g: &Game<BigDish>, kit: &Kit, path: &str) {
 
 fn game(seed: u64, warm: f32) -> (Game<BigDish>, Kit) {
     let world = race_world(seed, 2, 5000);
-    let rules = Rules {
-        price: 0.0,
-        ..Rules::default()
-    };
+    let rules = Rules { price: 0.0, ..Rules::default() };
     let mut g = Game::new(world, rules, seed);
     // The squad stands by on Hold Fire and cannot die: only the tool acts.
     for k in 0..g.soldiers.len() {
@@ -173,10 +167,7 @@ fn game(seed: u64, warm: f32) -> (Game<BigDish>, Kit) {
     }
     // Tool by tool: the tool, not the carry rule (that is kitplans' work),
     // so tools come from the bank wherever a soldier stands.
-    let mut kit = Kit::new(KitRules {
-        carry_max: 0,
-        ..KitRules::default()
-    });
+    let mut kit = Kit::new(KitRules { carry_max: 0, ..KitRules::default() });
     g.bank = 1e9;
     secs(&mut g, &mut kit, warm, |_, _| {});
     (g, kit)
@@ -258,10 +249,7 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
                 g.soldiers[k].y = q.1;
                 g.soldiers[k].hp = 1e9;
                 g.apply(Cmd::Order(k, Order::Hold));
-                g.apply(Cmd::Stance(
-                    k,
-                    if arm == "none" { Stance::HoldFire } else { Stance::Free },
-                ));
+                g.apply(Cmd::Stance(k, if arm == "none" { Stance::HoldFire } else { Stance::Free }));
             }
             let r = 12.0 * s;
             o.m.push(("hole 0s".into(), hole(&g.world, p, r) as f64));
@@ -323,18 +311,8 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
         "gas" => {
             let p = densest(&g, |_| true);
             let r = kit.rules.gas_r * s;
-            let under: Vec<usize> = g
-                .world
-                .crystals()
-                .iter()
-                .enumerate()
-                .filter(|(_, c)| (c.0 .0 - p.0).hypot(c.0 .1 - p.1) <= r + 4.0 * s)
-                .map(|(i, _)| i)
-                .collect();
-            let charge = |g: &Game<BigDish>| -> f64 {
-                let c = g.world.crystals();
-                under.iter().map(|&i| c[i].1 as f64).sum()
-            };
+            let under: Vec<usize> = g.world.crystals().iter().enumerate().filter(|(_, c)| (c.0 .0 - p.0).hypot(c.0 .1 - p.1) <= r + 4.0 * s).map(|(i, _)| i).collect();
+            let charge = |g: &Game<BigDish>| -> f64 { let c = g.world.crystals(); under.iter().map(|&i| c[i].1 as f64).sum() };
             let c0 = charge(&g);
             snap(&g, &kit, "0before");
             if arm != "none" {
@@ -342,24 +320,12 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
                 assert!(kit.use_tool(&mut g, Tool::Gas(p)));
             }
             o.m.push(("gassed".into(), kit.gassed as f64));
-            let asleep = |g: &Game<BigDish>| {
-                if g.world.life.is_empty() {
-                    0
-                } else {
-                    (0..g.world.walkers.len())
-                        .filter(|&k| g.world.lives(k) && g.world.life[k] == LIFE_DORMANT)
-                        .count()
-                }
-            };
+            let asleep = |g: &Game<BigDish>| if g.world.life.is_empty() { 0 } else { (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.life[k] == LIFE_DORMANT).count() };
             secs(&mut g, &mut kit, 5.0, |_, _| {});
             o.m.push(("asleep 5s".into(), asleep(&g) as f64));
             if arm == "noise" {
                 let q = (p.0 + 10.0 * s, p.1);
-                let q = if g.world.open(q.0, q.1) {
-                    q
-                } else {
-                    (p.0 - 10.0 * s, p.1)
-                };
+                let q = if g.world.open(q.0, q.1) { q } else { (p.0 - 10.0 * s, p.1) };
                 kit.use_tool(&mut g, Tool::Blast(q));
             }
             secs(&mut g, &mut kit, 5.0, |_, _| {});
@@ -383,24 +349,19 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
             let (a, b) = ((p.0 - uy * half, p.1 + ux * half), (p.0 + uy * half, p.1 - ux * half));
             let line: Vec<usize> = {
                 let n = (2.0 * half) as usize;
-                (0..=n)
-                    .filter_map(|j| {
-                        let f = j as f32 / n as f32;
-                        let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
-                        g.world.open(x, y).then(|| y as usize * g.world.w + x as usize)
-                    })
-                    .collect()
+                (0..=n).filter_map(|j| {
+                    let f = j as f32 / n as f32;
+                    let (x, y) = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+                    g.world.open(x, y).then(|| y as usize * g.world.w + x as usize)
+                }).collect()
             };
             let on_line = |g: &Game<BigDish>| -> f64 { line.iter().map(|&i| g.world.trail[i] as f64).sum() };
             let beyond = |g: &Game<BigDish>| -> usize {
                 let w = &g.world;
-                (0..w.walkers.len())
-                    .filter(|&k| w.lives(k) && (w.life.is_empty() || w.life[k] != slime_mould::mould::big::LIFE_DEAD))
-                    .filter(|&k| {
-                        let (x, y, _) = w.walkers[k];
-                        (x - p.0) * ux + (y - p.1) * uy > 0.0
-                    })
-                    .count()
+                (0..w.walkers.len()).filter(|&k| w.lives(k) && (w.life.is_empty() || w.life[k] != slime_mould::mould::big::LIFE_DEAD)).filter(|&k| {
+                    let (x, y, _) = w.walkers[k];
+                    (x - p.0) * ux + (y - p.1) * uy > 0.0
+                }).count()
             };
             if arm == "nocrater" {
                 kit.rules.crater_secs = 0.0;
@@ -443,10 +404,7 @@ fn run(test: &str, arm: &str, seed: u64, warm: f32, look: Option<&str>) -> Out {
             for at in [20.0f32, 60.0, 120.0] {
                 secs(&mut g, &mut kit, at - t, |_, _| {});
                 t = at;
-                o.m.push((
-                    format!("near larder {at:.0}s"),
-                    walkers_within(&g.world, l, 12.0 * s) as f64,
-                ));
+                o.m.push((format!("near larder {at:.0}s"), walkers_within(&g.world, l, 12.0 * s) as f64));
                 snap(&g, &kit, &format!("{at:.0}s"));
             }
             o.m.push(("gone off".into(), kit.bangs.len() as f64));
@@ -487,10 +445,7 @@ fn main() {
     if let Some(d) = &look {
         std::fs::create_dir_all(d).unwrap();
     }
-    println!(
-        "kitprobe test={test} warm={warm} seeds {seeds:?}; kit {:?}",
-        KitRules::default()
-    );
+    println!("kitprobe test={test} warm={warm} seeds {seeds:?}; kit {:?}", KitRules::default());
     let jobs: Vec<(u64, &str)> = seeds.iter().flat_map(|&s| arms.iter().map(move |&a| (s, a))).collect();
     let next = std::sync::atomic::AtomicUsize::new(0);
     let out = std::sync::Mutex::new(vec![Out::default(); jobs.len()]);
@@ -517,16 +472,7 @@ fn main() {
     println!("\nmeans:");
     for a in &arms {
         let names: Vec<String> = get(seeds[0], a).m.iter().map(|x| x.0.clone()).collect();
-        let line: Vec<String> = names
-            .iter()
-            .enumerate()
-            .map(|(i, n)| {
-                format!(
-                    "{n} {:.0}",
-                    seeds.iter().map(|&s| get(s, a).m[i].1).sum::<f64>() / seeds.len() as f64
-                )
-            })
-            .collect();
+        let line: Vec<String> = names.iter().enumerate().map(|(i, n)| format!("{n} {:.0}", seeds.iter().map(|&s| get(s, a).m[i].1).sum::<f64>() / seeds.len() as f64)).collect();
         println!("  {a:>9}: {}", line.join(", "));
     }
     println!("\npairs (higher / lower / tied, two-sided sign p):");
@@ -544,11 +490,7 @@ fn main() {
                         lo += 1;
                     }
                 }
-                println!(
-                    "  {a} vs {b}, {n}: {hi} / {lo} / {}, p {:.4}",
-                    seeds.len() - hi - lo,
-                    sign_p(hi, hi + lo)
-                );
+                println!("  {a} vs {b}, {n}: {hi} / {lo} / {}, p {:.4}", seeds.len() - hi - lo, sign_p(hi, hi + lo));
             }
         }
     }

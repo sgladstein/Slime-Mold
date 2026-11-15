@@ -191,38 +191,11 @@ fn preset_key(k: usize) -> String {
 fn preset(k: usize) -> Settings {
     let b = Settings::big_dish();
     // The comparison's dishes: no food, grey on black.
-    let bare = Settings {
-        food: false,
-        colour: Colour::Grey,
-        ..b.clone()
-    };
-    let jenson = Settings {
-        walkers: 1_000_000,
-        crowd: false,
-        turn: 22.5,
-        reach: 18.0,
-        curve: Curve::Soft,
-        ..bare.clone()
-    };
-    let respawn = Settings {
-        respawn: 0.01,
-        ..jenson.clone()
-    };
-    let trunk = Settings {
-        start: Start::Disc,
-        disc: 180.0,
-        haze: 0.3,
-        respawn: 0.001,
-        trail_scale: 0.02,
-        step_by: [1.0, 1.0],
-        ..jenson.clone()
-    };
-    let sick = Settings {
-        cap: 100,
-        seed_at: 4.0,
-        seed_r: 40.0,
-        ..jenson.clone()
-    };
+    let bare = Settings { food: false, colour: Colour::Grey, ..b.clone() };
+    let jenson = Settings { walkers: 1_000_000, crowd: false, turn: 22.5, reach: 18.0, curve: Curve::Soft, ..bare.clone() };
+    let respawn = Settings { respawn: 0.01, ..jenson.clone() };
+    let trunk = Settings { start: Start::Disc, disc: 180.0, haze: 0.3, respawn: 0.001, trail_scale: 0.02, step_by: [1.0, 1.0], ..jenson.clone() };
+    let sick = Settings { cap: 100, seed_at: 4.0, seed_r: 40.0, ..jenson.clone() };
     // The report's droplets: 30,000 walkers laying deposit 5 each (1.5 per
     // 100,000), SA 90, RA 45, SO 9, keep 0.93, a disc of 120 dish cells,
     // blocked walkers laying all of it; drawn by walkers a cell.
@@ -243,133 +216,56 @@ fn preset(k: usize) -> Settings {
     match k {
         0 => b,
         // The 4x Mould page's 32k dish laid today's deposit a walker.
-        1 => Settings {
-            walkers: 32_000,
-            laid: b.laid * 0.32,
-            ..b
-        },
+        1 => Settings { walkers: 32_000, laid: b.laid * 0.32, ..b },
         // Ropes: 0 loops at 10 s against 151.5 with the limit.
         2 => Settings { crowd: false, ..bare },
         // Polygons: 43.5 loops at 10 s.
         3 => jenson,
         // A fine living mesh and a haze: 196 loops.
         4 => respawn,
-        5 => Settings {
-            field: Field::Walkers,
-            ..respawn
-        },
-        6 => Settings {
-            walkers: 4_000_000,
-            ..jenson.clone()
-        },
-        7 => Settings {
-            walkers: 4_000_000,
-            crowd: false,
-            curve: Curve::Soft,
-            ..bare
-        },
+        5 => Settings { field: Field::Walkers, ..respawn },
+        6 => Settings { walkers: 4_000_000, ..jenson.clone() },
+        7 => Settings { walkers: 4_000_000, crowd: false, curve: Curve::Soft, ..bare },
         // The looks report's dishes, its base the comparison's Jenson
         // settings at 1M. The trunk test: a dense disc (45 dish cells) with
         // 30% haze and slow respawn keeps a thick ring at 20 s (8 of 8 seeds).
         8 => trunk.clone(),
         // Contagion seeded in the middle at 4 s on the even polygons of the
         // square-root deposit: a red wave along the tubes in about 2 s.
-        9 => Settings {
-            sick: 120,
-            immune: 480,
-            catch_at: 0.5,
-            sick_trail: 3.0,
-            ..sick.clone()
-        },
+        9 => Settings { sick: 120, immune: 480, catch_at: 0.5, sick_trail: 3.0, ..sick.clone() },
         // 36 Points: turning less in strong trail sweeps the first ring out
         // over the dish; narrower sensors there draw long curves.
-        10 => Settings {
-            step_by: [0.0, 1.0],
-            turn_by: [-20.0, 1.0],
-            ..trunk.clone()
-        },
-        11 => Settings {
-            step_by: [0.0, 1.0],
-            angle_by: [-30.0, 1.0],
-            ..trunk.clone()
-        },
+        10 => Settings { step_by: [0.0, 1.0], turn_by: [-20.0, 1.0], ..trunk.clone() },
+        11 => Settings { step_by: [0.0, 1.0], angle_by: [-30.0, 1.0], ..trunk.clone() },
         // The capped square-root deposit erases the start into even polygons.
-        12 => Settings {
-            trail_scale: 0.0,
-            step_by: [0.0, 1.0],
-            cap: 100,
-            ..trunk
-        },
+        12 => Settings { trail_scale: 0.0, step_by: [0.0, 1.0], cap: 100, ..trunk },
         // Sick 0.5 s, immune 1 s: it never ends, 30-36% sick.
-        13 => Settings {
-            sick: 60,
-            immune: 120,
-            catch_at: 0.5,
-            sick_trail: 3.0,
-            ..sick.clone()
-        },
+        13 => Settings { sick: 60, immune: 120, catch_at: 0.5, sick_trail: 3.0, ..sick.clone() },
         // Sick walkers sense half as far and turn twice as hard: the mesh
         // coarsens behind the wave (8 of 8 seeds at 9 s), then recovers.
-        14 => Settings {
-            sick: 240,
-            immune: 6000,
-            catch_at: 5.0,
-            sick_reach: 0.5,
-            sick_turn: 2.0,
-            ..sick
-        },
+        14 => Settings { sick: 240, immune: 6000, catch_at: 5.0, sick_reach: 0.5, sick_turn: 2.0, ..sick },
         // The outside rules report's dishes (`run.sh` and its commands),
         // on the comparison's Jenson settings at 1M unless said. Two
         // species started in halves hold two territories, avoiding each
         // other (border cells held 80%+ by one: 0.994-1.000, 8 of 8 seeds).
-        15 => Settings {
-            species: 2,
-            zones: true,
-            ..jenson.clone()
-        },
+        15 => Settings { species: 2, zones: true, ..jenson.clone() },
         // Three cyclic species (own +1, next +0.6, previous -1) braid into
         // ribbons that keep flowing (97-125 loops at 10 s).
-        16 => Settings {
-            species: 3,
-            cycle: true,
-            sensor_angle: 20.0,
-            turn: 20.0,
-            reach: 32.0,
-            step: 2.0,
-            ..jenson.clone()
-        },
+        16 => Settings { species: 3, cycle: true, sensor_angle: 20.0, turn: 20.0, reach: 32.0, step: 2.0, ..jenson.clone() },
         // Explorers from a small disc (20 dish cells), each for 0-2x 900
         // ticks: radial veins with a feathery front, best at about 2 s.
-        17 => Settings {
-            start: Start::Disc,
-            disc: 80.0,
-            explore: 900,
-            explore_spread: 1.0,
-            ..jenson
-        },
+        17 => Settings { start: Start::Disc, disc: 80.0, explore: 900, explore_spread: 1.0, ..jenson },
         // Jones and Adamatzky's packed walkers, one a cell, laying trail
         // where they stand when blocked: about 180 round droplets (seed 1).
         18 => droplets,
         // The same with a longer reach: beads on strings.
-        19 => Settings {
-            reach: 27.0,
-            ..droplets.clone()
-        },
+        19 => Settings { reach: 27.0, ..droplets.clone() },
         // The creatures report's: grazing (weight 10) makes the droplets
         // crawl (centres moved 6.5-7.6 cells in 2 s against 0.67-0.77, 8 of
         // 8 seeds); two species of them, not avoiding each other, roam as
         // amber and teal cells (drawn by trail, in species colours).
-        20 => Settings {
-            graze: 10.0,
-            ..droplets.clone()
-        },
-        21 => Settings {
-            graze: 10.0,
-            species: 2,
-            avoid: 0.0,
-            field: Field::Trail,
-            ..droplets
-        },
+        20 => Settings { graze: 10.0, ..droplets.clone() },
+        21 => Settings { graze: 10.0, species: 2, avoid: 0.0, field: Field::Trail, ..droplets },
         // Growth (Larder World W0, `Reports/growth-2026-11-11.md`): the
         // census's dishes, 10,000 walkers in a blob in 100,000 slots,
         // upkeep 0.01, grazing 10; the grass regrows (fed) or does not
@@ -378,26 +274,8 @@ fn preset(k: usize) -> Settings {
         // laid is per 100,000 walkers at the start, so 0.5 here is the
         // census's deposit of 5 a walker (the default 5 would be 50 a
         // walker: thick ropes, not a mesh).
-        22 => Settings {
-            walkers: 10_000,
-            capacity: 100_000,
-            laid: 0.5,
-            upkeep: 0.01,
-            graze: 10.0,
-            graze_regrow: 0.002,
-            start: Start::Home,
-            ..b.clone()
-        },
-        23 => Settings {
-            walkers: 10_000,
-            capacity: 100_000,
-            laid: 0.5,
-            upkeep: 0.01,
-            graze: 10.0,
-            graze_regrow: 0.0,
-            start: Start::Home,
-            ..b
-        },
+        22 => Settings { walkers: 10_000, capacity: 100_000, laid: 0.5, upkeep: 0.01, graze: 10.0, graze_regrow: 0.002, start: Start::Home, ..b.clone() },
+        23 => Settings { walkers: 10_000, capacity: 100_000, laid: 0.5, upkeep: 0.01, graze: 10.0, graze_regrow: 0.0, start: Start::Home, ..b },
         _ => panic!("preset {k}: 0-23"),
     }
 }
@@ -476,32 +354,8 @@ enum Knob {
     Slots,
 }
 
-const LOOKS: [Knob; 11] = [
-    Knob::Disc,
-    Knob::Haze,
-    Knob::TrailScale,
-    Knob::ReachBy,
-    Knob::AngleBy,
-    Knob::TurnBy,
-    Knob::StepBy,
-    Knob::TrailPower,
-    Knob::Cap,
-    Knob::Floor,
-    Knob::Wander,
-];
-const SICK: [Knob; 11] = [
-    Knob::Sick,
-    Knob::Immune,
-    Knob::Catch,
-    Knob::Germ,
-    Knob::GermKeep,
-    Knob::SickSpeed,
-    Knob::SickTrail,
-    Knob::SickReach,
-    Knob::SickTurn,
-    Knob::SeedAt,
-    Knob::SeedR,
-];
+const LOOKS: [Knob; 11] = [Knob::Disc, Knob::Haze, Knob::TrailScale, Knob::ReachBy, Knob::AngleBy, Knob::TurnBy, Knob::StepBy, Knob::TrailPower, Knob::Cap, Knob::Floor, Knob::Wander];
+const SICK: [Knob; 11] = [Knob::Sick, Knob::Immune, Knob::Catch, Knob::Germ, Knob::GermKeep, Knob::SickSpeed, Knob::SickTrail, Knob::SickReach, Knob::SickTurn, Knob::SeedAt, Knob::SeedR];
 
 const OUTSIDE: [Knob; 20] = [
     Knob::Species,
@@ -528,28 +382,12 @@ const OUTSIDE: [Knob; 20] = [
 
 /// Growth and starving (Larder World W0): the walkers eat the grass, so
 /// grazing's three controls are here too.
-const GROWTH: [Knob; 9] = [
-    Knob::Upkeep,
-    Knob::StartEnergy,
-    Knob::BirthEnergy,
-    Knob::BirthCost,
-    Knob::Starve,
-    Knob::Slots,
-    Knob::GrazeRegrow,
-    Knob::GrazeEat,
-    Knob::Graze,
-];
+const GROWTH: [Knob; 9] = [Knob::Upkeep, Knob::StartEnergy, Knob::BirthEnergy, Knob::BirthCost, Knob::Starve, Knob::Slots, Knob::GrazeRegrow, Knob::GrazeEat, Knob::Graze];
 
 /// The panel's pages (Tab turns them): the first holds the comparison's
 /// controls, the others the looks report's, the outside rules report's
 /// and growth's (2026-11-11).
-const PAGES: [(&str, &[Knob]); 5] = [
-    ("MAIN", &KNOBS),
-    ("LOOKS", &LOOKS),
-    ("CONTAGION", &SICK),
-    ("OUTSIDE RULES", &OUTSIDE),
-    ("GROWTH", &GROWTH),
-];
+const PAGES: [(&str, &[Knob]); 5] = [("MAIN", &KNOBS), ("LOOKS", &LOOKS), ("CONTAGION", &SICK), ("OUTSIDE RULES", &OUTSIDE), ("GROWTH", &GROWTH)];
 
 const KNOBS: [Knob; 18] = [
     Knob::Walkers,
@@ -572,9 +410,7 @@ const KNOBS: [Knob; 18] = [
     Knob::Start,
 ];
 
-const WALKER_STEPS: [usize; 10] = [
-    10_000, 32_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 6_000_000, 8_000_000,
-];
+const WALKER_STEPS: [usize; 10] = [10_000, 32_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 6_000_000, 8_000_000];
 const RESPAWN_STEPS: [f32; 9] = [0.0, 0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3];
 const SCALE_STEPS: [f32; 9] = [0.0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0];
 const CAP_STEPS: [u16; 10] = [0, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
@@ -723,12 +559,7 @@ impl Knob {
             Knob::Food => on(s.food),
             Knob::Smell => format!("{:.0}", s.smell),
             Knob::Colour => if s.colour == Colour::Amber { "AMBER" } else { "GREY" }.into(),
-            Knob::Field => if s.field == Field::Trail {
-                "TRAIL"
-            } else {
-                "WALKERS A CELL"
-            }
-            .into(),
+            Knob::Field => if s.field == Field::Trail { "TRAIL" } else { "WALKERS A CELL" }.into(),
             Knob::Curve => if s.curve == Curve::Game { "GAME" } else { "SOFT" }.into(),
             Knob::Knee => format!("{:.1}", s.knee),
             Knob::Gamma => format!("{:.2}", s.gamma),
@@ -843,27 +674,9 @@ impl Knob {
             Knob::Respawn => s.respawn = next_in(&RESPAWN_STEPS, s.respawn, dir),
             Knob::Food => s.food = !s.food,
             Knob::Smell => s.smell = (s.smell + 2.0 * k * d).clamp(1.0, 200.0),
-            Knob::Colour => {
-                s.colour = if s.colour == Colour::Amber {
-                    Colour::Grey
-                } else {
-                    Colour::Amber
-                }
-            }
-            Knob::Field => {
-                s.field = if s.field == Field::Trail {
-                    Field::Walkers
-                } else {
-                    Field::Trail
-                }
-            }
-            Knob::Curve => {
-                s.curve = if s.curve == Curve::Game {
-                    Curve::Soft
-                } else {
-                    Curve::Game
-                }
-            }
+            Knob::Colour => s.colour = if s.colour == Colour::Amber { Colour::Grey } else { Colour::Amber },
+            Knob::Field => s.field = if s.field == Field::Trail { Field::Walkers } else { Field::Trail },
+            Knob::Curve => s.curve = if s.curve == Curve::Game { Curve::Soft } else { Curve::Game },
             Knob::Knee => s.knee = mul(s.knee, if big { 2.0 } else { 1.25 }).clamp(0.05, 10_000.0),
             Knob::Gamma => s.gamma = (s.gamma + 0.05 * k * d).clamp(0.05, 3.0),
             Knob::Ticks => s.ticks = (s.ticks as i32 + dir * if big { 4 } else { 1 }).clamp(1, 32) as u32,
@@ -985,8 +798,7 @@ fn panel(w: usize, h: usize, lines: &[(String, [u8; 4])], bottom: &[(String, [u8
             }
         }
     };
-    let width =
-        |list: &[(String, [u8; 4])]| list.iter().map(|(t, _)| hud::text_width(t)).max().unwrap_or(0) as usize * 2 + 16;
+    let width = |list: &[(String, [u8; 4])]| list.iter().map(|(t, _)| hud::text_width(t)).max().unwrap_or(0) as usize * 2 + 16;
     if !lines.is_empty() {
         shade(&mut img, 0, 0, width(lines), lines.len() * row * 2 + 12);
         for (i, (text, colour)) in lines.iter().enumerate() {
@@ -997,13 +809,7 @@ fn panel(w: usize, h: usize, lines: &[(String, [u8; 4])], bottom: &[(String, [u8
         let top = h.saturating_sub(bottom.len() * row * 2 + 10);
         shade(&mut img, 0, top, width(bottom), h);
         for (i, (text, colour)) in bottom.iter().enumerate() {
-            hud::draw_text_crisp(
-                &mut img,
-                (w as u32, h as u32),
-                (4, (top / 2) as i32 + 3 + (i * row) as i32),
-                text,
-                *colour,
-            );
+            hud::draw_text_crisp(&mut img, (w as u32, h as u32), (4, (top / 2) as i32 + 3 + (i * row) as i32), text, *colour);
         }
     }
     img
@@ -1098,9 +904,7 @@ impl App {
             hand: Hand::default(),
             frames: 0,
             drawn: 0,
-            shot_after: std::env::var("MOULDGPU_SCREENSHOT_AFTER_FRAMES")
-                .ok()
-                .and_then(|v| v.parse().ok()),
+            shot_after: std::env::var("MOULDGPU_SCREENSHOT_AFTER_FRAMES").ok().and_then(|v| v.parse().ok()),
             fps_clock: Instant::now(),
             fps: 0.0,
             alive: None,
@@ -1141,20 +945,10 @@ impl App {
             match ev {
                 HudEvent::SelectOnly(k) => self.controls.selected = vec![k],
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
-                HudEvent::Group(g) => {
-                    self.controls.selected = self.controls.groups[g]
-                        .iter()
-                        .copied()
-                        .filter(|k| units.iter().any(|u| u.id == *k && u.alive))
-                        .collect()
-                }
+                HudEvent::Group(g) => self.controls.selected = self.controls.groups[g].iter().copied().filter(|k| units.iter().any(|u| u.id == *k && u.alive)).collect(),
                 HudEvent::Idle => {
                     let after = self.controls.selected.first().copied();
-                    if let Some(k) = self
-                        .squad
-                        .as_ref()
-                        .and_then(|q| q.next_idle(after).or_else(|| q.next_idle(None)))
-                    {
+                    if let Some(k) = self.squad.as_ref().and_then(|q| q.next_idle(after).or_else(|| q.next_idle(None))) {
                         self.controls.selected = vec![k];
                         if let Some(u) = units.iter().find(|u| u.id == k) {
                             self.camera.centre_on((u.x, u.y));
@@ -1167,10 +961,7 @@ impl App {
                 }
                 HudEvent::Menu(MenuItem::Resume) => self.paused = self.menu_paused,
                 HudEvent::Menu(MenuItem::Restart) => {
-                    self.squad = self
-                        .engine
-                        .as_ref()
-                        .map(|e| Squad::new((e.dish.w, e.dish.h), self.scale));
+                    self.squad = self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale));
                     self.controls.selected.clear();
                     self.paused = self.menu_paused;
                 }
@@ -1191,9 +982,7 @@ impl App {
     }
 
     fn restart(&mut self) {
-        let (Some(p), Some(shared)) = (&self.pixels, &self.shared) else {
-            return;
-        };
+        let (Some(p), Some(shared)) = (&self.pixels, &self.shared) else { return };
         self.s.walkers = self.s.walkers.min(self.max_walkers);
         let dropped = self.engine.take().map(|e| e.dropped).unwrap_or_default();
         let mut e = Engine::new(p.device(), p.queue(), shared, &self.s, self.scale);
@@ -1219,24 +1008,14 @@ impl App {
     /// Binds the look to the view (or takes it off), from the engine's
     /// fields and a ground field made from its dish.
     fn apply_look(&mut self) {
-        let (Some(p), Some(e), Some(v)) = (&self.pixels, &self.engine, self.view.as_mut()) else {
-            return;
-        };
+        let (Some(p), Some(e), Some(v)) = (&self.pixels, &self.engine, self.view.as_mut()) else { return };
         if !self.look {
             v.clear_look();
             return;
         }
         let g = self.ground.get_or_insert_with(|| {
             let crystal = look::dish_crystals(&e.dish);
-            let mut codes = look::ground(
-                e.dish.w,
-                e.dish.w * e.dish.h,
-                &look::Fields {
-                    agar: &e.dish.agar,
-                    crystal: &crystal,
-                    ..Default::default()
-                },
-            );
+            let mut codes = look::ground(e.dish.w, e.dish.w * e.dish.h, &look::Fields { agar: &e.dish.agar, crystal: &crystal, ..Default::default() });
             look::mark_far(e.dish.w, &mut codes);
             look::ground_buffer(p.device(), p.queue(), &codes)
         });
@@ -1249,59 +1028,21 @@ impl App {
         }
         let crowd_ok = self.engine.as_ref().is_none_or(|e| e.crowd_ok);
         // The seed does not count as a change.
-        let moved = Settings {
-            seed: 0,
-            ..self.s.clone()
-        } != Settings {
-            seed: 0,
-            ..preset(self.preset)
-        };
+        let moved = Settings { seed: 0, ..self.s.clone() } != Settings { seed: 0, ..preset(self.preset) };
         let (name, knobs) = PAGES[self.page];
         let mut lines = vec![
-            (
-                format!(
-                    "MOULD SANDBOX ON {}   H HIDES",
-                    self.adapter
-                        .to_uppercase()
-                        .chars()
-                        .filter(|&c| hud::has_crisp_glyph(c))
-                        .collect::<String>()
-                ),
-                WHITE,
-            ),
-            (
-                format!(
-                    "{} {}{}",
-                    preset_key(self.preset),
-                    PRESETS[self.preset],
-                    if moved { " (CHANGED)" } else { "" }
-                ),
-                PICKED,
-            ),
-            (
-                format!("PAGE {}/{} {name}   TAB: NEXT PAGE", self.page + 1, PAGES.len()),
-                DIM,
-            ),
+            (format!("MOULD SANDBOX ON {}   H HIDES", self.adapter.to_uppercase().chars().filter(|&c| hud::has_crisp_glyph(c)).collect::<String>()), WHITE),
+            (format!("{} {}{}", preset_key(self.preset), PRESETS[self.preset], if moved { " (CHANGED)" } else { "" }), PICKED),
+            (format!("PAGE {}/{} {name}   TAB: NEXT PAGE", self.page + 1, PAGES.len()), DIM),
         ];
         for (i, k) in knobs.iter().enumerate() {
             let at = i == self.cursor[self.page];
             let mark = if at { ">" } else { " " };
             let colour = if at { PICKED } else { WHITE };
-            lines.push((
-                format!("{mark} {:<18} {}", k.label(), k.value(&self.s, crowd_ok)),
-                colour,
-            ));
+            lines.push((format!("{mark} {:<18} {}", k.label(), k.value(&self.s, crowd_ok)), colour));
         }
         let (done, ms) = self.engine.as_ref().map(|e| e.done).map_or((0, String::new()), |d| {
-            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| {
-                format!(
-                    "GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2} + VIEW {:.2})",
-                    st.sim_ms + st.draw_ms + st.view_ms,
-                    st.sim_ms,
-                    st.draw_ms,
-                    st.view_ms
-                )
-            });
+            let ms = self.stamps.as_ref().map_or("GPU TIME N/A".to_string(), |st| format!("GPU {:.2} MS A FRAME (TICKS {:.2} + DRAWING {:.2} + VIEW {:.2})", st.sim_ms + st.draw_ms + st.view_ms, st.sim_ms, st.draw_ms, st.view_ms));
             (d, ms)
         });
         // Each line fits the 1024-cell dish at the crisp font's 12 px a
@@ -1314,45 +1055,16 @@ impl App {
             "LEFT DRAG DROPS WALKERS  RIGHT DRAG WIPES  F DROPS FOOD  ESC QUITS"
         };
         let world = self.engine.as_ref().map_or((0, 0), |e| (e.dish.w, e.dish.h));
-        let camera = format!(
-            "WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  L LOOK  W WORLD {}X{}  Q SQUAD",
-            self.camera.zoom, world.0, world.1
-        );
+        let camera = format!("WHEEL ZOOMS ({:.2}X)  MIDDLE DRAG OR EDGE PANS  M MAP  L LOOK  W WORLD {}X{}  Q SQUAD", self.camera.zoom, world.0, world.1);
         let bottom = vec![
-            (
-                "1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(),
-                WHITE,
-            ),
-            (
-                "9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(),
-                WHITE,
-            ),
-            (
-                "SHIFT+6 TERRITORIES  7 RIBBONS  8 EXPLORERS  9 DROPLETS  0 BEADS".to_string(),
-                WHITE,
-            ),
-            (
-                "CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES  3 FED MOULD  4 STARVING MOULD".to_string(),
-                WHITE,
-            ),
-            (
-                "ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(),
-                DIM,
-            ),
+            ("1 BIG DISH  2 32K  3 NO LIMIT  4 JENSON  5 +RESPAWN  6 BY WALKERS  7 4M  8 4M OURS".to_string(), WHITE),
+            ("9 TRUNK RING  0 CONTAGION  SHIFT+1 SWEEP  2 CURVES  3 POLYGONS  4 ENDEMIC  5 ROPES".to_string(), WHITE),
+            ("SHIFT+6 TERRITORIES  7 RIBBONS  8 EXPLORERS  9 DROPLETS  0 BEADS".to_string(), WHITE),
+            ("CTRL+1 GRAZING DROPLETS  2 GRAZING SPECIES  3 FED MOULD  4 STARVING MOULD".to_string(), WHITE),
+            ("ARROWS PICK AND CHANGE (SHIFT: MORE)  SPACE PAUSE  . STEP  R RESTART  N NEW SEED".to_string(), DIM),
             (mouse.to_string(), DIM),
             (camera, DIM),
-            (
-                format!(
-                    "{ms}  {:.0} FPS  {:.1} S  SEED {}{}{}",
-                    self.fps,
-                    done as f64 / STEPS_PER_SECOND as f64,
-                    self.s.seed,
-                    self.alive
-                        .map_or(String::new(), |a| format!("  ALIVE {}", thousands(a))),
-                    if self.paused { "  PAUSED" } else { "" }
-                ),
-                WHITE,
-            ),
+            (format!("{ms}  {:.0} FPS  {:.1} S  SEED {}{}{}", self.fps, done as f64 / STEPS_PER_SECOND as f64, self.s.seed, self.alive.map_or(String::new(), |a| format!("  ALIVE {}", thousands(a))), if self.paused { "  PAUSED" } else { "" }), WHITE),
         ];
         (lines, bottom)
     }
@@ -1362,50 +1074,16 @@ impl App {
         // the keys the controls do not use stay the sandbox's.
         if let Some(sq) = self.squad.as_mut() {
             let units = sq.units();
-            let digit = matches!(
-                code,
-                KeyCode::Digit1
-                    | KeyCode::Digit2
-                    | KeyCode::Digit3
-                    | KeyCode::Digit4
-                    | KeyCode::Digit5
-                    | KeyCode::Digit6
-                    | KeyCode::Digit7
-                    | KeyCode::Digit8
-                    | KeyCode::Digit9
-            );
+            let digit = matches!(code, KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 | KeyCode::Digit4 | KeyCode::Digit5 | KeyCode::Digit6 | KeyCode::Digit7 | KeyCode::Digit8 | KeyCode::Digit9);
             if digit {
                 self.controls.key(code, true, false, &units, &mut self.camera);
                 return;
             }
         }
-        const DIGITS: [KeyCode; 10] = [
-            KeyCode::Digit1,
-            KeyCode::Digit2,
-            KeyCode::Digit3,
-            KeyCode::Digit4,
-            KeyCode::Digit5,
-            KeyCode::Digit6,
-            KeyCode::Digit7,
-            KeyCode::Digit8,
-            KeyCode::Digit9,
-            KeyCode::Digit0,
-        ];
+        const DIGITS: [KeyCode; 10] = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9, KeyCode::Digit0];
         // 1-9 and 0 are presets 1-10; Shift with 1-9 and 0 the ten after,
         // Ctrl with them the ten after that.
-        let digit = DIGITS
-            .iter()
-            .position(|&k| k == code)
-            .map(|k| {
-                k + if self.ctrl {
-                    20
-                } else if self.shift {
-                    10
-                } else {
-                    0
-                }
-            })
-            .filter(|&k| k < PRESETS.len());
+        let digit = DIGITS.iter().position(|&k| k == code).map(|k| k + if self.ctrl { 20 } else if self.shift { 10 } else { 0 }).filter(|&k| k < PRESETS.len());
         if let Some(k) = digit {
             let seed = self.s.seed;
             self.preset = k;
@@ -1419,11 +1097,7 @@ impl App {
             KeyCode::ArrowUp | KeyCode::ArrowDown => {
                 let n = PAGES[self.page].1.len();
                 let c = &mut self.cursor[self.page];
-                *c = if code == KeyCode::ArrowUp {
-                    (*c + n - 1) % n
-                } else {
-                    (*c + 1) % n
-                };
+                *c = if code == KeyCode::ArrowUp { (*c + n - 1) % n } else { (*c + 1) % n };
             }
             KeyCode::KeyI => self.infect_once = true,
             KeyCode::ArrowLeft | KeyCode::ArrowRight => {
@@ -1458,10 +1132,7 @@ impl App {
             KeyCode::KeyQ => {
                 self.squad = match self.squad {
                     Some(_) => None,
-                    None => self
-                        .engine
-                        .as_ref()
-                        .map(|e| Squad::new((e.dish.w, e.dish.h), self.scale)),
+                    None => self.engine.as_ref().map(|e| Squad::new((e.dish.w, e.dish.h), self.scale)),
                 };
                 self.controls.selected.clear();
                 self.hud.cancel_targeting();
@@ -1474,11 +1145,7 @@ impl App {
                 // The world: today's 1024 x 640 dish, or twice as wide and
                 // high (2048 x 1280) with four times the walkers, bigger
                 // than a screen, to scroll.
-                let (scale, walkers) = if self.scale == 4 {
-                    (8, self.s.walkers * 4)
-                } else {
-                    (4, (self.s.walkers / 4).max(10_000))
-                };
+                let (scale, walkers) = if self.scale == 4 { (8, self.s.walkers * 4) } else { (4, (self.s.walkers / 4).max(10_000)) };
                 self.scale = scale;
                 self.s.walkers = walkers.min(self.max_walkers);
                 if let Some(e) = self.engine.as_mut() {
@@ -1511,11 +1178,7 @@ impl App {
             self.panel_dirty = true;
             // A blocking read of the energy (0.4 MB at 100,000 slots), only
             // while growth is on and the panel shows it.
-            self.alive = self
-                .engine
-                .as_ref()
-                .filter(|e| e.grows && self.show_panel)
-                .map(|e| e.alive());
+            self.alive = self.engine.as_ref().filter(|e| e.grows && self.show_panel).map(|e| e.alive());
         }
         let dt = self.last_frame.elapsed().as_secs_f32();
         self.last_frame = Instant::now();
@@ -1548,8 +1211,7 @@ impl App {
             sq.marks_with(self.camera.zoom, self.look, &mut self.marks);
             self.controls.marks(&units, &self.camera, sq.radius(), &mut self.marks);
             for n in sq.notes.drain(..) {
-                self.hud
-                    .alert(&n.text, n.at, if n.bad { theme::BAD } else { theme::GOOD });
+                self.hud.alert(&n.text, n.at, if n.bad { theme::BAD } else { theme::GOOD });
             }
         }
         // The game UI: drawn into the canvas (and its ghost and pings into
@@ -1561,26 +1223,14 @@ impl App {
                 // What is under the cursor in the world (not behind a panel
                 // or the minimap), and where a placement would land
                 // (through the minimap when on it).
-                let hover = self
-                    .controls
-                    .cursor
-                    .filter(|&p| !self.hud.over(p))
-                    .and_then(|p| self.camera.world_at(p));
+                let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
                 let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
-                let ghost = self
-                    .hud
-                    .targeting()
-                    .and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+                let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
                 let model = sq.model(&self.controls.selected, hover, ghost, self.paused);
-                self.hud
-                    .draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
+                self.hud.draw(&model, &self.controls, &self.camera, minimap, c, &mut self.marks);
                 self.camera.set_inset(self.hud.top, c.screen.1 as f32 - self.hud.bottom);
             }
-            let bx = if self.squad.is_some() {
-                self.hud.minimap_box
-            } else {
-                None
-            };
+            let bx = if self.squad.is_some() { self.hud.minimap_box } else { None };
             if let Some(v) = self.view.as_mut() {
                 v.minimap_box = bx;
             }
@@ -1596,11 +1246,7 @@ impl App {
         } else {
             self.s.ticks
         };
-        let (Some(p), Some(shared), Some(e), Some(view)) =
-            (&self.pixels, &self.shared, self.engine.as_mut(), self.view.as_ref())
-        else {
-            return;
-        };
+        let (Some(p), Some(shared), Some(e), Some(view)) = (&self.pixels, &self.shared, self.engine.as_mut(), self.view.as_ref()) else { return };
         let mut canvas_pass = self.canvas_pass.as_mut();
         let camera = self.camera;
         let mut hand = self.hand;
@@ -1645,10 +1291,7 @@ impl App {
                 let (sim, draw, view, n) = st.median();
                 format!("GPU {:.3} ms a frame (ticks {sim:.3} + drawing {draw:.3} + view {view:.3}), median of {n} frames timed", sim + draw + view)
             });
-            println!(
-                "mouldgpu: after {} frames, {} ticks: {st}; {:.1} frames a second",
-                self.drawn, e.done, self.fps
-            );
+            println!("mouldgpu: after {} frames, {} ticks: {st}; {:.1} frames a second", self.drawn, e.done, self.fps);
             event_loop.exit();
         }
     }
@@ -1669,52 +1312,27 @@ impl ApplicationHandler for App {
         let p = big_params(&self.s, self.scale, false);
         let world = (p.w() as u32, p.h() as u32);
         let first = first_size(world, event_loop.primary_monitor().map(|m| m.size()));
-        let attributes = Window::default_attributes()
-            .with_title("Mould sandbox (GPU)")
-            .with_inner_size(first);
+        let attributes = Window::default_attributes().with_title("Mould sandbox (GPU)").with_inner_size(first);
         let window = match event_loop.create_window(attributes) {
             Ok(w) => Arc::new(w),
             Err(err) => return self.fail(event_loop, format!("window creation failed: {err}")),
         };
         // Look at the GPU first, to ask for timestamps if it has them.
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-        let probe = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            ..Default::default()
-        }))
-        .ok();
+        let probe = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).ok();
         // The pixel buffer is the window's size, one pixel a screen pixel:
         // the camera's view pass draws the dish into it at any zoom.
         let size = window.inner_size();
         let (w, h) = (size.width.max(1), size.height.max(1));
-        let options = wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            compatible_surface: None,
-            force_fallback_adapter: false,
-        };
+        let options = wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, compatible_surface: None, force_fallback_adapter: false };
         let mut built = None;
-        if let Some(a) = probe
-            .as_ref()
-            .filter(|a| a.features().contains(wgpu::Features::TIMESTAMP_QUERY))
-        {
-            let desc = wgpu::DeviceDescriptor {
-                label: Some("mouldgpu"),
-                required_features: wgpu::Features::TIMESTAMP_QUERY,
-                required_limits: a.limits(),
-                ..Default::default()
-            };
-            built = PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window)))
-                .request_adapter_options(options.clone())
-                .device_descriptor(desc)
-                .build()
-                .ok();
+        if let Some(a) = probe.as_ref().filter(|a| a.features().contains(wgpu::Features::TIMESTAMP_QUERY)) {
+            let desc = wgpu::DeviceDescriptor { label: Some("mouldgpu"), required_features: wgpu::Features::TIMESTAMP_QUERY, required_limits: a.limits(), ..Default::default() };
+            built = PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options.clone()).device_descriptor(desc).build().ok();
         }
         let timestamps = built.is_some();
         if built.is_none() {
-            built = match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window)))
-                .request_adapter_options(options)
-                .build()
-            {
+            built = match PixelsBuilder::new(w, h, SurfaceTexture::new(size.width, size.height, Arc::clone(&window))).request_adapter_options(options).build() {
                 Ok(p) => Some(p),
                 Err(err) => return self.fail(event_loop, format!("pixels init failed: {err}")),
             };
@@ -1730,19 +1348,9 @@ impl ApplicationHandler for App {
         }
         let info = pixels.adapter().get_info();
         self.adapter = info.name.clone();
-        println!(
-            "mouldgpu: {} ({:?}), timestamps {}",
-            info.name,
-            info.backend,
-            if timestamps { "yes" } else { "no" }
-        );
+        println!("mouldgpu: {} ({:?}), timestamps {}", info.name, info.backend, if timestamps { "yes" } else { "no" });
         let limit = pixels.device().limits().max_storage_buffer_binding_size as usize;
-        self.max_walkers = WALKER_STEPS
-            .iter()
-            .copied()
-            .filter(|&n| n * 16 <= limit)
-            .max()
-            .unwrap_or(100_000);
+        self.max_walkers = WALKER_STEPS.iter().copied().filter(|&n| n * 16 <= limit).max().unwrap_or(100_000);
         self.shared = Some(Shared::new(pixels.device()));
         if timestamps {
             self.stamps = Some(Stamps::with_view(pixels.device(), pixels.queue(), true));
@@ -1766,10 +1374,7 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(size) => {
                 if size.width > 0 && size.height > 0 {
                     if let Some(p) = self.pixels.as_mut() {
-                        let res = p
-                            .resize_buffer(size.width, size.height)
-                            .map_err(|e| e.to_string())
-                            .and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
+                        let res = p.resize_buffer(size.width, size.height).map_err(|e| e.to_string()).and_then(|_| p.resize_surface(size.width, size.height).map_err(|e| e.to_string()));
                         if let Err(err) = res {
                             return self.fail(event_loop, format!("resize failed: {err}"));
                         }
@@ -1796,22 +1401,13 @@ impl ApplicationHandler for App {
                     // the newest alert. (F is its burn-line button, so the
                     // controls' F+drag is not needed here.)
                     if self.squad.is_some() && !event.repeat {
-                        let (took, events) =
-                            self.hud
-                                .key(code, event.state == ElementState::Pressed, self.ctrl, &mut self.camera);
+                        let (took, events) = self.hud.key(code, event.state == ElementState::Pressed, self.ctrl, &mut self.camera);
                         self.hud_events(events, event_loop);
                         if took {
                             return;
                         }
                     }
-                    let repeat_ok = matches!(
-                        code,
-                        KeyCode::ArrowLeft
-                            | KeyCode::ArrowRight
-                            | KeyCode::ArrowUp
-                            | KeyCode::ArrowDown
-                            | KeyCode::Period
-                    );
+                    let repeat_ok = matches!(code, KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Period);
                     if event.state == ElementState::Pressed && (!event.repeat || repeat_ok) {
                         self.key(code, event_loop);
                     }
@@ -1824,9 +1420,7 @@ impl ApplicationHandler for App {
                 let mm = self.minimap();
                 self.hud.moved(Some(at));
                 self.controls.moved(Some(at), &mut self.camera, mm);
-                self.hand.at = self.camera.world_at(at).filter(|_| {
-                    mm.is_none_or(|r| slime_mould::world::view::minimap_world(r, self.world(), at).is_none())
-                });
+                self.hand.at = self.camera.world_at(at).filter(|_| mm.is_none_or(|r| slime_mould::world::view::minimap_world(r, self.world(), at).is_none()));
             }
             WindowEvent::CursorLeft { .. } => {
                 self.hand.at = None;
@@ -1853,11 +1447,7 @@ impl ApplicationHandler for App {
             WindowEvent::MouseInput { state, button, .. } => {
                 let down = state == ElementState::Pressed;
                 let mm = self.minimap();
-                let on_map = self
-                    .controls
-                    .cursor
-                    .zip(mm)
-                    .is_some_and(|(c, r)| slime_mould::world::view::minimap_world(r, self.world(), c).is_some());
+                let on_map = self.controls.cursor.zip(mm).is_some_and(|(c, r)| slime_mould::world::view::minimap_world(r, self.world(), c).is_some());
                 let b = match button {
                     MouseButton::Left => Some(Button::Left),
                     MouseButton::Right => Some(Button::Right),
@@ -1907,10 +1497,7 @@ impl ApplicationHandler for App {
 
 fn write_gif(path: &str, shots: Vec<image::RgbaImage>, ms: u32) {
     let delay = image::Delay::from_numer_denom_ms(ms, 1);
-    let frames: Vec<image::Frame> = shots
-        .into_iter()
-        .map(|img| image::Frame::from_parts(img, 0, 0, delay))
-        .collect();
+    let frames: Vec<image::Frame> = shots.into_iter().map(|img| image::Frame::from_parts(img, 0, 0, delay)).collect();
     let file = std::fs::File::create(path).expect("gif file");
     let mut enc = image::codecs::gif::GifEncoder::new_with_speed(file, 10);
     enc.set_repeat(image::codecs::gif::Repeat::Infinite).unwrap();
@@ -1975,29 +1562,12 @@ struct Look {
 /// `ticks` ticks and the drawing a submit), timed, then measured and drawn.
 fn headless(s: &Settings, scale: usize, look: &Look) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
-        ..Default::default()
-    }))
-    .expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
     let info = adapter.get_info();
-    println!(
-        "adapter: {} ({:?}, {:?}, driver {} {})",
-        info.name, info.backend, info.device_type, info.driver, info.driver_info
-    );
+    println!("adapter: {} ({:?}, {:?}, driver {} {})", info.name, info.backend, info.device_type, info.driver, info.driver_info);
     let timestamps = adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY);
-    let required_features = if timestamps {
-        wgpu::Features::TIMESTAMP_QUERY
-    } else {
-        wgpu::Features::empty()
-    };
-    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-        label: Some("mouldgpu"),
-        required_features,
-        required_limits: adapter.limits(),
-        ..Default::default()
-    }))
-    .expect("no device");
+    let required_features = if timestamps { wgpu::Features::TIMESTAMP_QUERY } else { wgpu::Features::empty() };
+    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("mouldgpu"), required_features, required_limits: adapter.limits(), ..Default::default() })).expect("no device");
     let shared = Shared::new(&device);
     std::fs::create_dir_all(&look.dir).unwrap();
     let mut pictures = Vec::new();
@@ -2022,13 +1592,8 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 s.curve,
                 s.seed
             );
-            let looks = Settings {
-                seed: s.seed,
-                ..Settings::big_dish()
-            };
-            if (s.start, s.trail_scale, s.cap, s.floor, s.wander)
-                != (looks.start, looks.trail_scale, looks.cap, looks.floor, looks.wander)
-            {
+            let looks = Settings { seed: s.seed, ..Settings::big_dish() };
+            if (s.start, s.trail_scale, s.cap, s.floor, s.wander) != (looks.start, looks.trail_scale, looks.cap, looks.floor, looks.wander) {
                 println!(
                     "   looks: start {:?} disc {} haze {}; trail scale {} reach {:?} angle {:?} turn {:?} step {:?}; cap {} floor {} wander {}",
                     s.start, s.disc, s.haze, s.trail_scale, s.reach_by, s.angle_by, s.turn_by, s.step_by, s.cap, s.floor, s.wander
@@ -2064,17 +1629,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     s.sick, s.immune, s.catch_at, s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, s.seed_at, s.seed_r
                 );
             }
-            if (
-                s.fields(),
-                s.explore,
-                s.blocked_lay,
-                s.blocked_keep,
-                s.chance,
-                s.size_spread,
-                s.sensor_r,
-                s.graze,
-            ) != (0, 0, 0.0, false, 0.0, 0.0, 0, 0.0)
-            {
+            if (s.fields(), s.explore, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r, s.graze) != (0, 0, 0.0, false, 0.0, 0.0, 0, 0.0) {
                 println!(
                     "   outside: species {} avoid {} zones {} cycle {} next {} prev {} convert {} boost {}; explore {} ticks, trail {} spread {}; blocked lay {} keep {} reset {}; chance {} size spread {} sensor r {}; graze {} eat {} regrow {}",
                     s.fields(),
@@ -2169,42 +1724,12 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 let units: Vec<UnitIn> = (0..look.fire)
                     .map(|u| {
                         let (px, py) = piles[u % piles.len()];
-                        UnitIn {
-                            x: px * k + (u / piles.len()) as f32 * 3.0,
-                            y: py * k,
-                            touch: 3.0,
-                            sight: 30.0,
-                            take_r: 4.0,
-                            take: 0.5,
-                            smell_r: 2.0,
-                            smell: 0.5,
-                        }
+                        UnitIn { x: px * k + (u / piles.len()) as f32 * 3.0, y: py * k, touch: 3.0, sight: 30.0, take_r: 4.0, take: 0.5, smell_r: 2.0, smell: 0.5 }
                     })
                     .collect();
-                let shots: Vec<ShotIn> = if e.grows {
-                    units
-                        .iter()
-                        .zip(&aims)
-                        .filter_map(|(u, a)| {
-                            a.map(|to| ShotIn {
-                                from: (u.x, u.y),
-                                to,
-                                r: 3.0,
-                            })
-                        })
-                        .collect()
-                } else {
-                    Vec::new()
-                };
+                let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
-                e.set_squad(&Frame {
-                    units,
-                    shots,
-                    slime: slime_trail(s.knee),
-                    crater: 0,
-                    sink: 0.0,
-                    ..Frame::default()
-                });
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -2228,10 +1753,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             wall.push(t0.elapsed().as_secs_f64() * 1e3);
             if stamp.is_some() {
                 let x = st.as_mut().unwrap();
-                let t: Vec<u64> = read_back(&device, &queue, &x.resolve)
-                    .chunks_exact(8)
-                    .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
-                    .collect();
+                let t: Vec<u64> = read_back(&device, &queue, &x.resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
                 let ms = |a: u64, b: u64| b.saturating_sub(a) as f64 * x.period / 1e6;
                 gpu.push((ms(t[0], t[1]), ms(t[1], t[2])));
             }
@@ -2263,10 +1785,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             let timed = &mut wall[1.min(wall.len())..].to_vec();
             let worst = timed.iter().cloned().fold(0.0, f64::max);
             let m = median(timed);
-            print!(
-                "wall ms a frame of {} ticks and the drawing, {} frames: median {m:.3}, worst {worst:.3}",
-                s.ticks, frames
-            );
+            print!("wall ms a frame of {} ticks and the drawing, {} frames: median {m:.3}, worst {worst:.3}", s.ticks, frames);
             if !gpu.is_empty() {
                 let (mut a, mut b): (Vec<f64>, Vec<f64>) = gpu.iter().cloned().unzip();
                 print!("; GPU ms ticks {:.3}, drawing {:.3}", median(&mut a), median(&mut b));
@@ -2276,25 +1795,11 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 println!("squad: {} units a frame, {fired} shots, {kills} walkers killed, {took:.1} charge taken (the wall ms above include reading it back every frame)", look.fire);
             }
             let mm = e.measure();
-            let mut sick = if s.sick_on() {
-                format!("  sick {:.3}", e.sick_share(s))
-            } else {
-                String::new()
-            };
+            let mut sick = if s.sick_on() { format!("  sick {:.3}", e.sick_share(s)) } else { String::new() };
             if e.grows {
                 sick += &format!("  alive {}", mm.alive);
             }
-            println!(
-                "dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}{sick}",
-                mm.seconds,
-                mm.tube_area,
-                mm.loops,
-                mm.width,
-                mm.reach,
-                mm.reached,
-                e.dish.piles.len(),
-                mm.strays
-            );
+            println!("dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}{sick}", mm.seconds, mm.tube_area, mm.loops, mm.width, mm.reach, mm.reached, e.dish.piles.len(), mm.strays);
             if !course.is_empty() {
                 println!("sick every 0.5 s: {}", course.join(" "));
             }
@@ -2304,10 +1809,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
             }
             if e.npiles > 0 || e.walled {
                 let (_, bites, broken) = e.world_counts();
-                println!(
-                    "world: crystals left {:.3}, wall bites {bites}, wall cells broken {broken}",
-                    e.dish.crystals_left()
-                );
+                println!("world: crystals left {:.3}, wall bites {bites}, wall cells broken {broken}", e.dish.crystals_left());
             }
             let path = format!("{}/{}-{:03}s.png", look.dir, look.tag, look.seconds.round() as u32);
             pic.save(&path).unwrap();
@@ -2329,38 +1831,23 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                         format!("{} {:.3}", runs[0][q].0, v[v.len() / 2])
                     })
                     .collect();
-                println!(
-                    "GPU ms a pass, median of 11 ticks each submitted alone: {}",
-                    parts.join(", ")
-                );
+                println!("GPU ms a pass, median of 11 ticks each submitted alone: {}", parts.join(", "));
             }
         }
         pictures.push(pic);
     }
     if look.twice {
-        println!(
-            "same picture twice: {}",
-            if pictures[0] == pictures[1] { "yes" } else { "NO" }
-        );
+        println!("same picture twice: {}", if pictures[0] == pictures[1] { "yes" } else { "NO" });
     }
 }
 
 /// The headless run's last frame through the camera (`view=WxH`), saved as
 /// `TAG-view.png`, with the view pass's GPU time (median of 21).
-fn view_shot(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    e: &Engine,
-    screen: (u32, u32),
-    look: &Look,
-    timestamps: bool,
-) {
+fn view_shot(device: &wgpu::Device, queue: &wgpu::Queue, e: &Engine, screen: (u32, u32), look: &Look, timestamps: bool) {
     let world = (e.dish.w, e.dish.h);
     let mut view = View::new(device, queue, &e.frame, world, screen);
     let mut cam = Camera::new(world, screen);
-    let (cx, cy, zoom) = look
-        .cam
-        .unwrap_or((world.0 as f32 / 2.0, world.1 as f32 / 2.0, cam.zoom));
+    let (cx, cy, zoom) = look.cam.unwrap_or((world.0 as f32 / 2.0, world.1 as f32 / 2.0, cam.zoom));
     cam.zoom_to(zoom, (0.0, 0.0));
     cam.centre_on((cx, cy));
     let mut marks = Marks::default();
@@ -2371,32 +1858,13 @@ fn view_shot(
         // and a drag box under way: every mark the controls draw.
         let mut sq = Squad::new(world, e.dish.p.scale);
         let mut k = Controls::new(0);
-        sq.command(UiCommand::Order {
-            units: vec![0],
-            at: (sq.units[0].x + 60.0, sq.units[0].y - 40.0),
-        });
-        let (a, b) = (
-            (sq.units[4].x - 20.0, sq.units[4].y + 30.0),
-            (sq.units[7].x + 30.0, sq.units[7].y + 30.0),
-        );
-        sq.command(UiCommand::Burn {
-            units: vec![4, 5],
-            from: a,
-            to: b,
-        });
+        sq.command(UiCommand::Order { units: vec![0], at: (sq.units[0].x + 60.0, sq.units[0].y - 40.0) });
+        let (a, b) = ((sq.units[4].x - 20.0, sq.units[4].y + 30.0), (sq.units[7].x + 30.0, sq.units[7].y + 30.0));
+        sq.command(UiCommand::Burn { units: vec![4, 5], from: a, to: b });
         sq.step(0.5);
         k.selected = vec![0, 4, 5];
         if !look.ui.is_empty() {
-            ui_state(
-                &look.ui,
-                &mut sq,
-                &mut k,
-                &mut cam,
-                &mut view,
-                &mut canvas,
-                &mut hud,
-                &mut marks,
-            );
+            ui_state(&look.ui, &mut sq, &mut k, &mut cam, &mut view, &mut canvas, &mut hud, &mut marks);
             view.minimap_box = hud.minimap_box;
         }
         let units = sq.units();
@@ -2409,10 +1877,7 @@ fn view_shot(
     }
     view.set_marks(&marks);
     if look.ui.is_empty() {
-        let (lines, bottom) = (
-            vec![("CAMERA VIEW".to_string(), WHITE)],
-            vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)],
-        );
+        let (lines, bottom) = (vec![("CAMERA VIEW".to_string(), WHITE)], vec![(format!("ZOOM {:.2}  WORLD {} X {}", cam.zoom, world.0, world.1), DIM)]);
         view.set_overlay(Some(&panel(screen.0 as usize, screen.1 as usize, &lines, &bottom)));
     }
     let mut cp = CanvasPass::new(device, queue);
@@ -2420,40 +1885,21 @@ fn view_shot(
     // The view and the UI timed apart (stamps 0-1 and 2-3), and the UI's
     // CPU side (binning and upload, every frame in the game) on the clock.
     let (mut times, mut ui_times, mut cpu_times) = (Vec::new(), Vec::new(), Vec::new());
-    let qs = timestamps.then(|| {
-        device.create_query_set(&wgpu::QuerySetDescriptor {
-            label: Some("view"),
-            ty: wgpu::QueryType::Timestamp,
-            count: 4,
-        })
-    });
-    let resolve = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("view stamps"),
-        size: 32,
-        usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
-        mapped_at_creation: false,
-    });
+    let qs = timestamps.then(|| device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view"), ty: wgpu::QueryType::Timestamp, count: 4 }));
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view stamps"), size: 32, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
     for _ in 0..21 {
         let t0 = Instant::now();
         cp.upload(&mut canvas);
         cpu_times.push(t0.elapsed().as_secs_f64() * 1e3);
         let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         view.record(&mut enc, &cam, qs.as_ref().map(|q| (q, Some(0), Some(1))));
-        cp.record_timed(
-            &mut enc,
-            &view.out,
-            view.stride,
-            qs.as_ref().map(|q| (q, Some(2), Some(3))),
-        );
+        cp.record_timed(&mut enc, &view.out, view.stride, qs.as_ref().map(|q| (q, Some(2), Some(3))));
         if let Some(q) = &qs {
             enc.resolve_query_set(q, 0..4, &resolve, 0);
         }
         queue.submit([enc.finish()]);
         if qs.is_some() {
-            let t: Vec<u64> = read_back(device, queue, &resolve)
-                .chunks_exact(8)
-                .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
-                .collect();
+            let t: Vec<u64> = read_back(device, queue, &resolve).chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
             let period = queue.get_timestamp_period() as f64 / 1e6;
             times.push(t[1].saturating_sub(t[0]) as f64 * period);
             ui_times.push(t[3].saturating_sub(t[2]) as f64 * period);
@@ -2477,16 +1923,7 @@ fn view_shot(
 /// is drawn twice: once to lay it out (so a button's place is known for a
 /// hover), then for the picture.
 #[allow(clippy::too_many_arguments)]
-fn ui_state(
-    state: &str,
-    sq: &mut Squad,
-    k: &mut Controls,
-    cam: &mut Camera,
-    view: &mut View,
-    canvas: &mut Canvas,
-    hud: &mut Hud,
-    marks: &mut Marks,
-) {
+fn ui_state(state: &str, sq: &mut Squad, k: &mut Controls, cam: &mut Camera, view: &mut View, canvas: &mut Canvas, hud: &mut Hud, marks: &mut Marks) {
     use slime_mould::world::demo::WALL_ID;
     // A fight under way: two soldiers forward and hurt, one lost, a wall
     // and a turret built, an upgrade researching.
@@ -2502,27 +1939,14 @@ fn ui_state(
     let base = (sq.units[0].x, sq.units[0].y);
     let s = sq.scale;
     sq.turrets.push((base.0 - 10.0 * s, base.1 + 18.0 * s));
-    sq.walls.push((
-        (base.0 + 30.0 * s, base.1 - 10.0 * s),
-        (base.0 + 34.0 * s, base.1 + 22.0 * s),
-    ));
+    sq.walls.push(((base.0 + 30.0 * s, base.1 - 10.0 * s), (base.0 + 34.0 * s, base.1 + 22.0 * s)));
     k.groups[0] = vec![0, 1, 2, 3, 4, 5];
     k.groups[1] = vec![6, 7, 8];
     k.groups[3] = vec![10, 11];
-    hud.alert(
-        "Soldier 7 is under fire",
-        Some((sq.units[6].x, sq.units[6].y)),
-        theme::BAD,
-    );
+    hud.alert("Soldier 7 is under fire", Some((sq.units[6].x, sq.units[6].y)), theme::BAD);
     hud.alert("Soldier 10 was lost", Some((sq.units[9].x, sq.units[9].y)), theme::BAD);
     let minimap = view.minimap && !cam.sees_all();
-    let draw = |sq: &Squad,
-                k: &Controls,
-                cam: &mut Camera,
-                canvas: &mut Canvas,
-                hud: &mut Hud,
-                marks: &mut Marks,
-                paused: bool| {
+    let draw = |sq: &Squad, k: &Controls, cam: &mut Camera, canvas: &mut Canvas, hud: &mut Hud, marks: &mut Marks, paused: bool| {
         canvas.clear();
         marks.clear();
         let hover = k.cursor.filter(|&p| !hud.over(p)).and_then(|p| cam.world_at(p));
@@ -2589,48 +2013,24 @@ fn ui_state(
         cpu.push(t0.elapsed().as_secs_f64() * 1e3);
     }
     cpu.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    println!(
-        "ui {state}: CPU {:.3} ms the model and the HUD's layout (median of 21)",
-        cpu[10]
-    );
+    println!("ui {state}: CPU {:.3} ms the model and the HUD's layout (median of 21)", cpu[10]);
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut s = Settings::big_dish();
     let mut picked = 0usize;
     let mut scale = 4usize;
-    let mut look = Look {
-        dir: String::new(),
-        seconds: 10.0,
-        gif: false,
-        frames: false,
-        every: 6,
-        down: 2,
-        twice: false,
-        tag: String::new(),
-        view: None,
-        cam: None,
-        squad: false,
-        ui: String::new(),
-        walls: Vec::new(),
-        fire: 0,
-    };
+    let mut look = Look { dir: String::new(), seconds: 10.0, gif: false, frames: false, every: 6, down: 2, twice: false, tag: String::new(), view: None, cam: None, squad: false, ui: String::new(), walls: Vec::new(), fire: 0 };
     let args: Vec<String> = std::env::args().skip(1).collect();
     // The preset first, so the other keys change it.
     for arg in &args {
         if let Some(v) = arg.strip_prefix("preset=") {
-            picked = v
-                .parse::<usize>()
-                .map_err(|e| format!("preset={v}: {e}"))?
-                .clamp(1, PRESETS.len())
-                - 1;
+            picked = v.parse::<usize>().map_err(|e| format!("preset={v}: {e}"))?.clamp(1, PRESETS.len()) - 1;
             s = preset(picked);
         }
     }
     for arg in &args {
-        let (k, v) = arg
-            .split_once('=')
-            .ok_or_else(|| format!("expected key=value, got {arg}"))?;
+        let (k, v) = arg.split_once('=').ok_or_else(|| format!("expected key=value, got {arg}"))?;
         match k {
             "preset" => {}
             "scale" => scale = v.parse()?,
@@ -2648,11 +2048,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "cam" => {
                 let p: Vec<f32> = v.split(',').map(|x| x.parse()).collect::<Result<_, _>>()?;
-                look.cam = Some((
-                    *p.first().ok_or("cam=X,Y,ZOOM")?,
-                    *p.get(1).ok_or("cam=X,Y,ZOOM")?,
-                    p.get(2).copied().unwrap_or(1.0),
-                ));
+                look.cam = Some((*p.first().ok_or("cam=X,Y,ZOOM")?, *p.get(1).ok_or("cam=X,Y,ZOOM")?, p.get(2).copied().unwrap_or(1.0)));
             }
             "squad" => look.squad = on_off(k, v)?,
             "ui" => look.ui = v.into(),
@@ -2685,9 +2081,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use slime_mould::mould::big::{
-        BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE, SOIL_BARREN, SOIL_CLAY, SOIL_DEEP, SOIL_SAND,
-    };
+    use slime_mould::mould::big::{BigDish, BigParams, LIFE_DEAD, LIFE_DORMANT, LIFE_SPORE, SOIL_BARREN, SOIL_CLAY, SOIL_DEEP, SOIL_SAND};
     use slime_mould::mould::tiers::Tier;
 
     #[test]
@@ -2699,11 +2093,7 @@ mod tests {
             texts.push(preset_key(k));
             for knob in PAGES.iter().flat_map(|p| p.1.iter()) {
                 texts.push(knob.label().into());
-                assert!(
-                    knob.label().len() <= 18,
-                    "{} is wider than the panel's column",
-                    knob.label()
-                );
+                assert!(knob.label().len() <= 18, "{} is wider than the panel's column", knob.label());
                 texts.push(knob.value(&s, true));
                 texts.push(knob.value(&s, false));
             }
@@ -2735,10 +2125,7 @@ mod tests {
     fn presets_are_the_comparisons_dishes() {
         let today = BigParams::today();
         let b = preset(0);
-        assert_eq!(
-            (b.walkers, b.crowd, b.sensor_angle, b.turn, b.reach),
-            (100_000, true, 45.0, 45.0, today.sensor_offset)
-        );
+        assert_eq!((b.walkers, b.crowd, b.sensor_angle, b.turn, b.reach), (100_000, true, 45.0, 45.0, today.sensor_offset));
         // The nose rule smells food at today's reach in fine cells.
         assert_eq!(b.smell, 36.0);
         // The comparison scaled the deposit by 100,000 / walkers: 0.5 at 1M.
@@ -2751,10 +2138,7 @@ mod tests {
         // The looks report's trunk test (`trunk.sh`, scale 4): a disc of 45
         // dish cells, 30% haze, respawn 0.001, sense_scale 0.02, step_mod 1:1.
         let k = big_params(&preset(8), 4, false);
-        assert_eq!(
-            (k.blob, k.blob_r, k.haze, k.respawn, k.sense_scale, k.step_mod),
-            (true, 45.0, 0.3, 0.001, 0.02, [1.0, 1.0])
-        );
+        assert_eq!((k.blob, k.blob_r, k.haze, k.respawn, k.sense_scale, k.step_mod), (true, 45.0, 0.3, 0.001, 0.02, [1.0, 1.0]));
         assert!((k.deposit - 0.5).abs() < 1e-6 && k.crowd == 0);
         // Its 36 Points looks (raw kb, kc) and square-root deposit (ka).
         assert!((big_params(&preset(10), 4, false).turn_mod[0] - (-20f32).to_radians()).abs() < 1e-6);
@@ -2762,133 +2146,38 @@ mod tests {
         assert_eq!(big_params(&preset(12), 4, false).deposit_cap, 100);
         // Contagion (raw c1, c2, Rsick-s1): seeded at 4 s, 10 dish cells.
         let c = big_params(&preset(9), 4, false);
-        assert_eq!(
-            (
-                c.sick_steps,
-                c.immune_steps,
-                c.sick_catch,
-                c.sick_trail,
-                c.deposit_cap,
-                c.sick_seed_r
-            ),
-            (120, 480, 0.5, 3.0, 100, 0.0)
-        );
+        assert_eq!((c.sick_steps, c.immune_steps, c.sick_catch, c.sick_trail, c.deposit_cap, c.sick_seed_r), (120, 480, 0.5, 3.0, 100, 0.0));
         assert_eq!((preset(9).seed_at, preset(9).seed_r / 4.0), (4.0, 10.0));
         assert_eq!((preset(13).sick, preset(13).immune), (60, 120));
         let r = big_params(&preset(14), 4, false);
-        assert_eq!(
-            (
-                r.sick_steps,
-                r.immune_steps,
-                r.sick_catch,
-                r.sick_reach,
-                r.sick_turn,
-                r.sick_trail
-            ),
-            (240, 6000, 5.0, 0.5, 2.0, 1.0)
-        );
+        assert_eq!((r.sick_steps, r.immune_steps, r.sick_catch, r.sick_reach, r.sick_turn, r.sick_trail), (240, 6000, 5.0, 0.5, 2.0, 1.0));
         // The outside rules report's (`run.sh` and its commands, scale 4).
         let t = big_params(&preset(15), 4, false);
-        assert_eq!(
-            (t.species, t.species_zones, t.species_avoid, t.blob, t.walkers),
-            (2, true, 1.0, false, 1_000_000)
-        );
+        assert_eq!((t.species, t.species_zones, t.species_avoid, t.blob, t.walkers), (2, true, 1.0, false, 1_000_000));
         assert!((t.deposit - 0.5).abs() < 1e-6 && t.sensor_offset == 18.0);
         let c = big_params(&preset(16), 4, false);
-        assert_eq!(
-            (
-                c.species,
-                c.species_cycle,
-                c.species_next,
-                c.species_prev,
-                c.sensor_offset,
-                c.step
-            ),
-            (3, true, 0.6, -1.0, 32.0, 2.0)
-        );
+        assert_eq!((c.species, c.species_cycle, c.species_next, c.species_prev, c.sensor_offset, c.step), (3, true, 0.6, -1.0, 32.0, 2.0));
         assert!((c.sensor_angle.to_degrees() - 20.0).abs() < 1e-4 && (c.rotate_angle.to_degrees() - 20.0).abs() < 1e-4);
         let x = big_params(&preset(17), 4, false);
-        assert_eq!(
-            (
-                x.blob,
-                x.blob_r,
-                x.haze,
-                x.explore_steps,
-                x.explore_spread,
-                x.explore_deposit
-            ),
-            (true, 20.0, 0.0, 900, 1.0, 0.05)
-        );
+        assert_eq!((x.blob, x.blob_r, x.haze, x.explore_steps, x.explore_spread, x.explore_deposit), (true, 20.0, 0.0, 900, 1.0, 0.05));
         let d = big_params(&preset(18), 4, true);
-        assert_eq!(
-            (
-                d.walkers,
-                d.crowd,
-                d.sensor_offset,
-                d.keep,
-                d.blob_r,
-                d.blocked_deposit,
-                d.blocked_keep
-            ),
-            (30_000, 1, 9.0, 0.93, 120.0, 1.0, false)
-        );
-        assert!(
-            (d.deposit - 5.0).abs() < 1e-4
-                && (d.sensor_angle.to_degrees() - 90.0).abs() < 1e-4
-                && (d.rotate_angle.to_degrees() - 45.0).abs() < 1e-4
-        );
+        assert_eq!((d.walkers, d.crowd, d.sensor_offset, d.keep, d.blob_r, d.blocked_deposit, d.blocked_keep), (30_000, 1, 9.0, 0.93, 120.0, 1.0, false));
+        assert!((d.deposit - 5.0).abs() < 1e-4 && (d.sensor_angle.to_degrees() - 90.0).abs() < 1e-4 && (d.rotate_angle.to_degrees() - 45.0).abs() < 1e-4);
         assert_eq!(big_params(&preset(19), 4, true).sensor_offset, 27.0);
         // The creatures report's: grazing weight 10 on the droplets; two
         // species with no avoidance, drawn by trail in species colours.
         let g = big_params(&preset(20), 4, true);
-        assert_eq!(
-            (
-                g.graze_weight,
-                g.graze_eat,
-                g.graze_regrow,
-                g.species,
-                g.blocked_deposit,
-                g.walkers
-            ),
-            (10.0, 0.05, 0.002, 0, 1.0, 30_000)
-        );
+        assert_eq!((g.graze_weight, g.graze_eat, g.graze_regrow, g.species, g.blocked_deposit, g.walkers), (10.0, 0.05, 0.002, 0, 1.0, 30_000));
         let g2 = big_params(&preset(21), 4, true);
-        assert_eq!(
-            (g2.graze_weight, g2.species, g2.species_avoid, g2.species_convert),
-            (10.0, 2, 0.0, 0.0)
-        );
+        assert_eq!((g2.graze_weight, g2.species, g2.species_avoid, g2.species_convert), (10.0, 2, 0.0, 0.0));
         assert_eq!(preset(21).field, Field::Trail);
         // Every preset has a key: 1-9 and 0, then Shift with 1-9 and 0.
-        assert_eq!(
-            (preset_key(8), preset_key(9), preset_key(14)),
-            ("9".to_string(), "0".to_string(), "SHIFT+5".to_string())
-        );
-        assert_eq!(
-            (preset_key(15), preset_key(19), preset_key(20), preset_key(21)),
-            (
-                "SHIFT+6".to_string(),
-                "SHIFT+0".to_string(),
-                "CTRL+1".to_string(),
-                "CTRL+2".to_string()
-            )
-        );
+        assert_eq!((preset_key(8), preset_key(9), preset_key(14)), ("9".to_string(), "0".to_string(), "SHIFT+5".to_string()));
+        assert_eq!((preset_key(15), preset_key(19), preset_key(20), preset_key(21)), ("SHIFT+6".to_string(), "SHIFT+0".to_string(), "CTRL+1".to_string(), "CTRL+2".to_string()));
         // Growth's two: the census's fed and starved dishes.
         let (fed, starving) = (big_params(&preset(22), 4, true), big_params(&preset(23), 4, true));
-        assert_eq!(
-            (preset_key(22), preset_key(23)),
-            ("CTRL+3".to_string(), "CTRL+4".to_string())
-        );
-        assert_eq!(
-            (
-                fed.walkers,
-                fed.capacity,
-                fed.upkeep,
-                fed.graze_weight,
-                fed.graze_regrow,
-                starving.graze_regrow
-            ),
-            (10_000, 100_000, 0.01, 10.0, 0.002, 0.0)
-        );
+        assert_eq!((preset_key(22), preset_key(23)), ("CTRL+3".to_string(), "CTRL+4".to_string()));
+        assert_eq!((fed.walkers, fed.capacity, fed.upkeep, fed.graze_weight, fed.graze_regrow, starving.graze_regrow), (10_000, 100_000, 0.01, 10.0, 0.002, 0.0));
     }
 
     #[test]
@@ -2902,35 +2191,17 @@ mod tests {
                 knob.nudge(&mut s, -1, false, 8_000_000);
             }
         }
-        assert!(
-            s.walkers >= 10_000 && s.ticks >= 1 && s.keep >= 0.0 && s.reach >= 1.0 && s.step >= 0.25 && s.knee > 0.0
-        );
+        assert!(s.walkers >= 10_000 && s.ticks >= 1 && s.keep >= 0.0 && s.reach >= 1.0 && s.step >= 0.25 && s.knee > 0.0);
         // The CPU adds sick and immune ticks in a u16; powers stay at 0 or
         // above, where `powf` and the GPU's `pow0` agree.
         assert!(s.sick + s.immune <= u16::MAX as u32 && s.catch_at > 0.0 && s.germ_keep < 1.0 && s.disc >= 10.0);
-        assert!([s.reach_by[1], s.angle_by[1], s.turn_by[1], s.step_by[1]]
-            .iter()
-            .all(|&e| e >= 0.0));
+        assert!([s.reach_by[1], s.angle_by[1], s.turn_by[1], s.step_by[1]].iter().all(|&e| e >= 0.0));
         // The outside rules: at most four species (a colour each), never one.
-        assert!(
-            s.species <= MAX_SPECIES
-                && s.species != 1
-                && s.sensor_r <= 3
-                && s.explorer_trail >= 0.0
-                && s.explore_spread <= 1.0
-                && s.chance >= 0.0
-                && s.boost >= 0.1
-        );
+        assert!(s.species <= MAX_SPECIES && s.species != 1 && s.sensor_r <= 3 && s.explorer_trail >= 0.0 && s.explore_spread <= 1.0 && s.chance >= 0.0 && s.boost >= 0.1);
         let mut t = Settings::big_dish();
-        assert!(
-            Knob::Species.nudge(&mut t, 1, false, 8_000_000) && t.fields() == 2,
-            "species start at two, with a restart"
-        );
+        assert!(Knob::Species.nudge(&mut t, 1, false, 8_000_000) && t.fields() == 2, "species start at two, with a restart");
         assert!(Knob::Species.nudge(&mut t, -1, false, 8_000_000) && t.fields() == 0);
-        assert!(
-            !Knob::Zones.nudge(&mut t, 1, false, 8_000_000),
-            "bands without species change nothing"
-        );
+        assert!(!Knob::Zones.nudge(&mut t, 1, false, 8_000_000), "bands without species change nothing");
         assert_eq!(next_in(&WALKER_STEPS, 100_000, 1), 200_000);
         assert_eq!(next_in(&WALKER_STEPS, 100_000, -1), 32_000);
         assert_eq!(next_in(&WALKER_STEPS, 150_000, -1), 100_000);
@@ -2938,10 +2209,7 @@ mod tests {
         // A value below the list (from the command line) goes up to its first.
         assert_eq!(next_in(&WALKER_STEPS, 5_000, 1), 10_000);
         assert_eq!(next_in(&WALKER_STEPS, 5_000, -1), 5_000);
-        assert_eq!(
-            (percent(0.3), percent(0.0001), percent(0.0)),
-            ("30%".to_string(), "0.01%".to_string(), "OFF".to_string())
-        );
+        assert_eq!((percent(0.3), percent(0.0001), percent(0.0)), ("30%".to_string(), "0.01%".to_string(), "OFF".to_string()));
         // The limit restarts the dish (switched on mid-run it would jam).
         assert!(Knob::Crowd.nudge(&mut s, 1, false, 8_000_000));
         // Growth: on or off restarts, a change while on does not; the
@@ -2952,10 +2220,7 @@ mod tests {
         assert!(Knob::Slots.nudge(&mut g, 1, false, 8_000_000) && g.capacity == 200_000);
         g.graze_regrow = 0.0001;
         Knob::GrazeRegrow.nudge(&mut g, -1, false, 8_000_000);
-        assert_eq!(
-            (g.graze_regrow, Knob::GrazeRegrow.value(&g, true)),
-            (0.0, "OFF".to_string())
-        );
+        assert_eq!((g.graze_regrow, Knob::GrazeRegrow.value(&g, true)), (0.0, "OFF".to_string()));
         Knob::GrazeRegrow.nudge(&mut g, 1, false, 8_000_000);
         assert_eq!(g.graze_regrow, 0.0001);
         assert_eq!(thousands(1_000_000), "1,000,000");
@@ -2971,11 +2236,7 @@ mod tests {
 
     /// `exact` on software Vulkan, `card` on a real GPU (`ON_CARD`).
     fn tol<T>(exact: T, card: T) -> T {
-        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) {
-            card
-        } else {
-            exact
-        }
+        if ON_CARD.load(std::sync::atomic::Ordering::Relaxed) { card } else { exact }
     }
 
     /// A GPU for the twin tests, or `None` (the test then passes, saying it
@@ -2995,15 +2256,8 @@ mod tests {
         };
         let info = adapter.get_info();
         eprintln!("adapter: {} ({:?})", info.name, info.backend);
-        ON_CARD.store(
-            info.device_type != wgpu::DeviceType::Cpu,
-            std::sync::atomic::Ordering::Relaxed,
-        );
-        let desc = wgpu::DeviceDescriptor {
-            label: Some("twin"),
-            required_limits: adapter.limits(),
-            ..Default::default()
-        };
+        ON_CARD.store(info.device_type != wgpu::DeviceType::Cpu, std::sync::atomic::Ordering::Relaxed);
+        let desc = wgpu::DeviceDescriptor { label: Some("twin"), required_limits: adapter.limits(), ..Default::default() };
         Some(block_on(adapter.request_device(&desc)).expect("device"))
     }
 
@@ -3013,26 +2267,18 @@ mod tests {
 
     fn small(k: usize) -> Settings {
         let s = preset(k);
-        Settings {
-            walkers: s.walkers / 4,
-            ..s
-        }
+        Settings { walkers: s.walkers / 4, ..s }
     }
 
     fn run(e: &mut Engine, shared: &Shared, s: &Settings, ticks: u32, hand: Hand) {
         e.write_params(s, hand, ticks);
-        let mut enc = e
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        let mut enc = e.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
         e.record(shared, &mut enc, ticks, s.curve == Curve::Soft, None);
         e.queue.submit([enc.finish()]);
     }
 
     fn walkers_of(e: &Engine) -> Vec<(f32, f32, f32)> {
-        floats(&read_back(&e.device, &e.queue, &e.walkers))
-            .chunks_exact(4)
-            .map(|c| (c[0], c[1], c[2]))
-            .collect()
+        floats(&read_back(&e.device, &e.queue, &e.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect()
     }
 
     /// The shader's `keyed` (the CPU's, with the seed and use folded into
@@ -3070,11 +2316,7 @@ mod tests {
         let side = (e.done % 2) as usize;
         let trail = floats(&read_back(&e.device, &e.queue, &e.trail[side]));
         let scent = floats(&read_back(&e.device, &e.queue, &e.scent[side]));
-        let off = gpu
-            .iter()
-            .zip(&cpu.walkers)
-            .filter(|(g, c)| (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3)
-            .count();
+        let off = gpu.iter().zip(&cpu.walkers).filter(|(g, c)| (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3).count();
         let moved = before.iter().zip(&cpu.walkers).filter(|(a, b)| a != b).count();
         (moved, off, l1(&trail, &cpu.trail), l1(&scent, &cpu.scent))
     }
@@ -3092,19 +2334,7 @@ mod tests {
         // Presets 1 (one a cell, food), 3 (no limit), 4 (Jenson's angles
         // and reach, a million walkers in the sandbox) and 5 (4 with
         // respawn), and 1 with respawn (jumps that claim their cell).
-        let dishes = [
-            ("1", small(0)),
-            ("3", small(2)),
-            ("4", small(3)),
-            ("5", small(4)),
-            (
-                "1 + respawn",
-                Settings {
-                    respawn: 0.01,
-                    ..small(0)
-                },
-            ),
-        ];
+        let dishes = [("1", small(0)), ("3", small(2)), ("4", small(3)), ("5", small(4)), ("1 + respawn", Settings { respawn: 0.01, ..small(0) })];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -3124,10 +2354,7 @@ mod tests {
             // off on preset 1.
             assert_eq!(moved, n, "preset {name}: every walker steps, turns or is blocked");
             assert!(off * 1000 <= n, "preset {name}: {off} of {n} walkers off");
-            assert!(
-                lt <= 1e-4 && ls <= 1e-6,
-                "preset {name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}"
-            );
+            assert!(lt <= 1e-4 && ls <= 1e-6, "preset {name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
         }
     }
 
@@ -3143,66 +2370,17 @@ mod tests {
         let j = small(3);
         // A scale that leaves most walkers short of full (s < 1), and a
         // different power for each setting, so a crossed one shows.
-        let trail_set = Settings {
-            trail_scale: 0.01,
-            reach_by: [4.0, 0.5],
-            angle_by: [-10.0, 2.0],
-            turn_by: [-5.0, 1.5],
-            step_by: [0.5, 0.75],
-            ..j.clone()
-        };
-        let floor = Settings {
-            floor: 20.0,
-            wander: 0.01,
-            ..j.clone()
-        };
+        let trail_set = Settings { trail_scale: 0.01, reach_by: [4.0, 0.5], angle_by: [-10.0, 2.0], turn_by: [-5.0, 1.5], step_by: [0.5, 0.75], ..j.clone() };
+        let floor = Settings { floor: 20.0, wander: 0.01, ..j.clone() };
         // The disc start with haze, seeded sick in the middle at the start.
-        let sick = Settings {
-            start: Start::Disc,
-            disc: 60.0,
-            haze: 0.3,
-            sick: 60,
-            immune: 60,
-            catch_at: 0.2,
-            sick_trail: 3.0,
-            sick_speed: 1.5,
-            sick_reach: 0.5,
-            sick_turn: 2.0,
-            seed_at: 0.0,
-            seed_r: 30.0,
-            ..j.clone()
-        };
+        let sick = Settings { start: Start::Disc, disc: 60.0, haze: 0.3, sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, sick_speed: 1.5, sick_reach: 0.5, sick_turn: 2.0, seed_at: 0.0, seed_r: 30.0, ..j.clone() };
         let dishes = [
             ("trail-set", trail_set),
             ("floor and wander", floor),
             ("square-root deposit", Settings { cap: 50, ..j.clone() }),
             ("contagion", sick.clone()),
-            (
-                "contagion, square-root deposit, respawn",
-                Settings {
-                    cap: 100,
-                    respawn: 0.01,
-                    ..sick.clone()
-                },
-            ),
-            (
-                "contagion, one a cell",
-                Settings {
-                    start: Start::Spread,
-                    seed_r: 60.0,
-                    ..Settings {
-                        sick: 60,
-                        immune: 60,
-                        catch_at: 0.2,
-                        sick_trail: 3.0,
-                        sick_speed: 1.5,
-                        sick_reach: 0.5,
-                        sick_turn: 2.0,
-                        seed_at: 0.0,
-                        ..small(0)
-                    }
-                },
-            ),
+            ("contagion, square-root deposit, respawn", Settings { cap: 100, respawn: 0.01, ..sick.clone() }),
+            ("contagion, one a cell", Settings { start: Start::Spread, seed_r: 60.0, ..Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, sick_speed: 1.5, sick_reach: 0.5, sick_turn: 2.0, seed_at: 0.0, ..small(0) } }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3216,11 +2394,7 @@ mod tests {
             let side = (e.done % 2) as usize;
             let (mut sick_off, mut lg, mut ill) = (0, 0.0, 0);
             if s.sick_on() {
-                let gpu: Vec<u32> = read_back(&device, &queue, &e.sick)
-                    .chunks_exact(4)
-                    .take(n)
-                    .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                    .collect();
+                let gpu: Vec<u32> = read_back(&device, &queue, &e.sick).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
                 sick_off = gpu.iter().zip(&cpu.sick).filter(|(g, c)| **g != **c as u32).count();
                 ill = cpu.sick.iter().filter(|&&c| c as u32 > s.immune).count();
                 lg = l1(&floats(&read_back(&device, &queue, &e.germ[side])), &cpu.germ);
@@ -3232,10 +2406,7 @@ mod tests {
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
             if s.sick_on() {
                 assert!(ill > 0, "{name}: someone is sick");
-                assert!(
-                    sick_off * 1000 <= n && lg <= 1e-4,
-                    "{name}: {sick_off} counters off, germ L1 {lg:.2e}"
-                );
+                assert!(sick_off * 1000 <= n && lg <= 1e-4, "{name}: {sick_off} counters off, germ L1 {lg:.2e}");
             }
         }
     }
@@ -3272,141 +2443,25 @@ mod tests {
         let shared = Shared::new(&device);
         let j = small(3);
         let one = small(0);
-        let sick = |s: Settings| Settings {
-            sick: 60,
-            immune: 60,
-            catch_at: 0.2,
-            sick_trail: 3.0,
-            seed_at: 0.0,
-            seed_r: 60.0,
-            ..s
-        };
+        let sick = |s: Settings| Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, seed_r: 60.0, ..s };
         let dishes = [
             // PR #58's boost: species 0 lays 1.5 times as much.
-            (
-                "two species in bands, species 0 boosted",
-                Settings {
-                    species: 2,
-                    zones: true,
-                    avoid: 0.75,
-                    boost: 1.5,
-                    ..j.clone()
-                },
-            ),
-            (
-                "three cyclic species",
-                Settings {
-                    species: 3,
-                    cycle: true,
-                    avoid: 0.5,
-                    sensor_angle: 20.0,
-                    turn: 20.0,
-                    reach: 32.0,
-                    step: 2.0,
-                    ..j.clone()
-                },
-            ),
-            (
-                "four cyclic species",
-                Settings {
-                    species: 4,
-                    cycle: true,
-                    next: 0.4,
-                    prev: -0.8,
-                    ..j.clone()
-                },
-            ),
-            (
-                "explorers, spread, respawn",
-                Settings {
-                    explore: 60,
-                    explore_spread: 1.0,
-                    explorer_trail: 0.1,
-                    respawn: 0.01,
-                    ..j.clone()
-                },
-            ),
-            (
-                "blocked lay and keep, one a cell",
-                Settings {
-                    blocked_lay: 1.0,
-                    blocked_keep: true,
-                    blocked_reset: 0.1,
-                    ..one.clone()
-                },
-            ),
+            ("two species in bands, species 0 boosted", Settings { species: 2, zones: true, avoid: 0.75, boost: 1.5, ..j.clone() }),
+            ("three cyclic species", Settings { species: 3, cycle: true, avoid: 0.5, sensor_angle: 20.0, turn: 20.0, reach: 32.0, step: 2.0, ..j.clone() }),
+            ("four cyclic species", Settings { species: 4, cycle: true, next: 0.4, prev: -0.8, ..j.clone() }),
+            ("explorers, spread, respawn", Settings { explore: 60, explore_spread: 1.0, explorer_trail: 0.1, respawn: 0.01, ..j.clone() }),
+            ("blocked lay and keep, one a cell", Settings { blocked_lay: 1.0, blocked_keep: true, blocked_reset: 0.1, ..one.clone() }),
             ("droplets", small(18)),
-            (
-                "chance, size spread, area sensors",
-                Settings {
-                    chance: 2.0,
-                    size_spread: 1.0,
-                    sensor_r: 1,
-                    ..j.clone()
-                },
-            ),
-            (
-                "species, explorers, cap, contagion",
-                sick(Settings {
-                    species: 2,
-                    explore: 60,
-                    explore_spread: 0.5,
-                    cap: 100,
-                    ..j.clone()
-                }),
-            ),
-            (
-                "explorers, blocked lay, contagion, one a cell",
-                sick(Settings {
-                    explore: 60,
-                    explore_spread: 1.0,
-                    blocked_lay: 0.5,
-                    ..one.clone()
-                }),
-            ),
-            (
-                "species, area sensors, one a cell",
-                Settings {
-                    species: 3,
-                    sensor_r: 2,
-                    blocked_keep: true,
-                    ..one
-                },
-            ),
+            ("chance, size spread, area sensors", Settings { chance: 2.0, size_spread: 1.0, sensor_r: 1, ..j.clone() }),
+            ("species, explorers, cap, contagion", sick(Settings { species: 2, explore: 60, explore_spread: 0.5, cap: 100, ..j.clone() })),
+            ("explorers, blocked lay, contagion, one a cell", sick(Settings { explore: 60, explore_spread: 1.0, blocked_lay: 0.5, ..one.clone() })),
+            ("species, area sensors, one a cell", Settings { species: 3, sensor_r: 2, blocked_keep: true, ..one }),
             // PR #56: grazing and conversion.
             ("grazing droplets", small(20)),
             ("two species of grazing droplets", small(21)),
-            (
-                "two species converting, species 0 boosted",
-                Settings {
-                    species: 2,
-                    convert: 1.2,
-                    boost: 1.5,
-                    ..j.clone()
-                },
-            ),
-            (
-                "three cyclic species converting",
-                Settings {
-                    species: 3,
-                    cycle: true,
-                    convert: 1.0,
-                    ..j.clone()
-                },
-            ),
-            (
-                "converting, grazing, cap, explorers, respawn",
-                Settings {
-                    species: 2,
-                    convert: 1.5,
-                    graze: 10.0,
-                    cap: 100,
-                    explore: 60,
-                    explore_spread: 1.0,
-                    respawn: 0.01,
-                    ..j.clone()
-                },
-            ),
+            ("two species converting, species 0 boosted", Settings { species: 2, convert: 1.2, boost: 1.5, ..j.clone() }),
+            ("three cyclic species converting", Settings { species: 3, cycle: true, convert: 1.0, ..j.clone() }),
+            ("converting, grazing, cap, explorers, respawn", Settings { species: 2, convert: 1.5, graze: 10.0, cap: 100, explore: 60, explore_spread: 1.0, respawn: 0.01, ..j.clone() }),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3435,34 +2490,15 @@ mod tests {
                 let fields: Vec<f32> = cpu.species_trail.iter().flatten().copied().collect();
                 lsp = l1(&floats(&read_back(&device, &queue, &e.species[side])), &fields);
             }
-            let ages: Vec<u32> = read_back(&device, &queue, &e.age)
-                .chunks_exact(4)
-                .take(n)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect();
-            let ages_off = if cpu.age.is_empty() {
-                0
-            } else {
-                ages.iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count()
-            };
-            let specs: Vec<u32> = read_back(&device, &queue, &e.spec)
-                .chunks_exact(4)
-                .take(n)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect();
+            let ages: Vec<u32> = read_back(&device, &queue, &e.age).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            let ages_off = if cpu.age.is_empty() { 0 } else { ages.iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let specs: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let (specs_off, joined) = if cpu.spec.is_empty() {
                 (0, 0)
             } else {
-                (
-                    specs.iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count(),
-                    before_spec.iter().zip(&cpu.spec).filter(|(a, b)| a != b).count(),
-                )
+                (specs.iter().zip(&cpu.spec).filter(|(g, c)| **g != **c as u32).count(), before_spec.iter().zip(&cpu.spec).filter(|(a, b)| a != b).count())
             };
-            let lg = if cpu.grass.is_empty() {
-                0.0
-            } else {
-                l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass)
-            };
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
             // Explorers at the tick's start, by the CPU's rule (the keyed
             // draw rebuilt from `stream`, as the shader has it).
             let low = |v: u32| {
@@ -3475,39 +2511,17 @@ mod tests {
             };
             let stage = |k: usize| {
                 let u = (low(k as u32 | 0x8000_0000 ^ low(low(stream(s.seed, DRAW_SIZE)))) >> 8) as f32 / 16_777_216.0;
-                s.explore as f32
-                    * if s.explore_spread > 0.0 {
-                        1.0 + s.explore_spread * (2.0 * u - 1.0)
-                    } else {
-                        1.0
-                    }
+                s.explore as f32 * if s.explore_spread > 0.0 { 1.0 + s.explore_spread * (2.0 * u - 1.0) } else { 1.0 }
             };
-            let young = if s.explore > 0 {
-                before_age
-                    .iter()
-                    .enumerate()
-                    .filter(|&(k, &a)| (a as f32) < stage(k))
-                    .count()
-            } else {
-                0
-            };
+            let young = if s.explore > 0 { before_age.iter().enumerate().filter(|&(k, &a)| (a as f32) < stage(k)).count() } else { 0 };
             eprintln!("{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}; {ages_off} ages off, {young} explorers; {joined} joined another species, {specs_off} species off; grass L1 {lg:.1e}");
             assert_eq!(cpu.species_trail.len(), e.nsp as usize, "{name}: the species fields");
             // A blocked walker that keeps its heading stays as it was.
-            assert!(
-                moved == n || (s.blocked_keep && moved > 0),
-                "{name}: every walker steps, turns or is blocked"
-            );
+            assert!(moved == n || (s.blocked_keep && moved > 0), "{name}: every walker steps, turns or is blocked");
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
-            assert!(
-                lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4,
-                "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}"
-            );
+            assert!(lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}");
             assert!(ages_off * 1000 <= n, "{name}: {ages_off} ages off");
-            assert!(
-                specs_off * 1000 <= n && lg <= 1e-4,
-                "{name}: {specs_off} species off, grass L1 {lg:.2e}"
-            );
+            assert!(specs_off * 1000 <= n && lg <= 1e-4, "{name}: {specs_off} species off, grass L1 {lg:.2e}");
             if s.convert > 0.0 {
                 assert!(joined > 0, "{name}: someone joins another species in the tick");
             }
@@ -3515,10 +2529,7 @@ mod tests {
                 assert!(cpu.grass.iter().any(|&g| g > 0.0 && g < 0.9), "{name}: grass eaten");
             }
             if s.explore > 0 {
-                assert!(
-                    young > 0 && young < n,
-                    "{name}: explorers and networkers both ({young} of {n})"
-                );
+                assert!(young > 0 && young < n, "{name}: explorers and networkers both ({young} of {n})");
             }
         }
     }
@@ -3536,29 +2547,9 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
         let j = small(3);
-        let one = Settings {
-            species: 2,
-            zones: true,
-            ..small(0)
-        };
-        let sick = |s: Settings| Settings {
-            sick: 60,
-            immune: 60,
-            catch_at: 0.2,
-            sick_trail: 3.0,
-            seed_at: 0.0,
-            seed_r: 60.0,
-            ..s
-        };
-        let mix = |s: Settings| Settings {
-            mix_share: 0.3,
-            mix_reach: 3.0,
-            mix_angle: 0.5,
-            mix_turn: 2.0,
-            mix_step: 1.5,
-            mix_deposit: 0.5,
-            ..s
-        };
+        let one = Settings { species: 2, zones: true, ..small(0) };
+        let sick = |s: Settings| Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, seed_r: 60.0, ..s };
+        let mix = |s: Settings| Settings { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..s };
         let with = |mut s: Settings, keys: &[(&str, &str)]| {
             for (k, v) in keys {
                 set(&mut s, k, v).unwrap();
@@ -3568,169 +2559,38 @@ mod tests {
         // The creature thread's droplet and network species (big.rs
         // `species_sets_differ_by_species`, in the sandbox's units).
         let (drop, net) = (
-            [
-                ("s0.crowd", "1"),
-                ("s0.sensor_angle", "86"),
-                ("s0.turn", "46"),
-                ("s0.laid", "2"),
-                ("s0.keep", "0.93"),
-                ("s0.blocked_lay", "1"),
-                ("s0.graze", "10"),
-            ],
-            [
-                ("s1.crowd", "0"),
-                ("s1.keep", "0.6"),
-                ("s1.graze", "0"),
-                ("s1.explore", "60"),
-            ],
+            [("s0.crowd", "1"), ("s0.sensor_angle", "86"), ("s0.turn", "46"), ("s0.laid", "2"), ("s0.keep", "0.93"), ("s0.blocked_lay", "1"), ("s0.graze", "10")],
+            [("s1.crowd", "0"), ("s1.keep", "0.6"), ("s1.graze", "0"), ("s1.explore", "60")],
         );
         let dishes = [
-            (
-                "species 0 at 70%, converting",
-                Settings {
-                    species: 2,
-                    species_share: 0.7,
-                    convert: 1.2,
-                    ..j.clone()
-                },
-            ),
-            (
-                "converting over a square of 3, bands",
-                Settings {
-                    species: 2,
-                    zones: true,
-                    convert: 1.2,
-                    convert_r: 3,
-                    ..j.clone()
-                },
-            ),
-            (
-                "hunting droplets converting over a square of 8 (the dead-end's dish)",
-                Settings {
-                    avoid: -0.5,
-                    convert: 1.2,
-                    convert_r: 8,
-                    species_share: 0.55,
-                    ..one.clone()
-                },
-            ),
-            (
-                "three cyclic species converting over a square of 2, cap",
-                Settings {
-                    species: 3,
-                    cycle: true,
-                    convert: 1.0,
-                    convert_r: 2,
-                    cap: 100,
-                    ..j.clone()
-                },
-            ),
+            ("species 0 at 70%, converting", Settings { species: 2, species_share: 0.7, convert: 1.2, ..j.clone() }),
+            ("converting over a square of 3, bands", Settings { species: 2, zones: true, convert: 1.2, convert_r: 3, ..j.clone() }),
+            ("hunting droplets converting over a square of 8 (the dead-end's dish)", Settings { avoid: -0.5, convert: 1.2, convert_r: 8, species_share: 0.55, ..one.clone() }),
+            ("three cyclic species converting over a square of 2, cap", Settings { species: 3, cycle: true, convert: 1.0, convert_r: 2, cap: 100, ..j.clone() }),
             ("mixed walkers", mix(j.clone())),
-            (
-                "mixed walkers, one a cell, blocked lay and keep",
-                mix(Settings {
-                    species: 0,
-                    blocked_lay: 1.0,
-                    blocked_keep: true,
-                    ..one.clone()
-                }),
-            ),
-            (
-                "mixed walkers, two species, cap, explorers, contagion",
-                sick(mix(Settings {
-                    species: 2,
-                    explore: 60,
-                    explore_spread: 0.5,
-                    cap: 100,
-                    ..j.clone()
-                })),
-            ),
+            ("mixed walkers, one a cell, blocked lay and keep", mix(Settings { species: 0, blocked_lay: 1.0, blocked_keep: true, ..one.clone() })),
+            ("mixed walkers, two species, cap, explorers, contagion", sick(mix(Settings { species: 2, explore: 60, explore_spread: 0.5, cap: 100, ..j.clone() }))),
             // The network species explores first, with a spread so some
             // still explore at the twin tick (with a stage of 20 every
             // walker had finished it, and the stage taken from the global
             // switch for both species went unseen).
-            (
-                "a droplet species and a network species",
-                with(
-                    Settings {
-                        explore_spread: 1.0,
-                        ..one.clone()
-                    },
-                    &[&drop[..], &net[..]].concat(),
-                ),
-            ),
-            (
-                "own reach, step, deposit and keep, scent at the own reach, respawn",
-                with(
-                    Settings {
-                        species: 2,
-                        respawn: 0.01,
-                        smell: 0.0,
-                        ..j.clone()
-                    },
-                    &[
-                        ("s0.reach", "40"),
-                        ("s0.step", "2"),
-                        ("s1.laid", "3"),
-                        ("s1.keep", "0.8"),
-                        ("s1.sensor_angle", "30"),
-                    ],
-                ),
-            ),
-            (
-                "crowd limits by species, respawn",
-                with(
-                    Settings {
-                        respawn: 0.01,
-                        ..one.clone()
-                    },
-                    &[("s1.crowd", "0"), ("s1.step", "1.5")],
-                ),
-            ),
+            ("a droplet species and a network species", with(Settings { explore_spread: 1.0, ..one.clone() }, &[&drop[..], &net[..]].concat())),
+            ("own reach, step, deposit and keep, scent at the own reach, respawn", with(Settings { species: 2, respawn: 0.01, smell: 0.0, ..j.clone() }, &[("s0.reach", "40"), ("s0.step", "2"), ("s1.laid", "3"), ("s1.keep", "0.8"), ("s1.sensor_angle", "30")])),
+            ("crowd limits by species, respawn", with(Settings { respawn: 0.01, ..one.clone() }, &[("s1.crowd", "0"), ("s1.step", "1.5")])),
             // A third of the walkers jump a tick, so limited and unlimited
             // jumpers often aim at one cell.
-            (
-                "crowd limits by species, heavy respawn",
-                with(
-                    Settings {
-                        respawn: 0.3,
-                        ..one.clone()
-                    },
-                    &[("s1.crowd", "0")],
-                ),
-            ),
-            (
-                "own settings, mixed, converting over a square of 4",
-                mix(with(
-                    Settings {
-                        convert: 1.2,
-                        convert_r: 4,
-                        ..one.clone()
-                    },
-                    &drop,
-                )),
-            ),
+            ("crowd limits by species, heavy respawn", with(Settings { respawn: 0.3, ..one.clone() }, &[("s1.crowd", "0")])),
+            ("own settings, mixed, converting over a square of 4", mix(with(Settings { convert: 1.2, convert_r: 4, ..one.clone() }, &drop))),
         ];
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
-            assert_eq!(
-                e.dish.p.species_sets.is_empty(),
-                !s.per_species(),
-                "{name}: the sets reach the CPU dish"
-            );
+            assert_eq!(e.dish.p.species_sets.is_empty(), !s.per_species(), "{name}: the sets reach the CPU dish");
             assert_eq!(e.kinds, if s.mix_share > 0.0 { 2 } else { 1 }, "{name}: the kinds");
             // The GPU starts with the CPU dish's species and kinds (the
             // twin's inject writes them again, so this is the only check
             // of where they start).
-            let start: Vec<u32> = read_back(&device, &queue, &e.spec)
-                .chunks_exact(4)
-                .take(e.n as usize)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect();
-            assert!(
-                start == spec_words(&e.dish),
-                "{name}: the species and kinds the GPU starts with"
-            );
+            let start: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(e.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+            assert!(start == spec_words(&e.dish), "{name}: the species and kinds the GPU starts with");
             let mut cpu = e.dish.clone();
             // The warm-up does not convert: with it one species took every
             // walker within the 40 ticks (species 0 at 70%). The twin tick
@@ -3757,57 +2617,20 @@ mod tests {
                 let fields: Vec<f32> = cpu.species_trail.iter().flatten().copied().collect();
                 lsp = l1(&floats(&read_back(&device, &queue, &e.species[side])), &fields);
             }
-            let u32s = |b: &wgpu::Buffer| -> Vec<u32> {
-                read_back(&device, &queue, b)
-                    .chunks_exact(4)
-                    .take(n)
-                    .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                    .collect()
-            };
-            let ages_off = if cpu.age.is_empty() {
-                0
-            } else {
-                u32s(&e.age)
-                    .iter()
-                    .zip(&cpu.age)
-                    .filter(|(g, c)| **g != **c as u32)
-                    .count()
-            };
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
             let words = u32s(&e.spec);
-            let specs_off = if cpu.spec.is_empty() {
-                0
-            } else {
-                words
-                    .iter()
-                    .zip(&cpu.spec)
-                    .filter(|(g, c)| *g & 0xFF != **c as u32)
-                    .count()
-            };
+            let specs_off = if cpu.spec.is_empty() { 0 } else { words.iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
             let joined = before_spec.iter().zip(&cpu.spec).filter(|(a, b)| a != b).count();
             // A walker's kind never changes, so every one must agree.
-            let kinds_off = if cpu.kind.is_empty() {
-                words.iter().filter(|&&w| w >> 8 != 0).count()
-            } else {
-                words
-                    .iter()
-                    .zip(&cpu.kind)
-                    .filter(|(g, c)| *g >> 8 != **c as u32)
-                    .count()
-            };
+            let kinds_off = if cpu.kind.is_empty() { words.iter().filter(|&&w| w >> 8 != 0).count() } else { words.iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
             let second = cpu.kind.iter().filter(|&&k| k == 1).count();
             let share0 = cpu.spec.iter().filter(|&&c| c == 0).count();
-            let lg = if cpu.grass.is_empty() {
-                0.0
-            } else {
-                l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass)
-            };
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
             eprintln!(
                 "{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}; {ages_off} ages off; {share0} of species 0, {joined} joined another species, {specs_off} species off; {second} of the second kind, {kinds_off} kinds off; grass L1 {lg:.1e}"
             );
-            assert!(
-                moved == n || (s.blocked_keep && moved > 0),
-                "{name}: every walker steps, turns or is blocked"
-            );
+            assert!(moved == n || (s.blocked_keep && moved > 0), "{name}: every walker steps, turns or is blocked");
             if s.respawn < 0.1 {
                 assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             } else {
@@ -3821,78 +2644,44 @@ mod tests {
                 // species and a limited one must aim at one cell, the
                 // unlimited one first in the CPU's order, for the claim
                 // rule to be seen.
-                let key = |k: u32, q: u32| {
-                    (keyed_as_the_gpu(stream(s.seed, DRAW_JUMP), t, 4 * k + q) >> 8) as f32 / 16_777_216.0
-                };
+                let key = |k: u32, q: u32| (keyed_as_the_gpu(stream(s.seed, DRAW_JUMP), t, 4 * k + q) >> 8) as f32 / 16_777_216.0;
                 // The CPU's `cell` (private to big.rs).
                 let (w, h) = (still.w, still.h);
-                let cell = |x: f32, y: f32| {
-                    (x >= 0.0 && y >= 0.0 && (x as usize) < w && (y as usize) < h).then(|| y as usize * w + x as usize)
-                };
-                let at = |k: usize| {
-                    cell(key(k as u32, 1) * w as f32, key(k as u32, 2) * h as f32).filter(|&j| still.agar[j])
-                };
+                let cell = |x: f32, y: f32| (x >= 0.0 && y >= 0.0 && (x as usize) < w && (y as usize) < h).then(|| y as usize * w + x as usize);
+                let at = |k: usize| cell(key(k as u32, 1) * w as f32, key(k as u32, 2) * h as f32).filter(|&j| still.agar[j]);
                 let jumpers: Vec<usize> = (0..n).filter(|&k| key(k as u32, 0) < s.respawn).collect();
-                let left: std::collections::HashSet<usize> = jumpers
-                    .iter()
-                    .map(|&k| cell(still.walkers[k].0, still.walkers[k].1).unwrap())
-                    .collect();
-                let clear: Vec<usize> = jumpers
-                    .iter()
-                    .copied()
-                    .filter(|&k| at(k).is_some_and(|j| !left.contains(&j)))
-                    .collect();
+                let left: std::collections::HashSet<usize> = jumpers.iter().map(|&k| cell(still.walkers[k].0, still.walkers[k].1).unwrap()).collect();
+                let clear: Vec<usize> = jumpers.iter().copied().filter(|&k| at(k).is_some_and(|j| !left.contains(&j))).collect();
                 let gpu = walkers_of(&e);
-                let clear_off = clear
-                    .iter()
-                    .filter(|&&k| {
-                        let (g, c) = (gpu[k], cpu.walkers[k]);
-                        (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
-                    })
-                    .count();
+                let clear_off = clear.iter().filter(|&&k| {
+                    let (g, c) = (gpu[k], cpu.walkers[k]);
+                    (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+                }).count();
                 let mut first: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
                 for &k in &clear {
                     first.entry(at(k).unwrap()).or_insert(k);
                 }
                 let crowd_of = |k: usize| cpu.p.species_sets[still.spec[k] as usize].crowd;
-                let contested = clear
-                    .iter()
-                    .filter(|&&k| {
-                        let f = first[&at(k).unwrap()];
-                        f != k && crowd_of(f) == 0 && crowd_of(k) > 0
-                    })
-                    .count();
+                let contested = clear.iter().filter(|&&k| {
+                    let f = first[&at(k).unwrap()];
+                    f != k && crowd_of(f) == 0 && crowd_of(k) > 0
+                }).count();
                 eprintln!("   {} jumped, {} into cells no jumper left: {clear_off} off; {contested} limited walkers aimed at a cell an unlimited one took first", jumpers.len(), clear.len());
-                assert!(
-                    clear_off == 0 && contested > 0,
-                    "{name}: {clear_off} jumpers off, {contested} contested"
-                );
+                assert!(clear_off == 0 && contested > 0, "{name}: {clear_off} jumpers off, {contested} contested");
                 assert!(off * 100 <= n, "{name}: {off} of {n} walkers off");
             }
-            assert!(
-                lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4 && lg <= 1e-4,
-                "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}, grass L1 {lg:.2e}"
-            );
-            assert!(
-                ages_off * 1000 <= n && specs_off * 1000 <= n,
-                "{name}: {ages_off} ages, {specs_off} species off"
-            );
+            assert!(lt <= 1e-4 && ls <= 1e-6 && lsp <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, species L1 {lsp:.2e}, grass L1 {lg:.2e}");
+            assert!(ages_off * 1000 <= n && specs_off * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species off");
             assert_eq!(kinds_off, 0, "{name}: kinds off");
             if s.convert > 0.0 {
                 assert!(joined > 0, "{name}: someone joins another species in the tick");
             }
             if s.mix_share > 0.0 {
-                assert!(
-                    second * 5 > n && second * 2 < n,
-                    "{name}: {second} of {n} of the second kind"
-                );
+                assert!(second * 5 > n && second * 2 < n, "{name}: {second} of {n} of the second kind");
             }
             if s.species_share > 0.0 {
                 let want = s.species_share * n as f32;
-                assert!(
-                    (share0 as f32 - want).abs() < 0.2 * want,
-                    "{name}: {share0} of species 0, against {want}"
-                );
+                assert!((share0 as f32 - want).abs() < 0.2 * want, "{name}: {share0} of species 0, against {want}");
             }
         }
     }
@@ -3908,12 +2697,7 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
         let r = 8;
-        let s = Settings {
-            species: 2,
-            convert: 1.2,
-            convert_r: r as u32,
-            ..small(3)
-        };
+        let s = Settings { species: 2, convert: 1.2, convert_r: r as u32, ..small(3) };
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         let mut cpu = e.dish.clone();
         for _ in 0..40 {
@@ -3932,9 +2716,7 @@ mod tests {
         for (sp, f) in cpu.species_trail.iter().enumerate() {
             for y in 0..h {
                 for x in 0..w {
-                    let want: f64 = (x.saturating_sub(r)..(x + r + 1).min(w))
-                        .map(|xx| f[y * w + xx] as f64)
-                        .sum();
+                    let want: f64 = (x.saturating_sub(r)..(x + r + 1).min(w)).map(|xx| f[y * w + xx] as f64).sum();
                     let d = (got[sp * w * h + y * w + x] as f64 - want).abs() / want.abs().max(1.0);
                     worst = worst.max(d);
                     if x % 256 + r >= 256 {
@@ -3988,30 +2770,9 @@ mod tests {
             }
             s
         };
-        let sleep: &[(&str, &str)] = &[
-            ("sleep_rate", "0.05"),
-            ("wake_scent", "50"),
-            ("sleep_deposit", "0.3"),
-            ("alarm_keep", "0.95"),
-            ("alarm_relay", "20"),
-            ("wake_alarm", "1"),
-            ("alarm_weight", "2"),
-            ("sleep_rest", "10"),
-            ("wake_steps", "10"),
-        ];
-        let crystals = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            ..small(0)
-        };
-        let hungry = |s: Settings| Settings {
-            upkeep: 0.02,
-            starve: 0.2,
-            birth_energy: 0.6,
-            capacity: 3 * s.walkers / 2,
-            ..s
-        };
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         const STEPS: u16 = 30;
         const DEATH: f32 = 0.05;
         // (states off after 10 ticks, gas words off just after the gas)
@@ -4031,20 +2792,14 @@ mod tests {
             }
             let (x, y) = (x / m / k, y / m / k);
             cpu.p.gas_death = DEATH;
-            let g = Settings {
-                gas_death: gpu_death,
-                ..s.clone()
-            };
+            let g = Settings { gas_death: gpu_death, ..s.clone() };
             let n_cpu = cpu.gas(x * k, y * k, 10.0 * k, STEPS);
             let n_gpu = e.gas(&shared, &g, x, y, 10.0, gpu_steps);
             let n = cpu.walkers.len();
             let (life, _) = e.life_of();
             let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
             let words_off = e.gassed_of().iter().zip(&cpu.gassed).filter(|(a, b)| a != b).count();
-            assert!(
-                n_cpu > 50 && n_gpu as usize == n_cpu && life_off == 0,
-                "{name}: gassed {n_gpu} on the GPU, {n_cpu} on the CPU, {life_off} states off"
-            );
+            assert!(n_cpu > 50 && n_gpu as usize == n_cpu && life_off == 0, "{name}: gassed {n_gpu} on the GPU, {n_cpu} on the CPU, {life_off} states off");
             let mut states_after_10 = 0;
             let points = [(x * k, y * k), (x * k + 5.0 * k, y * k), (x * k + 40.0 * k, y * k)];
             // Dead asleep: counted dead, or with growth a freed slot.
@@ -4062,10 +2817,7 @@ mod tests {
                     let calm_gpu = e.calm(&shared, &points, 3.0 * k);
                     let calm_cpu = cpu.gassed_near(&points, 3.0 * k);
                     if gpu_death == DEATH && gpu_steps == STEPS {
-                        assert!(
-                            calm_cpu[0] > 0 && calm_gpu == calm_cpu,
-                            "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU"
-                        );
+                        assert!(calm_cpu[0] > 0 && calm_gpu == calm_cpu, "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU");
                     }
                 }
                 if gpu_death != DEATH || gpu_steps != STEPS {
@@ -4073,31 +2825,14 @@ mod tests {
                 }
                 // The gas's words on every slot both hold dormant.
                 let gw = e.gassed_of();
-                let gas_off = (0..n)
-                    .filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j])
-                    .count();
-                eprintln!(
-                    "{name}, tick {}: {life_off} of {n} states off, {gas_off} gas words off; dead {:?}",
-                    10 * (round + 1),
-                    cpu.life_counts()
-                );
-                assert!(
-                    life_off * 1000 <= n && gas_off == 0,
-                    "{name}, tick {}: {life_off} states, {gas_off} gas words off",
-                    10 * (round + 1)
-                );
+                let gas_off = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j]).count();
+                eprintln!("{name}, tick {}: {life_off} of {n} states off, {gas_off} gas words off; dead {:?}", 10 * (round + 1), cpu.life_counts());
+                assert!(life_off * 1000 <= n && gas_off == 0, "{name}, tick {}: {life_off} states, {gas_off} gas words off", 10 * (round + 1));
             }
             if gpu_death == DEATH && gpu_steps == STEPS {
                 assert!(dead(&cpu) > dead0, "{name}: the gas killed sleepers");
-                assert!(
-                    cpu.gassed.iter().all(|&g| g == 0) && e.gassed_of().iter().all(|&g| g == 0),
-                    "{name}: the gas ran out on both"
-                );
-                assert_eq!(
-                    e.calm(&shared, &points, 3.0 * k),
-                    vec![0, 0, 0],
-                    "{name}: no calm once the gas is out"
-                );
+                assert!(cpu.gassed.iter().all(|&g| g == 0) && e.gassed_of().iter().all(|&g| g == 0), "{name}: the gas ran out on both");
+                assert_eq!(e.calm(&shared, &points, 3.0 * k), vec![0, 0, 0], "{name}: no calm once the gas is out");
             }
             (states_after_10, words_off)
         };
@@ -4116,10 +2851,7 @@ mod tests {
         let (s_name, s) = &dishes[1];
         let (states, _) = play(s_name, s, 0.0, STEPS);
         eprintln!("planted, no gas death: {states} states off after 10 ticks");
-        assert!(
-            states * 1000 > s.walkers,
-            "the twin catches gassed sleepers that don't die"
-        );
+        assert!(states * 1000 > s.walkers, "the twin catches gassed sleepers that don't die");
         let (_, words) = play(s_name, s, DEATH, STEPS + 1);
         eprintln!("planted, a step longer: {words} gas words off");
         assert!(words > 50, "the twin catches a gas a step too long");
@@ -4140,17 +2872,7 @@ mod tests {
         let shared = Shared::new(&device);
         let _ = &queue;
         let mut sleepy = small(0);
-        for (k, v) in [
-            ("sleep_rate", "0.05"),
-            ("wake_scent", "50"),
-            ("sleep_deposit", "0.3"),
-            ("alarm_keep", "0.95"),
-            ("alarm_relay", "20"),
-            ("wake_alarm", "1"),
-            ("alarm_weight", "2"),
-            ("sleep_rest", "10"),
-            ("wake_steps", "10"),
-        ] {
+        for (k, v) in [("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")] {
             set(&mut sleepy, k, v).unwrap();
         }
         const KEEP: f32 = 0.97;
@@ -4173,12 +2895,7 @@ mod tests {
             }
             let (x, y) = (x / m / k, y / m / k);
             (cpu.p.gas_keep, cpu.p.gas_sleep, cpu.p.gas_linger) = (KEEP, SLEEP, LINGER);
-            let g = Settings {
-                gas_keep: gpu_keep,
-                gas_sleep: gpu_sleep,
-                gas_linger: LINGER,
-                ..s.clone()
-            };
+            let g = Settings { gas_keep: gpu_keep, gas_sleep: gpu_sleep, gas_linger: LINGER, ..s.clone() };
             cpu.lay_gas(x * k, y * k, 8.0 * k, 1.0);
             e.lay_gas(&shared, &g, x, y, 8.0, 1.0);
             let n = cpu.walkers.len();
@@ -4190,59 +2907,36 @@ mod tests {
                     cpu.tick();
                 }
                 let cloud = e.gas_cloud_of();
-                let cells_off = cloud
-                    .iter()
-                    .zip(&cpu.gas_cloud)
-                    .filter(|(a, b)| (*a - *b).abs() > 1e-6)
-                    .count();
+                let cells_off = cloud.iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
                 let walled = cloud.iter().zip(&cpu.agar).filter(|(v, a)| !**a && **v != 0.0).count();
                 assert_eq!(walled, 0, "{name}: cloud off the agar");
                 let (life, _) = e.life_of();
                 let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
                 let gw = e.gassed_of();
-                let gas_off = (0..n)
-                    .filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j])
-                    .count();
-                let sleepers = (0..n)
-                    .filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && cpu.gassed[j] > 0)
-                    .count();
+                let gas_off = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && life[j] == 2 && gw[j] != cpu.gassed[j]).count();
+                let sleepers = (0..n).filter(|&j| cpu.lives(j) && cpu.life[j] == 2 && cpu.gassed[j] > 0).count();
                 let top = cpu.gas_cloud.iter().cloned().fold(0.0f32, f32::max);
                 eprintln!("{name}, tick {}: cloud top {top:.3}, {cells_off} cells off, {life_off} of {n} states off, {gas_off} gas words off, {sleepers} gassed sleepers", 10 * (round + 1));
                 if round == 0 && gpu_sleep == SLEEP && gpu_keep == KEEP {
                     let calm_gpu = e.calm(&shared, &points, 3.0 * k);
                     let calm_cpu = cpu.gassed_near(&points, 3.0 * k);
-                    assert!(
-                        calm_cpu[0] > 0 && calm_gpu == calm_cpu,
-                        "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU"
-                    );
+                    assert!(calm_cpu[0] > 0 && calm_gpu == calm_cpu, "{name}: calm {calm_gpu:?} on the GPU, {calm_cpu:?} on the CPU");
                 }
                 out.push((cells_off, life_off, gas_off, sleepers));
             }
             out
         };
-        for (name, s) in [
-            ("plain (the cloud turns the states on)", small(0)),
-            ("dormancy and alarm", sleepy.clone()),
-        ] {
+        for (name, s) in [("plain (the cloud turns the states on)", small(0)), ("dormancy and alarm", sleepy.clone())] {
             let rounds = play(name, &s, SLEEP, KEEP);
             assert!(rounds[0].3 > 50, "{name}: the cloud put walkers to sleep");
             for (r, &(cells, states, words, _)) in rounds.iter().enumerate() {
-                assert!(
-                    cells == 0 && states * 1000 <= s.walkers && words == 0,
-                    "{name}, round {r}: {cells} cells, {states} states, {words} gas words off"
-                );
+                assert!(cells == 0 && states * 1000 <= s.walkers && words == 0, "{name}, round {r}: {cells} cells, {states} states, {words} gas words off");
             }
         }
         let rounds = play("planted, sleeps over 0.3", &sleepy, 0.3, KEEP);
-        assert!(
-            rounds.iter().any(|r| r.1 * 1000 > sleepy.walkers || r.2 > 10),
-            "the twin catches a cloud that sleeps at the wrong level"
-        );
+        assert!(rounds.iter().any(|r| r.1 * 1000 > sleepy.walkers || r.2 > 10), "the twin catches a cloud that sleeps at the wrong level");
         let rounds = play("planted, keeps more", &sleepy, SLEEP, KEEP * 1.001);
-        assert!(
-            rounds.iter().any(|r| r.0 > 0),
-            "the twin catches a cloud that keeps more"
-        );
+        assert!(rounds.iter().any(|r| r.0 > 0), "the twin catches a cloud that keeps more");
     }
 
     /// **An explosion's fling on the engine** (`Engine::fling`, the CPU's
@@ -4265,37 +2959,13 @@ mod tests {
             }
             s
         };
-        let sleep: &[(&str, &str)] = &[
-            ("sleep_rate", "0.05"),
-            ("wake_scent", "50"),
-            ("sleep_deposit", "0.3"),
-            ("alarm_keep", "0.95"),
-            ("alarm_relay", "20"),
-            ("wake_alarm", "1"),
-            ("alarm_weight", "2"),
-            ("sleep_rest", "10"),
-            ("wake_steps", "10"),
-        ];
-        let crystals = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            ..small(0)
-        };
-        let hungry = |s: Settings| Settings {
-            upkeep: 0.02,
-            starve: 0.2,
-            birth_energy: 0.6,
-            capacity: 3 * s.walkers / 2,
-            ..s
-        };
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         const STEPS: u16 = 12;
         // (walkers off over the flight, worst tick)
         let play = |name: &str, s: &Settings, gpu_speed: f32| -> usize {
-            let s = Settings {
-                fling_speed: 1.5,
-                ..s.clone()
-            };
+            let s = Settings { fling_speed: 1.5, ..s.clone() };
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             for _ in 0..20 {
@@ -4320,43 +2990,22 @@ mod tests {
             let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
             e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
             let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
-            let g = Settings {
-                fling_speed: gpu_speed,
-                ..s.clone()
-            };
+            let g = Settings { fling_speed: gpu_speed, ..s.clone() };
             let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
             let n = cpu.walkers.len();
             let (life, timer) = e.life_of();
             let marks = e.flung_of();
             let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
-            let timer_off = timer
-                .iter()
-                .zip(&cpu.life_t)
-                .enumerate()
-                .filter(|&(j, (a, b))| cpu.lives(j) && a != b)
-                .count();
+            let timer_off = timer.iter().zip(&cpu.life_t).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
             let marks_off = marks.iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
-            let occ_off = read_back(&device, &queue, &e.occ)
-                .chunks_exact(4)
-                .zip(cpu.occupancy())
-                .filter(|(a, b)| u32::from_le_bytes((*a).try_into().unwrap()) != **b as u32)
-                .count();
+            let occ_off = read_back(&device, &queue, &e.occ).chunks_exact(4).zip(cpu.occupancy()).filter(|(a, b)| u32::from_le_bytes((*a).try_into().unwrap()) != **b as u32).count();
             let gpu_w = walkers_of(&e);
-            let heading_off = (0..n)
-                .filter(|&j| cpu.flung[j] && (gpu_w[j].2 - cpu.walkers[j].2).abs() > 1e-5)
-                .count();
-            let timers: std::collections::BTreeSet<u16> =
-                (0..n).filter(|&j| cpu.flung[j]).map(|j| cpu.life_t[j]).collect();
+            let heading_off = (0..n).filter(|&j| cpu.flung[j] && (gpu_w[j].2 - cpu.walkers[j].2).abs() > 1e-5).count();
+            let timers: std::collections::BTreeSet<u16> = (0..n).filter(|&j| cpu.flung[j]).map(|j| cpu.life_t[j]).collect();
             eprintln!("{name}: killed {killed}, flung {n_gpu} on the GPU and {n_cpu} on the CPU, timers {timers:?}; {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
-            assert!(
-                n_cpu > 50 && n_gpu as usize == n_cpu,
-                "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU"
-            );
+            assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
             assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
-            assert!(
-                timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)),
-                "{name}: the nearest fly furthest: {timers:?}"
-            );
+            assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
                 let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
@@ -4370,20 +3019,14 @@ mod tests {
                     // blast's flight went its own way at tick 3 (trail L1
                     // 7.7e-6), float order on the card, where llvmpipe matched.
                     let few = tol(n / 1000, (n / 1000).max(2));
-                    assert!(
-                        off <= few && life_off <= few && marks_off <= few && lt <= tol(1e-6, 1e-5),
-                        "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}"
-                    );
+                    assert!(off <= few && life_off <= few && marks_off <= few && lt <= tol(1e-6, 1e-5), "{name}, tick {t}: {off} walkers, {life_off} states, {marks_off} marks off; trail L1 {lt:.1e}");
                 }
             }
             if gpu_speed == s.fling_speed {
                 let left = cpu.flung.iter().filter(|&&f| f).count();
                 let left_gpu = e.flung_of().iter().filter(|&&f| f).count();
                 eprintln!("{name}: after the flight {left} still flung on the CPU, {left_gpu} on the GPU; worst tick {worst} walkers off");
-                assert!(
-                    left * 20 <= n_cpu && left_gpu * 20 <= n_cpu,
-                    "{name}: {left} and {left_gpu} of {n_cpu} still in flight"
-                );
+                assert!(left * 20 <= n_cpu && left_gpu * 20 <= n_cpu, "{name}: {left} and {left_gpu} of {n_cpu} still in flight");
             }
             worst
         };
@@ -4421,17 +3064,9 @@ mod tests {
         use slime_mould::mould::squad::{BurstRules, Frame};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 30.0,
-            crater: 0.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            rules,
-            seed,
-        );
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         cpu.bank = 1.0e9;
         for k in 0..cpu.soldiers.len() {
             assert!(cpu.apply(Cmd::Order(k, Order::Attack)));
@@ -4439,10 +3074,7 @@ mod tests {
         let rr = RoundRules::default();
         let mut rc = Rounds::new(parse("bomb").unwrap(), rr);
         let fine = rules.tps as f32 * cpu.world.fine_steps() as f32;
-        let k = BurstRules {
-            fling_speed: rr.fling_speed,
-            ..burst_rules(&rr.kit, fine)
-        };
+        let k = BurstRules { fling_speed: rr.fling_speed, ..burst_rules(&rr.kit, fine) };
         let (mut frames, mut checked, mut after_off) = (0, 0, 0);
         while cpu.end.is_none() && cpu.time() < 30.0 {
             cpu.step();
@@ -4460,21 +3092,9 @@ mod tests {
             }
             let (life, timer) = gpu.world.e.life_of();
             let d = &cpu.world;
-            let off = (0..d.walkers.len())
-                .filter(|&j| life[j] != d.life[j] || (d.lives(j) && timer[j] != d.life_t[j]))
-                .count();
-            let marks = gpu
-                .world
-                .e
-                .flung_of()
-                .iter()
-                .zip(&d.flung)
-                .filter(|(a, b)| a != b)
-                .count();
-            assert!(
-                off == 0 && marks == 0,
-                "frame {frames}: after the bombs {off} states or timers and {marks} marks off"
-            );
+            let off = (0..d.walkers.len()).filter(|&j| life[j] != d.life[j] || (d.lives(j) && timer[j] != d.life_t[j])).count();
+            let marks = gpu.world.e.flung_of().iter().zip(&d.flung).filter(|(a, b)| a != b).count();
+            assert!(off == 0 && marks == 0, "frame {frames}: after the bombs {off} states or timers and {marks} marks off");
             checked += 1;
             // Two frames on, each from the CPU's state.
             let mut twin = cpu.world.clone();
@@ -4482,25 +3102,13 @@ mod tests {
                 gpu.world.e.inject(&twin);
                 World::frame(&mut twin, &Frame::default(), 2);
                 gpu.world.frame(&Frame::default(), 2);
-                let m = gpu
-                    .world
-                    .e
-                    .flung_of()
-                    .iter()
-                    .zip(&twin.flung)
-                    .filter(|(a, b)| a != b)
-                    .count();
+                let m = gpu.world.e.flung_of().iter().zip(&twin.flung).filter(|(a, b)| a != b).count();
                 after_off = after_off.max(m);
             }
         }
         let left = cpu.world.flung.iter().filter(|&&f| f).count();
         eprintln!("bombs: {} cast, {} killed, {} flung in {frames} frames; {checked} casts checked on the engine, flung marks at most {after_off} off two frames on; {left} still flung at the end", rc.cast[3], rc.killed, rc.flung);
-        assert!(
-            rc.cast[3] > 0 && rc.flung > 0 && checked > 0,
-            "the bombs threw mould: {:?}, {} flung",
-            rc.cast,
-            rc.flung
-        );
+        assert!(rc.cast[3] > 0 && rc.flung > 0 && checked > 0, "the bombs threw mould: {:?}, {} flung", rc.cast, rc.flung);
         assert!(after_off * 1000 <= walkers, "{after_off} marks off in flight");
     }
 
@@ -4517,60 +3125,17 @@ mod tests {
         };
         // Rates for a test: spores that fly 20 ticks and rest 10, walkers
         // that doze at 5% a tick (big.rs `life_cycle_threads_change_nothing`).
-        let spores: &[(&str, &str)] = &[
-            ("spore_rate", "0.01"),
-            ("spore_scent", "-1"),
-            ("spore_steps", "20"),
-            ("spore_reach", "8"),
-            ("spore_land", "1"),
-            ("spore_deposit", "0.2"),
-            ("spore_rest", "10"),
-        ];
-        let sleep: &[(&str, &str)] = &[
-            ("sleep_rate", "0.05"),
-            ("wake_scent", "50"),
-            ("sleep_deposit", "0.3"),
-            ("alarm_keep", "0.95"),
-            ("alarm_relay", "20"),
-            ("wake_alarm", "1"),
-            ("alarm_weight", "2"),
-            ("sleep_rest", "10"),
-            ("wake_steps", "10"),
-        ];
-        let burst: &[(&str, &str)] = &[
-            ("spore_burst", "0.5"),
-            ("spore_alarm", "1"),
-            ("spore_steps", "20"),
-            ("spore_reach", "8"),
-            ("alarm_keep", "0.98"),
-        ];
+        let spores: &[(&str, &str)] = &[("spore_rate", "0.01"), ("spore_scent", "-1"), ("spore_steps", "20"), ("spore_reach", "8"), ("spore_land", "1"), ("spore_deposit", "0.2"), ("spore_rest", "10")];
+        let sleep: &[(&str, &str)] = &[("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_deposit", "0.3"), ("alarm_keep", "0.95"), ("alarm_relay", "20"), ("wake_alarm", "1"), ("alarm_weight", "2"), ("sleep_rest", "10"), ("wake_steps", "10")];
+        let burst: &[(&str, &str)] = &[("spore_burst", "0.5"), ("spore_alarm", "1"), ("spore_steps", "20"), ("spore_reach", "8"), ("alarm_keep", "0.98")];
         let both = [spores, sleep].concat();
-        let hungry = |s: Settings| Settings {
-            upkeep: 0.02,
-            starve: 0.2,
-            birth_energy: 0.6,
-            capacity: 3 * s.walkers / 2,
-            ..s
-        };
-        let mix = |s: Settings| Settings {
-            mix_share: 0.3,
-            mix_reach: 3.0,
-            mix_angle: 0.5,
-            mix_turn: 2.0,
-            mix_step: 1.5,
-            mix_deposit: 0.5,
-            ..s
-        };
+        let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
+        let mix = |s: Settings| Settings { mix_share: 0.3, mix_reach: 3.0, mix_angle: 0.5, mix_turn: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..s };
         let tier = |t: Tier, mut s: Settings| {
             t.settings(&mut s).unwrap();
             s
         };
-        let crystals = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            ..small(0)
-        };
+        let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
         // Dormant walkers that die asleep, at 2% a tick so four ticks see it.
         let dying = [sleep, &[("sleep_death", "0.02")]].concat();
         let dishes = [
@@ -4581,118 +3146,27 @@ mod tests {
             // tick (fruit at 30, ten ticks of flight, no landing on scent),
             // two species with their own crowd limits, so landings meet in
             // a cell and species 1's ignore the limit.
-            (
-                "a burst landing at once, two species with their own crowd limits",
-                with(
-                    Settings { species: 2, ..small(0) },
-                    &[
-                        ("spore_burst", "1"),
-                        ("spore_alarm", "1"),
-                        ("spore_steps", "10"),
-                        ("spore_reach", "8"),
-                        ("spore_land", "0"),
-                        ("alarm_keep", "0.98"),
-                        ("s1.crowd", "0"),
-                    ],
-                ),
-            ),
+            ("a burst landing at once, two species with their own crowd limits", with(Settings { species: 2, ..small(0) }, &[("spore_burst", "1"), ("spore_alarm", "1"), ("spore_steps", "10"), ("spore_reach", "8"), ("spore_land", "0"), ("alarm_keep", "0.98"), ("s1.crowd", "0")])),
             ("dormancy, alarm and relays", with(small(0), sleep)),
-            (
-                "skittish: alarm only, the states from the strike",
-                with(small(0), &[("alarm_keep", "0.98"), ("alarm_weight", "-10")]),
-            ),
-            (
-                "both, two species with their own crowd limits, mixed",
-                mix(with(
-                    Settings { species: 2, ..small(0) },
-                    &[&both[..], &[("s1.crowd", "0"), ("s1.step", "1.5")]].concat(),
-                )),
-            ),
+            ("skittish: alarm only, the states from the strike", with(small(0), &[("alarm_keep", "0.98"), ("alarm_weight", "-10")])),
+            ("both, two species with their own crowd limits, mixed", mix(with(Settings { species: 2, ..small(0) }, &[&both[..], &[("s1.crowd", "0"), ("s1.step", "1.5")]].concat()))),
             ("both, growth on crystals", with(hungry(crystals.clone()), &both)),
-            (
-                "both, growth on grass",
-                with(
-                    hungry(Settings {
-                        graze: 10.0,
-                        ..small(0)
-                    }),
-                    &both,
-                ),
-            ),
-            (
-                "both, cap, explorers, contagion",
-                with(
-                    Settings {
-                        cap: 100,
-                        explore: 60,
-                        explore_spread: 1.0,
-                        sick: 60,
-                        immune: 60,
-                        catch_at: 0.2,
-                        seed_at: 0.0,
-                        seed_r: 60.0,
-                        ..small(3)
-                    },
-                    &both,
-                ),
-            ),
-            (
-                "both, respawn",
-                with(
-                    Settings {
-                        respawn: 0.01,
-                        ..small(0)
-                    },
-                    &both,
-                ),
-            ),
+            ("both, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &both)),
+            ("both, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &both)),
+            ("both, respawn", with(Settings { respawn: 0.01, ..small(0) }, &both)),
             ("dormancy, dying asleep", with(small(0), &dying)),
             // The dying's counters (explorers age, the sick count down), and
             // with no crowd limit the capped share of a cell they leave to
             // ordinary walkers (round 3 missed the dying counted dormant on
             // the one-a-cell dish, where no walker shares their cell).
-            (
-                "dormancy, dying asleep, no limit, cap, explorers, contagion",
-                with(
-                    Settings {
-                        cap: 100,
-                        explore: 60,
-                        explore_spread: 1.0,
-                        sick: 60,
-                        immune: 60,
-                        catch_at: 0.2,
-                        seed_at: 0.0,
-                        seed_r: 60.0,
-                        ..small(3)
-                    },
-                    &dying,
-                ),
-            ),
-            (
-                "both, dying asleep, growth on grass",
-                with(
-                    hungry(Settings {
-                        graze: 10.0,
-                        ..small(0)
-                    }),
-                    &[&both[..], &[("sleep_death", "0.02")]].concat(),
-                ),
-            ),
+            ("dormancy, dying asleep, no limit, cap, explorers, contagion", with(Settings { cap: 100, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..small(3) }, &dying)),
+            ("both, dying asleep, growth on grass", with(hungry(Settings { graze: 10.0, ..small(0) }), &[&both[..], &[("sleep_death", "0.02")]].concat())),
             ("the Sporer (Tier::settings)", tier(Tier::Sporer, small(0))),
             ("the Sleeper", tier(Tier::Sleeper, small(0))),
-            (
-                "the Sleeper, growth on crystals",
-                tier(Tier::Sleeper, hungry(crystals.clone())),
-            ),
+            ("the Sleeper, growth on crystals", tier(Tier::Sleeper, hungry(crystals.clone()))),
             ("the Swarmer", tier(Tier::Swarmer, small(0))),
         ];
-        let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> {
-            read_back(&device, &queue, b)
-                .chunks_exact(4)
-                .take(n)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect()
-        };
+        let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -4717,9 +3191,7 @@ mod tests {
             assert!(!cpu.life.is_empty(), "{name}: life states on");
             // The strike on both, from the same state, on an ordinary
             // walker (so it kills one at least).
-            let j = (0..cpu.walkers.len())
-                .find(|&j| cpu.lives(j) && cpu.life[j] == 0)
-                .expect("an ordinary walker");
+            let j = (0..cpu.walkers.len()).find(|&j| cpu.lives(j) && cpu.life[j] == 0).expect("an ordinary walker");
             let (x, y) = (cpu.walkers[j].0 / k, cpu.walkers[j].1 / k);
             // A wall beside it on the world dish: the strike's alarm must
             // stay off the wall.
@@ -4733,59 +3205,21 @@ mod tests {
             let killed = cpu.strike(x, y, 4.0, 30.0, 12.0);
             cpu.scorch_disc(x * k, y * k, 5.0 * k, 300);
             e.burst(&shared, &s, x, y, 4.0, 30.0, 12.0, 5.0, 300, 0.0);
-            let crater_off = e
-                .crater_of()
-                .iter()
-                .zip(&cpu.scorch)
-                .filter(|(a, b)| **a != **b as f32)
-                .count();
-            assert!(
-                cpu.scorch.contains(&300) && crater_off == 0,
-                "{name}: the burst's crater, {crater_off} cells off"
-            );
+            let crater_off = e.crater_of().iter().zip(&cpu.scorch).filter(|(a, b)| **a != **b as f32).count();
+            assert!(cpu.scorch.contains(&300) && crater_off == 0, "{name}: the burst's crater, {crater_off} cells off");
             let side = (e.done % 2) as usize;
             let struck_trail = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
-            let struck_alarm = if cpu.alarm.is_empty() {
-                0.0
-            } else {
-                l1(&e.alarm_of(), &cpu.alarm)
-            };
+            let struck_alarm = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
             let struck_life = e.life_of().0.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
             let gpu_killed = e.struck();
             // What the next tick's inject would hide: the strike's counts,
             // lives and each species' trail.
-            let struck_occ = u32s(&e.occ, cpu.agar.len())
-                .iter()
-                .zip(cpu.occupancy())
-                .filter(|(a, b)| **a != **b as u32)
-                .count();
-            let struck_lives = if cpu.energy.is_empty() {
-                0
-            } else {
-                floats(&read_back(&device, &queue, &e.energy))
-                    .iter()
-                    .take(cpu.walkers.len())
-                    .enumerate()
-                    .filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j))
-                    .count()
-            };
-            let struck_species = if e.nsp > 0 {
-                l1(
-                    &floats(&read_back(&device, &queue, &e.species[side])),
-                    &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>(),
-                )
-            } else {
-                0.0
-            };
+            let struck_occ = u32s(&e.occ, cpu.agar.len()).iter().zip(cpu.occupancy()).filter(|(a, b)| **a != **b as u32).count();
+            let struck_lives = if cpu.energy.is_empty() { 0 } else { floats(&read_back(&device, &queue, &e.energy)).iter().take(cpu.walkers.len()).enumerate().filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j)).count() };
+            let struck_species = if e.nsp > 0 { l1(&floats(&read_back(&device, &queue, &e.species[side])), &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>()) } else { 0.0 };
             assert!(struck_occ == 0 && struck_lives == 0 && struck_species <= 1e-6, "{name}: after the strike {struck_occ} counts and {struck_lives} lives off, species L1 {struck_species:.1e}");
-            assert!(
-                killed > 0 && gpu_killed as usize == killed && struck_life == 0,
-                "{name}: the strike killed {gpu_killed} on the GPU, {killed} on the CPU; {struck_life} states off"
-            );
-            assert!(
-                struck_trail <= 1e-6 && struck_alarm <= 1e-6,
-                "{name}: after the strike trail L1 {struck_trail:.1e}, alarm L1 {struck_alarm:.1e}"
-            );
+            assert!(killed > 0 && gpu_killed as usize == killed && struck_life == 0, "{name}: the strike killed {gpu_killed} on the GPU, {killed} on the CPU; {struck_life} states off");
+            assert!(struck_trail <= 1e-6 && struck_alarm <= 1e-6, "{name}: after the strike trail L1 {struck_trail:.1e}, alarm L1 {struck_alarm:.1e}");
             // Two ticks on both (`twin` injects the CPU's state again, the
             // strike's included).
             let n = cpu.walkers.len();
@@ -4794,121 +3228,35 @@ mod tests {
             let side = (e.done % 2) as usize;
             let (life, timer) = e.life_of();
             let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
-            let timer_off = timer
-                .iter()
-                .zip(&cpu.life_t)
-                .enumerate()
-                .filter(|&(j, (a, b))| cpu.lives(j) && a != b)
-                .count();
-            let la = if cpu.alarm.is_empty() {
-                0.0
-            } else {
-                l1(&e.alarm_of(), &cpu.alarm)
-            };
-            let lsp = if e.nsp > 0 {
-                l1(
-                    &floats(&read_back(&device, &queue, &e.species[side])),
-                    &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>(),
-                )
-            } else {
-                0.0
-            };
+            let timer_off = timer.iter().zip(&cpu.life_t).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
+            let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
+            let lsp = if e.nsp > 0 { l1(&floats(&read_back(&device, &queue, &e.species[side])), &cpu.species_trail.iter().flatten().copied().collect::<Vec<f32>>()) } else { 0.0 };
             let occ = u32s(&e.occ, cpu.agar.len());
-            let occ_off = occ
-                .iter()
-                .zip(cpu.occupancy())
-                .filter(|(a, b)| **a != **b as u32)
-                .count();
+            let occ_off = occ.iter().zip(cpu.occupancy()).filter(|(a, b)| **a != **b as u32).count();
             // Energy in living slots only: a struck walker's slot keeps its
             // energy on the CPU (unread until a birth halves its parent's
             // into it) and holds -1 on the GPU.
             let living = |v: &[f32]| -> Vec<f32> { (0..n).filter(|&j| cpu.lives(j)).map(|j| v[j]).collect() };
-            let le = if cpu.energy.is_empty() {
-                0.0
-            } else {
-                l1(
-                    &living(&floats(&read_back(&device, &queue, &e.energy))),
-                    &living(&cpu.energy),
-                )
-            };
+            let le = if cpu.energy.is_empty() { 0.0 } else { l1(&living(&floats(&read_back(&device, &queue, &e.energy))), &living(&cpu.energy)) };
             let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
-            let lives_off = if cpu.energy.is_empty() {
-                0
-            } else {
-                floats(&read_back(&device, &queue, &e.energy))
-                    .iter()
-                    .take(n)
-                    .enumerate()
-                    .filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j))
-                    .count()
-            };
-            let lc = if cpu.charge.is_empty() {
-                0.0
-            } else {
-                l1(&floats(&read_back(&device, &queue, &e.charge)), &cpu.charge)
-            };
-            let lg = if cpu.grass.is_empty() {
-                0.0
-            } else {
-                l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass)
-            };
-            let lgerm = if cpu.germ.is_empty() {
-                0.0
-            } else {
-                l1(
-                    &floats(&read_back(&device, &queue, &e.germ[side]))[..cpu.germ.len()],
-                    &cpu.germ,
-                )
-            };
-            let ages_off = if cpu.age.is_empty() {
-                0
-            } else {
-                u32s(&e.age, n)
-                    .iter()
-                    .zip(&cpu.age)
-                    .enumerate()
-                    .filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32)
-                    .count()
-            };
-            let sick_off = if cpu.sick.is_empty() {
-                0
-            } else {
-                u32s(&e.sick, n)
-                    .iter()
-                    .zip(&cpu.sick)
-                    .enumerate()
-                    .filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32)
-                    .count()
-            };
+            let lives_off = if cpu.energy.is_empty() { 0 } else { floats(&read_back(&device, &queue, &e.energy)).iter().take(n).enumerate().filter(|&(j, v)| (*v >= 0.0) != cpu.lives(j)).count() };
+            let lc = if cpu.charge.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.charge)), &cpu.charge) };
+            let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
+            let lgerm = if cpu.germ.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.germ[side]))[..cpu.germ.len()], &cpu.germ) };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age, n).iter().zip(&cpu.age).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick, n).iter().zip(&cpu.sick).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
             let after = cpu.life_counts();
             eprintln!(
                 "{name}: {n} slots, states before {before:?} (walkers, spores, dormant, dead), after {after:?}; struck {killed}; {moved} moved, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, species L1 {lsp:.1e}, alarm L1 {la:.1e} (alarm in all {alarm_sum:.0}); {life_off} states and {timer_off} timers off; {occ_off} counts off; energy L1 {le:.1e}, {lives_off} lives off, charge L1 {lc:.1e}, grass L1 {lg:.1e}, germ L1 {lgerm:.1e}; {ages_off} ages and {sick_off} sick counters off"
             );
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
-            assert!(
-                lt <= 1e-6 && ls <= 1e-6 && lsp <= 1e-6 && la <= 1e-6,
-                "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}"
-            );
-            assert!(
-                life_off * 1000 <= n && timer_off * 1000 <= n && occ_off * 1000 <= n,
-                "{name}: {life_off} states, {timer_off} timers, {occ_off} counts off"
-            );
-            assert!(
-                le <= 1e-3 && lives_off * 1000 <= n && lc <= 1e-6,
-                "{name}: energy {le:.1e}, {lives_off} lives, charge {lc:.1e}"
-            );
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lsp <= 1e-6 && la <= 1e-6, "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}");
+            assert!(life_off * 1000 <= n && timer_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {life_off} states, {timer_off} timers, {occ_off} counts off");
+            assert!(le <= 1e-3 && lives_off * 1000 <= n && lc <= 1e-6, "{name}: energy {le:.1e}, {lives_off} lives, charge {lc:.1e}");
             assert!(lg <= 1e-6 && lgerm <= 1e-6, "{name}: grass {lg:.1e}, germ {lgerm:.1e}");
-            assert!(
-                ages_off * 1000 <= n && sick_off * 1000 <= n,
-                "{name}: {ages_off} ages, {sick_off} sick counters off"
-            );
+            assert!(ages_off * 1000 <= n && sick_off * 1000 <= n, "{name}: {ages_off} ages, {sick_off} sick counters off");
             if s.sleep_death >= 0.01 && s.upkeep == 0.0 {
-                assert!(
-                    after[3] > before[3],
-                    "{name}: dormant walkers die asleep: dead {} then {}",
-                    before[3],
-                    after[3]
-                );
+                assert!(after[3] > before[3], "{name}: dormant walkers die asleep: dead {} then {}", before[3], after[3]);
             }
         }
     }
@@ -4922,11 +3270,7 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
         for base in [small(0), small(4)] {
-            let forced = Settings {
-                blocked_keep: true,
-                blocked_reset: 1.0,
-                ..base.clone()
-            };
+            let forced = Settings { blocked_keep: true, blocked_reset: 1.0, ..base.clone() };
             let mut seen = Vec::new();
             for s in [&base, &forced] {
                 let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
@@ -4934,10 +3278,7 @@ mod tests {
                     run(&mut e, &shared, s, s.ticks, Hand::default());
                 }
                 assert_eq!(e.outside, s.blocked_keep, "the pipelines picked");
-                let w: Vec<u32> = walkers_of(&e)
-                    .iter()
-                    .flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()])
-                    .collect();
+                let w: Vec<u32> = walkers_of(&e).iter().flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()]).collect();
                 seen.push((e.picture(), w));
             }
             assert!(seen[0] == seen[1], "the plain and full pipelines differ");
@@ -4967,17 +3308,10 @@ mod tests {
         }
         let was = cpu.reached.clone();
         let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 2);
-        let gpu: Vec<bool> = read_back(&device, &queue, &e.reached)
-            .chunks_exact(4)
-            .take(cpu.reached.len())
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()) != 0)
-            .collect();
+        let gpu: Vec<bool> = read_back(&device, &queue, &e.reached).chunks_exact(4).take(cpu.reached.len()).map(|c| u32::from_le_bytes(c.try_into().unwrap()) != 0).collect();
         eprintln!("a pile reached after {} ticks: {was:?} to {:?}; GPU {gpu:?}; {moved} moved, {off} off, trail L1 {lt:.1e}, scent L1 {ls:.1e}", ticks + 1, cpu.reached);
         assert_eq!(gpu, cpu.reached, "the GPU marked the pile the CPU did");
-        assert!(
-            off * 1000 <= cpu.walkers.len() && lt <= 1e-4 && ls <= 1e-6,
-            "{off} off, trail L1 {lt:.2e}, scent L1 {ls:.2e}"
-        );
+        assert!(off * 1000 <= cpu.walkers.len() && lt <= 1e-4 && ls <= 1e-6, "{off} off, trail L1 {lt:.2e}, scent L1 {ls:.2e}");
     }
 
     /// The same seed gives the same dish and picture twice, bit for bit,
@@ -4989,43 +3323,15 @@ mod tests {
         let shared = Shared::new(&device);
         // Key 5, and the looks with contagion seeded by the mouse and by
         // the clock (`seed_at` 0.1 s).
-        let looks = Settings {
-            trail_scale: 0.02,
-            turn_by: [-20.0, 1.0],
-            floor: 0.25,
-            wander: 0.01,
-            cap: 100,
-            sick: 60,
-            immune: 120,
-            seed_at: 0.1,
-            ..small(9)
-        };
+        let looks = Settings { trail_scale: 0.02, turn_by: [-20.0, 1.0], floor: 0.25, wander: 0.01, cap: 100, sick: 60, immune: 120, seed_at: 0.1, ..small(9) };
         // The outside rules: cyclic species with explorers (their stage
         // started again by respawn and the pull), the chance turn, size
         // spread and area sensors; and two species of grazing droplets
         // keeping their heading and converting.
-        let outside = Settings {
-            respawn: 0.01,
-            explore: 60,
-            explore_spread: 1.0,
-            chance: 2.0,
-            size_spread: 0.5,
-            sensor_r: 1,
-            ..small(16)
-        };
-        let droplets = Settings {
-            blocked_keep: true,
-            blocked_reset: 0.03,
-            convert: 1.2,
-            ..small(21)
-        };
+        let outside = Settings { respawn: 0.01, explore: 60, explore_spread: 1.0, chance: 2.0, size_spread: 0.5, sensor_r: 1, ..small(16) };
+        let droplets = Settings { blocked_keep: true, blocked_reset: 0.03, convert: 1.2, ..small(21) };
         for s in [small(4), looks, outside, droplets] {
-            let hand = |f: u32| Hand {
-                at: Some((200.0 + 4.0 * f as f32, 150.0)),
-                pull: f < 10,
-                wipe: f >= 10,
-                infect: f == 3,
-            };
+            let hand = |f: u32| Hand { at: Some((200.0 + 4.0 * f as f32, 150.0)), pull: f < 10, wipe: f >= 10, infect: f == 3 };
             let mut seen = Vec::new();
             for _ in 0..2 {
                 let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -5038,11 +3344,7 @@ mod tests {
                 counters.extend(read_back(&device, &queue, &e.grass));
                 seen.push((e.picture(), walkers_of(&e), counters));
             }
-            let bits = |w: &[(f32, f32, f32)]| {
-                w.iter()
-                    .flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()])
-                    .collect::<Vec<u32>>()
-            };
+            let bits = |w: &[(f32, f32, f32)]| w.iter().flat_map(|&(x, y, h)| [x.to_bits(), y.to_bits(), h.to_bits()]).collect::<Vec<u32>>();
             assert!(seen[0].0 == seen[1].0, "the pictures differ");
             assert_eq!(bits(&seen[0].1), bits(&seen[1].1), "the walkers differ");
             assert!(seen[0].2 == seen[1].2, "the sick, ages, species or grass differ");
@@ -5056,33 +3358,19 @@ mod tests {
     fn the_crowd_limit_holds_through_jumps() {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let s = Settings {
-            respawn: 0.01,
-            ..small(0)
-        };
+        let s = Settings { respawn: 0.01, ..small(0) };
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         assert!(e.crowd_ok);
         for f in 0..30 {
-            let hand = Hand {
-                at: Some((256.0, 160.0)),
-                pull: f % 2 == 0,
-                wipe: false,
-                infect: false,
-            };
+            let hand = Hand { at: Some((256.0, 160.0)), pull: f % 2 == 0, wipe: false, infect: false };
             run(&mut e, &shared, &s, s.ticks, hand);
         }
         let walkers = walkers_of(&e);
         assert_eq!(walkers.len(), e.n as usize);
-        let occ: Vec<u32> = read_back(&device, &queue, &e.occ)
-            .chunks_exact(4)
-            .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-            .collect();
+        let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
         let mut counted = vec![0u32; e.cells as usize];
         for &(x, y, _) in &walkers {
-            assert!(
-                x >= 0.0 && y >= 0.0 && (x as usize) < e.dish.w && (y as usize) < e.dish.h,
-                "a walker outside the dish at {x}, {y}"
-            );
+            assert!(x >= 0.0 && y >= 0.0 && (x as usize) < e.dish.w && (y as usize) < e.dish.h, "a walker outside the dish at {x}, {y}");
             let i = y as usize * e.dish.w + x as usize;
             assert!(e.dish.agar[i], "a walker off the agar at {x}, {y}");
             counted[i] += 1;
@@ -5097,144 +3385,51 @@ mod tests {
     fn the_soft_curves_reference_is_the_p999() {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let s = Settings {
-            laid: 2000.0,
-            ..small(2)
-        };
-        let s = Settings {
-            curve: Curve::Soft,
-            ..s
-        };
+        let s = Settings { laid: 2000.0, ..small(2) };
+        let s = Settings { curve: Curve::Soft, ..s };
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         for _ in 0..30 {
             run(&mut e, &shared, &s, s.ticks, Hand::default());
         }
-        let top = f32::from_bits(u32::from_le_bytes(
-            read_back(&device, &queue, &e.state)[4..8].try_into().unwrap(),
-        ));
-        let mut lit: Vec<f32> = floats(&read_back(&device, &queue, &e.trail[(e.done % 2) as usize]))
-            .into_iter()
-            .filter(|&v| v > 0.0)
-            .collect();
+        let top = f32::from_bits(u32::from_le_bytes(read_back(&device, &queue, &e.state)[4..8].try_into().unwrap()));
+        let mut lit: Vec<f32> = floats(&read_back(&device, &queue, &e.trail[(e.done % 2) as usize])).into_iter().filter(|&v| v > 0.0).collect();
         lit.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let p999 = lit[lit.len() - (lit.len() / 1000).max(1)];
         eprintln!("top {top}, p99.9 {p999}, ratio {:.3}", top / p999);
         assert!(p999 > 65_536.0, "the dish should pass the old histogram's top: {p999}");
-        assert!(
-            top >= p999 * 0.999 && top <= p999 * 1.1,
-            "top {top} against p99.9 {p999}"
-        );
+        assert!(top >= p999 * 0.999 && top <= p999 * 1.1, "top {top} against p99.9 {p999}");
     }
 
     #[test]
     fn controls_parse() {
         let mut s = preset(3);
-        for (k, v) in [
-            ("walkers", "2000000"),
-            ("respawn", "0.03"),
-            ("curve", "game"),
-            ("colour", "amber"),
-            ("field", "walkers"),
-            ("start", "blob"),
-            ("crowd", "1"),
-        ] {
+        for (k, v) in [("walkers", "2000000"), ("respawn", "0.03"), ("curve", "game"), ("colour", "amber"), ("field", "walkers"), ("start", "blob"), ("crowd", "1")] {
             set(&mut s, k, v).unwrap();
         }
-        assert_eq!(
-            (s.walkers, s.respawn, s.curve, s.colour, s.field, s.start, s.crowd),
-            (
-                2_000_000,
-                0.03,
-                Curve::Game,
-                Colour::Amber,
-                Field::Walkers,
-                Start::Home,
-                true
-            )
-        );
+        assert_eq!((s.walkers, s.respawn, s.curve, s.colour, s.field, s.start, s.crowd), (2_000_000, 0.03, Curve::Game, Colour::Amber, Field::Walkers, Start::Home, true));
         // The looks' keys, with the CPU's names too (examples/bigdish.rs).
-        for (k, v) in [
-            ("start", "disc"),
-            ("haze", "0.3"),
-            ("sense_scale", "0.02"),
-            ("turn_mod", "-20:1"),
-            ("step_by", "1"),
-            ("deposit_cap", "100"),
-            ("sick_steps", "120"),
-            ("catch", "5"),
-        ] {
+        for (k, v) in [("start", "disc"), ("haze", "0.3"), ("sense_scale", "0.02"), ("turn_mod", "-20:1"), ("step_by", "1"), ("deposit_cap", "100"), ("sick_steps", "120"), ("catch", "5")] {
             set(&mut s, k, v).unwrap();
         }
-        assert_eq!(
-            (
-                s.start,
-                s.haze,
-                s.trail_scale,
-                s.turn_by,
-                s.step_by,
-                s.cap,
-                s.sick,
-                s.catch_at
-            ),
-            (Start::Disc, 0.3, 0.02, [-20.0, 1.0], [1.0, 1.0], 100, 120, 5.0)
-        );
+        assert_eq!((s.start, s.haze, s.trail_scale, s.turn_by, s.step_by, s.cap, s.sick, s.catch_at), (Start::Disc, 0.3, 0.02, [-20.0, 1.0], [1.0, 1.0], 100, 120, 5.0));
         assert!(set(&mut s, "turn_mod", "-20:x").is_err());
         // The outside rules' keys, by the CPU's names (examples/bigdish.rs).
-        for (k, v) in [
-            ("species", "3"),
-            ("species_cycle", "1"),
-            ("species_avoid", "0.5"),
-            ("explore_steps", "900"),
-            ("explore_spread", "1"),
-            ("blocked_deposit", "1"),
-            ("blocked_keep", "on"),
-            ("chance_exp", "4"),
-            ("size_spread", "0.6"),
-            ("sensor_r", "1"),
-        ] {
+        for (k, v) in [("species", "3"), ("species_cycle", "1"), ("species_avoid", "0.5"), ("explore_steps", "900"), ("explore_spread", "1"), ("blocked_deposit", "1"), ("blocked_keep", "on"), ("chance_exp", "4"), ("size_spread", "0.6"), ("sensor_r", "1")] {
             set(&mut s, k, v).unwrap();
         }
-        assert_eq!(
-            (
-                s.species,
-                s.cycle,
-                s.avoid,
-                s.explore,
-                s.explore_spread,
-                s.blocked_lay,
-                s.blocked_keep,
-                s.chance,
-                s.size_spread,
-                s.sensor_r
-            ),
-            (3, true, 0.5, 900, 1.0, 1.0, true, 4.0, 0.6, 1)
-        );
+        assert_eq!((s.species, s.cycle, s.avoid, s.explore, s.explore_spread, s.blocked_lay, s.blocked_keep, s.chance, s.size_spread, s.sensor_r), (3, true, 0.5, 900, 1.0, 1.0, true, 4.0, 0.6, 1));
         set(&mut s, "species", "9").unwrap();
         assert_eq!(s.fields(), 4);
-        for (k, v) in [
-            ("species_convert", "1.5"),
-            ("graze_weight", "10"),
-            ("graze_eat", "0.1"),
-            ("graze_regrow", "0.004"),
-            ("species_boost", "1.5"),
-        ] {
+        for (k, v) in [("species_convert", "1.5"), ("graze_weight", "10"), ("graze_eat", "0.1"), ("graze_regrow", "0.004"), ("species_boost", "1.5")] {
             set(&mut s, k, v).unwrap();
         }
-        assert_eq!(
-            (s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost),
-            (1.5, 10.0, 0.1, 0.004, 1.5)
-        );
+        assert_eq!((s.convert, s.graze, s.graze_eat, s.graze_regrow, s.boost), (1.5, 10.0, 0.1, 0.004, 1.5));
         assert!(set(&mut s, "nonsense", "1").is_err());
         // Switches and names are strict: `crowd=false` is off, a misspelt
         // name is an error, and no frame has 0 ticks.
         set(&mut s, "crowd", "false").unwrap();
         assert!(!s.crowd);
-        for (k, v) in [
-            ("crowd", "maybe"),
-            ("curve", "Soft"),
-            ("colour", "red"),
-            ("start", "packed"),
-        ] {
+        for (k, v) in [("crowd", "maybe"), ("curve", "Soft"), ("colour", "red"), ("start", "packed")] {
             assert!(set(&mut s, k, v).is_err(), "{k}={v}");
         }
         set(&mut s, "ticks", "0").unwrap();
@@ -5254,65 +3449,20 @@ mod tests {
         // 128,000 cells); with no limit nothing slows a birth but the slots,
         // so it gets twenty times (it doubles about every 10 ticks of the
         // 40-tick warm-up; three times was full by then).
-        let g = |s: Settings| Settings {
-            upkeep: 0.01,
-            walkers: s.walkers / 5,
-            capacity: if s.crowd { 3 } else { 20 } * s.walkers / 5,
-            graze: 10.0,
-            ..s
-        };
+        let g = |s: Settings| Settings { upkeep: 0.01, walkers: s.walkers / 5, capacity: if s.crowd { 3 } else { 20 } * s.walkers / 5, graze: 10.0, ..s };
         // Hungry: grass eaten faster than it pays (0.03 upkeep against at
         // most 0.05 eaten), so some starve while others breed.
-        let hungry = |s: Settings| Settings {
-            upkeep: 0.03,
-            starve: 0.2,
-            birth_energy: 0.6,
-            graze_regrow: 0.0,
-            ..g(s)
-        };
+        let hungry = |s: Settings| Settings { upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze_regrow: 0.0, ..g(s) };
         let dishes = [
             ("growing, one a cell", g(small(0))),
             ("growing, no limit", g(small(2))),
             ("hungry, one a cell", hungry(small(0))),
             ("hungry, no limit, Jenson's", hungry(small(3))),
-            (
-                "hungry, species converting, explorers, contagion, respawn",
-                Settings {
-                    species: 2,
-                    convert: 1.2,
-                    explore: 60,
-                    explore_spread: 1.0,
-                    sick: 60,
-                    immune: 60,
-                    catch_at: 0.2,
-                    seed_at: 0.0,
-                    seed_r: 60.0,
-                    respawn: 0.01,
-                    ..hungry(small(0))
-                },
-            ),
-            (
-                "hungry, cap, grazing off",
-                Settings {
-                    cap: 100,
-                    graze: 0.0,
-                    ..hungry(small(3))
-                },
-            ),
+            ("hungry, species converting, explorers, contagion, respawn", Settings { species: 2, convert: 1.2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, respawn: 0.01, ..hungry(small(0)) }),
+            ("hungry, cap, grazing off", Settings { cap: 100, graze: 0.0, ..hungry(small(3)) }),
             // The toolkit's germ (2026-11-14): the sick pay `sick_upkeep`
             // times the upkeep, long sick so the warm-up leaves some sick.
-            (
-                "hungry, the sick pay five times the upkeep",
-                Settings {
-                    sick: 400,
-                    immune: 60,
-                    catch_at: 0.2,
-                    seed_at: 0.0,
-                    seed_r: 60.0,
-                    sick_upkeep: 5.0,
-                    ..hungry(small(0))
-                },
-            ),
+            ("hungry, the sick pay five times the upkeep", Settings { sick: 400, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, sick_upkeep: 5.0, ..hungry(small(0)) }),
             // Every other walker set starving and the rest set to breed
             // (below), with room in the slots: births land in cells freed
             // by deaths in the same tick, some of them claimed by the
@@ -5320,36 +3470,13 @@ mod tests {
             // With species, explorers and contagion, so a child landing in
             // the slot of a walker that died keeps no age, sickness or
             // species of the dead one's.
-            (
-                "hungry, dying beside breeding",
-                Settings {
-                    starve: 1.0,
-                    capacity: 60_000,
-                    species: 2,
-                    explore: 60,
-                    explore_spread: 1.0,
-                    sick: 60,
-                    immune: 60,
-                    catch_at: 0.2,
-                    seed_at: 0.0,
-                    seed_r: 60.0,
-                    ..hungry(small(0))
-                },
-            ),
+            ("hungry, dying beside breeding", Settings { starve: 1.0, capacity: 60_000, species: 2, explore: 60, explore_spread: 1.0, sick: 60, immune: 60, catch_at: 0.2, seed_at: 0.0, seed_r: 60.0, ..hungry(small(0)) }),
             // The species settings (2026-11-11): children keep their
             // parent's kind, and a parent breeds by its species' crowd
             // limit (species 1 has none); species 1 does not graze, which
             // growth on grass overrides (every walker eats).
             ("hungry, mixed walkers, crowd limits by species", {
-                let mut s = Settings {
-                    species: 2,
-                    zones: true,
-                    mix_share: 0.3,
-                    mix_reach: 2.0,
-                    mix_step: 1.5,
-                    mix_deposit: 0.5,
-                    ..hungry(small(0))
-                };
+                let mut s = Settings { species: 2, zones: true, mix_share: 0.3, mix_reach: 2.0, mix_step: 1.5, mix_deposit: 0.5, ..hungry(small(0)) };
                 for (k, v) in [("s1.crowd", "0"), ("s1.graze", "0"), ("s0.keep", "0.93")] {
                     set(&mut s, k, v).unwrap();
                 }
@@ -5401,68 +3528,19 @@ mod tests {
             let (born, starved) = (cpu.births - born, cpu.starved - starved);
             let energy = floats(&read_back(&device, &queue, &e.energy));
             let want = energies(&cpu);
-            let lives_off = energy
-                .iter()
-                .zip(&want)
-                .filter(|(g, c)| (**g >= 0.0) != (**c >= 0.0))
-                .count();
-            let le = l1(
-                &energy.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(),
-                &want.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(),
-            );
-            let u32s = |b: &wgpu::Buffer| -> Vec<u32> {
-                read_back(&device, &queue, b)
-                    .chunks_exact(4)
-                    .take(n)
-                    .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                    .collect()
-            };
-            let ages_off = if cpu.age.is_empty() {
-                0
-            } else {
-                u32s(&e.age)
-                    .iter()
-                    .zip(&cpu.age)
-                    .filter(|(g, c)| **g != **c as u32)
-                    .count()
-            };
-            let specs_off = if cpu.spec.is_empty() {
-                0
-            } else {
-                u32s(&e.spec)
-                    .iter()
-                    .zip(&cpu.spec)
-                    .filter(|(g, c)| *g & 0xFF != **c as u32)
-                    .count()
-            };
+            let lives_off = energy.iter().zip(&want).filter(|(g, c)| (**g >= 0.0) != (**c >= 0.0)).count();
+            let le = l1(&energy.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &want.iter().map(|&v| v.max(0.0)).collect::<Vec<_>>());
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age).iter().zip(&cpu.age).filter(|(g, c)| **g != **c as u32).count() };
+            let specs_off = if cpu.spec.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.spec).filter(|(g, c)| *g & 0xFF != **c as u32).count() };
             // A child is its parent's kind (`mix_share`, bit 8).
-            let kinds_off = if cpu.kind.is_empty() {
-                0
-            } else {
-                u32s(&e.spec)
-                    .iter()
-                    .zip(&cpu.kind)
-                    .filter(|(g, c)| *g >> 8 != **c as u32)
-                    .count()
-            };
+            let kinds_off = if cpu.kind.is_empty() { 0 } else { u32s(&e.spec).iter().zip(&cpu.kind).filter(|(g, c)| *g >> 8 != **c as u32).count() };
             // Living slots only: a dead slot's counter is never read (a
             // birth there sets it to 0), and the CPU counts it down while
             // the GPU leaves it (seen with `sick` 400, 2026-11-14: 73 dead
             // slots one apart, every living one exact).
-            let sick_off = if cpu.sick.is_empty() {
-                0
-            } else {
-                u32s(&e.sick)
-                    .iter()
-                    .zip(&cpu.sick)
-                    .enumerate()
-                    .filter(|(k, (g, c))| cpu.lives(*k) && **g != **c as u32)
-                    .count()
-            };
-            let occ: Vec<u32> = read_back(&device, &queue, &e.occ)
-                .chunks_exact(4)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect();
+            let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick).iter().zip(&cpu.sick).enumerate().filter(|(k, (g, c))| cpu.lives(*k) && **g != **c as u32).count() };
+            let occ: Vec<u32> = read_back(&device, &queue, &e.occ).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
             let occ_off = occ.iter().zip(occupancy(&cpu)).filter(|(g, c)| **g != *c).count();
             let alive = cpu.alive.iter().filter(|&&a| a).count();
             let lg = l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass);
@@ -5473,18 +3551,9 @@ mod tests {
             if hungry {
                 assert!(starved > 0, "{name}: someone starves in the tick");
             }
-            assert!(
-                off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n,
-                "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}"
-            );
-            assert!(
-                lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4,
-                "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}"
-            );
-            assert!(
-                (ages_off + specs_off + sick_off) * 1000 <= n,
-                "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off"
-            );
+            assert!(off * 1000 <= n && lives_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {off} walkers, {lives_off} lives, {occ_off} counts off of {n}");
+            assert!(lt <= 1e-4 && ls <= 1e-6 && le <= 1e-4 && lg <= 1e-4, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}, energy L1 {le:.2e}, grass L1 {lg:.2e}");
+            assert!((ages_off + specs_off + sick_off) * 1000 <= n, "{name}: {ages_off} ages, {specs_off} species, {sick_off} sick off");
             assert_eq!(kinds_off, 0, "{name}: kinds off");
         }
     }
@@ -5499,43 +3568,24 @@ mod tests {
     fn world_off(e: &Engine, cpu: &BigDish, fresh: &[bool]) -> (f64, usize, f64, usize, usize) {
         let (device, queue) = (&e.device, &e.queue);
         let wd = world_data(cpu);
-        let u32s = |b: &wgpu::Buffer| -> Vec<u32> {
-            read_back(device, queue, b)
-                .chunks_exact(4)
-                .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                .collect()
-        };
+        let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(device, queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
         let charge = floats(&read_back(device, queue, &e.charge));
         // Eaten charge is floored at 0, as on the CPU; a cell below it is a
         // bug however small (a planted one left -1e-4 of a cell's charge).
-        let lc = if charge.iter().any(|&c| c < 0.0) {
-            f64::INFINITY
-        } else {
-            l1(&charge, &wd.charge)
-        };
+        let lc = if charge.iter().any(|&c| c < 0.0) { f64::INFINITY } else { l1(&charge, &wd.charge) };
         let share = floats(&read_back(device, queue, &e.share));
         let took_off = if cpu.took.is_empty() {
             0
         } else {
-            (0..cpu.walkers.len())
-                .filter(|&k| cpu.lives(k) && !fresh.get(k).copied().unwrap_or(false))
-                .filter(|&k| {
-                    let (x, y, _) = cpu.walkers[k];
-                    (share[y as usize * cpu.w + x as usize] - cpu.took[k]).abs() > 1e-6
-                })
-                .count()
+            (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && !fresh.get(k).copied().unwrap_or(false)).filter(|&k| {
+                let (x, y, _) = cpu.walkers[k];
+                (share[y as usize * cpu.w + x as usize] - cpu.took[k]).abs() > 1e-6
+            }).count()
         };
         // Infinite health (a wall that never breaks) on both sides reads as 0.
         let finite = |v: Vec<f32>| -> Vec<f32> { v.into_iter().map(|h| if h.is_finite() { h } else { 0.0 }).collect() };
-        let lh = l1(
-            &finite(floats(&read_back(device, queue, &e.health))),
-            &finite(wd.health),
-        );
-        let agar_off = u32s(&e.agar)
-            .iter()
-            .zip(&cpu.agar)
-            .filter(|(g, c)| (**g != 0) != **c)
-            .count();
+        let lh = l1(&finite(floats(&read_back(device, queue, &e.health))), &finite(wd.health));
+        let agar_off = u32s(&e.agar).iter().zip(&cpu.agar).filter(|(g, c)| (**g != 0) != **c).count();
         let ground_off = u32s(&e.ground).iter().zip(&wd.ground).filter(|(g, c)| g != c).count();
         (lc, took_off, lh, agar_off, ground_off)
     }
@@ -5553,13 +3603,7 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
         // The Larder world's dish (23 piles, a rectangle), crystals at 512.
-        let w = |s: Settings| Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            crystal_eat: 0.05,
-            ..s
-        };
+        let w = |s: Settings| Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.05, ..s };
         // Walls across home's way out, and one that cuts through a crystal
         // (pile 0 sits at 56, 80 in dish cells), built a third of the way
         // through the warm-up; and one across home's crystal and the crowd
@@ -5582,17 +3626,8 @@ mod tests {
             if t == 0 {
                 let (cx, cy, r) = (56.0f32, 80.0f32, 24.0f32);
                 for q in 0..16 {
-                    let (a, b) = (
-                        q as f32 * std::f32::consts::TAU / 16.0,
-                        (q + 1) as f32 * std::f32::consts::TAU / 16.0,
-                    );
-                    cpu.build_wall(
-                        cx + r * a.cos(),
-                        cy + r * a.sin(),
-                        cx + r * b.cos(),
-                        cy + r * b.sin(),
-                        2.0,
-                    );
+                    let (a, b) = (q as f32 * std::f32::consts::TAU / 16.0, (q + 1) as f32 * std::f32::consts::TAU / 16.0);
+                    cpu.build_wall(cx + r * a.cos(), cy + r * a.sin(), cx + r * b.cos(), cy + r * b.sin(), 2.0);
                 }
             }
         };
@@ -5602,167 +3637,53 @@ mod tests {
         let soil: Build = |cpu, t| {
             if t == 0 {
                 let w = cpu.w;
-                cpu.soil = (0..w * cpu.h)
-                    .map(|i| [SOIL_SAND, SOIL_CLAY, SOIL_BARREN, SOIL_DEEP, 0][(i % w) * 5 / w])
-                    .collect();
+                cpu.soil = (0..w * cpu.h).map(|i| [SOIL_SAND, SOIL_CLAY, SOIL_BARREN, SOIL_DEEP, 0][(i % w) * 5 / w]).collect();
                 cpu.wet = cpu.soil.iter().map(|&k| k == SOIL_DEEP).collect();
             }
         };
         let none: Build = |_, _| {};
-        let grow = |s: Settings| Settings {
-            upkeep: 0.01,
-            walkers: 5_000,
-            capacity: 15_000,
-            crystal_eat: 0.02,
-            ..s
-        };
+        let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
         let dishes: [(&str, Settings, Build); 22] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
-            (
-                "crystals at 1, no limit, regrowing",
-                Settings {
-                    crystal: 1.0,
-                    crystal_regrow: 0.002,
-                    ..w(small(2))
-                },
-                none,
-            ),
+            ("crystals at 1, no limit, regrowing", Settings { crystal: 1.0, crystal_regrow: 0.002, ..w(small(2)) }, none),
             // Charge 1 and no flow: cells are eaten to the floor and stay.
-            (
-                "crystals at 1, no flow, no limit",
-                Settings {
-                    crystal: 1.0,
-                    crystal_flow: 0.0,
-                    ..w(small(2))
-                },
-                none,
-            ),
-            (
-                "rock and wet ground",
-                Settings {
-                    rock: 0.35,
-                    wet: 0.35,
-                    ..w(small(0))
-                },
-                none,
-            ),
+            ("crystals at 1, no flow, no limit", Settings { crystal: 1.0, crystal_flow: 0.0, ..w(small(2)) }, none),
+            ("rock and wet ground", Settings { rock: 0.35, wet: 0.35, ..w(small(0)) }, none),
             // Health 3 (bites 1): walls break in the warm-up and the tick.
-            (
-                "walls that break, leaking scent",
-                Settings {
-                    wall_hp: 3.0,
-                    ..w(small(0))
-                },
-                walls,
-            ),
-            (
-                "walls that never break, sealed",
-                Settings {
-                    wall_hp: 0.0,
-                    wall_scent: 0.0,
-                    ..w(small(2))
-                },
-                walls,
-            ),
+            ("walls that break, leaking scent", Settings { wall_hp: 3.0, ..w(small(0)) }, walls),
+            ("walls that never break, sealed", Settings { wall_hp: 0.0, wall_scent: 0.0, ..w(small(2)) }, walls),
             // No limit, so several walkers on a cell bite one wall cell in
             // the same tick, and health 1,000 so the bites add up unbroken.
-            (
-                "walls under a crowd, no limit",
-                Settings {
-                    wall_hp: 1000.0,
-                    ..w(small(2))
-                },
-                late,
-            ),
-            (
-                "a cage round a packed start",
-                Settings {
-                    wall_hp: 1000.0,
-                    walkers: 5_000,
-                    start: Start::Home,
-                    ..w(small(0))
-                },
-                cage,
-            ),
+            ("walls under a crowd, no limit", Settings { wall_hp: 1000.0, ..w(small(2)) }, late),
+            ("a cage round a packed start", Settings { wall_hp: 1000.0, walkers: 5_000, start: Start::Home, ..w(small(0)) }, cage),
             // Growth eating the crystals (the GPU thread's W0): the life
             // pass adds each walker's take.
-            (
-                "growth on crystals",
-                Settings {
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("growth on crystals", Settings { wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // Soil: the trail's keep on sand and clay, barren upkeep and no
             // births there; then with two species (each field x the keep).
             ("soil bands, growth on crystals", grow(w(small(0))), soil),
             // One a cell: with no limit a child lands on a crystal cell
             // others share, and the take check (a cell's share against each
             // living walker's take) counts the newborn, which took nothing.
-            (
-                "soil bands, two species",
-                Settings {
-                    species: 2,
-                    ..grow(w(small(0)))
-                },
-                soil,
-            ),
+            ("soil bands, two species", Settings { species: 2, ..grow(w(small(0))) }, soil),
             // One body (2026-11-12): energy evens out between neighbouring
             // cells (`esum`, `egain`) and hungry walkers weigh the scent
             // harder, at the one-body thread's lead (0.05, 8), over walls
             // so some walkers are blocked and crowded.
-            (
-                "one body: food shared, hunger",
-                Settings {
-                    energy_flow: 0.05,
-                    hunger_scent: 8.0,
-                    hunger_at: 1.0,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
-            (
-                "lone step: a walker with few others round it slows",
-                Settings {
-                    lone_step: 3.0,
-                    lone_floor: 0.3,
-                    lone_r: 2,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            ("lone step: a walker with few others round it slows", Settings { lone_step: 3.0, lone_floor: 0.3, lone_r: 2, ..grow(w(small(0))) }, walls),
             // A fed mould packs tighter (2026-11-12, the slime-enemy
             // thread): every other walker is fed to 3 before the tick
             // (below), so fed and unfed ones step and breed side by side,
             // two a cell for the fed.
-            (
-                "fed crowd: a fed walker packs two to a cell",
-                Settings {
-                    fed_crowd: 1,
-                    fed_full: 2.0,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("fed crowd: a fed walker packs two to a cell", Settings { fed_crowd: 1, fed_full: 2.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // Lossy sharing (2026-11-13, the slime-enemy thread): what a
             // cell takes from a richer neighbour arrives short, so food
             // fades with distance from the crystals. 0.2, four times the
             // value on trial, so a sign or clamp slip shows in the L1.
-            (
-                "lossy flow: shared food fades as it travels",
-                Settings {
-                    energy_flow: 0.05,
-                    flow_loss: 0.2,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("lossy flow: shared food fades as it travels", Settings { energy_flow: 0.05, flow_loss: 0.2, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // A part cut off from its food withers (2026-11-13, the
             // slime-enemy thread): news of food spread twice a step (the
             // spread ends in its second turn's block) and three times (it
@@ -5770,31 +3691,8 @@ mod tests {
             // every step with a 4-step lag and even odds, so the twin tick
             // withers some walkers and spares those the news reaches. Half
             // the walkers' news is set stale before the tick (below).
-            (
-                "wither: news spread twice",
-                Settings {
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    wither_reach: 2,
-                    energy_flow: 0.05,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
-            (
-                "wither: news spread three times",
-                Settings {
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    wither_reach: 3,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("wither: news spread twice", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 2, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            ("wither: news spread three times", Settings { wither: 0.5, wither_every: 1, wither_lag: 4, wither_reach: 3, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // A cut-off part panics (2026-11-13, the slime-enemy thread):
             // the news runs without withering, and the stale half runs for
             // the nearest crystal with food left, twice as fast, by the way
@@ -5802,102 +3700,32 @@ mod tests {
             // (past the lag of 4, within its lean of 2: steers there at
             // half its pace, `panic_creep`). The squad's charge is in the
             // squad twin.
-            (
-                "panic: cut-off walkers run for a crystal",
-                Settings {
-                    panic: 2.0,
-                    panic_lean: 2,
-                    panic_creep: 0.5,
-                    wither_lag: 4,
-                    energy_flow: 0.05,
-                    wall_hp: 3.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("panic: cut-off walkers run for a crystal", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // Dense slime condenses (2026-11-14, the condense thread): ripe
             // on crystal or with 4 walkers round it, condensed after 3 steps
             // ripe, so the warm-up condenses much of the mould and the
             // freed slots stay empty; a third of the rest is set one step
             // from condensing (below); and with withering at even odds
             // some condensed walkers break in the tick.
-            (
-                "condense: dense walkers ripen, condense and break",
-                Settings {
-                    condense: 3,
-                    condense_crowd: 4,
-                    condense_r: 2,
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    energy_flow: 0.05,
-                    wall_hp: 0.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("condense: dense walkers ripen, condense and break", Settings { condense: 3, condense_crowd: 4, condense_r: 2, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // Condensed slime breaks away (`roam`, 11-14): as above, and of
             // the condensed walkers (below) a quarter are already on their
             // way to a crystal (some land in the tick) and a quarter reach
             // their `roam` age in it and pick one.
-            (
-                "roam: condensed walkers break away, run and land",
-                Settings {
-                    condense: 3,
-                    condense_crowd: 4,
-                    condense_r: 2,
-                    roam: 5,
-                    roam_far: 3.0,
-                    roam_share: 1.0,
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    energy_flow: 0.05,
-                    wall_hp: 0.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("roam: condensed walkers break away, run and land", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // A fed walker that cannot divide thickens (`thicken`, 11-15,
             // the slime-enemy thread): a third of the ordinary walkers are
             // set past twice a birth's energy (below), so they thicken in
             // the tick; nothing ripens or is absorbed (`condense` 0); with
             // withering at even odds some thickened walkers break.
-            (
-                "thicken: fed walkers thicken in place",
-                Settings {
-                    thicken: 2.0,
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    energy_flow: 0.05,
-                    wall_hp: 0.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("thicken: fed walkers thicken in place", Settings { thicken: 2.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // Thickened slime breaks away (`roam` with `thicken`, `condense`
             // 0; 11-15): a third of the walkers are set thick (below), and of
             // them a quarter are on their way and a quarter pick a crystal in
             // the tick. Caught by the condense thread's read of #338: with
             // condense 0 the GPU sent no `roam` while the CPU still marked
             // breakaways.
-            (
-                "thicken roam: thick walkers break away, run and land",
-                Settings {
-                    thicken: 2.0,
-                    roam: 5,
-                    roam_far: 3.0,
-                    roam_share: 1.0,
-                    wither: 0.5,
-                    wither_every: 1,
-                    wither_lag: 4,
-                    energy_flow: 0.05,
-                    wall_hp: 0.0,
-                    ..grow(w(small(0)))
-                },
-                walls,
-            ),
+            ("thicken roam: thick walkers break away, run and land", Settings { thicken: 2.0, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -5945,11 +3773,7 @@ mod tests {
             }
             let dense_was = cpu.dense.clone();
             if s.condense > 0 {
-                assert_eq!(
-                    cpu.dense.len(),
-                    cpu.walkers.len(),
-                    "{name}: the warm-up made the condensing words"
-                );
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the condensing words");
                 for k in (0..cpu.walkers.len()).step_by(3) {
                     if cpu.lives(k) && !cpu.is_dense(k) {
                         cpu.dense[k] = s.condense - 1;
@@ -5957,11 +3781,7 @@ mod tests {
                 }
             }
             if s.thicken > 0.0 {
-                assert_eq!(
-                    cpu.dense.len(),
-                    cpu.walkers.len(),
-                    "{name}: the warm-up made the dense words"
-                );
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the dense words");
                 for k in (0..cpu.walkers.len()).step_by(3) {
                     if cpu.lives(k) && !cpu.is_dense(k) {
                         cpu.energy[k] = 2.5 * cpu.p.birth_energy;
@@ -6002,18 +3822,12 @@ mod tests {
                     }
                 }
             }
-            let roamed: Vec<bool> = (0..cpu.walkers.len())
-                .map(|k| cpu.lives(k) && cpu.roam_of(k).is_some())
-                .collect();
+            let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
-            let scared = (0..cpu.walkers.len())
-                .filter(|&k| cpu.lives(k) && cpu.panics(k))
-                .count();
+            let scared = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panics(k)).count();
             let creep = cpu.p.panic_creep.max(slime_mould::mould::big::PANIC_CREEP_MIN);
-            let leaning = (0..cpu.walkers.len())
-                .filter(|&k| cpu.lives(k) && cpu.panic_haste(k) == creep)
-                .count();
+            let leaning = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.panic_haste(k) == creep).count();
             let start = cpu.walkers.clone();
             let n = cpu.walkers.len();
             let was: Vec<bool> = (0..n).map(|k| cpu.lives(k)).collect();
@@ -6024,72 +3838,33 @@ mod tests {
             // the same news (whole numbers, so exactly).
             if news {
                 assert!(e.withers, "{name}: the news passes run");
-                let words: Vec<u32> = read_back(&device, &queue, &e.news)
-                    .chunks(4)
-                    .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-                    .collect();
-                let gpu_alive: Vec<bool> = floats(&read_back(&device, &queue, &e.energy))
-                    .iter()
-                    .map(|&v| v >= 0.0)
-                    .collect();
+                let words: Vec<u32> = read_back(&device, &queue, &e.news).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+                let gpu_alive: Vec<bool> = floats(&read_back(&device, &queue, &e.energy)).iter().map(|&v| v >= 0.0).collect();
                 let lives_off = (0..n).filter(|&k| gpu_alive[k] != cpu.lives(k)).count();
-                let news_off = (0..n)
-                    .filter(|&k| cpu.lives(k) && words[k] as u64 != cpu.news[k])
-                    .count();
-                let heard_now = (0..n)
-                    .filter(|&k| cpu.lives(k) && k % 2 == 0 && cpu.news[k] > 1)
-                    .count();
+                let news_off = (0..n).filter(|&k| cpu.lives(k) && words[k] as u64 != cpu.news[k]).count();
+                let heard_now = (0..n).filter(|&k| cpu.lives(k) && k % 2 == 0 && cpu.news[k] > 1).count();
                 let left = words[n..n + e.cells as usize].iter().filter(|&&v| v != 0).count();
                 eprintln!("{name}: {} died in the tick on the CPU, {lives_off} slots live or die apart, {news_off} news off; {heard_now} stale walkers heard again; {scared} panicked", cpu.starved - starved);
                 assert!(heard_now > 0, "{name}: the news reaches some stale walkers");
-                assert!(
-                    s.wither <= 0.0 || cpu.starved > starved,
-                    "{name}: the tick withers some stale walkers"
-                );
-                assert_eq!(
-                    scared > 0,
-                    s.panic > 0.0,
-                    "{name}: stale walkers panic only with panic on"
-                );
+                assert!(s.wither <= 0.0 || cpu.starved > starved, "{name}: the tick withers some stale walkers");
+                assert_eq!(scared > 0, s.panic > 0.0, "{name}: stale walkers panic only with panic on");
                 assert_eq!(leaning > 0, s.panic > 0.0, "{name}: {leaning} walkers lean");
                 if s.panic > 0.0 {
                     // A panicking walker steps twice as far as its own step.
-                    let far = (0..n)
-                        .filter(|&k| cpu.lives(k) && k % 2 == 0)
-                        .map(|k| (cpu.walkers[k].0 - start[k].0).hypot(cpu.walkers[k].1 - start[k].1))
-                        .fold(0.0f32, f32::max);
+                    let far = (0..n).filter(|&k| cpu.lives(k) && k % 2 == 0).map(|k| (cpu.walkers[k].0 - start[k].0).hypot(cpu.walkers[k].1 - start[k].1)).fold(0.0f32, f32::max);
                     eprintln!("{name}: the farthest a stale walker went in the tick, {far:.2} fine cells (step {}, {} substeps)", s.step, cpu.p.substeps);
-                    assert!(
-                        far > 1.5 * s.step,
-                        "{name}: a panicking walker's step is longer than its own"
-                    );
+                    assert!(far > 1.5 * s.step, "{name}: a panicking walker's step is longer than its own");
                 }
-                assert_eq!(
-                    (lives_off, news_off, left),
-                    (0, 0, 0),
-                    "{name}: slots, news and the gathered block left"
-                );
+                assert_eq!((lives_off, news_off, left), (0, 0, 0), "{name}: slots, news and the gathered block left");
             }
             if s.condense > 0 {
                 assert!(e.condenses, "{name}: the condense passes run");
                 let gd = e.dense_of();
                 let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
                 let held = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
-                let broke = (0..n)
-                    .filter(|&k| {
-                        cpu.lives(k)
-                            && was[k]
-                            && dense_was
-                                .get(k)
-                                .is_some_and(|&d| d & slime_mould::mould::big::DENSE != 0)
-                            && !cpu.is_dense(k)
-                    })
-                    .count();
+                let broke = (0..n).filter(|&k| cpu.lives(k) && was[k] && dense_was.get(k).is_some_and(|&d| d & slime_mould::mould::big::DENSE != 0) && !cpu.is_dense(k)).count();
                 eprintln!("{name}: {held} condensed; in the tick {} absorbed, {} condensed, {broke} broke; mass {} of {n}; {dense_off} words off", cpu.absorbed - absorbed, cpu.condensed - condensed, cpu.mass());
-                assert!(
-                    held > 0 && cpu.absorbed > absorbed && cpu.condensed > condensed && broke > 0,
-                    "{name}: walkers condense, are absorbed and break in the tick"
-                );
+                assert!(held > 0 && cpu.absorbed > absorbed && cpu.condensed > condensed && broke > 0, "{name}: walkers condense, are absorbed and break in the tick");
                 assert_eq!(dense_off, 0, "{name}: condensing words");
             }
             if s.thicken > 0.0 {
@@ -6098,54 +3873,25 @@ mod tests {
                 let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
                 let held = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
                 eprintln!("{name}: {held} thick; {} thickened in the tick, {} absorbed; mass {} of {n}; {dense_off} words off", cpu.thickened - thickened, cpu.absorbed - absorbed, cpu.mass());
-                assert!(
-                    cpu.thickened > thickened && cpu.absorbed == absorbed,
-                    "{name}: walkers thicken and none is absorbed in the tick"
-                );
+                assert!(cpu.thickened > thickened && cpu.absorbed == absorbed, "{name}: walkers thicken and none is absorbed in the tick");
                 assert_eq!(dense_off, 0, "{name}: dense words");
             }
             if s.roam > 0 {
                 let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
-                let left_now = (0..n)
-                    .filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some())
-                    .count();
-                let landed = (0..n)
-                    .filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none())
-                    .count();
+                let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
+                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
-                assert!(
-                    on_way > 0 && left_now > 0 && landed > 0,
-                    "{name}: walkers break away, run and land in the tick"
-                );
+                assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
             }
-            let (broken, bitten, eaten, births) = (
-                cpu.broken - broken,
-                cpu.wall_hits - bitten,
-                cpu.eaten - eaten,
-                cpu.births - births,
-            );
+            let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
             let (lc, took_off, lh, agar_off, ground_off) = world_off(&e, &cpu, &fresh);
             let (_, hits, gpu_broken) = e.world_counts();
             // Growth: what the walkers ate turned into energy; and no grass
             // where the CPU has none (crystals on, grazing off).
-            let le = if e.grows {
-                l1(
-                    &floats(&read_back(&device, &queue, &e.energy))
-                        .iter()
-                        .map(|&v| v.max(0.0))
-                        .collect::<Vec<_>>(),
-                    &energies(&cpu).iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(),
-                )
-            } else {
-                0.0
-            };
+            let le = if e.grows { l1(&floats(&read_back(&device, &queue, &e.energy)).iter().map(|&v| v.max(0.0)).collect::<Vec<_>>(), &energies(&cpu).iter().map(|&v| v.max(0.0)).collect::<Vec<_>>()) } else { 0.0 };
             let grass = floats(&read_back(&device, &queue, &e.grass));
-            let lg = if cpu.grass.is_empty() {
-                grass.iter().map(|&g| g.abs() as f64).sum()
-            } else {
-                l1(&grass, &cpu.grass)
-            };
+            let lg = if cpu.grass.is_empty() { grass.iter().map(|&g| g.abs() as f64).sum() } else { l1(&grass, &cpu.grass) };
             eprintln!(
                 "{name}: {n} walkers, {moved} moved or turned, {off} off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, health L1 {lh:.1e}, energy L1 {le:.1e}, grass {lg:.1e}; {eaten:.1} eaten; {bitten} bites and {broken} cells broken on the CPU, {hits} and {gpu_broken} on the GPU; {took_off} takes, {agar_off} agar and {ground_off} ground cells off"
             );
@@ -6164,40 +3910,17 @@ mod tests {
             if !cpu.wall.is_empty() && s.wall_hp > 0.0 {
                 assert!(bitten > 0, "{name}: walkers bite the walls in the tick");
                 // Health 3 breaks in the warm-up; 1,000 holds.
-                assert!(
-                    s.wall_hp > 10.0 || cpu.broken > 0,
-                    "{name}: a wall broke in the warm-up"
-                );
-                assert_eq!(
-                    (hits as u64, gpu_broken as usize),
-                    (bitten, broken),
-                    "{name}: bites and cells broken"
-                );
+                assert!(s.wall_hp > 10.0 || cpu.broken > 0, "{name}: a wall broke in the warm-up");
+                assert_eq!((hits as u64, gpu_broken as usize), (bitten, broken), "{name}: bites and cells broken");
             }
             if s.wet > 0.0 {
-                assert!(
-                    !cpu.wet.is_empty()
-                        && cpu
-                            .walkers
-                            .iter()
-                            .any(|&(x, y, _)| cpu.wet[y as usize * cpu.w + x as usize]),
-                    "{name}: walkers on wet ground"
-                );
+                assert!(!cpu.wet.is_empty() && cpu.walkers.iter().any(|&(x, y, _)| cpu.wet[y as usize * cpu.w + x as usize]), "{name}: walkers on wet ground");
             }
             if !cpu.soil.is_empty() {
-                let on = |k: u8| {
-                    (0..n)
-                        .filter(|&q| {
-                            cpu.lives(q) && cpu.soil[cpu.walkers[q].1 as usize * cpu.w + cpu.walkers[q].0 as usize] == k
-                        })
-                        .count()
-                };
+                let on = |k: u8| (0..n).filter(|&q| cpu.lives(q) && cpu.soil[cpu.walkers[q].1 as usize * cpu.w + cpu.walkers[q].0 as usize] == k).count();
                 let kinds = [on(SOIL_SAND), on(SOIL_CLAY), on(SOIL_BARREN), on(SOIL_DEEP), on(0)];
                 eprintln!("{name}: living walkers on sand, clay, barren, deep water, plain {kinds:?}; {births} born in the tick");
-                assert!(
-                    kinds.iter().all(|&c| c > 0) && births > 0,
-                    "{name}: walkers on every kind of soil {kinds:?}, {births} born"
-                );
+                assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
                 assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
             }
             // The fed pack: cells holding two walkers after the tick, on
@@ -6207,33 +3930,16 @@ mod tests {
                 for k in (0..n).filter(|&k| cpu.lives(k)) {
                     held[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize] += 1;
                 }
-                let occ = read_back(&device, &queue, &e.occ)
-                    .chunks(4)
-                    .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
-                    .collect::<Vec<_>>();
-                let (two, gpu_two) = (
-                    held.iter().filter(|&&c| c == 2).count(),
-                    occ.iter().filter(|&&c| c == 2).count(),
-                );
-                eprintln!(
-                    "{name}: {two} cells hold two walkers on the CPU, {gpu_two} on the GPU; {births} born in the tick"
-                );
-                assert!(
-                    two > 0 && held.iter().all(|&c| c <= 2),
-                    "{name}: fed walkers pack two to a cell, never three"
-                );
+                let occ = read_back(&device, &queue, &e.occ).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect::<Vec<_>>();
+                let (two, gpu_two) = (held.iter().filter(|&&c| c == 2).count(), occ.iter().filter(|&&c| c == 2).count());
+                eprintln!("{name}: {two} cells hold two walkers on the CPU, {gpu_two} on the GPU; {births} born in the tick");
+                assert!(two > 0 && held.iter().all(|&c| c <= 2), "{name}: fed walkers pack two to a cell, never three");
                 assert_eq!(two, gpu_two, "{name}: cells holding two");
             }
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
-            assert!(
-                lc <= 1e-6 && lh <= 1e-6,
-                "{name}: charge L1 {lc:.2e}, health L1 {lh:.2e}"
-            );
-            assert!(
-                took_off * 1000 <= n && agar_off == 0 && ground_off == 0,
-                "{name}: {took_off} takes, {agar_off} agar, {ground_off} ground off"
-            );
+            assert!(lc <= 1e-6 && lh <= 1e-6, "{name}: charge L1 {lc:.2e}, health L1 {lh:.2e}");
+            assert!(took_off * 1000 <= n && agar_off == 0 && ground_off == 0, "{name}: {took_off} takes, {agar_off} agar, {ground_off} ground off");
         }
     }
 
@@ -6258,16 +3964,7 @@ mod tests {
         use slime_mould::mould::squad::{self, Frame, UnitIn};
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let s = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            crystal_eat: 0.02,
-            upkeep: 0.01,
-            walkers: 5_000,
-            capacity: 15_000,
-            ..small(0)
-        };
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, ..small(0) };
         let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
         let mut cpu = e.dish.clone();
         for _ in 0..60 {
@@ -6275,9 +3972,7 @@ mod tests {
         }
         let (w, h) = (cpu.w, cpu.h);
         let k = SCALE as f32;
-        let thick = (0..w * h)
-            .max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b]))
-            .unwrap();
+        let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
         let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
         let n = squad::UNITS_MAX;
         // Every third unit on a crystal (harvesting), the rest round the
@@ -6291,31 +3986,12 @@ mod tests {
                     (p.0 * k, p.1 * k)
                 } else {
                     let a = i as f32 * 2.4;
-                    (
-                        t.0 + (6.0 + i as f32 * 0.3) * a.cos(),
-                        t.1 + (6.0 + i as f32 * 0.3) * a.sin(),
-                    )
+                    (t.0 + (6.0 + i as f32 * 0.3) * a.cos(), t.1 + (6.0 + i as f32 * 0.3) * a.sin())
                 };
-                UnitIn {
-                    x: at.0.clamp(0.0, w as f32 - 1.0),
-                    y: at.1.clamp(0.0, h as f32 - 1.0),
-                    touch: 3.0,
-                    sight: 30.0,
-                    take_r: 3.0,
-                    take: if i % 3 == 0 { 50.0 } else { 0.0 },
-                    smell_r: 2.0,
-                    smell: 0.5,
-                }
+                UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
             })
             .collect();
-        let f = Frame {
-            units,
-            shots: Vec::new(),
-            slime: squad::slime_trail(s.knee),
-            crater: 0,
-            sink: 0.0,
-            ..Frame::default()
-        };
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
         e.inject(&cpu);
         e.set_squad(&f);
         run(&mut e, &shared, &s, 1, Hand::default());
@@ -6323,30 +3999,14 @@ mod tests {
         let gpu_out = e.squad_out();
         assert_eq!(cpu_out.units.len(), n, "the CPU reads every unit");
         let past: Vec<_> = cpu_out.units[64..].iter().collect();
-        eprintln!(
-            "squad cap: {n} units; past 64, {} touch, {} aim, {} took",
-            past.iter().filter(|u| u.touching > 0).count(),
-            past.iter().filter(|u| u.target.is_some()).count(),
-            past.iter().filter(|u| u.took > 0.0).count()
-        );
+        eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
         assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
         // A unit aims only at slime it sees (`squad::sees`, 2026-11-13): the
         // six of the spiral that the clamp puts in the world's rock border
         // see nothing, so every unit past 64 on agar aims.
         let on_agar = |u: &UnitIn| cpu.agar[u.y as usize * w + u.x as usize];
-        assert!(
-            cpu_out.units[n - 1].touching > 0
-                && past.iter().any(|u| u.took > 0.0)
-                && past
-                    .iter()
-                    .zip(&f.units[64..])
-                    .all(|(u, i)| u.target.is_some() || !on_agar(i)),
-            "units past 64 touch, aim and harvest"
-        );
-        assert!(
-            past.iter().filter(|u| u.target.is_some()).count() >= 20,
-            "most past 64 aim"
-        );
+        assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().zip(&f.units[64..]).all(|(u, i)| u.target.is_some() || !on_agar(i)), "units past 64 touch, aim and harvest");
+        assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
     }
 
     /// **Solid crystals on both engines** (`Rules::crystal_solid`, the
@@ -6359,29 +4019,12 @@ mod tests {
     fn crystal_twin(planted: bool) -> Result<usize, String> {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
         use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, Stance, World};
-        let Some((device, queue)) = test_gpu() else {
-            return Ok(0);
-        };
+        let Some((device, queue)) = test_gpu() else { return Ok(0) };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 10.0,
-            crater: 0.0,
-            ..Rules::default()
-        };
-        let mut cpu = Game::new(
-            slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)),
-            rules,
-            seed,
-        );
-        let gpu_rules = Rules {
-            crystal_solid: !planted,
-            ..rules
-        };
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            gpu_rules,
-            seed,
-        );
+        let rules = Rules { cap: 10.0, crater: 0.0, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let gpu_rules = Rules { crystal_solid: !planted, ..rules };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), gpu_rules, seed);
         let (i, c) = cpu.crystal_at(cpu.larder).expect("the larder sits on a crystal");
         for k in 0..cpu.soldiers.len() {
             assert!(cpu.apply(Cmd::Stance(k, Stance::HoldFire)) && gpu.apply(Cmd::Stance(k, Stance::HoldFire)));
@@ -6394,39 +4037,22 @@ mod tests {
             ticks += 1;
             for (k, (a, b)) in cpu.soldiers.iter().zip(&gpu.soldiers).enumerate() {
                 if (a.x.to_bits(), a.y.to_bits()) != (b.x.to_bits(), b.y.to_bits()) {
-                    return Err(format!(
-                        "tick {ticks}: soldier {k} at {:?} on the CPU, {:?} on the GPU",
-                        (a.x, a.y),
-                        (b.x, b.y)
-                    ));
+                    return Err(format!("tick {ticks}: soldier {k} at {:?} on the CPU, {:?} on the GPU", (a.x, a.y), (b.x, b.y)));
                 }
                 // Judged by the CPU game's crystals (the rule's own ground).
                 for (name, s) in [("CPU", a), ("GPU", b)] {
                     if !cpu.standable(s.x, s.y) {
-                        return Err(format!(
-                            "tick {ticks}: soldier {k} on a crystal on the {name} at {:?}",
-                            (s.x, s.y)
-                        ));
+                        return Err(format!("tick {ticks}: soldier {k} on a crystal on the {name} at {:?}", (s.x, s.y)));
                     }
                 }
             }
         }
         // They got there: every soldier at the rim, not stuck on the way.
         let rim = cpu.world.crystal_r(i) + 3.0 * scale as f32;
-        let near = cpu
-            .soldiers
-            .iter()
-            .filter(|s| (s.x - c.0).hypot(s.y - c.1) <= rim)
-            .count();
-        eprintln!(
-            "crystal twin: {ticks} ticks, {near} of {} soldiers within {rim} fine cells of the centre",
-            cpu.soldiers.len()
-        );
+        let near = cpu.soldiers.iter().filter(|s| (s.x - c.0).hypot(s.y - c.1) <= rim).count();
+        eprintln!("crystal twin: {ticks} ticks, {near} of {} soldiers within {rim} fine cells of the centre", cpu.soldiers.len());
         if near < cpu.soldiers.len() {
-            return Err(format!(
-                "only {near} of {} soldiers reached the rim",
-                cpu.soldiers.len()
-            ));
+            return Err(format!("only {near} of {} soldiers reached the rim", cpu.soldiers.len()));
         }
         Ok(ticks)
     }
@@ -6451,17 +4077,7 @@ mod tests {
         use slime_mould::mould::squad::{self, Frame, ShotIn, UnitIn};
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let base = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            crystal_eat: 0.02,
-            upkeep: 0.01,
-            walkers: 5_000,
-            capacity: 15_000,
-            wall_hp: 1000.0,
-            ..small(0)
-        };
+        let base = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, wall_hp: 1000.0, ..small(0) };
         // And with the life cycle (2026-11-11): shots miss spores in flight
         // and kill the dormant, and a struck walker is dead.
         let life = with_life(base.clone());
@@ -6479,30 +4095,16 @@ mod tests {
         // steps left; the frame's tick then cuts the trail under it.
         // And the cone (`BigParams::scorch_cone`, the look A/B): fewer steps
         // toward the strike's rim, the same whole numbers on both.
-        let cone = Settings {
-            scorch_cone: true,
-            ..base.clone()
-        };
+        let cone = Settings { scorch_cone: true, ..base.clone() };
         // And a cut-off part's panic (2026-11-13, the slime-enemy thread):
         // half the walkers' news is stale (below), and those within 10 dish
         // cells of a unit charge it, the rest run for a crystal.
-        let scared = Settings {
-            panic: 2.0,
-            panic_r: 10.0,
-            panic_lean: 2,
-            panic_creep: 0.5,
-            wither_lag: 4,
-            ..base.clone()
-        };
+        let scared = Settings { panic: 2.0, panic_r: 10.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, ..base.clone() };
         // And dense slime condensing (2026-11-14, the condense thread): half
         // the living walkers are condensed before the frame (below), so a
         // shot breaks some instead of killing them and a unit's touch
         // counts them twice; ripening runs, too slowly to condense.
-        let dense = Settings {
-            condense: 10_000,
-            condense_crowd: 4,
-            ..base.clone()
-        };
+        let dense = Settings { condense: 10_000, condense_crowd: 4, ..base.clone() };
         // And the body's surge (2026-11-15, the slime-enemy thread): every
         // walker within 10 dish cells of a unit lunges at the nearest; and
         // with panic, only the calm half surges while the stale half
@@ -6510,35 +4112,14 @@ mod tests {
         // frame's first step is the lunge's first: all four surge words are
         // nonzero and lean and dash differ, so a word read from the wrong
         // offset changes which walkers move how far.
-        let surge = Settings {
-            surge_every: 1,
-            surge_lean: 3,
-            surge_dash: 5,
-            surge_haste: 2.5,
-            panic_r: 10.0,
-            ..base.clone()
-        };
-        let surge_scared = Settings {
-            surge_every: 1,
-            surge_lean: 3,
-            surge_dash: 5,
-            surge_haste: 2.5,
-            ..scared.clone()
-        };
+        let surge = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, panic_r: 10.0, ..base.clone() };
+        let surge_scared = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, ..scared.clone() };
         // And the game's surge (`surge_at`, food-driven surges, 11-15): set
         // after the warm-up so the frame's first step is the lunge's first
         // by `surge_at`, while the clock alone would be calm (its period is
         // far longer than the dish has run), so an engine that reads the
         // clock and not the game's step moves no walker.
-        let timed = Settings {
-            surge_every: 1_000_000,
-            surge_lean: 4,
-            surge_dash: 6,
-            surge_haste: 3.0,
-            surge_at: 1,
-            panic_r: 10.0,
-            ..surge.clone()
-        };
+        let timed = Settings { surge_every: 1_000_000, surge_lean: 4, surge_dash: 6, surge_haste: 3.0, surge_at: 1, panic_r: 10.0, ..surge.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -6558,34 +4139,13 @@ mod tests {
             ("plain, shots that sink", base.clone(), 20, 1.0, 0, 1.0),
             ("cone craters, a sink of 1.5", cone, 20, 1.5, 0, 1.0),
             ("plain, a cut-off part charges the squad", scared, 0, 0.0, 0, 1.0),
-            (
-                "plain, condensed walkers take two shots and touch as two",
-                dense.clone(),
-                0,
-                0.0,
-                0,
-                1.0,
-            ),
-            (
-                "plain, sinking shots spray the slime they kill",
-                base.clone(),
-                20,
-                1.0,
-                3,
-                1.0,
-            ),
+            ("plain, condensed walkers take two shots and touch as two", dense.clone(), 0, 0.0, 0, 1.0),
+            ("plain, sinking shots spray the slime they kill", base.clone(), 20, 1.0, 3, 1.0),
             ("plain, a third of the kills spray", base, 0, 0.0, 3, 0.33),
             ("spores and dormancy, the spray", life, 0, 0.0, 3, 1.0),
             ("condensed walkers break, the rest spray", dense, 0, 0.0, 3, 1.0),
             ("plain, the body surges at the squad", surge, 0, 0.0, 0, 1.0),
-            (
-                "plain, a cut-off part charges and the body surges",
-                surge_scared,
-                0,
-                0.0,
-                0,
-                1.0,
-            ),
+            ("plain, a cut-off part charges and the body surges", surge_scared, 0, 0.0, 0, 1.0),
             ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
@@ -6609,9 +4169,7 @@ mod tests {
                     }
                 }
             }
-            let dense_before = (0..cpu.walkers.len())
-                .filter(|&k| cpu.lives(k) && cpu.is_dense(k))
-                .count();
+            let dense_before = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
             if s.surge_at > 0 {
                 // The game's surge began `lean` steps before the frame's
                 // first step (t0), so t0 lunges; the clock would be calm.
@@ -6620,26 +4178,15 @@ mod tests {
                 assert_eq!(cpu.surge_haste(), 0.0, "{name}: the clock alone is calm");
                 s.surge_at = t0 - s.surge_lean;
                 cpu.p.surge_at = s.surge_at;
-                assert_eq!(
-                    cpu.surge_haste(),
-                    s.surge_haste,
-                    "{name}: the frame's first step lunges"
-                );
+                assert_eq!(cpu.surge_haste(), s.surge_haste, "{name}: the frame's first step lunges");
             } else if s.surge_every > 0 {
                 // The frame's first step (t0) at the lunge's first: t0 % every
                 // = lean.
                 let t0 = cpu.steps as u32 + 1;
                 s.surge_every = t0 - s.surge_lean;
-                assert!(
-                    s.surge_every > s.surge_lean + s.surge_dash,
-                    "{name}: a whole period before the frame"
-                );
+                assert!(s.surge_every > s.surge_lean + s.surge_dash, "{name}: a whole period before the frame");
                 cpu.p.surge_every = s.surge_every;
-                assert_eq!(
-                    cpu.surge_haste(),
-                    s.surge_haste,
-                    "{name}: the frame's first step lunges"
-                );
+                assert_eq!(cpu.surge_haste(), s.surge_haste, "{name}: the frame's first step lunges");
             }
             if s.panic > 0.0 {
                 cpu.p.wither_lag = s.wither_lag;
@@ -6655,49 +4202,22 @@ mod tests {
             let (w, h) = (cpu.w, cpu.h);
             let k = SCALE as f32;
             let slime = squad::slime_trail(s.knee);
-            let thick = (0..w * h)
-                .max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b]))
-                .unwrap();
+            let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
             let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
             let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
-            let unit = |at: (f32, f32), take: f32| UnitIn {
-                x: at.0,
-                y: at.1,
-                touch: 3.0,
-                sight: 30.0,
-                take_r: 4.0,
-                take,
-                smell_r: 2.0,
-                smell: 0.5,
-            };
+            let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
             // Two units on one small patch of crystal 3, asking more than it
             // holds, so the second gets what the first left.
-            let patch = |take: f32| UnitIn {
-                take_r: 1.5,
-                ..unit(pile(3), take)
-            };
+            let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
             let mut units = vec![unit(t, 0.0), patch(3000.0), patch(3000.0)];
             units.extend((5..10).map(|p| unit(pile(p), 100.0)));
             // Units that see only a few blocks, so which block's centre is in
             // sight decides where they aim.
-            units.extend((0..6).map(|q| UnitIn {
-                sight: 2.5 + q as f32,
-                ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0)
-            }));
+            units.extend((0..6).map(|q| UnitIn { sight: 2.5 + q as f32, ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0) }));
             // Shots from each crystal toward the thickest mould, and two across
             // the wall at x = 140 (fine cells), one of them from beside it.
-            let mut shots: Vec<ShotIn> = (0..12)
-                .map(|p| ShotIn {
-                    from: pile(p),
-                    to: t,
-                    r: 3.0,
-                })
-                .collect();
-            shots.push(ShotIn {
-                from: (120.0, 160.0),
-                to: (190.0, 160.0),
-                r: 3.0,
-            });
+            let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
+            shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0 });
             // A shot that meets the wall before any slime: from a clear cell
             // beside it, across it.
             let clear = (60..250)
@@ -6708,32 +4228,19 @@ mod tests {
                     stop.is_some_and(|n| p[..n].iter().all(|&i| cpu.trail[i as usize] < slime))
                 })
                 .expect("a clear way to the wall");
-            shots.push(ShotIn {
-                from: clear,
-                to: (clear.0 + 30.0, clear.1),
-                r: 2.0,
-            });
+            shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
             // A unit on the first wall cell that shot meets, so its smell disc
             // covers wall and agar (it must land only on the agar). One beside
             // the clear cell missed a planted bug: the wall was out of reach.
             let p = squad::path(w, h, clear, (clear.0 + 30.0, clear.1));
             let wall = p.into_iter().find(|&i| !cpu.agar[i as usize]).unwrap() as usize;
-            units.push(UnitIn {
-                smell_r: 4.0,
-                ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0)
-            });
+            units.push(UnitIn { smell_r: 4.0, ..unit(((wall % w) as f32 + 0.5, (wall / w) as f32 + 0.5), 0.0) });
             // Wide discs, as the soldiers' at scale 8 (2026-11-12, when the
             // unit passes took a workgroup each): boxes of over 256 cells,
             // so each thread takes several cells and blocks, and the harvest
             // several pieces, stopping in one or taking all it reaches.
             let wide = units.len();
-            units.extend([(13, 60.0), (14, 1.0e6)].map(|(p, take)| UnitIn {
-                touch: 12.0,
-                sight: 60.0,
-                take_r: 12.0,
-                smell_r: 12.0,
-                ..unit(pile(p), take)
-            }));
+            units.extend([(13, 60.0), (14, 1.0e6)].map(|(p, take)| UnitIn { touch: 12.0, sight: 60.0, take_r: 12.0, smell_r: 12.0, ..unit(pile(p), take) }));
             // The same shot twice: a walker in both strikes dies once, counted
             // for the first.
             let again = shots.len();
@@ -6745,18 +4252,10 @@ mod tests {
                 .find(|&(k, (x, y, _))| !cpu.lives(k) && cpu.trail[y as usize * w + x as usize] >= slime)
                 .expect("a slot that starved in the mould");
             let (sx, sy, _) = starved.1;
-            shots.push(ShotIn {
-                from: (sx, sy),
-                to: t,
-                r: 3.0,
-            });
+            shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
             // A radius that is not a whole number: its alarm's squared radius
             // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
-            shots.push(ShotIn {
-                from: pile(12),
-                to: t,
-                r: 2.5,
-            });
+            shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
             // Two shots from slime cells three apart, so each hits its own
             // cell and their strikes share cells, where cone craters give
             // different steps and the larger must stay (2026-11-12: the
@@ -6772,31 +4271,17 @@ mod tests {
                 .expect("two slime cells three apart, away from the thickest");
             shots.extend([0, 3].map(|dx| {
                 let from = ((near.0 + dx) as f32 + 0.5, near.1 as f32 + 0.5);
-                ShotIn {
-                    from,
-                    to: (from.0, from.1 + 10.0),
-                    r: 3.0,
-                }
+                ShotIn { from, to: (from.0, from.1 + 10.0), r: 3.0 }
             }));
             // With the life cycle, shots from slime beside spores in flight,
             // whose strikes cover them (they must be missed).
             if !cpu.life.is_empty() {
-                let slimy = |x: i64, y: i64| {
-                    x >= 0
-                        && y >= 0
-                        && (x as usize) < w
-                        && (y as usize) < h
-                        && cpu.agar[y as usize * w + x as usize]
-                        && cpu.trail[y as usize * w + x as usize] >= slime
-                };
+                let slimy = |x: i64, y: i64| x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h && cpu.agar[y as usize * w + x as usize] && cpu.trail[y as usize * w + x as usize] >= slime;
                 let beside: Vec<(f32, f32)> = (0..cpu.walkers.len())
                     .filter(|&k| cpu.lives(k) && cpu.life[k] == LIFE_SPORE)
                     .filter_map(|k| {
                         let (x, y) = (cpu.walkers[k].0 as i64, cpu.walkers[k].1 as i64);
-                        (-2..=2)
-                            .flat_map(|dy| (-2..=2).map(move |dx| (x + dx, y + dy)))
-                            .find(|&(x, y)| slimy(x, y))
-                            .map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5))
+                        (-2..=2).flat_map(|dy| (-2..=2).map(move |dx| (x + dx, y + dy))).find(|&(x, y)| slimy(x, y)).map(|(x, y)| (x as f32 + 0.5, y as f32 + 0.5))
                     })
                     .take(8)
                     .collect();
@@ -6814,11 +4299,7 @@ mod tests {
                     })
                 })
                 .count();
-            assert_eq!(
-                charging > 0,
-                s.panic > 0.0,
-                "{name}: {charging} stale walkers charge a unit"
-            );
+            assert_eq!(charging > 0, s.panic > 0.0, "{name}: {charging} stale walkers charge a unit");
             // The calm walkers that surge at a unit (within `panic_r`).
             let surging = (0..cpu.walkers.len())
                 .filter(|&q| s.surge_every > 0 && cpu.lives(q) && !cpu.panics(q))
@@ -6830,24 +4311,11 @@ mod tests {
                     })
                 })
                 .count();
-            assert_eq!(
-                surging > 0,
-                s.surge_every > 0,
-                "{name}: {surging} calm walkers surge at a unit"
-            );
+            assert_eq!(surging > 0, s.surge_every > 0, "{name}: {surging} calm walkers surge at a unit");
             if s.surge_every > 0 {
                 eprintln!("squad, {name}: {surging} calm walkers surge, {charging} stale ones charge");
             }
-            let f = Frame {
-                units,
-                shots,
-                slime,
-                crater,
-                sink,
-                spray,
-                spray_speed: 0.7,
-                spray_share: share,
-            };
+            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7, spray_share: share };
             // Two ticks with the spray (a fine step each here), so the
             // droplets that fly 2 steps land and those that fly 3 still fly.
             let ticks = if spray > 0 { 2 } else { 1 };
@@ -6859,32 +4327,15 @@ mod tests {
             let pre = (spray > 0).then(|| cpu.clone());
             // Where the shots would land without the sink, to check it moves
             // some of them.
-            let edge = squad::shots(
-                &mut cpu.clone(),
-                &f.shots,
-                slime,
-                crater,
-                0.0,
-                (f.spray, f.spray_speed, f.spray_share),
-            );
+            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0, (f.spray, f.spray_speed, f.spray_share));
             let cpu_out = squad::frame(&mut cpu, &f, ticks);
             let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
             assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
             let gpu_out = e.squad_out();
             let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
-            assert_eq!(
-                cpu_out.shots[again].hit, cpu_out.shots[0].hit,
-                "the repeated shot hits where the first did"
-            );
+            assert_eq!(cpu_out.shots[again].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
             assert_eq!(cpu_out.shots[again].killed, 0, "and kills nothing the first did not");
-            let walled = f
-                .shots
-                .iter()
-                .zip(&cpu_out.shots)
-                .filter(|(q, o)| {
-                    o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])
-                })
-                .count();
+            let walled = f.shots.iter().zip(&cpu_out.shots).filter(|(q, o)| o.hit.is_none() && squad::path(w, h, q.from, q.to).iter().any(|&i| !cpu.agar[i as usize])).count();
             let took: Vec<f32> = cpu_out.units.iter().map(|u| u.took).collect();
             eprintln!(
                 "squad, {name}: {} shots, {} hit, {kills} killed, {walled} stopped by a wall; touching {:?}; took {took:?}",
@@ -6894,44 +4345,23 @@ mod tests {
             );
             assert_eq!(gpu_out, cpu_out, "the squad's outputs");
             assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
-            assert!(
-                cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0,
-                "the unit in the mould is touched and aims at walkers it counts"
-            );
-            assert!(
-                took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0),
-                "units harvest; the second on a patch gets what the first left"
-            );
-            assert!(
-                took[wide] == 60.0
-                    && took[wide + 1] > 0.0
-                    && took[wide + 1] < 1.0e6
-                    && cpu_out.units[wide].target.is_some(),
-                "the wide discs harvest, stopping when full or taking all they reach"
-            );
+            assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
+            assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
+            assert!(took[wide] == 60.0 && took[wide + 1] > 0.0 && took[wide + 1] < 1.0e6 && cpu_out.units[wide].target.is_some(), "the wide discs harvest, stopping when full or taking all they reach");
             // The world after the frame.
             let gpu = walkers_of(&e);
             let energy = floats(&read_back(&device, &queue, &e.energy));
-            let lives_off = (0..cpu.walkers.len())
-                .filter(|&k| (energy[k] >= 0.0) != cpu.lives(k))
-                .count();
-            let off = (0..cpu.walkers.len())
-                .filter(|&k| cpu.lives(k))
-                .filter(|&k| {
-                    let (g, c) = (gpu[k], cpu.walkers[k]);
-                    (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
-                })
-                .count();
+            let lives_off = (0..cpu.walkers.len()).filter(|&k| (energy[k] >= 0.0) != cpu.lives(k)).count();
+            let off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).filter(|&k| {
+                let (g, c) = (gpu[k], cpu.walkers[k]);
+                (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+            }).count();
             let side = (e.done % 2) as usize;
             let lt = l1(&floats(&read_back(&device, &queue, &e.trail[side])), &cpu.trail);
             let ls = l1(&floats(&read_back(&device, &queue, &e.scent[side])), &cpu.scent);
             let (lc, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
             // The alarm the shots laid, spread one tick (0 without the field).
-            let la = if cpu.alarm.is_empty() {
-                0.0
-            } else {
-                l1(&e.alarm_of(), &cpu.alarm)
-            };
+            let la = if cpu.alarm.is_empty() { 0.0 } else { l1(&e.alarm_of(), &cpu.alarm) };
             let alarm_sum: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
             eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
@@ -6941,81 +4371,44 @@ mod tests {
             // and the rest died where they landed.
             if let Some(pre) = pre {
                 let mut thrown = pre.clone();
-                squad::shots(
-                    &mut thrown,
-                    &f.shots,
-                    slime,
-                    crater,
-                    sink,
-                    (spray, f.spray_speed, share),
-                );
+                squad::shots(&mut thrown, &f.shots, slime, crater, sink, (spray, f.spray_speed, share));
                 let thrown = thrown.doomed.iter().filter(|&&d| d).count();
                 let plain = squad::frame(&mut pre.clone(), &Frame { spray: 0, ..f.clone() }, ticks);
                 let plain_kills: u32 = plain.shots.iter().map(|q| q.killed).sum();
-                let flying = (0..cpu.walkers.len())
-                    .filter(|&k| cpu.lives(k) && cpu.doomed[k])
-                    .count();
+                let flying = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.doomed[k]).count();
                 let flung_off = e.flung_of().iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
                 eprintln!("squad spray, {name}: {kills} killed ({plain_kills} without it), {thrown} thrown; {flying} still in flight after the tick; {flung_off} flung marks off");
                 assert_eq!(kills, plain_kills, "{name}: the spray kills as many");
-                assert!(
-                    thrown > 0 && flying > 0 && flying < thrown,
-                    "{name}: droplets fly, and some have landed and died"
-                );
+                assert!(thrown > 0 && flying > 0 && flying < thrown, "{name}: droplets fly, and some have landed and died");
                 // A share under 1 throws about that share of the kills.
                 if share < 1.0 {
                     let got = thrown as f32 / kills as f32;
-                    assert!(
-                        (got - share).abs() < 0.2,
-                        "{name}: {thrown} of {kills} thrown at a share of {share}"
-                    );
+                    assert!((got - share).abs() < 0.2, "{name}: {thrown} of {kills} thrown at a share of {share}");
                 }
-                assert!(
-                    cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d),
-                    "a droplet is flung"
-                );
+                assert!(cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d), "a droplet is flung");
                 assert_eq!(flung_off, 0, "{name}: the same droplets fly");
             }
             // Condensing: the same walkers broke, and the touch counted them.
             if s.condense > 0 {
                 assert!(e.condenses, "{name}: the condense passes run");
                 let gd = e.dense_of();
-                let dense_off = (0..cpu.walkers.len())
-                    .filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k])
-                    .count();
-                let dense_after = (0..cpu.walkers.len())
-                    .filter(|&k| cpu.lives(k) && cpu.is_dense(k))
-                    .count();
+                let dense_off = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let dense_after = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
                 eprintln!("squad condense, {name}: {dense_before} condensed before the frame, {dense_after} after; {dense_off} words off");
-                assert!(
-                    dense_after < dense_before && dense_after > 0,
-                    "{name}: shots break some condensed walkers"
-                );
+                assert!(dense_after < dense_before && dense_after > 0, "{name}: shots break some condensed walkers");
                 assert_eq!(dense_off, 0, "{name}: condensing words");
-                assert!(
-                    squad::dense_cells(&cpu).iter().any(|&n| n > 0),
-                    "{name}: condensed walkers hold cells"
-                );
+                assert!(squad::dense_cells(&cpu).iter().any(|&n| n > 0), "{name}: condensed walkers hold cells");
             } else {
                 assert_eq!(dense_before, 0);
             }
-            assert!(
-                lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6,
-                "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}"
-            );
-            assert!(
-                cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64,
-                "the shots lay the alarm: {alarm_sum:.0} in all"
-            );
+            assert!(lt <= 1e-6 && ls <= 1e-6 && lc <= 1e-6 && la <= 1e-6, "trail L1 {lt:.2e}, scent L1 {ls:.2e}, charge L1 {lc:.2e}, alarm L1 {la:.2e}");
+            assert!(cpu.alarm.is_empty() || alarm_sum > 100.0 * squad::SHOT_ALARM as f64, "the shots lay the alarm: {alarm_sum:.0} in all");
             assert!(agar_off == 0 && ground_off == 0);
             // The craters the hits laid, counted down through the tick, to
             // the step (none without them).
             let (gc, cc) = (e.crater_of(), cpu.scorch.clone());
             if crater == 0 {
-                assert!(
-                    cc.is_empty() && gc.iter().all(|&v| v == 0.0),
-                    "{name}: no crater unless shots lay one"
-                );
+                assert!(cc.is_empty() && gc.iter().all(|&v| v == 0.0), "{name}: no crater unless shots lay one");
             } else {
                 let off = (0..w * h).filter(|&i| gc[i] != cc[i] as f32).count();
                 let laid = cc.iter().filter(|&&v| v > 0).count();
@@ -7028,19 +4421,10 @@ mod tests {
                     // Cones about different hits that share cells, where the
                     // two give different steps and the larger must stay (the
                     // GPU's `cut` takes it with atomicMax; a plain write raced).
-                    let hits: Vec<((f32, f32), f32)> = cpu_out
-                        .shots
-                        .iter()
-                        .zip(&f.shots)
-                        .filter_map(|(o, i)| o.hit.map(|h| (h, i.r)))
-                        .collect();
+                    let hits: Vec<((f32, f32), f32)> = cpu_out.shots.iter().zip(&f.shots).filter_map(|(o, i)| o.hit.map(|h| (h, i.r))).collect();
                     let overlaps = (0..hits.len())
                         .flat_map(|a| (a + 1..hits.len()).map(move |b| (a, b)))
-                        .filter(|&(a, b)| {
-                            hits[a].0 != hits[b].0
-                                && (hits[a].0 .0 - hits[b].0 .0).hypot(hits[a].0 .1 - hits[b].0 .1)
-                                    < hits[a].1 + hits[b].1
-                        })
+                        .filter(|&(a, b)| hits[a].0 != hits[b].0 && (hits[a].0 .0 - hits[b].0 .0).hypot(hits[a].0 .1 - hits[b].0 .1) < hits[a].1 + hits[b].1)
                         .count();
                     eprintln!("squad craters, {name}: {overlaps} pairs of cones about different hits that overlap");
                     assert!(overlaps > 0, "{name}: no overlapping cones to test the larger steps on");
@@ -7050,31 +4434,17 @@ mod tests {
                 // Spores in a struck disc are missed, the dormant in one die.
                 let struck = |k: usize| {
                     let (x, y, _) = at[k];
-                    f.shots.iter().zip(&cpu_out.shots).any(|(q, o)| {
-                        o.hit
-                            .is_some_and(|(hx, hy)| (x.floor() + 0.5 - hx).hypot(y.floor() + 0.5 - hy) <= q.r)
-                    })
+                    f.shots.iter().zip(&cpu_out.shots).any(|(q, o)| o.hit.is_some_and(|(hx, hy)| (x.floor() + 0.5 - hx).hypot(y.floor() + 0.5 - hy) <= q.r))
                 };
-                let missed = (0..before.len())
-                    .filter(|&k| cpu.lives(k) && before[k] == LIFE_SPORE && struck(k))
-                    .count();
+                let missed = (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == LIFE_SPORE && struck(k)).count();
                 // (With the spray a struck dormant walker flies out first.)
-                let slept = (0..before.len())
-                    .filter(|&k| {
-                        before[k] == LIFE_DORMANT && (cpu.life[k] == LIFE_DEAD || cpu.doomed.get(k) == Some(&true))
-                    })
-                    .count();
+                let slept = (0..before.len()).filter(|&k| before[k] == LIFE_DORMANT && (cpu.life[k] == LIFE_DEAD || cpu.doomed.get(k) == Some(&true))).count();
                 let (st, tm) = e.life_of();
                 // Every slot's, the emptied ones' too (a shot one is dead).
-                let states_off = (0..before.len())
-                    .filter(|&k| st[k] != cpu.life[k] || tm[k] != cpu.life_t[k])
-                    .count();
+                let states_off = (0..before.len()).filter(|&k| st[k] != cpu.life[k] || tm[k] != cpu.life_t[k]).count();
                 let count = |l: u8| (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == l).count();
                 eprintln!("squad life: {} spores, {} dormant at the frame; {missed} spores in a struck disc missed, {slept} dormant killed; {states_off} states or timers off", count(LIFE_SPORE), count(LIFE_DORMANT));
-                assert!(
-                    (missed > 0) == (s.spore_rate > 0.0) && slept > 0,
-                    "shots meet spores (if any fly) and the dormant"
-                );
+                assert!((missed > 0) == (s.spore_rate > 0.0) && slept > 0, "shots meet spores (if any fly) and the dormant");
                 assert_eq!(states_off, 0, "life states and timers");
             }
         }
@@ -7095,36 +4465,28 @@ mod tests {
         // The Swarmer's pull (+3), and the turn from gunfire
         // (`larder_world::FLEE_WEIGHT`, -1, an opt-in since 2026-11-12).
         for weight in ["3", "-1"] {
-            let mut s = small(0);
-            Tier::Swarmer.settings(&mut s).unwrap();
-            set(&mut s, "alarm_weight", weight).unwrap();
-            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
-            let mut cpu = e.dish.clone();
-            for _ in 0..30 {
-                cpu.tick();
+        let mut s = small(0);
+        Tier::Swarmer.settings(&mut s).unwrap();
+        set(&mut s, "alarm_weight", weight).unwrap();
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..30 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+        for c in squad::disc(w, h, (thick % w) as i64, (thick / w) as i64, 400) {
+            if cpu.agar[c] {
+                cpu.alarm[c] += squad::SHOT_ALARM;
             }
-            let (w, h) = (cpu.w, cpu.h);
-            let thick = (0..w * h)
-                .max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b]))
-                .unwrap();
-            for c in squad::disc(w, h, (thick % w) as i64, (thick / w) as i64, 400) {
-                if cpu.agar[c] {
-                    cpu.alarm[c] += squad::SHOT_ALARM;
-                }
-            }
-            let laid: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
-            let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 4);
-            let la = l1(&e.alarm_of(), &cpu.alarm);
-            let left: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
-            eprintln!("the alarm alone, weight {weight}: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
-            assert!(
-                cpu.life.is_empty() && !e.cycles && e.outside,
-                "the field without the states, on the outside pipelines"
-            );
-            assert!(
-                off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6,
-                "weight {weight}: {off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}"
-            );
+        }
+        let laid: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 4);
+        let la = l1(&e.alarm_of(), &cpu.alarm);
+        let left: f64 = cpu.alarm.iter().map(|&v| v as f64).sum();
+        eprintln!("the alarm alone, weight {weight}: {} walkers, {moved} moved, {off} off; alarm laid {laid:.0}, {left:.0} after four ticks; trail L1 {lt:.1e}, scent L1 {ls:.1e}, alarm L1 {la:.1e}; states {}, outside pipelines {}", cpu.walkers.len(), e.cycles, e.outside);
+        assert!(cpu.life.is_empty() && !e.cycles && e.outside, "the field without the states, on the outside pipelines");
+        assert!(off == 0 && lt <= 1e-6 && ls <= 1e-6 && la <= 1e-6, "weight {weight}: {off} walkers off; trail {lt:.1e}, scent {ls:.1e}, alarm {la:.1e}");
         }
     }
 
@@ -7132,18 +4494,7 @@ mod tests {
     /// ticks a walker in the mould, flights of 20 ticks, a doze in twenty
     /// where the scent is under 50.
     fn with_life(mut s: Settings) -> Settings {
-        for (k, v) in [
-            ("spore_rate", "0.01"),
-            ("spore_scent", "-1"),
-            ("spore_steps", "20"),
-            ("spore_reach", "8"),
-            ("spore_land", "1"),
-            ("spore_rest", "10"),
-            ("sleep_rate", "0.05"),
-            ("wake_scent", "50"),
-            ("sleep_rest", "10"),
-            ("wake_steps", "10"),
-        ] {
+        for (k, v) in [("spore_rate", "0.01"), ("spore_scent", "-1"), ("spore_steps", "20"), ("spore_reach", "8"), ("spore_land", "1"), ("spore_rest", "10"), ("sleep_rate", "0.05"), ("wake_scent", "50"), ("sleep_rest", "10"), ("wake_steps", "10")] {
             set(&mut s, k, v).unwrap();
         }
         s
@@ -7159,42 +4510,16 @@ mod tests {
     fn a_wall_builds_on_the_gpu_as_on_the_cpu() {
         let Some((device, queue)) = test_gpu() else { return };
         let shared = Shared::new(&device);
-        let w = Settings {
-            piles: 23,
-            rect: true,
-            crystal: 512.0,
-            ..small(0)
-        };
+        let w = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
         // Growth on, hungry and without crystals, so walkers starve all over
         // and empty slots keep stale places under the wall (before
         // 2026-11-11 the GPU moved those too).
-        let hungry = Settings {
-            crystal: 0.0,
-            upkeep: 0.03,
-            starve: 0.2,
-            birth_energy: 0.6,
-            graze: 10.0,
-            graze_regrow: 0.0,
-            capacity: 3 * w.walkers / 2,
-            ..w.clone()
-        };
+        let hungry = Settings { crystal: 0.0, upkeep: 0.03, starve: 0.2, birth_energy: 0.6, graze: 10.0, graze_regrow: 0.0, capacity: 3 * w.walkers / 2, ..w.clone() };
         // With the life cycle: spores in flight and the struck dead stay
         // where they are under a new wall (the CPU skips them), the dormant
         // are moved out.
         let life = with_life(w.clone());
-        for (name, s) in [
-            ("one a cell", w.clone()),
-            (
-                "no limit",
-                Settings {
-                    crowd: false,
-                    ..w.clone()
-                },
-            ),
-            ("sealed", Settings { wall_scent: 0.0, ..w }),
-            ("growth, empty slots under the wall", hungry),
-            ("spores, dormant and the dead", life),
-        ] {
+        for (name, s) in [("one a cell", w.clone()), ("no limit", Settings { crowd: false, ..w.clone() }), ("sealed", Settings { wall_scent: 0.0, ..w }), ("growth, empty slots under the wall", hungry), ("spores, dormant and the dead", life)] {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             let cycles = s.spore_rate > 0.0;
@@ -7213,67 +4538,27 @@ mod tests {
             let cells = cpu.build_wall(seg.0, seg.1, seg.2, seg.3, seg.4);
             e.build_wall(&shared, &s, seg.0, seg.1, seg.2, seg.3, seg.4);
             let (_, _, _, agar_off, ground_off) = world_off(&e, &cpu, &[]);
-            let u32s = |b: &wgpu::Buffer| -> Vec<u32> {
-                read_back(&device, &queue, b)
-                    .chunks_exact(4)
-                    .map(|c| u32::from_le_bytes(c.try_into().unwrap()))
-                    .collect()
-            };
+            let u32s = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
             let agar: Vec<bool> = u32s(&e.agar).iter().map(|&a| a != 0).collect();
             let side = (e.done % 2) as usize;
             let trail = floats(&read_back(&device, &queue, &e.trail[side]));
             let scent = floats(&read_back(&device, &queue, &e.scent[side]));
             let charge = floats(&read_back(&device, &queue, &e.charge));
             let walled: Vec<usize> = (0..cpu.agar.len()).filter(|&i| cpu.wall[i]).collect();
-            let left_on = walled
-                .iter()
-                .filter(|&&i| trail[i] != 0.0 || scent[i] != 0.0 || charge[i] != 0.0)
-                .count();
+            let left_on = walled.iter().filter(|&&i| trail[i] != 0.0 || scent[i] != 0.0 || charge[i] != 0.0).count();
             let gpu = walkers_of(&e);
             // Slots that hold a cell only: the empty ones (growth), spores and
             // the dead keep their places.
-            let living: Vec<bool> = (0..gpu.len())
-                .map(|k| cpu.lives(k) && (cpu.life.is_empty() || !matches!(cpu.life[k], LIFE_SPORE | LIFE_DEAD)))
-                .collect();
-            let kinds = |l: u8| {
-                (0..gpu.len())
-                    .filter(|&k| {
-                        cpu.lives(k)
-                            && cpu.life.get(k) == Some(&l)
-                            && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]
-                    })
-                    .count()
-            };
+            let living: Vec<bool> = (0..gpu.len()).map(|k| cpu.lives(k) && (cpu.life.is_empty() || !matches!(cpu.life[k], LIFE_SPORE | LIFE_DEAD))).collect();
+            let kinds = |l: u8| (0..gpu.len()).filter(|&k| cpu.lives(k) && cpu.life.get(k) == Some(&l) && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]).count();
             let (spores_under, dead_under) = (kinds(LIFE_SPORE), kinds(LIFE_DEAD));
-            let dormant_out = (0..gpu.len())
-                .filter(|&k| {
-                    cpu.lives(k) && cpu.life.get(k) == Some(&LIFE_DORMANT) && cpu.walkers[k] != e.dish.walkers[k]
-                })
-                .count();
-            let empty_under = (0..gpu.len())
-                .filter(|&k| !living[k] && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize])
-                .count();
-            let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| {
-                ws.iter()
-                    .zip(&living)
-                    .filter(|&(&(x, y, _), &l)| l && !ag[y as usize * cpu.w + x as usize])
-                    .count()
-            };
+            let dormant_out = (0..gpu.len()).filter(|&k| cpu.lives(k) && cpu.life.get(k) == Some(&LIFE_DORMANT) && cpu.walkers[k] != e.dish.walkers[k]).count();
+            let empty_under = (0..gpu.len()).filter(|&k| !living[k] && !cpu.agar[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize]).count();
+            let inside = |ws: &[(f32, f32, f32)], ag: &[bool]| ws.iter().zip(&living).filter(|&(&(x, y, _), &l)| l && !ag[y as usize * cpu.w + x as usize]).count();
             let (gpu_inside, cpu_inside) = (inside(&gpu, &agar), inside(&cpu.walkers, &cpu.agar));
-            let moved = |ws: &[(f32, f32, f32)]| {
-                ws.iter()
-                    .zip(&e.dish.walkers)
-                    .zip(&living)
-                    .filter(|&((a, b), &l)| l && a != b)
-                    .count()
-            };
+            let moved = |ws: &[(f32, f32, f32)]| ws.iter().zip(&e.dish.walkers).zip(&living).filter(|&((a, b), &l)| l && a != b).count();
             let (moved_gpu, moved_cpu) = (moved(&gpu), moved(&cpu.walkers));
-            let stale_moved = gpu
-                .iter()
-                .zip(&cpu.walkers)
-                .zip(&living)
-                .filter(|&((a, b), &l)| !l && a != b)
-                .count();
+            let stale_moved = gpu.iter().zip(&cpu.walkers).zip(&living).filter(|&((a, b), &l)| !l && a != b).count();
             let occ = u32s(&e.occ);
             let mut want = vec![0u32; occ.len()];
             for (&(x, y, _), &l) in gpu.iter().zip(&living) {
@@ -7282,41 +4567,22 @@ mod tests {
                 }
             }
             let occ_off = occ.iter().zip(&want).filter(|(a, b)| a != b).count();
-            let crowded = if s.crowd {
-                occ.iter().filter(|&&c| c > 1).count()
-            } else {
-                0
-            };
+            let crowded = if s.crowd { occ.iter().filter(|&&c| c > 1).count() } else { 0 };
             eprintln!("{name}: {cells} cells walled, {} walkers; {moved_cpu} moved out on the CPU, {moved_gpu} on the GPU; {cpu_inside} and {gpu_inside} left inside; {agar_off} agar and {ground_off} ground cells off, {left_on} walled cells with trail, scent or charge, {occ_off} counts off, {crowded} cells over the limit; {empty_under} empty slots under the wall, {stale_moved} of them moved", gpu.len());
             if s.upkeep > 0.0 {
                 assert!(empty_under > 0, "{name}: empty slots under the wall");
             }
             if cycles {
                 eprintln!("{name}: under the wall {spores_under} spores and {dead_under} dead stay, {dormant_out} dormant moved out");
-                assert!(
-                    dead_under > 0 && dormant_out > 0,
-                    "{name}: the dead stay under the wall and the dormant move"
-                );
+                assert!(dead_under > 0 && dormant_out > 0, "{name}: the dead stay under the wall and the dormant move");
             }
             assert_eq!(stale_moved, 0, "{name}: an empty slot moved");
             assert!(cells > 0 && moved_cpu > 0, "{name}: the wall covers walkers");
-            assert!(
-                agar_off == 0 && ground_off == 0 && left_on == 0,
-                "{name}: {agar_off} agar, {ground_off} ground, {left_on} cells left on"
-            );
+            assert!(agar_off == 0 && ground_off == 0 && left_on == 0, "{name}: {agar_off} agar, {ground_off} ground, {left_on} cells left on");
             assert_eq!(gpu.len(), cpu.walkers.len(), "{name}: no walker lost");
-            assert!(
-                gpu_inside <= cpu_inside,
-                "{name}: {gpu_inside} walkers left inside the wall, {cpu_inside} on the CPU"
-            );
-            assert!(
-                moved_gpu == moved_cpu,
-                "{name}: {moved_gpu} walkers moved, {moved_cpu} on the CPU"
-            );
-            assert!(
-                occ_off == 0 && crowded == 0,
-                "{name}: {occ_off} counts off, {crowded} crowded"
-            );
+            assert!(gpu_inside <= cpu_inside, "{name}: {gpu_inside} walkers left inside the wall, {cpu_inside} on the CPU");
+            assert!(moved_gpu == moved_cpu, "{name}: {moved_gpu} walkers moved, {moved_cpu} on the CPU");
+            assert!(occ_off == 0 && crowded == 0, "{name}: {occ_off} counts off, {crowded} crowded");
         }
     }
 
@@ -7339,45 +4605,20 @@ mod tests {
         use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 20.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 20.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            rules,
-            seed,
-        );
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         assert_eq!(gpu.world.size(), cpu.world.size());
-        assert_eq!(
-            gpu.world.crystals(),
-            cpu.world.crystals(),
-            "the same crystals and charge at the start"
-        );
+        assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "the same crystals and charge at the start");
         assert_eq!(gpu.world.living(), cpu.world.living());
         assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core));
         // The mould grid (the campaign's goals, the player AI): the same
         // squares from the same walkers, then the GPU's once-a-second sum
         // against the CPU's own (`GRID_EVERY`, 2026-11-12).
         const BIN: usize = 4;
-        assert_eq!(
-            gpu.world.mould_grid(BIN),
-            cpu.world.mould_grid(BIN),
-            "the same mould grid at the start"
-        );
+        assert_eq!(gpu.world.mould_grid(BIN), cpu.world.mould_grid(BIN), "the same mould grid at the start");
         // Soldier 0 clears the crystal nearest the larder (the larder's own).
-        let c = cpu
-            .world
-            .crystals()
-            .iter()
-            .map(|c| c.0)
-            .min_by(|a, b| {
-                (a.0 - cpu.larder.0)
-                    .hypot(a.1 - cpu.larder.1)
-                    .total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))
-            })
-            .unwrap();
+        let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
         for g in [&mut cpu.log, &mut gpu.log] {
             g.clear();
         }
@@ -7394,34 +4635,17 @@ mod tests {
                 overlaps.push(same as f64 / a.iter().sum::<u32>().max(b.iter().sum::<u32>()).max(1) as f64);
             }
         }
-        eprintln!(
-            "game s, living CPU, GPU: {sizes:?}; banked {} / {}; the grids' overlap {overlaps:.3?}",
-            cpu.harvested, gpu.harvested
-        );
+        eprintln!("game s, living CPU, GPU: {sizes:?}; banked {} / {}; the grids' overlap {overlaps:.3?}", cpu.harvested, gpu.harvested);
         assert_eq!(gpu.world.ticks(), cpu.world.ticks(), "the same game ticks");
-        assert!(
-            cpu.harvested > 0.0 && gpu.harvested == cpu.harvested,
-            "banked {} on the GPU, {} on the CPU",
-            gpu.harvested,
-            cpu.harvested
-        );
+        assert!(cpu.harvested > 0.0 && gpu.harvested == cpu.harvested, "banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
         for &(t, a, b) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= 0.08 * a,
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
-        assert!(
-            sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers,
-            "the mould grew, then its first walkers starved: {sizes:?}"
-        );
+        assert!(sizes.iter().any(|&(_, a, _)| a > walkers) && sizes.last().unwrap().1 < walkers, "the mould grew, then its first walkers starved: {sizes:?}");
         // 0.91, 0.90, 0.88 and 0.78 (2026-11-12): the two engines' floats
         // part, and most at 20 s, just after the first walkers starve.
-        assert!(
-            overlaps.iter().all(|&o| o >= 0.7),
-            "the mould grids overlap: {overlaps:.3?}"
-        );
+        assert!(overlaps.iter().all(|&o| o >= 0.7), "the mould grids overlap: {overlaps:.3?}");
     }
 
     /// **The campaign's tiers on the engine** (`mould::tiers`, 2026-11-12):
@@ -7436,10 +4660,7 @@ mod tests {
         use slime_mould::mould::tiers::Tier;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 20.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 20.0, ..Rules::default() };
         for t in [Tier::Drifter, Tier::Sprawler, Tier::Trunk] {
             let mut p = race_params(seed, scale, walkers);
             t.apply(&mut p);
@@ -7459,11 +4680,7 @@ mod tests {
             eprintln!("{}: game s, living CPU, GPU: {sizes:?}", t.name());
             for &(at, a, b) in &sizes {
                 let (a, b) = (a as f64, b as f64);
-                assert!(
-                    (a - b).abs() <= 0.08 * a,
-                    "{}: mould at {at} s: {b} walkers on the GPU, {a} on the CPU",
-                    t.name()
-                );
+                assert!((a - b).abs() <= 0.08 * a, "{}: mould at {at} s: {b} walkers on the GPU, {a} on the CPU", t.name());
             }
         }
     }
@@ -7503,24 +4720,13 @@ mod tests {
         // 0.5-cell spread is game side, the same on both, but it moved
         // seed 3's chaos past the band (1377 GPU against 1266 CPU walkers
         // at 25 s here; killed 1443 against 1172 with craters).
-        let rules = Rules {
-            cap: 30.0,
-            crater: 0.0,
-            crystal_solid: false,
-            bullet_speed: 0.0,
-            range: 15.0,
-            spread: 0.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted
         // the engines past the bounds (killed 1239 GPU against 1056 CPU;
         // 1725 against 1564 walkers at 25 s with craters).
-        let race = || slime_mould::mould::big::BigParams {
-            start_shape: false,
-            ..race_params(seed, scale, walkers)
-        };
+        let race = || slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) };
         let flee = || {
             let mut p = race();
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
@@ -7531,19 +4737,12 @@ mod tests {
         (s.alarm_keep, s.alarm_weight, s.start_shape) = (FLEE_KEEP, FLEE_WEIGHT, false);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
         let mut off = Game::new(slime_mould::mould::big::BigDish::new(race()), rules, seed);
-        assert!(
-            cpu.world.p.alarm_weight < 0.0 && gpu.world.s.alarm_weight < 0.0,
-            "the race world flees gunfire on both"
-        );
+        assert!(cpu.world.p.alarm_weight < 0.0 && gpu.world.s.alarm_weight < 0.0, "the race world flees gunfire on both");
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
         }
         for k in 0..cpu.soldiers.len() {
-            assert!(
-                cpu.apply(Cmd::Order(k, Order::Attack))
-                    && gpu.apply(Cmd::Order(k, Order::Attack))
-                    && off.apply(Cmd::Order(k, Order::Attack))
-            );
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
         }
         let mut sizes = Vec::new();
         while cpu.end.is_none() {
@@ -7551,37 +4750,18 @@ mod tests {
             gpu.step();
             off.step();
             if cpu.world.ticks() % 75 == 0 {
-                sizes.push((
-                    cpu.world.ticks() / 15,
-                    cpu.world.living(),
-                    gpu.world.living(),
-                    off.world.living(),
-                ));
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
             }
         }
         eprintln!("firing on the fleeing mould: game s, living CPU, GPU, CPU without the alarm: {sizes:?}; shots {} / {}, killed {} / {} (without the alarm {})", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed);
-        assert!(
-            cpu.shots > 20 && gpu.shots > 20,
-            "the squad fired: {} / {}",
-            cpu.shots,
-            gpu.shots
-        );
+        assert!(cpu.shots > 20 && gpu.shots > 20, "the squad fired: {} / {}", cpu.shots, gpu.shots);
         let (a, b) = (cpu.killed as f64, gpu.killed as f64);
-        assert!(
-            a > 0.0 && (a - b).abs() <= 0.15 * a,
-            "killed {b} on the GPU, {a} on the CPU"
-        );
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= 0.08 * a,
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
-        assert!(
-            off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c),
-            "the alarm changed the CPU's game"
-        );
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the alarm changed the CPU's game");
     }
 
     /// **A gassed mould on the engine as on the CPU** (the sleep gas in the
@@ -7633,48 +4813,18 @@ mod tests {
         eprintln!("burned: cpu {burned_cpu}, gpu {burned_gpu}");
         assert_eq!(burned_gpu, burned_cpu, "the same walkers burned on both");
         let crater_cpu: Vec<f32> = cpu.scorch.iter().map(|&c| c as f32).collect();
-        let crater_off = gpu
-            .e
-            .crater_of()
-            .iter()
-            .zip(&crater_cpu)
-            .filter(|(a, b)| a != b)
-            .count();
+        let crater_off = gpu.e.crater_of().iter().zip(&crater_cpu).filter(|(a, b)| a != b).count();
         // Bait (11-14, in place of the alarm trail): food scent, the field
         // the units' smell adds to, within 1e-5 of its size.
-        let scent_off = gpu
-            .e
-            .scent_of()
-            .iter()
-            .zip(&cpu.scent)
-            .filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0))
-            .count();
-        let cloud_off = gpu
-            .e
-            .gas_cloud_of()
-            .iter()
-            .zip(&cpu.gas_cloud)
-            .filter(|(a, b)| (*a - *b).abs() > 1e-6)
-            .count();
-        let laid = (
-            crater_cpu.iter().filter(|&&c| c > 0.0).count(),
-            cpu.scent.iter().zip(&scent_before).filter(|(a, b)| a > b).count(),
-            cpu.gas_cloud.iter().filter(|&&v| v > 0.0).count(),
-        );
+        let scent_off = gpu.e.scent_of().iter().zip(&cpu.scent).filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0)).count();
+        let cloud_off = gpu.e.gas_cloud_of().iter().zip(&cpu.gas_cloud).filter(|(a, b)| (*a - *b).abs() > 1e-6).count();
+        let laid = (crater_cpu.iter().filter(|&&c| c > 0.0).count(), cpu.scent.iter().zip(&scent_before).filter(|(a, b)| a > b).count(), cpu.gas_cloud.iter().filter(|&&v| v > 0.0).count());
         eprintln!("trail of {} discs: cells laid (crater, bait, cloud) {laid:?}; off on the GPU {crater_off}, {scent_off}, {cloud_off}", bursts.len());
-        assert!(
-            laid.0 > 100 && laid.1 > 100 && laid.2 > 100,
-            "every trail laid its field: {laid:?}"
-        );
+        assert!(laid.0 > 100 && laid.1 > 100 && laid.2 > 100, "every trail laid its field: {laid:?}");
         assert_eq!((crater_off, scent_off, cloud_off), (0, 0, 0));
         // Smother (11-14, "disrupt scent"): the scent on the bait's line
         // wiped on both.
-        let b = slime_mould::mould::squad::Burst {
-            at: bursts[3].at,
-            r: 3.0,
-            smother: true,
-            ..Default::default()
-        };
+        let b = slime_mould::mould::squad::Burst { at: bursts[3].at, r: 3.0, smother: true, ..Default::default() };
         let (at, sc) = ((b.at.0 * s) as usize, s as usize);
         let i = at.min(cpu.w - 1) + (b.at.1 * s) as usize * cpu.w;
         assert!(cpu.scent[i] > 0.0, "bait under the smother");
@@ -7682,13 +4832,7 @@ mod tests {
         gpu.burst(&b, &k);
         assert_eq!(cpu.scent[i], 0.0, "smothered");
         let _ = sc;
-        let off = gpu
-            .e
-            .scent_of()
-            .iter()
-            .zip(&cpu.scent)
-            .filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0))
-            .count();
+        let off = gpu.e.scent_of().iter().zip(&cpu.scent).filter(|(a, b)| (*a - *b).abs() > 1e-5 * b.abs().max(1.0)).count();
         assert_eq!(off, 0, "the smother on both engines");
     }
 
@@ -7701,38 +4845,15 @@ mod tests {
         use slime_mould::mould::squad::Burst;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 30.0,
-            crater: 0.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15): the
         // gas catches 8 walkers where seed 3's thin edge first bites, and
         // with the outline the squad met a different edge, where the gassed
         // and bare games' health came out 380.4 against 381.5 (the claim
         // holds where the mould is thin, which the disc fixes in place).
         let play = |gas: bool| -> (Vec<f32>, u32, u32) {
-            let mut cpu = Game::new(
-                slime_mould::mould::big::BigDish::new(slime_mould::mould::big::BigParams {
-                    start_shape: false,
-                    ..race_params(seed, scale, walkers)
-                }),
-                rules,
-                seed,
-            );
-            let mut gpu = Game::new(
-                GpuWorld::new(
-                    &device,
-                    &queue,
-                    slime_mould::gpu::Settings {
-                        start_shape: false,
-                        ..race_settings(seed, scale, walkers)
-                    },
-                    scale,
-                ),
-                rules,
-                seed,
-            );
+            let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) }), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, slime_mould::gpu::Settings { start_shape: false, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
             assert!(gpu.world.has_gas(), "the engine's world has the gas");
             for k in 0..cpu.soldiers.len() {
                 assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
@@ -7748,12 +4869,7 @@ mod tests {
                     gpu.world.e.inject(&cpu.world);
                     let s = cpu.world.scale();
                     let at = (cpu.soldiers[k].x / s, cpu.soldiers[k].y / s);
-                    let b = Burst {
-                        at,
-                        r: kit.gas_r,
-                        gas: (kit.gas_secs * fine) as u16,
-                        ..Burst::default()
-                    };
+                    let b = Burst { at, r: kit.gas_r, gas: (kit.gas_secs * fine) as u16, ..Burst::default() };
                     let (c, g) = (cpu.world.burst(&b, &br), gpu.world.burst(&b, &br));
                     assert_eq!(g, c, "the burst on both");
                     gassed = c.gassed;
@@ -7762,10 +4878,7 @@ mod tests {
                 cpu.step();
                 gpu.step();
                 frames += 1;
-                let (a, b): (Vec<f32>, Vec<f32>) = (
-                    cpu.soldiers.iter().map(|s| s.hp).collect(),
-                    gpu.soldiers.iter().map(|s| s.hp).collect(),
-                );
+                let (a, b): (Vec<f32>, Vec<f32>) = (cpu.soldiers.iter().map(|s| s.hp).collect(), gpu.soldiers.iter().map(|s| s.hp).collect());
                 assert_eq!(a, b, "frame {frames} ({:.2} s): the squad's health", cpu.time());
             }
             (cpu.soldiers.iter().map(|s| s.hp).collect(), gassed, frames)
@@ -7775,10 +4888,7 @@ mod tests {
         eprintln!("gassed {gassed} walkers; squad health at 16 s {hp:?}, with no gas {bare:?} ({frames} frames)");
         // The race world is thin where it first bites (8 walkers, seed 3).
         assert!(gassed > 0, "the gas caught the mould: {gassed}");
-        assert!(
-            hp.iter().sum::<f32>() > bare.iter().sum::<f32>(),
-            "the gassed mould bit less: {hp:?} against {bare:?}"
-        );
+        assert!(hp.iter().sum::<f32>() > bare.iter().sum::<f32>(), "the gassed mould bit less: {hp:?} against {bare:?}");
     }
 
     /// **Bullets on the engine as on the CPU** (the technical lead on #191,
@@ -7797,26 +4907,11 @@ mod tests {
         use slime_mould::mould::larder_world::{race_world, BulletMods, Cmd, Game, Order, Rules};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 30.0,
-            crater: 0.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
         let twin = |gpu_speed: f32| -> (Result<(), String>, u32, u32, u32) {
             let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-            let mut gpu = Game::new(
-                GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-                Rules {
-                    bullet_speed: gpu_speed,
-                    ..rules
-                },
-                seed,
-            );
-            let mods = BulletMods {
-                pierce: 1,
-                split: 1,
-                ..BulletMods::default()
-            };
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), Rules { bullet_speed: gpu_speed, ..rules }, seed);
+            let mods = BulletMods { pierce: 1, split: 1, ..BulletMods::default() };
             cpu.bullet_mods = mods;
             gpu.bullet_mods = mods;
             for k in 0..cpu.soldiers.len() {
@@ -7829,27 +4924,10 @@ mod tests {
                 gpu.step();
                 if cpu.last_shots != gpu.last_shots {
                     let i = cpu.last_shots.iter().zip(&gpu.last_shots).position(|(a, b)| a != b);
-                    return (
-                        Err(format!(
-                            "{:.2} s: legs differ at {i:?} of {} / {}: {:?} against {:?}",
-                            cpu.time(),
-                            cpu.last_shots.len(),
-                            gpu.last_shots.len(),
-                            i.map(|i| cpu.last_shots[i]),
-                            i.map(|i| gpu.last_shots[i])
-                        )),
-                        legs,
-                        pieces,
-                        hits,
-                    );
+                    return (Err(format!("{:.2} s: legs differ at {i:?} of {} / {}: {:?} against {:?}", cpu.time(), cpu.last_shots.len(), gpu.last_shots.len(), i.map(|i| cpu.last_shots[i]), i.map(|i| gpu.last_shots[i]))), legs, pieces, hits);
                 }
                 if cpu.bullets != gpu.bullets {
-                    return (
-                        Err(format!("{:.2} s: bullets in flight differ", cpu.time())),
-                        legs,
-                        pieces,
-                        hits,
-                    );
+                    return (Err(format!("{:.2} s: bullets in flight differ", cpu.time())), legs, pieces, hits);
                 }
                 legs += cpu.last_shots.len() as u32;
                 hits += cpu.last_shots.iter().filter(|s| s.hit.is_some()).count() as u32;
@@ -7861,10 +4939,7 @@ mod tests {
         let (same, legs, pieces, hits) = twin(rules.bullet_speed);
         eprintln!("bullet twin: {legs} legs, {hits} hits, {pieces} piece-frames in flight; {same:?}");
         same.unwrap();
-        assert!(
-            legs > 50 && hits > 10 && pieces > 0,
-            "the squad fired, hit, and split: {legs} legs, {hits} hits, {pieces} pieces"
-        );
+        assert!(legs > 50 && hits > 10 && pieces > 0, "the squad fired, hit, and split: {legs} legs, {hits} hits, {pieces} pieces");
         let (planted, ..) = twin(rules.bullet_speed - 1.0);
         eprintln!("planted (GPU game 1 cell/s slower): {planted:?}");
         assert!(planted.is_err(), "the twin catches bullets flying at the wrong speed");
@@ -7907,55 +4982,21 @@ mod tests {
         // walking maps (`Rules::map_pops`): sliced, 1585 GPU against 1316
         // CPU at 25 s.
         // Dead-on aim, as the fleeing twin (the rifle's 0.5-cell spread, 11-15).
-        let rules = Rules {
-            cap: 30.0,
-            crater: 10.0,
-            core_pull: 0.0,
-            crystal_solid: false,
-            drain: 1.0,
-            elbow: 0.0,
-            corners: false,
-            map_pops: usize::MAX,
-            spread: 0.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, map_pops: usize::MAX, spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted
         // the engines past the bounds (killed 1239 GPU against 1056 CPU;
         // 1725 against 1564 walkers at 25 s with craters).
-        let race = || slime_mould::mould::big::BigParams {
-            start_shape: false,
-            ..race_params(seed, scale, walkers)
-        };
+        let race = || slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race()), rules, seed);
-        let mut gpu = Game::new(
-            GpuWorld::new(
-                &device,
-                &queue,
-                slime_mould::gpu::Settings {
-                    start_shape: false,
-                    ..race_settings(seed, scale, walkers)
-                },
-                scale,
-            ),
-            rules,
-            seed,
-        );
-        let mut off = Game::new(
-            slime_mould::mould::big::BigDish::new(race()),
-            Rules { crater: 0.0, ..rules },
-            seed,
-        );
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, slime_mould::gpu::Settings { start_shape: false, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race()), Rules { crater: 0.0, ..rules }, seed);
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
         }
         for k in 0..cpu.soldiers.len() {
-            assert!(
-                cpu.apply(Cmd::Order(k, Order::Attack))
-                    && gpu.apply(Cmd::Order(k, Order::Attack))
-                    && off.apply(Cmd::Order(k, Order::Attack))
-            );
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
         }
         let mut sizes = Vec::new();
         while cpu.end.is_none() {
@@ -7963,44 +5004,22 @@ mod tests {
             gpu.step();
             off.step();
             if cpu.world.ticks() % 75 == 0 {
-                sizes.push((
-                    cpu.world.ticks() / 15,
-                    cpu.world.living(),
-                    gpu.world.living(),
-                    off.world.living(),
-                ));
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
             }
         }
-        let (laid_cpu, laid_gpu) = (
-            cpu.world.scorch.iter().filter(|&&v| v > 0).count(),
-            gpu.world.e.crater_of().iter().filter(|&&v| v > 0.0).count(),
-        );
+        let (laid_cpu, laid_gpu) = (cpu.world.scorch.iter().filter(|&&v| v > 0).count(), gpu.world.e.crater_of().iter().filter(|&&v| v > 0.0).count());
         eprintln!("firing with craters: game s, living CPU, GPU, CPU without craters: {sizes:?}; shots {} / {}, killed {} / {} (without craters {}); cells under a crater at the end {laid_cpu} / {laid_gpu}", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed);
-        assert!(
-            cpu.shots > 20 && gpu.shots > 20,
-            "the squad fired: {} / {}",
-            cpu.shots,
-            gpu.shots
-        );
+        assert!(cpu.shots > 20 && gpu.shots > 20, "the squad fired: {} / {}", cpu.shots, gpu.shots);
         assert!(laid_cpu > 0 && laid_gpu > 0, "craters on both");
         let (a, b) = (cpu.killed as f64, gpu.killed as f64);
-        assert!(
-            a > 0.0 && (a - b).abs() <= 0.15 * a,
-            "killed {b} on the GPU, {a} on the CPU"
-        );
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
         // Floor 100 (11-14): the GTX 1070 ended 897 against the CPU's 981 at
         // 30 s, 84 apart, over 8% of a small mould: chaos, as the core twin's.
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= (0.08 * a).max(100.0),
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= (0.08 * a).max(100.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
-        assert!(
-            off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c),
-            "the craters changed the CPU's game"
-        );
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the craters changed the CPU's game");
     }
 
     /// **Is the twins' gap chaos?** (the technical lead's question on the
@@ -8036,37 +5055,15 @@ mod tests {
             let seeds = 3..=10u64;
             let n = seeds.clone().count() as f64;
             for seed in seeds {
-                let rules = Rules {
-                    cap: 30.0,
-                    crater: 10.0,
-                    core_pull: pull,
-                    crystal_solid: false,
-                    ..Rules::default()
-                };
-                let mut cpu = Game::new(
-                    slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)),
-                    rules,
-                    seed,
-                );
-                let mut gpu = Game::new(
-                    GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-                    rules,
-                    seed,
-                );
-                let mut alt = Game::new(
-                    slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers + 1)),
-                    rules,
-                    seed,
-                );
+                let rules = Rules { cap: 30.0, crater: 10.0, core_pull: pull, crystal_solid: false, ..Rules::default() };
+                let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+                let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+                let mut alt = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers + 1)), rules, seed);
                 for g in [&mut cpu.log, &mut gpu.log, &mut alt.log] {
                     g.clear();
                 }
                 for k in 0..cpu.soldiers.len() {
-                    assert!(
-                        cpu.apply(Cmd::Order(k, Order::Attack))
-                            && gpu.apply(Cmd::Order(k, Order::Attack))
-                            && alt.apply(Cmd::Order(k, Order::Attack))
-                    );
+                    assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && alt.apply(Cmd::Order(k, Order::Attack)));
                 }
                 let mut row = String::new();
                 while cpu.end.is_none() {
@@ -8074,37 +5071,18 @@ mod tests {
                     gpu.step();
                     alt.step();
                     if cpu.world.ticks() % 75 == 0 {
-                        row += &format!(
-                            " {}s:{}/{}/{}",
-                            cpu.world.ticks() / 15,
-                            cpu.world.living(),
-                            gpu.world.living(),
-                            alt.world.living()
-                        );
+                        row += &format!(" {}s:{}/{}/{}", cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), alt.world.living());
                     }
                 }
-                let (c, g, a) = (
-                    cpu.world.living() as f64,
-                    gpu.world.living() as f64,
-                    alt.world.living() as f64,
-                );
+                let (c, g, a) = (cpu.world.living() as f64, gpu.world.living() as f64, alt.world.living() as f64);
                 gap += (g - c).abs() / n;
                 floor += (a - c).abs() / n;
                 above += (g > c) as u32;
-                eprintln!(
-                    "pull {pull} seed {seed}: killed CPU {} GPU {} one more walker {}; living CPU/GPU/one more:{row}",
-                    cpu.killed, gpu.killed, alt.killed
-                );
+                eprintln!("pull {pull} seed {seed}: killed CPU {} GPU {} one more walker {}; living CPU/GPU/one more:{row}", cpu.killed, gpu.killed, alt.killed);
             }
             eprintln!("pull {pull}: mould at 30 s, mean gap from the CPU: GPU {gap:.0}, one more walker {floor:.0}; GPU above on {above} of {n}");
-            assert!(
-                gap <= 1.25 * floor,
-                "pull {pull}: the GPU's gap {gap:.0} is past the CPU's own spread {floor:.0}"
-            );
-            assert!(
-                (2..=6).contains(&above),
-                "pull {pull}: the GPU leans one way, above on {above} of {n}"
-            );
+            assert!(gap <= 1.25 * floor, "pull {pull}: the GPU's gap {gap:.0} is past the CPU's own spread {floor:.0}");
+            assert!((2..=6).contains(&above), "pull {pull}: the GPU leans one way, above on {above} of {n}");
         }
     }
 
@@ -8142,44 +5120,15 @@ mod tests {
         // moulds past the bound (896 GPU against 1014 CPU at 30 s).
         // Whole walking maps (`Rules::map_pops`, 2026-11-14) for the same
         // reason: sliced, 1630 GPU against 1467 CPU at 25 s.
-        let rules = Rules {
-            cap: 30.0,
-            crater: 10.0,
-            core_pull: 8.0,
-            crystal_solid: false,
-            drain: 1.0,
-            elbow: 0.0,
-            sink: 0.0,
-            map_pops: usize::MAX,
-            ..Rules::default()
-        };
-        let mut cpu = Game::new(
-            slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)),
-            rules,
-            seed,
-        );
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            rules,
-            seed,
-        );
-        let mut off = Game::new(
-            slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)),
-            Rules {
-                core_pull: 0.0,
-                ..rules
-            },
-            seed,
-        );
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 8.0, crystal_solid: false, drain: 1.0, elbow: 0.0, sink: 0.0, map_pops: usize::MAX, ..Rules::default() };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { core_pull: 0.0, ..rules }, seed);
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
         }
         for k in 0..cpu.soldiers.len() {
-            assert!(
-                cpu.apply(Cmd::Order(k, Order::Attack))
-                    && gpu.apply(Cmd::Order(k, Order::Attack))
-                    && off.apply(Cmd::Order(k, Order::Attack))
-            );
+            assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)) && off.apply(Cmd::Order(k, Order::Attack)));
         }
         let (mut sizes, mut pulled) = (Vec::new(), 0u32);
         while cpu.end.is_none() {
@@ -8187,27 +5136,15 @@ mod tests {
             gpu.step();
             off.step();
             let sc = cpu.world.scale();
-            pulled += cpu
-                .soldiers
-                .iter()
-                .any(|s| s.alive && (s.x - cpu.core.0).hypot(s.y - cpu.core.1) <= 2.0 * cpu.rules.core_r * sc)
-                as u32;
+            pulled += cpu.soldiers.iter().any(|s| s.alive && (s.x - cpu.core.0).hypot(s.y - cpu.core.1) <= 2.0 * cpu.rules.core_r * sc) as u32;
             if cpu.world.ticks() % 75 == 0 {
-                sizes.push((
-                    cpu.world.ticks() / 15,
-                    cpu.world.living(),
-                    gpu.world.living(),
-                    off.world.living(),
-                ));
+                sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living(), off.world.living()));
             }
         }
         eprintln!("attacking the core with the pull: game s, living CPU, GPU, CPU without the pull: {sizes:?}; ticks a soldier pulled {pulled}; shots {} / {}, killed {} / {} (without the pull {}), soldiers left {} / {} ({})", cpu.shots, gpu.shots, cpu.killed, gpu.killed, off.killed, cpu.alive(), gpu.alive(), off.alive());
         assert!(pulled > 0, "a soldier reached the core");
         let (a, b) = (cpu.killed as f64, gpu.killed as f64);
-        assert!(
-            a > 0.0 && (a - b).abs() <= 0.15 * a,
-            "killed {b} on the GPU, {a} on the CPU"
-        );
+        assert!(a > 0.0 && (a - b).abs() <= 0.15 * a, "killed {b} on the GPU, {a} on the CPU");
         // 8%, or 100 walkers once the pulled mould is under 1,250: by 30 s
         // The floor is 150 since the GTX 1070 (11-14, 004b7cb): 824 on the
         // card against 933 on the CPU at 30 s, the same chaos on hardware.
@@ -8219,15 +5156,9 @@ mod tests {
         // is above on 4 seeds, below on 4 (`twin_gap_over_seeds_is_chaos`).
         for &(t, a, b, _) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= (0.08 * a).max(150.0),
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= (0.08 * a).max(150.0), "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
-        assert!(
-            off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c),
-            "the pull changed the CPU's game"
-        );
+        assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
     }
 
     /// **A siren on the engine as on the CPU** (2026-11-12): its calls go
@@ -8240,35 +5171,16 @@ mod tests {
         use slime_mould::mould::larder_world::{race_world, BuildRules, Cmd, Game, Kind, Rules, Stance, World};
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 20.0,
-            start_bank: 1e6,
-            build: BuildRules {
-                raise: 0.0,
-                ..BuildRules::default()
-            },
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 20.0, start_bank: 1e6, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            rules,
-            seed,
-        );
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         // Between the bases, on open ground.
-        let p = (
-            0.6 * cpu.larder.0 + 0.4 * cpu.core.0,
-            0.6 * cpu.larder.1 + 0.4 * cpu.core.1,
-        );
+        let p = (0.6 * cpu.larder.0 + 0.4 * cpu.core.0, 0.6 * cpu.larder.1 + 0.4 * cpu.core.1);
         let w: &dyn World = &cpu.world;
-        let at = (0..60)
-            .flat_map(|r| (0..16).map(move |k| (r, k)))
-            .map(|(r, k)| {
-                let a = k as f32 / 16.0 * std::f32::consts::TAU;
-                (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
-            })
-            .find(|q| w.open(q.0, q.1))
-            .expect("open ground");
+        let at = (0..60).flat_map(|r| (0..16).map(move |k| (r, k))).map(|(r, k)| {
+            let a = k as f32 / 16.0 * std::f32::consts::TAU;
+            (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
+        }).find(|q| w.open(q.0, q.1)).expect("open ground");
         for g in [&mut cpu.soldiers[0], &mut gpu.soldiers[0]] {
             (g.x, g.y, g.stance) = (at.0, at.1, Stance::HoldFire);
         }
@@ -8281,23 +5193,12 @@ mod tests {
                 sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
             }
         }
-        eprintln!(
-            "siren: calls {} / {}, living CPU, GPU {sizes:?}",
-            cpu.sirens, gpu.sirens
-        );
-        assert!(
-            cpu.sirens >= 5 && gpu.sirens == cpu.sirens,
-            "calls {} on the GPU, {} on the CPU",
-            gpu.sirens,
-            cpu.sirens
-        );
+        eprintln!("siren: calls {} / {}, living CPU, GPU {sizes:?}", cpu.sirens, gpu.sirens);
+        assert!(cpu.sirens >= 5 && gpu.sirens == cpu.sirens, "calls {} on the GPU, {} on the CPU", gpu.sirens, cpu.sirens);
         assert!(!cpu.world.alarm.is_empty(), "the CPU's alarm field is on");
         for &(t, a, b) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= 0.08 * a,
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
     }
 
@@ -8316,18 +5217,9 @@ mod tests {
         // The old bite (1 a walker): at the game's 2 the builder dies before
         // the turret stands, and it never fires on either engine.
         // The lure's burn (once checked here too) was removed 2026-11-14: no upkeep.
-        let rules = Rules {
-            cap: 20.0,
-            start_bank: 1e6,
-            drain: 1.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 20.0, start_bank: 1e6, drain: 1.0, ..Rules::default() };
         let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-        let mut gpu = Game::new(
-            GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-            rules,
-            seed,
-        );
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
         let near = |g: &Game<_>, p: (f32, f32)| -> (f32, f32) {
             let w: &dyn World = &g.world;
             for r in 0..80 {
@@ -8346,22 +5238,9 @@ mod tests {
         // first frame) and within its range of it.
         let occ = cpu.world.occupancy();
         let w = cpu.world.w;
-        let empty = |p: (f32, f32)| {
-            (-6i64..=6).all(|dy| {
-                (-6i64..=6).all(|dx| {
-                    occ.get((p.1 as i64 + dy) as usize * w + (p.0 as i64 + dx) as usize)
-                        .is_none_or(|&n| n == 0)
-                })
-            })
-        };
-        let turret = (1..60)
-            .map(|r| near(&cpu, (cpu.core.0 + r as f32 * 2.0, cpu.core.1)))
-            .find(|&p| empty(p))
-            .expect("open ground past the blob");
-        eprintln!(
-            "turret {:.0} fine cells from the core",
-            (turret.0 - cpu.core.0).hypot(turret.1 - cpu.core.1)
-        );
+        let empty = |p: (f32, f32)| (-6i64..=6).all(|dy| (-6i64..=6).all(|dx| occ.get((p.1 as i64 + dy) as usize * w + (p.0 as i64 + dx) as usize).is_none_or(|&n| n == 0)));
+        let turret = (1..60).map(|r| near(&cpu, (cpu.core.0 + r as f32 * 2.0, cpu.core.1))).find(|&p| empty(p)).expect("open ground past the blob");
+        eprintln!("turret {:.0} fine cells from the core", (turret.0 - cpu.core.0).hypot(turret.1 - cpu.core.1));
         let lure = near(&cpu, (cpu.larder.0 + 16.0, cpu.larder.1 + 16.0));
         cpu.place(turret, crystal, lure);
         gpu.place(turret, crystal, lure);
@@ -8386,28 +5265,12 @@ mod tests {
                 sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
             }
         }
-        eprintln!(
-            "buildings: living CPU, GPU {sizes:?}; pumped {} / {}, shots {} / {}, killed {} / {}",
-            cpu.pumped, gpu.pumped, cpu.shots, gpu.shots, cpu.killed, gpu.killed
-        );
-        assert!(
-            cpu.pumped > 0.0 && (gpu.pumped - cpu.pumped).abs() <= 1e-3 * cpu.pumped,
-            "pumped {} on the GPU, {} on the CPU",
-            gpu.pumped,
-            cpu.pumped
-        );
-        assert!(
-            cpu.killed > 0 && gpu.killed > 0,
-            "the turret kills on both: {} / {}",
-            cpu.killed,
-            gpu.killed
-        );
+        eprintln!("buildings: living CPU, GPU {sizes:?}; pumped {} / {}, shots {} / {}, killed {} / {}", cpu.pumped, gpu.pumped, cpu.shots, gpu.shots, cpu.killed, gpu.killed);
+        assert!(cpu.pumped > 0.0 && (gpu.pumped - cpu.pumped).abs() <= 1e-3 * cpu.pumped, "pumped {} on the GPU, {} on the CPU", gpu.pumped, cpu.pumped);
+        assert!(cpu.killed > 0 && gpu.killed > 0, "the turret kills on both: {} / {}", cpu.killed, gpu.killed);
         for &(t, a, b) in &sizes {
             let (a, b) = (a as f64, b as f64);
-            assert!(
-                (a - b).abs() <= 0.08 * a,
-                "mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-            );
+            assert!((a - b).abs() <= 0.08 * a, "mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
         }
     }
 
@@ -8427,62 +5290,23 @@ mod tests {
         let Some((device, queue)) = test_gpu() else { return };
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
         let (seed, scale, walkers) = (3, 2, 5_000);
-        let rules = Rules {
-            cap: 20.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 20.0, ..Rules::default() };
         for name in ["fork", "nest", "passes", "rim"] {
             let m = Map::load(&dir, name).unwrap();
             let mut cpu = Game::new(BigDish::with_map(race_params(seed, scale, walkers), &m), rules, seed);
-            let mut gpu = Game::new(
-                GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m),
-                rules,
-                seed,
-            );
-            assert!(
-                cpu.world.soil.contains(&SOIL_CLAY) && gpu.world.e.ground_world & WORLD_SOIL != 0,
-                "{name}: the map's clay on both"
-            );
-            assert!(
-                name == "fork" || name == "nest" || cpu.world.soil.contains(&SOIL_SAND),
-                "{name}: the map's sand"
-            );
-            assert_eq!(
-                gpu.world.crystals(),
-                cpu.world.crystals(),
-                "{name}: the same crystals and charge at the start"
-            );
+            let mut gpu = Game::new(GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m), rules, seed);
+            assert!(cpu.world.soil.contains(&SOIL_CLAY) && gpu.world.e.ground_world & WORLD_SOIL != 0, "{name}: the map's clay on both");
+            assert!(name == "fork" || name == "nest" || cpu.world.soil.contains(&SOIL_SAND), "{name}: the map's sand");
+            assert_eq!(gpu.world.crystals(), cpu.world.crystals(), "{name}: the same crystals and charge at the start");
             let n = cpu.world.crystals().len();
-            assert!(
-                (0..n).all(|c| gpu.world.crystal_r(c) == cpu.world.crystal_r(c)),
-                "{name}: radii"
-            );
-            assert!(
-                (0..n).any(|c| cpu.world.crystal_r(c) != cpu.world.crystal_r(0)),
-                "{name}: crystals of more than one size"
-            );
+            assert!((0..n).all(|c| gpu.world.crystal_r(c) == cpu.world.crystal_r(c)), "{name}: radii");
+            assert!((0..n).any(|c| cpu.world.crystal_r(c) != cpu.world.crystal_r(0)), "{name}: crystals of more than one size");
             assert_eq!(gpu.world.living(), cpu.world.living(), "{name}");
             assert_eq!((gpu.larder, gpu.core), (cpu.larder, cpu.core), "{name}");
             let k = scale as f32 / 4.0;
-            assert_eq!(
-                cpu.larder,
-                (m.items.landing.unwrap().0 * k, m.items.landing.unwrap().1 * k),
-                "{name}: the squad lands on the map's landing"
-            );
-            let c = cpu
-                .world
-                .crystals()
-                .iter()
-                .map(|c| c.0)
-                .min_by(|a, b| {
-                    (a.0 - cpu.larder.0)
-                        .hypot(a.1 - cpu.larder.1)
-                        .total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))
-                })
-                .unwrap();
-            assert!(
-                cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1)))
-            );
+            assert_eq!(cpu.larder, (m.items.landing.unwrap().0 * k, m.items.landing.unwrap().1 * k), "{name}: the squad lands on the map's landing");
+            let c = cpu.world.crystals().iter().map(|c| c.0).min_by(|a, b| (a.0 - cpu.larder.0).hypot(a.1 - cpu.larder.1).total_cmp(&(b.0 - cpu.larder.0).hypot(b.1 - cpu.larder.1))).unwrap();
+            assert!(cpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))) && gpu.apply(Cmd::Order(0, Order::Clear(c.0, c.1))));
             let mut sizes = Vec::new();
             while cpu.end.is_none() {
                 cpu.step();
@@ -8491,31 +5315,17 @@ mod tests {
                     sizes.push((cpu.world.ticks() / 15, cpu.world.living(), gpu.world.living()));
                 }
             }
-            eprintln!(
-                "{name}: game s, living CPU, GPU: {sizes:?}; banked {} / {}",
-                cpu.harvested, gpu.harvested
-            );
+            eprintln!("{name}: game s, living CPU, GPU: {sizes:?}; banked {} / {}", cpu.harvested, gpu.harvested);
             // Equal to f32 rounding: a partial load (a crystal running dry)
             // is a sum of takes the GPU adds in another order.
-            assert!(
-                cpu.harvested > 0.0 && (gpu.harvested - cpu.harvested).abs() <= 1e-3 * cpu.harvested,
-                "{name}: banked {} on the GPU, {} on the CPU",
-                gpu.harvested,
-                cpu.harvested
-            );
+            assert!(cpu.harvested > 0.0 && (gpu.harvested - cpu.harvested).abs() <= 1e-3 * cpu.harvested, "{name}: banked {} on the GPU, {} on the CPU", gpu.harvested, cpu.harvested);
             for &(t, a, b) in &sizes {
                 let (a, b) = (a as f64, b as f64);
-                assert!(
-                    (a - b).abs() <= 0.08 * a,
-                    "{name}: mould at {t} s: {b} walkers on the GPU, {a} on the CPU"
-                );
+                assert!((a - b).abs() <= 0.08 * a, "{name}: mould at {t} s: {b} walkers on the GPU, {a} on the CPU");
             }
             let left = |w: &dyn World| w.crystals().iter().map(|c| c.1 as f64).sum::<f64>();
             let (lc, lg) = (left(&cpu.world), left(&gpu.world));
-            assert!(
-                (lc - lg).abs() <= 0.02 * lc,
-                "{name}: crystal charge left {lg} on the GPU, {lc} on the CPU"
-            );
+            assert!((lc - lg).abs() <= 0.02 * lc, "{name}: crystal charge left {lg} on the GPU, {lc} on the CPU");
         }
     }
 
@@ -8561,54 +5371,17 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
         for _ in 0..n {
             // A walker's place on a 512 x 320 dish, a heading as the walk
             // keeps it (turns add to it unwrapped), a step, a field value.
-            inp.extend([
-                unit() * 512.0,
-                unit() * 320.0,
-                (unit() - 0.5) * 40.0,
-                0.5 + unit(),
-                unit() * 20.0,
-                unit(),
-                unit() * 4.0,
-                unit() * 64.0,
-            ]);
+            inp.extend([unit() * 512.0, unit() * 320.0, (unit() - 0.5) * 40.0, 0.5 + unit(), unit() * 20.0, unit(), unit() * 4.0, unit() * 64.0]);
         }
         use wgpu::util::DeviceExt;
-        let ib = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("maths in"),
-            contents: &f32_bytes(&inp),
-            usage: wgpu::BufferUsages::STORAGE,
-        });
-        let ob = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("maths out"),
-            size: (inp.len() * 4) as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("maths"),
-            source: wgpu::ShaderSource::Wgsl(SRC.into()),
-        });
-        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("maths"),
-            layout: None,
-            module: &module,
-            entry_point: Some("main"),
-            compilation_options: Default::default(),
-            cache: None,
-        });
+        let ib = device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some("maths in"), contents: &f32_bytes(&inp), usage: wgpu::BufferUsages::STORAGE });
+        let ob = device.create_buffer(&wgpu::BufferDescriptor { label: Some("maths out"), size: (inp.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("maths"), source: wgpu::ShaderSource::Wgsl(SRC.into()) });
+        let pipe = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor { label: Some("maths"), layout: None, module: &module, entry_point: Some("main"), compilation_options: Default::default(), cache: None });
         let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("maths"),
             layout: &pipe.get_bind_group_layout(0),
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: ib.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: ob.as_entire_binding(),
-                },
-            ],
+            entries: &[wgpu::BindGroupEntry { binding: 0, resource: ib.as_entire_binding() }, wgpu::BindGroupEntry { binding: 1, resource: ob.as_entire_binding() }],
         });
         let mut enc = device.create_command_encoder(&Default::default());
         {
@@ -8619,32 +5392,14 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
         }
         queue.submit([enc.finish()]);
         let out = floats(&read_back(&device, &queue, &ob));
-        let names = [
-            "cos",
-            "sin",
-            "exp",
-            "pow",
-            "sqrt",
-            "x + cos*st",
-            "y + sin*st",
-            "a*b + c",
-        ];
+        let names = ["cos", "sin", "exp", "pow", "sqrt", "x + cos*st", "y + sin*st", "a*b + c"];
         let mut diff = [0usize; 8];
         let mut worst = [0f32; 8];
         let (mut cells_off, mut fused_same, mut unfused_same) = (0usize, 0usize, 0usize);
         for k in 0..n {
             let q = &inp[8 * k..8 * k + 8];
             let (x, y, h, st, v, a, b, c) = (q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
-            let cpu = [
-                h.cos(),
-                h.sin(),
-                (-v).exp(),
-                a.powf(0.7),
-                v.sqrt(),
-                x + h.cos() * st,
-                y + h.sin() * st,
-                a * b + c,
-            ];
+            let cpu = [h.cos(), h.sin(), (-v).exp(), a.powf(0.7), v.sqrt(), x + h.cos() * st, y + h.sin() * st, a * b + c];
             let gpu = &out[8 * k..8 * k + 8];
             for j in 0..8 {
                 if gpu[j].to_bits() != cpu[j].to_bits() {
@@ -8659,10 +5414,7 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
             unfused_same += (gpu[7].to_bits() == (a * b + c).to_bits()) as usize;
         }
         for j in 0..8 {
-            eprintln!(
-                "{:>11}: {} of {n} differ from the CPU's bits, worst by {:.2e}",
-                names[j], diff[j], worst[j]
-            );
+            eprintln!("{:>11}: {} of {n} differ from the CPU's bits, worst by {:.2e}", names[j], diff[j], worst[j]);
         }
         eprintln!("a step lands in another cell for {cells_off} of {n}; a*b + c matches the CPU's unfused result {unfused_same} times and the fused {fused_same}");
     }
@@ -8699,29 +5451,15 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
             (2.0 * sum / 2f64.powi(n as i32)).min(1.0)
         };
         let (scale, walkers) = (2, 5_000);
-        let rules = Rules {
-            cap: 30.0,
-            ..Rules::default()
-        };
+        let rules = Rules { cap: 30.0, ..Rules::default() };
         // A mark: game s, CPU trail, GPU trail, CPU living, GPU living.
         type Mark = (u64, f64, f64, usize, usize);
         let mut rows: Vec<Vec<Mark>> = Vec::new();
         // `DRIFT_SEEDS=N` for more (the 1070 plays 8 in about 30 s).
-        let seeds = std::env::var("DRIFT_SEEDS")
-            .ok()
-            .and_then(|v| v.parse::<u64>().ok())
-            .unwrap_or(8);
+        let seeds = std::env::var("DRIFT_SEEDS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(8);
         for seed in 1..=seeds {
-            let mut cpu = Game::new(
-                slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)),
-                rules,
-                seed,
-            );
-            let mut gpu = Game::new(
-                GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale),
-                rules,
-                seed,
-            );
+            let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
             let mut r = Vec::new();
             while cpu.end.is_none() && gpu.end.is_none() {
                 cpu.step();
@@ -8729,33 +5467,19 @@ fn main(@builtin(global_invocation_id) g: vec3<u32>) {
                 if cpu.world.ticks() % 75 == 0 {
                     let cells = cpu.world.trail.len();
                     let side = (gpu.world.e.done % 2) as usize;
-                    let gt: f64 = floats(&read_back(&device, &queue, &gpu.world.e.trail[side]))[..cells]
-                        .iter()
-                        .map(|&v| v as f64)
-                        .sum();
+                    let gt: f64 = floats(&read_back(&device, &queue, &gpu.world.e.trail[side]))[..cells].iter().map(|&v| v as f64).sum();
                     let ct: f64 = cpu.world.trail.iter().map(|&v| v as f64).sum();
                     r.push((cpu.world.ticks() / 15, ct, gt, cpu.world.living(), gpu.world.living()));
                 }
             }
-            eprintln!(
-                "seed {seed}: game s, trail CPU, GPU, living CPU, GPU: {:?}",
-                r.iter()
-                    .map(|&(t, a, b, c, d)| (t, a.round(), b.round(), c, d))
-                    .collect::<Vec<_>>()
-            );
+            eprintln!("seed {seed}: game s, trail CPU, GPU, living CPU, GPU: {:?}", r.iter().map(|&(t, a, b, c, d)| (t, a.round(), b.round(), c, d)).collect::<Vec<_>>());
             rows.push(r);
         }
         let marks = rows.iter().map(Vec::len).min().unwrap_or(0);
         for m in 0..marks {
             let t = rows[0][m].0;
-            let (tu, td) = (
-                rows.iter().filter(|r| r[m].2 > r[m].1).count(),
-                rows.iter().filter(|r| r[m].2 < r[m].1).count(),
-            );
-            let (lu, ld) = (
-                rows.iter().filter(|r| r[m].4 > r[m].3).count(),
-                rows.iter().filter(|r| r[m].4 < r[m].3).count(),
-            );
+            let (tu, td) = (rows.iter().filter(|r| r[m].2 > r[m].1).count(), rows.iter().filter(|r| r[m].2 < r[m].1).count());
+            let (lu, ld) = (rows.iter().filter(|r| r[m].4 > r[m].3).count(), rows.iter().filter(|r| r[m].4 < r[m].3).count());
             let ratio: Vec<f64> = rows.iter().map(|r| r[m].2 / r[m].1.max(1e-9)).collect();
             let mut sorted = ratio.clone();
             sorted.sort_by(f64::total_cmp);

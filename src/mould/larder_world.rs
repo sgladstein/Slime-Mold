@@ -49,36 +49,36 @@
 //! ticks.
 
 mod buildings;
-mod cmd;
-mod cover;
-mod funnel;
-mod paths;
-mod raising;
+mod world;
 mod rules;
+mod paths;
+mod cmd;
+mod raising;
+mod shots;
+mod turn;
 mod score;
 mod shapes;
-mod shots;
 mod squads;
-mod turn;
-mod world;
+mod funnel;
+mod cover;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
-use buildings::Who;
-pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
 pub use cmd::*;
-pub use cover::{Cover, CoverRules, HealRules};
 pub use paths::*;
 pub use raising::*;
 pub use rules::*;
+pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
-pub use world::*;
+pub use cover::{Cover, CoverRules, HealRules};
+pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
+use buildings::Who;
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
-pub use super::guns::Gun;
-pub use super::rounds::Deck;
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
+pub use super::guns::Gun;
+pub use super::rounds::Deck;
 
 pub use super::larder::{End, Order, Stance};
 
@@ -422,14 +422,7 @@ struct Flight {
 pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
     let frames = (secs.max(0.0) * rules.tps as f32 / rules.frame_ticks.max(1) as f32).round() as u32;
     for _ in 0..frames {
-        let f = Frame {
-            units: Vec::new(),
-            shots: Vec::new(),
-            slime: squad::slime_trail(6.0),
-            crater: 0,
-            sink: rules.sink,
-            ..Frame::default()
-        };
+        let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink, ..Frame::default() };
         world.frame(&f, rules.frame_ticks);
     }
 }
@@ -439,14 +432,7 @@ pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
 pub fn far_crystal(world: &impl World) -> (f32, f32) {
     let cs = world.crystals();
     let home = cs[0].0;
-    cs.iter()
-        .map(|c| c.0)
-        .max_by(|a, b| {
-            (a.0 - home.0)
-                .hypot(a.1 - home.1)
-                .total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))
-        })
-        .unwrap_or(home)
+    cs.iter().map(|c| c.0).max_by(|a, b| (a.0 - home.0).hypot(a.1 - home.1).total_cmp(&(b.0 - home.0).hypot(b.1 - home.1))).unwrap_or(home)
 }
 
 impl<W: World> Game<W> {
@@ -457,9 +443,7 @@ impl<W: World> Game<W> {
         let core = world.crystals()[0].0;
         let mould = world.living();
         let (w, h) = world.size();
-        let open = (0..w * h)
-            .filter(|&i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5))
-            .count();
+        let open = (0..w * h).filter(|&i| world.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).count();
         let density = mould as f32 / open.max(1) as f32;
         let start_charge: Vec<f32> = world.crystals().iter().map(|c| c.1).collect();
         let taken = vec![0.0; start_charge.len()];
@@ -590,20 +574,13 @@ impl<W: World> Game<W> {
     /// The farthest any live squad fires (`gun_range`), or the standard
     /// rifle's with none: what the mould's panic reach reads.
     pub fn gun_range_max(&self) -> f32 {
-        self.live_squads()
-            .into_iter()
-            .map(|q| self.gun_range(q))
-            .fold(None, |m: Option<f32>, r| Some(m.map_or(r, |m| m.max(r))))
-            .unwrap_or_else(|| self.gun_range(SQUADS_MAX))
+        self.live_squads().into_iter().map(|q| self.gun_range(q)).fold(None, |m: Option<f32>, r| Some(m.map_or(r, |m| m.max(r)))).unwrap_or_else(|| self.gun_range(SQUADS_MAX))
     }
 
     /// Squad `q`'s gun (owner 11-14 16:46Z: "The squad owns the gun"): its
     /// own if it was armed (`arm`), else the standard rifle at these rules.
     pub fn gun(&self, q: usize) -> Gun {
-        self.squads
-            .get(q)
-            .and_then(|s| s.gun)
-            .unwrap_or_else(|| Gun::standard(&self.rules))
+        self.squads.get(q).and_then(|s| s.gun).unwrap_or_else(|| Gun::standard(&self.rules))
     }
 
     /// Squad `q` takes `gun` (`Cmd::Arm`); `None` gives back the standard
@@ -687,9 +664,10 @@ impl<W: World> Game<W> {
     pub fn alive(&self) -> usize {
         self.soldiers.iter().filter(|s| s.alive).count()
     }
+
 }
 
 #[cfg(test)]
-mod narrow_tests;
-#[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod narrow_tests;

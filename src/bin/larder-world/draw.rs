@@ -14,70 +14,22 @@ use super::*;
 /// trail, clay keeps it, barren ground starves and takes no births), so
 /// the look draws it (#84). `depth` is the crystals' depth
 /// (`App::depth`), worked out once a world.
-pub(super) fn ground_codes(
-    g: &Game<GpuWorld>,
-    depth: &[u8],
-    charge: Option<&[f32]>,
-    health: Option<&[f32]>,
-) -> Vec<u32> {
+pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f32]>, health: Option<&[f32]>) -> Vec<u32> {
     let d = &g.world.e.dish;
     let cells = d.w * d.h;
     let pile = |i: usize| d.pile_of.get(i).copied().unwrap_or(0) as usize;
     let charge_share: Vec<f32> = match charge {
-        Some(c) => (0..cells)
-            .map(|i| {
-                if pile(i) > 0 {
-                    c[i] / d
-                        .pile_fill
-                        .get(pile(i) - 1)
-                        .copied()
-                        .unwrap_or(d.p.crystal_charge)
-                        .max(1e-6)
-                } else {
-                    0.0
-                }
-            })
-            .collect(),
+        Some(c) => (0..cells).map(|i| if pile(i) > 0 { c[i] / d.pile_fill.get(pile(i) - 1).copied().unwrap_or(d.p.crystal_charge).max(1e-6) } else { 0.0 }).collect(),
         None => Vec::new(),
     };
     let broken = |i: usize| health.is_some_and(|h| d.wall.get(i).copied().unwrap_or(false) && h[i] <= 0.0);
     let wall_share: Vec<f32> = match health {
-        Some(h) => (0..cells)
-            .map(|i| {
-                if d.wall.get(i).copied().unwrap_or(false) {
-                    let full = d.wall_health.get(i).copied().unwrap_or(f32::INFINITY);
-                    if full.is_finite() && full > 0.0 {
-                        h[i] / full
-                    } else {
-                        1.0
-                    }
-                } else {
-                    0.0
-                }
-            })
-            .collect(),
+        Some(h) => (0..cells).map(|i| if d.wall.get(i).copied().unwrap_or(false) { let full = d.wall_health.get(i).copied().unwrap_or(f32::INFINITY); if full.is_finite() && full > 0.0 { h[i] / full } else { 1.0 } } else { 0.0 }).collect(),
         None => Vec::new(),
     };
-    let wall: Vec<bool> = (0..cells)
-        .map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i))
-        .collect();
+    let wall: Vec<bool> = (0..cells).map(|i| d.wall.get(i).copied().unwrap_or(false) && !broken(i)).collect();
     let agar: Vec<bool> = (0..cells).map(|i| d.agar[i] || broken(i)).collect();
-    let mut codes = look::ground(
-        d.w,
-        cells,
-        &Fields {
-            agar: &agar,
-            rock: &d.rock,
-            wet: &d.wet,
-            wall: &wall,
-            wall_share: &wall_share,
-            crystal: &d.pile_of,
-            charge_share: &charge_share,
-            elev: &[],
-            soil: &d.soil,
-            depth,
-        },
-    );
+    let mut codes = look::ground(d.w, cells, &Fields { agar: &agar, rock: &d.rock, wet: &d.wet, wall: &wall, wall_share: &wall_share, crystal: &d.pile_of, charge_share: &charge_share, elev: &[], soil: &d.soil, depth });
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);
@@ -104,10 +56,7 @@ pub(super) struct Live {
 pub(super) fn live_cells(g: &Game<GpuWorld>, old: &Live) -> Live {
     let e = &g.world.e;
     let d = &e.dish;
-    let cells: Vec<u32> = (0..d.w * d.h)
-        .filter(|&i| d.wall.get(i).copied().unwrap_or(false) || d.pile_of.get(i).copied().unwrap_or(0) > 0)
-        .map(|i| i as u32)
-        .collect();
+    let cells: Vec<u32> = (0..d.w * d.h).filter(|&i| d.wall.get(i).copied().unwrap_or(false) || d.pile_of.get(i).copied().unwrap_or(0) > 0).map(|i| i as u32).collect();
     let gather = slime_mould::gpu::Gather::new(&e.device, &e.queue, &cells, old.gather.as_ref());
     Live { cells, gather }
 }
@@ -137,14 +86,9 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
         look::code(Ground::Wall, share)
     } else {
         let p = d.pile_of.get(i).copied().unwrap_or(0) as usize;
-        look::code(
-            Ground::Crystal,
-            charge / d.pile_fill.get(p - 1).copied().unwrap_or(d.p.crystal_charge).max(1e-6),
-        )
+        look::code(Ground::Crystal, charge / d.pile_fill.get(p - 1).copied().unwrap_or(d.p.crystal_charge).max(1e-6))
     };
-    base | (depth.get(i).copied().unwrap_or(0) as u32) << 16
-        | ((d.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4
-        | (old & look::FAR)
+    base | (depth.get(i).copied().unwrap_or(0) as u32) << 16 | ((d.soil.get(i).copied().unwrap_or(0) & 7) as u32) << 4 | (old & look::FAR)
 }
 
 pub(super) fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) {
@@ -160,40 +104,22 @@ pub(super) fn end_screen(end: End, g: &Game<GpuWorld>) -> (String, Vec<String>) 
     let mut lines = Vec::new();
     if let End::Cap(s) = end {
         let m = g.mould as f32 / g.start_mould.max(1) as f32;
-        lines.push(format!(
-            "You took {:.0}% of the charge gone from the crystals; the mould is {} walkers, {m:.1} times its start",
-            s * 100.0,
-            thousands(g.mould)
-        ));
+        lines.push(format!("You took {:.0}% of the charge gone from the crystals; the mould is {} walkers, {m:.1} times its start", s * 100.0, thousands(g.mould)));
     }
     lines.push(summary(g));
-    lines.push(format!(
-        "Score {:+.2} (a win is over 1, a loss under -1)",
-        g.score().unwrap_or(0.0)
-    ));
+    lines.push(format!("Score {:+.2} (a win is over 1, a loss under -1)", g.score().unwrap_or(0.0)));
     (title, lines)
 }
 
 /// A mission's end: stars and the cause in the title, then what happened.
 pub(super) fn mission_screen(tr: &Tracker, g: &Game<GpuWorld>) -> (String, Vec<String>) {
     let v = tr.verdict.expect("a verdict");
-    let stars = if v.stars == 0 {
-        "Mission lost".to_string()
-    } else {
-        format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize))
-    };
+    let stars = if v.stars == 0 { "Mission lost".to_string() } else { format!("{}: {}", tr.mission.name, "*".repeat(v.stars as usize)) };
     (stars, vec![tr.cause_line(), summary(g)])
 }
 
 pub(super) fn summary(g: &Game<GpuWorld>) -> String {
-    format!(
-        "{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls",
-        g.alive(),
-        g.harvested,
-        thousands(g.killed as usize),
-        g.shots,
-        g.walls
-    )
+    format!("{} soldiers left, {:.0} food harvested, {} walkers killed with {} shots, {} walls", g.alive(), g.harvested, thousands(g.killed as usize), g.shots, g.walls)
 }
 
 /// A turret's lamp from the game's state: dark while rising or with no
@@ -218,14 +144,7 @@ pub(super) fn turret_state<W: World>(g: &Game<W>, b: &Building) -> u32 {
 /// the core), white else. `homing`: the first order is a harvest carrying
 /// home, so it heads for the larder. A first order closer than a dish
 /// cell (a squad settling where it was let go) draws nothing.
-fn order_chain(
-    marks: &mut Marks,
-    g: &Game<GpuWorld>,
-    from: (f32, f32),
-    orders: impl Iterator<Item = (Order, bool)>,
-    homing: bool,
-    sc: f32,
-) {
+fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: impl Iterator<Item = (Order, bool)>, homing: bool, sc: f32) {
     let mut from = from;
     for (n, (o, queued)) in orders.enumerate() {
         let to = match o {
@@ -243,11 +162,7 @@ fn order_chain(
         }
         let later = n > 0 || queued;
         let a = if later { 150 } else { 210 };
-        let colour = if matches!(o, Order::Attack | Order::Fight(..)) {
-            [255, 110, 110, a]
-        } else {
-            [255, 255, 255, a - 20]
-        };
+        let colour = if matches!(o, Order::Attack | Order::Fight(..)) { [255, 110, 110, a] } else { [255, 255, 255, a - 20] };
         marks.line(from, to, 2.0, colour);
         marks.ring(to, if later { 1.0 } else { 1.4 } * sc, colour);
         from = to;
@@ -256,56 +171,23 @@ fn order_chain(
 
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
-fn turret_mark(
-    marks: &mut Marks,
-    lights: &mut Vec<Light>,
-    looks: &[BuildingLook],
-    g: &Game<GpuWorld>,
-    k: usize,
-    half: f32,
-) {
+fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
     let b = &g.buildings[k];
     let look = looks.get(k).copied().unwrap_or_default();
     let built = if b.up() { 1.0 } else { b.built };
     let fl = look.shot / TURRET_SHOT;
-    let m = (
-        b.at.0 + look.facing.cos() * half * 1.8,
-        b.at.1 + look.facing.sin() * half * 1.8,
-    );
+    let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
     // Its muzzle flash, under the head so the barrels cover its root (gun
     // look, 2026-11-15), as a soldier's: a rifle's jets in a plain shot's
     // gold, for the first `FLASH` of the kick.
     let jf = ((look.shot - (TURRET_SHOT - FLASH)) / FLASH).clamp(0.0, 1.0);
     if jf > 0.0 {
-        marks.muzzle_flash(
-            m,
-            half * 0.9,
-            look.facing,
-            0,
-            k as u32 * 13,
-            jf,
-            flame(&card_look(None)),
-            MUZZLE_CORE,
-        );
+        marks.muzzle_flash(m, half * 0.9, look.facing, 0, k as u32 * 13, jf, flame(&card_look(None)), MUZZLE_CORE);
     }
-    marks.turret(
-        b.at,
-        half,
-        built,
-        b.hp / b.max_hp.max(1.0),
-        look.facing,
-        fl,
-        turret_state(g, b),
-    );
+    marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
     if fl > 0.0 {
         let sc = g.world.scale();
-        lights.push(Light {
-            at: m,
-            reach: MUZZLE_LIGHT * sc,
-            lift: 3.0,
-            colour: [255.0, 220.0, 170.0],
-            strength: 0.6 * fl,
-        });
+        lights.push(Light { at: m, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
     }
 }
 
@@ -380,9 +262,7 @@ impl App {
     /// The look's ground from the world's cells: once a game second (the
     /// crystals drain, the walls wear), and at once when a wall goes up.
     pub(super) fn refresh_ground(&mut self) {
-        let (Some(g), Some(buf)) = (&self.game, &self.ground) else {
-            return;
-        };
+        let (Some(g), Some(buf)) = (&self.game, &self.ground) else { return };
         let t = g.time();
         // A step still running would make the read-back below wait for it
         // (on llvmpipe the split's prepare p95 was 14.9 ms against 1.3 ms
@@ -395,11 +275,7 @@ impl App {
         let e = &g.world.e;
         let t0 = Instant::now();
         let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
-        let floats = |b: Vec<u8>| -> Vec<f32> {
-            b.chunks_exact(4)
-                .map(|c| f32::from_le_bytes(c.try_into().unwrap()))
-                .collect()
-        };
+        let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
         let d = &e.dish;
         let any_wall = d.wall.iter().any(|&w| w);
         let cells = d.w * d.h;
@@ -411,11 +287,7 @@ impl App {
             let health = any_wall.then(|| floats(read_back(&e.device, &e.queue, &e.health)));
             read = ms(t0);
             self.codes = ground_codes(g, &self.depth, Some(&charge), health.as_deref());
-            e.queue.write_buffer(
-                buf,
-                0,
-                &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>(),
-            );
+            e.queue.write_buffer(buf, 0, &self.codes.iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
             self.live = live_cells(g, &self.live);
             self.wall_mask = (0..cells).map(is_wall).collect();
         } else {
@@ -432,28 +304,14 @@ impl App {
                         self.wall_mask[i] = is_wall(i);
                     }
                     self.live = live_cells(g, &self.live);
-                    tiles = changed
-                        .iter()
-                        .map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE))
-                        .collect();
+                    tiles = changed.iter().map(|&i| ((i % d.w) / WALL_TILE, (i / d.w) / WALL_TILE)).collect();
                     tiles.sort_unstable();
                     tiles.dedup();
                     // A cell that stopped being a wall (the CPU dish's
                     // rubble; the GPU's walls wear to rubble but stay
                     // walls) and holds no crystal: its code from the dish.
-                    let f = look::Fields {
-                        agar: &d.agar,
-                        rock: &d.rock,
-                        wet: &d.wet,
-                        wall: &d.wall,
-                        crystal: &d.pile_of,
-                        soil: &d.soil,
-                        ..Default::default()
-                    };
-                    for &i in changed
-                        .iter()
-                        .filter(|&&i| !is_wall(i) && d.pile_of.get(i).copied().unwrap_or(0) == 0)
-                    {
+                    let f = look::Fields { agar: &d.agar, rock: &d.rock, wet: &d.wet, wall: &d.wall, crystal: &d.pile_of, soil: &d.soil, ..Default::default() };
+                    for &i in changed.iter().filter(|&&i| !is_wall(i) && d.pile_of.get(i).copied().unwrap_or(0) == 0) {
                         self.codes[i] = look::cell(&f, i, self.depth.get(i).copied().unwrap_or(0));
                     }
                 }
@@ -463,31 +321,16 @@ impl App {
             // (technical lead, 2026-11-14: the whole field read back and
             // rebuilt took 4.6 ms at today's area and 32.9 ms at 6x on
             // the 1070, a dropped frame a second from 4x).
-            let (charge, health) = self.live.gather.as_ref().map_or((Vec::new(), Vec::new()), |q| {
-                q.read(&e.device, &e.queue, &e.charge, &e.health)
-            });
+            let (charge, health) = self.live.gather.as_ref().map_or((Vec::new(), Vec::new()), |q| q.read(&e.device, &e.queue, &e.charge, &e.health));
             let (charge, health) = (floats(charge), any_wall.then(|| floats(health)));
             read = ms(t0);
-            let write = |codes: &[u32], a: usize, b: usize| {
-                e.queue.write_buffer(
-                    buf,
-                    a as u64 * 4,
-                    &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>(),
-                )
-            };
+            let write = |codes: &[u32], a: usize, b: usize| e.queue.write_buffer(buf, a as u64 * 4, &codes[a..b].iter().flat_map(|c| c.to_le_bytes()).collect::<Vec<u8>>());
             // Rows of changed cells written as runs: a crystal eaten
             // changes a few rows of it, not the buffer.
             let mut run: Option<(usize, usize)> = None;
             for (k, &i) in self.live.cells.iter().enumerate() {
                 let i = i as usize;
-                let c = live_code(
-                    g,
-                    &self.depth,
-                    i,
-                    self.codes[i],
-                    charge[k],
-                    health.as_ref().map(|h| h[k]),
-                );
+                let c = live_code(g, &self.depth, i, self.codes[i], charge[k], health.as_ref().map(|h| h[k]));
                 if c == self.codes[i] {
                     continue;
                 }
@@ -532,23 +375,15 @@ impl App {
         // with no mould near for 5 s to take it). Game objects, not the
         // simulation, so marks.
         if g.rules.larder {
-            // The larder is a sprite in soldier A's style (art review
-            // 2026-11-14: it was a plain beige square), drawn from the game's
-            // state: its charge cells lit while the bank holds food, darkening
-            // as the mould holds it with the bank dry (the overrun count). The
-            // faint ring is the ground a walker must reach to hold it. Drawn
-            // 2.2 dish cells (was 1.6) since the buildings went soldier-scale
-            // (11-14), so the store stays bigger than an outpost.
-            self.marks.building_pulse(
-                g.larder,
-                2.2 * sc,
-                LARDER_SPRITE,
-                1.0,
-                1.0 - g.overrun_share(),
-                g.bank >= 1.0,
-                self.banked / BANKED,
-            );
-            self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
+        // The larder is a sprite in soldier A's style (art review
+        // 2026-11-14: it was a plain beige square), drawn from the game's
+        // state: its charge cells lit while the bank holds food, darkening
+        // as the mould holds it with the bank dry (the overrun count). The
+        // faint ring is the ground a walker must reach to hold it. Drawn
+        // 2.2 dish cells (was 1.6) since the buildings went soldier-scale
+        // (11-14), so the store stays bigger than an outpost.
+        self.marks.building_pulse(g.larder, 2.2 * sc, LARDER_SPRITE, 1.0, 1.0 - g.overrun_share(), g.bank >= 1.0, self.banked / BANKED);
+        self.marks.ring(g.larder, 3.0 * sc, [214, 196, 150, 90]);
         } else {
             // No larder (the squad mode): each guarded crystal's ring, the
             // game's count of who holds it (`Game::guarded`).
@@ -568,33 +403,13 @@ impl App {
                 let n = q;
                 if let Some(m) = g.middle(q) {
                     let lit = g.active == Some(q);
-                    let colour = if lit {
-                        [255, 255, 255, 255]
-                    } else {
-                        [200, 210, 220, 170]
-                    };
-                    let label = format!(
-                        "{}{}",
-                        n + 1,
-                        if lit {
-                            " *"
-                        } else if g.leads(q) {
-                            ""
-                        } else {
-                            " auto"
-                        }
-                    );
+                    let colour = if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
+                    let label = format!("{}{}", n + 1, if lit { " *" } else if g.leads(q) { "" } else { " auto" });
                     // Above its topmost soldier, so the soldiers' sprites
                     // don't cover the number (the longer "N auto" label of
                     // 11-15 showed only its tail over a spread squad).
                     let top = g.members(q).iter().map(|&k| g.soldiers[k].y).fold(m.1, f32::min);
-                    self.marks.label(
-                        (m.0, top),
-                        (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)),
-                        &label,
-                        if lit { 2.0 } else { 1.5 },
-                        colour,
-                    );
+                    self.marks.label((m.0, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
                 }
             }
         }
@@ -610,11 +425,7 @@ impl App {
         // The core ring marks a home that can be taken, so a headless mould
         // (the default since 11-12 20:21Z: no king) shows none.
         if g.core_rule.kind != CoreKind::Headless {
-            let core = if g.core_down.is_some() {
-                [94, 214, 132, 200]
-            } else {
-                [242, 98, 98, 150]
-            };
+            let core = if g.core_down.is_some() { [94, 214, 132, 200] } else { [242, 98, 98, 150] };
             self.marks.ring(g.core, g.rules.core_r * sc, core);
         }
         // Buildings: sprites in soldier A's style (`Marks::building`,
@@ -629,36 +440,16 @@ impl App {
         // dashed ring of lines claims only its own pixels (one big ring
         // mark walks its whole box: 0.7 ms at 480 pixels).
         let cursor = self.controls.cursor.filter(|&p| !self.hud.over(p));
-        let placing = self
-            .hud
-            .targeting()
-            .filter(|t| t.0 == TURRET)
-            .and(cursor)
-            .and_then(|p| self.hud.aim(p, &self.camera));
+        let placing = self.hud.targeting().filter(|t| t.0 == TURRET).and(cursor).and_then(|p| self.hud.aim(p, &self.camera));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings
-                .iter()
-                .find(|b| {
-                    b.alive
-                        && b.kind == Kind::Turret
-                        && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3
-                })
-                .map(|b| b.at)
+            g.buildings.iter().find(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| b.at)
         });
         for at in placing.into_iter().chain(over) {
             let reach = g.rules.build.turret_range * sc;
             let n = 72;
             for i in 0..n {
-                let (a0, a1) = (
-                    i as f32 / n as f32 * std::f32::consts::TAU,
-                    (i as f32 + 0.5) / n as f32 * std::f32::consts::TAU,
-                );
-                self.marks.line(
-                    (at.0 + reach * a0.cos(), at.1 + reach * a0.sin()),
-                    (at.0 + reach * a1.cos(), at.1 + reach * a1.sin()),
-                    0.0,
-                    [240, 232, 200, 110],
-                );
+                let (a0, a1) = (i as f32 / n as f32 * std::f32::consts::TAU, (i as f32 + 0.5) / n as f32 * std::f32::consts::TAU);
+                self.marks.line((at.0 + reach * a0.cos(), at.1 + reach * a0.sin()), (at.0 + reach * a1.cos(), at.1 + reach * a1.sin()), 0.0, [240, 232, 200, 110]);
             }
         }
         let mut turrets = Vec::new();
@@ -738,13 +529,7 @@ impl App {
                     Kind::Lure => {
                         self.marks.building(b.at, half, kind, built, health, working);
                         if working && b.up() {
-                            glows.push(Light {
-                                at: b.at,
-                                reach: g.rules.build.lure_r * sc * 1.6,
-                                lift: -2.0,
-                                colour: [150.0, 235.0, 80.0],
-                                strength: 1.3,
-                            });
+                            glows.push(Light { at: b.at, reach: g.rules.build.lure_r * sc * 1.6, lift: -2.0, colour: [150.0, 235.0, 80.0], strength: 1.3 });
                         }
                     }
                     // A rig built round its crystal (owner, 2026-11-15: "it
@@ -757,54 +542,25 @@ impl App {
                     // with its hose turned in and a drawn line of charge.
                     Kind::Pump => {
                         let frame = g.rules.frame_ticks as f32 / g.rules.tps as f32;
-                        let full = if b.up() {
-                            (b.drew / (g.pump_draw(k) * g.pump_yield(k) * frame).max(1e-6)).clamp(0.0, 1.0)
-                        } else {
-                            0.0
-                        };
+                        let full = if b.up() { (b.drew / (g.pump_draw(k) * g.pump_yield(k) * frame).max(1e-6)).clamp(0.0, 1.0) } else { 0.0 };
                         let c = b.crystal.and_then(|c| g.world.crystals().get(c).map(|x| (c, x.0)));
                         if let Some((ci, cat)) = c {
-                            self.marks
-                                .pump_rig(cat, pump_rig_r(g, ci), built, health, working, full, b.level);
+                            self.marks.pump_rig(cat, pump_rig_r(g, ci), built, health, working, full, b.level);
                             if full > 0.0 {
-                                glows.push(Light {
-                                    at: cat,
-                                    reach: 5.0 * sc,
-                                    lift: 3.0,
-                                    colour: [92.0, 224.0, 232.0],
-                                    strength: 0.8 * full,
-                                });
+                                glows.push(Light { at: cat, reach: 5.0 * sc, lift: 3.0, colour: [92.0, 224.0, 232.0], strength: 0.8 * full });
                             }
                         }
                         // The head faces up the screen, its hose down into
                         // the crystal under it.
-                        self.marks.building_facing(
-                            b.at,
-                            half,
-                            kind,
-                            built,
-                            health,
-                            working,
-                            0.0,
-                            -std::f32::consts::FRAC_PI_2,
-                        );
+                        self.marks.building_facing(b.at, half, kind, built, health, working, 0.0, -std::f32::consts::FRAC_PI_2);
                         if b.up() && b.level > 1 {
                             let below = (half * zoom).max(2.0) + 5.0;
-                            self.marks.label(
-                                b.at,
-                                (-6.0, -below - 10.0),
-                                &"I".repeat(b.level as usize),
-                                1.5,
-                                [126, 232, 240, 255],
-                            );
+                            self.marks.label(b.at, (-6.0, -below - 10.0), &"I".repeat(b.level as usize), 1.5, [126, 232, 240, 255]);
                         }
                     }
                     // A mini larder: its cells and lamp flare as a carrier
                     // banks a load there.
-                    Kind::Outpost => {
-                        self.marks
-                            .building_pulse(b.at, half, kind, built, health, working, n.bank / BANKED)
-                    }
+                    Kind::Outpost => self.marks.building_pulse(b.at, half, kind, built, health, working, n.bank / BANKED),
                     // A call: the lamp and horns flare red with a red light
                     // for `SIREN_CALL`; the call itself is the engine's alarm
                     // field, which the view draws spreading and fading
@@ -814,13 +570,7 @@ impl App {
                         let f = n.call / SIREN_CALL;
                         self.marks.building_pulse(b.at, half, kind, built, health, f > 0.0, f);
                         if f > 0.0 {
-                            glows.push(Light {
-                                at: b.at,
-                                reach: g.rules.build.siren_r * sc * 0.6,
-                                lift: 4.0,
-                                colour: [255.0, 90.0, 60.0],
-                                strength: 1.2 * f,
-                            });
+                            glows.push(Light { at: b.at, reach: g.rules.build.siren_r * sc * 0.6, lift: 4.0, colour: [255.0, 90.0, 60.0], strength: 1.2 * f });
                         }
                     }
                     _ => self.marks.building(b.at, half, kind, built, health, working),
@@ -860,24 +610,15 @@ impl App {
         // and a drain drew a line from every soldier.
         if let Some(q) = g.active.filter(|_| g.rules.squads) {
             for r in g.linked(q) {
-                let (Some(mid), sq) = (g.middle(r), &g.squads[r]) else {
-                    continue;
-                };
+                let (Some(mid), sq) = (g.middle(r), &g.squads[r]) else { continue };
                 let lead = g.members(r).first().map(|&k| g.soldiers[k].order);
                 let now = match (sq.dest, sq.work, lead) {
-                    (Some((x, y)), _, _) if sq.steer == (0.0, 0.0) => Some(if sq.fight {
-                        Order::Fight(x, y)
-                    } else {
-                        Order::Move(x, y)
-                    }),
+                    (Some((x, y)), _, _) if sq.steer == (0.0, 0.0) => Some(if sq.fight { Order::Fight(x, y) } else { Order::Move(x, y) }),
                     (None, Some(o), _) => Some(o),
                     (None, None, Some(o @ (Order::Attack | Order::Burn(..)))) => Some(o),
                     _ => None,
                 };
-                let orders = now
-                    .map(|o| (o, false))
-                    .into_iter()
-                    .chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
+                let orders = now.map(|o| (o, false)).into_iter().chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
                 order_chain(&mut self.marks, g, mid, orders, false, sc);
             }
         }
@@ -886,16 +627,7 @@ impl App {
         // the line beside it was a painted effect.
         for t in self.tracers.iter().filter(|_| g.rules.bullet_speed <= 0.0) {
             let a = (255.0 * (1.0 - t.age / TRACER)).clamp(0.0, 255.0) as u8;
-            self.marks.line(
-                t.from,
-                t.to,
-                0.0,
-                if t.hit {
-                    [255, 236, 170, a]
-                } else {
-                    [200, 200, 200, a / 2]
-                },
-            );
+            self.marks.line(t.from, t.to, 0.0, if t.hit { [255, 236, 170, a] } else { [200, 200, 200, a / 2] });
         }
         // Each bullet in flight (`Game::bullets`) as Noita draws a spell
         // (Reports/noita-spell-look-2026-11-14.md): a streak along this
@@ -926,31 +658,19 @@ impl App {
             let end = leg.hit.unwrap_or(leg.to);
             let gone = (end.0 - leg.from.0).hypot(end.1 - leg.from.1);
             let flew = (between * g.rules.bullet_speed * b.speed * sc * step).min(gone);
-            let b = &slime_mould::mould::larder_world::Bullet {
-                at: (leg.from.0 + b.dir.0 * flew, leg.from.1 + b.dir.1 * flew),
-                ..*b
-            };
+            let b = &slime_mould::mould::larder_world::Bullet { at: (leg.from.0 + b.dir.0 * flew, leg.from.1 + b.dir.1 * flew), ..*b };
             // A payload this world can't cast yet flies plain, as it lands.
             let castable = |c: &rounds::Cast| match c.payload {
                 rounds::Card::Gas => g.world.has_gas(),
                 rounds::Card::Germ => g.world.has_germ(),
                 _ => true,
             };
-            let cast =
-                b.by.and_then(|k| g.soldiers.get(k))
-                    .and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.cast))
-                    .filter(castable);
+            let cast = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.cast)).filter(castable);
             let look = card_look(cast.map(|c| c.payload));
             // Wide, and the bullet's damage (`Ammo::reach`), widen it.
-            let wide = rounds::RoundRules::default()
-                .wide
-                .powi(cast.map_or(0, |c| c.wide) as i32)
-                * cast.map_or(1.0, |c| c.ammo.reach());
+            let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32) * cast.map_or(1.0, |c| c.ammo.reach());
             let quiet = cast.is_some_and(|c| c.quiet);
-            let core = (0.22 * sc * zoom).clamp(1.6, 5.0)
-                * wide
-                * if b.split > 0 { 1.3 } else { 1.0 }
-                * if b.pierce > 0 { 0.8 } else { 1.0 };
+            let core = (0.22 * sc * zoom).clamp(1.6, 5.0) * wide * if b.split > 0 { 1.3 } else { 1.0 } * if b.pierce > 0 { 0.8 } else { 1.0 };
             let mut len = travel * b.speed * if b.pierce > 0 { 2.4 } else { 1.0 };
             // A soldier's bullet comes out of its barrel (gun look,
             // 2026-11-15): hidden inside the gun, its tail never further
@@ -989,17 +709,8 @@ impl App {
             if cast.is_some_and(|c| c.scatter) {
                 let side = (-b.dir.1 * 0.9 * sc, b.dir.0 * 0.9 * sc);
                 for f in [-1.0, 1.0] {
-                    let h = (
-                        b.at.0 + side.0 * f - b.dir.0 * 0.6 * sc,
-                        b.at.1 + side.1 * f - b.dir.1 * 0.6 * sc,
-                    );
-                    self.marks.streak(
-                        h,
-                        (h.0 - b.dir.0 * len * 0.6, h.1 - b.dir.1 * len * 0.6),
-                        core * 0.6,
-                        glow,
-                        look.core,
-                    );
+                    let h = (b.at.0 + side.0 * f - b.dir.0 * 0.6 * sc, b.at.1 + side.1 * f - b.dir.1 * 0.6 * sc);
+                    self.marks.streak(h, (h.0 - b.dir.0 * len * 0.6, h.1 - b.dir.1 * len * 0.6), core * 0.6, glow, look.core);
                 }
             }
             // The bullet's own light: its strike's disc (`Bullet::r`), what
@@ -1010,27 +721,15 @@ impl App {
             // through the body, each hit swept a disc 14 cells across over
             // the slime (owner 20:09Z: "each bullet that hit has a huge wave
             // that goes out. it is too much").
-            self.lights.push(Light {
-                at: head,
-                reach: b.r,
-                lift: 3.0,
-                colour: look.light,
-                strength: lit * if quiet { 0.2 } else { 0.5 },
-            });
+            self.lights.push(Light { at: head, reach: b.r, lift: 3.0, colour: look.light, strength: lit * if quiet { 0.2 } else { 0.5 } });
         }
         // Each soldier's muzzle flash while it burns (`FLASH`), at the
         // mouth of its kicked-back barrel, under the soldiers so the
         // barrel is drawn over the flash's root. Its colour is the cast the
         // shot carried, its shape the squad's gun (`Marks::muzzle_flash`).
         for (k, s) in g.soldiers.iter().enumerate() {
-            let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flash > 0.0) else {
-                continue;
-            };
-            let kind = g
-                .squads
-                .get(s.squad as usize)
-                .and_then(|q| q.gun)
-                .map_or(GunKind::Rifle, |gun| gun.kind);
+            let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flash > 0.0) else { continue };
+            let kind = g.squads.get(s.squad as usize).and_then(|q| q.gun).map_or(GunKind::Rifle, |gun| gun.kind);
             let look = card_look(self.rounds.cast_of(g, s.squad as usize, l.cast).map(|c| c.payload));
             let at = drawn_at(s, l, body_r);
             let tip = muzzle(at, l.facing, body_r);
@@ -1042,8 +741,7 @@ impl App {
             };
             let len = (len * body_r).max(10.0 / zoom);
             let seed = l.shots.wrapping_mul(7).wrapping_add(k as u32 * 37);
-            self.marks
-                .muzzle_flash(tip, len, l.facing, id, seed, l.flash / FLASH, flame(&look), MUZZLE_CORE);
+            self.marks.muzzle_flash(tip, len, l.facing, id, seed, l.flash / FLASH, flame(&look), MUZZLE_CORE);
         }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
@@ -1052,8 +750,7 @@ impl App {
         for (k, half) in turrets {
             turret_mark(&mut self.marks, &mut self.lights, &self.blooks, g, k, half);
             let b = &g.buildings[k];
-            self.marks
-                .health(b.at, (half * zoom).max(2.0) + 5.0, b.hp / b.max_hp.max(1.0));
+            self.marks.health(b.at, (half * zoom).max(2.0) + 5.0, b.hp / b.max_hp.max(1.0));
         }
         // A burst lights the world for its first tenth of a second (Noita's
         // explosion light lasts 0.08 s at 8 radii), brighter the more it
@@ -1075,13 +772,7 @@ impl App {
             // The same for all affects"); a bomb's throw ring is not damage.
             // Was 3 radii after Noita's 8, then 1.5 (#296): every shot now
             // casts, so a payload squad lit the whole front each volley.
-            self.lights.push(Light {
-                at,
-                reach: p.burst.r * sc,
-                lift: 4.0,
-                colour: look.light,
-                strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown),
-            });
+            self.lights.push(Light { at, reach: p.burst.r * sc, lift: 4.0, colour: look.light, strength: f * f * (1.0 + (p.killed as f32 / 200.0).min(1.0) + 0.5 * thrown) });
         }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
@@ -1099,10 +790,7 @@ impl App {
         let ts = &self.tracers;
         let mut i = 0;
         while i < ts.len() {
-            let n = ts[i..]
-                .iter()
-                .take_while(|t| t.from == ts[i].from && t.age == ts[i].age)
-                .count();
+            let n = ts[i..].iter().take_while(|t| t.from == ts[i].from && t.age == ts[i].age).count();
             let volley = &ts[i..i + n];
             i += n;
             let share = 1.0 / volley.iter().filter(|t| t.hit).count().max(1) as f32;
@@ -1114,13 +802,7 @@ impl App {
                 let f = 1.0 - age / TRACER;
                 let hot = (f * 2.0 - 1.0).max(0.0);
                 let colour = [255.0, 214.0 + 41.0 * hot, 150.0 + 100.0 * hot];
-                self.lights.push(Light {
-                    at: tr.to,
-                    reach: tr.r,
-                    lift: 3.0,
-                    colour,
-                    strength: 0.9 * f * f * share,
-                });
+                self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour, strength: 0.9 * f * f * share });
             }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
@@ -1129,29 +811,14 @@ impl App {
                 // At the barrel's mouth (gun look, 2026-11-15; was at the
                 // soldier's middle, under its body).
                 let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r);
-                self.lights.push(Light {
-                    at: tip,
-                    reach: MUZZLE_LIGHT * sc,
-                    lift: 3.0,
-                    colour: [255.0, 220.0, 170.0],
-                    strength: 0.6 * fl,
-                });
+                self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
             // A bite: a brief hot light on the side the slime bit from
             // (`step_notes`, from the real damage).
             if let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flinch > 0.0) {
                 let f = l.flinch / FLINCH;
-                let at = (
-                    s.x + l.bite.cos() * g.rules.touch * sc,
-                    s.y + l.bite.sin() * g.rules.touch * sc,
-                );
-                self.lights.push(Light {
-                    at,
-                    reach: 3.5 * sc,
-                    lift: 2.0,
-                    colour: [255.0, 120.0, 70.0],
-                    strength: 1.1 * f,
-                });
+                let at = (s.x + l.bite.cos() * g.rules.touch * sc, s.y + l.bite.sin() * g.rules.touch * sc);
+                self.lights.push(Light { at, reach: 3.5 * sc, lift: 2.0, colour: [255.0, 120.0, 70.0], strength: 1.1 * f });
             }
         }
         // A lodged cast (delay, thick) is an ember where it waits, its light
@@ -1159,25 +826,9 @@ impl App {
         for (c, at, due) in self.rounds.lodged() {
             let look = card_look(Some(c.payload));
             let left = due.saturating_sub(t) as f32 / tps;
-            let f = if c.trigger == Some(rounds::Card::Delay) {
-                1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0)
-            } else {
-                0.4
-            };
-            self.marks.streak(
-                at,
-                at,
-                (0.18 * sc * zoom).clamp(1.2, 4.0),
-                [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8],
-                look.core,
-            );
-            self.lights.push(Light {
-                at,
-                reach: MUZZLE_LIGHT * sc,
-                lift: 2.0,
-                colour: look.light,
-                strength: 0.3 + 0.7 * f,
-            });
+            let f = if c.trigger == Some(rounds::Card::Delay) { 1.0 - (left / self.rounds.rules.delay_secs).clamp(0.0, 1.0) } else { 0.4 };
+            self.marks.streak(at, at, (0.18 * sc * zoom).clamp(1.2, 4.0), [look.glow[0], look.glow[1], look.glow[2], (90.0 + 150.0 * f) as u8], look.core);
+            self.lights.push(Light { at, reach: MUZZLE_LIGHT * sc, lift: 2.0, colour: look.light, strength: 0.3 + 0.7 * f });
         }
         // A soldier is drawn its touch wide (walkers that close drain it),
         // and at least 8 pixels across the radius, so it reads at any zoom
@@ -1188,37 +839,17 @@ impl App {
         // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
         // dead first, so the living are drawn over them.
         let r = body_r;
-        let order = g
-            .soldiers
-            .iter()
-            .enumerate()
-            .filter(|(_, s)| !s.alive)
-            .chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
+        let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             // The load as charge in its pack, the take as light at its
             // hands (harvest look, 11-14; the carry bar is gone).
-            let carry = if g.rules.carry > 0.0 {
-                s.carry / g.rules.carry
-            } else {
-                0.0
-            };
+            let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
             let at = if s.alive { drawn_at(s, &l, r) } else { (s.x, s.y) };
             let bite = if s.alive { l.flinch / FLINCH } else { 0.0 };
             // No sprite flash: the muzzle flash is its own mark, drawn
             // above as light (gun look, 2026-11-15).
-            self.marks.soldier_bitten(
-                at,
-                r,
-                l.facing,
-                team_colour(0),
-                0.0,
-                s.alive,
-                carry,
-                l.take / TAKE,
-                bite,
-                l.bite,
-            );
+            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
@@ -1226,6 +857,7 @@ impl App {
                 // Health only when hurt (art direction rule 6).
                 let below = (r * zoom * 0.9).max(2.0) + 5.0;
                 self.marks.health((s.x, s.y), below, s.hp / g.rules.hp);
+
             }
         }
         let units = self.units();
@@ -1245,11 +877,7 @@ impl App {
         // rate food came in over the last 10 s (`Game::income`). It was
         // the bank's net change, so a placed building showed as "-50/s"
         // for the next 10 s, and stayed there after it stood.
-        let rate = self
-            .bank_log
-            .front()
-            .filter(|f| t - f.0 >= 2.0)
-            .map(|&(t0, i0)| ((g.income() - i0) / (t - t0)).max(0.0));
+        let rate = self.bank_log.front().filter(|f| t - f.0 >= 2.0).map(|&(t0, i0)| ((g.income() - i0) / (t - t0)).max(0.0));
         let lost = g.soldiers.iter().filter(|s| !s.alive).count();
         let took = g.take_share();
         let mut m = Model {
@@ -1284,28 +912,19 @@ impl App {
             aiming: self.sq.as_ref().is_some_and(|q| q.steering()),
             ..Model::default()
         };
-        m.selection = sel
-            .iter()
-            .map(|&k| {
-                let s = g.soldiers[k];
-                let badge = match s.order {
-                    Order::Hold => None,
-                    Order::Move(..) => Some(Icon::Move),
-                    Order::Fight(..) => Some(Icon::Attack),
-                    Order::Build(..) => Some(Icon::Wall),
-                    Order::Clear(..) => Some(Icon::Crystal),
-                    Order::Burn(..) => Some(Icon::Burn),
-                    Order::Attack => Some(Icon::Attack),
-                };
-                Card {
-                    id: k,
-                    icon: Icon::Soldier,
-                    team: 0,
-                    hp: s.hp / r.hp,
-                    badge,
-                }
-            })
-            .collect();
+        m.selection = sel.iter().map(|&k| {
+            let s = g.soldiers[k];
+            let badge = match s.order {
+                Order::Hold => None,
+                Order::Move(..) => Some(Icon::Move),
+                Order::Fight(..) => Some(Icon::Attack),
+                Order::Build(..) => Some(Icon::Wall),
+                Order::Clear(..) => Some(Icon::Crystal),
+                Order::Burn(..) => Some(Icon::Burn),
+                Order::Attack => Some(Icon::Attack),
+            };
+            Card { id: k, icon: Icon::Soldier, team: 0, hp: s.hp / r.hp, badge }
+        }).collect();
         if sel.len() == 1 {
             let k = sel[0];
             let s = g.soldiers[k];
@@ -1341,19 +960,9 @@ impl App {
                     ("Stance".into(), stance_name(s.stance).into()),
                     ("Gun".into(), g.gun(s.squad as usize).title()),
                     ("Range".into(), format!("{:.0} cells", g.gun_range(s.squad as usize))),
-                    (
-                        "A shot".into(),
-                        if r.price > 0.0 {
-                            format!("{:.0} food", r.price)
-                        } else {
-                            format!("free, one every {:.1} s", g.gun(s.squad as usize).every())
-                        },
-                    ),
+                    ("A shot".into(), if r.price > 0.0 { format!("{:.0} food", r.price) } else { format!("free, one every {:.1} s", g.gun(s.squad as usize).every()) }),
                     ("Mould on it".into(), format!("{}", s.touching)),
-                    (
-                        "Tools held".into(),
-                        format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max),
-                    ),
+                    ("Tools held".into(), format!("{} / {}", self.kit.held(k), self.kit.rules.carry_max)),
                 ],
                 note: None,
             });
@@ -1369,16 +978,8 @@ impl App {
                     _ => "new soldiers wait here".into(),
                 },
                 hp: None,
-                stats: vec![
-                    ("Bank".into(), format!("{:.0}", g.bank)),
-                    ("Harvested".into(), format!("{:.0}", g.harvested)),
-                    ("Eaten by the mould".into(), format!("{:.0}", g.stolen)),
-                    ("Soldiers".into(), format!("{} / {}", g.alive(), r.max_squad)),
-                ],
-                note: Some(
-                    "B buys a soldier. Right-click sets where new soldiers go; on a crystal they start harvesting it."
-                        .into(),
-                ),
+                stats: vec![("Bank".into(), format!("{:.0}", g.bank)), ("Harvested".into(), format!("{:.0}", g.harvested)), ("Eaten by the mould".into(), format!("{:.0}", g.stolen)), ("Soldiers".into(), format!("{} / {}", g.alive(), r.max_squad))],
+                note: Some("B buys a soldier. Right-click sets where new soldiers go; on a crystal they start harvesting it.".into()),
             });
         }
         // The hover card: a crystal or the larder under the cursor.
@@ -1390,15 +991,8 @@ impl App {
                     title: "The larder".into(),
                     subtitle: "your base".into(),
                     hp: None,
-                    stats: vec![
-                        ("Bank".into(), format!("{:.0}", g.bank)),
-                        ("Harvested".into(), format!("{:.0}", g.harvested)),
-                        ("Eaten by the mould".into(), format!("{:.0}", g.stolen)),
-                    ],
-                    note: Some(
-                        "Harvesters bring charge here; bought soldiers stand here. Mould touching it eats the bank."
-                            .into(),
-                    ),
+                    stats: vec![("Bank".into(), format!("{:.0}", g.bank)), ("Harvested".into(), format!("{:.0}", g.harvested)), ("Eaten by the mould".into(), format!("{:.0}", g.stolen))],
+                    note: Some("Harvesters bring charge here; bought soldiers stand here. Mould touching it eats the bank.".into()),
                 });
             } else if let Some((i, c)) = g.crystal_at(p) {
                 let charge = g.world.crystals()[i].1;
@@ -1409,23 +1003,13 @@ impl App {
                     title: crystal_name(i),
                     subtitle: format!("{:.0}% of its charge left", 100.0 * charge / full),
                     hp: Some((charge / full, format!("{:.0} food", charge / r.charge))),
-                    stats: vec![(
-                        "Size".into(),
-                        format!("{:.0} cells across", 2.0 * g.world.crystal_r(i) / sc),
-                    )],
-                    note: Some(if (c.0 - g.core.0).hypot(c.1 - g.core.1) < 1.0 {
-                        "Where the mould grew from. Stand on it with no mould near for 5 s to take it.".into()
-                    } else {
-                        "Right-click with soldiers selected to harvest it and hold it.".into()
-                    }),
+                    stats: vec![("Size".into(), format!("{:.0} cells across", 2.0 * g.world.crystal_r(i) / sc))],
+                    note: Some(if (c.0 - g.core.0).hypot(c.1 - g.core.1) < 1.0 { "Where the mould grew from. Stand on it with no mould near for 5 s to take it.".into() } else { "Right-click with soldiers selected to harvest it and hold it.".into() }),
                 });
             }
         }
         let any = !sel.is_empty();
-        let stance = sel
-            .first()
-            .map(|&k| g.soldiers[k].stance)
-            .filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
+        let stance = sel.first().map(|&k| g.soldiers[k].stance).filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
         let need = |cost: f32| (g.bank < cost).then(|| format!("Need {:.0} more food", cost - g.bank));
         let no_sel = || Some("Select soldiers first".to_string());
         let full = g.alive() >= r.max_squad;
@@ -1486,29 +1070,12 @@ impl App {
         if self.tools_page {
             let k = &self.kit;
             let kr = k.rules;
-            let held: u32 = (0..g.soldiers.len())
-                .filter(|&i| g.soldiers[i].alive)
-                .map(|i| k.held(i))
-                .sum();
-            let tool = |id: u32,
-                        slot: (u8, u8),
-                        icon: Icon,
-                        name: &str,
-                        key: KeyCode,
-                        target: Target,
-                        price: f32,
-                        works: bool,
-                        about: String| Command {
+            let held: u32 = (0..g.soldiers.len()).filter(|&i| g.soldiers[i].alive).map(|i| k.held(i)).sum();
+            let tool = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, target: Target, price: f32, works: bool, about: String| Command {
                 target,
                 cost: Some(format!("{price:.0}")),
                 ready: works && held > 0 && g.bank >= price,
-                why_not: if !works {
-                    Some("Not on the GPU world yet".into())
-                } else if held == 0 {
-                    Some("No soldier holds a tool; they take them at the larder".into())
-                } else {
-                    need(price)
-                },
+                why_not: if !works { Some("Not on the GPU world yet".into()) } else if held == 0 { Some("No soldier holds a tool; they take them at the larder".into()) } else { need(price) },
                 about,
                 ..Command::new(id, slot, icon, name, key)
             };
@@ -1524,26 +1091,17 @@ impl App {
         }
         if self.build_page {
             let b = r.build;
-            let lures = g
-                .buildings
-                .iter()
-                .filter(|q| q.alive && matches!(q.kind, Kind::Lure | Kind::Siren))
-                .count();
+            let lures = g.buildings.iter().filter(|q| q.alive && matches!(q.kind, Kind::Lure | Kind::Siren)).count();
             let room = g.standing() < b.max;
             let ghosts = g.buildings.iter().filter(|q| q.alive && !q.up()).count();
-            let place =
-                |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
-                    target: Target::Point { radius: b.touch * sc },
-                    cost: Some(format!("{cost:.0}")),
-                    ready: g.bank >= cost && room,
-                    why_not: if room {
-                        need(cost)
-                    } else {
-                        Some(format!("At most {} buildings", b.max))
-                    },
-                    about,
-                    ..Command::new(id, slot, icon, name, key)
-                };
+            let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
+                target: Target::Point { radius: b.touch * sc },
+                cost: Some(format!("{cost:.0}")),
+                ready: g.bank >= cost && room,
+                why_not: if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) },
+                about,
+                ..Command::new(id, slot, icon, name, key)
+            };
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
                 place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
@@ -1641,27 +1199,15 @@ impl App {
                     (true, Some(format!("{price:.0} food, release to lay")))
                 }
             }
-            Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => {
-                (false, Some("out of every soldier's range".into()))
-            }
+            Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             // On a crystal with a pump: the pump's upgrade (owner,
             // 2026-11-15: "you should be able to upgrade them").
             Some((PUMP, at, _)) if g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some() => {
                 let b = g.pump_crystal(at).and_then(|c| g.pump_on(c)).unwrap();
                 let level = g.buildings[b].level;
                 match g.upgrade_price(b) {
-                    Some(p) if g.bank >= p => (
-                        true,
-                        Some(format!("upgrade to level {}: {p:.0} food, click", level + 1)),
-                    ),
-                    Some(p) => (
-                        false,
-                        Some(format!(
-                            "upgrade to level {}: {p:.0} food, {:.0} short",
-                            level + 1,
-                            p - g.bank
-                        )),
-                    ),
+                    Some(p) if g.bank >= p => (true, Some(format!("upgrade to level {}: {p:.0} food, click", level + 1))),
+                    Some(p) => (false, Some(format!("upgrade to level {}: {p:.0} food, {:.0} short", level + 1, p - g.bank))),
                     None if !g.buildings[b].up() => (false, Some("its pump is still being built".into())),
                     None => (false, Some(format!("its pump is at the top level ({level})"))),
                 }
@@ -1670,17 +1216,8 @@ impl App {
                 let kind = build_kind(id).unwrap();
                 match g.build_blocked(kind, at) {
                     Some(why) => (false, Some(why.into())),
-                    None if g.reachable(at) => (
-                        true,
-                        Some(format!("{:.0} food, click to build", g.build_price(kind, at))),
-                    ),
-                    None => (
-                        true,
-                        Some(format!(
-                            "{:.0} food, click: a soldier walks there",
-                            g.build_price(kind, at)
-                        )),
-                    ),
+                    None if g.reachable(at) => (true, Some(format!("{:.0} food, click to build", g.build_price(kind, at)))),
+                    None => (true, Some(format!("{:.0} food, click: a soldier walks there", g.build_price(kind, at)))),
                 }
             }
             _ => (true, None),
@@ -1695,14 +1232,7 @@ impl App {
                 let last = r.depth >= slime_mould::mould::run::PLANETS;
                 let (label, line) = match (v.stars > 0, last) {
                     (true, true) => ("The home world is free", format!("The run is won: {} planets", r.depth)),
-                    (true, false) => (
-                        "On to the shop",
-                        format!(
-                            "+{} points for the shop ({} now)",
-                            slime_mould::mould::run::reward(r.depth, v.stars),
-                            r.points + slime_mould::mould::run::reward(r.depth, v.stars)
-                        ),
-                    ),
+                    (true, false) => ("On to the shop", format!("+{} points for the shop ({} now)", slime_mould::mould::run::reward(r.depth, v.stars), r.points + slime_mould::mould::run::reward(r.depth, v.stars))),
                     (false, _) => ("End the run", format!("The run ends on planet {}", r.depth)),
                 };
                 end.1.insert(1, line);
@@ -1718,44 +1248,21 @@ impl App {
                 ("P".into(), "Pause".into()),
                 ("Tab".into(), "Four times faster, or back".into()),
                 ("N".into(), "Start the next map".into()),
-                (
-                    "Q".into(),
-                    "Build page: turret, lure, pump, outpost; Q again goes back".into(),
-                ),
-                (
-                    "E".into(),
-                    "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into(),
-                ),
+                ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+                ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
             ]
-        } else {
-            vec![
-                ("Right click".into(), "Move there; on a crystal, harvest it".into()),
-                (
-                    "Shift + order".into(),
-                    "Queue it after the soldiers' current orders".into(),
-                ),
-                (
-                    "Place a building".into(),
-                    "The selected soldiers walk there and raise it; idle soldiers nearby help".into(),
-                ),
-                ("A, click".into(), "Attack-move there; on the core, attack it".into()),
-                (
-                    "Click the larder".into(),
-                    "Select it: B buys, right click sets the rally point".into(),
-                ),
-                ("P".into(), "Pause".into()),
-                ("Tab".into(), "Four times faster, or back".into()),
-                ("N".into(), "Start the next map".into()),
-                (
-                    "Q".into(),
-                    "Build page: turret, lure, pump, outpost; Q again goes back".into(),
-                ),
-                (
-                    "E".into(),
-                    "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into(),
-                ),
-            ]
-        };
+        } else { vec![
+            ("Right click".into(), "Move there; on a crystal, harvest it".into()),
+            ("Shift + order".into(), "Queue it after the soldiers' current orders".into()),
+            ("Place a building".into(), "The selected soldiers walk there and raise it; idle soldiers nearby help".into()),
+            ("A, click".into(), "Attack-move there; on the core, attack it".into()),
+            ("Click the larder".into(), "Select it: B buys, right click sets the rally point".into()),
+            ("P".into(), "Pause".into()),
+            ("Tab".into(), "Four times faster, or back".into()),
+            ("N".into(), "Start the next map".into()),
+            ("Q".into(), "Build page: turret, lure, pump, outpost; Q again goes back".into()),
+            ("E".into(), "Tools page: blast, det cord, mine, germ, sleep gas; E again goes back".into()),
+        ] };
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
         m.squads = self.squad_panel();
@@ -1767,11 +1274,7 @@ impl App {
     /// alive) lit at the cast its next shot fires.
     fn loadout(&self, g: &Game<GpuWorld>, sel: &[usize]) -> Loadout {
         let rd = &self.rounds;
-        let scope: Vec<usize> = if sel.is_empty() {
-            (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect()
-        } else {
-            sel.to_vec()
-        };
+        let scope: Vec<usize> = if sel.is_empty() { (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect() } else { sel.to_vec() };
         let lead = scope.first().copied();
         // The squad owns the gun and its cards (owner 11-14 16:46Z): the
         // controlled squad's, else the lead soldier's.
@@ -1784,10 +1287,7 @@ impl App {
             rounds::Card::Germ => g.world.has_germ(),
             _ => true,
         });
-        let name = match LOADOUTS
-            .iter()
-            .find(|(_, c)| rounds::parse(c).unwrap_or_default() == round)
-        {
+        let name = match LOADOUTS.iter().find(|(_, c)| rounds::parse(c).unwrap_or_default() == round) {
             Some((n, _)) => n.to_string(),
             // Rolled bullets (Ctrl+H, a run's): their words are numbers.
             None if round.iter().any(|c| matches!(c, rounds::Card::Ammo(_))) => "rolled bullets".into(),
@@ -1800,50 +1300,26 @@ impl App {
             (n, Some(k)) => format!("Soldier {} (of {n})", k + 1),
         };
         let own = g.squads.get(q).is_some_and(|s| s.deck.is_some());
-        let whose = if own {
-            format!("{whose}, squad {}'s own cards", q + 1)
-        } else {
-            whose
-        };
+        let whose = if own { format!("{whose}, squad {}'s own cards", q + 1) } else { whose };
         Loadout {
-            name: if round.is_empty() {
-                "Plain".into()
-            } else {
-                capital(&name)
-            },
+            name: if round.is_empty() { "Plain".into() } else { capital(&name) },
             whose,
             cards,
             slots: (gun.slots as usize).max(1),
             gun: Some((gun_icon(gun.kind), capital(&gun.title()), gun.line())),
             // The budget (owner's card, 11-14 15:34Z) under the cards.
             note: if self.args.range.is_some() {
-                Some(if round.is_empty() {
-                    "No cards: H, the armory".into()
-                } else {
-                    format!("Cost {} of {}  ·  H, the armory", rounds::cost(&round), gun.budget)
-                })
+                Some(if round.is_empty() { "No cards: H, the armory".into() } else { format!("Cost {} of {}  ·  H, the armory", rounds::cost(&round), gun.budget) })
             } else if self.args.run.is_some() {
                 // (A run's gun is what its shop built: H only refused there,
                 // so it has no button; the review, 11-15.)
-                Some(if round.is_empty() {
-                    "No cards: the shop between planets sells them".into()
-                } else {
-                    format!(
-                        "Cost {} of {}  ·  change it in the shop between planets",
-                        rounds::cost(&round),
-                        gun.budget
-                    )
-                })
+                Some(if round.is_empty() { "No cards: the shop between planets sells them".into() } else { format!("Cost {} of {}  ·  change it in the shop between planets", rounds::cost(&round), gun.budget) })
             } else if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
-            cycle: if self.args.run.is_some() {
-                None
-            } else {
-                Some((NEXT_ROUND, KeyCode::KeyH))
-            },
+            cycle: if self.args.run.is_some() { None } else { Some((NEXT_ROUND, KeyCode::KeyH)) },
         }
     }
 }
@@ -1893,112 +1369,34 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
             };
             (icon, CardKind::Payload, format!("{}.{words}", ammo_numbers(&a)))
         }
-        C::Blast => (
-            Icon::Blast,
-            CardKind::Payload,
-            format!("Kills slime within {:.0} cells and leaves a crater.", k.blast_r),
-        ),
-        C::Gas => (
-            Icon::Gas,
-            CardKind::Payload,
-            format!("Puts slime within {:.0} cells to sleep.", k.gas_r),
-        ),
-        C::Germ => (
-            Icon::Germ,
-            CardKind::Payload,
-            format!("Infects slime within {:.0} cells; the sickness spreads.", k.germ_r),
-        ),
-        C::Bomb => (
-            Icon::Bomb,
-            CardKind::Payload,
-            format!(
-                "Kills slime within {:.0} cells and throws the rest {:.0} cells out.",
-                r.bomb_r,
-                r.bomb_r * r.bomb_ring
-            ),
-        ),
-        C::Wide => (
-            Icon::Wide,
-            CardKind::Modifier,
-            format!("Its hit is {:.1}x wider.", r.wide),
-        ),
-        C::Scatter => (
-            Icon::Scatter,
-            CardKind::Modifier,
-            format!("Its hit becomes {} smaller ones.", r.scatter_n),
-        ),
+        C::Blast => (Icon::Blast, CardKind::Payload, format!("Kills slime within {:.0} cells and leaves a crater.", k.blast_r)),
+        C::Gas => (Icon::Gas, CardKind::Payload, format!("Puts slime within {:.0} cells to sleep.", k.gas_r)),
+        C::Germ => (Icon::Germ, CardKind::Payload, format!("Infects slime within {:.0} cells; the sickness spreads.", k.germ_r)),
+        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Kills slime within {:.0} cells and throws the rest {:.0} cells out.", r.bomb_r, r.bomb_r * r.bomb_ring)),
+        C::Wide => (Icon::Wide, CardKind::Modifier, format!("Its hit is {:.1}x wider.", r.wide)),
+        C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("Its hit becomes {} smaller ones.", r.scatter_n)),
         C::Quiet => (Icon::Quiet, CardKind::Modifier, "It doesn't alarm the slime.".into()),
-        C::Delay => (
-            Icon::Delay,
-            CardKind::Trigger,
-            format!("It goes off {:.0} s after landing.", r.delay_secs),
-        ),
-        C::Thick => (
-            Icon::Thick,
-            CardKind::Trigger,
-            format!("It waits until slime crowds round it (up to {:.0} s).", r.thick_secs),
-        ),
-        C::Pierce => (
-            Icon::Pierce,
-            CardKind::Flight,
-            "Bullets go through one slime hit.".into(),
-        ),
-        C::Split => (
-            Icon::Split,
-            CardKind::Flight,
-            format!("Bullets split in {split_n} where they land."),
-        ),
+        C::Delay => (Icon::Delay, CardKind::Trigger, format!("It goes off {:.0} s after landing.", r.delay_secs)),
+        C::Thick => (Icon::Thick, CardKind::Trigger, format!("It waits until slime crowds round it (up to {:.0} s).", r.thick_secs)),
+        C::Pierce => (Icon::Pierce, CardKind::Flight, "Bullets go through one slime hit.".into()),
+        C::Split => (Icon::Split, CardKind::Flight, format!("Bullets split in {split_n} where they land.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
-        C::Scorch => (
-            Icon::Burn,
-            CardKind::Flight,
-            format!("Bullets burn a line the slime avoids for {:.0} s.", r.trail_crater_secs),
-        ),
-        C::Bait => (
-            Icon::Bait,
-            CardKind::Flight,
-            "Bullets leave a scent line the slime follows.".into(),
-        ),
+        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Bullets burn a line the slime avoids for {:.0} s.", r.trail_crater_secs)),
+        C::Bait => (Icon::Bait, CardKind::Flight, "Bullets leave a scent line the slime follows.".into()),
         C::Mist => (Icon::Gas, CardKind::Flight, "Bullets leave a thin sleeping gas.".into()),
         // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
-        C::Range => (
-            Icon::Target,
-            CardKind::Flight,
-            format!(
-                "Shoots {:.0}% farther ({:.0} cells).",
-                100.0 * w.range_card,
-                w.range * w.range_card
-            ),
-        ),
+        C::Range => (Icon::Target, CardKind::Flight, format!("Shoots {:.0}% farther ({:.0} cells).", 100.0 * w.range_card, w.range * w.range_card)),
         // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
-        C::Rate => (
-            Icon::Fast,
-            CardKind::Flight,
-            format!("Fires {:.0}x as often.", 1.0 + w.rate_card),
-        ),
-        C::Thrift => (
-            Icon::Upgrade,
-            CardKind::Modifier,
-            format!("The next card costs {} less budget.", rounds::THRIFT),
-        ),
-        C::Smother => (
-            Icon::Close,
-            CardKind::Flight,
-            "Bullets wipe the scent slime follows to food.".into(),
-        ),
+        C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
+        C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
+        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food.".into()),
     }
 }
 
 /// A rolled bullet's numbers in a line: "Damage 6.3, speed 1.9x, range
 /// 1.7x, spread 0.6x".
 pub(super) fn ammo_numbers(a: &rounds::Ammo) -> String {
-    format!(
-        "Damage {:.1}, speed {:.1}x, range {:.1}x, spread {:.1}x",
-        a.damage(),
-        a.speed(),
-        a.range(),
-        a.spread()
-    )
+    format!("Damage {:.1}, speed {:.1}x, range {:.1}x, spread {:.1}x", a.damage(), a.speed(), a.range(), a.spread())
 }
 
 /// A card's words with its kind before them ("Next bullet: its hit is
@@ -2009,10 +1407,7 @@ pub(super) fn card_words(c: rounds::Card, kind: CardKind, words: &str) -> String
         return words.to_string();
     }
     let mut w = words.chars();
-    let first = w
-        .next()
-        .map(|f| f.to_lowercase().collect::<String>())
-        .unwrap_or_default();
+    let first = w.next().map(|f| f.to_lowercase().collect::<String>()).unwrap_or_default();
     format!("{}: {first}{}", kind.label(), w.as_str())
 }
 
@@ -2031,13 +1426,7 @@ pub(super) fn ammo_icon(s: rounds::Set) -> Icon {
 /// makes the cast `next` lit (a cast is the modifiers and trigger before a
 /// payload, and the payload), cards after the last payload idle. Flight
 /// cards ride every bullet, so they are never idle.
-pub(super) fn gun_cards(
-    round: &[rounds::Card],
-    r: &RoundRules,
-    w: &Rules,
-    next: Option<usize>,
-    castable: impl Fn(rounds::Card) -> bool,
-) -> Vec<GunCard> {
+pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next: Option<usize>, castable: impl Fn(rounds::Card) -> bool) -> Vec<GunCard> {
     let payloads = round.iter().filter(|c| c.kind() == rounds::Kind::Payload).count();
     let mut cast = 0;
     let mut out = Vec::new();
@@ -2049,13 +1438,7 @@ pub(super) fn gun_cards(
             cast += 1;
         }
     }
-    let payload_of = |j: usize| {
-        round
-            .iter()
-            .filter(|c| c.kind() == rounds::Kind::Payload)
-            .nth(j)
-            .copied()
-    };
+    let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
         about = format!("{about} Budget {}.", c.cost());
@@ -2090,6 +1473,7 @@ pub(super) fn gun_cards(
     out
 }
 
+
 /// How long a burst lights the world, game seconds.
 const BURST_LIGHT: f32 = 0.12;
 /// How far a light with no damage of its own reaches, in cells: a
@@ -2112,12 +1496,7 @@ const MUZZLE_CORE: [u8; 4] = [255, 250, 232, 255];
 /// blue), so the jets read as fire round the white core rather than as
 /// one white blot.
 fn flame(look: &CardLook) -> [u8; 4] {
-    [
-        look.glow[0],
-        (look.glow[1] as f32 * 0.75) as u8,
-        (look.glow[2] as f32 * 0.5) as u8,
-        255,
-    ]
+    [look.glow[0], (look.glow[1] as f32 * 0.75) as u8, (look.glow[2] as f32 * 0.5) as u8, 255]
 }
 /// Seconds of a bullet's flight its tracer shows.
 const TRACE_SECS: f32 = 0.08;
@@ -2135,20 +1514,14 @@ pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
 pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, r: f32) -> (f32, f32) {
     let jerk = (l.flinch / FLINCH).powi(2) * 0.2 * r;
     let kick = (l.kick / KICK).powi(2) * 0.2 * r;
-    (
-        s.x - l.bite.cos() * jerk - l.facing.cos() * kick,
-        s.y - l.bite.sin() * jerk - l.facing.sin() * kick,
-    )
+    (s.x - l.bite.cos() * jerk - l.facing.cos() * kick, s.y - l.bite.sin() * jerk - l.facing.sin() * kick)
 }
 
 /// The mouth of the barrel of a soldier drawn at `at`, facing `facing`,
 /// `r` world cells across the radius (`MUZZLE`).
 pub(super) fn muzzle(at: (f32, f32), facing: f32, r: f32) -> (f32, f32) {
     let (c, s) = (facing.cos(), facing.sin());
-    (
-        at.0 + r * (MUZZLE.0 * c - MUZZLE.1 * s),
-        at.1 + r * (MUZZLE.0 * s + MUZZLE.1 * c),
-    )
+    (at.0 + r * (MUZZLE.0 * c - MUZZLE.1 * s), at.1 + r * (MUZZLE.0 * s + MUZZLE.1 * c))
 }
 
 /// A payload's colours: the streak's glow and hot core, and its light.
@@ -2170,11 +1543,7 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         Some(rounds::Card::Bomb) => ([255, 90, 30], [255, 228, 170], [255.0, 130.0, 60.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
-    CardLook {
-        glow,
-        core: [core[0], core[1], core[2], 255],
-        light,
-    }
+    CardLook { glow, core: [core[0], core[1], core[2], 255], light }
 }
 
 /// The run's unlock (`mould::run::ITEMS`) a command needs, if any: the

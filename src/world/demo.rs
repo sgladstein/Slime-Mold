@@ -14,7 +14,7 @@ use winit::keyboard::KeyCode;
 use super::controls::{unit_marks, UiCommand, Unit};
 use super::icons::Icon;
 use super::marks::{team_colour, Marks};
-use super::ui::{theme, Card, Command, Ghost, HudEvent, Info, Model, Resource, Target};
+use super::ui::{theme, Card, Command, HudEvent, Info, Model, Resource, Target, Ghost};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stance {
@@ -129,20 +129,7 @@ impl Squad {
         let (w, h) = (world.0 as f32, world.1 as f32);
         let s = scale as f32;
         let mut units = Vec::new();
-        let unit = |x, y, team| StandIn {
-            x,
-            y,
-            team,
-            hp: MAX_HP,
-            to: None,
-            burn: None,
-            stance: Stance::Defend,
-            weapon: Weapon::Rifle,
-            attack: false,
-            hold: false,
-            warned: false,
-            facing: -std::f32::consts::FRAC_PI_2,
-        };
+        let unit = |x, y, team| StandIn { x, y, team, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false, facing: -std::f32::consts::FRAC_PI_2 };
         for k in 0..12 {
             let (i, j) = ((k % 4) as f32, (k / 4) as f32);
             let mut u = unit(w * 0.3 + i * 4.0 * s, h * 0.5 + j * 4.0 * s, 0);
@@ -152,28 +139,10 @@ impl Squad {
             units.push(u);
         }
         for k in 0..6 {
-            units.push(unit(
-                w * 0.7 + (k % 3) as f32 * 4.0 * s,
-                h * 0.4 + (k / 3) as f32 * 4.0 * s,
-                1,
-            ));
+            units.push(unit(w * 0.7 + (k % 3) as f32 * 4.0 * s, h * 0.4 + (k / 3) as f32 * 4.0 * s, 1));
         }
         // Larder's soldier speed, about 12 dish cells a second.
-        Squad {
-            units,
-            speed: 12.0 * s,
-            scale: s,
-            energy: 1500.0,
-            time: 0.0,
-            turrets: Vec::new(),
-            walls: Vec::new(),
-            armour: 0,
-            research: None,
-            home: (w * 0.28, h * 0.5),
-            world: (w, h),
-            notes: Vec::new(),
-            lost: 0,
-        }
+        Squad { units, speed: 12.0 * s, scale: s, energy: 1500.0, time: 0.0, turrets: Vec::new(), walls: Vec::new(), armour: 0, research: None, home: (w * 0.28, h * 0.5), world: (w, h), notes: Vec::new(), lost: 0 }
     }
 
     /// A unit's radius in world cells: about Larder's soldier, a dish cell.
@@ -182,17 +151,7 @@ impl Squad {
     }
 
     pub fn units(&self) -> Vec<Unit> {
-        self.units
-            .iter()
-            .enumerate()
-            .map(|(id, u)| Unit {
-                id,
-                team: u.team,
-                x: u.x,
-                y: u.y,
-                alive: u.hp > 0.0,
-            })
-            .collect()
+        self.units.iter().enumerate().map(|(id, u)| Unit { id, team: u.team, x: u.x, y: u.y, alive: u.hp > 0.0 }).collect()
     }
 
     /// Spreads `ids` round `at` in a square, `gap` cells apart, so they do
@@ -210,10 +169,7 @@ impl Squad {
     }
 
     fn living(&self, ids: &[usize]) -> Vec<usize> {
-        ids.iter()
-            .copied()
-            .filter(|&k| self.units.get(k).is_some_and(|u| u.hp > 0.0 && u.team == 0))
-            .collect()
+        ids.iter().copied().filter(|&k| self.units.get(k).is_some_and(|u| u.hp > 0.0 && u.team == 0)).collect()
     }
 
     pub fn command(&mut self, c: UiCommand) {
@@ -288,20 +244,7 @@ impl Squad {
                     self.energy -= RECRUIT;
                     let n = self.units.iter().filter(|u| u.team == 0).count() as f32;
                     let at = (self.home.0 + (n % 4.0) * gap, self.home.1 - 3.0 * gap);
-                    self.units.push(StandIn {
-                        x: at.0,
-                        y: at.1,
-                        team: 0,
-                        hp: MAX_HP,
-                        to: None,
-                        burn: None,
-                        stance: Stance::Defend,
-                        weapon: Weapon::Rifle,
-                        attack: false,
-                        hold: false,
-                        warned: false,
-                        facing: -std::f32::consts::FRAC_PI_2,
-                    });
+                    self.units.push(StandIn { x: at.0, y: at.1, team: 0, hp: MAX_HP, to: None, burn: None, stance: Stance::Defend, weapon: Weapon::Rifle, attack: false, hold: false, warned: false, facing: -std::f32::consts::FRAC_PI_2 });
                     self.note("A soldier has joined at the larder".into(), Some(at), false);
                 }
                 UPGRADE_ID if self.energy >= UPGRADE && self.research.is_none() && self.armour < 3 => {
@@ -346,15 +289,7 @@ impl Squad {
     pub fn can_build(&self, at: (f32, f32)) -> bool {
         let r = 4.0 * self.scale;
         let (w, h) = self.world;
-        at.0 > r
-            && at.1 > r
-            && at.0 < w - r
-            && at.1 < h - r
-            && !self
-                .units
-                .iter()
-                .any(|u| u.hp > 0.0 && (u.x - at.0).hypot(u.y - at.1) < r)
-            && !self.turrets.iter().any(|t| (t.0 - at.0).hypot(t.1 - at.1) < 2.0 * r)
+        at.0 > r && at.1 > r && at.0 < w - r && at.1 < h - r && !self.units.iter().any(|u| u.hp > 0.0 && (u.x - at.0).hypot(u.y - at.1) < r) && !self.turrets.iter().any(|t| (t.0 - at.0).hypot(t.1 - at.1) < 2.0 * r)
     }
 
     pub fn step(&mut self, dt: f32) {
@@ -370,11 +305,7 @@ impl Squad {
                 self.research = None;
                 self.armour += 1;
                 let a = self.armour;
-                self.note(
-                    format!("Armour {a} is done: soldiers take {}% less damage", a * 20),
-                    None,
-                    false,
-                );
+                self.note(format!("Armour {a} is done: soldiers take {}% less damage", a * 20), None, false);
             }
         }
         let step = self.speed * dt;
@@ -406,18 +337,8 @@ impl Squad {
             if u.hp <= 0.0 || (u.team == 0 && u.stance == Stance::HoldFire) {
                 continue;
             }
-            let reach = u.weapon.range()
-                * s
-                * if u.team == 0 && u.stance == Stance::Free {
-                    1.3
-                } else {
-                    1.0
-                };
-            let near = (0..n)
-                .filter(|&j| self.units[j].team != u.team && self.units[j].hp > 0.0)
-                .map(|j| (j, (self.units[j].x - u.x).hypot(self.units[j].y - u.y)))
-                .filter(|&(_, d)| d <= reach)
-                .min_by(|a, b| a.1.total_cmp(&b.1));
+            let reach = u.weapon.range() * s * if u.team == 0 && u.stance == Stance::Free { 1.3 } else { 1.0 };
+            let near = (0..n).filter(|&j| self.units[j].team != u.team && self.units[j].hp > 0.0).map(|j| (j, (self.units[j].x - u.x).hypot(self.units[j].y - u.y))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1));
             if let Some((j, _)) = near {
                 let dmg = u.weapon.damage() * if u.team == 1 { 0.6 } else { 1.0 };
                 hurt[j] += dmg * dt;
@@ -425,18 +346,7 @@ impl Squad {
         }
         for t in self.turrets.clone() {
             let reach = 30.0 * s;
-            if let Some(j) = (0..n)
-                .filter(|&j| {
-                    self.units[j].team == 1
-                        && self.units[j].hp > 0.0
-                        && (self.units[j].x - t.0).hypot(self.units[j].y - t.1) <= reach
-                })
-                .min_by(|&a, &b| {
-                    (self.units[a].x - t.0)
-                        .hypot(self.units[a].y - t.1)
-                        .total_cmp(&(self.units[b].x - t.0).hypot(self.units[b].y - t.1))
-                })
-            {
+            if let Some(j) = (0..n).filter(|&j| self.units[j].team == 1 && self.units[j].hp > 0.0 && (self.units[j].x - t.0).hypot(self.units[j].y - t.1) <= reach).min_by(|&a, &b| (self.units[a].x - t.0).hypot(self.units[a].y - t.1).total_cmp(&(self.units[b].x - t.0).hypot(self.units[b].y - t.1))) {
                 hurt[j] += 8.0 * dt;
             }
         }
@@ -444,11 +354,7 @@ impl Squad {
             if h <= 0.0 {
                 continue;
             }
-            let armour = if self.units[j].team == 0 {
-                1.0 - 0.2 * self.armour as f32
-            } else {
-                1.0
-            };
+            let armour = if self.units[j].team == 0 { 1.0 - 0.2 * self.armour as f32 } else { 1.0 };
             let before = self.units[j].hp;
             let after = (before - h * armour).max(0.0);
             self.units[j].hp = after;
@@ -481,12 +387,7 @@ impl Squad {
             let n = ((a.0 - b.0).hypot(a.1 - b.1) / s).ceil().max(1.0) as usize;
             for i in 0..=n {
                 let f = i as f32 / n as f32;
-                out.disc(
-                    (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f),
-                    0.9 * s,
-                    [150, 140, 125, 255],
-                    i % 6 == 0,
-                );
+                out.disc((a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f), 0.9 * s, [150, 140, 125, 255], i % 6 == 0);
             }
         }
         for &t in &self.turrets {
@@ -510,44 +411,16 @@ impl Squad {
                 out.line(a, b, 4.0, [255, 150, 60, 255]);
             }
             if let (Some(to), true) = (u.to, u.hp > 0.0) {
-                out.line(
-                    (u.x, u.y),
-                    to,
-                    2.0,
-                    if u.attack {
-                        [255, 110, 110, 120]
-                    } else {
-                        [255, 255, 255, 90]
-                    },
-                );
+                out.line((u.x, u.y), to, 2.0, if u.attack { [255, 110, 110, 120] } else { [255, 255, 255, 90] });
             }
             if figures {
                 let r = self.radius();
                 out.soldier((u.x, u.y), r, u.facing, team_colour(u.team), 0.0, u.hp > 0.0);
                 if u.hp > 0.0 {
-                    out.bar(
-                        (u.x, u.y),
-                        (r * zoom).max(2.0) + 5.0,
-                        (7.0, 1.0),
-                        u.hp / MAX_HP,
-                        [90, 220, 110, 255],
-                        [70, 30, 30, 255],
-                    );
+                    out.bar((u.x, u.y), (r * zoom).max(2.0) + 5.0, (7.0, 1.0), u.hp / MAX_HP, [90, 220, 110, 255], [70, 30, 30, 255]);
                 }
             } else {
-                unit_marks(
-                    &Unit {
-                        id,
-                        team: u.team,
-                        x: u.x,
-                        y: u.y,
-                        alive: u.hp > 0.0,
-                    },
-                    self.radius(),
-                    u.hp / MAX_HP,
-                    zoom,
-                    out,
-                );
+                unit_marks(&Unit { id, team: u.team, x: u.x, y: u.y, alive: u.hp > 0.0 }, self.radius(), u.hp / MAX_HP, zoom, out);
             }
         }
     }
@@ -565,65 +438,25 @@ impl Squad {
         let t = self.time as u32;
         let mut m = Model {
             resources: vec![
-                Resource {
-                    icon: Icon::Crystal,
-                    colour: theme::ENERGY,
-                    label: "Energy: crystals harvested, spent on soldiers and building".into(),
-                    value: format!("{:.0}", self.energy),
-                    rate: Some("+6/s".into()),
-                },
-                Resource {
-                    icon: Icon::Soldier,
-                    colour: theme::TEXT,
-                    label: "Soldiers alive".into(),
-                    value: format!("{mine}"),
-                    rate: (self.lost > 0).then(|| format!("-{} lost", self.lost)),
-                },
-                Resource {
-                    icon: Icon::Shield,
-                    colour: theme::ACCENT,
-                    label: "Armour level (upgrades)".into(),
-                    value: format!("{}", self.armour),
-                    rate: self.research.map(|r| format!("next in {r:.0}s")),
-                },
+                Resource { icon: Icon::Crystal, colour: theme::ENERGY, label: "Energy: crystals harvested, spent on soldiers and building".into(), value: format!("{:.0}", self.energy), rate: Some("+6/s".into()) },
+                Resource { icon: Icon::Soldier, colour: theme::TEXT, label: "Soldiers alive".into(), value: format!("{mine}"), rate: (self.lost > 0).then(|| format!("-{} lost", self.lost)) },
+                Resource { icon: Icon::Shield, colour: theme::ACCENT, label: "Armour level (upgrades)".into(), value: format!("{}", self.armour), rate: self.research.map(|r| format!("next in {r:.0}s")) },
             ],
             clock: format!("{}:{:02}", t / 60, t % 60),
             speed: paused.then(|| "Paused".to_string()),
             objective: Some("Stand-in squad, no game rules: the game is cargo run --release --bin larder-world".into()),
-            idle: self
-                .units
-                .iter()
-                .filter(|u| u.team == 0 && u.hp > 0.0 && u.to.is_none() && u.burn.is_none() && !u.hold)
-                .count(),
+            idle: self.units.iter().filter(|u| u.team == 0 && u.hp > 0.0 && u.to.is_none() && u.burn.is_none() && !u.hold).count(),
             ..Model::default()
         };
-        m.selection = sel
-            .iter()
-            .map(|&k| {
-                let u = &self.units[k];
-                Card {
-                    id: k,
-                    icon: Icon::Soldier,
-                    team: 0,
-                    hp: u.hp / MAX_HP,
-                    badge: Some(u.weapon.icon()),
-                }
-            })
-            .collect();
+        m.selection = sel.iter().map(|&k| {
+            let u = &self.units[k];
+            Card { id: k, icon: Icon::Soldier, team: 0, hp: u.hp / MAX_HP, badge: Some(u.weapon.icon()) }
+        }).collect();
         // Info: a hovered rival, else one selected soldier.
         let pick = 2.5 * self.scale;
-        let hovered = hover.and_then(|p| {
-            self.units
-                .iter()
-                .enumerate()
-                .find(|(_, u)| u.hp > 0.0 && (u.x - p.0).hypot(u.y - p.1) < pick)
-        });
+        let hovered = hover.and_then(|p| self.units.iter().enumerate().find(|(_, u)| u.hp > 0.0 && (u.x - p.0).hypot(u.y - p.1) < pick));
         let info_of = |k: usize, u: &StandIn| {
-            let (title, colour) = if u.team == 0 {
-                (format!("Soldier {}", k + 1), team_colour(0))
-            } else {
-                (format!("Rival soldier {}", k + 1), team_colour(1))
-            };
+            let (title, colour) = if u.team == 0 { (format!("Soldier {}", k + 1), team_colour(0)) } else { (format!("Rival soldier {}", k + 1), team_colour(1)) };
             let doing = if u.hold {
                 "holding position"
             } else if u.burn.is_some() {
@@ -656,10 +489,7 @@ impl Squad {
                     ]
                 } else {
                     // A rival's stance is not something the player can see.
-                    vec![
-                        ("Range".into(), format!("{:.0} cells", u.weapon.range())),
-                        ("Damage".into(), format!("{:.0}/s", u.weapon.damage() * 0.6)),
-                    ]
+                    vec![("Range".into(), format!("{:.0} cells", u.weapon.range())), ("Damage".into(), format!("{:.0}/s", u.weapon.damage() * 0.6))]
                 },
                 note: (u.team == 1).then(|| "An enemy: right-click it with soldiers selected to attack".to_string()),
             }
@@ -679,120 +509,29 @@ impl Squad {
         let need = |cost: f32| (self.energy < cost).then(|| format!("Need {:.0} more energy", cost - self.energy));
         let no_sel = || Some("Select soldiers first".to_string());
         let mut cmds = vec![
-            Command {
-                target: Target::Point {
-                    radius: 3.0 * self.scale,
-                },
-                ready: any,
-                why_not: no_sel(),
-                about: "Move there, fighting whatever is met on the way.".into(),
-                ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA)
-            },
-            Command {
-                ready: any,
-                why_not: no_sel(),
-                about: "Drop every order and stand still.".into(),
-                ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS)
-            },
-            Command {
-                ready: any,
-                why_not: no_sel(),
-                about: "Stay put and do not chase; still fires by its stance.".into(),
-                ..Command::new(HOLD, (0, 2), Icon::Hold, "Hold position", KeyCode::KeyH)
-            },
-            Command {
-                target: Target::Line {
-                    width: 2.0 * self.scale,
-                },
-                ready: any,
-                why_not: no_sel(),
-                about: "Spread out along a line and keep it burning, so the mould cannot cross.".into(),
-                ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF)
-            },
-            Command {
-                ready: any,
-                on: stance == Some(Stance::HoldFire),
-                why_not: no_sel(),
-                about: "Do not shoot, even when fired on. Saves the mould's attention.".into(),
-                ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ)
-            },
-            Command {
-                ready: any,
-                on: stance == Some(Stance::Defend),
-                why_not: no_sel(),
-                about: "Shoot only what comes close. The default.".into(),
-                ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX)
-            },
-            Command {
-                ready: any,
-                on: stance == Some(Stance::Free),
-                why_not: no_sel(),
-                about: "Shoot anything in reach, a third further than defending.".into(),
-                ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC)
-            },
+            Command { target: Target::Point { radius: 3.0 * self.scale }, ready: any, why_not: no_sel(), about: "Move there, fighting whatever is met on the way.".into(), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
+            Command { ready: any, why_not: no_sel(), about: "Drop every order and stand still.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
+            Command { ready: any, why_not: no_sel(), about: "Stay put and do not chase; still fires by its stance.".into(), ..Command::new(HOLD, (0, 2), Icon::Hold, "Hold position", KeyCode::KeyH) },
+            Command { target: Target::Line { width: 2.0 * self.scale }, ready: any, why_not: no_sel(), about: "Spread out along a line and keep it burning, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
+            Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot, even when fired on. Saves the mould's attention.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
+            Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: "Shoot only what comes close. The default.".into(), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
+            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: "Shoot anything in reach, a third further than defending.".into(), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
             Command {
                 ready: any,
                 why_not: no_sel(),
                 about: "Change weapons. The rifle reaches 24 cells; the flamer 10, but burns twice as hard.".into(),
-                ..Command::new(
-                    SWAP,
-                    (1, 3),
-                    if weapon == Some(Weapon::Rifle) {
-                        Icon::Flamer
-                    } else {
-                        Icon::Rifle
-                    },
-                    if weapon == Some(Weapon::Rifle) {
-                        "Take the flamer"
-                    } else {
-                        "Take the rifle"
-                    },
-                    KeyCode::KeyE,
-                )
+                ..Command::new(SWAP, (1, 3), if weapon == Some(Weapon::Rifle) { Icon::Flamer } else { Icon::Rifle }, if weapon == Some(Weapon::Rifle) { "Take the flamer" } else { "Take the rifle" }, KeyCode::KeyE)
             },
-            Command {
-                cost: Some(format!("{RECRUIT:.0}")),
-                ready: self.energy >= RECRUIT,
-                why_not: need(RECRUIT),
-                about: "A new soldier at the larder.".into(),
-                ..Command::new(RECRUIT_ID, (2, 0), Icon::Recruit, "Recruit a soldier", KeyCode::KeyB)
-            },
-            Command {
-                target: Target::Area {
-                    half: (1.6 * self.scale, 1.6 * self.scale),
-                },
-                cost: Some(format!("{TURRET:.0}")),
-                ready: self.energy >= TURRET,
-                why_not: need(TURRET),
-                about: "A turret that fires at enemies within 30 cells.".into(),
-                ..Command::new(TURRET_ID, (2, 1), Icon::Turret, "Build a turret", KeyCode::KeyT)
-            },
-            Command {
-                target: Target::Line {
-                    width: 1.8 * self.scale,
-                },
-                cost: Some(format!("{WALL_A_CELL:.0}/cell")),
-                ready: self.energy >= 20.0,
-                why_not: need(20.0),
-                about: "A wall the mould has to wear through. Costs by its length.".into(),
-                ..Command::new(WALL_ID, (2, 2), Icon::Wall, "Lay a wall", KeyCode::KeyV)
-            },
+            Command { cost: Some(format!("{RECRUIT:.0}")), ready: self.energy >= RECRUIT, why_not: need(RECRUIT), about: "A new soldier at the larder.".into(), ..Command::new(RECRUIT_ID, (2, 0), Icon::Recruit, "Recruit a soldier", KeyCode::KeyB) },
+            Command { target: Target::Area { half: (1.6 * self.scale, 1.6 * self.scale) }, cost: Some(format!("{TURRET:.0}")), ready: self.energy >= TURRET, why_not: need(TURRET), about: "A turret that fires at enemies within 30 cells.".into(), ..Command::new(TURRET_ID, (2, 1), Icon::Turret, "Build a turret", KeyCode::KeyT) },
+            Command { target: Target::Line { width: 1.8 * self.scale }, cost: Some(format!("{WALL_A_CELL:.0}/cell")), ready: self.energy >= 20.0, why_not: need(20.0), about: "A wall the mould has to wear through. Costs by its length.".into(), ..Command::new(WALL_ID, (2, 2), Icon::Wall, "Lay a wall", KeyCode::KeyV) },
             Command {
                 cost: Some(format!("{UPGRADE:.0}")),
                 ready: self.energy >= UPGRADE && self.research.is_none() && self.armour < 3,
                 cooldown: self.research.map_or(0.0, |r| r / UPGRADE_SECONDS),
                 wait: self.research.map(|r| format!("{:.0}s", r.ceil())),
-                why_not: if self.armour >= 3 {
-                    Some("Armour is at its best".into())
-                } else if self.research.is_some() {
-                    Some("Already under way".into())
-                } else {
-                    need(UPGRADE)
-                },
-                about: format!(
-                    "Armour {}: every soldier takes a fifth less damage. Takes {UPGRADE_SECONDS:.0} s.",
-                    self.armour + 1
-                ),
+                why_not: if self.armour >= 3 { Some("Armour is at its best".into()) } else if self.research.is_some() { Some("Already under way".into()) } else { need(UPGRADE) },
+                about: format!("Armour {}: every soldier takes a fifth less damage. Takes {UPGRADE_SECONDS:.0} s.", self.armour + 1),
                 ..Command::new(UPGRADE_ID, (2, 3), Icon::Upgrade, "Upgrade armour", KeyCode::KeyU)
             },
         ];
@@ -810,10 +549,7 @@ impl Squad {
                 if self.energy >= cost {
                     (true, Some(format!("{cost:.0} energy, release to lay")))
                 } else {
-                    (
-                        false,
-                        Some(format!("{cost:.0} energy, {:.0} short", cost - self.energy)),
-                    )
+                    (false, Some(format!("{cost:.0} energy, {:.0} short", cost - self.energy)))
                 }
             }
             _ => (true, None),
@@ -824,12 +560,10 @@ impl Squad {
 
     /// The idle soldier after `after` (the idle button cycles).
     pub fn next_idle(&self, after: Option<usize>) -> Option<usize> {
-        let idle: Vec<usize> = (0..self.units.len())
-            .filter(|&k| {
-                let u = &self.units[k];
-                u.team == 0 && u.hp > 0.0 && u.to.is_none() && u.burn.is_none() && !u.hold
-            })
-            .collect();
+        let idle: Vec<usize> = (0..self.units.len()).filter(|&k| {
+            let u = &self.units[k];
+            u.team == 0 && u.hp > 0.0 && u.to.is_none() && u.burn.is_none() && !u.hold
+        }).collect();
         let start = after.and_then(|a| idle.iter().position(|&k| k > a)).unwrap_or(0);
         idle.get(start).copied()
     }

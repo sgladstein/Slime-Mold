@@ -17,12 +17,8 @@ use slime_mould::mould::tiers::Tier;
 const R: f32 = 8.0;
 
 fn main() {
-    let (mut seeds, mut scale, mut walkers, mut at, mut secs) =
-        ((1u64..=8).collect::<Vec<_>>(), 2usize, 5_000usize, 0.35f32, 60u32);
-    let mut rules = Rules {
-        start_bank: 1e6,
-        ..Rules::default()
-    };
+    let (mut seeds, mut scale, mut walkers, mut at, mut secs) = ((1u64..=8).collect::<Vec<_>>(), 2usize, 5_000usize, 0.35f32, 60u32);
+    let mut rules = Rules { start_bank: 1e6, ..Rules::default() };
     // Placed whole: this asks what the building does, not how it rises.
     rules.build.raise = 0.0;
     // `kind=siren tier=swarmer`: the siren on a tier that answers the alarm
@@ -46,15 +42,8 @@ fn main() {
             _ => panic!("unknown {k}"),
         }
     }
-    println!(
-        "worldbuild: lure smell {} (x a soldier's), radius {} dish cells",
-        rules.build.lure_smell, rules.build.lure_r
-    );
-    println!(
-        "worldbuild: {} on tier {}",
-        kind.name(),
-        tier.map_or("plain", |t| t.name())
-    );
+    println!("worldbuild: lure smell {} (x a soldier's), radius {} dish cells", rules.build.lure_smell, rules.build.lure_r);
+    println!("worldbuild: {} on tier {}", kind.name(), tier.map_or("plain", |t| t.name()));
     println!("worldbuild: placed {at} of the way from the core to the larder, walkers within {R} dish cells, scale {scale}, walkers {walkers}, {secs} s");
     let (mut more, mut less) = (0, 0);
     for &seed in &seeds {
@@ -68,14 +57,10 @@ fn main() {
             let s = g.world.scale();
             let (c, l) = (g.core, g.larder);
             let p = (c.0 + (l.0 - c.0) * at, c.1 + (l.1 - c.1) * at);
-            let site = (0..40)
-                .flat_map(|r| (0..16).map(move |k| (r, k)))
-                .map(|(r, k)| {
-                    let a = k as f32 / 16.0 * std::f32::consts::TAU;
-                    (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
-                })
-                .find(|q| g.world.open(q.0, q.1))
-                .expect("open ground");
+            let site = (0..40).flat_map(|r| (0..16).map(move |k| (r, k))).map(|(r, k)| {
+                let a = k as f32 / 16.0 * std::f32::consts::TAU;
+                (p.0 + r as f32 * a.cos(), p.1 + r as f32 * a.sin())
+            }).find(|q| g.world.open(q.0, q.1)).expect("open ground");
             g.soldiers[0].x = site.0;
             g.soldiers[0].y = site.1;
             g.apply(Cmd::Stance(0, Stance::HoldFire));
@@ -90,23 +75,11 @@ fn main() {
                 }
                 if t % 10 == 0 {
                     let r2 = (R * s) * (R * s);
-                    let n = g
-                        .world
-                        .walkers
-                        .iter()
-                        .enumerate()
-                        .filter(|(k, w)| g.world.lives(*k) && (w.0 - site.0).powi(2) + (w.1 - site.1).powi(2) <= r2)
-                        .count();
+                    let n = g.world.walkers.iter().enumerate().filter(|(k, w)| g.world.lives(*k) && (w.0 - site.0).powi(2) + (w.1 - site.1).powi(2) <= r2).count();
                     near.push(n);
                 }
             }
-            println!(
-                "  seed {seed} {} {}: near it every 10 s {near:?}; calls {}; mould {}",
-                kind.name(),
-                if on { "on " } else { "off" },
-                g.sirens,
-                g.world.living()
-            );
+            println!("  seed {seed} {} {}: near it every 10 s {near:?}; calls {}; mould {}", kind.name(), if on { "on " } else { "off" }, g.sirens, g.world.living());
             row.push(*near.last().unwrap());
         }
         if row[0] > row[1] {
@@ -121,8 +94,5 @@ fn main() {
     for i in 0..=k {
         p += (1..=i).fold(1.0f64, |acc, j| acc * (n - j + 1) as f64 / j as f64) / 2f64.powi(n);
     }
-    println!(
-        "on against off at {secs} s: more walkers near it on {more}, fewer on {less} (two-sided sign test p {:.4})",
-        (2.0 * p).min(1.0)
-    );
+    println!("on against off at {secs} s: more walkers near it on {more}, fewer on {less} (two-sided sign test p {:.4})", (2.0 * p).min(1.0));
 }

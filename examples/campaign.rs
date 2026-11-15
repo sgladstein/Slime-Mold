@@ -67,14 +67,7 @@ struct Row {
 }
 
 fn main() {
-    let (mut mission, mut seeds, mut hands, mut scale, mut walkers, mut threads) = (
-        String::from("1-landfall"),
-        (1u64, 8u64),
-        String::from("idle,random,boom,claim,late,fort,strike"),
-        2usize,
-        5000usize,
-        4usize,
-    );
+    let (mut mission, mut seeds, mut hands, mut scale, mut walkers, mut threads) = (String::from("1-landfall"), (1u64, 8u64), String::from("idle,random,boom,claim,late,fort,strike"), 2usize, 5000usize, 4usize);
     let mut engines = vec![false];
     let mut keys: Vec<(String, String)> = Vec::new();
     let mut plants = true;
@@ -93,17 +86,7 @@ fn main() {
             "plants" => plants = v != "0",
             // `keys=energy_flow:0.05+wither:0.01`: mould keys over the tier
             // (`tiers::set_key`, CPU only), to try a tier change first.
-            "keys" => {
-                keys = v
-                    .split('+')
-                    .filter(|k| !k.is_empty())
-                    .map(|kv| {
-                        kv.split_once(':')
-                            .map(|(a, b)| (a.to_string(), b.to_string()))
-                            .expect("keys=K:V+K:V")
-                    })
-                    .collect()
-            }
+            "keys" => keys = v.split('+').filter(|k| !k.is_empty()).map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=K:V+K:V")).collect(),
             "gpu" => {
                 engines = match v {
                     "0" => vec![false],
@@ -116,11 +99,7 @@ fn main() {
         }
     }
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let m = Mission::parse(
-        &std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{mission}.txt")))
-            .unwrap(),
-    )
-    .unwrap();
+    let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{mission}.txt"))).unwrap()).unwrap();
     let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
     let tier = m.tier.as_deref().and_then(Tier::from_name);
     println!(
@@ -130,11 +109,7 @@ fn main() {
         m.says,
         m.map,
         m.tier.as_deref().unwrap_or("none"),
-        if m.tier.is_some() && tier.is_none() {
-            "(not built: plain mould)"
-        } else {
-            ""
-        },
+        if m.tier.is_some() && tier.is_none() { "(not built: plain mould)" } else { "" },
         seeds.0,
         seeds.1
     );
@@ -149,14 +124,7 @@ fn main() {
             }
         }
     }
-    println!(
-        "on {}",
-        engines
-            .iter()
-            .map(|&g| if g { "the GPU engine" } else { "the CPU" })
-            .collect::<Vec<_>>()
-            .join(" and ")
-    );
+    println!("on {}", engines.iter().map(|&g| if g { "the GPU engine" } else { "the CPU" }).collect::<Vec<_>>().join(" and "));
     let next = std::sync::atomic::AtomicUsize::new(0);
     let rows = std::sync::Mutex::new(Vec::new());
     std::thread::scope(|sc| {
@@ -170,29 +138,9 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
-                    let map = if plants {
-                        slime_mould::mould::plants::planted(&map, *s)
-                    } else {
-                        map.clone()
-                    };
-                    let r = play(
-                        &m,
-                        &map,
-                        tier,
-                        &keys,
-                        *s,
-                        scale,
-                        walkers,
-                        h,
-                        dev.as_ref().filter(|_| *on_gpu),
-                    );
-                    eprintln!(
-                        "  {h} s{s}{}: {} {:.0}s {}*",
-                        if *on_gpu { " GPU" } else { "" },
-                        r.cause,
-                        r.at,
-                        r.stars
-                    );
+                    let map = if plants { slime_mould::mould::plants::planted(&map, *s) } else { map.clone() };
+                    let r = play(&m, &map, tier, &keys, *s, scale, walkers, h, dev.as_ref().filter(|_| *on_gpu));
+                    eprintln!("  {h} s{s}{}: {} {:.0}s {}*", if *on_gpu { " GPU" } else { "" }, r.cause, r.at, r.stars);
                     rows.lock().unwrap().push(r);
                 }
             });
@@ -239,19 +187,7 @@ fn main() {
     for h in names {
         for &on_gpu in &engines {
             let rs: Vec<&Row> = rows.iter().filter(|r| r.hand == h && r.gpu == on_gpu).collect();
-            summary(
-                h,
-                if both {
-                    if on_gpu {
-                        " GPU"
-                    } else {
-                        " CPU"
-                    }
-                } else {
-                    ""
-                },
-                &rs,
-            );
+            summary(h, if both { if on_gpu { " GPU" } else { " CPU" } } else { "" }, &rs);
         }
     }
 }
@@ -275,34 +211,15 @@ fn summary(h: &str, engine: &str, rs: &[&Row]) {
 /// A GPU device with the adapter's limits (as `examples/larderworld.rs`).
 fn gpu() -> (wgpu::Device, wgpu::Queue) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
-        ..Default::default()
-    }))
-    .expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
     eprintln!("campaign: GPU {}", adapter.get_info().name);
-    block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-        label: Some("campaign"),
-        required_limits: adapter.limits(),
-        ..Default::default()
-    }))
-    .expect("GPU device")
+    block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("campaign"), required_limits: adapter.limits(), ..Default::default() })).expect("GPU device")
 }
 
 /// One round on the CPU big dish, or with `gpu` on the GPU engine (the
 /// same map, params and tier as the window's `GpuWorld::with_map`).
 #[allow(clippy::too_many_arguments)]
-fn play(
-    m: &Mission,
-    map: &Map,
-    tier: Option<Tier>,
-    keys: &[(String, String)],
-    seed: u64,
-    scale: usize,
-    walkers: usize,
-    hand: &str,
-    gpu: Option<&(wgpu::Device, wgpu::Queue)>,
-) -> Row {
+fn play(m: &Mission, map: &Map, tier: Option<Tier>, keys: &[(String, String)], seed: u64, scale: usize, walkers: usize, hand: &str, gpu: Option<&(wgpu::Device, wgpu::Queue)>) -> Row {
     let rules = m.rules(Rules::default());
     match gpu {
         None => {
@@ -329,11 +246,7 @@ fn play(
                 t.settings(&mut s).unwrap();
             }
             assert!(keys.is_empty(), "keys= is CPU only");
-            let world = if m.own {
-                GpuWorld::garden_on_map(device, queue, s, scale, map, walkers).unwrap()
-            } else {
-                GpuWorld::with_map(device, queue, s, scale, map)
-            };
+            let world = if m.own { GpuWorld::garden_on_map(device, queue, s, scale, map, walkers).unwrap() } else { GpuWorld::with_map(device, queue, s, scale, map) };
             play_on(Game::new(world, rules, seed), m, seed, hand, true)
         }
     }
@@ -366,9 +279,7 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
             "random" => random_hand(&mut g),
             _ if gaps && walled.iter().any(|w| !w) && g.time() < 120.0 => campaign::wall_rim_gaps(&mut g, &mut walled),
             _ => {
-                ai.as_mut()
-                    .unwrap_or_else(|| panic!("unknown hand {hand}"))
-                    .play(&mut g);
+                ai.as_mut().unwrap_or_else(|| panic!("unknown hand {hand}")).play(&mut g);
                 if let Some(p) = plan {
                     p.play(&mut g, reserve);
                 }
@@ -382,29 +293,14 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
         // `CAMPAIGN_TRACE=1`: each side's walkers, the bank and the
         // buildings every 30 s (mission 8: who is winning, and how).
         if std::env::var_os("CAMPAIGN_TRACE").is_some() && (g.time() as u64).is_multiple_of(30) {
-            eprintln!(
-                "    {hand} s{seed} t {:.0}: own {} enemy {} soldiers {} bank {:.0} killed {} buildings {}",
-                g.time(),
-                g.world.own_living(),
-                g.mould,
-                g.alive(),
-                g.bank,
-                g.killed,
-                g.buildings.iter().filter(|b| b.alive).count()
-            );
+            eprintln!("    {hand} s{seed} t {:.0}: own {} enemy {} soldiers {} bank {:.0} killed {} buildings {}", g.time(), g.world.own_living(), g.mould, g.alive(), g.bank, g.killed, g.buildings.iter().filter(|b| b.alive).count());
         }
         if let Some(gr) = grid.as_deref() {
             let gw = g.world.size().0.div_ceil(BIN);
             for (c, ((x, y), _)) in g.world.crystals().into_iter().enumerate().take(64) {
                 let r = g.world.crystal_r(c);
-                let (bx0, bx1) = (
-                    ((x - r) / BIN as f32).max(0.0) as usize,
-                    ((x + r) / BIN as f32) as usize,
-                );
-                let (by0, by1) = (
-                    ((y - r) / BIN as f32).max(0.0) as usize,
-                    ((y + r) / BIN as f32) as usize,
-                );
+                let (bx0, bx1) = (((x - r) / BIN as f32).max(0.0) as usize, ((x + r) / BIN as f32) as usize);
+                let (by0, by1) = (((y - r) / BIN as f32).max(0.0) as usize, ((y + r) / BIN as f32) as usize);
                 'c: for by in by0..=by1 {
                     for bx in bx0..=bx1.min(gw - 1) {
                         if gr.get(by * gw + bx).is_some_and(|&n| n > 0) {
@@ -420,10 +316,7 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
             let gw = g.world.size().0.div_ceil(BIN);
             let mut n = [0u32; 3];
             for (i, &c) in gr.iter().enumerate() {
-                let (px, py) = (
-                    ((i % gw) * BIN) as f32 + BIN as f32 / 2.0,
-                    ((i / gw) * BIN) as f32 + BIN as f32 / 2.0,
-                );
+                let (px, py) = (((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0);
                 if px < rect.0 * fine || px > rect.2 * fine || py < rect.1 * fine || py > rect.3 * fine {
                     for (k, t) in [1, 4, 16].iter().enumerate() {
                         n[k] += (c >= *t) as u32;
@@ -437,24 +330,14 @@ fn play_on<W: World>(mut g: Game<W>, m: &Mission, seed: u64, hand: &str, on_gpu:
         }
         let v = tr.second(&g, grid.as_deref(), 1.0);
         if let Some(c) = tr.count {
-            let c = if matches!(m.goal, Goal::Contain { .. }) {
-                c as f32 / g.mould.max(1) as f32
-            } else {
-                c as f32
-            };
+            let c = if matches!(m.goal, Goal::Contain { .. }) { c as f32 / g.mould.max(1) as f32 } else { c as f32 };
             count = (count.0.min(c), count.1.max(c));
         }
         if let Some(v) = v {
             break v;
         }
     };
-    let share = |p: usize| {
-        if tr.secs[p] == 0 {
-            0.0
-        } else {
-            tr.dead[p] as f32 / tr.secs[p] as f32
-        }
-    };
+    let share = |p: usize| if tr.secs[p] == 0 { 0.0 } else { tr.dead[p] as f32 / tr.secs[p] as f32 };
     Row {
         hand: hand.into(),
         seed,
@@ -512,10 +395,7 @@ fn random_hand<W: World>(g: &mut Game<W>) {
             let p = point(g);
             let a = g.rng.f32() * std::f32::consts::TAU;
             let l = 5.0 * g.world.scale();
-            Order::Burn(
-                (p.0 - a.cos() * l, p.1 - a.sin() * l),
-                (p.0 + a.cos() * l, p.1 + a.sin() * l),
-            )
+            Order::Burn((p.0 - a.cos() * l, p.1 - a.sin() * l), (p.0 + a.cos() * l, p.1 + a.sin() * l))
         }
         _ => Order::Attack,
     };

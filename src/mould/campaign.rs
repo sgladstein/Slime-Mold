@@ -56,13 +56,7 @@ pub enum Goal {
     /// random fire met First contact on 2 of 4 seeds by 2:49 (census v10),
     /// chasing the mould off a crystal and walking away; holding means
     /// standing there.
-    Clear {
-        crystals: Vec<usize>,
-        need: usize,
-        secs: f32,
-        retake: bool,
-        guard: bool,
-    },
+    Clear { crystals: Vec<usize>, need: usize, secs: f32, retake: bool, guard: bool },
     /// At most `leak` of the walkers outside this rectangle (map cells) for
     /// `secs` game seconds in a row (mission 3: keep the mould in the Rim).
     /// With no leak allowed (the first census) no hand ever held the Rim for
@@ -75,12 +69,7 @@ pub enum Goal {
     /// off). On the Sprawler (census v6) every hand had 46% outside; the
     /// wall-the-gaps hand cut it to 17% with no thick bin (design review,
     /// 07:22Z: pick between the two rules on the Sprawler's numbers).
-    Contain {
-        rect: (f32, f32, f32, f32),
-        secs: f32,
-        leak: f32,
-        body: u32,
-    },
+    Contain { rect: (f32, f32, f32, f32), secs: f32, leak: f32, body: u32 },
     /// Walkers fall to `frac` of their peak (mission 4: starve it; `shrink
     /// 0` is a wipe, mission 2). The peak counts from `SHRINK_FROM`: a new
     /// mould halves by itself in its first 40 s as walkers starve, and
@@ -143,23 +132,15 @@ impl Mission {
     /// shrink F`, `goal take F [SECS]`, `goal outgrow F SECS`; and `own`
     /// (no value) for the player's own mould.
     pub fn parse(text: &str) -> Result<Mission, String> {
-        let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules, mut own) =
-            (None, None, None, None, None, vec![], None, vec![], false);
+        let (mut name, mut says, mut map, mut tier, mut goal, mut verbs, mut bonus, mut rules, mut own) = (None, None, None, None, None, vec![], None, vec![], false);
         for (n, line) in text.lines().enumerate() {
             let line = line.split('#').next().unwrap_or("").trim();
             if line.is_empty() {
                 continue;
             }
             let err = |m: String| format!("line {}: {m}", n + 1);
-            let (kind, rest) = line
-                .split_once(char::is_whitespace)
-                .map(|(k, r)| (k, r.trim()))
-                .unwrap_or((line, ""));
-            let nums = |s: &str| {
-                s.split_whitespace()
-                    .map(|w| w.parse::<f32>().map_err(|e| err(format!("{w:?}: {e}"))))
-                    .collect::<Result<Vec<f32>, String>>()
-            };
+            let (kind, rest) = line.split_once(char::is_whitespace).map(|(k, r)| (k, r.trim())).unwrap_or((line, ""));
+            let nums = |s: &str| s.split_whitespace().map(|w| w.parse::<f32>().map_err(|e| err(format!("{w:?}: {e}")))).collect::<Result<Vec<f32>, String>>();
             match kind {
                 "name" => name = Some(rest.to_string()),
                 "says" => says = Some(rest.to_string()),
@@ -168,9 +149,7 @@ impl Mission {
                 "own" if rest.is_empty() => own = true,
                 "verbs" => verbs = rest.split_whitespace().map(str::to_string).collect(),
                 "rule" => {
-                    let (k, v) = rest
-                        .split_once(char::is_whitespace)
-                        .ok_or_else(|| err("`rule` takes KEY VALUE".into()))?;
+                    let (k, v) = rest.split_once(char::is_whitespace).ok_or_else(|| err("`rule` takes KEY VALUE".into()))?;
                     let v = v.trim().parse::<f32>().map_err(|e| err(format!("{v:?}: {e}")))?;
                     if !RULE_KEYS.contains(&k) {
                         return Err(err(format!("unknown rule `{k}`")));
@@ -178,9 +157,7 @@ impl Mission {
                     rules.push((k.to_string(), v));
                 }
                 "bonus" => {
-                    let (k, v) = rest
-                        .split_once(char::is_whitespace)
-                        .ok_or_else(|| err("`bonus` takes KIND N".into()))?;
+                    let (k, v) = rest.split_once(char::is_whitespace).ok_or_else(|| err("`bonus` takes KIND N".into()))?;
                     let v = nums(v)?;
                     bonus = Some(match (k, v.as_slice()) {
                         ("lose", [x]) => Bonus::LoseAtMost(*x as usize),
@@ -195,37 +172,11 @@ impl Mission {
                     let (k, v) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
                     let v = nums(v)?;
                     goal = Some(match (k, v.as_slice()) {
-                        ("squad", [x]) => Goal::Squad {
-                            n: *x as usize,
-                            crystals: 0,
-                        },
-                        ("squad", [x, k]) => Goal::Squad {
-                            n: *x as usize,
-                            crystals: *k as usize,
-                        },
-                        ("clear" | "retake" | "hold", [need, secs, cs @ ..])
-                            if !cs.is_empty() && (*need as usize) <= cs.len() =>
-                        {
-                            Goal::Clear {
-                                crystals: cs.iter().map(|&c| c as usize).collect(),
-                                need: *need as usize,
-                                secs: *secs,
-                                retake: k != "clear",
-                                guard: k == "hold",
-                            }
-                        }
-                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain {
-                            rect: (*x0, *y0, *x1, *y1),
-                            secs: *secs,
-                            leak: *leak,
-                            body: 0,
-                        },
-                        ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain {
-                            rect: (*x0, *y0, *x1, *y1),
-                            secs: *secs,
-                            leak: *leak,
-                            body: *body as u32,
-                        },
+                        ("squad", [x]) => Goal::Squad { n: *x as usize, crystals: 0 },
+                        ("squad", [x, k]) => Goal::Squad { n: *x as usize, crystals: *k as usize },
+                        ("clear" | "retake" | "hold", [need, secs, cs @ ..]) if !cs.is_empty() && (*need as usize) <= cs.len() => Goal::Clear { crystals: cs.iter().map(|&c| c as usize).collect(), need: *need as usize, secs: *secs, retake: k != "clear", guard: k == "hold" },
+                        ("contain", [x0, y0, x1, y1, secs, leak]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: 0 },
+                        ("contain", [x0, y0, x1, y1, secs, leak, body]) => Goal::Contain { rect: (*x0, *y0, *x1, *y1), secs: *secs, leak: *leak, body: *body as u32 },
                         ("shrink", [f]) => Goal::Shrink(*f),
                         ("take", [f]) => Goal::Take(*f, 0.0),
                         ("take", [f, secs]) => Goal::Take(*f, *secs),
@@ -265,11 +216,7 @@ impl Mission {
             .filter_map(|p| {
                 let stem = p.file_stem()?.to_str()?.to_string();
                 let m = Mission::parse(&std::fs::read_to_string(&p).ok()?).ok()?;
-                let n = stem
-                    .split(|c: char| !c.is_ascii_digit())
-                    .next()
-                    .and_then(|d| d.parse().ok())
-                    .unwrap_or(u32::MAX);
+                let n = stem.split(|c: char| !c.is_ascii_digit()).next().and_then(|d| d.parse().ok()).unwrap_or(u32::MAX);
                 Some((n, stem, m))
             })
             .collect();
@@ -304,17 +251,7 @@ impl Mission {
     }
 }
 
-const RULE_KEYS: [&str; 9] = [
-    "price",
-    "start_bank",
-    "squad",
-    "soldier_cost",
-    "cap",
-    "smell",
-    "overrun",
-    "reserve",
-    "drain",
-];
+const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "cap", "smell", "overrun", "reserve", "drain"];
 
 /// A walker's bite on a soldier in a mission (`Rules::drain`) unless its
 /// file sets one (`rule drain N`): 1, the bite the missions were tuned on.
@@ -469,13 +406,7 @@ fn walkers_where(grid: &[u32], size: (usize, usize), f: impl Fn(f32, f32) -> boo
     let gw = size.0.div_ceil(BIN);
     grid.iter()
         .enumerate()
-        .filter(|&(i, &n)| {
-            n > 0
-                && f(
-                    ((i % gw) * BIN) as f32 + BIN as f32 / 2.0,
-                    ((i / gw) * BIN) as f32 + BIN as f32 / 2.0,
-                )
-        })
+        .filter(|&(i, &n)| n > 0 && f(((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0))
         .map(|(_, &n)| n)
         .sum()
 }
@@ -526,18 +457,7 @@ impl Tracker {
                 if *crystals == 0 {
                     return Some(squad);
                 }
-                let mut at: Vec<(i32, i32)> = g
-                    .soldiers
-                    .iter()
-                    .filter(|s| s.alive)
-                    .filter_map(|s| {
-                        if let Order::Clear(x, y) = s.order {
-                            Some((x as i32, y as i32))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
+                let mut at: Vec<(i32, i32)> = g.soldiers.iter().filter(|s| s.alive).filter_map(|s| if let Order::Clear(x, y) = s.order { Some((x as i32, y as i32)) } else { None }).collect();
                 at.sort();
                 at.dedup();
                 self.count = Some(at.len() as u32);
@@ -573,11 +493,7 @@ impl Tracker {
                 // Held: the bar is the seconds held while the share is met,
                 // and half the share's progress toward it while it is not.
                 self.held = if share >= 1.0 { self.held + dt } else { 0.0 };
-                Some(if share >= 1.0 {
-                    0.5 + 0.5 * (self.held / secs).min(1.0)
-                } else {
-                    0.5 * share
-                })
+                Some(if share >= 1.0 { 0.5 + 0.5 * (self.held / secs).min(1.0) } else { 0.5 * share })
             }
             // From the even start (0.5), as `Take`: the bar is half the
             // share's way to `f`, then the seconds held at it.
@@ -587,19 +503,9 @@ impl Tracker {
                 self.count = Some(own as u32);
                 let way = ((share - 0.5) / (f - 0.5)).clamp(0.0, 1.0);
                 self.held = if way >= 1.0 { self.held + dt } else { 0.0 };
-                Some(if way >= 1.0 {
-                    0.5 + 0.5 * (self.held / secs.max(1e-3)).min(1.0)
-                } else {
-                    0.5 * way
-                })
+                Some(if way >= 1.0 { 0.5 + 0.5 * (self.held / secs.max(1e-3)).min(1.0) } else { 0.5 * way })
             }
-            Goal::Clear {
-                crystals,
-                need,
-                secs,
-                retake,
-                guard,
-            } => {
+            Goal::Clear { crystals, need, secs, retake, guard } => {
                 let grid = grid?;
                 let cs = g.world.crystals();
                 self.touched.resize(cs.len(), false);
@@ -609,12 +515,7 @@ impl Tracker {
                     let on = walkers_where(grid, size, |px, py| (px - x).hypot(py - y) <= r);
                     if on > 0 {
                         self.touched[c] = true;
-                    } else if (!retake || self.touched[c])
-                        && (!guard
-                            || g.soldiers
-                                .iter()
-                                .any(|s| s.alive && (s.x - x).hypot(s.y - y) <= r + GUARD * g.world.scale()))
-                    {
+                    } else if (!retake || self.touched[c]) && (!guard || g.soldiers.iter().any(|s| s.alive && (s.x - x).hypot(s.y - y) <= r + GUARD * g.world.scale())) {
                         clear += 1;
                     }
                 }
@@ -629,27 +530,14 @@ impl Tracker {
                 let out = walkers_where(grid, size, outside);
                 let gw = size.0.div_ceil(BIN);
                 let thick = if *body > 0 {
-                    grid.iter()
-                        .enumerate()
-                        .filter(|&(i, &n)| {
-                            n >= *body
-                                && outside(
-                                    ((i % gw) * BIN) as f32 + BIN as f32 / 2.0,
-                                    ((i / gw) * BIN) as f32 + BIN as f32 / 2.0,
-                                )
-                        })
-                        .count() as u32
+                    grid.iter().enumerate().filter(|&(i, &n)| n >= *body && outside(((i % gw) * BIN) as f32 + BIN as f32 / 2.0, ((i / gw) * BIN) as f32 + BIN as f32 / 2.0)).count() as u32
                 } else {
                     0
                 };
                 self.count = Some(out);
                 self.outside = Some(out as f32 / g.mould.max(1) as f32);
                 self.thick = Some(thick);
-                self.held = if out as f32 <= leak * g.mould.max(1) as f32 && thick == 0 {
-                    self.held + dt
-                } else {
-                    0.0
-                };
+                self.held = if out as f32 <= leak * g.mould.max(1) as f32 && thick == 0 { self.held + dt } else { 0.0 };
                 Some((self.held / secs).min(1.0))
             }
         }
@@ -680,13 +568,7 @@ impl Tracker {
         // Dead time: did anything the player owns do something useful?
         let r = &g.rules;
         let walked = g.soldiers.iter().enumerate().any(|(i, s)| {
-            s.alive
-                && !matches!(s.order, Order::Hold)
-                && self
-                    .last
-                    .at
-                    .get(i)
-                    .is_some_and(|&(x, y)| (s.x - x).hypot(s.y - y) > 0.1)
+            s.alive && !matches!(s.order, Order::Hold) && self.last.at.get(i).is_some_and(|&(x, y)| (s.x - x).hypot(s.y - y) > 0.1)
         });
         // Kills count only while the mould is smaller than 30 s ago: firing
         // at a mould that regrows as fast is not progress (design review,
@@ -697,11 +579,7 @@ impl Tracker {
         let shrinking = g.mould < self.moulds[ago];
         let banked = g.harvested > self.last.harvested + 1e-3;
         let rising = b > self.last.bar + 1e-4;
-        self.stall_run = if rising || shrinking || banked {
-            0
-        } else {
-            self.stall_run + 1
-        };
+        self.stall_run = if rising || shrinking || banked { 0 } else { self.stall_run + 1 };
         self.longest_stall = self.longest_stall.max(self.stall_run);
         let useful = banked
             || (g.killed > self.last.killed && shrinking)
@@ -736,14 +614,7 @@ impl Tracker {
             None => false,
         };
         let graded = |best: f32| if best >= 0.5 { 1 } else { 0 };
-        let v = |cause, stars| {
-            Some(Verdict {
-                cause,
-                at: t,
-                stars,
-                best: self.best,
-            })
-        };
+        let v = |cause, stars| Some(Verdict { cause, at: t, stars, best: self.best });
         self.verdict = if met {
             v(Cause::Goal, 1 + u8::from(t < two_stars(r.cap)) + u8::from(bonus))
         } else if matches!(g.end, Some(End::SquadWiped(_))) {
@@ -806,39 +677,22 @@ impl Tracker {
                 Some(0) | None => format!("{says} ({:.0}%)", 100.0 * b),
                 Some(n) => format!("{says} ({:.0}%; thick mould outside in {n} places)", 100.0 * b),
             },
-            (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!(
-                "{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)",
-                100.0 * b,
-                100.0 * o,
-                100.0 * leak
-            ),
+            (Some(b), Goal::Contain { leak, .. }, Some(o)) => format!("{says} ({:.0}%; {:.1}% outside, {:.0}% allowed)", 100.0 * b, 100.0 * o, 100.0 * leak),
             // The walkers now and the count to reach, beside the bar (the
             // whole-game review, 11-15: "(0%)" alone said nothing for the
             // first minute, and never how far there was to go).
             (Some(_), Goal::Shrink(_), _) if self.peak == 0 => match self.walkers {
-                Some(n) => format!(
-                    "{says} (counting from {}:{:02}; {} walkers now)",
-                    SHRINK_FROM as u32 / 60,
-                    SHRINK_FROM as u32 % 60,
-                    grouped(n)
-                ),
+                Some(n) => format!("{says} (counting from {}:{:02}; {} walkers now)", SHRINK_FROM as u32 / 60, SHRINK_FROM as u32 % 60, grouped(n)),
                 None => says.clone(),
             },
             (Some(b), Goal::Shrink(f), _) => match self.walkers {
-                Some(n) => format!(
-                    "{says} ({:.0}%: {} walkers now \u{2192} {})",
-                    100.0 * b,
-                    grouped(n),
-                    grouped((self.peak as f32 * f).floor() as usize)
-                ),
+                Some(n) => format!("{says} ({:.0}%: {} walkers now \u{2192} {})", 100.0 * b, grouped(n), grouped((self.peak as f32 * f).floor() as usize)),
                 None => format!("{says} ({:.0}%)", 100.0 * b),
             },
             (Some(b), _, _) => format!("{says} ({:.0}%)", 100.0 * b),
             // Said, not hidden (design review, 05:38Z): a world with no
             // mould grid gives a goal on where the mould is no bar.
-            (None, _, _) if self.secs.iter().sum::<u32>() > 0 => {
-                format!("{says} (progress not shown in this build yet)")
-            }
+            (None, _, _) if self.secs.iter().sum::<u32>() > 0 => format!("{says} (progress not shown in this build yet)"),
             (None, _, _) => says.clone(),
         }
     }
@@ -849,15 +703,8 @@ impl Tracker {
         let at = format!("{}:{:02}", v.at as u32 / 60, v.at as u32 % 60);
         let best = format!("best {:.0}% of the goal", 100.0 * v.best);
         match v.cause {
-            Cause::Goal => format!(
-                "Goal met at {at}: {} star{}",
-                v.stars,
-                if v.stars == 1 { "" } else { "s" }
-            ),
-            Cause::Cap => format!(
-                "Time: {} ({best})",
-                if v.stars > 0 { "held on, 1 star" } else { "lost" }
-            ),
+            Cause::Goal => format!("Goal met at {at}: {} star{}", v.stars, if v.stars == 1 { "" } else { "s" }),
+            Cause::Cap => format!("Time: {} ({best})", if v.stars > 0 { "held on, 1 star" } else { "lost" }),
             Cause::SquadWiped => format!("Your last soldier fell at {at} ({best})"),
             Cause::Overrun => format!("The mould took the larder at {at} with the bank empty ({best})"),
             Cause::Stuck => format!("No food to buy or fire with since {} ({best})", {
@@ -947,6 +794,7 @@ pub fn wall_rim_gaps<W: World>(g: &mut Game<W>, walled: &mut [bool; 4]) {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -958,58 +806,24 @@ mod tests {
     fn a_mission_file_parses_and_refuses_typos() {
         let m = Mission::parse(LANDFALL).unwrap();
         assert_eq!(m.goal, Goal::Squad { n: 8, crystals: 0 });
-        assert_eq!(
-            Mission::parse(&LANDFALL.replace("goal squad 8", "goal squad 8 2"))
-                .unwrap()
-                .goal,
-            Goal::Squad { n: 8, crystals: 2 }
-        );
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal squad 8 2")).unwrap().goal, Goal::Squad { n: 8, crystals: 2 });
         assert_eq!(m.bonus, Some(Bonus::LoseAtMost(2)));
         assert_eq!(m.rules(Rules::default()).price, 0.0);
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal sqaud 8")).is_err());
         assert!(Mission::parse(&LANDFALL.replace("rule price 0", "rule prise 0")).is_err());
         assert!(Mission::parse(&format!("{LANDFALL}goal take 0.6\n")).is_err());
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 6 60 1 2 3 4 5 6 7 8")).unwrap();
-        assert_eq!(
-            c.goal,
-            Goal::Clear {
-                crystals: (1..=8).collect(),
-                need: 6,
-                secs: 60.0,
-                retake: false,
-                guard: false
-            }
-        );
+        assert_eq!(c.goal, Goal::Clear { crystals: (1..=8).collect(), need: 6, secs: 60.0, retake: false, guard: false });
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal hold 1 60 1 2")).unwrap();
-        assert!(matches!(
-            c.goal,
-            Goal::Clear {
-                retake: true,
-                guard: true,
-                ..
-            }
-        ));
+        assert!(matches!(c.goal, Goal::Clear { retake: true, guard: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal retake 1 60 1")).unwrap();
         assert!(matches!(c.goal, Goal::Clear { retake: true, .. }));
         let c = Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60 1 16")).unwrap();
         assert!(matches!(c.goal, Goal::Contain { body: 16, .. }));
-        assert!(
-            Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(),
-            "contain needs its leak"
-        );
+        assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal contain 0 0 10 10 60")).is_err(), "contain needs its leak");
         assert!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal clear 3 60 1 2")).is_err());
-        assert_eq!(
-            Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6"))
-                .unwrap()
-                .goal,
-            Goal::Take(0.6, 0.0)
-        );
-        assert_eq!(
-            Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6 300"))
-                .unwrap()
-                .goal,
-            Goal::Take(0.6, 300.0)
-        );
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6")).unwrap().goal, Goal::Take(0.6, 0.0));
+        assert_eq!(Mission::parse(&LANDFALL.replace("goal squad 8", "goal take 0.6 300")).unwrap().goal, Goal::Take(0.6, 300.0));
         let own = Mission::parse(&LANDFALL.replace("goal squad 8", "own\ngoal outgrow 0.6 60")).unwrap();
         assert_eq!((own.goal, own.own), (Goal::Outgrow(0.6, 60.0), true));
         assert!(!Mission::parse(LANDFALL).unwrap().own);
@@ -1025,8 +839,7 @@ mod tests {
         for e in std::fs::read_dir(&dir).unwrap() {
             let p = e.unwrap().path();
             if p.extension().is_some_and(|x| x == "txt") {
-                Mission::parse(&std::fs::read_to_string(&p).unwrap())
-                    .unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+                Mission::parse(&std::fs::read_to_string(&p).unwrap()).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
                 n += 1;
             }
         }
@@ -1034,10 +847,7 @@ mod tests {
         // The start menu's list: every file, in campaign order (10 after 9).
         let list = Mission::list(&dir);
         assert_eq!(list.len(), n, "every shipped mission parses, so all are listed");
-        let nums: Vec<u32> = list
-            .iter()
-            .map(|(s, _)| s.split('-').next().unwrap().parse().unwrap())
-            .collect();
+        let nums: Vec<u32> = list.iter().map(|(s, _)| s.split('-').next().unwrap().parse().unwrap()).collect();
         assert!(nums.windows(2).all(|w| w[0] <= w[1]), "in order: {nums:?}");
         assert_eq!(list[0].0, "1-landfall");
     }
@@ -1047,14 +857,7 @@ mod tests {
     /// squad's seconds are dead.
     #[test]
     fn an_idle_squad_does_not_meet_a_squad_goal() {
-        let mut g = Game::new(
-            race_world(1, 2, 2000),
-            Rules {
-                cap: 120.0,
-                ..Rules::default()
-            },
-            1,
-        );
+        let mut g = Game::new(race_world(1, 2, 2000), Rules { cap: 120.0, ..Rules::default() }, 1);
         let mut tr = Tracker::new(Mission::parse(LANDFALL).unwrap(), &g);
         let mut v = None;
         while v.is_none() {
@@ -1076,14 +879,7 @@ mod tests {
     /// with stars before the cap.
     #[test]
     fn hiring_fills_the_squad_goal() {
-        let mut g = Game::new(
-            race_world(1, 2, 2000),
-            Rules {
-                start_bank: 10_000.0,
-                ..Rules::default()
-            },
-            1,
-        );
+        let mut g = Game::new(race_world(1, 2, 2000), Rules { start_bank: 10_000.0, ..Rules::default() }, 1);
         let mut tr = Tracker::new(Mission::parse(LANDFALL).unwrap(), &g);
         let mut v = None;
         while v.is_none() {
@@ -1104,12 +900,7 @@ mod tests {
 
     /// Plays `secs` game seconds (or to the verdict) with `hand` called once
     /// a second, the tracker following with the CPU world's mould grid.
-    fn follow(
-        g: &mut Game<crate::mould::big::BigDish>,
-        tr: &mut Tracker,
-        secs: f32,
-        mut hand: impl FnMut(&mut Game<crate::mould::big::BigDish>),
-    ) -> Option<Verdict> {
+    fn follow(g: &mut Game<crate::mould::big::BigDish>, tr: &mut Tracker, secs: f32, mut hand: impl FnMut(&mut Game<crate::mould::big::BigDish>)) -> Option<Verdict> {
         let tps = g.rules.tps as u64;
         while g.time() < secs {
             hand(g);
@@ -1156,10 +947,7 @@ mod tests {
 
         let mut g = small(Rules::default());
         let mut tr = Tracker::new(mission(&format!("goal retake 1 10 {near}")), &g);
-        assert!(
-            follow(&mut g, &mut tr, 30.0, |_| {}).is_none(),
-            "retake: the mould was never there"
-        );
+        assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none(), "retake: the mould was never there");
         assert_eq!(tr.best, 0.0);
 
         let mut g = small(Rules::default());
@@ -1186,25 +974,16 @@ mod tests {
                 s.order = Order::Move(at.0, at.1);
             }
         });
-        assert_eq!(
-            v.map(|v| v.cause),
-            Some(Cause::Goal),
-            "a soldier on the crystal holds it"
-        );
+        assert_eq!(v.map(|v| v.cause), Some(Cause::Goal), "a soldier on the crystal holds it");
         let mut g = small(Rules::default());
         let mut tr = held(&g, near);
         // The larder is on that crystal: walk well clear of it.
         let away = (at.0 - 120.0, at.1);
-        assert!(
-            follow(&mut g, &mut tr, 40.0, |g| {
-                for s in g.soldiers.iter_mut() {
-                    s.order = Order::Move(away.0, away.1);
-                }
-            })
-            .is_none(),
-            "nobody on it, not held: best {}",
-            tr.best
-        );
+        assert!(follow(&mut g, &mut tr, 40.0, |g| {
+            for s in g.soldiers.iter_mut() {
+                s.order = Order::Move(away.0, away.1);
+            }
+        }).is_none(), "nobody on it, not held: best {}", tr.best);
     }
 
     /// Stuck seconds warn on the goal line before they end the mission
@@ -1214,11 +993,7 @@ mod tests {
         let g = small(Rules::default());
         let mut tr = Tracker::new(mission("goal shrink 0.02"), &g);
         tr.stuck_run = STUCK_WARN as u32 - 1;
-        assert!(
-            !tr.progress_line().contains("Nothing is happening"),
-            "{}",
-            tr.progress_line()
-        );
+        assert!(!tr.progress_line().contains("Nothing is happening"), "{}", tr.progress_line());
         tr.stuck_run = STUCK_WARN as u32 + 2;
         let line = tr.progress_line();
         assert!(line.contains("ends in 18 s"), "{line}");
@@ -1245,11 +1020,7 @@ mod tests {
         let mut tr = Tracker::new(mission("goal contain 0 0 8 8 10 1 16"), &g);
         assert!(follow(&mut g, &mut tr, 30.0, |_| {}).is_none());
         assert!(tr.thick.unwrap() > 0, "thick bins outside: {:?}", tr.thick);
-        assert!(
-            tr.progress_line().contains("thick mould outside in"),
-            "{}",
-            tr.progress_line()
-        );
+        assert!(tr.progress_line().contains("thick mould outside in"), "{}", tr.progress_line());
     }
 
     /// An idle squad takes no charge: `take` stays at 0 (its bar starts from
@@ -1269,24 +1040,11 @@ mod tests {
         // Before the peak counts, the line says when it will, and the
         // walkers now; after, the walkers now and the count to reach.
         let line = tr.progress_line();
-        assert!(
-            line.contains("counting from 1:00;") && line.contains(&format!("{} walkers now", grouped(g.world.mass()))),
-            "{line}"
-        );
+        assert!(line.contains("counting from 1:00;") && line.contains(&format!("{} walkers now", grouped(g.world.mass()))), "{line}");
         assert!(follow(&mut g, &mut tr, 65.0, |_| {}).is_none());
         let line = tr.progress_line();
-        assert!(
-            line.contains(&format!(
-                "{} walkers now \u{2192} {}",
-                grouped(g.world.mass()),
-                grouped(tr.peak / 2)
-            )),
-            "{line}"
-        );
-        assert_eq!(
-            (grouped(7), grouped(1234), grouped(12630), grouped(1_000_000)),
-            ("7".into(), "1,234".into(), "12,630".into(), "1,000,000".into())
-        );
+        assert!(line.contains(&format!("{} walkers now \u{2192} {}", grouped(g.world.mass()), grouped(tr.peak / 2))), "{line}");
+        assert_eq!((grouped(7), grouped(1234), grouped(12630), grouped(1_000_000)), ("7".into(), "1,234".into(), "12,630".into(), "1,000,000".into()));
     }
 
     /// A held take goal is not met while the share is only reached: a
@@ -1316,11 +1074,7 @@ mod tests {
                 assert_eq!(tr.bar, Some(0.0), "the bar counts before a tenth is gone");
             }
         }
-        assert!(
-            tr.best <= 0.75,
-            "a minute and a half is at most 0.5 + 0.5 x 90 / 300: {}",
-            tr.best
-        );
+        assert!(tr.best <= 0.75, "a minute and a half is at most 0.5 + 0.5 x 90 / 300: {}", tr.best);
     }
 
     /// **Outgrow** (mission 8): on the garden the bar is 0 at the even
@@ -1338,9 +1092,7 @@ mod tests {
         assert!(tr.bar.unwrap() < 0.05, "even sides: {:?}", tr.bar);
         // Kill most of the enemy's walkers: the share passes 0.6.
         let d = &mut g.world.dish;
-        let enemy: Vec<usize> = (0..d.walkers.len())
-            .filter(|&k| d.lives(k) && d.spec[k] != OWN)
-            .collect();
+        let enemy: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.spec[k] != OWN).collect();
         for &k in &enemy[..enemy.len() * 3 / 4] {
             d.kill(k);
         }
@@ -1361,11 +1113,7 @@ mod tests {
     /// mission ends on Stuck (the owner's playtest, 04:13Z).
     #[test]
     fn a_broke_squad_is_stuck() {
-        let mut g = small(Rules {
-            start_bank: 0.0,
-            price: 10.0,
-            ..Rules::default()
-        });
+        let mut g = small(Rules { start_bank: 0.0, price: 10.0, ..Rules::default() });
         let mut tr = Tracker::new(mission("goal take 0.6"), &g);
         let v = follow(&mut g, &mut tr, 60.0, |_| {}).expect("stuck by 0:31");
         assert_eq!(v.cause, Cause::Stuck, "{v:?}");
@@ -1377,10 +1125,7 @@ mod tests {
     /// squad half; sent to harvest two crystals, the bar fills.
     #[test]
     fn squad_and_crystals() {
-        let mut g = small(Rules {
-            start_bank: 10_000.0,
-            ..Rules::default()
-        });
+        let mut g = small(Rules { start_bank: 10_000.0, ..Rules::default() });
         let mut tr = Tracker::new(mission("goal squad 6 2"), &g);
         assert!(follow(&mut g, &mut tr, 10.0, |g| {
             if g.alive() < 6 {
@@ -1390,14 +1135,8 @@ mod tests {
         .is_none());
         assert_eq!(tr.bar, Some(0.0), "no crystal harvested yet");
         let cs: Vec<(f32, f32)> = g.world.crystals().iter().skip(1).take(2).map(|c| c.0).collect();
-        g.apply(crate::mould::larder_world::Cmd::Order(
-            0,
-            Order::Clear(cs[0].0, cs[0].1),
-        ));
-        g.apply(crate::mould::larder_world::Cmd::Order(
-            1,
-            Order::Clear(cs[1].0, cs[1].1),
-        ));
+        g.apply(crate::mould::larder_world::Cmd::Order(0, Order::Clear(cs[0].0, cs[0].1)));
+        g.apply(crate::mould::larder_world::Cmd::Order(1, Order::Clear(cs[1].0, cs[1].1)));
         let v = follow(&mut g, &mut tr, 20.0, |_| {}).expect("six soldiers on two crystals");
         assert_eq!(v.cause, Cause::Goal);
     }
@@ -1432,11 +1171,7 @@ mod tests {
         use crate::mould::tiers::Tier;
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let play = |name: &str, hand: &str, walls: bool, secs: f32| -> (Option<Verdict>, f32) {
-            let m = Mission::parse(
-                &std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt")))
-                    .unwrap(),
-            )
-            .unwrap();
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
             let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
             let mut p = race_params(1, 2, 5000);
             if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
@@ -1468,27 +1203,15 @@ mod tests {
             ]
             .map(|h| h.join().unwrap())
         });
-        assert!(
-            m1.0.is_some_and(|v| v.cause == Cause::Goal),
-            "Landfall, claim: {:?}",
-            m1.0
-        );
-        assert!(
-            m2.0.is_some_and(|v| v.cause == Cause::Goal),
-            "First contact, strike: {:?}",
-            m2.0
-        );
+        assert!(m1.0.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", m1.0);
+        assert!(m2.0.is_some_and(|v| v.cause == Cause::Goal), "First contact, strike: {:?}", m2.0);
         // In held seconds of The gaps' 5:00 (300 s since census v12): walls
         // hold 150 s or more of the 180, no walls under 120 (103 s on seed 1,
         // when the thick mould first gets out).
-        assert!(
-            walls.0.is_none() && walls.1 * 300.0 >= 150.0,
-            "The gaps, walls: {:?} best {}",
-            walls.0,
-            walls.1
-        );
+        assert!(walls.0.is_none() && walls.1 * 300.0 >= 150.0, "The gaps, walls: {:?} best {}", walls.0, walls.1);
         assert!(open.1 * 300.0 < 120.0, "The gaps without walls held: best {}", open.1);
     }
+
 
     /// **Missions 4-7's plans still win** (2026-11-14, cloud plan C3: each
     /// mission has two winning plans in census v13, seeds 1-4,
@@ -1508,11 +1231,7 @@ mod tests {
         use crate::mould::tiers::Tier;
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let play = |name: &str, plan: &str, style: &str, secs: f32| -> Option<Verdict> {
-            let m = Mission::parse(
-                &std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt")))
-                    .unwrap(),
-            )
-            .unwrap();
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
             let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
             let mut p = race_params(1, 2, 5000);
             if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
@@ -1534,39 +1253,14 @@ mod tests {
             let play = &play;
             [
                 // Census v15 seed 1 (after elbow room, #227): Goal at 5:33.
-                sc.spawn(move || {
-                    (
-                        "Cut the cord, cut+strike",
-                        play(
-                            "4-cut-the-cord",
-                            "cut",
-                            "strike:strike_at=180+strike_army=14+buy_to=18",
-                            420.0,
-                        ),
-                    )
-                }),
+                sc.spawn(move || ("Cut the cord, cut+strike", play("4-cut-the-cord", "cut", "strike:strike_at=180+strike_army=14+buy_to=18", 420.0))),
                 // 6:09 (v15).
-                sc.spawn(move || {
-                    (
-                        "Kill zone, zone+claim",
-                        play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0),
-                    )
-                }),
+                sc.spawn(move || ("Kill zone, zone+claim", play("5-kill-zone", "zone", "claim:claim_at=120+buy_to=10", 480.0))),
                 // 3:40 (v15).
-                sc.spawn(move || {
-                    (
-                        "The nest, strike",
-                        play("6-the-nest", "", "strike:strike_at=120+strike_army=12+buy_to=16", 360.0),
-                    )
-                }),
+                sc.spawn(move || ("The nest, strike", play("6-the-nest", "", "strike:strike_at=120+strike_army=12+buy_to=16", 360.0))),
                 // 3:43 (census v16: keep the spores off the landing
                 // crystal for a minute; pumps and turrets).
-                sc.spawn(move || {
-                    (
-                        "Spore season, turtle+boom",
-                        play("7-spore-season", "turtle", "boom:buy_to=8", 300.0),
-                    )
-                }),
+                sc.spawn(move || ("Spore season, turtle+boom", play("7-spore-season", "turtle", "boom:buy_to=8", 300.0))),
             ]
             .map(|h| h.join().unwrap())
         });
@@ -1590,11 +1284,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         // A round to `secs`, or until `done` says it is decided.
         let play = |name: &str, walls: bool, secs: f32, done: fn(&Tracker) -> bool| -> Tracker {
-            let m = Mission::parse(
-                &std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt")))
-                    .unwrap(),
-            )
-            .unwrap();
+            let m = Mission::parse(&std::fs::read_to_string(root.join(format!("Reports/larder-campaign-2026-11-12/missions/{name}.txt"))).unwrap()).unwrap();
             let map = Map::load(&root.join("Reports/larder-maps-2026-11-11/maps"), &m.map).unwrap();
             let mut p = race_params(1, 2, 5000);
             if let Some(t) = m.tier.as_deref().and_then(Tier::from_name) {
@@ -1629,21 +1319,8 @@ mod tests {
             ]
             .map(|h| h.join().unwrap())
         });
-        assert!(
-            landfall.verdict.is_some_and(|v| v.cause == Cause::Goal),
-            "Landfall, claim: {:?}",
-            landfall.verdict
-        );
-        assert!(
-            walls.verdict.is_none() && walls.thick == Some(0) && walls.bar.unwrap_or(0.0) >= 0.2,
-            "The gaps with walls: thick {:?} bar {:?}",
-            walls.thick,
-            walls.bar
-        );
-        assert!(
-            open.thick.is_some_and(|n| n > 0),
-            "The gaps without walls kept thick mould in for 2:20: bar {:?}",
-            open.bar
-        );
+        assert!(landfall.verdict.is_some_and(|v| v.cause == Cause::Goal), "Landfall, claim: {:?}", landfall.verdict);
+        assert!(walls.verdict.is_none() && walls.thick == Some(0) && walls.bar.unwrap_or(0.0) >= 0.2, "The gaps with walls: thick {:?} bar {:?}", walls.thick, walls.bar);
+        assert!(open.thick.is_some_and(|n| n > 0), "The gaps without walls kept thick mould in for 2:20: bar {:?}", open.bar);
     }
 }

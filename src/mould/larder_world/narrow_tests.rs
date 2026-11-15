@@ -14,11 +14,7 @@ pub(super) fn door_map(wide: f32, long: f32, door: f32) -> map::Map {
     for y in 0..m.h {
         for x in 0..m.w {
             let (dx, dy) = ((x as f32 + 0.5) / k, (y as f32 + 0.5) / k);
-            m.ground[y * m.w + x] = if (120.0..120.0 + long).contains(&dx) && (dy - door).abs() > wide / 2.0 {
-                map::G_ROCK
-            } else {
-                0
-            };
+            m.ground[y * m.w + x] = if (120.0..120.0 + long).contains(&dx) && (dy - door).abs() > wide / 2.0 { map::G_ROCK } else { 0 };
         }
     }
     m
@@ -44,16 +40,7 @@ pub(super) fn bridge_game(seed: u64, n: usize) -> Game<BigDish> {
 pub(super) fn gap_game(m: &map::Map, seed: u64, n: usize) -> Game<BigDish> {
     let d = BigDish::with_map(race_params(seed, 1, 500), m);
     let funnel = std::env::var("NARROW_FUNNEL").map_or(true, |v| v != "0");
-    let mut g = Game::new(
-        d,
-        Rules {
-            squads: true,
-            funnel,
-            max_squad: 64,
-            ..Rules::default()
-        },
-        seed,
-    );
+    let mut g = Game::new(d, Rules { squads: true, funnel, max_squad: 64, ..Rules::default() }, seed);
     g.bank = 1e6;
     while g.alive() < n {
         assert!(g.apply(Cmd::Buy));
@@ -73,10 +60,7 @@ pub(super) fn cross(g: &mut Game<BigDish>, to: (f32, f32), secs: f32) -> Vec<(f3
     for _ in 0..steps {
         g.step();
         let m = g.members(0);
-        out.push((
-            g.time() - t0,
-            m.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect(),
-        ));
+        out.push((g.time() - t0, m.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect()));
     }
     out
 }
@@ -84,54 +68,36 @@ pub(super) fn cross(g: &mut Game<BigDish>, to: (f32, f32), secs: f32) -> Vec<(f3
 #[test]
 #[ignore]
 fn measure_bridge() {
-    for (name, map, goal) in gaps()
-        .into_iter()
-        .filter(|g| std::env::var("NARROW_MAP").map_or(true, |m| m == g.0))
-    {
-        for n in std::env::var("NARROW_NS")
-            .map(|v| v.split(',').map(|x| x.parse().unwrap()).collect::<Vec<usize>>())
-            .unwrap_or(vec![8, 16, 24, 32])
-        {
-            for seed in 1..=2u64 {
-                let mut g = gap_game(&map, seed, n);
-                let sc = g.s();
-                let m0 = g.middle(0).unwrap();
-                let to = (goal.0 * sc, goal.1 * sc);
-                let tr = cross(&mut g, to, 60.0);
-                // All past the river's far bank (dish x 137).
-                let over = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 152.0 * sc)).map(|t| t.0);
-                // All within 3 gaps of the goal's blob.
-                let settled = tr
-                    .iter()
-                    .find(|(_, p)| {
-                        p.iter()
-                            .all(|q| (q.0 - to.0).hypot(q.1 - to.1) < (g.gap() * (n as f32).sqrt() + 2.0) * sc)
-                    })
-                    .map(|t| t.0);
-                // Walking: total path, total backward (away from goal x) path.
-                let (mut walked, mut back) = (0.0, 0.0);
-                for w in tr.windows(2) {
-                    for (a, b) in w[0].1.iter().zip(&w[1].1) {
-                        walked += (b.0 - a.0).hypot(b.1 - a.1);
-                        if b.0 < a.0 {
-                            back += a.0 - b.0;
-                        }
-                    }
+    for (name, map, goal) in gaps().into_iter().filter(|g| std::env::var("NARROW_MAP").map_or(true, |m| m == g.0)) {
+    for n in std::env::var("NARROW_NS").map(|v| v.split(',').map(|x| x.parse().unwrap()).collect::<Vec<usize>>()).unwrap_or(vec![8, 16, 24, 32]) {
+        for seed in 1..=2u64 {
+            let mut g = gap_game(&map, seed, n);
+            let sc = g.s();
+            let m0 = g.middle(0).unwrap();
+            let to = (goal.0 * sc, goal.1 * sc);
+            let tr = cross(&mut g, to, 60.0);
+            // All past the river's far bank (dish x 137).
+            let over = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 152.0 * sc)).map(|t| t.0);
+            // All within 3 gaps of the goal's blob.
+            let settled = tr.iter().find(|(_, p)| p.iter().all(|q| (q.0 - to.0).hypot(q.1 - to.1) < (g.gap() * (n as f32).sqrt() + 2.0) * sc)).map(|t| t.0);
+            // Walking: total path, total backward (away from goal x) path.
+            let (mut walked, mut back) = (0.0, 0.0);
+            for w in tr.windows(2) {
+                for (a, b) in w[0].1.iter().zip(&w[1].1) {
+                    walked += (b.0 - a.0).hypot(b.1 - a.1);
+                    if b.0 < a.0 { back += a.0 - b.0; }
                 }
-                let mut stuck = 0usize; // soldier-steps not moving while not yet settled
-                for w in tr.windows(2) {
-                    if settled.is_some_and(|s| w[1].0 > s) {
-                        break;
-                    }
-                    for (a, b) in w[0].1.iter().zip(&w[1].1) {
-                        if (b.0 - a.0).hypot(b.1 - a.1) < 1e-3 * sc {
-                            stuck += 1;
-                        }
-                    }
-                }
-                println!("{name} n={n} seed={seed} start=({:.0},{:.0}) over={over:?} settled={settled:?} walked/soldier={:.0} back/soldier={:.1} still-steps/soldier={:.0} jam={:.2} crowd={}", m0.0 / sc, m0.1 / sc, walked / n as f32 / sc, back / n as f32 / sc, stuck as f32 / n as f32, jam(&tr, g.gap() * sc), crowd(&tr, g.gap() * sc));
             }
+            let mut stuck = 0usize; // soldier-steps not moving while not yet settled
+            for w in tr.windows(2) {
+                if settled.is_some_and(|s| w[1].0 > s) { break; }
+                for (a, b) in w[0].1.iter().zip(&w[1].1) {
+                    if (b.0 - a.0).hypot(b.1 - a.1) < 1e-3 * sc { stuck += 1; }
+                }
+            }
+            println!("{name} n={n} seed={seed} start=({:.0},{:.0}) over={over:?} settled={settled:?} walked/soldier={:.0} back/soldier={:.1} still-steps/soldier={:.0} jam={:.2} crowd={}", m0.0 / sc, m0.1 / sc, walked / n as f32 / sc, back / n as f32 / sc, stuck as f32 / n as f32, jam(&tr, g.gap() * sc), crowd(&tr, g.gap() * sc));
         }
+    }
     }
 }
 
@@ -139,21 +105,13 @@ fn measure_bridge() {
 /// gap at once among those within 12 dish cells of dish x 128, per soldier.
 pub(super) fn jam(tr: &[(f32, Vec<(f32, f32)>)], gap: f32) -> f32 {
     let sc = gap / 2.52;
-    tr.iter()
-        .map(|(_, p)| {
-            let n = p.len();
-            let p: Vec<(f32, f32)> = p.iter().copied().filter(|q| (q.0 / sc - 128.0).abs() < 20.0).collect();
-            let mut c = 0;
-            for i in 0..p.len() {
-                for j in i + 1..p.len() {
-                    if (p[i].0 - p[j].0).hypot(p[i].1 - p[j].1) < 0.5 * gap {
-                        c += 1;
-                    }
-                }
-            }
-            c as f32 / n as f32
-        })
-        .fold(0.0, f32::max)
+    tr.iter().map(|(_, p)| {
+        let n = p.len();
+        let p: Vec<(f32, f32)> = p.iter().copied().filter(|q| (q.0 / sc - 128.0).abs() < 20.0).collect();
+        let mut c = 0;
+        for i in 0..p.len() { for j in i + 1..p.len() { if (p[i].0 - p[j].0).hypot(p[i].1 - p[j].1) < 0.5 * gap { c += 1; } } }
+        c as f32 / n as f32
+    }).fold(0.0, f32::max)
 }
 
 /// Writes squad 0's walk over the bridge as CSV (t, k, x, y in dish cells)
@@ -161,10 +119,7 @@ pub(super) fn jam(tr: &[(f32, Vec<(f32, f32)>)], gap: f32) -> f32 {
 #[test]
 #[ignore]
 fn dump_bridge() {
-    let n: usize = std::env::var("NARROW_N")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(24);
+    let n: usize = std::env::var("NARROW_N").ok().and_then(|v| v.parse().ok()).unwrap_or(24);
     let which = std::env::var("NARROW_MAP").unwrap_or("bridge8".into());
     let (_, map, goal) = gaps().into_iter().find(|g| g.0 == which).unwrap();
     let mut g = gap_game(&map, 1, n);
@@ -184,11 +139,7 @@ fn dump_bridge() {
     let mut m = String::new();
     for y in 0..h {
         for x in 0..w {
-            m.push(if g.standable(x as f32 + 0.5, y as f32 + 0.5) {
-                '1'
-            } else {
-                '0'
-            });
+            m.push(if g.standable(x as f32 + 0.5, y as f32 + 0.5) { '1' } else { '0' });
         }
         m.push('\n');
     }
@@ -210,26 +161,15 @@ fn save_gap_maps() {
 /// soldier within 20 dish cells of dish x 128.
 pub(super) fn crowd(tr: &[(f32, Vec<(f32, f32)>)], gap: f32) -> usize {
     let sc = gap / 2.52;
-    tr.iter()
-        .map(|(_, p)| {
-            p.iter()
-                .filter(|q| (q.0 / sc - 128.0).abs() < 20.0)
-                .map(|a| p.iter().filter(|b| (b.0 - a.0).hypot(b.1 - a.1) < gap).count() - 1)
-                .max()
-                .unwrap_or(0)
-        })
-        .max()
-        .unwrap_or(0)
+    tr.iter().map(|(_, p)| {
+        p.iter().filter(|q| (q.0 / sc - 128.0).abs() < 20.0).map(|a| p.iter().filter(|b| (b.0 - a.0).hypot(b.1 - a.1) < gap).count() - 1).max().unwrap_or(0)
+    }).max().unwrap_or(0)
 }
 
 /// Furthest member of squad 0 from its middle, dish cells.
 fn spread(g: &Game<BigDish>) -> f32 {
     let m = g.middle(0).unwrap();
-    g.members(0)
-        .iter()
-        .map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1))
-        .fold(0.0, f32::max)
-        / g.s()
+    g.members(0).iter().map(|&k| (g.soldiers[k].x - m.0).hypot(g.soldiers[k].y - m.1)).fold(0.0, f32::max) / g.s()
 }
 
 /// **A big squad funnels through a narrow door** (owner, 2026-11-15). 24
@@ -254,20 +194,11 @@ fn a_big_squad_funnels_through_a_door_and_forms_up_after() {
             if funnel {
                 let over = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 152.0 * sc)).map(|t| t.0);
                 assert!(over.is_some_and(|t| t < 16.0), "seed {seed}: through at {over:?}");
-                assert!(
-                    !g.columns[0].on && g.squads[0].dest.is_none(),
-                    "seed {seed}: arrived and out of the column"
-                );
+                assert!(!g.columns[0].on && g.squads[0].dest.is_none(), "seed {seed}: arrived and out of the column");
             }
         }
-        assert!(
-            worst[1] <= 7 && worst[1] < worst[0],
-            "seed {seed}: worst knot {worst:?} (off, on)"
-        );
-        assert!(
-            after[1] < after[0] + 1.0,
-            "seed {seed}: stands {after:?} cells wide after (off, on)"
-        );
+        assert!(worst[1] <= 7 && worst[1] < worst[0], "seed {seed}: worst knot {worst:?} (off, on)");
+        assert!(after[1] < after[0] + 1.0, "seed {seed}: stands {after:?} cells wide after (off, on)");
     }
 }
 
@@ -319,13 +250,7 @@ fn time_funnel() {
         for _ in 0..(16.0 / dt) as usize {
             // The turn alone on a copy of the step's start: the real step
             // runs it again, so time it on the squads' state as it stands.
-            let saved = (
-                g.squads.clone(),
-                g.columns.clone(),
-                g.soldiers.clone(),
-                g.ranks.clone(),
-                g.ranked,
-            );
+            let saved = (g.squads.clone(), g.columns.clone(), g.soldiers.clone(), g.ranks.clone(), g.ranked);
             let t0 = std::time::Instant::now();
             g.squad_turn(dt);
             t += t0.elapsed().as_secs_f64();
@@ -334,9 +259,6 @@ fn time_funnel() {
             (g.squads, g.columns, g.soldiers, g.ranks, g.ranked) = saved;
             g.step();
         }
-        println!(
-            "funnel={funnel} squad_turn mean {:.1} us over {n} steps ({on} funnelling)",
-            t / n as f64 * 1e6
-        );
+        println!("funnel={funnel} squad_turn mean {:.1} us over {n} steps ({on} funnelling)", t / n as f64 * 1e6);
     }
 }

@@ -668,14 +668,7 @@ fn hud_lines(d: &Dish, view: &View, scale: u32, frame: &mut [u8], (fw, fh): (u32
         Phase::Over if d.level.is_some() => {
             let amount = d.card.as_ref().map(|c| c.amount.clone()).unwrap_or_default();
             text(frame, (fw, fh), 6, line(3), &amount, TEXT);
-            text(
-                frame,
-                (fw, fh),
-                6,
-                line(4),
-                "R: TRY AGAIN  N: NEXT DISH  M: DISHES",
-                DIM,
-            );
+            text(frame, (fw, fh), 6, line(4), "R: TRY AGAIN  N: NEXT DISH  M: DISHES", DIM);
         }
         Phase::Over => score_lines(d, frame, (fw, fh), line(3)),
         Phase::Growing => {
@@ -864,10 +857,7 @@ fn arrival_card(d: &Dish, frame: &mut [u8], (fw, fh): (u32, u32)) {
                     ),
                     TEXT,
                 ),
-                (
-                    format!("N: DISH {} WITH {}  R: AGAIN", w.stretch + 1, thousands(n)),
-                    DIM,
-                ),
+                (format!("N: DISH {} WITH {}  R: AGAIN", w.stretch + 1, thousands(n)), DIM),
             ]
         }
         Some(Outcome::Lost { at }) => vec![
@@ -1090,11 +1080,7 @@ fn level_status(d: &Dish, joined: &super::Score) -> String {
         },
         Win::AliveAtBell { .. } => {
             let fed = d.dish_piles().filter(|p| p.reached() && p.food > 0.0).count();
-            format!(
-                "TIME {left}  MOULD {}  EATING {fed} PILE{}",
-                d.walkers.len(),
-                if fed == 1 { "" } else { "S" }
-            )
+            format!("TIME {left}  MOULD {}  EATING {fed} PILE{}", d.walkers.len(), if fed == 1 { "" } else { "S" })
         }
         Win::Endless { .. } => format!(
             "ALIVE {}  MOULD {}  MOST {}",
@@ -1102,11 +1088,7 @@ fn level_status(d: &Dish, joined: &super::Score) -> String {
             d.walkers.len(),
             d.peak_mould
         ),
-        Win::Rival { .. } => format!(
-            "TIME {left}  YOU ATE {}%  WILD {}",
-            super::level::pct(d.food_share()),
-            d.wild_left
-        ),
+        Win::Rival { .. } => format!("TIME {left}  YOU ATE {}%  WILD {}", super::level::pct(d.food_share()), d.wild_left),
     }
 }
 
@@ -1141,10 +1123,7 @@ fn ruler_overlay(d: &Dish, scale: u32, frame: &mut [u8], fw: u32) {
         let (p, q) = (&l.piles[a], &l.piles[b]);
         let len = (q.x - p.x).hypot(q.y - p.y).max(0.01);
         let (ux, uy) = ((q.x - p.x) / len, (q.y - p.y) / len);
-        (
-            (p.x + ux * (p.r + 3.0), p.y + uy * (p.r + 3.0)),
-            (q.x - ux * (q.r + 3.0), q.y - uy * (q.r + 3.0)),
-        )
+        ((p.x + ux * (p.r + 3.0), p.y + uy * (p.r + 3.0)), (q.x - ux * (q.r + 3.0), q.y - uy * (q.r + 3.0)))
     };
     for (a, b) in l.ruler().1 {
         let (pa, pb) = rim(a, b);
@@ -1286,8 +1265,7 @@ impl QuitArm {
 
     /// Whether a second Escape at `now` would quit (what the look shows).
     pub fn armed(&self, now: std::time::Instant) -> bool {
-        self.at
-            .is_some_and(|at| now.saturating_duration_since(at) <= Self::WINDOW)
+        self.at.is_some_and(|at| now.saturating_duration_since(at) <= Self::WINDOW)
     }
 
     /// True once, on the first call after the window ran out unused: the
@@ -1331,9 +1309,7 @@ pub fn menu_cards((fw, fh): (u32, u32)) -> Vec<(i32, i32, i32, i32)> {
     let h = 64;
     let gap = 6;
     let top = ((fh as i32 - (n * (h + gap) + 30)) / 2).max(2) + 26;
-    (0..n)
-        .map(|k| ((fw as i32 - w) / 2, top + k * (h + gap), w, h))
-        .collect()
+    (0..n).map(|k| ((fw as i32 - w) / 2, top + k * (h + gap), w, h)).collect()
 }
 
 /// An entry's name and two lines, for the picker.
@@ -1341,17 +1317,8 @@ pub fn entry_lines(e: usize) -> (&'static str, [&'static str; 2]) {
     use super::level::{DISHES, FREE, WANDER};
     match e {
         0 => ("LESSON", ["SIX STEPS: EACH TOOL IN TURN,", "THEN A STORM."]),
-        FREE => (
-            "FREE DISH",
-            ["THE SEEDED DISHES: JOIN, SHORT,", "STORM-PROOF. N: ANOTHER DISH."],
-        ),
-        WANDER => (
-            "THE WANDERER",
-            [
-                "NO CLOCK: LEAD HER TO THE CRACK, G: GO.",
-                "WHAT ARRIVES STARTS THE NEXT DISH.",
-            ],
-        ),
+        FREE => ("FREE DISH", ["THE SEEDED DISHES: JOIN, SHORT,", "STORM-PROOF. N: ANOTHER DISH."]),
+        WANDER => ("THE WANDERER", ["NO CLOCK: LEAD HER TO THE CRACK, G: GO.", "WHAT ARRIVES STARTS THE NEXT DISH."]),
         _ => (DISHES[e - 1].name, DISHES[e - 1].goal),
     }
 }
@@ -1380,14 +1347,7 @@ fn menu(m: &Menu, frame: &mut [u8], (fw, fh): (u32, u32), _scale: u32) {
         panel(frame, fw, (x, y, w, h), edge);
         let (name, lines) = entry_lines(e);
         let c = if open { TEXT } else { DIM };
-        text(
-            frame,
-            (fw, fh),
-            x + 10,
-            y + 6,
-            &format!("{} {name}", e + 1),
-            if open { HOT } else { DIM },
-        );
+        text(frame, (fw, fh), x + 10, y + 6, &format!("{} {name}", e + 1), if open { HOT } else { DIM });
         // Best stars, or "DONE" for the lesson; nothing for free play and
         // the Wanderer.
         let right = if e >= FREE {

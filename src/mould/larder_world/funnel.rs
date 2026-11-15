@@ -70,10 +70,7 @@ impl<W: World> Game<W> {
     pub(super) fn formation_width(&self, q: usize) -> f32 {
         let n = self.members(q).len();
         let sq = self.squads[q];
-        let far = (0..n)
-            .map(|r| sq.formation.offset(r, n, self.gap()))
-            .map(|o| o.0.hypot(o.1))
-            .fold(0.0, f32::max);
+        let far = (0..n).map(|r| sq.formation.offset(r, n, self.gap())).map(|o| o.0.hypot(o.1)).fold(0.0, f32::max);
         2.0 * far + self.gap()
     }
 
@@ -127,14 +124,7 @@ impl<W: World> Game<W> {
         let cols = ((n as f32).sqrt().ceil() as usize).max(1);
         // The way back: the head, then the trail newest first.
         let mut way: Vec<(f32, f32)> = vec![a];
-        way.extend(
-            self.columns[q]
-                .trail
-                .iter()
-                .rev()
-                .copied()
-                .filter(|p| (p.0 - a.0).hypot(p.1 - a.1) > 1e-3),
-        );
+        way.extend(self.columns[q].trail.iter().rev().copied().filter(|p| (p.0 - a.0).hypot(p.1 - a.1) > 1e-3));
         let mut out = Vec::with_capacity(n);
         let (mut seg, mut along) = (0usize, 0.0f32);
         // Direction of travel at the head, for rows past the trail's end.
@@ -177,10 +167,7 @@ impl<W: World> Game<W> {
             let (l, r) = self.across(p, d, cap);
             // A row at most one wider than the row ahead of it, so the
             // squad tapers into the mouth instead of crowding it square.
-            let fit = (((l + r) / gap).floor() as usize)
-                .clamp(1, cols)
-                .min(last + 1)
-                .min(n - out.len());
+            let fit = (((l + r) / gap).floor() as usize).clamp(1, cols).min(last + 1).min(n - out.len());
             last = fit;
             // Centred on the free ground across the way.
             let mid = (r - l) / 2.0;
@@ -200,14 +187,7 @@ impl<W: World> Game<W> {
     /// `at` heading for `a` (its next point) and `ahead` a point further
     /// along its way. Returns the anchor to use: on starting to funnel, the
     /// squad's front.
-    pub(super) fn funnel(
-        &mut self,
-        q: usize,
-        at: (f32, f32),
-        a: (f32, f32),
-        ahead: (f32, f32),
-        front: (f32, f32),
-    ) -> (f32, f32) {
+    pub(super) fn funnel(&mut self, q: usize, at: (f32, f32), a: (f32, f32), ahead: (f32, f32), front: (f32, f32)) -> (f32, f32) {
         let sc = self.s();
         let m = self.members(q);
         let n = m.len();
@@ -226,9 +206,7 @@ impl<W: World> Game<W> {
             front
         } else if !tight && was {
             // Done once every member has a straight walk to the anchor.
-            if m.iter()
-                .all(|&k| self.walk_line((self.soldiers[k].x, self.soldiers[k].y), a))
-            {
+            if m.iter().all(|&k| self.walk_line((self.soldiers[k].x, self.soldiers[k].y), a)) {
                 self.columns[q].on = false;
             }
             a
@@ -237,11 +215,7 @@ impl<W: World> Game<W> {
         };
         let keep = (n as f32 * self.gap() + need / sc + 10.0) * sc;
         self.lay_trail(q, a, keep);
-        self.columns[q].places = if self.columns[q].on {
-            self.column_places(q, a, n)
-        } else {
-            Vec::new()
-        };
+        self.columns[q].places = if self.columns[q].on { self.column_places(q, a, n) } else { Vec::new() };
         a
     }
 
@@ -257,16 +231,12 @@ impl<W: World> Game<W> {
     /// squad funnels.
     pub(super) fn column_place(&self, k: usize, r: usize, n: usize) -> Option<(f32, f32)> {
         let c = self.columns.get(self.soldiers[k].squad as usize)?;
-        (c.on && c.places.len() == n)
-            .then(|| c.places.get(r).copied())
-            .flatten()
+        (c.on && c.places.len() == n).then(|| c.places.get(r).copied()).flatten()
     }
 
     /// Whether soldier `k`'s squad funnels now.
     pub(super) fn in_column(&self, k: usize) -> bool {
-        self.columns
-            .get(self.soldiers[k].squad as usize)
-            .is_some_and(|c| c.on && !c.places.is_empty())
+        self.columns.get(self.soldiers[k].squad as usize).is_some_and(|c| c.on && !c.places.is_empty())
     }
 }
 

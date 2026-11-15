@@ -182,14 +182,7 @@ pub fn new_dish_with(seed: u64, params: Params) -> Dish {
             if d.ground[i] == Ground::Agar && d.occ[i] == 0 {
                 d.occ[i] = 1;
                 let heading = d.rng.f32() * TAU;
-                d.walkers.push(Walker {
-                    slept: u64::MAX,
-                    woke: u64::MAX,
-                    x,
-                    y,
-                    heading,
-                    food: 0.0,
-                });
+                d.walkers.push(Walker { slept: u64::MAX, woke: u64::MAX, x, y, heading, food: 0.0 });
                 placed += 1;
             }
         }
@@ -453,9 +446,7 @@ pub fn bell_geodesic(d: &Dish, dist: &[f32], bell: usize) -> Option<f32> {
 pub fn echo_route(d: &Dish, main: &[f32], bell: usize, reach: f32) -> Option<(f32, Vec<f32>)> {
     let first = bell_geodesic(d, main, bell)?;
     let p = &d.piles[bell];
-    let rim: Vec<usize> = disc(p.r + 1.0)
-        .filter_map(|(ox, oy)| cell(p.x + ox, p.y + oy))
-        .collect();
+    let rim: Vec<usize> = disc(p.r + 1.0).filter_map(|(ox, oy)| cell(p.x + ox, p.y + oy)).collect();
     let entry: Vec<usize> = rim.iter().copied().filter(|&i| main[i] <= first + 2.0).collect();
     let n = entry.len() as f32;
     let ex = entry.iter().map(|&i| (i % W) as f32 + 0.5).sum::<f32>() / n - p.x;
@@ -676,9 +667,7 @@ impl Organ {
         }];
         let mut echo_maps = Vec::new();
         for b in 0..3 {
-            let Some(len) = bell_geodesic(d, &map, b + 1) else {
-                continue;
-            };
+            let Some(len) = bell_geodesic(d, &map, b + 1) else { continue };
             if len > PULSE_REACH {
                 continue;
             }
@@ -711,11 +700,7 @@ impl Organ {
         self.pending.extend(notes.iter().copied());
         self.pending.sort_by_key(|n| n.step);
         self.bar = notes;
-        self.pulses.push(Pulse {
-            beat_at: t,
-            map,
-            echo_maps,
-        });
+        self.pulses.push(Pulse { beat_at: t, map, echo_maps });
     }
 
     /// Seconds since the last beat.
@@ -794,14 +779,7 @@ pub fn draw(o: &Organ, view: &super::render::View, scale: u32, frame: &mut [u8])
                 let g = 0.4 + 0.6 * n.gain;
                 let fill = [0, 1, 2].map(|j| (c[j] as f32 + (255.0 - c[j] as f32) * f * 0.6) as u8);
                 disc_px(frame, fw, scale, (p.x, p.y), p.r * (0.6 + 0.4 * f * g), fill);
-                ring(
-                    frame,
-                    fw,
-                    scale,
-                    (p.x, p.y),
-                    p.r + 3.0 + 14.0 * age / 0.5,
-                    c.map(|v| (v as f32 * f) as u8),
-                );
+                ring(frame, fw, scale, (p.x, p.y), p.r + 3.0 + 14.0 * age / 0.5, c.map(|v| (v as f32 * f) as u8));
             }
         }
     }
@@ -824,13 +802,7 @@ fn ring(frame: &mut [u8], fw: u32, scale: u32, (cx, cy): (f32, f32), r: f32, c: 
     let n = (rp * 6.3).ceil().max(8.0) as usize;
     for k in 0..n {
         let a = k as f32 / n as f32 * TAU;
-        put(
-            frame,
-            fw,
-            (cx * s + a.cos() * rp) as i32,
-            (cy * s + a.sin() * rp) as i32,
-            c,
-        );
+        put(frame, fw, (cx * s + a.cos() * rp) as i32, (cy * s + a.sin() * rp) as i32, c);
     }
 }
 
@@ -899,11 +871,7 @@ fn hud(o: &Organ, view: &super::render::View, scale: u32, frame: &mut [u8], (fw,
     }
     let tools_end = x;
     if view.keys {
-        let keys = if view.paused {
-            "PAUSED  P: GO"
-        } else {
-            "T: TARGET  P: PAUSE  R: RESTART"
-        };
+        let keys = if view.paused { "PAUSED  P: GO" } else { "T: TARGET  P: PAUSE  R: RESTART" };
         let w = text_px(keys);
         if x + 12 + w + 6 < fw as i32 {
             text(frame, (fw, fh), fw as i32 - w - 6, top + 4, keys, DIM);
@@ -1032,10 +1000,7 @@ const MAX_VOICES: usize = 24;
 
 impl Voices {
     pub fn new(sample_rate: u32) -> Self {
-        Voices {
-            sr: sample_rate as f32,
-            live: Vec::with_capacity(MAX_VOICES),
-        }
+        Voices { sr: sample_rate as f32, live: Vec::with_capacity(MAX_VOICES) }
     }
 
     pub fn strike(&mut self, n: &Note) {
@@ -1048,14 +1013,7 @@ impl Voices {
             Voice::Heart => (HEART_HZ, true),
             Voice::Bell(b) => (NOTES[b], false),
         };
-        self.live.push(Ringing {
-            hz,
-            gain: n.gain,
-            pan: n.pan,
-            age: 0,
-            heart,
-            phase: [0.0; 2],
-        });
+        self.live.push(Ringing { hz, gain: n.gain, pan: n.pan, age: 0, heart, phase: [0.0; 2] });
     }
 
     /// Interleaved samples, added into `out` (which the caller zeroes).
@@ -1140,10 +1098,7 @@ pub struct Joiner {
 
 impl Joiner {
     pub fn new() -> Self {
-        Joiner {
-            next_think: 0,
-            dist: Vec::new(),
-        }
+        Joiner { next_think: 0, dist: Vec::new() }
     }
 
     /// Bells a pulse can reach now.
@@ -1261,10 +1216,7 @@ mod tests {
         heart_distance(&d, 1000, &mut s);
         let (g1, s1) = (bell_geodesic(&d, &g, 3).unwrap(), bell_distance(&d, &s, 3).unwrap());
         assert!(g1 > g0 + 4.0, "geodesic: straight {g0}, bowed {g1}");
-        assert!(
-            s1.abs_diff(s0) <= 2,
-            "step count is blind to the bow: straight {s0}, bowed {s1}"
-        );
+        assert!(s1.abs_diff(s0) <= 2, "step count is blind to the bow: straight {s0}, bowed {s1}");
     }
 
     /// A loop rings twice; a single tube once.

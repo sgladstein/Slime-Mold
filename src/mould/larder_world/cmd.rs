@@ -84,20 +84,11 @@ impl Cmd {
             Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Unbuild(b) => format!("unbuild {b}"),
             Cmd::Upgrade(b) => format!("upgrade {b}"),
-            Cmd::Queue(k, o) => format!(
-                "queue{}",
-                &super::super::larder::Cmd::Order(k, o).to_line()["order".len()..]
-            ),
-            Cmd::Rally(o) => format!(
-                "rally{}",
-                &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]
-            ),
+            Cmd::Queue(k, o) => format!("queue{}", &super::super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
+            Cmd::Rally(o) => format!("rally{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Send(b) => format!("send {b}"),
             Cmd::Steer(q, d) => format!("steer {q} {} {}", d.0, d.1),
-            Cmd::SquadOrder(q, o) => format!(
-                "sorder {q}{}",
-                &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]
-            ),
+            Cmd::SquadOrder(q, o) => format!("sorder {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Fire(q, Some(p)) => format!("fire {q} {} {}", p.0, p.1),
             Cmd::Fire(q, None) => format!("fire {q} none"),
             Cmd::Face(q, p) => format!("face {q} {} {}", p.0, p.1),
@@ -106,10 +97,7 @@ impl Cmd {
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
             Cmd::Formation(q, f) => format!("formation {q} {}", f.name()),
-            Cmd::SquadQueue(q, o) => format!(
-                "squeue {q}{}",
-                &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]
-            ),
+            Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
             Cmd::Cover(q, c) => format!("cover {q} {}", c.name()),
@@ -146,12 +134,7 @@ impl Cmd {
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
             "load" if w.get(2) == Some(&"army") => return Some(Cmd::Load(w.get(1)?.parse().ok()?, None)),
-            "load" => {
-                return Some(Cmd::Load(
-                    w.get(1)?.parse().ok()?,
-                    Some(Deck::new(&super::super::rounds::parse(w.get(2)?)?)),
-                ))
-            }
+            "load" => return Some(Cmd::Load(w.get(1)?.parse().ok()?, Some(Deck::new(&super::super::rounds::parse(w.get(2)?)?)))),
             v @ ("sorder" | "squeue") => {
                 let q: u8 = w.get(1)?.parse().ok()?;
                 let rest = w[2..].join(" ");
@@ -245,20 +228,7 @@ impl<W: World> Game<W> {
             }
             Cmd::Arm(q, g) => self.arm(q as usize, g),
             Cmd::Load(q, d) => self.load(q as usize, d),
-            Cmd::Steer(..)
-            | Cmd::SquadOrder(..)
-            | Cmd::Fire(..)
-            | Cmd::Face(..)
-            | Cmd::Split(..)
-            | Cmd::Join(..)
-            | Cmd::Merge(..)
-            | Cmd::Active(..)
-            | Cmd::Formation(..)
-            | Cmd::SquadQueue(..)
-            | Cmd::Link(..)
-            | Cmd::Unlink(..)
-            | Cmd::Cover(..)
-            | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) | Cmd::Heal(..) => self.squad_cmd(c),
             _ => false,
         }
     }
@@ -275,11 +245,7 @@ impl<W: World> Game<W> {
         // on the rally order, as before. In the squad mode with none
         // controlled (deselected, owner 2026-11-15 02:58Z) it joins the
         // lowest live squad: there is no larder to start at.
-        let join = self
-            .active
-            .filter(|&q| !self.members(q).is_empty())
-            .or_else(|| self.live_squads().first().copied())
-            .filter(|_| self.rules.squads);
+        let join = self.active.filter(|&q| !self.members(q).is_empty()).or_else(|| self.live_squads().first().copied()).filter(|_| self.rules.squads);
         let at = join.and_then(|q| self.middle(q));
         self.add_soldier_at(at.unwrap_or(self.larder), a);
         let gather = join.is_some_and(|q| self.squads[q].steer == (0.0, 0.0) && self.squads[q].dest.is_none());
@@ -300,9 +266,7 @@ impl<W: World> Game<W> {
     /// Within range of a live soldier.
     pub fn reachable(&self, at: (f32, f32)) -> bool {
         let r = self.rules.range * self.s();
-        self.soldiers
-            .iter()
-            .any(|s| s.alive && (s.x - at.0).hypot(s.y - at.1) <= r)
+        self.soldiers.iter().any(|s| s.alive && (s.x - at.0).hypot(s.y - at.1) <= r)
     }
 
     /// The price of a wall from `a` to `b` (fine cells).
@@ -320,8 +284,7 @@ impl<W: World> Game<W> {
     pub(super) fn wall_cells(&mut self, a: (f32, f32), b: (f32, f32)) {
         self.walls += 1;
         let s = self.s();
-        self.world
-            .build_wall((a.0 / s, a.1 / s), (b.0 / s, b.1 / s), self.rules.wall_width);
+        self.world.build_wall((a.0 / s, a.1 / s), (b.0 / s, b.1 / s), self.rules.wall_width);
         self.stale_maps();
     }
 
@@ -329,16 +292,10 @@ impl<W: World> Game<W> {
     /// dish cells): its index and centre.
     pub fn crystal_at(&self, p: (f32, f32)) -> Option<(usize, (f32, f32))> {
         let sc = self.s();
-        self.world
-            .crystals()
-            .iter()
-            .enumerate()
-            .map(|(i, c)| (i, c.0))
-            .filter(|&(i, c)| (c.0 - p.0).hypot(c.1 - p.1) <= self.world.crystal_r(i) + 2.0 * sc)
-            .min_by(|a, b| {
-                let d = |c: (f32, f32)| (c.0 - p.0).hypot(c.1 - p.1);
-                d(a.1).total_cmp(&d(b.1))
-            })
+        self.world.crystals().iter().enumerate().map(|(i, c)| (i, c.0)).filter(|&(i, c)| (c.0 - p.0).hypot(c.1 - p.1) <= self.world.crystal_r(i) + 2.0 * sc).min_by(|a, b| {
+            let d = |c: (f32, f32)| (c.0 - p.0).hypot(c.1 - p.1);
+            d(a.1).total_cmp(&d(b.1))
+        })
     }
 
     /// Send a builder to ghost `b` (`Cmd::Send`): the nearest idle soldier
@@ -359,9 +316,7 @@ impl<W: World> Game<W> {
             (0..self.soldiers.len())
                 .filter(|&k| {
                     let s = &self.soldiers[k];
-                    s.alive
-                        && !matches!(s.order, Order::Build(_))
-                        && (!idle || (s.order == Order::Hold && s.queued == 0))
+                    s.alive && !matches!(s.order, Order::Build(_)) && (!idle || (s.order == Order::Hold && s.queued == 0))
                 })
                 .min_by(|&x, &y| d(&self.soldiers[x]).total_cmp(&d(&self.soldiers[y])))
         };
@@ -411,13 +366,7 @@ impl<W: World> Game<W> {
             .iter()
             .enumerate()
             .filter(|&(q, s)| q != k && s.alive)
-            .filter_map(|(_, s)| {
-                if let Order::Clear(x, y) = s.order {
-                    self.crystal_at((x, y)).map(|c| c.0)
-                } else {
-                    None
-                }
-            })
+            .filter_map(|(_, s)| if let Order::Clear(x, y) = s.order { self.crystal_at((x, y)).map(|c| c.0) } else { None })
             .collect();
         self.world
             .crystals()
@@ -425,11 +374,7 @@ impl<W: World> Game<W> {
             .enumerate()
             .filter(|&(i, (c, charge))| i != 0 && Some(i) != skip && charge >= ask && d(c, l) < d(c, core))
             .filter(|&(i, (_, charge))| self.start_charge[i] - charge - self.taken[i] <= 0.01 * self.start_charge[i])
-            .min_by(|a, b| {
-                busy.contains(&a.0)
-                    .cmp(&busy.contains(&b.0))
-                    .then(d(a.1 .0, l).total_cmp(&d(b.1 .0, l)))
-            })
+            .min_by(|a, b| busy.contains(&a.0).cmp(&busy.contains(&b.0)).then(d(a.1 .0, l).total_cmp(&d(b.1 .0, l))))
             .map(|(_, (c, _))| c)
     }
 
@@ -480,11 +425,7 @@ impl<W: World> Game<W> {
         let stance = if self.rules.squads && Some(s.squad as usize) == self.active {
             // The controlled squad's guns are the player's (`squads`): on
             // its own it only defends itself.
-            if s.stance == Stance::HoldFire {
-                Stance::HoldFire
-            } else {
-                Stance::Defend
-            }
+            if s.stance == Stance::HoldFire { Stance::HoldFire } else { Stance::Defend }
         } else if matches!(s.order, Order::Attack | Order::Fight(..)) {
             Stance::Free
         } else {

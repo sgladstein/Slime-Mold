@@ -215,15 +215,7 @@ const CLAIM_MOVE: u32 = 103;
 /// The chosen scaling rule (`examples/bigdish.rs` preset `nose`).
 fn nose(walkers: usize, seed: u64) -> BigParams {
     let t = BigParams::today();
-    BigParams {
-        scale: 4,
-        walkers,
-        scent_coarse: false,
-        scent_offset: t.sensor_offset * 4.0,
-        blob: false,
-        seed,
-        ..t
-    }
+    BigParams { scale: 4, walkers, scent_coarse: false, scent_offset: t.sensor_offset * 4.0, blob: false, seed, ..t }
 }
 
 fn block_on<F: Future>(f: F) -> F::Output {
@@ -278,46 +270,15 @@ impl Run {
         let n = d.walkers.len() as u32;
         let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC;
         let buf = |label: &str, bytes: &[u8], usage: wgpu::BufferUsages| {
-            let b = dev.create_buffer(&wgpu::BufferDescriptor {
-                label: Some(label),
-                size: bytes.len().max(16) as u64,
-                usage,
-                mapped_at_creation: false,
-            });
+            let b = dev.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: bytes.len().max(16) as u64, usage, mapped_at_creation: false });
             gpu.queue.write_buffer(&b, 0, bytes);
             b
         };
-        let sso = if p.scent_offset > 0.0 {
-            p.scent_offset
-        } else {
-            p.sensor_offset
-        };
+        let sso = if p.scent_offset > 0.0 { p.scent_offset } else { p.sensor_offset };
         let crowd = p.crowd as u32;
-        let mut params = u32_bytes(&[
-            d.w as u32,
-            d.h as u32,
-            n,
-            crowd,
-            stream(p.seed, DRAW_TURN),
-            stream(p.seed, DRAW_BLOCKED),
-            stream(p.seed, CLAIM_MOVE),
-            0,
-        ]);
-        params.extend(f32_bytes(&[
-            p.sensor_angle,
-            p.rotate_angle,
-            p.sensor_offset,
-            sso,
-            p.step,
-            p.deposit,
-            p.keep,
-            p.scent_keep,
-        ]));
-        let params = buf(
-            "params",
-            &params,
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        );
+        let mut params = u32_bytes(&[d.w as u32, d.h as u32, n, crowd, stream(p.seed, DRAW_TURN), stream(p.seed, DRAW_BLOCKED), stream(p.seed, CLAIM_MOVE), 0]);
+        params.extend(f32_bytes(&[p.sensor_angle, p.rotate_angle, p.sensor_offset, sso, p.step, p.deposit, p.keep, p.scent_keep]));
+        let params = buf("params", &params, wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST);
         let state = buf("state", &u32_bytes(&[d.steps as u32, 0, 0, 0]), storage);
         let flat: Vec<f32> = d.walkers.iter().flat_map(|&(x, y, h)| [x, y, h, 0.0]).collect();
         let walkers = buf("walkers", &f32_bytes(&flat), storage);
@@ -333,29 +294,16 @@ impl Run {
         let agar: Vec<u32> = d.agar.iter().map(|&a| a as u32).collect();
         let agar = buf("agar", &u32_bytes(&agar), storage);
         let lay = buf("lay", &f32_bytes(&d.scent_laid()), storage);
-        let trail = [
-            buf("trail0", &f32_bytes(&d.trail), storage),
-            buf("trail1", &f32_bytes(&d.trail), storage),
-        ];
-        let scent = [
-            buf("scent0", &f32_bytes(&d.scent), storage),
-            buf("scent1", &f32_bytes(&d.scent), storage),
-        ];
+        let trail = [buf("trail0", &f32_bytes(&d.trail), storage), buf("trail1", &f32_bytes(&d.trail), storage)];
+        let scent = [buf("scent0", &f32_bytes(&d.scent), storage), buf("scent1", &f32_bytes(&d.scent), storage)];
 
-        let module = dev.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("big dish"),
-            source: wgpu::ShaderSource::Wgsl(SHADER.into()),
-        });
+        let module = dev.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("big dish"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
         // One explicit layout shared by all four entry points, so one bind
         // group serves every pass.
         let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer {
-                ty,
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
+            ty: wgpu::BindingType::Buffer { ty, has_dynamic_offset: false, min_binding_size: None },
             count: None,
         };
         let rw = wgpu::BufferBindingType::Storage { read_only: false };
@@ -364,15 +312,8 @@ impl Run {
         for b in 1..=13 {
             entries.push(entry(b, if b == 8 || b == 9 { ro } else { rw }));
         }
-        let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("big dish"),
-            entries: &entries,
-        });
-        let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("big dish"),
-            bind_group_layouts: &[Some(&bgl)],
-            immediate_size: 0,
-        });
+        let bgl = dev.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("big dish"), entries: &entries });
+        let layout = dev.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("big dish"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
         let pipe = |entry_point: &str| {
             dev.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some(entry_point),
@@ -386,35 +327,12 @@ impl Run {
         let pipes = [pipe("sense"), pipe("walk"), pipe("trail"), pipe("scent")];
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
-            let bufs: [&wgpu::Buffer; 14] = [
-                &params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b],
-                &scent[a], &scent[b],
-            ];
-            let entries: Vec<wgpu::BindGroupEntry> = bufs
-                .iter()
-                .enumerate()
-                .map(|(i, b)| wgpu::BindGroupEntry {
-                    binding: i as u32,
-                    resource: b.as_entire_binding(),
-                })
-                .collect();
-            dev.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("big dish"),
-                layout: &bgl,
-                entries: &entries,
-            })
+            let bufs: [&wgpu::Buffer; 14] = [&params, &state, &walkers, &intent, &icell, &occ, &claim, &dep, &agar, &lay, &trail[a], &trail[b], &scent[a], &scent[b]];
+            let entries: Vec<wgpu::BindGroupEntry> = bufs.iter().enumerate().map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() }).collect();
+            dev.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("big dish"), layout: &bgl, entries: &entries })
         };
         let groups = [group(true), group(false)];
-        Run {
-            pipes,
-            groups,
-            walkers,
-            trail,
-            scent,
-            n,
-            cells,
-            lay,
-        }
+        Run { pipes, groups, walkers, trail, scent, n, cells, lay }
     }
 
     /// Records `ticks` ticks starting at tick `from` (which sets the
@@ -429,10 +347,7 @@ impl Run {
                     beginning_of_pass_write_index: Some(2 * p as u32),
                     end_of_pass_write_index: Some(2 * p as u32 + 1),
                 });
-                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                    label: None,
-                    timestamp_writes,
-                });
+                let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: None, timestamp_writes });
                 pass.set_pipeline(pipe);
                 pass.set_bind_group(0, group, &[]);
                 pass.dispatch_workgroups(sizes[p].div_ceil(256), 1, 1);
@@ -443,15 +358,8 @@ impl Run {
 
 fn read_back(gpu: &Gpu, src: &wgpu::Buffer) -> Vec<u8> {
     let size = src.size();
-    let staging = gpu.device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("read back"),
-        size,
-        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-    let mut enc = gpu
-        .device
-        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+    let staging = gpu.device.create_buffer(&wgpu::BufferDescriptor { label: Some("read back"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let mut enc = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
     enc.copy_buffer_to_buffer(src, 0, &staging, 0, size);
     gpu.queue.submit([enc.finish()]);
     staging.map_async(wgpu::MapMode::Read, .., |r| r.expect("map"));
@@ -462,10 +370,7 @@ fn read_back(gpu: &Gpu, src: &wgpu::Buffer) -> Vec<u8> {
 }
 
 fn floats(bytes: &[u8]) -> Vec<f32> {
-    bytes
-        .chunks_exact(4)
-        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-        .collect()
+    bytes.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()
 }
 
 fn main() {
@@ -474,9 +379,7 @@ fn main() {
     let mut look: Option<String> = None;
     let mut cpu = true;
     for arg in std::env::args().skip(1) {
-        let (k, v) = arg
-            .split_once('=')
-            .unwrap_or_else(|| panic!("expected key=value, got {arg}"));
+        let (k, v) = arg.split_once('=').unwrap_or_else(|| panic!("expected key=value, got {arg}"));
         match k {
             "walkers" => counts = v.split(',').map(|s| s.parse().unwrap()).collect(),
             "seconds" => seconds = v.parse().unwrap(),
@@ -488,69 +391,30 @@ fn main() {
         }
     }
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
-    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
-        ..Default::default()
-    }))
-    .expect("no GPU adapter");
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, ..Default::default() })).expect("no GPU adapter");
     let info = adapter.get_info();
-    println!(
-        "adapter: {} ({:?}, {:?}, driver {} {})",
-        info.name, info.backend, info.device_type, info.driver, info.driver_info
-    );
+    println!("adapter: {} ({:?}, {:?}, driver {} {})", info.name, info.backend, info.device_type, info.driver, info.driver_info);
     let timestamps = adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY);
-    let required_features = if timestamps {
-        wgpu::Features::TIMESTAMP_QUERY
-    } else {
-        wgpu::Features::empty()
-    };
-    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-        label: Some("gputime"),
-        required_features,
-        required_limits: adapter.limits(),
-        ..Default::default()
-    }))
-    .expect("no device");
-    let gpu = Gpu {
-        device,
-        queue,
-        timestamps,
-    };
-    println!(
-        "timestamp queries: {}",
-        if gpu.timestamps { "yes" } else { "no (wall time only)" }
-    );
+    let required_features = if timestamps { wgpu::Features::TIMESTAMP_QUERY } else { wgpu::Features::empty() };
+    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor { label: Some("gputime"), required_features, required_limits: adapter.limits(), ..Default::default() })).expect("no device");
+    let gpu = Gpu { device, queue, timestamps };
+    println!("timestamp queries: {}", if gpu.timestamps { "yes" } else { "no (wall time only)" });
 
     for &n in &counts {
         let mut p = nose(n, seed);
-        let agar_cells = BigDish::new(BigParams {
-            walkers: 1,
-            ..p.clone()
-        })
-        .agar
-        .iter()
-        .filter(|&&a| a)
-        .count();
+        let agar_cells = BigDish::new(BigParams { walkers: 1, ..p.clone() }).agar.iter().filter(|&&a| a).count();
         if n > agar_cells / 2 {
             p.crowd = 0;
         }
         let mut d = BigDish::new(p.clone());
-        println!(
-            "== {} walkers on {} x {} (crowd {}), seed {seed}",
-            d.walkers.len(),
-            d.w,
-            d.h,
-            p.crowd
-        );
+        println!("== {} walkers on {} x {} (crowd {}), seed {seed}", d.walkers.len(), d.w, d.h, p.crowd);
         let run = Run::new(&gpu, &d);
         let ticks = (seconds * STEPS_PER_SECOND as f32).round() as u64;
         let mut per_tick = Vec::new();
         let mut done = 0u64;
         while done < ticks {
             let k = batch.min(ticks - done);
-            let mut enc = gpu
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            let mut enc = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             run.record(&mut enc, done, k, None);
             let t0 = Instant::now();
             gpu.queue.submit([enc.finish()]);
@@ -568,11 +432,7 @@ fn main() {
                 }
             }
         }
-        let timed = if per_tick.len() > 1 {
-            &per_tick[1..]
-        } else {
-            &per_tick[..]
-        };
+        let timed = if per_tick.len() > 1 { &per_tick[1..] } else { &per_tick[..] };
         let mut sorted = timed.to_vec();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let median = sorted[sorted.len() / 2];
@@ -585,20 +445,9 @@ fn main() {
             2.0 * median
         );
         if gpu.timestamps {
-            let qs = gpu.device.create_query_set(&wgpu::QuerySetDescriptor {
-                label: Some("passes"),
-                ty: wgpu::QueryType::Timestamp,
-                count: 8,
-            });
-            let resolve = gpu.device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some("resolve"),
-                size: 64,
-                usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC,
-                mapped_at_creation: false,
-            });
-            let mut enc = gpu
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            let qs = gpu.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("passes"), ty: wgpu::QueryType::Timestamp, count: 8 });
+            let resolve = gpu.device.create_buffer(&wgpu::BufferDescriptor { label: Some("resolve"), size: 64, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+            let mut enc = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             // One more tick, profiled; it advances the dish, so the
             // measures below are at `seconds` plus one tick.
             run.record(&mut enc, done, 1, Some(&qs));
@@ -606,44 +455,23 @@ fn main() {
             enc.resolve_query_set(&qs, 0..8, &resolve, 0);
             gpu.queue.submit([enc.finish()]);
             let raw = read_back(&gpu, &resolve);
-            let stamp: Vec<u64> = raw
-                .chunks_exact(8)
-                .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
-                .collect();
+            let stamp: Vec<u64> = raw.chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
             let ns = gpu.queue.get_timestamp_period() as f64;
             let names = ["sense", "walk", "trail", "scent"];
-            let parts: Vec<String> = (0..4)
-                .map(|p| {
-                    format!(
-                        "{} {:.3}",
-                        names[p],
-                        stamp[2 * p + 1].saturating_sub(stamp[2 * p]) as f64 * ns / 1e6
-                    )
-                })
-                .collect();
+            let parts: Vec<String> = (0..4).map(|p| format!("{} {:.3}", names[p], stamp[2 * p + 1].saturating_sub(stamp[2 * p]) as f64 * ns / 1e6)).collect();
             println!("GPU ms a pass, one tick: {}", parts.join(", "));
         }
         // Read the dish back and measure it as the CPU does.
         let side = (done % 2) as usize;
         d.trail = floats(&read_back(&gpu, &run.trail[side]));
         d.scent = floats(&read_back(&gpu, &run.scent[side]));
-        d.walkers = floats(&read_back(&gpu, &run.walkers))
-            .chunks_exact(4)
-            .map(|c| (c[0], c[1], c[2]))
-            .collect();
+        d.walkers = floats(&read_back(&gpu, &run.walkers)).chunks_exact(4).map(|c| (c[0], c[1], c[2])).collect();
         d.ticks = done;
         d.update_reached();
         let m = d.measure();
         println!(
             "gpu dish at {:.1}s: tube {:.1}  loops {}  width {:.2}  reach {:.1}  piles {}/{}  strays {:.3}",
-            m.seconds,
-            m.tube_area,
-            m.loops,
-            m.width,
-            m.reach,
-            m.reached,
-            d.piles.len(),
-            m.strays
+            m.seconds, m.tube_area, m.loops, m.width, m.reach, m.reached, d.piles.len(), m.strays
         );
         if let Some(dir) = &look {
             // Make the folder: the first run on the GTX 1070 (2026-11-10)

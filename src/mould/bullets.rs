@@ -132,30 +132,10 @@ impl Set {
 
     pub fn lean(self) -> Lean {
         match self {
-            Set::Standard => Lean {
-                damage: 1.0,
-                speed: 1.0,
-                range: 1.0,
-                spread: 1.0,
-            },
-            Set::Slug => Lean {
-                damage: 1.6,
-                speed: 0.6,
-                range: 0.9,
-                spread: 0.6,
-            },
-            Set::Needle => Lean {
-                damage: 0.6,
-                speed: 2.0,
-                range: 1.5,
-                spread: 0.5,
-            },
-            Set::Buckshot => Lean {
-                damage: 0.8,
-                speed: 0.9,
-                range: 0.6,
-                spread: 2.5,
-            },
+            Set::Standard => Lean { damage: 1.0, speed: 1.0, range: 1.0, spread: 1.0 },
+            Set::Slug => Lean { damage: 1.6, speed: 0.6, range: 0.9, spread: 0.6 },
+            Set::Needle => Lean { damage: 0.6, speed: 2.0, range: 1.5, spread: 0.5 },
+            Set::Buckshot => Lean { damage: 0.8, speed: 0.9, range: 0.6, spread: 2.5 },
         }
     }
 }
@@ -189,16 +169,7 @@ impl Ammo {
     /// A payload's standard bullet: damage `DAMAGE`, every multiplier 1,
     /// its fixed card's cost. What `Card::Blast` and the rest fire.
     pub fn standard(shell: Shell) -> Ammo {
-        Ammo {
-            shell,
-            set: Set::Standard,
-            depth: 1,
-            damage: (DAMAGE * 10.0) as u16,
-            speed: 100,
-            range: 100,
-            spread: 100,
-            cost: shell.base() as u8,
-        }
+        Ammo { shell, set: Set::Standard, depth: 1, damage: (DAMAGE * 10.0) as u16, speed: 100, range: 100, spread: 100, cost: shell.base() as u8 }
     }
 
     /// A bullet of any payload and set, rolled for the planet at `depth`
@@ -242,12 +213,7 @@ impl Ammo {
     /// speed (half weight), range and tightness (half weight); 1 is a
     /// standard bullet. Its cost follows it.
     pub fn grade(&self) -> f32 {
-        let l = [
-            (self.damage() / DAMAGE).ln(),
-            0.5 * self.speed().ln(),
-            self.range().ln(),
-            -0.5 * self.spread().ln(),
-        ];
+        let l = [(self.damage() / DAMAGE).ln(), 0.5 * self.speed().ln(), self.range().ln(), -0.5 * self.spread().ln()];
         (l.iter().sum::<f32>() / 3.0).exp()
     }
 
@@ -262,30 +228,13 @@ impl Ammo {
     /// One line of its numbers: "damage 12.4, speed 1.8x, range 1.3x,
     /// spread 0.6x, cost 4".
     pub fn line(&self) -> String {
-        format!(
-            "damage {:.1}, speed {:.1}x, range {:.1}x, spread {:.1}x, cost {}",
-            self.damage(),
-            self.speed(),
-            self.range(),
-            self.spread(),
-            self.cost
-        )
+        format!("damage {:.1}, speed {:.1}x, range {:.1}x, spread {:.1}x, cost {}", self.damage(), self.speed(), self.range(), self.spread(), self.cost)
     }
 
     /// The text form inside a round (`rounds::parse`, `Cmd::Load`):
     /// `ammo/SHELL/SET/DEPTH/DAMAGE/SPEED/RANGE/SPREAD/COST`, whole numbers.
     pub fn word(&self) -> String {
-        format!(
-            "ammo/{}/{}/{}/{}/{}/{}/{}/{}",
-            self.shell.key(),
-            self.set.key(),
-            self.depth,
-            self.damage,
-            self.speed,
-            self.range,
-            self.spread,
-            self.cost
-        )
+        format!("ammo/{}/{}/{}/{}/{}/{}/{}/{}", self.shell.key(), self.set.key(), self.depth, self.damage, self.speed, self.range, self.spread, self.cost)
     }
 
     pub fn from_word(s: &str) -> Option<Ammo> {
@@ -310,9 +259,7 @@ impl Ammo {
 
 fn cap(s: &str) -> String {
     let mut c = s.chars();
-    c.next()
-        .map(|f| f.to_uppercase().collect::<String>() + c.as_str())
-        .unwrap_or_default()
+    c.next().map(|f| f.to_uppercase().collect::<String>() + c.as_str()).unwrap_or_default()
 }
 
 fn rng(seed: u64, depth: u32) -> Rng {
@@ -354,10 +301,7 @@ mod tests {
     fn a_standard_bullet_is_the_fixed_card() {
         for s in Shell::ALL {
             let a = Ammo::standard(s);
-            assert_eq!(
-                (a.damage(), a.speed(), a.range(), a.spread(), a.reach()),
-                (DAMAGE, 1.0, 1.0, 1.0, 1.0)
-            );
+            assert_eq!((a.damage(), a.speed(), a.range(), a.spread(), a.reach()), (DAMAGE, 1.0, 1.0, 1.0, 1.0));
             assert_eq!(a.cost as u32, s.card().cost());
             assert!((a.grade() - 1.0).abs() < 1e-6);
             assert_eq!(Shell::of(s.card()), Some(s));
@@ -385,33 +329,14 @@ mod tests {
 
     #[test]
     fn each_set_leans_its_rolls_the_way_it_says() {
-        let mean = |set: Set, f: &dyn Fn(&Ammo) -> f32| {
-            (0..2000)
-                .map(|s| f(&Ammo::roll_of(Shell::Plain, set, s, 1)))
-                .sum::<f32>()
-                / 2000.0
-        };
+        let mean = |set: Set, f: &dyn Fn(&Ammo) -> f32| (0..2000).map(|s| f(&Ammo::roll_of(Shell::Plain, set, s, 1))).sum::<f32>() / 2000.0;
         let (st, sl, ne, bu) = (Set::Standard, Set::Slug, Set::Needle, Set::Buckshot);
-        assert!(
-            mean(sl, &|a| a.damage()) > 1.4 * mean(st, &|a| a.damage()),
-            "a slug hits harder"
-        );
-        assert!(
-            mean(ne, &|a| a.speed()) > 1.7 * mean(st, &|a| a.speed()),
-            "a needle flies faster"
-        );
-        assert!(
-            mean(ne, &|a| a.range()) > mean(st, &|a| a.range())
-                && mean(ne, &|a| a.damage()) < mean(st, &|a| a.damage())
-        );
-        assert!(
-            mean(bu, &|a| a.spread()) > 2.0 * mean(st, &|a| a.spread()),
-            "buckshot spreads"
-        );
+        assert!(mean(sl, &|a| a.damage()) > 1.4 * mean(st, &|a| a.damage()), "a slug hits harder");
+        assert!(mean(ne, &|a| a.speed()) > 1.7 * mean(st, &|a| a.speed()), "a needle flies faster");
+        assert!(mean(ne, &|a| a.range()) > mean(st, &|a| a.range()) && mean(ne, &|a| a.damage()) < mean(st, &|a| a.damage()));
+        assert!(mean(bu, &|a| a.spread()) > 2.0 * mean(st, &|a| a.spread()), "buckshot spreads");
         // Standard bullets roll round 1: as often better as worse.
-        let g: Vec<f32> = (0..2000)
-            .map(|s| Ammo::roll_of(Shell::Blast, st, s, 1).grade())
-            .collect();
+        let g: Vec<f32> = (0..2000).map(|s| Ammo::roll_of(Shell::Blast, st, s, 1).grade()).collect();
         let better = g.iter().filter(|&&x| x > 1.0).count();
         assert!((800..1200).contains(&better), "{better} of 2000 better than standard");
     }
@@ -423,33 +348,17 @@ mod tests {
             let v: Vec<f32> = all.iter().filter(|a| f(a)).map(|a| a.cost as f32).collect();
             v.iter().sum::<f32>() / v.len() as f32
         };
-        assert!(
-            mean_cost(&|a| a.shell == Shell::Germ) > mean_cost(&|a| a.shell == Shell::Plain) + 1.5,
-            "a payload costs more"
-        );
+        assert!(mean_cost(&|a| a.shell == Shell::Germ) > mean_cost(&|a| a.shell == Shell::Plain) + 1.5, "a payload costs more");
         let blasts = |f: &dyn Fn(f32) -> bool| mean_cost(&|a| a.shell == Shell::Blast && f(a.grade()));
-        assert!(
-            blasts(&|g| g > 1.15) > blasts(&|g| g < 0.85),
-            "a better roll costs more"
-        );
+        assert!(blasts(&|g| g > 1.15) > blasts(&|g| g < 0.85), "a better roll costs more");
         // Luck: two blasts of one grade need not cost the same.
-        let near: Vec<u8> = all
-            .iter()
-            .filter(|a| a.shell == Shell::Blast && (a.grade() - 1.0).abs() < 0.03)
-            .map(|a| a.cost)
-            .collect();
+        let near: Vec<u8> = all.iter().filter(|a| a.shell == Shell::Blast && (a.grade() - 1.0).abs() < 0.03).map(|a| a.cost).collect();
         assert!(near.iter().any(|&c| c != near[0]), "{near:?}");
     }
 
     #[test]
     fn deeper_planets_roll_more_damage() {
-        let mean = |d: u32| {
-            many(3000, d)
-                .iter()
-                .map(|a| a.damage() / a.set.lean().damage)
-                .sum::<f32>()
-                / 3000.0
-        };
+        let mean = |d: u32| many(3000, d).iter().map(|a| a.damage() / a.set.lean().damage).sum::<f32>() / 3000.0;
         let (a, b) = (mean(1), mean(10));
         assert!(b > 1.25 * a, "{a} then {b}");
     }

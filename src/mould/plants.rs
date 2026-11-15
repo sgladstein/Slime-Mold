@@ -334,11 +334,7 @@ pub fn fire_step(
             // it burned, a jungle's char came out at 0.2, a third of its
             // fuel), and only plants over the embers' last `fuel` count:
             // those cleared a burn in about 15 s, before `char_keep` faded it.
-            let clear = if to[i] > 0.0 {
-                0.0
-            } else {
-                (plant[i] - f.fuel).max(0.0) * f.char_clear
-            };
+            let clear = if to[i] > 0.0 { 0.0 } else { (plant[i] - f.fuel).max(0.0) * f.char_clear };
             char[i] = ((char[i] * f.char_keep + ate * f.char_gain).min(1.0) - clear).max(0.0);
         }
     }
@@ -367,9 +363,7 @@ pub fn roll(i: u32, tick: u32) -> f32 {
 /// and water 1. Fire reads it (`fire_step`); nothing else yet.
 pub fn moisture(w: usize, h: usize, water: &[bool], kind: &[u8], seed: u32, base: f32, spread: f32) -> Vec<f32> {
     // The distance to water, in cells (chamfer 1-1, two passes), to 8.
-    let mut d: Vec<u8> = (0..w * h)
-        .map(|i| if !water.is_empty() && water[i] { 0 } else { 8 })
-        .collect();
+    let mut d: Vec<u8> = (0..w * h).map(|i| if !water.is_empty() && water[i] { 0 } else { 8 }).collect();
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;
@@ -398,9 +392,7 @@ pub fn moisture(w: usize, h: usize, water: &[bool], kind: &[u8], seed: u32, base
             if d[i] == 0 || kind[i] == REEDS {
                 return 1.0;
             }
-            let n = 0.5 * noise(x, y, 40, seed ^ 0x5EED_0001)
-                + 0.3 * noise(x, y, 12, seed ^ 0x5EED_0002)
-                + 0.2 * noise(x, y, 4, seed ^ 0x5EED_0003);
+            let n = 0.5 * noise(x, y, 40, seed ^ 0x5EED_0001) + 0.3 * noise(x, y, 12, seed ^ 0x5EED_0002) + 0.2 * noise(x, y, 4, seed ^ 0x5EED_0003);
             // The noise's middle half spans about 0.4-0.6, so x 2 x 2: a
             // spread of 0.3 gives patches some 0.25 drier and wetter.
             let mut m = base + spread * 4.0 * (n - 0.5);
@@ -704,7 +696,7 @@ mod tests {
         let (mut a, mut b) = (vec![0.0; w * h], vec![0.0; w * h]);
         let mut ch = vec![0.0; w * h];
         a[w] = 1.0; // lit at (0, 1)
-                    // Dry ground (moisture 0): nothing goes out by chance.
+        // Dry ground (moisture 0): nothing goes out by chance.
         let moist = vec![0.0; w * h];
         let mut tick = 0;
         for _ in 0..3000 {
@@ -721,13 +713,7 @@ mod tests {
         assert!(plant[w + 25] > 0.7, "bare ground at x 20 stops it: {}", plant[w + 25]);
         // x 10 burnt its 0.8 (char kept whole here, `char_keep` 1; the
         // embers' last plants clear it slowly after).
-        assert!(
-            ch[w + 10] > 0.5 && ch[w + 20] == 0.0 && ch[w + 25] == 0.0,
-            "char where it burnt: {} {} {}",
-            ch[w + 10],
-            ch[w + 20],
-            ch[w + 25]
-        );
+        assert!(ch[w + 10] > 0.5 && ch[w + 20] == 0.0 && ch[w + 25] == 0.0, "char where it burnt: {} {} {}", ch[w + 10], ch[w + 20], ch[w + 25]);
         // Lit beyond the bare line, it burns to the water and stops.
         a.fill(0.0);
         a[w + 21] = 1.0;
@@ -763,9 +749,7 @@ mod tests {
         a[w] = 1.0;
         for _ in 0..300 {
             tick += 1;
-            fire_step(
-                &g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b, &moist, tick,
-            );
+            fire_step(&g, &r, &F, &trail, &reeds, &mut plant, &mut ch, &a, &mut b, &moist, tick);
             std::mem::swap(&mut a, &mut b);
         }
         assert!(plant[w + 5] > 0.79, "reeds don't burn");
@@ -778,15 +762,7 @@ mod tests {
         let (w, h) = (200, 9);
         let cap = vec![1.0; w * h];
         let agar = vec![true; w * h];
-        let g = Ground {
-            w,
-            h,
-            cap: &cap,
-            agar: &agar,
-            pile_of: &[],
-            wet: &[],
-            scorch: &[],
-        };
+        let g = Ground { w, h, cap: &cap, agar: &agar, pile_of: &[], wet: &[], scorch: &[] };
         let r = Rates { kinds: KIND, ..R };
         let kind = vec![MEADOW; w * h];
         let trail = vec![0.0; w * h];
@@ -819,20 +795,11 @@ mod tests {
     fn moisture_slows_fire_and_puts_it_out() {
         for m in [0.0, 0.2, 0.4, 0.6, 0.8] {
             let (f10, f20, lit, burnt) = front(m);
-            println!(
-                "moisture {m}: front {f10} at 10 s, {f20} at 20 s; {lit} burning at 10 s; {:.0}% burnt by 60 s",
-                100.0 * burnt
-            );
+            println!("moisture {m}: front {f10} at 10 s, {f20} at 20 s; {lit} burning at 10 s; {:.0}% burnt by 60 s", 100.0 * burnt);
         }
         let (dry10, dry20, _, dry_burnt) = front(0.2);
-        assert!(
-            (5..=20).contains(&dry10) && dry20 > dry10,
-            "about a cell a second on dry ground: {dry10} {dry20}"
-        );
+        assert!((5..=20).contains(&dry10) && dry20 > dry10, "about a cell a second on dry ground: {dry10} {dry20}");
         let (_, damp20, _, damp_burnt) = front(0.6);
-        assert!(
-            damp20 < dry20 && damp_burnt < dry_burnt,
-            "damp is slower and burns less: {damp20} {damp_burnt}"
-        );
+        assert!(damp20 < dry20 && damp_burnt < dry_burnt, "damp is slower and burns less: {damp20} {damp_burnt}");
     }
 }

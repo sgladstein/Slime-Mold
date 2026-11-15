@@ -50,32 +50,12 @@ fn main() {
             "grow" => grow = v.parse().unwrap(),
             "look" => look = Some(v.to_string()),
             "look_d0" => look_d0 = v.parse().unwrap(),
-            "keys" => {
-                keys = v
-                    .split('+')
-                    .map(|kv| {
-                        kv.split_once(':')
-                            .map(|(a, b)| (a.to_string(), b.to_string()))
-                            .expect("keys=k:v+k:v")
-                    })
-                    .collect()
-            }
+            "keys" => keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
             _ => panic!("unknown {k}"),
         }
     }
-    let base: Vec<(String, String)> = [
-        ("capacity", "50000"),
-        ("energy_flow", "0.05"),
-        ("wither", "0.01"),
-        ("panic", "2"),
-    ]
-    .iter()
-    .map(|(a, b)| (a.to_string(), b.to_string()))
-    .collect();
-    println!(
-        "retreatprobe: race world scale {SCALE}, 25000 walkers, grow {grow} s, keys {:?} then {keys:?}",
-        base
-    );
+    let base: Vec<(String, String)> = [("capacity", "50000"), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+    println!("retreatprobe: race world scale {SCALE}, 25000 walkers, grow {grow} s, keys {:?} then {keys:?}", base);
     let s = SCALE as f32;
     let (touch, step) = (TOUCH * s, SPEED * s / TPS);
     let mut tally = std::collections::BTreeMap::<(u32, String), (u32, u32)>::new();
@@ -93,17 +73,9 @@ fn main() {
         // The piece.
         let live: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
         // Pile centres in fine cells (`BigDish::piles` holds dish cells).
-        let centres: Vec<(f32, f32)> = (0..d.piles.len())
-            .map(|j| d.pile_centre(j))
-            .map(|c| ((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5))
-            .collect();
+        let centres: Vec<(f32, f32)> = (0..d.piles.len()).map(|j| d.pile_centre(j)).map(|c| ((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5)).collect();
         let far = |x: f32, y: f32| centres.iter().all(|&(px, py)| (px - x).hypot(py - y) >= 40.0);
-        let near = |k0: usize| {
-            live.iter()
-                .copied()
-                .filter(|&k| (d.walkers[k].0 - d.walkers[k0].0).hypot(d.walkers[k].1 - d.walkers[k0].1) <= 10.0)
-                .collect::<Vec<_>>()
-        };
+        let near = |k0: usize| live.iter().copied().filter(|&k| (d.walkers[k].0 - d.walkers[k0].0).hypot(d.walkers[k].1 - d.walkers[k0].1) <= 10.0).collect::<Vec<_>>();
         let mut rng = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1;
         let mut piece = Vec::new();
         for _ in 0..20_000 {
@@ -132,37 +104,21 @@ fn main() {
             d.news[k] = d.steps + 1 - lag;
         }
         let n = piece.len() as f32;
-        let (cx, cy) = (
-            piece.iter().map(|&k| d.walkers[k].0).sum::<f32>() / n,
-            piece.iter().map(|&k| d.walkers[k].1).sum::<f32>() / n,
-        );
-        let edge = piece
-            .iter()
-            .map(|&k| (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy))
-            .fold(0.0f32, f32::max);
+        let (cx, cy) = (piece.iter().map(|&k| d.walkers[k].0).sum::<f32>() / n, piece.iter().map(|&k| d.walkers[k].1).sum::<f32>() / n);
+        let edge = piece.iter().map(|&k| (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy)).fold(0.0f32, f32::max);
         let a = (d.h as f32 / 2.0 - cy).atan2(d.w as f32 / 2.0 - cx);
         let (ux, uy) = (a.cos(), a.sin());
         println!("seed {seed}: piece of {} walkers round ({cx:.0}, {cy:.0}), edge {edge:.1} fine cells; away along ({ux:.2}, {uy:.2})", piece.len());
         for d0 in [16.0f32, 24.0, 32.0] {
-            for (name, react) in [
-                ("stands", f32::INFINITY),
-                ("pulls back at 0 s", 0.0),
-                ("pulls back at 0.5 s", 0.5),
-            ] {
+            for (name, react) in [("stands", f32::INFINITY), ("pulls back at 0 s", 0.0), ("pulls back at 0.5 s", 0.5)] {
                 let mut e = d.clone();
                 let (mut x, mut y) = (cx + ux * (edge + d0), cy + uy * (edge + d0));
                 let (mut caught, mut least) = (None, f32::MAX);
-                let film = look
-                    .as_ref()
-                    .filter(|_| d0 == look_d0)
-                    .map(|dir| format!("{dir}/s{seed}-{}", name.replace(' ', "-").replace('.', "")));
+                let film = look.as_ref().filter(|_| d0 == look_d0).map(|dir| format!("{dir}/s{seed}-{}", name.replace(' ', "-").replace('.', "")));
                 if let Some(f) = &film {
                     std::fs::create_dir_all(f).unwrap();
                 }
-                let (fx, fy) = (
-                    (cx + ux * (edge + d0) * 0.5) as i64,
-                    (cy + uy * (edge + d0) * 0.5) as i64,
-                );
+                let (fx, fy) = ((cx + ux * (edge + d0) * 0.5) as i64, (cy + uy * (edge + d0) * 0.5) as i64);
                 for t in 0..(10.0 * TPS) as u32 {
                     let secs = t as f32 / TPS;
                     if secs >= react {
@@ -171,10 +127,7 @@ fn main() {
                     }
                     e.threats = vec![(x.floor() as i64, y.floor() as i64)];
                     e.tick();
-                    let m = (0..e.walkers.len())
-                        .filter(|&k| e.lives(k))
-                        .map(|k| (e.walkers[k].0 - x).hypot(e.walkers[k].1 - y))
-                        .fold(f32::MAX, f32::min);
+                    let m = (0..e.walkers.len()).filter(|&k| e.lives(k)).map(|k| (e.walkers[k].0 - x).hypot(e.walkers[k].1 - y)).fold(f32::MAX, f32::min);
                     least = least.min(m);
                     if let Some(f) = &film {
                         frame(&e, (fx, fy), (x, y), touch, &format!("{f}/f{t:04}.png"));
@@ -227,10 +180,7 @@ fn frame(d: &BigDish, at: (i64, i64), unit: (f32, f32), touch: f32, path: &str) 
             }
         }
     }
-    let (ux, uy) = (
-        (unit.0 - (at.0 - w / 2) as f32) * k as f32,
-        (unit.1 - (at.1 - h / 2) as f32) * k as f32,
-    );
+    let (ux, uy) = ((unit.0 - (at.0 - w / 2) as f32) * k as f32, (unit.1 - (at.1 - h / 2) as f32) * k as f32);
     for i in 0..64 {
         let a = i as f32 / 64.0 * std::f32::consts::TAU;
         let (rx, ry) = (ux + a.cos() * touch * k as f32, uy + a.sin() * touch * k as f32);

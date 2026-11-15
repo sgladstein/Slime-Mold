@@ -5,35 +5,20 @@
 fn command_ids_are_one_registry() {
     // Unique and 1..=n, so a clash or a gap fails here, not in play.
     for (i, &(name, id)) in COMMANDS.iter().enumerate() {
-        assert_eq!(
-            id as usize,
-            i + 1,
-            "{name} is {id}; command ids run 1, 2, 3, ... in the table"
-        );
+        assert_eq!(id as usize, i + 1, "{name} is {id}; command ids run 1, 2, 3, ... in the table");
     }
     // Every building the build page places has exactly one command (the
     // wall is drawn with WALL, a two-click line, not a build_kind).
     use Kind as K;
     let placed = [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren];
     for kind in placed {
-        let ids: Vec<&str> = COMMANDS
-            .iter()
-            .filter(|&&(_, id)| build_kind(id) == Some(kind))
-            .map(|&(n, _)| n)
-            .collect();
+        let ids: Vec<&str> = COMMANDS.iter().filter(|&&(_, id)| build_kind(id) == Some(kind)).map(|&(n, _)| n).collect();
         assert_eq!(ids.len(), 1, "{} has commands {ids:?}", kind.name());
     }
     // ... and exactly one sprite, the sprites running 0, 1, 2, ... (#161).
-    let mut sprites: Vec<u32> = placed
-        .iter()
-        .map(|&k| sprite_kind(k).unwrap_or_else(|| panic!("{} has no sprite", k.name())))
-        .collect();
+    let mut sprites: Vec<u32> = placed.iter().map(|&k| sprite_kind(k).unwrap_or_else(|| panic!("{} has no sprite", k.name()))).collect();
     sprites.sort();
-    assert_eq!(
-        sprites,
-        (0..placed.len() as u32).collect::<Vec<_>>(),
-        "building sprite kinds clash or skip"
-    );
+    assert_eq!(sprites, (0..placed.len() as u32).collect::<Vec<_>>(), "building sprite kinds clash or skip");
 }
 
 use super::*;
@@ -51,14 +36,7 @@ fn every_shape_is_keys_the_engine_takes() {
         assert_eq!(walkers == 5_000, name == "a", "{name}");
     }
     assert!(shape_keys("f").is_none());
-    assert_eq!(
-        (
-            Rules::mass_for(5_000, 2),
-            Rules::mass_for(1_250, 1),
-            Rules::mass_for(25_000, 2)
-        ),
-        (1.0, 1.0, 0.2)
-    );
+    assert_eq!((Rules::mass_for(5_000, 2), Rules::mass_for(1_250, 1), Rules::mass_for(25_000, 2)), (1.0, 1.0, 0.2));
 }
 
 /// **Shape C's peak against one walker a cell** (tech lead on #183,
@@ -93,34 +71,18 @@ fn shape_c_at_its_peak_fills_at_most_half_of_any_map() {
             agar_cells(&s, 2, |q| BigDish::with_map(q, &m))
         };
         let full = s.capacity as f32 / agar as f32;
-        eprintln!(
-            "{name}: {agar} open cells at scale 2, C's 50,000 slots fill {:.1}%",
-            100.0 * full
-        );
+        eprintln!("{name}: {agar} open cells at scale 2, C's 50,000 slots fill {:.1}%", 100.0 * full);
         if full > worst.0 {
             worst = (full, name.to_string());
         }
     }
-    assert!(
-        worst.0 <= 0.5,
-        "{}: C's slots fill {:.1}% of its open cells",
-        worst.1,
-        100.0 * worst.0
-    );
+    assert!(worst.0 <= 0.5, "{}: C's slots fill {:.1}% of its open cells", worst.1, 100.0 * worst.0);
 }
 
 /// The default mould is shape C, under the keys the command line gave.
 #[test]
 fn the_default_is_shape_c_under_given_keys() {
-    let mut args = Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 2,
-        walkers: 5000,
-        keys: vec![("upkeep".into(), "0.001".into())],
-        voice: true,
-        ..Default::default()
-    };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: vec![("upkeep".into(), "0.001".into())], voice: true, ..Default::default() };
     default_shape(&mut args);
     assert_eq!(args.walkers, 25_000);
     let mut s = race_settings(1, 2, args.walkers);
@@ -139,20 +101,7 @@ fn the_default_is_shape_c_under_given_keys() {
 #[test]
 fn the_window_plays_the_real_game() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("fork".into()),
-            seed: 1,
-            scale: 2,
-            walkers: 5000,
-            voice: true,
-            ..Default::default()
-        },
-        (640, 400),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() }, (640, 400), &device, &queue).unwrap();
     let step = 1.0 / 15.0;
     // Shots fly as bullets (11-13): a tracer for every leg flown, and
     // the legs that were firings are the shots.
@@ -182,19 +131,7 @@ fn the_window_plays_the_real_game() {
     // cancel yet), the lures' switch, back.
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(
-        m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(),
-        [
-            "Turret",
-            "Lure",
-            "Pump",
-            "Outpost",
-            "Siren",
-            "Cancel a build",
-            "Lures, sirens on/off",
-            "Back"
-        ]
-    );
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Siren", "Cancel a build", "Lures, sirens on/off", "Back"]);
     assert!(!m.commands[5].ready, "nothing being built");
 }
 
@@ -206,60 +143,29 @@ fn the_window_plays_the_real_game() {
 #[test]
 fn the_window_uses_the_tools() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("fork".into()),
-            seed: 1,
-            scale: 1,
-            walkers: 1250,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
     for _ in 0..10 {
         app.step(1.0 / 15.0);
     }
-    let held: u32 = (0..app.game.as_ref().unwrap().soldiers.len())
-        .map(|k| app.kit.held(k))
-        .sum();
+    let held: u32 = (0..app.game.as_ref().unwrap().soldiers.len()).map(|k| app.kit.held(k)).sum();
     assert!(held > 0, "soldiers took tools at the larder");
     app.tools_page = true;
     let m = app.model(None, None);
-    assert_eq!(
-        m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(),
-        ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]
-    );
-    assert!(
-        m.commands[0].ready && m.commands[3].ready && m.commands[4].ready,
-        "blast, germ and gas ready on the GPU"
-    );
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
+    assert!(m.commands[0].ready && m.commands[3].ready && m.commands[4].ready, "blast, germ and gas ready on the GPU");
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
     let s = g.soldiers[0];
     let k = g.world.scale();
     app.use_tool(Tool::Blast((s.x + 10.0 * k, s.y)));
-    app.use_tool(Tool::Cord(
-        (s.x - 10.0 * k, s.y + 8.0 * k),
-        (s.x + 10.0 * k, s.y + 8.0 * k),
-    ));
+    app.use_tool(Tool::Cord((s.x - 10.0 * k, s.y + 8.0 * k), (s.x + 10.0 * k, s.y + 8.0 * k)));
     app.use_tool(Tool::Gas((s.x, s.y - 10.0 * k)));
     let g = app.game.as_ref().unwrap();
-    assert_eq!(
-        (app.kit.uses[0], app.kit.uses[2], app.kit.uses[4]),
-        (1, 1, 1),
-        "the blast, the cord and the gas were used"
-    );
+    assert_eq!((app.kit.uses[0], app.kit.uses[2], app.kit.uses[4]), (1, 1, 1), "the blast, the cord and the gas were used");
     assert!(g.bank < 10_000.0, "and paid");
     let cratered = g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
     assert!(cratered > 0, "the blast left a crater");
-    assert_eq!(
-        (0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(),
-        held - 3,
-        "three held tools spent"
-    );
+    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 3, "three held tools spent");
 }
 
 /// A campaign mission plays its own map and rules, shows its goal as the
@@ -268,26 +174,11 @@ fn the_window_uses_the_tools() {
 #[test]
 fn a_mission_shows_its_goal_and_its_end() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            seed: 1,
-            scale: 2,
-            walkers: 5000,
-            mission: Some("1-landfall".into()),
-            ..Default::default()
-        },
-        (640, 400),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { seed: 1, scale: 2, walkers: 5000, mission: Some("1-landfall".into()), ..Default::default() }, (640, 400), &device, &queue).unwrap();
     assert_eq!(app.name, "flats");
     assert_eq!(app.game.as_ref().unwrap().bank, 0.0, "the mission's start_bank");
     app.prepare();
-    assert!(app
-        .model(None, None)
-        .objective
-        .is_some_and(|o| o.starts_with("Grow your squad to")));
+    assert!(app.model(None, None).objective.is_some_and(|o| o.starts_with("Grow your squad to")));
     // An idle squad meets nothing by a 1:00 cap. (A rush on the core was
     // lost by 2:00 until the mission's reserve recruit, Larder PR #106:
     // its squad now keeps coming back, and an idle one fires on the
@@ -314,10 +205,7 @@ fn a_mission_shows_its_goal_and_its_end() {
 /// adapter fails them rather than letting them pass unrun.
 fn smoke_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
     let g = gpu();
-    assert!(
-        g.is_some() || std::env::var("MOULDGPU_TEST_GPU").map_or(true, |v| v != "1"),
-        "MOULDGPU_TEST_GPU=1 but no GPU adapter"
-    );
+    assert!(g.is_some() || std::env::var("MOULDGPU_TEST_GPU").map_or(true, |v| v != "1"), "MOULDGPU_TEST_GPU=1 but no GPU adapter");
     g
 }
 
@@ -329,38 +217,11 @@ fn smoke_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
 /// 256 x 160 dish, 1,250 walkers): 5-9 s a round on software Vulkan,
 /// against 20-24 s at scale 2 (2026-11-12).
 fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
-    let args = Args {
-        map: mission.is_none().then(|| "fork".into()),
-        seed: 1,
-        scale: 1,
-        walkers: 1250,
-        voice: true,
-        mission: mission.map(String::from),
-        ..Default::default()
-    };
-    let b = Bench {
-        secs: 60.0,
-        hand: hand.into(),
-        fps: 24.0,
-        screen: (320, 200),
-        stamps: false,
-        grid: 0,
-        sound: Some(String::new()),
-        fast,
-        passes: 0,
-        settle: false,
-        squad1: false,
-        spread: true,
-        view: None,
-        viewpasses: 0,
-    };
+    let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, voice: true, mission: mission.map(String::from), ..Default::default() };
+    let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 0 };
     let t0 = Instant::now();
     let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
-    eprintln!(
-        "smoke {mission:?} {hand}{}: {last} ({:.1} s)",
-        if fast { " fast" } else { "" },
-        t0.elapsed().as_secs_f32()
-    );
+    eprintln!("smoke {mission:?} {hand}{}: {last} ({:.1} s)", if fast { " fast" } else { "" }, t0.elapsed().as_secs_f32());
     last
 }
 
@@ -375,10 +236,7 @@ fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand
 fn the_window_plays_every_mission() {
     let Some((device, queue)) = smoke_gpu() else { return };
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-campaign-2026-11-12/missions");
-    let mut names: Vec<String> = std::fs::read_dir(&dir)
-        .unwrap()
-        .filter_map(|e| e.ok()?.file_name().to_str()?.strip_suffix(".txt").map(String::from))
-        .collect();
+    let mut names: Vec<String> = std::fs::read_dir(&dir).unwrap().filter_map(|e| e.ok()?.file_name().to_str()?.strip_suffix(".txt").map(String::from)).collect();
     names.sort();
     assert!(names.len() >= 3, "the missions in {}: {names:?}", dir.display());
     let styles = ["boom", "claim", "strike", "fort", "late"];
@@ -413,44 +271,11 @@ fn the_window_takes_every_command() {
 #[test]
 fn the_window_plays_the_players_own_mould() {
     let Some((device, queue)) = smoke_gpu() else { return };
-    let args = Args {
-        seed: 1,
-        scale: 1,
-        walkers: 625,
-        own: true,
-        ..Default::default()
-    };
-    let b = Bench {
-        secs: 60.0,
-        hand: "every".into(),
-        fps: 24.0,
-        screen: (320, 200),
-        stamps: false,
-        grid: 0,
-        sound: Some(String::new()),
-        fast: false,
-        passes: 0,
-        settle: false,
-        squad1: false,
-        spread: true,
-        view: None,
-        viewpasses: 2,
-    };
+    let args = Args { seed: 1, scale: 1, walkers: 625, own: true, ..Default::default() };
+    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 2 };
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
     assert!(last.contains("t "), "{last}");
-    let app = offscreen(
-        Args {
-            seed: 1,
-            scale: 1,
-            walkers: 625,
-            own: true,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let app = offscreen(Args { seed: 1, scale: 1, walkers: 625, own: true, ..Default::default() }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_ref().unwrap();
     assert_eq!(g.world.counts_by_side(), (625, 625));
     assert_eq!(g.mould, 625, "the game's mould is the enemy's");
@@ -462,31 +287,10 @@ fn the_window_plays_the_players_own_mould() {
 #[test]
 fn a_shot_from_a_soldier_with_no_note_yet_draws() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("fork".into()),
-            seed: 1,
-            scale: 1,
-            walkers: 1250,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let s = *g.soldiers.last().unwrap();
-    g.last_shots = vec![slime_mould::mould::larder_world::Shot {
-        from: (s.x, s.y),
-        to: (s.x + 5.0, s.y),
-        hit: None,
-        killed: 0,
-        by: Some(g.soldiers.len() - 1),
-        fired: true,
-        cast: 0,
-        r: 2.0,
-    }];
+    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: (s.x, s.y), to: (s.x + 5.0, s.y), hit: None, killed: 0, by: Some(g.soldiers.len() - 1), fired: true, cast: 0, r: 2.0 }];
     app.looks.clear();
     shot_marks(app.game.as_ref().unwrap(), &mut app.tracers, &mut app.looks, None);
     assert_eq!(app.looks.len(), app.game.as_ref().unwrap().soldiers.len());
@@ -499,57 +303,25 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
 fn the_menu_plays_the_command_lines_rounds() {
     use slime_mould::world::start::StartEvent;
     // A bare command line plays the squad mode (owner 2026-11-15 07:57Z: "squad mode is default mode"; `main`).
-    let bare = Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 2,
-        walkers: 5000,
-        voice: true,
-        squads: true,
-        ..Default::default()
-    };
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, squads: true, ..Default::default() };
     let mut cli = bare.clone();
     default_shape(&mut cli);
     let mut menu = start_menu(&bare);
-    assert!(
-        menu.options.iter().all(|o| o.is_default()),
-        "a bare command line presets nothing"
-    );
+    assert!(menu.options.iter().all(|o| o.is_default()), "a bare command line presets nothing");
     let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
-    assert_eq!(
-        (a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own),
-        (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false)
-    );
+    assert_eq!((a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own), (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false));
     assert!(a.squads, "the sandbox plays the squad mode by default");
     // A mission keeps its own mould: no shape C keys, no map.
     assert!(menu.missions.len() >= 3, "the campaign's missions are listed");
     assert_eq!(menu.missions[0].stem, "1-landfall");
     let m = round_args(&bare, false, &menu, &StartEvent::Mission(1));
-    assert_eq!(
-        (m.mission.as_deref(), m.walkers, m.keys.len()),
-        (Some(menu.missions[1].stem.as_str()), 5000, 0)
-    );
+    assert_eq!((m.mission.as_deref(), m.walkers, m.keys.len()), (Some(menu.missions[1].stem.as_str()), 5000, 0));
     // Options moved: they land as the command line's keys would.
     for o in &mut menu.options {
-        o.at = o
-            .choices
-            .iter()
-            .position(|c| {
-                c == match o.key.as_str() {
-                    "panic" => "0",
-                    "bullet" => "0",
-                    "map" => "rim",
-                    "rounds" => "split",
-                    _ => o.value(),
-                }
-            })
-            .unwrap();
+        o.at = o.choices.iter().position(|c| c == match o.key.as_str() { "panic" => "0", "bullet" => "0", "map" => "rim", "rounds" => "split", _ => o.value() }).unwrap();
     }
     let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
-    assert_eq!(
-        (a.map.as_deref(), a.bullet, LOADOUTS[a.round].0),
-        (Some("rim"), Some(0.0), "split")
-    );
+    assert_eq!((a.map.as_deref(), a.bullet, LOADOUTS[a.round].0), (Some("rim"), Some(0.0), "split"));
     assert_eq!(a.keys.last(), Some(&("panic".to_string(), "0".to_string())));
     let m = round_args(&bare, false, &menu, &StartEvent::Mission(0));
     assert_eq!(m.keys, vec![("panic".to_string(), "0".to_string())]);
@@ -561,38 +333,18 @@ fn the_menu_plays_the_command_lines_rounds() {
     let w = menu.options.iter_mut().find(|o| o.key == "wither").unwrap();
     w.at = w.default;
     let a = round_args(&given, false, &menu, &StartEvent::Sandbox);
-    assert_eq!(
-        a.keys
-            .iter()
-            .filter(|k| k.0 == "wither")
-            .map(|k| k.1.as_str())
-            .collect::<Vec<_>>(),
-        vec!["0.01"],
-        "reset to C's own"
-    );
+    assert_eq!(a.keys.iter().filter(|k| k.0 == "wither").map(|k| k.1.as_str()).collect::<Vec<_>>(), vec!["0.01"], "reset to C's own");
 }
 
 #[test]
 fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     let r = RoundRules::default();
-    let cards = |s: &str, next| {
-        gun_cards(&rounds::parse(s).unwrap(), &r, &Rules::default(), next, |c| {
-            c != rounds::Card::Germ
-        })
-    };
+    let cards = |s: &str, next| gun_cards(&rounds::parse(s).unwrap(), &r, &Rules::default(), next, |c| c != rounds::Card::Germ);
     let lit = |v: &[GunCard]| v.iter().map(|c| c.next).collect::<Vec<_>>();
     // Two casts: quiet+gas, then quiet+blast; the second is next.
     let lull = cards("quiet+gas+quiet+blast", Some(1));
     assert_eq!(lit(&lull), [false, false, true, true]);
-    assert_eq!(
-        lull.iter().map(|c| c.kind).collect::<Vec<_>>(),
-        [
-            CardKind::Modifier,
-            CardKind::Payload,
-            CardKind::Modifier,
-            CardKind::Payload
-        ]
-    );
+    assert_eq!(lull.iter().map(|c| c.kind).collect::<Vec<_>>(), [CardKind::Modifier, CardKind::Payload, CardKind::Modifier, CardKind::Payload]);
     // A modifier takes its payload's colour; a payload has no price a hit
     // (owner 18:38Z: "The bank is just to build the gun"), only its
     // budget cost.
@@ -604,10 +356,7 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     let tail = cards("blast+quiet", Some(0));
     assert_eq!((tail[0].next, tail[1].idle, tail[1].next), (true, true, false));
     let lance = cards("pierce+split+blast", Some(0));
-    assert_eq!(
-        lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(),
-        [(false, false), (false, false), (true, false)]
-    );
+    assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
     // A payload this world cannot cast says so.
     assert!(cards("germ", Some(0))[0].about.contains("Not on this world"));
     // Short words in plain language (owner 11-15 02:57Z: "The text for
@@ -617,20 +366,10 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     for c in rounds::Card::ALL {
         let (_, kind, words) = card_face(c, &r, &Rules::default());
         let low = words.to_lowercase();
-        assert!(
-            words.len() <= 60
-                && words.matches(". ").count() == 0
-                && !["payload", "modifier", "trigger", "walker", "mould"]
-                    .iter()
-                    .any(|j| low.contains(j)),
-            "{c:?}: {words}"
-        );
+        assert!(words.len() <= 60 && words.matches(". ").count() == 0 && !["payload", "modifier", "trigger", "walker", "mould"].iter().any(|j| low.contains(j)), "{c:?}: {words}");
         assert!(["Bullet", "Next bullet", "Always"].contains(&kind.label()));
     }
-    assert_eq!(
-        draw::card_words(rounds::Card::Wide, CardKind::Modifier, "Its hit is 1.6x wider."),
-        "Next bullet: its hit is 1.6x wider."
-    );
+    assert_eq!(draw::card_words(rounds::Card::Wide, CardKind::Modifier, "Its hit is 1.6x wider."), "Next bullet: its hit is 1.6x wider.");
     let needle = rounds::Card::Ammo(rounds::Ammo::roll_of(rounds::Shell::Bomb, rounds::Set::Needle, 7, 4));
     let (_, _, words) = card_face(needle, &r, &Rules::default());
     assert!(words.len() <= 120 && words.starts_with("Damage "), "{words}");
@@ -651,23 +390,12 @@ fn rolled_bullets_load_within_the_gun_and_show_their_numbers() {
         let gun = kind.average();
         for n in 0..20 {
             let cards = input::bullet_load(&gun, 1, n, 3);
-            assert!(
-                !cards.is_empty() && rounds::fit_gun(cards.clone(), &gun).is_ok(),
-                "{kind:?} load {n}: {}",
-                rounds::name(&cards)
-            );
-            for (c, face) in cards
-                .iter()
-                .zip(gun_cards(&cards, &r, &Rules::default(), Some(0), |_| true))
-            {
+            assert!(!cards.is_empty() && rounds::fit_gun(cards.clone(), &gun).is_ok(), "{kind:?} load {n}: {}", rounds::name(&cards));
+            for (c, face) in cards.iter().zip(gun_cards(&cards, &r, &Rules::default(), Some(0), |_| true)) {
                 assert!(face.icon.is_some() && face.kind == CardKind::Payload, "{c:?}");
                 if let rounds::Card::Ammo(a) = c {
                     assert_eq!(face.name, a.title());
-                    assert!(
-                        face.about.contains(&format!("Damage {:.1}", a.damage())),
-                        "{}",
-                        face.about
-                    );
+                    assert!(face.about.contains(&format!("Damage {:.1}", a.damage())), "{}", face.about);
                 }
             }
         }
@@ -681,27 +409,11 @@ fn rolled_bullets_load_within_the_gun_and_show_their_numbers() {
 fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
     let Some((device, queue)) = gpu() else { return };
     for screen in [(1280, 800), (1920, 1080)] {
-        let app = offscreen(
-            Args {
-                map: Some("fork".into()),
-                seed: 1,
-                scale: 1,
-                walkers: 1250,
-                ..Default::default()
-            },
-            screen,
-            &device,
-            &queue,
-        )
-        .unwrap();
+        let app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, screen, &device, &queue).unwrap();
         let g = app.game.as_ref().unwrap();
         let (top, bottom) = Hud::insets(screen, app.canvas.as_ref().unwrap().ui);
         let y = app.camera.to_screen(g.larder).1;
-        assert!(
-            y > top + 40.0 && y < screen.1 as f32 - bottom - 40.0,
-            "{screen:?}: the larder at y {y:.0}, the band {top:.0}..{:.0}",
-            screen.1 as f32 - bottom
-        );
+        assert!(y > top + 40.0 && y < screen.1 as f32 - bottom - 40.0, "{screen:?}: the larder at y {y:.0}, the band {top:.0}..{:.0}", screen.1 as f32 - bottom);
     }
 }
 
@@ -713,14 +425,7 @@ fn the_opening_camera_frames_the_larder_above_the_bottom_panels() {
 fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     use slime_mould::world::start::Page;
     let Some((device, queue)) = gpu() else { return };
-    let base = Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 2,
-        walkers: 5000,
-        voice: true,
-        ..Default::default()
-    };
+    let base = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
     let mut app = offscreen(base.clone(), (640, 400), &device, &queue).unwrap();
     app.base = Some((base.clone(), true));
     app.menu = Some(start_menu(&base));
@@ -738,20 +443,13 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     let t = app.game.as_ref().unwrap().time();
     app.menu_input(|m| m.key(KeyCode::ArrowDown, true)).unwrap();
     app.menu_input(|m| m.key(KeyCode::ArrowUp, true)).unwrap();
-    assert_eq!(
-        app.game.as_ref().unwrap().time(),
-        t,
-        "moving between rows kept the dish"
-    );
+    assert_eq!(app.game.as_ref().unwrap().time(), t, "moving between rows kept the dish");
     // The map row: Right turns Fork to the next map, and the dish is on it.
     let picks = app.menu_input(|m| m.key(KeyCode::ArrowRight, true)).unwrap();
     assert!(picks.is_empty());
     let next = app.menu.as_ref().unwrap().option("map").unwrap().value().to_string();
     assert_ne!(next, "fork");
-    assert_eq!(
-        (app.args.map.as_deref(), app.name.as_str()),
-        (Some(next.as_str()), next.as_str())
-    );
+    assert_eq!((app.args.map.as_deref(), app.name.as_str()), (Some(next.as_str()), next.as_str()));
     assert_eq!(app.game.as_ref().unwrap().time(), 0.0, "a fresh round");
     assert!(app.in_menu(), "still on the menu");
 }
@@ -762,14 +460,7 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
 #[test]
 fn the_squad_panel_splits_switches_and_combines() {
     let Some((device, queue)) = gpu() else { return };
-    let args = Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 2,
-        walkers: 5000,
-        squads: true,
-        ..Default::default()
-    };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
     let mut app = offscreen(args, (1280, 720), &device, &queue).unwrap();
     let rows = |app: &App| app.model(None, None).squads.expect("a squad panel in squad mode").rows;
     let r = rows(&app);
@@ -804,30 +495,16 @@ fn the_squad_panel_splits_switches_and_combines() {
     // The build page has no Outpost without the larder.
     app.build_page = true;
     let cmds = app.model(None, None).commands;
-    assert!(
-        cmds.iter().any(|c| c.name == "Turret") && !cmds.iter().any(|c| c.name == "Outpost"),
-        "{:?}",
-        cmds.iter().map(|c| &c.name).collect::<Vec<_>>()
-    );
+    assert!(cmds.iter().any(|c| c.name == "Turret") && !cmds.iter().any(|c| c.name == "Outpost"), "{:?}", cmds.iter().map(|c| &c.name).collect::<Vec<_>>());
     app.build_page = false;
     // The RTS round has no panel.
-    let rts = Args {
-        squads: false,
-        ..app.args.clone()
-    };
+    let rts = Args { squads: false, ..app.args.clone() };
     let app = offscreen(rts, (640, 400), &device, &queue).unwrap();
     assert!(app.model(None, None).squads.is_none());
 }
 
 fn squad_args(squads: bool) -> Args {
-    Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 1,
-        walkers: 1250,
-        squads,
-        ..Default::default()
-    }
+    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, squads, ..Default::default() }
 }
 
 /// **A step a command finishes keeps its shots** (bug sweep, 2026-11-14,
@@ -892,28 +569,16 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     assert_eq!(key_of("Drain a crystal"), Some(KeyCode::KeyG));
     assert_eq!(key_of("Attack-move"), Some(KeyCode::KeyR));
     assert_eq!(key_of("Defend"), Some(KeyCode::KeyX));
-    assert!(
-        m.help_base
-            .as_ref()
-            .is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))),
-        "F1 lists the squad's keys"
-    );
+    assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
     // G is the card's: it aims a drain, and merges nothing.
     assert!(!app.squad_key(KeyCode::KeyG, true, false, false));
     let (took, _) = app.hud.key(KeyCode::KeyG, true, false, &mut app.camera);
-    assert!(
-        took && app.hud.targeting().is_some_and(|t| t.0 == HARVEST),
-        "G aims a drain"
-    );
+    assert!(took && app.hud.targeting().is_some_and(|t| t.0 == HARVEST), "G aims a drain");
     app.hud.cancel_targeting();
     // Y splits the controlled squad.
     let n = app.game.as_ref().unwrap().live_squads().len();
     assert!(app.squad_key(squadmode::SPLIT, true, false, false));
-    assert_eq!(
-        app.game.as_ref().unwrap().live_squads().len(),
-        n + 1,
-        "Y split the squad"
-    );
+    assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n + 1, "Y split the squad");
     // The wheel zooms (about the squad, still following it); Ctrl + wheel
     // switches squads.
     let (z, active) = (app.camera.zoom, app.game.as_ref().unwrap().active);
@@ -925,11 +590,7 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     assert_eq!(app.game.as_ref().unwrap().active, active);
     app.ctrl = true;
     assert!(app.squad_wheel(1));
-    assert_ne!(
-        app.game.as_ref().unwrap().active,
-        active,
-        "Ctrl + wheel switched squads"
-    );
+    assert_ne!(app.game.as_ref().unwrap().active, active, "Ctrl + wheel switched squads");
 }
 
 #[test]
@@ -957,27 +618,13 @@ fn the_squad_cameras_follow_keeps_the_squad_in_the_middle() {
         if i >= 10 {
             worst = worst.max((m.0 - f.0).hypot(m.1 - f.1));
         }
-        assert!(
-            app.sq.as_ref().unwrap().follow,
-            "frame {i}: the camera stopped following"
-        );
+        assert!(app.sq.as_ref().unwrap().follow, "frame {i}: the camera stopped following");
     }
     app.squad_key(KeyCode::KeyD, false, false, true);
-    let (sx, sy) = app.camera.to_screen(
-        app.game
-            .as_ref()
-            .map(|g| g.active.and_then(|q| g.middle(q)).unwrap())
-            .unwrap(),
-    );
-    eprintln!(
-        "follow: worst {worst:.2} cells off; squad on screen at ({sx:.0}, {sy:.0}), zoom {}",
-        app.camera.zoom
-    );
+    let (sx, sy) = app.camera.to_screen(app.game.as_ref().map(|g| g.active.and_then(|q| g.middle(q)).unwrap()).unwrap());
+    eprintln!("follow: worst {worst:.2} cells off; squad on screen at ({sx:.0}, {sy:.0}), zoom {}", app.camera.zoom);
     assert!(worst < 3.0, "the camera fell {worst:.1} cells behind the squad");
-    assert!(
-        (0.0..640.0).contains(&sx) && (0.0..400.0).contains(&sy),
-        "the squad left the screen"
-    );
+    assert!((0.0..640.0).contains(&sx) && (0.0..400.0).contains(&sy), "the squad left the screen");
 }
 
 /// **No two commands on a page share a slot or a key** (bug sweep,
@@ -1033,16 +680,8 @@ fn the_cards_burn_reaches_a_moving_squad() {
     }
     let g = app.game.as_ref().unwrap();
     let q = g.active.unwrap();
-    let burning = g
-        .members(q)
-        .iter()
-        .filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..)))
-        .count();
-    assert_eq!(
-        burning,
-        g.members(q).len(),
-        "every member of the squad burns the line half a second later"
-    );
+    let burning = g.members(q).iter().filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..))).count();
+    assert_eq!(burning, g.members(q).len(), "every member of the squad burns the line half a second later");
 }
 
 /// **The minimap in the squad mode** (review after the bug sweep,
@@ -1060,23 +699,14 @@ fn the_minimap_sends_the_squad_where_it_shows() {
     app.controls.cursor = Some(c);
     app.hud.moved(Some(c));
     let shows = app.hud.on_minimap(c).unwrap();
-    assert!(
-        !app.squad_button(Button::Left, true),
-        "a left click on the minimap is the controls' (the camera)"
-    );
-    assert!(
-        app.game.as_ref().unwrap().squads.iter().all(|q| q.fire.is_none()),
-        "and fires nothing"
-    );
+    assert!(!app.squad_button(Button::Left, true), "a left click on the minimap is the controls' (the camera)");
+    assert!(app.game.as_ref().unwrap().squads.iter().all(|q| q.fire.is_none()), "and fires nothing");
     app.squad_button(Button::Left, false);
     assert!(app.squad_button(Button::Right, true));
     let g = app.game.as_ref().unwrap();
     let d = g.squads[g.active.unwrap()].dest.expect("the squad was sent");
     let sc = g.world.scale();
-    assert!(
-        (d.0 - shows.0).hypot(d.1 - shows.1) <= 8.0 * sc,
-        "sent to {d:?}, the minimap shows {shows:?}"
-    );
+    assert!((d.0 - shows.0).hypot(d.1 - shows.1) <= 8.0 * sc, "sent to {d:?}, the minimap shows {shows:?}");
 }
 
 /// **A steady bottom bar** (owner, 11-14 20:19Z: "the bottom hud menu
@@ -1107,44 +737,18 @@ fn the_bottom_bar_and_minimap_stay_put_at_every_zoom() {
 #[test]
 fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("fork".into()),
-            seed: 1,
-            scale: 1,
-            walkers: 1250,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let at = (g.larder.0 + 6.0, g.larder.1);
     g.bank += g.build_price(Kind::Turret, at);
     assert!(g.build(Kind::Turret, at));
     let k = g.buildings.len() - 1;
     (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
-    g.last_shots = vec![slime_mould::mould::larder_world::Shot {
-        from: at,
-        to: (at.0, at.1 + 5.0),
-        hit: None,
-        killed: 0,
-        by: None,
-        fired: true,
-        cast: 0,
-        r: 2.0,
-    }];
+    g.last_shots = vec![slime_mould::mould::larder_world::Shot { from: at, to: (at.0, at.1 + 5.0), hit: None, killed: 0, by: None, fired: true, cast: 0, r: 2.0 }];
     app.blooks.clear();
     turret_fired(app.game.as_ref().unwrap(), &mut app.blooks);
     let t = app.blooks[k];
-    assert!(
-        (t.facing - std::f32::consts::FRAC_PI_2).abs() < 1e-4 && t.shot == TURRET_SHOT,
-        "down its shot, kicking: {} {}",
-        t.facing,
-        t.shot
-    );
+    assert!((t.facing - std::f32::consts::FRAC_PI_2).abs() < 1e-4 && t.shot == TURRET_SHOT, "down its shot, kicking: {} {}", t.facing, t.shot);
     // Aim to the right: a tenth of a second turns it TURRET_TURN / 10.
     let g = app.game.as_mut().unwrap();
     (g.buildings[k].aim, g.buildings[k].dense) = (Some((at.0 + 5.0, at.1)), g.rules.aim_min);
@@ -1167,29 +771,12 @@ fn a_turret_faces_its_shot_and_its_lamp_is_the_game_state() {
 #[test]
 fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("fork".into()),
-            seed: 1,
-            scale: 1,
-            walkers: 1250,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
     let g = app.game.as_mut().unwrap();
     let home = g.larder;
     let mut stand = |kind: Kind, at: (f32, f32)| {
         g.bank += g.build_price(kind, at);
-        assert!(
-            g.build(kind, at),
-            "{} at {at:?}: {:?}",
-            kind.name(),
-            g.build_blocked(kind, at)
-        );
+        assert!(g.build(kind, at), "{} at {at:?}: {:?}", kind.name(), g.build_blocked(kind, at));
         let k = g.buildings.len() - 1;
         (g.buildings[k].built, g.buildings[k].hp) = (1.0, g.buildings[k].max_hp);
         k
@@ -1205,11 +792,7 @@ fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     let mut banked = 0.0;
     step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
     assert_eq!(app.blooks[siren].call, SIREN_CALL, "the siren's call");
-    assert!(
-        app.blooks[post].bank == BANKED && banked == 0.0,
-        "the outpost flares, not the larder: {} {banked}",
-        app.blooks[post].bank
-    );
+    assert!(app.blooks[post].bank == BANKED && banked == 0.0, "the outpost flares, not the larder: {} {banked}", app.blooks[post].bank);
     let g = app.game.as_mut().unwrap();
     (g.soldiers[0].x, g.soldiers[0].y) = g.larder;
     app.looks[0].carry = 5.0;
@@ -1223,22 +806,11 @@ fn a_step_shows_a_siren_call_a_bank_at_an_outpost_and_a_bite() {
     assert_eq!(app.looks[0].flinch, 0.0, "a nibble under FLINCH_HP");
     app.game.as_mut().unwrap().soldiers[0].hp -= 0.6 * FLINCH_HP;
     step_notes(app.game.as_ref().unwrap(), &mut app.blooks, &mut app.looks, &mut banked);
-    assert!(
-        app.looks[0].flinch == FLINCH && app.looks[0].bite.abs() < 1e-4,
-        "flinch {} from {}",
-        app.looks[0].flinch,
-        app.looks[0].bite
-    );
+    assert!(app.looks[0].flinch == FLINCH && app.looks[0].bite.abs() < 1e-4, "flinch {} from {}", app.looks[0].flinch, app.looks[0].bite);
 }
 
 fn run_base() -> Args {
-    Args {
-        map: Some("fork".into()),
-        seed: 1,
-        scale: 1,
-        walkers: 1250,
-        ..Default::default()
-    }
+    Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }
 }
 
 /// A run's level plays as a mission would: no sandbox map, the level's seed and walkers, and the run; the
@@ -1252,10 +824,7 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     r.depth = 3;
     let a = run_args(&base, &menu, &r);
     let l = r.level();
-    assert_eq!(
-        (a.map.as_deref(), a.mission.as_deref(), a.own, a.seed, a.keys.len()),
-        (None, None, false, l.seed, 0)
-    );
+    assert_eq!((a.map.as_deref(), a.mission.as_deref(), a.own, a.seed, a.keys.len()), (None, None, false, l.seed, 0));
     // Shape C's walkers by the level, whatever the base's (its keys go on
     // in `start`, under the tier's: `run_shape`).
     assert_eq!(a.walkers, run_walkers(l.walkers));
@@ -1263,17 +832,11 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     assert_eq!(a.run.as_ref().map(|r| r.depth), Some(3));
     let mut cli = base.clone();
     cli.run = Some(r);
-    assert!(
-        round_args(&cli, false, &menu, &StartEvent::Sandbox).run.is_none(),
-        "the sandbox is not a run"
-    );
+    assert!(round_args(&cli, false, &menu, &StartEvent::Sandbox).run.is_none(), "the sandbox is not a run");
     // The shop page shows what the run sells, by group.
     let shop = shop_of(&Run::new(1));
     assert!(shop.heading.starts_with("Planet 1 of 8"), "{}", shop.heading);
-    assert!(shop
-        .rows
-        .iter()
-        .any(|row| row.group == "Buildings" && row.name == "Turrets"));
+    assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name == "Turrets"));
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
@@ -1296,13 +859,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
     let m = app.model(None, None);
-    assert!(
-        m.objective
-            .as_deref()
-            .is_some_and(|o| o.starts_with("Wipe out the slime")),
-        "{:?}",
-        m.objective
-    );
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out the slime")), "{:?}", m.objective);
     // Turrets are on the build page; walls are owned from the start.
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
@@ -1312,12 +869,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
     app.build_page = false;
     // A won level: the end screen carries on to the shop.
-    let win = Verdict {
-        cause: Cause::Goal,
-        at: 300.0,
-        stars: 2,
-        best: 1.0,
-    };
+    let win = Verdict { cause: Cause::Goal, at: 300.0, stars: 2, best: 1.0 };
     app.mission.as_mut().unwrap().verdict = Some(win);
     let m = app.model(None, None);
     assert_eq!(m.carry_on.as_deref(), Some("On to the shop"));
@@ -1328,36 +880,17 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert!(menu.run_live);
     assert_eq!(app.run.as_ref().map(|r| (r.depth, r.points)), Some((2, reward(1, 2))));
     // Buy armour, then land.
-    let hp = app
-        .run
-        .as_ref()
-        .unwrap()
-        .shop()
-        .iter()
-        .position(|r| r.name == ITEMS[0].name)
-        .unwrap();
+    let hp = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == ITEMS[0].name).unwrap();
     app.menu_event(StartEvent::Buy(hp)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().level_of("hp"), 1);
     // A card dragged to the front of the gun (owner 20:32Z): the gun fires
     // it first, and the shop is drawn again with it there.
     app.run.as_mut().unwrap().cards = vec![(rounds::Card::Wide, true), (rounds::Card::Blast, true)];
-    let blast = app
-        .run
-        .as_ref()
-        .unwrap()
-        .shop()
-        .iter()
-        .position(|r| r.name == "Blast")
-        .unwrap();
+    let blast = app.run.as_ref().unwrap().shop().iter().position(|r| r.name == "Blast").unwrap();
     app.menu_event(StartEvent::Move(blast, 0)).unwrap();
     assert_eq!(app.run.as_ref().unwrap().gun_text(), "blast+wide");
     let shop = app.menu.as_ref().unwrap().shop.as_ref().unwrap();
-    let on: Vec<&str> = shop
-        .rows
-        .iter()
-        .filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards)
-        .map(|r| r.name.as_str())
-        .collect();
+    let on: Vec<&str> = shop.rows.iter().filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards).map(|r| r.name.as_str()).collect();
     assert_eq!(on, ["Blast", "Wide"]);
     assert!(app.in_menu(), "a move is no pick of a round");
     app.menu_event(StartEvent::NextLevel).unwrap();
@@ -1366,22 +899,12 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");
     // A lost level ends the run.
-    app.mission.as_mut().unwrap().verdict = Some(Verdict {
-        stars: 0,
-        cause: Cause::SquadWiped,
-        ..win
-    });
+    app.mission.as_mut().unwrap().verdict = Some(Verdict { stars: 0, cause: Cause::SquadWiped, ..win });
     assert_eq!(app.model(None, None).carry_on.as_deref(), Some("End the run"));
     app.carry_on().unwrap();
     let menu = app.menu.as_ref().unwrap();
     assert!(app.run.is_none() && !menu.run_live && menu.page == Page::Main);
-    assert!(
-        menu.notice
-            .as_deref()
-            .is_some_and(|n| n.starts_with("The run ended on planet 2")),
-        "{:?}",
-        menu.notice
-    );
+    assert!(menu.notice.as_deref().is_some_and(|n| n.starts_with("The run ended on planet 2")), "{:?}", menu.notice);
 }
 
 /// **The gun range in the window** (owner, 11-15 02:55Z: "I need a test
@@ -1406,51 +929,23 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     app.menu_event(StartEvent::Range).unwrap();
     let menu = app.menu.as_ref().unwrap();
     assert!(menu.page == Page::Shop && menu.shop.as_ref().is_some_and(|s| s.range && s.purse == "Free") && !app.armory);
-    let row = |app: &App, name: &str, offer: bool| {
-        app.range
-            .as_ref()
-            .unwrap()
-            .shop()
-            .iter()
-            .position(|r| r.name == name && matches!(r.pick, Pick::Offer(_) | Pick::Gun(_)) == offer)
-            .unwrap_or_else(|| panic!("no {name}"))
-    };
-    app.menu_event(StartEvent::Buy(row(&app, "Standard blast", true)))
-        .unwrap();
+    let row = |app: &App, name: &str, offer: bool| app.range.as_ref().unwrap().shop().iter().position(|r| r.name == name && matches!(r.pick, Pick::Offer(_) | Pick::Gun(_)) == offer).unwrap_or_else(|| panic!("no {name}"));
+    app.menu_event(StartEvent::Buy(row(&app, "Standard blast", true))).unwrap();
     app.menu_event(StartEvent::Move(row(&app, "Wide", true), 0)).unwrap();
     let r = app.range.clone().unwrap();
-    assert_eq!(
-        (r.gun_text().split('+').next(), r.gun().len(), r.points),
-        (Some("wide"), 2, 0)
-    );
+    assert_eq!((r.gun_text().split('+').next(), r.gun().len(), r.points), (Some("wide"), 2, 0));
     // The shop shows them in the gun.
     let shop = app.menu.as_ref().unwrap().shop.as_ref().unwrap();
-    assert_eq!(
-        shop.rows
-            .iter()
-            .filter(|x| x.on && x.area == slime_mould::world::start::ShopArea::Cards)
-            .count(),
-        2
-    );
+    assert_eq!(shop.rows.iter().filter(|x| x.on && x.area == slime_mould::world::start::ShopArea::Cards).count(), 2);
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu() && !app.armory && !app.paused);
     let g = app.game.as_ref().unwrap();
-    assert!(
-        g.rules.cap >= 3600.0 && g.bank >= 100_000.0,
-        "cap {} bank {}",
-        g.rules.cap,
-        g.bank
-    );
+    assert!(g.rules.cap >= 3600.0 && g.bank >= 100_000.0, "cap {} bank {}", g.rules.cap, g.bank);
     assert_eq!(g.gun(0), r.carried());
     assert_eq!(app.rounds.cards_of(g, 0), r.gun());
     app.prepare();
     let m = app.model(None, None);
-    assert!(
-        !m.clock.contains('/') && m.objective.as_deref().is_some_and(|o| o.starts_with("Gun range")),
-        "{} {:?}",
-        m.clock,
-        m.objective
-    );
+    assert!(!m.clock.contains('/') && m.objective.as_deref().is_some_and(|o| o.starts_with("Gun range")), "{} {:?}", m.clock, m.objective);
     for _ in 0..8 {
         app.step(1.0 / 15.0);
     }
@@ -1461,14 +956,7 @@ fn the_gun_range_builds_a_gun_and_plays_it() {
     app.next_round();
     assert!(app.in_menu() && app.armory && app.paused && app.menu.as_ref().unwrap().page == Page::Shop);
     assert_eq!(app.view.as_ref().map(|v| v.minimap), minimap.map(|_| false));
-    let long = app
-        .range
-        .as_ref()
-        .unwrap()
-        .shop()
-        .iter()
-        .position(|x| x.name == "Long gun" && matches!(x.pick, Pick::Gun(_)))
-        .unwrap();
+    let long = app.range.as_ref().unwrap().shop().iter().position(|x| x.name == "Long gun" && matches!(x.pick, Pick::Gun(_))).unwrap();
     app.menu_event(StartEvent::Buy(long)).unwrap();
     assert_eq!(app.range.as_ref().unwrap().carried().kind, GunKind::Long);
     app.menu_event(StartEvent::NextLevel).unwrap();
@@ -1506,22 +994,7 @@ fn the_window_plays_a_runs_planet() {
     let mut r = Run::new(4);
     r.depth = 3;
     args.run = Some(r);
-    let b = Bench {
-        secs: 60.0,
-        hand: "every".into(),
-        fps: 24.0,
-        screen: (320, 200),
-        stamps: false,
-        grid: 0,
-        sound: Some(String::new()),
-        fast: false,
-        passes: 0,
-        settle: false,
-        squad1: false,
-        spread: true,
-        view: None,
-        viewpasses: 0,
-    };
+    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 0 };
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("run: {e}"));
     assert!(last.contains("t "), "{last}");
 }
@@ -1548,28 +1021,10 @@ fn the_window_plays_a_run_in_squad_mode_at_depths_3_and_6() {
             // 12 frames a second, so frames hold one or two steps (the
             // fast-forward path) and the four rounds cost about half the
             // 170 s they took at 24 on software Vulkan (2026-11-15).
-            let b = Bench {
-                secs: 60.0,
-                hand: hand.into(),
-                fps: 12.0,
-                screen: (320, 200),
-                stamps: false,
-                grid: 0,
-                sound: Some(String::new()),
-                fast: false,
-                passes: 0,
-                settle: false,
-                squad1: false,
-                spread: true,
-                view: None,
-                viewpasses: 0,
-            };
+            let b = Bench { secs: 60.0, hand: hand.into(), fps: 12.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 0 };
             let t0 = Instant::now();
             let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("planet {depth} {hand}: {e}"));
-            eprintln!(
-                "squad run planet {depth} {hand}: {last} ({:.1} s)",
-                t0.elapsed().as_secs_f32()
-            );
+            eprintln!("squad run planet {depth} {hand}: {last} ({:.1} s)", t0.elapsed().as_secs_f32());
             assert!(last.contains("t "), "planet {depth} {hand}: {last}");
         }
     }
@@ -1597,40 +1052,13 @@ fn every_test_loadout_fits_the_default_budget() {
 #[test]
 fn the_sparse_ground_refresh_matches_a_whole_one() {
     let Some((device, queue)) = gpu() else { return };
-    let mut app = offscreen(
-        Args {
-            map: Some("nest".into()),
-            seed: 1,
-            scale: 1,
-            walkers: 1250,
-            ..Default::default()
-        },
-        (320, 200),
-        &device,
-        &queue,
-    )
-    .unwrap();
-    let floats = |b: Vec<u8>| -> Vec<f32> {
-        b.chunks_exact(4)
-            .map(|c| f32::from_le_bytes(c.try_into().unwrap()))
-            .collect()
-    };
-    let walls: Vec<usize> = {
-        let d = &app.game.as_ref().unwrap().world.e.dish;
-        (0..d.w * d.h).filter(|&i| d.wall[i]).collect()
-    };
+    let mut app = offscreen(Args { map: Some("nest".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
+    let floats = |b: Vec<u8>| -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect() };
+    let walls: Vec<usize> = { let d = &app.game.as_ref().unwrap().world.e.dish; (0..d.w * d.h).filter(|&i| d.wall[i]).collect() };
     assert!(walls.len() > 10, "the nest map has walls");
-    assert!(
-        app.live.cells.len() > walls.len() && app.live.gather.is_some(),
-        "crystal and wall cells live"
-    );
+    assert!(app.live.cells.len() > walls.len() && app.live.gather.is_some(), "crystal and wall cells live");
     let (mut checked, mut worn, mut raised, mut at) = (0, false, false, app.ground_at);
-    let wall_cells = |app: &App| {
-        app.codes
-            .iter()
-            .filter(|&&c| c & 0xF == look::Ground::Wall as u32)
-            .count()
-    };
+    let wall_cells = |app: &App| app.codes.iter().filter(|&&c| c & 0xF == look::Ground::Wall as u32).count();
     let walls_before = wall_cells(&app);
     while app.game.as_ref().unwrap().time() < 16.0 {
         plan(app.game.as_mut().unwrap(), "rush");
@@ -1639,17 +1067,9 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             // A worn wall cell and a broken one: the refresh draws a
             // share and rubble from health it reads alone.
             let e = &app.game.as_ref().unwrap().world.e;
-            let full = e
-                .dish
-                .wall_health
-                .get(walls[0])
-                .copied()
-                .filter(|h| h.is_finite())
-                .unwrap_or(400.0);
-            e.queue
-                .write_buffer(&e.health, walls[0] as u64 * 4, &(full * 0.4).to_le_bytes());
-            e.queue
-                .write_buffer(&e.health, walls[1] as u64 * 4, &0.0f32.to_le_bytes());
+            let full = e.dish.wall_health.get(walls[0]).copied().filter(|h| h.is_finite()).unwrap_or(400.0);
+            e.queue.write_buffer(&e.health, walls[0] as u64 * 4, &(full * 0.4).to_le_bytes());
+            e.queue.write_buffer(&e.health, walls[1] as u64 * 4, &0.0f32.to_le_bytes());
             worn = true;
         }
         if !raised && app.game.as_ref().unwrap().time() > 6.0 {
@@ -1673,12 +1093,7 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             let e = &g.world.e;
             let charge = floats(read_back(&e.device, &e.queue, &e.charge));
             let health = floats(read_back(&e.device, &e.queue, &e.health));
-            assert_eq!(
-                app.codes,
-                ground_codes(g, &app.depth, Some(&charge), Some(&health)),
-                "t {:.1} s",
-                g.time()
-            );
+            assert_eq!(app.codes, ground_codes(g, &app.depth, Some(&charge), Some(&health)), "t {:.1} s", g.time());
             checked += 1;
         }
     }
@@ -1686,21 +1101,10 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     // game seconds hold 6 to 16 of them (6 in 12 s on software Vulkan).
     assert!(checked >= 6, "{checked} refreshes checked");
     let g = app.game.as_ref().unwrap();
-    assert_eq!(
-        app.codes[walls[1]] & 0xF,
-        look::Ground::Rubble as u32,
-        "the broken wall cell drew as rubble"
-    );
-    assert!(
-        raised && wall_cells(&app) > walls_before + 20,
-        "the raised walls drew: {} wall cells, {walls_before} before",
-        wall_cells(&app)
-    );
+    assert_eq!(app.codes[walls[1]] & 0xF, look::Ground::Rubble as u32, "the broken wall cell drew as rubble");
+    assert!(raised && wall_cells(&app) > walls_before + 20, "the raised walls drew: {} wall cells, {walls_before} before", wall_cells(&app));
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
-    assert!(
-        left < app.charge0.iter().sum::<f32>(),
-        "crystals were eaten, so charges changed: {left}"
-    );
+    assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");
 }
 
 /// **The squad's order lines** (owner's playtest, 2026-11-14 20:12Z and
@@ -1722,13 +1126,7 @@ fn a_squads_orders_and_queue_draw_as_one_path() {
     assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Fight(pts[1].0, pts[1].1))));
     assert!(g.apply(Cmd::SquadQueue(q as u8, Order::Move(pts[2].0, pts[2].1))));
     app.marks();
-    let lines: Vec<_> = app
-        .marks
-        .list
-        .iter()
-        .filter(|k| k.shape == slime_mould::world::Shape::Line)
-        .map(|k| (k.at, k.half, k.colour))
-        .collect();
+    let lines: Vec<_> = app.marks.list.iter().filter(|k| k.shape == slime_mould::world::Shape::Line).map(|k| (k.at, k.half, k.colour)).collect();
     let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).hypot(a.1 - b.1) < 0.5;
     let from = [m, pts[0], pts[1]];
     for (i, (&a, &b)) in from.iter().zip(&pts).enumerate() {
@@ -1739,11 +1137,7 @@ fn a_squads_orders_and_queue_draw_as_one_path() {
     }
     // One chain for the squad, not one per soldier.
     let n = app.game.as_ref().unwrap().members(q).len();
-    assert!(
-        n > 1 && lines.iter().filter(|l| near(l.1, pts[0])).count() == 1,
-        "{n} soldiers drew {} lines to the first point",
-        lines.iter().filter(|l| near(l.1, pts[0])).count()
-    );
+    assert!(n > 1 && lines.iter().filter(|l| near(l.1, pts[0])).count() == 1, "{n} soldiers drew {} lines to the first point", lines.iter().filter(|l| near(l.1, pts[0])).count());
 }
 
 /// **Letting go of the squad** (owner 2026-11-15 02:58Z: "a way to
@@ -1762,34 +1156,19 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     }
     let dt = 1.0 / 60.0;
     app.squad_frame(dt);
-    let q = app
-        .game
-        .as_ref()
-        .unwrap()
-        .active
-        .expect("a squad controlled at the start");
+    let q = app.game.as_ref().unwrap().active.expect("a squad controlled at the start");
     assert!(!app.controls.selected.is_empty());
     let panel = app.model(None, None).squads.unwrap();
-    assert!(
-        !panel.free && panel.rows.iter().all(|r| r.auto != r.active),
-        "the commanded squad is not auto"
-    );
+    assert!(!panel.free && panel.rows.iter().all(|r| r.auto != r.active), "the commanded squad is not auto");
     // Esc lets go.
     assert!(app.squad_key(KeyCode::Escape, true, false, true));
     assert!(app.squad_free());
     assert_eq!(app.game.as_ref().unwrap().active, None);
     app.squad_frame(dt);
-    assert_eq!(
-        app.game.as_ref().unwrap().active,
-        None,
-        "the frame does not take a squad back"
-    );
+    assert_eq!(app.game.as_ref().unwrap().active, None, "the frame does not take a squad back");
     assert!(app.controls.selected.is_empty(), "nothing selected");
     let panel = app.model(None, None).squads.unwrap();
-    assert!(
-        panel.free && panel.rows.iter().all(|r| r.auto && !r.active),
-        "every tile AUTO"
-    );
+    assert!(panel.free && panel.rows.iter().all(|r| r.auto && !r.active), "every tile AUTO");
     // A second Esc is the HUD's: the squad key passes it on.
     assert!(!app.squad_key(KeyCode::Escape, true, false, true));
     // WASD pans the camera, unpaused, and steers no squad.
@@ -1808,10 +1187,7 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     app.controls.key(KeyCode::KeyD, false, false, &units, &mut app.camera);
     let c1 = app.camera.focus();
     assert!(c1.0 > c0.0 + 1.0, "D panned the camera right: {c0:?} -> {c1:?}");
-    assert!(
-        app.game.as_ref().unwrap().squads.iter().all(|s| s.steer == (0.0, 0.0)),
-        "no squad steered"
-    );
+    assert!(app.game.as_ref().unwrap().squads.iter().all(|s| s.steer == (0.0, 0.0)), "no squad steered");
     // Space takes the last squad back, and the camera follows it.
     assert!(app.squad_key(KeyCode::Space, true, false, true));
     assert_eq!(app.game.as_ref().unwrap().active, Some(q));
@@ -1821,16 +1197,10 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     assert!(app.squad_free());
     app.squad_panel_event(HudEvent::Squad(0));
     assert!(!app.squad_free());
-    assert_eq!(
-        app.game.as_ref().unwrap().active,
-        Some(app.game.as_ref().unwrap().live_squads()[0])
-    );
+    assert_eq!(app.game.as_ref().unwrap().active, Some(app.game.as_ref().unwrap().live_squads()[0]));
     // A click on a squad takes it.
     app.let_go();
-    let m = {
-        let g = app.game.as_ref().unwrap();
-        g.middle(q).unwrap()
-    };
+    let m = { let g = app.game.as_ref().unwrap(); g.middle(q).unwrap() };
     app.camera.centre_on(m);
     app.squad_frame(dt);
     let at = app.camera.to_screen(m);
@@ -1858,18 +1228,11 @@ fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
         let q = g.active.unwrap();
         (q, g.middle(q).unwrap(), g.world.scale())
     };
-    let at = [
-        (10.0, 0.0),
-        (-10.0, 0.0),
-        (0.0, 10.0),
-        (0.0, -10.0),
-        (7.0, 7.0),
-        (-7.0, -7.0),
-    ]
-    .iter()
-    .map(|&(dx, dy)| (m.0 + dx * sc, m.1 + dy * sc))
-    .find(|&p| app.game.as_ref().unwrap().build_blocked(Kind::Turret, p).is_none())
-    .expect("room for a turret beside the squad");
+    let at = [(10.0, 0.0), (-10.0, 0.0), (0.0, 10.0), (0.0, -10.0), (7.0, 7.0), (-7.0, -7.0)]
+        .iter()
+        .map(|&(dx, dy)| (m.0 + dx * sc, m.1 + dy * sc))
+        .find(|&p| app.game.as_ref().unwrap().build_blocked(Kind::Turret, p).is_none())
+        .expect("room for a turret beside the squad");
     app.hud_event(HudEvent::Point { id: TURRET, at }).unwrap();
     let b = app.game.as_ref().unwrap().buildings.len() - 1;
     let built = |app: &App| app.game.as_ref().unwrap().buildings[b].built;
@@ -1884,23 +1247,14 @@ fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
     assert!(part > 0.0 && part < 1.0, "part built: {part}");
     // Sent away, it stops raising.
     let away = (m.0 - (at.0 - m.0) * 4.0, m.1 - (at.1 - m.1) * 4.0);
-    app.game
-        .as_mut()
-        .unwrap()
-        .apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
+    app.game.as_mut().unwrap().apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
     for _ in 0..240 {
         app.squad_frame(dt);
         app.step(dt);
     }
     let stopped = built(&app);
-    assert!(
-        stopped < 1.0 && app.game.as_ref().unwrap().raising(b).0 == 0,
-        "nobody raises it once the squad has gone"
-    );
-    let (bank, n) = {
-        let g = app.game.as_ref().unwrap();
-        (g.bank, g.buildings.len())
-    };
+    assert!(stopped < 1.0 && app.game.as_ref().unwrap().raising(b).0 == 0, "nobody raises it once the squad has gone");
+    let (bank, n) = { let g = app.game.as_ref().unwrap(); (g.bank, g.buildings.len()) };
     // One right click on the ghost.
     let c = app.camera.to_screen(at);
     app.controls.cursor = Some(c);
@@ -1909,11 +1263,7 @@ fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
     app.squad_button(Button::Right, false);
     {
         let g = app.game.as_ref().unwrap();
-        assert_eq!(
-            g.squads[q].work,
-            Some(Order::Build(b)),
-            "the squad goes back to raise it"
-        );
+        assert_eq!(g.squads[q].work, Some(Order::Build(b)), "the squad goes back to raise it");
         assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == Order::Build(b)));
         assert_eq!((g.bank, g.buildings.len()), (bank, n), "nothing paid, no second ghost");
     }
@@ -1931,21 +1281,11 @@ fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
     let at2 = (at.0 + (at.0 - m.0), at.1 + (at.1 - m.1));
     app.game.as_mut().unwrap().apply(Cmd::Build(Kind::Turret, at2));
     let b2 = app.game.as_ref().unwrap().buildings.len() - 1;
-    app.game
-        .as_mut()
-        .unwrap()
-        .apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
-    let (bank, n) = {
-        let g = app.game.as_ref().unwrap();
-        (g.bank, g.buildings.len())
-    };
+    app.game.as_mut().unwrap().apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
+    let (bank, n) = { let g = app.game.as_ref().unwrap(); (g.bank, g.buildings.len()) };
     app.hud_event(HudEvent::Point { id: TURRET, at: at2 }).unwrap();
     let g = app.game.as_ref().unwrap();
-    assert_eq!(
-        g.squads[q].work,
-        Some(Order::Build(b2)),
-        "the card's click on its own ghost resumes it"
-    );
+    assert_eq!(g.squads[q].work, Some(Order::Build(b2)), "the card's click on its own ghost resumes it");
     assert_eq!((g.bank, g.buildings.len()), (bank, n), "and places nothing");
 }
 
@@ -1972,28 +1312,15 @@ fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
 fn the_menus_real_lists_fit_one_screen() {
     use slime_mould::world::start::Page;
     for squads in [true, false] {
-        let base = Args {
-            squads,
-            ..Default::default()
-        };
-        let tabs: Vec<String> = options(&base)
-            .iter()
-            .map(|o| o.tab.clone())
-            .fold(Vec::new(), |mut t, n| {
-                if !t.contains(&n) {
-                    t.push(n);
-                }
-                t
-            });
+        let base = Args { squads, ..Default::default() };
+        let tabs: Vec<String> = options(&base).iter().map(|o| o.tab.clone()).fold(Vec::new(), |mut t, n| {
+            if !t.contains(&n) {
+                t.push(n);
+            }
+            t
+        });
         assert_eq!(tabs, ["Game", "Planet", "The mould"]);
-        for (screen, user) in [
-            ((1920, 1080), 2.0),
-            ((1280, 540), 2.0),
-            ((1280, 720), 2.0),
-            ((1280, 800), 1.75),
-            ((1600, 972), 1.25),
-            ((1920, 1080), 1.0),
-        ] {
+        for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
             let at = format!("{screen:?} at {user}, squads {squads}");
             let mut m = start_menu(&base);
             let mut c = Canvas::new(screen);
@@ -2007,42 +1334,21 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Options);
             for tab in &tabs {
                 draw(&mut m);
-                assert!(
-                    m.sheets() == 1 && !m.scrolls(),
-                    "{at}: the {tab} tab takes {} pages (scrolls: {})",
-                    m.sheets(),
-                    m.scrolls()
-                );
+                assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
                 m.key(KeyCode::Tab, true);
             }
-            assert_eq!(
-                m.page,
-                Page::Keys,
-                "{at}: Tab after the last options tab opens the keys"
-            );
+            assert_eq!(m.page, Page::Keys, "{at}: Tab after the last options tab opens the keys");
             draw(&mut m);
             // 49 lines in two columns: one page at 100% on 1080 lines, two
             // in the window as it opens at 125% and at 200% on 1080, three
             // at 200% on 720 (11-15; its text stays 15 units, the owner's
             // "the text seems too small").
-            assert!(
-                m.sheets() <= 3 && !m.scrolls(),
-                "{at}: the key list takes {} pages",
-                m.sheets()
-            );
+            assert!(m.sheets() <= 3 && !m.scrolls(), "{at}: the key list takes {} pages", m.sheets());
             m.key(KeyCode::Tab, true);
-            assert_eq!(
-                m.page,
-                Page::Options,
-                "{at}: Tab on the keys goes round to the first tab"
-            );
+            assert_eq!(m.page, Page::Options, "{at}: Tab on the keys goes round to the first tab");
             m.show(Page::Missions);
             draw(&mut m);
-            assert!(
-                m.sheets() == 1 && !m.scrolls(),
-                "{at}: the campaign takes {} pages",
-                m.sheets()
-            );
+            assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the campaign takes {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
             // one screen, but the armory's eight guns, which may take two
@@ -2064,11 +1370,7 @@ fn the_menus_real_lists_fit_one_screen() {
                 for tab in 0..if name == "shop" { 5 } else { 4 } {
                     draw(&mut m);
                     let most = if name == "armory" && tab == 0 { 2 } else { 1 };
-                    assert!(
-                        m.sheets() <= most && !m.scrolls(),
-                        "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)",
-                        m.sheets()
-                    );
+                    assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());
                     m.key(KeyCode::Tab, true);
                 }
             }

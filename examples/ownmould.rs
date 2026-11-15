@@ -84,10 +84,7 @@ fn parse_seeds(s: &str) -> Vec<u64> {
 fn opts() -> Opts {
     let mut o = Opts {
         seeds: (1..=16).collect(),
-        forms: ["net", "hunk", "scout", "heavy"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+        forms: ["net", "hunk", "scout", "heavy"].iter().map(|s| s.to_string()).collect(),
         secs: 180,
         walkers: 5000,
         threads: 4,
@@ -156,38 +153,16 @@ fn duel_map(seed: u64, walkers: usize) -> Map {
         }
     }
     let mid = MAP_W as f32 / 2.0;
-    let left: Vec<Crystal> = m
-        .items
-        .crystals
-        .iter()
-        .copied()
-        .filter(|c| c.x + c.r < mid - 4.0)
-        .collect();
+    let left: Vec<Crystal> = m.items.crystals.iter().copied().filter(|c| c.x + c.r < mid - 4.0).collect();
     let mut crystals = left.clone();
-    crystals.extend(left.iter().map(|c| Crystal {
-        x: MAP_W as f32 - c.x,
-        ..*c
-    }));
+    crystals.extend(left.iter().map(|c| Crystal { x: MAP_W as f32 - c.x, ..*c }));
     let aim = (MAP_W as f32 / 4.0, MAP_H as f32 / 2.0);
-    let home = *left
-        .iter()
-        .min_by(|a, b| {
-            (a.x - aim.0)
-                .hypot(a.y - aim.1)
-                .total_cmp(&(b.x - aim.0).hypot(b.y - aim.1))
-        })
-        .expect("a left crystal");
+    let home = *left.iter().min_by(|a, b| (a.x - aim.0).hypot(a.y - aim.1).total_cmp(&(b.x - aim.0).hypot(b.y - aim.1))).expect("a left crystal");
     let mut items = m.items.clone();
     items.crystals = crystals;
     items.moulds = vec![(home.x, home.y), (MAP_W as f32 - home.x, home.y)];
     items.landing = None;
-    Map {
-        w: m.w,
-        h: m.h,
-        ground,
-        plants: Vec::new(),
-        items,
-    }
+    Map { w: m.w, h: m.h, ground, plants: Vec::new(), items }
 }
 
 fn duel(o: &Opts, seed: u64, left: &str, right: &str) -> BigDish {
@@ -318,12 +293,7 @@ fn picture(d: &BigDish) -> image::RgbaImage {
             base[1] + a * 150.0 + b * 120.0,
             base[2] + a * 20.0 + b * (255.0 - base[2]) * 0.95,
         ];
-        image::Rgba([
-            px[0].min(255.0) as u8,
-            px[1].min(255.0) as u8,
-            px[2].min(255.0) as u8,
-            255,
-        ])
+        image::Rgba([px[0].min(255.0) as u8, px[1].min(255.0) as u8, px[2].min(255.0) as u8, 255])
     })
 }
 
@@ -353,25 +323,16 @@ fn main() {
     );
     if let Some(dir) = o.look.clone() {
         std::fs::create_dir_all(&dir).unwrap();
-        let (a, b) = (
-            o.forms[0].clone(),
-            o.forms.get(1).cloned().unwrap_or_else(|| o.forms[0].clone()),
-        );
+        let (a, b) = (o.forms[0].clone(), o.forms.get(1).cloned().unwrap_or_else(|| o.forms[0].clone()));
         for &seed in &o.seeds {
             let mut save = |d: &BigDish, s: u32| {
                 let (n, held) = census_of(d);
                 let path = format!("{dir}/{a}-{b}-s{seed}-t{s:03}.png");
                 picture(d).save(&path).unwrap();
-                println!(
-                    "look {a}(left) vs {b}(right) seed {seed} t {s}s walkers {:?} held {:?} -> {path}",
-                    n, held
-                );
+                println!("look {a}(left) vs {b}(right) seed {seed} t {s}s walkers {:?} held {:?} -> {path}", n, held);
             };
             let out = play(&o, seed, &a, &b, Some(&mut save));
-            println!(
-                "look end seed {seed}: ate {:.0} / {:.0}, walkers {:?}, held {:?}, turned to each {:?}",
-                out.ate[0], out.ate[1], out.walkers, out.held, out.turned
-            );
+            println!("look end seed {seed}: ate {:.0} / {:.0}, walkers {:?}, held {:?}, turned to each {:?}", out.ate[0], out.ate[1], out.walkers, out.held, out.turned);
         }
         return;
     }
@@ -398,11 +359,7 @@ fn main() {
                 }
                 let (i, j, s, flip) = jobs[k];
                 let (a, b) = (&o.forms[i], &o.forms[j]);
-                let out = if flip {
-                    play(&o, s, b, a, None)
-                } else {
-                    play(&o, s, a, b, None)
-                };
+                let out = if flip { play(&o, s, b, a, None) } else { play(&o, s, a, b, None) };
                 // A's numbers first.
                 let (ia, ib) = if flip { (1, 0) } else { (0, 1) };
                 let share = out.ate[ia] / (out.ate[0] + out.ate[1]).max(1e-9);

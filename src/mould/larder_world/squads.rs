@@ -231,16 +231,7 @@ impl Squad {
     /// gun." (From 17:40Z to then the new half took the standard rifle and
     /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad {
-            formation: self.formation,
-            face: self.face,
-            cover: self.cover,
-            fight: self.fight,
-            next_volley: self.next_volley,
-            gun: self.gun,
-            deck: self.deck,
-            ..Squad::default()
-        }
+        Squad { formation: self.formation, face: self.face, cover: self.cover, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, ..Squad::default() }
     }
 }
 
@@ -269,9 +260,7 @@ impl<W: World> Game<W> {
 
     /// Live members of squad `q`, by soldier index.
     pub fn members(&self, q: usize) -> Vec<usize> {
-        (0..self.soldiers.len())
-            .filter(|&k| self.soldiers[k].alive && self.soldiers[k].squad as usize == q)
-            .collect()
+        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].squad as usize == q).collect()
     }
 
     /// The squads linked with `q` (`Cmd::Link`), `q` among them, in id order.
@@ -280,17 +269,13 @@ impl<W: World> Game<W> {
         if g == NO_LINK {
             return vec![q];
         }
-        self.live_squads()
-            .into_iter()
-            .filter(|&r| r == q || self.squads[r].link == g)
-            .collect()
+        self.live_squads().into_iter().filter(|&r| r == q || self.squads[r].link == g).collect()
     }
 
     /// Whether squad `q` is the controlled one or linked with it: its shots
     /// get the lead's edge (`LeadRules`).
     pub fn leads(&self, q: usize) -> bool {
-        self.active
-            .is_some_and(|a| a == q || (self.squads[q].link != NO_LINK && self.squads[a].link == self.squads[q].link))
+        self.active.is_some_and(|a| a == q || (self.squads[q].link != NO_LINK && self.squads[a].link == self.squads[q].link))
     }
 
     /// Whether squad `q` is doing nothing: not steered, sent or working.
@@ -337,18 +322,12 @@ impl<W: World> Game<W> {
         }
         let mean = |ks: &[usize]| {
             let n = ks.len() as f32;
-            let (x, y) = ks
-                .iter()
-                .fold((0.0, 0.0), |a, &k| (a.0 + self.soldiers[k].x, a.1 + self.soldiers[k].y));
+            let (x, y) = ks.iter().fold((0.0, 0.0), |a, &k| (a.0 + self.soldiers[k].x, a.1 + self.soldiers[k].y));
             (x / n, y / n)
         };
         let all = mean(&m);
         let stray = STRAY * self.s();
-        let near: Vec<usize> = m
-            .iter()
-            .copied()
-            .filter(|&k| (self.soldiers[k].x - all.0).hypot(self.soldiers[k].y - all.1) <= stray)
-            .collect();
+        let near: Vec<usize> = m.iter().copied().filter(|&k| (self.soldiers[k].x - all.0).hypot(self.soldiers[k].y - all.1) <= stray).collect();
         Some(if near.is_empty() { all } else { mean(&near) })
     }
 
@@ -402,17 +381,14 @@ impl<W: World> Game<W> {
         let sq = self.squads[q];
         let col = &self.columns[q];
         let places: Vec<(f32, f32)> = if col.on && col.places.len() == n {
-            col.places
-                .iter()
-                .map(|o| (centre.0 + o.0 * sc, centre.1 + o.1 * sc))
-                .collect()
+            col.places.iter().map(|o| (centre.0 + o.0 * sc, centre.1 + o.1 * sc)).collect()
         } else {
             (0..n)
-                .map(|r| {
-                    let o = turned(sq.formation, sq.formation.offset(r, n, gap), sq.face);
-                    (centre.0 + o.0 * sc, centre.1 + o.1 * sc)
-                })
-                .collect()
+            .map(|r| {
+                let o = turned(sq.formation, sq.formation.offset(r, n, gap), sq.face);
+                (centre.0 + o.0 * sc, centre.1 + o.1 * sc)
+            })
+            .collect()
         };
         let mut pairs: Vec<(f32, usize, usize)> = Vec::with_capacity(n * n);
         for (i, &k) in m.iter().enumerate() {
@@ -472,11 +448,7 @@ impl<W: World> Game<W> {
         // took 26 s to get round a bar at 1x against 13 s with whole maps,
         // and stood still 798 of 900 steps at 6x (technical review,
         // 2026-11-15; 13.6 and 16.4 s at 10 dish cells).
-        let near = if sent {
-            MAP_NEAR * self.s()
-        } else {
-            STEER_NEAR * self.s()
-        };
+        let near = if sent { MAP_NEAR * self.s() } else { STEER_NEAR * self.s() };
         let Some(key) = self.map_for(gi, to, near) else {
             // Its map is being built (`pump_maps`): the anchor waits.
             return from;
@@ -569,18 +541,10 @@ impl<W: World> Game<W> {
             }
             let sq = self.squads[q];
             let at = sq.anchor.unwrap_or(mid);
-            let at = if self.solid_at(at).is_some() {
-                self.rim(at, mid)
-            } else {
-                at
-            };
+            let at = if self.solid_at(at).is_some() { self.rim(at, mid) } else { at };
             // An anchor off the ground (an old save, rock grown round it)
             // comes back to the nearest ground, or to the middle.
-            let at = if self.world.open(at.0, at.1) {
-                at
-            } else {
-                self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid)
-            };
+            let at = if self.world.open(at.0, at.1) { at } else { self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid) };
             // Waits for the squad once it is the lead ahead of its middle,
             // but never to come back toward it: a squad pressed against
             // rock and steered away goes (before the bug sweep, 2026-11-14,
@@ -603,25 +567,13 @@ impl<W: World> Game<W> {
             // door until the squad had squeezed up behind it (door 6 cells
             // wide, 24 soldiers: 0.6 s still at the mouth).
             let ahead = if self.columns[q].on {
-                self.members(q)
-                    .iter()
-                    .map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1))
-                    .fold(f32::MAX, f32::min)
-                    > LEAD * sc
+                self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1)).fold(f32::MAX, f32::min) > LEAD * sc
             } else {
                 gap(at) > LEAD * sc
             };
             let step = self.rules.speed * sc * dt * PACE * self.pace(q);
-            let target = if steering {
-                (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc)
-            } else {
-                sq.dest.unwrap_or(at)
-            };
-            let a = if step > 0.0 {
-                self.guide(at, target, step, !steering)
-            } else {
-                at
-            };
+            let target = if steering { (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc) } else { sq.dest.unwrap_or(at) };
+            let a = if step > 0.0 { self.guide(at, target, step, !steering) } else { at };
             let a = if ahead && gap(a) >= gap(at) - 1e-3 { at } else { a };
             // Narrow ground ahead: a column (`funnel`). Looks a formation's
             // half width and a gap along the way, and starts the column at
@@ -630,16 +582,8 @@ impl<W: World> Game<W> {
                 let look = (self.formation_width(q) + self.gap()) * sc;
                 let far = self.guide(at, target, look, !steering);
                 let dir = unit((far.0 - at.0, far.1 - at.1)).unwrap_or(sq.face);
-                let lead = self
-                    .members(q)
-                    .iter()
-                    .map(|&k| (self.soldiers[k].x - at.0) * dir.0 + (self.soldiers[k].y - at.1) * dir.1)
-                    .fold(0.0, f32::max);
-                let front = if self.columns[q].on || lead <= 0.0 {
-                    a
-                } else {
-                    self.guide(at, target, lead.min(look), !steering)
-                };
+                let lead = self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0) * dir.0 + (self.soldiers[k].y - at.1) * dir.1).fold(0.0, f32::max);
+                let front = if self.columns[q].on || lead <= 0.0 { a } else { self.guide(at, target, lead.min(look), !steering) };
                 self.funnel(q, at, a, far, front)
             } else {
                 a
@@ -664,11 +608,7 @@ impl<W: World> Game<W> {
                 }
             }
             self.rank_squad(q, a);
-            let o = if sq.fight && !steering {
-                Order::Fight(a.0, a.1)
-            } else {
-                Order::Move(a.0, a.1)
-            };
+            let o = if sq.fight && !steering { Order::Fight(a.0, a.1) } else { Order::Move(a.0, a.1) };
             // Moving as one, nobody works or stands guard.
             self.squads[q].work = None;
             for k in self.members(q) {
@@ -697,10 +637,7 @@ impl<W: World> Game<W> {
         if m.is_empty() {
             return (0.0, 0.0);
         }
-        let (x, y) = m
-            .iter()
-            .map(|&k| self.place_at(k, at))
-            .fold((0.0, 0.0), |a, p| (a.0 + p.0 - at.0, a.1 + p.1 - at.1));
+        let (x, y) = m.iter().map(|&k| self.place_at(k, at)).fold((0.0, 0.0), |a, p| (a.0 + p.0 - at.0, a.1 + p.1 - at.1));
         (x / m.len() as f32, y / m.len() as f32)
     }
 
@@ -709,11 +646,7 @@ impl<W: World> Game<W> {
     pub(super) fn pace(&self, q: usize) -> f32 {
         let Some(mid) = self.middle(q) else { return 1.0 };
         let stray = STRAY * self.s();
-        self.members(q)
-            .into_iter()
-            .filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray)
-            .map(|j| self.wade(j))
-            .fold(1.0, f32::min)
+        self.members(q).into_iter().filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray).map(|j| self.wade(j)).fold(1.0, f32::min)
     }
 
     /// Whether soldier `k` fires a volley shot this step, and at what.
@@ -741,12 +674,7 @@ impl<W: World> Game<W> {
     /// standard rifle's is `Rules::shot_every`), the controlled squad's
     /// `LeadRules::rate` times as often.
     pub(super) fn shot_gap(&self, q: usize) -> u64 {
-        let every = self.gun(q).every()
-            / if self.leads(q) {
-                self.rules.lead.rate.max(0.01)
-            } else {
-                1.0
-            };
+        let every = self.gun(q).every() / if self.leads(q) { self.rules.lead.rate.max(0.01) } else { 1.0 };
         // The rounds' `Rate` cards (11-14): x (1 + rate_card) a card.
         let every = every / (1.0 + self.rules.rate_card * self.mods(q).rate as f32).max(0.01);
         self.secs(every).max(1)
@@ -764,16 +692,7 @@ impl<W: World> Game<W> {
     /// where it stands in the link, so the link arrives as it walked.
     pub(super) fn squad_cmd(&mut self, c: Cmd) -> bool {
         let q = match c {
-            Cmd::Steer(q, _)
-            | Cmd::SquadOrder(q, _)
-            | Cmd::SquadQueue(q, _)
-            | Cmd::Fire(q, _)
-            | Cmd::Face(q, _)
-            | Cmd::Heal(q)
-                if (q as usize) < SQUADS_MAX =>
-            {
-                q as usize
-            }
+            Cmd::Steer(q, _) | Cmd::SquadOrder(q, _) | Cmd::SquadQueue(q, _) | Cmd::Fire(q, _) | Cmd::Face(q, _) | Cmd::Heal(q) if (q as usize) < SQUADS_MAX => q as usize,
             _ => return self.squad_one(c),
         };
         let group = self.linked(q);
@@ -781,10 +700,7 @@ impl<W: World> Game<W> {
             return self.squad_one(c);
         }
         let mids: Vec<Option<(f32, f32)>> = group.iter().map(|&r| self.middle(r)).collect();
-        let at = mids
-            .iter()
-            .flatten()
-            .fold((0.0f32, 0.0f32, 0.0f32), |a, m| (a.0 + m.0, a.1 + m.1, a.2 + 1.0));
+        let at = mids.iter().flatten().fold((0.0f32, 0.0f32, 0.0f32), |a, m| (a.0 + m.0, a.1 + m.1, a.2 + 1.0));
         let centre = (at.0 / at.2.max(1.0), at.1 / at.2.max(1.0));
         let shift = |o: Order, m: Option<(f32, f32)>| match (o, m) {
             (Order::Move(x, y), Some(m)) => Order::Move(x + m.0 - centre.0, y + m.1 - centre.1),
@@ -1014,10 +930,7 @@ impl<W: World> Game<W> {
                 // A dead controlled squad holds nothing: its link still
                 // names the live ones, and refusing them left nothing to
                 // command when the controlled squad of a link was wiped out.
-                if self
-                    .active
-                    .is_some_and(|a| !self.members(a).is_empty() && self.linked(a).contains(&(q as usize)))
-                {
+                if self.active.is_some_and(|a| !self.members(a).is_empty() && self.linked(a).contains(&(q as usize))) {
                     return false;
                 }
                 if let Some(old) = self.active.filter(|&o| o != q as usize) {
