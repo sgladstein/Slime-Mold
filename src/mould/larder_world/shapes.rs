@@ -53,7 +53,19 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // #198 soldiers could not shoot the bits on them and it fell to 1.
     // `panic=0` turns it off. The report's *A cut-off part panics* has
     // the films.
-    const C: [(&str, &str); 5] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")];
+    // A fed walker that cannot divide thickens (`BigParams::thicken` 2,
+    // 2026-11-15). The owner, 11-15 08:34Z: the slime should "keep getting
+    // stronger by holding onto its crystals and getting more of them (which
+    // increases how fast it multiplies)". Without it C fills its 50,000
+    // slots by 3:00 on the CPU race world (seed 1) and then gets no
+    // stronger, though it eats three times its upkeep. With it, a walker
+    // that has banked twice a birth's energy (it had no slot or no room to
+    // divide into) turns condensed where it stands: two lives, twice the
+    // bite and upkeep, drawn bronze. Holding every crystal, C's mass is
+    // 90,739 at 7:00 and still rising (50,000 without); held to its 4
+    // nearest crystals, 30,338 (Reports/thicken-2026-11-15/README.md).
+    // `thicken=0` turns it off.
+    const C: [(&str, &str); 6] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),
