@@ -1,0 +1,321 @@
+<title>Front Doors and Back Roads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* A front door and a back road for every nest (11-15): before and after. Same look as the map-fix page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --rock: #8f969d; --road: #3c4a3a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.diagram { max-width: 680px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font: 500 13px var(--body); fill: var(--muted); }
+.diagram text.k { fill: var(--fg); font-weight: 600; }
+.stats { font: 12.5px/1.45 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+.planet { display: grid; gap: 10px; }
+.planet h3 small { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin-left: 8px; }
+.figs.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · planets 1-8 · nests · 2026-11-15</div>
+<h1>Front Doors and Back Roads</h1>
+<p>Every nest now sits in a rock bowl with two ways in: a narrow front door facing the landing, a squad's kill box, and a wide breach round the side, reached by a road over the ground. The play review found almost no nest with both. Every picture pairs the map fixes (before) with this change (after), same planet, same seed, with the counts beside it.</p>
+<div class="score">
+<div><b>Nests with both ways in</b><span class="n">4 → 111</span><span class="muted">of 112 nests (seeds 1-8, planets 1-8), on the play reviewer's own measure: a direct way at most 10 dish cells wide and a way round at least 16.</span></div>
+<div><b>Door and road widths</b><span class="n">6-10 / 16-32</span><span class="muted">dish cells, the planet's own check on 280 nests over 160 planets. Doors 6 wide on 194 nests, 8 on 81, 10 on 5.</span></div>
+<div><b>What it costs</b><span class="n">+8-28%</span><span class="muted">build time by planet (the core world 0.56 → 0.72 s, once a level). First-try passes 149 → 143 of 160, no fallbacks.</span></div>
+</div>
+<p class="muted">Widths are in dish cells, the units the soldiers and slime move in (a map cell is half of one). Nests now stand at least 470 map cells apart, so river valley seed 2's second nest moved; the rest stay put. Crystals and hedges are placed after the bowls, so they can land elsewhere. "Direct / round" under each picture is the reviewer's measure: the widest way within 15% of the shortest walk, then the widest way of any length.</p>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>What a nest looks like now</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">review item 4</span></div></div></div>
+<p>A lobed rock rim, 26-36 map cells thick, rings a bowl 104-136 across inside. The door is a channel 7-9 wide straight toward the landing. The breach is a gap 28-35 wide, 105-150 degrees round. The road, 20-23 wide, runs from the landing to in front of the door, then round the outside of the rim to the breach. It takes the cheapest way over the ground: rock costs 6 times plain ground and deep water 3 times, with noise so it wanders. Crystals, hedges, rings and the landing's crystal keep off the road, the door and the breach. The planet's check holds every nest to both widths, or the planet is built again.</p>
+<figure class="diagram">
+<svg viewBox="0 0 640 300" role="img" aria-label="Diagram: a nest in a rock rim. The road runs from the landing on the left to the door, then round the top of the rim to a breach on the upper right.">
+<path d="M60 165 L265 165 A115 115 0 0 1 461.3 83.7 L429.5 115.5" fill="none" stroke="var(--road)" stroke-width="18" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M60 165 L265 165 A115 115 0 0 1 461.3 83.7 L429.5 115.5" fill="none" stroke="var(--play)" stroke-width="2" stroke-dasharray="6 6"/>
+<path d="M413.8 92.5 A80 80 0 0 0 301 152.5" fill="none" stroke="var(--rock)" stroke-width="20"/>
+<path d="M301 177.5 A80 80 0 1 0 452.5 131.2" fill="none" stroke="var(--rock)" stroke-width="20"/>
+<path d="M262 165 L312 165" stroke="var(--slime)" stroke-width="7" stroke-linecap="round"/>
+<polygon points="380,145 397.3,155 397.3,175 380,185 362.7,175 362.7,155" fill="var(--crystal)" opacity="0.85"/>
+<rect x="48" y="153" width="24" height="24" fill="none" stroke="var(--slime)" stroke-width="3"/>
+<text x="60" y="198" text-anchor="middle" class="k">landing</text>
+<text x="380" y="206" text-anchor="middle" class="k">nest</text>
+<text x="150" y="146" text-anchor="middle">road 20-23, over the ground</text>
+<text x="236" y="190" text-anchor="middle" fill="var(--slime)">door 7-9</text>
+<text x="472" y="128" text-anchor="start">breach 28-35,</text>
+<text x="472" y="144" text-anchor="start">105-150° round</text>
+<text x="380" y="285" text-anchor="middle">rim 26-36 map cells, lobed</text>
+<text x="300" y="40" text-anchor="middle" fill="var(--play)">the way round, at least 16</text>
+</svg>
+<figcaption>Widths in dish cells unless marked. The direct way is the road's first stretch and the door (at most 10). The way round follows the road to the breach (at least 16).</figcaption>
+</figure>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>The slime's first minute in its bowl</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">after only</span></div></div></div>
+<p>The slime fills its bowl and leaves by the door and the breach, then follows the roads out. A frame every 3 s from 1 s to 58 s at zoom 3, idle hand, on software Vulkan.</p>
+<div class="figs two">
+<figure><video src="pics/film-1-2.mp4" autoplay muted loop playsinline controls></video><figcaption><b>Meadow seed 2.</b> Direct / round 26 / 26 → 7 / 28. The bowl spills out of its door toward the crystals by 10 s.</figcaption></figure>
+<figure><video src="pics/film-7-2.mp4" autoplay muted loop playsinline controls></video><figcaption><b>Caves seed 2.</b> Direct / round 4 / 4 → 7 / 18 for this nest. The door leads west, the breach north-east into the tunnels.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>Every biome, before and after</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">zoom 3, 30 s</span></div></div></div>
+<p>The first nest of one seed on each planet, at zoom 3 after 30 s of an idle hand. Counts: the reviewer's direct / round for each nest, the planet's own check after, rock's share of the map and the crystals.</p>
+<div class="planet">
+<h3>Meadow <small>planet 1, seed 2, Yala</small></h3>
+<p class="stats">Direct / round <b>26 / 26 → 7 / 28</b> · own check after <b>6 / 22</b> · rock <b>0% → 4%</b> · crystals <b>11 → 11</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-1-2-before.webp" alt="Meadow seed 2, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-1-2-after.webp" alt="Meadow seed 2, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">Before, the nest sat in open meadow: every way in was 26 wide. Now its bowl holds the slime, which leaves by the door toward the crystals.</p>
+</div>
+<div class="planet">
+<h3>Barrens <small>planet 2, seed 3, Yadarron</small></h3>
+<p class="stats">Direct / round <b>16 / 16 → 6 / 23</b> · own check after <b>6 / 22</b> · rock <b>5% → 7%</b> · crystals <b>14 → 14</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-2-3-before.webp" alt="Barrens seed 3, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-2-3-after.webp" alt="Barrens seed 3, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">The barrens' outcrops gave one 16-wide way in. Now the door faces the landing's crystals and the breach opens on the far side.</p>
+</div>
+<div class="planet">
+<h3>Fen <small>planet 3, seed 1, Drevix</small></h3>
+<p class="stats">Direct / round <b>10 / 26 → 4 / 24</b> · own check after <b>6 / 20</b> · rock <b>5% → 7%</b> · crystals <b>12 → 7</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-3-1-before.webp" alt="Fen seed 1, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-3-1-after.webp" alt="Fen seed 1, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">The fen already had a narrow way and a wide one, by luck of its pools. Now it is built in. Five crystals were lost to the lanes here, the most of any pictured planet.</p>
+</div>
+<div class="planet">
+<h3>River valley <small>planet 4, seed 2, Ullukar</small></h3>
+<p class="stats">Direct / round <b>4 / 4, 4 / 4 → 6 / 19, 6 / 22</b> · own check after <b>6 / 20, 6 / 22</b> · rock <b>10% → 13%</b> · crystals <b>22 → 22</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-4-2-before.webp" alt="River valley seed 2, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-4-2-after.webp" alt="River valley seed 2, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">Both nests could be reached only by 4-wide gaps between ridges. Now each has a road 19-22 wide round to its breach.</p>
+</div>
+<div class="planet">
+<h3>Jungle <small>planet 5, seed 1, Yathek</small></h3>
+<p class="stats">Direct / round <b>11 / 12, 11 / 12 → 6 / 24, 6 / 24</b> · own check after <b>6 / 22, 6 / 22</b> · rock <b>6% → 8%</b> · crystals <b>30 → 30</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-5-1-before.webp" alt="Jungle seed 1, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-5-1-after.webp" alt="Jungle seed 1, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">The jungle's hedge rings left every way about 11 wide. The rings now stay off the door, breach and road.</p>
+</div>
+<div class="planet">
+<h3>Highlands <small>planet 6, seed 3, Sossozen</small></h3>
+<p class="stats">Direct / round <b>4 / 11, 4 / 11 → 4 / 20, 6 / 20</b> · own check after <b>6 / 20, 6 / 20</b> · rock <b>18% → 17%</b> · crystals <b>26 → 26</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-6-3-before.webp" alt="Highlands seed 3, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-6-3-after.webp" alt="Highlands seed 3, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">Rocky rooms: the narrow way was there, but no wide one. The road is routed through the rooms, cutting rock only where it must.</p>
+</div>
+<div class="planet">
+<h3>Caves <small>planet 7, seed 2, Lothaskar</small></h3>
+<p class="stats">Direct / round <b>4 / 4, 4 / 4 → 7 / 18, 6 / 18</b> · own check after <b>6 / 18, 6 / 18</b> · rock <b>54% → 51%</b> · crystals <b>35 → 30</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-7-2-before.webp" alt="Caves seed 2, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-7-2-after.webp" alt="Caves seed 2, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">Every way in was a 4-wide tunnel. Now a road 18 wide winds through the caves to each breach, and the caverns the rims cut off are filled in.</p>
+</div>
+<div class="planet">
+<h3>Core world <small>planet 8, seed 2, Lozo</small></h3>
+<p class="stats">Direct / round <b>14 / 16, 14 / 16, 19 / 19 → 12 / 22, 6 / 26, 6 / 28</b> · own check after <b>8 / 22, 6 / 26, 6 / 28</b> · rock <b>6% → 6%</b> · crystals <b>61 → 61</b></p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-8-2-before.webp" alt="Core world seed 2, the nest at zoom 3 before: no bowl" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-8-2-after.webp" alt="Core world seed 2, the nest at zoom 3 after: a rock bowl with a door and a breach" loading="lazy"></figure>
+</div>
+<p class="muted">Three nests, each now in its bowl. The far nest is the one miss on the reviewer's measure: its road to the breach is only 1.149 times the walk through the door, so both ways count as direct.</p>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>Zoomed in</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">zoom 5, 30 s</span></div></div></div>
+<p>The same nests closer, as play is seen. The rim's lobes and knobs are noise on its radius (15% over 90 map cells) and its thickness (0.3-1.7 of the mean over 26 cells); with less, it read as a drawn circle.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/close-1-2-before.webp" alt="Meadow seed 2 at zoom 5 before" loading="lazy"><figcaption><b>Meadow, seed 2.</b> Direct / round 26 / 26.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-1-2-after.webp" alt="Meadow seed 2 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 7 / 28.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-2-3-before.webp" alt="Barrens seed 3 at zoom 5 before" loading="lazy"><figcaption><b>Barrens, seed 3.</b> Direct / round 16 / 16.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-2-3-after.webp" alt="Barrens seed 3 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 6 / 23.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-3-1-before.webp" alt="Fen seed 1 at zoom 5 before" loading="lazy"><figcaption><b>Fen, seed 1.</b> Direct / round 10 / 26.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-3-1-after.webp" alt="Fen seed 1 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 4 / 24.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-4-2-before.webp" alt="River valley seed 2 at zoom 5 before" loading="lazy"><figcaption><b>River valley, seed 2.</b> Direct / round 4 / 4, 4 / 4.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-4-2-after.webp" alt="River valley seed 2 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 6 / 19, 6 / 22.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-5-1-before.webp" alt="Jungle seed 1 at zoom 5 before" loading="lazy"><figcaption><b>Jungle, seed 1.</b> Direct / round 11 / 12, 11 / 12.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-5-1-after.webp" alt="Jungle seed 1 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 6 / 24, 6 / 24.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-6-3-before.webp" alt="Highlands seed 3 at zoom 5 before" loading="lazy"><figcaption><b>Highlands, seed 3.</b> Direct / round 4 / 11, 4 / 11.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-6-3-after.webp" alt="Highlands seed 3 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 4 / 20, 6 / 20.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-7-2-before.webp" alt="Caves seed 2 at zoom 5 before" loading="lazy"><figcaption><b>Caves, seed 2.</b> Direct / round 4 / 4, 4 / 4.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-7-2-after.webp" alt="Caves seed 2 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 7 / 18, 6 / 18.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/close-8-2-before.webp" alt="Core world seed 2 at zoom 5 before" loading="lazy"><figcaption><b>Core world, seed 2.</b> Direct / round 14 / 16, 14 / 16, 19 / 19.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/close-8-2-after.webp" alt="Core world seed 2 at zoom 5 after: the bowl's rim close up" loading="lazy"><figcaption><b>Same planet and seed.</b> 12 / 22, 6 / 26, 6 / 28.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">5</div><div><h2>The door at 1 s</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">zoom 8, after only</span></div></div></div>
+<p>Each first nest's door at zoom 8, one second in. The slime's start already fills the bowl and reaches the door.</p>
+<div class="figs four">
+<figure><img src="pics/door-1-2-after.webp" alt="Meadow seed 2, the door at zoom 8" loading="lazy"><figcaption><b>Meadow, seed 2.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-2-3-after.webp" alt="Barrens seed 3, the door at zoom 8" loading="lazy"><figcaption><b>Barrens, seed 3.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-3-1-after.webp" alt="Fen seed 1, the door at zoom 8" loading="lazy"><figcaption><b>Fen, seed 1.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-4-2-after.webp" alt="River valley seed 2, the door at zoom 8" loading="lazy"><figcaption><b>River valley, seed 2.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-5-1-after.webp" alt="Jungle seed 1, the door at zoom 8" loading="lazy"><figcaption><b>Jungle, seed 1.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-6-3-after.webp" alt="Highlands seed 3, the door at zoom 8" loading="lazy"><figcaption><b>Highlands, seed 3.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-7-2-after.webp" alt="Caves seed 2, the door at zoom 8" loading="lazy"><figcaption><b>Caves, seed 2.</b> Door 6 wide on the planet's check.</figcaption></figure>
+<figure><img src="pics/door-8-2-after.webp" alt="Core world seed 2, the door at zoom 8" loading="lazy"><figcaption><b>Core world, seed 2.</b> Door 8 wide on the planet's check.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">6</div><div><h2>The layouts in false colour</h2>
+<div class="tags"><span class="tag">map files</span></div></div></div>
+<p>The map files themselves, before on the left and after on the right, so the bowls, doors, breaches and roads show without the slime over them.</p>
+<div class="key"><span><i style="background:#5f643c"></i>ground</span><span><i style="background:#3c648c"></i>shallow water</span><span><i style="background:#192850"></i>deep water</span><span><i style="background:#aa783c"></i>bridge</span><span><i style="background:#96969b"></i>rock</span><span><i style="background:#dc3cdc"></i>hedge (soft rock)</span><span><i style="background:#3cdce6"></i>crystal</span><span><i style="border:2px solid #ff3c28"></i>nest</span><span><i style="border:2px solid #ffe600"></i>landing</span></div>
+<div class="figs two">
+<figure><img src="pics/fc-planet-1-2.webp" alt="Meadow seed 2 in false colour, before and after" loading="lazy"><figcaption><b>Meadow, seed 2.</b> Rock 0% → 4%; crystals 11 → 11.</figcaption></figure>
+<figure><img src="pics/fc-planet-2-3.webp" alt="Barrens seed 3 in false colour, before and after" loading="lazy"><figcaption><b>Barrens, seed 3.</b> Rock 5% → 7%; crystals 14 → 14.</figcaption></figure>
+<figure><img src="pics/fc-planet-3-1.webp" alt="Fen seed 1 in false colour, before and after" loading="lazy"><figcaption><b>Fen, seed 1.</b> Rock 5% → 7%; crystals 12 → 7.</figcaption></figure>
+<figure><img src="pics/fc-planet-4-2.webp" alt="River valley seed 2 in false colour, before and after" loading="lazy"><figcaption><b>River valley, seed 2.</b> Rock 10% → 13%; crystals 22 → 22.</figcaption></figure>
+<figure><img src="pics/fc-planet-5-1.webp" alt="Jungle seed 1 in false colour, before and after" loading="lazy"><figcaption><b>Jungle, seed 1.</b> Rock 6% → 8%; crystals 30 → 30.</figcaption></figure>
+<figure><img src="pics/fc-planet-6-3.webp" alt="Highlands seed 3 in false colour, before and after" loading="lazy"><figcaption><b>Highlands, seed 3.</b> Rock 18% → 17%; crystals 26 → 26.</figcaption></figure>
+<figure><img src="pics/fc-planet-7-2.webp" alt="Caves seed 2 in false colour, before and after" loading="lazy"><figcaption><b>Caves, seed 2.</b> Rock 54% → 51%; crystals 35 → 30.</figcaption></figure>
+<figure><img src="pics/fc-planet-8-2.webp" alt="Core world seed 2 in false colour, before and after" loading="lazy"><figcaption><b>Core world, seed 2.</b> Rock 6% → 6%; crystals 61 → 61.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">7</div><div><h2>Measured</h2>
+<div class="tags"><span class="tag">112 nests</span><span class="tag">160 planets</span></div></div></div>
+<p>The deciding measure, named before the first run: the play reviewer's own script (with one fix: it took a way that reached no nest as within 15%), seeds 1-8 of every planet.</p>
+<div class="tbl"><table>
+<thead><tr><th>Planet</th><th>Nests</th><th>Reviewed</th><th>Map fixes (before)</th><th>Doors (after)</th></tr></thead>
+<tbody>
+<tr><td>1 Meadow</td><td>8</td><td>1</td><td>0</td><td class="ok">8</td></tr>
+<tr><td>2 Barrens</td><td>8</td><td>2</td><td>1</td><td class="ok">8</td></tr>
+<tr><td>3 Fen</td><td>8</td><td>0</td><td>1</td><td class="ok">8</td></tr>
+<tr><td>4 River valley</td><td>16</td><td>0</td><td>2</td><td class="ok">16</td></tr>
+<tr><td>5 Jungle</td><td>16</td><td>1</td><td>0</td><td class="ok">16</td></tr>
+<tr><td>6 Highlands</td><td>16</td><td>0</td><td>0</td><td class="ok">16</td></tr>
+<tr><td>7 Caves</td><td>16</td><td>0</td><td>0</td><td class="ok">16</td></tr>
+<tr><td>8 Core</td><td>24</td><td>0</td><td>0</td><td class="ok">23</td></tr>
+<tr><td><b>All</b></td><td>112</td><td>4</td><td>4</td><td class="ok"><b>111</b></td></tr>
+</tbody></table></div>
+<p class="muted">After, direct ways are 4-10 wide on that measure (one 12) and the ways round 17-34. The one miss is core seed 2's far nest (12 / 22), shown above.</p>
+<p>What it costs, over 160 planets (seeds 1-20):</p>
+<div class="tbl"><table>
+<thead><tr><th>Planet</th><th>First-try passes</th><th>Median build</th><th>Median rock</th><th>Far-nest walk</th><th>Median crystals</th></tr></thead>
+<tbody>
+<tr><td>1 Meadow</td><td>19 → 18</td><td>50 → 54 ms</td><td>2% → 7%</td><td>532 → 520</td><td class="bad">11 → 10</td></tr>
+<tr><td>2 Barrens</td><td>19 → 20</td><td>54 → 64 ms</td><td>4% → 7%</td><td>648 → 638</td><td class="bad">12.5 → 10.5</td></tr>
+<tr><td>3 Fen</td><td>19 → 18</td><td>86 → 96 ms</td><td>3% → 6%</td><td>796 → 762</td><td>13.5 → 13</td></tr>
+<tr><td>4 River valley</td><td>20 → 18</td><td>157 → 168 ms</td><td>10% → 12%</td><td>1,044 → 938</td><td>16 → 15</td></tr>
+<tr><td>5 Jungle</td><td>19 → 19</td><td>168 → 191 ms</td><td>5% → 6%</td><td>1,176 → 1,166</td><td>27 → 26.5</td></tr>
+<tr><td>6 Highlands</td><td>16 → 15</td><td>253 → 288 ms</td><td>19% → 17%</td><td>1,618 → 1,408</td><td>26 → 26</td></tr>
+<tr><td>7 Caves</td><td>18 → 19</td><td>296 → 360 ms</td><td>56% → 51%</td><td>2,004 → 1,826</td><td class="bad">35 → 31</td></tr>
+<tr><td>8 Core</td><td>19 → 16</td><td>561 → 718 ms</td><td>9% → 8%</td><td>2,308 → 2,180</td><td>60.5 → 61</td></tr>
+</tbody></table></div>
+<p class="muted">Walks in map cells. A planet that fails its first try is built again with the next seed; none needed the open fallback. The rock share rises on the open planets (the rims) and falls in the caves (the roads). Fewer crystals on planets 1-4 and the caves: the fields lose spots to the lanes and the filled caverns. A tuning note, not a blocker: the field counts can be raised.</p>
+</section>
+
+<section class="sec">
+<h2>Tried on the way</h2>
+<p class="muted">First-try passes on seeds 1-8 (64 planets) after each step.</p>
+<ol>
+<li><b>A rim, a door, a breach and a straight road.</b> 42 of 64.</li>
+<li><b>The landing's crystal moved off the roads</b> (it narrowed a highlands way round to 10): 43.</li>
+<li><b>Nest rings moved off the lanes</b> (they shut the way round on every jungle): 53.</li>
+<li><b>The landing's crystal allowed farther, anywhere in plain sight</b>, where the landing sits in a small room: 54.</li>
+<li><b>The road's arc starts at the door</b>, not 60 degrees round, which was as quick a way to the breach as to the door: 58.</li>
+<li><b>Cut-off caverns filled</b>: 60.</li>
+<li><b>Roads routed over the ground</b>, not cut straight as boulevards through the caves and ridges: still 60, and the caves keep their tunnels.</li>
+<li><b>Dropping a nest under 400 apart on every map</b> failed 7 of 20 river valleys' first tries; now only below today's area.</li>
+<li><b>Lobed rims</b>, after the first frames showed drawn circles: 145 → 143 of 160.</li>
+</ol>
+</section>
+
+<section class="sec">
+<h2>Not done here, and next</h2>
+<ul>
+<li><b>Every rim is rock.</b> A moat on the fens, a thorn hedge the squad can break in the jungle, or a ring of boulders on the meadows would tell the biomes apart (the looks review's item 3).</li>
+<li><b>The door is 6 wide at its narrowest on the planet's check, 4 on the reviewer's.</b> The channel is 7-9; the rim's knobs take the rest. A squad files through either way.</li>
+<li><b>Crystal counts</b> on planets 1-4 and the caves are down 4-11%.</li>
+<li><b>Next:</b> fens weighted to lakes, cave tunnels 5-15 wide, a landing crystal per biome, and nests kept off river crossings.</li>
+</ul>
+</section>
+
+</div>

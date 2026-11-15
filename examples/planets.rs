@@ -39,7 +39,7 @@ fn main() -> Result<(), String> {
     if let Some(d) = &out {
         std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
     }
-    println!("depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts");
+    println!("depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts");
     let mut total = (0, 0.0f64);
     for &depth in &depths {
         for &seed in &seeds {
@@ -63,7 +63,7 @@ fn main() -> Result<(), String> {
             let rc = levelgen::Recipe::of(&p);
             let pc = |v: f32| format!("{:.0}%", v * 100.0);
             println!(
-                "{depth} {seed} {} {} [{:?} {:?} {:?} {}] {} {ms:.0} | {} {} {} {} {} {} {} | {} {} {} | {} | {}",
+                "{depth} {seed} {} {} [{:?} {:?} {:?} {}] {} {ms:.0} | {} {} {} {} {} {} {} | {} {} {} | {} | {} | {}",
                 p.name,
                 p.biome.name().replace(' ', "-"),
                 rc.openness,
@@ -82,6 +82,7 @@ fn main() -> Result<(), String> {
                 s.to_first,
                 s.to_crystal,
                 pc(s.open_share),
+                levelgen::doors(&p, &m).iter().map(|(d, r)| format!("{d}/{r}")).collect::<Vec<_>>().join(" "),
                 why.join(" / ")
             );
             if let Some(d) = &out {
