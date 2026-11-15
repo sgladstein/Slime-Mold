@@ -1462,7 +1462,8 @@ impl App {
             v.minimap_box = self.hud.minimap_box;
             v.minimap_off = false;
             v.set_marks(&self.marks);
-            v.set_lights(&self.lights);
+            let cam = &self.camera;
+            v.set_lights(&self.lights, (cam.x, cam.y, cam.x + cam.screen.0 / cam.zoom, cam.y + cam.screen.1 / cam.zoom));
         }
     }
 

@@ -41,6 +41,34 @@ const BINDINGS_AFTER: [u32; 7] = [LIGHTS_BINDING, 21, 22, 23, 24, 25, 26];
 /// The most point lights a frame (`View::set_lights`); `shaded` loops over
 /// them a pixel, so the cap bounds that loop.
 pub const MAX_LIGHTS: usize = 64;
+
+/// The lights a frame uploads (`View::set_lights`): those whose reach
+/// touches the world rectangle `seen` (x0, y0, x1, y1, cells), in the order
+/// given, and past `MAX_LIGHTS` the brightest at their middles (`strength`,
+/// so a light late in its fade goes first; strength x reach squared would
+/// drop every muzzle light, 1 cell, before any burst). Until 2026-11-15 the first 64 pushed were kept, off
+/// screen or not, so with 40 soldiers the muzzle lights, pushed after the
+/// bursts and hits, were the ones dropped (the whole-game review, 11-15);
+/// lights off screen also cost every pixel a loop turn for nothing.
+pub fn pick_lights(lights: &[Light], seen: (f32, f32, f32, f32)) -> Vec<Light> {
+    let (x0, y0, x1, y1) = seen;
+    let mut on: Vec<Light> = lights.iter().copied().filter(|l| l.at.0 + l.reach >= x0 && l.at.0 - l.reach <= x1 && l.at.1 + l.reach >= y0 && l.at.1 - l.reach <= y1).collect();
+    if on.len() > MAX_LIGHTS {
+        let worth = |l: &Light| l.strength;
+        let mut order: Vec<usize> = (0..on.len()).collect();
+        order.sort_by(|&a, &b| worth(&on[b]).total_cmp(&worth(&on[a])).then(a.cmp(&b)));
+        let mut keep = vec![false; on.len()];
+        for &k in &order[..MAX_LIGHTS] {
+            keep[k] = true;
+        }
+        let mut k = 0;
+        on.retain(|_| {
+            k += 1;
+            keep[k - 1]
+        });
+    }
+    on
+}
 /// The lights' binding: 15-19 are the graphics thread's (#212 and its
 /// crystal work), so the lights sit after them.
 const LIGHTS_BINDING: u32 = 20;
@@ -659,13 +687,14 @@ impl View {
         }
     }
 
-    /// This frame's point lights (past `MAX_LIGHTS` the rest are dropped):
-    /// they light the shaded world (`view.wgsl`, `shaded`), so only with
-    /// the look on.
-    pub fn set_lights(&mut self, lights: &[Light]) {
-        let n = lights.len().min(MAX_LIGHTS);
+    /// This frame's point lights, `pick_lights` of them for the world
+    /// rectangle `seen` (x0, y0, x1, y1, cells): they light the shaded world
+    /// (`view.wgsl`, `shaded`), so only with the look on.
+    pub fn set_lights(&mut self, lights: &[Light], seen: (f32, f32, f32, f32)) {
+        let lights = pick_lights(lights, seen);
+        let n = lights.len();
         if n > 0 {
-            let words: Vec<f32> = lights[..n].iter().flat_map(|l| [l.at.0, l.at.1, l.reach, l.lift, l.colour[0], l.colour[1], l.colour[2], l.strength]).collect();
+            let words: Vec<f32> = lights.iter().flat_map(|l| [l.at.0, l.at.1, l.reach, l.lift, l.colour[0], l.colour[1], l.colour[2], l.strength]).collect();
             let bytes: Vec<u8> = words.iter().flat_map(|x| x.to_le_bytes()).collect();
             self.queue.write_buffer(&self.lights, 0, &bytes);
         }
@@ -815,6 +844,29 @@ impl View {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Off-screen lights are dropped, and past the cap the brightest are
+    /// kept in their order: a muzzle light pushed last still lands when
+    /// 80 dim hit lights came first.
+    #[test]
+    fn the_lights_kept_are_on_screen_and_the_brightest() {
+        let at = |x: f32, s: f32| Light { at: (x, 10.0), reach: 2.0, lift: 3.0, colour: [255.0; 3], strength: s };
+        let seen = (0.0, 0.0, 100.0, 50.0);
+        // Off the right edge by more than its reach, and just touching it.
+        assert!(pick_lights(&[at(103.0, 1.0)], seen).is_empty());
+        assert_eq!(pick_lights(&[at(101.5, 1.0)], seen).len(), 1);
+        let mut many: Vec<Light> = (0..80).map(|k| at(k as f32, 0.1)).collect();
+        many.push(at(50.0, 0.6));
+        let kept = pick_lights(&many, seen);
+        // The bright one pushed last, and the first 63 of the equal dim
+        // ones, in the order given.
+        let mut want = many[..MAX_LIGHTS - 1].to_vec();
+        want.push(at(50.0, 0.6));
+        assert_eq!(kept, want);
+        // Under the cap, everything on screen, as given.
+        let few: Vec<Light> = (0..10).map(|k| at(k as f32, 0.1)).collect();
+        assert_eq!(pick_lights(&few, seen), few);
+    }
     use crate::world::marks::{Mark, Shape};
 
     /// A GPU for the view's tests, as the sandbox's: skipped with none,
