@@ -605,6 +605,26 @@ const ELEV: f32 = 5.0;
 // an olive-brown whose middle (57,54,43) read as sand beside the slime.
 const SOIL_LOW: vec3<f32> = vec3<f32>(18.0, 22.0, 27.0);
 const SOIL_HIGH: vec3<f32> = vec3<f32>(52.0, 55.0, 58.0);
+// Plain soil at elevation `e` (-1 to 1), in its planet's own hue (`P.flora`,
+// `levelgen::Biome as u8`): art lead 11-15, the biomes' plain soils were one
+// slate grey and read apart by their plants alone. Each tint keeps the
+// value about where it was (grey 34-41 at the middle elevation, inside the
+// ground's 20-45 band) and moves the hue: barrens a sun-baked tan (about
+// 30 degrees), caves a cold blue-grey (about 220), meadow a little brown,
+// jungle a dark red-brown humus, fen olive mud, valley a warm silt;
+// highlands keep the neutral stone grey.
+fn biome_tint(fl: u32) -> vec3<f32> {
+    if (fl == 1u) { return vec3<f32>(1.31, 1.04, 0.75); }
+    if (fl == 2u) { return vec3<f32>(0.95, 1.0, 0.88); }
+    if (fl == 3u) { return vec3<f32>(1.08, 1.0, 0.92); }
+    if (fl == 4u) { return vec3<f32>(1.33, 0.88, 0.7); }
+    if (fl == 5u) { return vec3<f32>(1.0, 1.0, 1.0); }
+    if (fl == 6u) { return vec3<f32>(0.91, 0.99, 1.18); }
+    return vec3<f32>(1.08, 1.0, 0.9);
+}
+fn plain_soil(e: f32) -> vec3<f32> {
+    return mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * e) * biome_tint(P.flora);
+}
 // Soil kinds (byte 0's high nibble, `look::Fields::soil`; the mould's
 // `BigDish::soil`, Larder World maps): each changes the mould (sand: its
 // trail fades, and it spreads further; clay: its trail lasts, and it is
@@ -1003,7 +1023,7 @@ fn cell_mat(ix: i32, iy: i32, th: f32, cut: f32, dense: f32) -> Mat {
 fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> Mat {
     var m: Mat;
     if (ix < 0 || iy < 0 || ix >= i32(P.ww) || iy >= i32(P.wh)) {
-        m.albedo = mix(SOIL_LOW, SOIL_HIGH, 0.5); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0; m.vis = 1.0;
+        m.albedo = plain_soil(0.0); m.glow = vec3<f32>(0.0); m.gloss = 0.05; m.body = 0.0; m.gem = 0.0; m.vis = 1.0;
         return m;
     }
     let i = cidx(ix, iy);
@@ -1035,7 +1055,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // over it; before 2026-11-11 19:29Z it was the engine's flat near-black.
     // Flat land (elevation 0, every map until the simulation uses height)
     // is the middle of the range.
-    var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * byte(g, 3u));
+    var base = plain_soil(byte(g, 3u));
     let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
     // Burnt ground and the plants are laid per pixel in `shaded`
@@ -1093,7 +1113,16 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // crystals thread). The ground now shows through the frontier's thin
     // film only, where its thickness grades it.
     let opaque = smoothstep(0.05, 0.35, th);
-    m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
+    // The thin film's floor is absolute (art lead 11-15: over the fen's
+    // dark mud the film fell to 73 in grey): wherever it has thickness,
+    // the film is lifted with the slime's own light to at least 95 before
+    // shading (80 on its shaded flank, the shade floor being 0.85) over any
+    // ground, gated as the gel's lift so the tail past the walkers stays
+    // ground.
+    var thin = mix(soil, gel, film);
+    let thin_l = dot(thin, vec3<f32>(0.299, 0.587, 0.114));
+    thin += vivid / max(lum, 1.0) * max(95.0 * smoothstep(FILM_LIFT_A, FILM_LIFT_B, th) - thin_l, 0.0);
+    m.albedo = mix(thin, body_c, opaque * 0.95);
     // How much of the ground's own detail (plants, char, soil texture)
     // shows through the slime here, gone by the thin film's middle (th
     // 0.05) by the colour's thickness, walkers counted (art lead 11-15,
@@ -1553,7 +1582,7 @@ fn ground_cell(ix: i32, iy: i32) -> GroundB {
     let kind = g & 15u;
     let sk = (g >> 4u) & 7u;
     o.elev = byte(g, 3u);
-    var base = mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * o.elev);
+    var base = plain_soil(o.elev);
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
     if (kind == WET) { base = WET_RGB; }
     o.col = base;
@@ -1614,7 +1643,21 @@ fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
         let n = vnoise(q1 * 3.2 + 9.0);
         let speck = 0.10 * smoothstep(0.66, 0.86, n) - 0.08 * smoothstep(0.66, 0.86, 1.0 - n);
         let streak = 0.05 * (vnoise(vec2<f32>(q2.x * 0.25, q2.y * 2.2) + 4.0) - 0.5) * 2.0;
-        return speck + streak;
+        // A hardpan of large faint polygons, about four cells across,
+        // their seams a pixel or two (art lead 11-15).
+        let g = p / 4.0;
+        let gi = floor(g);
+        var d1 = 9.0; var d2 = 9.0;
+        for (var j = -1; j <= 1; j++) {
+            for (var i = -1; i <= 1; i++) {
+                let c = gi + vec2<f32>(f32(i), f32(j));
+                let o = c + vec2<f32>(hash2(c * 1.9 + 0.7), hash2(c * 3.1 + 4.3)) * 0.8 + 0.1;
+                let d = length(g - o);
+                if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+            }
+        }
+        let seam = 1.0 - smoothstep(0.8, 2.2, (d2 - d1) * 4.0 * P.zoom);
+        return 0.7 * speck + streak - 0.10 * seam;
     }
     if (fl == 2u) {
         // Fen: mud, darker wet blotches a couple of cells across, with a
@@ -1655,7 +1698,11 @@ fn plain_look(fl: u32, p: vec2<f32>) -> f32 {
     if (fl == 6u) {
         // Caves: stone dust, a faint fine grain over broad pale and dark
         // drifts.
-        return 0.10 * (vnoise(q2 / 6.0 + 8.0) - 0.5) + 0.07 * (vnoise(q1 * 2.8 + 13.0) - 0.5);
+        // Smooth, with sparse pale grit and dark damp patches (art lead
+        // 11-15: the first cut's even grain read as the barrens').
+        let damp = smoothstep(0.55, 0.8, vnoise(q2 / 4.5 + 8.0));
+        let grit = smoothstep(0.9, 0.97, vnoise(q1 * 3.3 + 13.0));
+        return 0.04 * (vnoise(q1 / 2.0 + 2.0) - 0.5) - 0.12 * damp + 0.14 * grit * (1.0 - damp);
     }
     // Meadow and the core world: loam, soft crumbs at two scales.
     return 0.13 * (vnoise(q1 * 1.6 + 2.0) - 0.5) + 0.09 * (vnoise(q2 * 3.1 + 19.0) - 0.5);
@@ -1809,7 +1856,7 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // water's edges are redrawn at the pixel. (Plants and char are drawn
     // over all this in `shaded`.)
     let est = ground_est(x, y);
-    let land = SAND_RGB * ls.x + CLAY_RGB * ls.y + BARREN_RGB * ls.z + mix(SOIL_LOW, SOIL_HIGH, 0.5 + 0.5 * ground_elev(x, y)) * ls.w;
+    let land = SAND_RGB * ls.x + CLAY_RGB * ls.y + BARREN_RGB * ls.z + plain_soil(ground_elev(x, y)) * ls.w;
     var want = land;
     // Wet: the water's edge is where the smooth wet share crosses one
     // half, worked out at the pixel (one pixel antialiased, as rock's), so

@@ -52,9 +52,36 @@ Some rows look unchanged because the measure registers a few cells by their midd
 - Slime-coloured film p10 is 80 or above on 13 of 14 planet-seeds; highlands 1 is 75.
 - The review's film p10 fell on fen 2 (90 → 73), where the thin film lies over the darker mud.
 
+## Second round: a hue per soil, and the film's absolute floor (art lead, 11-15 04:49Z)
+
+The art lead found barrens grit and cave dust nearly the same picture, and plain soil too alike in hue across the set. The changes:
+
+- **One colour source.** `plain_soil(e)` now gives plain soil its biome's hue everywhere it is drawn: the cell material, the ground bake and the pixel redraw. That keeps soil edges and the far view consistent.
+- **The hues** (`biome_tint`). Each keeps the value at the middle elevation inside the 20-45 band:
+  - barrens: a sun-baked tan, about 30 degrees;
+  - caves: a cold blue-grey, about 220 degrees;
+  - meadow: a touch of brown;
+  - jungle: a dark red-brown humus;
+  - fen: olive mud;
+  - valley: a warm silt;
+  - highlands: neutral stone.
+- **Barrens texture.** Barrens now has a hardpan of large faint polygons about four cells across, with the wind streaks and fewer specks.
+- **Caves texture.** Caves are smoother, with sparse pale grit and dark damp patches.
+- **The art lead's test.** Barrens, caves and highlands are each nameable in a 420x240 crop at zoom 12 with no plants (the stills).
+- **Meadow tint.** The meadow tint is milder than first set, (1.08, 1.0, 0.9) rather than (1.14, 0.99, 0.85). At 1.14 red, the bare ground in `the_slime_edge_is_as_sharp_as_its_walkers` rose from 39 to 44.5, and its 10-90% width read exactly 1.50 cells, the limit.
+- **The film floor.** The thin film is now lifted with the slime's own light to at least 95 grey before shading (80 after the 0.85 shade floor) over any ground. It is gated as the gel lift is, so the edge test passes.
+
+Measured with the reviewer's `measure.py`. Each figure is round one → round two, before the jungle tint was raised to keep its value:
+
+- **Plain bare p50:** 33-47 on all 14 planet-seeds.
+- **Barrens plain ground:** 42 → 45.
+- **Jungle plain ground:** 42 → 39 and 39 → 37. Its tint was then brightened to (1.33, 0.88, 0.7) to keep the value.
+- **Slime-coloured film p10:** 13 of 14 planet-seeds at 78 or above. Jungle went 85 → 79 and 82 → 78. Highlands 1 is 75.
+- **The review's film p10 on fen:** stays at 73. The film's floor does not reach it, because those pixels are the faint fringe past the last walkers and the veins' cast shadow on the mud. That fringe is exactly what the edge-sharpness test keeps at ground value. Lifting it is the change that widened the edge to 1.74 cells (dead-ends 11-15). So a p10 at 80 everywhere and an edge as sharp as the walkers pull against each other; this cut keeps the edge.
+
 ## Pictures
 
-- `<biome>-z12-before.png` and `<biome>-z12-after.png`: the landing site of each planet, seed 1, at zoom 12 and 1 s. Before is the same build with `PLAIN_AMP` at 0.
+- `<biome>-z12-before.png` and `<biome>-z12-after.png`: the landing site of each planet, seed 1, at zoom 12 and 1 s. Before is round one's build with `PLAIN_AMP` at 0 (main's flat slate soil); after is round two.
 - `highlands-, barrens-, fen-z12-*.gif`: 2-8 s at the same spots.
 - `index.html` is the page.
 
