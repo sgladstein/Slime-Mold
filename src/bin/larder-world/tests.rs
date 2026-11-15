@@ -431,6 +431,12 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     app.menu = Some(start_menu(&base));
     app.open_menu().unwrap();
     app.menu.as_mut().unwrap().show(Page::Options);
+    // To the map row (the UI size is first since the review, 11-15; Right
+    // on it would turn and save the UI size).
+    let map_row = app.menu.as_ref().unwrap().options.iter().position(|o| o.key == "map").unwrap();
+    for _ in 0..map_row {
+        app.menu_input(|m| m.key(KeyCode::ArrowDown, true)).unwrap();
+    }
     // Down to "Your own mould" and back: no restart (the round's clock runs on).
     for _ in 0..3 {
         app.game.as_mut().unwrap().step();

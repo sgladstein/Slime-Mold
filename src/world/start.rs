@@ -252,7 +252,10 @@ enum Hit {
     Mission(usize),
     /// Option `i` one choice back or on.
     Turn(usize, isize),
+    /// Option `i`'s row: a click focuses it, Enter turns it on.
     Reset(usize),
+    /// The "default X" under a changed option: a click resets it.
+    Default(usize),
     ResetAll,
 }
 
@@ -445,7 +448,7 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -473,7 +476,7 @@ impl StartMenu {
                 Page::Keys => Hit::Keys,
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
-                Page::Main => Hit::Sandbox,
+                Page::Main => Hit::Run,
             };
             self.focus = self.rows().iter().position(|&h| h == led).unwrap_or(0);
         }
@@ -505,11 +508,13 @@ impl StartMenu {
             Hit::Turn(i, by) => self.options[i].turn(by),
             // On the keyboard, Enter on an option's row turns it on.
             Hit::Reset(i) => self.options[i].turn(1),
+            // Every rule back, the UI size kept (a display choice, not a rule).
             Hit::ResetAll => {
-                for o in &mut self.options {
+                for o in self.options.iter_mut().filter(|o| o.key != "ui") {
                     o.at = o.default;
                 }
             }
+            Hit::Default(i) => self.options[i].at = self.options[i].default,
             Hit::Panel => {}
         }
         None
@@ -562,9 +567,18 @@ impl StartMenu {
         }
         match hit {
             Some(h) if was == Some(h) => {
-                // A row clicked: an option's row resets it (its arrows turn it).
+                // A row clicked takes the focus: its arrows turn it, its
+                // "default" line resets it. (A click on the row reset it,
+                // so one stray click took a 200% UI back to 100%: the
+                // review, 11-15.)
                 let h = match h {
                     Hit::Reset(i) => {
+                        if let Some(k) = self.rows().iter().position(|&r| r == Hit::Reset(i)) {
+                            self.focus = k;
+                        }
+                        return Vec::new();
+                    }
+                    Hit::Default(i) => {
                         self.options[i].at = self.options[i].default;
                         return Vec::new();
                     }
@@ -738,7 +752,7 @@ impl StartMenu {
         let hint = match self.page {
             Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
-            Page::Options => "Left/Right change  ·  Backspace or click the row: default  ·  Esc back",
+            Page::Options => "Left/Right or the arrows change  ·  Backspace or a click on \"back to\" resets  ·  Esc back",
             Page::Keys => "Esc or F1 back",
             Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "Click takes a card  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back to the range",
             Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
@@ -780,12 +794,16 @@ impl StartMenu {
     }
 
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default()).map(|o| format!("{} {}", o.key, o.value())).collect();
+        // The rules changed, by their labels; the UI size is not a rule
+        // ("Free play, with ui 200%", the review 11-15).
+        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && o.key != "ui").map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
+        // The run first, and the one lit (the whole-game review, 11-15:
+        // the run is the game; Sandbox led and was lit before).
         let mut items: Vec<(&str, String, Hit, bool)> = vec![
-            ("Sandbox", sandbox, Hit::Sandbox, true),
-            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, false),
+            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true),
+            ("Sandbox", sandbox, Hit::Sandbox, false),
             ("Campaign", campaign, Hit::Campaign, false),
         ];
         if self.planets {
@@ -875,8 +893,15 @@ impl StartMenu {
             }
             let vc = if o.is_default() { TEXT } else { WARN };
             c.text_fit(Weight::SemiBold, 15.0 * s, (prev.right() + vw / 2.0, row.y + 26.0 * s), Align::Centre, o.value(), vw - 8.0 * s, vc);
-            let d = if o.is_default() { "default".to_string() } else { format!("default {}", o.choices[o.default]) };
-            c.text_fit(Weight::Medium, 12.5 * s, (prev.right() + vw / 2.0, row.y + 49.0 * s), Align::Centre, &d, vw + 2.0 * aw, if o.is_default() { FAINT } else { MUTED });
+            // Under a changed value, "back to X", a click resets it.
+            if !o.is_default() {
+                let d = format!("back to {}", o.choices[o.default]);
+                let dw = c.atlas.measure(Weight::Medium, 12.5 * s, &d).min(vw + 2.0 * aw);
+                let dr = Rect::new(prev.right() + (vw - dw) / 2.0 - 4.0 * s, row.y + 36.0 * s, dw + 8.0 * s, 18.0 * s);
+                let hot = self.hover.is_some_and(|p| dr.contains(p));
+                c.text_fit(Weight::Medium, 12.5 * s, (prev.right() + vw / 2.0, row.y + 49.0 * s), Align::Centre, &d, vw + 2.0 * aw, if hot { ACCENT } else { MUTED });
+                self.hits.push((dr, Hit::Default(i)));
+            }
             y += rh;
         }
         // The defaults move as the game is tuned (D5: "applies to this build").
@@ -1380,9 +1405,9 @@ mod tests {
     #[test]
     fn the_keyboard_walks_the_pages() {
         let mut m = menu();
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Sandbox]);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Run], "the run is first");
         m.key(KeyCode::ArrowDown, true);
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Run], "the run is second");
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Sandbox], "the sandbox is second");
         m.key(KeyCode::ArrowDown, true);
         assert!(m.key(KeyCode::Enter, true).is_empty());
         assert_eq!(m.page, Page::Missions);
@@ -1703,7 +1728,7 @@ mod tests {
         assert!(m.rect_of(Hit::RandomPlanet).is_none());
         m.planets = true;
         assert_eq!(click(&mut m, &mut c, Hit::RandomPlanet), vec![StartEvent::RandomPlanet]);
-        assert_eq!(m.rows()[3], Hit::RandomPlanet, "after Sandbox, Run and Campaign");
+        assert_eq!(m.rows()[3], Hit::RandomPlanet, "after Run, Sandbox and Campaign");
         let y = |m: &StartMenu, h: Hit| m.rect_of(h).unwrap().y;
         assert!(y(&m, Hit::Campaign) < y(&m, Hit::RandomPlanet) && y(&m, Hit::RandomPlanet) < y(&m, Hit::Options));
         m.focus = 0;
@@ -1748,7 +1773,27 @@ mod tests {
         assert!(m.options.iter().all(|o| o.is_default()));
         click(&mut m, &mut c, Hit::Turn(1, 1));
         click(&mut m, &mut c, Hit::Reset(1));
-        assert!(m.option("panic").unwrap().is_default(), "a click on the row resets it");
+        assert!(!m.option("panic").unwrap().is_default(), "a click on the row only takes the focus");
+        assert_eq!(m.rows()[m.focus], Hit::Reset(1));
+        click(&mut m, &mut c, Hit::Default(1));
+        assert!(m.option("panic").unwrap().is_default(), "its \"back to\" line resets it");
+        c.clear();
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::Default(1)).is_none(), "and goes once it is the default");
+    }
+
+    /// The UI size is a display choice: All to defaults leaves it, and the
+    /// sandbox's line does not list it as a rule (the review, 11-15).
+    #[test]
+    fn all_to_defaults_keeps_the_ui_size() {
+        let mut m = menu();
+        m.options.push(Opt::new("ui", "UI and text size", &["100%", "150%", "200%"], "100%", "200%", ""));
+        let mut c = Canvas::new((1280, 800));
+        m.show(Page::Options);
+        click(&mut m, &mut c, Hit::Turn(1, 1));
+        click(&mut m, &mut c, Hit::ResetAll);
+        assert_eq!(m.changed("ui"), Some("200%"));
+        assert_eq!(m.changed("panic"), None);
     }
 
     #[test]
