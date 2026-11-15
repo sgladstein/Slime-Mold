@@ -1,0 +1,26 @@
+== planet 5 raw
+  t 1 s: mould 18034, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 49.9,131.8
+  t 30 s: mould 4545, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 49.9,131.8
+  t 60 s: mould 4523, soldiers 4, bank 2000, harvested 0, shots 2, killed 2, took 0%, crystals left 0.995; squad at 49.9,131.8
+  t 120 s: mould 5913, soldiers 4, bank 2000, harvested 0, shots 6, killed 6, took 0%, crystals left 0.988; squad at 49.9,131.8
+real	1m38.585s
+== planet 5 c
+  t 1 s: mould 18034, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 49.9,131.8
+  t 30 s: mould 18399, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.997; squad at 49.9,131.8
+  t 60 s: mould 20140, soldiers 4, bank 2000, harvested 0, shots 2, killed 2, took 0%, crystals left 0.994; squad at 49.9,131.8
+  t 120 s: mould 29521, soldiers 4, bank 2000, harvested 0, shots 28, killed 25, took 0%, crystals left 0.984; squad at 49.9,131.8
+real	1m47.511s
+== planet 8 raw
+  t 1 s: mould 67442, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 899.1,733.6
+  t 30 s: mould 7750, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 899.1,733.6
+  t 60 s: mould 7646, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.995; squad at 899.1,733.6
+  t 120 s: mould 9273, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.987; squad at 899.1,733.6
+real	3m21.253s
+== planet 8 c
+  t 1 s: mould 67442, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 899.1,733.6
+  t 30 s: mould 67414, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 899.1,733.6
+  t 60 s: mould 66281, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.995; squad at 899.1,733.6
+  t 120 s: mould 54152, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.985; squad at 899.1,733.6
+real	3m25.127s
+
+[exited with code 0]
