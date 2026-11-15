@@ -43,11 +43,13 @@ below slipped past the tests.
 - **Fire kills counted unevenly**: the GPU's `firekill` adds to the strike
   counter (`wstat[3]`), so the next kill burst claims them; the CPU counts
   `burned()` only on burn-trail frames. Stats and score only.
+  *Fixed 11-15, see* Leftovers fixed *below.*
 - **Designed maps get plants (`plants::stand_in`) only in the window**; the
-  CPU census and campaign tools load them bare.
+  CPU census and campaign tools load them bare. *Fixed 11-15, below.*
 - Healing runs while a soldier works (still, unbitten, not firing).
-- Dev only: N on a `planet:D:SEED` map reloads the same planet; a run with
-  `menu=0` does not scale walkers by `Level::walkers`.
+- Dev only: N on a `planet:D:SEED` map reloads the same planet (*fixed
+  11-15, below*); a run with `menu=0` does not scale walkers by
+  `Level::walkers`.
 - Cost: `Game::mods` rebuilds `rounds::flight` on every call; `heal` clones
   the crystals per guarded crystal; `work_boost` scans the soldiers per
   worker.
@@ -91,3 +93,33 @@ p50, ms:
 About +0.2 ms of GPU a frame at every zoom (some main runs started with the
 card near 1000 MHz). Kept: the seams broke the crisp-at-24-px rule, and
 every frame stays under 3.7 ms p95 at play zoom.
+
+## Leftovers fixed (2026-11-15, later)
+
+Three of the open items above, in one change (thread "Fix leftover
+bug-check items"). No shader change.
+
+- **Fire kills.** `Game::finish_step` now asks `World::burned` once a
+  frame and counts the plants' fire in `Game::killed` and the new
+  `Game::fire_killed`; before, only a Scorch trail's frame asked, so a CPU
+  game without one never counted a fire kill. On the GPU the strike
+  counter (`wstat[3]`) is shared with `firekill`, so `GpuWorld` now reads
+  it from every frame's readout (already copied there): what moved over a
+  frame is fire's, as bursts run only between frames. A kill burst after a
+  burn reads the counter first, so the burn's kills stay fire's and the
+  blast counts only its own. No new read-back a frame (one before a kill
+  burst only when a burn came first in that gap). A Scorch trail's burns
+  still count in `Rounds::burned` on both. Test
+  `the_plants_fire_kills_count_without_a_scorch_trail` (flats, full plant
+  cover, a burn by the slime's home at 10 s): 5 fire kills by 40 s, all 5
+  in `Game::fire_killed` (0 before: the field did not exist and nothing
+  asked).
+- **Plants in the tools.** `plants::planted(map, seed)` is the window's
+  `stand_in` on a copy; the `campaign`, `larderworld` and `kitplans`
+  examples plant each seed's map with it (`plants=0` plays bare, as the
+  window's). `cutprobe` stays bare (hunk probes light no fire). The
+  library's tests keep their bare maps.
+- **N on a seeded planet.** N on `planet:D:SEED[:AREA]` goes on to
+  `planet:D:SEED+1` (the name's seed wins over `seed=`, so the old fresh
+  seed changed nothing); a seedless planet still rolls a fresh seed. Test
+  `n_on_a_seeded_planet_goes_on_to_the_next_seed`.
