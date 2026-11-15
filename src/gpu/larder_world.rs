@@ -58,6 +58,7 @@ pub fn race_settings(seed: u64, scale: usize, walkers: usize) -> Settings {
         smell: p.scent_offset,
         start: if p.blob { Start::Home } else { Start::Spread },
         haze: p.haze,
+        start_shape: p.start_shape,
         // Contagion is off (`sick` 0); these only make the params equal.
         immune: p.immune_steps as u32,
         catch_at: p.sick_catch,
@@ -1382,7 +1383,11 @@ mod tests {
         // last few dozen came over by conversion, not birth: the player's
         // mould fell from 1,000 to 980 in every run, as it isn't sown here).
         assert!(most_free > most + 50, "the cap held nothing back ({most_free} free, {most} capped)");
-        assert!(own + 5 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
+        // 15, was 5: with organic starts (2026-11-15, `start_shape`) the
+        // two moulds meet along a different edge, and conversion there
+        // differs between the capped and free runs by 13 of 1,000 on seed 5
+        // (994 against 1,007); the cap itself takes nothing of the player's.
+        assert!(own + 15 >= own_free, "the player's mould lost by the enemy's cap ({own} against {own_free})");
         let ((own_stop, _), most_stop) = run(None, true);
         assert!(most_stop <= walkers + walkers / 10, "with its births stopped the enemy reached {most_stop}");
         // The cap's overshoot is bounded by one step's births (the count
@@ -1390,7 +1395,8 @@ mod tests {
         // births-stopped one (conversion alike in both) is a step's parents
         // at most; at seed 5 it is 0.
         assert!(most <= most_stop + walkers / 20, "the capped enemy passed its cap by {} over the stopped one", most - most_stop.min(most));
-        assert!(own_stop + 5 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
+        // 15 as above (organic starts: 994 against 1,007 at seed 5).
+        assert!(own_stop + 15 >= own_free, "stopping the enemy's births stopped the player's ({own_stop})");
     }
 
     /// **The garden on a designed map, both engines** (mission 8, the tech
@@ -1463,7 +1469,11 @@ mod tests {
         assert_eq!(g.shots[0].hit, None, "the GPU's shot stopped on the player's mould");
         assert_eq!(c.shots[0].hit, None, "the CPU's shot stopped on the player's mould");
         let own = gpu.counts_by_side().0;
-        let into = Frame { shots: vec![ShotIn { from: (home.0 - 30.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
+        // From just outside the home's middle: since starts are organic
+        // (2026-11-15, `start_shape`) a shot from 30 cells out can stop on
+        // the start's thin fraying rim, where trail lies but no walker is
+        // within its reach (0 killed on both engines, seed 5).
+        let into = Frame { shots: vec![ShotIn { from: (home.0 - 4.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
         let (g, c) = (gpu.frame(&into, 0), cpu.frame(&into, 0));
         assert!(g.shots[0].killed > 0 && c.shots[0].killed > 0, "kills: GPU {}, CPU {}", g.shots[0].killed, c.shots[0].killed);
         assert_eq!(g.shots[0].hit, c.shots[0].hit, "the same hit cell");

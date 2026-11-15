@@ -2555,3 +2555,45 @@ fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
     d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
     assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
 }
+
+/// Each start is an organic shape, not a disc (planet review, 2026-11-15:
+/// "every start is a perfect gold disc"): the 90th-percentile reach of the
+/// walkers in each of 24 sectors round the start varies by far more than
+/// the disc's on the same open world,
+/// every walker is placed, and seeds differ.
+#[test]
+fn a_start_is_an_organic_shape_not_a_disc() {
+    let reach = |p: crate::mould::big::BigParams| {
+        let d = BigDish::new(p);
+        // The living (the rest are empty slots), about their own middle.
+        let live: Vec<(f32, f32)> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| (d.walkers[k].0, d.walkers[k].1)).collect();
+        let n = live.len() as f32;
+        let (hx, hy) = (live.iter().map(|w| w.0).sum::<f32>() / n, live.iter().map(|w| w.1).sum::<f32>() / n);
+        let mut by: Vec<Vec<f32>> = vec![Vec::new(); 24];
+        for &(x, y) in &live {
+            let (dx, dy) = (x - hx, y - hy);
+            let a = ((dy.atan2(dx) / std::f32::consts::TAU + 1.0).fract() * 24.0) as usize % 24;
+            by[a].push(dx.hypot(dy));
+        }
+        let far: Vec<f32> = by
+            .iter_mut()
+            .map(|v| {
+                v.sort_by(f32::total_cmp);
+                v.get(v.len() * 9 / 10).copied().unwrap_or(0.0)
+            })
+            .collect();
+        let mean = far.iter().sum::<f32>() / 24.0;
+        let sd = (far.iter().map(|f| (f - mean).powi(2)).sum::<f32>() / 24.0).sqrt();
+        (sd / mean, live.len(), far)
+    };
+    // On open ground, so rock does not clip either.
+    let open = |seed, shape| crate::mould::big::BigParams { start_shape: shape, terrain_rock: 0.0, terrain_wet: 0.0, haze: 0.0, ..race_params(seed, 1, 500) };
+    for seed in [1, 2, 3] {
+        let (cv, n, far) = reach(open(seed, true));
+        let (cv_disc, n_disc, _) = reach(open(seed, false));
+        eprintln!("seed {seed}: organic {cv:.3}, disc {cv_disc:.3}");
+        assert_eq!(n, n_disc, "seed {seed}: every walker placed");
+        assert!(cv > cv_disc + 0.1, "seed {seed}: the start's reach varies by {cv:.3} of its mean, the disc's {cv_disc:.3}: {far:?}");
+    }
+    assert_ne!(reach(open(1, true)).2, reach(open(2, true)).2, "two seeds, one shape");
+}
