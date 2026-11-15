@@ -151,6 +151,9 @@ pub struct Shop {
     /// A folder's icon by its name (the command card's page button);
     /// a folder not named shows its first row's.
     pub folder_icons: Vec<(String, Icon)>,
+    /// The gun range's armory, not a run's shop: its buttons go back to
+    /// the range or leave it, and Esc goes back to the range.
+    pub range: bool,
 }
 
 /// Where everything on the shop page goes at one scale.
@@ -195,6 +198,9 @@ pub enum StartEvent {
     EditMaps,
     /// Start a roguelike run, or go back to the one under way.
     Run,
+    /// The gun range's armory (owner, 11-15 02:55Z: "a test environment
+    /// ... where I can play with the guns and cards and bullets").
+    Range,
     /// Shop row `i` picked.
     Buy(usize),
     /// Shop row `i` (a bullet card) dragged to the carried gun's slot
@@ -225,6 +231,7 @@ enum Hit {
     Panel,
     Sandbox,
     Run,
+    Range,
     Buy(usize),
     /// Open the shop's folder `k` (`StartMenu::folders`), or close it.
     Folder(usize),
@@ -392,7 +399,7 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Sandbox, Hit::Run, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -418,6 +425,7 @@ impl StartMenu {
                 Page::Missions => Hit::Campaign,
                 Page::Options => Hit::Options,
                 Page::Keys => Hit::Keys,
+                Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
                 Page::Main => Hit::Sandbox,
             };
@@ -430,6 +438,7 @@ impl StartMenu {
         match h {
             Hit::Sandbox => return Some(StartEvent::Sandbox),
             Hit::Run => return Some(StartEvent::Run),
+            Hit::Range => return Some(StartEvent::Range),
             Hit::Buy(i) => return Some(StartEvent::Buy(i)),
             Hit::Folder(k) => {
                 self.folder = self.folders().get(k).cloned();
@@ -460,6 +469,12 @@ impl StartMenu {
         None
     }
 
+    /// Esc (or a right click) on the gun range's armory, no folder open:
+    /// back to the range, not to the main page.
+    fn leaves_armory(&self) -> bool {
+        self.page == Page::Shop && self.folder.is_none() && self.shop.as_ref().is_some_and(|s| s.range)
+    }
+
     pub fn moved(&mut self, p: Option<(f32, f32)>) {
         self.hover = p;
         // Held down on a bullet card and moved: a drag.
@@ -480,6 +495,9 @@ impl StartMenu {
     pub fn button(&mut self, b: Button, pressed: bool) -> Vec<StartEvent> {
         if b != Button::Left {
             if b == Button::Right && pressed && self.page != Page::Main {
+                if self.leaves_armory() {
+                    return vec![StartEvent::NextLevel];
+                }
                 self.back();
             }
             return Vec::new();
@@ -528,6 +546,7 @@ impl StartMenu {
                     self.show(Page::Keys);
                 }
             }
+            KeyCode::Escape if self.leaves_armory() => return vec![StartEvent::NextLevel],
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
                 if self.page != Page::Main {
                     self.back();
@@ -588,9 +607,16 @@ impl StartMenu {
         // menu stopped growing past about 100% on a 1080-line screen and
         // Ctrl + seemed to do nothing there (owner: "changing the UI zoom,
         // doesn't change the main menu"). The main page and the campaign's
-        // list count their own rows (62 units and a 12 gap a row).
+        // list count their own rows (62 units and a 12 gap a row; the main
+        // page's Quit has no second line, 48 units: with the Gun range's row
+        // 11-15, counting it at 62 held 150% on a 1280 x 800 window to 1.2x).
         let held = match self.page {
-            Page::Main | Page::Missions => 330.0 + 78.0 * self.rows().len() as f32,
+            // (78 a row since the UI review's 66-unit buttons; Quit 50 + 12.
+            // The main page's own frame, title to hint, is about 240 units,
+            // not the 330 the options page keeps: with nine rows 330 held
+            // 150% on a 1280 x 800 window to 1.06x.)
+            Page::Main => 240.0 + 78.0 * self.rows().len() as f32 - 16.0,
+            Page::Missions => 330.0 + 78.0 * self.rows().len() as f32,
             _ => 330.0 + 62.0 * self.options.len() as f32,
         };
         let s = c.ui.px(c.screen).min(sh / held);
@@ -615,6 +641,7 @@ impl StartMenu {
             Page::Missions => "Campaign",
             Page::Options => "Options",
             Page::Keys => "Keys",
+            Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
             Page::Shop => "The run: spend your points, then land",
         };
         c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
@@ -633,6 +660,7 @@ impl StartMenu {
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Left/Right change  ·  Backspace or click the row: default  ·  Esc back",
             Page::Keys => "Esc or F1 back",
+            Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "Click takes a card  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back to the range",
             Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
         c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, MUTED);
@@ -685,6 +713,7 @@ impl StartMenu {
             items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false));
         }
         items.extend([
+            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false),
             ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
             ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
         ]);
@@ -885,6 +914,7 @@ impl StartMenu {
         self.glass(plan.right, c, s);
         let title = match &self.folder {
             Some(f) => format!("Upgrades  ›  {f}"),
+            None if shop.range => "The range".to_string(),
             None => "Upgrades".to_string(),
         };
         c.text(Weight::SemiBold, 14.5 * s, (plan.left.x + 14.0 * s, plan.left.y + 24.0 * s), Align::Left, &title, MUTED);
@@ -988,8 +1018,9 @@ impl StartMenu {
         // scale).
         let s = foot_s;
         let by = sh - 96.0 * s;
-        self.item(Rect::new(x, by, 240.0 * s, 44.0 * s), "Land on the next planet", "", Hit::Next, true, focus == Some(Hit::Next), c, s);
-        self.item(Rect::new(x + 252.0 * s, by, 170.0 * s, 44.0 * s), "Give up the run", "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
+        let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else { ("Land on the next planet", "Give up the run") };
+        self.item(Rect::new(x, by, 240.0 * s, 44.0 * s), next, "", Hit::Next, true, focus == Some(Hit::Next), c, s);
+        self.item(Rect::new(x + 252.0 * s, by, 170.0 * s, 44.0 * s), end, "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
     }
 
     /// A tile's face: bright when a pick does something, dark when not.
@@ -1185,10 +1216,12 @@ impl StartMenu {
     }
 
     /// The centre of the first card out of the gun named `name`, as last
-    /// drawn.
+    /// drawn; else of the last gun card so named (the one on sale, or the
+    /// gun range's rack, after those owned).
     pub fn card_at(&self, name: &str) -> Option<(f32, f32)> {
         let shop = self.shop.as_ref()?;
-        let i = self.card_groups().into_iter().flat_map(|(_, c)| c).find(|&i| shop.rows[i].name == name)?;
+        let gun = shop.rows.iter().rposition(|r| r.area == ShopArea::Guns && r.name == name);
+        let i = self.card_groups().into_iter().flat_map(|(_, c)| c).find(|&i| shop.rows[i].name == name).or(gun)?;
         self.rect_of(Hit::Buy(i)).map(|r| (r.x + r.w / 2.0, r.y + r.h / 2.0))
     }
 
@@ -1289,7 +1322,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { "In the bag" } else { "For sale" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), folder_icons: Vec::new() }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), folder_icons: Vec::new(), range: false }
     }
 
     /// Every tile of the shop, on the first grid page and in each folder,
@@ -1375,6 +1408,34 @@ mod tests {
                 assert_eq!(place(false, screen, user), place(true, screen, user), "{screen:?} at {user}: the shop moved when a card went into the bag");
             }
         }
+    }
+
+    /// The gun range's armory is the shop page with its own buttons: Back
+    /// to the range goes on to the round (`NextLevel`), and so do Esc and
+    /// a right click with no folder open; Leave the range is `EndRun`. The
+    /// main page's Gun range row opens it.
+    #[test]
+    fn the_gun_ranges_armory_goes_back_to_the_range() {
+        let mut m = menu();
+        let mut c = Canvas::new((1280, 800));
+        assert_eq!(click(&mut m, &mut c, Hit::Range), vec![StartEvent::Range]);
+        assert!(m.rows().iter().position(|&h| h == Hit::Range) < m.rows().iter().position(|&h| h == Hit::Options), "before Options");
+        let mut shop = shop(6);
+        shop.range = true;
+        m.shop = Some(shop);
+        m.show(Page::Shop);
+        assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
+        assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
+        assert_eq!(m.key(KeyCode::Escape, true), vec![StartEvent::NextLevel]);
+        assert_eq!(m.button(Button::Right, true), vec![StartEvent::NextLevel]);
+        // A folder open: Esc closes it first.
+        m.act(Hit::Folder(0));
+        assert!(m.key(KeyCode::Escape, true).is_empty());
+        assert_eq!((m.page, m.folder.as_deref()), (Page::Shop, None));
+        // The run's shop goes back to the main page, on Run.
+        m.shop.as_mut().unwrap().range = false;
+        assert!(m.key(KeyCode::Escape, true).is_empty());
+        assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Run));
     }
 
     /// Drags `from` to `to` (both as last drawn): press, move past

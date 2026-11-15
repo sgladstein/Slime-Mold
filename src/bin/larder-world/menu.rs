@@ -135,6 +135,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("H", "Next round loadout"),
         ("Shift+H", "Roll a test gun for the squad (rifle, carbine, long gun, scattergun in turn)"),
         ("Ctrl+H", "Roll test bullets for the squad, as many as its gun holds"),
+        ("H (gun range)", "The armory: every gun, card and bullet, free"),
         ("P", "Pause"),
         ("Tab", "Four times faster, or back"),
         ("N", "Next map"),
@@ -190,7 +191,8 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
     a
 }
 
-/// The shop page's contents for run `r`.
+/// The shop page's contents for run `r` (the gun range's armory when
+/// `r` is the range's).
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
@@ -206,6 +208,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");
     }
     lines.push(clock);
+    if r.range {
+        lines = vec![
+            "Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(),
+            format!("Guns and bullets are rolled as on planet {}; the tiles on the left roll them again, deeper or shallower", r.depth),
+        ];
+    }
     // The cards' words and colours as the HUD's loadout strip shows them,
     // with the run's own rules.
     let mut rules = Rules::default();
@@ -217,6 +225,10 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         .into_iter()
         .map(|row| {
             let (group, area) = match row.group {
+                // The range: its own rows on the left, the shelf by what a
+                // card works on, then the bag.
+                Group::Dev if r.range => (String::new(), ShopArea::Upgrades),
+                Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 Group::Build | Group::Tools | Group::Dev => (row.group.name().to_string(), ShopArea::Folder),
                 Group::Guns => ("Guns".to_string(), ShopArea::Guns),
@@ -251,20 +263,52 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.bars = gun_bars(&g);
                     s.about = format!("{} {}", g.kind.about(), row.about);
                 }
-                Face::Dev => s.icon = Icon::Fast,
+                Face::Dev => {
+                    s.icon = match row.pick {
+                        Pick::DevDepth(1) => Icon::Upgrade,
+                        Pick::DevDepth(_) => Icon::Hold,
+                        Pick::EmptyGun => Icon::Close,
+                        Pick::EmptyBag => Icon::Stop,
+                        _ => Icon::Fast,
+                    }
+                }
             }
             s
         })
         .collect();
     Shop {
-        heading: format!("{} next: {}", l.mission.name, l.mission.says),
+        heading: if r.range { "The gun range".into() } else { format!("{} next: {}", l.mission.name, l.mission.says) },
         lines,
-        purse: format!("{} points", r.points),
+        purse: if r.range { "Free".into() } else { format!("{} points", r.points) },
         rows,
         slots: gun.slots,
         budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
         folder_icons: vec![(Group::Build.name().into(), Icon::Turret), (Group::Tools.name().into(), Icon::Grenade), (Group::Dev.name().into(), Icon::Fast)],
+        range: r.range,
     }
+}
+
+/// The range's heading for a card row: the shelf's by what the card
+/// works on, or the bag.
+fn range_shelf(row: &run::Row) -> &'static str {
+    match (row.pick, &row.face) {
+        (Pick::Offer(_), Face::Card(c)) => match c.kind() {
+            rounds::Kind::Payload => "Bullets",
+            rounds::Kind::Flight => "Cards for every bullet",
+            _ => "Cards for the next bullet",
+        },
+        _ => "In the bag",
+    }
+}
+
+/// The gun range's round: the sandbox's, as its pick would start it,
+/// armed from the range's armory (`r`).
+pub(super) fn range_args(base: &Args, chosen: bool, menu: &StartMenu, r: &Run) -> Args {
+    let mut a = round_args(base, chosen, menu, &StartEvent::Sandbox);
+    // The armory's gun and cards, not the command line's.
+    (a.gun, a.ammo) = (None, None);
+    a.range = Some(r.clone());
+    a
 }
 
 /// An upgrade's icon: the command card's own for what it unlocks.
@@ -329,8 +373,10 @@ pub(super) fn round_args(base: &Args, chosen: bool, menu: &StartMenu, pick: &Sta
     let val = |k: &str| menu.option(k).map(|o| o.value().to_string());
     // The engine keys the page owns: its value replaces the command line's.
     a.keys.retain(|(k, _)| !ENGINE_OPTS.contains(&k.as_str()));
-    // Not a run's level unless `run_args` makes it one.
+    // Not a run's level unless `run_args` makes it one, nor the gun range
+    // unless `range_args` does.
     a.run = None;
+    a.range = None;
     match pick {
         StartEvent::Mission(i) => {
             a.mission = menu.missions.get(*i).map(|e| e.stem.clone());
@@ -439,6 +485,35 @@ impl App {
     pub(super) fn menu_event(&mut self, ev: StartEvent) -> Result<bool, String> {
         match ev {
             StartEvent::Quit => return Ok(true),
+            StartEvent::Range => self.show_armory(),
+            StartEvent::NextLevel if self.ranging() => {
+                if self.armory {
+                    self.close_armory();
+                } else {
+                    // Into the range, armed from the armory.
+                    let (Some((base, chosen)), Some(r), Some(menu)) = (self.base.clone(), self.range.clone(), self.menu.take()) else { return Ok(false) };
+                    self.args = range_args(&base, chosen, &menu, &r);
+                    self.round = self.args.round;
+                    self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
+                    self.parked = Some(menu);
+                    self.start()?;
+                    self.paused = false;
+                    self.hud.alert("The gun range: I opens the armory, B buys soldiers, N a new map", None, theme::ACCENT);
+                }
+            }
+            StartEvent::EndRun if self.ranging() => {
+                // Leaves the range for the main page (the gun stays built
+                // for next time).
+                if self.armory {
+                    self.set_armory(false);
+                    self.parked = self.menu.take();
+                    return self.back_to_menu().map(|()| false);
+                }
+                if let Some(m) = self.menu.as_mut() {
+                    m.shop = None;
+                    m.show(Page::Main);
+                }
+            }
             StartEvent::Run if self.run.is_some() => self.show_shop(),
             StartEvent::Run | StartEvent::NextLevel => {
                 let Some((base, _)) = self.base.clone() else { return Ok(false) };
@@ -458,7 +533,7 @@ impl App {
                 self.paused = false;
             }
             StartEvent::Buy(i) => {
-                if let Some(r) = self.run.as_mut() {
+                if let Some(r) = self.shop_run() {
                     if let Some(row) = r.shop().get(i) {
                         let p: Pick = row.pick;
                         if !r.pick(p) {
@@ -473,7 +548,7 @@ impl App {
             // A bullet card dragged (or Q/E) to another slot of the gun;
             // one for sale is bought on the way.
             StartEvent::Move(i, slot) => {
-                if let Some(r) = self.run.as_mut() {
+                if let Some(r) = self.shop_run() {
                     if let Some(row) = r.shop().get(i) {
                         let done = match row.pick {
                             Pick::Card(ci) => r.pick(Pick::Move(ci, slot)),
@@ -524,8 +599,98 @@ impl App {
         Ok(false)
     }
 
+    /// The armory up over the range's round, or not. The view draws a
+    /// minimap of its own whenever the camera doesn't see the whole map,
+    /// and the armory leaves the round's camera as it was (zoomed in), so
+    /// the minimap is switched off under it and back as it was after.
+    pub(super) fn set_armory(&mut self, on: bool) {
+        if on == self.armory {
+            return;
+        }
+        self.armory = on;
+        if let Some(v) = self.view.as_mut() {
+            if on {
+                self.armory_minimap = std::mem::replace(&mut v.minimap, false);
+            } else {
+                v.minimap = self.armory_minimap;
+            }
+        }
+    }
+
+    /// The shop page on show is the gun range's armory.
+    fn ranging(&self) -> bool {
+        self.menu.as_ref().and_then(|m| m.shop.as_ref()).is_some_and(|s| s.range)
+    }
+
+    /// The run the shop page on show buys for: the range's in its
+    /// armory, else the roguelike run's.
+    fn shop_run(&mut self) -> Option<&mut Run> {
+        if self.ranging() {
+            self.range.as_mut()
+        } else {
+            self.run.as_mut()
+        }
+    }
+
+    /// The gun range's armory as the menu's shop page (a new range the
+    /// first time), over the menu's dish or the range round.
+    pub(super) fn show_armory(&mut self) {
+        let r = self.range.get_or_insert_with(|| Run::range(fresh_seed()));
+        if let Some(m) = self.menu.as_mut() {
+            m.shop = Some(shop_of(r));
+            if m.page != Page::Shop {
+                m.show(Page::Shop);
+            }
+        }
+    }
+
+    /// I in the range round: the armory over it, the round paused under
+    /// it (the parked menu brought back on its shop page).
+    pub(super) fn open_armory(&mut self) {
+        if self.args.range.is_none() || self.in_menu() {
+            return;
+        }
+        let Some((base, _)) = self.base.clone() else {
+            self.hud.alert("The armory is on the start menu's Gun range", None, theme::WARN);
+            return;
+        };
+        self.menu = Some(self.parked.take().unwrap_or_else(|| start_menu(&base)));
+        self.set_armory(true);
+        self.paused = true;
+        self.show_armory();
+    }
+
+    /// Back from the armory to the range round: its gun on every squad
+    /// and the army's round its cards (each squad back on it), the menu
+    /// parked again, play on. Restart and N keep it (`args.range`).
+    pub(super) fn close_armory(&mut self) {
+        self.set_armory(false);
+        if let Some(mut m) = self.menu.take() {
+            m.shop = None;
+            m.show(Page::Main);
+            self.parked = Some(m);
+        }
+        self.paused = false;
+        let Some(r) = self.range.clone() else { return };
+        self.rounds = Rounds::new(r.gun(), RoundRules { budget: r.budget(), ..RoundRules::default() });
+        if let Some(g) = self.game.as_mut() {
+            let gun = r.carried();
+            for q in 0..g.squads.len() {
+                g.apply(Cmd::Arm(q as u8, Some(gun)));
+                g.apply(Cmd::Load(q as u8, None));
+            }
+        }
+        let cards: Vec<String> = r.gun().iter().map(|c| c.title()).collect();
+        let what = if cards.is_empty() { format!("{}, no cards: plain shots", draw::capital(&r.carried().title())) } else { format!("{}: {}", draw::capital(&r.carried().title()), cards.join(", ")) };
+        self.hud.alert(&what, None, theme::ACCENT);
+        self.args.range = Some(r);
+    }
+
     /// The shop page, filled from the run (the menu up, its dish behind).
     pub(super) fn show_shop(&mut self) {
+        if self.ranging() {
+            return self.show_armory();
+        }
         let Some(r) = self.run.as_mut() else { return };
         if let Some(m) = self.menu.as_mut() {
             r.dev = m.option("dev").is_some_and(|o| o.value() == "on");
@@ -578,6 +743,7 @@ impl App {
     /// screen's Main menu).
     pub(super) fn back_to_menu(&mut self) -> Result<(), String> {
         self.save_replay();
+        self.set_armory(false);
         self.menu = self.parked.take();
         if let Some(m) = self.menu.as_mut() {
             m.show(Page::Main);
