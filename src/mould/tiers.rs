@@ -259,6 +259,7 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "roam" => p.roam = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
         "roam_far" => p.roam_far = f()?,
         "roam_share" => p.roam_share = f()?,
+        "thicken" => p.thicken = f()?,
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).

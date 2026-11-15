@@ -335,7 +335,14 @@ const ROAM_BIT: u32 = 0x40000u;
 const ROAM_SHIFT: u32 = 19u;
 const ROAM_FRESH: f32 = 0.8;
 fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
-fn condenses() -> bool { return growth() && P.condense > 0u; }
+// The dense state is on for condensing or thickening (`BigParams::thicken`,
+// 11-15, the slime-enemy thread: a fed walker that cannot divide turns
+// condensed in place); only condensing ripens, absorbs and stops births
+// at the slots (`ripens`).
+fn condenses() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0); }
+fn ripens() -> bool { return growth() && P.condense > 0u; }
+// `thicken` in tenths of `birth_at`, in `ccrowd`'s top byte (bits 24-31).
+fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
 fn set_dense(k: u32, v: u32) { atomicStore(&news[dense_base() + DENSE_HEAD + k], v); }
@@ -945,7 +952,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Ripe long enough (`ripen`), it condenses: half the ripe are
     // absorbed, half hold the mass, twice the energy (`condense`).
     var heavy = dense && is_dense(k);
-    if (condenses() && !dense && (dense_word(k) & RIPE_BITS) >= min(P.condense, RIPE_BITS)) {
+    if (ripens() && !dense && (dense_word(k) & RIPE_BITS) >= min(P.condense, RIPE_BITS)) {
         if (unit(keyed(P.s_condense, S.t, k)) < 0.5) {
             atomicSub(&occ[i], 1u);
             atomicStore(&claim[i], NONE);
@@ -969,7 +976,17 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A condensed walker is two walkers' worth and pays for both.
     if (heavy) { up *= 2.0; }
     let e = (energy[k] + g + share[i]) - up;
-    if (e > 0.0) { energy[k] = e; return; }
+    if (e > 0.0) {
+        energy[k] = e;
+        // Fed past what a birth needs and still undivided, it thickens
+        // (`thicken`, the CPU's order: after the upkeep).
+        let th = thick_at();
+        if (growth() && th > 0.0 && !heavy && e >= th * P.birth_at) {
+            set_dense(k, DENSE_BIT);
+            energy[k] = e - P.birth_cost;
+        }
+        return;
+    }
     if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         // A condensed walker starving breaks instead (`condense`).
         if (heavy) { set_dense(k, 0u); energy[k] = 0.0; return; }
@@ -1129,7 +1146,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     // Condensing (`condense`): no births while the mould's mass fills the
     // slots (`masscount`, as the pass began; the CPU's `mass`).
-    if (condenses() && atomicLoad(&news[dense_base()]) >= P.n) { return; }
+    if (ripens() && atomicLoad(&news[dense_base()]) >= P.n) { return; }
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
@@ -3099,11 +3116,13 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         set_dense(k, nw);
         return;
     }
+    // Thickening alone (`thicken`, `condense` 0) only ages its words.
+    if (!ripens()) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
     var ripe = share[i] > 0.0;
     if (!ripe) {
-        let r = i32(max(P.ccrowd >> 16u, 1u));
+        let r = i32(max((P.ccrowd >> 16u) & 0xFFu, 1u));
         let cx = i32(i % P.w); let cy = i32(i / P.w);
         var n = 0u;
         for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {

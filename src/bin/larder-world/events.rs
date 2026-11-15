@@ -184,6 +184,10 @@ impl ApplicationHandler for App {
                     MouseScrollDelta::PixelDelta(p) => (p.y / 40.0).round() as i32,
                 };
                 if self.in_menu() {
+                    // A page taller than the window scrolls.
+                    if let Some(m) = self.menu.as_mut() {
+                        m.wheel(notches);
+                    }
                     return;
                 }
                 if self.squad_wheel(notches) || self.squad_zoom(notches) {
