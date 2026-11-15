@@ -2324,39 +2324,52 @@ fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower(
 }
 
 #[test]
-fn a_resting_soldier_by_a_held_crystal_heals_for_food() {
-    let run = |rate: f32| {
+fn a_squad_told_to_heal_heals_for_food_and_nobody_heals_unasked() {
+    // `heal`: told to heal or not, with the heal rate at `rate`.
+    let run = |rate: f32, heal: bool| {
         let mut g = no_larder(10);
         g.rules.heal.rate = rate;
         g.rules.heal.away = 0.0;
         g.bank = 1000.0;
         let k = g.members(0)[0];
         g.soldiers[k].hp = 50.0;
+        if heal {
+            assert!(g.apply(Cmd::Heal(0)));
+        }
         for _ in 0..10 * g.rules.tps / g.rules.frame_ticks {
             g.step();
         }
-        (g.soldiers[k].hp, g.healed, g.guarded.len())
+        (g.soldiers[k].hp, g.healed, g.guarded.len(), g.squads[0].heal)
     };
-    let (hp, healed, held) = run(HealRules::default().rate);
-    let (hp0, healed0, _) = run(0.0);
-    eprintln!("healing: hp {hp} (off {hp0}), healed {healed}, crystals held {held}");
+    let (hp, healed, held, still) = run(HealRules::default().rate, true);
+    let (hp0, healed0, ..) = run(0.0, true);
+    let (hp_unasked, healed_unasked, ..) = run(HealRules::default().rate, false);
+    eprintln!("healing: hp {hp} (rate 0 {hp0}, not told {hp_unasked}), healed {healed}, crystals held {held}");
     assert!(held > 0, "the squad holds the crystal it starts round");
     assert_eq!((hp0, healed0), (50.0, 0.0), "no healing with the rate at 0");
-    assert!(hp > 80.0, "rested 10 s by a held crystal: {hp} hp");
-    assert!(healed > 30.0);
-    // Away from a held crystal, a sixth as fast.
+    // Owner 2026-11-15 07:41Z: "Healing should be a specific action".
+    assert_eq!((hp_unasked, healed_unasked), (50.0, 0.0), "nobody heals without the order");
+    assert!(hp >= 99.0, "told to heal, 10 s by a held crystal: {hp} hp");
+    assert!(healed > 45.0);
+    assert!(!still, "whole again, the squad stops healing");
+    // Away from a held crystal, a sixth as fast; another order stops it.
     let mut g = no_larder(10);
     g.guarded.clear();
     g.rules.guard = 0.0;
     g.bank = 1000.0;
     let k = g.members(0)[0];
     g.soldiers[k].hp = 50.0;
+    g.apply(Cmd::Heal(0));
     for _ in 0..10 * g.rules.tps / g.rules.frame_ticks {
         g.step();
     }
     let hp = g.soldiers[k].hp;
     assert!(g.guarded.is_empty());
-    assert!(hp > 55.0 && hp < 70.0, "rested 10 s away from a held crystal: {hp} hp");
+    assert!(hp > 55.0 && hp < 70.0, "healed 10 s away from a held crystal: {hp} hp");
+    assert!(g.squads[0].heal);
+    let m = g.middle(0).unwrap();
+    g.apply(Cmd::SquadOrder(0, Order::Move(m.0 + 4.0 * g.s(), m.1)));
+    assert!(!g.squads[0].heal, "another order ends the healing");
 }
 
 /// Deep water (new ground kinds, 2026-11-14): no soldier stands in it, so

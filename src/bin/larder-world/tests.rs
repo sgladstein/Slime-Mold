@@ -302,13 +302,15 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
 #[test]
 fn the_menu_plays_the_command_lines_rounds() {
     use slime_mould::world::start::StartEvent;
-    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
+    // A bare command line plays the squad mode (owner 2026-11-15 07:57Z: "squad mode is default mode"; `main`).
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: true, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
     let mut cli = bare.clone();
     default_shape(&mut cli);
     let mut menu = start_menu(&bare);
     assert!(menu.options.iter().all(|o| o.is_default()), "a bare command line presets nothing");
     let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
     assert_eq!((a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own), (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false));
+    assert!(a.squads, "the sandbox plays the squad mode by default");
     // A mission keeps its own mould: no shape C keys, no map.
     assert!(menu.missions.len() >= 3, "the campaign's missions are listed");
     assert_eq!(menu.missions[0].stem, "1-landfall");
@@ -1168,4 +1170,83 @@ fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
     assert!(app.squad_button(Button::Left, true));
     app.squad_button(Button::Left, false);
     assert_eq!(app.game.as_ref().unwrap().active, Some(q), "clicked squad taken");
+}
+
+/// **One click resumes a half-built building** (owner 2026-11-15: "If you
+/// start building something but have to stop you should just need to click
+/// again to get the squad to resume building"). The squad lays a turret,
+/// raises part of it, is sent away; a right click on the ghost, or the
+/// turret card's click on it again, sends it back to raise the same ghost:
+/// no second building, nothing paid again.
+#[test]
+fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    let (q, m, sc) = {
+        let g = app.game.as_ref().unwrap();
+        let q = g.active.unwrap();
+        (q, g.middle(q).unwrap(), g.world.scale())
+    };
+    let at = [(10.0, 0.0), (-10.0, 0.0), (0.0, 10.0), (0.0, -10.0), (7.0, 7.0), (-7.0, -7.0)]
+        .iter()
+        .map(|&(dx, dy)| (m.0 + dx * sc, m.1 + dy * sc))
+        .find(|&p| app.game.as_ref().unwrap().build_blocked(Kind::Turret, p).is_none())
+        .expect("room for a turret beside the squad");
+    app.hud_event(HudEvent::Point { id: TURRET, at }).unwrap();
+    let b = app.game.as_ref().unwrap().buildings.len() - 1;
+    let built = |app: &App| app.game.as_ref().unwrap().buildings[b].built;
+    for _ in 0..600 {
+        if built(&app) > 0.2 {
+            break;
+        }
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let part = built(&app);
+    assert!(part > 0.0 && part < 1.0, "part built: {part}");
+    // Sent away, it stops raising.
+    let away = (m.0 - (at.0 - m.0) * 4.0, m.1 - (at.1 - m.1) * 4.0);
+    app.game.as_mut().unwrap().apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
+    for _ in 0..240 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let stopped = built(&app);
+    assert!(stopped < 1.0 && app.game.as_ref().unwrap().raising(b).0 == 0, "nobody raises it once the squad has gone");
+    let (bank, n) = { let g = app.game.as_ref().unwrap(); (g.bank, g.buildings.len()) };
+    // One right click on the ghost.
+    let c = app.camera.to_screen(at);
+    app.controls.cursor = Some(c);
+    app.hud.moved(Some(c));
+    assert!(app.squad_button(Button::Right, true));
+    app.squad_button(Button::Right, false);
+    {
+        let g = app.game.as_ref().unwrap();
+        assert_eq!(g.squads[q].work, Some(Order::Build(b)), "the squad goes back to raise it");
+        assert!(g.members(q).iter().all(|&k| g.soldiers[k].order == Order::Build(b)));
+        assert_eq!((g.bank, g.buildings.len()), (bank, n), "nothing paid, no second ghost");
+    }
+    for _ in 0..3000 {
+        if built(&app) >= 1.0 {
+            break;
+        }
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    assert!(built(&app) >= 1.0, "it stands: {}", built(&app));
+    assert_eq!(app.game.as_ref().unwrap().buildings.len(), n);
+
+    // The turret card's click again on a second, half-built one: the same.
+    let at2 = (at.0 + (at.0 - m.0), at.1 + (at.1 - m.1));
+    app.game.as_mut().unwrap().apply(Cmd::Build(Kind::Turret, at2));
+    let b2 = app.game.as_ref().unwrap().buildings.len() - 1;
+    app.game.as_mut().unwrap().apply(Cmd::SquadOrder(q as u8, Order::Move(away.0, away.1)));
+    let (bank, n) = { let g = app.game.as_ref().unwrap(); (g.bank, g.buildings.len()) };
+    app.hud_event(HudEvent::Point { id: TURRET, at: at2 }).unwrap();
+    let g = app.game.as_ref().unwrap();
+    assert_eq!(g.squads[q].work, Some(Order::Build(b2)), "the card's click on its own ghost resumes it");
+    assert_eq!((g.bank, g.buildings.len()), (bank, n), "and places nothing");
 }
