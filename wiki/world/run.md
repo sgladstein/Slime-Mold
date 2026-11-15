@@ -56,10 +56,10 @@ code:
 
 A separate mode beside the campaign (Run on the start menu, or
 `run=SEED`): eight planets on the way to the slime's home world, each one
-map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 2% on
-every planet since 11-15; it was 25% on planet 1 down to 10%, and the owner
-kept winning with slime left; under 3% the slime is broken and its
-stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the walkers now against the count to reach ("12,630 walkers now → 252", [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
+map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 1% on
+every planet since 11-15 18:02Z; 2% from 03:02Z, and before that 25% on
+planet 1 down to 10%; each time the owner kept winning with slime left; under 3% the slime is broken and its
+stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the slime now against the count to reach, both as mass (a thickened walker twice, as the bar counts it; "12,630 walkers now → 126" at 1%), [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells guns and gun cards
 that get better deeper; a lost planet ends the run. The shop page has two
@@ -123,6 +123,7 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-14 20:32Z: "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around".
 - 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups).
 - 2026-11-15 08:34Z (to the slime thread, on a planet's slime size): "It should vary and be more later on."
+- 2026-11-15 18:02Z: "We are still winning the game with too many slime left. Drop it to 1% of peak" (`WIN_SHARE` 1%).
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 - 2026-11-15 02:55Z: "I need a test environment built where I can play with the guns and cards and bullets."
