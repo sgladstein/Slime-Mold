@@ -244,9 +244,10 @@ pub struct BuildRules {
     /// the ghost, so a squad walked round to stand on every side.
     pub reach: f32,
     /// The share of its price a standing building pays back when pulled
-    /// down (`Game::demolish`, the building card's Demolish). The owner
-    /// has not ruled it (2026-11-15); half, as the menus thread proposed,
-    /// so pulling down and rebuilding elsewhere costs something.
+    /// down (`Game::demolish`, the building card's Demolish). Half, owner
+    /// 2026-11-15 21:37Z ("Demolishing a building giving half back is
+    /// good"), so pulling down and rebuilding elsewhere costs something;
+    /// calling off a part-built one (`unbuild`) gives all of it back.
     pub demolish: f32,
 }
 

@@ -1734,7 +1734,7 @@ impl App {
     }
 
     /// The card: call off a ghost, pull down a standing building (half its
-    /// price back: the refund is not ruled, the menus thread's proposal),
+    /// price back, owner 2026-11-15 21:37Z),
     /// upgrade a pump, switch a lure or siren.
     pub(super) fn building_card(&self, g: &Game<GpuWorld>, bk: usize) -> Vec<Command> {
         let bd = g.buildings[bk];
