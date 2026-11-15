@@ -1,0 +1,89 @@
+   Compiling slime-mould v0.1.0 (C:\Users\Scott\Code\sm-twin338)
+    Finished `release` profile [optimized] target(s) in 1m 31s
+     Running unittests src\bin\mouldgpu.rs (C:\Users\Scott\Code\sm-batch-target\release\deps\mouldgpu-c3b7c72f82c3d876.exe)
+
+running 2 tests
+adapter: NVIDIA GeForce GTX 1070 (Vulkan)
+adapter: NVIDIA GeForce GTX 1070 (Vulkan)
+squad, plain: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0, 0, 5, 10, 3, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, plain: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.1e-8, charge L1 2.5e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad, spores and dormancy: 27 shots, 26 hit, 22 killed, 1 stopped by a wall; touching [11, 0, 0, 0, 0, 0, 0, 0, 3, 2, 9, 12, 8, 3, 0, 9, 19]; took [0.0, 3000.0, 1607.8113, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 193010.0]
+squad world, spores and dormancy: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.0e-8, charge L1 2.4e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad life: 121 spores, 4291 dormant at the frame; 8 spores in a struck disc missed, 16 dormant killed; 0 states or timers off
+crystals: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.6e-9, scent L1 1.1e-8, charge L1 3.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 49.1 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+squad, the Sleeper: 19 shots, 18 hit, 20 killed, 1 stopped by a wall; touching [12, 0, 0, 1, 0, 0, 0, 0, 2, 6, 9, 5, 3, 2, 0, 22, 41]; took [0.0, 3000.0, 1607.5565, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192992.56]
+squad world, the Sleeper: 0 slots differ in life, 0 walkers off; trail L1 9.5e-9, scent L1 1.2e-8, charge L1 9.4e-10, alarm L1 9.4e-9 (in all 94320); 0 agar and 0 ground off
+squad life: 0 spores, 1756 dormant at the frame; 0 spores in a struck disc missed, 1 dormant killed; 0 states or timers off
+squad, the Swarmer, the alarm and no states: 19 shots, 18 hit, 28 killed, 1 stopped by a wall; touching [9, 3, 3, 1, 0, 0, 1, 0, 0, 5, 11, 4, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9729, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, the Swarmer, the alarm and no states: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.2e-10, alarm L1 1.2e-8 (in all 93533); 0 agar and 0 ground off
+crystals at 1, no limit, regrowing: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.0e-8, charge L1 9.7e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 35.2 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+squad, plain, shots that lay craters: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0, 0, 5, 10, 3, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, plain, shots that lay craters: 0 slots differ in life, 0 walkers off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 2.5e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad craters, plain, shots that lay craters: 448 cells under a crater, 0 off
+squad, plain, cone craters: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [9, 2, 2, 0, 0, 0, 2, 0, 0, 5, 10, 3, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, plain, cone craters: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.1e-8, charge L1 2.5e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad craters, plain, cone craters: 448 cells under a crater, 0 off
+squad craters, plain, cone craters: 1 pairs of cones about different hits that overlap
+crystals at 1, no flow, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.3e-9, scent L1 9.3e-9, charge L1 9.2e-12, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 27.5 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+squad, plain, shots that sink: 19 shots, 18 hit, 28 killed, 1 stopped by a wall; touching [10, 2, 2, 1, 0, 0, 1, 0, 0, 4, 10, 4, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, plain, shots that sink: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.1e-8, charge L1 2.3e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad craters, plain, shots that sink: 462 cells under a crater, 0 off
+squad, cone craters, a sink of 1.5: 19 shots, 18 hit, 30 killed, 1 stopped by a wall; touching [10, 3, 3, 1, 0, 0, 4, 1, 0, 5, 10, 4, 3, 1, 0, 30, 48]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, cone craters, a sink of 1.5: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.1e-8, charge L1 2.5e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad craters, cone craters, a sink of 1.5: 462 cells under a crater, 0 off
+squad craters, cone craters, a sink of 1.5: 1 pairs of cones about different hits that overlap
+squad, plain, a cut-off part charges the squad: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [11, 2, 2, 0, 0, 0, 2, 0, 0, 6, 10, 4, 3, 1, 0, 29, 50]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.44]
+squad world, plain, a cut-off part charges the squad: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 3.3e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+rock and wet ground: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.6e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 128.6 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+squad, plain, condensed walkers take two shots and touch as two: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [15, 4, 4, 0, 0, 0, 4, 0, 0, 9, 16, 5, 5, 1, 0, 45, 68]; took [0.0, 3000.0, 1606.9927, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.19]
+squad world, plain, condensed walkers take two shots and touch as two: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.9e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad condense, plain, condensed walkers take two shots and touch as two: 2327 condensed before the frame, 2307 after; 0 words off
+squad, plain, the body surges at the squad: 586 calm walkers surge, 0 stale ones charge
+squad, plain, the body surges at the squad: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [11, 5, 5, 1, 1, 0, 3, 0, 2, 7, 7, 4, 3, 1, 0, 33, 59]; took [0.0, 3000.0, 1606.9531, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.06]
+squad world, plain, the body surges at the squad: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 9.1e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad, plain, a cut-off part charges and the body surges: 66 calm walkers surge, 520 stale ones charge
+walls that break, leaking scent: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.7e-9, scent L1 1.1e-8, charge L1 4.1e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 48.5 eaten; 11 bites and 4 cells broken on the CPU, 11 and 4 on the GPU; 0 takes, 0 agar and 0 ground cells off
+squad, plain, a cut-off part charges and the body surges: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [10, 3, 3, 1, 1, 0, 2, 0, 0, 6, 10, 4, 3, 1, 0, 31, 52]; took [0.0, 3000.0, 1606.9729, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192996.44]
+squad world, plain, a cut-off part charges and the body surges: 0 slots differ in life, 0 walkers off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 9.9e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+squad, plain, the game times the surge: 586 calm walkers surge, 0 stale ones charge
+squad, plain, the game times the surge: 19 shots, 18 hit, 19 killed, 1 stopped by a wall; touching [8, 6, 6, 2, 1, 1, 3, 0, 2, 5, 6, 3, 3, 1, 0, 34, 54]; took [0.0, 3000.0, 1606.9531, 100.0, 100.0, 100.0, 100.0, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 192995.94]
+squad world, plain, the game times the surge: 0 slots differ in life, 0 walkers off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.0e-10, alarm L1 0.0e0 (in all -0); 0 agar and 0 ground off
+test tests::the_squad_matches_the_cpu_for_one_frame ... ok
+walls that never break, sealed: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 3.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 72.1 eaten; 0 bites and 0 cells broken on the CPU, 4 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+walls under a crowd, no limit: 25000 walkers, 25000 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.3e-8, charge L1 3.7e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 71.9 eaten; 11 bites and 0 cells broken on the CPU, 11 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+a cage round a packed start: 5000 walkers, 5000 moved or turned, 0 off; trail L1 9.8e-9, scent L1 8.3e-9, charge L1 1.4e-11, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 16.8 eaten; 53 bites and 0 cells broken on the CPU, 53 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+growth on crystals: 15000 walkers, 4646 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.1 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, growth on crystals: 15000 walkers, 5832 moved or turned, 0 off; trail L1 9.3e-9, scent L1 1.1e-8, charge L1 2.8e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 9.2 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, growth on crystals: living walkers on sand, clay, barren, deep water, plain [1227, 1724, 585, 1053, 1243]; 1497 born in the tick
+soil bands, two species: 15000 walkers, 5971 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.1e-8, charge L1 3.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 6.7 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+soil bands, two species: living walkers on sand, clay, barren, deep water, plain [1440, 1596, 608, 1040, 1287]; 1660 born in the tick
+one body: food shared, hunger: 15000 walkers, 4662 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.3e-10, health L1 0.0e0, energy L1 1.4e-6, grass 0.0e0; 8.2 eaten; 2 bites and 1 cells broken on the CPU, 2 and 1 on the GPU; 0 takes, 0 agar and 0 ground cells off
+lone step: a walker with few others round it slows: 15000 walkers, 4658 moved or turned, 0 off; trail L1 9.3e-9, scent L1 1.1e-8, charge L1 2.3e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 6.5 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+fed crowd: a fed walker packs two to a cell: 15000 walkers, 6152 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.6e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.1 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+fed crowd: a fed walker packs two to a cell: 289 cells hold two walkers on the CPU, 289 on the GPU; 1513 born in the tick
+lossy flow: shared food fades as it travels: 15000 walkers, 4650 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.2e-10, health L1 0.0e0, energy L1 1.1e-6, grass 0.0e0; 7.6 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+wither: news spread twice: 2005 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 645 stale walkers heard again; 0 panicked
+wither: news spread twice: 15000 walkers, 4659 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.2e-10, health L1 0.0e0, energy L1 1.2e-6, grass 0.0e0; 7.6 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+wither: news spread three times: 1967 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 667 stale walkers heard again; 0 panicked
+wither: news spread three times: 15000 walkers, 4646 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.0e-10, health L1 0.0e0, energy L1 0.0e0, grass 0.0e0; 8.1 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+panic: cut-off walkers run for a crystal: 29 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 1041 stale walkers heard again; 4518 panicked
+panic: cut-off walkers run for a crystal: the farthest a stale walker went in the tick, 2.00 fine cells (step 1, 1 substeps)
+panic: cut-off walkers run for a crystal: 15000 walkers, 4659 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.1e-8, charge L1 3.1e-10, health L1 0.0e0, energy L1 1.3e-6, grass 0.0e0; 8.2 eaten; 1 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+condense: dense walkers ripen, condense and break: 845 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 386 stale walkers heard again; 0 panicked
+condense: dense walkers ripen, condense and break: 911 condensed; in the tick 22 absorbed, 20 condensed, 682 broke; mass 3307 of 15000; 0 words off
+condense: dense walkers ripen, condense and break: 15000 walkers, 3263 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.0e-8, charge L1 1.8e-10, health L1 0.0e0, energy L1 1.4e-6, grass 0.0e0; 1.9 eaten; 0 bites and 0 cells broken on the CPU, 0 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+roam: condensed walkers break away, run and land: 923 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 451 stale walkers heard again; 0 panicked
+roam: condensed walkers break away, run and land: 1459 condensed; in the tick 16 absorbed, 25 condensed, 19 broke; mass 3887 of 15000; 0 words off
+roam: condensed walkers break away, run and land: 1364 on the way, 58 left in the tick, 26 landed
+roam: condensed walkers break away, run and land: 15000 walkers, 3367 moved or turned, 0 off; trail L1 9.5e-9, scent L1 1.0e-8, charge L1 2.3e-10, health L1 0.0e0, energy L1 1.7e-6, grass 0.0e0; 10.1 eaten; 0 bites and 0 cells broken on the CPU, 8 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+thicken: fed walkers thicken in place: 1997 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 908 stale walkers heard again; 0 panicked
+thicken: fed walkers thicken in place: 863 thick; 863 thickened in the tick, 0 absorbed; mass 4139 of 15000; 0 words off
+thicken: fed walkers thicken in place: 15000 walkers, 5165 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.2e-10, health L1 0.0e0, energy L1 1.1e-7, grass 0.0e0; 7.6 eaten; 0 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+thicken roam: thick walkers break away, run and land: 1364 died in the tick on the CPU, 0 slots live or die apart, 0 news off; 1010 stale walkers heard again; 0 panicked
+thicken roam: thick walkers break away, run and land: 2086 thick; 863 thickened in the tick, 0 absorbed; mass 5962 of 15000; 0 words off
+thicken roam: thick walkers break away, run and land: 758 on the way, 381 left in the tick, 10 landed
+thicken roam: thick walkers break away, run and land: 15000 walkers, 5163 moved or turned, 0 off; trail L1 9.4e-9, scent L1 1.2e-8, charge L1 2.6e-10, health L1 0.0e0, energy L1 1.1e-7, grass 0.0e0; 7.6 eaten; 0 bites and 0 cells broken on the CPU, 1 and 0 on the GPU; 0 takes, 0 agar and 0 ground cells off
+test tests::the_world_matches_the_cpu_for_one_tick ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 40 filtered out; finished in 8.15s
+

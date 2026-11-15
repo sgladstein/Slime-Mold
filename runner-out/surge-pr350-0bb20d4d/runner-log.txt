@@ -1,0 +1,11 @@
+start 13:17:28Z free KB 3857172 gpu 0,0,0,0,0 % C free GB 34
+checkout exit=0 head=0bb20d4d8af954c394527dc73bcc05cd760c751e
+twins exit=0 13:19:11Z
+build exit=0 13:19:35Z
+warmup start 13:19:35Z card 139 MHz, 405 MHz, 28, 6.51 W
+warmup exit=0 13:19:45Z card 1987 MHz, 4006 MHz, 33, 43.01 W
+run 1 (bench=20 mode=squads hand=squads seed=1) start 13:19:50Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 33, 43.12 W free KB 3807656
+run 1 exit=0 13:19:58Z
+run 2 (bench=20 mode=squads hand=squads seed=1 set=surge_food=0) start 13:20:03Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 35, 43.46 W free KB 3824072
+run 2 exit=0 13:20:10Z
+ALL DONE 13:20:10Z
