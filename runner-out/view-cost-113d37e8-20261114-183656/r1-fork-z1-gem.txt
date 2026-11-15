@@ -1,0 +1,21 @@
+== card before: 1987 MHz, 4006 MHz, 35, 43.50 W, 0 %
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+  view: zoom 1 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 3 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 106.8 MB for 512 x 320 cells (652 bytes a cell), the biggest 16.7 MB
+  180 frames, 45 game steps; 0.04 read-backs a step, 0.04 waits a step (0.10 ms a step waiting); steps finished once in 44, when the next was due 0
+  every frame (180 of them), ms: frame p50 5.73 p95 6.54 max 10.64; step  p50 0.04 p95 0.65 max 5.19; prepare  p50 0.11 p95 0.59 max 0.72; record  p50 0.10 p95 0.14 max 0.33; GPU tail  p50 5.16 p95 5.55 max 5.63
+  frames with a step (45 of them), ms: frame p50 5.97 p95 7.17 max 10.64; step  p50 0.60 p95 1.75 max 5.19; prepare  p50 0.12 p95 0.66 max 0.72; record  p50 0.12 p95 0.15 max 0.33; GPU tail  p50 5.14 p95 5.19 max 5.21
+  after the first game second (120 frames), ms: frame max 10.64; step max 5.19; prepare max 0.72
+  ground refresh: 2 of them, ms: mean 0.27 max 0.28, of which the read-back at most 0.11; 5266 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 3 s: mould 24966, soldiers 6, buildings 0, harvested 0, shots 7, killed 34
+  view, every pass timed alone (median of 120 frames): 5.044 ms in all
+    base       2.349 ms   46.6%  (120 frames)
+    marks      0.019 ms    0.4%  (120 frames)
+    compose    0.083 ms    1.6%  (120 frames)
+    specks     0.015 ms    0.3%  (120 frames)
+    prep       2.575 ms   51.0%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1595 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
