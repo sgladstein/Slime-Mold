@@ -240,8 +240,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
         }
+        // `real=1` (D6, 11-15): past the first frame, one window frame of
+        // `t` less the last frame's time in real seconds, so a hit-stop
+        // holds the game still across frames as the window does.
+        let real = app.args.real && fi > 0;
+        let mut once = real;
         // A mission's verdict stops the steps, as the game's end does.
-        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
+        while app.game.as_ref().is_some_and(|g| (once || (!real && g.time() < t)) && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
+            once = false;
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
@@ -328,7 +334,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
-            app.step(step);
+            app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
@@ -430,8 +436,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let step_s = g.rules.frame_ticks as f32 / g.rules.tps as f32;
         let into = (1.0 - (g.time() - t) / step_s).clamp(0.0, 1.0);
         let notes = (app.looks.clone(), app.tracers.clone());
-        app.sub = Some(into);
-        app.age_notes(into * step_s);
+        if !app.args.real {
+            app.sub = Some(into);
+            app.age_notes(into * step_s);
+        }
         let g = app.game.as_ref().unwrap();
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
@@ -464,6 +472,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
             app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
             app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            if tag == "near" {
+                let (sx, sy) = app.shake();
+                (app.camera.x, app.camera.y) = (app.camera.x + sx, app.camera.y + sy);
+            }
             app.prepare();
             let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
             let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("shot") });
@@ -476,7 +488,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
-        (app.looks, app.tracers) = notes;
+        if !app.args.real {
+            (app.looks, app.tracers) = notes;
+        }
         app.sub = None;
         let g = app.game.as_ref().unwrap();
         let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / app.charge0.iter().sum::<f32>().max(1.0);
