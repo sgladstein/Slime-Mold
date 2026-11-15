@@ -27,6 +27,7 @@ sources:
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-design-2026-11-10.md
+  - Reports/shop-b-2026-11-15/README.md
   - Reports/shot-damage-2026-11-12.md
   - Reports/ui-review-2026-11-15/README.md
   - Reports/ui-scale-2026-11-15/README.md
@@ -45,6 +46,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 19:37 | No menu page scrolls. The main menu is menu A (the ways to play as one column of names with one caption box beside the row under the cursor; the title on this page only). The run shop and the gun range's armory are shop B: the gun and bag pinned along the top, tabs over a counter of half-size tiles that pages, one info pane with the Buy button; the armory adds a Guns table against the carried gun and a shape-by-payload bullet grid | 17:31Z: "Having to scroll is horrible. That's not professional." 17:41Z: "The bullet tiles could easily be half the size without even losing any info." 19:37Z: "Shop B, menu A," | [run](world/run.md), [world camera](world/world-camera.md), [report](../Reports/shop-b-2026-11-15/README.md) |
 | 2026-11-15 18:00 | Guards while working are reviewed and kept, improved: they stand at the work's edge on the slime's side instead of out in its film (`cover.rs`) | "Have someone review the guards while harvesting option. It doesn't seem to work well. Either improve it or remove it." | [squad mode](world/squad-mode.md), [report](../Reports/guards-2026-11-15/README.md) |
 | 2026-11-15 17:14 | A pump never drains its crystal: it pays its draw (`Game::pump_draw`) for as long as the crystal has charge, so only the slime eating the crystal stops it (`Game::pump_flows`, `PUMP_DRY`); hand draining still empties a crystal, and the slime's eating is unchanged | "when building a pump on a crystal, it shouldn't drain it away. That should be one of the advantages of pumping over harvesting. Pumped crystals last forever" | [economy](world/economy.md), [report](../Reports/pump-economy-2026-11-15/README.md) |
 | 2026-11-15 08:30 | The game the owner plays and judges by is the roguelike run in squad mode; the work it most needs is an enemy that progresses and presses ("especially when your guns get stronger"), guns that are a main draw, and menus and shortcuts that don't get in the way | "3) squad mode on roguelike run"; "There needs to be more interesting progression in the enemy"; "The gun graphics need work. They should really be one of the draws of the game. They need to be really satisfying." | [run](world/run.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
