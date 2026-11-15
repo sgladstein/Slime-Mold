@@ -141,7 +141,13 @@ impl App {
     }
 
     /// Right click: harvest a crystal under it, else walk there.
+    /// On an unfinished building, back to raising it (`resume`).
     pub(super) fn order_at(&mut self, ids: &[usize], at: (f32, f32)) {
+        if let Some(b) = self.game.as_ref().and_then(|g| g.unfinished_at(at)) {
+            if self.resume(ids, b) {
+                return;
+            }
+        }
         let o = self.order_for(at);
         self.order_all(ids, |_| o);
     }
@@ -177,6 +183,49 @@ impl App {
             // The one soldier `send` put on it.
             self.last_sent = (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Build(b));
         }
+    }
+
+    /// Back to work on unfinished building `b` (owner 2026-11-15: "If you
+    /// start building something but have to stop you should just need to
+    /// click again to get the squad to resume building"). A right click on
+    /// it, or the build card's click on it again, comes here instead of
+    /// moving there or placing a second one, so nothing is paid twice.
+    /// In the squad mode the controlled squad goes (Shift: after its
+    /// queue); in the RTS round the selected soldiers (Shift queues), or
+    /// with none the nearest free one (`Cmd::Send`). False if `b` is not
+    /// unfinished or nobody went.
+    pub(super) fn resume(&mut self, sel: &[usize], b: usize) -> bool {
+        let Some(g) = &self.game else { return false };
+        let Some(bd) = g.buildings.get(b).copied().filter(|bd| bd.alive && bd.built < 1.0) else { return false };
+        let squad = g.active.filter(|_| g.rules.squads && self.sq.is_some());
+        let picked = self.living(sel);
+        let shift = self.shift;
+        let went = if let Some(q) = squad {
+            let g = self.game.as_mut().unwrap();
+            g.apply(if shift { Cmd::SquadQueue(q as u8, Order::Build(b)) } else { Cmd::SquadOrder(q as u8, Order::Build(b)) })
+        } else if !picked.is_empty() {
+            self.order_all(&picked, |_| Order::Build(b));
+            true
+        } else {
+            self.game.as_mut().unwrap().apply(Cmd::Send(b))
+        };
+        if went {
+            let what = match bd.kind {
+                Kind::Wall { .. } => "wall",
+                k => k.name(),
+            };
+            let done = (bd.built * 100.0).floor();
+            self.hud.alert(&format!("Back to the {what} ({done:.0}% built)"), Some(bd.at), theme::GOOD);
+        }
+        went
+    }
+
+    /// The unfinished building of build card `id`'s kind under `at`, if
+    /// any (the pump card finds a rig by its crystal, `unfinished_at`).
+    fn unfinished_for(&self, id: u32, at: (f32, f32)) -> Option<usize> {
+        let g = self.game.as_ref()?;
+        let b = g.unfinished_at(at)?;
+        (Some(g.buildings[b].kind) == build_kind(id)).then_some(b)
     }
 
     /// What a point means as an order: harvest a crystal under it, else
@@ -349,6 +398,13 @@ impl App {
                             None => self.hud.alert("No unfinished building there", None, theme::WARN),
                         }
                     }
+                }
+                // The pump card again on a pump rig still going up, or any
+                // build card again on its unfinished building: back to
+                // raising it, not a second placement (owner 2026-11-15).
+                HudEvent::Point { id, at } if self.unfinished_for(id, at).is_some() => {
+                    let b = self.unfinished_for(id, at).unwrap();
+                    self.resume(&sel, b);
                 }
                 // The pump on a crystal that has one upgrades it.
                 HudEvent::Point { id: PUMP, at } if self.game.as_ref().is_some_and(|g| g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some()) => {
