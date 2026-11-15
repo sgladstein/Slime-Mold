@@ -348,7 +348,7 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     // budget cost.
     assert_eq!(lull[0].colour, lull[1].colour);
     assert_ne!(lull[0].colour, lull[3].colour);
-    assert!(lull[3].about.contains("Costs 3 of the gun's budget"), "{}", lull[3].about);
+    assert!(lull[3].about.ends_with("Budget 3."), "{}", lull[3].about);
     // A card after the last payload casts nothing; flight cards ride every
     // bullet, never lit as a cast and never idle.
     let tail = cards("blast+quiet", Some(0));
@@ -357,6 +357,20 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
     // A payload this world cannot cast says so.
     assert!(cards("germ", Some(0))[0].about.contains("Not on this world"));
+    // Short words in plain language (owner 11-15 02:57Z: "The text for
+    // all the gun cards is too much. They should be simplified and
+    // clarified"): one sentence each, at most 60 characters, no kind
+    // jargon; the run's rolled bullets a line of numbers more.
+    for c in rounds::Card::ALL {
+        let (_, kind, words) = card_face(c, &r, &Rules::default());
+        let low = words.to_lowercase();
+        assert!(words.len() <= 60 && words.matches(". ").count() == 0 && !["payload", "modifier", "trigger", "walker", "mould"].iter().any(|j| low.contains(j)), "{c:?}: {words}");
+        assert!(["Bullet", "Next bullet", "Always"].contains(&kind.label()));
+    }
+    assert_eq!(draw::card_words(rounds::Card::Wide, CardKind::Modifier, "Its hit is 1.6x wider."), "Next bullet: its hit is 1.6x wider.");
+    let needle = rounds::Card::Ammo(rounds::Ammo::roll_of(rounds::Shell::Bomb, rounds::Set::Needle, 7, 4));
+    let (_, _, words) = card_face(needle, &r, &Rules::default());
+    assert!(words.len() <= 120 && words.starts_with("Damage "), "{words}");
     // Every loadout H cycles through draws, each card with a glyph and words.
     for (name, l) in LOADOUTS {
         for c in cards(l, Some(0)) {
@@ -379,7 +393,7 @@ fn rolled_bullets_load_within_the_gun_and_show_their_numbers() {
                 assert!(face.icon.is_some() && face.kind == CardKind::Payload, "{c:?}");
                 if let rounds::Card::Ammo(a) = c {
                     assert_eq!(face.name, a.title());
-                    assert!(face.about.contains(&format!("damage {:.1}", a.damage())), "{}", face.about);
+                    assert!(face.about.contains(&format!("Damage {:.1}", a.damage())), "{}", face.about);
                 }
             }
         }
