@@ -144,9 +144,73 @@ Checks: `mould::run::tests::every_shop_rolls_bullets_and_prices_them_by_the_roll
 no fixed payload card; a bought bullet goes into the gun and its text reads
 back through `rounds::parse`).
 
+## Run pacing: the clock and the head start (2026-11-15 02:30Z)
+
+From the planet review's findings 6 and 5 (three reviewers, 11-15,
+`Reports/levelgen-review-2026-11-15/`), passed on by the coordinator.
+
+**The clock grows with the planet** (`run::clock`, finding 6). It was 900 s
+on every planet while the walk to the far nest grew from 14 s to 60 s, so
+the owner's "15/20 minutes to 1 hour+" a level (11-14 15:33Z) was not wired
+up. Now 900 + 450 x (area - 0.6) s in half minutes, from the planet's area
+as a share of today's map (`run::area_of`): 15:00, 16:30, 18:00, 21:00,
+25:30, 31:30, 40:30 and 55:30 on planets 1-8. Linear in area, not in its
+square root (the walk), because the slime and the crystals scale with area.
+The level carries it as its mission's `rule cap`, so the HUD's clock, the
+end and the AI read it unchanged. Two stars now need the goal before four
+fifths of the clock (`campaign::two_stars`), as 12:00 was of 15:00; the
+campaign's missions keep 15:00 and 12:00. The shop's heading says the next
+planet's clock.
+
+**The slime grows alone before landing** (`run::head_start`,
+`larder_world::head_start`, finding 5): 60 x (sqrt(area) - 1) s on planets
+bigger than today's map, so 11, 25, 40, 60 and 87 s on planets 4-8 and none
+on 1-3. Frames with no unit and no shot, then `Game::new` notes the world's
+ticks (`Game::landed`) and `Game::time` counts from there, so the clock,
+the goal's 60 s wait and the end screen start at 0:00 on landing.
+`grow=SECS` sets it by hand (`grow=0` lands on a fresh slime) and
+`run=SEED:DEPTH` films a deep planet's level.
+
+What it does, core world seed 1, idle hand, llvmpipe (pictures on the page):
+
+| | Walkers at landing | At 1:00 |
+|---|---|---|
+| Fresh (`grow=0`) | 65,654 (three discs) | 7,335 (a tube network between the nests) |
+| With the 87 s head start | 7,292 (the network) | |
+
+**What it does not do: spread the slime over the map.** The slime sheds
+most of its walkers in its first 30 s on every planet, whatever it starts
+with: planet 1 3,234 -> 1,652 at 30 s, planet 5 18,027 -> 4,053, the core
+world 65,654 -> 7,335 at 60 s (fresh, idle hand, seed 1). So the walkers
+the run scales by area (`Level::walkers`) are mostly gone in half a
+minute, and the core world settles at about 4.4 times planet 1's slime on
+10 times its area. The review's 3% cover is this, not the front's speed. A
+longer head start only shows the network longer; the size the slime keeps
+is the slime's own economy (its food and upkeep), which is the slime
+thread's to look at, so it is passed on and not tuned here.
+
+Rejected: a clock by the square root of area (the walk): 15:00 to 47:30,
+under the owner's "1 hour+" on the core world.
+
+Cost: the head start runs before the first frame, once a level. On
+llvmpipe 87 s at 6x took 101-195 s; on the 1070 the 6x step is 2.11 ms, so
+about 1,300 frames is an estimated 3 s pause at landing (not yet timed).
+
+The breather planet the review suggests around planet 6 (smaller and
+richer, as Noita's Holy Mountain) is map work: the levelgen thread put it
+to the owner, who chose (02:17Z) to judge the pace in play first. The run
+follows whatever sizes `levelgen::AREA` gives: a smaller planet gets a
+shorter clock, fewer walkers and no head start, and the walker test now
+asks for more walkers a cell deeper, not in all.
+
+Checks: `run::tests::bigger_planets_get_a_longer_clock_and_a_grown_slime`
+(the eight clocks and head starts; every level's rules carry its clock),
+`larder_world::tests::a_head_start_grows_the_slime_and_the_clock_starts_on_landing`
+(CPU world: ticks run on, `time` is 0 on landing, a 2 s cap ends at 2 s).
+
 ## Pictures
 
-[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: rolled bullets in the shop (three planets in; after planet 1), the second shop (after planet 1; three planets in; the Buildings and Tools folders; 1280x720 with dev mode), then the first build's start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
+[Roguelike Run](https://claude.ai/artifact/4BSDgRDDTbt2qmUAkmoFcs), archived in `page/`: the core world fresh at landing and 1:00 and with its head start, the shop's clock line; rolled bullets in the shop (three planets in; after planet 1), the second shop (after planet 1; three planets in; the Buildings and Tools folders; 1280x720 with dev mode), then the first build's start menu, planet 1 at 1:30 (the generated barrens planet; farm hand: 19 soldiers, 4,823 food, the slime 1,322 walkers at 1:30), the shop after planet 1 at two stars (250 points), and dev mode.
 
 ## Checks
 

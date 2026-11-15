@@ -444,6 +444,26 @@ fn taking_the_plain_moulds_home_stops_nothing() {
     assert!(g.core_down.is_none() && g.world.p.birth_energy.is_finite());
 }
 
+/// A head start (`head_start`, the run's big planets, 11-15): the slime
+/// grows alone first, the world's ticks run on, and the game's clock still
+/// starts at 0:00 on landing, so the cap and the goals count from there.
+#[test]
+fn a_head_start_grows_the_slime_and_the_clock_starts_on_landing() {
+    let r = Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+    let fresh = race_world(3, 1, 1_000);
+    let mut grown = race_world(3, 1, 1_000);
+    head_start(&mut grown, 10.0, &r);
+    assert_eq!(grown.ticks(), 10 * u64::from(r.tps));
+    assert_ne!(grown.living(), fresh.living(), "the slime lived on alone");
+    let mut g = Game::new(grown, Rules { cap: 2.0, ..r }, 3);
+    assert_eq!(g.time(), 0.0);
+    while g.end.is_none() {
+        g.step();
+    }
+    assert!(matches!(g.end, Some(End::Cap(_))));
+    assert!((g.time() - 2.0).abs() < 0.1, "the cap counts from landing, not from the world's start: {}", g.time());
+}
+
 #[test]
 fn the_squad_starts_far_from_the_mould() {
     let g = small(1);

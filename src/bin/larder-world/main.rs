@@ -428,11 +428,15 @@ struct Args {
     bullet: Option<f32>,
     /// A roguelike run's level (`mould::run`): this round plays the run's
     /// current planet, with its upgrades. `run=SEED` starts a run on its
-    /// first planet; the start menu's Run does too.
+    /// first planet; the start menu's Run does too. `run=SEED:DEPTH`
+    /// lands on planet DEPTH.
     run: Option<Run>,
     /// `dev=1`: the run's shop has the dev rows (jump planets, points,
     /// redraw cards); also the options page's Dev mode.
     dev: bool,
+    /// `grow=SECS`: a run level's head start (`run::head_start`) set by
+    /// hand, to compare (`grow=0` lands on a fresh slime).
+    grow: Option<f32>,
 }
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
@@ -846,6 +850,18 @@ impl App {
             rules.larder = false;
             rules.seek = false;
             rules.overrun = 0.0;
+        }
+        // A run's big planets: the slime grows alone first (`run::head_start`,
+        // the planet review's finding 5, 11-15), and the clock starts on
+        // landing (`Game::landed`).
+        let mut world = world;
+        if let Some(r) = &a.run {
+            let grow = a.grow.unwrap_or(r.level().grow);
+            if grow > 0.0 {
+                let t0 = std::time::Instant::now();
+                slime_mould::mould::larder_world::head_start(&mut world, grow, &rules);
+                eprintln!("head start: the slime grew {grow:.0} s alone in {:.1} s", t0.elapsed().as_secs_f32());
+            }
         }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
         self.sq = a.squads.then(SquadInput::new);
@@ -1398,7 +1414,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1432,8 +1448,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 chosen = true;
             }
             "mission" => args.mission = Some(v.to_string()),
-            "run" => args.run = Some(Run::new(v.parse()?)),
+            "run" => {
+                // `run=SEED` or `run=SEED:DEPTH` (a run landing on planet
+                // DEPTH, to film a deep planet's level).
+                let (seed, depth) = v.split_once(':').unwrap_or((v, "1"));
+                let mut r = Run::new(seed.parse()?);
+                r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
+                args.run = Some(r);
+            }
             "dev" => args.dev = v != "0",
+            "grow" => args.grow = Some(v.parse()?),
             "mode" => {
                 args.squads = match v {
                     "squads" => true,
@@ -1576,6 +1600,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(r) = args.run.as_mut() {
         r.dev = args.dev;
         r.restock();
+        // The level's seed and walkers, as the menu's Run gives them
+        // (`run_args`), so `run=SEED:DEPTH` films the level a run plays.
+        let l = r.level();
+        args.seed = l.seed;
+        args.walkers = ((args.walkers as f32) * l.walkers).round() as usize;
     }
     if !chosen && args.mission.is_none() && !args.own && args.run.is_none() {
         default_shape(&mut args);
