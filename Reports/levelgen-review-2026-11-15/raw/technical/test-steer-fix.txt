@@ -1,0 +1,8 @@
+near=4 dish cells: test mould::larder_world::review_tests::review_steered_squad_round_rock ... STEER 1024x640 whole=false: past the bar at Some(14.533334) s; anchor still 24 steps, a map building or asked 33 steps; middle at map (482, 521); step max 10.7 ms; wall 1.2 s
+near=4 dish cells: STEER 1024x640 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 25.0 ms; wall 1.7 s
+near=4 dish cells: STEER 2512x1568 whole=false: past the bar at Some(20.0) s; anchor still 108 steps, a map building or asked 143 steps; middle at map (481, 523); step max 78.3 ms; wall 9.0 s
+near=4 dish cells: STEER 2512x1568 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 122.1 ms; wall 9.7 s
+near=10 dish cells: test mould::larder_world::review_tests::review_steered_squad_round_rock ... STEER 1024x640 whole=false: past the bar at Some(13.6) s; anchor still 10 steps, a map building or asked 21 steps; middle at map (482, 521); step max 17.7 ms; wall 1.3 s
+near=10 dish cells: STEER 1024x640 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 23.4 ms; wall 1.7 s
+near=10 dish cells: STEER 2512x1568 whole=false: past the bar at Some(16.4) s; anchor still 54 steps, a map building or asked 87 steps; middle at map (481, 523); step max 39.0 ms; wall 5.7 s
+near=10 dish cells: STEER 2512x1568 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 110.2 ms; wall 8.7 s
