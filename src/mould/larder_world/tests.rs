@@ -2886,3 +2886,32 @@ fn a_spread_bullet_widens_the_rifles_aim() {
     }
     panic!("no volley");
 }
+
+/// The plants' fire's kills count in the game's kills every frame (bug
+/// check 11-15: they were counted only on a Scorch trail's frame, so a
+/// game without one never counted them).
+#[test]
+fn the_plants_fire_kills_count_without_a_scorch_trail() {
+    use crate::mould::map::Map;
+    use crate::mould::plants::pack;
+    use std::path::Path;
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+    let mut m = Map::load(&dir, "flats").unwrap();
+    // Full cover in kind bands, as the GPU twin test of the plants.
+    m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+    let mut g = Game::new(BigDish::with_map(race_params(3, 1, 2_000), &m), Rules::default(), 3);
+    let home = g.world.homes[0];
+    let burn = squad::Burst { at: (home.0 + 12.0, home.1), r: 6.0, burn: true, ..Default::default() };
+    for sec in 0..40 {
+        if sec == 10 {
+            g.world.burst(&burn, &squad::BurstRules::default());
+        }
+        for _ in 0..g.rules.tps / g.rules.frame_ticks {
+            g.step();
+        }
+    }
+    eprintln!("t {} end {:?} burning {} fire_killed {} killed {}", g.time(), g.end, g.world.burning, g.world.fire_killed, g.killed);
+    assert!(g.world.fire_killed > 0, "the fire killed walkers");
+    assert_eq!(g.fire_killed as u64, g.world.fire_killed, "every fire kill counted");
+    assert!(g.killed >= g.fire_killed);
+}

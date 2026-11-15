@@ -141,6 +141,9 @@ struct Read {
     own: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
+    /// The engine's kill counter at the frame's end (`Engine::struck`,
+    /// `wstat[3]`), which the plants' `firekill` pass adds to.
+    struck: u32,
 }
 
 /// The engine as a Larder world.
@@ -198,9 +201,20 @@ pub struct GpuWorld {
     /// spent waiting for them (`frame_finish`).
     pub waits: u64,
     pub wait_ms: f64,
-    /// Walkers bursts have killed so far (`Engine::struck`), so `burst`
-    /// returns its own.
+    /// The engine's kill counter as last read (`Engine::struck`), so
+    /// `burst` returns its own kills.
     struck: u32,
+    /// Kills on that counter that are fire's (the plants' `firekill`, and
+    /// burns), not yet told (`World::burned`). The counter is shared, so
+    /// until 2026-11-15 the next kill burst claimed them all as its own
+    /// (bug check 11-15): now every frame's readout carries the counter,
+    /// what moved during a frame is fire's (bursts run between frames,
+    /// never in one), and a kill burst after a burn reads the counter
+    /// first so the burn's kills stay fire's.
+    fire_new: u32,
+    /// A burn has run since `struck` was read: its kills are on the
+    /// counter but not yet in `fire_new`.
+    burn_dirty: bool,
 }
 
 /// The gardeners on the GPU world (`own_mould`'s `Garden`, 2026-11-12):
@@ -327,7 +341,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0 };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false };
         g.read_now();
         g
     }
@@ -454,7 +468,7 @@ impl GpuWorld {
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3] }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -464,6 +478,15 @@ impl GpuWorld {
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
         self.own = r.own as usize;
+        // What the frame (and any burn before it) killed on the shared
+        // counter is fire's. A counter behind ours (a fresh dish, an
+        // inject) starts the count again.
+        let moved = r.struck.wrapping_sub(self.struck);
+        if moved < 1 << 31 {
+            self.fire_new += moved;
+        }
+        self.struck = r.struck;
+        self.burn_dirty = false;
         if let Some(g) = r.grid.take() {
             self.grid = Some((self.e.grid as usize, self.ticks(), g));
         }
@@ -595,6 +618,21 @@ impl World for GpuWorld {
         r.out
     }
 
+    /// Fire's kills since the last call: the plants' `firekill` and the
+    /// burns (`Burst::burn`), which `burst` does not count here.
+    fn burned(&mut self) -> u32 {
+        // Fire's kills in the frames came with their readouts; only a burn
+        // since then needs a read-back (the Scorch trail's, once a frame).
+        if self.burn_dirty {
+            self.flush();
+            let now = self.e.struck();
+            self.fire_new += now.wrapping_sub(self.struck);
+            self.struck = now;
+            self.burn_dirty = false;
+        }
+        std::mem::take(&mut self.fire_new)
+    }
+
     /// The kill, clear, alarm and crater in the engine's strike passes (a
     /// submit of its own, after any frame in flight), then one read-back for
     /// the walkers killed: bursts are a player's tool uses, a few a second
@@ -606,14 +644,6 @@ impl World for GpuWorld {
     /// reach or turn, as there), and the strike's `kill` pass infects. The
     /// alarm field turns on with the first alarm or gas, as `BigDish::
     /// enable_alarm` does.
-    fn burned(&mut self) -> u32 {
-        self.flush();
-        let now = self.e.struck();
-        let n = now.wrapping_sub(self.struck);
-        self.struck = now;
-        n
-    }
-
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
         // A step in shares (`spread`) runs whole before the burst, so the
         // burst lands between steps as on the CPU.
@@ -624,6 +654,14 @@ impl World for GpuWorld {
         let mut out = squad::BurstOut::default();
         if b.kill || b.burn || b.alarm > 0.0 || b.crater > 0 {
             let r = if b.kill || b.burn { b.r } else { 0.0 };
+            if b.kill && self.burn_dirty {
+                // A burn's kills are fire's: off the counter before this
+                // kill's own.
+                let now = self.e.struck();
+                self.fire_new += now.wrapping_sub(self.struck);
+                self.struck = now;
+                self.burn_dirty = false;
+            }
             self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
             // Only a kill moves the count: a shock or a crater alone (the
             // rounds' trails, a burst a bullet a frame) skips the read-back,
@@ -632,6 +670,8 @@ impl World for GpuWorld {
                 let now = self.e.struck();
                 out.killed = now.wrapping_sub(self.struck);
                 self.struck = now;
+            } else if b.burn {
+                self.burn_dirty = true;
             }
         }
         // Fire in the plants, after the strike and crater as on the CPU

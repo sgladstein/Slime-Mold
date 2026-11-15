@@ -508,8 +508,14 @@ impl App {
             KeyCode::Tab => self.fast = !self.fast,
             KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
             KeyCode::KeyN => {
-                // On a generated planet, N rolls a new one at the same depth.
-                if self.args.map.as_deref().is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some()) {
+                // On a generated planet, N rolls a new one at the same depth;
+                // one with its seed in the name (`planet:D:SEED`) goes on to
+                // the next seed, as the name's seed wins over `seed=` (bug
+                // check 11-15: N reloaded the same planet).
+                if let Some(next) = self.args.map.as_deref().and_then(next_planet) {
+                    self.name = next.clone();
+                    self.args.map = Some(next);
+                } else if self.args.map.as_deref().is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some()) {
                     self.args.seed = fresh_seed();
                 } else {
                     let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
@@ -572,4 +578,14 @@ pub(super) fn bullet_load(gun: &Gun, seed: u64, n: u32, depth: u32) -> Vec<round
         cards.push(rounds::Card::Plain);
     }
     cards
+}
+
+/// `planet:D:SEED` (and `planet:D:SEED:AREA`) with the seed one on, for N;
+/// None for any other map, and for a planet without a seed in its name.
+pub(super) fn next_planet(map: &str) -> Option<String> {
+    let rest = map.strip_prefix("planet:")?;
+    let mut words: Vec<String> = rest.split(':').map(String::from).collect();
+    let seed: u64 = words.get(1)?.parse().ok()?;
+    words[1] = seed.wrapping_add(1).to_string();
+    Some(format!("planet:{}", words.join(":")))
 }

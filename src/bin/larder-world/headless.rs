@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)]) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -162,6 +162,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut boomed: Vec<usize> = Vec::new();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for (fi, &t) in at.iter().enumerate() {
+        if fi > 0 && scroll != 0 {
+            if let Some(m) = app.menu.as_mut() {
+                m.wheel(-scroll);
+            }
+        }
         // `drag=`: frame `fi`'s share of its drag: the pointer on the card,
         // pressed, carried (eased) to its place, let go at seven tenths,
         // then resting there.

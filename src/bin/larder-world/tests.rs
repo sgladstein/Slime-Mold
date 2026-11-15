@@ -1252,3 +1252,16 @@ fn a_click_on_a_half_built_building_sends_the_squad_back_to_it() {
     assert_eq!(g.squads[q].work, Some(Order::Build(b2)), "the card's click on its own ghost resumes it");
     assert_eq!((g.bank, g.buildings.len()), (bank, n), "and places nothing");
 }
+
+/// N on a planet named with its seed goes on to the next seed (bug check
+/// 11-15: the name's seed won over the fresh `seed=`, so N reloaded the
+/// same planet); other maps and seedless planets are not renamed.
+#[test]
+fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
+    use super::input::next_planet;
+    assert_eq!(next_planet("planet:3:41").as_deref(), Some("planet:3:42"));
+    assert_eq!(next_planet("planet:2:7:1.5").as_deref(), Some("planet:2:8:1.5"));
+    assert_eq!(next_planet("planet:3"), None);
+    assert_eq!(next_planet("planet"), None);
+    assert_eq!(next_planet("fork"), None);
+}

@@ -465,6 +465,15 @@ pub fn stand_in(m: &mut crate::mould::map::Map, seed: u32, share: f32) {
         .collect();
 }
 
+/// `m` as the game plays it (`stand_in` on seed `seed`, full), for the
+/// census and campaign tools: until 2026-11-15 only the window planted
+/// designed maps, so the CPU tools played them bare (bug check 11-15).
+pub fn planted(m: &crate::mould::map::Map, seed: u64) -> crate::mould::map::Map {
+    let mut m = m.clone();
+    stand_in(&mut m, seed as u32, 1.0);
+    m
+}
+
 /// A B byte's kind and start density (0-1).
 pub fn unpack(b: u8) -> (u8, f32) {
     (b >> 6, (b & 63) as f32 / 63.0)

@@ -487,6 +487,9 @@ fn main() {
     let (mut threads, mut look) = (4usize, None::<String>);
     let mut rules = Rules { cap: 600.0, ..Rules::default() };
     let mut map = None::<(String, Map)>;
+    // A map grows the window's plants on each seed (`plants::stand_in`,
+    // 2026-11-15; before, the census played designed maps bare).
+    let mut plants = true;
     let mut kr = KitRules::default();
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -515,6 +518,7 @@ fn main() {
                 let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
                 map = Some((v.to_string(), Map::load(&dir, v).unwrap_or_else(|e| panic!("{e}"))));
             }
+            "plants" => plants = v != "0",
             _ => panic!("unknown {k}"),
         }
     }
@@ -543,7 +547,8 @@ fn main() {
                 }
                 let (tier, seed, hand) = &jobs[j];
                 let lk = if *seed == seeds[0] { look.as_deref() } else { None };
-                let r = play(*seed, tier, hand, rules, kr, mapr, lk);
+                let grown = mapr.map(|m| if plants { slime_mould::mould::plants::planted(m, *seed) } else { m.clone() });
+                let r = play(*seed, tier, hand, rules, kr, grown.as_ref(), lk);
                 println!(
                     "{tier:>8} {hand:>7} seed {seed:>2}: {:>11} at {:>4.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, harvested {:>6.0}, shots {:>5}; uses {:?}, tool kills {:?}; {:.2} ms a tick",
                     r.end, r.t, r.score, r.alive, r.mould, r.harvested, r.shots, r.uses, r.killed, r.ms_tick
