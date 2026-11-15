@@ -2830,7 +2830,115 @@ const CALL_RED: vec3<f32> = vec3<f32>(255.0, 90.0, 60.0);
 const BITE_HOT: vec3<f32> = vec3<f32>(255.0, 120.0, 72.0);
 const ALARM_RGB: vec3<f32> = vec3<f32>(200.0, 214.0, 240.0);
 
+// ---- The pump's rig (kind 6, `Marks::pump_rig`, 2026-11-15) ----
+//
+// The owner (2026-11-15): a pump "should probably just change the whole
+// appearance of the crystal like you've built some sort of structure
+// around it". Drawn round the crystal, not over it, so the crystal's own
+// charge (the simulation, dimming as it is pumped) stays in sight: a
+// steel hexagon just outside the crystal's pointy-top hexagon, a pylon at
+// each corner with a lamp, and three struts to the pump head in the middle
+// (a building sprite, kind 2, drawn over it). Shapes at screen resolution,
+// so crisp at any zoom (owner, 11-14: play is zoomed in). What changes is
+// the game's state: it is laid corner by corner clockwise from the top as
+// it is built (the rest a faint plan), darkens as it is hurt, and the
+// struts' charge lines and the lamps glow by its draw this frame
+// (`pulse`, `Building::drew` of its full draw). Its level (1-3, `state`
+// 0-2) adds an inner ring a level.
+//
+// Sizes are shares of the rig's radius R (twice the mark's half): the
+// crystal is 1/1.3 of R (`pump_rig_r` in the window).
+fn sd_hex_pointy(p: vec2<f32>, rc: f32) -> f32 {
+    // iq's hexagon with x and y swapped, so a corner is at the top.
+    let k = vec3<f32>(-0.8660254, 0.5, 0.57735027);
+    let ri = rc * 0.8660254;
+    var q = abs(vec2<f32>(p.y, p.x));
+    q -= 2.0 * min(dot(k.xy, q), 0.0) * k.xy;
+    q -= vec2<f32>(clamp(q.x, -k.z * ri, k.z * ri), ri);
+    return length(q) * sign(q.y);
+}
+
+fn sd_seg(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>) -> f32 {
+    let pa = p - a; let ba = b - a;
+    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
+const STEEL: vec3<f32> = vec3<f32>(150.0, 160.0, 170.0);
+const STEEL_DARK: vec3<f32> = vec3<f32>(70.0, 78.0, 88.0);
+
+fn pump_rig(d: vec2<f32>, r: f32, built: f32, health: f32, working: bool, pulse: f32, level: u32) -> vec4<f32> {
+    let big = 2.0 * r;
+    let p = d / big;
+    let aa = 1.0 / big;
+    let l = normalize(LIGHT);
+    // Clockwise from the top: 0 at the top corner, 1 all the way round.
+    let turn = fract(atan2(p.x, -p.y) / 6.2831853 + 1.0);
+    let laid = turn <= built;
+    let f = 0.84;
+    let t = max(0.04, 1.6 * aa);
+    // The frame (and an inner ring a level), the pylons, the struts.
+    var sd_frame = abs(sd_hex_pointy(p, f)) - t;
+    for (var i = 1u; i <= min(level, 2u); i++) {
+        sd_frame = min(sd_frame, abs(sd_hex_pointy(p, f - 0.07 * f32(i))) - 0.45 * t);
+    }
+    var sd_pylon = 1e9;
+    var sd_lamp = 1e9;
+    var sd_strut = 1e9;
+    var sd_core = 1e9;
+    let hub = 0.27;
+    for (var i = 0u; i < 6u; i++) {
+        let a = -1.5707963 + 1.0471976 * f32(i);
+        let c = vec2<f32>(cos(a), sin(a)) * f;
+        sd_pylon = min(sd_pylon, length(p - c) - max(0.085, 2.5 * aa));
+        sd_lamp = min(sd_lamp, length(p - c) - max(0.035, 1.2 * aa));
+        if (i % 2u == 0u) {
+            let e = vec2<f32>(cos(a), sin(a)) * hub;
+            sd_strut = min(sd_strut, sd_seg(p, c, e) - max(0.022, 1.2 * aa));
+            sd_core = min(sd_core, sd_seg(p, c, e) - max(0.008, 0.5 * aa));
+        }
+    }
+    let solid = min(min(sd_frame, sd_pylon), sd_strut);
+    // The frame's shadow, cast away from the light.
+    let sh = abs(sd_hex_pointy(p + vec2<f32>(l.x, l.y) * 0.035, f)) - t;
+    var out = vec4<f32>(0.0, 0.0, 0.0, 0.3 * cover(sh, aa * 2.0) * select(0.0, 1.0, laid && built > 0.0));
+    // A dark outline a pixel and a half round the steel, so it parts from
+    // slime and ground alike (the buildings' rule, #227).
+    let ink = cover(solid - OUTLINE * aa, aa);
+    let body = cover(solid, aa);
+    // Steel lit from the light's side: brighter where the surface faces it.
+    let lit = 0.82 + 0.3 * clamp(dot(normalize(p + vec2<f32>(1e-5)), -vec2<f32>(l.x, l.y)), -1.0, 1.0);
+    var steel = STEEL * lit;
+    if (sd_strut < min(sd_frame, sd_pylon)) { steel = mix(STEEL_DARK, STEEL, 0.55) * lit; }
+    let grey = dot(steel, vec3<f32>(0.3, 0.59, 0.11));
+    let hurt = 1.0 - health;
+    steel = mix(steel, vec3<f32>(grey), 0.6 * hurt) * (1.0 - 0.45 * hurt);
+    if (laid) {
+        out = pm_over(out, vec4<f32>(INK * ink, ink));
+        out = pm_over(out, vec4<f32>(steel * body, body));
+        if (built >= 1.0) {
+            // Charge in the struts and the lamps, by the draw.
+            let g = select(0.0, clamp(0.25 + 0.75 * pulse, 0.0, 1.0), working);
+            let core = cover(sd_core, aa) * g;
+            out = pm_over(out, vec4<f32>(CHARGE * core, core));
+            let lamp = cover(sd_lamp, aa);
+            let lc = mix(LAMP_IDLE, CHARGE_HOT, g);
+            out = pm_over(out, vec4<f32>(lc * lamp, lamp));
+            let halo = exp(-max(sd_lamp, 0.0) * max(sd_lamp, 0.0) / 0.0012) * 0.6 * g * (1.0 - lamp);
+            out = vec4<f32>(out.xyz + CHARGE * halo, min(out.w + halo, 1.0));
+        }
+    } else {
+        // The plan: a cream line round the steel to come, faint inside.
+        let edge = clamp(ink - body, 0.0, 1.0) * 0.8;
+        out = pm_over(out, vec4<f32>(RIM * edge, edge));
+        out = pm_over(out, vec4<f32>(steel * body * 0.25, body * 0.25));
+    }
+    if (out.w <= 0.0) { return vec4<f32>(0.0); }
+    return vec4<f32>(out.xyz / out.w, out.w);
+}
+
 fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: bool, pulse: f32, facing: f32, state: u32) -> vec4<f32> {
+    if (kind == 6u) { return pump_rig(d, r, built, health, working, pulse, state); }
     let aa = 1.0 / max(r, 1.0);
     let l = normalize(LIGHT);
     let p = d / r;

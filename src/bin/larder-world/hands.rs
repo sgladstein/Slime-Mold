@@ -91,6 +91,12 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "squadwork" {
         return squadwork_hand(g);
     }
+    if hand == "pumps" {
+        return pumps_hand(g);
+    }
+    if hand == "greedy" {
+        return greedy_hand(g);
+    }
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings);
     // `siren` the same with a siren in the lure's place (a tier's look).
@@ -455,6 +461,67 @@ pub(super) fn squadwork_hand(g: &mut Game<GpuWorld>) {
                 let s = &g.soldiers[k];
                 eprintln!("  k {k} at {:.0},{:.0} order {:?} cover {} queued {} hp {:.0}", s.x / sc, s.y / sc, s.order, s.cover, s.queued, s.hp);
             }
+        }
+    }
+}
+
+/// `pumps` (2026-11-15, the pump economy's clips): from 1 s the squad
+/// pumps the crystals nearest it, smallest walk first, placing each pump
+/// by a click on the crystal's rim (it snaps to the middle) and raising it
+/// together; once a pump stands and the bank allows it is upgraded, up to
+/// its top level, before the next is placed. No draining by hand.
+fn pumps_hand(g: &mut Game<GpuWorld>) {
+    if g.time() < 1.0 {
+        return;
+    }
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    let Some(&k0) = live.first() else { return };
+    // A ghost: everyone raises it.
+    if let Some(b) = g.buildings.iter().position(|b| b.alive && !b.up()) {
+        for &k in &live {
+            if g.soldiers[k].order != Order::Build(b) {
+                g.apply(Cmd::Order(k, Order::Build(b)));
+            }
+        }
+        return;
+    }
+    // A standing pump below its top level: upgrade it when the bank allows.
+    if let Some(b) = (0..g.buildings.len()).find(|&b| g.upgrade_price(b).is_some()) {
+        g.apply(Cmd::Upgrade(b));
+        return;
+    }
+    // The next crystal with charge and no pump, nearest the squad.
+    let s = g.soldiers[k0];
+    let cs = g.world.crystals();
+    let next = (1..cs.len()).filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none()).min_by(|&a, &b| {
+        let d = |c: usize| (cs[c].0 .0 - s.x).hypot(cs[c].0 .1 - s.y);
+        d(a).total_cmp(&d(b))
+    });
+    if let Some(c) = next {
+        // On its rim, toward the squad: the pump snaps to the middle.
+        let (cx, cy) = cs[c].0;
+        let d = (s.x - cx).hypot(s.y - cy).max(1.0);
+        let r = g.world.crystal_r(c) * 0.9;
+        g.apply(Cmd::Build(Kind::Pump, (cx + (s.x - cx) / d * r, cy + (s.y - cy) / d * r)));
+    }
+}
+
+/// `greedy` (2026-11-15, the owner's opening: "I just run to the biggest
+/// Crystal harvest the whole thing and I have a full squad of 40 within
+/// the first 30 seconds"): every soldier drains the biggest crystal with
+/// charge left, and a soldier is bought whenever the bank can pay.
+fn greedy_hand(g: &mut Game<GpuWorld>) {
+    while g.bank >= g.rules.soldier_cost && g.alive() < g.rules.max_squad {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    let cs = g.world.crystals();
+    let Some(c) = (1..cs.len()).filter(|&c| cs[c].1 > 0.0).max_by(|&a, &b| cs[a].1.total_cmp(&cs[b].1)).map(|c| cs[c].0) else { return };
+    for k in 0..g.soldiers.len() {
+        let on = matches!(g.soldiers[k].order, Order::Clear(x, y) if g.crystal_at((x, y)).is_some_and(|(i, _)| cs[i].1 > 0.0));
+        if g.soldiers[k].alive && !on {
+            g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
         }
     }
 }

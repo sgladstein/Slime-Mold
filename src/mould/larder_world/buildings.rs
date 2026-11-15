@@ -11,8 +11,13 @@
 //!   and burns bank food each second it is on (`Cmd::Toggle` switches it).
 //!   It pulls the mould into a turret line, off a farmed crystal or away
 //!   from the larder, at the price of a slower economy.
-//! - **Pump**: stands on a crystal and drains its charge into the bank
-//!   with no carriers. It is food on a crystal to the mould, so a target.
+//! - **Pump**: stands on a crystal, centred on it, and drains its charge
+//!   into the bank with no carriers: the main income since 2026-11-15
+//!   (owner: draining the biggest crystal by hand gave "a full squad of 40
+//!   within the first 30 seconds"). It draws by the crystal's size and
+//!   can be upgraded (`Game::upgrade`, owner: "you should be able to
+//!   upgrade them. Pumps on bigger crystals should give you more"). It is
+//!   food on a crystal to the mould, so a target.
 //! - **Wall**: today's wall (`BigDish::build_wall`) as one kind, so the
 //!   soldier controls thread's build orders raise walls and turrets alike.
 //!
@@ -102,6 +107,9 @@ pub struct Building {
     /// kind): the window lights its draw line by it (building looks,
     /// 11-14). Read only; no rule uses it.
     pub drew: f32,
+    /// A pump's level, 1 to `PUMP_LEVELS` (`Game::upgrade`); 1 for every
+    /// other kind.
+    pub level: u8,
 }
 
 impl Building {
@@ -110,6 +118,9 @@ impl Building {
         self.alive && self.built >= 1.0
     }
 }
+
+/// A pump's levels (`Game::upgrade`).
+pub const PUMP_LEVELS: u8 = 3;
 
 /// How far out a turret's shot starts, in its touch radii: the tip of the
 /// barrels the window draws (`Marks::turret`, the head one touch radius
@@ -165,8 +176,22 @@ pub struct BuildRules {
     // price once.
     pub pump_cost: f32,
     pub pump_hp: f32,
-    /// Food a second a pump draws from its crystal.
+    /// Food a second a level-1 pump draws at least, however small its
+    /// crystal.
     pub pump_rate: f32,
+    /// The share of its crystal's starting charge a level-1 pump draws a
+    /// second (`Game::pump_draw`): bigger crystals pay more (owner,
+    /// 2026-11-15). 1/150: a crystal pumped dry in two and a half minutes
+    /// at level 1.
+    pub pump_share: f32,
+    /// Each pump level past the first multiplies its draw by this...
+    pub pump_up_rate: f32,
+    /// ...and the food each charge it draws is worth by this, so an
+    /// upgrade pays more in all, not only sooner.
+    pub pump_up_yield: f32,
+    /// An upgrade to level `n + 1` costs `n` times this, from the bank at
+    /// once.
+    pub pump_up_cost: f32,
     /// A working pump's scent, as a multiple of a soldier's, over
     /// `lure_r` (0: none beyond its crystal's own). The pump as bait.
     pub pump_smell: f32,
@@ -233,6 +258,10 @@ impl Default for BuildRules {
             pump_cost: 500.0,
             pump_hp: 200.0,
             pump_rate: 5.0,
+            pump_share: 1.0 / 150.0,
+            pump_up_rate: 1.5,
+            pump_up_yield: 1.25,
+            pump_up_cost: 400.0,
             pump_smell: 0.0,
             outpost_cost: 400.0,
             outpost_hp: 300.0,
@@ -297,7 +326,19 @@ impl<W: World> Game<W> {
         if let Kind::Wall { to } = kind {
             return (!self.rules.build.anywhere && !self.reachable(to)).then_some("no soldier in range");
         }
-        if !self.world.open(at.0, at.1) {
+        // A pump snaps to its crystal's middle (owner, 2026-11-15: "it
+        // should automatically center itself on the crystal"), so it is
+        // judged there; the crystal's cells are not open ground.
+        let at = if kind == Kind::Pump {
+            let Some(c) = self.pump_crystal(at) else { return Some("a pump goes on a crystal") };
+            if self.pump_on(c).is_some() {
+                return Some("this crystal has a pump: click it with the pump to upgrade");
+            }
+            self.world.crystals()[c].0
+        } else {
+            at
+        };
+        if kind != Kind::Pump && !self.world.open(at.0, at.1) {
             return Some("not open ground");
         }
         if self.standing() >= self.rules.build.max {
@@ -307,16 +348,58 @@ impl<W: World> Game<W> {
         if self.buildings.iter().any(|b| b.alive && !matches!(b.kind, Kind::Wall { .. }) && (b.at.0 - at.0).hypot(b.at.1 - at.1) < gap) {
             return Some("too close to another building");
         }
-        if kind == Kind::Pump && self.pump_crystal(at).is_none() {
-            return Some("a pump goes on a crystal");
-        }
         None
     }
 
-    /// The crystal a pump at `at` would stand on: one whose disc holds the
-    /// point.
-    fn pump_crystal(&self, at: (f32, f32)) -> Option<usize> {
-        self.world.crystals().iter().enumerate().find(|(i, c)| (c.0 .0 - at.0).hypot(c.0 .1 - at.1) <= self.world.crystal_r(*i)).map(|(i, _)| i)
+    /// The crystal a pump placed at `at` goes on: the nearest whose disc,
+    /// and a cell or two round it, holds the point (`crystal_at`, the
+    /// harvest click's), so a click on its rim finds it.
+    pub fn pump_crystal(&self, at: (f32, f32)) -> Option<usize> {
+        self.crystal_at(at).map(|(i, _)| i)
+    }
+
+    /// The pump (standing or a ghost) on crystal `c`, if any.
+    pub fn pump_on(&self, c: usize) -> Option<usize> {
+        self.buildings.iter().position(|b| b.alive && b.kind == Kind::Pump && b.crystal == Some(c))
+    }
+
+    /// Food a second pump `b` draws while its crystal lasts: the larger of
+    /// `pump_rate` and `pump_share` of its crystal's starting food, times
+    /// `pump_up_rate` a level past the first. 0 for anything else.
+    pub fn pump_draw(&self, b: usize) -> f32 {
+        let Some(bd) = self.buildings.get(b).filter(|bd| bd.kind == Kind::Pump) else { return 0.0 };
+        let Some(c) = bd.crystal else { return 0.0 };
+        let r = self.rules.build;
+        let full = self.start_charge.get(c).copied().unwrap_or(0.0) / self.rules.charge;
+        r.pump_rate.max(r.pump_share * full) * r.pump_up_rate.powi(i32::from(bd.level.max(1)) - 1)
+    }
+
+    /// The food each food's worth of charge pump `b` draws banks
+    /// (`pump_up_yield` a level past the first).
+    pub fn pump_yield(&self, b: usize) -> f32 {
+        let level = self.buildings.get(b).map_or(1, |bd| bd.level.max(1));
+        self.rules.build.pump_up_yield.powi(i32::from(level) - 1)
+    }
+
+    /// What upgrading building `b` costs now, or None if it can't be
+    /// upgraded (not a standing pump, or at `PUMP_LEVELS`).
+    pub fn upgrade_price(&self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).filter(|bd| bd.up() && bd.kind == Kind::Pump && bd.level < PUMP_LEVELS)?;
+        Some(self.rules.build.pump_up_cost * f32::from(bd.level))
+    }
+
+    /// Upgrade pump `b` a level (`Cmd::Upgrade`), paid from the bank at
+    /// once. True if it went up.
+    pub fn upgrade(&mut self, b: usize) -> bool {
+        match self.upgrade_price(b) {
+            Some(p) if self.bank >= p => {
+                self.bank -= p;
+                self.spent += p;
+                self.buildings[b].level += 1;
+                true
+            }
+            _ => false,
+        }
     }
 
     /// Place a building of `kind` at `at` (fine cells), paid now. True if
@@ -328,6 +411,9 @@ impl<W: World> Game<W> {
         let price = self.build_price(kind, at);
         self.bank -= price;
         self.spent += price;
+        let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
+        // On its crystal's middle (`build_blocked`).
+        let at = crystal.map_or(at, |c| self.world.crystals()[c].0);
         let b = self.rules.build;
         let hp = match kind {
             Kind::Turret => b.turret_hp,
@@ -337,10 +423,9 @@ impl<W: World> Game<W> {
             Kind::Siren => b.siren_hp,
             Kind::Wall { .. } => self.world_wall_hp(),
         };
-        let crystal = if kind == Kind::Pump { self.pump_crystal(at) } else { None };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0 });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1 });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -475,8 +560,14 @@ impl<W: World> Game<W> {
                 }
                 Kind::Pump => {
                     if let Some(c) = bd.crystal {
-                        u.take = b.pump_rate * dt * r.charge;
-                        u.take_r = self.world.crystal_r(c).min(4.0 * sc);
+                        // From its middle over the whole crystal (it stood
+                        // on the crystal's edge, drawing within 4 cells,
+                        // until 2026-11-15). Bigger crystals give more
+                        // (`pump_draw`).
+                        u.take = self.pump_draw(k) * dt * r.charge;
+                        u.take_r = self.world.crystal_r(c) + sc;
+                        // The mould wears it over the crystal it stands on.
+                        u.touch = u.touch.max(self.world.crystal_r(c));
                         u.smell_r = b.lure_r * sc;
                         u.smell = self.world.food_deposit() * r.smell * b.pump_smell * r.frame_ticks as f32;
                         crystal = Some(c);
@@ -517,7 +608,8 @@ impl<W: World> Game<W> {
         let up = bd.up();
         if up && bd.kind == Kind::Pump && u.took > 0.0 {
             bd.working = true;
-            let food = u.took / r.charge;
+            let level = bd.level.max(1);
+            let food = u.took / r.charge * r.build.pump_up_yield.powi(i32::from(level) - 1);
             bd.drew = food;
             self.bank += food;
             self.harvested += food;
@@ -614,7 +706,7 @@ mod tests {
                 let a = i as f32 * 0.7;
                 (g.larder.0 + (4.0 + i as f32 * 0.2) * a.cos(), g.larder.1 + (4.0 + i as f32 * 0.2) * a.sin())
             })
-            .find(|&p| g.world.open(p.0, p.1) && g.reachable(p) && g.crystal_at(p).is_none_or(|(i, c)| (c.0 - p.0).hypot(c.1 - p.1) > g.world.crystal_r(i)) && (p.0 - at.0).hypot(p.1 - at.1) > 3.0)
+            .find(|&p| g.world.open(p.0, p.1) && g.reachable(p) && g.crystal_at(p).is_none() && (p.0 - at.0).hypot(p.1 - at.1) > 3.0)
             .expect("open ground off the crystals");
         assert_eq!(g.build_blocked(Kind::Pump, off), Some("a pump goes on a crystal"));
         g.bank = 10.0;
@@ -770,12 +862,93 @@ mod tests {
             g.step();
             drew += g.buildings[0].drew;
         }
-        let want = 10.0 * g.rules.build.pump_rate;
+        let want = 10.0 * g.pump_draw(0);
         // `Building::drew`, the window's draw line, is the pump's take.
         assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
         assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
         assert!(g.take_share() > 0.5, "the pump's take is the squad's");
+    }
+
+    #[test]
+    fn a_pump_snaps_to_its_crystals_middle_one_a_crystal() {
+        let mut g = small(5);
+        let (c, centre) = g.crystal_at(g.larder).expect("the larder stands on a crystal");
+        let r = g.world.crystal_r(c);
+        // A click on the rim (owner, 2026-11-15: "it should automatically
+        // center itself on the crystal").
+        let rim = (centre.0 + 0.9 * r, centre.1);
+        assert_eq!(g.build_blocked(Kind::Pump, rim), None);
+        assert!(g.build(Kind::Pump, rim));
+        assert_eq!((g.buildings[0].at, g.buildings[0].crystal), (centre, Some(c)));
+        assert_eq!(g.pump_on(c), Some(0));
+        assert!(g.build_blocked(Kind::Pump, centre).is_some_and(|w| w.contains("upgrade")), "one pump a crystal");
+    }
+
+    #[test]
+    fn a_bigger_crystal_pumps_more() {
+        let mut g = small(5);
+        let (c, centre) = g.crystal_at(g.larder).unwrap();
+        assert!(g.build(Kind::Pump, centre));
+        let b = g.rules.build;
+        let full = g.start_charge[c] / g.rules.charge;
+        assert_eq!(g.pump_draw(0), b.pump_rate.max(b.pump_share * full));
+        g.start_charge[c] *= 4.0;
+        let more = g.pump_draw(0);
+        g.start_charge[c] /= 16.0;
+        let less = g.pump_draw(0);
+        assert!(more > less && more >= b.pump_share * full * 4.0 * 0.999, "{more} against {less}");
+        assert_eq!(less, b.pump_rate.max(b.pump_share * full / 4.0), "the floor for a small crystal");
+    }
+
+    #[test]
+    fn an_upgraded_pump_draws_more_and_costs_from_the_bank() {
+        let pumped = |level: u8| {
+            let mut g = small(5);
+            let (_, centre) = g.crystal_at(g.larder).unwrap();
+            assert!(g.build(Kind::Pump, centre));
+            for l in 1..level {
+                let (bank, price) = (g.bank, g.upgrade_price(0).expect("a standing pump below the top"));
+                assert_eq!(price, g.rules.build.pump_up_cost * f32::from(l));
+                assert!(g.apply(Cmd::Upgrade(0)));
+                assert_eq!(g.bank, bank - price);
+            }
+            assert_eq!(g.buildings[0].level, level);
+            let income = g.income();
+            for _ in 0..(g.rules.tps * 5) {
+                g.step();
+            }
+            (g.pumped, g.income() - income, g.pump_draw(0) * g.pump_yield(0))
+        };
+        let (one, three) = (pumped(1), pumped(PUMP_LEVELS));
+        assert!(three.0 > 2.0 * one.0, "level 3 {} against level 1 {} in 5 s", three.0, one.0);
+        assert!((three.1 - three.0).abs() < 1e-3 * three.0, "the income is the pumping");
+        assert!((three.0 - 5.0 * three.2).abs() < 0.05 * three.0, "{} pumped for {} a second", three.0, three.2);
+        let mut g = small(5);
+        let (_, centre) = g.crystal_at(g.larder).unwrap();
+        assert!(g.build(Kind::Pump, centre));
+        g.buildings[0].level = PUMP_LEVELS;
+        assert_eq!(g.upgrade_price(0), None, "the top level");
+        assert!(!g.apply(Cmd::Upgrade(0)));
+        assert_eq!(Cmd::parse(&Cmd::Upgrade(4).to_line()), Some(Cmd::Upgrade(4)));
+    }
+
+    #[test]
+    fn building_comes_out_of_the_bank_not_the_income() {
+        // Owner, 2026-11-15: the flow "should always be positive. When you
+        // build something, it should just automatically subtract".
+        let mut g = small(3);
+        g.rules.build.raise = 8.0;
+        let at = open_near(&g, (g.larder.0 + 8.0, g.larder.1));
+        let (bank, income) = (g.bank, g.income());
+        assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+        assert_eq!((g.bank, g.income()), (bank - g.rules.build.turret_cost, income));
+        let mut last = g.income();
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+            assert!(g.income() >= last, "income never falls");
+            last = g.income();
+        }
     }
 
     #[test]
