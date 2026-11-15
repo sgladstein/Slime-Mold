@@ -1,0 +1,326 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-005s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-005s-near.png
+  CPU: ground field 3.73 ms (once a game second), model and HUD 0.325 ms a frame
+  t 5 s: mould 13121, soldiers 4, bank 1500, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 368.0,33.1
+  surge: the slime ate 11 food (2.2/s); meter 11.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13121 (readout 13121)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 121 / 200, built 0.6, standing
+    pumped 0 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-010s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-010s-near.png
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.316 ms a frame
+  t 10 s: mould 13078, soldiers 4, bank 363, harvested 63, shots 0, killed 0, took 0%, crystals left 0.999; squad at 368.0,33.1
+  surge: the slime ate 23 food (2.3/s); meter 22.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078 (readout 13078)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pumped 63 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-015s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-015s-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.072 ms a frame
+  t 15 s: mould 13080, soldiers 4, bank 451, harvested 151, shots 0, killed 0, took 0%, crystals left 0.998; squad at 368.0,33.1
+  surge: the slime ate 35 food (2.3/s); meter 35.1 of 103, 0 surges
+  dense: 294 condensed or thick walkers, mass 13374 (readout 13374)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pumped 151 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-020s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-020s-near.png
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.086 ms a frame
+  t 20 s: mould 13150, soldiers 4, bank 39, harvested 239, shots 0, killed 0, took 0%, crystals left 0.998; squad at 348.5,37.5
+  surge: the slime ate 49 food (2.4/s); meter 48.6 of 103, 0 surges
+  dense: 572 condensed or thick walkers, mass 13722 (readout 13722)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 20 / 200, built 0.0, standing
+    pumped 239 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-025s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-025s-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.079 ms a frame
+  t 25 s: mould 13305, soldiers 4, bank 131, harvested 331, shots 2, killed 1, took 0%, crystals left 0.997; squad at 302.1,47.8
+  surge: the slime ate 64 food (2.6/s); meter 64.0 of 103, 0 surges
+  dense: 743 condensed or thick walkers, mass 14048 (readout 14048)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 200 / 200, built 1.0, standing, working
+    pumped 331 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-030s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-030s-near.png
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.114 ms a frame
+  t 30 s: mould 13543, soldiers 4, bank 244, harvested 444, shots 12, killed 11, took 0%, crystals left 0.996; squad at 302.1,47.8
+  surge: the slime ate 82 food (2.7/s); meter 81.7 of 103, 0 surges
+  dense: 872 condensed or thick walkers, mass 14415 (readout 14415)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 197 / 200, built 1.0, standing, working
+    pumped 444 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-035s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-035s-near.png
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.121 ms a frame
+  t 35 s: mould 13859, soldiers 4, bank 357, harvested 557, shots 22, killed 33, took 0%, crystals left 0.995; squad at 302.1,47.8
+  surge: the slime ate 102 food (2.9/s); meter 102.4 of 103, 0 surges
+  dense: 969 condensed or thick walkers, mass 14828 (readout 14828)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 195 / 200, built 1.0, standing, working
+    pumped 557 food
+  surge 1 starts at t 35.1 s (the slime has eaten 103 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-040s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-040s-near.png
+  CPU: ground field 4.40 ms (once a game second), model and HUD 0.325 ms a frame
+  t 40 s: mould 14212, soldiers 4, bank 81, harvested 683, shots 39, killed 74, took 0%, crystals left 0.994; squad at 302.1,47.8
+  surge: the slime ate 126 food (3.1/s); meter 23.2 of 103, 1 surges
+  dense: 1160 condensed or thick walkers, mass 15372 (readout 15372)
+  squad: touching 0.0 mean, 0 most; health 94 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 181 / 200, built 1.0, standing, working
+    pumped 683 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-045s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-045s-near.png
+  CPU: ground field 1.52 ms (once a game second), model and HUD 0.096 ms a frame
+  t 45 s: mould 14531, soldiers 4, bank 216, harvested 818, shots 49, killed 94, took 0%, crystals left 0.993; squad at 302.1,47.8
+  surge: the slime ate 151 food (3.4/s); meter 48.4 of 103, 1 surges
+  dense: 1499 condensed or thick walkers, mass 16030 (readout 16030)
+  squad: touching 0.2 mean, 1 most; health 93 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 179 / 200, built 1.0, standing, working
+    pumped 818 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-050s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-050s-near.png
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.125 ms a frame
+  t 50 s: mould 14808, soldiers 4, bank 351, harvested 953, shots 60, killed 121, took 0%, crystals left 0.992; squad at 302.1,47.8
+  surge: the slime ate 176 food (3.5/s); meter 73.8 of 103, 1 surges
+  dense: 1847 condensed or thick walkers, mass 16655 (readout 16655)
+  squad: touching 0.2 mean, 1 most; health 93 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 177 / 200, built 1.0, standing, working
+    pumped 953 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-055s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-055s-near.png
+  CPU: ground field 1.45 ms (once a game second), model and HUD 0.073 ms a frame
+  t 55 s: mould 15058, soldiers 4, bank 485, harvested 1088, shots 72, killed 145, took 0%, crystals left 0.991; squad at 302.1,47.8
+  surge: the slime ate 202 food (3.7/s); meter 99.3 of 103, 1 surges
+  dense: 2129 condensed or thick walkers, mass 17187 (readout 17187)
+  squad: touching 0.0 mean, 0 most; health 92 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 173 / 200, built 1.0, standing, working
+    pumped 1088 food
+  surge 2 starts at t 55.7 s (the slime has eaten 205 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-060s-near.png
+  CPU: ground field 5.26 ms (once a game second), model and HUD 0.187 ms a frame
+  t 60 s: mould 15313, soldiers 4, bank 617, harvested 1222, shots 89, killed 215, took 0%, crystals left 0.990; squad at 302.1,47.8
+  surge: the slime ate 228 food (3.8/s); meter 22.2 of 103, 2 surges
+  dense: 2357 condensed or thick walkers, mass 17670 (readout 17670)
+  squad: touching 0.0 mean, 0 most; health 89 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 149 / 200, built 1.0, standing, working
+    pumped 1222 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-065s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-065s-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.270 ms a frame
+  t 65 s: mould 15483, soldiers 4, bank 751, harvested 1357, shots 100, killed 238, took 0%, crystals left 0.989; squad at 302.1,47.8
+  surge: the slime ate 253 food (3.9/s); meter 47.7 of 103, 2 surges
+  dense: 2572 condensed or thick walkers, mass 18055 (readout 18055)
+  squad: touching 0.0 mean, 0 most; health 88 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 142 / 200, built 1.0, standing, working
+    pumped 1357 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-070s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-070s-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.280 ms a frame
+  t 70 s: mould 15668, soldiers 4, bank 110, harvested 1516, shots 111, killed 250, took 0%, crystals left 0.988; squad at 302.1,47.8
+  surge: the slime ate 279 food (4.0/s); meter 73.2 of 103, 2 surges
+  dense: 2760 condensed or thick walkers, mass 18428 (readout 18428)
+  squad: touching 0.0 mean, 0 most; health 88 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 140 / 200, built 1.0, standing, working
+    pumped 1516 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-075s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-075s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.239 ms a frame
+  t 75 s: mould 15853, soldiers 4, bank 285, harvested 1692, shots 118, killed 281, took 0%, crystals left 0.986; squad at 302.1,47.8
+  surge: the slime ate 304 food (4.1/s); meter 98.8 of 103, 2 surges
+  dense: 2936 condensed or thick walkers, mass 18789 (readout 18789)
+  squad: touching 0.0 mean, 0 most; health 87 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 135 / 200, built 1.0, standing, working
+    pumped 1692 food
+  surge 3 starts at t 75.8 s (the slime has eaten 308 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-080s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-080s-near.png
+  CPU: ground field 3.88 ms (once a game second), model and HUD 0.072 ms a frame
+  t 80 s: mould 16168, soldiers 4, bank 452, harvested 1868, shots 131, killed 354, took 0%, crystals left 0.985; squad at 302.1,47.8
+  surge: the slime ate 330 food (4.1/s); meter 21.6 of 103, 3 surges
+  dense: 3093 condensed or thick walkers, mass 19261 (readout 19261)
+  squad: touching 0.0 mean, 0 most; health 85 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 101 / 200, built 1.0, standing, working
+    pumped 1868 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-085s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-085s-near.png
+  CPU: ground field 7.06 ms (once a game second), model and HUD 0.072 ms a frame
+  t 85 s: mould 16238, soldiers 4, bank 128, harvested 2044, shots 139, killed 397, took 0%, crystals left 0.984; squad at 310.3,86.6
+  surge: the slime ate 356 food (4.2/s); meter 47.3 of 103, 3 surges
+  dense: 3243 condensed or thick walkers, mass 19481 (readout 19481)
+  squad: touching 0.0 mean, 0 most; health 83 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 80 / 200, built 1.0, standing, working
+    pump at (320, 133): hp 16 / 200, built 0.0, standing
+    pumped 2044 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-090s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-090s-near.png
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.481 ms a frame
+  t 90 s: mould 15902, soldiers 4, bank 321, harvested 2239, shots 151, killed 431, took 0%, crystals left 0.983; squad at 316.6,116.8
+  surge: the slime ate 381 food (4.2/s); meter 73.1 of 103, 3 surges
+  dense: 3401 condensed or thick walkers, mass 19303 (readout 19303)
+  squad: touching 0.0 mean, 0 most; health 82 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 35 / 200, built 1.0, standing, working
+    pump at (320, 133): hp 186 / 200, built 1.0, standing, working
+    pumped 2239 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-095s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-095s-near.png
+  CPU: ground field 4.88 ms (once a game second), model and HUD 0.074 ms a frame
+  t 95 s: mould 15800, soldiers 4, bank 172, harvested 2496, shots 168, killed 472, took 0%, crystals left 0.982; squad at 316.6,116.8
+  surge: the slime ate 407 food (4.3/s); meter 99.1 of 103, 3 surges
+  dense: 3580 condensed or thick walkers, mass 19380 (readout 19380)
+  squad: touching 0.5 mean, 1 most; health 78 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 5 / 200, built 1.0, standing, working
+    pump at (320, 133): hp 151 / 200, built 1.0, standing, working
+    pumped 2496 food
+  surge 4 starts at t 95.7 s (the slime has eaten 411 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-100s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-100s-near.png
+  CPU: ground field 2.32 ms (once a game second), model and HUD 0.132 ms a frame
+  t 100 s: mould 15807, soldiers 4, bank 355, harvested 2699, shots 183, killed 548, took 0%, crystals left 0.981; squad at 316.6,116.8
+  surge: the slime ate 434 food (4.3/s); meter 22.4 of 103, 4 surges
+  dense: 3729 condensed or thick walkers, mass 19536 (readout 19536)
+  squad: touching 0.2 mean, 1 most; health 67 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 106 / 200, built 1.0, standing, working
+    pumped 2699 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-105s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-105s-near.png
+  CPU: ground field 2.70 ms (once a game second), model and HUD 0.111 ms a frame
+  t 105 s: mould 15930, soldiers 4, bank 540, harvested 2887, shots 200, killed 593, took 0%, crystals left 0.979; squad at 316.6,116.8
+  surge: the slime ate 460 food (4.4/s); meter 48.7 of 103, 4 surges
+  dense: 3882 condensed or thick walkers, mass 19812 (readout 19812)
+  squad: touching 0.0 mean, 0 most; health 62 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 65 / 200, built 1.0, standing, working
+    pumped 2887 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-110s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-110s-near.png
+  CPU: ground field 2.96 ms (once a game second), model and HUD 0.123 ms a frame
+  t 110 s: mould 16058, soldiers 4, bank 725, harvested 3074, shots 216, killed 635, took 0%, crystals left 0.978; squad at 316.6,116.8
+  surge: the slime ate 486 food (4.4/s); meter 75.1 of 103, 4 surges
+  dense: 4040 condensed or thick walkers, mass 20098 (readout 20098)
+  squad: touching 0.8 mean, 2 most; health 58 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 11 / 200, built 1.0, standing, working
+    pumped 3074 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-115s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-115s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.075 ms a frame
+  t 115 s: mould 16244, soldiers 4, bank 346, harvested 3197, shots 234, killed 699, took 0%, crystals left 0.977; squad at 316.6,116.8
+  surge: the slime ate 513 food (4.5/s); meter 101.6 of 103, 4 surges
+  dense: 4191 condensed or thick walkers, mass 20435 (readout 20435)
+  squad: touching 0.8 mean, 2 most; health 53 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 182 / 200, built 1.0, standing, working
+    pumped 3197 food
+  surge 5 starts at t 115.2 s (the slime has eaten 514 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-120s-near.png
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.474 ms a frame
+  t 120 s: mould 16428, soldiers 4, bank 93, harvested 3365, shots 251, killed 786, took 0%, crystals left 0.976; squad at 316.6,116.8
+  surge: the slime ate 539 food (4.5/s); meter 25.6 of 103, 5 surges
+  dense: 4320 condensed or thick walkers, mass 20748 (readout 20748)
+  squad: touching 0.5 mean, 2 most; health 41 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 124 / 200, built 1.0, standing, working
+    pumped 3365 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-125s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-125s-near.png
+  CPU: ground field 9.83 ms (once a game second), model and HUD 0.117 ms a frame
+  t 125 s: mould 16673, soldiers 4, bank 279, harvested 3552, shots 268, killed 832, took 0%, crystals left 0.975; squad at 316.6,116.8
+  surge: the slime ate 566 food (4.5/s); meter 52.3 of 103, 5 surges
+  dense: 4480 condensed or thick walkers, mass 21153 (readout 21153)
+  squad: touching 0.2 mean, 1 most; health 38 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 95 / 200, built 1.0, standing, working
+    pumped 3552 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-130s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-130s-near.png
+  CPU: ground field 2.18 ms (once a game second), model and HUD 0.081 ms a frame
+  t 130 s: mould 16901, soldiers 4, bank 465, harvested 3739, shots 284, killed 887, took 0%, crystals left 0.973; squad at 316.6,116.8
+  surge: the slime ate 593 food (4.6/s); meter 79.1 of 103, 5 surges
+  dense: 4606 condensed or thick walkers, mass 21507 (readout 21507)
+  squad: touching 0.5 mean, 1 most; health 36 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 66 / 200, built 1.0, standing, working
+    pumped 3739 food
+  surge 6 starts at t 134.4 s (the slime has eaten 617 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-135s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-135s-near.png
+  CPU: ground field 9.13 ms (once a game second), model and HUD 0.267 ms a frame
+  t 135 s: mould 17165, soldiers 4, bank 650, harvested 3927, shots 301, killed 928, took 0%, crystals left 0.972; squad at 316.6,116.8
+  surge: the slime ate 620 food (4.6/s); meter 3.3 of 103, 6 surges
+  dense: 4749 condensed or thick walkers, mass 21914 (readout 21914)
+  squad: touching 0.2 mean, 1 most; health 33 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 36 / 200, built 1.0, standing, working
+    pumped 3927 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-140s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-140s-near.png
+  CPU: ground field 6.31 ms (once a game second), model and HUD 0.072 ms a frame
+  t 140 s: mould 17412, soldiers 4, bank 810, harvested 4114, shots 316, killed 993, took 0%, crystals left 0.971; squad at 316.6,116.8
+  surge: the slime ate 647 food (4.6/s); meter 30.4 of 103, 6 surges
+  dense: 4891 condensed or thick walkers, mass 22303 (readout 22303)
+  squad: touching 0.2 mean, 1 most; health 29 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 11 / 200, built 1.0, standing, working
+    pumped 4114 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-145s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-145s-near.png
+  CPU: ground field 7.42 ms (once a game second), model and HUD 0.100 ms a frame
+  t 145 s: mould 17670, soldiers 4, bank 173, harvested 4279, shots 332, killed 1035, took 0%, crystals left 0.970; squad at 316.6,116.8
+  surge: the slime ate 674 food (4.7/s); meter 57.8 of 103, 6 surges
+  dense: 5021 condensed or thick walkers, mass 22691 (readout 22691)
+  squad: touching 0.5 mean, 2 most; health 26 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pumped 4279 food
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-150s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d1-base/planet-1-1-pumps-150s-near.png
+  CPU: ground field 1.41 ms (once a game second), model and HUD 0.077 ms a frame
+  t 150 s: mould 17901, soldiers 4, bank 260, harvested 4366, shots 349, killed 1094, took 0%, crystals left 0.969; squad at 316.6,116.8
+  surge: the slime ate 702 food (4.7/s); meter 85.0 of 103, 6 surges
+  dense: 5160 condensed or thick walkers, mass 23061 (readout 23061)
+  squad: touching 0.8 mean, 2 most; health 22 mean
+    pump at (374, 25): hp 197 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pump at (320, 133): hp 0 / 200, built 1.0, worn down
+    pumped 4366 food

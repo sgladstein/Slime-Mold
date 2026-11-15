@@ -12,6 +12,7 @@ sources:
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
+  - Reports/run-progression-2026-11-15/does-to-you.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -34,12 +35,14 @@ code:
   - ammo_price
   - area_of
   - clock
+  - does_to_you
   - enemy_keys
   - gun_price
   - head_start
   - range_args
   - reward
   - run_args
+  - run_hidden
   - run_shape
   - run_walkers
   - shells_at
@@ -109,7 +112,23 @@ buildings, frame p50/p95) with each command; `cargo run --release --example
 playlog -- FILE` prints time to 10-40 soldiers, splits, pumps, kills a
 minute against the slime's mass, and frame times.
 
-Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet waits for the owner (the review's D3).
+Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet: see below.
+
+## What each planet does to you
+
+Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
+[report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
+rung of `LADDER` does one thing to you (`does_to_you`), named on the planet
+card and in the landing alert: the Drifter and the Trunk smell your pumps
+(`pump_smell` 20 over `lure_r` 15 cells) and come to eat their crystals; the
+Sprawler smells your soldiers from far off (`smell` 4 over 4 cells); the
+Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
+3x (`surge_haste`); the Sporer bursts into spores at an alarm of 0.3; the
+Sleeper wakes at an alarm of 0.3. Run seed 1 at 2:00, each ends or wears the
+four-soldier test squad (or the pumps) sooner than before: three planets that
+squad survived now end it. A test: the owner's play sets the size. The run
+shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
+them on the command card), and the 40-soldier rush is left as it is (D7).
 
 ## The gun range
 
@@ -136,6 +155,7 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups; in shop B the gun and bag are pinned and hold still, a test checks it).
 - 2026-11-15 17:31Z: "Having to scroll is horrible. That's not professional." 17:41Z: "The bullet tiles could easily be half the size without even losing any info." 19:37Z: "Shop B, menu A," (the tabbed counter with a pane).
 - 2026-11-15 08:34Z (to the slime thread, on a planet's slime size): "It should vary and be more later on."
+- 2026-11-15 21:41Z (the review's decisions): "1. Agreed. We can test it out. 2. No. 3. Let me see the video. 4. Play first. No changes yet. 5-7) agreed" (D3 does-to-you as a test, D5 no payload card, D7 no rush brake yet, D10 no outpost, lure or siren in the run shop).
 - 2026-11-15 18:02Z: "We are still winning the game with too many slime left. Drop it to 1% of peak" (`WIN_SHARE` 1%).
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
@@ -144,7 +164,7 @@ armory over the paused round and Back re-arms every squad
 
 ## Open
 
-- The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; no thread owns what the enemy does to you planet by planet; the stuck rule (`count_stuck`) ends a run with a healthy squad when the bank is short.
+- The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).

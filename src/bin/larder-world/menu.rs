@@ -228,6 +228,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
     let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
+    // What this tier does to you (`run::does_to_you`).
+    let does = run::does_to_you(l.tier).says;
+    if !does.is_empty() {
+        lines[0] += &format!(". {does}");
+    }
     // The level's clock and head start (`run::clock`, `run::head_start`).
     let cap = l.mission.rules(Rules::default()).cap;
     let secs = cap.round() as u32;

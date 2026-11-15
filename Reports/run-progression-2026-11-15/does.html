@@ -1,0 +1,72 @@
+<title>Planet Threats</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column; a chart of kills against mass, then the tier strip of stills. */
+:root {
+  --bg: #f3f5ef; --panel: #ffffff; --fg: #1d231c; --muted: #5c6758; --line: #d5dbcf;
+  --slime: #d98b12; --squad: #2f7f9e; --bad: #b3402f; --good: #3b7d3a;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141912; --panel: #1c231a; --fg: #e3e8de; --muted: #9aa695; --line: #333d30;
+  --slime: #f0a531; --squad: #5bb3d4; --bad: #e0705e; --good: #7cc27a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141912; --panel: #1c231a; --fg: #e3e8de; --muted: #9aa695; --line: #333d30;
+  --slime: #f0a531; --squad: #5bb3d4; --bad: #e0705e; --good: #7cc27a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; }
+main { max-width: 1060px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; } h2 { font-size: 20px; }
+p { margin: 0; max-width: 70ch; }
+.lede { color: var(--muted); }
+section { display: grid; gap: 12px; min-width: 0; }
+.wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; min-width: 640px; width: 100%; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font: 600 12px var(--mono); color: var(--muted); letter-spacing: .03em; }
+.ok { color: var(--good); font-weight: 600; }
+svg text { fill: var(--fg); font: 12px var(--mono); }
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.key { display: flex; gap: 18px; flex-wrap: wrap; font: 13px var(--mono); color: var(--muted); }
+.key span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.tiers { display: grid; gap: 22px; }
+video { width: 100%; height: auto; border-radius: 4px; background: #000; max-width: 100%; }
+.says { font-family: var(--display); font-size: 17px; color: var(--fg); }
+.nums { font: 13px var(--mono); color: var(--muted); }
+.nums b { color: var(--bad); font-weight: 600; }
+figure { margin: 0; display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-width: 0; }
+figure img { border-radius: 4px; width: 100%; height: auto; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--fg); font-family: var(--display); font-size: 15px; }
+ul { margin: 0; padding-left: 20px; max-width: 70ch; display: grid; gap: 4px; }
+code { font: 13px var(--mono); }
+</style>
+<main>
+<header style="display:grid;gap:8px"><h1>What each planet does to you</h1>
+<p class="lede">The D3 test, built as you agreed: each slime tier gets one thing it does to you, named on the planet card and in the landing alert. Run seed 1, filmed headless on software Vulkan, 0:00 to 2:00 (planet 1 to 2:30) at 4 s a frame. Left is the run before, right is with the planet's thing. One seed each, a look, not a census.</p></header>
+<section><div class="tiers">
+<figure><video src="does/d1.mp4" poster="does/d1-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 1: Drifter</b><br><span class="says">"It smells your pumps and comes to eat their crystals"</span><br>Pumps smell of food 20x a soldier, over 15 cells. Pumps hand, whole map.<br><span class="nums">Before: Far pump 197 of 200 hp at 2:00, squad 4 at 41 health. With: Far pump 23 hp at 2:00, first pump down by 1:00, <b>squad lost at 2:21</b>.</span></figcaption></figure>
+<figure><video src="does/d2.mp4" poster="does/d2-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 2: Sprawler</b><br><span class="says">"Its fast threads smell your soldiers from far off"</span><br>Soldier smell 4 over 4 cells (was 0.5 over 2). Idle squad.<br><span class="nums">Before: 2 soldiers, 13 health at 2:00. With: <b>squad gone by 1:30</b>.</span></figcaption></figure>
+<figure><video src="does/d3.mp4" poster="does/d3-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 3: Trunk</b><br><span class="says">"It runs its cords to your pumps"</span><br>Same pump smell as planet 1. Pumps hand, whole map.<br><span class="nums">Before: First two pumps 189 and 182 hp at 2:00. With: 163 and 161 hp (modest).</span></figcaption></figure>
+<figure><video src="does/d4.mp4" poster="does/d4-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 4: Swarmer</b><br><span class="says">"Its surges charge your squad from far off, and fast"</span><br>A surge reaches 25 cells past the gun's range (was 5) and lunges 3x (was 2x). Attack-move.<br><span class="nums">Before: Health 74 at 2:00. With: <b>health 29</b>.</span></figcaption></figure>
+<figure><video src="does/d5.mp4" poster="does/d5-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 5: Sporer</b><br><span class="says">"Struck, it scatters spores that start new slime"</span><br>Bursts at an alarm of 0.3 (was 1), 0.2 a step (was 0.05). Attack-move.<br><span class="nums">Before: 4 soldiers at 27 health. With: <b>none left at 2:00</b>.</span></figcaption></figure>
+<figure><video src="does/d6.mp4" poster="does/d6-last.jpg" controls loop muted playsinline preload="metadata"></video>
+<figcaption><b>Planet 6: Sleeper</b><br><span class="says">"It wakes at your first shots, and all of it comes"</span><br>Wakes at an alarm of 0.3 (was 1). Attack-move.<br><span class="nums">Before: 1 soldier, 14 health. With: <b>squad gone by 1:30</b>.</span></figcaption></figure>
+</div></section>
+<section><h2>Also in this change</h2><ul>
+<li>The run shop no longer sells the outpost, lure or siren, and the command card hides them in a run (D10).</li>
+<li>No payload card at the start (D5) and no brake on the 40-soldier rush (D7): nothing changed there.</li>
+<li>Tried and dropped: a louder Swarmer alarm drew the body to the wounds, not the squad (health 74 to 95). A higher Sleeper wake bar made it sleep deeper (4 soldiers at 99). A strong spore rate sent the spores away from the fight.</li>
+<li>Three rows now end the four-soldier test squad on planets 1, 5 and 6, where it survived before. That is a big step; your play decides the size, and each number is one setting.</li>
+</ul></section>
+</main>

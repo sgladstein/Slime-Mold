@@ -925,6 +925,13 @@ impl App {
             match Tier::from_name(t) {
                 Some(tier) => {
                     tier.settings(&mut s)?;
+                    // In a run, what the tier does to you over its own keys
+                    // (`run::does_to_you`).
+                    if level.is_some() {
+                        for &(k, v) in slime_mould::mould::run::does_to_you(tier).keys {
+                            slime_mould::gpu::set(&mut s, k, v)?;
+                        }
+                    }
                     core_tier = Some(tier);
                 }
                 None => eprintln!("larder-world: tier {t} is not built yet; the plain mould plays"),
@@ -1204,7 +1211,16 @@ impl App {
         }
         self.open_log();
         match &self.mission {
-            Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
+            Some(tr) => {
+                self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT);
+                // What the run's tier does to you (`run::does_to_you`).
+                if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
+                    let does = slime_mould::mould::run::does_to_you(r.level().tier).says;
+                    if !does.is_empty() {
+                        self.hud.alert(&format!("{}: {does}", title_case(r.level().tier.name())), None, theme::WARN);
+                    }
+                }
+            }
             None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())

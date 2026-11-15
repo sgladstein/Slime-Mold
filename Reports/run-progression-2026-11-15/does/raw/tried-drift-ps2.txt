@@ -1,0 +1,51 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-030s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-030s-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.072 ms a frame
+  t 30 s: mould 13541, soldiers 4, bank 244, harvested 444, shots 11, killed 14, took 0%, crystals left 0.996; squad at 302.1,47.8
+  surge: the slime ate 82 food (2.7/s); meter 81.7 of 103, 0 surges
+  dense: 872 condensed or thick walkers, mass 14413 (readout 14413)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 197 / 200, built 1.0, standing, working
+    pumped 444 food
+  surge 1 starts at t 35.1 s (the slime has eaten 103 food)
+  surge 2 starts at t 55.9 s (the slime has eaten 206 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-060s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.071 ms a frame
+  t 60 s: mould 15302, soldiers 4, bank 599, harvested 1222, shots 89, killed 298, took 0%, crystals left 0.990; squad at 302.1,47.8
+  surge: the slime ate 227 food (3.8/s); meter 21.3 of 103, 2 surges
+  dense: 2327 condensed or thick walkers, mass 17629 (readout 17629)
+  squad: touching 0.8 mean, 2 most; health 89 mean
+    pump at (374, 25): hp 198 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 101 / 200, built 1.0, standing, working
+    pumped 1222 food
+  surge 3 starts at t 76.0 s (the slime has eaten 308 food)
+  surge 4 starts at t 96.1 s (the slime has eaten 411 food)
+  surge 5 starts at t 115.9 s (the slime has eaten 514 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-120s-near.png
+  CPU: ground field 10.33 ms (once a game second), model and HUD 0.084 ms a frame
+  t 120 s: mould 16405, soldiers 3, bank 455, harvested 2794, shots 259, killed 1349, took 0%, crystals left 0.976; squad at 301.7,46.4
+  surge: the slime ate 535 food (4.5/s); meter 21.6 of 103, 5 surges
+  dense: 4200 condensed or thick walkers, mass 20605 (readout 20605)
+  squad: touching 0.0 mean, 0 most; health 37 mean
+    pump at (374, 25): hp 178 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pumped 2794 food
+  surge 6 starts at t 135.4 s (the slime has eaten 617 food)
+  surge 7 starts at t 153.7 s (the slime has eaten 719 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-180s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-ps2/planet-1-1-pumps-180s-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.141 ms a frame
+  t 155 s: mould 18410, soldiers 0, bank 100, harvested 3479, shots 304, killed 1608, took 0%, crystals left 0.967, ended: squad wiped
+  surge: the slime ate 727 food (4.7/s); meter 7.3 of 103, 7 surges
+  dense: 5115 condensed or thick walkers, mass 23525 (readout 23525)
+    pump at (374, 25): hp 164 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 56 / 200, built 0.6, standing
+    pumped 3479 food
