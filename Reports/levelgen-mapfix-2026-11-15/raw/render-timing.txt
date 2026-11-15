@@ -1,0 +1,17 @@
+before core-1 193 s
+before core-2 200 s
+before valley-2 3 s
+before jungle-1 4 s
+before bridge-4-2 3 s
+before nest-8-2 13 s
+before bridge-4-6 3 s
+before nest-5-1 5 s
+after core-1 205 s
+after core-2 208 s
+after valley-2 3 s
+after jungle-1 5 s
+after bridge-4-2 2 s
+after nest-8-2 11 s
+after bridge-4-6 3 s
+after nest-5-1 4 s
+done

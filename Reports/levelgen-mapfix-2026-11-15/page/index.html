@@ -1,0 +1,176 @@
+<title>Planet Map Fixes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* The map fixes from the three planet reviews (11-15): before and after. Same look as the review page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · planets 1-8 · map fixes · 2026-11-15</div>
+<h1>Planet Map Fixes</h1>
+<p>The first map fixes from the three planet reviews, looks first. Nests now sit off the map's edges and, on the big planets, spread across the map. The core world has fewer streams and at most two rivers. Rings round nests are broken arcs, hedges stay off water, bridges are straight decks and fords taper. Every picture pairs the reviewed build (before) with this change (after), same planet, same seed, with the counts beside it.</p>
+<div class="score">
+<div><b>Nests by an edge</b><span class="n">141 → 0</span><span class="muted">of 280 nests on 160 planets (seeds 1-20, planets 1-8) within 150 map cells of an edge.</span></div>
+<div><b>Hedge pieces on water</b><span class="n">2,518 → 378</span><span class="muted">of 12,640 and 11,762 pieces on the same 160 planets. Most of what is left is cave gates (217).</span></div>
+<div><b>Core world spacing</b><span class="n">0.12 → 0.25</span><span class="muted">the closest two nests over the map's width, worst of 20 core worlds (median 0.18 → 0.33).</span></div>
+</div>
+<p class="muted">The same seed lays out differently after: nest placement now draws more random numbers, so everything placed after it moves. Compare the kinds of change, not where things are. The whole-map views of the 6x core world fit the window below zoom 1, where the view is unshaded (the reviews' item 1, for the drawing threads).</p>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>The core world: nests spread out, fewer streams</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">review item 5</span></div></div></div>
+<p>Before, two nests had to stand 280 map cells apart on every planet, so on the 6x core world they bunched in one corner. Now they stand 0.3 of the map's width apart. Streams grew with the map, which webbed the whole core world; now a bigger map keeps the normal count, and rivers stop at two.</p>
+<div class="figs one">
+<figure><video src="pics/core-1-film.mp4" autoplay muted loop playsinline controls></video><figcaption><b>Core world, seed 1, 1 s to 60 s</b> (a frame every 10 s, idle hand). Closest two nests 0.14 → 0.25 of the width; nearest to an edge 100 → 240 map cells.</figcaption></figure>
+<figure><video src="pics/core-2-film.mp4" autoplay muted loop playsinline controls></video><figcaption><b>Core world, seed 2, 1 s to 60 s.</b> Closest two nests 0.19 → 0.34 of the width; water 17.3% → 6.1% of the map; hedge pieces on water 107 → 1.</figcaption></figure>
+</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/core-1-before.webp" alt="Core world seed 1 before: three nests bunched in the top-left corner" loading="lazy"><figcaption><b>Seed 1 at 60 s.</b> Three nests in the top-left corner.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/core-1-after.webp" alt="Core world seed 1 after: three nests spread down the left half" loading="lazy"><figcaption><b>Seed 1 at 60 s.</b> Three nests spread over the far half.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/core-2-before.webp" alt="Core world seed 2 before: a web of dark streams over the whole map" loading="lazy"><figcaption><b>Seed 2 at 60 s.</b> A web of streams over the whole map.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/core-2-after.webp" alt="Core world seed 2 after: a few streams, nests spread out" loading="lazy"><figcaption><b>Seed 2 at 60 s.</b> A few streams; nests 0.34 of the width apart.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>Rings round nests are broken arcs</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">review item 5</span></div></div></div>
+<p>A ring of hedge round a nest was one round C with one gap, and read as a bullseye. Now it is two or three arcs, each at its own distance from the nest, with a gap after each.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/nest-8-2-before.webp" alt="A core world nest at zoom 6 inside one round hedge ring" loading="lazy"><figcaption><b>Core world seed 2, a nest at zoom 6, 1 s.</b> One ring, one gap.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-8-2-after.webp" alt="The same nest after: hedge arcs at different distances" loading="lazy"><figcaption><b>Same planet and seed.</b> Arcs at different distances.</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/nest-5-1-before.webp" alt="A jungle nest at zoom 6 inside one round ring" loading="lazy"><figcaption><b>Jungle seed 1, a nest at zoom 6, 1 s.</b></figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/nest-5-1-after.webp" alt="The same jungle nest after: three staggered arcs" loading="lazy"><figcaption><b>Same planet and seed.</b> Three staggered arcs.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>Hedges stay off water; nests stay off the edges</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">review item 10</span></div></div></div>
+<p>A hedge piece is left out where either end or its middle is wet, so no more beige tubes laid across lakes. Nests keep at least 0.16 of the map's width from the sides and 0.2 of its height from the top and bottom (150-240 map cells), so the slime's starting blob isn't cut by the frame.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/jungle-1-before.webp" alt="Jungle seed 1 before: hedges cross the dark lakes" loading="lazy"><figcaption><b>Jungle seed 1, 1 s.</b> 65 of 221 hedge pieces touch water.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/jungle-1-after.webp" alt="Jungle seed 1 after: hedges on dry ground" loading="lazy"><figcaption><b>Same planet and seed.</b> 16 of 191; closest two nests 0.22 → 0.34 of the width.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>Straight bridges and tapered fords</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">review item 9</span></div></div></div>
+<p>A bridge deck took the river's own ragged outline. It is now a straight band that runs 6 cells past the widest the banks reach. At a ford, the deep middle now narrows to it over 9 cells either side, instead of stopping square.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/bridge-4-2-before.webp" alt="A bridge at zoom 12 with a ragged end" loading="lazy"><figcaption><b>River valley seed 2, the bridge at zoom 12.</b> The deck's ends follow the bank.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/bridge-4-2-after.webp" alt="The bridge after: a straight deck past both banks, the slime already at its west end" loading="lazy"><figcaption><b>Same planet and seed.</b> A straight deck past both banks. The near nest now sits by the bridge, so the slime is there at 1 s (see the end).</figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/bridge-4-6-before.webp" alt="Another bridge at zoom 12, its west end rounded" loading="lazy"><figcaption><b>River valley seed 6, the bridge at zoom 12.</b></figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/bridge-4-6-after.webp" alt="The bridge after: a straight deck" loading="lazy"><figcaption><b>Same planet and seed.</b></figcaption></figure>
+<figure><span class="ba">Before</span><img src="pics/valley-2-before.webp" alt="River valley seed 2, whole map, before" loading="lazy"><figcaption><b>River valley seed 2, whole map, 1 s.</b> Nearest nest to an edge 197 map cells; closest pair 0.27 of the width.</figcaption></figure>
+<figure><span class="ba after">After</span><img src="pics/valley-2-after.webp" alt="River valley seed 2, whole map, after" loading="lazy"><figcaption><b>Same planet and seed.</b> 155 and 0.33.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">5</div><div><h2>The layouts in false colour</h2>
+<div class="tags"><span class="tag">map files</span></div></div></div>
+<p>The map files themselves, before on the left and after on the right, so each change shows without the slime over it.</p>
+<div class="key"><span><i style="background:#5f643c"></i>ground</span><span><i style="background:#3c648c"></i>shallow water</span><span><i style="background:#192850"></i>deep water</span><span><i style="background:#aa783c"></i>bridge</span><span><i style="background:#96969b"></i>rock</span><span><i style="background:#dc3cdc"></i>hedge (soft rock)</span><span><i style="background:#3cdce6"></i>crystal</span><span><i style="border:2px solid #ff3c28"></i>nest</span><span><i style="border:2px solid #ffe600"></i>landing</span></div>
+<div class="figs two">
+<figure><img src="pics/fc-planet-8-5.webp" alt="Core world seed 5 in false colour: four rivers before, two after" loading="lazy"><figcaption><b>Core world seed 5.</b> Four parallel rivers → two; water 8.5% → 4.3%; closest two nests 0.14 → 0.29 of the width; hedge pieces on water 38 → 0.</figcaption></figure>
+<figure><img src="pics/fc-planet-8-2.webp" alt="Core world seed 2 in false colour: the stream web thins" loading="lazy"><figcaption><b>Core world seed 2.</b> The stream web thins; hedge rings become arcs.</figcaption></figure>
+<figure><img src="pics/fc-planet-8-1.webp" alt="Core world seed 1 in false colour: nests spread out" loading="lazy"><figcaption><b>Core world seed 1.</b> Nests 0.14 → 0.25 of the width apart.</figcaption></figure>
+<figure><img src="pics/fc-planet-5-1.webp" alt="Jungle seed 1 in false colour: hedges off the lakes" loading="lazy"><figcaption><b>Jungle seed 1.</b> Hedge pieces on water 65 → 16.</figcaption></figure>
+<figure><img src="pics/fc-planet-4-2.webp" alt="River valley seed 2 in false colour" loading="lazy"><figcaption><b>River valley seed 2.</b> The ford tapers; the bridge is a straight band.</figcaption></figure>
+<figure><img src="pics/fc-planet-4-1.webp" alt="River valley seed 1 in false colour: nests off the left edge" loading="lazy"><figcaption><b>River valley seed 1.</b> Nearest nest to an edge 110 → 195 map cells.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">6</div><div><h2>Every planet, measured</h2>
+<div class="tags"><span class="tag">160 planets</span></div></div></div>
+<p>Seeds 1-20 of planets 1-8, from the map files (<code>raw/measure.py</code>). Planets 1-3 have one nest, so no pair.</p>
+<div class="tbl"><table>
+<thead><tr><th>Planet</th><th>Nests by an edge</th><th>Closest pair / width (worst, median)</th><th>Hedge pieces on water</th><th>Water share</th></tr></thead>
+<tbody>
+<tr><td>1 Meadow</td><td class="ok">17/20 → 0/20</td><td>one nest</td><td class="ok">60/166 → 2/114</td><td>12.0% → 13.4%</td></tr>
+<tr><td>2 Barrens</td><td class="ok">14/20 → 0/20</td><td>one nest</td><td>0/48 → 0/32</td><td>0</td></tr>
+<tr><td>3 Fen</td><td class="ok">17/20 → 0/20</td><td>one nest</td><td class="ok">23/68 → 12/48</td><td>24.3% → 23.4%</td></tr>
+<tr><td>4 River valley</td><td class="ok">21/40 → 0/40</td><td>0.23, 0.31 → 0.28, 0.32</td><td class="bad">4/68 → 10/76</td><td>4.9% → 5.0%</td></tr>
+<tr><td>5 Jungle</td><td class="ok">18/40 → 0/40</td><td>0.22, 0.27 → 0.28, 0.33</td><td class="ok">1,143/4,518 → 53/4,130</td><td>13.6% → 11.0%</td></tr>
+<tr><td>6 Highlands</td><td class="ok">20/40 → 0/40</td><td>0.18, 0.25 → 0.27, 0.33</td><td>20/208 → 15/196</td><td>7.1% → 6.3%</td></tr>
+<tr><td>7 Caves</td><td class="ok">18/40 → 0/40</td><td>0.18, 0.35 → 0.30, 0.33</td><td class="bad">164/936 → 217/1,052</td><td>7.4% → 7.4%</td></tr>
+<tr><td>8 Core</td><td class="ok">16/60 → 0/60</td><td>0.12, 0.18 → 0.25, 0.33</td><td class="ok">1,104/6,628 → 69/6,114</td><td>10.5% → 8.3%</td></tr>
+</tbody></table></div>
+<p class="muted">What it costs, same 160 planets (<code>raw/survey.py</code>): first-try passes 143 → 149 of 160; median build time within 10% on every planet (core world 577 → 561 ms); the walk to the far nest 1-8% shorter, since nests left the corners (caves 2,174 → 2,004 cells; the checks still hold it above 0.6 of the width).</p>
+</section>
+
+<section class="sec">
+<h2>Not fixed here, and next</h2>
+<ul>
+<li><b>Cave gates on pools.</b> Hedge pieces on water rose in the caves (164 → 217): they are gates across tunnels with a pool in them. A gate locks its pass, so it stays; it could move to the dry end of its tunnel.</li>
+<li><b>River valley seed 2's near nest sits by the bridge</b>, so the slime holds the bridge from the start. Keeping nests off river crossings goes with the next item.</li>
+<li><b>Next: a front door and a back road for every nest.</b> A direct way at most 10 wide and a way round at least 16 wide, checked when the planet is built (the play review found 4 of 112 nests with both). Then fens weighted to lakes, cave tunnels 5-15 wide, and a landing crystal per biome.</li>
+</ul>
+</section>
+
+</div>

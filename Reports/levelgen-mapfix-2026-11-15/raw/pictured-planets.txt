@@ -1,0 +1,14 @@
+8-1 before nearest edge 100  apart 0.14  hedges on water 0/281  water 0.000  width 2512
+8-1 after  nearest edge 240  apart 0.25  hedges on water 0/272  water 0.000  width 2512
+8-2 before nearest edge 134  apart 0.19  hedges on water 107/374  water 0.173  width 2512
+8-2 after  nearest edge 240  apart 0.34  hedges on water 1/311  water 0.061  width 2512
+5-1 before nearest edge 202  apart 0.22  hedges on water 65/221  water 0.168  width 1456
+5-1 after  nearest edge 202  apart 0.34  hedges on water 16/191  water 0.171  width 1456
+4-2 before nearest edge 197  apart 0.27  hedges on water 0/0  water 0.064  width 1216
+4-2 after  nearest edge 155  apart 0.33  hedges on water 0/4  water 0.085  width 1216
+4-6 before nearest edge 142  apart 0.25  hedges on water 0/8  water 0.036  width 1216
+4-6 after  nearest edge 195  apart 0.31  hedges on water 0/4  water 0.041  width 1216
+4-1 before nearest edge 110  apart 0.30  hedges on water 0/4  water 0.041  width 1216
+4-1 after  nearest edge 195  apart 0.32  hedges on water 0/0  water 0.041  width 1216
+8-5 before nearest edge 173  apart 0.14  hedges on water 38/271  water 0.085  width 2512
+8-5 after  nearest edge 240  apart 0.29  hedges on water 0/252  water 0.043  width 2512
