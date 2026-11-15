@@ -1321,9 +1321,18 @@ impl Hud {
             _ => l.to_string(),
         };
         let guards = format!("Guards: {}", p.cover);
-        let row_w = |c: &Canvas, px: f32, keys: bool| {
-            [("Let go", &p.free_key), ("Combine", &p.combine_key), ("Split", &p.split_key), (guards.as_str(), &p.cover_key)].iter().map(|(l, k)| c.atlas.measure(Weight::SemiBold, px, &label(l, k, keys)) + 26.0 * s).sum::<f32>()
-        };
+        let none = None;
+        let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
+        // (One list, measured and drawn: the fit first counted four buttons
+        // and #330's Heal, a fifth, then ran over "1 squad" at 150%.)
+        let buttons = [
+            ("Let go", &p.free_key, &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
+            ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
+            ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
+            (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
+            ("Heal", &p.heal_key, &p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
+        ];
+        let row_w = |c: &Canvas, px: f32, keys: bool| buttons.iter().map(|(l, k, ..)| c.atlas.measure(Weight::SemiBold, px, &label(l, k, keys)) + 26.0 * s).sum::<f32>();
         let head_w = c.atlas.measure(Weight::SemiBold, 16.0 * s, &head) + 12.0 * s;
         let (bpx, keys, with_head) = [(13.5, true, true), (12.0, true, true), (12.0, true, false), (12.0, false, false)]
             .into_iter()
@@ -1331,21 +1340,26 @@ impl Hud {
             .find(|&(px, keys, h)| row_w(c, px, keys) + if h { head_w } else { 0.0 } <= inner.w)
             .unwrap_or((12.0 * s, false, false));
         let hw = if with_head { c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT) } else { -12.0 * s };
+        // Nothing left of here: the header word, or the panel's edge.
+        let floor = inner.x + hw + 12.0 * s;
+        // Where they still do not fit, Guards goes first, then Heal (the
+        // review, 11-15: a narrow panel kept Guards and dropped Heal, the
+        // owner's 07:41 order), then Combine.
+        let mut keep = [true; 5];
+        for drop in [3, 4, 1] {
+            let used: f32 = buttons.iter().zip(keep).filter(|(_, k)| *k).map(|((l, k, ..), _)| c.atlas.measure(Weight::SemiBold, bpx, &label(l, k, keys)) + 26.0 * s).sum();
+            if inner.right() - used >= floor {
+                break;
+            }
+            keep[drop] = false;
+        }
         let bh = 22.0 * s;
         let mut bx = inner.right();
         let mut tip: Option<(String, Rect)> = None;
-        let none = None;
-        let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
-        for (label_text, key, off, hit, about) in [
-            ("Let go", &p.free_key, &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
-            ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
-            ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
-            (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
-            ("Heal", &p.heal_key, &p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
-        ] {
+        for ((label_text, key, off, hit, about), _) in buttons.into_iter().zip(keep).filter(|(_, k)| *k) {
             let text = label(label_text, key, keys);
             let w = c.atlas.measure(Weight::SemiBold, bpx, &text) + 20.0 * s;
-            if bx - w < inner.x {
+            if bx - w < floor {
                 continue;
             }
             bx -= w;
@@ -2282,6 +2296,37 @@ mod tests {
                 assert!(screen.1 as f32 - r.hud.bottom <= screen.1 as f32 * 0.34, "{screen:?} at {user}: the bottom bar is too tall");
             }
             assert!(last > Rig::new(screen).hud.scale * 1.3, "{screen:?}: the biggest size grows the HUD");
+        }
+    }
+
+    /// The squad header's buttons, with a gun loaded, at every UI size:
+    /// none overlaps another and all stay in the squad panel, off the gun
+    /// strip (11-15: at 150% the fifth, Heal, ran over "1 squad"; the fit
+    /// had counted four. The header word itself is not in the hits: the
+    /// code keeps buttons right of it, `floor`).
+    #[test]
+    fn the_squad_header_keeps_clear_at_every_size() {
+        let row = |k: &str, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: 4, hp: 0.8, note: Some("holding".into()), active, near: false, linked: false, auto: !active };
+        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit, Hit::SquadCover, Hit::SquadHeal];
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.m.squads = Some(panel.clone());
+                r.m.loadout = Some(loadout());
+                r.c.ui.user = user;
+                r.draw();
+                let tile = r.hud.hits.iter().find(|(_, h)| *h == Hit::Squad(0)).map(|(b, _)| *b).unwrap();
+                let bs: Vec<Rect> = r.hud.hits.iter().filter(|(_, h)| heads.contains(h)).map(|(b, _)| *b).collect();
+                assert!(!bs.is_empty(), "{screen:?} at {user}: no header buttons");
+                for (k, b) in bs.iter().enumerate() {
+                    // (The tiles start at the panel's inner edge, right of the gun strip.)
+                    assert!(b.x >= tile.x - 0.5, "{screen:?} at {user}: a header button {b:?} left of the squad panel ({tile:?})");
+                    for c in &bs[k + 1..] {
+                        assert!(b.right() <= c.x + 0.5 || c.right() <= b.x + 0.5, "{screen:?} at {user}: {b:?} and {c:?} overlap");
+                    }
+                }
+            }
         }
     }
 
