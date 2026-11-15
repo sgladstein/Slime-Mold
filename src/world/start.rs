@@ -294,6 +294,10 @@ pub struct StartMenu {
 /// How far the pointer moves, held down on a card, before a click becomes
 /// a drag (pixels).
 const DRAG_FROM: f32 = 6.0;
+/// A bullet card in the shop, UI units (landscape since the UI review,
+/// 11-15: 78 x 98 before).
+const CARD_W: f32 = 184.0;
+const CARD_H: f32 = 64.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
@@ -607,8 +611,12 @@ impl StartMenu {
         // page's Quit has no second line, 48 units: with the Gun range's row
         // 11-15, counting it at 62 held 150% on a 1280 x 800 window to 1.2x).
         let held = match self.page {
-            Page::Main => 330.0 + 74.0 * self.rows().len() as f32 - 14.0,
-            Page::Missions => 330.0 + 74.0 * self.rows().len() as f32,
+            // (78 a row since the UI review's 66-unit buttons; Quit 50 + 12.
+            // The main page's own frame, title to hint, is about 240 units,
+            // not the 330 the options page keeps: with nine rows 330 held
+            // 150% on a 1280 x 800 window to 1.06x.)
+            Page::Main => 240.0 + 78.0 * self.rows().len() as f32 - 16.0,
+            Page::Missions => 330.0 + 78.0 * self.rows().len() as f32,
             _ => 330.0 + 62.0 * self.options.len() as f32,
         };
         let s = c.ui.px(c.screen).min(sh / held);
@@ -636,7 +644,7 @@ impl StartMenu {
             Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
             Page::Shop => "The run: spend your points, then land",
         };
-        c.text(Weight::Medium, 16.0 * s, (x, 126.0 * s), Align::Left, sub, MUTED);
+        c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
         let top = 160.0 * s;
         let rows = self.rows();
         let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
@@ -655,7 +663,7 @@ impl StartMenu {
             Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "Click takes a card  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back to the range",
             Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
-        c.text_fit(Weight::Medium, 12.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, FAINT);
+        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, MUTED);
     }
 
     fn glass(&mut self, r: Rect, c: &mut Canvas, s: f32) {
@@ -679,12 +687,14 @@ impl StartMenu {
             c.outline(r.inset(-2.0 * s), 12.0 * s, 1.5 * s, ACCENT);
         }
         let pad = 18.0 * s;
+        // (17 and 12.5 until the UI review, 11-15: "the text seems too
+        // small".)
         if sub.is_empty() {
-            c.text(Weight::SemiBold, 17.0 * s, (r.x + pad, r.y + r.h / 2.0 + 6.0 * s), Align::Left, label, TEXT);
+            c.text(Weight::SemiBold, 18.0 * s, (r.x + pad, r.y + r.h / 2.0 + 6.5 * s), Align::Left, label, TEXT);
         } else {
-            c.text(Weight::SemiBold, 17.0 * s, (r.x + pad, r.y + r.h / 2.0 - 2.0 * s), Align::Left, label, TEXT);
+            c.text(Weight::SemiBold, 18.0 * s, (r.x + pad, r.y + r.h / 2.0 - 3.0 * s), Align::Left, label, TEXT);
             let col = if primary { [220, 236, 250, 255] } else { MUTED };
-            c.text_fit(Weight::Medium, 12.5 * s, (r.x + pad, r.y + r.h / 2.0 + 16.0 * s), Align::Left, sub, r.w - 2.0 * pad, col);
+            c.text_fit(Weight::Medium, 14.0 * s, (r.x + pad, r.y + r.h / 2.0 + 17.0 * s), Align::Left, sub, r.w - 2.0 * pad, col);
         }
         self.hits.push((r, hit));
     }
@@ -713,12 +723,12 @@ impl StartMenu {
         items.push(("Quit", String::new(), Hit::Quit, false));
         let mut y = top + 12.0 * s;
         for (label, sub, hit, primary) in items {
-            let h = if sub.is_empty() { 48.0 * s } else { 62.0 * s };
-            self.item(Rect::new(x, y, w.min(420.0 * s), h), label, &sub, hit, primary, focus == Some(hit), c, s);
+            let h = if sub.is_empty() { 50.0 * s } else { 66.0 * s };
+            self.item(Rect::new(x, y, w.min(500.0 * s), h), label, &sub, hit, primary, focus == Some(hit), c, s);
             y += h + 12.0 * s;
         }
         if let Some(n) = self.notice.clone() {
-            c.text_fit(Weight::Medium, 13.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
+            c.text_fit(Weight::Medium, 14.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
         }
     }
 
@@ -730,7 +740,7 @@ impl StartMenu {
         let h = (room / (n.max(1) as f32) - 10.0 * s).clamp(52.0 * s, 78.0 * s);
         let mut y = top + 12.0 * s;
         if n == 0 {
-            c.text(Weight::Medium, 15.0 * s, (x, y + 24.0 * s), Align::Left, "No missions found", MUTED);
+            c.text(Weight::Medium, 16.0 * s, (x, y + 24.0 * s), Align::Left, "No missions found", MUTED);
             y += 48.0 * s;
         }
         for i in 0..n {
@@ -738,7 +748,7 @@ impl StartMenu {
             let r = Rect::new(x, y, w, h);
             self.item(r, &format!("{}. {}", i + 1, e.name), &e.says, Hit::Mission(i), false, focus == Some(Hit::Mission(i)), c, s);
             if !e.detail.is_empty() && h >= 70.0 * s {
-                c.text_fit(Weight::Medium, 11.5 * s, (r.right() - 18.0 * s, r.y + 22.0 * s), Align::Right, &e.detail, r.w * 0.4, FAINT);
+                c.text_fit(Weight::Medium, 13.0 * s, (r.right() - 18.0 * s, r.y + 24.0 * s), Align::Right, &e.detail, r.w * 0.4, MUTED);
             }
             y += h + 10.0 * s;
         }
@@ -746,6 +756,9 @@ impl StartMenu {
     }
 
     fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) {
+        // Wider than the other pages (560 until the UI review, 11-15):
+        // every note was cut off after half the row.
+        let w = (w * 1.4).min(c.screen.0 as f32 - 2.0 * x);
         let n = self.options.len();
         let rh = 62.0 * s;
         let panel = Rect::new(x, top + 12.0 * s, w, n as f32 * rh + 24.0 * s);
@@ -764,14 +777,14 @@ impl StartMenu {
             }
             self.hits.push((row, Hit::Reset(i)));
             let lx = row.x + 14.0 * s;
-            c.text(Weight::SemiBold, 15.5 * s, (lx, row.y + 24.0 * s), Align::Left, &o.label, TEXT);
-            c.text_fit(Weight::Medium, 12.0 * s, (lx, row.y + 44.0 * s), Align::Left, &o.note, row.w * 0.52, MUTED);
             // The value between its arrows, the default under it.
             let aw = 30.0 * s;
             let vw = 150.0 * s;
             let right = row.right() - 10.0 * s;
             let next = Rect::new(right - aw, row.y + 6.0 * s, aw, 28.0 * s);
             let prev = Rect::new(next.x - vw - aw, next.y, aw, 28.0 * s);
+            c.text(Weight::SemiBold, 16.5 * s, (lx, row.y + 24.0 * s), Align::Left, &o.label, TEXT);
+            c.text_fit(Weight::Medium, 13.5 * s, (lx, row.y + 45.0 * s), Align::Left, &o.note, prev.x - lx - 16.0 * s, MUTED);
             for (r, by, label) in [(prev, -1isize, "<"), (next, 1, ">")] {
                 let hot = self.hover.is_some_and(|p| r.contains(p));
                 c.panel(r, 7.0 * s, if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP }, if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM }, 1.0, [255, 255, 255, 30]);
@@ -781,11 +794,11 @@ impl StartMenu {
             let vc = if o.is_default() { TEXT } else { WARN };
             c.text_fit(Weight::SemiBold, 15.0 * s, (prev.right() + vw / 2.0, row.y + 26.0 * s), Align::Centre, o.value(), vw - 8.0 * s, vc);
             let d = if o.is_default() { "default".to_string() } else { format!("default {}", o.choices[o.default]) };
-            c.text_fit(Weight::Medium, 11.5 * s, (prev.right() + vw / 2.0, row.y + 48.0 * s), Align::Centre, &d, vw + 2.0 * aw, if o.is_default() { FAINT } else { MUTED });
+            c.text_fit(Weight::Medium, 12.5 * s, (prev.right() + vw / 2.0, row.y + 49.0 * s), Align::Centre, &d, vw + 2.0 * aw, if o.is_default() { FAINT } else { MUTED });
             y += rh;
         }
         // The defaults move as the game is tuned (D5: "applies to this build").
-        c.text_fit(Weight::Medium, 12.0 * s, (x, panel.bottom() + 20.0 * s), Align::Left, "Defaults are this build's; they move as the game is tuned", w, FAINT);
+        c.text_fit(Weight::Medium, 13.0 * s, (x, panel.bottom() + 20.0 * s), Align::Left, "Defaults are this build's; they move as the game is tuned", w, MUTED);
         let by = panel.bottom() + 34.0 * s;
         self.item(Rect::new(x, by, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, focus == Some(Hit::Back), c, s);
         self.item(Rect::new(x + 152.0 * s, by, 200.0 * s, 42.0 * s), "All to defaults", "", Hit::ResetAll, false, focus == Some(Hit::ResetAll), c, s);
@@ -799,14 +812,20 @@ impl StartMenu {
     /// opening a folder does not move the rest.
     fn shop_plan(&self, shop: &Shop, screen: (f32, f32), x: f32, top: f32, s: f32, foot: f32) -> ShopPlan {
         let (sw, sh) = screen;
-        let (t, g, p, head) = (60.0 * s, 6.0 * s, 14.0 * s, 26.0 * s);
+        // Sizes from the UI review (11-15, "the text seems too small ...
+        // not always making the best use of space"): tiles 60 -> 78 with
+        // their names at 12.5, not 9.5 (which the fit shrank to 7.5); the
+        // bullet cards 78 x 98 portrait -> 184 x 64 landscape, as the
+        // armory had width to spare and ran out of height (the page shrank
+        // to fit, so taller cards only made every word smaller).
+        let (t, g, p, head) = (78.0 * s, 7.0 * s, 14.0 * s, 30.0 * s);
         let cols = 6usize;
         let left_w = 2.0 * p + cols as f32 * t + (cols - 1) as f32 * g;
         let pages = std::iter::once(shop.rows.iter().filter(|r| r.area == ShopArea::Upgrades).count() + self.folders().len())
             .chain(self.folders().into_iter().map(|f| 1 + shop.rows.iter().filter(|r| r.area == ShopArea::Folder && r.group == f).count()));
         let grid_rows = pages.max().unwrap_or(1).div_ceil(cols).max(1);
         let grid_h = grid_rows as f32 * t + (grid_rows - 1) as f32 * g;
-        let detail_h = 116.0 * s;
+        let detail_h = 136.0 * s;
         let left = Rect::new(x, top, left_w, head + 8.0 * s + grid_h + 12.0 * s + detail_h + p);
         let mut tiles = Vec::new();
         for (k, h) in self.grid().into_iter().enumerate() {
@@ -816,13 +835,13 @@ impl StartMenu {
         let detail = Rect::new(left.x + p, left.y + head + 8.0 * s + grid_h + 12.0 * s, left_w - 2.0 * p, detail_h);
         // The armory: what is left of the width.
         let rx = left.right() + 16.0 * s;
-        let rw = (sw - x - rx).min(980.0 * s);
-        let (gw, gh) = (226.0 * s, 146.0 * s);
-        let (cw, ch) = (78.0 * s, 98.0 * s);
+        let rw = sw - x - rx;
+        let (gw, gh) = (262.0 * s, 166.0 * s);
+        let (cw, ch) = (CARD_W * s, CARD_H * s);
         let mut heads = Vec::new();
         let (x0, x1) = (rx + p, rx + rw - p);
         let mut y = top + head + 8.0 * s;
-        heads.push(((x0, top + 22.0 * s), "Guns".to_string()));
+        heads.push(((x0, top + 24.0 * s), "Guns".to_string()));
         // Lays `n` boxes `w` by `h` in rows from `y`; returns them and the
         // height used.
         let flow = |n: usize, w: f32, h: f32, y: f32| -> (Vec<Rect>, f32) {
@@ -838,7 +857,7 @@ impl StartMenu {
         // The carried gun's slots, the cards in it first.
         let on: Vec<usize> = shop.rows.iter().enumerate().filter(|(_, r)| r.area == ShopArea::Cards && r.on).map(|(i, _)| i).collect();
         let n_slots = (shop.slots as usize).max(on.len());
-        heads.push(((x0, y + 16.0 * s), format!("In the gun, fired left to right  ·  budget {} of {}  ·  {} of {} slots", shop.budget.0, shop.budget.1, on.len(), shop.slots)));
+        heads.push(((x0, y + 19.0 * s), format!("In the gun, fired left to right  ·  budget {} of {}  ·  {} of {} slots", shop.budget.0, shop.budget.1, on.len(), shop.slots)));
         y += head;
         let (rects, used) = flow(n_slots, cw, ch, y);
         let slots: Vec<(Rect, Option<usize>)> = rects.into_iter().enumerate().map(|(k, r)| (r, on.get(k).copied())).collect();
@@ -846,7 +865,7 @@ impl StartMenu {
         let mut cards = Vec::new();
         let bag_top = y;
         for (name, idx) in self.card_groups() {
-            heads.push(((x0, y + 16.0 * s), name));
+            heads.push(((x0, y + 19.0 * s), name));
             y += head;
             let (rects, used) = flow(idx.len(), cw, ch, y);
             cards.extend(rects.into_iter().zip(idx));
@@ -870,19 +889,19 @@ impl StartMenu {
     fn shop_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
         let Some(shop) = self.shop.clone() else { return };
-        c.text_fit(Weight::SemiBold, 18.0 * s, (x, top + 14.0 * s), Align::Left, &shop.heading, sw - 2.0 * x - 160.0 * s, TEXT);
-        let mut y = top + 36.0 * s;
+        c.text_fit(Weight::SemiBold, 20.0 * s, (x, top + 15.0 * s), Align::Left, &shop.heading, sw - 2.0 * x - 200.0 * s, TEXT);
+        let mut y = top + 38.0 * s;
         for l in &shop.lines {
-            c.text_fit(Weight::Medium, 13.0 * s, (x, y), Align::Left, l, sw - 2.0 * x, MUTED);
-            y += 19.0 * s;
+            c.text_fit(Weight::Medium, 14.5 * s, (x, y), Align::Left, l, sw - 2.0 * x, MUTED);
+            y += 21.0 * s;
         }
-        c.text(Weight::SemiBold, 18.0 * s, (sw - x, top + 14.0 * s), Align::Right, &shop.purse, ACCENT);
+        c.text(Weight::SemiBold, 22.0 * s, (sw - x, top + 16.0 * s), Align::Right, &shop.purse, ACCENT);
         // The layout starts a little over the UI's own size (the menu's
         // `s` is held down for the options page, which the shop is not)
         // and shrinks until both areas fit above the buttons.
         let body = y + 2.0 * s;
         let foot_s = s;
-        let mut k = (c.ui.px(c.screen) * 1.2).max(s);
+        let mut k = (c.ui.px(c.screen) * 1.3).max(s);
         let plan = loop {
             let plan = self.shop_plan(&shop, (sw, sh), x, body, k, 108.0 * foot_s);
             if plan.fits || k < 0.3 {
@@ -898,9 +917,9 @@ impl StartMenu {
             None if shop.range => "The range".to_string(),
             None => "Upgrades".to_string(),
         };
-        c.text(Weight::SemiBold, 13.0 * s, (plan.left.x + 14.0 * s, plan.left.y + 22.0 * s), Align::Left, &title, FAINT);
+        c.text(Weight::SemiBold, 14.5 * s, (plan.left.x + 14.0 * s, plan.left.y + 24.0 * s), Align::Left, &title, MUTED);
         for (at, h) in &plan.heads {
-            c.text_fit(Weight::SemiBold, 13.0 * s, *at, Align::Left, h, plan.right.w - 28.0 * s, FAINT);
+            c.text_fit(Weight::SemiBold, 14.5 * s, *at, Align::Left, h, plan.right.w - 28.0 * s, MUTED);
         }
         let hot = |r: Rect| self.hover.is_some_and(|p| r.contains(p));
         // What the detail box describes: the tile under the cursor, else
@@ -955,12 +974,12 @@ impl StartMenu {
                     }
                     c.rrect(r, 9.0 * s, [255, 255, 255, 6]);
                     c.outline(r, 9.0 * s, 1.0, [255, 255, 255, 30]);
-                    c.text(Weight::Medium, 10.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 4.0 * s), Align::Centre, "empty", FAINT);
+                    c.text(Weight::Medium, 13.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 4.5 * s), Align::Centre, "empty", FAINT);
                     self.hits.push((r, Hit::Slot(k)));
                 }
             }
             // Its place in the firing order.
-            c.text(Weight::SemiBold, 9.5 * s, (r.x + 7.0 * s, r.y + 22.0 * s), Align::Left, &format!("{}", k + 1), with_alpha(TEXT, 0.55));
+            c.text(Weight::SemiBold, 12.0 * s, (r.x + 8.0 * s, r.y + 19.0 * s), Align::Left, &format!("{}", k + 1), with_alpha(TEXT, 0.6));
         }
         for &(r, i) in &plan.cards {
             if hot(r) {
@@ -988,7 +1007,7 @@ impl StartMenu {
                 Some(_) => c.outline(plan.bag.inset(4.0 * s), 12.0 * s, 2.0 * s, with_alpha(ACCENT, 0.7)),
                 None => {}
             }
-            let (w, h) = plan.slots.first().map_or((78.0 * s, 98.0 * s), |x| (x.0.w, x.0.h));
+            let (w, h) = plan.slots.first().map_or((CARD_W * s, CARD_H * s), |x| (x.0.w, x.0.h));
             let r = Rect::new(p.0 - w / 2.0, p.1 - h * 0.4, w, h);
             c.rrect(Rect::new(r.x + 4.0 * s, r.y + 6.0 * s, w, h), 10.0 * s, [0, 0, 0, 110]);
             self.bullet_card(&shop.rows[i], r, true, false, c, s);
@@ -1026,22 +1045,32 @@ impl StartMenu {
     fn tile(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         let owned = row.level.1 > 0 && row.level.0 >= row.level.1;
         self.face(r, row.ready || owned, false, hot, focused, c, s);
-        let dim = if row.ready || owned { 1.0 } else { 0.42 };
-        let ic = 24.0 * s;
+        let dim: f32 = if row.ready || owned { 1.0 } else { 0.42 };
+        // A long name ("More cards on the gun") goes on two lines under a
+        // smaller icon rather than shrinking to nothing.
+        let ink = with_alpha(TEXT, dim.max(0.6));
+        let room = r.w - 8.0 * s;
+        let lines = if c.atlas.measure(Weight::SemiBold, 11.5 * s, &row.name) > room - 2.0 * s { c.wrap(Weight::SemiBold, 11.5 * s, room, &row.name) } else { vec![row.name.clone()] };
+        let ic = if lines.len() > 1 { 22.0 * s } else { 28.0 * s };
         c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 8.0 * s), ic, with_alpha(if owned { GOOD } else { row.tint }, dim));
-        let px = fit_px(c, &row.name, 9.5 * s, 7.5 * s, r.w - 6.0 * s);
-        c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 44.0 * s), Align::Centre, &row.name, r.w - 6.0 * s, with_alpha(TEXT, dim.max(0.6)));
+        if lines.len() > 1 {
+            c.text_fit(Weight::SemiBold, 11.5 * s, (r.x + r.w / 2.0, r.y + 44.0 * s), Align::Centre, &lines[0], room, ink);
+            c.text_fit(Weight::SemiBold, 11.5 * s, (r.x + r.w / 2.0, r.y + 57.0 * s), Align::Centre, &lines[1..].join(" "), room, ink);
+        } else {
+            let px = fit_px(c, &row.name, 12.5 * s, 11.5 * s, room - 2.0 * s);
+            c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 54.0 * s), Align::Centre, &row.name, room, ink);
+        }
         if row.level.1 > 1 {
-            let d = 4.0 * s;
+            let d = 5.0 * s;
             for k in 0..row.level.1 {
-                let at = Rect::new(r.x + 5.0 * s + k as f32 * (d + 2.0 * s), r.bottom() - 9.0 * s, d, d);
+                let at = Rect::new(r.x + 6.0 * s + k as f32 * (d + 2.5 * s), r.bottom() - 11.0 * s, d, d);
                 c.rrect(at, d / 2.0, if k < row.level.0 { ACCENT } else { [255, 255, 255, 40] });
             }
         }
         if owned {
-            c.icon(Icon::Check, (r.right() - 14.0 * s, r.y + 4.0 * s), 10.0 * s, GOOD);
+            c.icon(Icon::Check, (r.right() - 17.0 * s, r.y + 5.0 * s), 13.0 * s, GOOD);
         } else if !row.price.is_empty() {
-            c.text(Weight::SemiBold, 9.5 * s, (r.right() - 4.0 * s, r.bottom() - 4.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
+            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 5.0 * s, r.bottom() - 5.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
         }
     }
 
@@ -1051,12 +1080,12 @@ impl StartMenu {
     fn folder_tile(&self, name: &str, icon: Icon, any: bool, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
         self.face(r, true, false, hot, focused, c, s);
         c.outline(r.inset(3.0 * s), 7.0 * s, 1.0, [96, 190, 255, 60]);
-        let ic = 24.0 * s;
-        c.icon(icon, (r.x + (r.w - ic) / 2.0, r.y + 8.0 * s), ic, ACCENT);
-        c.text_fit(Weight::SemiBold, 9.5 * s, (r.x + r.w / 2.0, r.y + 44.0 * s), Align::Centre, name, r.w - 6.0 * s, TEXT);
-        c.text(Weight::SemiBold, 11.0 * s, (r.right() - 6.0 * s, r.bottom() - 4.0 * s), Align::Right, if name == "Back" { "‹" } else { "›" }, MUTED);
+        let ic = 28.0 * s;
+        c.icon(icon, (r.x + (r.w - ic) / 2.0, r.y + 9.0 * s), ic, ACCENT);
+        c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + r.w / 2.0, r.y + 54.0 * s), Align::Centre, name, r.w - 6.0 * s, TEXT);
+        c.text(Weight::SemiBold, 14.0 * s, (r.right() - 6.0 * s, r.bottom() - 4.0 * s), Align::Right, if name == "Back" { "‹" } else { "›" }, MUTED);
         if any {
-            c.rrect(Rect::new(r.right() - 11.0 * s, r.y + 5.0 * s, 6.0 * s, 6.0 * s), 3.0 * s, ENERGY);
+            c.rrect(Rect::new(r.right() - 13.0 * s, r.y + 6.0 * s, 7.0 * s, 7.0 * s), 3.5 * s, ENERGY);
         }
     }
 
@@ -1067,22 +1096,22 @@ impl StartMenu {
         self.face(r, row.ready, row.on, hot, focused, c, s);
         let p = 12.0 * s;
         let dim = if row.ready || row.on { 1.0 } else { 0.5 };
-        let ic = 30.0 * s;
+        let ic = 34.0 * s;
         c.icon(row.icon, (r.x + p, r.y + p), ic, with_alpha(row.tint, dim));
-        c.text_fit(Weight::SemiBold, 14.5 * s, (r.x + p + ic + 10.0 * s, r.y + p + 13.0 * s), Align::Left, &row.name, r.w - 2.0 * p - ic - 10.0 * s, with_alpha(TEXT, dim.max(0.6)));
+        c.text_fit(Weight::SemiBold, 17.0 * s, (r.x + p + ic + 10.0 * s, r.y + p + 14.0 * s), Align::Left, &row.name, r.w - 2.0 * p - ic - 10.0 * s, with_alpha(TEXT, dim.max(0.6)));
         let (tag, col) = if !row.price.is_empty() {
             (format!("{}  ·  {}", row.price, row.state), if row.ready { ACCENT } else { BAD })
         } else {
             (row.state.clone(), if row.on { GOOD } else { MUTED })
         };
-        c.text_fit(Weight::Medium, 11.0 * s, (r.x + p + ic + 10.0 * s, r.y + p + 29.0 * s), Align::Left, &tag, r.w - 2.0 * p - ic - 10.0 * s, col);
-        let mut y = r.y + 56.0 * s;
-        let step = ((r.bottom() - p - y) / row.bars.len().max(1) as f32).min(16.0 * s);
+        c.text_fit(Weight::Medium, 13.5 * s, (r.x + p + ic + 10.0 * s, r.y + p + 33.0 * s), Align::Left, &tag, r.w - 2.0 * p - ic - 10.0 * s, col);
+        let mut y = r.y + 66.0 * s;
+        let step = ((r.bottom() - p - y + 6.0 * s) / row.bars.len().max(1) as f32).min(19.0 * s);
         for (label, f, value) in &row.bars {
-            c.text(Weight::Medium, 10.0 * s, (r.x + p, y + 4.0 * s), Align::Left, label, FAINT);
-            let bar = Rect::new(r.x + p + 50.0 * s, y - 1.0 * s, r.w - 2.0 * p - 50.0 * s - 46.0 * s, 5.0 * s);
+            c.text(Weight::Medium, 12.5 * s, (r.x + p, y + 4.5 * s), Align::Left, label, MUTED);
+            let bar = Rect::new(r.x + p + 62.0 * s, y - 1.0 * s, r.w - 2.0 * p - 62.0 * s - 52.0 * s, 6.0 * s);
             c.bar(bar, *f, with_alpha(row.tint, 0.85 * dim), [255, 255, 255, 22]);
-            c.text(Weight::SemiBold, 10.0 * s, (r.right() - p, y + 4.0 * s), Align::Right, value, with_alpha(TEXT, dim.max(0.6)));
+            c.text(Weight::SemiBold, 12.5 * s, (r.right() - p, y + 4.5 * s), Align::Right, value, with_alpha(TEXT, dim.max(0.6)));
             y += step;
         }
     }
@@ -1091,25 +1120,32 @@ impl StartMenu {
     /// budget cost as pips and its price.
     #[allow(clippy::too_many_arguments)]
     fn bullet_card(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
+        // Landscape since the UI review (11-15): the icon at the left, the
+        // name, its budget cost as pips and its price beside it.
         self.face(r, row.ready, row.on, hot, focused, c, s);
         let dim = if row.ready || row.on { 1.0 } else { 0.45 };
-        c.rrect(Rect::new(r.x + 6.0 * s, r.y + 5.0 * s, r.w - 12.0 * s, 4.0 * s), 2.0 * s, with_alpha(row.tint, 0.9 * dim));
-        let ic = 28.0 * s;
-        c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 18.0 * s), ic, with_alpha(row.tint, dim));
+        c.rrect(Rect::new(r.x + 6.0 * s, r.y + 4.0 * s, r.w - 12.0 * s, 3.0 * s), 1.5 * s, with_alpha(row.tint, 0.9 * dim));
+        let ic = 30.0 * s;
+        c.icon(row.icon, (r.x + 22.0 * s, r.y + (r.h - ic) / 2.0 + 3.0 * s), ic, with_alpha(row.tint, dim));
+        let tx = r.x + 22.0 * s + ic + 10.0 * s;
+        let mut room = r.right() - 8.0 * s - tx;
         if let Some(b) = row.badge {
-            let bs = 14.0 * s;
-            c.icon(b, (r.right() - bs - 5.0 * s, r.y + 13.0 * s), bs, with_alpha(TEXT, 0.85 * dim.max(0.6)));
+            let bs = 15.0 * s;
+            c.icon(b, (r.right() - bs - 7.0 * s, r.y + 12.0 * s), bs, with_alpha(TEXT, 0.85 * dim.max(0.6)));
+            room -= bs + 4.0 * s;
         }
-        c.text_fit(Weight::SemiBold, 11.0 * s, (r.x + r.w / 2.0, r.y + 62.0 * s), Align::Centre, &row.name, r.w - 8.0 * s, with_alpha(TEXT, dim.max(0.6)));
-        let d = 5.0 * s;
+        let px = fit_px(c, &row.name, 13.5 * s, 11.5 * s, room);
+        c.text_fit(Weight::SemiBold, px, (tx, r.y + 28.0 * s), Align::Left, &row.name, room, with_alpha(TEXT, dim.max(0.6)));
+        let d = 6.0 * s;
+        let foot = r.bottom() - 13.0 * s;
         for k in 0..row.cost.min(6) {
-            c.rrect(Rect::new(r.x + 7.0 * s + k as f32 * (d + 2.0 * s), r.bottom() - 11.0 * s, d, d), d / 2.0, with_alpha(ENERGY, 0.85 * dim.max(0.6)));
+            c.rrect(Rect::new(tx + k as f32 * (d + 2.5 * s), foot - d / 2.0 - 4.0 * s, d, d), d / 2.0, with_alpha(ENERGY, 0.85 * dim.max(0.6)));
         }
         if row.cost == 0 {
-            c.text(Weight::Medium, 9.0 * s, (r.x + 7.0 * s, r.bottom() - 6.0 * s), Align::Left, "free", FAINT);
+            c.text(Weight::Medium, 12.0 * s, (tx, foot), Align::Left, "free", MUTED);
         }
         if !row.price.is_empty() {
-            c.text(Weight::SemiBold, 10.5 * s, (r.right() - 6.0 * s, r.bottom() - 6.0 * s), Align::Right, &row.price, if row.ready { ACCENT } else { BAD });
+            c.text(Weight::SemiBold, 13.5 * s, (r.right() - 8.0 * s, foot), Align::Right, &row.price, if row.ready { ACCENT } else { BAD });
         }
     }
 
@@ -1132,14 +1168,14 @@ impl StartMenu {
             Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "Drag a card here.".into(), String::new(), String::new(), true),
             _ => ("Point at a tile".into(), "The gun fires its cards left to right. Drag a card to a slot to move it; click a card to take it out or put it in.".into(), String::new(), String::new(), true),
         };
-        c.text_fit(Weight::SemiBold, 15.0 * s, (r.x + p, r.y + 22.0 * s), Align::Left, &name, r.w - 2.0 * p - 120.0 * s, TEXT);
+        c.text_fit(Weight::SemiBold, 17.0 * s, (r.x + p, r.y + 24.0 * s), Align::Left, &name, r.w - 2.0 * p - 150.0 * s, TEXT);
         let tag = if price.is_empty() { state } else if state.is_empty() { format!("{price} points") } else { format!("{price} points  ·  {state}") };
-        c.text_fit(Weight::SemiBold, 12.0 * s, (r.right() - p, r.y + 22.0 * s), Align::Right, &tag, 120.0 * s, if !price.is_empty() && !ready { BAD } else { ACCENT });
-        let lead = 16.0 * s;
-        let lines = c.wrap(Weight::Medium, 12.0 * s, r.w - 2.0 * p, &about);
-        let room = ((r.h - 34.0 * s) / lead).floor().max(1.0) as usize;
+        c.text_fit(Weight::SemiBold, 14.0 * s, (r.right() - p, r.y + 24.0 * s), Align::Right, &tag, 150.0 * s, if !price.is_empty() && !ready { BAD } else { ACCENT });
+        let lead = 19.5 * s;
+        let lines = c.wrap(Weight::Medium, 14.0 * s, r.w - 2.0 * p, &about);
+        let room = ((r.h - 38.0 * s) / lead).floor().max(1.0) as usize;
         for (k, l) in lines.iter().take(room).enumerate() {
-            c.text(Weight::Medium, 12.0 * s, (r.x + p, r.y + 42.0 * s + k as f32 * lead), Align::Left, l, MUTED);
+            c.text(Weight::Medium, 14.0 * s, (r.x + p, r.y + 48.0 * s + k as f32 * lead), Align::Left, l, MUTED);
         }
     }
 
@@ -1147,11 +1183,13 @@ impl StartMenu {
         let sh = c.screen.1 as f32;
         let rows = self.keys.clone();
         // Two columns when one does not fit.
-        let lh = 22.0 * s;
+        let lh = 26.0 * s;
         let room = sh - top - 130.0 * s;
         let per = ((room - 24.0 * s) / lh).floor().max(1.0) as usize;
         let cols = if rows.len() > per { 2 } else { 1 };
-        let col_w = if cols == 1 { w } else { (w * 1.6).min(c.screen.0 as f32 - 2.0 * x) / 2.0 };
+        // Two wide columns (1.6 x the page until the UI review, 11-15, which
+        // cut most lines short).
+        let col_w = if cols == 1 { w } else { (w * 2.5).min(c.screen.0 as f32 - 2.0 * x) / 2.0 };
         let per = rows.len().div_ceil(cols);
         let panel = Rect::new(x, top + 12.0 * s, col_w * cols as f32, per as f32 * lh + 30.0 * s);
         self.glass(panel, c, s);
@@ -1159,9 +1197,9 @@ impl StartMenu {
             let (col, row) = (k / per.max(1), k % per.max(1));
             let cx = panel.x + 20.0 * s + col as f32 * col_w;
             let y = panel.y + 28.0 * s + row as f32 * lh;
-            let kw = (col_w * 0.34).min(170.0 * s);
-            c.text_fit(Weight::SemiBold, 13.0 * s, (cx, y), Align::Left, key, kw - 8.0 * s, ACCENT);
-            c.text_fit(Weight::Medium, 13.0 * s, (cx + kw, y), Align::Left, what, col_w - kw - 28.0 * s, TEXT);
+            let kw = (col_w * 0.34).min(190.0 * s);
+            c.text_fit(Weight::SemiBold, 15.0 * s, (cx, y), Align::Left, key, kw - 8.0 * s, ACCENT);
+            c.text_fit(Weight::Medium, 15.0 * s, (cx + kw, y), Align::Left, what, col_w - kw - 28.0 * s, TEXT);
         }
         self.item(Rect::new(x, panel.bottom() + 16.0 * s, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, true, c, s);
     }
