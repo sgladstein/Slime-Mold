@@ -38,7 +38,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 6] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken"];
+const ENGINE_OPTS: [&str; 7] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -92,6 +92,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // `BigParams::thicken`): on in shape C at 2, a birth's energy
         // twice over.
         ("thicken", "Thicken", &["0", "1.5", "2", "3"][..], "Slime fed past what it can spread into thickens in place (bronze, twice as tough), so holding crystals makes it stronger; 0 is off"),
+        // The body surges (11-15, `BigParams::surge_every`): steps between
+        // surges (30 a second); on in shape C at 900 (30 s).
+        ("surge", "Surge", &["0", "600", "900", "1800"][..], "Every so often the slime near your soldiers and buildings creeps toward them, then lunges; steps between surges (900 is 30 s); 0 is off"),
         // Plants (11-14, `mould::plants`): on by default; a stand-in
         // field on maps without their own. Fire from blasts and scorch
         // rounds burns through them.

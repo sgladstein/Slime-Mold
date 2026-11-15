@@ -67,7 +67,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (232 words).
-pub const PARAMS_BYTES: usize = 944;
+pub const PARAMS_BYTES: usize = 960;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -89,6 +89,10 @@ pub const ROAM_AT: usize = 912;
 /// deep water's step (`BigParams::deep_step`), then three words kept for
 /// the next ground kinds.
 pub const GROUND_AT: usize = 928;
+/// The surge row (`BigParams::surge_every`, 11-15, the slime-enemy thread;
+/// Params grew from 944 to 960): the steps between surges, the creep's and
+/// the lunge's steps, the lunge's haste.
+pub const SURGE_AT: usize = 944;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -445,6 +449,14 @@ pub struct Settings {
     /// 11-15): its energy as a multiple of a birth's, 0 off; needs growth.
     /// The GPU holds it in tenths, at most 25.5 (`ccrowd`'s top byte).
     pub thicken: f32,
+    /// The body surges (`BigParams::surge_every`, `surge_lean`,
+    /// `surge_dash`, `surge_haste`; 11-15): steps between surges (0 off),
+    /// the creep's and the lunge's steps, the lunge's haste; the reach is
+    /// `panic_r`.
+    pub surge_every: u32,
+    pub surge_lean: u32,
+    pub surge_dash: u32,
+    pub surge_haste: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -610,6 +622,10 @@ impl Settings {
             roam_far: t.roam_far,
             roam_share: t.roam_share,
             thicken: t.thicken,
+            surge_every: t.surge_every,
+            surge_lean: t.surge_lean,
+            surge_dash: t.surge_dash,
+            surge_haste: t.surge_haste,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -868,6 +884,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "condense_crowd" => s.condense_crowd = int()?,
         "condense_r" => s.condense_r = int()?.clamp(1, 8) as u8,
         "thicken" => s.thicken = f()?.clamp(0.0, 25.5),
+        "surge" => s.surge_every = int()?,
+        "surge_lean" => s.surge_lean = int()?.min(crate::mould::big::SURGE_MAX),
+        "surge_dash" => s.surge_dash = int()?.min(crate::mould::big::SURGE_MAX),
+        "surge_haste" => s.surge_haste = f()?,
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
         "roam_far" => s.roam_far = f()?,
         "roam_share" => s.roam_share = f()?,
@@ -1022,6 +1042,10 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         roam_far: s.roam_far,
         roam_share: s.roam_share,
         thicken: s.thicken,
+        surge_every: s.surge_every,
+        surge_lean: s.surge_lean,
+        surge_dash: s.surge_dash,
+        surge_haste: s.surge_haste,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1973,6 +1997,10 @@ impl Engine {
         b.extend(f32_bytes(&[s.roam_share]));
         assert_eq!(b.len(), GROUND_AT, "Params rows before the ground row moved");
         b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
+        assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
+        let sm = crate::mould::big::SURGE_MAX;
+        b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm), s.surge_dash.min(sm)]));
+        b.extend(f32_bytes(&[s.surge_haste]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food

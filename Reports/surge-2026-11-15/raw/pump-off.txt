@@ -1,0 +1,109 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 6.97 ms (once a game second), model and HUD 0.313 ms a frame
+  t 15 s: mould 22935, soldiers 8, bank 965, harvested 542, shots 189, killed 1745, took 94%, crystals left 0.981; squad at 327.7,142.5
+  dense: 340 condensed or thick walkers, mass 23275
+  squad: touching 0.0 mean, 0 most; health 86 mean
+    pump at (165, 150): hp 180 / 200, built 1.0, standing, working
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 155 / 200, built 1.0, standing, working
+    pump at (450, 225): hp 153 / 200, built 1.0, standing, working
+    pumped 542 food
+  CPU: ground field 6.22 ms (once a game second), model and HUD 0.139 ms a frame
+  t 30 s: mould 22604, soldiers 8, bank 1360, harvested 937, shots 330, killed 2569, took 92%, crystals left 0.967; squad at 292.5,126.1
+  dense: 805 condensed or thick walkers, mass 23409
+  squad: touching 0.2 mean, 1 most; health 72 mean
+    pump at (165, 150): hp 123 / 200, built 1.0, standing, working
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 41 / 200, built 1.0, standing, working
+    pumped 937 food
+  CPU: ground field 2.16 ms (once a game second), model and HUD 1.104 ms a frame
+  t 45 s: mould 23165, soldiers 8, bank 1598, harvested 1175, shots 492, killed 3048, took 89%, crystals left 0.957; squad at 330.0,142.9
+  dense: 1197 condensed or thick walkers, mass 24362
+  squad: touching 0.5 mean, 3 most; health 54 mean
+    pump at (165, 150): hp 46 / 200, built 1.0, standing, working
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1175 food
+  CPU: ground field 5.38 ms (once a game second), model and HUD 0.107 ms a frame
+  t 60 s: mould 24754, soldiers 8, bank 1675, harvested 1252, shots 658, killed 3448, took 85%, crystals left 0.952; squad at 330.0,142.9
+  dense: 1661 condensed or thick walkers, mass 26415
+  squad: touching 0.4 mean, 1 most; health 40 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.40 ms (once a game second), model and HUD 0.237 ms a frame
+  t 75 s: mould 27271, soldiers 6, bank 1675, harvested 1252, shots 820, killed 3837, took 78%, crystals left 0.948; squad at 330.0,142.9
+  dense: 2780 condensed or thick walkers, mass 30051
+  squad: touching 0.7 mean, 3 most; health 38 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 5.41 ms (once a game second), model and HUD 0.269 ms a frame
+  t 90 s: mould 20125, soldiers 5, bank 1682, harvested 1252, shots 947, killed 4068, took 72%, crystals left 0.943; squad at 330.0,142.9
+  dense: 4214 condensed or thick walkers, mass 24339
+  squad: touching 0.0 mean, 0 most; health 38 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.55 ms (once a game second), model and HUD 0.106 ms a frame
+  t 105 s: mould 20078, soldiers 4, bank 1682, harvested 1252, shots 1062, killed 4312, took 66%, crystals left 0.938; squad at 330.0,142.9
+  dense: 5425 condensed or thick walkers, mass 25503
+  squad: touching 0.8 mean, 2 most; health 39 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.90 ms (once a game second), model and HUD 0.086 ms a frame
+  t 120 s: mould 22359, soldiers 4, bank 1682, harvested 1252, shots 1174, killed 4571, took 61%, crystals left 0.933; squad at 330.0,142.9
+  dense: 6476 condensed or thick walkers, mass 28835
+  squad: touching 0.2 mean, 1 most; health 30 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.24 ms (once a game second), model and HUD 0.090 ms a frame
+  t 135 s: mould 24591, soldiers 4, bank 1682, harvested 1252, shots 1290, killed 4839, took 57%, crystals left 0.928; squad at 330.0,142.9
+  dense: 7394 condensed or thick walkers, mass 31985
+  squad: touching 0.5 mean, 1 most; health 22 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.34 ms (once a game second), model and HUD 0.192 ms a frame
+  t 150 s: mould 26814, soldiers 3, bank 1682, harvested 1252, shots 1380, killed 5108, took 54%, crystals left 0.924; squad at 329.5,142.2
+  dense: 8234 condensed or thick walkers, mass 35048
+  squad: touching 0.3 mean, 1 most; health 18 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 3.32 ms (once a game second), model and HUD 0.159 ms a frame
+  t 165 s: mould 28860, soldiers 2, bank 1682, harvested 1252, shots 1459, killed 5342, took 51%, crystals left 0.919; squad at 328.7,144.9
+  dense: 9012 condensed or thick walkers, mass 37872
+  squad: touching 0.0 mean, 0 most; health 12 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
+  CPU: ground field 2.43 ms (once a game second), model and HUD 0.095 ms a frame
+  t 180 s: mould 30881, soldiers 1, bank 1682, harvested 1252, shots 1495, killed 5511, took 48%, crystals left 0.914; squad at 330.6,143.3
+  dense: 9692 condensed or thick walkers, mass 40573
+  squad: touching 0.0 mean, 0 most; health 4 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1252 food
