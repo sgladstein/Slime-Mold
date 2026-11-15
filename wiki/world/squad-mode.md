@@ -27,9 +27,9 @@ the one you command. The squads you do not command keep their last order and
 fire on their own. Squads split, join, link, queue orders and stand guard while
 they drain or build; there is no larder. It is `mode=squads` (`Rules::squads`),
 the start menu's *Control* option and the mode the run plays in. The owner
-ruled it the default mode on 2026-11-15 (~07:4xZ, from project memory; exact
-words not in the repo yet); in this checkout the menu still starts on `rts`,
-so the default is waiting on a PR. Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
+ruled it the default mode on 2026-11-15 07:57Z; the campaign keeps the old
+mode (08:09Z). In this checkout the menu still starts on `rts`; #330 builds the
+default. Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
 
 ## How it plays
 
@@ -48,7 +48,7 @@ so the default is waiting on a PR. Detail: [report](../../Reports/squad-mode-202
   work (`cover.rs`).
 - **Resting heals.** A soldier still and unbitten for 3 s heals from the bank
   (`Game::heal`). Owner 11-15: healing should be a specific order, not
-  automatic; that is PR #330, not in this checkout.
+  automatic; that is PR #330, in the merge queue.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on)
   ([report](../../Reports/narrow-squads-2026-11-15/README.md)).
@@ -62,6 +62,9 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
 - 2026-11-14 04:08Z: "the unit control should be squad based from the ground up. All soliders in a squad stick together at least as well as they can."
 - 2026-11-14 04:49Z: "This should be built as a seperate mode for right now. Not erase the other game."
+- 2026-11-15 07:57Z: "squad mode is default mode".
+- 2026-11-15 08:09Z: "No campaign can stay the old mode".
+- 2026-11-15 07:41Z: "Healing should be a specific action".
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).
 
 ## Open
