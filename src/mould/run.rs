@@ -115,6 +115,17 @@ pub fn open_scale(m: &Map) -> f32 {
     open / (m.ground.len().max(1) as f32 * REF_OPEN)
 }
 
+/// Each planet's slime is this factor bigger or smaller than its depth and
+/// area give, rolled from the level's seed: 0.8 to 1.25, even on a log
+/// scale (so as often a fifth smaller as a quarter bigger). The owner,
+/// 11-15 08:34Z, on how big a planet's slime should be: "It should vary
+/// and be more later on". The depth's fifth a planet and the area keep it
+/// more later on; this makes two planets at one depth differ.
+pub fn size_roll(seed: u64) -> f32 {
+    let u = (mix(seed ^ 0x5112_E5EE) >> 11) as f32 / (1u64 << 53) as f32;
+    (0.8f32.ln() + u * (1.25f32.ln() - 0.8f32.ln())).exp()
+}
+
 /// The planet's area as a share of today's map (`MAP_W` x `MAP_H`): 0.6 on
 /// planet 1, 6 on the core world (`levelgen::AREA`).
 pub fn area_of(p: &Planet) -> f32 {
@@ -506,7 +517,8 @@ impl Run {
         // 11-14 17:50Z: the same count covered a third of the smaller
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
-        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area, mission, grow: head_start(area) }
+        let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed);
+        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -955,7 +967,8 @@ mod tests {
             let l = r.level();
             // A cell's walkers grow deeper, so a smaller planet (a breather)
             // can have fewer in all.
-            let dense = l.walkers / area_of(&r.planet());
+            let dense = l.walkers / area_of(&r.planet()) / size_roll(l.seed);
+            assert!((0.8..=1.25).contains(&size_roll(l.seed)));
             assert!(dense > walkers, "more walkers a cell deeper");
             assert!(shrink_goal(d) <= goals);
             (walkers, goals) = (dense, shrink_goal(d));
@@ -983,6 +996,19 @@ mod tests {
             let cap = l.mission.rules(Rules::default()).cap;
             assert_eq!((cap, l.grow), (clock(a), head_start(a)), "planet {d}: the level's rules carry its clock");
         }
+    }
+
+    /// Planets at one depth differ in slime (owner, 11-15 08:34Z: "It
+    /// should vary and be more later on"): the roll spans 0.8-1.25 over
+    /// seeds, half of them each side of 1.
+    #[test]
+    fn a_planets_slime_size_varies_by_seed() {
+        let rolls: Vec<f32> = (0..400).map(size_roll).collect();
+        assert!(rolls.iter().all(|r| (0.8..=1.25).contains(r)));
+        let (lo, hi) = (rolls.iter().cloned().fold(9.0, f32::min), rolls.iter().cloned().fold(0.0, f32::max));
+        assert!(lo < 0.82 && hi > 1.22, "{lo} {hi}");
+        let under = rolls.iter().filter(|&&r| r < 1.0).count();
+        assert!((160..=240).contains(&under), "{under} of 400 under 1");
     }
 
     #[test]

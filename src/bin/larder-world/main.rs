@@ -774,6 +774,15 @@ impl App {
             }
             (None, None) => None,
         };
+        // A run's slime is shape C (the owner's default slime, 11-12: its
+        // shared food, withering, panic and charge) with the tier's keys over
+        // it, and C's slots grown with the level's walkers. Until 11-15 a run
+        // played the bare race keys (shape A's), as a mission keeps its own
+        // mould; that slime shed nine tenths of its walkers in its first
+        // minute on every planet (the slime-enemy thread found why).
+        if let Some(l) = &level {
+            run_shape(&mut s, l.walkers)?;
+        }
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.
         if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
@@ -825,7 +834,9 @@ impl App {
                 // (`run::open_scale`), not its whole area.
                 let mut s = s;
                 if a.run.is_some() {
-                    s.walkers = ((s.walkers as f32) * slime_mould::mould::run::open_scale(&m)).round().max(1.0) as _;
+                    let open = slime_mould::mould::run::open_scale(&m);
+                    s.walkers = ((s.walkers as f32) * open).round().max(1.0) as _;
+                    s.capacity = ((s.capacity as f32) * open).round().max(s.walkers as f32) as _;
                     walkers = s.walkers;
                 }
                 // Plants (11-14): the stand-in on a map without its own,
@@ -1672,7 +1683,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // (`run_args`), so `run=SEED:DEPTH` films the level a run plays.
         let l = r.level();
         args.seed = l.seed;
-        args.walkers = ((args.walkers as f32) * l.walkers).round() as usize;
+        args.walkers = run_walkers(l.walkers);
     }
     if !chosen && args.mission.is_none() && !args.own && args.run.is_none() {
         default_shape(&mut args);

@@ -808,8 +808,7 @@ fn run_base() -> Args {
     Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None }
 }
 
-/// A run's level plays as a mission would: the tier's own mould (no shape
-/// C keys), no sandbox map, the level's seed and walkers, and the run; the
+/// A run's level plays as a mission would: no sandbox map, the level's seed and walkers, and the run; the
 /// sandbox after it is no run.
 #[test]
 fn the_menu_starts_a_runs_level_like_a_mission() {
@@ -821,7 +820,10 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     let a = run_args(&base, &menu, &r);
     let l = r.level();
     assert_eq!((a.map.as_deref(), a.mission.as_deref(), a.own, a.seed, a.keys.len()), (None, None, false, l.seed, 0));
-    assert_eq!(a.walkers, (1250.0 * l.walkers).round() as usize);
+    // Shape C's walkers by the level, whatever the base's (its keys go on
+    // in `start`, under the tier's: `run_shape`).
+    assert_eq!(a.walkers, run_walkers(l.walkers));
+    assert_eq!(run_walkers(1.0), 25_000);
     assert_eq!(a.run.as_ref().map(|r| r.depth), Some(3));
     let mut cli = base.clone();
     cli.run = Some(r);
