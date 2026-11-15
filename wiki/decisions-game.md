@@ -6,6 +6,7 @@ updated: 2026-11-15
 sources:
   - CLAUDE.md
   - HANDOFF.md
+  - Reports/bug-check-2026-11-15/README.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/card-text-2026-11-15.md
   - Reports/fed-mould-2026-11-13/README.md
@@ -40,6 +41,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 08:10 | The rifle and the long gun get a small base aim spread, 0.5 and 0.3 cells (`guns::RIFLE_SPREAD`, `Rules::spread`), so a bullet card's spread multiplier (Buckshot wider, Needle tighter) shows on every gun | Card "Fix spread bullets on the rifle and long gun how?": "Small base spread on both" | [bug check](../Reports/bug-check-2026-11-15/README.md) |
 | 2026-11-15 07:57 | Squad mode is the default: the window (play.cmd, the start menu's Control option, sandbox, Random planet, a run, the gun range) plays it unless `mode=rts` or Control: rts says otherwise. The campaign's missions stay RTS (they are written for the larder), and the no-window films, censuses and bench keep RTS unless they say `mode=squads` | "squad mode is default mode" | [Larder World](world/larder.md) |
 | 2026-11-15 07:50 | A half-built building is resumed with one click: a right click on it (or its build card again) sends the squad back to raise it, with no new placement and nothing paid again (`Game::unfinished_at`, `App::resume`) | "If you start building something but have to stop you should just need to click again to get the squad to resume building" | [Larder](world/larder.md), [report](../Reports/resume-build-2026-11-15/README.md) |
 | 2026-11-15 07:41 | Healing in squad mode is an order, not automatic: a squad told to heal (Heal button, key L) stops and heals for food; nobody heals unasked, harvesters and builders at work included. Each soldier has its own health; a squad tile's bar shows their mean | "does each solider have their individual health but the bar just shows an average? Healing should be a specific action" | [Larder World](world/larder.md), [report](../Reports/squad-mode-2026-11-14/README.md) |
