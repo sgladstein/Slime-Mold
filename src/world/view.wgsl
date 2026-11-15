@@ -2599,13 +2599,30 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // per 4 of zoom, so the throw shows as the mould itself in the air
     // and not only as the streak it lays. It counts 6 calm walkers a pixel
     // (the calm bits, 0-9, so it never reads as cut off).
-    if (w.w > 0.5) {
-        let r = i32(P.zoom / 4.0);
-        for (var dy = -r; dy <= r; dy++) {
-            for (var dx = -r; dx <= r; dx++) {
-                let qx = px + dx; let qy = py + dy;
-                if (qx < 0 || qy < 0 || qx >= i32(P.sw) || qy >= i32(P.sh)) { continue; }
-                atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], 6u);
+    // Since the gun look (2026-11-15) it is a droplet drawn out along its
+    // flight (its heading, the third word): a round head zoom / 4 pixels
+    // across the radius and a tail that thins behind it over 0.8 of the
+    // cells it flies a tick (the fourth word, from the engine's `fly`; at
+    // least half a cell, at most three), so a throw or a shot's spray reads
+    // as mould flying out, its frames joined into one motion, and not as a
+    // spray of squares (the square was 2 zoom / 4 + 1 pixels a side: 13 x
+    // 13 at zoom 24). A shot's spray droplet slows to a stop, so its tail
+    // shortens as it lands.
+    if (w.w > 0.0) {
+        let rh = max(P.zoom / 4.0, 0.75);
+        let len = max(clamp(0.8 * w.w, 0.5, 3.0) * P.zoom, 2.0);
+        let dir = vec2<f32>(cos(w.z), sin(w.z));
+        let tail = s - dir * len;
+        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + 1.0)));
+        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + 1.0)));
+        for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
+            for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
+                let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
+                let t = clamp(dot(s - p, dir) / len, 0.0, 1.0);
+                let r = rh * (1.0 - 0.7 * t);
+                if (distance(p, s - dir * (t * len)) <= r) {
+                    atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], select(6u, 3u, t > 0.5));
+                }
             }
         }
         return;
@@ -2758,6 +2775,7 @@ const LINE: u32 = 6u;
 const SOLDIER: u32 = 7u;
 const BUILDING: u32 = 8u;
 const STREAK: u32 = 9u;
+const FLASH: u32 = 10u;
 
 // ---- The soldier ----
 //
@@ -3252,6 +3270,21 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         }
         return;
     }
+    if (shape == FLASH) {
+        // A muzzle flash's jets reach about its length from the mouth.
+        let rr = 1.35 * half(b).x + 4.0;
+        let lo = max(s - vec2<f32>(rr), vec2<f32>(0.0));
+        let hi = min(s + vec2<f32>(rr), vec2<f32>(f32(P.sw) - 1.0, f32(P.sh) - 1.0));
+        if (hi.x < lo.x || hi.y < lo.y) { return; }
+        let w = u32(hi.x - lo.x) + 1u;
+        let total = w * (u32(hi.y - lo.y) + 1u);
+        for (var j = t0; j < total; j += 64u * SPLIT) {
+            let q = floor(lo) + vec2<f32>(f32(j % w), f32(j / w));
+            let g = flash_at(b, q + vec2<f32>(0.5));
+            if (g.x > 0.004 || g.y > 0.0) { claim(i32(q.x), i32(q.y), k, false); }
+        }
+        return;
+    }
     let h = half(b);
     var x0 = floor(s.x - h.x);
     var y0 = floor(s.y - h.y);
@@ -3326,8 +3359,82 @@ fn streak_at(b: u32, p: vec2<f32>) -> vec2<f32> {
     let d = distance(p, tail + ab * t);
     let along = t * t;
     let halo = exp(-(d * d) / (2.0 * r * r * 2.2)) * along;
-    let core = clamp(r - d + 0.5, 0.0, 1.0) * mix(0.35, 1.0, along);
+    // The core tapers from its full radius at the head to under half at
+    // the tail, a comet rather than a rod (gun look, 2026-11-15; before,
+    // the same width all along read as a flat dash at zoom 24).
+    let rc = r * mix(0.45, 1.0, t);
+    let core = clamp(rc - d + 0.5, 0.0, 1.0) * mix(0.35, 1.0, along);
     return vec2<f32>(select(halo, 0.0, d > 3.0 * r), core);
+}
+
+// One flame jet of a muzzle flash, in the flash's frame `q` (pixels, +x
+// out of the barrel): from the barrel's mouth at angle `a`, `len` pixels
+// long, `w` pixels across the radius at its root, tapering to a point.
+// Returns (glow, core) as `streak_at`.
+fn jet(q: vec2<f32>, a: f32, len: f32, w: f32) -> vec2<f32> {
+    let dir = vec2<f32>(cos(a), sin(a));
+    let t = dot(q, dir);
+    if (t > len + 3.0 * w) { return vec2<f32>(0.0); }
+    let tt = clamp(t / max(len, 1.0), 0.0, 1.0);
+    var dd = abs(q.x * dir.y - q.y * dir.x);
+    if (t < 0.0) { dd = length(q); }
+    if (t > len) { dd = distance(q, dir * len); }
+    let fall = 1.0 - tt;
+    let r = w * pow(fall, 0.6) + 0.35;
+    let halo = exp(-(dd * dd) / (2.0 * 4.8 * w * w)) * fall;
+    let core = clamp(r - dd + 0.5, 0.0, 1.0) * mix(0.55, 1.0, fall);
+    return vec2<f32>(halo, core);
+}
+
+// A muzzle flash (`Marks::muzzle_flash`, gun look 2026-11-15): a white-hot
+// ball at the barrel's mouth and flame jets out of it, shaped by the gun
+// (a rifle's long jet and two side tongues, a carbine's short fat burst,
+// a long gun's long thin jet with its brake venting sideways, a
+// scattergun's fan of five), each shot's lengths and angles varied by its
+// seed. It shrinks and dims as `left` burns down. Light, as a streak.
+// Before, a flat orange oval (the sprite's flash tile) sat at the barrel
+// for the flash's 0.07 s, the same every shot.
+fn flash_at(b: u32, p: vec2<f32>) -> vec2<f32> {
+    let len = half(b).x;
+    let ang = bitcast<f32>(marks[b + 9u]);
+    let ex = marks[b + 11u];
+    let kind = ex & 3u;
+    let seed = f32((ex >> 2u) & 255u);
+    let left = f32((ex >> 10u) & 255u) / 255.0;
+    let d = p - anchor(b);
+    if (dot(d, d) > 1.7 * len * len + 16.0) { return vec2<f32>(0.0); }
+    let ca = cos(ang); let sa = sin(ang);
+    let q = vec2<f32>(d.x * ca + d.y * sa, -d.x * sa + d.y * ca);
+    let l = len * (0.45 + 0.55 * left);
+    let w = max(l * 0.12, 0.8);
+    let h1 = hash2(vec2<f32>(seed, 1.7)); let h2 = hash2(vec2<f32>(seed, 5.3));
+    let h3 = hash2(vec2<f32>(seed, 9.1)); let h4 = hash2(vec2<f32>(seed, 13.9));
+    // The ball at the barrel's mouth.
+    let rb = w * 1.15;
+    let db = length(q);
+    var g = vec2<f32>(0.8 * exp(-(db * db) / (2.0 * 1.6 * rb * rb)), clamp(rb - db + 0.5, 0.0, 1.0));
+    var j = vec2<f32>(0.0);
+    if (kind == 3u) {
+        // The scattergun's fan, one jet a pellet's worth of it.
+        for (var i = 0u; i < 5u; i++) {
+            let hi = hash2(vec2<f32>(seed, 20.0 + f32(i)));
+            let a = (f32(i) - 2.0) * 0.24 + (hi - 0.5) * 0.14;
+            let jj = jet(q, a, l * (0.55 + 0.3 * hi), w * 0.85);
+            j = vec2<f32>(j.x + jj.x, max(j.y, jj.y));
+        }
+    } else {
+        var fwd = vec2<f32>(1.0, 1.0);
+        var side = vec3<f32>(0.95, 0.38, 0.7);
+        if (kind == 1u) { fwd = vec2<f32>(0.72, 1.25); side = vec3<f32>(1.15, 0.46, 0.85); }
+        if (kind == 2u) { fwd = vec2<f32>(1.0, 0.75); side = vec3<f32>(1.5, 0.3, 0.55); }
+        let f0 = jet(q, (h1 - 0.5) * 0.12, l * fwd.x * (0.85 + 0.3 * h2), w * fwd.y);
+        let fa = side.x + (h3 - 0.5) * 0.25;
+        let s1 = jet(q, fa, l * side.y * (0.75 + 0.5 * h4), w * side.z);
+        let s2 = jet(q, -fa, l * side.y * (0.75 + 0.5 * h1), w * side.z);
+        j = vec2<f32>(f0.x + s1.x + s2.x, max(f0.y, max(s1.y, s2.y)));
+    }
+    g = vec2<f32>(min(g.x + 0.8 * j.x, 1.0), max(g.y, j.y));
+    return vec2<f32>(g.x * sqrt(left), g.y * (0.35 + 0.65 * left));
 }
 
 fn soldier_at(b: u32, d: vec2<f32>, r: f32) -> vec4<f32> {
@@ -3366,8 +3473,10 @@ fn compose(@builtin(global_invocation_id) gid: vec3<u32>) {
             let d = f32(x) + 0.5 - anchor(b).x;
             if (d + h.x > bitcast<f32>(marks[b + 9u]) * 2.0 * h.x) { col = marks[b + 8u]; }
         }
-        if (marks[b + 6u] == STREAK && !in_minimap(x, y)) {
-            let g = streak_at(b, vec2<f32>(f32(x) + 0.5, f32(y) + 0.5));
+        if ((marks[b + 6u] == STREAK || marks[b + 6u] == FLASH) && !in_minimap(x, y)) {
+            let pq = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5);
+            var g = vec2<f32>(0.0);
+            if (marks[b + 6u] == STREAK) { g = streak_at(b, pq); } else { g = flash_at(b, pq); }
             let a = f32(col >> 24u) / 255.0;
             c = c + unpack(col) * g.x * a + unpack(marks[b + 8u]) * g.y;
         } else if (marks[b + 6u] == SOLDIER && !in_minimap(x, y)) {

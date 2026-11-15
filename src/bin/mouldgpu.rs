@@ -1729,7 +1729,7 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                     .collect();
                 let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
-                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0 });
+                e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() });
             }
             // GPU time on every tenth frame (the read back waits).
             let stamp = st.as_ref().filter(|_| f % 10 == 5);
@@ -3940,7 +3940,7 @@ mod tests {
                 UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
             })
             .collect();
-        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0 };
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
         e.inject(&cpu);
         e.set_squad(&f);
         run(&mut e, &shared, &s, 1, Hand::default());
@@ -4057,19 +4057,28 @@ mod tests {
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
+        // And the spray (`Frame::spray`, the gun look 2026-11-15): the
+        // struck fly out as droplets for 2 or 3 fine steps (by their slots;
+        // the frame runs two ticks of a fine step each, so some land and
+        // die and the rest still fly), on
+        // a dish without the life states before the frame and on one with
+        // them, where struck spores are still missed.
         let cases = [
-            ("plain", base.clone(), 0, 0.0),
-            ("spores and dormancy", life, 0, 0.0),
-            ("the Sleeper", sleeper, 0, 0.0),
-            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0),
-            ("plain, shots that lay craters", base.clone(), 20, 0.0),
-            ("plain, cone craters", cone.clone(), 20, 0.0),
-            ("plain, shots that sink", base, 20, 1.0),
-            ("cone craters, a sink of 1.5", cone, 20, 1.5),
-            ("plain, a cut-off part charges the squad", scared, 0, 0.0),
-            ("plain, condensed walkers take two shots and touch as two", dense, 0, 0.0),
+            ("plain", base.clone(), 0, 0.0, 0),
+            ("spores and dormancy", life.clone(), 0, 0.0, 0),
+            ("the Sleeper", sleeper, 0, 0.0, 0),
+            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0, 0),
+            ("plain, shots that lay craters", base.clone(), 20, 0.0, 0),
+            ("plain, cone craters", cone.clone(), 20, 0.0, 0),
+            ("plain, shots that sink", base.clone(), 20, 1.0, 0),
+            ("cone craters, a sink of 1.5", cone, 20, 1.5, 0),
+            ("plain, a cut-off part charges the squad", scared, 0, 0.0, 0),
+            ("plain, condensed walkers take two shots and touch as two", dense.clone(), 0, 0.0, 0),
+            ("plain, sinking shots spray the slime they kill", base, 20, 1.0, 3),
+            ("spores and dormancy, the spray", life, 0, 0.0, 3),
+            ("condensed walkers break, the rest spray", dense, 0, 0.0, 3),
         ];
-        for (name, s, crater, sink) in cases {
+        for (name, s, crater, sink, spray) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             // Panic: the warm-up makes the news with a lag no walker
@@ -4203,15 +4212,20 @@ mod tests {
                 })
                 .count();
             assert_eq!(charging > 0, s.panic > 0.0, "{name}: {charging} stale walkers charge a unit");
-            let f = Frame { units, shots, slime, crater, sink };
+            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7 };
+            // Two ticks with the spray (a fine step each here), so the
+            // droplets that fly 2 steps land and those that fly 3 still fly.
+            let ticks = if spray > 0 { 2 } else { 1 };
             e.inject(&cpu);
             e.set_squad(&f);
-            run(&mut e, &shared, &s, 1, Hand::default());
+            run(&mut e, &shared, &s, ticks, Hand::default());
             let (before, at) = (cpu.life.clone(), cpu.walkers.clone());
+            // The dish before the frame, to run it again without the spray.
+            let pre = (spray > 0).then(|| cpu.clone());
             // Where the shots would land without the sink, to check it moves
             // some of them.
-            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0);
-            let cpu_out = squad::frame(&mut cpu, &f, 1);
+            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0, (f.spray, f.spray_speed));
+            let cpu_out = squad::frame(&mut cpu, &f, ticks);
             let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
             assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
             let gpu_out = e.squad_out();
@@ -4249,6 +4263,23 @@ mod tests {
             eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
             assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+            // The spray: the same kills as without it; after the tick some
+            // droplets still fly (flung and doomed, the same slots on both)
+            // and the rest died where they landed.
+            if let Some(pre) = pre {
+                let mut thrown = pre.clone();
+                squad::shots(&mut thrown, &f.shots, slime, crater, sink, (spray, f.spray_speed));
+                let thrown = thrown.doomed.iter().filter(|&&d| d).count();
+                let plain = squad::frame(&mut pre.clone(), &Frame { spray: 0, ..f.clone() }, ticks);
+                let plain_kills: u32 = plain.shots.iter().map(|q| q.killed).sum();
+                let flying = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.doomed[k]).count();
+                let flung_off = e.flung_of().iter().zip(&cpu.flung).filter(|(a, b)| a != b).count();
+                eprintln!("squad spray, {name}: {kills} killed ({plain_kills} without it), {thrown} thrown; {flying} still in flight after the tick; {flung_off} flung marks off");
+                assert_eq!(kills, plain_kills, "{name}: the spray kills as many");
+                assert!(thrown > 0 && flying > 0 && flying < thrown, "{name}: droplets fly, and some have landed and died");
+                assert!(cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d), "a droplet is flung");
+                assert_eq!(flung_off, 0, "{name}: the same droplets fly");
+            }
             // Condensing: the same walkers broke, and the touch counted them.
             if s.condense > 0 {
                 assert!(e.condenses, "{name}: the condense passes run");
@@ -4298,7 +4329,8 @@ mod tests {
                     f.shots.iter().zip(&cpu_out.shots).any(|(q, o)| o.hit.is_some_and(|(hx, hy)| (x.floor() + 0.5 - hx).hypot(y.floor() + 0.5 - hy) <= q.r))
                 };
                 let missed = (0..before.len()).filter(|&k| cpu.lives(k) && before[k] == LIFE_SPORE && struck(k)).count();
-                let slept = (0..before.len()).filter(|&k| before[k] == LIFE_DORMANT && cpu.life[k] == LIFE_DEAD).count();
+                // (With the spray a struck dormant walker flies out first.)
+                let slept = (0..before.len()).filter(|&k| before[k] == LIFE_DORMANT && (cpu.life[k] == LIFE_DEAD || cpu.doomed.get(k) == Some(&true))).count();
                 let (st, tm) = e.life_of();
                 // Every slot's, the emptied ones' too (a shot one is dead).
                 let states_off = (0..before.len()).filter(|&k| st[k] != cpu.life[k] || tm[k] != cpu.life_t[k]).count();

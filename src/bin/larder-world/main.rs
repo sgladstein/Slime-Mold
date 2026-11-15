@@ -305,6 +305,9 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How long a soldier's gun kicks back after a shot, seconds: it jumps
+/// back at once and eases home over this (gun look, 2026-11-15).
+const KICK: f32 = 0.14;
 /// How far a soldier walks (dish cells) before its figure turns to the way
 /// it is going (`App::step`).
 const TURN: f32 = 0.3;
@@ -418,6 +421,9 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
+    /// `spray=S`: how long the slime a shot kills flies out of the hit, in
+    /// seconds (`Rules::spray_secs`; 0 none), for before-and-after films.
+    spray: Option<f32>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -453,6 +459,7 @@ const RANGE_CAP: f32 = 36_000.0;
 const RANGE_BANK: f32 = 100_000.0;
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
+#[derive(Clone, Copy)]
 struct Tracer {
     from: (f32, f32),
     to: (f32, f32),
@@ -461,6 +468,9 @@ struct Tracer {
     /// The strike's radius, fine cells (`Shot::r`): a hit lights only
     /// what it kills (owner 20:22Z).
     r: f32,
+    /// Seconds into the step's leg the drawn bullet reaches the hit, at
+    /// its speed (`App::between`): its light waits for it.
+    delay: f32,
 }
 
 /// What the window keeps of each soldier beside the game: the way it
@@ -484,11 +494,18 @@ struct Look {
     hurt: f32,
     flinch: f32,
     bite: f32,
+    /// Seconds left of its gun's kick from its last shot (`KICK` long),
+    /// the cast that shot carried (`Shot::cast`: its flash takes the
+    /// payload's colour) and the shots it has fired, which vary each
+    /// muzzle flash (gun look, 2026-11-15).
+    kick: f32,
+    cast: u8,
+    shots: u32,
 }
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
     }
 }
 
@@ -576,6 +593,9 @@ struct App {
     spread: bool,
     /// Game seconds owed to the game (the accumulator).
     owed: f32,
+    /// How far into the next step a headless picture is taken, 0-1 (it
+    /// draws whole steps; `between`), or None in the window.
+    sub: Option<f32>,
     last_frame: Instant,
     shift: bool,
     /// The soldier the last build with nobody selected sent (`builders`):
@@ -705,6 +725,7 @@ impl App {
             fast: false,
             spread: true,
             owed: 0.0,
+            sub: None,
             last_frame: Instant::now(),
             shift: false,
             last_sent: None,
@@ -867,6 +888,9 @@ impl App {
         rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
         if let Some(w) = a.wade {
             rules.wade = w;
+        }
+        if let Some(s) = a.spray {
+            rules.spray_secs = s;
         }
         if let Some(b) = a.sink {
             rules.sink = b;
@@ -1049,15 +1073,31 @@ impl App {
         self.saved = true;
     }
 
-    /// Steps the game for `dt` real seconds and keeps the window's notes
-    /// (facing, flashes, tracers, alerts).
-    fn step(&mut self, dt: f32) {
+    /// How far the frame is from the last finished step to the next, 0-1:
+    /// the game seconds owed over a step. Bullets glide along the last
+    /// step's legs by it (gun look, 2026-11-15): at 15 steps a second and
+    /// 60 frames, each bullet sat still for four frames and then jumped
+    /// its 0.067 s of flight (6 fine cells), so a shot read as a dash that
+    /// blinked across the ground rather than flew.
+    fn between(&self) -> f32 {
+        if let Some(a) = self.sub {
+            return a;
+        }
+        let Some(g) = self.game.as_ref() else { return 0.0 };
+        let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        if self.paused || g.end.is_some() { 1.0 } else { (self.owed / step).clamp(0.0, 1.0) }
+    }
+
+    /// Ages the window's notes of the game by `dt` seconds: tracers,
+    /// muzzle flashes and kicks, takes and flinches.
+    fn age_notes(&mut self, dt: f32) {
         for t in &mut self.tracers {
             t.age += dt;
         }
-        self.tracers.retain(|t| t.age < TRACER);
+        self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
+            l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
             l.flinch = (l.flinch - dt).max(0.0);
         }
@@ -1065,6 +1105,12 @@ impl App {
             b.call = (b.call - dt).max(0.0);
             b.bank = (b.bank - dt).max(0.0);
         }
+    }
+
+    /// Steps the game for `dt` real seconds and keeps the window's notes
+    /// (facing, flashes, tracers, alerts).
+    fn step(&mut self, dt: f32) {
+        self.age_notes(dt);
         // A step a command finished since the last frame (`catch_up`).
         self.catch_up();
         let Some(g) = self.game.as_mut() else { return };
@@ -1463,7 +1509,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, spray: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1540,6 +1586,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
+            "spray" => args.spray = Some(v.parse()?),
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);

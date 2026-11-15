@@ -66,8 +66,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (232 words).
-pub const PARAMS_BYTES: usize = 944;
+/// Bytes in `Params` (240 words).
+pub const PARAMS_BYTES: usize = 960;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -89,6 +89,12 @@ pub const ROAM_AT: usize = 912;
 /// deep water's step (`BigParams::deep_step`), then three words kept for
 /// the next ground kinds.
 pub const GROUND_AT: usize = 928;
+/// The spray row (gun look, 2026-11-15; Params grew from 944 to 960): a
+/// shot's spray (`squad::Frame::spray`): its longest flight in fine steps
+/// (0 off), its first speed and the flight's reciprocal; then the fine
+/// steps a tick, so `fly` can give the view each flung walker's flight a
+/// tick.
+pub const SPRAY_AT: usize = 944;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -1341,6 +1347,9 @@ pub struct Engine {
     pub squad: (u32, u32, f32),
     /// The squad frame's sink, squared (`squad::Frame::sink`; 0 off).
     pub shot_sink: f32,
+    /// The squad frame's spray (`squad::Frame::spray`): its longest
+    /// flight in fine steps (0 off) and its first speed.
+    pub spray: (u32, f32),
     pub squad_due: bool,
     /// The squad's unit passes on one thread, as before 2026-11-12
     /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
@@ -1625,6 +1634,7 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             shot_sink: 0.0,
+            spray: (0, 0.0),
             squad_due: false,
             squad_one: false,
             squad_on: false,
@@ -1958,6 +1968,8 @@ impl Engine {
         b.extend(f32_bytes(&[s.roam_share]));
         assert_eq!(b.len(), GROUND_AT, "Params rows before the ground row moved");
         b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
+        assert_eq!(b.len(), SPRAY_AT, "Params rows before the spray row moved");
+        b.extend(u32_bytes(&self.spray_row()));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2351,6 +2363,9 @@ impl Engine {
             if !self.dish.flung.is_empty() {
                 self.dish.flung = self.flung_of();
             }
+            if !self.dish.doomed.is_empty() {
+                self.dish.doomed = self.marked(0x4000);
+            }
         }
         // The Larder World: the crystals as the GPU holds them, so the
         // measure's crystal share left is the GPU's.
@@ -2600,7 +2615,20 @@ impl Engine {
     /// Each slot's flung mark (the CPU's `flung`, engine.wgsl's `FLUNG`),
     /// read back from the `spec` words.
     pub fn flung_of(&self) -> Vec<bool> {
-        read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()) & 0x2000 != 0).collect()
+        self.marked(0x2000)
+    }
+
+    /// Whether each slot's `spec` word has `bit` (`FLUNG` 0x2000, `DOOM`
+    /// 0x4000: the CPU's `flung` and `doomed`), read back.
+    fn marked(&self, bit: u32) -> Vec<bool> {
+        read_back(&self.device, &self.queue, &self.spec).chunks_exact(4).take(self.n as usize).map(|c| u32::from_le_bytes(c.try_into().unwrap()) & bit != 0).collect()
+    }
+
+    /// The spray row (`SPRAY_AT`): the longest flight, the first speed and
+    /// the flight's reciprocal (`big::spray_inv`), the fine steps a tick.
+    fn spray_row(&self) -> [u32; 4] {
+        let inv = crate::mould::big::spray_inv(self.spray.0 as u16);
+        [self.spray.0, self.spray.1.to_bits(), inv.to_bits(), self.dish.p.substeps.max(1) as u32]
     }
 
     /// **An explosion's fling** (the CPU's `BigDish::fling`; dish cells,
@@ -2726,6 +2754,20 @@ impl Engine {
         // The sink squared, as `squad::sink_r2` multiplies it (0 off).
         self.shot_sink = if f.sink > 0.0 { f.sink * f.sink } else { 0.0 };
         self.queue.write_buffer(&self.params, SQUAD_AT as u64 + 28, &u32_bytes(&[self.shot_sink.to_bits()]));
+        // The spray (gun look, 2026-11-15). A droplet is a flung spore, so
+        // the life states go on with the first frame that has shots, as
+        // `squad::shots` turns the CPU's on.
+        self.spray = if f.spray > 0 { (f.spray as u32, f.spray_speed) } else { (0, 0.0) };
+        if self.spray.0 > 0 && nshots > 0 {
+            self.cycles = true;
+            if self.dish.flung.is_empty() {
+                self.dish.flung = vec![false; self.n as usize];
+            }
+            if self.dish.doomed.is_empty() {
+                self.dish.doomed = vec![false; self.n as usize];
+            }
+        }
+        self.queue.write_buffer(&self.params, SPRAY_AT as u64, &u32_bytes(&self.spray_row()));
         self.crater_steps = f.crater as u32;
         self.scorched |= f.crater > 0;
         self.queue.write_buffer(&self.params, CRATER_AT as u64 + 8, &u32_bytes(&[(f.crater as f32).to_bits(), self.crater_flags()]));
@@ -2778,7 +2820,7 @@ pub fn occupancy(d: &BigDish) -> Vec<u32> {
 pub fn spec_words(d: &BigDish) -> Vec<u32> {
     (0..d.walkers.len())
         .map(|k| {
-            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16) | d.flung.get(k).map_or(0, |&f| (f as u32) << 13)
+            d.spec.get(k).map_or(0, |&c| c as u32) | d.kind.get(k).map_or(0, |&c| (c as u32) << 8) | d.life.get(k).map_or(0, |&c| (c as u32) << 9) | d.life_t.get(k).map_or(0, |&c| (c as u32) << 16) | d.flung.get(k).map_or(0, |&f| (f as u32) << 13) | d.doomed.get(k).map_or(0, |&f| (f as u32) << 14)
         })
         .collect()
 }
