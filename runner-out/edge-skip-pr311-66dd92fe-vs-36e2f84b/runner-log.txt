@@ -1,0 +1,44 @@
+start 01:16:15Z free KB 3267248 gpu 0,0,0,0,0 % edge 0
+build A head=66dd92feb7de7baec9cec2eca9f64d160a5f9a4f
+build A exit=0 01:17:51Z
+build B head=36e2f84b54ea0c5feaf71c7477bb6f1b33a992b9
+build B exit=0 01:19:23Z
+warmup start 01:19:23Z card 139 MHz, 405 MHz, 35, 7.09 W
+warmup exit=0 01:19:32Z card 1974 MHz, 4006 MHz, 39, 43.41 W
+r1-z1-A start 01:19:37Z gpu 0,0,0,0,0 % card 999 MHz, 3802 MHz, 37, 29.00 W
+r1-z1-A exit=0 01:19:41Z
+r1-z1-B start 01:19:47Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 39, 43.21 W
+r1-z1-B exit=0 01:19:55Z
+r1-z12-A start 01:20:00Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 41, 43.96 W
+r1-z12-A exit=0 01:20:03Z
+r1-z12-B start 01:20:08Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 42, 44.18 W
+r1-z12-B exit=0 01:20:11Z
+r1-z24-A start 01:20:17Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 42, 44.28 W
+r1-z24-A exit=0 01:20:20Z
+r1-z24-B start 01:20:25Z gpu 0,0,0,0,0 % card 1012 MHz, 3802 MHz, 42, 29.48 W
+r1-z24-B exit=0 01:20:28Z
+r2-z1-A start 01:20:34Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 43, 44.43 W
+r2-z1-A exit=0 01:20:38Z
+r2-z1-B start 01:20:43Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 45, 44.78 W
+r2-z1-B exit=0 01:20:48Z
+r2-z12-A start 01:20:53Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 46, 44.04 W
+r2-z12-A exit=0 01:20:56Z
+r2-z12-B start 01:21:01Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 47, 44.28 W
+r2-z12-B exit=0 01:21:05Z
+r2-z24-A start 01:21:10Z gpu 0,0,0,0,0 % card 1025 MHz, 3802 MHz, 44, 29.72 W
+r2-z24-A exit=0 01:21:13Z
+r2-z24-B start 01:21:18Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 47, 44.52 W
+r2-z24-B exit=0 01:21:21Z
+r3-z1-A start 01:21:27Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 48, 44.52 W
+r3-z1-A exit=0 01:21:31Z
+r3-z1-B start 01:21:36Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 49, 44.78 W
+r3-z1-B exit=0 01:21:41Z
+r3-z12-A start 01:21:46Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 50, 44.78 W
+r3-z12-A exit=0 01:21:49Z
+r3-z12-B start 01:21:54Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 50, 45.01 W
+r3-z12-B exit=0 01:21:58Z
+r3-z24-A start 01:22:03Z gpu 0,0,0,0,0 % card 1025 MHz, 3802 MHz, 50, 30.06 W
+r3-z24-A exit=0 01:22:06Z
+r3-z24-B start 01:22:11Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 51, 45.73 W
+r3-z24-B exit=0 01:22:14Z
+ALL DONE 01:22:14Z
