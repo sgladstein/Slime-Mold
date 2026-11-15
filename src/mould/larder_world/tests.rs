@@ -2362,12 +2362,16 @@ fn a_working_squad_posts_defenders_when_slime_is_near_and_works_a_little_slower(
     g.rules.cover.near = u32::MAX;
     g.apply(Cmd::Cover(0, Cover::Some));
     assert_eq!(guards(&g), 0, "no slime near: everyone works");
-    // Defenders never stand in thick slime: a post has at most `thin` walkers by it.
+    // Defenders stand at the work's edge, with the squad, never out in the
+    // slime (posts out in its film cost soldiers, 2026-11-15).
     g.rules.cover.near = 0;
     g.apply(Cmd::Cover(0, Cover::Some));
+    let (ci, cc) = g.crystal_at(c).unwrap();
+    let edge = g.world.crystal_r(ci) + RIM * g.s();
     for k in g.members(0).into_iter().filter(|&k| g.soldiers[k].cover) {
         let (Order::Fight(x, y) | Order::Move(x, y)) = g.soldiers[k].order else { unreachable!() };
-        assert!(g.world.walkers_in((x, y), 2.0 * g.s()) <= g.rules.cover.thin.max(g.world.walkers_in(c, 2.0 * g.s())), "a post in the slime");
+        let d = (x - cc.0).hypot(y - cc.1);
+        assert!(d <= edge + 6.0 * g.s(), "a post {:.1} cells out, the edge at {:.1}", d / g.s(), edge / g.s());
     }
     // Sent elsewhere, the work ends and the defenders come in.
     let to = open_near(&g, 20.0);

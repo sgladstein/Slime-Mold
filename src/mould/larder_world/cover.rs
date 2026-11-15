@@ -16,10 +16,19 @@
 //!   (`cover_turn`) it looks for slime round the work: with enough within
 //!   `CoverRules::sense`, `Cover::share` of it (at least one, never all)
 //!   stand guard on the side the slime is on, each on its own bearing of a
-//!   small arc. A defender stands as far out as `CoverRules::out` but only
-//!   where the slime under it is thin (`CoverRules::thin`): it steps back
-//!   toward the work until it is, and at the work's edge if nowhere is.
-//!   With no slime near, everyone works.
+//!   small arc at the work's edge: the squad's front toward the slime,
+//!   still one body with the workers. With no slime near, everyone works.
+//! - Guards used to stand out from the work, up to 8 cells past its edge
+//!   where the slime under the post was thin (`out` 8, `thin` 4 walkers
+//!   within 2 cells; #276). Reverted 2026-11-15 after the owner's "It
+//!   doesn't seem to work well": on shape C a thin film reaches far round
+//!   the body, so the posts stood alone in it, out of the squad, and the
+//!   guards were bitten and died while the workers were bitten as often as
+//!   with no guards. Drain by hand, 8 soldiers, 60 s, seeds 1-4 (Fork): with
+//!   guards out, health at 60 s fell below guards off on 4 of 4 seeds and 5
+//!   soldiers died (none off); guards at the edge lost 1 and killed more
+//!   slime than guards off on 4 of 4 (summed health at 60 s: off 2462,
+//!   edge 2220, out 1781 of 3200; Reports/guards-2026-11-15).
 //! - The workers' rate rises so the squad's whole rate falls only by
 //!   `CoverRules::slow` times the defenders' share (`work_boost`): 3 of 8
 //!   on guard cost 22.5%, not 37.5%. (0.2 first, 7.5%: "seems too small to
@@ -91,10 +100,6 @@ pub struct CoverRules {
     pub sense: f32,
     /// Walkers within `sense` that call defenders out (fewer: everyone works).
     pub near: u32,
-    /// Farthest a defender stands from the work, dish cells.
-    pub out: f32,
-    /// Walkers within 2 dish cells of a spot thin enough to stand in.
-    pub thin: u32,
     /// The squad's whole work rate falls by this times the defenders' share.
     pub slow: f32,
     /// A worker fires this often as it would (0.5: half as often).
@@ -103,7 +108,7 @@ pub struct CoverRules {
 
 impl Default for CoverRules {
     fn default() -> Self {
-        CoverRules { some: 1.0 / 3.0, more: 0.5, sense: 30.0, near: 20, out: 8.0, thin: 4, slow: 0.6, work_fire: 0.5 }
+        CoverRules { some: 1.0 / 3.0, more: 0.5, sense: 30.0, near: 20, slow: 0.6, work_fire: 0.5 }
     }
 }
 
@@ -300,23 +305,14 @@ impl<W: World> Game<W> {
             };
             for (i, &k) in on.iter().enumerate() {
                 let a = base + (i as f32 - (g as f32 - 1.0) / 2.0) * 0.45;
-                let (dx, dy) = (a.cos(), a.sin());
-                // Farthest out first, back toward the work until the slime
-                // under the spot is thin: never into the body.
-                let mut spot = None;
-                let steps = 8;
-                for j in (0..=steps).rev() {
-                    let d = rim + r.out * sc * j as f32 / steps as f32;
-                    let p = (at.0 + dx * d, at.1 + dy * d);
-                    if self.standable(p.0, p.1) && self.solid_at(p).is_none() && within(self, p, 2.0 * sc) <= r.thin {
-                        spot = Some(p);
-                        break;
-                    }
-                }
-                let p = spot.unwrap_or_else(|| {
-                    let p = (at.0 + dx * rim, at.1 + dy * rim);
-                    if self.standable(p.0, p.1) { p } else { self.nearest_standable(p, 6.0 * sc).unwrap_or((self.soldiers[k].x, self.soldiers[k].y)) }
-                });
+                // At the work's edge on its bearing (see the module notes:
+                // posts out in the slime's film cost soldiers for nothing).
+                let p = (at.0 + a.cos() * rim, at.1 + a.sin() * rim);
+                let p = if self.standable(p.0, p.1) && self.solid_at(p).is_none() {
+                    p
+                } else {
+                    self.nearest_standable(p, 6.0 * sc).unwrap_or((self.soldiers[k].x, self.soldiers[k].y))
+                };
                 // Walks to its post, then stands and fights there (an
                 // attack-move to it stopped at the first slime in reach).
                 let s = &mut self.soldiers[k];
