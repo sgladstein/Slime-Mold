@@ -66,8 +66,11 @@ back with a click on open ground, a number or Space. Its card:
 
 - a ghost: **Call it off** (Del), the whole price back (`Cmd::Unbuild`);
 - standing: **Demolish** (Del), half the price back (`Cmd::Demolish`,
-  `BuildRules::demolish` 0.5). **The refund was not ruled**; half is the
-  menus thread's proposal. A wall can't be pulled down (its cells are the
+  `BuildRules::demolish` 0.5). Half was the
+  menus thread's proposal; the owner ruled it at 21:37Z ("Demolishing a
+  building giving half back is good. Canceling a partial build should
+  give all of it back"), which `unbuild` already does (tested on a
+  half-raised turret). A wall can't be pulled down (its cells are the
   GPU world's; there is no way to lift them yet);
 - a pump: **Upgrade** (U); a lure or siren: **Switch on/off** (J).
 

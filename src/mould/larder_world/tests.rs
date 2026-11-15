@@ -2177,7 +2177,7 @@ fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
     assert!(g.buildings[n].up());
     assert!(!g.apply(Cmd::Unbuild(n)));
     // ... it is pulled down instead, for half its price (`Cmd::Demolish`,
-    // the building card, 2026-11-15; the refund not ruled).
+    // the building card; half, owner 2026-11-15 21:37Z).
     assert_eq!(g.building_at(c), Some(n), "a click on it finds it, standing");
     let before = g.bank;
     assert!(g.apply(Cmd::Demolish(n)));
