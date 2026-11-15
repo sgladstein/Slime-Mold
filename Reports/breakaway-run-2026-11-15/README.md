@@ -101,12 +101,43 @@ to 1:30. Soldiers at each 30 s check; mass at the last:
 
 ## Frame cost
 
-Condensing runs five GPU passes (`ripen`, `massclear`, `masscount`,
-`dclear`, `dcount`; `Reports/condense-2026-11-14/README.md`, *On the
-GPU*), none of which ran in a run before. On llvmpipe they cost +1.9% of
-the frame (p50 63.6 against 64.8 ms, 11-14). Breakaway adds no pass. Its
-1070 cost has never been measured; a timing of planet 2 and the core
-world with and without is booked with the PC runner.
+**None measurable on the GTX 1070.** Condensing's GPU passes (`ripen`,
+`massclear`, `masscount`, `dclear`, `dcount`;
+`Reports/condense-2026-11-14/README.md`, *On the GPU*) already ran in every
+run, since shape C's thickening uses them; turning `condense` on makes
+`ripen` do its full work. Breakaway adds no pass.
+
+The PC runner timed `bench=45 run=1:R mode=squads hand=squads
+screen=1920x1080 passes=60 viewpasses=60` at 90946e27, on (A, the build's
+default) and with `condense=0 roam=0` (B), interleaved A B A B on planet 2
+and then the core world. The GPU was idle before each run. Runs 3, 5, 7
+and 8 started on a down-clocked card (746 to 835 MHz), and the card warmed
+from 32 to 62 C over planet 8. Raw files: branch
+`claude/project-thread-26drse` at 22b76272,
+`runner-out/breakaway-pr370-90946e27/`. Times in ms:
+
+| Run | Frame p50 / p95 | GPU step | of which `ripen` | View | Walkers at 0:45 |
+|---|---|---|---|---|---|
+| 1, planet 2, on | 7.18 / 7.86 | 0.977 | 0.055 | 6.461 | 14,632 |
+| 2, planet 2, off | 7.13 / 7.82 | 0.949 | 0.010 | 6.431 | 19,581 |
+| 3, planet 2, on | 7.24 / 7.93 | 0.985 | | 6.548 | 14,632 |
+| 4, planet 2, off | 7.21 / 7.86 | 0.953 | | 6.471 | 19,581 |
+| 5, core world, on | 11.14 / 16.70 | 6.179 | 0.405 | 7.791 | 94,367 |
+| 6, core world, off | 11.23 / 16.75 | 6.280 | 0.090 | 7.941 | 130,683 |
+| 7, core world, on | 11.21 / 16.78 | 6.189 | | 7.825 | 94,367 |
+| 8, core world, off | 11.25 / 16.75 | 6.279 | | 7.941 | 130,683 |
+
+- On planet 2 the step costs 0.03 ms more (`ripen` +0.045 ms) and the
+  frame's p95 0.04 to 0.07 ms more, about the gap between two runs of
+  the same arm (7.86 and 7.93).
+- On the core world condensing is cheaper: `ripen` costs 0.32 ms more, but
+  over a quarter fewer walkers to sense, breed and draw save more (step 6.18
+  against 6.28, view 7.79 against 7.94). The frame does not move.
+- Both arms' core-world frame max (544 to 579 ms) is the head start's 87 s
+  of growth before the clock.
+- At 0:45 on the core world the squad had killed 1,971 walkers with
+  condensing on and 25 without (shots 92 against 189). That is one game,
+  and why is not checked; the films do not cover the core world.
 
 ## Open
 
