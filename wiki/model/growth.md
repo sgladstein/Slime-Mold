@@ -95,7 +95,8 @@ away, running like a panicking walker, and lands and feeds there. **On in the
 run from planet 2** with `condense` (both 300; the whole-game review's D2,
 owner 11-15 21:41Z): breakaway alone over shape C's thickening moved
 nothing on planet 2 (19,093 walkers at 2:00 against 19,103), while both
-made the slime a fifth to two fifths heavier at 3:00
+made the slime a fifth to two fifths heavier at 3:00, at no frame cost on
+the GTX 1070 (the core world's step 0.1 ms cheaper, with fewer walkers)
 ([breakaway in the run](../../Reports/breakaway-run-2026-11-15/README.md)).
 
 **Thickening** (11-15, `BigParams::thicken`, both engines; **on in shape
