@@ -1,0 +1,1 @@
+Blind A/B on the Fen Moats page (2026-11-15): A = rock rims (Recipe::moat off, lakes 3 to 1), B = rock lip with a moat (Recipe::moat on, lakes 3 to 1).

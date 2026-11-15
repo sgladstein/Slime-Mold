@@ -1,0 +1,22 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts
+3 1 Drevix fen [Outcrops Lakes Plain veins] 0 111 | 10 6% 0% 13% 0% 22% 0 | 808 808 91 | 100% | 6/18 | 
+3 2 Drevon fen [Outcrops Pools Plain fields] 0 130 | 8 8% 0% 18% 0% 46% 4 | 772 772 71 | 100% | 6/26 | 
+3 3 Lovoskar fen [Open Lakes Clay scattered] 0 127 | 16 5% 0% 38% 0% 17% 4 | 759 759 59 | 100% | 6/18 | 
+3 4 Zovor fen [Open Lakes Clay veins] 0 115 | 11 2% 0% 30% 0% 28% 0 | 739 739 85 | 100% | 8/22 | 
+3 5 Yakus fen [Outcrops Lakes Plain richer-farther] 0 99 | 16 7% 0% 12% 0% 19% 4 | 672 672 48 | 100% | 6/16 | 
+3 6 Ixna fen [Outcrops Lakes Clay veins] 0 99 | 13 6% 0% 27% 0% 39% 0 | 796 796 97 | 100% | 6/20 | 
+3 7 Pheske fen [Outcrops Lakes Clay scattered] 0 102 | 16 5% 0% 44% 0% 15% 0 | 780 780 72 | 100% | 6/20 | 
+3 8 Vethar fen [Open Pools Clay fields] 0 146 | 14 4% 0% 44% 0% 29% 4 | 787 787 80 | 100% | 6/30 | 
+3 9 Zodix fen [Open Lakes Clay fields] 0 98 | 13 3% 0% 41% 0% 33% 0 | 836 836 75 | 100% | 6/18 | 
+3 10 Phenum fen [Open Pools Clay scattered] 0 101 | 16 3% 0% 45% 0% 16% 0 | 756 756 100 | 100% | 6/28 | 
+3 11 Drezon fen [Open Pools Clay scattered] 0 101 | 12 3% 0% 30% 0% 39% 0 | 810 810 62 | 100% | 6/30 | 
+3 12 Nezix fen [Open Pools Clay veins] 1 188 | 9 5% 0% 41% 0% 24% 0 | 822 822 71 | 100% | 6/20 | missing items: 5 crystals, 1 nests
+3 13 Mukith fen [Outcrops Lakes Clay veins] 0 99 | 7 6% 0% 28% 0% 31% 0 | 636 636 70 | 100% | 6/20 | 
+3 14 Losson fen [Outcrops Lakes Plain scattered] 0 125 | 16 7% 0% 15% 0% 25% 8 | 764 764 69 | 100% | 6/20 | 
+3 15 Thassus fen [Open Lakes Clay fields] 0 127 | 14 3% 0% 35% 0% 29% 0 | 829 829 82 | 100% | 6/22 | 
+3 16 Kazo fen [Outcrops Lakes Clay veins] 0 98 | 12 5% 0% 26% 0% 30% 0 | 780 780 75 | 100% | 6/18 | 
+3 17 Ixzor fen [Outcrops Lakes Clay fields] 0 103 | 13 4% 0% 28% 0% 13% 0 | 710 710 80 | 100% | 6/22 | 
+3 18 Grinerrar fen [Open Lakes Clay fields] 0 110 | 12 4% 0% 41% 0% 17% 0 | 713 713 80 | 100% | 6/28 | 
+3 19 Grivor fen [Open Lakes Clay fields] 0 105 | 13 3% 0% 33% 0% 35% 0 | 739 739 94 | 100% | 6/20 | 
+3 20 Sovix fen [Open Lakes Clay scattered] 0 100 | 16 3% 0% 33% 0% 31% 0 | 751 751 68 | 100% | 8/28 | 
+20 planets, 114 ms each on average
