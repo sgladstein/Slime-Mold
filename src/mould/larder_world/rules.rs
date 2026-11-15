@@ -454,6 +454,28 @@ pub struct Rules {
 }
 
 impl Rules {
+    /// **Set one rule by name** (the window's `set=NAME=V`, 2026-11-15, the
+    /// whole-game review's W44: no reviewer could film a pump's scent on,
+    /// as the window took no rule keys). False if there is no such rule.
+    pub fn set(&mut self, name: &str, v: f32) -> bool {
+        let f = match name {
+            "pump_smell" => &mut self.build.pump_smell,
+            "lure_smell" => &mut self.build.lure_smell,
+            "lure_r" => &mut self.build.lure_r,
+            "smell" => &mut self.smell,
+            "smell_r" => &mut self.smell_r,
+            "hoard" => &mut self.hoard,
+            "panic_margin" => &mut self.panic_margin,
+            "range" => &mut self.range,
+            "drain" => &mut self.drain,
+            "cap" => &mut self.cap,
+            "start_bank" => &mut self.start_bank,
+            _ => return false,
+        };
+        *f = v;
+        true
+    }
+
     /// The fight weight of one walker in a mould that starts with
     /// `walkers` on a world of `scale` (`Rules::mass`): today's density,
     /// 5,000 at scale 2 (1,250 at scale 1, 20,000 at 4), counts 1 each.

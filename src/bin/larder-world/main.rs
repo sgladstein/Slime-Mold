@@ -366,6 +366,9 @@ const LOADOUTS: [(&str, &str); 30] = [
     ("sniper", "range+range+pierce"),
 ];
 
+/// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
+const RULE_KEY: &str = "set:";
+
 #[derive(Clone)]
 struct Args {
     /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
@@ -799,8 +802,9 @@ impl App {
             Some(RunGround::Made(m)) => Some(m),
             _ => None,
         };
-        // Engine keys last, over the race world's and the mission's tier.
-        for (k, v) in &a.keys {
+        // Engine keys last, over the race world's and the mission's tier
+        // (`set:` keys are the game's rules, set below).
+        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY)) {
             slime_mould::gpu::set(&mut s, k, v)?;
             if k == "tier" {
                 core_tier = Tier::from_name(v);
@@ -905,6 +909,13 @@ impl App {
                 let t0 = std::time::Instant::now();
                 slime_mould::mould::larder_world::head_start(&mut world, grow, &rules);
                 eprintln!("head start: the slime grew {grow:.0} s alone in {:.1} s", t0.elapsed().as_secs_f32());
+            }
+        }
+        // Rule keys (`set=NAME=V`, 11-15, W44) last, over everything above.
+        for (k, v) in a.keys.iter().filter_map(|(k, v)| k.strip_prefix(RULE_KEY).map(|k| (k, v))) {
+            let v: f32 = v.parse().map_err(|e| format!("set={k}={v}: {e}"))?;
+            if !rules.set(k, v) {
+                return Err(format!("set={k}: no such rule"));
             }
         }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
@@ -1622,6 +1633,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // `bank=N`: the no-window round starts with N food in the bank
             // (films of rounds, whose casts are paid from it).
             "bank" => bank = Some(v.parse::<f32>()?),
+            // `set=NAME=V`: one of the game's rules by name
+            // (`Rules::set`, such as `set=pump_smell=2`), kept
+            // with the engine keys under `set:` so a menu round keeps it.
+            "set" => {
+                let (name, val) = v.split_once('=').ok_or("set=NAME=VALUE (a rule, such as set=pump_smell=2)")?;
+                let x: f32 = val.parse().map_err(|e| format!("set={name}={val}: {e}"))?;
+                if !Rules::default().set(name, x) {
+                    return Err(format!("set={name}: no such rule").into());
+                }
+                args.keys.push((format!("{RULE_KEY}{name}"), val.to_string()));
+            }
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
