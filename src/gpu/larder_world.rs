@@ -885,6 +885,15 @@ impl World for GpuWorld {
         self.e.dish.p.surge_at = at;
     }
 
+    /// As `set_surge_at`: written with the next step's params, and kept on
+    /// the mirror dish.
+    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32) {
+        let cell = crate::mould::larder_world::raid_cell(to, (self.e.dish.w, self.e.dish.h));
+        (self.s.raid_at, self.s.raid_to, self.s.raid_r, self.s.raid_share) = (at, cell, r, share);
+        let p = &mut self.e.dish.p;
+        (p.raid_at, p.raid_to, p.raid_r, p.raid_share) = (at, cell, r, share);
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }
@@ -1073,6 +1082,9 @@ mod tests {
         }
         fn set_surge_at(&mut self, at: u32) {
             self.g.set_surge_at(at)
+        }
+        fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32) {
+            self.g.set_raid(at, to, r, share)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()

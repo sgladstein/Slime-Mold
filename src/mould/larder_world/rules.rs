@@ -493,6 +493,9 @@ pub struct Rules {
     /// *Food-driven*). 120 brought the gaps to 11 s by 2:00.
     pub surge_food: f32,
     pub surge_min: f32,
+    /// **Raids** (2026-11-15, the defenses thread; `raids.rs`): the slime
+    /// spends what it eats on waves at the player's richest holding.
+    pub raid: super::RaidRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -503,7 +506,21 @@ impl Rules {
     /// whole-game review's W44: no reviewer could film a pump's scent on,
     /// as the window took no rule keys). False if there is no such rule.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
+        // Raids (`RaidRules`, 11-15): `raid_food=0` turns them off,
+        // `last_stand=1` on.
+        if name == "last_stand" {
+            self.raid.last_stand = v > 0.0;
+            return true;
+        }
         let f = match name {
+            "raid_food" => &mut self.raid.food,
+            "raid_first" => &mut self.raid.first,
+            "raid_min" => &mut self.raid.min,
+            "raid_every" => &mut self.raid.every,
+            "raid_size" => &mut self.raid.size,
+            "raid_share" => &mut self.raid.share,
+            "raid_lure_r" => &mut self.raid.lure_r,
+            "last_stand_at" => &mut self.raid.last_stand_at,
             "pump_smell" => &mut self.build.pump_smell,
             "lure_smell" => &mut self.build.lure_smell,
             "lure_r" => &mut self.build.lure_r,
@@ -606,6 +623,7 @@ impl Default for Rules {
             panic_margin: 5.0,
             surge_food: SURGE_FOOD,
             surge_min: 10.0,
+            raid: super::RaidRules::default(),
         }
     }
 }

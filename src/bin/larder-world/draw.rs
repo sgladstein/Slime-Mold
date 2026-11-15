@@ -1103,7 +1103,7 @@ impl App {
                 ..Command::new(id, slot, icon, name, key)
             };
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down. Click a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
                 place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("The main income. Snaps onto a crystal and draws it into the bank, more from bigger crystals ({:.1}% of its food a second, at least {:.0}). Click a pumped crystal to upgrade it: {:.0} food, {:.1}x the draw and {:.2}x the food a level, 3 levels.", b.pump_share * 100.0, b.pump_rate, b.pump_up_cost, b.pump_up_rate, b.pump_up_yield)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
@@ -1210,6 +1210,16 @@ impl App {
                     Some(p) => (false, Some(format!("upgrade to level {}: {p:.0} food, {:.0} short", level + 1, p - g.bank))),
                     None if !g.buildings[b].up() => (false, Some("its pump is still being built".into())),
                     None => (false, Some(format!("its pump is at the top level ({level})"))),
+                }
+            }
+            // On a standing turret: its render upgrade (the kill box pays).
+            Some((TURRET, at, _)) if g.turret_at(at).is_some() => {
+                let b = g.turret_at(at).unwrap();
+                match g.upgrade_price(b) {
+                    Some(p) if g.bank >= p => (true, Some(format!("render: {p:.0} food, click"))),
+                    Some(p) => (false, Some(format!("render: {p:.0} food, {:.0} short", p - g.bank))),
+                    None if !g.buildings[b].up() => (false, Some("its turret is still being built".into())),
+                    None => (false, Some("this turret already renders".into())),
                 }
             }
             Some((id, at, _)) if build_kind(id).is_some() => {

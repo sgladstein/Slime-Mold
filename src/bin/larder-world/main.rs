@@ -625,6 +625,8 @@ struct App {
     core_told: bool,
     /// The broken mould (`Rules::broken`) told.
     broken_told: bool,
+    /// Raids the HUD has told of (`Game::raids`).
+    raids_told: usize,
     robbed_at: Option<f32>,
     stolen: f32,
     broke: bool,
@@ -756,6 +758,7 @@ impl App {
             dry: Vec::new(),
             core_told: false,
             broken_told: false,
+            raids_told: 0,
             robbed_at: None,
             stolen: 0.0,
             broke: false,
@@ -1088,6 +1091,7 @@ impl App {
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
         self.broken_told = false;
+        self.raids_told = 0;
         self.bank_log.clear();
         self.banked = 0.0;
         let voice = self.listener.as_ref().is_none_or(|l| l.voice);
@@ -1346,6 +1350,14 @@ impl App {
                 self.hud.alert("The mould is broken: its stragglers starve unless they reach a crystal", None, theme::GOOD);
             } else {
                 self.hud.alert("The mould is growing back from a crystal", None, theme::BAD);
+            }
+        }
+        // A raid the slime sends (`Rules::raid`, 11-15): told once, where
+        // it goes, so the player can look before it lands.
+        if g.raids.sent.len() > self.raids_told {
+            self.raids_told = g.raids.sent.len();
+            if let Some(d) = g.raids.sent.last() {
+                self.hud.alert(&raid_words(g, d), Some(d.to), theme::BAD);
             }
         }
         if g.stolen > self.stolen {
@@ -1629,6 +1641,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
     let mut turrets: Vec<(Kind, (f32, f32))> = Vec::new();
+    let mut renders: Vec<usize> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
     let mut chosen = false;
@@ -1799,15 +1812,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let squad = cut.and_then(|c: Cut| c.squad);
                 cut = Some(Cut { t: *t, x: *x, y: *y, r: *r, hold: more.first().copied().unwrap_or(f32::INFINITY), width: more.get(1).copied().unwrap_or(6.0), squad });
             }
-            "turret" | "lure" | "pump" | "outpost" | "siren" => {
+            // `turret2=X,Y` (11-15, the kill box films): a turret that
+            // renders (level 2) from the start.
+            "turret" | "turret2" | "lure" | "pump" | "outpost" | "siren" => {
                 // `turret=X,Y` (11-14, the turret films; the other kinds for
                 // the building looks): one standing whole at (X, Y) from the
                 // start, world units as `centre=` (paid for, not raised);
                 // repeat for more.
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y] = w.as_slice() else { return Err(format!("{k}=X,Y").into()) };
-                let kind = match k { "turret" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
+                let kind = match k { "turret" | "turret2" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
                 turrets.push((kind, (*x, *y)));
+                if k == "turret2" {
+                    renders.push(turrets.len() - 1);
+                }
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
@@ -1867,7 +1885,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select, &drags, scroll)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, &renders, page, hover, select, &drags, scroll)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
@@ -1885,3 +1903,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests;
+
+/// The alert for raid `d`: what the slime goes for.
+fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime_mould::mould::larder_world::Raid) -> String {
+    use slime_mould::mould::larder_world::RaidAim;
+    let name = |k: usize| g.buildings.get(k).map_or("building", |b| b.kind.name());
+    match d.aim {
+        _ if d.last_stand => "Last stand: the whole mould rushes your soldiers".into(),
+        RaidAim::Building(k) => format!("The mould is raiding your {}", name(k)),
+        RaidAim::Lure { from: Some(k), .. } => format!("A raid on your {} turns for the lure", name(k)),
+        RaidAim::Lure { from: None, .. } => "A raid on your soldiers turns for the lure".into(),
+        RaidAim::Soldiers(_) => "The mould is raiding your soldiers".into(),
+    }
+}

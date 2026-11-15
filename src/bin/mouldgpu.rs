@@ -4120,6 +4120,12 @@ mod tests {
         // far longer than the dish has run), so an engine that reads the
         // clock and not the game's step moves no walker.
         let timed = Settings { surge_every: 1_000_000, surge_lean: 4, surge_dash: 6, surge_haste: 3.0, surge_at: 1, panic_r: 10.0, ..surge.clone() };
+        // And a raid (`BigParams::raid_at`, 2026-11-15, the defenses
+        // thread): set after the warm-up so the frame's first step is in the
+        // raid's run, at a crystal, with panic on, so a raider must not
+        // panic and the walkers out of the raid's draw still do; all seven
+        // raid words differ from their neighbours.
+        let raid = Settings { raid_at: 1, raid_r: 30.0, raid_share: 0.5, raid_lean: 3, raid_len: 7, raid_haste: 1.5, ..scared.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4147,6 +4153,7 @@ mod tests {
             ("plain, the body surges at the squad", surge, 0, 0.0, 0, 1.0),
             ("plain, a cut-off part charges and the body surges", surge_scared, 0, 0.0, 0, 1.0),
             ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
+            ("plain, a raid on a crystal while a cut-off part charges", raid, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4179,7 +4186,16 @@ mod tests {
                 s.surge_at = t0 - s.surge_lean;
                 cpu.p.surge_at = s.surge_at;
                 assert_eq!(cpu.surge_haste(), s.surge_haste, "{name}: the frame's first step lunges");
-            } else if s.surge_every > 0 {
+            } else if s.raid_at > 0 {
+                // The raid began `lean` steps before the frame's first step.
+                let t0 = cpu.steps as u32 + 1;
+                s.raid_at = t0 - s.raid_lean;
+                let c = (cpu.piles[1].0 * SCALE as f32, cpu.piles[1].1 * SCALE as f32);
+                s.raid_to = slime_mould::mould::larder_world::raid_cell(c, (cpu.w, cpu.h));
+                (cpu.p.raid_at, cpu.p.raid_to, cpu.p.raid_r, cpu.p.raid_share) = (s.raid_at, s.raid_to, s.raid_r, s.raid_share);
+                assert_eq!(cpu.raid_haste(), s.raid_haste, "{name}: the frame's first step runs");
+            }
+            if s.surge_at == 0 && s.raid_at == 0 && s.surge_every > 0 {
                 // The frame's first step (t0) at the lunge's first: t0 % every
                 // = lean.
                 let t0 = cpu.steps as u32 + 1;
@@ -4314,6 +4330,12 @@ mod tests {
             assert_eq!(surging > 0, s.surge_every > 0, "{name}: {surging} calm walkers surge at a unit");
             if s.surge_every > 0 {
                 eprintln!("squad, {name}: {surging} calm walkers surge, {charging} stale ones charge");
+            }
+            // The walkers that raid (within the reach of the crystal).
+            let raiding = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && cpu.raid_of(q).is_some()).count();
+            assert_eq!(raiding > 0, s.raid_at > 0, "{name}: {raiding} walkers raid");
+            if s.raid_at > 0 {
+                eprintln!("squad, {name}: {raiding} walkers raid, {charging} stale ones charge");
             }
             let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7, spray_share: share };
             // Two ticks with the spray (a fine step each here), so the

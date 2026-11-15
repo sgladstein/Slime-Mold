@@ -489,7 +489,7 @@ fn pumps_hand(g: &mut Game<GpuWorld>) {
         return;
     }
     // A standing pump below its top level: upgrade it when the bank allows.
-    if let Some(b) = (0..g.buildings.len()).find(|&b| g.upgrade_price(b).is_some()) {
+    if let Some(b) = (0..g.buildings.len()).find(|&b| g.buildings[b].kind == Kind::Pump && g.upgrade_price(b).is_some()) {
         g.apply(Cmd::Upgrade(b));
         return;
     }

@@ -29,6 +29,7 @@ sources:
   - Reports/mould-shooter-2026-11-11.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
+  - Reports/raids-2026-11-15/README.md
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-research-2026-11-10.md
   - Reports/soldier-controls-2026-11-12.md
@@ -291,6 +292,21 @@ to 14 s: nine surges in three minutes against the clock's six, each 3-7 s
 later with four pumps taking food. A run's planets scale the food with the
 level's walkers (`run::surge_food`). On the GTX 1070 the surges' frame
 cost does not show, clock or food-driven, and the squad twins pass.
+Since 11-15 the slime also **raids** (owner, 20:56Z: a big defense
+"just ends with the mold clustering around its own crystals"; 21:15Z:
+"Raids is the number 1 option"): every 400 food it eats from its
+crystals (no sooner than 1:00, 40-150 s apart) it sends 15% of its mass
+at the player's best pump, else a building, else the soldiers, from
+beyond the surge's reach (`Rules::raid`, `raids.rs`; `BigParams::raid_*`
+on both engines, the squad twin exact). A lure that is on within 40 cells
+of the target takes the raid, so a lure ringed by turrets is a kill box,
+and a turret's one upgrade (600 food, the turret card on it) makes it
+render: each walker killed in its range pays 0.25 food (owner: "the kill
+box pays but only with an upgrade"). The last stand (off; `set=last_stand=1`)
+sends the whole slime once at the soldiers when it falls under a quarter
+of its peak. On a Fork turtle to 4:00, 4 raids took 2 of 3 pumps and the
+turrets killed a third more; the slime grew as before. Raiders steer
+straight, so walls stop them ([raids](../../Reports/raids-2026-11-15/README.md)).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

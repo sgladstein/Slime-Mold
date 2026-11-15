@@ -744,6 +744,9 @@ impl World for Later {
     fn set_surge_at(&mut self, at: u32) {
         World::set_surge_at(&mut self.d, at)
     }
+    fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32) {
+        World::set_raid(&mut self.d, at, to, r, share)
+    }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)
     }
@@ -3025,4 +3028,97 @@ fn the_slime_surges_when_it_has_eaten() {
     let gaps: Vec<f32> = std::iter::once(starts[0] - g.landed as f32 / g.rules.tps as f32).chain(starts.windows(2).map(|w| w[1] - w[0])).collect();
     eprintln!("starved: gaps {gaps:?}");
     assert!(starts.len() >= 3 && gaps.iter().all(|&s| (20.0..20.5).contains(&s)), "each at the ceiling: {gaps:?}");
+}
+
+/// Raids (`Rules::raid`, `raids.rs`, 2026-11-15, the defenses thread): with
+/// the meter full the game sends a raid at the pump drawing most, through
+/// the world's raid words (target, reach, share, first step); a lure that
+/// is on near the target takes it; `food` 0 sends none; the last stand
+/// sends the whole slime once at the soldiers when it falls under its share
+/// of its peak.
+#[test]
+fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
+    let play = |raid: RaidRules, lure: bool, secs: f32| {
+        let mut g = small(1);
+        g.rules.raid = raid;
+        g.bank = 1.0e6;
+        // Pumps on the two crystals farthest from the mould's home: the
+        // larger draws more.
+        let cs = g.world.crystals();
+        let mut by_far: Vec<usize> = (0..cs.len()).collect();
+        let home = g.core;
+        by_far.sort_by(|&a, &b| ((cs[b].0 .0 - home.0).hypot(cs[b].0 .1 - home.1)).total_cmp(&(cs[a].0 .0 - home.0).hypot(cs[a].0 .1 - home.1)));
+        for &c in &by_far[..2] {
+            assert!(g.build(Kind::Pump, cs[c].0), "a pump on crystal {c}");
+        }
+        let top = (0..g.buildings.len()).max_by(|&a, &b| g.pump_draw(a).total_cmp(&g.pump_draw(b))).unwrap();
+        if lure {
+            let at = g.buildings[top].at;
+            let spot = (0..64).map(|i| (at.0 + 8.0 * (i as f32 * 0.7).cos(), at.1 + 8.0 * (i as f32 * 0.7).sin())).find(|&p| g.build_blocked(Kind::Lure, p).is_none()).expect("room for a lure");
+            assert!(g.build(Kind::Lure, spot));
+        }
+        while g.time() < secs && g.end.is_none() {
+            g.step();
+        }
+        (g, top)
+    };
+    let fast = RaidRules { food: 1.0e-3, first: 2.0, min: 5.0, every: 0.0, ..RaidRules::default() };
+    let (g, top) = play(fast, false, 14.0);
+    eprintln!("raids: {:?}", g.raids.sent);
+    assert!(g.raids.sent.len() >= 2, "a raid every 5 s once the meter fills: {}", g.raids.sent.len());
+    let d = g.raids.sent[0];
+    assert_eq!(d.aim, RaidAim::Building(top), "the pump drawing most");
+    assert!(d.reach > 0.0 && d.held > 0 && d.share == fast.share && !d.last_stand);
+    let last = g.raids.sent.last().unwrap();
+    assert_eq!(g.world.p.raid_to, raid_cell(last.to, (g.world.w, g.world.h)), "the world holds the target");
+    assert_eq!((g.world.p.raid_r, g.world.p.raid_share), (last.reach, last.share));
+    assert_eq!(g.world.p.raid_at as u64, last.tick * g.world.fine_steps() as u64 + 1, "it starts on the next step");
+    // A lure that is on by the pump takes the raid.
+    let (g, top) = play(fast, true, 8.0);
+    let lure = g.buildings.iter().position(|b| b.kind == Kind::Lure).unwrap();
+    assert!(g.buildings[lure].alive, "the lure still stands at the first raid");
+    assert_eq!(g.raids.sent[0].aim, RaidAim::Lure { lure, from: Some(top) });
+    assert_eq!(g.raids.sent[0].to, g.buildings[lure].at);
+    // Off: none, and the world holds no raid.
+    let (g, _) = play(RaidRules { food: 0.0, ..fast }, false, 14.0);
+    assert!(g.raids.sent.is_empty() && g.world.p.raid_at == 0);
+    // The last stand: once, the whole slime, at the soldiers.
+    let mut g = small(1);
+    g.rules.raid = RaidRules { last_stand: true, food: 0.0, ..RaidRules::default() };
+    g.step();
+    g.peak = g.mould * 10;
+    g.time_raids();
+    g.time_raids();
+    assert_eq!(g.raids.sent.len(), 1, "once");
+    let d = g.raids.sent[0];
+    assert!(d.last_stand && d.share == 1.0 && matches!(d.aim, RaidAim::Soldiers(_)) && d.reach >= 1.0e3, "{d:?}");
+    // Off by default.
+    assert!(!RaidRules::default().last_stand);
+}
+
+/// The kill box pays (`BuildRules::render_food`, 2026-11-15): only a turret
+/// upgraded once renders; the slime killed within its range pays into the
+/// bank and counts as income, and a kill outside it pays nothing.
+#[test]
+fn a_rendering_turret_pays_for_kills_in_its_range() {
+    let mut g = small(1);
+    g.bank = 1.0e5;
+    let at = g.larder;
+    let spot = (0..64).map(|i| (at.0 + 12.0 * (i as f32 * 0.7).cos(), at.1 + 12.0 * (i as f32 * 0.7).sin())).find(|&p| g.build_blocked(Kind::Turret, p).is_none()).expect("room for a turret");
+    assert!(g.build(Kind::Turret, spot));
+    let t = g.buildings.len() - 1;
+    let near = (spot.0 + 3.0, spot.1);
+    let far = (spot.0 + 10.0 * g.rules.build.turret_range, spot.1);
+    assert_eq!(g.render_pay(&[(Some(near), 10)]), 0.0, "a plain turret renders nothing");
+    assert_eq!(g.upgrade_price(t), Some(g.rules.build.render_cost));
+    assert_eq!(g.turret_at(spot), Some(t));
+    let bank = g.bank;
+    assert!(g.apply(Cmd::Upgrade(t)));
+    assert_eq!(g.bank, bank - g.rules.build.render_cost);
+    assert_eq!(g.upgrade_price(t), None, "one level");
+    let (before, income) = (g.bank, g.income());
+    let paid = g.render_pay(&[(Some(near), 10), (Some(far), 50), (None, 7)]);
+    assert_eq!(paid, 10.0 * g.rules.build.render_food, "only the kills in range");
+    assert_eq!(g.bank, before + paid);
+    assert_eq!(g.income(), income + paid);
 }
