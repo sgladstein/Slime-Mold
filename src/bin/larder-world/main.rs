@@ -438,7 +438,19 @@ struct Args {
     /// `grow=SECS`: a run level's head start (`run::head_start`) set by
     /// hand, to compare (`grow=0` lands on a fresh slime).
     grow: Option<f32>,
+    /// The gun range (`Run::range`; owner, 11-15 02:55Z: "a test
+    /// environment ... where I can play with the guns and cards and
+    /// bullets"): this round is the sandbox's, the squad armed from the
+    /// range's armory (H opens it over the fight), with no time limit and a
+    /// bank that does not run dry. `range=1` (or `range=SEED`) starts one.
+    range: Option<Run>,
 }
+
+/// The gun range's clock (game seconds): ten hours, so it never ends on
+/// time.
+const RANGE_CAP: f32 = 36_000.0;
+/// The gun range's starting bank: soldiers to buy without a thought.
+const RANGE_BANK: f32 = 100_000.0;
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
 struct Tracer {
@@ -638,6 +650,15 @@ struct App {
     /// The roguelike run under way, between its levels too (`args.run` is
     /// the level being played; this is the run itself, in the shop).
     run: Option<Run>,
+    /// The gun range's armory, between rounds too (`args.range` is the
+    /// one the round was armed from).
+    range: Option<Run>,
+    /// The armory is up over a live range round (the start menu's shop
+    /// page, the round paused under it), not the menu over its dish
+    /// (`App::set_armory`).
+    armory: bool,
+    /// The minimap's switch (M) while the armory hides it.
+    armory_minimap: bool,
     result: Result<(), String>,
 }
 
@@ -650,6 +671,9 @@ impl App {
             gun_rolls: 0,
             ammo_rolls: 0,
             run: args.run.clone(),
+            range: args.range.clone(),
+            armory: false,
+            armory_minimap: false,
             args,
             window: None,
             pixels: None,
@@ -824,6 +848,13 @@ impl App {
         if let Some(r) = &a.run {
             r.rules(&mut rules);
         }
+        // The gun range: no clock to beat and a bank that never runs dry,
+        // so soldiers can always be bought (B) and the round never ends on
+        // time or a wiped squad.
+        if a.range.is_some() {
+            rules.cap = RANGE_CAP;
+            rules.start_bank = rules.start_bank.max(RANGE_BANK);
+        }
         if let Some(c) = a.crater {
             rules.crater = c;
         }
@@ -877,18 +908,23 @@ impl App {
         } else if let Some(r) = &a.run {
             // A run lands with the gun it carries, upgraded (`Run::armed`).
             game.apply(Cmd::Arm(0, Some(r.armed())));
+        } else if let Some(r) = &a.range {
+            // The range: the armory's gun as it is.
+            game.apply(Cmd::Arm(0, Some(r.carried())));
         }
         let mut kit = KitRules::default();
         if let Some(r) = &a.run {
             r.kit(&mut kit);
         }
         self.kit = Kit::new(kit);
-        // A run's gun is the cards it bought (`Run::gun`); H does not cycle it.
-        let gun = match &a.run {
+        // A run's gun is the cards it bought (`Run::gun`), the range's the
+        // ones put in at its armory; H does not cycle either.
+        let armed = a.run.as_ref().or(a.range.as_ref());
+        let gun = match armed {
             Some(r) => r.gun(),
             None => rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(),
         };
-        let budget = a.run.as_ref().map_or(RoundRules::default().budget, Run::budget);
+        let budget = armed.map_or(RoundRules::default().budget, Run::budget);
         self.rounds = Rounds::new(gun, RoundRules { budget, ..RoundRules::default() });
         if let Some(v) = &a.ammo {
             let cards = match v.parse::<u32>() {
@@ -1269,7 +1305,8 @@ impl App {
         }
         self.step(dt);
         // The dish under the menu plays on: a round it ends starts again.
-        if self.in_menu() && self.game.as_ref().is_some_and(|g| g.end.is_some()) {
+        // (Not the gun range's paused under its armory.)
+        if self.in_menu() && !self.armory && self.game.as_ref().is_some_and(|g| g.end.is_some()) {
             if let Err(e) = self.open_menu() {
                 return self.fail(event_loop, e);
             }
@@ -1424,7 +1461,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
@@ -1467,6 +1504,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 r.depth = depth.parse::<u32>()?.clamp(1, slime_mould::mould::run::PLANETS);
                 args.run = Some(r);
             }
+            "range" => args.range = Some(Run::range(v.parse()?)),
             "dev" => args.dev = v != "0",
             "grow" => args.grow = Some(v.parse()?),
             "mode" => {
@@ -1538,7 +1576,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "select" => select = v != "0",
             "drag" => {
                 for d in v.split('/') {
-                    let (a, b) = d.split_once('>').ok_or("drag=FROM>TO[/FROM>TO..]: a slot (from 1) or a card's name, to a slot or bag")?;
+                    // `go`: the gun range's armory closes, and the film
+                    // goes on in the round from the first frame whose
+                    // `at=` time moves on.
+                    if d == "go" {
+                        drags.push(("go".into(), "go".into()));
+                        continue;
+                    }
+                    let (a, b) = d.split_once('>').ok_or("drag=FROM>TO[/FROM>TO..][/go]: a slot (from 1) or a card's name, to a slot or bag; go leaves the range's armory")?;
                     drags.push((a.to_string(), b.to_string()));
                 }
             }

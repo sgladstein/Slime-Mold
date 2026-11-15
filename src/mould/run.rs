@@ -376,6 +376,10 @@ pub enum Pick {
     DevPoints,
     /// Dev mode: a fresh draw of cards.
     DevReroll,
+    /// The gun range: every card in the gun back to the bag.
+    EmptyGun,
+    /// The gun range: the bag emptied (the gun keeps its cards).
+    EmptyBag,
 }
 
 /// One run.
@@ -407,7 +411,12 @@ pub struct Run {
     rerolls: u64,
     /// The run ended on a lost level.
     beaten: bool,
+    /// The gun range (`Run::range`): a free armory, not a run.
+    pub range: bool,
 }
+
+/// The depth the gun range rolls its guns and bullets for at first.
+pub const RANGE_DEPTH: u32 = 3;
 
 fn level_of(owned: &[u8; ITEMS.len()], key: &str) -> u8 {
     ITEMS.iter().position(|i| i.key == key).map_or(0, |k| owned[k])
@@ -430,7 +439,23 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
+    }
+
+    /// The gun range (owner, 11-15 02:55Z: "I need a test environment
+    /// built where I can play with the guns and cards and bullets"): a run
+    /// whose shop is a free armory. Every gun kind is owned (its average),
+    /// with one of each rolled for the depth on the rack; the shelf holds
+    /// every card that is no bullet and a bullet of every payload and set
+    /// (the standard set exact, the others rolled), free and never sold
+    /// out. No upgrades, no planets: the window plays it on the sandbox.
+    pub fn range(seed: u64) -> Run {
+        let mut r = Run::new(seed);
+        r.range = true;
+        r.depth = RANGE_DEPTH;
+        r.guns = GunKind::ALL.iter().map(|k| k.average()).collect();
+        r.restock();
+        r
     }
 
     /// Levels owned of the item `key` (0 for an unknown key).
@@ -606,12 +631,15 @@ impl Run {
     /// the points do not reach.
     fn buy(&mut self, k: usize) -> Option<usize> {
         let &c = self.offers.get(k)?;
-        let price = card_price(c);
-        if price > self.points {
-            return None;
+        // The range's shelf is free and never sold out.
+        if !self.range {
+            let price = card_price(c);
+            if price > self.points {
+                return None;
+            }
+            self.points -= price;
+            self.offers.remove(k);
         }
-        self.points -= price;
-        self.offers.remove(k);
         let room = self.fits(c);
         self.cards.push((c, false));
         let last = self.cards.len() - 1;
@@ -661,6 +689,19 @@ impl Run {
     /// `draw`'s, of the powers this depth has reached, not already owned
     /// (a card may be offered again once owned only if every card is).
     pub fn restock(&mut self) {
+        if self.range {
+            let z = mix(mix(self.seed ^ 0x7A46_E000) ^ u64::from(self.depth)) ^ self.rerolls;
+            self.offers.clear();
+            for (i, &shell) in Shell::ALL.iter().enumerate() {
+                for (j, &set) in Set::ALL.iter().enumerate() {
+                    let a = if set == Set::Standard { Ammo::standard(shell) } else { Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.depth) };
+                    self.offers.push(Card::Ammo(a));
+                }
+            }
+            self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
+            self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.depth)).collect();
+            return;
+        }
         let n = OFFER + self.level_of("draw") as usize;
         let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.depth)).collect();
         let fresh: Vec<Card> = pool.iter().copied().filter(|c| !self.cards.iter().any(|o| o.0 == *c)).collect();
@@ -713,10 +754,11 @@ impl Run {
         (l < it.max).then_some(it.cost * (u32::from(l) + 1))
     }
 
-    /// The shop's rows: the items, the cards on offer, the cards owned.
+    /// The shop's rows: the items, the cards on offer, the cards owned;
+    /// the gun range's has no items, a free shelf, and its own rows.
     pub fn shop(&self) -> Vec<Row> {
         let mut rows = Vec::new();
-        for (i, it) in ITEMS.iter().enumerate() {
+        for (i, it) in ITEMS.iter().enumerate().filter(|_| !self.range) {
             let l = self.owned[i];
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
@@ -744,11 +786,13 @@ impl Run {
         }
         for (i, g) in self.gun_offers.iter().enumerate() {
             let p = gun_price(g);
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
+            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_price(c);
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price, state, ready: self.range || p <= self.points, pick: Pick::Offer(i) });
         }
         let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
@@ -769,7 +813,15 @@ impl Run {
                 pick: Pick::Card(i),
             });
         }
-        if self.dev {
+        if self.range {
+            let row = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: String::new(), ready: true, pick };
+            rows.push(row("New rolls", "Roll the shelf's bullets and the rack's guns again.".into(), Pick::DevReroll));
+            rows.push(row("Deeper rolls", format!("Roll them as on planet {} (now {}).", (self.depth + 1).min(PLANETS), self.depth), Pick::DevDepth(1)));
+            rows.push(row("Shallower rolls", format!("Roll them as on planet {} (now {}).", self.depth.saturating_sub(1).max(1), self.depth), Pick::DevDepth(-1)));
+            rows.push(row("Empty the gun", "Every card in the gun back to the bag.".into(), Pick::EmptyGun));
+            rows.push(row("Empty the bag", "Throw away the cards in the bag.".into(), Pick::EmptyBag));
+        }
+        if self.dev && !self.range {
             let dev = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
             rows.push(dev("Next planet deeper", format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)), Pick::DevDepth(1)));
             rows.push(dev("Next planet shallower", format!("Land on planet {} instead", self.depth.saturating_sub(1).max(1)), Pick::DevDepth(-1)));
@@ -794,6 +846,14 @@ impl Run {
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
+                // The range swaps a rack gun for the owned one of its kind,
+                // which goes on the rack (four of each, either way back).
+                if let Some(k) = self.range.then(|| self.guns.iter().position(|o| o.kind == g.kind)).flatten() {
+                    self.gun_offers[i] = std::mem::replace(&mut self.guns[k], g);
+                    self.carry = k;
+                    self.refit();
+                    return true;
+                }
                 let price = gun_price(&g);
                 if price > self.points {
                     return false;
@@ -813,7 +873,7 @@ impl Run {
                 self.refit();
                 true
             }
-            Pick::DevDepth(by) if self.dev => {
+            Pick::DevDepth(by) if self.dev || self.range => {
                 self.depth = (self.depth as i32 + by).clamp(1, PLANETS as i32) as u32;
                 self.restock();
                 true
@@ -822,12 +882,25 @@ impl Run {
                 self.points += 1000;
                 true
             }
-            Pick::DevReroll if self.dev => {
+            Pick::DevReroll if self.dev || self.range => {
                 self.rerolls += 1;
                 self.restock();
                 true
             }
             Pick::DevDepth(_) | Pick::DevPoints | Pick::DevReroll => false,
+            Pick::EmptyGun | Pick::EmptyBag if !self.range => false,
+            Pick::EmptyGun => {
+                let any = self.cards.iter().any(|c| c.1);
+                // In the bag in their order, after what was there.
+                let (gun, bag): (Vec<_>, Vec<_>) = self.cards.drain(..).partition(|c| c.1);
+                self.cards = bag.into_iter().chain(gun.into_iter().map(|c| (c.0, false))).collect();
+                any
+            }
+            Pick::EmptyBag => {
+                let n = self.cards.len();
+                self.cards.retain(|c| c.1);
+                self.cards.len() < n
+            }
             Pick::Card(i) => {
                 let room = self.cards.get(i).is_some_and(|c| self.fits(c.0));
                 match self.cards.get(i) {
@@ -993,6 +1066,44 @@ mod tests {
         r.points = 0;
         r.offers = vec![Card::Wide];
         assert!(!r.buy_into(0, 0) && r.offers.len() == 1, "no points, no card");
+    }
+
+    /// The gun range (owner, 11-15 02:55Z: "I need a test environment
+    /// built where I can play with the guns and cards and bullets"): every
+    /// gun kind owned and one of each rolled on the rack, a bullet of every
+    /// payload and set and every other card on a free shelf that never
+    /// sells out, no upgrades; its rows roll again, roll deeper and empty
+    /// the gun and the bag. A run has none of that.
+    #[test]
+    fn the_gun_range_is_a_free_armory() {
+        let mut r = Run::range(7);
+        assert!(r.guns.iter().map(|g| g.kind).eq(GunKind::ALL) && r.gun_offers.len() == GunKind::ALL.len());
+        let others = Card::ALL.iter().filter(|c| c.kind() != Kind::Payload).count();
+        assert_eq!(r.offers.len(), Shell::ALL.len() * Set::ALL.len() + others);
+        for shell in Shell::ALL {
+            for set in Set::ALL {
+                assert!(r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == shell && a.set == set)), "{shell:?} {set:?}");
+            }
+        }
+        assert_eq!(r.offers[0], Card::Ammo(Ammo::standard(Shell::Plain)), "the standard set is exact");
+        let rows = r.shop();
+        assert!(rows.iter().all(|row| !matches!(row.pick, Pick::Item(_)) && row.price.is_empty() && (row.ready || row.on)), "no upgrades, nothing to pay");
+        // The same card twice, free, and still on the shelf.
+        let n = r.offers.len();
+        assert!(r.pick(Pick::Offer(0)) && r.pick(Pick::Offer(0)));
+        assert_eq!((r.offers.len(), r.cards.len(), r.points), (n, 2, 0));
+        let (owned, rack) = (r.guns[0], r.gun_offers[0]);
+        assert!(r.pick(Pick::Gun(0)) && r.carry == 0 && r.guns[0] == rack && r.gun_offers[0] == owned, "a rack gun swaps for the owned one of its kind, free, and is carried");
+        // New rolls change the rolled bullets, not the exact ones.
+        let before = r.offers.clone();
+        assert!(r.pick(Pick::DevReroll) && before != r.offers && before[0] == r.offers[0]);
+        assert!(r.pick(Pick::DevDepth(1)) && r.depth == RANGE_DEPTH + 1);
+        assert!(r.pick(Pick::EmptyGun) && r.gun().is_empty() && r.cards.len() == 2);
+        assert!(r.pick(Pick::EmptyBag) && r.cards.is_empty());
+        let mut run = Run::new(7);
+        run.cards = vec![(Card::Wide, true)];
+        assert!(!run.pick(Pick::EmptyGun) && !run.pick(Pick::DevReroll) && run.gun_text() == "wide");
+        assert!(!run.shop().iter().any(|row| matches!(row.pick, Pick::EmptyGun | Pick::EmptyBag)));
     }
 
     #[test]

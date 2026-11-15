@@ -348,6 +348,9 @@ impl<W: World> Game<W> {
             Some(&r) if self.ranked[q] as usize == n && (r as usize) < n => r as usize,
             _ => m.iter().position(|&j| j == k).unwrap_or(0),
         };
+        if let Some(o) = self.column_place(k, r, n) {
+            return o;
+        }
         let sq = self.squads[q];
         turned(sq.formation, sq.formation.offset(r, n, self.gap()), sq.face)
     }
@@ -370,12 +373,17 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let gap = self.gap();
         let sq = self.squads[q];
-        let places: Vec<(f32, f32)> = (0..n)
+        let col = &self.columns[q];
+        let places: Vec<(f32, f32)> = if col.on && col.places.len() == n {
+            col.places.iter().map(|o| (centre.0 + o.0 * sc, centre.1 + o.1 * sc)).collect()
+        } else {
+            (0..n)
             .map(|r| {
                 let o = turned(sq.formation, sq.formation.offset(r, n, gap), sq.face);
                 (centre.0 + o.0 * sc, centre.1 + o.1 * sc)
             })
-            .collect();
+            .collect()
+        };
         let mut pairs: Vec<(f32, usize, usize)> = Vec::with_capacity(n * n);
         for (i, &k) in m.iter().enumerate() {
             let s = self.soldiers[k];
@@ -502,6 +510,7 @@ impl<W: World> Game<W> {
             let steering = sq.steer != (0.0, 0.0);
             if !steering && sq.dest.is_none() {
                 self.squads[q].anchor = None;
+                self.funnel_stop(q);
                 // At rest: round the point every member was last sent to.
                 let m = self.members(q);
                 if let Some(&k0) = m.first() {
@@ -544,21 +553,41 @@ impl<W: World> Game<W> {
             let rest = self.shape_off(q, at);
             let mid = (mid.0 - rest.0, mid.1 - rest.1);
             let gap = |p: (f32, f32)| (p.0 - mid.0).hypot(p.1 - mid.1);
-            let ahead = gap(at) > LEAD * sc;
-            let step = self.rules.speed * sc * dt * PACE * self.pace(q);
-            let a = if steering {
-                let far = (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc);
-                if step > 0.0 { self.guide(at, far, step, false) } else { at }
+            // A funnelling squad's head (`funnel`) waits only for the
+            // front of its queue: its places reach back along the way it
+            // came, and the middle of a squad queuing at a door lags its
+            // places' middle by more than the lead while it all goes well.
+            // Measured from the middle, the head stood at the mouth of the
+            // door until the squad had squeezed up behind it (door 6 cells
+            // wide, 24 soldiers: 0.6 s still at the mouth).
+            let ahead = if self.columns[q].on {
+                self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1)).fold(f32::MAX, f32::min) > LEAD * sc
             } else {
-                let d = sq.dest.unwrap_or(at);
-                if step > 0.0 { self.guide(at, d, step, true) } else { at }
+                gap(at) > LEAD * sc
             };
+            let step = self.rules.speed * sc * dt * PACE * self.pace(q);
+            let target = if steering { (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc) } else { sq.dest.unwrap_or(at) };
+            let a = if step > 0.0 { self.guide(at, target, step, !steering) } else { at };
             let a = if ahead && gap(a) >= gap(at) - 1e-3 { at } else { a };
+            // Narrow ground ahead: a column (`funnel`). Looks a formation's
+            // half width and a gap along the way, and starts the column at
+            // the squad's front (its furthest member along the way).
+            let a = if self.rules.funnel && step > 0.0 {
+                let look = (self.formation_width(q) + self.gap()) * sc;
+                let far = self.guide(at, target, look, !steering);
+                let dir = unit((far.0 - at.0, far.1 - at.1)).unwrap_or(sq.face);
+                let lead = self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0) * dir.0 + (self.soldiers[k].y - at.1) * dir.1).fold(0.0, f32::max);
+                let front = if self.columns[q].on || lead <= 0.0 { a } else { self.guide(at, target, lead.min(look), !steering) };
+                self.funnel(q, at, a, far, front)
+            } else {
+                a
+            };
             if let Some(d) = sq.dest.filter(|_| !steering) {
                 if (d.0 - a.0).hypot(d.1 - a.1) < 1e-3 && gap(d) <= 2.0 * sc {
                     // Arrived: the members keep their places round it, or
                     // it starts what it has queued.
                     self.squads[q].dest = None;
+                    self.funnel_stop(q);
                     self.squad_next(q);
                     continue;
                 }
