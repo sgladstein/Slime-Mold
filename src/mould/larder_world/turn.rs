@@ -405,7 +405,21 @@ impl<W: World> Game<W> {
     /// Once a game second: `Game::stuck`.
     pub(super) fn count_stuck(&mut self) {
         let taken = self.harvested + self.soldiers.iter().map(|s| s.carry).sum::<f32>();
-        if self.alive() > 0 && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
+        // Half a dish cell walked is a move (a soldier settling in its
+        // formation shifts less than that).
+        let step = 0.5 * self.s();
+        let walked = self.soldiers.iter().zip(&self.stuck_at).any(|(s, &(x, y))| s.alive && (s.x - x).hypot(s.y - y) > step);
+        self.stuck_at = self.soldiers.iter().map(|s| (s.x, s.y)).collect();
+        // A standing pump still has a crystal to give, and a building going
+        // up is the bank already spent on a plan.
+        let working = self.buildings.iter().any(|b| b.alive && (b.built < 1.0 || b.kind == Kind::Pump));
+        // With free shots and a crystal still charged, a living squad
+        // always has a way on (walk to it, or fire), so standing still is
+        // the player's choice, which the clock judges (the chores thread's
+        // window test, 11-15: planet 6 in squad mode ended "Stuck" at 0:34
+        // before the squad had met the slime).
+        let way_on = self.rules.price <= 0.0 && self.world.crystals().iter().any(|c| c.1 > 0.0);
+        if self.alive() > 0 && !walked && !working && !way_on && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
             self.stuck += 1;
             self.stuck_run += 1;
         } else {

@@ -286,14 +286,22 @@ pub struct Game<W: World> {
     pub larder_touch: u32,
     /// **Stuck seconds** (design review, 2026-11-12: no soft lock), counted
     /// once a game second: a soldier alive, no shot fired and no food taken
-    /// (harvested plus carried did not rise) since the last count, and the
-    /// bank below a soldier's price. `stuck` is the round's total, `stuck_run`
+    /// (harvested plus carried did not rise) since the last count, no
+    /// soldier walked, no pump stands, nothing is being built and not
+    /// (free shots and a crystal with charge left), and the
+    /// bank below a soldier's price (the walking, pump and building
+    /// exceptions since the whole-game review's W17, 11-15: a run ended
+    /// "stuck" at 1:37 with four soldiers at full health and both pumps
+    /// standing). `stuck` is the round's total, `stuck_run`
     /// the seconds in a row now (0 once a second isn't stuck). The census
     /// (`examples/larderworld.rs`) counted this itself until 2026-11-12; the
     /// campaign's mission layer reads it here.
     pub stuck: u32,
     pub stuck_run: u32,
     stuck_mark: (u32, f32),
+    /// Each soldier's place at the last stuck count: a soldier that walked
+    /// since is doing something (whole-game review W17, 11-15).
+    stuck_at: Vec<(f32, f32)>,
     /// Ticks the larder has been held with the bank empty (`Rules::overrun`),
     /// and ticks toward the next reserve recruit (`Rules::reserve`).
     held_ticks: u64,
@@ -449,6 +457,7 @@ impl<W: World> Game<W> {
             stuck: 0,
             stuck_run: 0,
             stuck_mark: (0, 0.0),
+            stuck_at: Vec::new(),
             held_ticks: 0,
             reserve_ticks: 0,
             end: None,

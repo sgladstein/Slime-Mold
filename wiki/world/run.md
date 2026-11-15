@@ -8,9 +8,10 @@ sources:
   - Reports/gun-range-2026-11-15.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
-code:
-  - LADDER
+  - Reports/run-progression-2026-11-15/README.md
+code:  - LADDER
   - PLANETS
+  - Playlog
   - RANGE_DEPTH
   - REF_OPEN
   - Run::buy_into
@@ -21,6 +22,7 @@ code:
   - Run::range
   - Run::rules
   - Run::shop
+  - STUCK_WARN
   - WIN_SHARE
   - ammo_price
   - area_of
@@ -68,7 +70,29 @@ locked on the command card, except pumps, the main income since 2026-11-15: they
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 
+Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
+
+## Ending early, the play log, pressure by depth
+
+Since 11-15 (the whole-game review's W17, W30 and W13;
+[report](../../Reports/run-progression-2026-11-15/README.md)), a second
+counts as stuck only when, besides no shot, no food taken and the bank under
+a soldier's price, no soldier walked, no pump stands, nothing is being built
+and shots cost food or every crystal is dry (in squad mode shots are free,
+so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) the goal line warns
+that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
+four healthy soldiers and both pumps standing. The shrink goal counts the
+slime's mass (`World::mass`: a thickened walker twice; the GPU's `count`
+pass adds the enemy's condensed walkers to the readout), so a body that
+thickens no longer reads as shrinking. The window writes a play log
+(`Playlog`) beside the replay, `larder-world-log-MAP-SEED.txt`, a line a
+game second (walkers, mass, soldiers, squads, bank, income, shots, kills,
+buildings, frame p50/p95) with each command; `cargo run --release --example
+playlog -- FILE` prints time to 10-40 soldiers, splits, pumps, kills a
+minute against the slime's mass, and frame times.
+
+Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet waits for the owner (the review's D3).
 
 ## The gun range
 

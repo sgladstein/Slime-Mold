@@ -138,11 +138,13 @@ pub const MAX_PILES: usize = 64;
 const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking walker looks over the same piles on both engines");
 
 /// The wall counters' first bytes (`Engine::wstat`): bites, broken cells,
-/// the eviction's moves, the struck, the living walkers, three spare. The
+/// the eviction's moves, the struck, the living walkers, the own mould's,
+/// the cap's two counts, the enemy's condensed walkers (word 8, 11-15: the
+/// run's goal counts mass, a condensed walker twice), three spare. The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
-pub const WSTAT_BYTES: usize = 32;
+pub const WSTAT_BYTES: usize = 48;
 
 /// The smallest mould grid square the wall counters have room for, in
 /// dish cells, where the scale is bigger: the campaign's and the player
@@ -2690,8 +2692,10 @@ impl Engine {
     pub fn record_count(&self, shared: &Shared, enc: &mut wgpu::CommandEncoder) {
         let (gw, gh) = self.grid_size();
         assert!(gw * gh <= self.grid_max(), "a mould grid square under a dish cell");
-        // Words 4 (the living) and 5 (the player's own mould's, in a garden).
+        // Words 4 (the living) and 5 (the player's own mould's, in a garden),
+        // and 8 (the enemy's condensed walkers).
         enc.clear_buffer(&self.wstat, 16, Some(8));
+        enc.clear_buffer(&self.wstat, 32, Some(4));
         if gw * gh > 0 {
             enc.clear_buffer(&self.wstat, WSTAT_BYTES as u64, Some(4 * (gw * gh) as u64));
         }
