@@ -1022,3 +1022,73 @@ fn a_squads_orders_and_queue_draw_as_one_path() {
     let n = app.game.as_ref().unwrap().members(q).len();
     assert!(n > 1 && lines.iter().filter(|l| near(l.1, pts[0])).count() == 1, "{n} soldiers drew {} lines to the first point", lines.iter().filter(|l| near(l.1, pts[0])).count());
 }
+
+/// **Letting go of the squad** (owner 2026-11-15 02:58Z: "a way to
+/// deselect so that you're not actually controlling any specific squad in
+/// there and then you can move around the map using wasd"): Esc lets go
+/// (nothing selected, every tile AUTO, Let go greyed), WASD then pans the
+/// camera unpaused and steers nobody, a second Esc is the HUD's (the menu),
+/// and Space, a tile or a click on a squad takes command again.
+#[test]
+fn esc_lets_go_of_the_squad_and_wasd_pans_until_a_squad_is_taken_again() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
+    app.game.as_mut().unwrap().bank = 1e6;
+    for _ in 0..3 {
+        app.game.as_mut().unwrap().apply(Cmd::Buy);
+    }
+    let dt = 1.0 / 60.0;
+    app.squad_frame(dt);
+    let q = app.game.as_ref().unwrap().active.expect("a squad controlled at the start");
+    assert!(!app.controls.selected.is_empty());
+    let panel = app.model(None, None).squads.unwrap();
+    assert!(!panel.free && panel.rows.iter().all(|r| r.auto != r.active), "the commanded squad is not auto");
+    // Esc lets go.
+    assert!(app.squad_key(KeyCode::Escape, true, false, true));
+    assert!(app.squad_free());
+    assert_eq!(app.game.as_ref().unwrap().active, None);
+    app.squad_frame(dt);
+    assert_eq!(app.game.as_ref().unwrap().active, None, "the frame does not take a squad back");
+    assert!(app.controls.selected.is_empty(), "nothing selected");
+    let panel = app.model(None, None).squads.unwrap();
+    assert!(panel.free && panel.rows.iter().all(|r| r.auto && !r.active), "every tile AUTO");
+    // A second Esc is the HUD's: the squad key passes it on.
+    assert!(!app.squad_key(KeyCode::Escape, true, false, true));
+    // WASD pans the camera, unpaused, and steers no squad.
+    assert!(!app.paused);
+    app.camera.zoom_to(6.0, app.camera.to_screen(app.camera.centre()));
+    let c0 = app.camera.focus();
+    assert!(!app.squad_key(KeyCode::KeyD, true, false, true), "D is not the squad's");
+    app.controls.wasd_pan = app.squad_free();
+    let units = app.units();
+    app.controls.key(KeyCode::KeyD, true, false, &units, &mut app.camera);
+    for _ in 0..30 {
+        app.controls.update(&mut app.camera, dt);
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    app.controls.key(KeyCode::KeyD, false, false, &units, &mut app.camera);
+    let c1 = app.camera.focus();
+    assert!(c1.0 > c0.0 + 1.0, "D panned the camera right: {c0:?} -> {c1:?}");
+    assert!(app.game.as_ref().unwrap().squads.iter().all(|s| s.steer == (0.0, 0.0)), "no squad steered");
+    // Space takes the last squad back, and the camera follows it.
+    assert!(app.squad_key(KeyCode::Space, true, false, true));
+    assert_eq!(app.game.as_ref().unwrap().active, Some(q));
+    assert!(!app.squad_free() && app.sq.as_ref().unwrap().follow);
+    // The panel's Let go, then a tile, do the same.
+    app.squad_panel_event(HudEvent::SquadFree);
+    assert!(app.squad_free());
+    app.squad_panel_event(HudEvent::Squad(0));
+    assert!(!app.squad_free());
+    assert_eq!(app.game.as_ref().unwrap().active, Some(app.game.as_ref().unwrap().live_squads()[0]));
+    // A click on a squad takes it.
+    app.let_go();
+    let m = { let g = app.game.as_ref().unwrap(); g.middle(q).unwrap() };
+    app.camera.centre_on(m);
+    app.squad_frame(dt);
+    let at = app.camera.to_screen(m);
+    app.controls.cursor = Some(at);
+    assert!(app.squad_button(Button::Left, true));
+    app.squad_button(Button::Left, false);
+    assert_eq!(app.game.as_ref().unwrap().active, Some(q), "clicked squad taken");
+}

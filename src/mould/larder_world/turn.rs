@@ -96,7 +96,7 @@ impl<W: World> Game<W> {
                     // From its rim (`Rules::crystal_solid`), with the slot's room.
                     let room = if self.rules.crystal_solid { RIM + 1.0 } else { 1.0 };
                     if (s.x - c.0).hypot(s.y - c.1) <= self.world.crystal_r(i) + room * sc {
-                        take = (r.harvest * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
+                        take = (r.harvest * if r.larder { 1.0 } else { r.hand } * dt * self.work_boost(k)).min((r.carry - s.load - s.carry).max(0.0)) * r.charge;
                         at_crystal = Some(i);
                     }
                 }

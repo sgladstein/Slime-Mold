@@ -592,6 +592,14 @@ impl<W: World> Game<W> {
     }
 
     /// Game seconds since the start (the landing, `Game::landed`).
+    /// Food that has come in, in all: drained, pumped and guarded (the
+    /// window's flow readout is its rate, so it is never negative: owner,
+    /// 2026-11-15, "the monitor that says your energy flow should always
+    /// be positive"; spending shows in the bank, not the flow).
+    pub fn income(&self) -> f32 {
+        self.harvested + self.guard_paid
+    }
+
     pub fn time(&self) -> f32 {
         (self.world.ticks() - self.landed) as f32 / self.rules.tps as f32
     }
