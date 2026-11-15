@@ -2,11 +2,12 @@
 title: Plants
 kind: mechanism
 status: open
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/fire-2026-11-14/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
+  - Reports/review-fixes-2026-11-15/README.md
 code:
   - BigDish::ignite
   - BigParams::fire_damp
@@ -48,7 +49,16 @@ muted green (hue 130-150; teal took the crystals' cyan), under the slime by the 
 on darkened ground through one continuous ember-red-orange-yellow ramp;
 zoomed in, each burning crown takes the heat at its centre and burns
 hotter while fresh (engine block 8 `PB_FRESH`, view only), ember grains
-show the heat left on burnt ground, and char is near-black grey
+show the heat left on burnt ground, and char is near-black grey; a fresh
+crown's top burns white-hot (luma ~240, over the slime's highlight; art
+lead 11-15). Plants, char and soil detail are gone under any slime by
+mid-film (`vis`, [report](../../Reports/review-fixes-2026-11-15/README.md)).
+Each planet draws its own plant forms (`flora_form`, keyed by the map's
+`flora` line, the biome): barrens dry thorn clumps, fen moss cushions,
+valley long blades, jungle star-lobed canopy, highlands lichen rosettes,
+caves pale fungus caps, core wine-red thorns and rings; a map with no
+`flora` line keeps the meadow forms
+([page](https://claude.ai/artifact/GfhdLAM5txddNwy9kT43e4))
 ([page](https://claude.ai/artifact/7ZFRbDuC4ahCxKVV6wDui5),
 [report](../../Reports/plants-look-2026-11-14/README.md)). Before: a 3 x 3
 Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qwwP27HdY)).
@@ -71,3 +81,4 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
 
 - [plants report](../../Reports/plants-2026-11-14/README.md), *brainstorm*.
 - [plants look](../../Reports/plants-look-2026-11-14/README.md), *crowns sized by the field, fire per crown*.
+- [review fixes](../../Reports/review-fixes-2026-11-15/README.md), *plants under the slime, white-hot fire front*.

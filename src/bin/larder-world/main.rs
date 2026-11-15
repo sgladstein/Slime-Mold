@@ -915,7 +915,7 @@ impl App {
             let dense = e.grows && ws.condense > 0;
             v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
             // Plants, their fire and the char (11-14), from the same buffer.
-            v.set_plants(e.plants.then_some((&e.news, &e.state)), (e.plant_at / 4) as u32 + slime_mould::gpu::PLANT_HEAD as u32);
+            v.set_plants(e.plants.then_some((&e.news, &e.state)), (e.plant_at / 4) as u32 + slime_mould::gpu::PLANT_HEAD as u32, e.dish.flora_of.unwrap_or(0) as u32);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();

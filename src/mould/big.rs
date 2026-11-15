@@ -1480,6 +1480,8 @@ pub struct BigDish {
     pub fire_steps: u32,
     /// The map's `moisture BASE SPREAD` line, kept for `Map::of_dish`.
     pub moisture_of: Option<(f32, f32)>,
+    /// The map's flora (`Items::flora`), for the view's plant forms.
+    pub flora_of: Option<u8>,
     /// Fire's kills the game has been told of (`World::burned`).
     pub fire_told: u64,
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
@@ -1721,6 +1723,7 @@ impl BigDish {
             moist: Vec::new(),
             fire_steps: 0,
             moisture_of: None,
+            flora_of: None,
             fire_told: 0,
             gassed: Vec::new(),
             flung: Vec::new(),
@@ -1836,6 +1839,7 @@ impl BigDish {
         // Water for moisture: wet ground and deep water (soil 4).
         let water: Vec<bool> = (0..n).map(|i| (!self.wet.is_empty() && self.wet[i]) || (!self.soil.is_empty() && self.soil[i] == 4)).collect();
         self.moisture_of = map.and_then(|m| m.items.moisture);
+        self.flora_of = map.and_then(|m| m.items.flora);
         let (base, spread) = self.moisture_of.unwrap_or((0.15, 0.3));
         self.moist = pl::moisture(w, self.h, &water, &self.plant_kind, self.p.seed as u32, base, spread);
     }

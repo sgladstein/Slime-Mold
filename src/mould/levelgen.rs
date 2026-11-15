@@ -1503,7 +1503,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
 
     // Crystals.
-    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), ..Items::default() };
+    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), flora: Some(p.biome as u8), ..Items::default() };
     let clear = |ground: &[u8], items: &Items, c: (f32, f32), rad: f32, gap: f32| -> bool {
         if c.0 < rad + 24.0 || c.1 < rad + 24.0 || c.0 > wf - rad - 24.0 || c.1 > hf - rad - 24.0 {
             return false;
@@ -2432,8 +2432,10 @@ mod tests {
     // below). Then planet 4 (river valley): no dune clay over deep water
     // or bridges, no bridge planks by the nests (bug check, 11-15). Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
-    // which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xe2ddd9586ec43882, 0xb4183e35b474ba49, 0x4bbbb8f96e6ea1d0, 0x3115a9964abbe8ea, 0x6a8d5a9e7fc09b42];
+    // which finds the same nearest sites as the full scan. Then the item
+    // text's `flora` line (11-15, plants thread: each biome's plant forms
+    // in the view); the ground and plants are unchanged.
+    const PINNED: [u64; 8] = [0x31a97874cb9b66b2, 0x05ee9fb9fe6acccf, 0x77d2aa3e848817cf, 0x2fc27e472ef07b75, 0xeca63c4d4f44f7b5, 0x98a0f8e45acb1f79, 0x47c0bc9a485a3bf4, 0x1ac9df36bc070b41];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -2464,7 +2466,7 @@ mod tests {
         assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
     }
 
-    const PINNED_BIG: u64 = 0x6a8d5a9e7fc09b42;
+    const PINNED_BIG: u64 = 0x1ac9df36bc070b41;
 
     /// Each planet's plants: the share of its map cells with any, and the
     /// mean density over all of them (plants are drawn as crowns sized by
