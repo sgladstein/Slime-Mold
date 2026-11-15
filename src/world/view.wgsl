@@ -981,6 +981,11 @@ fn mc(ix: i32, iy: i32) -> Mat {
 var<workgroup> crowd: array<u32, 576>;
 // The fine grid's second half on the same tile (`set_dense`).
 var<workgroup> crowd2: array<u32, 576>;
+// The tile's rows summed across (the Gaussians' first, horizontal pass;
+// 24 rows of the workgroup's 16 columns): the sharp count, the cut-off
+// count, the condensed count and the fresh absorptions under the sharp
+// Gaussian, and the count under the body's.
+var<workgroup> rows5: array<array<f32, 5>, 384>;
 
 // The slime below the cell (2026-11-14, the owner's playtest, 01:49Z: "The
 // slime looks very blurry/out of focus"). Before, the body was one value a
@@ -1048,12 +1053,35 @@ fn look_trail(x: f32, y: f32) -> f32 {
     return t / ws;
 }
 
+// How far beyond the map's edge `prep` works the ground out, in cells.
+const OFF_MAP: f32 = 8.0;
+
 @compute @workgroup_size(16, 16)
 fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
     // The walkers a fine cell (and, above bit 16, the cut-off ones) on a
     // 24 x 24 tile: the workgroup's 16 x 16 and a 4-cell rim.
     let bx = i32(wid.x * 16u) - 4;
     let by = i32(wid.y * 16u) - 4;
+    // Fine cells well beyond the map's edge (the dark round a map smaller
+    // than the screen, which is rock) are never read: `base` draws a pixel
+    // the rock covers whole as the rock's top alone, and the ground's
+    // samples near the edge reach a few cells out at most (the slope 2,
+    // the cast shadow 3, the sheen 1.5). Their terrain is still written
+    // (`tcell`, which the rock's top reads); the rest is skipped, a whole
+    // workgroup at a time before its tile. (Performance thread, 11-15: at
+    // zoom 1 on the fork, three quarters of `prep` was off the map.)
+    let kf0 = f32(P.fine);
+    let lo = vec2<f32>(f32(P.ox), f32(P.oy)) + vec2<f32>(f32(wid.x * 16u), f32(wid.y * 16u)) / kf0;
+    let hi = lo + 16.0 / kf0;
+    let wgf = vec2<f32>(f32(P.ww), f32(P.wh));
+    let group_off = any(hi < vec2<f32>(-OFF_MAP)) || any(lo > wgf + OFF_MAP);
+    if (group_off) {
+        if (gid.x >= P.rw || gid.y >= P.rh) { return; }
+        if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
+            tcell[(gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine] = ter_prep(P.ox + i32(gid.x / P.fine), P.oy + i32(gid.y / P.fine));
+        }
+        return;
+    }
     for (var k = li; k < 576u; k += 256u) {
         let fx = bx + i32(k % 24u); let fy = by + i32(k / 24u);
         var v = 0u;
@@ -1066,43 +1094,61 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         crowd2[k] = v2;
     }
     workgroupBarrier();
-    if (gid.x >= P.rw || gid.y >= P.rh) { return; }
-    let i = gid.y * P.rw + gid.x;
     let kf = f32(P.fine);
     var sig = SHARP_S * kf;
     if (P.fine == 1u) { sig = SHARP_S1; }
     let sigb = BODY_S * kf;
-    var n = 0.0;
-    var m = 0.0;
-    var ws = 0.0;
-    var nb = 0.0;
-    var wb = 0.0;
-    var dn = 0.0;
-    var ab = 0.0;
     // Gaussians are separable: nine weights a side each, not 81 exps.
     var g1: array<f32, 9>;
     var g2: array<f32, 9>;
+    var s1 = 0.0;
+    var s2 = 0.0;
     for (var q = 0; q < 9; q++) {
         let d2 = f32((q - 4) * (q - 4));
         g1[q] = exp(-d2 / (2.0 * sig * sig));
         g2[q] = exp(-d2 / (2.0 * sigb * sigb));
+        s1 += g1[q];
+        s2 += g2[q];
     }
-    for (var dy = 0u; dy < 9u; dy++) {
+    // And applied separably: each of the tile's 24 rows summed across its
+    // nine columns once (`rows5`), then nine rows down a cell. Before
+    // (to 11-15) each fine cell took all 81 of its window's tile words, two
+    // thirds of `prep` at zoom 1 on llvmpipe (33 of 59 ms, planet 8); the
+    // sums differ only in the float rounding of their order.
+    for (var k = li; k < 384u; k += 256u) {
+        let r = k / 16u;
+        let c0 = k % 16u;
+        var a = array<f32, 5>(0.0, 0.0, 0.0, 0.0, 0.0);
         for (var dx = 0u; dx < 9u; dx++) {
-            let t = crowd[(lid.y + dy) * 24u + lid.x + dx];
+            let t = crowd[r * 24u + c0 + dx];
             let c = f32(t & 0xFFFFu) / 15.0;
-            let w = g1[dx] * g1[dy];
-            n += w * c;
-            m += w * f32(t >> 16u) / 15.0;
-            let t2 = crowd2[(lid.y + dy) * 24u + lid.x + dx];
-            dn += w * f32(t2 & 0xFFFFu) / 15.0;
-            ab += w * f32(t2 >> 16u);
-            ws += w;
-            let v = g2[dx] * g2[dy];
-            nb += v * c;
-            wb += v;
+            let t2 = crowd2[r * 24u + c0 + dx];
+            a[0] += g1[dx] * c;
+            a[1] += g1[dx] * f32(t >> 16u) / 15.0;
+            a[2] += g1[dx] * f32(t2 & 0xFFFFu) / 15.0;
+            a[3] += g1[dx] * f32(t2 >> 16u);
+            a[4] += g2[dx] * c;
         }
+        rows5[k] = a;
     }
+    workgroupBarrier();
+    if (gid.x >= P.rw || gid.y >= P.rh) { return; }
+    let i = gid.y * P.rw + gid.x;
+    var n = 0.0;
+    var m = 0.0;
+    var nb = 0.0;
+    var dn = 0.0;
+    var ab = 0.0;
+    for (var dy = 0u; dy < 9u; dy++) {
+        let a = rows5[(lid.y + dy) * 16u + lid.x];
+        n += g1[dy] * a[0];
+        m += g1[dy] * a[1];
+        dn += g1[dy] * a[2];
+        ab += g1[dy] * a[3];
+        nb += g2[dy] * a[4];
+    }
+    let ws = s1 * s1;
+    let wb = s2 * s2;
     let cut_share = clamp(m / max(n, 1e-3), 0.0, 1.0);
     // The share of the mould's mass round the cell that has condensed (a
     // condensed walker counts two in `n`).
@@ -1933,23 +1979,53 @@ fn terrain(x: f32, y: f32) -> Ter {
     return t;
 }
 
-// The ground's colour `c` at world point (x, y) with the hard terrain over
-// it: the shadow it casts, then its top, lit, with an antialiased edge.
-fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
-    // No hard terrain within reach of this cell (`look::FAR`): nothing to
-    // draw, at the cost of one read.
-    if ((ground[cidx(i32(floor(x)), i32(floor(y)))] & 128u) != 0u) { return c0; }
-    let l = normalize(LIGHT);
-    let t = terrain(x, y);
-    var cov = 0.0;
-    var d = 0.0;
-    let gl = max(length(t.grad), 1e-4);
-    if (t.s > 0.0) {
-        // Signed distance to the edge in cells (inside positive), and the
-        // pixel's coverage.
-        d = (t.s - TER_ISO) / gl;
-        cov = clamp(0.5 + d * P.zoom, 0.0, 1.0);
+// The hard terrain at world point (x, y) as `terrain_over` draws it: the
+// field, the signed distance to its edge in cells (inside positive) and
+// the pixel's coverage. `near` is false where no hard terrain is within
+// reach of this cell (`look::FAR`), at the cost of one read.
+struct TerAt { t: Ter, d: f32, cov: f32, near: bool };
+fn terrain_at(x: f32, y: f32) -> TerAt {
+    var o: TerAt;
+    o.d = 0.0; o.cov = 0.0;
+    o.near = (ground[cidx(i32(floor(x)), i32(floor(y)))] & 128u) == 0u;
+    if (!o.near) { return o; }
+    o.t = terrain(x, y);
+    let gl = max(length(o.t.grad), 1e-4);
+    if (o.t.s > 0.0) {
+        o.d = (o.t.s - TER_ISO) / gl;
+        o.cov = clamp(0.5 + o.d * P.zoom, 0.0, 1.0);
     }
+    return o;
+}
+
+// The terrain's top at a covered point: flat, beveled down to the edge.
+fn terrain_top(ta: TerAt) -> vec3<f32> {
+    let t = ta.t;
+    let d = ta.d;
+    let l = normalize(LIGHT);
+    let gl = max(length(t.grad), 1e-4);
+    let inward = t.grad / gl;
+    let k = 1.0 - smoothstep(0.0, TER_BEVEL, d);
+    // Raised: the bevel tilts enough that the side toward the light is lit
+    // and the far side shaded (11-14, art lead: rock read as a flat
+    // cutout at barren's value; the tilt was 0.35 + 0.15 h), and a thin
+    // rim along the lit edge catches the key light.
+    let n = normalize(vec3<f32>(-inward * k * (0.8 + 0.2 * t.h), 1.0));
+    let shade = 1.0 + 1.25 * (dot(n, l) - l.z);
+    let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
+    let spec = pow(max(dot(n, half_v), 0.0), 20.0) * 0.08;
+    let lit_edge = max(dot(-inward, normalize(l.xy)), 0.0) * (1.0 - smoothstep(0.0, 2.0, d * P.zoom));
+    return t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec + vec3<f32>(60.0, 58.0, 52.0) * lit_edge;
+}
+
+// The ground's colour `c` at world point (x, y) with the hard terrain over
+// it (`terrain_at`): the shadow it casts, then its top, lit, with an
+// antialiased edge. Where the terrain covers the pixel whole, `base` takes
+// `terrain_top` alone and never shades the ground under it.
+fn terrain_over(c0: vec3<f32>, x: f32, y: f32, ta: TerAt) -> vec3<f32> {
+    if (!ta.near) { return c0; }
+    let l = normalize(LIGHT);
+    let cov = ta.cov;
     var c = c0;
     if (cov < 1.0) {
         // The shadow on the ground: the terrain a short way toward the
@@ -1964,19 +2040,7 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
     if (cov <= 0.0) { return c; }
     // The top: flat, beveled down to the edge within TER_BEVEL, the bevel
     // a little steeper the taller the terrain.
-    let inward = t.grad / gl;
-    let k = 1.0 - smoothstep(0.0, TER_BEVEL, d);
-    // Raised: the bevel tilts enough that the side toward the light is lit
-    // and the far side shaded (11-14, art lead: rock read as a flat
-    // cutout at barren's value; the tilt was 0.35 + 0.15 h), and a thin
-    // rim along the lit edge catches the key light.
-    let n = normalize(vec3<f32>(-inward * k * (0.8 + 0.2 * t.h), 1.0));
-    let shade = 1.0 + 1.25 * (dot(n, l) - l.z);
-    let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
-    let spec = pow(max(dot(n, half_v), 0.0), 20.0) * 0.08;
-    let lit_edge = max(dot(-inward, normalize(l.xy)), 0.0) * (1.0 - smoothstep(0.0, 2.0, d * P.zoom));
-    let top = t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec + vec3<f32>(60.0, 58.0, 52.0) * lit_edge;
-    return mix(c, top, cov);
+    return mix(c, terrain_top(ta), cov);
 }
 
 // An absorbed walker (the engine's `ABSORB_BIT`, 11-14; art director:
@@ -2192,9 +2256,23 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
         let fy = P.cy + (f32(y) + 0.5) / P.zoom;
         if (P.shade == 1u && P.zoom >= 1.0) {
             // Shaded from the fields, smooth between cells at any zoom.
-            c = shaded(fx, fy, 0.75 / f32(P.fine));
-            c = terrain_over(c, fx, fy);
+            // Where rock or a wall covers the pixel whole, its top is all
+            // that shows: the ground under it is not shaded (performance
+            // thread, 11-15: rock and the dark beyond the map's edge, which
+            // is rock, were shaded and then painted over; at zoom 1 that is
+            // most of the screen on a map smaller than it).
+            let ta = terrain_at(fx, fy);
             let n = atomicExchange(&specks[y * P.stride + x], 0u);
+            if (ta.cov >= 1.0) {
+                c = terrain_top(ta);
+                // The specks' light needs the body count only where a
+                // walker is.
+                under_body = 0.0;
+                if ((n & 1023u) != 0u) { under_body = mat_at(fx, fy).body; }
+            } else {
+                c = shaded(fx, fy, 0.75 / f32(P.fine));
+                c = terrain_over(c, fx, fy, ta);
+            }
             // Each calm walker a point of light (owner's playtest, 11-14
             // 04:50Z: "single individual walkers should be brighter"). It
             // was 0.048 of white added a walker, so a lone explorer on bare
