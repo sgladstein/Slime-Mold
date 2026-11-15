@@ -1,0 +1,13 @@
+before gate-2-z3 6 s
+after gate-2-z3 7 s
+after gate-2-z6 6 s
+before gate-2-z6 6 s
+after gate-11-z3 7 s
+before gate-11-z3 7 s
+after gate-11-z6 6 s
+before gate-11-z6 7 s
+after gate-16-z3 6 s
+before gate-16-z3 6 s
+before gate-16-z6 6 s
+after gate-16-z6 7 s
+done

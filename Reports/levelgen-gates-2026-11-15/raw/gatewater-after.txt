@@ -1,0 +1,21 @@
+7-1: chains 8, on water 0; pieces 32, on water 0
+7-2: chains 10, on water 0; pieces 40, on water 0
+7-3: chains 15, on water 0; pieces 60, on water 0
+7-4: chains 10, on water 0; pieces 40, on water 0
+7-5: chains 10, on water 0; pieces 40, on water 0
+7-6: chains 8, on water 0; pieces 32, on water 0
+7-7: chains 9, on water 0; pieces 36, on water 0
+7-8: chains 2, on water 0; pieces 8, on water 0
+7-9: chains 9, on water 0; pieces 36, on water 0
+7-10: chains 11, on water 0; pieces 44, on water 0
+7-11: chains 8, on water 0; pieces 32, on water 0
+7-12: chains 4, on water 0; pieces 16, on water 0
+7-13: chains 7, on water 0; pieces 28, on water 0
+7-14: chains 8, on water 0; pieces 32, on water 0
+7-15: chains 6, on water 0; pieces 24, on water 0
+7-16: chains 8, on water 0; pieces 32, on water 0
+7-17: chains 3, on water 0; pieces 12, on water 0
+7-18: chains 10, on water 1; pieces 40, on water 2
+7-19: chains 7, on water 0; pieces 28, on water 0
+7-20: chains 11, on water 0; pieces 44, on water 0
+planet 7, 20 seeds: chains 164, on water 1; pieces 656, on water 2
