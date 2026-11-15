@@ -79,10 +79,28 @@ close from a mean of 20.8 to 9.4 fine cells in 20 ticks, against 20.3
 without the surge. With no unit in reach, and before the first surge,
 the hash is unchanged.
 
-Frame cost: the units are searched only during a surge (2.5 s in 30). The
-1070 timing is not done yet. It would compare a bench with the clock
-always in a surge (`surge=76 surge_lean=45 surge_dash=30`) against
-`surge=0`.
+Frame cost (GTX 1070 at ca54aa2a, `larder-world bench=20 mode=squads
+hand=squads seed=1`; raw `claude/project-thread-26drse` cbc79fd7,
+`runner-out/surge-pr343-ca54aa2a/`): with `surge=0` every frame is p50
+4.60 and p95 5.21 ms (GPU tail p95 4.40). With the clock in a surge
+almost all the time (`surge=76 surge_lean=45 surge_dash=30`) it is p50
+4.60 and p95 5.16 (GPU tail p95 4.40). No cost shows. The units are
+searched only during a surge (2.5 s in 30). Both twins pass on the 1070.
+
+## By depth (run planets)
+
+`run::enemy_keys(depth)`, applied in `run_shape` after shape C's keys and
+before the tier's and the menu's moved options. The run thread agreed the
+curve and asked for it to sit on the shop's clock line.
+
+| Planet | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Surge every (s) | 40 | 40 | 30 | 30 | 25 | 20 | 20 | 15 |
+| Lunge (s) | 1.0 | 1.0 | 1.0 | 1.2 | 1.4 | 1.5 | 1.5 | 1.8 |
+| Thicken at (births' energy) | 2.0 | 2.0 | 1.8 | 1.7 | 1.6 | 1.5 | 1.4 | 1.3 |
+
+Planet 1 is gentler than the sandbox's C (30 s, 1 s, 2.0) and the core
+world fiercer. Test `run::tests::the_slime_gets_fiercer_deeper`.
 
 ## Not done
 

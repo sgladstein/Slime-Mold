@@ -276,6 +276,13 @@ no longer safe: on the Fork the first lunge took 2 of 9 soldiers by
 32.5 s (9 of 9 without) and the second wiped the last 3. A squad out of
 reach is untouched, so the surge presses the player only where the body
 already is ([surge](../../Reports/surge-2026-11-15/README.md)).
+For films (11-15, the whole-game review's W44), `larder-world
+set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
+lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,
+cap, start_bank; an unknown name stops with an error), and the engine
+keys `scent_keep` (the food scent kept a step, 0.97) and `fed_scent` (a
+reached crystal's share of it, 0.15) turn the food scent up or down on
+both engines.
 Taking crystals barely shrinks C: at its cap it eats three times its
 upkeep, so on one crystal of 23 it holds 50,000 walkers for two minutes
 before it falls (10,369 at six). Making size follow held food, and a

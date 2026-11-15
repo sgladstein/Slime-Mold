@@ -206,7 +206,13 @@ impl<W: World> Game<W> {
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink };
+        // The spray: its longest flight in fine steps, and the first speed
+        // that takes the fastest droplet that flies longest `spray_reach`
+        // cells as it slows (speed x (0.7 steps + 0.3) in all: the sum of
+        // 0.4 + 0.6 x t / steps over its steps, `big::spray_pace`).
+        let spray = (r.spray_secs * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
+        let spray_speed = r.spray_reach * self.world.scale() / (0.7 * spray as f32 + 0.3);
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, by, fired, who, from, out });
     }
@@ -223,6 +229,10 @@ impl<W: World> Game<W> {
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
         self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast, r: i.r }).collect();
+        self.flown.clear();
+        if r.bullet_speed > 0.0 {
+            self.flown.extend_from_slice(&self.bullets);
+        }
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         // The plants' fire's kills, every frame on both worlds (bug check
@@ -405,7 +415,21 @@ impl<W: World> Game<W> {
     /// Once a game second: `Game::stuck`.
     pub(super) fn count_stuck(&mut self) {
         let taken = self.harvested + self.soldiers.iter().map(|s| s.carry).sum::<f32>();
-        if self.alive() > 0 && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
+        // Half a dish cell walked is a move (a soldier settling in its
+        // formation shifts less than that).
+        let step = 0.5 * self.s();
+        let walked = self.soldiers.iter().zip(&self.stuck_at).any(|(s, &(x, y))| s.alive && (s.x - x).hypot(s.y - y) > step);
+        self.stuck_at = self.soldiers.iter().map(|s| (s.x, s.y)).collect();
+        // A standing pump still has a crystal to give, and a building going
+        // up is the bank already spent on a plan.
+        let working = self.buildings.iter().any(|b| b.alive && (b.built < 1.0 || b.kind == Kind::Pump));
+        // With free shots and a crystal still charged, a living squad
+        // always has a way on (walk to it, or fire), so standing still is
+        // the player's choice, which the clock judges (the chores thread's
+        // window test, 11-15: planet 6 in squad mode ended "Stuck" at 0:34
+        // before the squad had met the slime).
+        let way_on = self.rules.price <= 0.0 && self.world.crystals().iter().any(|c| c.1 > 0.0);
+        if self.alive() > 0 && !walked && !working && !way_on && self.shots == self.stuck_mark.0 && taken <= self.stuck_mark.1 && self.bank < self.rules.soldier_cost {
             self.stuck += 1;
             self.stuck_run += 1;
         } else {

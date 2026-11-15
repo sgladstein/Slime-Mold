@@ -9,10 +9,13 @@ sources:
   - Reports/menu-fixes-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
+  - Reports/run-progression-2026-11-15/README.md
+  - Reports/surge-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
 code:
   - LADDER
   - PLANETS
+  - Playlog
   - RANGE_DEPTH
   - REF_OPEN
   - Run::buy_into
@@ -23,10 +26,12 @@ code:
   - Run::range
   - Run::rules
   - Run::shop
+  - STUCK_WARN
   - WIN_SHARE
   - ammo_price
   - area_of
   - clock
+  - enemy_keys
   - gun_price
   - head_start
   - range_args
@@ -39,6 +44,7 @@ code:
   - shop_plan
   - shrink_goal
   - size_roll
+  - surge_secs
   - two_stars
 ---
 
@@ -65,12 +71,34 @@ slots hold the cards. The gun fires its slots left to right; the player
 drags a card onto a slot to move it, buys a card for sale straight into a
 slot, drags one onto the bag to take it out, or presses Q and E; a card
 put in without a slot lands before the first bullet (`Run::put_in`)
-([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime is shape C under the tier's keys (`run_shape`), from C's 25,000 walkers times the level's factor (`run_walkers`) and a per-planet roll of 0.8 to 1.25 (`size_roll`; owner 11-15 08:34Z: "It should vary and be more later on"), C's slots grown to match; until 11-15 a run played the bare race slime by mistake, which shed nine tenths of itself in a minute ([report](../../Reports/roguelike-run-2026-11-14/README.md), *The run's slime is shape C*). Locked buildings and tools show
+([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime is shape C under the tier's keys (`run_shape`), from C's 25,000 walkers times the level's factor (`run_walkers`) and a per-planet roll of 0.8 to 1.25 (`size_roll`; owner 11-15 08:34Z: "It should vary and be more later on"), C's slots grown to match, and then the planet's own engine keys (`enemy_keys`, 11-15, the slime-enemy thread; the run thread agreed the curve): the slime surges every 40 s on planets 1-2, 30 s on 3-4, 25 s on 5, 20 s on 6-7 and 15 s on the core world (`surge_every`; the sandbox's C is 30 s), lunges 1 s to 1.8 s (`surge_dash`) and thickens from 2 down to 1.3 births' energy (`thicken`), so deeper slime presses harder and toughens faster on what it holds; the shop's clock line names the period (`surge_secs`) ([surge](../../Reports/surge-2026-11-15/README.md)); until 11-15 a run played the bare race slime by mistake, which shed nine tenths of itself in a minute ([report](../../Reports/roguelike-run-2026-11-14/README.md), *The run's slime is shape C*). Locked buildings and tools show
 locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 
+Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
+
+## Ending early, the play log, pressure by depth
+
+Since 11-15 (the whole-game review's W17, W30 and W13;
+[report](../../Reports/run-progression-2026-11-15/README.md)), a second
+counts as stuck only when, besides no shot, no food taken and the bank under
+a soldier's price, no soldier walked, no pump stands, nothing is being built
+and shots cost food or every crystal is dry (in squad mode shots are free,
+so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) the goal line warns
+that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
+four healthy soldiers and both pumps standing. The shrink goal counts the
+slime's mass (`World::mass`: a thickened walker twice; the GPU's `count`
+pass adds the enemy's condensed walkers to the readout), so a body that
+thickens no longer reads as shrinking. The window writes a play log
+(`Playlog`) beside the replay, `larder-world-log-MAP-SEED.txt`, a line a
+game second (walkers, mass, soldiers, squads, bank, income, shots, kills,
+buildings, frame p50/p95) with each command; `cargo run --release --example
+playlog -- FILE` prints time to 10-40 soldiers, splits, pumps, kills a
+minute against the slime's mass, and frame times.
+
+Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet waits for the owner (the review's D3).
 
 ## The gun range
 

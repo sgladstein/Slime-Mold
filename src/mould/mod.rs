@@ -77,6 +77,7 @@ pub mod own_mould;
 pub mod plans;
 pub mod plants;
 pub mod play;
+pub mod playlog;
 pub mod render;
 pub mod rounds;
 pub mod run;
