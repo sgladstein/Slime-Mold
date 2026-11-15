@@ -16,7 +16,7 @@ Page: https://claude.ai/artifact/GfhdLAM5txddNwy9kT43e4 (`page/`, `raw/films.sh`
   - With freshness taken linearly, the front's luma p99 was 186.
   - The far view's smooth flame takes the same core.
   - The body keeps its red-orange ramp, and the embers stay dull red.
-- **Level pins:** the item text's new `flora` line changes the levelgen fingerprints (`PINNED`, `PINNED_BIG`); the ground and plants are the same.
+- **Level pins:** the item text's new `flora` line changes the levelgen fingerprints (`PINNED`, `MORE_PINNED`); the ground and plants are the same.
 - **Camera:** `Camera::clamp` no longer panics when the view is the world's size to within rounding. The clamp's bounds crossed by an ulp on planet 5 seed 1 at 960x600 (min -29.661352 > max -29.661354), and the headless film crashed.
 
 - **A flora per biome:** each map now has a `flora N` line, written by the level generator from its biome (`levelgen::Biome` in order: 0 meadow, 1 barrens, 2 fen, 3 valley, 4 jungle, 5 highlands, 6 caves, 7 core). It goes to `map::Items::flora`, then `BigDish::flora_of`, then `View::set_plants`, then the view's `P.flora`.

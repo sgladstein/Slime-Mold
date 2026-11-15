@@ -1,0 +1,20 @@
+== play geometry: within-biome mean pairwise distance (seed to seed)
+  meadow 2.99  barrens 2.99  fen 3.50  valley 3.23  jungle 2.15  highlands 3.23  caves 2.73  core 4.23
+  most alike biome pairs (between / within; 1.0 = no more apart than two seeds of one biome):
+    barrens-fen: 1.01 (between 3.28)
+    highlands-core: 1.06 (between 3.94)
+    jungle-core: 1.11 (between 3.53)
+    fen-valley: 1.11 (between 3.72)
+    meadow-barrens: 1.13 (between 3.37)
+    valley-highlands: 1.14 (between 3.68)
+  most apart: fen-caves 1.96, barrens-caves 2.13, meadow-caves 2.40
+== geometry + ground the slime feels: within-biome mean pairwise distance (seed to seed)
+  meadow 3.91  barrens 3.44  fen 3.73  valley 3.56  jungle 2.80  highlands 3.54  caves 2.96  core 4.57
+  most alike biome pairs (between / within; 1.0 = no more apart than two seeds of one biome):
+    jungle-core: 1.12 (between 4.11)
+    highlands-core: 1.21 (between 4.92)
+    meadow-fen: 1.23 (between 4.69)
+    fen-core: 1.23 (between 5.11)
+    valley-core: 1.25 (between 5.06)
+    fen-jungle: 1.26 (between 4.12)
+  most apart: fen-caves 2.16, meadow-caves 2.28, barrens-caves 2.35
