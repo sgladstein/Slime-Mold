@@ -1,0 +1,72 @@
+# Bug check of the 11-14 merges (2026-11-15)
+
+**Ask.** Owner, 11-15 00:20Z: "Start a deep bug check code review thread. We
+have made many changes today." Scope: everything merged 2026-11-14 after
+#275 (#276-#307, 62 code files, about 13,000 lines), main 3f6b6fbc. The full
+suite was green on it (455 lib tests and the binaries'), so every finding
+below slipped past the tests.
+
+## Reproduced, fixed here
+
+| # | Bug | Reproduction | Fix |
+| --- | --- | --- | --- |
+| 1 | Linked squads soft-lock: when the controlled squad of a link dies, `Cmd::Active` refuses every live squad of its link (the dead squad keeps its link id), so `squad_frame` never hands control on | `a_link_whose_controlled_squad_dies_hands_control_to_the_rest` failed on main | `Cmd::Active` checks the link only while the controlled squad has members |
+| 2 | A `Thrift` card takes a run's gun over its budget: `Run::fits` costs a card at the gun's end, `put_in` and `move_to` place it elsewhere, and a Thrift cuts the card after it | Thrift, Bomb, Germ (6) on a budget of 7, buy Quiet: the gun became Thrift, Quiet, Bomb, Germ costing 8 (`a_thrift_cannot_take_the_gun_over_its_budget`) | `put_in` and `move_to` check the gun where the card lands (bag, or the move refused); taking a card out runs `refit` |
+| 3 | Hard seams half a cell to a cell and a half off every shore and bridge at close zoom (#305's spline skip tested the 2 x 2 cells round a pixel, but the spline reads 4 x 4, and the bank, shallow margin, bridge shadow and depth read its shares as a distance) | River map at zoom 24 beside the bridge: one pixel row jumped from 56 to 89 (RGB sum); with the skip off it ramps 56, 59, 62 ... 89. 8,013 pixels differ by more than 6 at zoom 24, 2,995 at 12 | Skip only when all 16 cells are one ground; renders now equal the no-skip path at zoom 12, 16 and 24 (0 pixels differ) |
+
+## Read in the code, fixed here
+
+| # | Bug | Fix |
+| --- | --- | --- |
+| 4 | Run shop "Faster trigger" and "Longer barrels" did nothing: `Run::rules` puts them on `Rules::shot_every`/`range`, which only `Gun::standard` reads, and a run arms squad 0 with `Run::carried()` | `Run::armed`: the carried gun with those levels; the window arms and shows it (`barrels_and_trigger_reach_the_carried_gun`) |
+
+## Reproduced, fixed by the planets thread (PR #309)
+
+- Dune clay islands overwrote deep water and bridges (`(g & 0x0F) | G_CLAY`):
+  26 of 32 dune planets over seeds 1-40, depths 1-8 (all Valley, depth 4)
+  had deep cells turned to standable wet clay, up to 9,027 cells (seed 9).
+- Read: bridge planks left on dry land near nests; stale walking maps starved
+  by a steady stream of asks; `map_for` preferring a failed neighbour's map
+  over the goal's own; no cache trim at the old pace.
+
+## Read in the code, left open
+
+- **Spread on bullet cards does nothing on the rifle and long gun** (their
+  spread is 0; `turn.rs` multiplies it), yet `Ammo::grade` prices it.
+  Owner question: a small base spread, or an additive bullet spread.
+- **Fire kills counted unevenly**: the GPU's `firekill` adds to the strike
+  counter (`wstat[3]`), so the next kill burst claims them; the CPU counts
+  `burned()` only on burn-trail frames. Stats and score only.
+- **Designed maps get plants (`plants::stand_in`) only in the window**; the
+  CPU census and campaign tools load them bare.
+- Healing runs while a soldier works (still, unbitten, not firing).
+- Dev only: N on a `planet:D:SEED` map reloads the same planet; a run with
+  `menu=0` does not scale walkers by `Level::walkers`.
+- Cost: `Game::mods` rebuilds `rounds::flight` on every call; `heal` clones
+  the crystals per guarded crystal; `work_boost` scans the soldiers per
+  worker.
+
+## Checked and clean
+
+Upkeep is gone (no rations, hunger or lure burn; the slime's own upkeep is
+its metabolism). HUD bar and minimap hit rects match the drawing (#300).
+Order lines read each squad's queue every frame; WASD pans while paused
+(#301). Map files keep size, plants and moisture. The view's buffer layouts
+and the engine's params, plant header and gas read-back offsets (#307) agree
+between Rust and WGSL. Drag, Q and E keep every card once.
+
+## Cost of fix 3
+
+llvmpipe, `map=river seed=1 bench=8 hand=idle screen=1280x800
+centre=256,140,ZOOM`, GPU tail p50, three alternating rounds:
+
+| Zoom | Main | This |
+| --- | --- | --- |
+| 1 | 166.9, 178.0, 201.5 | 180.7, 199.5, 206.9 |
+| 12 | 88.8, 90.5, 103.0 | 99.1, 105.8, 106.7 |
+
+About +12-17% on llvmpipe, giving back part of #305's saving: a uniform
+pixel now reads 16 ground words instead of 4 (no spline weights). A bit in
+the ground word marking "one ground for 2 cells round" would make it one
+read again; byte 0 has none spare (kind, soil, `FAR`). 1070 timing to come
+through the coordinator.
