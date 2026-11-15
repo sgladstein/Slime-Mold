@@ -1,0 +1,66 @@
+<title>Slime Flinch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; the four clips in a 2x2 grid (one column on a phone), letter and counts under each */
+:root{
+  --bg:#f3f2ec; --panel:#e8e6dc; --fg:#1d211c; --muted:#5b6157;
+  --accent:#b0702a; --soft:#f1e3cf; --line:#cfccbf;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:.92rem;color:var(--muted)}
+.letter{font:750 1.35rem/1 var(--display);color:var(--fg);min-width:1.2em}
+.counts{font:13px/1.4 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.ask{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+footer{font-size:.85rem;color:var(--muted);max-width:760px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · the slime under fire · 2026-11-15</span>
+  <h1>Should the slime flinch when it's shot?</h1>
+  <p class="lede">Every shot lays an alarm in the ground where it lands. Until now the default slime ignored it, so a squad firing into the slime stood in a sea of it. With the flinch, the slime's walkers turn away from fresh alarm. The alarm fades quickly, so the slime only gives ground while the shots keep coming, then closes back in. Here are four strengths of the same fight, from no flinch to a long one. Which one feels best to play against?</p>
+</header>
+
+<section>
+  <h2>The squad meets the slime on planet 1</h2>
+  <p class="prose">Run seed 1, planet 1, the squad firing into the slime as it arrives, 11 to 19 s at the game's own pace, the camera on the squad. Where the slime has a flinch, the pale glow round the squad is the alarm itself, at the haze strength the build now draws. Under each clip: soldiers left at 30, 60, 90 and 120 s, then the slime killed and the slime's size at 2:00.</p>
+  <div class="grid">
+    <figure><video src="img/fight-A.mp4" poster="img/fight-A.jpg" autoplay muted loop playsinline aria-label="Clip A, planet 1 fight"></video><figcaption><span class="letter">A</span><span class="counts">soldiers 8 · 4 · 3 · 0 · killed 5,422 · slime 14,058</span></figcaption></figure>
+    <figure><video src="img/fight-B.mp4" poster="img/fight-B.jpg" autoplay muted loop playsinline aria-label="Clip B, planet 1 fight"></video><figcaption><span class="letter">B</span><span class="counts">soldiers 8 · 4 · 0 · 0 · killed 6,369 · slime 13,437</span></figcaption></figure>
+    <figure><video src="img/fight-C.mp4" poster="img/fight-C.jpg" autoplay muted loop playsinline aria-label="Clip C, planet 1 fight"></video><figcaption><span class="letter">C</span><span class="counts">soldiers 8 · 8 · 6 · 1 · killed 12,222 · slime 11,983</span></figcaption></figure>
+    <figure><video src="img/fight-D.mp4" poster="img/fight-D.jpg" autoplay muted loop playsinline aria-label="Clip D, planet 1 fight"></video><figcaption><span class="letter">D</span><span class="counts">soldiers 8 · 8 · 5 · 1 · killed 13,126 · slime 11,442</span></figcaption></figure>
+  </div>
+  <p class="prose">These counts are one game each. Two of these flinches were also played against no flinch on five seeds of planet 1 with the same hand: each left the squad fewer soldiers at 2:00 on three seeds and more on one, which is no steady change in who wins. So the choice is how it looks and feels, not how hard it is.</p>
+  <div class="ask">
+    <h3>Your pick</h3>
+    <p>Reply with a letter: the one you'd rather play against. The build already plays one of the four, and switching is one number. It's also on the start menu's Options page as Flinch, so you can try it in a game.</p>
+  </div>
+</section>
+
+<footer>The flinch acts on slimes with no alarm of their own: the sandbox and planets 1 to 3 of a run. The Swarmer, Sporer and Sleeper keep theirs, so the Swarmer still floods to a wound. Source and numbers: <code>Reports/flinch-2026-11-15/</code> in the repo.</footer>
+</main>

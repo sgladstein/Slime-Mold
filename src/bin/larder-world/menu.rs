@@ -38,7 +38,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 7] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge"];
+const ENGINE_OPTS: [&str; 8] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -95,6 +95,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // The body surges (11-15, `BigParams::surge_every`): steps between
         // surges (30 a second); on in shape C at 900 (30 s).
         ("surge", "Surge", &["0", "900", "1800", "3600"][..], "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off"),
+        // The body flinches from fire (11-15, `BigParams::flinch`): on in
+        // shape C at 0.9, the alarm field's keep a fine step; a slime with
+        // an alarm of its own (the Swarmer's) keeps it.
+        ("flinch", "Flinch", &["0", "0.8", "0.9", "0.95"][..], "Slime a shot lands near backs off for a moment, so a ring opens round soldiers who keep firing; higher lasts longer; 0 is off"),
         // Plants (11-14, `mould::plants`): on by default; a stand-in
         // field on maps without their own. Fire from blasts and scorch
         // rounds burns through them.

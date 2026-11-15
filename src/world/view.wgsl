@@ -2192,9 +2192,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // slime, by the film there (the whole-game review's W46, 11-15: with
     // the alarm on, as on the Swarmer's, Sporer's and Sleeper's planets,
     // the squad's whole fire zone washed out mint, soil and plants with
-    // it). Where the haze draws nothing its slope is not sampled.
+    // it). Where the haze draws nothing it is not sampled: a branch, as
+    // WGSL's `select` runs both its arms (with `select` here, `alarm_look=0`
+    // still cost the 1070's base pass 0.11 ms of the change's 0.16, 11-15).
     let ak = mix(P.alarm_ground, P.alarm_slime, 1.0 - under);
-    let a2 = select(vec2<f32>(0.0, 0.0), alarm_at(x, y), P.alarm_full > 0.0 && ak > 0.0);
+    var a2 = vec2<f32>(0.0, 0.0);
+    if (P.alarm_full > 0.0 && ak > 0.0) {
+        a2 = alarm_at(x, y);
+    }
     let a = a2.x;
     if (a > 0.01 * P.alarm_full) {
         let gx = alarm_or(x + 1.0, y, a) - alarm_or(x - 1.0, y, a);

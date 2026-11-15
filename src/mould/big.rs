@@ -959,6 +959,17 @@ pub struct BigParams {
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
+    /// **The flinch** (2026-11-15, the whole-game review's W19; off at 0):
+    /// on a mould whose tier reads no alarm of its own (`alarm_keep` and
+    /// `alarm_weight` both 0 once every key is in), the dish is made with
+    /// the alarm field at keep `flinch` and read at `FLINCH_WEIGHT` (-1), so
+    /// the ground a shot lands on is ground the body backs off while the
+    /// alarm is fresh (`BigParams::flinched`). At 0.9 a shot's alarm halves
+    /// in a few fine steps, so it is a flinch, not the old flee's retreat
+    /// (keep 0.98, `larder_world::FLEE_KEEP`). A tier with an alarm of its
+    /// own (the Swarmer, Sporer, Sleeper and Grudge) keeps it. Folded in when
+    /// the dish is made, so the keys may come in any order.
+    pub flinch: f32,
     /// **Habituation** (off when `scar_keep` is 0; needs the alarm field;
     /// added 2026-11-12 for the Larder ladder, review 2's "a mould that
     /// learns": `Reports/mould-tiers-campaign-2026-11-12.md`). A scar field
@@ -1192,7 +1203,29 @@ pub struct BigParams {
     pub dish: (usize, usize),
 }
 
+/// The weight a flinching mould reads the alarm at (`BigParams::flinch`):
+/// away from it, as the old flee (`larder_world::FLEE_WEIGHT`).
+pub const FLINCH_WEIGHT: f32 = -1.0;
+
+/// The alarm's keep and weight with a flinch folded in (`BigParams::flinch`,
+/// `gpu::Settings::flinch`): a mould with no alarm of its own gets the field
+/// at keep `flinch`, read at `FLINCH_WEIGHT`; any other is left as it is,
+/// so folding twice changes nothing.
+pub fn flinch_alarm(keep: f32, weight: f32, flinch: f32) -> (f32, f32) {
+    if flinch > 0.0 && keep <= 0.0 && weight == 0.0 {
+        (flinch.min(0.999), FLINCH_WEIGHT)
+    } else {
+        (keep, weight)
+    }
+}
+
 impl BigParams {
+    /// These params with the flinch folded into the alarm (`flinch_alarm`).
+    pub fn flinched(self) -> Self {
+        let (alarm_keep, alarm_weight) = flinch_alarm(self.alarm_keep, self.alarm_weight, self.flinch);
+        BigParams { alarm_keep, alarm_weight, ..self }
+    }
+
     /// Today's numbers on today's grid: the base every scaled dish is judged
     /// against. 2,000 walkers is about today's peak.
     pub fn today() -> Self {
@@ -1344,6 +1377,7 @@ impl BigParams {
             alarm_keep: 0.0,
             alarm_weight: 0.0,
             alarm_relay: 0.0,
+            flinch: 0.0,
             scar_keep: 0.0,
             scar_gain: 0.0,
             scar_weight: 0.0,
@@ -1770,11 +1804,12 @@ impl BigDish {
     }
 
     fn build(p: BigParams, map: Option<&Map>) -> Self {
-        // A map's world is the map's size.
+        // A map's world is the map's size; the flinch folds into the alarm.
         let p = match map {
             Some(m) => BigParams { dish: m.dish_size(), ..p },
             None => p,
-        };
+        }
+        .flinched();
         assert!(
             p.species_sets.is_empty() || p.species_sets.len() >= p.species.max(1) as usize,
             "species_sets needs one set per species"
@@ -4943,6 +4978,47 @@ mod tests {
         assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
         let (plain, grudge) = (near(false, 0.0, 0.0), near(false, 0.9999, 2.0));
         assert!(grudge > plain + 20, "grudge {grudge} against {plain} at the centre");
+    }
+
+    /// The flinch (W19, 2026-11-15): folded in when the dish is made, it
+    /// gives a mould with no alarm of its own the field at its keep, read at
+    /// -1, and leaves a tier's own alarm alone; struck every other tick at
+    /// its home pile (a squad's steady fire), the flinching mould backs off
+    /// the spot while the fire lasts and comes back once it stops: 27
+    /// walkers within 8 cells under fire against 383, then 210 against 418
+    /// 200 ticks after. Struck every 10th tick (a radius-2 kill) it did not
+    /// flinch (400 against 403): at keep 0.9 one shot's alarm is gone
+    /// before the next.
+    #[test]
+    fn a_flinching_mould_backs_off_fire_and_comes_back() {
+        assert_eq!(flinch_alarm(0.0, 0.0, 0.9), (0.9, FLINCH_WEIGHT));
+        assert_eq!(flinch_alarm(0.0, 0.0, 0.0), (0.0, 0.0));
+        // The Swarmer's pull and the Sporer's field (weight 0) stay theirs.
+        assert_eq!(flinch_alarm(0.98, 3.0, 0.9), (0.98, 3.0));
+        assert_eq!(flinch_alarm(0.98, 0.0, 0.9), (0.98, 0.0));
+        let twice = BigParams { flinch: 0.9, ..small(1, 1) }.flinched().flinched();
+        assert_eq!((twice.alarm_keep, twice.alarm_weight), (0.9, FLINCH_WEIGHT));
+        let near = |flinch: f32| {
+            let mut d = BigDish::new(BigParams { flinch, piles: 1, ..small(1, 1) });
+            assert_eq!(d.alarm.is_empty(), flinch == 0.0);
+            let (cx, cy) = d.piles[0];
+            let count = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0 - cx).hypot(d.walkers[k].1 - cy) <= 8.0).count();
+            let mut under_fire = 0;
+            for t in 0..400 {
+                if t % 2 == 0 && t < 200 {
+                    d.strike(cx, cy, 1.0, 50.0, 6.0);
+                }
+                d.tick();
+                if t == 195 {
+                    under_fire = count(&d);
+                }
+            }
+            (under_fire, count(&d))
+        };
+        let (plain, flinched) = (near(0.0), near(0.9));
+        eprintln!("walkers within 8 of the spot under fire / 200 ticks after: plain {plain:?}, flinch {flinched:?}");
+        assert!(flinched.0 * 2 < plain.0, "under fire: flinch {} against {}", flinched.0, plain.0);
+        assert!(flinched.1 > 2 * flinched.0.max(1), "after: flinch {} against {} under fire", flinched.1, flinched.0);
     }
 
     /// Threads split the field passes by rows; the dish must not care.

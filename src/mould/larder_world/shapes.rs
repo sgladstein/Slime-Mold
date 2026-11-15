@@ -84,7 +84,17 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // as it spreads over its crystals, so the first surge comes at about
     // 43 s and the gaps shrink to about 14 s; a slime cut off its crystals
     // waits the whole minute.
-    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "1800")];
+    // C flinches from fire (`BigParams::flinch` 0.9, 2026-11-15, the
+    // whole-game review's W19: "A hit should make the body flinch"): a
+    // shot's alarm is ground the body backs off for a moment, so a ring
+    // opens round a squad that keeps firing and closes when it stops. A
+    // tier with an alarm of its own keeps it (the Swarmer still floods to
+    // a wound). On planet 1, squad hand, seeds 1-5 to 2:00: soldiers left
+    // 1, 5, 0, 0, 7 against 0, 8, 3, 1, 7 without it, walkers killed more
+    // on 3 of 5, so no steady change in who wins; the old flee (keep
+    // 0.98) failed the census gate in 2026-11-12's rules
+    // (`Reports/flinch-2026-11-15/README.md`).
+    const C: [(&str, &str); 8] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "1800"), ("flinch", "0.9")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),

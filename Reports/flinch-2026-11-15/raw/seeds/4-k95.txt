@@ -1,0 +1,23 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 2.35 ms (once a game second), model and HUD 0.093 ms a frame
+  t 30 s: mould 14010, soldiers 7, bank 413, harvested 0, shots 228, killed 4897, took 0%, crystals left 0.996; squad at 121.6,166.9
+  surge: the slime ate 94 food (3.1/s); meter 93.6 of 136, 0 surges
+  dense: 552 condensed or thick walkers, mass 14562
+  squad: touching 0.6 mean, 1 most; health 74 mean
+  surge 1 starts at t 39.8 s (the slime has eaten 136 food)
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.061 ms a frame
+  t 60 s: mould 13336, soldiers 2, bank 413, harvested 0, shots 396, killed 8841, took 0%, crystals left 0.989; squad at 104.3,167.0
+  surge: the slime ate 231 food (3.9/s); meter 95.7 of 136, 1 surges
+  dense: 1546 condensed or thick walkers, mass 14882
+  squad: touching 1.0 mean, 1 most; health 39 mean
+  surge 2 starts at t 68.6 s (the slime has eaten 272 food)
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.065 ms a frame
+  t 90 s: mould 12019, soldiers 0, bank 413, harvested 0, shots 437, killed 10114, took 0%, crystals left 0.982
+  surge: the slime ate 389 food (4.3/s); meter 117.2 of 136, 2 surges
+  dense: 2917 condensed or thick walkers, mass 14936
+  surge 3 starts at t 93.2 s (the slime has eaten 407 food)
+  surge 4 starts at t 115.6 s (the slime has eaten 543 food)
+  CPU: ground field 1.44 ms (once a game second), model and HUD 0.060 ms a frame
+  t 120 s: mould 13653, soldiers 0, bank 413, harvested 0, shots 437, killed 10114, took 0%, crystals left 0.973
+  surge: the slime ate 571 food (4.8/s); meter 27.7 of 136, 4 surges
+  dense: 4625 condensed or thick walkers, mass 18278

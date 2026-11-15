@@ -268,6 +268,7 @@ impl GpuWorld {
     /// `garden_settings` with any changes; a grazing world is refused (the
     /// player's walkers a cell are counted into the grazing count).
     pub fn garden(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, seed: u64, scale: usize, walkers: usize) -> Result<Self, String> {
+        let s = s.flinched();
         if s.graze != 0.0 {
             return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
         }
@@ -294,7 +295,7 @@ impl GpuWorld {
             return Err(format!("a garden can't graze (graze {}): its count of the player's walkers uses the grazing count", s.graze));
         }
         let (m, side) = own_mould::garden_map_on(m, walkers)?;
-        let s = garden_settings_on(s, side);
+        let s = garden_settings_on(s, side).flinched();
         let shared = Shared::new(device);
         // `made_with` takes a dish, not a Result: a refused start is kept
         // here and returned once the engine is built. Its first call is a
@@ -326,6 +327,9 @@ impl GpuWorld {
     }
 
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize) -> Self {
+        // The flinch folds into the alarm here, as `BigDish` folds its
+        // params when made, so the keys may come in any order.
+        let s = s.flinched();
         let shared = Shared::new(device);
         let e = Engine::new(device, queue, &shared, &s, scale);
         Self::of(e, shared, s, scale)
@@ -333,6 +337,7 @@ impl GpuWorld {
 
     /// On a designed world (`Engine::with_map`, ROADMAP WM1).
     pub fn with_map(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize, m: &Map) -> Self {
+        let s = s.flinched();
         let shared = Shared::new(device);
         let e = Engine::with_map(device, queue, &shared, &s, scale, m);
         Self::of(e, shared, s, scale)

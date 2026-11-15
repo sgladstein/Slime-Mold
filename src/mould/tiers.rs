@@ -297,6 +297,7 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "sleep_death" => p.sleep_death = f()?,
         "alarm_keep" => p.alarm_keep = f()?,
         "alarm_weight" => p.alarm_weight = f()?,
+        "flinch" => p.flinch = f()?.max(0.0),
         "alarm_relay" => p.alarm_relay = f()?,
         "scar_keep" => p.scar_keep = f()?,
         "scar_gain" => p.scar_gain = f()?,
