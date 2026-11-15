@@ -21,6 +21,7 @@ sources:
   - Reports/mould-sound-2026-11-10.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/noita-spell-look-2026-11-14.md
+  - Reports/pump-economy-2026-11-15/README.md
   - Reports/rts-design-2026-11-10.md
   - Reports/shot-damage-2026-11-12.md
 code:
@@ -37,6 +38,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 03:07 | Pumps are the main income: draining a crystal by hand is cut to a fifth (`Rules::hand`); a pump snaps onto its crystal and is drawn as a structure built round it, pays more on bigger crystals and can be upgraded; pumps are never locked in the run. The food readout shows income only, and every cost comes straight out of the bank | "I'm thinking we might need to move primarily to the pumps instead of harvesting crystals"; "When you go to place it, it should automatically center itself on the crystal or it should probably just change the whole appearance of the crystal like you've built some sort of structure around it"; "the monitor that says your energy flow should always be positive ... It doesn't have to be part of the number that shows you your energy flow"; 03:07:51 "pumps do not start locked you should be able to upgrade them. Pumps on bigger crystals should give you more" | [Larder World](world/larder.md), [run](world/run.md), [report](../Reports/pump-economy-2026-11-15/README.md) |
 | 2026-11-15 03:02 | A run's planet is won only when the slime is nearly gone: the goal is 2% of its peak on every planet (`WIN_SHARE`; it was 25% on planet 1 down to 10%), under the broken line where stragglers off food starve by themselves (`Rules::broken` 3%, kept) | "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" | [run](world/run.md), [report](../Reports/roguelike-run-2026-11-14/README.md) |
 | 2026-11-15 02:58 | Squad mode has a way to control no squad: Esc (and the panel's Let go) lets go, every squad runs on its own orders and shows AUTO, and WASD then pans the camera even unpaused | "There should be a way to deselect so that you're not actually controlling any specific squad in there and then you can move around the map using wasd and it's easier to confirm that the squad is now running on its own automated protocol" | [Larder](world/larder.md), [report](../Reports/free-camera-2026-11-15/README.md) |
 | 2026-11-15 02:57 | Gun-card text is one short sentence each with its key number (`draw::card_face`, at most 60 characters); the kinds read Bullet, Next bullet and Always (`CardKind::label`; were Payload, Modifier, Trigger, Flight); how to click and drag is on the shop's hint line, not every card | "The text for all the gun cards is too much. They should be simplified and clarified" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/card-text-2026-11-15.md) |

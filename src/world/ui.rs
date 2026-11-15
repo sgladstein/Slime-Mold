@@ -373,6 +373,10 @@ pub struct Model {
     /// Beside the cursor while placing: the cost of what is drawn so far,
     /// or why it cannot go there.
     pub ghost_note: Option<String>,
+    /// Where the ghost snaps to instead of the cursor, and its radius in
+    /// world cells (a pump onto its crystal's middle, owner 2026-11-15:
+    /// "it should automatically center itself on the crystal").
+    pub ghost_snap: Option<((f32, f32), f32)>,
     /// A small card by the cursor for what is under it (an enemy, the
     /// mould), leaving the selection panel alone.
     pub hover: Option<Info>,
@@ -1665,7 +1669,14 @@ impl Hud {
         let Some(at) = self.aim(p, cam) else { return };
         let col = if m.ghost_ok { [96, 230, 150, 255] } else { [245, 96, 96, 255] };
         let fill = alpha(col, 0.28);
+        let snap = m.ghost_snap.filter(|_| matches!(t.target, Target::Point { .. }));
+        if let Some((c, radius)) = snap {
+            // A ring only: the crystal stays in sight under it.
+            world.ring(c, radius, col);
+            world.ring(c, radius * 0.96, alpha(col, 0.6));
+        }
         match t.target {
+            Target::Point { .. } if snap.is_some() => {}
             Target::Point { radius } => {
                 world.disc(at, radius, fill, false);
                 world.ring(at, radius, col);

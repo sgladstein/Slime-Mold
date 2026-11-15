@@ -525,20 +525,30 @@ impl App {
                             glows.push(Light { at: b.at, reach: g.rules.build.lure_r * sc * 1.6, lift: -2.0, colour: [150.0, 235.0, 80.0], strength: 1.3 });
                         }
                     }
-                    // Its hose turned into its crystal, and a line of charge
-                    // from the crystal's middle to the hose, as bright as
-                    // its draw this frame (`Building::drew`) is of a full
-                    // pump's (`pump_rate`): a crystal running dry dims it.
+                    // A rig built round its crystal (owner, 2026-11-15: "it
+                    // should probably just change the whole appearance of
+                    // the crystal like you've built some sort of structure
+                    // around it"), the pump's head on the crystal's middle,
+                    // lit by its draw this frame (`Building::drew`) of its
+                    // full draw (`Game::pump_draw`): a crystal running dry
+                    // dims it. Until 11-15 the pump stood by the crystal
+                    // with its hose turned in and a drawn line of charge.
                     Kind::Pump => {
-                        self.marks.building_facing(b.at, half, kind, built, health, working, 0.0, n.facing);
-                        if let (true, Some(c)) = (b.up(), b.crystal.and_then(|c| g.world.crystals().get(c).copied())) {
-                            let frame = g.rules.frame_ticks as f32 / g.rules.tps as f32;
-                            let full = (b.drew / (g.rules.build.pump_rate * frame).max(1e-6)).clamp(0.0, 1.0);
-                            let tip = (b.at.0 + n.facing.cos() * half * 1.5, b.at.1 + n.facing.sin() * half * 1.5);
+                        let frame = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+                        let full = if b.up() { (b.drew / (g.pump_draw(k) * g.pump_yield(k) * frame).max(1e-6)).clamp(0.0, 1.0) } else { 0.0 };
+                        let c = b.crystal.and_then(|c| g.world.crystals().get(c).map(|x| (c, x.0)));
+                        if let Some((ci, cat)) = c {
+                            self.marks.pump_rig(cat, pump_rig_r(g, ci), built, health, working, full, b.level);
                             if full > 0.0 {
-                                self.marks.line(c.0, tip, 0.0, [126, 232, 240, (90.0 + 165.0 * full) as u8]);
-                                glows.push(Light { at: c.0, reach: 5.0 * sc, lift: 3.0, colour: [92.0, 224.0, 232.0], strength: 0.8 * full });
+                                glows.push(Light { at: cat, reach: 5.0 * sc, lift: 3.0, colour: [92.0, 224.0, 232.0], strength: 0.8 * full });
                             }
+                        }
+                        // The head faces up the screen, its hose down into
+                        // the crystal under it.
+                        self.marks.building_facing(b.at, half, kind, built, health, working, 0.0, -std::f32::consts::FRAC_PI_2);
+                        if b.up() && b.level > 1 {
+                            let below = (half * zoom).max(2.0) + 5.0;
+                            self.marks.label(b.at, (-6.0, -below - 10.0), &"I".repeat(b.level as usize), 1.5, [126, 232, 240, 255]);
                         }
                     }
                     // A mini larder: its cells and lamp flare as a carrier
@@ -763,24 +773,22 @@ impl App {
         let sel = self.living(&self.controls.selected);
         let t = g.time();
         let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
-        let rate = self.bank_log.front().filter(|f| t - f.0 >= 2.0).map(|&(t0, b0)| (g.bank - b0) / (t - t0));
+        // Income only (owner, 2026-11-15: the flow "should always be
+        // positive"; build costs "should just come out of the bank"): the
+        // rate food came in over the last 10 s (`Game::income`). It was
+        // the bank's net change, so a placed building showed as "-50/s"
+        // for the next 10 s, and stayed there after it stood.
+        let rate = self.bank_log.front().filter(|f| t - f.0 >= 2.0).map(|&(t0, i0)| ((g.income() - i0) / (t - t0)).max(0.0));
         let lost = g.soldiers.iter().filter(|s| !s.alive).count();
         let took = g.take_share();
         let mut m = Model {
             resources: vec![
-                // The rate is the bank's net change; when it is falling and the
-                // bank would be dry within a minute it says when (the design
-                // review, 11-12 21:51Z). Nothing costs food to keep (owner,
-                // 11-14), so a fall is spending, healing or the mould eating.
                 Resource {
                     icon: Icon::Crystal,
                     colour: theme::ENERGY,
-                    label: "Food: crystal charge carried home. Soldiers, walls and buildings cost it once".to_string(),
+                    label: "Food: the bank, and what comes in a second (pumps, draining and guarding crystals). Soldiers, walls and buildings cost it once, straight from the bank".to_string(),
                     value: format!("{:.0}", g.bank),
-                    rate: rate.map(|v| match g.bank / -v {
-                        dry if v < 0.0 && dry < 60.0 => format!("{v:+.0}/s, dry in {dry:.0} s"),
-                        _ => format!("{v:+.0}/s"),
-                    }),
+                    rate: rate.map(|v| format!("+{v:.0}/s")),
                 },
                 Resource { icon: Icon::Soldier, colour: theme::TEXT, label: format!("Soldiers alive (at most {})", r.max_squad), value: format!("{}", g.alive()), rate: (lost > 0).then(|| format!("-{lost} lost")) },
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
@@ -993,7 +1001,7 @@ impl App {
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
                 place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
-                place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("On a crystal: draws {:.0} food a second into the bank with no carriers. The mould smells the crystal.", b.pump_rate)),
+                place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("The main income. Snaps onto a crystal and draws it into the bank, more from bigger crystals ({:.1}% of its food a second, at least {:.0}). Click a pumped crystal to upgrade it: {:.0} food, {:.1}x the draw and {:.2}x the food a level, 3 levels.", b.pump_share * 100.0, b.pump_rate, b.pump_up_cost, b.pump_up_rate, b.pump_up_yield)),
                 place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
                 place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
                 Command {
@@ -1087,6 +1095,18 @@ impl App {
                 }
             }
             Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            // On a crystal with a pump: the pump's upgrade (owner,
+            // 2026-11-15: "you should be able to upgrade them").
+            Some((PUMP, at, _)) if g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some() => {
+                let b = g.pump_crystal(at).and_then(|c| g.pump_on(c)).unwrap();
+                let level = g.buildings[b].level;
+                match g.upgrade_price(b) {
+                    Some(p) if g.bank >= p => (true, Some(format!("upgrade to level {}: {p:.0} food, click", level + 1))),
+                    Some(p) => (false, Some(format!("upgrade to level {}: {p:.0} food, {:.0} short", level + 1, p - g.bank))),
+                    None if !g.buildings[b].up() => (false, Some("its pump is still being built".into())),
+                    None => (false, Some(format!("its pump is at the top level ({level})"))),
+                }
+            }
             Some((id, at, _)) if build_kind(id).is_some() => {
                 let kind = build_kind(id).unwrap();
                 match g.build_blocked(kind, at) {
@@ -1096,6 +1116,10 @@ impl App {
                 }
             }
             _ => (true, None),
+        };
+        m.ghost_snap = match ghost {
+            Some((PUMP, at, _)) => g.pump_crystal(at).map(|c| (g.world.crystals()[c].0, pump_rig_r(g, c))),
+            _ => None,
         };
         if let Some(tr) = self.mission.as_ref().filter(|t| t.verdict.is_some()) {
             m.end = Some(mission_screen(tr, g));
@@ -1375,13 +1399,21 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
 
 /// The run's unlock (`mould::run::ITEMS`) a command needs, if any: the
 /// buildings and the tools the shop sells.
+/// The outer radius of pump rig round crystal `c` (`Marks::pump_rig`),
+/// world cells: the crystal's hexagon is 1/1.3 of it, so the frame sits
+/// just outside the crystal and its pylons a little further.
+pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
+    g.world.crystal_r(c) * 1.3
+}
+
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {
     Some(match id {
         WALL => "walls",
         TURRET => "turret",
         LURE => "lure",
         LURES => return None,
-        PUMP => "pump",
+        // Pumps are the main income: never locked (owner, 2026-11-15).
+        PUMP => return None,
         OUTPOST => "outpost",
         SIREN => "siren",
         T_BLAST => "blast",

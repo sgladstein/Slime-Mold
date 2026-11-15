@@ -41,7 +41,7 @@ pub enum Shape {
     Soldier = 7,
     /// A top-down building `hw` across its footprint radius (world cells
     /// with `WORLD`): kind `fill` (0 turret, 1 lure, 2 pump, 3 outpost, 4 siren,
-    /// 5 larder), `extra` bits 0-7 how built (0-255), 8-15 its health share,
+    /// 5 larder, 6 a pump's rig round its crystal), `extra` bits 0-7 how built (0-255), 8-15 its health share,
     /// bit 16 working (its lamp lit), bits 17-24 a flare of its lamp. The
     /// sprite atlas's tiles 4-15.
     Building = 8,
@@ -298,6 +298,21 @@ impl Marks {
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | (working as u32) << 16 | ((pulse.clamp(0.0, 1.0) * 255.0).round() as u32) << 17;
         self.push(Mark { flags: WORLD | MINIMAP, fill: kind as f32, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
+    }
+
+    /// A pump's rig round its crystal (building kind 6, 2026-11-15): a
+    /// steel hexagon `r` world cells out with a pylon at each corner and
+    /// struts to the middle, drawn as shapes in the view's shader (crisp
+    /// at any zoom). `built` and `health` as `building`; `draw` 0-1 the
+    /// pump's draw this frame of its full draw (the struts' charge and the
+    /// lamps), `level` 1-3 (an inner ring a level).
+    #[allow(clippy::too_many_arguments)]
+    pub fn pump_rig(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, working: bool, draw: f32, level: u8) {
+        let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let extra = b | h << 8 | (working as u32) << 16 | ((draw.clamp(0.0, 1.0) * 255.0).round() as u32) << 17 | (u32::from(level.clamp(1, 3)) - 1) << 25;
+        // The building box is twice the half each way (`draw_marks`).
+        self.push(Mark { flags: WORLD, fill: 6.0, extra, ..Mark::new(Shape::Building, at, (r / 2.0, r / 2.0), [200, 200, 200, 255]) });
     }
 
     /// A turret (building kind 0) as `building`, its head turned to
