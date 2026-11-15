@@ -50,6 +50,7 @@
 
 mod buildings;
 mod world;
+mod raids;
 mod rules;
 mod paths;
 mod cmd;
@@ -71,7 +72,8 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
-pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_MUZZLE};
+pub use raids::{Raid, RaidAim, RaidRules, Raids};
+pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::Who;
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -394,6 +396,10 @@ pub struct Game<W: World> {
     surge_last: u64,
     surge_timed: bool,
     charge_was: f64,
+    /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
+    pub raids: Raids,
+    /// Food the kill box has paid (`BuildRules::render_food`).
+    pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -518,6 +524,8 @@ impl<W: World> Game<W> {
             surge_last: 0,
             surge_timed: false,
             charge_was: 0.0,
+            raids: Raids::default(),
+            rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
         g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();
@@ -644,7 +652,7 @@ impl<W: World> Game<W> {
     /// 2026-11-15, "the monitor that says your energy flow should always
     /// be positive"; spending shows in the bank, not the flow).
     pub fn income(&self) -> f32 {
-        self.harvested + self.guard_paid
+        self.harvested + self.guard_paid + self.rendered
     }
 
     pub fn time(&self) -> f32 {

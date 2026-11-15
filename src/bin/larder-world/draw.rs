@@ -1182,7 +1182,7 @@ impl App {
             // the switch and Back below. Cancel a build left it: click the
             // building instead (`App::building_sel`).
             cmds = vec![
-                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
+                place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
                 Command {
                     target: Target::Line { width: r.wall_width * sc },
@@ -1295,6 +1295,16 @@ impl App {
                     Some(p) => (false, Some(format!("upgrade to level {}: {p:.0} food, {:.0} short", level + 1, p - g.bank))),
                     None if !g.buildings[b].up() => (false, Some("its pump is still being built".into())),
                     None => (false, Some(format!("its pump is at the top level ({level})"))),
+                }
+            }
+            // On a standing turret: its render upgrade (the kill box pays).
+            Some((TURRET, at, _)) if g.turret_at(at).is_some() => {
+                let b = g.turret_at(at).unwrap();
+                match g.upgrade_price(b) {
+                    Some(p) if g.bank >= p => (true, Some(format!("render: {p:.0} food, click"))),
+                    Some(p) => (false, Some(format!("render: {p:.0} food, {:.0} short", p - g.bank))),
+                    None if !g.buildings[b].up() => (false, Some("its turret is still being built".into())),
+                    None => (false, Some("this turret already renders".into())),
                 }
             }
             Some((id, at, _)) if build_kind(id).is_some() => {
@@ -1770,6 +1780,24 @@ impl App {
                 }),
                 about: format!("The next level: {:.1}x the draw and {:.2}x the food from it. {PUMP_LEVELS} levels.", g.rules.build.pump_up_rate, g.rules.build.pump_up_yield),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Upgrade", KeyCode::KeyU)
+            });
+        }
+        // A turret's one upgrade renders it (the kill box pays, owner
+        // 2026-11-15 21:15Z: "only with an upgrade").
+        if bd.kind == Kind::Turret {
+            let up = g.upgrade_price(bk);
+            let need = up.filter(|&p| g.bank < p);
+            let b = &g.rules.build;
+            cmds.push(Command {
+                cost: up.map(|p| format!("{p:.0}")),
+                ready: up.is_some() && need.is_none(),
+                why_not: Some(match (up, need) {
+                    (_, Some(p)) => format!("Need {:.0} more food", p - g.bank),
+                    (None, _) if !bd.up() => "Still being built".to_string(),
+                    _ => "It already renders".to_string(),
+                }),
+                about: format!("Render: every walker killed within {:.0} cells of it, by any shot, pays {:.2} food.", b.turret_range, b.render_food),
+                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
             });
         }
         if matches!(bd.kind, Kind::Lure | Kind::Siren) {

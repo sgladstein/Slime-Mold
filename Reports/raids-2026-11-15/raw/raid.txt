@@ -1,0 +1,468 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 43.4 s (the slime has eaten 150 food)
+  surge 2 starts at t 64.9 s (the slime has eaten 301 food)
+  CPU: ground field 9.77 ms (once a game second), model and HUD 0.083 ms a frame
+  t 70 s: mould 27782, soldiers 4, bank 5212, harvested 1701, rendered 0, shots 908, killed 3615, took 0%, crystals left 0.989; squad at 256.0,112.5
+  surge: the slime ate 346 food (4.9/s); meter 45.0 of 150, 2 surges
+  dense: 2889 condensed or thick walkers, mass 30671 (readout 30671)
+  squad: touching 0.0 mean, 0 most; health 72 mean
+    pump at (256, 85): hp 110 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 154 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 100 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 297 / 300, built 1.0, standing, working
+    pumped 1701 food
+  CPU: ground field 2.13 ms (once a game second), model and HUD 0.085 ms a frame
+  t 71 s: mould 27997, soldiers 4, bank 5266, harvested 1726, rendered 0, shots 917, killed 3623, took 0%, crystals left 0.988; squad at 256.0,112.5
+  surge: the slime ate 355 food (5.0/s); meter 54.2 of 150, 2 surges
+  dense: 2949 condensed or thick walkers, mass 30946 (readout 30946)
+  squad: touching 0.0 mean, 0 most; health 72 mean
+    pump at (256, 85): hp 109 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 154 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 100 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1726 food
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.080 ms a frame
+  t 72 s: mould 28183, soldiers 4, bank 5321, harvested 1750, rendered 0, shots 928, killed 3636, took 0%, crystals left 0.988; squad at 256.0,112.5
+  surge: the slime ate 364 food (5.1/s); meter 63.5 of 150, 2 surges
+  dense: 3020 condensed or thick walkers, mass 31203 (readout 31203)
+  squad: touching 0.0 mean, 0 most; health 72 mean
+    pump at (256, 85): hp 109 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 154 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 99 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1750 food
+  CPU: ground field 8.41 ms (once a game second), model and HUD 0.122 ms a frame
+  t 73 s: mould 28370, soldiers 4, bank 5376, harvested 1774, rendered 0, shots 941, killed 3651, took 0%, crystals left 0.988; squad at 256.0,112.5
+  surge: the slime ate 374 food (5.1/s); meter 72.9 of 150, 2 surges
+  dense: 3101 condensed or thick walkers, mass 31471 (readout 31471)
+  squad: touching 0.0 mean, 0 most; health 72 mean
+    pump at (256, 85): hp 109 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 154 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 98 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1774 food
+  CPU: ground field 2.15 ms (once a game second), model and HUD 0.082 ms a frame
+  t 74 s: mould 28566, soldiers 4, bank 5430, harvested 1799, rendered 0, shots 953, killed 3667, took 0%, crystals left 0.987; squad at 256.0,112.5
+  surge: the slime ate 383 food (5.2/s); meter 82.4 of 150, 2 surges
+  dense: 3186 condensed or thick walkers, mass 31752 (readout 31752)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 108 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 154 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 98 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1799 food
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.084 ms a frame
+  t 75 s: mould 28752, soldiers 4, bank 5485, harvested 1823, rendered 0, shots 967, killed 3675, took 0%, crystals left 0.987; squad at 256.0,112.5
+  surge: the slime ate 393 food (5.2/s); meter 92.0 of 150, 2 surges
+  dense: 3296 condensed or thick walkers, mass 32048 (readout 32048)
+  squad: touching 0.2 mean, 1 most; health 71 mean
+    pump at (256, 85): hp 108 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 98 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1823 food
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.084 ms a frame
+  t 76 s: mould 28923, soldiers 4, bank 5540, harvested 1847, rendered 0, shots 979, killed 3693, took 0%, crystals left 0.987; squad at 256.0,112.5
+  surge: the slime ate 402 food (5.3/s); meter 101.6 of 150, 2 surges
+  dense: 3403 condensed or thick walkers, mass 32326 (readout 32326)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 108 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 97 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing, working
+    turret at (222, 105): hp 297 / 300, built 1.0, standing, working
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1847 food
+  raid 1 at t 77.0 s: Building(0) at 256,85, reach 80 cells holding 8084 walkers, share 0.60
+  CPU: ground field 2.32 ms (once a game second), model and HUD 0.142 ms a frame
+  t 77 s: mould 29108, soldiers 4, bank 5594, harvested 1872, rendered 0, shots 987, killed 3705, took 0%, crystals left 0.986; squad at 256.0,112.5
+  surge: the slime ate 412 food (5.3/s); meter 111.3 of 150, 2 surges
+  dense: 3500 condensed or thick walkers, mass 32608 (readout 32608)
+  squad: touching 0.2 mean, 1 most; health 71 mean
+    pump at (256, 85): hp 108 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 97 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1872 food
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.091 ms a frame
+  t 78 s: mould 29334, soldiers 4, bank 5649, harvested 1896, rendered 0, shots 995, killed 3726, took 0%, crystals left 0.986; squad at 256.0,112.5
+  surge: the slime ate 422 food (5.4/s); meter 121.0 of 150, 2 surges
+  dense: 3597 condensed or thick walkers, mass 32931 (readout 32931)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 107 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 97 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing, working
+    pumped 1896 food
+  CPU: ground field 2.24 ms (once a game second), model and HUD 0.085 ms a frame
+  t 79 s: mould 29559, soldiers 4, bank 5704, harvested 1920, rendered 0, shots 1001, killed 3740, took 0%, crystals left 0.986; squad at 256.0,112.5
+  surge: the slime ate 431 food (5.5/s); meter 130.6 of 150, 2 surges
+  dense: 3694 condensed or thick walkers, mass 33253 (readout 33253)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 106 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 97 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1920 food
+  CPU: ground field 14.24 ms (once a game second), model and HUD 0.091 ms a frame
+  t 80 s: mould 29865, soldiers 4, bank 5759, harvested 1944, rendered 0, shots 1011, killed 3755, took 0%, crystals left 0.986; squad at 256.0,112.5
+  surge: the slime ate 441 food (5.5/s); meter 140.3 of 150, 2 surges
+  dense: 3766 condensed or thick walkers, mass 33631 (readout 33631)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 106 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 96 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1944 food
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.087 ms a frame
+  t 81 s: mould 30116, soldiers 4, bank 5798, harvested 1969, rendered 0, shots 1020, killed 3770, took 0%, crystals left 0.985; squad at 256.0,112.5
+  surge: the slime ate 451 food (5.6/s); meter 150.0 of 150, 2 surges
+  dense: 3836 condensed or thick walkers, mass 33952 (readout 33952)
+  squad: touching 0.0 mean, 0 most; health 71 mean
+    pump at (256, 85): hp 103 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 153 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 95 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1969 food
+  surge 3 starts at t 81.1 s (the slime has eaten 451 food)
+  CPU: ground field 19.43 ms (once a game second), model and HUD 0.929 ms a frame
+  t 82 s: mould 30320, soldiers 4, bank 5837, harvested 1993, rendered 0, shots 1033, killed 3832, took 0%, crystals left 0.985; squad at 256.0,112.5
+  surge: the slime ate 460 food (5.6/s); meter 9.1 of 150, 3 surges
+  dense: 3912 condensed or thick walkers, mass 34232 (readout 34232)
+  squad: touching 0.2 mean, 1 most; health 70 mean
+    pump at (256, 85): hp 99 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 94 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 297 / 300, built 1.0, standing
+    turret at (292, 100): hp 296 / 300, built 1.0, standing
+    pumped 1993 food
+  CPU: ground field 7.47 ms (once a game second), model and HUD 0.425 ms a frame
+  t 83 s: mould 30551, soldiers 4, bank 5876, harvested 2017, rendered 0, shots 1044, killed 3879, took 0%, crystals left 0.985; squad at 256.0,112.5
+  surge: the slime ate 470 food (5.7/s); meter 18.8 of 150, 3 surges
+  dense: 3990 condensed or thick walkers, mass 34541 (readout 34541)
+  squad: touching 0.0 mean, 0 most; health 70 mean
+    pump at (256, 85): hp 93 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 93 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing, working
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 296 / 300, built 1.0, standing
+    turret at (292, 100): hp 295 / 300, built 1.0, standing
+    pumped 2017 food
+  CPU: ground field 10.21 ms (once a game second), model and HUD 0.081 ms a frame
+  t 84 s: mould 29157, soldiers 4, bank 5915, harvested 2042, rendered 0, shots 1053, killed 3935, took 0%, crystals left 0.984; squad at 256.0,112.5
+  surge: the slime ate 480 food (5.7/s); meter 28.5 of 150, 3 surges
+  dense: 4053 condensed or thick walkers, mass 33210 (readout 33210)
+  squad: touching 0.0 mean, 0 most; health 69 mean
+    pump at (256, 85): hp 86 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 93 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing, working
+    turret at (222, 105): hp 296 / 300, built 1.0, standing, working
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2042 food
+  CPU: ground field 3.73 ms (once a game second), model and HUD 0.127 ms a frame
+  t 85 s: mould 26973, soldiers 4, bank 5954, harvested 2066, rendered 0, shots 1064, killed 3958, took 0%, crystals left 0.984; squad at 256.0,112.5
+  surge: the slime ate 490 food (5.8/s); meter 38.3 of 150, 3 surges
+  dense: 4120 condensed or thick walkers, mass 31093 (readout 31093)
+  squad: touching 0.0 mean, 0 most; health 69 mean
+    pump at (256, 85): hp 76 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 93 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing, working
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 296 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2066 food
+  CPU: ground field 3.94 ms (once a game second), model and HUD 0.124 ms a frame
+  t 86 s: mould 25233, soldiers 4, bank 5993, harvested 2090, rendered 0, shots 1075, killed 4033, took 0%, crystals left 0.984; squad at 256.0,112.5
+  surge: the slime ate 499 food (5.8/s); meter 48.1 of 150, 3 surges
+  dense: 4193 condensed or thick walkers, mass 29426 (readout 29426)
+  squad: touching 0.0 mean, 0 most; health 69 mean
+    pump at (256, 85): hp 68 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 93 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing, working
+    pumped 2090 food
+  CPU: ground field 15.11 ms (once a game second), model and HUD 0.530 ms a frame
+  t 87 s: mould 23987, soldiers 4, bank 6032, harvested 2115, rendered 0, shots 1082, killed 4053, took 0%, crystals left 0.983; squad at 256.0,112.5
+  surge: the slime ate 509 food (5.9/s); meter 57.9 of 150, 3 surges
+  dense: 4266 condensed or thick walkers, mass 28253 (readout 28253)
+  squad: touching 0.0 mean, 0 most; health 69 mean
+    pump at (256, 85): hp 52 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 92 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2115 food
+  CPU: ground field 6.16 ms (once a game second), model and HUD 0.389 ms a frame
+  t 88 s: mould 23024, soldiers 4, bank 6071, harvested 2139, rendered 0, shots 1093, killed 4080, took 0%, crystals left 0.983; squad at 256.0,112.5
+  surge: the slime ate 519 food (5.9/s); meter 67.9 of 150, 3 surges
+  dense: 4340 condensed or thick walkers, mass 27364 (readout 27364)
+  squad: touching 0.0 mean, 0 most; health 69 mean
+    pump at (256, 85): hp 28 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 92 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2139 food
+  CPU: ground field 2.26 ms (once a game second), model and HUD 0.458 ms a frame
+  t 89 s: mould 22271, soldiers 4, bank 6110, harvested 2163, rendered 0, shots 1104, killed 4214, took 0%, crystals left 0.983; squad at 256.0,112.5
+  surge: the slime ate 529 food (5.9/s); meter 77.8 of 150, 3 surges
+  dense: 4412 condensed or thick walkers, mass 26683 (readout 26683)
+  squad: touching 0.2 mean, 1 most; health 68 mean
+    pump at (256, 85): hp 5 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 152 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 92 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2163 food
+  CPU: ground field 16.93 ms (once a game second), model and HUD 0.079 ms a frame
+  t 90 s: mould 21743, soldiers 4, bank 6141, harvested 2179, rendered 0, shots 1114, killed 4300, took 0%, crystals left 0.982; squad at 256.0,112.5
+  surge: the slime ate 539 food (6.0/s); meter 87.7 of 150, 3 surges
+  dense: 4487 condensed or thick walkers, mass 26230 (readout 26230)
+  squad: touching 0.0 mean, 0 most; health 68 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 91 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2179 food
+  CPU: ground field 3.40 ms (once a game second), model and HUD 0.129 ms a frame
+  t 91 s: mould 21297, soldiers 4, bank 6167, harvested 2191, rendered 0, shots 1126, killed 4402, took 0%, crystals left 0.982; squad at 256.0,112.5
+  surge: the slime ate 549 food (6.0/s); meter 97.5 of 150, 3 surges
+  dense: 4559 condensed or thick walkers, mass 25856 (readout 25856)
+  squad: touching 0.0 mean, 0 most; health 67 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 91 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2191 food
+  CPU: ground field 7.92 ms (once a game second), model and HUD 0.141 ms a frame
+  t 92 s: mould 21144, soldiers 4, bank 6194, harvested 2203, rendered 0, shots 1136, killed 4425, took 0%, crystals left 0.982; squad at 256.0,112.5
+  surge: the slime ate 559 food (6.1/s); meter 107.3 of 150, 3 surges
+  dense: 4624 condensed or thick walkers, mass 25768 (readout 25768)
+  squad: touching 0.2 mean, 1 most; health 67 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 91 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing, working
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing, working
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2203 food
+  CPU: ground field 14.22 ms (once a game second), model and HUD 0.083 ms a frame
+  t 93 s: mould 20957, soldiers 4, bank 6220, harvested 2215, rendered 0, shots 1144, killed 4532, took 0%, crystals left 0.981; squad at 256.0,112.5
+  surge: the slime ate 568 food (6.1/s); meter 117.1 of 150, 3 surges
+  dense: 4690 condensed or thick walkers, mass 25647 (readout 25647)
+  squad: touching 0.8 mean, 1 most; health 67 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 90 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2215 food
+  CPU: ground field 2.18 ms (once a game second), model and HUD 0.285 ms a frame
+  t 94 s: mould 20853, soldiers 4, bank 6247, harvested 2226, rendered 0, shots 1158, killed 4587, took 0%, crystals left 0.981; squad at 256.0,112.5
+  surge: the slime ate 578 food (6.1/s); meter 126.8 of 150, 3 surges
+  dense: 4760 condensed or thick walkers, mass 25613 (readout 25613)
+  squad: touching 0.0 mean, 0 most; health 66 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 90 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing, working
+    pumped 2226 food
+  CPU: ground field 3.49 ms (once a game second), model and HUD 0.123 ms a frame
+  t 95 s: mould 20849, soldiers 4, bank 6273, harvested 2238, rendered 0, shots 1167, killed 4625, took 0%, crystals left 0.981; squad at 256.0,112.5
+  surge: the slime ate 588 food (6.2/s); meter 136.5 of 150, 3 surges
+  dense: 4822 condensed or thick walkers, mass 25671 (readout 25671)
+  squad: touching 0.0 mean, 0 most; health 66 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 151 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 90 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 295 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2238 food
+  CPU: ground field 2.19 ms (once a game second), model and HUD 0.345 ms a frame
+  t 96 s: mould 20874, soldiers 4, bank 6300, harvested 2250, rendered 0, shots 1182, killed 4667, took 0%, crystals left 0.980; squad at 256.0,112.5
+  surge: the slime ate 598 food (6.2/s); meter 146.3 of 150, 3 surges
+  dense: 4889 condensed or thick walkers, mass 25763 (readout 25763)
+  squad: touching 0.0 mean, 0 most; health 65 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 150 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 89 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing, working
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 294 / 300, built 1.0, standing
+    turret at (292, 100): hp 294 / 300, built 1.0, standing
+    pumped 2250 food
+  surge 4 starts at t 96.4 s (the slime has eaten 601 food)
+  CPU: ground field 2.31 ms (once a game second), model and HUD 0.090 ms a frame
+  t 97 s: mould 20851, soldiers 4, bank 6327, harvested 2262, rendered 0, shots 1195, killed 4694, took 0%, crystals left 0.980; squad at 256.0,112.5
+  surge: the slime ate 607 food (6.3/s); meter 5.8 of 150, 4 surges
+  dense: 4969 condensed or thick walkers, mass 25820 (readout 25820)
+  squad: touching 0.0 mean, 0 most; health 65 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 150 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 88 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 294 / 300, built 1.0, standing
+    turret at (292, 100): hp 293 / 300, built 1.0, standing
+    pumped 2262 food
+  CPU: ground field 7.21 ms (once a game second), model and HUD 0.131 ms a frame
+  t 98 s: mould 20820, soldiers 4, bank 6369, harvested 2274, rendered 0, shots 1207, killed 4760, took 0%, crystals left 0.980; squad at 256.0,112.5
+  surge: the slime ate 617 food (6.3/s); meter 15.6 of 150, 4 surges
+  dense: 5035 condensed or thick walkers, mass 25855 (readout 25855)
+  squad: touching 0.0 mean, 0 most; health 64 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 150 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 88 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 293 / 300, built 1.0, standing
+    turret at (292, 100): hp 292 / 300, built 1.0, standing
+    pumped 2274 food
+  CPU: ground field 2.17 ms (once a game second), model and HUD 0.088 ms a frame
+  t 99 s: mould 20757, soldiers 4, bank 6411, harvested 2285, rendered 0, shots 1220, killed 4850, took 0%, crystals left 0.979; squad at 256.0,112.5
+  surge: the slime ate 627 food (6.3/s); meter 25.3 of 150, 4 surges
+  dense: 5112 condensed or thick walkers, mass 25869 (readout 25869)
+  squad: touching 0.0 mean, 0 most; health 63 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 150 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 88 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing, working
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 290 / 300, built 1.0, standing
+    turret at (292, 100): hp 289 / 300, built 1.0, standing
+    pumped 2285 food
+  CPU: ground field 3.65 ms (once a game second), model and HUD 0.128 ms a frame
+  t 100 s: mould 20784, soldiers 4, bank 6453, harvested 2297, rendered 0, shots 1231, killed 4902, took 0%, crystals left 0.979; squad at 256.0,112.5
+  surge: the slime ate 636 food (6.4/s); meter 35.0 of 150, 4 surges
+  dense: 5187 condensed or thick walkers, mass 25971 (readout 25971)
+  squad: touching 0.5 mean, 1 most; health 63 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 150 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 88 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 290 / 300, built 1.0, standing, working
+    turret at (292, 100): hp 289 / 300, built 1.0, standing
+    pumped 2297 food
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.119 ms a frame
+  t 101 s: mould 20838, soldiers 4, bank 6480, harvested 2309, rendered 0, shots 1240, killed 4916, took 0%, crystals left 0.979; squad at 256.0,112.5
+  surge: the slime ate 646 food (6.4/s); meter 44.7 of 150, 4 surges
+  dense: 5259 condensed or thick walkers, mass 26097 (readout 26097)
+  squad: touching 0.0 mean, 0 most; health 63 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 149 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 87 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 290 / 300, built 1.0, standing
+    turret at (292, 100): hp 289 / 300, built 1.0, standing
+    pumped 2309 food
+  CPU: ground field 2.32 ms (once a game second), model and HUD 0.112 ms a frame
+  t 102 s: mould 20933, soldiers 4, bank 6522, harvested 2321, rendered 0, shots 1250, killed 4937, took 0%, crystals left 0.979; squad at 256.0,112.5
+  surge: the slime ate 656 food (6.4/s); meter 54.4 of 150, 4 surges
+  dense: 5337 condensed or thick walkers, mass 26270 (readout 26270)
+  squad: touching 0.5 mean, 1 most; health 62 mean
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 149 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 87 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 278 / 300, built 1.0, standing
+    turret at (256, 152): hp 289 / 300, built 1.0, standing
+    turret at (272, 148): hp 281 / 300, built 1.0, standing
+    turret at (222, 105): hp 290 / 300, built 1.0, standing
+    turret at (292, 100): hp 289 / 300, built 1.0, standing, working
+    pumped 2321 food

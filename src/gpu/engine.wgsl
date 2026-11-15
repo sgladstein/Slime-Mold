@@ -180,6 +180,14 @@ struct Params {
     // tick, and above it the share of the kills that spray
     // (`big::spray_share_q`, of 65,536; `spray_picked`).
     spray_steps: u32, spray_st: f32, spray_inv: f32, tick_steps: u32,
+    // The raid row (`BigParams::raid_at`, 2026-11-15, the defenses thread;
+    // Params grew from 976 to 1008): the raid's first step (0 none), its
+    // target (a fine cell, x | y << 16), its reach squared in whole fine
+    // cells and its draw's stream; its share, the lean's steps (low half)
+    // and the run's (high), the run's haste, and whether raiders follow the
+// walking distance (`raid_dist`, after the dense cells in `news`).
+    raid_at: u32, raid_to: u32, raid_r2: u32, s_raid: u32,
+    raid_share: f32, raid_ld: u32, raid_haste: f32, raid_field: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -649,6 +657,9 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
         let c = piles[(dense_word(k) >> ROAM_SHIFT) & 63u].centre;
         return vec3<f32>(f32(c & 0xFFFFu) + 0.5, f32(c >> 16u) + 0.5, 1.0);
     }
+    // A raider runs for the raid's target and does not panic.
+    let raid = raid_to(k, here);
+    if (raid.z > 0.0) { return raid; }
     if (P.panic <= 0.0) { return surge_to(here); }
     let heard = atomicLoad(&news[k]);
     // The age of its news (S.t + 1 is never before it).
@@ -721,6 +732,44 @@ fn surge_to(here: u32) -> vec3<f32> {
     }
     if (best < 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, haste);
+}
+
+// A raid (`BigParams::raid_at`, the CPU's `raid_haste` and `raid_of`):
+// from the raid's first step, through its lean at `panic_creep` and its run
+// at `raid_haste`, a walker within the reach of the target (whole cells)
+// that is not breaking away and whose draw keyed on the first step is under
+// the share runs for the target. (x, y, haste); (-1, -1, 0) when not.
+fn raid_to(k: u32, here: u32) -> vec3<f32> {
+    let t = S.t + 1u;
+    if (P.raid_at == 0u || t < P.raid_at || roaming(k)) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let ph = t - P.raid_at;
+    let lean = P.raid_ld & 0xFFFFu;
+    let run = P.raid_ld >> 16u;
+    var haste = 0.0;
+    if (ph < lean) { haste = P.panic_creep; } else if (ph - lean < run) { haste = P.raid_haste; }
+    if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    let dx = i32(here % P.w) - i32(P.raid_to & 0xFFFFu);
+    let dy = i32(here / P.w) - i32(P.raid_to >> 16u);
+    if (u32(dx * dx + dy * dy) > P.raid_r2) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    if (unit(keyed(P.s_raid, P.raid_at, k)) >= P.raid_share) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    return vec3<f32>(f32(P.raid_to & 0xFFFFu) + 0.5, f32(P.raid_to >> 16u) + 0.5, haste);
+}
+
+// A raid's walking distance to its target at cell `i` (`BigDish::
+// raid_field`, 11-15), after the dense cells in `news`.
+// Kept on blocks of `RAID_BLOCK` fine cells a side (big.rs's).
+const RAID_BLOCK: u32 = 2u;
+fn raid_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + q]);
+}
+// A raider's sensor down that distance (the CPU's `by_field`): the least
+// distance reads highest; a wall is still a wall.
+fn raid_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return -f32(raid_dist(i));
 }
 
 // A panicking walker's sensor: how far heading `a` points toward the
@@ -823,7 +872,11 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let scared = goal.x >= 0.0;
     if (scared) { st *= goal.z; }
     var f: f32; var fl: f32; var fr: f32;
-    if (scared) {
+    if (scared && P.raid_field != 0u && raid_to(k, here).z > 0.0 && raid_dist(here) != 0xFFFFFFFFu) {
+        f = raid_at_sensor(wk.x, wk.y, h, so);
+        fl = raid_at_sensor(wk.x, wk.y, h - sa, so);
+        fr = raid_at_sensor(wk.x, wk.y, h + sa, so);
+    } else if (scared) {
         f = panic_at(wk.x, wk.y, h, so, goal);
         fl = panic_at(wk.x, wk.y, h - sa, so, goal);
         fr = panic_at(wk.x, wk.y, h + sa, so, goal);
@@ -995,7 +1048,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // its lag may die, whatever it still holds.
     // A condensed walker breaks instead, keeping half its energy (`condense`).
     let dense = is_dense(k);
-    if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu) && !roaming(k)) {
+    if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu) && !roaming(k) && raid_to(k, i).z <= 0.0) {
         if (unit(keyed(P.s_wither, S.t, k)) < P.wither) {
             if (dense) {
                 set_dense(k, 0u);
@@ -3305,7 +3358,7 @@ fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
 const PLANT_HEAD: u32 = 64u;
 // (Word 49 on: up to three lights for `ignite`, four words each; words
 // 32-44 held them, three words each, until 11-14.)
-fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + P.w * P.h; }
+fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h; }
 fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
 fn pblk(b: u32, i: u32) -> u32 { return plant_base() + PLANT_HEAD + b * P.w * P.h + i; }
