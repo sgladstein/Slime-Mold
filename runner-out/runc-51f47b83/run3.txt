@@ -1,0 +1,14 @@
+runner note: GPU-idle check relaxed to under 10% (owner OK; roguelike run-scale job 11-15 08:51Z); idle samples before this run: 0,0,0,0,0 %; card 1012 MHz, 3802 MHz, 42, 29.47 W
+larder-world machine at the start: RAM 3.7 GB free of 8.0; GPU memory 884 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, Video.UI.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+head start: the slime grew 87 s alone in 12.1 s
+larder-world bench: planet:8:1 seed 10903078890919904583, 1256 x 784 cells, 682490 slots, one walker a cell, scale 2 walkers 364924; hand farm, 60 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 335.9 MB for 1256 x 784 cells (341 bytes a cell), the biggest 59.4 MB
+  3600 frames, 900 game steps; 0.35 read-backs a step, 1.45 waits a step (12.48 ms a step waiting); steps finished once in 899, when the next was due 0
+  every frame (3600 of them), ms: frame p50 6.90 p95 11.98 max 312.34; step  p50 0.09 p95 5.64 max 305.81; prepare  p50 0.14 p95 0.16 max 4.30; record  p50 0.10 p95 0.11 max 1.38; GPU tail  p50 4.84 p95 6.81 max 32.07
+  frames with a step (900 of them), ms: frame p50 7.12 p95 12.53 max 65.06; step  p50 0.75 p95 6.20 max 32.59; prepare  p50 0.14 p95 0.16 max 0.65; record  p50 0.10 p95 0.12 max 0.23; GPU tail  p50 6.10 p95 6.26 max 32.07
+  after the first game second (3540 frames), ms: frame max 65.06; step max 32.59; prepare max 4.30
+  ground refresh: 59 of them, ms: mean 1.77 max 3.64, of which the read-back at most 0.44; 35525 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 60 s: mould 134261, soldiers 10, buildings 0, harvested 2175, shots 21, killed 321
+  machine at the end: RAM 3.5 GB free of 8.0; GPU memory 1151 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, Video.UI.exe, ShellExperienceHost.exe
