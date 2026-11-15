@@ -1213,7 +1213,10 @@ mod tests {
         attack(&mut p);
         p.bank = 0.0;
         let mut free = Rounds::new(vec![Card::Blast], RoundRules::default());
-        for _ in 0..15 * 10 {
+        // 20 s, was 10: with organic starts (2026-11-15, `start_shape`) seed
+        // 2's squad had cast no blast by 10 s, the mould's edge lying
+        // elsewhere; the claim is about the bank, not the walk.
+        for _ in 0..15 * 20 {
             p.step();
             free.after_step(&mut p);
         }
