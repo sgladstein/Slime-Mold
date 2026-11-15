@@ -26,10 +26,9 @@ left button is held, and fires twice as often with a 1.4x strike while it is
 the one you command. The squads you do not command keep their last order and
 fire on their own. Squads split, join, link, queue orders and stand guard while
 they drain or build; there is no larder. It is `mode=squads` (`Rules::squads`),
-the start menu's *Control* option and the mode the run plays in. The owner
-ruled it the default mode on 2026-11-15 07:57Z; the campaign keeps the old
-mode (08:09Z). In this checkout the menu still starts on `rts`; #330 builds the
-default. Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
+the start menu's *Control* option. It is the window's default (2026-11-15, #330; owner 07:57Z); missions and
+headless `look=`/`bench` runs stay on the RTS round (`mode=rts` or Control: rts
+brings it back), so the campaign keeps the old mode (owner 08:09Z). Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
 
 ## How it plays
 
@@ -46,9 +45,10 @@ default. Detail: [report](../../Reports/squad-mode-2026-11-14/README.md).
 - **Guards.** A squad draining or building with slime near posts a share of
   itself as guards (key I: none, some, more); 3 of 8 cost about a fifth of the
   work (`cover.rs`).
-- **Resting heals.** A soldier still and unbitten for 3 s heals from the bank
-  (`Game::heal`). Owner 11-15: healing should be a specific order, not
-  automatic; that is PR #330, in the merge queue.
+- **Healing is an order** (#330): tell a squad to heal (Heal button, key L; the
+  whole link). It stops, each member heals after 1 s still, paying food from the
+  bank, and stops when all are whole or on any other order
+  (`Game::heal`, `Cmd::Heal`). Nothing heals on its own.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on)
   ([report](../../Reports/narrow-squads-2026-11-15/README.md)).
@@ -69,7 +69,6 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
 ## Open
 
-- Make squad mode the default and add the healing order (owner 11-15).
 - A call-in delay for bought soldiers.
 
 ## Sources
