@@ -167,7 +167,9 @@ struct Params {
     // a shot's spray (`squad::Frame::spray`): its longest flight in fine
     // steps (0 off), its first speed in dish cells a fine step and the
     // flight's reciprocal (`big::spray_inv`); then the fine steps a tick
-    // (`BigParams::substeps`), for a flung walker's flight a tick.
+    // (`BigParams::substeps`, the low byte), for a flung walker's flight a
+    // tick, and above it the share of the kills that spray
+    // (`big::spray_share_q`, of 65,536; `spray_picked`).
     spray_steps: u32, spray_st: f32, spray_inv: f32, tick_steps: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
@@ -2117,6 +2119,9 @@ fn spray_timer(k: u32, steps: u32) -> u32 {
     return s - spray_hash(k) % ((s + 1u) / 2u);
 }
 fn spray_pace(k: u32) -> f32 { return 0.35 + 0.65 * unit(spray_hash(k)); }
+// Whether slot `k`'s kill sprays at the row's share (the CPU's
+// `big::spray_picked`): its own hash, apart from the flight's and pace's.
+fn spray_picked(k: u32) -> bool { return (lowbias32(k ^ 0x68E31DA4u) >> 16u) < (P.tick_steps >> 8u); }
 
 // Whether cell c is inside shot q's strike.
 fn struck(c: u32, q: u32) -> bool {
@@ -2160,7 +2165,7 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
             // that points the way the shot went (from its first cell), for
             // its own share of `spray_steps` (`spray_timer`), and dies where
             // it lands. Kills are counted here, as without it.
-            if (P.spray_steps > 0u) {
+            if (P.spray_steps > 0u && spray_picked(k)) {
                 let hit = SQ.sout[q].hit;
                 let s = SQ.shots[q];
                 let hx = i32(hit % P.w); let hy = i32(hit / P.w);
@@ -2777,7 +2782,7 @@ fn fly(@builtin(global_invocation_id) gid: vec3<u32>) {
     // cells, over 0) while it flies, so the view draws it as a hot droplet
     // drawn out along that flight (`draw_specks`); `alight` puts it back to
     // 0. (It was 1 until the gun look, 11-15, the view's speck a square.)
-    let fw = select(0.0, max(sst * f32(max(P.tick_steps, 1u)), 0.01), flung);
+    let fw = select(0.0, max(sst * f32(max(P.tick_steps & 255u, 1u)), 0.01), flung);
     var at = vec4<f32>(nx, ny, h, fw);
     if (j == NONE || agar[j] == 0u) { at = vec4<f32>(wk.x, wk.y, unit(keyed(P.s_spore_h, t, k | 0x40000000u)) * TAU, fw); }
     walkers[k] = at;

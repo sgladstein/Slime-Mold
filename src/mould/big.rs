@@ -1577,6 +1577,21 @@ pub fn spray_timer(k: u32, steps: u16) -> u16 {
     (s - spray_hash(k) % s.div_ceil(2)) as u16
 }
 
+/// The spray's share as the engine takes it (`squad::Frame::spray_share`):
+/// a fraction of 65,536, so 1 is 65,536 and every hash's top 16 bits are
+/// under it.
+pub fn spray_share_q(share: f32) -> u32 {
+    (share.clamp(0.0, 1.0) * 65536.0).round() as u32
+}
+
+/// Whether slot `k`'s kill flies as a spray droplet at share `q`
+/// (`spray_share_q`): keyed on the slot alone, by its own hash (the
+/// flight's and pace's are another, so the share picks fast and slow
+/// droplets alike), as the engine's `strike` keys it.
+pub fn spray_picked(k: u32, q: u32) -> bool {
+    (super::lowbias32(k ^ 0x68E3_1DA4) >> 16) < q
+}
+
 /// A spray droplet's pace (`squad::Frame::spray`): 0.35 to 1 of the
 /// spray's first speed, by its slot, so a hit throws a spread and not a
 /// ring. Its speed a fine step is the first speed x this x (0.4 + 0.6 x its

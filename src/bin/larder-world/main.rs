@@ -422,9 +422,10 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
-    /// `spray=S`: how long the slime a shot kills flies out of the hit, in
-    /// seconds (`Rules::spray_secs`; 0 none), for before-and-after films.
-    spray: Option<f32>,
+    /// `spray=S[,SHARE]`: how long the slime a shot kills flies out of the
+    /// hit, in seconds (`Rules::spray_secs`; 0 none), and the share of the
+    /// kills that fly (`Rules::spray_share`, 1 all), for films and A/Bs.
+    spray: Option<(f32, f32)>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -901,8 +902,8 @@ impl App {
         if let Some(w) = a.wade {
             rules.wade = w;
         }
-        if let Some(s) = a.spray {
-            rules.spray_secs = s;
+        if let Some((s, share)) = a.spray {
+            (rules.spray_secs, rules.spray_share) = (s, share);
         }
         if let Some(b) = a.sink {
             rules.sink = b;
@@ -1601,7 +1602,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
-            "spray" => args.spray = Some(v.parse()?),
+            // `spray=SECS[,SHARE]`: the spray's seconds (0 off) and the
+            // share of each shot's kills that spray (`Rules::spray_share`).
+            "spray" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                args.spray = match w.as_slice() {
+                    [s] => Some((*s, 1.0)),
+                    [s, share] => Some((*s, *share)),
+                    _ => return Err("spray=SECS or spray=SECS,SHARE".into()),
+                };
+            }
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);

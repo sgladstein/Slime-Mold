@@ -1,0 +1,6 @@
+Spray share blind A/B (2026-11-15). Drawn with random.Random(20261115).choice(['all-is-A','all-is-B']) -> all-is-B.
+
+A = spray=0.3,0.25 (a quarter of each shot's kills fly; the rest die where they stand)
+B = the default, spray_share 1 (every kill flies)
+
+Clips: range-A.mp4 (ab/quarter), range-B.mp4 (ab/all), fork-A.mp4 (ab/fork-quarter), fork-B.mp4 (ab/fork-all).

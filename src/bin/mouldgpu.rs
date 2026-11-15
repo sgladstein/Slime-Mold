@@ -4115,21 +4115,22 @@ mod tests {
         // a dish without the life states before the frame and on one with
         // them, where struck spores are still missed.
         let cases = [
-            ("plain", base.clone(), 0, 0.0, 0),
-            ("spores and dormancy", life.clone(), 0, 0.0, 0),
-            ("the Sleeper", sleeper, 0, 0.0, 0),
-            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0, 0),
-            ("plain, shots that lay craters", base.clone(), 20, 0.0, 0),
-            ("plain, cone craters", cone.clone(), 20, 0.0, 0),
-            ("plain, shots that sink", base.clone(), 20, 1.0, 0),
-            ("cone craters, a sink of 1.5", cone, 20, 1.5, 0),
-            ("plain, a cut-off part charges the squad", scared, 0, 0.0, 0),
-            ("plain, condensed walkers take two shots and touch as two", dense.clone(), 0, 0.0, 0),
-            ("plain, sinking shots spray the slime they kill", base, 20, 1.0, 3),
-            ("spores and dormancy, the spray", life, 0, 0.0, 3),
-            ("condensed walkers break, the rest spray", dense, 0, 0.0, 3),
+            ("plain", base.clone(), 0, 0.0, 0, 1.0),
+            ("spores and dormancy", life.clone(), 0, 0.0, 0, 1.0),
+            ("the Sleeper", sleeper, 0, 0.0, 0, 1.0),
+            ("the Swarmer, the alarm and no states", swarmer, 0, 1.0, 0, 1.0),
+            ("plain, shots that lay craters", base.clone(), 20, 0.0, 0, 1.0),
+            ("plain, cone craters", cone.clone(), 20, 0.0, 0, 1.0),
+            ("plain, shots that sink", base.clone(), 20, 1.0, 0, 1.0),
+            ("cone craters, a sink of 1.5", cone, 20, 1.5, 0, 1.0),
+            ("plain, a cut-off part charges the squad", scared, 0, 0.0, 0, 1.0),
+            ("plain, condensed walkers take two shots and touch as two", dense.clone(), 0, 0.0, 0, 1.0),
+            ("plain, sinking shots spray the slime they kill", base.clone(), 20, 1.0, 3, 1.0),
+            ("plain, a third of the kills spray", base, 0, 0.0, 3, 0.33),
+            ("spores and dormancy, the spray", life, 0, 0.0, 3, 1.0),
+            ("condensed walkers break, the rest spray", dense, 0, 0.0, 3, 1.0),
         ];
-        for (name, s, crater, sink, spray) in cases {
+        for (name, s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             // Panic: the warm-up makes the news with a lag no walker
@@ -4263,7 +4264,7 @@ mod tests {
                 })
                 .count();
             assert_eq!(charging > 0, s.panic > 0.0, "{name}: {charging} stale walkers charge a unit");
-            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7 };
+            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7, spray_share: share };
             // Two ticks with the spray (a fine step each here), so the
             // droplets that fly 2 steps land and those that fly 3 still fly.
             let ticks = if spray > 0 { 2 } else { 1 };
@@ -4275,7 +4276,7 @@ mod tests {
             let pre = (spray > 0).then(|| cpu.clone());
             // Where the shots would land without the sink, to check it moves
             // some of them.
-            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0, (f.spray, f.spray_speed));
+            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0, (f.spray, f.spray_speed, f.spray_share));
             let cpu_out = squad::frame(&mut cpu, &f, ticks);
             let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
             assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
@@ -4319,7 +4320,7 @@ mod tests {
             // and the rest died where they landed.
             if let Some(pre) = pre {
                 let mut thrown = pre.clone();
-                squad::shots(&mut thrown, &f.shots, slime, crater, sink, (spray, f.spray_speed));
+                squad::shots(&mut thrown, &f.shots, slime, crater, sink, (spray, f.spray_speed, share));
                 let thrown = thrown.doomed.iter().filter(|&&d| d).count();
                 let plain = squad::frame(&mut pre.clone(), &Frame { spray: 0, ..f.clone() }, ticks);
                 let plain_kills: u32 = plain.shots.iter().map(|q| q.killed).sum();
@@ -4328,6 +4329,11 @@ mod tests {
                 eprintln!("squad spray, {name}: {kills} killed ({plain_kills} without it), {thrown} thrown; {flying} still in flight after the tick; {flung_off} flung marks off");
                 assert_eq!(kills, plain_kills, "{name}: the spray kills as many");
                 assert!(thrown > 0 && flying > 0 && flying < thrown, "{name}: droplets fly, and some have landed and died");
+                // A share under 1 throws about that share of the kills.
+                if share < 1.0 {
+                    let got = thrown as f32 / kills as f32;
+                    assert!((got - share).abs() < 0.2, "{name}: {thrown} of {kills} thrown at a share of {share}");
+                }
                 assert!(cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d), "a droplet is flung");
                 assert_eq!(flung_off, 0, "{name}: the same droplets fly");
             }

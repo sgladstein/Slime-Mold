@@ -212,7 +212,7 @@ impl<W: World> Game<W> {
         // 0.4 + 0.6 x t / steps over its steps, `big::spray_pace`).
         let spray = (r.spray_secs * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         let spray_speed = r.spray_reach * self.world.scale() / (0.7 * spray as f32 + 0.3);
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed };
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, by, fired, who, from, out });
     }

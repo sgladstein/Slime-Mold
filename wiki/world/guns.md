@@ -12,6 +12,7 @@ sources:
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
+  - Reports/spray-share-ab-2026-11-15/README.md
 code:
   - Ammo::roll
   - Gun::roll
@@ -48,7 +49,9 @@ from the barrel, a hit light when the bullet gets there, and the spray:
 every walker a shot kills flies out of the hit back toward the shooter as
 a droplet and dies where it lands, so kills are as without it
 (`Rules::spray_secs`, `spray=0` turns it off;
-[gun look](../../Reports/gun-look-2026-11-15/README.md)).
+[gun look](../../Reports/gun-look-2026-11-15/README.md)). How much of the
+kill flies (`Rules::spray_share`, 1 all) is a blind A/B for the owner
+([spray A/B](../../Reports/spray-share-ab-2026-11-15/README.md)).
 
 ## Owner's word
 

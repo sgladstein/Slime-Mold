@@ -362,6 +362,11 @@ pub struct Rules {
     /// s, 1 to 29 walkers in the air, too few to see; `Reports/dead-ends.md`.)
     pub spray_secs: f32,
     pub spray_reach: f32,
+    /// The share of a shot's kills that spray (`squad::Frame::spray_share`;
+    /// `spray_share=` in the window): 1 throws every kill. Asked of the
+    /// owner as a blind A/B (the whole-game review, 11-15, wanted a few
+    /// walkers a hit), so a choice, not a measured default.
+    pub spray_share: f32,
     /// The controlled squad's edge (`squads`, owner 2026-11-14 04:08Z:
     /// "whoever you are actively controlling is stronger"; 04:18Z: faster
     /// fire and harder hits, seen in the bullets and the holes).
@@ -533,6 +538,7 @@ impl Default for Rules {
             sink: 1.0,
             spray_secs: 0.3,
             spray_reach: 5.0,
+            spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
             funnel: true,

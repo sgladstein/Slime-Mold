@@ -1355,8 +1355,9 @@ pub struct Engine {
     /// The squad frame's sink, squared (`squad::Frame::sink`; 0 off).
     pub shot_sink: f32,
     /// The squad frame's spray (`squad::Frame::spray`): its longest
-    /// flight in fine steps (0 off) and its first speed.
-    pub spray: (u32, f32),
+    /// flight in fine steps (0 off), its first speed, and the share of the
+    /// kills that spray (`big::spray_share_q`, of 65,536).
+    pub spray: (u32, f32, u32),
     pub squad_due: bool,
     /// The squad's unit passes on one thread, as before 2026-11-12
     /// (`smell1`, `units1`, `harvest1`), to compare the two on a GPU.
@@ -1641,7 +1642,7 @@ impl Engine {
             kills,
             squad: (0, 0, 0.0),
             shot_sink: 0.0,
-            spray: (0, 0.0),
+            spray: (0, 0.0, 65536),
             squad_due: false,
             squad_one: false,
             squad_on: false,
@@ -2640,10 +2641,14 @@ impl Engine {
     }
 
     /// The spray row (`SPRAY_AT`): the longest flight, the first speed and
-    /// the flight's reciprocal (`big::spray_inv`), the fine steps a tick.
+    /// the flight's reciprocal (`big::spray_inv`), then the fine steps a
+    /// tick in the last word's low byte and the spray's share
+    /// (`big::spray_share_q`, at most 65,536) above it.
     fn spray_row(&self) -> [u32; 4] {
         let inv = crate::mould::big::spray_inv(self.spray.0 as u16);
-        [self.spray.0, self.spray.1.to_bits(), inv.to_bits(), self.dish.p.substeps.max(1) as u32]
+        let ticks = self.dish.p.substeps.clamp(1, 255) as u32;
+        assert!(self.spray.2 <= 65536, "the spray's share is a fraction of 65,536");
+        [self.spray.0, self.spray.1.to_bits(), inv.to_bits(), ticks | (self.spray.2 << 8)]
     }
 
     /// **An explosion's fling** (the CPU's `BigDish::fling`; dish cells,
@@ -2772,7 +2777,7 @@ impl Engine {
         // The spray (gun look, 2026-11-15). A droplet is a flung spore, so
         // the life states go on with the first frame that has shots, as
         // `squad::shots` turns the CPU's on.
-        self.spray = if f.spray > 0 { (f.spray as u32, f.spray_speed) } else { (0, 0.0) };
+        self.spray = if f.spray > 0 { (f.spray as u32, f.spray_speed, crate::mould::big::spray_share_q(f.spray_share)) } else { (0, 0.0, 65536) };
         if self.spray.0 > 0 && nshots > 0 {
             self.cycles = true;
             if self.dish.flung.is_empty() {
