@@ -1,0 +1,233 @@
+<title>Cave Tunnels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Cave tunnels of varying width, lobed caverns and rooms (11-15): before and after. Same look as the doors page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --rock: #8f969d; --road: #3c4a3a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.diagram { max-width: 680px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font: 500 13px var(--body); fill: var(--muted); }
+.diagram text.k { fill: var(--fg); font-weight: 600; }
+.stats { font: 12.5px/1.45 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+.planet { display: grid; gap: 10px; }
+.planet h3 small { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin-left: 8px; }
+.figs.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.view { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 6px; }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · planet 7, the caves · 2026-11-15</div>
+<h1>Cave Tunnels</h1>
+<p>The planet reviews found the caves read as a node graph, round caverns joined by tubes of one width, and suspected they were a slog at 4x. Now the caverns are lobed, every tunnel pinches and widens along its way, and each cave planet has a few big rooms to fight in away from the landing and the nests. Every picture pairs main (before) with this change (after): same planet, same seed, same moment.</p>
+<div class="score">
+<div><b>Tunnel widths</b><span class="n">12-17 → 9-22</span><span class="muted">dish cells, 10th to 90th percentile along the tunnels' middles, 20 caves. Pinches never under 8; the widest about 25.</span></div>
+<div><b>Room to fight in</b><span class="n">81 → 134</span><span class="muted">map cells from rock at the middle of the widest room away from the landing and nests, the median of 20 caves (76-109 → 120-235). Four rooms on the caves' 4x map.</span></div>
+<div><b>What it costs</b><span class="n">19 → 19</span><span class="muted">first-try builds of 20. Build 362 → 438 ms, once a level. Rock 51% → 44.5% of the map; crystals 31 → 35 (medians).</span></div>
+</div>
+<p class="muted">Widths are in dish cells, the units the soldiers and slime move in (a map cell is half of one). The landing, the nests and the regions stay where they were; the caverns, tunnels and crystals are rolled again.</p>
+</header>
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>The whole cave at zoom 1</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag">3 caves</span><span class="tag">30 s</span></div></div></div>
+<p>The node graph is the review's word for the left-hand pictures: discs on even tubes. After, rooms run into each other and tunnels narrow and open as they go.</p>
+<div class="planet"><h3>Seed 2, Lothaskar</h3>
+<p class="stats">tunnel widths <b>12-17 → 9-23</b> (10th-90th percentile, dish cells) · rock <b>51% → 42%</b> · crystals <b>30 → 35</b> · walk to the nearest nest <b>1,096 → 1,096</b> map cells</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/far-2-before.webp" alt="Cave seed 2, the whole map at zoom 1 at 30 s, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/far-2-after.webp" alt="Cave seed 2, the whole map at zoom 1 at 30 s, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 8, Quane</h3>
+<p class="stats">tunnel widths <b>12-18 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>51% → 46%</b> · crystals <b>12 → 16</b> · walk to the nearest nest <b>1,099 → 1,028</b> map cells</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/far-8-before.webp" alt="Cave seed 8, the whole map at zoom 1 at 30 s, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/far-8-after.webp" alt="Cave seed 8, the whole map at zoom 1 at 30 s, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 13, Sorrorrith</h3>
+<p class="stats">tunnel widths <b>13-17 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>54% → 43%</b> · crystals <b>36 → 36</b> · walk to the nearest nest <b>1,059 → 1,059</b> map cells</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/far-13-before.webp" alt="Cave seed 13, the whole map at zoom 1 at 30 s, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/far-13-after.webp" alt="Cave seed 13, the whole map at zoom 1 at 30 s, after" loading="lazy"></figure>
+</div>
+</div>
+</section>
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>The slime's first minute</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag p">play</span><span class="tag">films</span></div></div></div>
+<p>From the first nest at zoom 2, a frame every 3 s to 58 s, no hands on the controls. The slime fills the tunnels it reaches; where a tunnel pinches its flow narrows, where it opens it spreads.</p>
+<div class="planet"><h3>Seed 8, Quane</h3>
+<div class="pair">
+<figure><span class="ba">Before</span><video src="pics/nestfilm-8-before.mp4" autoplay muted loop playsinline controls></video></figure>
+<figure><span class="ba after">After</span><video src="pics/nestfilm-8-after.mp4" autoplay muted loop playsinline controls></video></figure>
+</div></div>
+<div class="planet"><h3>Seed 2, Lothaskar</h3>
+<div class="pair">
+<figure><span class="ba">Before</span><video src="pics/nestfilm-2-before.mp4" autoplay muted loop playsinline controls></video></figure>
+<figure><span class="ba after">After</span><video src="pics/nestfilm-2-after.mp4" autoplay muted loop playsinline controls></video></figure>
+</div></div>
+</section>
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>Zoomed in</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag">zoom 3</span><span class="tag">30 s</span></div></div></div>
+<p>Halfway from the landing to the first nest, then the widest room away from the landing and the nests (found on the after map; before, the same spot).</p>
+<div class="planet"><h3>Seed 2, Lothaskar</h3>
+<div class="view">Halfway to the first nest</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/mid-2-before.webp" alt="Cave seed 2, halfway to the first nest at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/mid-2-after.webp" alt="Cave seed 2, halfway to the first nest at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="view">The widest room</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/room-2-before.webp" alt="Cave seed 2, the widest room at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/room-2-after.webp" alt="Cave seed 2, the widest room at zoom 3, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 8, Quane</h3>
+<div class="view">Halfway to the first nest</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/mid-8-before.webp" alt="Cave seed 8, halfway to the first nest at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/mid-8-after.webp" alt="Cave seed 8, halfway to the first nest at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="view">The widest room</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/room-8-before.webp" alt="Cave seed 8, the widest room at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/room-8-after.webp" alt="Cave seed 8, the widest room at zoom 3, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 13, Sorrorrith</h3>
+<div class="view">Halfway to the first nest</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/mid-13-before.webp" alt="Cave seed 13, halfway to the first nest at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/mid-13-after.webp" alt="Cave seed 13, halfway to the first nest at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="view">The widest room</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/room-13-before.webp" alt="Cave seed 13, the widest room at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/room-13-after.webp" alt="Cave seed 13, the widest room at zoom 3, after" loading="lazy"></figure>
+</div>
+</div>
+</section>
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>The landing</h2>
+<div class="tags"><span class="tag p">play</span><span class="tag">zoom 3</span><span class="tag">1 s</span></div></div></div>
+<p>What the squad sees first. The landing's cavern only bulges, so it keeps its room.</p>
+<div class="figs two">
+<figure><img src="pics/land-2-1s-before.webp" alt="Cave seed 2, the landing at 1 s, before" loading="lazy"><figcaption><b>Seed 2, before.</b></figcaption></figure>
+<figure><img src="pics/land-2-1s-after.webp" alt="Cave seed 2, the landing at 1 s, after" loading="lazy"><figcaption><b>Seed 2, after.</b> tunnel widths <b>12-17 → 9-23</b> (10th-90th percentile, dish cells) · rock <b>51% → 42%</b> · crystals <b>30 → 35</b> · walk to the nearest nest <b>1,096 → 1,096</b> map cells</figcaption></figure>
+<figure><img src="pics/land-8-1s-before.webp" alt="Cave seed 8, the landing at 1 s, before" loading="lazy"><figcaption><b>Seed 8, before.</b></figcaption></figure>
+<figure><img src="pics/land-8-1s-after.webp" alt="Cave seed 8, the landing at 1 s, after" loading="lazy"><figcaption><b>Seed 8, after.</b> tunnel widths <b>12-18 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>51% → 46%</b> · crystals <b>12 → 16</b> · walk to the nearest nest <b>1,099 → 1,028</b> map cells</figcaption></figure>
+<figure><img src="pics/land-13-1s-before.webp" alt="Cave seed 13, the landing at 1 s, before" loading="lazy"><figcaption><b>Seed 13, before.</b></figcaption></figure>
+<figure><img src="pics/land-13-1s-after.webp" alt="Cave seed 13, the landing at 1 s, after" loading="lazy"><figcaption><b>Seed 13, after.</b> tunnel widths <b>13-17 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>54% → 43%</b> · crystals <b>36 → 36</b> · walk to the nearest nest <b>1,059 → 1,059</b> map cells</figcaption></figure>
+</div>
+</section>
+<section class="item">
+<div class="ihead"><div class="rank">5</div><div><h2>The layouts in false colour</h2>
+<div class="tags"><span class="tag">maps</span></div></div></div>
+<p>Before left, after right.</p>
+<div class="key"><span><i style="background:#5f643c"></i>ground</span><span><i style="background:#3c648c"></i>shallow water</span><span><i style="background:#96969b"></i>rock</span><span><i style="background:#dc3cdc"></i>gate (soft rock)</span><span><i style="background:#3cdce6"></i>crystal</span><span><i style="border:2px solid #ff3c28"></i>nest</span><span><i style="border:2px solid #ffe600"></i>landing</span></div>
+<div class="figs one">
+<figure><img src="pics/fc-7-2.webp" alt="Cave seed 2 in false colour, before and after" loading="lazy"><figcaption><b>Seed 2, Lothaskar.</b> tunnel widths <b>12-17 → 9-23</b> (10th-90th percentile, dish cells) · rock <b>51% → 42%</b> · crystals <b>30 → 35</b> · walk to the nearest nest <b>1,096 → 1,096</b> map cells</figcaption></figure>
+<figure><img src="pics/fc-7-8.webp" alt="Cave seed 8 in false colour, before and after" loading="lazy"><figcaption><b>Seed 8, Quane.</b> tunnel widths <b>12-18 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>51% → 46%</b> · crystals <b>12 → 16</b> · walk to the nearest nest <b>1,099 → 1,028</b> map cells</figcaption></figure>
+<figure><img src="pics/fc-7-13.webp" alt="Cave seed 13 in false colour, before and after" loading="lazy"><figcaption><b>Seed 13, Sorrorrith.</b> tunnel widths <b>13-17 → 9-21</b> (10th-90th percentile, dish cells) · rock <b>54% → 43%</b> · crystals <b>36 → 36</b> · walk to the nearest nest <b>1,059 → 1,059</b> map cells</figcaption></figure>
+</div>
+</section>
+<section class="item">
+<div class="ihead"><div class="rank">6</div><div><h2>Measured</h2>
+<div class="tags"><span class="tag">20 caves</span><span class="tag">seeds 1-20</span></div></div></div>
+<p>The deciding measure, named before the change: the spread of tunnel widths along the tunnels' middles (a tunnel is under 30 dish cells wide; caverns are 115 and more, a nest's road 40 and more), and the most room away from home.</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>Tunnel width, 10th / 50th / 90th percentile (dish cells)</td><td>12 / 15 / 17</td><td class="ok">9 / 15 / 22</td></tr>
+<tr><td>Tunnel middles under 8 / over 14 dish cells</td><td>1% / 59%</td><td>2% / 54%</td></tr>
+<tr><td>Widest room away from home (clearance, map cells)</td><td>76-109</td><td class="ok">120-235</td></tr>
+<tr><td>Cave floor 20+ dish cells from rock</td><td>9.8%</td><td>14.5%</td></tr>
+<tr><td>Rock share (median)</td><td>51%</td><td>44.5%</td></tr>
+<tr><td>First-try builds</td><td>19</td><td>19</td></tr>
+<tr><td>Crystals (median)</td><td>31</td><td>35</td></tr>
+<tr><td>Walk to the nearest nest (median, map cells)</td><td>1,212</td><td>1,167</td></tr>
+<tr><td>Door / way round (dish cells)</td><td>6-10 / 16-20</td><td>6-8 / 18-20</td></tr>
+<tr><td>Build (median of three runs, once a level)</td><td>362 ms</td><td class="bad">438 ms</td></tr>
+</tbody></table></div>
+<p class="muted">The play review measured 4-wide tunnels in its own 4-cell bins, which read low; on the exact measure here no cave had tunnels under 12 dish cells at the 10th percentile before.</p>
+</section>
+
+<section class="sec">
+<h2>Tried on the way</h2>
+<ul>
+<li><b>Pinches down to 6 dish cells.</b> Crystals were cut off on 17 of 20 caves' first tries, 5 fell back to the open plan, and a build took 5.6 s on average. The planet's check (and a squad) counts a gap under about 8 dish cells as shut, so pinches stop at 8.</li>
+</ul>
+</section>
+
+<section class="sec">
+<h2>Not done here, and next</h2>
+<ul>
+<li><b>The caves' colours.</b> Rock the backdrop's grey and flat rock fields are the drawing half of the same review item.</li>
+<li><b>Is it still a slog at 4x?</b> The walk to the nearest nest is 4% shorter and the rooms are new; only play can say.</li>
+<li><b>Next:</b> a landing crystal per biome, and nests kept off river crossings.</li>
+</ul>
+</section>
+
+</div>
