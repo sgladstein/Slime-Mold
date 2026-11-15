@@ -680,12 +680,18 @@ impl App {
             // Before, a fresh bullet's streak lay over the soldier's own
             // body and left it beside the gun.
             let mut head = b.at;
+            // Its light comes up over its first three body radii out of the
+            // barrel: a scattergun's pellets all leave the mouth together,
+            // and their lights there would add up over the soldier; the
+            // mouth's light is the flash's (`MUZZLE_LIGHT`).
+            let mut lit = 1.0;
             if let Some(s) = b.by.and_then(|k| g.soldiers.get(k)).filter(|s| s.alive) {
                 let from = (b.at.0 - s.x).hypot(b.at.1 - s.y);
                 let out = from - MUZZLE.0 * body_r;
                 if out <= 0.0 {
                     continue;
                 }
+                lit = (out / (3.0 * body_r)).clamp(0.0, 1.0);
                 len = len.min(out);
                 let side = (-b.dir.1 * MUZZLE.1 * body_r, b.dir.0 * MUZZLE.1 * body_r);
                 let near = |d: f32| (1.0 - d / (4.0 * body_r)).clamp(0.0, 1.0);
@@ -715,7 +721,7 @@ impl App {
             // through the body, each hit swept a disc 14 cells across over
             // the slime (owner 20:09Z: "each bullet that hit has a huge wave
             // that goes out. it is too much").
-            self.lights.push(Light { at: head, reach: b.r, lift: 3.0, colour: look.light, strength: if quiet { 0.2 } else { 0.5 } });
+            self.lights.push(Light { at: head, reach: b.r, lift: 3.0, colour: look.light, strength: lit * if quiet { 0.2 } else { 0.5 } });
         }
         // Each soldier's muzzle flash while it burns (`FLASH`), at the
         // mouth of its kicked-back barrel, under the soldiers so the
@@ -771,17 +777,33 @@ impl App {
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
         // Once the drawn bullet gets there (`Tracer::delay`), white-hot for
-        // its first moment, then gold (gun look, 2026-11-15; was gold at
-        // half this from the step's start, before the bullet arrived).
-        for tr in self.tracers.iter().filter(|tr| tr.hit) {
-            let age = tr.age - tr.delay;
-            if !(0.0..TRACER).contains(&age) {
-                continue;
+        // its first moment, then gold, falling as the square of what is
+        // left (gun look, 2026-11-15; was gold at 0.5 falling straight from
+        // the step's start, before the bullet arrived). 1.4 at the peak lit
+        // a soldier white when slime at its feet was hit; 0.9 is a flash
+        // that still reads over the bright slime.
+        // One volley's hits share one hit's light: a scattergun's pellets
+        // (pushed together, from one mouth in one step) each light their
+        // share, so a fan landing on one spot lights it as one hit does.
+        // Summed, four pellets 2 cells out lit the squad white (gun look,
+        // 2026-11-15).
+        let ts = &self.tracers;
+        let mut i = 0;
+        while i < ts.len() {
+            let n = ts[i..].iter().take_while(|t| t.from == ts[i].from && t.age == ts[i].age).count();
+            let volley = &ts[i..i + n];
+            i += n;
+            let share = 1.0 / volley.iter().filter(|t| t.hit).count().max(1) as f32;
+            for tr in volley.iter().filter(|tr| tr.hit) {
+                let age = tr.age - tr.delay;
+                if !(0.0..TRACER).contains(&age) {
+                    continue;
+                }
+                let f = 1.0 - age / TRACER;
+                let hot = (f * 2.0 - 1.0).max(0.0);
+                let colour = [255.0, 214.0 + 41.0 * hot, 150.0 + 100.0 * hot];
+                self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour, strength: 0.9 * f * f * share });
             }
-            let f = 1.0 - age / TRACER;
-            let hot = (f * 2.0 - 1.0).max(0.0);
-            let colour = [255.0, 214.0 + 41.0 * hot, 150.0 + 100.0 * hot];
-            self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour, strength: 1.4 * f * f });
         }
         for (k, s) in g.soldiers.iter().enumerate() {
             let fl = self.looks.get(k).map_or(0.0, |l| l.flash / FLASH);
