@@ -46,7 +46,10 @@ work; a thread working on one directly may change it.
 - [The Larder player AI](world/player-ai.md): plays soldiers through the player's commands, one brain per side; on the Larder world four of five styles beat the scripted farm 15-16/16 held out.
 - [The player's own mould](world/own-mould.md): gardeners (owner, 11-12); soldiers grow a second species that fights the enemy by conversion; forms trade eating for fighting.
 - [The mould tiers](world/mould-tiers.md): the difficulty ladder; Drifter, Sprawler, Trunk (the campaign), Sporer, Sleeper, Swarmer, and Grudge, which remembers where it was shot.
-- [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls and the game UI over a world bigger than the screen; view 0.3-0.4 ms, UI 0.1 ms on the 1070.
+- [The world camera and UI](world/world-camera.md): pan, zoom, minimap, GPU marks and Larder's controls and the game UI (scale 75-300%, one steady bottom bar) over a world bigger than the screen; view 0.3-0.4 ms, UI 0.1 ms on the 1070.
+- [Squad mode](world/squad-mode.md): steer one squad, the rest run AUTO; split, join, link, guards, queues, narrow gaps; the default mode; healing is an order.
+- [The squad economy](world/economy.md): one bank, pumps are the main income, hand draining a fifth, guarding pays, no upkeep.
+- [Guns, bullets and gun cards](world/guns.md): the squad owns a rolled gun with a budget and slots; rolled bullets, stacking cards, no recharge; the gun range.
 - [The squad toolkit](world/squad-toolkit.md): six tools from the mould's model (blast and crater, mine, det cord, germ, sleep gas, smell); with tools carried, the best plan changes by tier.
 - [The roguelike run](world/run.md): eight planets toward the slime's home world, a shop between them (upgrades, unlocks, gun cards), harder slime deeper; beside the campaign.
 

@@ -365,6 +365,10 @@ pub struct SquadPanel {
     /// Guards button, which cycles it (`HudEvent::SquadCover`).
     pub cover: String,
     pub cover_key: Option<String>,
+    /// The Heal button's key, and why it would do nothing (everyone whole,
+    /// or healing already); it sends `HudEvent::SquadHeal`.
+    pub heal_key: Option<String>,
+    pub heal_off: Option<String>,
     /// No squad commanded (Esc): the header says so and Let go greys out.
     pub free: bool,
     /// Let go's key ("Esc"), shown on it; it sends `HudEvent::SquadFree`.
@@ -484,6 +488,7 @@ pub enum HudEvent {
     SquadSplit,
     SquadCombine,
     SquadCover,
+    SquadHeal,
     /// The squad panel's Let go: command no squad.
     SquadFree,
 }
@@ -508,6 +513,7 @@ enum Hit {
     SquadSplit,
     SquadCombine,
     SquadCover,
+    SquadHeal,
     SquadFree,
 }
 
@@ -879,6 +885,7 @@ impl Hud {
             Hit::SquadCombine => out.push(HudEvent::SquadCombine),
             Hit::SquadLink(r) => out.push(HudEvent::SquadLink(r)),
             Hit::SquadCover => out.push(HudEvent::SquadCover),
+            Hit::SquadHeal => out.push(HudEvent::SquadHeal),
             Hit::SquadFree => out.push(HudEvent::SquadFree),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
@@ -1334,6 +1341,7 @@ impl Hud {
             ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
             ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
             (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
+            ("Heal", &p.heal_key, &p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
         ] {
             let text = label(label_text, key, keys);
             let w = c.atlas.measure(Weight::SemiBold, bpx, &text) + 20.0 * s;
@@ -2263,7 +2271,7 @@ mod tests {
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
         let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false, auto: !active };
-        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), free: false, free_key: Some("Esc".into()) };
+        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
             r.m.squads = Some(panel.clone());
@@ -2287,6 +2295,8 @@ mod tests {
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadLink(2)]));
             let b = find(&r, Hit::SquadCover);
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCover]));
+            let b = find(&r, Hit::SquadHeal);
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadHeal]));
             let b = find(&r, Hit::Squad(1));
             // Left of the +, so the tile itself.
             assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(1)]));

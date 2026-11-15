@@ -1,0 +1,50 @@
+  t 1 s: mould 24993, soldiers 4, bank 2000, harvested 0, shots 1, killed 7, took 0%, crystals left 1.000; squad at 256.0,112.5
+  t 4 s: mould 24899, soldiers 4, bank 1996, harvested 0, shots 13, killed 105, took 0%, crystals left 1.000; squad at 256.0,112.5
+  t 7 s: mould 24626, soldiers 4, bank 1988, harvested 0, shots 25, killed 301, took 0%, crystals left 0.999; squad at 256.0,112.5
+  t 10 s: mould 24314, soldiers 4, bank 1979, harvested 0, shots 37, killed 479, took 0%, crystals left 0.999; squad at 256.0,112.5
+  t 13 s: mould 24080, soldiers 3, bank 1968, harvested 0, shots 48, killed 666, took 0%, crystals left 0.999; squad at 254.0,112.5
+  t 16 s: mould 24055, soldiers 0, bank 1946, harvested 0, shots 52, killed 769, took 0%, crystals left 0.999
+  t 19 s: mould 24173, soldiers 0, bank 1904, harvested 0, shots 52, killed 769, took 0%, crystals left 0.998
+  t 22 s: mould 24325, soldiers 0, bank 1848, harvested 0, shots 52, killed 769, took 0%, crystals left 0.998
+  t 25 s: mould 24462, soldiers 0, bank 1789, harvested 0, shots 52, killed 769, took 0%, crystals left 0.998
+  t 28 s: mould 24657, soldiers 0, bank 1726, harvested 0, shots 52, killed 769, took 0%, crystals left 0.997
+  t 31 s: mould 24870, soldiers 0, bank 1661, harvested 0, shots 52, killed 769, took 0%, crystals left 0.997
+  t 34 s: mould 25123, soldiers 0, bank 1597, harvested 0, shots 52, killed 769, took 0%, crystals left 0.996
+  t 37 s: mould 25448, soldiers 0, bank 1532, harvested 0, shots 52, killed 769, took 0%, crystals left 0.996
+  t 40 s: mould 25807, soldiers 0, bank 1467, harvested 0, shots 52, killed 769, took 0%, crystals left 0.995
+  t 43 s: mould 26239, soldiers 0, bank 1402, harvested 0, shots 52, killed 769, took 0%, crystals left 0.995
+  t 46 s: mould 26694, soldiers 0, bank 1336, harvested 0, shots 52, killed 769, took 0%, crystals left 0.994
+  t 49 s: mould 27217, soldiers 0, bank 1269, harvested 0, shots 52, killed 769, took 0%, crystals left 0.993
+  t 52 s: mould 27753, soldiers 0, bank 1202, harvested 0, shots 52, killed 769, took 0%, crystals left 0.993
+  t 55 s: mould 28334, soldiers 0, bank 1135, harvested 0, shots 52, killed 769, took 0%, crystals left 0.992
+  t 58 s: mould 28961, soldiers 0, bank 1068, harvested 0, shots 52, killed 769, took 0%, crystals left 0.991
+  t 61 s: mould 29579, soldiers 0, bank 1001, harvested 0, shots 52, killed 769, took 0%, crystals left 0.990
+  t 64 s: mould 30244, soldiers 0, bank 934, harvested 0, shots 52, killed 769, took 0%, crystals left 0.989
+  t 67 s: mould 30941, soldiers 0, bank 867, harvested 0, shots 52, killed 769, took 0%, crystals left 0.988
+  t 70 s: mould 31615, soldiers 0, bank 800, harvested 0, shots 52, killed 769, took 0%, crystals left 0.987
+  t 73 s: mould 32325, soldiers 0, bank 733, harvested 0, shots 52, killed 769, took 0%, crystals left 0.986
+  t 76 s: mould 33032, soldiers 0, bank 665, harvested 0, shots 52, killed 769, took 0%, crystals left 0.985
+  t 79 s: mould 33773, soldiers 0, bank 598, harvested 0, shots 52, killed 769, took 0%, crystals left 0.984
+  t 82 s: mould 34501, soldiers 0, bank 531, harvested 0, shots 52, killed 769, took 0%, crystals left 0.983
+  t 85 s: mould 31342, soldiers 0, bank 464, harvested 0, shots 52, killed 769, took 0%, crystals left 0.982
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
+  t 88 s: mould 28466, soldiers 0, bank 399, harvested 0, shots 52, killed 769, took 0%, crystals left 0.980, ended: squad wiped
