@@ -2937,7 +2937,7 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
 // The living walkers (the CPU's `living`: a slot alive, with growth, and
 // not dead) into `wstat[4]`, and with `grid` the mould grid (the CPU's
 // `mould_grid`: each `grid`-cell square's walkers holding a cell, its
-// `occ`) into `wstat[8..]`, row by row; `Engine::record_count` clears both
+// `occ`) into `wstat[12..]`, row by row; `Engine::record_count` clears both
 // first and dispatches a thread for each slot and each cell. The game's
 // packed readout copies them, so neither costs a read-back of its own (the
 // count read the energy and `spec` back, 8 MB at 1M slots, until
@@ -2951,14 +2951,18 @@ fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k < P.n && energy[k] >= 0.0 && ((spec[k] >> 9u) & 3u) != L_DEAD) {
         atomicAdd(&wstat[4], 1u);
         // The player's own mould's share of them, in a garden.
-        if (garden() && species_of(k) == OWN_SP) { atomicAdd(&wstat[5], 1u); }
+        let own = garden() && species_of(k) == OWN_SP;
+        if (own) { atomicAdd(&wstat[5], 1u); }
+        // The enemy's condensed walkers (11-15), so the game's mass is
+        // living + these, as the CPU's `BigDish::mass` counts them twice.
+        if (!own && is_dense(k)) { atomicAdd(&wstat[8], 1u); }
     }
     let g = P.grid;
     if (g > 0u && k < P.w * P.h) {
         let o = atomicLoad(&occ[k]);
         if (o > 0u) {
             let gw = (P.w + g - 1u) / g;
-            atomicAdd(&wstat[8u + (k / P.w / g) * gw + (k % P.w) / g], o);
+            atomicAdd(&wstat[12u + (k / P.w / g) * gw + (k % P.w) / g], o);
         }
     }
 }

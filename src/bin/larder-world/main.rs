@@ -638,6 +638,14 @@ struct App {
     seen: u64,
     report_at: Instant,
     saved: bool,
+    /// The play log (`mould::playlog`, whole-game review W13, 11-15):
+    /// `larder-world-log-MAP-SEED.txt` beside the replay, a line a game
+    /// second, in the window only (not the headless films). The path, the
+    /// writer, the last second written, and whether the end is written.
+    log_path: Option<String>,
+    playlog: slime_mould::mould::playlog::Playlog,
+    log_sec: u64,
+    log_ended: bool,
     /// The command card shows the build page (Q).
     build_page: bool,
     /// The squad toolkit (`mould::kit`) and whether the card shows its page
@@ -753,6 +761,10 @@ impl App {
             seen: 0,
             report_at: Instant::now(),
             saved: false,
+            log_path: None,
+            playlog: Default::default(),
+            log_sec: 0,
+            log_ended: false,
             build_page: false,
             kit: Kit::new(KitRules::default()),
             rounds: Rounds::new(Vec::new(), RoundRules::default()),
@@ -1083,11 +1095,44 @@ impl App {
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", map_title(&self.name, self.args.seed), self.args.seed));
         }
+        self.open_log();
         match &self.mission {
             Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
             None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())
+    }
+
+    /// A new round's play log (`log_path`), its header written: the map,
+    /// seed, mode, and the mission's name and tier when there is one.
+    fn open_log(&mut self) {
+        self.log_path = None;
+        self.playlog = Default::default();
+        self.log_sec = 0;
+        self.log_ended = false;
+        if self.window.is_none() {
+            return;
+        }
+        let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
+        let mut extra = vec![("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        if let Some(tr) = &self.mission {
+            extra.push(("mission", tr.mission.name.clone()));
+            extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
+        }
+        let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
+        match std::fs::write(&path, head) {
+            Ok(()) => self.log_path = Some(path),
+            Err(e) => eprintln!("larder-world: {path}: {e}"),
+        }
+    }
+
+    /// Appends `text` to the play log (nothing without one).
+    fn log_write(path: &Option<String>, text: &str) {
+        use std::io::Write;
+        let Some(path) = path else { return };
+        if let Ok(mut f) = std::fs::OpenOptions::new().append(true).open(path) {
+            let _ = f.write_all(text.as_bytes());
+        }
     }
 
     /// The round's commands, to replay it (`Game::replay`).
@@ -1222,6 +1267,22 @@ impl App {
             }
         }
         let t = g.time();
+        // The play log's line for each whole game second passed.
+        if self.log_path.is_some() {
+            let sec = (g.settled_ticks().saturating_sub(g.landed)) / g.rules.tps as u64;
+            if sec > self.log_sec {
+                self.log_sec = sec;
+                let line = self.playlog.second(g);
+                Self::log_write(&self.log_path, &line);
+            }
+            let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
+            if !self.log_ended && (g.end.is_some() || verdict.is_some()) {
+                self.log_ended = true;
+                let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
+                let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
+                Self::log_write(&self.log_path, &text);
+            }
+        }
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
@@ -1404,6 +1465,7 @@ impl App {
             return self.fail(event_loop, format!("render failed: {err}"));
         }
         self.frame_ms.push(t0.elapsed().as_secs_f32() * 1e3);
+        self.playlog.frame(t0.elapsed().as_secs_f32() * 1e3);
         let since = self.report_at.elapsed().as_secs_f32();
         if since >= 10.0 && !self.frame_ms.is_empty() {
             // The frame's CPU time (the game's steps, their read-backs, the

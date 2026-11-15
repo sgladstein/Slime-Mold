@@ -1,0 +1,33 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 40 s alone in 79.4 s
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-001s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-001s-near.png
+  CPU: ground field 11.01 ms (once a game second), model and HUD 0.126 ms a frame
+  t 1 s: mould 138870, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 58.3,322.0
+  dense: 5447 condensed or thick walkers, mass 144317
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-030s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-030s-near.png
+  CPU: ground field 8.89 ms (once a game second), model and HUD 0.100 ms a frame
+  t 30 s: mould 130903, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.990; squad at 58.3,322.0
+  dense: 14064 condensed or thick walkers, mass 144967
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-060s-near.png
+  CPU: ground field 10.00 ms (once a game second), model and HUD 0.101 ms a frame
+  t 60 s: mould 124370, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.978; squad at 58.3,322.0
+  dense: 18463 condensed or thick walkers, mass 142833
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-090s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-090s-near.png
+  CPU: ground field 6.82 ms (once a game second), model and HUD 0.073 ms a frame
+  t 90 s: mould 117949, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.967; squad at 58.3,322.0
+  dense: 20171 condensed or thick walkers, mass 138120
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/idle-d6/planet-6-1-idle-120s-near.png
+  CPU: ground field 11.36 ms (once a game second), model and HUD 0.121 ms a frame
+  t 120 s: mould 111188, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.955; squad at 58.3,322.0
+  dense: 22645 condensed or thick walkers, mass 133833
+  squad: touching 0.0 mean, 0 most; health 100 mean
+wall 332 s
