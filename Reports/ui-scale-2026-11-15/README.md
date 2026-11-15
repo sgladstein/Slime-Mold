@@ -59,6 +59,28 @@ clips (the same with `scroll=1 at=1,1.25,..,4.75`); before = main at
 Frame cost: the clip is one more word a shape and a compare a pixel per
 shape; the menu draws once a frame as before. Not timed on the 1070.
 
+## Review fixes
+
+The three-reviewer review ([menu review](../menu-review-2026-11-15/README.md))
+found two bugs that #334 landed with, from main's #330 (Heal is a squad
+order) merging into this branch; they are fixed in the pull request that
+adds the review:
+
+- The squad header sized its fit over four buttons while #330 drew a
+  fifth, Heal, last: at 1920x1080 150% Heal drew over "1 squad", and at
+  200% it was the first button skipped. The header now builds one list of
+  five buttons for both the fit and the drawing, drops Guards, then Heal,
+  then Combine when short, and never draws a button left of the header
+  word. Test `the_squad_header_keeps_clear_at_every_size` (every UI step,
+  1280x800, 1920x1080, 2560x1440, with a gun strip).
+- `slot_rects` was filtered to the slots in view, and `drop_at` used the
+  index in that filtered list as the slot number, so with the first row of
+  slots scrolled off a card dropped on slot 5 went to slot 1. The list now
+  keeps every slot and a drop outside the page's visible band (under the
+  title or the fixed buttons) does nothing, the bag included. Test
+  `a_drop_after_scrolling_lands_in_its_own_slot` (1280x720 at 200%, 12
+  slots).
+
 ## Not changed
 
 - The UI size is still capped where the bottom bar would take a third of
