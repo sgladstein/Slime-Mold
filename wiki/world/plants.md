@@ -4,11 +4,11 @@ kind: mechanism
 status: open
 updated: 2026-11-15
 sources:
+  - Reports/bug-check-leftovers-2026-11-15/README.md
   - Reports/fire-2026-11-14/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
-  - Reports/bug-check-2026-11-15/README.md
 code:
   - BigDish::ignite
   - BigParams::fire_damp
@@ -78,7 +78,7 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
   window and (since 2026-11-15, `plants::planted`) the campaign,
   larderworld and kitplans census tools. Fire kills count in
   `Game::killed` every frame on both worlds (`Game::fire_killed`;
-  [bug check, *Leftovers fixed*](../../Reports/bug-check-2026-11-15/README.md)).
+  [bug-check leftovers](../../Reports/bug-check-leftovers-2026-11-15/README.md)).
 - Cover (plants muffling a soldier's scent) awaits the owner.
 - Plants' look (owner 19:26Z: "mostly just green blobs"): per-pixel crowns built, awaiting the graphics lead and the owner; llvmpipe frame +9.5 ms at zoom 12, 1070 not timed.
 - Next: shots stopped by tall plants, thickets, slime-eating plants, fertile battlefields and slow ground (off), each a switch for playtest; the 1070's frame cost.
