@@ -68,5 +68,20 @@ centre=256,140,ZOOM`, GPU tail p50, three alternating rounds:
 About +12-17% on llvmpipe, giving back part of #305's saving: a uniform
 pixel now reads 16 ground words instead of 4 (no spline weights). A bit in
 the ground word marking "one ground for 2 cells round" would make it one
-read again; byte 0 has none spare (kind, soil, `FAR`). 1070 timing to come
-through the coordinator.
+read again; byte 0 has none spare (kind, soil, `FAR`).
+
+**GTX 1070** (PC runner, 11-15; main 66dd92fe against this PR's 36e2f84b,
+the same River look, three alternating rounds a zoom; raw output on branch
+`claude/project-thread-26drse` at 58bcadf9,
+`runner-out/edge-skip-pr311-66dd92fe-vs-36e2f84b/`). Frame p95 / GPU tail
+p50, ms:
+
+| Zoom | Main | This |
+| --- | --- | --- |
+| 1 | 6.08-6.53 / 5.23-5.28 | 6.29-6.33 / 5.46-5.50 |
+| 12 | 3.22-3.24 / 2.39-2.42 | 3.44-3.47 / 2.62-2.65 |
+| 24 | 3.04-3.32 / 2.22-2.28 | 3.23-3.61 / 2.42-2.45 |
+
+About +0.2 ms of GPU a frame at every zoom (some main runs started with the
+card near 1000 MHz). Kept: the seams broke the crisp-at-24-px rule, and
+every frame stays under 3.7 ms p95 at play zoom.
