@@ -15,6 +15,10 @@
 //! the rows marked by engine and the summary given for each (GPU thread,
 //! 2026-11-12: the Rim leaked in the GPU window where the CPU census held).
 //!
+//! The map grows the window's plants (`plants::stand_in` on each seed,
+//! 2026-11-15; before, the census played designed maps bare); `plants=0`
+//! plays it bare.
+//!
 //! The mould's tier is the mission's when `mould::tiers::Tier` has it; the
 //! ladder names not yet built (drifter, sprawler, trunk) play the plain
 //! mould, and the output says so.
@@ -66,6 +70,7 @@ fn main() {
     let (mut mission, mut seeds, mut hands, mut scale, mut walkers, mut threads) = (String::from("1-landfall"), (1u64, 8u64), String::from("idle,random,boom,claim,late,fort,strike"), 2usize, 5000usize, 4usize);
     let mut engines = vec![false];
     let mut keys: Vec<(String, String)> = Vec::new();
+    let mut plants = true;
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').unwrap_or((&a, ""));
         match k {
@@ -78,6 +83,7 @@ fn main() {
             "scale" => scale = v.parse().unwrap(),
             "walkers" => walkers = v.parse().unwrap(),
             "threads" => threads = v.parse().unwrap(),
+            "plants" => plants = v != "0",
             // `keys=energy_flow:0.05+wither:0.01`: mould keys over the tier
             // (`tiers::set_key`, CPU only), to try a tier change first.
             "keys" => keys = v.split('+').filter(|k| !k.is_empty()).map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=K:V+K:V")).collect(),
@@ -132,6 +138,7 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
+                    let map = if plants { slime_mould::mould::plants::planted(&map, *s) } else { map.clone() };
                     let r = play(&m, &map, tier, &keys, *s, scale, walkers, h, dev.as_ref().filter(|_| *on_gpu));
                     eprintln!("  {h} s{s}{}: {} {:.0}s {}*", if *on_gpu { " GPU" } else { "" }, r.cause, r.at, r.stars);
                     rows.lock().unwrap().push(r);

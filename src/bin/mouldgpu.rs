@@ -4105,6 +4105,15 @@ mod tests {
         // shot breaks some instead of killing them and a unit's touch
         // counts them twice; ripening runs, too slowly to condense.
         let dense = Settings { condense: 10_000, condense_crowd: 4, ..base.clone() };
+        // And the body's surge (2026-11-15, the slime-enemy thread): every
+        // walker within 10 dish cells of a unit lunges at the nearest; and
+        // with panic, only the calm half surges while the stale half
+        // charges or runs. The clock is set after the warm-up (below) so the
+        // frame's first step is the lunge's first: all four surge words are
+        // nonzero and lean and dash differ, so a word read from the wrong
+        // offset changes which walkers move how far.
+        let surge = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, panic_r: 10.0, ..base.clone() };
+        let surge_scared = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, ..scared.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4119,8 +4128,10 @@ mod tests {
             ("cone craters, a sink of 1.5", cone, 20, 1.5),
             ("plain, a cut-off part charges the squad", scared, 0, 0.0),
             ("plain, condensed walkers take two shots and touch as two", dense, 0, 0.0),
+            ("plain, the body surges at the squad", surge, 0, 0.0),
+            ("plain, a cut-off part charges and the body surges", surge_scared, 0, 0.0),
         ];
-        for (name, s, crater, sink) in cases {
+        for (name, mut s, crater, sink) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             // Panic: the warm-up makes the news with a lag no walker
@@ -4142,6 +4153,15 @@ mod tests {
                 }
             }
             let dense_before = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+            if s.surge_every > 0 {
+                // The frame's first step (t0) at the lunge's first: t0 % every
+                // = lean.
+                let t0 = cpu.steps as u32 + 1;
+                s.surge_every = t0 - s.surge_lean;
+                assert!(s.surge_every > s.surge_lean + s.surge_dash, "{name}: a whole period before the frame");
+                cpu.p.surge_every = s.surge_every;
+                assert_eq!(cpu.surge_haste(), s.surge_haste, "{name}: the frame's first step lunges");
+            }
             if s.panic > 0.0 {
                 cpu.p.wither_lag = s.wither_lag;
                 for k in (0..cpu.walkers.len()).step_by(2) {
@@ -4254,6 +4274,21 @@ mod tests {
                 })
                 .count();
             assert_eq!(charging > 0, s.panic > 0.0, "{name}: {charging} stale walkers charge a unit");
+            // The calm walkers that surge at a unit (within `panic_r`).
+            let surging = (0..cpu.walkers.len())
+                .filter(|&q| s.surge_every > 0 && cpu.lives(q) && !cpu.panics(q))
+                .filter(|&q| {
+                    let (x, y) = (cpu.walkers[q].0.floor() as i64, cpu.walkers[q].1.floor() as i64);
+                    units.iter().any(|u| {
+                        let (ux, uy) = squad::cell_of(w, h, u.x, u.y);
+                        (ux - x) * (ux - x) + (uy - y) * (uy - y) <= r2
+                    })
+                })
+                .count();
+            assert_eq!(surging > 0, s.surge_every > 0, "{name}: {surging} calm walkers surge at a unit");
+            if s.surge_every > 0 {
+                eprintln!("squad, {name}: {surging} calm walkers surge, {charging} stale ones charge");
+            }
             let f = Frame { units, shots, slime, crater, sink };
             e.inject(&cpu);
             e.set_squad(&f);

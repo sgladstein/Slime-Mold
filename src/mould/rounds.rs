@@ -837,6 +837,8 @@ impl Rounds {
                 self.trailed += 1;
             }
         }
+        // The GPU's burns (the CPU counted its own above); the plants'
+        // fire's kills were taken in `finish_step`, so none are here.
         if n[0] > 0 && self.rules.trail_burn {
             burned += g.world.burned() as usize;
         }

@@ -113,9 +113,11 @@ pub trait World {
     /// where `has_gas` and `has_germ` say so (a world without them leaves
     /// those parts out, and the toolkit doesn't sell them there).
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
-    /// Walkers `Burst::burn` bursts killed since the last call that their
-    /// `burst` did not count (a GPU world counts them here, in one
-    /// read-back; a CPU world counts them in `burst` and returns 0).
+    /// Walkers fire killed since the last call that no `burst` counted:
+    /// the plants' fire on every world, and on a GPU world the
+    /// `Burst::burn` bursts too (counted here in one read-back; a CPU world
+    /// counts a burn in its `burst`). `Game::finish_step` asks once a
+    /// frame, so the plants' kills count in every game (bug check 11-15).
     fn burned(&mut self) -> u32 {
         0
     }

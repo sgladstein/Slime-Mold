@@ -225,6 +225,14 @@ impl<W: World> Game<W> {
         self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast, r: i.r }).collect();
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+        // The plants' fire's kills, every frame on both worlds (bug check
+        // 11-15: they were counted only on a Scorch trail's frames, so a
+        // CPU game without one never counted them, and the GPU's went to
+        // the next blast). A Scorch trail's burns come after the step
+        // (`Rounds::after_step`), there.
+        let fire = self.world.burned();
+        self.fire_killed += fire;
+        self.killed += fire;
         // Gassed mould sleeps and does not bite (the squad toolkit's sleep
         // gas): its walkers are taken off each unit's touch.
         let calm = self.world.calm(&f.units.iter().map(|u| (u.x, u.y)).collect::<Vec<_>>(), r.touch * sc);
