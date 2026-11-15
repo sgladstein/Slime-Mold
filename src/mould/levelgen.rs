@@ -1559,7 +1559,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
 
     // Crystals.
-    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), ..Items::default() };
+    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), flora: Some(p.biome as u8), ..Items::default() };
     let clear = |ground: &[u8], items: &Items, c: (f32, f32), rad: f32, gap: f32| -> bool {
         if c.0 < rad + 24.0 || c.1 < rad + 24.0 || c.0 > wf - rad - 24.0 || c.1 > hf - rad - 24.0 {
             return false;
@@ -2524,8 +2524,10 @@ mod tests {
     // capped, nest rings in arcs, no hedges on water, straight bridges and
     // tapered fords. Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
-    // which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0x69e4983ed24ff16b, 0x68c6f1b51e420500, 0x3b5be9abc2cf1a42, 0xd2c1242a98024a37, 0xf3f50c62fa2a458f, 0xad256d7d81a87319, 0xef1b91831db2f01b, 0xfc88217767751ddd];
+    // which finds the same nearest sites as the full scan. The item
+    // text's `flora` line (11-15, plants thread: each biome's plant forms
+    // in the view) changed every print, not the ground or plants.
+    const PINNED: [u64; 8] = [0x4248ae7dda524c5b, 0xcef08c74cac2a3bd, 0x7309e5cd22a3f1c0, 0xda3c7d0ca2863128, 0x5aaebb4ee1f789c3, 0x9a3af4e927eb6590, 0xac64bbe4671a004d, 0x2aa09380fbc2fa0e];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -2561,7 +2563,8 @@ mod tests {
         assert_eq!(got, want, "{got:#x?}");
     }
 
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xebd1105f8bcad933), (2, 7, 0x4e359f0a986be9a5), (3, 3, 0xa2e430d1b962e52f), (4, 2, 0xef931fb105f1a4c3), (7, 2, 0xc3a98b929881b889), (8, 3, 0xf39a47b78795d50a)];
+    // Re-pinned for the item text's `flora` line too (11-15, plants thread).
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xb19a25facfdeb1f3), (2, 7, 0xec0b8f1be60e8710), (3, 3, 0x18a8436223cfa9e5), (4, 2, 0x352fcb9a2397a9ec), (7, 2, 0x788c6611712fa087), (8, 3, 0x3e2d695aca77b799)];
 
     /// Nests keep off the map's edges by at least 150 map cells, and two
     /// nests stand at least a fifth of the map's width apart (0.3 wanted;
@@ -2619,7 +2622,7 @@ mod tests {
                 }
             }
             let crystals = (0..6).map(|k| Crystal { x: 400.0 + 12.0 * k as f32, y: 200.0, r: 6.0, charge: 100.0 }).collect();
-            let items = Items { crystals, moulds: vec![(450.0, 100.0)], landing: Some((100.0, 160.0)), walls: Vec::new(), moisture: None };
+            let items = Items { crystals, moulds: vec![(450.0, 100.0)], landing: Some((100.0, 160.0)), walls: Vec::new(), moisture: None, flora: None };
             Map { w, h, ground, plants: Vec::new(), items }
         };
         let open = |m: &Map| {
