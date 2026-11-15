@@ -66,28 +66,49 @@ Turtle: pumps on the three landing crystals, five turrets, a lure at
 
 | at 4:00 | raids off | raids on |
 |---|---|---|
-| raids | 0 | 4 (1:15, 1:57, 2:39, 3:21) |
-| slime killed | 7,850 | 10,462 |
+| raids | 0 | 4 (1:17, 1:59, 2:41, 3:23) |
+| slime killed | 7,850 | 10,867 |
 | pumps standing | 3 | 1 |
-| soldiers | 4 | 2 |
-| harvested | 5,834 | 3,524 |
-| slime walkers | 37,872 | 38,014 |
+| soldiers | 4 | 1 |
+| harvested | 5,834 | 3,554 |
+| slime walkers | 37,872 | 39,201 |
 
-The raids reach the defense and it kills a third more, but the slime still
+(Raids on rerun with routing, 11-15 22:5x.) The raids reach the defense and it kills 38% more, but the slime still
 grows as before: the turtle is now attacked, not yet winning. That is the
 balance pass's question (raid size, render pay), not this build's.
 
 Films (`page/*.gif`, frames a game second apart, `raw/*.txt` their counts):
-`raid.gif` (first raid 1:16 on the top pump, reach 80 cells holding 8,084
+`raid.gif` (first raid 1:17 on the top pump, decided at 1:16, reach 80 cells holding 8,084
 walkers), `lure-killbox.gif` (lure at 256,62 with rendering turrets: the
 raid turns for it at 1:17; 608 food rendered by 1:40 against 2,155 pumped),
 `last-stand.gif` (`set=last_stand=1 set=last_stand_at=0.8` so it fires at
-1:27 in a short film).
+1:28 in a short film, decided at 1:27; both films with routing; the lure film is from the first version, before routing).
 
-**Seen and not fixed:** raiders steer straight at the target, so the home
-body piles up against the Fork's walls in the last stand rather than going
-round. Steering raids round walls (a path or flow field) is the next step;
-pathing (`paths.rs`) belongs to the levelgen thread.
+**Round walls** (added the same evening, after the first last-stand film
+showed the home body piling against the Fork's walls; the coordinator and
+the levelgen thread, which owns `paths.rs`, agreed it lives with the
+raid): a raid now walks its walking distance. When the game decides a
+raid it copies the slime's ground (`World::raid_ground`) and a worker
+thread builds `big::raid_field_for`: a Dijkstra on 2x2-cell blocks (a
+block is open when all four cells are agar; straight steps cost 2,
+diagonals 3 and never cut a closed corner), from the open block nearest
+the target. The raid goes one game second later with that field
+(`World::set_raid`); a raider on a reached block reads the field at its
+sensors instead of the straight bearing (GPU: the field sits after the
+dense counts in the news buffer, `Engine::write_raid_field`; Params word
+`raid_field`). The web build (no threads) builds it at once.
+
+Timing (`cargo run --release --example raidpaths -- 8 1`, planet 8 seed
+1, 1256 x 784 fine cells, the largest the run makes): fine cells took
+62-65 ms; 2x2 blocks 14 ms, then 6-7 ms with row-wise open checks and a
+padded grid. On the worker thread the frame pays only the ground's copy
+and the thread's start: worst of 20, 0.22 ms. The upload is one
+`write_buffer` of 246,176 words (1 MB) once per raid. Not yet timed on
+the 1070.
+
+The last-stand film above is with routing: the arms' slime goes round the
+arm tips and over the top to the squad; the stem's body comes up its
+corridor into the turrets at its mouth (3 of 4 soldiers died by 2:30).
 
 ## Tests
 
@@ -99,7 +120,8 @@ pathing (`paths.rs`) belongs to the levelgen thread.
   `a_rendering_turret_pays_for_kills_in_its_range`.
 - Squad twin (`mouldgpu`): new case "a raid on a crystal while a cut-off
   part charges" (143 raiders, 519 chargers): exact; a planted GPU bug
-  (raid ignored) fails it.
+  (raid ignored) fails it. "a raid round walls (its walking distance)":
+  exact; a wrong field flag fails it.
 
 ## Commands
 

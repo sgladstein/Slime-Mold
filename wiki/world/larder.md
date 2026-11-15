@@ -300,13 +300,16 @@ at the player's best pump, else a building, else the soldiers, from
 beyond the surge's reach (`Rules::raid`, `raids.rs`; `BigParams::raid_*`
 on both engines, the squad twin exact). A lure that is on within 40 cells
 of the target takes the raid, so a lure ringed by turrets is a kill box,
-and a turret's one upgrade (600 food, the turret card on it) makes it
-render: each walker killed in its range pays 0.25 food (owner: "the kill
+and a turret's one upgrade (600 food) makes it
+render (select the turret, Render): each walker killed in its range pays 0.25 food (owner: "the kill
 box pays but only with an upgrade"). The last stand (off; `set=last_stand=1`)
 sends the whole slime once at the soldiers when it falls under a quarter
 of its peak. On a Fork turtle to 4:00, 4 raids took 2 of 3 pumps and the
-turrets killed a third more; the slime grew as before. Raiders steer
-straight, so walls stop them ([raids](../../Reports/raids-2026-11-15/README.md)).
+turrets killed 38% more; the slime grew as before. Raiders walk round
+walls: a worker thread builds the raid's walking distance on 2x2 blocks
+(`big::raid_field_for`, 6 ms on planet 8, 0.22 ms on the frame) and the
+raid goes a game second after it is decided
+([raids](../../Reports/raids-2026-11-15/README.md)).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

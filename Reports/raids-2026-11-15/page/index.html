@@ -39,15 +39,15 @@ code { font-size: 13px; overflow-wrap: anywhere }
     <img src="raid.gif" alt="A stream of slime crosses from the upper arms to the top pump">
     <div class="side">
       <span class="tag">Raid on a pump</span>
-      <h2>1:16, the first raid hits the top pump</h2>
+      <h2>1:17, the first raid hits the top pump</h2>
       <p>It takes the walkers nearest the pump, 80 cells around it holding 8,084 walkers, and sends 6 in 10 of them. The upper arms stream across to the pump while the home body stays put. The HUD reads "The mould is raiding your pump".</p>
       <table><tr><th>Turtle to 4:00</th><th>Raids off</th><th>Raids on</th></tr>
       <tr><td>Raids</td><td>0</td><td>4</td></tr>
-      <tr><td>Slime killed</td><td>7,850</td><td>10,462</td></tr>
+      <tr><td>Slime killed</td><td>7,850</td><td>10,867</td></tr>
       <tr><td>Pumps lost</td><td>0 of 3</td><td>2 of 3</td></tr>
-      <tr><td>Soldiers lost</td><td>0</td><td>2</td></tr>
-      <tr><td>Harvested</td><td>5,834</td><td>3,524</td></tr>
-      <tr><td>Slime walkers</td><td>37,872</td><td>38,014</td></tr></table>
+      <tr><td>Soldiers lost</td><td>0</td><td>3</td></tr>
+      <tr><td>Harvested</td><td>5,834</td><td>3,554</td></tr>
+      <tr><td>Slime walkers</td><td>37,872</td><td>39,201</td></tr></table>
     </div>
   </section>
 
@@ -56,8 +56,8 @@ code { font-size: 13px; overflow-wrap: anywhere }
     <div class="side">
       <span class="tag">Lure kill box, rendering turrets</span>
       <h2>A lure in front of the pumps takes the raid</h2>
-      <p>The lure stands north of the top pump with three rendering turrets round it. At 1:17 the raid meant for the pump turns for the lure ("A raid on your pump turns for the lure"), right into the guns.</p>
-      <p>Rendering is a turret upgrade. Click a turret with the turret card to make it render for 600 food. After that, every walker any shot kills within its range pays 0.25 food. In this film the five rendering turrets paid 608 food by 1:40, against 2,155 from the pumps.</p>
+      <p>The lure stands north of the top pump with three rendering turrets round it. At 1:17 the raid meant for the pump turns for the lure ("A raid on your pump turns for the lure"), right into the guns. This film is from the first version, before raids walked round walls.</p>
+      <p>Rendering is a turret upgrade. Select a turret and press Render (600 food). After that, every walker any shot kills within its range pays 0.25 food. In this film the five rendering turrets paid 608 food by 1:40, against 2,155 from the pumps.</p>
     </div>
   </section>
 
@@ -66,14 +66,15 @@ code { font-size: 13px; overflow-wrap: anywhere }
     <div class="side">
       <span class="tag">Last stand, off by default</span>
       <h2>A losing slime rushes you with everything</h2>
-      <p>The last stand comes once, when the slime falls under a share of its peak. Then every walker it has runs at your thickest knot of soldiers. It is off by default because you weren't sure about it. To film it here, the trigger was set at 80% of the peak instead of the default 25%, so it fired at 1:27.</p>
-      <p><b>What doesn't work yet:</b> raiders steer straight at the target, so the home body piles up against the Fork's walls instead of walking round them. Steering raids along paths around walls is the next step, and the pathing thread owns that code.</p>
+      <p>The last stand comes once, when the slime falls under a share of its peak. Then every walker it has runs at your thickest knot of soldiers. It is off by default because you weren't sure about it. To film it here, the trigger was set at 80% of the peak instead of the default 25%, so it fired at 1:28.</p>
+      <p><b>Raiders now walk round walls.</b> In the first version they steered straight and piled up against the Fork's walls. Now, when the slime decides on a raid, the game works out the walking distance to the target in the background and the raid sets off one second later along it. In this film the arms go round their tips and over the top to the squad, and the stem's body comes up its corridor into the turrets at its mouth. Three of the four soldiers were dead by 2:30.</p>
+      <p class="muted">On the biggest planet the path takes 6 ms on a background thread, and the frame pays 0.22 ms.</p>
     </div>
   </section>
 
   <div class="pair">
     <figure><img src="off-240s.jpg" alt="Raids off at 4:00"><figcaption>Raids off, 4:00. All three pumps stand, and the slime never came.</figcaption></figure>
-    <figure><img src="on-240s.jpg" alt="Raids on at 4:00"><figcaption>Raids on, 4:00. Two pumps are worn down, and the turrets killed 33% more.</figcaption></figure>
+    <figure><img src="on-240s.jpg" alt="Raids on at 4:00"><figcaption>Raids on, 4:00. Two pumps are worn down, and the turrets killed 38% more.</figcaption></figure>
   </div>
 
   <p class="muted">Keys: <code>set=raid_food=0 set=raid_every=0</code> turns raids off, and <code>set=last_stand=1</code> turns the last stand on. Raw output and sources are in Reports/raids-2026-11-15/. CPU and GPU agree exactly on a raid in the squad twin test.</p>
