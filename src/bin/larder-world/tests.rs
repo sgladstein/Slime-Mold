@@ -218,7 +218,7 @@ fn smoke_gpu() -> Option<(wgpu::Device, wgpu::Queue)> {
 /// against 20-24 s at scale 2 (2026-11-12).
 fn smoke(device: &wgpu::Device, queue: &wgpu::Queue, mission: Option<&str>, hand: &str, fast: bool) -> String {
     let args = Args { map: mission.is_none().then(|| "fork".into()), seed: 1, scale: 1, walkers: 1250, keys: Vec::new(), voice: true, mission: mission.map(String::from), crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None };
-    let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true, view: None };
+    let b = Bench { secs: 60.0, hand: hand.into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 0 };
     let t0 = Instant::now();
     let last = bench(args, &b, device, queue).unwrap_or_else(|e| panic!("{mission:?} {hand}: {e}"));
     eprintln!("smoke {mission:?} {hand}{}: {last} ({:.1} s)", if fast { " fast" } else { "" }, t0.elapsed().as_secs_f32());
@@ -272,7 +272,7 @@ fn the_window_takes_every_command() {
 fn the_window_plays_the_players_own_mould() {
     let Some((device, queue)) = smoke_gpu() else { return };
     let args = Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None };
-    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None };
+    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 2 };
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("own=1: {e}"));
     assert!(last.contains("t "), "{last}");
     let app = offscreen(Args { map: None, seed: 1, scale: 1, walkers: 625, keys: Vec::new(), voice: false, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: true, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None }, (320, 200), &device, &queue).unwrap();
@@ -348,7 +348,7 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     // budget cost.
     assert_eq!(lull[0].colour, lull[1].colour);
     assert_ne!(lull[0].colour, lull[3].colour);
-    assert!(lull[3].about.contains("Costs 3 of the gun's budget"), "{}", lull[3].about);
+    assert!(lull[3].about.ends_with("Budget 3."), "{}", lull[3].about);
     // A card after the last payload casts nothing; flight cards ride every
     // bullet, never lit as a cast and never idle.
     let tail = cards("blast+quiet", Some(0));
@@ -357,6 +357,20 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
     // A payload this world cannot cast says so.
     assert!(cards("germ", Some(0))[0].about.contains("Not on this world"));
+    // Short words in plain language (owner 11-15 02:57Z: "The text for
+    // all the gun cards is too much. They should be simplified and
+    // clarified"): one sentence each, at most 60 characters, no kind
+    // jargon; the run's rolled bullets a line of numbers more.
+    for c in rounds::Card::ALL {
+        let (_, kind, words) = card_face(c, &r, &Rules::default());
+        let low = words.to_lowercase();
+        assert!(words.len() <= 60 && words.matches(". ").count() == 0 && !["payload", "modifier", "trigger", "walker", "mould"].iter().any(|j| low.contains(j)), "{c:?}: {words}");
+        assert!(["Bullet", "Next bullet", "Always"].contains(&kind.label()));
+    }
+    assert_eq!(draw::card_words(rounds::Card::Wide, CardKind::Modifier, "Its hit is 1.6x wider."), "Next bullet: its hit is 1.6x wider.");
+    let needle = rounds::Card::Ammo(rounds::Ammo::roll_of(rounds::Shell::Bomb, rounds::Set::Needle, 7, 4));
+    let (_, _, words) = card_face(needle, &r, &Rules::default());
+    assert!(words.len() <= 120 && words.starts_with("Damage "), "{words}");
     // Every loadout H cycles through draws, each card with a glyph and words.
     for (name, l) in LOADOUTS {
         for c in cards(l, Some(0)) {
@@ -379,7 +393,7 @@ fn rolled_bullets_load_within_the_gun_and_show_their_numbers() {
                 assert!(face.icon.is_some() && face.kind == CardKind::Payload, "{c:?}");
                 if let rounds::Card::Ammo(a) = c {
                     assert_eq!(face.name, a.title());
-                    assert!(face.about.contains(&format!("damage {:.1}", a.damage())), "{}", face.about);
+                    assert!(face.about.contains(&format!("Damage {:.1}", a.damage())), "{}", face.about);
                 }
             }
         }
@@ -836,7 +850,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
     let m = app.model(None, None);
-    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Beat the slime")), "{:?}", m.objective);
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out the slime")), "{:?}", m.objective);
     // Turrets are on the build page; walls are owned from the start.
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
@@ -894,7 +908,7 @@ fn the_window_plays_a_runs_planet() {
     let mut r = Run::new(4);
     r.depth = 3;
     args.run = Some(r);
-    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None };
+    let b = Bench { secs: 60.0, hand: "every".into(), fps: 24.0, screen: (320, 200), stamps: false, grid: 0, sound: Some(String::new()), fast: false, passes: 0, settle: false, squad1: false, spread: true, view: None, viewpasses: 0 };
     let last = bench(args, &b, &device, &queue).unwrap_or_else(|e| panic!("run: {e}"));
     assert!(last.contains("t "), "{last}");
 }
