@@ -1307,7 +1307,7 @@ fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
 /// the campaign in one page and the key list in three at most, nothing
 /// scrolling, at the worst sizes (16:9 and 21:9 at 200%, a small laptop at
 /// 175%, the window as it opens at 125%), in both control modes. The
-/// library's `the_inner_pages_fit_one_screen` checks every word's place.
+/// library's `the_menu_pages_fit_one_screen` checks every word's place.
 #[test]
 fn the_menus_real_lists_fit_one_screen() {
     use slime_mould::world::start::Page;

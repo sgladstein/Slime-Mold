@@ -278,7 +278,6 @@ enum Hit {
     EndRun,
     Campaign,
     Options,
-    Keys,
     EditMaps,
     RandomPlanet,
     Quit,
@@ -561,7 +560,9 @@ impl StartMenu {
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            // (No Keys row since 11-15: the key list is Options' last tab,
+            // and F1 or ? opens it from anywhere.)
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -586,7 +587,7 @@ impl StartMenu {
             let led = match from {
                 Page::Missions => Hit::Campaign,
                 Page::Options => Hit::Options,
-                Page::Keys => Hit::Keys,
+                Page::Keys => Hit::Options,
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
                 Page::Main => Hit::Run,
@@ -612,7 +613,6 @@ impl StartMenu {
             Hit::EndRun => return Some(StartEvent::EndRun),
             Hit::Campaign => self.show(Page::Missions),
             Hit::Options => self.show(Page::Options),
-            Hit::Keys => self.show(Page::Keys),
             Hit::Quit => return Some(StartEvent::Quit),
             Hit::EditMaps => return Some(StartEvent::EditMaps),
             Hit::RandomPlanet => return Some(StartEvent::RandomPlanet),
@@ -835,16 +835,22 @@ impl StartMenu {
         }
         let x = if inner { 40.0 * s } else { 48.0 * s };
         let w = (560.0 * s).min(sw - 2.0 * x);
-        if !inner {
+        if self.page == Page::Main {
+            // The title on the main page only, and smaller (44 at 96 until
+            // 11-15, with the rows from 160: the list ran under the hint at
+            // 200%; the owner picked menu A, names with one caption box).
+            c.text(Weight::SemiBold, 36.0 * s, (x, 64.0 * s), Align::Left, &self.title, TEXT);
+            c.text(Weight::Medium, 15.0 * s, (x, 90.0 * s), Align::Left, "A mould that grows, feeds and fights back", MUTED);
+        } else if !inner {
             c.text(Weight::SemiBold, 44.0 * s, (x, 96.0 * s), Align::Left, &self.title, TEXT);
-            let sub = match self.page {
-                Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
-                Page::Shop => "The run: spend your points, then land",
-                _ => "A mould that grows, feeds and fights back",
-            };
+            let sub = if self.shop.as_ref().is_some_and(|s| s.range) { "The gun range: build a gun, then shoot" } else { "The run: spend your points, then land" };
             c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
         }
-        let top = if inner { HEAD * s + 16.0 * s } else { 160.0 * s };
+        let top = match self.page {
+            Page::Main => 100.0 * s,
+            _ if inner => HEAD * s + 16.0 * s,
+            _ => 160.0 * s,
+        };
         let rows = self.rows();
         let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
         // The rows the page scrolls in: under the title, over the hint (and
@@ -909,7 +915,7 @@ impl StartMenu {
             }
         }
         let hint = match self.page {
-            Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
+            Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys  ·  Options holds the key list",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Up/Down pick  ·  Left/Right change  ·  Backspace resets  ·  Tab next tab  ·  Esc back",
             Page::Keys if self.sheets > 1 && self.tabbed() => "Left/Right next page  ·  Tab next tab  ·  Esc or F1 back",
@@ -920,7 +926,13 @@ impl StartMenu {
             Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
         let pager_w = if paged { 170.0 * s } else { 0.0 };
-        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, MUTED);
+        // On the main page a notice from the game (why the map editor did
+        // not start) takes the hint's place, in full view.
+        let (hint, ink) = match &self.notice {
+            Some(n) if self.page == Page::Main => (n.as_str(), WARN),
+            _ => (hint, MUTED),
+        };
+        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, ink);
     }
 
     fn glass(&mut self, r: Rect, c: &mut Canvas, s: f32) {
@@ -956,41 +968,75 @@ impl StartMenu {
         self.hits.push((r, hit));
     }
 
-    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
+    /// The main page (the owner's pick, 11-15 19:37Z, menu A of the
+    /// research's blind pair): the ways to play, then Options and the map
+    /// editor, then Quit, as names alone in one column, and one caption box
+    /// beside the row under the cursor (else the keyboard's) saying what it
+    /// is. Until then every row carried its line under its name, 66 units
+    /// a row, and at 200% the list ran under the hint and scrolled.
+    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size is not a rule
         // ("Free play, with ui 200%", the review 11-15).
         let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && o.key != "ui").map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
-        // the run is the game; Sandbox led and was lit before).
-        let mut items: Vec<(&str, String, Hit, bool)> = vec![
-            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true),
-            ("Sandbox", sandbox, Hit::Sandbox, false),
-            ("Campaign", campaign, Hit::Campaign, false),
+        // the run is the game; Sandbox led and was lit before). A gap
+        // before Options and before Quit.
+        let mut items: Vec<(&str, String, Hit, bool, bool)> = vec![
+            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true, false),
+            ("Sandbox", sandbox, Hit::Sandbox, false, false),
+            ("Campaign", campaign, Hit::Campaign, false, false),
         ];
         if self.planets {
             let depth = self.option("planet").map_or("1", |o| o.value());
-            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false));
+            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false, false));
         }
         items.extend([
-            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false),
-            ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
-            ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
+            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false),
+            ("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, true),
         ]);
         if self.edit_maps {
-            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false));
+            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false, false));
         }
-        items.push(("Quit", String::new(), Hit::Quit, false));
-        let mut y = top + 12.0 * s;
-        for (label, sub, hit, primary) in items {
-            let h = if sub.is_empty() { 50.0 * s } else { 66.0 * s };
-            self.item(Rect::new(x, y, w.min(500.0 * s), h), label, &sub, hit, primary, focus == Some(hit), c, s);
-            y += h + 12.0 * s;
+        items.push(("Quit", "Close the game".into(), Hit::Quit, false, true));
+        let longest = items.iter().map(|it| c.atlas.measure(Weight::SemiBold, 18.0 * s, it.0)).fold(0.0f32, f32::max);
+        let w = (longest + 48.0 * s).max(280.0 * s);
+        let (rh, gap) = (40.0 * s, 4.0 * s);
+        let mut y = top + 8.0 * s;
+        let mut placed = Vec::new();
+        for (label, sub, hit, primary, apart) in items {
+            if apart {
+                y += 12.0 * s;
+            }
+            let r = Rect::new(x, y, w, rh);
+            self.item(r, label, "", hit, primary, focus == Some(hit), c, s);
+            placed.push((r, label.to_string(), sub, hit));
+            y += rh + gap;
         }
-        if let Some(n) = self.notice.clone() {
-            c.text_fit(Weight::Medium, 14.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
-            y += 24.0 * s;
+        // The row under the cursor, else the keyboard's.
+        let hot = placed.iter().position(|p| self.hover.is_some_and(|h| p.0.contains(h)));
+        let told = hot.or_else(|| placed.iter().position(|p| focus == Some(p.3))).map(|k| placed.swap_remove(k)).map(|(r, n, sub, _)| (r, n, sub));
+        // (A notice, such as why the map editor did not start, takes the
+        // hint's line: `draw`.)
+        // The caption box beside the row it tells, with a notch toward it.
+        if let Some((r, name, sub)) = told {
+            let bx = r.right() + 18.0 * s;
+            let bw = (380.0 * s).min(c.screen.0 as f32 - x - bx);
+            let tw = bw - 32.0 * s;
+            let lines = Self::count(c, Weight::Medium, 15.0 * s, tw, &sub);
+            let bh = 48.0 * s + lines * 22.0 * s;
+            let by = r.y.min(c.screen.1 as f32 - FOOT * s - 12.0 * s - bh);
+            let b = Rect::new(bx, by, bw, bh);
+            c.shadow(b, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
+            c.panel(b, 10.0 * s, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+            let mid = r.y + r.h / 2.0;
+            for k in 0..6 {
+                let d = 6.0 - k as f32;
+                c.rrect(Rect::new(bx - d * s, mid - d * s, (d + 1.0) * s, 2.0 * d * s), 0.0, PANEL_TOP);
+            }
+            c.text(Weight::SemiBold, 18.0 * s, (bx + 16.0 * s, by + 30.0 * s), Align::Left, &name, TEXT);
+            self.lines(c, Weight::Medium, 15.0 * s, (bx + 16.0 * s, by + 54.0 * s), tw, 22.0 * s, &sub, [201, 210, 219, 255]);
         }
         y
     }
@@ -2154,12 +2200,13 @@ mod tests {
         assert!(m.rect_of(Hit::EditMaps).is_none());
         m.edit_maps = true;
         assert_eq!(click(&mut m, &mut c, Hit::EditMaps), vec![StartEvent::EditMaps]);
-        // Quit is still last, and Esc from the key card lands on Keys.
+        // Quit is still last, and Esc from the key card lands on Options
+        // (whose last tab it is; the main page has no Keys row since 11-15).
         m.key(KeyCode::ArrowUp, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit]);
         m.show(Page::Keys);
         m.key(KeyCode::Escape, true);
-        assert_eq!(m.rows()[m.focus], Hit::Keys);
+        assert_eq!(m.rows()[m.focus], Hit::Options);
     }
 
     #[test]
@@ -2276,7 +2323,7 @@ mod tests {
             click(&mut m, &mut c, Hit::Campaign);
             assert_eq!(click(&mut m, &mut c, Hit::Mission(2)), vec![StartEvent::Mission(2)], "{screen:?}");
             click(&mut m, &mut c, Hit::Back);
-            click(&mut m, &mut c, Hit::Keys);
+            m.key(KeyCode::F1, true);
             assert_eq!(m.page, Page::Keys);
             click(&mut m, &mut c, Hit::Back);
             assert_eq!(click(&mut m, &mut c, Hit::Quit), vec![StartEvent::Quit]);
@@ -2384,16 +2431,15 @@ mod tests {
     }
 
     /// The owner, 11-15 17:31Z: "Having to scroll is horrible. That's not
-    /// professional." Every Options tab, every page of the key list and
-    /// the campaign fit one screen at the worst sizes (16:9 and 21:9 at
+    /// professional." The main page, every Options tab, every page of the
+    /// key list and the campaign fit one screen at the worst sizes (16:9 and 21:9 at
     /// 200%, a small laptop at 175%, the window as it opens at 125%, and
     /// smaller than the game opens): nothing scrolls, every button and
     /// word is on the screen, no two words' glyphs touch, none under 12.5
     /// units, and the options' tabs and the campaign need no second page
-    /// at any of them. The main page and the shop join when the owner has
-    /// picked their layouts (`Reports/menu-layout-research-2026-11-15/`).
+    /// at any of them. The shop joins with its new layout.
     #[test]
-    fn the_inner_pages_fit_one_screen() {
+    fn the_menu_pages_fit_one_screen() {
         let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0)];
         for (screen, user) in sizes {
             let (sw, sh) = (screen.0 as f32, screen.1 as f32);
@@ -2406,7 +2452,7 @@ mod tests {
                 for (r, h) in &m.hits {
                     assert!(r.x >= -0.5 && r.y >= -0.5 && r.right() <= sw + 0.5 && r.bottom() <= sh + 0.5, "{at}: {h:?} {r:?} off the screen");
                 }
-                assert!(m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
+                assert!(m.page == Page::Main || m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
                 let runs: Vec<_> = c.runs.iter().filter(|t| t.ink.0 < t.ink.2).collect();
                 for (k, t) in runs.iter().enumerate() {
                     assert!(t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh, "{at}: {:?} {:?} off the screen", t.text, t.ink);
@@ -2459,6 +2505,18 @@ mod tests {
                 let at = format!("{screen:?} at {user}, Campaign row {row}");
                 check(&m, &c, &at);
                 assert_eq!(m.sheets(), 1, "{at}: the campaign takes {} pages", m.sheets());
+            }
+            // The main page with every row it can have (Random planet, the
+            // map editor) and a notice, each row focused in turn, its
+            // caption box beside it.
+            m.planets = true;
+            m.edit_maps = true;
+            m.notice = Some("The map editor did not start: larder-edit was not found next to the game".into());
+            m.show(Page::Main);
+            for row in 0..m.rows().len() {
+                m.focus = row;
+                draw(&mut m, &mut c);
+                check(&m, &c, &format!("{screen:?} at {user}, main row {row}"));
             }
         }
     }
