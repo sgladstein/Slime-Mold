@@ -68,6 +68,8 @@ pub enum Cmd {
     Arm(u8, Option<Gun>),
     /// Squad `q` takes its own cards (`Game::load`); None the army's.
     Load(u8, Option<Deck>),
+    /// Squad `q` stops and heals (`Squad::heal`).
+    Heal(u8),
 }
 
 impl Cmd {
@@ -99,6 +101,7 @@ impl Cmd {
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
             Cmd::Cover(q, c) => format!("cover {q} {}", c.name()),
+            Cmd::Heal(q) => format!("heal {q}"),
             Cmd::Arm(q, None) => format!("arm {q} none"),
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
             Cmd::Load(q, None) => format!("load {q} army"),
@@ -126,6 +129,7 @@ impl Cmd {
             "formation" => return Some(Cmd::Formation(w.get(1)?.parse().ok()?, Formation::parse(w.get(2)?)?)),
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
+            "heal" => return Some(Cmd::Heal(w.get(1)?.parse().ok()?)),
             "cover" => return Some(Cmd::Cover(w.get(1)?.parse().ok()?, Cover::parse(w.get(2)?)?)),
             "arm" if w.get(2) == Some(&"none") => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, None)),
             "arm" => return Some(Cmd::Arm(w.get(1)?.parse().ok()?, Some(Gun::from_words(&w[2..])?))),
@@ -224,7 +228,7 @@ impl<W: World> Game<W> {
             }
             Cmd::Arm(q, g) => self.arm(q as usize, g),
             Cmd::Load(q, d) => self.load(q as usize, d),
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Cover(..) | Cmd::Heal(..) => self.squad_cmd(c),
             _ => false,
         }
     }

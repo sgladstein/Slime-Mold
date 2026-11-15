@@ -2,7 +2,7 @@
 title: The mould tiers (difficulty ladder)
 kind: design
 status: open
-updated: 2026-11-12
+updated: 2026-11-15
 sources:
   - Reports/first-reach-2026-11-11.md
   - Reports/larder-world-roadmap-2026-11-11.md
@@ -10,6 +10,7 @@ sources:
   - Reports/mould-tiers-2026-11-11.md
   - Reports/mould-tiers-campaign-2026-11-12.md
   - Reports/mould-tiers-review-2026-11-11.md
+  - Reports/slime-review-2026-11-15/README.md
   - Reports/species-gpu-2026-11-11.md
   - Reports/species-sets-2026-11-11.md
 code:
@@ -68,6 +69,7 @@ nothing, and only a wipe ends it.
 
 ## Open
 
+- The slime enemy review (11-15, [report](../../Reports/slime-review-2026-11-15/README.md)): every tier changes how the slime moves more than what it goes after, and only soldier scent, the home pull, the panic charge and tier specials point it at the player. The run's ladder (`run::LADDER`) has neither the plain C mould nor the Grudge, and its planets played the old race keys rather than C's until the run thread's fix. Questions to the owner on the slime's main threat are open.
 - Each tier's core: all headless since 11-12 20:21Z (no king rule); the Sprawler pulls nothing and the Grudge pulls at 16 (twice the plain mould's 8; `tiers::GRUDGE_PULL`). The Trunk's regrowing core (`CoreKind::Regrow`, PR #163: a fallen core grew back unless the body starved) was taken out in PR 4; the tiers thread dropped it and the Drifter's Migrate under the no-king ruling (20:53Z): with no core to take, the Trunk keeps its tube network as its identity ([dead end](../../Reports/dead-ends.md)).
 
 - The census of the new tiers, re-run after shot craters (#113). Before craters (held-out 201-216): Grudge is the hardest (every plan lower than on plain, 16 of 16; random loses its squad 15 of 16);

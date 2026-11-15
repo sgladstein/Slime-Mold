@@ -75,6 +75,9 @@ pub(super) const SPLIT: KeyCode = KeyCode::KeyY;
 pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
 pub(super) const GUARDS: KeyCode = KeyCode::KeyI;
+/// Heal (owner 2026-11-15 07:41Z: "Healing should be a specific action").
+/// L is the build page's Lure, which the card takes first there.
+pub(super) const HEAL: KeyCode = KeyCode::KeyL;
 
 /// The bearing (radians) the cursor must swing round the controlled
 /// squad's middle before a line or wedge turns to it again (`aim`).
@@ -115,6 +118,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
         (k(GUARDS), "Guards while working: none, some, more".into()),
+        (k(HEAL), "Heal: the squad stops and heals for food (fast by a crystal you hold)".into()),
         (k(FORMATION), "Formation: blob, line, wedge, ring".into()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
@@ -291,7 +295,7 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | FORMATION | GUARDS) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | FORMATION | GUARDS | HEAL) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
         }
@@ -310,6 +314,12 @@ impl App {
                     g.apply(Cmd::Merge(q, o as u8));
                 } else {
                     self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
+                }
+            }
+            HEAL => {
+                // The whole link: it is commanded as one.
+                if g.apply(Cmd::Heal(q)) {
+                    self.hud.alert("Healing: stand still; fast by a crystal you hold, slow elsewhere, food from the bank", None, theme::TEXT);
                 }
             }
             GUARDS => {
@@ -643,6 +653,8 @@ impl App {
                 }
                 note.push(if sq.fire.is_some() {
                     "firing".to_string()
+                } else if sq.heal {
+                    "healing".to_string()
                 } else if sq.work.is_some() && guards > 0 {
                     format!("working, {guards} on guard")
                 } else if sq.work.is_some() {
@@ -684,6 +696,17 @@ impl App {
             },
             cover: g.active.map_or("some", |a| g.squads[a].cover.name()).to_string(),
             cover_key: key_name(GUARDS),
+            heal_key: key_name(HEAL),
+            heal_off: g.active.and_then(|a| {
+                let ms: Vec<usize> = g.linked(a).into_iter().flat_map(|r| g.members(r)).collect();
+                if ms.iter().all(|&k| g.soldiers[k].hp >= g.rules.hp) {
+                    Some("Everyone in the squad is at full health".to_string())
+                } else if g.squads[a].heal {
+                    Some("Healing: give it another order to stop".to_string())
+                } else {
+                    None
+                }
+            }),
             free: g.active.is_none(),
             free_key: Some("Esc".into()),
         })
@@ -722,6 +745,9 @@ impl App {
                         g.apply(Cmd::Link(q as u8, o as u8));
                     }
                 }
+            }
+            HudEvent::SquadHeal => {
+                g.apply(Cmd::Heal(q as u8));
             }
             HudEvent::SquadCover => {
                 // The whole link: it is commanded as one.

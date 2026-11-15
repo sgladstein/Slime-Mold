@@ -302,13 +302,15 @@ fn a_shot_from_a_soldier_with_no_note_yet_draws() {
 #[test]
 fn the_menu_plays_the_command_lines_rounds() {
     use slime_mould::world::start::StartEvent;
-    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
+    // A bare command line plays the squad mode (owner 2026-11-15 07:57Z: "squad mode is default mode"; `main`).
+    let bare = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: true, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
     let mut cli = bare.clone();
     default_shape(&mut cli);
     let mut menu = start_menu(&bare);
     assert!(menu.options.iter().all(|o| o.is_default()), "a bare command line presets nothing");
     let a = round_args(&bare, false, &menu, &StartEvent::Sandbox);
     assert_eq!((a.map.as_deref(), a.walkers, &a.keys, a.round, a.bullet, a.own), (cli.map.as_deref(), cli.walkers, &cli.keys, 0, None, false));
+    assert!(a.squads, "the sandbox plays the squad mode by default");
     // A mission keeps its own mould: no shape C keys, no map.
     assert!(menu.missions.len() >= 3, "the campaign's missions are listed");
     assert_eq!(menu.missions[0].stem, "1-landfall");

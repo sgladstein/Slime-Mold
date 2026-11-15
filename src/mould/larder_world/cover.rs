@@ -27,8 +27,10 @@
 //! - A worker fires `CoverRules::work_fire` as often as it would.
 //!
 //! "Units should be able to heal but it cost energy, and requires units to
-//! be idle for bit, maybe only near a captured crystal" (`heal`): a soldier
-//! that has stood still, unbitten and not firing for `HealRules::wait`
+//! be idle for bit, maybe only near a captured crystal" (`heal`). Healing is
+//! an order (`Cmd::Heal`, owner 2026-11-15 07:41Z: "Healing should be a
+//! specific action"; it was automatic in #276): the squad stops, and each
+//! member that has stood still, unbitten and not firing for `HealRules::wait`
 //! seconds heals, paying `HealRules::cost` food a point from the bank, the
 //! energy that builds: a full heal in 10 s by a crystal the player holds
 //! (`Game::guarded`, the no-larder game's), in a minute anywhere else
@@ -113,7 +115,8 @@ pub struct HealRules {
     /// Health a second while resting anywhere else (1.67: a full heal in a
     /// minute).
     pub away: f32,
-    /// Game seconds still, unbitten and not firing before it starts.
+    /// Game seconds still, unbitten and not firing before it starts (3 while
+    /// it was automatic; 1 once it was an order).
     pub wait: f32,
     /// Food from the bank a point of health.
     pub cost: f32,
@@ -123,7 +126,7 @@ pub struct HealRules {
 
 impl Default for HealRules {
     fn default() -> Self {
-        HealRules { rate: 10.0, away: 100.0 / 60.0, wait: 3.0, cost: 0.25, near: 10.0 }
+        HealRules { rate: 10.0, away: 100.0 / 60.0, wait: 1.0, cost: 0.25, near: 10.0 }
     }
 }
 
@@ -185,6 +188,12 @@ impl<W: World> Game<W> {
     pub(super) fn cover_turn(&mut self) {
         if !self.rules.squads {
             return;
+        }
+        // A healing squad whose members are all whole is done.
+        for q in self.live_squads() {
+            if self.squads[q].heal && self.members(q).iter().all(|&k| self.soldiers[k].hp >= self.rules.hp) {
+                self.squads[q].heal = false;
+            }
         }
         for q in self.live_squads() {
             let sq = self.squads[q];
@@ -341,7 +350,13 @@ impl<W: World> Game<W> {
     pub(super) fn heal(&mut self, k: usize, moved: f32, fired: bool, dt: f32) {
         let h = self.rules.heal;
         let s = self.soldiers[k];
-        if !self.rules.squads {
+        // Only a squad told to heal (`Cmd::Heal`; owner 2026-11-15 07:41Z:
+        // "Healing should be a specific action"). From #276 to then any
+        // soldier still, unbitten and not firing for `wait` seconds healed
+        // on its own, harvesters and builders at work too, spending food
+        // the player never chose to spend.
+        if !self.rules.squads || !self.squads[s.squad as usize].heal {
+            self.soldiers[k].rest = 0.0;
             return;
         }
         if moved > 0.05 * self.s() || s.touching > 0 || fired {
