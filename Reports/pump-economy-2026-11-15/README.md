@@ -100,3 +100,42 @@ Page: https://claude.ai/artifact/6jYuCSBxzV1XsXNbTvYfJ4 (`page/index.html` here;
   second guarded while full). If guarding becomes the new easy opening,
   that is the next lever; the owner's ruling keeps it above draining.
 - The roguelike thread owns run pacing and the win threshold and was told.
+
+## Pumped crystals last forever (2026-11-15 17:14Z)
+
+Owner: "when building a pump on a crystal, it shouldn't drain it away. That
+should be one of the advantages of pumping over harvesting. Pumped crystals
+last forever".
+
+- A pump no longer takes charge from the dish (`UnitIn::take` 0 for a pump).
+  `Game::building_out` banks `pump_draw x pump_yield` a second while
+  `Game::pump_flows` holds: the crystal has more than `PUMP_DRY` (1%) of its
+  starting charge. Before, a level-1 pump took 1/150 of the charge a second
+  and emptied its crystal in 2.5 minutes (faster upgraded).
+- Hand draining still empties a crystal. The slime's eating is unchanged:
+  the slime eating a pumped crystal down to crumbs is now the only thing
+  that stops a pump (apart from the slime wearing the pump down), so a
+  pumped crystal is still worth defending.
+- The pump still lights the crystal's working spot (`Game::last_takes`, a
+  take by no soldier with the charge the food stands for), and the rig's
+  glow (`Building::drew`) now stays full until the slime eats the crystal.
+- Score: a pump's food no longer counts in `Game::taken` (no charge left the
+  crystal), so `take_share` (the W2b cap score) and the "eaten" tests count
+  only real charge gone.
+- Tests: `a_pump_draws_its_crystal_into_the_bank` now checks the crystal
+  keeps its charge after 10 s and the pump took none;
+  `a_pumped_crystal_lasts_until_the_mould_eats_it` (new) empties the
+  crystal's cells and checks the pump stops paying. Full
+  `cargo test --release --locked` passes; clippy clean.
+- Smoke (no census; build first, balance later): mission 7 Spore season,
+  CPU, seeds 1-4, `hands=idle,pumps+boom,turtle+boom`, main 4a040a4e
+  against this change. Seeds 2-4 are identical on both (their pumps never
+  ran a crystal dry inside the mission). Seed 1: pumps+boom went from 0 to 1
+  star (best 0.37 to 0.57), 5,702 to 5,700 food harvested and 8,412 to
+  9,375 slime killed. Goal met 1/4 on both; idle 0/4 on both. Nothing
+  soft-locks: worst stall 41 s on both.
+- Run and campaign economy: pumps now pay without end, so a long planet
+  gives more food than before. Not retuned here; if a run gets too rich,
+  the levers are `BuildRules::pump_share` and the run's Pump power item.
+- Frame cost: less than before (no harvest disc per pump on either engine;
+  one `crystals()` read per standing pump a frame on the CPU side).

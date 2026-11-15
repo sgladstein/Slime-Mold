@@ -56,10 +56,10 @@ code:
 
 A separate mode beside the campaign (Run on the start menu, or
 `run=SEED`): eight planets on the way to the slime's home world, each one
-map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 2% on
-every planet since 11-15; it was 25% on planet 1 down to 10%, and the owner
-kept winning with slime left; under 3% the slime is broken and its
-stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the walkers now against the count to reach ("12,630 walkers now → 252", [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
+map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 1% on
+every planet since 11-15 18:02Z; 2% from 03:02Z, and before that 25% on
+planet 1 down to 10%; each time the owner kept winning with slime left; under 3% the slime is broken and its
+stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the slime now against the count to reach, both as mass (a thickened walker twice, as the bar counts it; "12,630 walkers now → 126" at 1%), [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells guns and gun cards
 that get better deeper; a lost planet ends the run. The shop page has two
@@ -74,7 +74,7 @@ drags a card onto a slot to move it, buys a card for sale straight into a
 slot, drags one onto the bag to take it out, or presses Q and E; a card
 put in without a slot lands before the first bullet (`Run::put_in`)
 ([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime is shape C under the tier's keys (`run_shape`), from C's 25,000 walkers times the level's factor (`run_walkers`) and a per-planet roll of 0.8 to 1.25 (`size_roll`; owner 11-15 08:34Z: "It should vary and be more later on"), C's slots grown to match, and then the planet's own engine keys (`enemy_keys`, 11-15, the slime-enemy thread; the run thread agreed the curve): the slime lunges 1 s to 1.8 s (`surge_dash`) and thickens from 2 down to 1.3 births' energy (`thicken`), so deeper slime presses harder and toughens faster on what it holds. On planets 1-3, whose tiers read no alarm of their own, C's flinch is on (`BigParams::flinch` 0.9): the slime backs off ground a volley keeps hitting and closes in when it stops, at no frame cost on the GTX 1070; planets 4-8 keep their tier's alarm ([flinch](../../Reports/flinch-2026-11-15/README.md)). Its surges come when it has eaten enough from its crystals (`Rules::surge_food`, set from `surge_food`: a third more than the sandbox's 150 food on planets 1-2, as much on 3-4, down to half on the core world, times the level's walkers, since a bigger slime eats more), at least 10 s apart and at most 80 s on planets 1-2, 60 s on 3-4, 50 s on 5, 40 s on 6-7 and 30 s on the core world (`surge_every`, the longest wait); the shop's clock line names the longest wait (`surge_secs`). Before food-driven surges (later on 11-15) they came on a fixed beat of half those waits; neither costs a frame on the GTX 1070 ([surge](../../Reports/surge-2026-11-15/README.md)); until 11-15 a run played the bare race slime by mistake, which shed nine tenths of itself in a minute ([report](../../Reports/roguelike-run-2026-11-14/README.md), *The run's slime is shape C*). Locked buildings and tools show
-locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
+locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, never drain their crystal (owner, 2026-11-15 17:14Z), and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 
@@ -123,6 +123,7 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-14 20:32Z: "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around".
 - 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups).
 - 2026-11-15 08:34Z (to the slime thread, on a planet's slime size): "It should vary and be more later on."
+- 2026-11-15 18:02Z: "We are still winning the game with too many slime left. Drop it to 1% of peak" (`WIN_SHARE` 1%).
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 - 2026-11-15 02:55Z: "I need a test environment built where I can play with the guns and cards and bullets."

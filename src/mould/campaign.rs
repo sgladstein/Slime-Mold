@@ -371,7 +371,8 @@ pub struct Tracker {
     /// Contain goals with `body`: bins outside with thick mould now.
     pub thick: Option<u32>,
     peak: usize,
-    /// Shrink goals: the walkers now, for the HUD's "now -> goal".
+    /// Shrink goals: the slime's mass now (`World::mass`), for the HUD's
+    /// "now -> goal".
     walkers: Option<usize>,
     lost: usize,
     last: Snapshot,
@@ -463,7 +464,9 @@ impl Tracker {
                 Some(squad.min(at.len() as f32 / *crystals as f32).min(1.0))
             }
             Goal::Shrink(f) => {
-                self.walkers = Some(g.mould);
+                // Mass, as the bar and its goal count (a thickened walker
+                // twice), so "now -> goal" compares like with like.
+                self.walkers = Some(g.world.mass());
                 if self.peak == 0 {
                     return Some(0.0);
                 }
@@ -1037,10 +1040,10 @@ mod tests {
         // Before the peak counts, the line says when it will, and the
         // walkers now; after, the walkers now and the count to reach.
         let line = tr.progress_line();
-        assert!(line.contains("counting from 1:00;") && line.contains(&format!("{} walkers now", grouped(g.mould))), "{line}");
+        assert!(line.contains("counting from 1:00;") && line.contains(&format!("{} walkers now", grouped(g.world.mass()))), "{line}");
         assert!(follow(&mut g, &mut tr, 65.0, |_| {}).is_none());
         let line = tr.progress_line();
-        assert!(line.contains(&format!("{} walkers now \u{2192} {}", grouped(g.mould), grouped(tr.peak / 2))), "{line}");
+        assert!(line.contains(&format!("{} walkers now \u{2192} {}", grouped(g.world.mass()), grouped(tr.peak / 2))), "{line}");
         assert_eq!((grouped(7), grouped(1234), grouped(12630), grouped(1_000_000)), ("7".into(), "1,234".into(), "12,630".into(), "1,000,000".into()));
     }
 
