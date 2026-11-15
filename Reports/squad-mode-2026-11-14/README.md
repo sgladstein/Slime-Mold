@@ -162,6 +162,14 @@ From the owner's notes (15:06Z) and answers (15:49Z):
   unbitten and not firing, for 3 s heals for 0.25 food a point from the bank
   (the energy that builds). By a crystal the player holds it heals fully in
   10 s; anywhere else it takes a minute (owner 15:49Z).
+  - 2026-11-15 07:41Z the owner ruled "Healing should be a specific action"
+    (the bug-check thread had found harvesters and builders at work healing
+    and spending food on their own). Now only a squad told to heal does:
+    **Heal** on the squad panel or key **L** (`Cmd::Heal`, the whole link).
+    The squad stops where it is, each member heals once it has been still,
+    unbitten and not firing for 1 s, and the squad stops healing when every
+    member is whole or it gets another order. Each soldier has its own
+    health; the tile's bar is their mean.
 - **Squad queues.** Shift + right click queues a move, guard or drain
   (`Cmd::SquadQueue`, up to 6). The squad starts the next one when it
   arrives or its work ends. A plain order drops the queue.
