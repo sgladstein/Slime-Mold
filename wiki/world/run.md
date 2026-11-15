@@ -5,17 +5,20 @@ status: open
 updated: 2026-11-15
 sources:
   - Reports/gun-order-2026-11-14.md
+  - Reports/gun-range-2026-11-15.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
 code:
   - LADDER
   - PLANETS
+  - RANGE_DEPTH
   - REF_OPEN
   - Run::buy_into
   - Run::carried
   - Run::gun
   - Run::level
   - Run::put_in
+  - Run::range
   - Run::rules
   - Run::shop
   - WIN_SHARE
@@ -24,6 +27,7 @@ code:
   - clock
   - gun_price
   - head_start
+  - range_args
   - reward
   - run_args
   - shells_at
@@ -61,6 +65,20 @@ locked on the command card, except pumps, the main income since 2026-11-15: they
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 
+The gun range plays with its shop as a free armory (below).
+
+## The gun range
+
+Gun range on the start menu, or `range=SEED`, uses a run
+as a free armory (`Run::range`): every gun kind owned at its average with a
+rolled one of each on the rack to swap in, a bullet of every payload and set
+(the standard set exact) and every other card, never sold out, and tiles to
+roll them again, deeper or shallower (from `RANGE_DEPTH`), and to empty the
+gun or the bag. Back to the range plays the sandbox's round armed from it
+(`range_args`), with no time limit and a 100,000 bank; H there opens the
+armory over the paused round and Back re-arms every squad
+([report](../../Reports/gun-range-2026-11-15.md)).
+
 ## Owner's word
 
 - 2026-11-14 15:21Z: "For now separate, but it might become the main game. I don't want to erase the campaign yet"; one level one map with a shop between: "Yes. Unless you have other suggestions. The maps should get bigger too as we progress."
@@ -71,6 +89,7 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 - 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups).
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
+- 2026-11-15 02:55Z: "I need a test environment built where I can play with the guns and cards and bullets."
 
 ## Open
 
@@ -83,3 +102,4 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
+- [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.

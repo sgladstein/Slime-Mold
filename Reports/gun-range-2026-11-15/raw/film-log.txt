@@ -1,0 +1,664 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+drag: frame 0 pointer 526,337 up
+/tmp/claude-0/range6/fork-stand-000s-all.png
+/tmp/claude-0/range6/fork-stand-000s-near.png
+  CPU: ground field 2.42 ms (once a game second), model and HUD 0.087 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 50%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 1 pointer 526,337 down
+/tmp/claude-0/range6/fork-stand-00010ms-all.png
+/tmp/claude-0/range6/fork-stand-00010ms-near.png
+  CPU: ground field 2.43 ms (once a game second), model and HUD 0.055 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 2 pointer 526,330 down
+/tmp/claude-0/range6/fork-stand-00020ms-all.png
+/tmp/claude-0/range6/fork-stand-00020ms-near.png
+  CPU: ground field 2.45 ms (once a game second), model and HUD 0.048 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 3 pointer 526,315 down
+/tmp/claude-0/range6/fork-stand-00030ms-all.png
+/tmp/claude-0/range6/fork-stand-00030ms-near.png
+  CPU: ground field 2.33 ms (once a game second), model and HUD 0.051 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 4 pointer 526,307 down
+/tmp/claude-0/range6/fork-stand-00040ms-all.png
+/tmp/claude-0/range6/fork-stand-00040ms-near.png
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.052 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 5 pointer 526,315 down
+/tmp/claude-0/range6/fork-stand-00050ms-all.png
+/tmp/claude-0/range6/fork-stand-00050ms-near.png
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.047 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 6 pointer 526,330 down
+/tmp/claude-0/range6/fork-stand-00060ms-all.png
+/tmp/claude-0/range6/fork-stand-00060ms-near.png
+  CPU: ground field 2.20 ms (once a game second), model and HUD 0.048 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 7 pointer 526,337 down
+/tmp/claude-0/range6/fork-stand-00070ms-all.png
+/tmp/claude-0/range6/fork-stand-00070ms-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.048 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 8 pointer 526,337 up
+drag: Buy(5)
+drag: the gun fires none
+/tmp/claude-0/range6/fork-stand-00080ms-all.png
+/tmp/claude-0/range6/fork-stand-00080ms-near.png
+  CPU: ground field 2.09 ms (once a game second), model and HUD 0.050 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 9 pointer 526,337 up
+/tmp/claude-0/range6/fork-stand-00090ms-all.png
+/tmp/claude-0/range6/fork-stand-00090ms-near.png
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.048 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 10 pointer 526,337 up
+/tmp/claude-0/range6/fork-stand-00100ms-all.png
+/tmp/claude-0/range6/fork-stand-00100ms-near.png
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.049 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 11 pointer 526,337 up
+/tmp/claude-0/range6/fork-stand-00110ms-all.png
+/tmp/claude-0/range6/fork-stand-00110ms-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.050 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 12 pointer 545,523 up
+/tmp/claude-0/range6/fork-stand-00120ms-all.png
+/tmp/claude-0/range6/fork-stand-00120ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.050 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 13 pointer 545,523 down
+/tmp/claude-0/range6/fork-stand-00130ms-all.png
+/tmp/claude-0/range6/fork-stand-00130ms-near.png
+  CPU: ground field 2.78 ms (once a game second), model and HUD 0.067 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 14 pointer 530,509 down
+/tmp/claude-0/range6/fork-stand-00140ms-all.png
+/tmp/claude-0/range6/fork-stand-00140ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.045 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 15 pointer 491,479 down
+/tmp/claude-0/range6/fork-stand-00150ms-all.png
+/tmp/claude-0/range6/fork-stand-00150ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.045 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 16 pointer 441,450 down
+/tmp/claude-0/range6/fork-stand-00160ms-all.png
+/tmp/claude-0/range6/fork-stand-00160ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.045 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 17 pointer 391,438 down
+/tmp/claude-0/range6/fork-stand-00170ms-all.png
+/tmp/claude-0/range6/fork-stand-00170ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.046 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 18 pointer 353,437 down
+/tmp/claude-0/range6/fork-stand-00180ms-all.png
+/tmp/claude-0/range6/fork-stand-00180ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.046 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 19 pointer 337,437 down
+/tmp/claude-0/range6/fork-stand-00190ms-all.png
+/tmp/claude-0/range6/fork-stand-00190ms-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.045 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 20 pointer 337,437 up
+drag: Move(12, 0)
+drag: the gun fires ammo/blast/standard/1/100/100/100/100/3
+/tmp/claude-0/range6/fork-stand-00200ms-all.png
+/tmp/claude-0/range6/fork-stand-00200ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 21 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00210ms-all.png
+/tmp/claude-0/range6/fork-stand-00210ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.042 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 22 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00220ms-all.png
+/tmp/claude-0/range6/fork-stand-00220ms-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 23 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00230ms-all.png
+/tmp/claude-0/range6/fork-stand-00230ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.046 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 24 pointer 337,672 up
+/tmp/claude-0/range6/fork-stand-00240ms-all.png
+/tmp/claude-0/range6/fork-stand-00240ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 25 pointer 337,672 down
+/tmp/claude-0/range6/fork-stand-00250ms-all.png
+/tmp/claude-0/range6/fork-stand-00250ms-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.042 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 26 pointer 337,648 down
+/tmp/claude-0/range6/fork-stand-00260ms-all.png
+/tmp/claude-0/range6/fork-stand-00260ms-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.044 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 27 pointer 337,590 down
+/tmp/claude-0/range6/fork-stand-00270ms-all.png
+/tmp/claude-0/range6/fork-stand-00270ms-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 28 pointer 337,525 down
+/tmp/claude-0/range6/fork-stand-00280ms-all.png
+/tmp/claude-0/range6/fork-stand-00280ms-near.png
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 29 pointer 337,476 down
+/tmp/claude-0/range6/fork-stand-00290ms-all.png
+/tmp/claude-0/range6/fork-stand-00290ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.044 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 30 pointer 337,448 down
+/tmp/claude-0/range6/fork-stand-00300ms-all.png
+/tmp/claude-0/range6/fork-stand-00300ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 31 pointer 337,437 down
+/tmp/claude-0/range6/fork-stand-00310ms-all.png
+/tmp/claude-0/range6/fork-stand-00310ms-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 32 pointer 337,437 up
+drag: Move(28, 0)
+drag: the gun fires wide+ammo/blast/standard/1/100/100/100/100/3
+/tmp/claude-0/range6/fork-stand-00320ms-all.png
+/tmp/claude-0/range6/fork-stand-00320ms-near.png
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 33 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00330ms-all.png
+/tmp/claude-0/range6/fork-stand-00330ms-near.png
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.039 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 0, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 34 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00340ms-all.png
+/tmp/claude-0/range6/fork-stand-00340ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 35 pointer 337,437 up
+/tmp/claude-0/range6/fork-stand-00350ms-all.png
+/tmp/claude-0/range6/fork-stand-00350ms-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.042 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 36 pointer 389,758 up
+/tmp/claude-0/range6/fork-stand-00360ms-all.png
+/tmp/claude-0/range6/fork-stand-00360ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 37 pointer 389,758 down
+/tmp/claude-0/range6/fork-stand-00370ms-all.png
+/tmp/claude-0/range6/fork-stand-00370ms-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.044 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 38 pointer 393,727 down
+/tmp/claude-0/range6/fork-stand-00380ms-all.png
+/tmp/claude-0/range6/fork-stand-00380ms-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.043 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 39 pointer 403,653 down
+/tmp/claude-0/range6/fork-stand-00390ms-all.png
+/tmp/claude-0/range6/fork-stand-00390ms-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.046 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 40 pointer 415,568 down
+/tmp/claude-0/range6/fork-stand-00400ms-all.png
+/tmp/claude-0/range6/fork-stand-00400ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.036 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 41 pointer 428,499 down
+/tmp/claude-0/range6/fork-stand-00410ms-all.png
+/tmp/claude-0/range6/fork-stand-00410ms-near.png
+  CPU: ground field 2.61 ms (once a game second), model and HUD 0.055 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 42 pointer 437,454 down
+/tmp/claude-0/range6/fork-stand-00420ms-all.png
+/tmp/claude-0/range6/fork-stand-00420ms-near.png
+  CPU: ground field 1.71 ms (once a game second), model and HUD 0.041 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 43 pointer 441,437 down
+/tmp/claude-0/range6/fork-stand-00430ms-all.png
+/tmp/claude-0/range6/fork-stand-00430ms-near.png
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.037 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 44 pointer 441,437 up
+drag: Move(34, 2)
+drag: the gun fires wide+ammo/blast/standard/1/100/100/100/100/3+split
+/tmp/claude-0/range6/fork-stand-00440ms-all.png
+/tmp/claude-0/range6/fork-stand-00440ms-near.png
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.037 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 45 pointer 441,437 up
+/tmp/claude-0/range6/fork-stand-00450ms-all.png
+/tmp/claude-0/range6/fork-stand-00450ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.037 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 46 pointer 441,437 up
+/tmp/claude-0/range6/fork-stand-00460ms-all.png
+/tmp/claude-0/range6/fork-stand-00460ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.037 ms a frame
+  t 0 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 11, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 47 pointer 441,437 up
+/tmp/claude-0/range6/fork-stand-00470ms-all.png
+/tmp/claude-0/range6/fork-stand-00470ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.036 ms a frame
+  t 1 s: mould 25000, soldiers 4, bank 100000, harvested 0, shots 4, killed 23, took 0%, crystals left 1.000; squad at 256.0,112.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+drag: frame 48 go
+  rounds t    5 s: 12 casts (blast, gas, germ, bomb [12, 0, 0, 0]), 321 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-005s-all.png
+/tmp/claude-0/range6/fork-stand-005s-near.png
+  CPU: ground field 1.94 ms (once a game second), model and HUD 0.063 ms a frame
+  t 5 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 44, killed 396, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 84 mean
+  rounds t    5 s: 12 casts (blast, gas, germ, bomb [12, 0, 0, 0]), 321 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05100ms-all.png
+/tmp/claude-0/range6/fork-stand-05100ms-near.png
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.063 ms a frame
+  t 5 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 47, killed 396, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 83 mean
+  rounds t    5 s: 12 casts (blast, gas, germ, bomb [12, 0, 0, 0]), 321 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05200ms-all.png
+/tmp/claude-0/range6/fork-stand-05200ms-near.png
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.064 ms a frame
+  t 5 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 48, killed 396, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 83 mean
+  rounds t    5 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05300ms-all.png
+/tmp/claude-0/range6/fork-stand-05300ms-near.png
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.070 ms a frame
+  t 5 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 48, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 83 mean
+  rounds t    5 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05400ms-all.png
+/tmp/claude-0/range6/fork-stand-05400ms-near.png
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.064 ms a frame
+  t 5 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 48, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 83 mean
+  rounds t    6 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05500ms-all.png
+/tmp/claude-0/range6/fork-stand-05500ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.067 ms a frame
+  t 6 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 51, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 82 mean
+  rounds t    6 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05600ms-all.png
+/tmp/claude-0/range6/fork-stand-05600ms-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.063 ms a frame
+  t 6 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 52, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 82 mean
+  rounds t    6 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05700ms-all.png
+/tmp/claude-0/range6/fork-stand-05700ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.054 ms a frame
+  t 6 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 52, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 82 mean
+  rounds t    6 s: 13 casts (blast, gas, germ, bomb [13, 0, 0, 0]), 358 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05800ms-all.png
+/tmp/claude-0/range6/fork-stand-05800ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.054 ms a frame
+  t 6 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 52, killed 440, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 82 mean
+  rounds t    6 s: 14 casts (blast, gas, germ, bomb [14, 0, 0, 0]), 370 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-05900ms-all.png
+/tmp/claude-0/range6/fork-stand-05900ms-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.057 ms a frame
+  t 6 s: mould 24598, soldiers 4, bank 100000, harvested 0, shots 55, killed 454, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    6 s: 14 casts (blast, gas, germ, bomb [14, 0, 0, 0]), 370 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-006s-all.png
+/tmp/claude-0/range6/fork-stand-006s-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.053 ms a frame
+  t 6 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 56, killed 454, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    6 s: 16 casts (blast, gas, germ, bomb [16, 0, 0, 0]), 400 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06100ms-all.png
+/tmp/claude-0/range6/fork-stand-06100ms-near.png
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.055 ms a frame
+  t 6 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 56, killed 491, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    6 s: 16 casts (blast, gas, germ, bomb [16, 0, 0, 0]), 400 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06200ms-all.png
+/tmp/claude-0/range6/fork-stand-06200ms-near.png
+  CPU: ground field 1.95 ms (once a game second), model and HUD 0.061 ms a frame
+  t 6 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 56, killed 491, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    6 s: 16 casts (blast, gas, germ, bomb [16, 0, 0, 0]), 400 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06300ms-all.png
+/tmp/claude-0/range6/fork-stand-06300ms-near.png
+  CPU: ground field 1.95 ms (once a game second), model and HUD 0.059 ms a frame
+  t 6 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 59, killed 491, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    6 s: 16 casts (blast, gas, germ, bomb [16, 0, 0, 0]), 400 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06400ms-all.png
+/tmp/claude-0/range6/fork-stand-06400ms-near.png
+  CPU: ground field 1.95 ms (once a game second), model and HUD 0.063 ms a frame
+  t 6 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 60, killed 491, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    7 s: 17 casts (blast, gas, germ, bomb [17, 0, 0, 0]), 420 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06500ms-all.png
+/tmp/claude-0/range6/fork-stand-06500ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.053 ms a frame
+  t 7 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 60, killed 514, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    7 s: 17 casts (blast, gas, germ, bomb [17, 0, 0, 0]), 420 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06600ms-all.png
+/tmp/claude-0/range6/fork-stand-06600ms-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.051 ms a frame
+  t 7 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 60, killed 514, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 81 mean
+  rounds t    7 s: 18 casts (blast, gas, germ, bomb [18, 0, 0, 0]), 518 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06700ms-all.png
+/tmp/claude-0/range6/fork-stand-06700ms-near.png
+  CPU: ground field 2.04 ms (once a game second), model and HUD 0.050 ms a frame
+  t 7 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 63, killed 625, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 18 casts (blast, gas, germ, bomb [18, 0, 0, 0]), 518 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06800ms-all.png
+/tmp/claude-0/range6/fork-stand-06800ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.052 ms a frame
+  t 7 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 64, killed 625, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 18 casts (blast, gas, germ, bomb [18, 0, 0, 0]), 518 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-06900ms-all.png
+/tmp/claude-0/range6/fork-stand-06900ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.051 ms a frame
+  t 7 s: mould 24542, soldiers 4, bank 100000, harvested 0, shots 64, killed 625, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 19 casts (blast, gas, germ, bomb [19, 0, 0, 0]), 535 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-007s-all.png
+/tmp/claude-0/range6/fork-stand-007s-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.047 ms a frame
+  t 7 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 64, killed 649, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 19 casts (blast, gas, germ, bomb [19, 0, 0, 0]), 535 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07100ms-all.png
+/tmp/claude-0/range6/fork-stand-07100ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.056 ms a frame
+  t 7 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 67, killed 649, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 19 casts (blast, gas, germ, bomb [19, 0, 0, 0]), 535 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07200ms-all.png
+/tmp/claude-0/range6/fork-stand-07200ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.051 ms a frame
+  t 7 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 68, killed 649, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 20 casts (blast, gas, germ, bomb [20, 0, 0, 0]), 541 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07300ms-all.png
+/tmp/claude-0/range6/fork-stand-07300ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.052 ms a frame
+  t 7 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 68, killed 656, took 0%, crystals left 1.000; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    7 s: 20 casts (blast, gas, germ, bomb [20, 0, 0, 0]), 541 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07400ms-all.png
+/tmp/claude-0/range6/fork-stand-07400ms-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.050 ms a frame
+  t 7 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 68, killed 656, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 20 casts (blast, gas, germ, bomb [20, 0, 0, 0]), 541 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07500ms-all.png
+/tmp/claude-0/range6/fork-stand-07500ms-near.png
+  CPU: ground field 1.96 ms (once a game second), model and HUD 0.051 ms a frame
+  t 8 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 71, killed 656, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 20 casts (blast, gas, germ, bomb [20, 0, 0, 0]), 541 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07600ms-all.png
+/tmp/claude-0/range6/fork-stand-07600ms-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.051 ms a frame
+  t 8 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 72, killed 656, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 20 casts (blast, gas, germ, bomb [20, 0, 0, 0]), 541 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07700ms-all.png
+/tmp/claude-0/range6/fork-stand-07700ms-near.png
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.053 ms a frame
+  t 8 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 72, killed 656, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 22 casts (blast, gas, germ, bomb [22, 0, 0, 0]), 636 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07800ms-all.png
+/tmp/claude-0/range6/fork-stand-07800ms-near.png
+  CPU: ground field 3.02 ms (once a game second), model and HUD 0.073 ms a frame
+  t 8 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 72, killed 767, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 22 casts (blast, gas, germ, bomb [22, 0, 0, 0]), 636 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-07900ms-all.png
+/tmp/claude-0/range6/fork-stand-07900ms-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.058 ms a frame
+  t 8 s: mould 24353, soldiers 4, bank 100000, harvested 0, shots 75, killed 767, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.2 mean, 1 most; health 80 mean
+  rounds t    8 s: 22 casts (blast, gas, germ, bomb [22, 0, 0, 0]), 636 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-008s-all.png
+/tmp/claude-0/range6/fork-stand-008s-near.png
+  CPU: ground field 1.92 ms (once a game second), model and HUD 0.054 ms a frame
+  t 8 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 76, killed 767, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.2 mean, 1 most; health 80 mean
+  rounds t    8 s: 22 casts (blast, gas, germ, bomb [22, 0, 0, 0]), 636 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08100ms-all.png
+/tmp/claude-0/range6/fork-stand-08100ms-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.051 ms a frame
+  t 8 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 76, killed 767, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 22 casts (blast, gas, germ, bomb [22, 0, 0, 0]), 636 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08200ms-all.png
+/tmp/claude-0/range6/fork-stand-08200ms-near.png
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.055 ms a frame
+  t 8 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 76, killed 767, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08300ms-all.png
+/tmp/claude-0/range6/fork-stand-08300ms-near.png
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.053 ms a frame
+  t 8 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 79, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    8 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08400ms-all.png
+/tmp/claude-0/range6/fork-stand-08400ms-near.png
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.058 ms a frame
+  t 8 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 80, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08500ms-all.png
+/tmp/claude-0/range6/fork-stand-08500ms-near.png
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.054 ms a frame
+  t 9 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 80, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 80 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08600ms-all.png
+/tmp/claude-0/range6/fork-stand-08600ms-near.png
+  CPU: ground field 1.82 ms (once a game second), model and HUD 0.057 ms a frame
+  t 9 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 80, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08700ms-all.png
+/tmp/claude-0/range6/fork-stand-08700ms-near.png
+  CPU: ground field 1.80 ms (once a game second), model and HUD 0.057 ms a frame
+  t 9 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 83, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08800ms-all.png
+/tmp/claude-0/range6/fork-stand-08800ms-near.png
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.055 ms a frame
+  t 9 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 84, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-08900ms-all.png
+/tmp/claude-0/range6/fork-stand-08900ms-near.png
+  CPU: ground field 2.02 ms (once a game second), model and HUD 0.063 ms a frame
+  t 9 s: mould 24229, soldiers 4, bank 100000, harvested 0, shots 84, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 23 casts (blast, gas, germ, bomb [23, 0, 0, 0]), 639 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-009s-all.png
+/tmp/claude-0/range6/fork-stand-009s-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.062 ms a frame
+  t 9 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 84, killed 771, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09100ms-all.png
+/tmp/claude-0/range6/fork-stand-09100ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.064 ms a frame
+  t 9 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 87, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09200ms-all.png
+/tmp/claude-0/range6/fork-stand-09200ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.066 ms a frame
+  t 9 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 88, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09300ms-all.png
+/tmp/claude-0/range6/fork-stand-09300ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.062 ms a frame
+  t 9 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 88, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t    9 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09400ms-all.png
+/tmp/claude-0/range6/fork-stand-09400ms-near.png
+  CPU: ground field 1.88 ms (once a game second), model and HUD 0.064 ms a frame
+  t 9 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 88, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09500ms-all.png
+/tmp/claude-0/range6/fork-stand-09500ms-near.png
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.067 ms a frame
+  t 10 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 91, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09600ms-all.png
+/tmp/claude-0/range6/fork-stand-09600ms-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.058 ms a frame
+  t 10 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 92, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09700ms-all.png
+/tmp/claude-0/range6/fork-stand-09700ms-near.png
+  CPU: ground field 2.11 ms (once a game second), model and HUD 0.057 ms a frame
+  t 10 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 92, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 24 casts (blast, gas, germ, bomb [24, 0, 0, 0]), 651 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09800ms-all.png
+/tmp/claude-0/range6/fork-stand-09800ms-near.png
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.060 ms a frame
+  t 10 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 92, killed 784, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-09900ms-all.png
+/tmp/claude-0/range6/fork-stand-09900ms-near.png
+  CPU: ground field 1.81 ms (once a game second), model and HUD 0.055 ms a frame
+  t 10 s: mould 24226, soldiers 4, bank 100000, harvested 0, shots 95, killed 798, took 0%, crystals left 0.999; squad at 256.8,113.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-010s-all.png
+/tmp/claude-0/range6/fork-stand-010s-near.png
+  CPU: ground field 2.44 ms (once a game second), model and HUD 0.064 ms a frame
+  t 10 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 95, killed 798, took 0%, crystals left 0.999; squad at 257.3,114.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10100ms-all.png
+/tmp/claude-0/range6/fork-stand-10100ms-near.png
+  CPU: ground field 1.97 ms (once a game second), model and HUD 0.061 ms a frame
+  t 10 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 95, killed 798, took 0%, crystals left 0.999; squad at 258.6,116.1
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10200ms-all.png
+/tmp/claude-0/range6/fork-stand-10200ms-near.png
+  CPU: ground field 2.01 ms (once a game second), model and HUD 0.063 ms a frame
+  t 10 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 95, killed 798, took 0%, crystals left 0.999; squad at 259.3,116.8
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10300ms-all.png
+/tmp/claude-0/range6/fork-stand-10300ms-near.png
+  CPU: ground field 2.99 ms (once a game second), model and HUD 0.075 ms a frame
+  t 10 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 97, killed 798, took 0%, crystals left 0.999; squad at 260.3,118.1
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   10 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10400ms-all.png
+/tmp/claude-0/range6/fork-stand-10400ms-near.png
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.076 ms a frame
+  t 10 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 97, killed 798, took 0%, crystals left 0.999; squad at 260.7,118.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10500ms-all.png
+/tmp/claude-0/range6/fork-stand-10500ms-near.png
+  CPU: ground field 2.01 ms (once a game second), model and HUD 0.060 ms a frame
+  t 11 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 99, killed 798, took 0%, crystals left 0.999; squad at 260.7,118.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10600ms-all.png
+/tmp/claude-0/range6/fork-stand-10600ms-near.png
+  CPU: ground field 1.96 ms (once a game second), model and HUD 0.057 ms a frame
+  t 11 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 99, killed 798, took 0%, crystals left 0.999; squad at 260.7,118.6
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10700ms-all.png
+/tmp/claude-0/range6/fork-stand-10700ms-near.png
+  CPU: ground field 3.00 ms (once a game second), model and HUD 0.076 ms a frame
+  t 11 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 101, killed 798, took 0%, crystals left 0.999; squad at 260.9,118.9
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 26 casts (blast, gas, germ, bomb [26, 0, 0, 0]), 664 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10800ms-all.png
+/tmp/claude-0/range6/fork-stand-10800ms-near.png
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.057 ms a frame
+  t 11 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 101, killed 798, took 0%, crystals left 0.999; squad at 260.9,118.9
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 27 casts (blast, gas, germ, bomb [27, 0, 0, 0]), 680 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-10900ms-all.png
+/tmp/claude-0/range6/fork-stand-10900ms-near.png
+  CPU: ground field 2.63 ms (once a game second), model and HUD 0.078 ms a frame
+  t 11 s: mould 24212, soldiers 4, bank 100000, harvested 0, shots 103, killed 816, took 0%, crystals left 0.999; squad at 260.9,118.9
+  squad: touching 0.0 mean, 0 most; health 79 mean
+  rounds t   11 s: 27 casts (blast, gas, germ, bomb [27, 0, 0, 0]), 680 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/range6/fork-stand-011s-all.png
+/tmp/claude-0/range6/fork-stand-011s-near.png
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.059 ms a frame
+  t 11 s: mould 24208, soldiers 4, bank 100000, harvested 0, shots 103, killed 816, took 0%, crystals left 0.999; squad at 260.9,118.9
+  squad: touching 0.0 mean, 0 most; health 79 mean

@@ -37,9 +37,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut shop_run = None;
     if let Some((p, flag)) = menu_page {
         let mut m = start_menu(&app.args);
+        // The gun range's armory (`range=SEED menu=shop`) over its round,
+        // as H opens it; a drag changes the range's gun. Not paused: the
+        // film steps through `App::step`, which holds still while paused,
+        // so a frame's steps never ended (its first try hung on frame 1).
+        // Give the armory's frames a few hundredths of a second apart.
+        if let (slime_mould::world::start::Page::Shop, Some(r)) = (p, app.range.as_ref()) {
+            m.shop = Some(shop_of(r));
+            app.set_armory(true);
+        }
         // The run's shop (`run=SEED menu=shop`): as after its first planet
         // won with two stars, so the picture has points to spend.
-        if let (slime_mould::world::start::Page::Shop, Some(r)) = (p, app.run.as_ref()) {
+        if let (slime_mould::world::start::Page::Shop, Some(r), false) = (p, app.run.as_ref(), app.armory) {
             let mut r = r.clone();
             if r.points == 0 {
                 r.won(2);
@@ -97,6 +106,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `drag=`: where each drag starts and ends on the screen, found once
     // the shop is laid out (the slots stay put as cards move).
     let mut drag_path: Vec<((f32, f32), (f32, f32))> = Vec::new();
+    // `go` (the range's armory closed): the drags share the frames before
+    // the film's first whole second, the round plays after. A drag from a
+    // gun to itself is a click on it.
+    let go = drags.iter().any(|d| d.0 == "go");
+    let drags: Vec<&(String, String)> = drags.iter().filter(|d| d.0 != "go").collect();
+    let still = if go { at.iter().take_while(|&&t| t < at[0].floor() + 1.0).count() } else { at.len() };
     if !drags.is_empty() {
         app.prepare();
         let m = app.menu.as_ref().ok_or("drag= needs menu=shop..")?;
@@ -105,7 +120,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             Err(_) if s == "bag" => m.bag_at(),
             Err(_) => m.card_at(s),
         };
-        for (a, b) in drags {
+        for &(a, b) in &drags {
             drag_path.push((at(a).ok_or_else(|| format!("drag=: no {a} in the shop"))?, at(b).ok_or_else(|| format!("drag=: no {b} in the shop"))?));
         }
     }
@@ -150,8 +165,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // `drag=`: frame `fi`'s share of its drag: the pointer on the card,
         // pressed, carried (eased) to its place, let go at seven tenths,
         // then resting there.
-        if !drag_path.is_empty() {
-            let per = at.len().div_ceil(drag_path.len()).max(4);
+        if go && fi == still {
+            println!("drag: frame {fi} go");
+            app.menu_event(slime_mould::world::start::StartEvent::NextLevel)?;
+        }
+        if !drag_path.is_empty() && fi < still {
+            let per = still.div_ceil(drag_path.len()).max(4);
             let (k, j) = (fi / per, fi % per);
             if let (Some(&(a, b)), Some(m)) = (drag_path.get(k), app.menu.as_mut()) {
                 let held = (per as f32 * 0.7) as usize;
@@ -176,7 +195,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 for ev in events {
                     println!("drag: {ev:?}");
                     app.menu_event(ev)?;
-                    if let Some(r) = app.run.as_ref() {
+                    if let Some(r) = app.range.as_ref().filter(|_| app.armory).or(app.run.as_ref()) {
                         println!("drag: the gun fires {}", r.gun_text());
                     }
                 }
