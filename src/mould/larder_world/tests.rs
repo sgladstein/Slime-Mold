@@ -2555,3 +2555,149 @@ fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
     d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
     assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
 }
+
+// Walking maps at the core world's 6x (technical review, 2026-11-15):
+// a 1x world is 1024 x 640 map cells, a 6x one 2512 x 1568.
+
+/// A world `w` x `h` map cells with its landing at (300, 320); with `bar`,
+/// a rock bar at map x 400-447, y 120-519, east of it.
+fn bar_map(w: usize, h: usize, bar: bool) -> crate::mould::map::Map {
+    let mut ground = vec![0u8; w * h];
+    if bar {
+        for y in 120..520 {
+            for x in 400..448 {
+                ground[y * w + x] = crate::mould::map::G_ROCK;
+            }
+        }
+    }
+    let items = crate::mould::map::Items {
+        crystals: vec![crate::mould::map::Crystal { x: 900.0, y: 80.0, r: 20.0, charge: 384.0 }, crate::mould::map::Crystal { x: 200.0, y: 560.0, r: 20.0, charge: 384.0 }],
+        moulds: vec![(960.0, 600.0)],
+        landing: Some((300.0, 320.0)),
+        walls: Vec::new(),
+        moisture: None,
+    };
+    crate::mould::map::Map { w, h, ground, plants: Vec::new(), items }
+}
+
+/// Squad mode on `bar_map`, with walking maps built whole at once if
+/// `whole` (`Rules::map_pops`), else a slice a step as in play.
+fn bar_game(w: usize, h: usize, bar: bool, whole: bool) -> Game<BigDish> {
+    let m = bar_map(w, h, bar);
+    let mut rules = Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+    rules.squads = true;
+    if whole {
+        rules.map_pops = usize::MAX;
+    }
+    Game::new(BigDish::with_map(race_params(1, 2, 300), &m), rules, 1)
+}
+
+/// Game seconds until a squad of 4 steered east from the landing has its
+/// middle past the bar (map x 480), or None in `secs`.
+fn steer_past_bar(w: usize, h: usize, whole: bool, secs: u32) -> Option<f32> {
+    let mut g = bar_game(w, h, true, whole);
+    for _ in 0..4 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    let tps = g.rules.tps;
+    for _ in 0..2 * tps {
+        g.step();
+    }
+    g.apply(Cmd::Steer(0, (1.0, 0.0)));
+    for i in 0..secs * tps {
+        g.step();
+        // A fine cell is two map cells here (scale 2).
+        if g.middle(0).unwrap().0 * 2.0 > 480.0 {
+            return Some(i as f32 / tps as f32);
+        }
+    }
+    None
+}
+
+/// **A squad steered into rock gets round it as fast with maps built a
+/// slice a step as with whole ones** (`STEER_NEAR`). Near half a lead, at
+/// first, every anchor move asked for a new map and the anchor waited for
+/// it: 26.3 s against 12.9 s whole at 1x, and never in 60 s at 6x. Now
+/// 13.6 s at 1x (2026-11-15).
+#[test]
+fn a_steered_squad_gets_round_rock_with_sliced_maps() {
+    let whole = steer_past_bar(1024, 640, true, 60).expect("whole maps get past the bar");
+    let sliced = steer_past_bar(1024, 640, false, 60).expect("sliced maps get past the bar");
+    eprintln!("past the bar at 1x: whole {whole:.1} s, sliced {sliced:.1} s");
+    assert!(sliced < 1.5 * whole, "sliced {sliced:.1} s against whole {whole:.1} s");
+}
+
+/// The same at the core world's 6x, where a map takes about 8 steps:
+/// 16.4 s sliced against 12.9 s whole (2026-11-15).
+#[test]
+fn a_steered_squad_gets_round_rock_with_sliced_maps_at_6x() {
+    let whole = steer_past_bar(2512, 1568, true, 60).expect("whole maps get past the bar");
+    let sliced = steer_past_bar(2512, 1568, false, 60).expect("sliced maps get past the bar");
+    eprintln!("past the bar at 6x: whole {whole:.1} s, sliced {sliced:.1} s");
+    assert!(sliced < 1.5 * whole, "sliced {sliced:.1} s against whole {whole:.1} s");
+}
+
+/// **24 live goals at 6x keep their maps** (`MAP_CELLS_MAX`): each goal,
+/// asked every step, is served on every step after its first. At 16M
+/// cells the cache held 17 maps at 6x and lost 26% of goal-steps to
+/// rebuilds with 24 goals.
+#[test]
+fn walking_maps_serve_24_goals_at_6x() {
+    let mut g = bar_game(2512, 1568, false, false);
+    let (fw, fh) = g.world.size();
+    let n = 24;
+    let goals: Vec<(f32, f32)> = (0..n).map(|k| (30.0 + (k % 8) as f32 * (fw as f32 - 60.0) / 7.0, 30.0 + (k / 8) as f32 * 40.0)).collect();
+    let near = super::paths::MAP_NEAR * g.s();
+    let (mut first, mut lost) = (vec![None; n], 0usize);
+    for step in 0..600 {
+        g.pump_maps();
+        for (k, &p) in goals.iter().enumerate() {
+            match g.map_for(cell(fw, fh, p), p, near) {
+                Some(_) => first[k] = first[k].or(Some(step)),
+                None if first[k].is_some() => lost += 1,
+                None => {}
+            }
+        }
+    }
+    assert!(first.iter().all(Option::is_some), "every goal served in 600 steps: {first:?}");
+    assert_eq!(lost, 0, "goal-steps unserved after a goal's first map");
+}
+
+/// **Walls going up every 2 steps still let a waiting goal's map finish**
+/// (`stale_maps`): the map being built finishes, then goes stale. Started
+/// again on each wall, at first, a goal at 6x got no map in 600 steps with
+/// a wall every 6 steps or less.
+#[test]
+fn walls_in_quick_succession_let_a_walking_map_finish() {
+    for (w, h) in [(1024, 640), (2512, 1568)] {
+        let mut g = bar_game(w, h, false, false);
+        let (fw, fh) = g.world.size();
+        let p = (fw as f32 - 40.0, fh as f32 - 40.0);
+        let near = super::paths::MAP_NEAR * g.s();
+        let got = (0..60u32).find(|&step| {
+            g.pump_maps();
+            let served = g.map_for(cell(fw, fh, p), p, near).is_some();
+            if step % 2 == 1 {
+                g.stale_maps();
+            }
+            served
+        });
+        assert!(got.is_some_and(|s| s < 30), "{w}x{h}: first map at step {got:?}");
+    }
+    // A map finished after a wall went up mid-build is stale: walked until
+    // it is built again on the new ground.
+    let mut g = bar_game(2512, 1568, false, false);
+    let (fw, fh) = g.world.size();
+    let p = (fw as f32 - 40.0, fh as f32 - 40.0);
+    let gi = cell(fw, fh, p);
+    assert!(g.map_for(gi, p, 0.0).is_none());
+    g.pump_maps();
+    assert!(g.paths.building.is_some(), "a 6x map takes more than a step");
+    g.stale_maps();
+    while g.map_for(gi, p, 0.0).is_none() {
+        g.pump_maps();
+    }
+    let again = g.paths.stale.contains(&gi) || g.paths.building.as_ref().is_some_and(|b| b.goal == gi);
+    assert!(again, "built on the ground before the wall, so stale (or being built again)");
+}

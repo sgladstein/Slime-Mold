@@ -103,6 +103,9 @@ struct Paths {
     /// Whether the last map started was an asked goal's: with both asked
     /// and stale maps waiting, starts take turns (`pump_maps`).
     asked_last: bool,
+    /// Whether the map being built went stale while it was built (a wall
+    /// went up): it joins `stale` when done.
+    build_stale: bool,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.

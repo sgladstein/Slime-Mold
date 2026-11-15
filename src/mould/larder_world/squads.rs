@@ -427,9 +427,14 @@ impl<W: World> Game<W> {
         }
         let (w, h) = self.world.size();
         let gi = cell(w, h, to);
-        // A steered squad's `to` moves with it: a map to a point half a
-        // lead off serves it.
-        let near = if sent { MAP_NEAR * self.s() } else { lead / 2.0 };
+        // A steered squad's `to` moves with it: a map to a point within
+        // `STEER_NEAR` serves it. Half a lead, at first, was less than the
+        // `to` moves each time the anchor does, so every move asked for a
+        // new map and the anchor waited for it: a squad steered into rock
+        // took 26 s to get round a bar at 1x against 13 s with whole maps,
+        // and stood still 798 of 900 steps at 6x (technical review,
+        // 2026-11-15; 13.6 and 16.4 s at 10 dish cells).
+        let near = if sent { MAP_NEAR * self.s() } else { STEER_NEAR * self.s() };
         let Some(key) = self.map_for(gi, to, near) else {
             // Its map is being built (`pump_maps`): the anchor waits.
             return from;
