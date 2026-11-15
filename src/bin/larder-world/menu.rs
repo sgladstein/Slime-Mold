@@ -114,7 +114,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // once and is saved; not a round's setting, so `round_args` skips it.
     let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
     let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
-    o.push(Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
+    // First on the page (the review, 11-15: it was the last of 15 rows,
+    // below the fold, and the one the owner needed).
+    o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
     o
 }
 
