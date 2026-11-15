@@ -2037,7 +2037,11 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
 // it (`terrain_at`): the shadow it casts, then its top, lit, with an
 // antialiased edge. Where the terrain covers the pixel whole, `base` takes
 // `terrain_top` alone and never shades the ground under it.
-fn terrain_over(c0: vec3<f32>, x: f32, y: f32, ta: TerAt) -> vec3<f32> {
+// It works the terrain out again rather than taking `base`'s: held across
+// `shaded`, the terrain's fields cost the 1070 0.15-0.18 ms at zoom 6 and
+// 24 on the fork (registers; 2011eb65, Reports/view-cost-2026-11-15).
+fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
+    let ta = terrain_at(x, y);
     if (!ta.near) { return c0; }
     let l = normalize(LIGHT);
     let cov = ta.cov;
@@ -2286,7 +2290,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if ((n & 1023u) != 0u) { under_body = mat_at(fx, fy).body; }
             } else {
                 c = shaded(fx, fy, 0.75 / f32(P.fine));
-                c = terrain_over(c, fx, fy, ta);
+                c = terrain_over(c, fx, fy);
             }
             // Each calm walker a point of light (owner's playtest, 11-14
             // 04:50Z: "single individual walkers should be brighter"). It

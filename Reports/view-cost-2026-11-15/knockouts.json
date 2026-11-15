@@ -43,7 +43,7 @@
    "new": "            if (false) {\n                c = terrain_top(ta);"
   },
   {
-   "old": "                c = terrain_over(c, fx, fy, ta);",
+   "old": "                c = terrain_over(c, fx, fy);",
    "new": ""
   }
  ],
@@ -97,6 +97,12 @@
   {
    "old": "            let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);",
    "new": "            let hot = 0u;"
+  }
+ ],
+ "noskip": [
+  {
+   "old": "            if (ta.cov >= 1.0) {\n                c = terrain_top(ta);",
+   "new": "            if (false) {\n                c = terrain_top(ta);"
   }
  ]
 }
