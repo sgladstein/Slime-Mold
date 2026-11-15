@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-14
 sources:
   - Reports/burning-trails-2026-11-14.md
+  - Reports/card-text-2026-11-15.md
   - Reports/explosions-2026-11-14/README.md
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
@@ -134,7 +135,7 @@ green haze straight from the fields ([report](../../Reports/burning-trails-2026-
 The default mould ignores alarm (`alarm_weight` 0), so on 09:02Z (owner's card) the alarm trail
 became `bait`: food scent along the flight (`Burst::bait`, GPU pass `baitlay` 60) that every mould follows.
 Cards cost budget (`Card::cost`, gun budget 10, capacity at loadout, owner 15:34Z); `rate`, `thrift` and
-`smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)).
+`smother` (wipes food scent) added and `range` made 2x a card ([report](../../Reports/gun-budget-2026-11-14.md)). Each card says one short sentence with its key number (`draw::card_face`), its kind as Bullet, Next bullet or Always (`CardKind::label`, 11-15; [report](../../Reports/card-text-2026-11-15.md)).
 Since 16:46Z (owner) **the squad owns the gun** (`mould::guns`, [report](../../Reports/guns-2026-11-14.md)): a
 `Gun` is range, rate, spread, bullets a shot, budget and slots, rolled (`Gun::roll(seed, depth)`) round one of four
 kinds (rifle, the old gun; carbine; long gun; scattergun, 2-6 bullets a shot), each stat its own normal draw
