@@ -1725,7 +1725,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys|shop (shop-mid, shop-build, shop-tools: a run three planets in, a folder open)".into());
+                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a folder open)".into());
                 }
                 menu_flag = Some(v.to_string());
             }

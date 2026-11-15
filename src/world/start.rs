@@ -1,8 +1,13 @@
 //! **The start menu** (cloud plan 2026-11-14, item C2): what a player sees
 //! before a round. Its pages: the main page (sandbox, campaign, options,
 //! keys, quit), the campaign's mission list, an options page for the
-//! window's switches with each one's default beside it, and the key card
-//! (also F1 or ? from any page).
+//! window's switches in tabs with the focused one's note and default
+//! beside them, and the key card (its last tab; also F1 or ? from any
+//! page). The inner pages (Options, the keys, the campaign) fit one
+//! screen under a one-line header and page a list too long for it rather
+//! than scroll (owner, 11-15 17:31Z: "Having to scroll is horrible");
+//! the main page and the shop still scroll until the owner picks their
+//! layouts (`Reports/menu-layout-research-2026-11-15/`).
 //!
 //! Like the HUD (`ui`), it holds no game rules: the game hands it the
 //! missions, the options (name, choices, default) and the key card, draws
@@ -13,8 +18,10 @@
 //! simulation (owner, 2026-11-09/10).
 //!
 //! Keyboard: Up/Down pick a row, Enter takes it, Left/Right change an
-//! option, Backspace sets it back to its default, Esc goes back a page,
-//! 1-9 start that mission on the campaign page.
+//! option (on the keys, turn the page), Tab the next Options tab,
+//! PageUp/PageDown a paged list's page, Backspace sets an option back to
+//! its default, Esc goes back a page, 1-9 start that mission on the
+//! campaign page.
 
 use winit::keyboard::KeyCode;
 
@@ -34,6 +41,10 @@ pub struct Opt {
     pub at: usize,
     /// One line on what it does.
     pub note: String,
+    /// The Options page's tab it sits on (`in_tab`; the first tab when
+    /// empty). Tabs keep each list to a screen (owner, 11-15 17:31Z:
+    /// "Having to scroll is horrible").
+    pub tab: String,
 }
 
 impl Opt {
@@ -49,7 +60,13 @@ impl Opt {
         }
         let find = |v: &str| c.iter().position(|x| x == v).unwrap_or(0);
         let (default, at) = (find(default), find(current));
-        Opt { key: key.into(), label: label.into(), choices: c, default, at, note: note.into() }
+        Opt { key: key.into(), label: label.into(), choices: c, default, at, note: note.into(), tab: String::new() }
+    }
+
+    /// The same option on the Options page's tab `tab`.
+    pub fn in_tab(mut self, tab: &str) -> Self {
+        self.tab = tab.into();
+        self
     }
 
     pub fn value(&self) -> &str {
@@ -175,6 +192,23 @@ struct ShopPlan {
     fits_w: bool,
 }
 
+/// The Options page's last tab, the key list (also F1 or ?).
+const KEYS_TAB: &str = "Keys";
+
+/// The tab `o` sits on.
+fn tab_name(o: &Opt) -> &str {
+    if o.tab.is_empty() { "Game" } else { &o.tab }
+}
+
+/// The page of a list `per` rows a page that holds row `at`, as the range
+/// of rows it shows, and how many pages there are.
+fn sheet_of(n: usize, per: usize, sheet: usize) -> (std::ops::Range<usize>, usize) {
+    let per = per.max(1);
+    let pages = n.div_ceil(per).max(1);
+    let p = sheet.min(pages - 1);
+    (p * per..((p + 1) * per).min(n), pages)
+}
+
 /// The size `text` fits `max` pixels at: `px`, smaller down to `least`
 /// (a tile's name shrinks before it is cut).
 fn fit_px(c: &Canvas, text: &str, px: f32, least: f32, max: f32) -> f32 {
@@ -257,6 +291,11 @@ enum Hit {
     /// The "default X" under a changed option: a click resets it.
     Default(usize),
     ResetAll,
+    /// The Options page's tab `k` (the last is the key list).
+    Tab(usize),
+    /// A paged list one page back or on (the key list; a tab or the
+    /// mission list longer than the screen).
+    Flip(isize),
 }
 
 pub struct StartMenu {
@@ -303,7 +342,19 @@ pub struct StartMenu {
     drawn: Vec<(Rect, Hit)>,
     /// The keyboard moved the focus: scroll it into view.
     follow: bool,
+    /// The Options page's tab showing (the key list's is the last).
+    opt_tab: usize,
+    /// The page showing of a paged list, and how many it has, as last
+    /// drawn.
+    sheet: usize,
+    sheets: usize,
+    /// Rows a page of it, as last drawn.
+    per: usize,
 }
+
+/// The inner pages' header band and the hint line under them, UI units.
+const HEAD: f32 = 56.0;
+const FOOT: f32 = 44.0;
 
 /// How far the pointer moves, held down on a card, before a click becomes
 /// a drag (pixels).
@@ -315,7 +366,7 @@ const CARD_H: f32 = 64.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, folder: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, folder: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1 }
     }
 
     /// The option named `key`.
@@ -336,6 +387,55 @@ impl StartMenu {
         self.focus = 0;
         self.folder = None;
         self.scroll = 0.0;
+        self.sheet = 0;
+    }
+
+    /// The Options page's tabs: the options' own, in the order they come
+    /// (an option with none is on the first, "Game"), then the key list.
+    fn tabs(&self) -> Vec<String> {
+        let mut t: Vec<String> = Vec::new();
+        for o in &self.options {
+            let n = tab_name(o);
+            if !t.iter().any(|x| x == n) {
+                t.push(n.to_string());
+            }
+        }
+        t.push(KEYS_TAB.into());
+        t
+    }
+
+    /// The options on the tab showing, by index.
+    fn tab_opts(&self) -> Vec<usize> {
+        let tabs = self.tabs();
+        let Some(name) = tabs.get(self.opt_tab).filter(|n| *n != KEYS_TAB) else { return Vec::new() };
+        (0..self.options.len()).filter(|&i| tab_name(&self.options[i]) == name).collect()
+    }
+
+    /// Shows the Options page's tab `k` (the last is the key list).
+    /// Whether the page shows the Options tabs: Options, and the key list
+    /// unless the shop or the campaign opened it (F1 there), whose Back
+    /// goes back there.
+    fn tabbed(&self) -> bool {
+        self.page == Page::Options || (self.page == Page::Keys && matches!(self.keys_from, Page::Main | Page::Options))
+    }
+
+    fn open_tab(&mut self, k: usize) {
+        let n = self.tabs().len();
+        let k = k % n;
+        if k + 1 == n {
+            if self.page != Page::Keys {
+                self.show(Page::Keys);
+                // A tab of Options: Back leaves Options.
+                self.keys_from = Page::Main;
+            }
+        } else {
+            if self.page != Page::Options {
+                self.show(Page::Options);
+            }
+            self.opt_tab = k;
+            self.focus = 0;
+            self.sheet = 0;
+        }
     }
 
     /// The mouse wheel: a page taller than the window scrolls (`notches`
@@ -349,6 +449,19 @@ impl StartMenu {
     /// keyboard's focus follows by itself). Draw again to see it there.
     #[cfg(test)]
     fn reveal(&mut self, hit: Hit) {
+        // On a paged list (Options, the campaign) the page that holds it:
+        // the keyboard's row picks the page, so it takes the focus (and an
+        // option's tab opens).
+        if !self.drawn.iter().any(|(_, h)| *h == hit) {
+            if let (Page::Options, Hit::Reset(i)) = (self.page, hit) {
+                if let Some(k) = self.options.get(i).and_then(|o| self.tabs().iter().position(|t| t == tab_name(o))) {
+                    self.opt_tab = k;
+                }
+            }
+            if let Some(k) = self.rows().iter().position(|&h| h == hit) {
+                self.focus = k;
+            }
+        }
         if let Some(r) = self.drawn.iter().find(|(_, h)| *h == hit).map(|(r, _)| *r) {
             self.scroll_to(r);
         }
@@ -450,7 +563,7 @@ impl StartMenu {
         match self.page {
             Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
-            Page::Options => (0..self.options.len()).map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
+            Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
             Page::Shop => self.shop_rows(),
         }
@@ -505,7 +618,14 @@ impl StartMenu {
             Hit::RandomPlanet => return Some(StartEvent::RandomPlanet),
             Hit::Back => self.back(),
             Hit::Mission(i) => return Some(StartEvent::Mission(i)),
-            Hit::Turn(i, by) => self.options[i].turn(by),
+            Hit::Turn(i, by) => {
+                self.options[i].turn(by);
+                // The row turned takes the focus, so the note beside the
+                // list is the one for it.
+                if let Some(k) = self.rows().iter().position(|&r| r == Hit::Reset(i)) {
+                    self.focus = k;
+                }
+            }
             // On the keyboard, Enter on an option's row turns it on.
             Hit::Reset(i) => self.options[i].turn(1),
             // Every rule back, the UI size kept (a display choice, not a rule).
@@ -515,9 +635,22 @@ impl StartMenu {
                 }
             }
             Hit::Default(i) => self.options[i].at = self.options[i].default,
+            Hit::Tab(k) => self.open_tab(k),
+            Hit::Flip(by) => self.flip(by),
             Hit::Panel => {}
         }
         None
+    }
+
+    /// A paged list one page back or on (wrapping). Where the page follows
+    /// the keyboard (the options, the missions), the focus goes to the new
+    /// page's first row.
+    fn flip(&mut self, by: isize) {
+        let n = self.sheets.max(1) as isize;
+        self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
+        if matches!(self.page, Page::Options | Page::Missions) {
+            self.focus = self.sheet * self.per.max(1);
+        }
     }
 
     /// Esc (or a right click) on the gun range's armory, no folder open:
@@ -608,6 +741,14 @@ impl StartMenu {
                 }
             }
             KeyCode::Escape if self.leaves_armory() => return vec![StartEvent::NextLevel],
+            KeyCode::Tab if self.tabbed() => {
+                let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
+                self.open_tab(at + 1);
+            }
+            KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
+            KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys => {
+                self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
+            }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
                 if self.page != Page::Main {
                     self.back();
@@ -673,9 +814,17 @@ impl StartMenu {
         let s = c.ui.px(c.screen);
         let s = (s * 20.0 + 1e-3).floor() / 20.0;
         self.hits.clear();
+        // The inner pages (Options and its key list, the campaign) span the
+        // screen under a one-line header, with no title: all three
+        // researchers on the owner's "Having to scroll is horrible" (11-15
+        // 17:31Z) found the title and its line repeated on every page took
+        // 130 to 220 of the 565 units a 1080-line screen has at 200%
+        // (`Reports/menu-layout-research-2026-11-15/`).
+        let inner = matches!(self.page, Page::Options | Page::Keys | Page::Missions);
         // A shade down the left, fading out, so the panel reads over the
-        // dish; the shop spans the screen, so it dims all of it.
-        if self.page == Page::Shop {
+        // dish; the shop and the inner pages span the screen, so they dim
+        // all of it.
+        if self.page == Page::Shop || inner {
             c.rrect(Rect::new(0.0, 0.0, sw, sh), 0.0, [4, 6, 8, 150]);
         }
         let shade_w = (720.0 * s).min(sw);
@@ -684,24 +833,23 @@ impl StartMenu {
             let f = k as f32 / 40.0;
             c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
         }
-        let x = 48.0 * s;
+        let x = if inner { 40.0 * s } else { 48.0 * s };
         let w = (560.0 * s).min(sw - 2.0 * x);
-        c.text(Weight::SemiBold, 44.0 * s, (x, 96.0 * s), Align::Left, &self.title, TEXT);
-        let sub = match self.page {
-            Page::Main => "A mould that grows, feeds and fights back",
-            Page::Missions => "Campaign",
-            Page::Options => "Options",
-            Page::Keys => "Keys",
-            Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
-            Page::Shop => "The run: spend your points, then land",
-        };
-        c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
-        let top = 160.0 * s;
+        if !inner {
+            c.text(Weight::SemiBold, 44.0 * s, (x, 96.0 * s), Align::Left, &self.title, TEXT);
+            let sub = match self.page {
+                Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
+                Page::Shop => "The run: spend your points, then land",
+                _ => "A mould that grows, feeds and fights back",
+            };
+            c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
+        }
+        let top = if inner { HEAD * s + 16.0 * s } else { 160.0 * s };
         let rows = self.rows();
         let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
         // The rows the page scrolls in: under the title, over the hint (and
         // the shop's two buttons).
-        let foot = if self.page == Page::Shop { 108.0 * s } else { 44.0 * s };
+        let foot = if self.page == Page::Shop { 108.0 * s } else { FOOT * s };
         let body = Rect::new(0.0, top - 4.0 * s, sw, (sh - foot - top + 4.0 * s).max(1.0));
         self.body = Some(body);
         self.scroll = self.scroll.clamp(0.0, self.scroll_max);
@@ -731,6 +879,17 @@ impl StartMenu {
             r.h = y1 - y0;
             r.h > 0.0
         });
+        // The header over the body, and a paged list's pager at the right
+        // of the foot, never scrolled.
+        let paged = inner && self.sheets > 1;
+        if inner {
+            let n = self.hits.len();
+            self.header(c, x, s, focus);
+            if paged {
+                self.pager(c, sw - x, sh - foot + 7.0 * s, s);
+            }
+            self.drawn.extend_from_slice(&self.hits[n..]);
+        }
         if self.scroll_max > 0.0 {
             // Where the page is: a thin bar down the right edge.
             let track = Rect::new(sw - 12.0 * s, body.y + 8.0 * s, 5.0 * s, body.h - 16.0 * s);
@@ -752,12 +911,16 @@ impl StartMenu {
         let hint = match self.page {
             Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
-            Page::Options => "Left/Right or the arrows change  ·  Backspace or a click on \"back to\" resets  ·  Esc back",
+            Page::Options => "Up/Down pick  ·  Left/Right change  ·  Backspace resets  ·  Tab next tab  ·  Esc back",
+            Page::Keys if self.sheets > 1 && self.tabbed() => "Left/Right next page  ·  Tab next tab  ·  Esc or F1 back",
+            Page::Keys if self.sheets > 1 => "Left/Right next page  ·  Esc or F1 back",
+            Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
             Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "Click takes a card  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back to the range",
             Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
-        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, MUTED);
+        let pager_w = if paged { 170.0 * s } else { 0.0 };
+        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, MUTED);
     }
 
     fn glass(&mut self, r: Rect, c: &mut Canvas, s: f32) {
@@ -832,39 +995,205 @@ impl StartMenu {
         y
     }
 
-    fn missions_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
-        let n = self.missions.len();
-        // Rows shrink to fit a short window (then the page scrolls).
-        let room = self.body.map_or(600.0 * s, |b| b.h) - 80.0 * s;
-        let h = (room / (n.max(1) as f32) - 10.0 * s).clamp(52.0 * s, 78.0 * s);
-        let mut y = top + 12.0 * s;
-        if n == 0 {
-            c.text(Weight::Medium, 16.0 * s, (x, y + 24.0 * s), Align::Left, "No missions found", MUTED);
-            y += 48.0 * s;
-        }
-        for i in 0..n {
-            let e = self.missions[i].clone();
-            let r = Rect::new(x, y, w, h);
-            self.item(r, &format!("{}. {}", i + 1, e.name), &e.says, Hit::Mission(i), false, focus == Some(Hit::Mission(i)), c, s);
-            if !e.detail.is_empty() && h >= 70.0 * s {
-                c.text_fit(Weight::Medium, 13.0 * s, (r.right() - 18.0 * s, r.y + 24.0 * s), Align::Right, &e.detail, r.w * 0.4, MUTED);
+    /// The inner pages' header: the page's name, the Options tabs (the key
+    /// list is the last), and Back at the right.
+    fn header(&mut self, c: &mut Canvas, x: f32, s: f32, focus: Option<Hit>) {
+        let sw = c.screen.0 as f32;
+        let h = HEAD * s;
+        c.rrect(Rect::new(0.0, 0.0, sw, h), 0.0, [8, 11, 14, 236]);
+        c.rrect(Rect::new(0.0, h - s.max(1.0), sw, s.max(1.0)), 0.0, EDGE);
+        let name = match self.page {
+            Page::Missions => "Campaign",
+            _ if self.tabbed() => "Options",
+            _ => "Keys",
+        };
+        let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, name, TEXT) + 24.0 * s;
+        let back = Rect::new(sw - x - 116.0 * s, 10.0 * s, 116.0 * s, 36.0 * s);
+        if self.tabbed() {
+            let lit = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
+            let mut tx = tx;
+            for (k, t) in self.tabs().iter().enumerate() {
+                let w = c.atlas.measure(Weight::SemiBold, 15.0 * s, t) + 28.0 * s;
+                let r = Rect::new(tx, 11.0 * s, w, 34.0 * s);
+                if r.right() > back.x - 12.0 * s {
+                    break;
+                }
+                let on = k == lit;
+                let hot = self.hover.is_some_and(|p| r.contains(p));
+                let (top, bottom) = match (on, hot) {
+                    (true, _) => ([40, 70, 98, 255], [30, 54, 78, 255]),
+                    (false, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
+                    (false, false) => (BUTTON_TOP, BUTTON_BOTTOM),
+                };
+                c.panel(r, 8.0 * s, top, bottom, 1.0, if on { ACCENT } else { [255, 255, 255, 30] });
+                c.text(Weight::SemiBold, 15.0 * s, (r.x + 14.0 * s, r.y + 22.5 * s), Align::Left, t, if on { TEXT } else { MUTED });
+                self.hits.push((r, Hit::Tab(k)));
+                tx = r.right() + 8.0 * s;
             }
-            y += h + 10.0 * s;
         }
-        self.item(Rect::new(x, y + 8.0 * s, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, false, focus == Some(Hit::Back), c, s);
-        y + 50.0 * s
+        self.small_button(back, "Back", "Esc", Hit::Back, focus == Some(Hit::Back), c, s);
     }
 
-    fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
-        // Wider than the other pages (560 until the UI review, 11-15):
-        // every note was cut off after half the row.
-        let w = (w * 1.4).min(c.screen.0 as f32 - 2.0 * x);
-        let n = self.options.len();
-        let rh = 62.0 * s;
-        let panel = Rect::new(x, top + 12.0 * s, w, n as f32 * rh + 24.0 * s);
+    /// A one-line button with its key small at the right.
+    #[allow(clippy::too_many_arguments)]
+    fn small_button(&mut self, r: Rect, label: &str, key: &str, hit: Hit, focused: bool, c: &mut Canvas, s: f32) {
+        let hot = focused || self.hover.is_some_and(|p| r.contains(p));
+        let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+        c.panel(r, 8.0 * s, t, b, 1.0, [255, 255, 255, 34]);
+        if focused {
+            c.outline(r.inset(-2.0 * s), 10.0 * s, 1.5 * s, ACCENT);
+        }
+        c.text(Weight::SemiBold, 16.0 * s, (r.x + 14.0 * s, r.y + r.h / 2.0 + 6.0 * s), Align::Left, label, TEXT);
+        if !key.is_empty() {
+            c.text(Weight::Medium, 12.5 * s, (r.right() - 10.0 * s, r.y + r.h / 2.0 + 5.0 * s), Align::Right, key, MUTED);
+        }
+        self.hits.push((r, hit));
+    }
+
+    /// "<  2 of 3  >" ending at `right`, from `y` down, for a paged list
+    /// (in the foot, right of the hint).
+    fn pager(&mut self, c: &mut Canvas, right: f32, y: f32, s: f32) {
+        if self.sheets <= 1 {
+            return;
+        }
+        let bw = 34.0 * s;
+        let next = Rect::new(right - bw, y, bw, 30.0 * s);
+        let label = format!("{} of {}", self.sheet + 1, self.sheets);
+        let lw = c.atlas.measure(Weight::SemiBold, 14.5 * s, &label) + 20.0 * s;
+        let prev = Rect::new(next.x - lw - bw, y, bw, 30.0 * s);
+        c.text(Weight::SemiBold, 14.5 * s, (prev.right() + lw / 2.0, y + 20.0 * s), Align::Centre, &label, TEXT);
+        for (r, by, t) in [(prev, -1isize, "<"), (next, 1, ">")] {
+            let hot = self.hover.is_some_and(|p| r.contains(p));
+            c.panel(r, 7.0 * s, if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP }, if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM }, 1.0, [255, 255, 255, 30]);
+            c.text(Weight::SemiBold, 15.0 * s, (r.x + r.w / 2.0, r.y + 20.0 * s), Align::Centre, t, TEXT);
+            self.hits.push((r, Hit::Flip(by)));
+        }
+    }
+
+    /// The list and the note beside it: the list's width and the note's,
+    /// on an inner page `x` from each side.
+    fn split(&self, c: &Canvas, x: f32, s: f32) -> (f32, f32) {
+        let avail = c.screen.0 as f32 - 2.0 * x;
+        let note = (avail * 0.42).clamp(300.0 * s, 480.0 * s).min(avail * 0.5);
+        let list = (avail - note - 20.0 * s).min(680.0 * s);
+        (list, note)
+    }
+
+    /// The room an inner page's body has under its header, over its hint.
+    fn room(&self, c: &Canvas, top: f32, s: f32) -> f32 {
+        // (The 12 units the page keeps over its hint: `draw`'s scroll_max.)
+        c.screen.1 as f32 - FOOT * s - 12.0 * s - top
+    }
+
+    /// The missions as one-line rows, a page of them if they do not fit,
+    /// with the one under the cursor (else the keyboard's) told in full in
+    /// a note beside them. (Two-line rows of 78 units until 11-15: eight
+    /// needed 624 units, more than a 1080-line screen has at 200%.)
+    fn missions_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let n = self.missions.len();
+        let (lw, nw) = self.split(c, x, s);
+        let rh = 46.0 * s;
+        let room = self.room(c, top, s);
+        let per = ((room - 16.0 * s) / rh).floor().max(1.0) as usize;
+        if let Some(k) = focus.and_then(|h| if let Hit::Mission(i) = h { Some(i) } else { None }) {
+            self.sheet = k / per;
+        }
+        let (shown, pages) = sheet_of(n, per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let panel = Rect::new(x, top, lw, shown.len().max(1) as f32 * rh + 16.0 * s);
         self.glass(panel, c, s);
-        let mut y = panel.y + 12.0 * s;
-        for i in 0..n {
+        if n == 0 {
+            c.text(Weight::Medium, 16.0 * s, (x + 20.0 * s, top + 34.0 * s), Align::Left, "No missions found", MUTED);
+        }
+        let mut told = None;
+        let mut y = panel.y + 8.0 * s;
+        for i in shown {
+            let e = self.missions[i].clone();
+            let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, rh - 4.0 * s);
+            let focused = focus == Some(Hit::Mission(i));
+            let hot = self.hover.is_some_and(|p| row.contains(p));
+            if focused || hot {
+                c.rrect(row, 9.0 * s, [255, 255, 255, if focused { 22 } else { 12 }]);
+            }
+            if focused {
+                c.outline(row, 9.0 * s, 1.5 * s, ACCENT);
+            }
+            if hot || (focused && told.is_none()) {
+                told = Some(i);
+            }
+            let base = row.y + row.h / 2.0 + 6.0 * s;
+            let dw = c.atlas.measure(Weight::Medium, 14.0 * s, &e.detail).min(row.w * 0.4);
+            c.text_fit(Weight::SemiBold, 17.0 * s, (row.x + 14.0 * s, base), Align::Left, &format!("{}. {}", i + 1, e.name), row.w - dw - 44.0 * s, TEXT);
+            c.text_fit(Weight::Medium, 14.0 * s, (row.right() - 14.0 * s, base), Align::Right, &e.detail, row.w * 0.4, MUTED);
+            self.hits.push((row, Hit::Mission(i)));
+            y += rh;
+        }
+        // The note: the mission under the cursor, else the keyboard's, else
+        // the first.
+        if let Some(e) = told.or((n > 0).then_some(0)).map(|i| (i, self.missions[i].clone())) {
+            let (i, e) = e;
+            let tw = nw - 36.0 * s;
+            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &format!("{}. {}", i + 1, e.name)) * 28.0 + Self::count(c, Weight::Medium, 15.5 * s, tw, &e.says) * 23.0 + Self::count(c, Weight::Medium, 14.0 * s, tw, &e.detail) * 21.0;
+            let need = (36.0 + 10.0 + 48.0) * s + lines * s;
+            let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(220.0 * s).max(need).min(room));
+            self.glass(r, c, s);
+            let px = r.x + 18.0 * s;
+            let mut y = r.y + 36.0 * s;
+            y += self.lines(c, Weight::SemiBold, 21.0 * s, (px, y), tw, 28.0 * s, &format!("{}. {}", i + 1, e.name), TEXT) + 6.0 * s;
+            y += self.lines(c, Weight::Medium, 15.5 * s, (px, y), tw, 23.0 * s, &e.says, TEXT) + 4.0 * s;
+            self.lines(c, Weight::Medium, 14.0 * s, (px, y), tw, 21.0 * s, &e.detail, MUTED);
+            c.text(Weight::Medium, 13.5 * s, (px, r.bottom() - 18.0 * s), Align::Left, &format!("Click or {} starts it", i + 1), MUTED);
+        }
+        panel.bottom()
+    }
+
+    /// The lines `text` wraps to in `max` (none when empty).
+    fn count(c: &Canvas, weight: Weight, px: f32, max: f32, text: &str) -> f32 {
+        if text.is_empty() {
+            0.0
+        } else {
+            c.wrap(weight, px, max, text).len() as f32
+        }
+    }
+
+    /// Wrapped text from a first baseline at `at`; the height it took
+    /// (to the next first baseline).
+    #[allow(clippy::too_many_arguments)]
+    fn lines(&self, c: &mut Canvas, weight: Weight, px: f32, at: (f32, f32), max: f32, lead: f32, text: &str, colour: Rgba) -> f32 {
+        if text.is_empty() {
+            return 0.0;
+        }
+        c.paragraph(weight, px, at, max, lead, text, colour) as f32 * lead
+    }
+
+    /// The Options page: the tab's settings as one-line rows (a page of
+    /// them if a tab outgrows the screen), and beside them the focused
+    /// one's whole note, its default and its reset. Until 11-15 every
+    /// setting was a two-line row of 62 units with its note cut to fit,
+    /// 17 of them, so the page scrolled even at 100% on 1080 lines; three
+    /// researchers on the owner's "Having to scroll is horrible" (17:31Z)
+    /// agreed on tabs, single-line rows and a fixed note pane
+    /// (`Reports/menu-layout-research-2026-11-15/`).
+    fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
+        let opts = self.tab_opts();
+        let n = opts.len();
+        let (lw, nw) = self.split(c, x, s);
+        let rh = 46.0 * s;
+        let room = self.room(c, top, s);
+        let per = ((room - 16.0 * s) / rh).floor().max(1.0) as usize;
+        // The page follows the keyboard's row.
+        if let Some(k) = focus.and_then(|h| if let Hit::Reset(i) = h { opts.iter().position(|&o| o == i) } else { None }) {
+            self.sheet = k / per;
+        }
+        let (shown, pages) = sheet_of(n, per, self.sheet);
+        (self.sheets, self.per) = (pages, per);
+        self.sheet = self.sheet.min(pages - 1);
+        let panel = Rect::new(x, top, lw, shown.len().max(1) as f32 * rh + 16.0 * s);
+        self.glass(panel, c, s);
+        let mut told = None;
+        let mut y = panel.y + 8.0 * s;
+        for &i in &opts[shown] {
             let o = self.options[i].clone();
             let row = Rect::new(panel.x + 8.0 * s, y, panel.w - 16.0 * s, rh - 4.0 * s);
             let focused = focus == Some(Hit::Reset(i));
@@ -875,41 +1204,133 @@ impl StartMenu {
             if focused {
                 c.outline(row, 9.0 * s, 1.5 * s, ACCENT);
             }
+            if hot || (focused && told.is_none()) {
+                told = Some(i);
+            }
             self.hits.push((row, Hit::Reset(i)));
-            let lx = row.x + 14.0 * s;
-            // The value between its arrows, the default under it.
+            // The value between its arrows.
             let aw = 30.0 * s;
-            let vw = 150.0 * s;
-            let right = row.right() - 10.0 * s;
-            let next = Rect::new(right - aw, row.y + 6.0 * s, aw, 28.0 * s);
-            let prev = Rect::new(next.x - vw - aw, next.y, aw, 28.0 * s);
-            c.text(Weight::SemiBold, 16.5 * s, (lx, row.y + 24.0 * s), Align::Left, &o.label, TEXT);
-            c.text_fit(Weight::Medium, 13.5 * s, (lx, row.y + 45.0 * s), Align::Left, &o.note, prev.x - lx - 16.0 * s, MUTED);
+            let vw = 130.0 * s;
+            let next = Rect::new(row.right() - 8.0 * s - aw, row.y + (row.h - 30.0 * s) / 2.0, aw, 30.0 * s);
+            let prev = Rect::new(next.x - vw - aw, next.y, aw, 30.0 * s);
+            let base = row.y + row.h / 2.0 + 6.0 * s;
+            let lx = row.x + 14.0 * s;
+            let label_w = c.text_fit(Weight::SemiBold, 17.0 * s, (lx, base), Align::Left, &o.label, prev.x - lx - 30.0 * s, TEXT);
+            if !o.is_default() {
+                // Moved off its default: a dot after the name (the note
+                // says what it was).
+                c.rrect(Rect::new(lx + label_w + 8.0 * s, base - 9.0 * s, 7.0 * s, 7.0 * s), 3.5 * s, WARN);
+            }
             for (r, by, label) in [(prev, -1isize, "<"), (next, 1, ">")] {
                 let hot = self.hover.is_some_and(|p| r.contains(p));
                 c.panel(r, 7.0 * s, if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP }, if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM }, 1.0, [255, 255, 255, 30]);
-                c.text(Weight::SemiBold, 15.0 * s, (r.x + r.w / 2.0, r.y + 19.0 * s), Align::Centre, label, TEXT);
+                c.text(Weight::SemiBold, 15.0 * s, (r.x + r.w / 2.0, r.y + 20.0 * s), Align::Centre, label, TEXT);
                 self.hits.push((r, Hit::Turn(i, by)));
             }
             let vc = if o.is_default() { TEXT } else { WARN };
-            c.text_fit(Weight::SemiBold, 15.0 * s, (prev.right() + vw / 2.0, row.y + 26.0 * s), Align::Centre, o.value(), vw - 8.0 * s, vc);
-            // Under a changed value, "back to X", a click resets it.
-            if !o.is_default() {
-                let d = format!("back to {}", o.choices[o.default]);
-                let dw = c.atlas.measure(Weight::Medium, 12.5 * s, &d).min(vw + 2.0 * aw);
-                let dr = Rect::new(prev.right() + (vw - dw) / 2.0 - 4.0 * s, row.y + 36.0 * s, dw + 8.0 * s, 18.0 * s);
-                let hot = self.hover.is_some_and(|p| dr.contains(p));
-                c.text_fit(Weight::Medium, 12.5 * s, (prev.right() + vw / 2.0, row.y + 49.0 * s), Align::Centre, &d, vw + 2.0 * aw, if hot { ACCENT } else { MUTED });
-                self.hits.push((dr, Hit::Default(i)));
-            }
+            c.text_fit(Weight::SemiBold, 16.0 * s, (prev.right() + vw / 2.0, base), Align::Centre, o.value(), vw - 8.0 * s, vc);
             y += rh;
         }
-        // The defaults move as the game is tuned (D5: "applies to this build").
-        c.text_fit(Weight::Medium, 13.0 * s, (x, panel.bottom() + 20.0 * s), Align::Left, "Defaults are this build's; they move as the game is tuned", w, MUTED);
-        let by = panel.bottom() + 34.0 * s;
-        self.item(Rect::new(x, by, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, focus == Some(Hit::Back), c, s);
-        self.item(Rect::new(x + 152.0 * s, by, 200.0 * s, 42.0 * s), "All to defaults", "", Hit::ResetAll, false, focus == Some(Hit::ResetAll), c, s);
-        by + 42.0 * s
+        // The note: the row under the cursor, else the keyboard's, else
+        // the tab's first.
+        let tw = nw - 36.0 * s;
+        let told = told.or(opts.first().copied()).map(|i| (i, self.options[i].clone()));
+        let state = |o: &Opt| {
+            if o.is_default() {
+                format!("{} is the default", o.value())
+            } else {
+                format!("Now {}  ·  the default is {}", o.value(), o.choices[o.default])
+            }
+        };
+        // Every rule back (the UI size kept), and where the defaults come
+        // from (D5: "applies to this build"), at the note's foot.
+        let foot = "Defaults are this build's; they move as the game is tuned";
+        let fl = Self::count(c, Weight::Medium, 13.0 * s, tw, foot);
+        let tail = 8.0 * s + fl * 19.0 * s + 66.0 * s;
+        // As tall as the list, or as the note needs.
+        let need = told.as_ref().map_or(0.0, |(_, o)| {
+            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &o.label) * 28.0 + Self::count(c, Weight::Medium, 15.5 * s, tw, &o.note) * 23.0 + Self::count(c, Weight::Medium, 14.0 * s, tw, &state(o)) * 21.0;
+            (48.0 + if o.is_default() { -10.0 } else { 30.0 }) * s + lines * s
+        });
+        let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(300.0 * s).max(need + tail).min(room));
+        self.glass(r, c, s);
+        let px = r.x + 18.0 * s;
+        let all = Rect::new(px, r.bottom() - 54.0 * s, (190.0 * s).min(tw), 40.0 * s);
+        if let Some((i, o)) = told {
+            let mut y = r.y + 36.0 * s;
+            y += self.lines(c, Weight::SemiBold, 21.0 * s, (px, y), tw, 28.0 * s, &o.label, TEXT) + 6.0 * s;
+            y += self.lines(c, Weight::Medium, 15.5 * s, (px, y), tw, 23.0 * s, &o.note, TEXT) + 6.0 * s;
+            y += self.lines(c, Weight::Medium, 14.0 * s, (px, y), tw, 21.0 * s, &state(&o), MUTED);
+            if !o.is_default() {
+                let label = format!("Back to {}", o.choices[o.default]);
+                let bw = (c.atlas.measure(Weight::SemiBold, 16.0 * s, &label) + 70.0 * s).min(tw);
+                let b = Rect::new(px, y - 6.0 * s, bw, 36.0 * s);
+                if b.bottom() <= all.y - 8.0 * s - fl * 19.0 * s {
+                    self.small_button(b, &label, "Bksp", Hit::Default(i), false, c, s);
+                }
+            }
+        }
+        c.paragraph(Weight::Medium, 13.0 * s, (px, all.y - 12.0 * s - (fl - 1.0) * 19.0 * s), tw, 19.0 * s, foot, MUTED);
+        self.small_button(all, "All to defaults", "", Hit::ResetAll, focus == Some(Hit::ResetAll), c, s);
+        panel.bottom().max(r.bottom())
+    }
+
+    /// The key list, the Options page's last tab (also F1 or ?): two
+    /// columns where there is room, each line wrapped, a page at a time
+    /// (Left/Right or the arrows under it). It scrolled until 11-15.
+    fn keys_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32) -> f32 {
+        let rows = self.keys.clone();
+        let avail = c.screen.0 as f32 - 2.0 * x;
+        let room = self.room(c, top, s);
+        let gap = 28.0 * s;
+        // Two columns down to 788 units across (a 1280-wide screen at
+        // 200% is 984 units: at 440 a column it drew one, four pages).
+        let cols = if avail >= 2.0 * 380.0 * s + gap { 2 } else { 1 };
+        let col_w = (avail - (cols - 1) as f32 * gap) / cols as f32;
+        // The key's column: most keys are short, and a narrower one wraps
+        // fewer of the longer descriptions (0.36 and 210 drew three pages
+        // at 200% on 1080 lines, two now).
+        let kw = (col_w * 0.3).min(180.0 * s);
+        let (px, lead) = (15.0 * s, 21.0 * s);
+        // Each row's height: its longer side, wrapped.
+        let heights: Vec<f32> = rows
+            .iter()
+            .map(|(k, w)| {
+                let a = c.wrap(Weight::SemiBold, px, kw - 12.0 * s, k).len();
+                let b = c.wrap(Weight::Medium, px, col_w - kw - 24.0 * s, w).len();
+                a.max(b) as f32 * lead + 5.0 * s
+            })
+            .collect();
+        // Fill pages: column by column, each as tall as the room.
+        let col_h = room - 36.0 * s;
+        let mut sheets: Vec<Vec<(usize, usize, f32)>> = vec![Vec::new()];
+        let (mut col, mut y) = (0usize, 0.0f32);
+        for (i, h) in heights.iter().enumerate() {
+            if y + h > col_h && y > 0.0 {
+                col += 1;
+                y = 0.0;
+                if col == cols {
+                    sheets.push(Vec::new());
+                    col = 0;
+                }
+            }
+            sheets.last_mut().unwrap().push((i, col, y));
+            y += h;
+        }
+        self.sheets = sheets.len();
+        self.sheet = self.sheet.min(self.sheets - 1);
+        let shown = &sheets[self.sheet];
+        let used = shown.iter().map(|&(i, _, y)| y + heights[i]).fold(0.0f32, f32::max);
+        let panel = Rect::new(x, top, avail, used + 36.0 * s);
+        self.glass(panel, c, s);
+        for &(i, col, y) in shown {
+            let (k, w) = &rows[i];
+            let cx = panel.x + 20.0 * s + col as f32 * (col_w + gap);
+            let by = panel.y + 28.0 * s + y;
+            c.paragraph(Weight::SemiBold, px, (cx, by), kw - 12.0 * s, lead, k, ACCENT);
+            c.paragraph(Weight::Medium, px, (cx + kw, by), col_w - kw - 24.0 * s, lead, w, TEXT);
+        }
+        panel.bottom()
     }
 
     /// The shop page laid out at scale `s` from `top`: the upgrade grid on
@@ -1298,32 +1719,19 @@ impl StartMenu {
         }
     }
 
-    fn keys_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32) -> f32 {
-        let rows = self.keys.clone();
-        // Two columns when one does not fit and two have room (each 480
-        // units or more; under that a big UI size squeezed every line
-        // small), else one, and the page scrolls.
-        let lh = 26.0 * s;
-        let room = self.body.map_or(600.0 * s, |b| b.h) - 80.0 * s;
-        let per = ((room - 24.0 * s) / lh).floor().max(1.0) as usize;
-        let wide = (w * 2.5).min(c.screen.0 as f32 - 2.0 * x);
-        let cols = if rows.len() > per && wide / 2.0 >= 480.0 * s { 2 } else { 1 };
-        // Two wide columns (1.6 x the page until the UI review, 11-15, which
-        // cut most lines short); one as wide as there is room for.
-        let col_w = if cols == 1 { (w * 1.4).min(c.screen.0 as f32 - 2.0 * x) } else { wide / 2.0 };
-        let per = rows.len().div_ceil(cols);
-        let panel = Rect::new(x, top + 12.0 * s, col_w * cols as f32, per as f32 * lh + 30.0 * s);
-        self.glass(panel, c, s);
-        for (k, (key, what)) in rows.iter().enumerate() {
-            let (col, row) = (k / per.max(1), k % per.max(1));
-            let cx = panel.x + 20.0 * s + col as f32 * col_w;
-            let y = panel.y + 28.0 * s + row as f32 * lh;
-            let kw = (col_w * 0.34).min(190.0 * s);
-            c.text_fit(Weight::SemiBold, 15.0 * s, (cx, y), Align::Left, key, kw - 8.0 * s, ACCENT);
-            c.text_fit(Weight::Medium, 15.0 * s, (cx + kw, y), Align::Left, what, col_w - kw - 28.0 * s, TEXT);
+    /// The pages the last drawn list took: an Options tab, the key list or
+    /// the campaign (1 elsewhere). The fit tests'.
+    pub fn sheets(&self) -> usize {
+        if matches!(self.page, Page::Options | Page::Keys | Page::Missions) {
+            self.sheets
+        } else {
+            1
         }
-        self.item(Rect::new(x, panel.bottom() + 16.0 * s, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, true, c, s);
-        panel.bottom() + 58.0 * s
+    }
+
+    /// Whether the page last drawn was taller than the screen (it scrolls).
+    pub fn scrolls(&self) -> bool {
+        self.scroll_max > 0.0
     }
 
     /// Where `hit` was last drawn (tests and the window's smoke hand).
@@ -1810,7 +2218,8 @@ mod tests {
     }
 
     /// At every UI size the options page's last row and its buttons stay
-    /// on the screen (they ran off at 150% on 900 lines before the cap).
+    /// on the screen (they ran off at 150% on 900 lines before the cap),
+    /// a tab of more than fit paged, not scrolled.
     #[test]
     fn every_ui_size_reaches_every_option() {
         for screen in [(1280, 800), (1600, 900), (1920, 1080)] {
@@ -1827,7 +2236,9 @@ mod tests {
                 for h in [Hit::Reset(0), Hit::Reset(last), Hit::Back, Hit::ResetAll] {
                     shown(&mut m, &mut c, h);
                     let r = m.rect_of(h).unwrap();
-                    assert!(r.y >= m.body.unwrap().y && r.bottom() <= m.body.unwrap().bottom() + 0.5, "{screen:?} at {user}: {h:?} {r:?} not in view");
+                    // (Back is in the header, over the body.)
+                    assert!(h == Hit::Back || (r.y >= m.body.unwrap().y && r.bottom() <= m.body.unwrap().bottom() + 0.5), "{screen:?} at {user}: {h:?} {r:?} not in view");
+                    assert_eq!(m.scroll_max, 0.0, "{screen:?} at {user}: the options page scrolls");
                     assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {h:?} {r:?}");
                 }
             }
@@ -1912,7 +2323,10 @@ mod tests {
                         let h = m.rows()[m.focus];
                         let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {page:?} at {user}: {h:?} scrolled away"));
                         let b = m.body.unwrap();
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun);
+                        // The shop's two buttons and the inner pages'
+                        // header are fixed, over and under the body.
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions) && h == Hit::Back);
+                        assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
                     let probe = match page {
@@ -1938,6 +2352,157 @@ mod tests {
                     assert!(b >= a * grew * 0.9, "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)");
                 }
             }
+        }
+    }
+    /// A menu with the game's own lists' sizes: 17 options on three tabs
+    /// with the longest notes, eight missions and 46 key lines (the
+    /// game's, 11-15), some of them long.
+    fn full_menu() -> StartMenu {
+        let long = "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off";
+        let mut options = vec![Opt::new("ui", "UI and text size", &["75%", "100%", "200%"], "100%", "200%", "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere")];
+        for (k, tab) in [("map", "Planet"), ("planet", "Planet"), ("own", "Planet"), ("plants", "Planet")] {
+            options.push(Opt::new(k, "Your own mould", &["off", "on"], "off", "on", "A green mould the squad sows and feeds; sandbox on the race world").in_tab(tab));
+        }
+        for k in ["mode", "rounds", "bullet", "dev"] {
+            options.push(Opt::new(k, "Bullet speed", &["0", "30", "45", "60", "90"], "45", "0", "Dish cells a game second a shot flies; 0 is the instant ray"));
+        }
+        for k in ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"] {
+            options.push(Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The mould"));
+        }
+        let missions = ["Landfall", "First contact", "The gaps", "Cut the cord", "Kill zone", "The nest", "Spore season", "Two moulds"]
+            .iter()
+            .map(|n| Entry { stem: n.to_lowercase(), name: n.to_string(), says: "Grow your squad to 12 and harvest 3 crystals at once, then hold them while the slime surges".into(), detail: "The Passes, The Swarmer".into() })
+            .collect();
+        let keys = (0..46)
+            .map(|k| match k % 5 {
+                0 => ("Right click a half-built building".to_string(), "Back to building it (nothing paid again)".to_string()),
+                1 => ("Esc".into(), "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into()),
+                _ => (format!("Ctrl + {k}"), "Make a group, select it".into()),
+            })
+            .collect();
+        StartMenu::new("Larder World", missions, options, keys)
+    }
+
+    /// The owner, 11-15 17:31Z: "Having to scroll is horrible. That's not
+    /// professional." Every Options tab, every page of the key list and
+    /// the campaign fit one screen at the worst sizes (16:9 and 21:9 at
+    /// 200%, a small laptop at 175%, the window as it opens at 125%, and
+    /// smaller than the game opens): nothing scrolls, every button and
+    /// word is on the screen, no two words' glyphs touch, none under 12.5
+    /// units, and the options' tabs and the campaign need no second page
+    /// at any of them. The main page and the shop join when the owner has
+    /// picked their layouts (`Reports/menu-layout-research-2026-11-15/`).
+    #[test]
+    fn the_inner_pages_fit_one_screen() {
+        let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0)];
+        for (screen, user) in sizes {
+            let (sw, sh) = (screen.0 as f32, screen.1 as f32);
+            let mut m = full_menu();
+            let mut c = Canvas::new(screen);
+            c.ui.user = user;
+            let s = (c.ui.px(screen) * 20.0 + 1e-3).floor() / 20.0;
+            let check = |m: &StartMenu, c: &Canvas, at: &str| {
+                assert!(!m.scrolls(), "{at}: scrolls by {}", m.scroll_max);
+                for (r, h) in &m.hits {
+                    assert!(r.x >= -0.5 && r.y >= -0.5 && r.right() <= sw + 0.5 && r.bottom() <= sh + 0.5, "{at}: {h:?} {r:?} off the screen");
+                }
+                assert!(m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
+                let runs: Vec<_> = c.runs.iter().filter(|t| t.ink.0 < t.ink.2).collect();
+                for (k, t) in runs.iter().enumerate() {
+                    assert!(t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh, "{at}: {:?} {:?} off the screen", t.text, t.ink);
+                    assert!(t.px >= 12.5 * s - 0.01, "{at}: {:?} at {} px, under 12.5 x {s}", t.text, t.px);
+                    for u in &runs[k + 1..] {
+                        let apart = t.ink.2 <= u.ink.0 || u.ink.2 <= t.ink.0 || t.ink.3 <= u.ink.1 || u.ink.3 <= t.ink.1;
+                        assert!(apart, "{at}: {:?} {:?} and {:?} {:?} overlap", t.text, t.ink, u.text, u.ink);
+                    }
+                }
+            };
+            let draw = |m: &mut StartMenu, c: &mut Canvas| {
+                for _ in 0..2 {
+                    c.clear();
+                    m.draw(c);
+                }
+            };
+            // Each Options tab, every row focused in turn (the note shows
+            // the focused one's), with every option moved off its default
+            // (the note's longest: its "back to" button).
+            m.show(Page::Options);
+            for tab in 0..3 {
+                m.open_tab(tab);
+                for row in 0..m.rows().len() {
+                    m.focus = row;
+                    draw(&mut m, &mut c);
+                    let at = format!("{screen:?} at {user}, Options tab {tab} row {row}");
+                    check(&m, &c, &at);
+                    assert_eq!(m.sheets(), 1, "{at}: the tab takes {} pages", m.sheets());
+                }
+            }
+            // The key list, page by page.
+            m.open_tab(3);
+            assert_eq!(m.page, Page::Keys);
+            draw(&mut m, &mut c);
+            let pages = m.sheets();
+            for k in 0..pages {
+                draw(&mut m, &mut c);
+                check(&m, &c, &format!("{screen:?} at {user}, Keys page {k} of {pages}"));
+                assert_eq!(m.sheet, k);
+                m.key(KeyCode::ArrowRight, true);
+            }
+            // (How many pages the game's own key list takes: the window's
+            // test `the_menus_real_lists_fit_one_screen`.)
+            assert!(pages >= 1);
+            // The campaign, each mission focused in turn.
+            m.show(Page::Missions);
+            for row in 0..m.rows().len() {
+                m.focus = row;
+                draw(&mut m, &mut c);
+                let at = format!("{screen:?} at {user}, Campaign row {row}");
+                check(&m, &c, &at);
+                assert_eq!(m.sheets(), 1, "{at}: the campaign takes {} pages", m.sheets());
+            }
+        }
+    }
+
+    /// A list longer than the screen holds pages, not scrolls: 30
+    /// missions and 30 options on a tab at 200% on 1080 lines, every row
+    /// reached by the keyboard and by the pager's arrows, and back.
+    #[test]
+    fn a_long_list_pages_instead_of_scrolling() {
+        let mut m = full_menu();
+        m.missions = (0..30).map(|i| Entry { stem: format!("{i}"), name: format!("Mission {i}"), says: "Do it".into(), detail: "The Fork".into() }).collect();
+        for k in 0..30 {
+            m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The mould"));
+        }
+        let mut c = Canvas::new((1920, 1080));
+        c.ui.user = 2.0;
+        for page in [Page::Missions, Page::Options] {
+            m.show(page);
+            if page == Page::Options {
+                m.open_tab(2);
+            }
+            c.clear();
+            m.draw(&mut c);
+            let pages = m.sheets();
+            assert!(pages >= 3, "{page:?}: {pages} pages");
+            // The keyboard: every row drawn when focused, the page following.
+            for row in 0..m.rows().len() {
+                m.focus = row;
+                c.clear();
+                m.draw(&mut c);
+                let h = m.rows()[row];
+                assert!(m.rect_of(h).is_some(), "{page:?}: row {row} {h:?} not drawn when focused");
+                assert!(!m.scrolls(), "{page:?}: scrolls");
+            }
+            // The pager's arrows: on, round to the first, and back.
+            m.focus = 0;
+            c.clear();
+            m.draw(&mut c);
+            for k in 1..=pages {
+                click(&mut m, &mut c, Hit::Flip(1));
+                assert_eq!(m.sheet, k % pages, "{page:?}: page {k}");
+            }
+            click(&mut m, &mut c, Hit::Flip(-1));
+            assert_eq!(m.sheet, pages - 1);
         }
     }
 }
