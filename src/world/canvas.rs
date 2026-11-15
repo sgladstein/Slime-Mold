@@ -25,7 +25,9 @@ pub use super::settings::UiSize;
 
 pub const SHADER: &str = include_str!("canvas.wgsl");
 
-const PRIM_WORDS: usize = 16;
+/// (17 since 11-15: word 16 is the band of rows a shape is clipped to,
+/// for the start menu's pages that scroll.)
+const PRIM_WORDS: usize = 17;
 /// The most shapes a frame, and tile entries (a shape covers several
 /// tiles). Past either, shapes are dropped (the last-drawn first).
 /// A frame's shapes past this many are dropped (a runaway, not a busy
@@ -74,17 +76,20 @@ struct Prim {
     fill: f32,
     /// A rectangle left open (left, top, right, bottom pixels); zero none.
     hole: (u32, u32),
+    /// The rows it draws in (top, bottom pixels); `None` all of them.
+    clip: Option<(f32, f32)>,
 }
 
 impl Prim {
     fn new(kind: u32, lo: (f32, f32), hi: (f32, f32), colour: Rgba) -> Self {
-        Prim { kind, lo, hi, radius: 0.0, colour, colour2: [0; 4], border: 0.0, soft: 0.0, uv: (0, 0), border_colour: [0; 4], fill: 1.0, hole: (0, 0) }
+        Prim { kind, lo, hi, radius: 0.0, colour, colour2: [0; 4], border: 0.0, soft: 0.0, uv: (0, 0), border_colour: [0; 4], fill: 1.0, hole: (0, 0), clip: None }
     }
 
     /// The pixels it can touch (a shadow spreads past its box).
     fn bounds(&self) -> (f32, f32, f32, f32) {
         let s = if self.kind == SHADOW { self.soft + 1.0 } else { 1.0 };
-        (self.lo.0 - s, self.lo.1 - s, self.hi.0 + s, self.hi.1 + s)
+        let (y0, y1) = self.clip.unwrap_or((f32::MIN, f32::MAX));
+        (self.lo.0 - s, (self.lo.1 - s).max(y0), self.hi.0 + s, (self.hi.1 + s).min(y1))
     }
 
     fn words(&self) -> [u32; PRIM_WORDS] {
@@ -106,6 +111,8 @@ impl Prim {
             self.fill.to_bits(),
             self.hole.0,
             self.hole.1,
+            // Its rows as two 16-bit numbers, top low; zero: no clip.
+            self.clip.map_or(0, |(a, b)| (a.clamp(0.0, 65535.0) as u32) | ((b.clamp(1.0, 65535.0) as u32) << 16)),
         ]
     }
 }
@@ -304,16 +311,20 @@ pub struct Canvas {
     /// The UI's size (the player's and the window's DPI): the HUD and the
     /// start menu lay out in `ui.px(screen)` pixels a unit.
     pub ui: UiSize,
+    /// The rows (top, bottom pixels) shapes drawn from now on keep to: a
+    /// page that scrolls under its title and buttons. `clear` resets it.
+    pub clip: Option<(f32, f32)>,
 }
 
 impl Canvas {
     pub fn new(screen: (u32, u32)) -> Self {
-        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen, ui: UiSize::default() }
+        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen, ui: UiSize::default(), clip: None }
     }
 
     /// Starts a frame (and empties the atlas if the last frame filled it).
     pub fn clear(&mut self) {
         self.prims.clear();
+        self.clip = None;
         if self.atlas.full {
             self.atlas.reset();
         }
@@ -327,7 +338,15 @@ impl Canvas {
         self.prims.is_empty()
     }
 
-    fn push(&mut self, p: Prim) {
+    fn push(&mut self, mut p: Prim) {
+        if let Some((a, b)) = self.clip {
+            // Wholly outside its rows: not drawn at all.
+            let (_, y0, _, y1) = p.bounds();
+            if y1 <= a || y0 >= b {
+                return;
+            }
+            p.clip = Some((a, b));
+        }
         if self.prims.len() < MAX_PRIMS {
             self.prims.push(p);
         }

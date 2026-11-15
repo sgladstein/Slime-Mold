@@ -171,6 +171,8 @@ struct ShopPlan {
     heads: Vec<((f32, f32), String)>,
     detail: Rect,
     fits: bool,
+    /// It fits the window's width (the height can scroll).
+    fits_w: bool,
 }
 
 /// The size `text` fits `max` pixels at: `px`, smaller down to `least`
@@ -289,6 +291,15 @@ pub struct StartMenu {
     slot_rects: Vec<Rect>,
     bag: Option<Rect>,
     hits: Vec<(Rect, Hit)>,
+    /// How far the page is scrolled (pixels), the most it can be (as last
+    /// drawn), and the rows it scrolls in.
+    scroll: f32,
+    scroll_max: f32,
+    body: Option<Rect>,
+    /// Every hit as drawn, scrolled out of view or not (`reveal`).
+    drawn: Vec<(Rect, Hit)>,
+    /// The keyboard moved the focus: scroll it into view.
+    follow: bool,
 }
 
 /// How far the pointer moves, held down on a card, before a click becomes
@@ -301,7 +312,7 @@ const CARD_H: f32 = 64.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, folder: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new() }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, folder: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false }
     }
 
     /// The option named `key`.
@@ -321,6 +332,34 @@ impl StartMenu {
         self.page = page;
         self.focus = 0;
         self.folder = None;
+        self.scroll = 0.0;
+    }
+
+    /// The mouse wheel: a page taller than the window scrolls (`notches`
+    /// up is positive, as the window gives them).
+    pub fn wheel(&mut self, notches: i32) {
+        let step = 90.0 * self.body.map_or(1.0, |b| (b.h / 600.0).max(0.5));
+        self.scroll = (self.scroll - notches as f32 * step).clamp(0.0, self.scroll_max);
+    }
+
+    /// Scrolls so `hit`, as last drawn, is in view (the tests; the
+    /// keyboard's focus follows by itself). Draw again to see it there.
+    #[cfg(test)]
+    fn reveal(&mut self, hit: Hit) {
+        if let Some(r) = self.drawn.iter().find(|(_, h)| *h == hit).map(|(r, _)| *r) {
+            self.scroll_to(r);
+        }
+    }
+
+    fn scroll_to(&mut self, r: Rect) {
+        let Some(b) = self.body else { return };
+        let pad = 12.0 * (b.h / 600.0).clamp(0.5, 3.0);
+        if r.bottom() > b.bottom() {
+            self.scroll += r.bottom() - b.bottom() + pad;
+        } else if r.y < b.y {
+            self.scroll -= b.y - r.y + pad;
+        }
+        self.scroll = self.scroll.clamp(0.0, self.scroll_max.max(self.scroll));
     }
 
     /// Opens the shop's folder `name` (the pictures; a click does it in play).
@@ -538,6 +577,7 @@ impl StartMenu {
         let rows = self.rows();
         self.focus = self.focus.min(rows.len().saturating_sub(1));
         let row = rows.get(self.focus).copied();
+        self.follow = true;
         match code {
             KeyCode::F1 | KeyCode::Slash => {
                 if self.page == Page::Keys {
@@ -599,27 +639,17 @@ impl StartMenu {
     /// Draws the page on `c` (cleared by the caller).
     pub fn draw(&mut self, c: &mut Canvas) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        // The UI size (`UiSize::px`), held where the options page, the
-        // tallest, would run off the bottom (at 150% on a 900-line window
-        // its last rows, the UI size among them, did); at 100% it never is.
-        // Each page is held by its own height: until 11-14 20:23Z every page
-        // was held by the options page's, so with a dozen options the main
-        // menu stopped growing past about 100% on a 1080-line screen and
-        // Ctrl + seemed to do nothing there (owner: "changing the UI zoom,
-        // doesn't change the main menu"). The main page and the campaign's
-        // list count their own rows (62 units and a 12 gap a row; the main
-        // page's Quit has no second line, 48 units: with the Gun range's row
-        // 11-15, counting it at 62 held 150% on a 1280 x 800 window to 1.2x).
-        let held = match self.page {
-            // (78 a row since the UI review's 66-unit buttons; Quit 50 + 12.
-            // The main page's own frame, title to hint, is about 240 units,
-            // not the 330 the options page keeps: with nine rows 330 held
-            // 150% on a 1280 x 800 window to 1.06x.)
-            Page::Main => 240.0 + 78.0 * self.rows().len() as f32 - 16.0,
-            Page::Missions => 330.0 + 78.0 * self.rows().len() as f32,
-            _ => 330.0 + 62.0 * self.options.len() as f32,
-        };
-        let s = c.ui.px(c.screen).min(sh / held);
+        // The UI size (`UiSize::px`) on every page, and a page taller than
+        // the window scrolls (the wheel; the keyboard's focus is kept in
+        // view) under its title and over its hint and buttons. Until 11-15
+        // each page was held down to what fitted the window's height
+        // (`sh / held`: the options page at 1080 lines drew at 0.85 whatever
+        // the size, the key card too, and the shop and the gun range's
+        // armory shrank to fit, to about 0.6), so the owner found Ctrl +
+        // changed nothing there: "Changing the UI /text percentage increase
+        // does do what it should the menus are unaffected. The gun range is
+        // unaffected (I cannot read any of the text)" (11-15 07:56Z).
+        let s = c.ui.px(c.screen);
         let s = (s * 20.0 + 1e-3).floor() / 20.0;
         self.hits.clear();
         // A shade down the left, fading out, so the panel reads over the
@@ -648,12 +678,56 @@ impl StartMenu {
         let top = 160.0 * s;
         let rows = self.rows();
         let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
-        match self.page {
-            Page::Main => self.main_page(c, x, top, w, s, focus),
-            Page::Missions => self.missions_page(c, x, top, w, s, focus),
-            Page::Options => self.options_page(c, x, top, w, s, focus),
-            Page::Keys => self.keys_page(c, x, top, w, s),
-            Page::Shop => self.shop_page(c, x, top, s, focus),
+        // The rows the page scrolls in: under the title, over the hint (and
+        // the shop's two buttons).
+        let foot = if self.page == Page::Shop { 108.0 * s } else { 44.0 * s };
+        let body = Rect::new(0.0, top - 4.0 * s, sw, (sh - foot - top + 4.0 * s).max(1.0));
+        self.body = Some(body);
+        self.scroll = self.scroll.clamp(0.0, self.scroll_max);
+        let at = top - self.scroll;
+        c.clip = Some((body.y, body.bottom()));
+        let bottom = match self.page {
+            Page::Main => self.main_page(c, x, at, w, s, focus),
+            Page::Missions => self.missions_page(c, x, at, w, s, focus),
+            Page::Options => self.options_page(c, x, at, w, s, focus),
+            Page::Keys => self.keys_page(c, x, at, w, s),
+            Page::Shop => self.shop_page(c, x, at, s, focus),
+        };
+        c.clip = None;
+        self.scroll_max = (bottom + self.scroll + 12.0 * s - body.bottom()).max(0.0);
+        // The keyboard's row into view (seen the next frame).
+        if std::mem::take(&mut self.follow) {
+            if let Some(r) = focus.and_then(|h| self.rect_of(h)) {
+                self.scroll_to(r);
+            }
+        }
+        // What scrolled out of the rows cannot be clicked; what is partly
+        // in, only there.
+        self.drawn = self.hits.clone();
+        self.hits.retain_mut(|(r, _)| {
+            let (y0, y1) = (r.y.max(body.y), r.bottom().min(body.bottom()));
+            r.y = y0;
+            r.h = y1 - y0;
+            r.h > 0.0
+        });
+        self.slot_rects.retain(|r| r.bottom() > body.y && r.y < body.bottom());
+        if self.scroll_max > 0.0 {
+            // Where the page is: a thin bar down the right edge.
+            let track = Rect::new(sw - 12.0 * s, body.y + 8.0 * s, 5.0 * s, body.h - 16.0 * s);
+            c.rrect(track, 2.5 * s, [255, 255, 255, 18]);
+            let total = body.h + self.scroll_max;
+            let th = (track.h * body.h / total).max(30.0 * s);
+            let ty = track.y + (track.h - th) * (self.scroll / self.scroll_max);
+            c.rrect(Rect::new(track.x, ty, track.w, th), 2.5 * s, [255, 255, 255, 90]);
+        }
+        if self.page == Page::Shop {
+            if let Some(shop) = &self.shop {
+                // The buttons sit over the hint line, fixed.
+                let by = sh - 96.0 * s;
+                let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else { ("Land on the next planet", "Give up the run") };
+                self.item(Rect::new(x, by, 240.0 * s, 44.0 * s), next, "", Hit::Next, true, focus == Some(Hit::Next), c, s);
+                self.item(Rect::new(x + 252.0 * s, by, 170.0 * s, 44.0 * s), end, "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
+            }
         }
         let hint = match self.page {
             Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
@@ -699,7 +773,7 @@ impl StartMenu {
         self.hits.push((r, hit));
     }
 
-    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) {
+    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
         let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default()).map(|o| format!("{} {}", o.key, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
@@ -729,14 +803,15 @@ impl StartMenu {
         }
         if let Some(n) = self.notice.clone() {
             c.text_fit(Weight::Medium, 14.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
+            y += 24.0 * s;
         }
+        y
     }
 
-    fn missions_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) {
-        let sh = c.screen.1 as f32;
+    fn missions_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
         let n = self.missions.len();
-        // Rows shrink to fit a short window.
-        let room = sh - top - 140.0 * s;
+        // Rows shrink to fit a short window (then the page scrolls).
+        let room = self.body.map_or(600.0 * s, |b| b.h) - 80.0 * s;
         let h = (room / (n.max(1) as f32) - 10.0 * s).clamp(52.0 * s, 78.0 * s);
         let mut y = top + 12.0 * s;
         if n == 0 {
@@ -753,9 +828,10 @@ impl StartMenu {
             y += h + 10.0 * s;
         }
         self.item(Rect::new(x, y + 8.0 * s, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, false, focus == Some(Hit::Back), c, s);
+        y + 50.0 * s
     }
 
-    fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) {
+    fn options_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // Wider than the other pages (560 until the UI review, 11-15):
         // every note was cut off after half the row.
         let w = (w * 1.4).min(c.screen.0 as f32 - 2.0 * x);
@@ -802,6 +878,7 @@ impl StartMenu {
         let by = panel.bottom() + 34.0 * s;
         self.item(Rect::new(x, by, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, focus == Some(Hit::Back), c, s);
         self.item(Rect::new(x + 152.0 * s, by, 200.0 * s, 42.0 * s), "All to defaults", "", Hit::ResetAll, false, focus == Some(Hit::ResetAll), c, s);
+        by + 42.0 * s
     }
 
     /// The shop page laid out at scale `s` from `top`: the upgrade grid on
@@ -834,14 +911,18 @@ impl StartMenu {
         }
         let detail = Rect::new(left.x + p, left.y + head + 8.0 * s + grid_h + 12.0 * s, left_w - 2.0 * p, detail_h);
         // The armory: what is left of the width.
-        let rx = left.right() + 16.0 * s;
-        let rw = sw - x - rx;
+        // Under the upgrades, the screen's width, where beside them it would
+        // hold one gun card a row (a big UI size: 200% on 1920 x 1080 left
+        // it a column 777 pixels wide, every card under the last).
         let (gw, gh) = (262.0 * s, 166.0 * s);
+        let stacked = sw - x - (left.right() + 16.0 * s) < 2.0 * gw + g + 2.0 * p;
+        let (rx, rtop) = if stacked { (x, left.bottom() + 16.0 * s) } else { (left.right() + 16.0 * s, top) };
+        let rw = sw - x - rx;
         let (cw, ch) = (CARD_W * s, CARD_H * s);
         let mut heads = Vec::new();
         let (x0, x1) = (rx + p, rx + rw - p);
-        let mut y = top + head + 8.0 * s;
-        heads.push(((x0, top + 24.0 * s), "Guns".to_string()));
+        let mut y = rtop + head + 8.0 * s;
+        heads.push(((x0, rtop + 24.0 * s), "Guns".to_string()));
         // Lays `n` boxes `w` by `h` in rows from `y`; returns them and the
         // height used.
         let flow = |n: usize, w: f32, h: f32, y: f32| -> (Vec<Rect>, f32) {
@@ -879,16 +960,17 @@ impl StartMenu {
         // when a group needs a second row.
         let groups = self.card_groups().len();
         y += 2usize.saturating_sub(groups) as f32 * (head + ch + 14.0 * s);
-        let right = Rect::new(rx, top, rw, (y - top).max(left.h));
+        let right = Rect::new(rx, rtop, rw, if stacked { y - rtop } else { (y - rtop).max(left.h) });
         let bag = Rect::new(rx, bag_top, rw, (right.bottom() - bag_top).max(0.0));
         let room = sh - foot - top;
-        let fits = left.h <= room && right.h <= room && rw >= gw + 2.0 * p && left.right() <= sw;
-        ShopPlan { s, left, right, tiles, guns, slots, cards, bag, heads, detail, fits }
+        let fits_w = rw >= gw + 2.0 * p && left.right() <= sw;
+        let fits = left.h <= room && right.bottom() - top <= room && fits_w;
+        ShopPlan { s, left, right, tiles, guns, slots, cards, bag, heads, detail, fits, fits_w }
     }
 
-    fn shop_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) {
+    fn shop_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let Some(shop) = self.shop.clone() else { return };
+        let Some(shop) = self.shop.clone() else { return top };
         c.text_fit(Weight::SemiBold, 20.0 * s, (x, top + 15.0 * s), Align::Left, &shop.heading, sw - 2.0 * x - 200.0 * s, TEXT);
         let mut y = top + 38.0 * s;
         for l in &shop.lines {
@@ -896,19 +978,26 @@ impl StartMenu {
             y += 21.0 * s;
         }
         c.text(Weight::SemiBold, 22.0 * s, (sw - x, top + 16.0 * s), Align::Right, &shop.purse, ACCENT);
-        // The layout starts a little over the UI's own size (the menu's
-        // `s` is held down for the options page, which the shop is not)
-        // and shrinks until both areas fit above the buttons.
+        // The layout starts a little over the UI's own size and shrinks
+        // until both areas fit above the buttons, but not under the UI's
+        // size: past that the page scrolls (it went down to whatever fitted
+        // until 11-15, about 0.6 for the gun range's armory at 1080 lines:
+        // "I cannot read any of the text"). Only the width shrinks it
+        // further.
         let body = y + 2.0 * s;
         let foot_s = s;
-        let mut k = (c.ui.px(c.screen) * 1.3).max(s);
+        // (Laid out from the unscrolled top, so the scale does not change
+        // as the page scrolls.)
+        let shift = self.scroll;
+        let mut k = s * 1.3;
         let plan = loop {
-            let plan = self.shop_plan(&shop, (sw, sh), x, body, k, 108.0 * foot_s);
-            if plan.fits || k < 0.3 {
+            let plan = self.shop_plan(&shop, (sw, sh), x, body + shift, k, 108.0 * foot_s);
+            if plan.fits || (plan.fits_w && k <= s) || k < 0.3 {
                 break plan;
             }
-            k *= 0.92;
+            k = if plan.fits_w { (k * 0.92).max(s) } else { k * 0.92 };
         };
+        let plan = self.shop_plan(&shop, (sw, sh), x, body, plan.s, 108.0 * foot_s);
         let s = plan.s;
         self.glass(plan.left, c, s);
         self.glass(plan.right, c, s);
@@ -1009,18 +1098,17 @@ impl StartMenu {
             }
             let (w, h) = plan.slots.first().map_or((CARD_W * s, CARD_H * s), |x| (x.0.w, x.0.h));
             let r = Rect::new(p.0 - w / 2.0, p.1 - h * 0.4, w, h);
+            // (Over everything, not kept to the scrolling rows.)
+            let clip = c.clip.take();
             c.rrect(Rect::new(r.x + 4.0 * s, r.y + 6.0 * s, w, h), 10.0 * s, [0, 0, 0, 110]);
             self.bullet_card(&shop.rows[i], r, true, false, c, s);
+            c.clip = clip;
             shown = Some(Hit::Buy(i));
         }
         self.detail(&shop, shown, &folders, plan.detail, c, s);
-        // The buttons sit over the hint line (at `sh - 28` of the menu's
-        // scale).
-        let s = foot_s;
-        let by = sh - 96.0 * s;
-        let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else { ("Land on the next planet", "Give up the run") };
-        self.item(Rect::new(x, by, 240.0 * s, 44.0 * s), next, "", Hit::Next, true, focus == Some(Hit::Next), c, s);
-        self.item(Rect::new(x + 252.0 * s, by, 170.0 * s, 44.0 * s), end, "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
+        // (The buttons are `draw`'s, fixed under the scrolling page.)
+        let _ = foot_s;
+        plan.left.bottom().max(plan.right.bottom())
     }
 
     /// A tile's face: bright when a pick does something, dark when not.
@@ -1179,17 +1267,19 @@ impl StartMenu {
         }
     }
 
-    fn keys_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32) {
-        let sh = c.screen.1 as f32;
+    fn keys_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32) -> f32 {
         let rows = self.keys.clone();
-        // Two columns when one does not fit.
+        // Two columns when one does not fit and two have room (each 480
+        // units or more; under that a big UI size squeezed every line
+        // small), else one, and the page scrolls.
         let lh = 26.0 * s;
-        let room = sh - top - 130.0 * s;
+        let room = self.body.map_or(600.0 * s, |b| b.h) - 80.0 * s;
         let per = ((room - 24.0 * s) / lh).floor().max(1.0) as usize;
-        let cols = if rows.len() > per { 2 } else { 1 };
+        let wide = (w * 2.5).min(c.screen.0 as f32 - 2.0 * x);
+        let cols = if rows.len() > per && wide / 2.0 >= 480.0 * s { 2 } else { 1 };
         // Two wide columns (1.6 x the page until the UI review, 11-15, which
-        // cut most lines short).
-        let col_w = if cols == 1 { w } else { (w * 2.5).min(c.screen.0 as f32 - 2.0 * x) / 2.0 };
+        // cut most lines short); one as wide as there is room for.
+        let col_w = if cols == 1 { (w * 1.4).min(c.screen.0 as f32 - 2.0 * x) } else { wide / 2.0 };
         let per = rows.len().div_ceil(cols);
         let panel = Rect::new(x, top + 12.0 * s, col_w * cols as f32, per as f32 * lh + 30.0 * s);
         self.glass(panel, c, s);
@@ -1202,6 +1292,7 @@ impl StartMenu {
             c.text_fit(Weight::Medium, 15.0 * s, (cx + kw, y), Align::Left, what, col_w - kw - 28.0 * s, TEXT);
         }
         self.item(Rect::new(x, panel.bottom() + 16.0 * s, 140.0 * s, 42.0 * s), "Back", "", Hit::Back, true, true, c, s);
+        panel.bottom() + 58.0 * s
     }
 
     /// Where `hit` was last drawn (tests and the window's smoke hand).
@@ -1255,9 +1346,17 @@ mod tests {
         StartMenu::new("Larder World", missions, options, vec![("A".into(), "Attack".into())])
     }
 
-    fn click(m: &mut StartMenu, c: &mut Canvas, hit: Hit) -> Vec<StartEvent> {
+    /// Draws `m`, scrolled so `hit` is in view.
+    fn shown(m: &mut StartMenu, c: &mut Canvas, hit: Hit) {
         c.clear();
         m.draw(c);
+        m.reveal(hit);
+        c.clear();
+        m.draw(c);
+    }
+
+    fn click(m: &mut StartMenu, c: &mut Canvas, hit: Hit) -> Vec<StartEvent> {
+        shown(m, c, hit);
         let r = m.rect_of(hit).unwrap_or_else(|| panic!("{hit:?} not drawn on {:?}", m.page));
         m.moved(Some((r.x + r.w / 2.0, r.y + r.h / 2.0)));
         assert!(m.button(Button::Left, true).is_empty());
@@ -1342,11 +1441,15 @@ mod tests {
                         }
                         let mut c = Canvas::new(screen);
                         c.ui.user = user;
-                        m.draw(&mut c);
                         let mut rects: Vec<Rect> = Vec::new();
+                        // Each scrolled into view (the page scrolls since
+                        // 11-15), then where it sits on the whole page.
                         for h in m.rows() {
+                            shown(&mut m, &mut c, h);
                             let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {user} {n} {folder:?}: {h:?} not drawn"));
                             assert!(r.bottom() <= screen.1 as f32 + 0.5 && r.right() <= screen.0 as f32 + 0.5 && r.x >= 0.0, "{screen:?} at {user}, {n} cards: {h:?} {r:?} off screen");
+                            let fixed = matches!(h, Hit::Next | Hit::EndRun);
+                            let r = if fixed { Rect::new(r.x, r.y + 1e5, r.w, r.h) } else { Rect::new(r.x, r.y + m.scroll, r.w, r.h) };
                             assert!(rects.iter().all(|q| !(q.x < r.right() && r.x < q.right() && q.y < r.bottom() && r.y < q.bottom())), "{screen:?} at {user}, {n} cards: {h:?} overlaps");
                             rects.push(r);
                         }
@@ -1528,8 +1631,9 @@ mod tests {
                 (m.planets, m.edit_maps, m.run_live) = (true, true, true);
                 let mut c = Canvas::new(screen);
                 c.ui.user = user;
-                m.draw(&mut c);
+                // (Scrolled to each since 11-15: a big UI size scrolls.)
                 for h in m.rows() {
+                    shown(&mut m, &mut c, h);
                     let r = m.rect_of(h).unwrap_or_else(|| panic!("{h:?} not drawn"));
                     assert!(r.bottom() <= screen.1 as f32 - 30.0, "{screen:?} at {user}: {h:?} {r:?} reaches the hint line");
                 }
@@ -1612,17 +1716,22 @@ mod tests {
     /// At every UI size the options page's last row and its buttons stay
     /// on the screen (they ran off at 150% on 900 lines before the cap).
     #[test]
-    fn every_ui_size_keeps_the_options_page_on_screen() {
+    fn every_ui_size_reaches_every_option() {
         for screen in [(1280, 800), (1600, 900), (1920, 1080)] {
             for user in crate::world::settings::STEPS {
                 let mut m = menu();
+                // As many options as the game has, and more.
+                for k in 0..20 {
+                    m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does"));
+                }
                 m.show(Page::Options);
                 let mut c = Canvas::new(screen);
                 c.ui.user = user;
-                m.draw(&mut c);
                 let last = m.options.len() - 1;
-                for h in [Hit::Reset(last), Hit::Back, Hit::ResetAll] {
+                for h in [Hit::Reset(0), Hit::Reset(last), Hit::Back, Hit::ResetAll] {
+                    shown(&mut m, &mut c, h);
                     let r = m.rect_of(h).unwrap();
+                    assert!(r.y >= m.body.unwrap().y && r.bottom() <= m.body.unwrap().bottom() + 0.5, "{screen:?} at {user}: {h:?} {r:?} not in view");
                     assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {h:?} {r:?}");
                 }
             }
@@ -1638,9 +1747,12 @@ mod tests {
                 let mut m = menu();
                 let mut c = Canvas::new(screen);
                 c.ui.user = user;
-                m.draw(&mut c);
+                shown(&mut m, &mut c, Hit::Quit);
                 let r = m.rect_of(Hit::Quit).unwrap();
                 assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {r:?}");
+                m.scroll = 0.0;
+                c.clear();
+                m.draw(&mut c);
                 m.rect_of(Hit::Sandbox).unwrap().h
             };
             assert!(size(1.5) > size(1.0) * 1.2, "{screen:?}: 150% grows the main page");
@@ -1662,14 +1774,74 @@ mod tests {
             click(&mut m, &mut c, Hit::Back);
             assert_eq!(click(&mut m, &mut c, Hit::Quit), vec![StartEvent::Quit]);
             // A press on one button and a release on another is no click.
+            m.scroll = 0.0;
             c.clear();
             m.draw(&mut c);
             let a = m.rect_of(Hit::Sandbox).unwrap();
-            let q = m.rect_of(Hit::Quit).unwrap();
+            let q = m.rect_of(Hit::Run).unwrap();
             m.moved(Some((a.x + 4.0, a.y + 4.0)));
             m.button(Button::Left, true);
             m.moved(Some((q.x + 4.0, q.y + 4.0)));
             assert!(m.button(Button::Left, false).is_empty());
+        }
+    }
+
+    /// The owner, 11-15 07:56Z: "Changing the UI /text percentage increase
+    /// does do what it should the menus are unaffected. The gun range is
+    /// unaffected (I cannot read any of the text)". Every page is drawn at
+    /// the UI size: 200% doubles it (within the cap on the window), and a
+    /// page that no longer fits scrolls to every row, the keyboard's too.
+    #[test]
+    fn every_page_follows_the_ui_size() {
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for page in [Page::Main, Page::Missions, Page::Options, Page::Keys, Page::Shop] {
+                let size = |user: f32| {
+                    let mut m = menu();
+                    m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
+                    let mut sh = shop(14);
+                    sh.range = page == Page::Shop;
+                    m.shop = Some(sh);
+                    m.show(page);
+                    let mut c = Canvas::new(screen);
+                    c.ui.user = user;
+                    c.clear();
+                    m.draw(&mut c);
+                    // Every row reachable by the keyboard alone.
+                    for _ in 0..m.rows().len() {
+                        m.key(KeyCode::ArrowDown, true);
+                        c.clear();
+                        m.draw(&mut c);
+                        c.clear();
+                        m.draw(&mut c);
+                        let h = m.rows()[m.focus];
+                        let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {page:?} at {user}: {h:?} scrolled away"));
+                        let b = m.body.unwrap();
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun);
+                        assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
+                    }
+                    let probe = match page {
+                        Page::Shop => Hit::Buy(0),
+                        Page::Options => Hit::Reset(0),
+                        Page::Missions => Hit::Mission(0),
+                        Page::Keys | Page::Main => Hit::Back,
+                    };
+                    let probe = if page == Page::Main { Hit::Sandbox } else { probe };
+                    m.scroll = 0.0;
+                    shown(&mut m, &mut c, probe);
+                    (m.drawn.iter().find(|(_, h)| *h == probe).unwrap().0.h, c.ui.px(screen))
+                };
+                let (a, pa) = size(1.0);
+                let (b, pb) = size(2.0);
+                let grew = pb / pa;
+                assert!(grew > 1.25, "{screen:?}: 200% is capped to {grew}x");
+                if page == Page::Shop {
+                    // The shop starts a little over the UI's size where it
+                    // has room, but is never under it: a tile is 78 units.
+                    assert!(a >= 78.0 * pa * 0.97 && b >= 78.0 * pb * 0.97, "{screen:?}: the shop's tiles {a} at 100%, {b} at 200%, under the UI size");
+                } else {
+                    assert!(b >= a * grew * 0.9, "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)");
+                }
+            }
         }
     }
 }

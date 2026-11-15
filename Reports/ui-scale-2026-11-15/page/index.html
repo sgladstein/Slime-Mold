@@ -1,0 +1,95 @@
+<title>UI Size and the One Row</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one column of pictures, each with its numbers beside it as a caption strip. */
+:root { --bg:#f3f4f6; --fg:#16191d; --muted:#5b6370; --panel:#ffffff; --line:#d9dde3; --accent:#1f8fa8;
+  --display:"Space Grotesk",Inter,system-ui,sans-serif; --body:Inter,system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 var(--body); padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:32px 48px }
+main { max-width:1100px; margin:0 auto; display:grid; gap:28px }
+h1 { font:600 2rem/1.15 var(--display); margin:0; text-wrap:balance }
+h2 { font:600 1.15rem/1.3 var(--display); margin:0 }
+p { margin:0; max-width:68ch }
+.lede { color:var(--muted) }
+figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden }
+figure img { display:block; width:100% }
+figcaption { padding:12px 16px; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:.9rem; color:var(--muted) }
+figcaption b { color:var(--fg); font-weight:600 }
+.k { font-variant-numeric:tabular-nums; color:var(--accent); font-weight:600 }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:16px }
+@media (max-width:700px) { .pair { grid-template-columns:1fr } }
+ul { margin:0; padding-left:1.2em; display:grid; gap:4px }
+kbd { font:600 .85em var(--body); border:1px solid var(--line); border-radius:4px; padding:0 5px; background:var(--panel) }
+.find { display:grid; gap:10px; counter-reset:none }
+.find li { padding-left:2px }
+.tag { display:inline-block; font:600 .72rem/1 var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin-right:6px }
+.note { color:var(--muted); font-size:.9rem }
+table { border-collapse:collapse; font-size:.9rem; width:100% }
+td, th { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums }
+th { color:var(--muted); font-weight:600 }
+.wrap { overflow-x:auto }
+</style>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>UI size, the one-row bar and the hover card</h1>
+    <p class="lede">Three asks from the owner on 11-15. 07:51Z: "everything was supposed to be on one row, why is the gun in a seperate row on top". 07:54Z: the card over the mould's home crystal gets in the way of shooting. 07:56Z: "Changing the UI /text percentage ... the menus are unaffected. The gun range is unaffected (I cannot read any of the text)". Frames from the cloud's software GPU; "before" is main before these changes.</p>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <h2>What was wrong</h2>
+    <ul class="find">
+      <li><span class="tag">Menus</span>Each page was held to whatever fitted the window's height. On a 1080-line screen the options and key pages drew at <span class="k">0.85</span> whatever the UI size, and the shop and the gun range's armory shrank to fit, the armory to about <span class="k">0.6</span>. So Ctrl + did almost nothing there. Now every page draws at the UI size, and a page taller than the window scrolls with the wheel or the arrow keys (the keyboard's row is kept in view). A thin bar on the right shows where you are. At big sizes the shop puts the armory under the upgrades instead of squeezing it into one column.</li>
+      <li><span class="tag">Bar</span>The gun strip moved above the bar whenever the squad panel would be left under 240 units. The wider strip from the morning's review made that happen at big UI sizes (2560×1440 at 200%). It now always stays in the row and draws smaller, down to 60%. The squad panel's buttons (Let go, Combine, Split, Guards) no longer run over "1 squad" or onto the gun strip: they get smaller, then drop the header, then their key letters, then the last button.</li>
+      <li><span class="tag">Hover</span>The card over a crystal or the larder waits for the cursor to rest <span class="k">0.35 s</span>, shows <span class="k">2 s</span>, fades, and stays away until the cursor is on something else. Any click puts it away. Before, it stayed up the whole time the cursor was on the thing, which is where you shoot. (No picture: the card follows real time, which the picture tool does not.)</li>
+      <li><span class="tag">F1</span>The key card in play had one column. With squad mode's forty-odd rows it ran off a 1080-line screen at big sizes. It now uses up to three columns, and shrinks only past that.</li>
+    </ul>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Scrolling, at 200% and 100%</h2>
+    <figure><img src="clip-shop200.webp" alt="run shop scrolling at 200%" loading="lazy"><figcaption><b>Run shop, 200%, 1920×1080</b> the wheel, one notch a frame · upgrades first, then guns, the gun's slots and the cards under them</figcaption></figure>
+    <div class="pair"><figure><img src="clip-range100.webp" alt="gun range scrolling at 100%" loading="lazy"><figcaption><b>Gun range armory, 100%</b> it shrank to fit before (about 0.6); now it is drawn at the UI size and scrolls</figcaption></figure><figure><img src="clip-options200.webp" alt="options scrolling at 200%" loading="lazy"><figcaption><b>Options, 200%</b> every row reachable; Back and All to defaults at the end</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Start menu</h2>
+    <div class="pair"><figure><img src="main-200-before.webp" alt="Start menu before at 200%" loading="lazy"><figcaption><b>Before, 200%</b> 1920×1080</figcaption></figure><figure><img src="main-200-after.webp" alt="Start menu after at 200%" loading="lazy"><figcaption><b>After, 200%</b> 1920×1080</figcaption></figure></div>
+    <div class="pair"><figure><img src="main-100-after.webp" alt="Start menu after at 100%" loading="lazy"><figcaption><b>After, 100%</b> 1920×1080 (as before at 100%)</figcaption></figure><figure><img src="main-1440-200-after.webp" alt="Start menu after at 200% on 1440" loading="lazy"><figcaption><b>After, 200%</b> 2560×1440</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Options</h2>
+    <div class="pair"><figure><img src="options-200-before.webp" alt="Options before at 200%" loading="lazy"><figcaption><b>Before, 200%</b> 1920×1080</figcaption></figure><figure><img src="options-200-after.webp" alt="Options after at 200%" loading="lazy"><figcaption><b>After, 200%</b> 1920×1080</figcaption></figure></div>
+    <div class="pair"><figure><img src="options-100-after.webp" alt="Options after at 100%" loading="lazy"><figcaption><b>After, 100%</b> 1920×1080 (as before at 100%)</figcaption></figure><figure><img src="options-1440-200-after.webp" alt="Options after at 200% on 1440" loading="lazy"><figcaption><b>After, 200%</b> 2560×1440</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Keys</h2>
+    <div class="pair"><figure><img src="keys-200-before.webp" alt="Keys before at 200%" loading="lazy"><figcaption><b>Before, 200%</b> 1920×1080</figcaption></figure><figure><img src="keys-200-after.webp" alt="Keys after at 200%" loading="lazy"><figcaption><b>After, 200%</b> 1920×1080</figcaption></figure></div>
+    <div class="pair"><figure><img src="keys-100-after.webp" alt="Keys after at 100%" loading="lazy"><figcaption><b>After, 100%</b> 1920×1080 (as before at 100%)</figcaption></figure><figure><img src="keys-1440-200-after.webp" alt="Keys after at 200% on 1440" loading="lazy"><figcaption><b>After, 200%</b> 2560×1440</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Run shop (three planets in)</h2>
+    <div class="pair"><figure><img src="shop-200-before.webp" alt="Run shop (three planets in) before at 200%" loading="lazy"><figcaption><b>Before, 200%</b> 1920×1080</figcaption></figure><figure><img src="shop-200-after.webp" alt="Run shop (three planets in) after at 200%" loading="lazy"><figcaption><b>After, 200%</b> 1920×1080</figcaption></figure></div>
+    <div class="pair"><figure><img src="shop-100-after.webp" alt="Run shop (three planets in) after at 100%" loading="lazy"><figcaption><b>After, 100%</b> 1920×1080 (as before at 100%, except the armory now draws at the UI size)</figcaption></figure><figure><img src="shop-1440-200-after.webp" alt="Run shop (three planets in) after at 200% on 1440" loading="lazy"><figcaption><b>After, 200%</b> 2560×1440</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Gun range armory</h2>
+    <div class="pair"><figure><img src="range-200-before.webp" alt="Gun range armory before at 200%" loading="lazy"><figcaption><b>Before, 200%</b> 1920×1080</figcaption></figure><figure><img src="range-200-after.webp" alt="Gun range armory after at 200%" loading="lazy"><figcaption><b>After, 200%</b> 1920×1080</figcaption></figure></div>
+    <div class="pair"><figure><img src="range-100-after.webp" alt="Gun range armory after at 100%" loading="lazy"><figcaption><b>After, 100%</b> 1920×1080 (as before at 100%, except the armory now draws at the UI size)</figcaption></figure><figure><img src="range-1440-200-after.webp" alt="Gun range armory after at 200% on 1440" loading="lazy"><figcaption><b>After, 200%</b> 2560×1440</figcaption></figure></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>The bottom bar</h2>
+    <figure><img src="bar-1440-200-before.webp" alt="bar before" loading="lazy"><figcaption><b>Before, 2560×1440 at 200%</b> the gun strip above the bar</figcaption></figure>
+    <figure><img src="bar-2560x1440-200-after.webp" alt="bar after at 1440 200%" loading="lazy"><figcaption><b>After, 2560×1440 at 200%</b> in the row, drawn smaller; the squad buttons fit beside it</figcaption></figure>
+    <figure><img src="bar-1920x1080-200-after.webp" alt="bar after at 1080 200%" loading="lazy"><figcaption><b>After, 1920×1080 at 200%</b></figcaption></figure>
+    <figure><img src="bar-1920x1080-150-after.webp" alt="bar after at 1080 150%" loading="lazy"><figcaption><b>After, 1920×1080 at 150%</b> &ldquo;1 squad&rdquo; no longer under the buttons</figcaption></figure>
+    <figure><img src="bar-1920x1080-100-after.webp" alt="bar after at 1080 100%" loading="lazy"><figcaption><b>After, 1920×1080 at 100%</b> unchanged</figcaption></figure>
+  </section>
+  <p class="note">The UI size is capped where the bottom bar would take a third of the window or outgrow its width, so 200% on 1920×1080 is 1.9× (and 2× on 2560×1440). Commands are in the report's README, <code>Reports/ui-scale-2026-11-15/</code>.</p>
+</main>

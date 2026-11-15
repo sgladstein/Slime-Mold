@@ -1985,16 +1985,33 @@ impl Hud {
                     }
                 }
                 rows.extend(m.help.iter().cloned());
-                let w = 620.0 * s;
+                // In columns (up to three) where one runs off the screen, and
+                // smaller only past that: one 620-unit column ran off the
+                // top and bottom of a 1080-line screen at 200% (11-15), the
+                // squad mode's card having some forty rows.
+                let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
+                let n = rows.len().max(1);
+                let mut s = s;
+                let (cols, per) = loop {
+                    let per = (((sh - 40.0 * s - 150.0 * s) / (25.0 * s)).floor() as usize).max(1);
+                    let cols = n.div_ceil(per);
+                    if (cols <= 3 && cols as f32 * 600.0 * s + 20.0 * s <= sw - 40.0 * s) || s < 0.4 {
+                        break (cols.max(1), n.div_ceil(cols.max(1)));
+                    }
+                    s *= 0.92;
+                };
+                let col_w = 600.0 * s;
+                let w = cols as f32 * col_w + 20.0 * s;
                 let lh = 25.0 * s;
-                let h = 80.0 * s + rows.len() as f32 * lh + 70.0 * s;
+                let h = 80.0 * s + per as f32 * lh + 70.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 20.0 * s, (r.x + 28.0 * s, r.y + 42.0 * s), Align::Left, "Controls", TEXT);
-                let mut y = r.y + 76.0 * s;
-                for (k, what) in &rows {
-                    c.text(Weight::SemiBold, 14.5 * s, (r.x + 28.0 * s, y), Align::Left, k, ACCENT);
-                    c.text_fit(Weight::Medium, 14.5 * s, (r.x + 210.0 * s, y), Align::Left, what, w - 238.0 * s, TEXT);
-                    y += lh;
+                for (i, (k, what)) in rows.iter().enumerate() {
+                    let (col, row) = (i / per, i % per);
+                    let x = r.x + 28.0 * s + col as f32 * col_w;
+                    let y = r.y + 76.0 * s + row as f32 * lh;
+                    c.text_fit(Weight::SemiBold, 14.5 * s, (x, y), Align::Left, k, 174.0 * s, ACCENT);
+                    c.text_fit(Weight::Medium, 14.5 * s, (x + 182.0 * s, y), Align::Left, what, col_w - 210.0 * s, TEXT);
                 }
                 self.wide_button(Rect::new(r.x + w - 24.0 * s - 120.0 * s, r.bottom() - 24.0 * s - 38.0 * s, 120.0 * s, 38.0 * s), "Back", Hit::Back, true, c, s);
             }
@@ -2460,6 +2477,29 @@ mod tests {
             assert_eq!(r.key(k).1, vec![]);
             assert_eq!(r.key(KeyCode::Escape).1, vec![]);
             assert!(r.hud.menu_open());
+        }
+    }
+
+    /// The key card from play with as many rows as the squad mode's (some
+    /// forty) stays on the screen at every UI size, in columns, and at
+    /// 200% is drawn bigger than at 100% (11-15: one column ran off a
+    /// 1080-line screen).
+    #[test]
+    fn the_key_card_fits_at_every_size() {
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            let back = |user: f32| {
+                let mut r = Rig::new(screen);
+                r.m.help = (0..30).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
+                r.c.ui.user = user;
+                r.key(KeyCode::F1);
+                r.draw();
+                r.hud.hits.iter().find(|(_, h)| *h == Hit::Back).map(|(b, _)| *b).unwrap()
+            };
+            for user in crate::world::settings::STEPS {
+                let b = back(user);
+                assert!(b.y >= 0.0 && b.bottom() <= screen.1 as f32 && b.x >= 0.0 && b.right() <= screen.0 as f32, "{screen:?} at {user}: Back {b:?} off screen");
+            }
+            assert!(back(2.0).h > back(1.0).h * 1.25, "{screen:?}: 200% grows the card");
         }
     }
 
