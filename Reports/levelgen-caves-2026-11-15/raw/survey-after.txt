@@ -1,0 +1,22 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts
+7 1 Vekum cave [Caves Dry Sand scattered] 0 444 | 53 45% 16% 0% 0% 0% 32 | 1297 1853 72 | 99% | 6/20 6/20 | 
+7 2 Lothaskar cave [Caves Pools Sand jackpot] 0 516 | 35 42% 8% 8% 0% 20% 40 | 1096 1447 48 | 99% | 6/20 6/20 | 
+7 3 Tharro cave [Caves Pools Sand jackpot] 0 456 | 35 44% 9% 10% 0% 12% 56 | 1124 1696 85 | 100% | 8/20 6/20 | 
+7 4 Pherro cave [Caves Dry Clay jackpot] 0 395 | 36 44% 0% 20% 0% 0% 40 | 1161 1555 54 | 99% | 6/18 8/20 | 
+7 5 Quarror cave [Caves Pools Plain jackpot] 0 437 | 36 45% 0% 12% 0% 16% 40 | 1128 1924 54 | 100% | 8/20 6/20 | 
+7 6 Drenus cave [Caves Pools Clay scattered] 0 474 | 38 45% 0% 20% 0% 16% 32 | 1236 1888 56 | 98% | 8/20 6/20 | 
+7 7 Zozith cave [Caves Dry Sand scattered] 1 1147 | 50 45% 13% 0% 0% 0% 36 | 1365 1912 49 | 100% | 6/18 8/20 | 1 crystals cannot be reached
+7 8 Quane cave [Caves Dry Sand veins] 0 486 | 16 46% 13% 0% 0% 0% 8 | 1028 1796 55 | 100% | 6/18 8/20 | 
+7 9 Quassor cave [Caves Dry Sand jackpot] 0 404 | 36 44% 18% 0% 0% 0% 36 | 1258 1624 60 | 100% | 8/18 6/20 | 
+7 10 Neren cave [Caves Pools Plain scattered] 0 472 | 34 44% 0% 10% 0% 18% 44 | 1344 1889 56 | 100% | 6/18 8/20 | 
+7 11 Thavar cave [Caves Pools Plain veins] 0 418 | 11 45% 0% 9% 0% 18% 32 | 1107 1457 80 | 100% | 6/20 6/20 | 
+7 12 Kavurae cave [Caves Pools Clay veins] 0 464 | 10 46% 0% 21% 0% 16% 16 | 1345 1912 80 | 100% | 8/18 8/18 | 
+7 13 Sorrorrith cave [Caves Dry Sand jackpot] 0 374 | 36 43% 16% 0% 0% 0% 28 | 1059 1700 54 | 100% | 6/18 8/18 | 
+7 14 Nezum cave [Caves Pools Clay veins] 0 436 | 18 45% 0% 21% 0% 16% 32 | 1336 1880 64 | 97% | 6/20 6/18 | 
+7 15 Drele cave [Caves Dry Sand veins] 0 371 | 15 43% 16% 0% 0% 0% 24 | 1164 1834 54 | 100% | 6/20 6/18 | 
+7 16 Griskae cave [Caves Pools Clay fields] 0 452 | 25 45% 0% 20% 0% 13% 32 | 1075 1720 58 | 100% | 8/18 6/18 | 
+7 17 Grisso cave [Caves Pools Sand jackpot] 0 445 | 36 43% 8% 9% 0% 17% 12 | 1170 1830 75 | 100% | 6/18 8/20 | 
+7 18 Somum cave [Caves Pools Sand jackpot] 0 433 | 35 45% 8% 9% 0% 15% 40 | 1172 1824 54 | 96% | 6/18 6/18 | 
+7 19 Soris cave [Caves Dry Sand scattered] 0 430 | 49 43% 18% 0% 0% 0% 28 | 1370 1768 56 | 100% | 6/20 6/18 | 
+7 20 Thavevus cave [Caves Dry Clay veins] 0 371 | 17 43% 0% 27% 0% 0% 44 | 1060 1648 64 | 100% | 6/20 6/20 | 
+20 planets, 471 ms each on average
