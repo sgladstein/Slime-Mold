@@ -4,6 +4,7 @@ kind: mechanism
 status: open
 updated: 2026-11-15
 sources:
+  - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/food-tubes-2026-11-11.md
@@ -90,7 +91,12 @@ bronze keeps its veins under the sheen (luma 99; keep it at or under the
 bolt red's 105). **Breakaway** (`BigParams::roam`, off by default, needs
 condensing or, since 11-15, thickening; owner 11-14 15:06Z): every `roam` steps a condensed piece may
 leave together for the nearest untouched crystal at least `roam_far` cells
-away, running like a panicking walker, and lands and feeds there.
+away, running like a panicking walker, and lands and feeds there. **On in the
+run from planet 2** with `condense` (both 300; the whole-game review's D2,
+owner 11-15 21:41Z): breakaway alone over shape C's thickening moved
+nothing on planet 2 (19,093 walkers at 2:00 against 19,103), while both
+made the slime a fifth to two fifths heavier at 3:00
+([breakaway in the run](../../Reports/breakaway-run-2026-11-15/README.md)).
 
 **Thickening** (11-15, `BigParams::thicken`, both engines; **on in shape
 C at 2**): a walker that banks `thicken` times a birth's energy without
