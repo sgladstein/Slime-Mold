@@ -11,6 +11,7 @@ sources:
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
+  - Reports/shop-b-2026-11-15/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
 code:
@@ -42,7 +43,6 @@ code:
   - run_walkers
   - shells_at
   - shop_of
-  - shop_plan
   - shrink_goal
   - size_roll
   - surge_food
@@ -62,10 +62,18 @@ planet 1 down to 10%; each time the owner kept winning with slime left; under 3%
 stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the slime now against the count to reach, both as mass (a thickened walker twice, as the bar counts it; "12,630 walkers now → 126" at 1%), [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells guns and gun cards
-that get better deeper; a lost planet ends the run. The shop page has two
-areas: upgrades as a grid of command-card tiles with Buildings, Tools and
-Dev as folders, and an armory of gun cards (icon, stat bars) and bullet
-cards (the HUD's icons, in the carried gun's slots, the bag, for sale). The
+that get better deeper; a lost planet ends the run. The shop page is one
+screen at every UI size (shop B, the owner's pick of 2026-11-15 19:37Z):
+the planet's line and the points along the top, the carried gun's slots
+and the bag pinned under it, a row of tabs (Cards, Guns, Squad, Buildings,
+Tools) over a counter of half-size tiles that pages rather than scrolls,
+and a pane at the right that tells the picked tile, else the planet's
+briefing, with its Buy button; a click picks, Enter or the button buys
+([report](../../Reports/shop-b-2026-11-15/README.md)). Until then it had
+upgrades as a grid of command-card tiles with Buildings, Tools and Dev as
+folders, and an armory of gun cards and bullet cards below, which scrolled
+at large UI sizes (cards in the HUD's icons, in the carried gun's slots,
+the bag, for sale). The
 run starts with the average rifle and carries one gun (`Run::carried`,
 the gun thread's `guns::Gun`); two guns rolled for the coming planet are on
 sale each shop, priced by `gun_price`, and the carried gun's budget and
@@ -109,7 +117,10 @@ as a free armory (`Run::range`): every gun kind owned at its average with a
 rolled one of each on the rack to swap in, a bullet of every payload and set
 (the standard set exact) and every other card, never sold out, and tiles to
 roll them again, deeper or shallower (from `RANGE_DEPTH`), and to empty the
-gun or the bag. Back to the range plays the sandbox's round armed from it
+gun or the bag. The armory is the shop's frame with the range's tabs: Guns
+as a table whose stats are green or red against the carried gun, Bullets as
+a grid of shape by payload, and the modifiers' two shelves; the roll and
+empty tools sit on the bottom bar ([report](../../Reports/shop-b-2026-11-15/README.md)). Back to the range plays the sandbox's round armed from it
 (`range_args`), with no time limit and a 100,000 bank; H there opens the
 armory over the paused round and Back re-arms every squad
 ([report](../../Reports/gun-range-2026-11-15.md)).
@@ -121,7 +132,8 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-14 15:26Z: level generation is its own thread; this one reviews it "but you don't do level generation".
 - 2026-11-14 16:55Z: "Guns and bullets should have icons. This whole menu should not just be uniform buttons. There should be one area for unlocking/upgrading that should match the player menu from the screen (buildings and tools should be separate menus that you open up). The second area of the screen is for Guns/bullet cards."
 - 2026-11-14 20:32Z: "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around".
-- 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups).
+- 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups; in shop B the gun and bag are pinned and hold still, a test checks it).
+- 2026-11-15 17:31Z: "Having to scroll is horrible. That's not professional." 17:41Z: "The bullet tiles could easily be half the size without even losing any info." 19:37Z: "Shop B, menu A," (the tabbed counter with a pane).
 - 2026-11-15 08:34Z (to the slime thread, on a planet's slime size): "It should vary and be more later on."
 - 2026-11-15 18:02Z: "We are still winning the game with too many slime left. Drop it to 1% of peak" (`WIN_SHARE` 1%).
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).

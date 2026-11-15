@@ -1349,6 +1349,31 @@ fn the_menus_real_lists_fit_one_screen() {
             m.show(Page::Missions);
             draw(&mut m);
             assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the campaign takes {} pages", m.sheets());
+            // The run's shop three planets in (as `menu=shop-mid` films it)
+            // and the gun range's armory (Shop B, 11-15): every tab whole on
+            // one screen, but the armory's eight guns, which may take two
+            // pages at 200% on a 540-line screen.
+            let mut r = Run::new(4);
+            for _ in 0..3 {
+                r.won(3);
+            }
+            r.points += 900;
+            for _ in 0..3 {
+                r.pick(slime_mould::mould::run::Pick::Offer(0));
+            }
+            for (name, shop) in [("shop", shop_of(&r)), ("armory", shop_of(&Run::range(4)))] {
+                m.shop = Some(shop);
+                m.show(Page::Shop);
+                let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
+                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets and
+                // the two shelves of modifiers.)
+                for tab in 0..if name == "shop" { 5 } else { 4 } {
+                    draw(&mut m);
+                    let most = if name == "armory" && tab == 0 { 2 } else { 1 };
+                    assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());
+                    m.key(KeyCode::Tab, true);
+                }
+            }
         }
     }
 }
