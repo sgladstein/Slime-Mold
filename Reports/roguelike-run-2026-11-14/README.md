@@ -28,7 +28,8 @@ towards the core slime world". Level generation is its own thread (15:22Z,
   and a test keeps every rung playable. Walkers grow a fifth a planet
   (`WALKERS_PER_DEPTH`).
 - **The goal**: cut the slime to `shrink_goal(depth)` of its peak, 25% on
-  planet 1, 3 points less a planet, 10% from planet 6. The mission tracker's
+  planet 1, 3 points less a planet, 10% from planet 6 (2% on every planet
+  from 11-15, *Winning when the slime is gone* below). The mission tracker's
   stars, stuck and cap rules apply unchanged. Free play's bite (`drain` 2),
   not the missions' 1.
 - **Ground**: planet `depth` of the run's seed from the level generator
@@ -207,6 +208,47 @@ Checks: `run::tests::bigger_planets_get_a_longer_clock_and_a_grown_slime`
 (the eight clocks and head starts; every level's rules carry its clock),
 `larder_world::tests::a_head_start_grows_the_slime_and_the_clock_starts_on_landing`
 (CPU world: ticks run on, `time` is 0 on landing, a 2 s cap ends at 2 s).
+
+## Winning when the slime is gone (2026-11-15 03:30Z)
+
+Owner, 03:02Z: "I know I originally said getting the last few slime
+stragglers is annoying but right now how it's set up I feel like I keep
+winning before I've actually killed everything. So maybe we need a
+different threshold or something".
+
+The goal was the slime cut to 25% of its peak on planet 1, three points
+less a planet, 10% from planet 6, so a planet was won with a tenth to a
+quarter of the slime still on the map. Now 2% on every planet
+(`run::WIN_SHARE`; the goal reads "Wipe out the slime: cut it to 2% of its
+peak"). The stragglers stay easy: below 3% of its peak the slime is
+already broken (`Rules::broken`, the owner's 11-12 ruling), its upkeep
+50 times, so pieces off food starve in a second or two and the HUD says
+"The mould is broken: its stragglers starve unless they reach a crystal".
+2% sits under that line, since the game's peak counts from the landing
+and the goal's from 60 s, so what is left to shoot when the goal is near
+is slime on its crystals. Only the run changes: the campaign's missions
+keep their own goals in their files, and free play is won by wiping the
+mould or taking its core, as before.
+
+Smoke check, planet 1 seed 1, llvmpipe, three AI hands to 15:00:
+
+| Hand | End | Slime left | Walkers killed |
+|---|---|---|---|
+| strike | goal met at 6:37, 3 stars | 19 walkers (peak about 1,800) | 8,409 |
+| claim | the clock, no goal | 1,533 | 11,756 |
+| fort | the clock, no goal (never fires) | 1,822 | 0 |
+
+The strike hand's slime was at 1,783 walkers at 6:00 and 19 at 6:37; under
+the old 25% it would have been won with about 450 left. Claim and fort did
+not reach 25% either, so the change costs them nothing; nothing soft-locks
+(the clock ends the round). Not a census: one seed, a smoke check.
+
+Rejected: winning only when the slime is wiped (`MouldWiped`), since a
+straggler on a crystal can eat and breed back over the broken line, the
+chase the owner found annoying on 11-12.
+
+Check: `run::tests::levels_get_harder_and_the_same_seed_gives_the_same_run`
+(goal no higher deeper); the window's run test reads the new goal text.
 
 ## Pictures
 

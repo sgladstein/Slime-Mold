@@ -197,6 +197,9 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     if b.passes > 0 && stamped && !over(&app) {
         print_passes(&mut app, b.passes, dt);
     }
+    if b.viewpasses > 0 && device.features().contains(wgpu::Features::TIMESTAMP_QUERY) {
+        print_view_passes(&mut app, b.viewpasses, dt, device, queue)?;
+    }
     Ok(last)
 }
 
@@ -236,6 +239,67 @@ pub(super) fn print_passes(app: &mut App, n: u32, dt: f32) {
         let on = if some < steps.len() { format!(", on {some} of {} steps", steps.len()) } else { String::new() };
         println!("    {name:<10} {runs:>3} a step  {sum:>7.3} ms a step  {one:>7.3} ms a run  {:>5.1}%{on}", 100.0 * sum / total.max(1e-9));
     }
+}
+
+/// The bench's `viewpasses=N`: `n` more frames (the game stepping as in
+/// the run) with each of the view's passes stamped alone, then a line a
+/// pass: the median over the frames of its GPU ms. (Performance thread,
+/// 11-15: the whole view was one number, so a look's cost could only be
+/// had from A/B builds.)
+pub(super) fn print_view_passes(app: &mut App, n: u32, dt: f32, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
+    let names = slime_mould::world::View::PASS_NAMES;
+    let count = 2 * names.len() as u32;
+    let qs = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("view passes"), ty: wgpu::QueryType::Timestamp, count });
+    let size = count as u64 * 8;
+    let resolve = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view passes resolve"), size, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    let read = device.create_buffer(&wgpu::BufferDescriptor { label: Some("view passes read"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let period = queue.get_timestamp_period() as f64 * 1e-6;
+    let mut ms: Vec<Vec<f64>> = vec![Vec::new(); names.len()];
+    let mut total: Vec<f64> = Vec::new();
+    for _ in 0..n {
+        if app.game.as_ref().is_none_or(|g| g.end.is_some()) {
+            break;
+        }
+        app.step(dt);
+        app.settle();
+        app.prepare();
+        let view = app.view.as_ref().unwrap();
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("view passes") });
+        let order = view.record_each(&mut enc, &app.camera, &qs);
+        let used = 2 * order.len() as u32;
+        enc.resolve_query_set(&qs, 0..used, &resolve, 0);
+        enc.copy_buffer_to_buffer(&resolve, 0, &read, 0, used as u64 * 8);
+        let index = queue.submit([enc.finish()]);
+        read.slice(..).map_async(wgpu::MapMode::Read, |_| {});
+        device.poll(wgpu::PollType::Wait { submission_index: Some(index), timeout: None }).map_err(|e| format!("poll: {e}"))?;
+        {
+            let data = read.slice(..).get_mapped_range();
+            let t: Vec<u64> = data.chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+            let mut sum = 0.0;
+            for (q, &p) in order.iter().enumerate() {
+                let d = t[2 * q + 1].saturating_sub(t[2 * q]) as f64 * period;
+                ms[p].push(d);
+                sum += d;
+            }
+            total.push(sum);
+        }
+        read.unmap();
+    }
+    let median = |v: &mut Vec<f64>| {
+        v.sort_by(f64::total_cmp);
+        v.get(v.len() / 2).copied().unwrap_or(0.0)
+    };
+    let all = median(&mut total);
+    println!("  view, every pass timed alone (median of {} frames): {all:.3} ms in all", total.len());
+    for (p, name) in names.iter().enumerate() {
+        if ms[p].is_empty() {
+            continue;
+        }
+        let runs = ms[p].len();
+        let m = median(&mut ms[p]);
+        println!("    {name:<8} {m:>7.3} ms  {:>5.1}%  ({runs} frames)", 100.0 * m / all.max(1e-9));
+    }
+    Ok(())
 }
 
 /// `hand=every`, the smoke test's hand (2026-11-12): once a game second,

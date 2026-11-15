@@ -154,11 +154,26 @@ pub fn head_start(area: f32) -> f32 {
     (60.0 * (area.sqrt() - 1.0)).max(0.0).round()
 }
 
-/// The goal: the slime down to this share of its peak. Gentler early
-/// (a quarter), down to a tenth from planet 6.
-pub fn shrink_goal(depth: u32) -> f32 {
-    (0.25 - 0.03 * (depth.saturating_sub(1)) as f32).max(0.10)
+/// The goal: the slime down to this share of its peak, on every planet.
+///
+/// Why 2% (owner, 11-15 03:02Z: "right now how it's set up I feel like I
+/// keep winning before I've actually killed everything"): it was a
+/// quarter on planet 1 down to a tenth from planet 6, so a planet was won
+/// with a tenth to a quarter of the slime still on the map. 2% is under
+/// the broken line (`Rules::broken`, 3% of the game's peak, which counts
+/// from the landing and so sits higher than this goal's peak, counted from
+/// 60 s): before the goal is met the slime is broken and its stragglers
+/// off food starve in a second or two (the owner's earlier "having to kill
+/// the few random stragglers spread across the map to win is annoying",
+/// 11-12 22:06Z), so what is left to shoot is the slime still on its
+/// crystals. Difficulty by depth comes from the tier and the walkers now,
+/// not from a gentler goal.
+pub fn shrink_goal(_depth: u32) -> f32 {
+    WIN_SHARE
 }
+
+/// `shrink_goal` on every planet.
+pub const WIN_SHARE: f32 = 0.02;
 
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {
@@ -450,7 +465,7 @@ impl Run {
         let shrink = shrink_goal(d);
         let mission = Mission {
             name: format!("Planet {d} of {PLANETS}, {}", planet.name),
-            says: format!("Beat the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
+            says: format!("Wipe out the slime: cut it to {:.0}% of its peak", 100.0 * shrink),
             map: map.clone(),
             tier: Some(tier.name().to_string()),
             goal: Goal::Shrink(shrink),
@@ -720,7 +735,7 @@ impl Run {
                 face: Face::Gun(*g),
                 on,
                 name: title(&g.title()),
-                about: if on { format!("{}. Carried: every soldier lands with it", g.line()) } else { format!("{}. In the armory: pick to carry it", g.line()) },
+                about: if on { "Your squad carries it.".into() } else { "Click to carry it instead.".into() },
                 price: String::new(),
                 state: if on { "carried".into() } else { "armory".into() },
                 ready: !on,
@@ -729,11 +744,11 @@ impl Run {
         }
         for (i, g) in self.gun_offers.iter().enumerate() {
             let p = gun_price(g);
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("{}. Found on planet {}", g.line(), g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_price(c);
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: format!("{} For sale: click to buy it (into the gun when it fits), or drag it onto a slot", c.about()), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
         }
         let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
@@ -744,9 +759,12 @@ impl Run {
                 face: Face::Card(c),
                 on,
                 name: card_title(c),
-                about: if on { format!("{} Slot {slot} of the gun, fired in turn: click to take it out, drag it to another slot (or Q and E) to move it", c.about()) } else if fits { format!("{} In the bag: click to put it in the gun, or drag it to a slot", c.about()) } else { format!("{} In the bag: over the gun's budget or slots, take a card out first", c.about()) },
+                // Its words only; how to click and drag is on the shop's
+                // hint line (owner 11-15 02:57Z: the cards' text "is too
+                // much"). Its slot is its state.
+                about: if on || fits { c.about().into() } else { format!("{} Too big for the gun now.", c.about()) },
                 price: String::new(),
-                state: if on { "in the gun".into() } else { "in the bag".into() },
+                state: if on { format!("slot {slot}") } else { "in the bag".into() },
                 ready: on || fits,
                 pick: Pick::Card(i),
             });
@@ -961,7 +979,7 @@ mod tests {
         // The shop numbers the slots in firing order and says how to move.
         let rows: Vec<Row> = r.shop().into_iter().filter(|row| row.on && matches!(row.pick, Pick::Card(_))).collect();
         assert_eq!(rows.len(), 4);
-        assert!(rows[1].about.contains("Slot 2 of the gun") && rows[1].about.contains("drag it"), "{}", rows[1].about);
+        assert_eq!((rows[1].state.as_str(), rows[1].about.as_str()), ("slot 2", Card::Quiet.about()));
         assert!(rows.iter().map(|row| row.name.clone()).eq(["Gas", "Quiet", "Blast", "Wide"].map(String::from)));
         // A card for sale dragged onto slot 1: bought and put there; one
         // the gun has no room for is bought into the bag.

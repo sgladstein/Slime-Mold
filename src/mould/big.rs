@@ -147,6 +147,8 @@ impl SpeciesSet {
 }
 const DRAW_TERRAIN: u32 = 140;
 const DRAW_HOLD: u32 = 150;
+/// The start's outline on a map (`start_shape`).
+const DRAW_SHAPE: u32 = 160;
 /// Soil kinds in `BigDish::soil` (`BigParams::sand_keep`).
 pub const SOIL_SAND: u8 = 1;
 pub const SOIL_CLAY: u8 = 2;
@@ -242,6 +244,11 @@ pub struct BigParams {
     /// With `blob`, the share of walkers that start spread evenly over the
     /// whole dish instead (a haze around the seed); 0 is today's.
     pub haze: f32,
+    /// With `blob` (not `blob_r`), each start takes an organic outline
+    /// (`start_shape`) instead of a disc: the Larder world's
+    /// (`race_params`; the planet review, 2026-11-15, "every start is a
+    /// perfect gold disc"). Off: today's disc, for the other dishes.
+    pub start_shape: bool,
     /// Trail-dependent settings (Jenson's *36 Points*, as Bleuje's port
     /// reads it). 0 is off (today's). Otherwise each walker, when it looks,
     /// reads the trail at its own cell as the pass began and takes
@@ -1150,6 +1157,7 @@ impl BigParams {
             respawn: 0.0,
             blob_r: 0.0,
             haze: 0.0,
+            start_shape: false,
             sense_scale: 0.0,
             offset_mod: [0.0, 1.0],
             angle_mod: [0.0, 1.0],
@@ -2562,8 +2570,13 @@ impl BigDish {
             // widens by a quarter and goes on, up to the world's size. The
             // first round is the one every dish had, so a blob that fits
             // draws the same.
+            // In the Larder world each start takes its own organic outline
+            // (`start_shape`), so no start is a perfect disc. Keyed by the
+            // start's cell, not its order, so starts listed twice at one
+            // place (the garden's) draw one outline.
+            let shape = if self.p.start_shape && self.p.blob_r <= 0.0 { start_shape(seed, (x as u32) << 16 | y as u32) } else { Shape::DISC };
             loop {
-                self.place_round(seed, target, hx, hy, r, &mut k, budget);
+                self.place_round(seed, target, hx, hy, r, &shape, &mut k, budget);
                 if self.walkers.len() >= target || !self.p.blob || r > self.w.max(self.h) as f32 {
                     break;
                 }
@@ -2574,7 +2587,7 @@ impl BigDish {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn place_round(&mut self, seed: u64, n: usize, hx: f32, hy: f32, r: f32, k: &mut u32, budget: u32) {
+    fn place_round(&mut self, seed: u64, n: usize, hx: f32, hy: f32, r: f32, shape: &Shape, k: &mut u32, budget: u32) {
         while self.walkers.len() < n && *k < budget {
             let k0 = *k;
             let (a, b, c) = (
@@ -2586,7 +2599,8 @@ impl BigDish {
             let k = *k;
             let hazy = self.p.haze > 0.0 && unit(keyed(seed, 1, DRAW_HAZE, k)) < self.p.haze;
             let (x, y) = if self.p.blob && !hazy {
-                let (ang, dist) = (a * TAU, b.sqrt() * r);
+                let ang = a * TAU;
+                let dist = shape.dist(seed, k, ang, b) * r;
                 (hx + ang.cos() * dist, hy + ang.sin() * dist)
             } else if self.p.species_zones && self.p.species > 1 {
                 // Walker number `len` (the next pushed) is species_of(len);
@@ -2598,6 +2612,17 @@ impl BigDish {
                 (a * self.w as f32, b * self.h as f32)
             };
             let Some(i) = self.cell(x, y) else { continue };
+            // An organic start keeps clear of the squad's landing (12 dish
+            // cells): its arms are drawn, not grown, and must not start the
+            // game with the squad standing in slime.
+            if shape.rim > 0.0 {
+                if let Some((lx, ly)) = self.landing {
+                    let sc = self.p.scale as f32;
+                    if (x - lx * sc).hypot(y - ly * sc) < 12.0 * sc {
+                        continue;
+                    }
+                }
+            }
             // The crowd limit of the species this walker will be.
             let crowd = if self.p.species_sets.is_empty() { self.p.crowd } else { self.p.species_sets[self.species_of(self.walkers.len())].crowd };
             if !self.agar[i] || (crowd > 0 && self.occ[i] >= crowd as u16) {
@@ -4504,6 +4529,71 @@ impl BigDish {
         }
         out
     }
+}
+
+/// A start's outline: its radius by angle, as a share of the round blob's
+/// (`place_walkers`). The planet review (2026-11-15, #10): "every start is
+/// a perfect gold disc". The disc came from drawing a walker's distance as
+/// `sqrt(b) * r`, a hard round edge at the same radius all the way round.
+/// A map's start now takes lobes (harmonics 2 to 7, each
+/// strength and phase from the seed and the start), a ragged rim (a
+/// walker in the outer half may sit up to 45% further out or in) and a
+/// denser middle, at about the same area, so the walkers per cell, and so the opening, match the disc.
+pub(crate) struct Shape {
+    /// Per harmonic k = 2..7: (strength, phase).
+    lobes: [(f32, f32); 6],
+    /// The rim's spread, a share of the radius.
+    rim: f32,
+    /// Keeps the area: 1 / sqrt(mean of the outline squared).
+    norm: f32,
+}
+
+impl Shape {
+    pub(crate) const DISC: Shape = Shape { lobes: [(0.0, 0.0); 6], rim: 0.0, norm: 1.0 };
+
+    /// The outline's radius at angle `ang`, a share of the disc's.
+    fn radius(&self, ang: f32) -> f32 {
+        let mut f = 1.0;
+        for (j, &(a, ph)) in self.lobes.iter().enumerate() {
+            f += a * ((j as f32 + 2.0) * ang + ph).cos();
+        }
+        // Never pinched to nothing (a deep notch keeps 0.3 of the radius),
+        // and no arm past 1.4 of it: uncapped, the Fork's start reached up
+        // the middle channel onto the squad's landing at 0:00.
+        f.clamp(0.3, 1.4) * self.norm
+    }
+
+    /// A walker's distance from the start at angle `ang`, for the uniform
+    /// draw `b` (walker draw `k`), as a share of the disc's radius.
+    fn dist(&self, seed: u64, k: u32, ang: f32, b: f32) -> f32 {
+        // Denser in the middle, thinning outward (b^0.45, against the
+        // disc's even sqrt), so the body has a heart and a fraying edge.
+        let p = if self.rim > 0.0 { 0.45 } else { 0.5 };
+        let mut d = b.powf(p) * self.radius(ang);
+        if self.rim > 0.0 && b > 0.45 {
+            let e = unit(keyed(seed, 2, DRAW_SHAPE, k));
+            // Fades in over the outer third, so the middle stays packed.
+            let w = ((b - 0.45) / 0.55).min(1.0);
+            d *= 1.0 + self.rim * w * (2.0 * e - 1.0);
+        }
+        d
+    }
+}
+
+/// The outline of the start at cell `at` (x << 16 | y) for `seed` (`Shape`): harmonics 2 to 7, the low
+/// ones strongest (0.5 / (k - 1)^0.7 at most), so a start reaches out in a
+/// few broad arms with a wrinkled rim. A first try at a quarter of this
+/// (lobes up to 0.22) still read as a disc at the whole map's zoom.
+pub(crate) fn start_shape(seed: u64, at: u32) -> Shape {
+    let mut lobes = [(0.0, 0.0); 6];
+    for (q, l) in lobes.iter_mut().enumerate() {
+        let k = 2.0 + q as f32;
+        let a = unit(keyed(seed, 1 + at as u64, DRAW_SHAPE, 2 * q as u32));
+        let ph = unit(keyed(seed, 1 + at as u64, DRAW_SHAPE, 2 * q as u32 + 1)) * TAU;
+        *l = ((0.3 + 0.7 * a) * 0.5 / (k - 1.0).powf(0.7), ph);
+    }
+    let ms: f32 = 1.0 + lobes.iter().map(|&(a, _)| a * a / 2.0).sum::<f32>();
+    Shape { lobes, rim: 0.45, norm: 1.0 / ms.sqrt() }
 }
 
 #[cfg(test)]

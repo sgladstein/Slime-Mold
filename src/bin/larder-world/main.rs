@@ -89,9 +89,10 @@
 //! same eight and from 3 s walks them into the body on the core
 //! (`Order::Attack`, the rush's order).
 //! `-- bench=SECS [hand=..] [fps=60] [screen=..] [stamps=0] [grid=BIN]
-//! [sound=PATH] [fast=1] [passes=N]` times the window's frame without a
+//! [sound=PATH] [fast=1] [passes=N] [viewpasses=N]` times the window's frame without a
 //! window (`bench`), a mission's too, and with `passes=` each GPU pass of
-//! N more game steps; `hand=every` presses every command on the
+//! N more game steps (`viewpasses=` each of the view's passes over N more
+//! frames); `hand=every` presses every command on the
 //! card each game second (`press_every`), and `sound=` (empty: no file)
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
@@ -1416,6 +1417,9 @@ struct Bench {
     /// cell each way from zoom 6), so the draw is timed at the opening zoom
     /// and at `MAX_ZOOM` (24) over the body, not only where the window opens.
     view: Option<(f32, f32, f32)>,
+    /// `viewpasses=N`: after the timed run, N more frames with each of the
+    /// view's passes timed alone (`View::record_each`), as a table a pass.
+    viewpasses: u32,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -1423,6 +1427,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);
+    let mut viewpasses = 0u32;
     let mut holes = false;
     let mut bank = None;
     let mut centre = None;
@@ -1522,6 +1527,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "grid" => grid = v.parse()?,
             "fast" => fast = v != "0",
             "passes" => passes = v.parse()?,
+            "viewpasses" => viewpasses = v.parse()?,
             "settle" => settle = v != "0",
             "squad1" => squad1 = v != "0",
             "spread" => spread = v != "0",
@@ -1591,7 +1597,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Any other key is an engine setting (`gpu::set`), checked here.
             _ => match slime_mould::gpu::set(&mut race_settings(1, 2, 5000), k, v) {
                 Ok(()) => args.keys.push((k.to_string(), v.to_string())),
-                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, settle, squad1, spread)").into()),
+                Err(e) => return Err(format!("{e} (or one of map, seed, scale, walkers, shape, voice, mission, crater, aim, core_pull, mass, wade, sink; look, hand, at, screen, sound, holes, ui, centre, cut, hover, select, turret, lure, pump, outpost, siren; bench, fps, stamps, grid, fast, passes, viewpasses, settle, squad1, spread)").into()),
             },
         }
     }
@@ -1617,7 +1623,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(secs) = bench_secs {
         println!("larder-world machine at the start: {}", machine());
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
-        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre }, &device, &queue)?;
+        bench(args, &Bench { secs, hand, fps, screen, stamps, grid, sound: wav, fast, passes, settle, squad1, spread, view: centre, viewpasses }, &device, &queue)?;
         println!("  machine at the end: {}", machine());
         return Ok(());
     }

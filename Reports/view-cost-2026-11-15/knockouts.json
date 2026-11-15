@@ -1,0 +1,108 @@
+{
+ "shadedall": [
+  {
+   "old": "            c = shaded(fx, fy, 0.75 / f32(P.fine));",
+   "new": "            c = vec3<f32>(fx, fy, 0.0);"
+  }
+ ],
+ "soil": [
+  {
+   "old": "let sd = soil_detail(x, y, exp(-30.0 * th_here));",
+   "new": "let sd = vec4<f32>(1.0, 0.0, 0.0, 0.0);"
+  }
+ ],
+ "plants": [
+  {
+   "old": "    let pp = plant_px(x, y);",
+   "new": "    var pp: PlantPx; pp.d = vec4<f32>(0.0); pp.heat = 0.0; pp.char = 0.0; pp.fresh = 0.0;"
+  },
+  {
+   "old": "    if (P.plant_at != 0u) {\n        // Char",
+   "new": "    if (false) {\n        // Char"
+  },
+  {
+   "old": "    if (P.plant_at != 0u) {\n        // Emission",
+   "new": "    if (false) {\n        // Emission"
+  }
+ ],
+ "plantlayer": [
+  {
+   "old": "        pl = plant_layer(x, y, pp.d, pp.heat > 0.002);",
+   "new": "        pl.rgb = vec3<f32>(0.0); pl.cover = 0.0;"
+  }
+ ],
+ "plantpx": [
+  {
+   "old": "    let pp = plant_px(x, y);",
+   "new": "    var pp: PlantPx; pp.d = vec4<f32>(0.5, 0.0, 0.0, 0.0); pp.heat = 0.0; pp.char = 0.0; pp.fresh = 0.0;"
+  }
+ ],
+ "terrain": [
+  {
+   "old": "            if (ta.cov >= 1.0) {\n                c = terrain_top(ta);",
+   "new": "            if (false) {\n                c = terrain_top(ta);"
+  },
+  {
+   "old": "                c = terrain_over(c, fx, fy);",
+   "new": ""
+  }
+ ],
+ "gem": [
+  {
+   "old": "    let k1 = gem_near(x, y);\n    if (k1 > 0u) {",
+   "new": "    let k1 = 0u;\n    if (k1 > 0u) {"
+  }
+ ],
+ "gemh": [
+  {
+   "old": "    let h = max(hc0, gem_height(x, y));",
+   "new": "    let h = hc0;"
+  }
+ ],
+ "shadow": [
+  {
+   "old": "    let toward = max(cells_height_lin(tx, ty), gem_height(tx, ty));",
+   "new": "    let toward = 0.0;"
+  }
+ ],
+ "sheen": [
+  {
+   "old": "    let sx = film_h(x + so, y) - film_h(x - so, y);\n    let sy = film_h(x, y + so) - film_h(x, y - so);",
+   "new": "    let sx = 0.0; let sy = 0.0;"
+  }
+ ],
+ "slope": [
+  {
+   "old": "    let dx = cells_height(x + e, y) - hc0;\n    let dy = cells_height(x, y + e) - hc0;",
+   "new": "    let dx = 0.0; let dy = 0.0;"
+  }
+ ],
+ "lights": [
+  {
+   "old": "    for (var j = 0u; j < P.n_lights; j++) {\n        let a = lights[2u * j];",
+   "new": "    for (var j = 0u; j < 0u; j++) {\n        let a = lights[2u * j];"
+  }
+ ],
+ "alarm": [
+  {
+   "old": "    let a = select(0.0, alarm_at(x, y), P.alarm_full > 0.0);",
+   "new": "    let a = 0.0;"
+  }
+ ],
+ "specks": [
+  {
+   "old": "            let n = atomicExchange(&specks[y * P.stride + x], 0u);",
+   "new": "            let n = 0u;"
+  },
+  {
+   "old": "            let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);",
+   "new": "            let hot = 0u;"
+  }
+ ],
+ "noskip": [
+  {
+   "old": "            if (ta.cov >= 1.0) {\n                c = terrain_top(ta);",
+   "new": "            if (false) {\n                c = terrain_top(ta);"
+  }
+ ]
+}
