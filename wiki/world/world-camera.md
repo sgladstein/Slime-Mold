@@ -4,6 +4,7 @@ kind: mechanism
 status: current
 updated: 2026-11-15
 sources:
+  - Reports/alarm-look-2026-11-15/README.md
   - Reports/bar-allocator-2026-11-15/README.md
   - Reports/body-saturation-2026-11-15/README.md
   - Reports/building-looks-2026-11-14/README.md
@@ -36,6 +37,7 @@ sources:
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
 code:
+  - ALARM_LOOK
   - Camera::set_inset
   - Camera::wheel
   - CanvasPass
@@ -77,6 +79,7 @@ code:
   - View::record
   - View::record_each
   - View::set_alarm
+  - View::set_alarm_look
   - View::set_alive
   - View::set_body_density
   - View::set_crystals
@@ -180,7 +183,12 @@ pump turns its hose into its crystal with a charge line as bright as its draw
 flares when a load is banked there, and a siren's real call shows as the
 engine's alarm field itself, a pale front spreading and fading
 (`View::set_alarm`, bindings 25-26;
-[siren alarm](../../Reports/siren-alarm-2026-11-14/README.md)). A soldier the slime bites flinches every 3 hp of damage, the
+[siren alarm](../../Reports/siren-alarm-2026-11-14/README.md)), at a
+quarter of its first strength since 2026-11-15 (`View::set_alarm_look`,
+`ALARM_LOOK`; at full, a squad's fire on the Swarmer's planet washed the
+frame mint), and over open ground only, so a wall face draws no bright
+edge ([alarm look](../../Reports/alarm-look-2026-11-15/README.md), a
+blind A/B of four strengths for the owner). A soldier the slime bites flinches every 3 hp of damage, the
 bitten side flushing hot (`Marks::soldier_bitten`;
 [building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the

@@ -287,7 +287,8 @@ least 10 s after the last and at most shape C's `surge`, now 1800 steps
 11 by 3:00, so the first surge comes at 43 s and the gaps shrink from 22 s
 to 14 s: nine surges in three minutes against the clock's six, each 3-7 s
 later with four pumps taking food. A run's planets scale the food with the
-level's walkers (`run::surge_food`).
+level's walkers (`run::surge_food`). On the GTX 1070 the surges' frame
+cost does not show, clock or food-driven, and the squad twins pass.
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

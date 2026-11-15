@@ -1,0 +1,5 @@
+# The blind A/B key for the alarm-look page (kept off the page). letter, alarm_look folder, what it is
+A 0_1 only on the slime (full there, none on bare ground)
+B 0.1_0.1 a tenth everywhere
+C 0.25_0.25 a quarter everywhere
+D 1_1 today (1 on ground and slime)

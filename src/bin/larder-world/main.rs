@@ -98,6 +98,8 @@
 //! puts the round's sound on tape. The CI smoke tests play every mission
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
+//! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
+//! on the slime (`View::set_alarm_look`; 0 none);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
 //! mould's core draw it (`Rules::core_pull`; 0 is off); `wade=W` how many
@@ -396,6 +398,10 @@ struct Args {
     /// `crater=S`: game seconds of crater a hit lays (`Rules::crater`; 0
     /// turns the hole under fire off, to compare).
     crater: Option<f32>,
+    /// `alarm_look=G[,S]`: how strongly the alarm haze draws on bare ground
+    /// and on the slime (`View::set_alarm_look`; S defaults to G), for
+    /// films and A/Bs.
+    alarm_look: Option<(f32, f32)>,
     /// `aim=STRIKE,EVERY,SPREAD`: a shot's strike radius, game seconds
     /// between one soldier's shots, and aim spread, dish cells
     /// (`Rules::strike`, `shot_every`, `spread`): the look A/B of a
@@ -1054,6 +1060,9 @@ impl App {
             // director, 11-14: not rings timed from the call); full at a
             // siren's call.
             v.set_alarm(Some([&e.germ[0], &e.germ[1]]), game.rules.build.siren_alarm);
+            if let Some((g, s)) = self.args.alarm_look {
+                v.set_alarm_look(g, s);
+            }
             // The body's walkers a cell, from the start's living walkers
             // (the look's `body`; a growing world has ten slots a walker).
             v.set_body_density(e.alive() as f32 / (size.0 * size.1) as f32);
@@ -1666,6 +1675,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             "crater" => args.crater = Some(v.parse()?),
+            "alarm_look" => {
+                let (g, s) = v.split_once(',').unwrap_or((v, v));
+                args.alarm_look = Some((g.parse()?, s.parse()?));
+            }
             "core_pull" => args.core_pull = Some(v.parse()?),
             "bullet" => args.bullet = Some(v.parse()?),
             "own" => {

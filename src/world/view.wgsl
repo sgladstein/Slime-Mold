@@ -49,6 +49,9 @@ struct V {
     // The map's flora (`View::set_plants`, `map::Items::flora`): which
     // forms its plants take up close (`plant_layer`).
     flora: u32,
+    // How strongly the alarm haze draws (`View::set_alarm_look`, 11-15):
+    // on bare ground and on the slime, 1 as drawn on 11-14.
+    alarm_ground: f32, alarm_slime: f32, pad0: u32, pad1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1252,12 +1255,38 @@ fn alarm_cell(ix: i32, iy: i32) -> f32 {
     return germ1[i];
 }
 
-// The alarm at (x, y), bilinear.
-fn alarm_at(x: f32, y: f32) -> f32 {
+// Whether the engine keeps an alarm on cell (ix, iy): its agar, so not
+// rock, wall or the world's rim (the engine's `trail` pass zeroes those).
+fn alarm_open(ix: i32, iy: i32) -> f32 {
+    if (ix <= 0 || iy <= 0 || ix + 1 >= i32(P.ww) || iy + 1 >= i32(P.wh)) { return 0.0; }
+    let k = ground[cidx(ix, iy)] & 15u;
+    return select(1.0, 0.0, k == ROCK || k == WALL);
+}
+
+// The alarm at (x, y), bilinear over the open cells round it: x the
+// alarm, y the open cells' share of the weight (0 deep in a wall).
+// Plain bilinear (to 11-15) mixed a wall's 0 into the open cell beside
+// it, so a plateau of alarm fell to nothing at every wall face and the
+// front term below drew that fall as a bright straight line: the square
+// edge of a blast's glow in the Fork's stem (the whole-game review's W27;
+// the field itself is right, the walls hold none).
+fn alarm_at(x: f32, y: f32) -> vec2<f32> {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
     let tx = fx - f32(ix); let ty = fy - f32(iy);
-    return mix(mix(alarm_cell(ix, iy), alarm_cell(ix + 1, iy), tx), mix(alarm_cell(ix, iy + 1), alarm_cell(ix + 1, iy + 1), tx), ty);
+    let w = vec4<f32>((1.0 - tx) * (1.0 - ty) * alarm_open(ix, iy), tx * (1.0 - ty) * alarm_open(ix + 1, iy),
+        (1.0 - tx) * ty * alarm_open(ix, iy + 1), tx * ty * alarm_open(ix + 1, iy + 1));
+    let s = w.x + w.y + w.z + w.w;
+    if (s <= 0.0) { return vec2<f32>(0.0, 0.0); }
+    let a = vec4<f32>(alarm_cell(ix, iy), alarm_cell(ix + 1, iy), alarm_cell(ix, iy + 1), alarm_cell(ix + 1, iy + 1));
+    return vec2<f32>(dot(w, a) / s, s);
+}
+
+// A slope sample: the alarm there, or `a` (the pixel's own) where the
+// sample lies wholly in a wall, so a wall face has no slope.
+fn alarm_or(x: f32, y: f32, a: f32) -> f32 {
+    let s = alarm_at(x, y);
+    return select(a, s.x, s.y > 0.0);
 }
 
 fn look_trail(x: f32, y: f32) -> f32 {
@@ -2157,13 +2186,22 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // Where the field is under 1% of full, nothing is drawn and its slope
     // is not sampled: five bilinear samples everywhere cost llvmpipe 10% of
     // the frame (86.7 -> 95.3 ms GPU tail, 11-14).
-    let a = select(0.0, alarm_at(x, y), P.alarm_full > 0.0);
+    // Only open cells count (`alarm_at`): the haze fades out over a wall's
+    // first cell by the open share, and a wall face draws no front.
+    // Its strength is `alarm_ground` on bare ground and `alarm_slime` on the
+    // slime, by the film there (the whole-game review's W46, 11-15: with
+    // the alarm on, as on the Swarmer's, Sporer's and Sleeper's planets,
+    // the squad's whole fire zone washed out mint, soil and plants with
+    // it). Where the haze draws nothing its slope is not sampled.
+    let ak = mix(P.alarm_ground, P.alarm_slime, 1.0 - under);
+    let a2 = select(vec2<f32>(0.0, 0.0), alarm_at(x, y), P.alarm_full > 0.0 && ak > 0.0);
+    let a = a2.x;
     if (a > 0.01 * P.alarm_full) {
-        let gx = alarm_at(x + 1.0, y) - alarm_at(x - 1.0, y);
-        let gy = alarm_at(x, y + 1.0) - alarm_at(x, y - 1.0);
+        let gx = alarm_or(x + 1.0, y, a) - alarm_or(x - 1.0, y, a);
+        let gy = alarm_or(x, y + 1.0, a) - alarm_or(x, y - 1.0, a);
         let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
         let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
-        c += ALARM_RGB * (0.10 * fill + 0.45 * front);
+        c += ALARM_RGB * (0.10 * fill + 0.45 * front) * a2.y * ak;
     }
     let k1 = gem_near(x, y);
     if (k1 > 0u) {

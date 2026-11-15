@@ -26,12 +26,21 @@ pub const SHADER: &str = include_str!("view.wgsl");
 /// `sprites/render.js` (the owner's pick, 2026-11-11 16:48Z).
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
-/// Bytes in the uniform (40 words).
-const PARAMS_BYTES: usize = 160;
+/// Bytes in the uniform (44 words).
+const PARAMS_BYTES: usize = 176;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
 const MARGIN: u32 = 4;
+/// How strongly the alarm haze draws by default (`View::set_alarm_look`):
+/// on bare ground, on the slime. A quarter since 2026-11-15 (the whole-game
+/// review's W46: at full strength the squad's fire on the Swarmer's planet
+/// washed the frame mint, a mean lift of 57.6 over the frame with no haze
+/// and 27.7% of its pixels lifted over 60; a quarter is 15.5 and 12.5%, and
+/// a siren's call still reads as a ring on bare ground, where a tenth
+/// barely shows and the slime alone hides it;
+/// `Reports/alarm-look-2026-11-15/README.md`, a blind A/B for the owner).
+pub const ALARM_LOOK: (f32, f32) = (0.25, 0.25);
 /// The bindings after the first twenty, in `bind`'s order: 20 the lights,
 /// then 21-24 the crystals' live charge, their heat (`drain`), the terrain
 /// cells (`tcell`) and the crystal cells listed, and 25-26 the engine's two
@@ -187,6 +196,9 @@ pub struct View {
     germ: [wgpu::Buffer; 2],
     alarm_side: u32,
     alarm_full: f32,
+    /// How strongly the alarm haze draws on bare ground and on the slime
+    /// (`set_alarm_look`).
+    alarm_look: (f32, f32),
     n_list: u32,
     gem_words: Vec<f32>,
     live: std::cell::Cell<u32>,
@@ -308,6 +320,7 @@ impl View {
             germ,
             alarm_side: 0,
             alarm_full: 0.0,
+            alarm_look: ALARM_LOOK,
             n_list: 0,
             gem_words: Vec::new(),
             live: std::cell::Cell::new(0),
@@ -549,6 +562,13 @@ impl View {
         self.alarm_side = side & 1;
     }
 
+    /// How strongly the alarm haze draws: `ground` on bare ground, `slime`
+    /// on the slime (by the film there, so it blends at the slime's edge);
+    /// 1 is the haze as drawn on 11-14, 0 none. `ALARM_LOOK` by default.
+    pub fn set_alarm_look(&mut self, ground: f32, slime: f32) {
+        self.alarm_look = (ground.max(0.0), slime.max(0.0));
+    }
+
     fn clear_charge(&mut self) {
         if self.live.get() != 0 {
             (self.charge, self.heat) = (storage(&self.device, "charge", 16), storage(&self.device, "crystal heat", 16));
@@ -776,6 +796,9 @@ impl View {
             b.extend(v.to_le_bytes());
         }
         for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, self.flora] {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.alarm_look.0.to_bits(), self.alarm_look.1.to_bits(), 0, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {
@@ -1144,6 +1167,8 @@ mod tests {
             let p = pic.get_pixel(sx as u32, sy as u32).0;
             p[0] as i32 + p[1] as i32 + p[2] as i32
         };
+        // At full strength (the default draws a quarter, `ALARM_LOOK`).
+        view.set_alarm_look(1.0, 1.0);
         let bare = frame(&view);
         let spots = |pic: &image::RgbaImage| [lum(pic, c.0, c.1), lum(pic, c.0 + r, c.1), lum(pic, c.0 + r + 8.0, c.1)];
         let [mid0, edge0, out0] = spots(&bare);
@@ -1156,6 +1181,86 @@ mod tests {
         assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "the other side holds no alarm");
         view.set_alarm(None, 0.0);
         assert!((spots(&frame(&view))[1] - edge0).abs() <= 6, "none bound, none shown");
+    }
+
+    /// A wall holds no alarm (the engine's agar only), and its face is not
+    /// the field's front (the whole-game review's W27, 11-15: plain
+    /// bilinear mixed the wall's 0 in, so a plateau drew a bright line down
+    /// every wall face, the square edge of a blast's glow in the Fork's
+    /// stem): beside the wall the haze lifts the ground as in the middle of
+    /// the plateau. `set_alarm_look` scales it on bare ground and on the
+    /// slime (W46): 0 on the ground draws none on this bare dish.
+    #[test]
+    fn the_alarm_haze_has_no_front_at_a_wall_and_its_strength_is_set() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        // A wall two cells thick at x 40-41; the plateau fills the open
+        // cells left of it (not the rim), as the engine leaves it.
+        let wall = |x: usize| (40..42).contains(&x);
+        let full = 150.0f32;
+        let mut germ = vec![0.0f32; 3 * w * h];
+        let mut ground = vec![0u32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                if wall(x) {
+                    ground[y * w + x] = 3 | 255 << 8;
+                } else if x > 0 && x < 40 && y > 0 && y + 1 < h {
+                    germ[w * h + y * w + x] = full;
+                }
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let f32s = |v: &[f32]| v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>();
+        let look_b = buf("look", &vec![0u8; w * h * 4]);
+        let ground_b = buf("ground", &ground.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let live = buf("germ live", &f32s(&germ));
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((36.0, 20.0));
+        let frame = |view: &View| {
+            let mut enc = dev.create_command_encoder(&Default::default());
+            view.record(&mut enc, &cam, None);
+            q.submit([enc.finish()]);
+            view.picture()
+        };
+        let lum = |pic: &image::RgbaImage, x: f32, y: f32| {
+            let (sx, sy) = cam.to_screen((x, y));
+            let p = pic.get_pixel(sx as u32, sy as u32).0;
+            p[0] as i32 + p[1] as i32 + p[2] as i32
+        };
+        // The middle of the plateau, and half a cell and a fifth of a cell
+        // from the wall's face (x 40).
+        let at = [20.0f32, 39.5, 39.8];
+        view.set_alarm_look(1.0, 1.0);
+        let bare = frame(&view);
+        view.set_alarm(Some([&live, &live]), full);
+        let lifts = |pic: &image::RgbaImage| at.map(|x| lum(pic, x, 20.0) - lum(&bare, x, 20.0));
+        let [mid, face, closer] = lifts(&frame(&view));
+        assert!(mid > 20, "the plateau lifts the ground: {mid}");
+        // No brighter by the face than in the middle (the wall's own
+        // edge covers some of the last fifth of a cell: 58, 52 and 42 on
+        // llvmpipe; plain bilinear drew a front there, brighter).
+        assert!(face <= mid + 6 && closer <= mid + 6, "no front at the wall: middle {mid}, by the face {face}, {closer}");
+        view.set_alarm_look(0.0, 1.0);
+        let none = lifts(&frame(&view));
+        assert!(none.iter().all(|l| l.abs() <= 3), "none on bare ground: {none:?}");
+        view.set_alarm_look(0.1, 0.1);
+        let [tenth, ..] = lifts(&frame(&view));
+        assert!(tenth > 0 && tenth * 5 < mid, "a tenth: {tenth} of {mid}");
+        view.set_alarm_look(ALARM_LOOK.0, ALARM_LOOK.1);
+        let [default, ..] = lifts(&frame(&view));
+        assert!(default > tenth && default * 2 < mid, "the default, a quarter: {default} of {mid}");
     }
 
     /// A crystal shows its live charge (the owner's playtest, 2026-11-14
