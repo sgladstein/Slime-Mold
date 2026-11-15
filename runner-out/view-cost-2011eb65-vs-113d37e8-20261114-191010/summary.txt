@@ -1,0 +1,270 @@
+== r1-fork-z1-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 1.913 ms in all
+    base       1.426 ms   74.5%  (120 frames)
+    marks      0.019 ms    1.0%  (120 frames)
+    compose    0.083 ms    4.4%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.366 ms   19.2%  (120 frames)
+    drain      0.003 ms    0.2%  (120 frames)
+== r1-fork-z1-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 5.120 ms in all
+    base       2.403 ms   46.9%  (120 frames)
+    marks      0.019 ms    0.4%  (120 frames)
+    compose    0.083 ms    1.6%  (120 frames)
+    specks     0.014 ms    0.3%  (120 frames)
+    prep       2.596 ms   50.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r1-fork-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.960 ms in all
+    base       2.497 ms   84.3%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.029 ms    1.0%  (120 frames)
+    prep       0.346 ms   11.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r1-fork-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.007 ms in all
+    base       2.352 ms   78.2%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.029 ms    1.0%  (120 frames)
+    prep       0.538 ms   17.9%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r1-fork-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.203 ms in all
+    base       2.056 ms   93.3%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    3.7%  (120 frames)
+    specks     0.014 ms    0.6%  (120 frames)
+    prep       0.046 ms    2.1%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r1-fork-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.041 ms in all
+    base       1.871 ms   91.7%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    4.0%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.068 ms    3.4%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r1-planet-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.025 ms in all
+    base       2.516 ms   83.1%  (120 frames)
+    marks      0.075 ms    2.5%  (120 frames)
+    compose    0.086 ms    2.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.338 ms   11.2%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r1-planet-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.216 ms in all
+    base       2.511 ms   78.1%  (120 frames)
+    marks      0.075 ms    2.3%  (120 frames)
+    compose    0.086 ms    2.7%  (120 frames)
+    specks     0.008 ms    0.2%  (120 frames)
+    prep       0.532 ms   16.5%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r1-planet-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.823 ms in all
+    base       2.087 ms   73.9%  (120 frames)
+    marks      0.580 ms   20.5%  (120 frames)
+    compose    0.107 ms    3.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.043 ms    1.5%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r1-planet-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.855 ms in all
+    base       2.093 ms   73.3%  (120 frames)
+    marks      0.579 ms   20.3%  (120 frames)
+    compose    0.107 ms    3.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.066 ms    2.3%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r2-fork-z1-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 1.928 ms in all
+    base       1.437 ms   74.6%  (120 frames)
+    marks      0.019 ms    1.0%  (120 frames)
+    compose    0.084 ms    4.3%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.370 ms   19.2%  (120 frames)
+    drain      0.003 ms    0.2%  (120 frames)
+== r2-fork-z1-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 5.103 ms in all
+    base       2.396 ms   47.0%  (120 frames)
+    marks      0.019 ms    0.4%  (120 frames)
+    compose    0.083 ms    1.6%  (120 frames)
+    specks     0.014 ms    0.3%  (120 frames)
+    prep       2.586 ms   50.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r2-fork-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.953 ms in all
+    base       2.491 ms   84.4%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.028 ms    1.0%  (120 frames)
+    prep       0.345 ms   11.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r2-fork-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.996 ms in all
+    base       2.344 ms   78.2%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.029 ms    1.0%  (120 frames)
+    prep       0.536 ms   17.9%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r2-fork-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.195 ms in all
+    base       2.048 ms   93.3%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    3.7%  (120 frames)
+    specks     0.014 ms    0.6%  (120 frames)
+    prep       0.045 ms    2.1%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r2-fork-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.036 ms in all
+    base       1.865 ms   91.6%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    4.0%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.068 ms    3.3%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r2-planet-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.015 ms in all
+    base       2.507 ms   83.1%  (120 frames)
+    marks      0.075 ms    2.5%  (120 frames)
+    compose    0.086 ms    2.9%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.336 ms   11.2%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r2-planet-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.202 ms in all
+    base       2.500 ms   78.1%  (120 frames)
+    marks      0.074 ms    2.3%  (120 frames)
+    compose    0.086 ms    2.7%  (120 frames)
+    specks     0.008 ms    0.2%  (120 frames)
+    prep       0.530 ms   16.5%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r2-planet-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.812 ms in all
+    base       2.079 ms   73.9%  (120 frames)
+    marks      0.576 ms   20.5%  (120 frames)
+    compose    0.107 ms    3.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.043 ms    1.5%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r2-planet-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.840 ms in all
+    base       2.085 ms   73.4%  (120 frames)
+    marks      0.575 ms   20.2%  (120 frames)
+    compose    0.107 ms    3.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.066 ms    2.3%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r3-fork-z1-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 1.922 ms in all
+    base       1.433 ms   74.6%  (120 frames)
+    marks      0.019 ms    1.0%  (120 frames)
+    compose    0.084 ms    4.3%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.369 ms   19.2%  (120 frames)
+    drain      0.003 ms    0.2%  (120 frames)
+== r3-fork-z1-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 5.103 ms in all
+    base       2.397 ms   47.0%  (120 frames)
+    marks      0.019 ms    0.4%  (120 frames)
+    compose    0.083 ms    1.6%  (120 frames)
+    specks     0.014 ms    0.3%  (120 frames)
+    prep       2.587 ms   50.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r3-fork-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.951 ms in all
+    base       2.490 ms   84.4%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.029 ms    1.0%  (120 frames)
+    prep       0.345 ms   11.7%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r3-fork-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.001 ms in all
+    base       2.348 ms   78.2%  (120 frames)
+    marks      0.003 ms    0.1%  (120 frames)
+    compose    0.081 ms    2.7%  (120 frames)
+    specks     0.029 ms    1.0%  (120 frames)
+    prep       0.536 ms   17.9%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r3-fork-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.196 ms in all
+    base       2.048 ms   93.3%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    3.7%  (120 frames)
+    specks     0.014 ms    0.6%  (120 frames)
+    prep       0.045 ms    2.1%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r3-fork-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.046 ms in all
+    base       1.877 ms   91.7%  (120 frames)
+    marks      0.003 ms    0.2%  (120 frames)
+    compose    0.081 ms    4.0%  (120 frames)
+    specks     0.014 ms    0.7%  (120 frames)
+    prep       0.069 ms    3.4%  (120 frames)
+    drain      0.003 ms    0.1%  (120 frames)
+== r3-planet-z6-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.045 ms in all
+    base       2.531 ms   83.1%  (120 frames)
+    marks      0.075 ms    2.5%  (120 frames)
+    compose    0.086 ms    2.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.340 ms   11.2%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r3-planet-z6-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 3.234 ms in all
+    base       2.525 ms   78.1%  (120 frames)
+    marks      0.075 ms    2.3%  (120 frames)
+    compose    0.086 ms    2.7%  (120 frames)
+    specks     0.008 ms    0.2%  (120 frames)
+    prep       0.536 ms   16.6%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r3-planet-z24-none
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.840 ms in all
+    base       2.100 ms   73.9%  (120 frames)
+    marks      0.583 ms   20.5%  (120 frames)
+    compose    0.108 ms    3.8%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.043 ms    1.5%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
+== r3-planet-z24-commit-113d37e8
+larder-world machine at the start: RAM 3.1 GB free of 8.0; GPU memory 1392 MB in use of 8192, 0% busy; on the GPU too: explorer.exe, ProtonDrive.exe, ShellExperienceHost.exe, TextInputHost.exe, ProtonVPN.Client.exe, Video.UI.exe, SearchApp.exe, msedgewebview2.exe, LockApp.exe, claude.exe, logioptionsplus_agent.exe, SystemSettings.exe
+  view, every pass timed alone (median of 120 frames): 2.872 ms in all
+    base       2.107 ms   73.3%  (120 frames)
+    marks      0.585 ms   20.4%  (120 frames)
+    compose    0.108 ms    3.7%  (120 frames)
+    specks     0.008 ms    0.3%  (120 frames)
+    prep       0.067 ms    2.3%  (120 frames)
+    drain      0.004 ms    0.1%  (120 frames)
