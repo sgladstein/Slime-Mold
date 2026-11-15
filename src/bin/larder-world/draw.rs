@@ -175,11 +175,18 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
     let b = &g.buildings[k];
     let look = looks.get(k).copied().unwrap_or_default();
     let built = if b.up() { 1.0 } else { b.built };
-    marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, look.shot / TURRET_SHOT, turret_state(g, b));
     let fl = look.shot / TURRET_SHOT;
+    let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
+    // Its muzzle flash, under the head so the barrels cover its root (gun
+    // look, 2026-11-15), as a soldier's: a rifle's jets in a plain shot's
+    // gold, for the first `FLASH` of the kick.
+    let jf = ((look.shot - (TURRET_SHOT - FLASH)) / FLASH).clamp(0.0, 1.0);
+    if jf > 0.0 {
+        marks.muzzle_flash(m, half * 0.9, look.facing, 0, k as u32 * 13, jf, flame(&card_look(None)), MUZZLE_CORE);
+    }
+    marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
     if fl > 0.0 {
         let sc = g.world.scale();
-        let m = (b.at.0 + look.facing.cos() * half * 1.8, b.at.1 + look.facing.sin() * half * 1.8);
         lights.push(Light { at: m, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
     }
 }
@@ -637,8 +644,21 @@ impl App {
         self.lights.append(&mut glows);
         let t = g.world.ticks();
         let tps = g.rules.tps as f32;
-        let travel = g.rules.bullet_speed * sc * 0.06;
-        for b in &g.bullets {
+        // A tracer as long as 0.08 s of its flight at its own speed (gun
+        // look, 2026-11-15; was 0.06 s at the rules' speed for every
+        // bullet), so a slug's and a needle's read apart.
+        let travel = g.rules.bullet_speed * sc * TRACE_SECS;
+        let body_r = soldier_r(g, zoom);
+        // Each bullet glides along the leg it flew in the last step, by how
+        // far the frame is toward the next (`App::between`), at its own
+        // speed, and stops at what it hit.
+        let between = self.between();
+        let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        for (leg, b) in g.last_shots.iter().zip(&g.flown) {
+            let end = leg.hit.unwrap_or(leg.to);
+            let gone = (end.0 - leg.from.0).hypot(end.1 - leg.from.1);
+            let flew = (between * g.rules.bullet_speed * b.speed * sc * step).min(gone);
+            let b = &slime_mould::mould::larder_world::Bullet { at: (leg.from.0 + b.dir.0 * flew, leg.from.1 + b.dir.1 * flew), ..*b };
             // A payload this world can't cast yet flies plain, as it lands.
             let castable = |c: &rounds::Cast| match c.payload {
                 rounds::Card::Gas => g.world.has_gas(),
@@ -650,11 +670,42 @@ impl App {
             // Wide, and the bullet's damage (`Ammo::reach`), widen it.
             let wide = rounds::RoundRules::default().wide.powi(cast.map_or(0, |c| c.wide) as i32) * cast.map_or(1.0, |c| c.ammo.reach());
             let quiet = cast.is_some_and(|c| c.quiet);
-            let core = (0.22 * sc * zoom).clamp(1.4, 5.0) * wide * if b.split > 0 { 1.3 } else { 1.0 } * if b.pierce > 0 { 0.8 } else { 1.0 };
-            let len = travel * if b.pierce > 0 { 2.4 } else { 1.0 };
-            let tail = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
-            let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 210 }];
-            self.marks.streak(b.at, tail, core, glow, look.core);
+            let core = (0.22 * sc * zoom).clamp(1.6, 5.0) * wide * if b.split > 0 { 1.3 } else { 1.0 } * if b.pierce > 0 { 0.8 } else { 1.0 };
+            let mut len = travel * b.speed * if b.pierce > 0 { 2.4 } else { 1.0 };
+            // A soldier's bullet comes out of its barrel (gun look,
+            // 2026-11-15): hidden inside the gun, its tail never further
+            // back than the muzzle, and drawn the barrel's offset to the
+            // side of the aim line (the game fires from the soldier's
+            // middle), closing on the line over its first four body radii.
+            // Before, a fresh bullet's streak lay over the soldier's own
+            // body and left it beside the gun.
+            let mut head = b.at;
+            // Its light comes up over its first three body radii out of the
+            // barrel: a scattergun's pellets all leave the mouth together,
+            // and their lights there would add up over the soldier; the
+            // mouth's light is the flash's (`MUZZLE_LIGHT`).
+            let mut lit = 1.0;
+            if let Some(s) = b.by.and_then(|k| g.soldiers.get(k)).filter(|s| s.alive) {
+                let from = (b.at.0 - s.x).hypot(b.at.1 - s.y);
+                let out = from - MUZZLE.0 * body_r;
+                if out <= 0.0 {
+                    continue;
+                }
+                lit = (out / (3.0 * body_r)).clamp(0.0, 1.0);
+                len = len.min(out);
+                let side = (-b.dir.1 * MUZZLE.1 * body_r, b.dir.0 * MUZZLE.1 * body_r);
+                let near = |d: f32| (1.0 - d / (4.0 * body_r)).clamp(0.0, 1.0);
+                head = (b.at.0 + side.0 * near(out), b.at.1 + side.1 * near(out));
+                let back = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
+                let tail = (back.0 + side.0 * near(out - len), back.1 + side.1 * near(out - len));
+                let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
+                self.marks.streak(head, tail, core, glow, look.core);
+            } else {
+                let tail = (b.at.0 - b.dir.0 * len, b.at.1 - b.dir.1 * len);
+                let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
+                self.marks.streak(b.at, tail, core, glow, look.core);
+            }
+            let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
             if cast.is_some_and(|c| c.scatter) {
                 let side = (-b.dir.1 * 0.9 * sc, b.dir.0 * 0.9 * sc);
                 for f in [-1.0, 1.0] {
@@ -670,7 +721,27 @@ impl App {
             // through the body, each hit swept a disc 14 cells across over
             // the slime (owner 20:09Z: "each bullet that hit has a huge wave
             // that goes out. it is too much").
-            self.lights.push(Light { at: b.at, reach: b.r, lift: 3.0, colour: look.light, strength: if quiet { 0.2 } else { 0.5 } });
+            self.lights.push(Light { at: head, reach: b.r, lift: 3.0, colour: look.light, strength: lit * if quiet { 0.2 } else { 0.5 } });
+        }
+        // Each soldier's muzzle flash while it burns (`FLASH`), at the
+        // mouth of its kicked-back barrel, under the soldiers so the
+        // barrel is drawn over the flash's root. Its colour is the cast the
+        // shot carried, its shape the squad's gun (`Marks::muzzle_flash`).
+        for (k, s) in g.soldiers.iter().enumerate() {
+            let Some(l) = self.looks.get(k).filter(|l| s.alive && l.flash > 0.0) else { continue };
+            let kind = g.squads.get(s.squad as usize).and_then(|q| q.gun).map_or(GunKind::Rifle, |gun| gun.kind);
+            let look = card_look(self.rounds.cast_of(g, s.squad as usize, l.cast).map(|c| c.payload));
+            let at = drawn_at(s, l, body_r);
+            let tip = muzzle(at, l.facing, body_r);
+            let (len, id) = match kind {
+                GunKind::Rifle => (1.15, 0),
+                GunKind::Carbine => (1.0, 1),
+                GunKind::Long => (1.5, 2),
+                GunKind::Scatter => (1.1, 3),
+            };
+            let len = (len * body_r).max(10.0 / zoom);
+            let seed = l.shots.wrapping_mul(7).wrapping_add(k as u32 * 37);
+            self.marks.muzzle_flash(tip, len, l.facing, id, seed, l.flash / FLASH, flame(&look), MUZZLE_CORE);
         }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
@@ -705,13 +776,42 @@ impl App {
         }
         // Plain hits (a shot with no cast) light their spot as the tracer
         // fades, and a muzzle lights round the soldier as it fires.
-        for tr in self.tracers.iter().filter(|tr| tr.hit) {
-            self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour: [255.0, 214.0, 150.0], strength: 0.5 * (1.0 - tr.age / TRACER) });
+        // Once the drawn bullet gets there (`Tracer::delay`), white-hot for
+        // its first moment, then gold, falling as the square of what is
+        // left (gun look, 2026-11-15; was gold at 0.5 falling straight from
+        // the step's start, before the bullet arrived). 1.4 at the peak lit
+        // a soldier white when slime at its feet was hit; 0.9 is a flash
+        // that still reads over the bright slime.
+        // One volley's hits share one hit's light: a scattergun's pellets
+        // (pushed together, from one mouth in one step) each light their
+        // share, so a fan landing on one spot lights it as one hit does.
+        // Summed, four pellets 2 cells out lit the squad white (gun look,
+        // 2026-11-15).
+        let ts = &self.tracers;
+        let mut i = 0;
+        while i < ts.len() {
+            let n = ts[i..].iter().take_while(|t| t.from == ts[i].from && t.age == ts[i].age).count();
+            let volley = &ts[i..i + n];
+            i += n;
+            let share = 1.0 / volley.iter().filter(|t| t.hit).count().max(1) as f32;
+            for tr in volley.iter().filter(|tr| tr.hit) {
+                let age = tr.age - tr.delay;
+                if !(0.0..TRACER).contains(&age) {
+                    continue;
+                }
+                let f = 1.0 - age / TRACER;
+                let hot = (f * 2.0 - 1.0).max(0.0);
+                let colour = [255.0, 214.0 + 41.0 * hot, 150.0 + 100.0 * hot];
+                self.lights.push(Light { at: tr.to, reach: tr.r, lift: 3.0, colour, strength: 0.9 * f * f * share });
+            }
         }
         for (k, s) in g.soldiers.iter().enumerate() {
             let fl = self.looks.get(k).map_or(0.0, |l| l.flash / FLASH);
-            if s.alive && fl > 0.0 {
-                self.lights.push(Light { at: (s.x, s.y), reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.5 * fl });
+            if let Some(l) = self.looks.get(k).filter(|_| s.alive && fl > 0.0) {
+                // At the barrel's mouth (gun look, 2026-11-15; was at the
+                // soldier's middle, under its body).
+                let tip = muzzle(drawn_at(s, l, body_r), l.facing, body_r);
+                self.lights.push(Light { at: tip, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
             }
             // A bite: a brief hot light on the side the slime bit from
             // (`step_notes`, from the real damage).
@@ -738,19 +838,18 @@ impl App {
         // (2026-11-14: a 20-pixel olive disc at zoom 6); elbow room
         // (`Rules::elbow`, 1.6 touch radii) keeps the bodies apart. The
         // dead first, so the living are drawn over them.
-        let r = (g.rules.touch * sc * 1.15).max(10.0 / zoom);
+        let r = body_r;
         let order = g.soldiers.iter().enumerate().filter(|(_, s)| !s.alive).chain(g.soldiers.iter().enumerate().filter(|(_, s)| s.alive));
         for (k, s) in order {
             let l = self.looks.get(k).copied().unwrap_or(Look::new(s));
             // The load as charge in its pack, the take as light at its
             // hands (harvest look, 11-14; the carry bar is gone).
             let carry = if g.rules.carry > 0.0 { s.carry / g.rules.carry } else { 0.0 };
-            // A flinch: the body jerks back from the bite, a fifth of its
-            // radius at once, easing home over `FLINCH`.
-            let jerk = if s.alive { (l.flinch / FLINCH).powi(2) * 0.2 * r } else { 0.0 };
-            let at = (s.x - l.bite.cos() * jerk, s.y - l.bite.sin() * jerk);
+            let at = if s.alive { drawn_at(s, &l, r) } else { (s.x, s.y) };
             let bite = if s.alive { l.flinch / FLINCH } else { 0.0 };
-            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), l.flash / FLASH, s.alive, carry, l.take / TAKE, bite, l.bite);
+            // No sprite flash: the muzzle flash is its own mark, drawn
+            // above as light (gun look, 2026-11-15).
+            self.marks.soldier_bitten(at, r, l.facing, team_colour(0), 0.0, s.alive, carry, l.take / TAKE, bite, l.bite);
         }
         // The bars after every figure, so a neighbour never hides one.
         for s in &g.soldiers {
@@ -1386,6 +1485,44 @@ const BURST_LIGHT: f32 = 0.12;
 /// hit once every shot carried a card (owner 20:09Z: "it is too much");
 /// #296 cut them to 2.5 cells and 1.5 radii.
 const MUZZLE_LIGHT: f32 = 1.0;
+/// The mouth of a soldier's barrel in its sprite's frame, body radii
+/// (src/world/sprites/soldier.svg: the rifle runs out to x 1.45 at y 0.22
+/// to 0.39, on the right hand's side).
+const MUZZLE: (f32, f32) = (1.45, 0.305);
+/// A muzzle flash's white-hot core.
+const MUZZLE_CORE: [u8; 4] = [255, 250, 232, 255];
+
+/// A muzzle flash's flame: the cast's glow burnt warmer (less green and
+/// blue), so the jets read as fire round the white core rather than as
+/// one white blot.
+fn flame(look: &CardLook) -> [u8; 4] {
+    [look.glow[0], (look.glow[1] as f32 * 0.75) as u8, (look.glow[2] as f32 * 0.5) as u8, 255]
+}
+/// Seconds of a bullet's flight its tracer shows.
+const TRACE_SECS: f32 = 0.08;
+
+/// A soldier's drawn radius, world cells: its touch 1.15 times over, and
+/// at least 10 pixels, so it reads at any zoom (see `marks`).
+pub(super) fn soldier_r<W: World>(g: &Game<W>, zoom: f32) -> f32 {
+    (g.rules.touch * g.world.scale() * 1.15).max(10.0 / zoom)
+}
+
+/// Where a living soldier is drawn, `r` world cells across the radius: its
+/// place, jerked back from a bite (a fifth of `r` at once, easing home over
+/// `FLINCH`) and kicked back along its aim by its last shot (gun look,
+/// 2026-11-15: a fifth of `r` at once, easing home over `KICK`).
+pub(super) fn drawn_at(s: &slime_mould::mould::larder_world::Soldier, l: &Look, r: f32) -> (f32, f32) {
+    let jerk = (l.flinch / FLINCH).powi(2) * 0.2 * r;
+    let kick = (l.kick / KICK).powi(2) * 0.2 * r;
+    (s.x - l.bite.cos() * jerk - l.facing.cos() * kick, s.y - l.bite.sin() * jerk - l.facing.sin() * kick)
+}
+
+/// The mouth of the barrel of a soldier drawn at `at`, facing `facing`,
+/// `r` world cells across the radius (`MUZZLE`).
+pub(super) fn muzzle(at: (f32, f32), facing: f32, r: f32) -> (f32, f32) {
+    let (c, s) = (facing.cos(), facing.sin());
+    (at.0 + r * (MUZZLE.0 * c - MUZZLE.1 * s), at.1 + r * (MUZZLE.0 * s + MUZZLE.1 * c))
+}
 
 /// A payload's colours: the streak's glow and hot core, and its light.
 pub(super) struct CardLook {

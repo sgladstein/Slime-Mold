@@ -51,6 +51,14 @@ pub enum Shape {
     /// glow's strength), `colour2` its hot core. Added to the world as
     /// light (`view.wgsl`, `streak_at`), not painted over it.
     Streak = 9,
+    /// A muzzle flash (gun look, 2026-11-15): flame jets out of a barrel's
+    /// tip at the anchor, the forward jet `hw` world cells long, facing
+    /// `fill` radians (as `Soldier`); `extra` bits 0-1 the gun's kind (0
+    /// rifle, 1 carbine, 2 long gun, 3 scattergun), 2-9 a seed that varies
+    /// each shot's jets, 10-17 how much of the flash is left (0-255);
+    /// `colour` its glow, `colour2` its hot core. Light, as `Streak`
+    /// (`view.wgsl`, `flash_at`).
+    Flash = 10,
 }
 
 /// `hw` and `hh` are world cells (scaled by the zoom, at least 2 pixels)
@@ -243,6 +251,16 @@ impl Marks {
         self.push(Mark { colour2: core, fill: core_px, ..Mark::new(Shape::Streak, head, tail, glow) });
     }
 
+    /// A muzzle flash at `tip` (a barrel's end, world cells), its forward
+    /// jet `len` world cells, facing `facing` radians, for gun kind `kind`
+    /// (0-3), `seed` varying its jets, `left` 0-1 of the flash still to
+    /// burn: see `Shape::Flash`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn muzzle_flash(&mut self, tip: (f32, f32), len: f32, facing: f32, kind: u32, seed: u32, left: f32, glow: Rgba, core: Rgba) {
+        let extra = kind.min(3) | (seed & 255) << 2 | ((left.clamp(0.0, 1.0) * 255.0).round() as u32) << 10;
+        self.push(Mark { flags: WORLD, fill: facing, extra, colour2: core, ..Mark::new(Shape::Flash, tip, (len, len), glow) });
+    }
+
     /// A soldier at `at`, `r` world cells across the radius, facing
     /// `facing` radians, `flash` 0-1 the muzzle flash of a shot this
     /// moment (0 none). Also a dot on the minimap.
@@ -378,6 +396,17 @@ mod tests {
         assert_eq!((f32::from_bits(w[4]), f32::from_bits(w[5])), (7.0, 4.0), "the tail is a world point");
         assert_eq!(f32::from_bits(w[9]), 2.5, "the core's radius in pixels");
         assert_eq!(w[8], u32::from_le_bytes([255, 236, 190, 255]));
+    }
+
+    #[test]
+    fn a_muzzle_flash_packs_its_kind_seed_and_life() {
+        let mut m = Marks::default();
+        m.muzzle_flash((5.0, 6.0), 1.5, 0.5, 3, 300, 0.5, [255, 200, 110, 255], [255, 250, 235, 255]);
+        let w = m.words();
+        assert_eq!(w[6], Shape::Flash as u32);
+        assert_eq!(f32::from_bits(w[9]), 0.5, "the facing");
+        assert_eq!(w[10] & WORLD, WORLD, "its length is world cells");
+        assert_eq!((w[11] & 3, w[11] >> 2 & 255, w[11] >> 10 & 255), (3, 300 & 255, 128));
     }
 
     #[test]

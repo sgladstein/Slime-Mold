@@ -2962,3 +2962,13 @@ fn the_plants_fire_kills_count_without_a_scorch_trail() {
     assert_eq!(g.fire_killed as u64, g.world.fire_killed, "every fire kill counted");
     assert!(g.killed >= g.fire_killed);
 }
+
+/// The window's rule keys (`set=NAME=V`, `Rules::set`, 2026-11-15, W44):
+/// a known rule takes the value, an unknown one is refused.
+#[test]
+fn rules_set_by_name() {
+    let mut r = Rules::default();
+    assert!(r.set("pump_smell", 2.0) && r.build.pump_smell == 2.0);
+    assert!(r.set("panic_margin", 7.0) && r.panic_margin == 7.0);
+    assert!(!r.set("no_such_rule", 1.0));
+}

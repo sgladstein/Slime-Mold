@@ -348,6 +348,25 @@ pub struct Rules {
     /// (its first name): the mould's bite is its damage to soldiers
     /// (`drain`).
     pub sink: f32,
+    /// **The spray** (gun look, 2026-11-15, the owner 08:30Z: "The gun
+    /// graphics need work. They should really be one of the draws of the
+    /// game. They need to be really satisfying."): every walker a shot
+    /// kills flies out of the hit as a droplet, back toward the shooter,
+    /// for up to `spray_secs`, the furthest `spray_reach` cells, slowing to
+    /// a stop, and dies where it lands (`squad::Frame::spray`). Noita's
+    /// splash, the world's own matter in flight: each hit visibly blows
+    /// slime out of the body, with nothing drawn on the slime (the owner's
+    /// 11-12 ruling against stamps), and the kills are as without it. 0
+    /// seconds: none (`spray=0` in the window). (A first version threw the
+    /// living mould past the strike and let it live: 22% fewer kills by 30
+    /// s, 1 to 29 walkers in the air, too few to see; `Reports/dead-ends.md`.)
+    pub spray_secs: f32,
+    pub spray_reach: f32,
+    /// The share of a shot's kills that spray (`squad::Frame::spray_share`;
+    /// `spray_share=` in the window): 1 throws every kill. Asked of the
+    /// owner as a blind A/B (the whole-game review, 11-15, wanted a few
+    /// walkers a hit), so a choice, not a measured default.
+    pub spray_share: f32,
     /// The controlled squad's edge (`squads`, owner 2026-11-14 04:08Z:
     /// "whoever you are actively controlling is stronger"; 04:18Z: faster
     /// fire and harder hits, seen in the bullets and the holes).
@@ -454,6 +473,28 @@ pub struct Rules {
 }
 
 impl Rules {
+    /// **Set one rule by name** (the window's `set=NAME=V`, 2026-11-15, the
+    /// whole-game review's W44: no reviewer could film a pump's scent on,
+    /// as the window took no rule keys). False if there is no such rule.
+    pub fn set(&mut self, name: &str, v: f32) -> bool {
+        let f = match name {
+            "pump_smell" => &mut self.build.pump_smell,
+            "lure_smell" => &mut self.build.lure_smell,
+            "lure_r" => &mut self.build.lure_r,
+            "smell" => &mut self.smell,
+            "smell_r" => &mut self.smell_r,
+            "hoard" => &mut self.hoard,
+            "panic_margin" => &mut self.panic_margin,
+            "range" => &mut self.range,
+            "drain" => &mut self.drain,
+            "cap" => &mut self.cap,
+            "start_bank" => &mut self.start_bank,
+            _ => return false,
+        };
+        *f = v;
+        true
+    }
+
     /// The fight weight of one walker in a mould that starts with
     /// `walkers` on a world of `scale` (`Rules::mass`): today's density,
     /// 5,000 at scale 2 (1,250 at scale 1, 20,000 at 4), counts 1 each.
@@ -517,6 +558,9 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
+            spray_secs: 0.3,
+            spray_reach: 5.0,
+            spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
             funnel: true,
