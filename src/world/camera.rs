@@ -102,7 +102,11 @@ impl Camera {
         // the world (with no insets, the whole screen).
         let (top, bottom) = (self.inset.0 / self.zoom, self.inset.1 / self.zoom);
         let band = h - top - bottom;
-        self.y = if band >= self.world.1 { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, self.world.1 - h + bottom) };
+        // The upper bound is kept at least the lower: when the band is a
+        // hair under the world, rounding made it a few ulps below `-top`
+        // and `f32::clamp` panicked (planet 5 seed 1, 960 x 600 at zoom 12,
+        // min -29.661352 > max -29.661354; 11-15, crystals thread).
+        self.y = if band >= self.world.1 { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, (self.world.1 - h + bottom).max(-top)) };
     }
 
     /// The UI's insets changed (its panels' heights): keep the view legal.
