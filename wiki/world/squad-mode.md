@@ -87,7 +87,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 07:57Z: "squad mode is default mode".
 - 2026-11-15 08:09Z: "No campaign can stay the old mode".
 - 2026-11-15 07:41Z: "Healing should be a specific action".
-- 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1".
+- 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1"; 21:37Z: "Demolishing a building giving half back is good. Canceling a partial build should give all of it back".
 - 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).
 
