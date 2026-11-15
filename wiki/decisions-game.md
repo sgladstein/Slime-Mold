@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - CLAUDE.md
   - HANDOFF.md
@@ -19,6 +19,7 @@ sources:
   - Reports/mould-sound-2026-11-10.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/noita-spell-look-2026-11-14.md
+  - Reports/pump-economy-2026-11-15/README.md
   - Reports/rts-design-2026-11-10.md
   - Reports/shot-damage-2026-11-12.md
 code:
@@ -35,6 +36,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 03:07 | Pumps are the main income: draining a crystal by hand is cut to a fifth (`Rules::hand`); a pump snaps onto its crystal and is drawn as a structure built round it, pays more on bigger crystals and can be upgraded; pumps are never locked in the run. The food readout shows income only, and every cost comes straight out of the bank | "I'm thinking we might need to move primarily to the pumps instead of harvesting crystals"; "When you go to place it, it should automatically center itself on the crystal or it should probably just change the whole appearance of the crystal like you've built some sort of structure around it"; "the monitor that says your energy flow should always be positive ... It doesn't have to be part of the number that shows you your energy flow"; 03:07:51 "pumps do not start locked you should be able to upgrade them. Pumps on bigger crystals should give you more" | [Larder World](world/larder.md), [run](world/run.md), [report](../Reports/pump-economy-2026-11-15/README.md) |
 | 2026-11-14 20:32 | The player arranges the gun: it fires its slots left to right (`Run::gun` no longer sorts); in the run shop a card dragged onto a slot goes there (a card for sale is bought into it, `Run::buy_into`), onto the bag comes out, and Q and E move the focused card. A card put in without a slot still lands before the first bullet (`Run::put_in`) | "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around" | [run](world/run.md), [report](../Reports/gun-order-2026-11-14.md) |
 | 2026-11-14 20:22 | Every effect's light is the size of its damage: a bullet and its hit light their strike (`Bullet::r`, `Shot::r`), a burst its own radius (a bomb's kill core, not its throw ring); muzzles and embers 1 cell (`MUZZLE_LIGHT`) | "the blast light affect should only be the size of the damage. The same for all affects." | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
 | 2026-11-14 20:03-20:09 | A bullet's hit must not send a big wave over the slime: shot lights cut to 2.5 cells (`SHOT_LIGHT`; a bullet's was 7) and a burst's to 1.5 radii (was 3). Fire from blasts in the new plants is the plants thread's to tune | "even the sniper which is just range and pierce send outs these big circular affects. It is not good."; "each bullet that hit has a huge wave that goes out. it is too much" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |

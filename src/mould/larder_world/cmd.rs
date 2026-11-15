@@ -20,6 +20,8 @@ pub enum Cmd {
     Toggle(usize),
     /// Call off ghost `b` (`Game::unbuild`): it goes, its price comes back.
     Unbuild(usize),
+    /// Upgrade pump `b` a level (`Game::upgrade`), paid now.
+    Upgrade(usize),
     /// Shift + an order: soldier `k` does it after the ones it has
     /// (`Soldier::queue`); a soldier holding starts it at once.
     Queue(usize, Order),
@@ -79,6 +81,7 @@ impl Cmd {
             Cmd::Build(k, a) => format!("build {} {} {}", k.name(), a.0, a.1),
             Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Unbuild(b) => format!("unbuild {b}"),
+            Cmd::Upgrade(b) => format!("upgrade {b}"),
             Cmd::Queue(k, o) => format!("queue{}", &super::super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Send(b) => format!("send {b}"),
@@ -110,6 +113,7 @@ impl Cmd {
             "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
             "unbuild" => return Some(Cmd::Unbuild(w.get(1)?.parse().ok()?)),
+            "upgrade" => return Some(Cmd::Upgrade(w.get(1)?.parse().ok()?)),
             "send" => return Some(Cmd::Send(w.get(1)?.parse().ok()?)),
             "steer" => return Some(Cmd::Steer(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
             "fire" if w.get(2) == Some(&"none") => return Some(Cmd::Fire(w.get(1)?.parse().ok()?, None)),
@@ -212,6 +216,7 @@ impl<W: World> Game<W> {
             Cmd::Build(kind, at) => self.build(kind, at),
             Cmd::Toggle(k) => self.toggle(k),
             Cmd::Unbuild(b) => self.unbuild(b).is_some(),
+            Cmd::Upgrade(b) => self.upgrade(b),
             Cmd::Send(b) => self.send(b).is_some(),
             Cmd::Rally(o) => {
                 self.rally = o;

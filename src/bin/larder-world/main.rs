@@ -1175,7 +1175,7 @@ impl App {
             self.hud.alert("Out of food: soldiers cannot fire", None, theme::BAD);
         }
         self.broke = broke;
-        self.bank_log.push_back((t, g.bank));
+        self.bank_log.push_back((t, g.income()));
         while self.bank_log.front().is_some_and(|&(t0, _)| t - t0 > 10.0) {
             self.bank_log.pop_front();
         }
@@ -1323,6 +1323,11 @@ impl App {
         let hover = self.controls.cursor.filter(|&p| !self.hud.over(p)).and_then(|p| self.camera.world_at(p));
         let aim = self.controls.cursor.and_then(|p| self.hud.aim(p, &self.camera));
         let ghost = self.hud.targeting().and_then(|(id, _, from)| aim.map(|h| (id, h, from)));
+        // A pump snaps to the crystal under the cursor (owner, 2026-11-15).
+        let ghost = ghost.map(|(id, at, from)| match (id, self.game.as_ref()) {
+            (PUMP, Some(g)) => (id, g.pump_crystal(at).map_or(at, |c| g.world.crystals()[c].0), from),
+            _ => (id, at, from),
+        });
         // Placing a building: a faint ring where its builders will stand and
         // raise it from (`BuildRules::reach`; 2026-11-14, the build-flow
         // thread), so a turret by the slime can be placed with that ring

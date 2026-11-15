@@ -340,6 +340,24 @@ impl App {
                         }
                     }
                 }
+                // The pump on a crystal that has one upgrades it.
+                HudEvent::Point { id: PUMP, at } if self.game.as_ref().is_some_and(|g| g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some()) => {
+                    if let Some(g) = self.game.as_mut() {
+                        let b = g.pump_crystal(at).and_then(|c| g.pump_on(c)).unwrap();
+                        let price = g.upgrade_price(b);
+                        if g.apply(Cmd::Upgrade(b)) {
+                            let rate = g.pump_draw(b) * g.pump_yield(b);
+                            self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(g.buildings[b].at), theme::GOOD);
+                        } else {
+                            let why = match price {
+                                Some(p) => format!("Upgrading the pump costs {p:.0} food"),
+                                None if !g.buildings[b].up() => "The pump is still being built".to_string(),
+                                None => "The pump is at its top level".to_string(),
+                            };
+                            self.hud.alert(&why, None, theme::WARN);
+                        }
+                    }
+                }
                 HudEvent::Point { id, at } if build_kind(id).is_some() => {
                     if let Some(g) = self.game.as_mut() {
                         let kind = build_kind(id).unwrap();
