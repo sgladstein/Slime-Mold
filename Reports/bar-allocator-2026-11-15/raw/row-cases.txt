@@ -1,0 +1,900 @@
+(1600, 972) 0.75 squads 1 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 342/407/497 | before lab true gun 1.00
+(1600, 972) 0.75 squads 1 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 342/407/497 | before lab true gun 1.00
+(1600, 972) 0.75 squads 1 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 342/407/497 | before lab true gun 1.00
+(1600, 972) 0.75 squads 4 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 4 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 4 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 9 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 9 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 9 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 342/407/507 | before lab true gun 1.00
+(1600, 972) 0.75 squads 1 build 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 342/365/450 | before lab true gun 1.00
+(1600, 972) 0.75 squads 1 build 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 342/365/450 | before lab true gun 1.00
+(1600, 972) 0.75 squads 1 build 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 342/365/450 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 build 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1243/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 build 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1141/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.75 rts 6 build 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1039/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 345/411/498 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 345/411/498 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 345/411/498 | before lab true gun 1.00
+(1600, 972) 0.9 squads 4 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 4 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 4 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 9 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 9 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 9 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 345/411/508 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 build 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 345/368/450 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 build 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 345/368/450 | before lab true gun 1.00
+(1600, 972) 0.9 squads 1 build 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 345/368/450 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 build 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/782/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 build 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/680/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 0.9 rts 6 build 6: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/578/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 squads 1 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 341/405/487 | before lab true gun 1.00
+(1600, 972) 1 squads 1 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 341/405/487 | before lab true gun 1.00
+(1600, 972) 1 squads 1 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 341/405/487 | before lab true gun 1.00
+(1600, 972) 1 squads 4 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 4 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 4 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 9 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 9 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 9 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 341/405/497 | before lab true gun 1.00
+(1600, 972) 1 squads 1 build 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 341/363/441 | before lab true gun 1.00
+(1600, 972) 1 squads 1 build 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 341/363/441 | before lab true gun 1.00
+(1600, 972) 1 squads 1 build 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 341/363/441 | before lab true gun 1.00
+(1600, 972) 1 rts 6 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 rts 6 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 rts 6 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 rts 6 build 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/559/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 rts 6 build 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/457/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1 rts 6 build 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/455/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1.1 squads 1 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/502 | before lab true gun 1.00
+(1600, 972) 1.1 squads 1 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/502 | before lab false gun 1.00
+(1600, 972) 1.1 squads 1 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/502 | before lab false gun 1.00
+(1600, 972) 1.1 squads 4 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/513 | before lab true gun 1.00
+(1600, 972) 1.1 squads 4 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/513 | before lab false gun 1.00
+(1600, 972) 1.1 squads 4 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/513 | before lab false gun 1.00
+(1600, 972) 1.1 squads 9 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/512 | before lab true gun 1.00
+(1600, 972) 1.1 squads 9 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/512 | before lab false gun 1.00
+(1600, 972) 1.1 squads 9 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/512 | before lab false gun 1.00
+(1600, 972) 1.1 squads 1 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/382/737/158 need 337/360/454 | before lab true gun 1.00
+(1600, 972) 1.1 squads 1 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/380/737/158 need 337/360/454 | before lab false gun 1.00
+(1600, 972) 1.1 squads 1 build 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/360/454 | before lab false gun 1.00
+(1600, 972) 1.1 rts 6 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1.1 rts 6 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.1 rts 6 6: s 1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.1 rts 6 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 972) 1.1 rts 6 build 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.1 rts 6 build 6: s 1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/499 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/499 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/499 | before lab false gun 1.00
+(1600, 972) 1.25 squads 4 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 4 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 4 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 9 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 9 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 9 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 build 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/362/451 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 build 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/362/451 | before lab false gun 1.00
+(1600, 972) 1.25 squads 1 build 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/362/451 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 2: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/617/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 build 2: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/617/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 build 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.25 rts 6 build 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.5 squads 1 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 335/398/489 | before lab false gun 1.00
+(1600, 972) 1.5 squads 1 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 335/398/489 | before lab false gun 1.00
+(1600, 972) 1.5 squads 1 6: s 1.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/343/293/158 need 335/398/489 | before lab false gun 0.81
+(1600, 972) 1.5 squads 4 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 335/398/500 | before lab false gun 1.00
+(1600, 972) 1.5 squads 4 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 335/398/500 | before lab false gun 1.00
+(1600, 972) 1.5 squads 4 6: s 1.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/343/293/158 need 335/398/500 | before lab false gun 0.81
+(1600, 972) 1.5 squads 9 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 335/398/500 | before lab false gun 1.00
+(1600, 972) 1.5 squads 9 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 335/398/500 | before lab false gun 1.00
+(1600, 972) 1.5 squads 9 6: s 1.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/343/293/158 need 335/398/500 | before lab false gun 0.81
+(1600, 972) 1.5 squads 1 build 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 335/357/444 | before lab false gun 1.00
+(1600, 972) 1.5 squads 1 build 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 335/357/444 | before lab false gun 1.00
+(1600, 972) 1.5 squads 1 build 6: s 1.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/375/293/158 need 335/357/444 | before lab false gun 0.81
+(1600, 972) 1.5 rts 6 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.5 rts 6 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.5 rts 6 6: s 1.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/375/293/158 need 384/384/384 | before lab false gun 0.81
+(1600, 972) 1.5 rts 6 build 2: s 1.35 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/411/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.5 rts 6 build 4: s 1.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/409/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 972) 1.5 rts 6 build 6: s 1.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/375/293/158 need 384/384/384 | before lab false gun 0.81
+(1600, 972) 1.75 squads 1 2: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/426/293/159 need 341/406/493 | before lab false gun 0.85
+(1600, 972) 1.75 squads 1 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9199878 } widths 200/341/293/159 need 341/406/493 | before lab false gun 0.63
+(1600, 972) 1.75 squads 1 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6258224 } widths 200/341/293/159 need 341/406/493 | before lab false gun 0.60
+(1600, 972) 1.75 squads 4 2: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/426/293/159 need 341/406/504 | before lab false gun 0.85
+(1600, 972) 1.75 squads 4 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9199878 } widths 200/341/293/159 need 341/406/504 | before lab false gun 0.63
+(1600, 972) 1.75 squads 4 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6258224 } widths 200/341/293/159 need 341/406/504 | before lab false gun 0.60
+(1600, 972) 1.75 squads 9 2: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/426/293/159 need 341/406/503 | before lab false gun 0.85
+(1600, 972) 1.75 squads 9 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9199878 } widths 200/341/293/159 need 341/406/503 | before lab false gun 0.63
+(1600, 972) 1.75 squads 9 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6258224 } widths 200/341/293/159 need 341/406/503 | before lab false gun 0.60
+(1600, 972) 1.75 squads 1 build 2: s 1.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/394/293/159 need 341/364/447 | before lab false gun 0.85
+(1600, 972) 1.75 squads 1 build 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9199878 } widths 200/341/293/159 need 341/364/447 | before lab false gun 0.63
+(1600, 972) 1.75 squads 1 build 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6258224 } widths 200/341/293/159 need 341/364/447 | before lab false gun 0.60
+(1600, 972) 1.75 rts 6 2: s 1.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/394/293/159 need 384/384/384 | before lab false gun 0.85
+(1600, 972) 1.75 rts 6 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/324/293/159 need 384/384/384 | before lab false gun 0.63
+(1600, 972) 1.75 rts 6 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7550408 } widths 241/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 1.75 rts 6 build 2: s 1.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/394/293/159 need 384/384/384 | before lab false gun 0.85
+(1600, 972) 1.75 rts 6 build 4: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/324/293/159 need 384/384/384 | before lab false gun 0.63
+(1600, 972) 1.75 rts 6 build 6: s 1.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7550408 } widths 241/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 972) 2 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 2 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 2 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 2 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 2 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 972) 2 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 2 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 2 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 2 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 2 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2.5 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 972) 2.5 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 2.5 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 2.5 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 2.5 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2.5 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2.5 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 2.5 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2.5 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 2.5 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 972) 2.5 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 2.5 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 2.5 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 2.5 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2.5 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2.5 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 2.5 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 2.5 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 3 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 972) 3 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 3 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 972) 3 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 3 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 3 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 3 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 972) 3 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 3 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 972) 3 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 972) 3 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 3 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 972) 3 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 3 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 3 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 3 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 972) 3 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 972) 3 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 0.75 squads 1 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 329/389/478 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 1 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 329/389/478 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 1 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 329/389/478 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 4 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 4 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 4 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 9 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 9 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 9 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 329/389/488 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 1 build 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 329/350/434 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 1 build 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 329/350/434 | before lab true gun 1.00
+(1600, 1000) 0.75 squads 1 build 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 329/350/434 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 build 2: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1067/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 build 4: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/965/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.75 rts 6 build 6: s 0.7 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/863/737/159 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 334/396/482 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 334/396/482 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 334/396/482 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 4 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 334/396/493 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 4 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 334/396/493 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 4 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 334/396/493 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 9 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 334/396/492 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 9 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 334/396/492 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 9 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 334/396/492 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 build 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 334/356/437 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 build 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 334/356/437 | before lab true gun 1.00
+(1600, 1000) 0.9 squads 1 build 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 334/356/437 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 build 2: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/664/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 build 4: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/562/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 0.9 rts 6 build 6: s 0.85 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/460/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1 squads 1 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 331/392/495 | before lab true gun 1.00
+(1600, 1000) 1 squads 1 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/464/737/158 need 331/392/495 | before lab true gun 1.00
+(1600, 1000) 1 squads 1 6: s 0.95 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/398/737/158 need 331/392/495 | before lab false gun 1.00
+(1600, 1000) 1 squads 4 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 331/392/505 | before lab true gun 1.00
+(1600, 1000) 1 squads 4 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/464/737/158 need 331/392/505 | before lab true gun 1.00
+(1600, 1000) 1 squads 4 6: s 0.95 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/398/737/158 need 331/392/505 | before lab false gun 1.00
+(1600, 1000) 1 squads 9 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 331/392/505 | before lab true gun 1.00
+(1600, 1000) 1 squads 9 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/464/737/158 need 331/392/505 | before lab true gun 1.00
+(1600, 1000) 1 squads 9 6: s 0.95 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/398/737/158 need 331/392/505 | before lab false gun 1.00
+(1600, 1000) 1 squads 1 build 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 331/352/448 | before lab true gun 1.00
+(1600, 1000) 1 squads 1 build 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/364/737/158 need 331/352/448 | before lab true gun 1.00
+(1600, 1000) 1 squads 1 build 6: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/362/737/158 need 331/352/448 | before lab false gun 1.00
+(1600, 1000) 1 rts 6 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1 rts 6 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/464/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1 rts 6 6: s 0.95 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/398/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1 rts 6 build 2: s 0.95 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/466/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1 rts 6 build 4: s 0.95 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/464/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1 rts 6 build 6: s 0.95 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/398/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 1 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/502 | before lab true gun 1.00
+(1600, 1000) 1.1 squads 1 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/502 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 1 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/502 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 4 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/513 | before lab true gun 1.00
+(1600, 1000) 1.1 squads 4 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/513 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 4 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/513 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 9 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 337/401/512 | before lab true gun 1.00
+(1600, 1000) 1.1 squads 9 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 337/401/512 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 9 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/401/512 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 1 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/382/737/158 need 337/360/454 | before lab true gun 1.00
+(1600, 1000) 1.1 squads 1 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/380/737/158 need 337/360/454 | before lab false gun 1.00
+(1600, 1000) 1.1 squads 1 build 6: s 1 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 337/360/454 | before lab false gun 1.00
+(1600, 1000) 1.1 rts 6 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1.1 rts 6 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.1 rts 6 6: s 1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.1 rts 6 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1600, 1000) 1.1 rts 6 build 4: s 1 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.1 rts 6 build 6: s 1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/499 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/499 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/499 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 4 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 4 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 4 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 9 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 9 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 9 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/404/509 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 build 2: s 1.15 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/341/737/159 need 340/362/451 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 build 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 340/362/451 | before lab false gun 1.00
+(1600, 1000) 1.25 squads 1 build 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 340/362/451 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 2: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/617/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 build 2: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/617/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 build 4: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/515/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.25 rts 6 build 6: s 1.15 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/413/293/159 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.5 squads 1 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/468/293/158 need 339/404/492 | before lab false gun 1.00
+(1600, 1000) 1.5 squads 1 4: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/434/293/158 need 339/404/492 | before lab false gun 0.91
+(1600, 1000) 1.5 squads 1 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9780148 } widths 312/339/293/158 need 339/404/492 | before lab false gun 0.72
+(1600, 1000) 1.5 squads 4 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/468/293/158 need 339/404/503 | before lab false gun 1.00
+(1600, 1000) 1.5 squads 4 4: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/434/293/158 need 339/404/503 | before lab false gun 0.91
+(1600, 1000) 1.5 squads 4 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9780148 } widths 312/339/293/158 need 339/404/503 | before lab false gun 0.72
+(1600, 1000) 1.5 squads 9 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/468/293/158 need 339/404/502 | before lab false gun 1.00
+(1600, 1000) 1.5 squads 9 4: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/434/293/158 need 339/404/502 | before lab false gun 0.91
+(1600, 1000) 1.5 squads 9 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9780148 } widths 312/339/293/158 need 339/404/502 | before lab false gun 0.72
+(1600, 1000) 1.5 squads 1 build 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/368/293/158 need 339/362/446 | before lab false gun 1.00
+(1600, 1000) 1.5 squads 1 build 4: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/366/293/158 need 339/362/446 | before lab false gun 0.91
+(1600, 1000) 1.5 squads 1 build 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9780148 } widths 312/339/293/158 need 339/362/446 | before lab false gun 0.72
+(1600, 1000) 1.5 rts 6 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/468/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.5 rts 6 4: s 1.4 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/402/293/158 need 384/384/384 | before lab false gun 0.91
+(1600, 1000) 1.5 rts 6 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/332/293/158 need 384/384/384 | before lab false gun 0.72
+(1600, 1000) 1.5 rts 6 build 2: s 1.4 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/468/293/158 need 384/384/384 | before lab false gun 1.00
+(1600, 1000) 1.5 rts 6 build 4: s 1.4 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/402/293/158 need 384/384/384 | before lab false gun 0.91
+(1600, 1000) 1.5 rts 6 build 6: s 1.4 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/332/293/158 need 384/384/384 | before lab false gun 0.72
+(1600, 1000) 1.75 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 1000) 1.75 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 1.75 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 1.75 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 1000) 1.75 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 1.75 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 1.75 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 1.75 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 1.75 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 1.75 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 1.75 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 1.75 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 1000) 2 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 2 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 2 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 2 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 2 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 1000) 2 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 2 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 2 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 2 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 2 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 1000) 2.5 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 2.5 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 2.5 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 1000) 2.5 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 2.5 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 2.5 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 2.5 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2.5 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2.5 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 2.5 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 2.5 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 3 squads 1 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/498 | before lab false gun 0.74
+(1600, 1000) 3 squads 1 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 3 squads 1 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/498 | before lab false gun 0.60
+(1600, 1000) 3 squads 4 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 3 squads 4 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 3 squads 4 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 3 squads 9 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/398/508 | before lab false gun 0.74
+(1600, 1000) 3 squads 9 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 3 squads 9 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/398/508 | before lab false gun 0.60
+(1600, 1000) 3 squads 1 build 2: s 1.6 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/362/293/158 need 335/357/450 | before lab false gun 0.74
+(1600, 1000) 3 squads 1 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.7981504 } widths 173/335/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 3 squads 1 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/317/293/158 need 335/357/450 | before lab false gun 0.60
+(1600, 1000) 3 rts 6 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 3 rts 6 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 3 rts 6 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 3 rts 6 build 2: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/394/293/158 need 384/384/384 | before lab false gun 0.74
+(1600, 1000) 3 rts 6 build 4: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.96129006 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1600, 1000) 3 rts 6 build 6: s 1.6 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.65391827 } widths 209/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 0.75 squads 1 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 348/416/477 | before lab true gun 1.00
+(1280, 800) 0.75 squads 1 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 348/416/477 | before lab true gun 1.00
+(1280, 800) 0.75 squads 1 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 348/416/477 | before lab true gun 1.00
+(1280, 800) 0.75 squads 4 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 348/416/488 | before lab true gun 1.00
+(1280, 800) 0.75 squads 4 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 348/416/488 | before lab true gun 1.00
+(1280, 800) 0.75 squads 4 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 348/416/488 | before lab true gun 1.00
+(1280, 800) 0.75 squads 9 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 348/416/487 | before lab true gun 1.00
+(1280, 800) 0.75 squads 9 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 348/416/487 | before lab true gun 1.00
+(1280, 800) 0.75 squads 9 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 348/416/487 | before lab true gun 1.00
+(1280, 800) 0.75 squads 1 build 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 348/372/433 | before lab true gun 1.00
+(1280, 800) 0.75 squads 1 build 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 348/372/433 | before lab true gun 1.00
+(1280, 800) 0.75 squads 1 build 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 348/372/433 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 build 2: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1109/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 build 4: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1007/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.75 rts 6 build 6: s 0.55 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/905/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 342/407/497 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 342/407/497 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 342/407/497 | before lab true gun 1.00
+(1280, 800) 0.9 squads 4 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 4 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 4 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 9 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 9 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 9 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 342/407/507 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 build 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 342/365/450 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 build 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 342/365/450 | before lab true gun 1.00
+(1280, 800) 0.9 squads 1 build 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 342/365/450 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 build 2: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/751/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 build 4: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/649/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 0.9 rts 6 build 6: s 0.65 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/547/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1 squads 1 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 337/401/488 | before lab true gun 1.00
+(1280, 800) 1 squads 1 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/486/737/159 need 337/401/488 | before lab true gun 1.00
+(1280, 800) 1 squads 1 6: s 0.75 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/420/737/159 need 337/401/488 | before lab false gun 1.00
+(1280, 800) 1 squads 4 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 337/401/499 | before lab true gun 1.00
+(1280, 800) 1 squads 4 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/486/737/159 need 337/401/499 | before lab true gun 1.00
+(1280, 800) 1 squads 4 6: s 0.75 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/420/737/159 need 337/401/499 | before lab false gun 1.00
+(1280, 800) 1 squads 9 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 337/401/499 | before lab true gun 1.00
+(1280, 800) 1 squads 9 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/486/737/159 need 337/401/499 | before lab true gun 1.00
+(1280, 800) 1 squads 9 6: s 0.75 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 351/420/737/159 need 337/401/499 | before lab false gun 1.00
+(1280, 800) 1 squads 1 build 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 337/360/443 | before lab true gun 1.00
+(1280, 800) 1 squads 1 build 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/386/737/159 need 337/360/443 | before lab true gun 1.00
+(1280, 800) 1 squads 1 build 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/384/737/159 need 337/360/443 | before lab false gun 1.00
+(1280, 800) 1 rts 6 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1 rts 6 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/386/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1 rts 6 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/384/737/159 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1 rts 6 build 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/488/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1 rts 6 build 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/386/737/159 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1 rts 6 build 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/384/737/159 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.1 squads 1 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 345/411/498 | before lab true gun 1.00
+(1280, 800) 1.1 squads 1 4: s 0.8 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 345/411/498 | before lab false gun 1.00
+(1280, 800) 1.1 squads 1 6: s 0.8 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 345/411/498 | before lab false gun 1.00
+(1280, 800) 1.1 squads 4 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 345/411/508 | before lab true gun 1.00
+(1280, 800) 1.1 squads 4 4: s 0.8 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 345/411/508 | before lab false gun 1.00
+(1280, 800) 1.1 squads 4 6: s 0.8 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 345/411/508 | before lab false gun 1.00
+(1280, 800) 1.1 squads 9 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 345/411/508 | before lab true gun 1.00
+(1280, 800) 1.1 squads 9 4: s 0.8 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 345/411/508 | before lab false gun 1.00
+(1280, 800) 1.1 squads 9 6: s 0.8 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 345/411/508 | before lab false gun 1.00
+(1280, 800) 1.1 squads 1 build 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/382/737/158 need 345/368/450 | before lab true gun 1.00
+(1280, 800) 1.1 squads 1 build 4: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/380/737/158 need 345/368/450 | before lab false gun 1.00
+(1280, 800) 1.1 squads 1 build 6: s 0.8 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/346/737/158 need 345/368/450 | before lab false gun 1.00
+(1280, 800) 1.1 rts 6 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1.1 rts 6 4: s 0.8 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.1 rts 6 6: s 0.8 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.1 rts 6 build 2: s 0.8 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/482/737/158 need 384/384/384 | before lab true gun 1.00
+(1280, 800) 1.1 rts 6 build 4: s 0.8 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/416/737/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.1 rts 6 build 6: s 0.8 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/622/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 331/392/495 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 331/392/495 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/469/293/158 need 331/392/495 | before lab false gun 1.00
+(1280, 800) 1.25 squads 4 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 4 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 4 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/469/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 9 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 9 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 9 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/469/293/158 need 331/392/505 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 build 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 331/352/448 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 build 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 331/352/448 | before lab false gun 1.00
+(1280, 800) 1.25 squads 1 build 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/369/293/158 need 331/352/448 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/469/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 build 2: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/573/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 build 4: s 0.95 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/471/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.25 rts 6 build 6: s 0.95 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/469/293/158 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.5 squads 1 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/489/293/159 need 335/397/496 | before lab false gun 1.00
+(1280, 800) 1.5 squads 1 4: s 1.1 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/423/293/159 need 335/397/496 | before lab false gun 0.97
+(1280, 800) 1.5 squads 1 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 335/397/496 | before lab false gun 0.76
+(1280, 800) 1.5 squads 4 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/489/293/159 need 335/397/506 | before lab false gun 1.00
+(1280, 800) 1.5 squads 4 4: s 1.1 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/423/293/159 need 335/397/506 | before lab false gun 0.97
+(1280, 800) 1.5 squads 4 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 335/397/506 | before lab false gun 0.76
+(1280, 800) 1.5 squads 9 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/489/293/159 need 335/397/506 | before lab false gun 1.00
+(1280, 800) 1.5 squads 9 4: s 1.1 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/423/293/159 need 335/397/506 | before lab false gun 0.97
+(1280, 800) 1.5 squads 9 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 335/397/506 | before lab false gun 0.76
+(1280, 800) 1.5 squads 1 build 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/389/293/159 need 335/356/449 | before lab false gun 1.00
+(1280, 800) 1.5 squads 1 build 4: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/387/293/159 need 335/356/449 | before lab false gun 0.97
+(1280, 800) 1.5 squads 1 build 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 335/356/449 | before lab false gun 0.76
+(1280, 800) 1.5 rts 6 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/389/293/159 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.5 rts 6 4: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/387/293/159 need 384/384/384 | before lab false gun 0.97
+(1280, 800) 1.5 rts 6 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 384/384/384 | before lab false gun 0.76
+(1280, 800) 1.5 rts 6 build 2: s 1.1 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/389/293/159 need 384/384/384 | before lab false gun 1.00
+(1280, 800) 1.5 rts 6 build 4: s 1.1 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 285/387/293/159 need 384/384/384 | before lab false gun 0.97
+(1280, 800) 1.5 rts 6 build 6: s 1.1 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 319/353/293/159 need 384/384/384 | before lab false gun 0.76
+(1280, 800) 1.75 squads 1 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/499 | before lab false gun 0.68
+(1280, 800) 1.75 squads 1 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 1.75 squads 1 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 1.75 squads 4 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 1.75 squads 4 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 1.75 squads 4 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 1.75 squads 9 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 1.75 squads 9 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 1.75 squads 9 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 1.75 squads 1 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 342/365/452 | before lab false gun 0.68
+(1280, 800) 1.75 squads 1 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 1.75 squads 1 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 1.75 rts 6 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 1.75 rts 6 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 1.75 rts 6 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 1.75 rts 6 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 1.75 rts 6 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 1.75 rts 6 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2 squads 1 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/499 | before lab false gun 0.68
+(1280, 800) 2 squads 1 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 2 squads 1 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 2 squads 4 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 2 squads 4 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2 squads 4 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2 squads 9 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 2 squads 9 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2 squads 9 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2 squads 1 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 342/365/452 | before lab false gun 0.68
+(1280, 800) 2 squads 1 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 2 squads 1 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 2 rts 6 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 2 rts 6 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2 rts 6 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2 rts 6 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 2 rts 6 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2 rts 6 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2.5 squads 1 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/499 | before lab false gun 0.68
+(1280, 800) 2.5 squads 1 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 2.5 squads 1 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 2.5 squads 4 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 2.5 squads 4 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2.5 squads 4 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2.5 squads 9 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 2.5 squads 9 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2.5 squads 9 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 2.5 squads 1 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 342/365/452 | before lab false gun 0.68
+(1280, 800) 2.5 squads 1 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 2.5 squads 1 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 2.5 rts 6 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 2.5 rts 6 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2.5 rts 6 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2.5 rts 6 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 2.5 rts 6 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 2.5 rts 6 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 3 squads 1 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/499 | before lab false gun 0.68
+(1280, 800) 3 squads 1 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 3 squads 1 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/499 | before lab false gun 0.60
+(1280, 800) 3 squads 4 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 3 squads 4 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 3 squads 4 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 3 squads 9 2: s 1.3 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/346/293/158 need 342/407/510 | before lab false gun 0.68
+(1280, 800) 3 squads 9 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 3 squads 9 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/407/510 | before lab false gun 0.60
+(1280, 800) 3 squads 1 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 342/365/452 | before lab false gun 0.68
+(1280, 800) 3 squads 1 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6969618 } widths 151/342/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 3 squads 1 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/302/293/158 need 342/365/452 | before lab false gun 0.60
+(1280, 800) 3 rts 6 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 3 rts 6 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 3 rts 6 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 3 rts 6 build 2: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/378/293/158 need 384/384/384 | before lab false gun 0.68
+(1280, 800) 3 rts 6 build 4: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8903931 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1280, 800) 3 rts 6 build 6: s 1.3 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.60569066 } widths 193/300/293/158 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 0.75 squads 1 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 337/401/488 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 1 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 337/401/488 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 1 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 337/401/488 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 4 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 4 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 4 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 9 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 9 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 9 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 337/401/499 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 1 build 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 337/360/443 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 1 build 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 337/360/443 | before lab true gun 1.00
+(1920, 1080) 0.75 squads 1 build 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 337/360/443 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 build 2: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 build 4: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.75 rts 6 build 6: s 0.75 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 341/405/487 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 341/405/487 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 341/405/487 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 4 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 4 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 4 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 9 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 9 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 9 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 341/405/497 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 build 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 341/363/441 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 build 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 341/363/441 | before lab true gun 1.00
+(1920, 1080) 0.9 squads 1 build 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 341/363/441 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 build 2: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 build 4: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 0.9 rts 6 build 6: s 0.9 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 337/401/502 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 337/401/502 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 337/401/502 | before lab true gun 1.00
+(1920, 1080) 1 squads 4 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 337/401/513 | before lab true gun 1.00
+(1920, 1080) 1 squads 4 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 337/401/513 | before lab true gun 1.00
+(1920, 1080) 1 squads 4 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 337/401/513 | before lab true gun 1.00
+(1920, 1080) 1 squads 9 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 337/401/512 | before lab true gun 1.00
+(1920, 1080) 1 squads 9 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 337/401/512 | before lab true gun 1.00
+(1920, 1080) 1 squads 9 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 337/401/512 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 337/360/454 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 337/360/454 | before lab true gun 1.00
+(1920, 1080) 1 squads 1 build 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 337/360/454 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/702/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/600/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1 rts 6 build 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/498/737/158 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 1 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 335/397/496 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 1 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 335/397/496 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 1 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 335/397/496 | before lab false gun 1.00
+(1920, 1080) 1.1 squads 4 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 335/397/506 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 4 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 335/397/506 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 4 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 335/397/506 | before lab false gun 1.00
+(1920, 1080) 1.1 squads 9 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 335/397/506 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 9 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 335/397/506 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 9 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 335/397/506 | before lab false gun 1.00
+(1920, 1080) 1.1 squads 1 build 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 335/356/449 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 1 build 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 335/356/449 | before lab true gun 1.00
+(1920, 1080) 1.1 squads 1 build 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 335/356/449 | before lab false gun 1.00
+(1920, 1080) 1.1 rts 6 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1.1 rts 6 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1.1 rts 6 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.1 rts 6 build 2: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/527/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1.1 rts 6 build 4: s 1.1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/425/737/159 need 384/384/384 | before lab true gun 1.00
+(1920, 1080) 1.1 rts 6 build 6: s 1.1 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/423/737/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 337/401/494 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 4: s 1.25 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/352/737/158 need 337/401/494 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 337/401/494 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 4 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 4 4: s 1.25 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/352/737/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 4 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 9 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 9 4: s 1.25 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/352/737/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 9 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 337/401/504 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 build 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 337/360/447 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 build 4: s 1.25 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/384/737/158 need 337/360/447 | before lab false gun 1.00
+(1920, 1080) 1.25 squads 1 build 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 337/360/447 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 4: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/660/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 build 2: s 1.25 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/418/737/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 build 4: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/660/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.25 rts 6 build 6: s 1.25 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/558/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 337/401/488 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 337/401/488 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 337/401/488 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 4 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 4 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 4 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 9 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 9 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 9 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 337/401/499 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 build 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 337/360/443 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 build 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 337/360/443 | before lab false gun 1.00
+(1920, 1080) 1.5 squads 1 build 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 337/360/443 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 build 2: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 build 4: s 1.5 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.5 rts 6 build 6: s 1.5 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/159 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.75 squads 1 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 337/401/496 | before lab false gun 1.00
+(1920, 1080) 1.75 squads 1 4: s 1.75 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/357/293/158 need 337/401/496 | before lab false gun 0.79
+(1920, 1080) 1.75 squads 1 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8415129 } widths 268/337/293/158 need 337/401/496 | before lab false gun 0.63
+(1920, 1080) 1.75 squads 4 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 337/401/507 | before lab false gun 1.00
+(1920, 1080) 1.75 squads 4 4: s 1.75 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/357/293/158 need 337/401/507 | before lab false gun 0.79
+(1920, 1080) 1.75 squads 4 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8415129 } widths 268/337/293/158 need 337/401/507 | before lab false gun 0.63
+(1920, 1080) 1.75 squads 9 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 337/401/506 | before lab false gun 1.00
+(1920, 1080) 1.75 squads 9 4: s 1.75 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/357/293/158 need 337/401/506 | before lab false gun 0.79
+(1920, 1080) 1.75 squads 9 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8415129 } widths 268/337/293/158 need 337/401/506 | before lab false gun 0.63
+(1920, 1080) 1.75 squads 1 build 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 337/360/449 | before lab false gun 1.00
+(1920, 1080) 1.75 squads 1 build 4: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/389/293/158 need 337/360/449 | before lab false gun 0.79
+(1920, 1080) 1.75 squads 1 build 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8415129 } widths 268/337/293/158 need 337/360/449 | before lab false gun 0.63
+(1920, 1080) 1.75 rts 6 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.75 rts 6 4: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/389/293/158 need 384/384/384 | before lab false gun 0.79
+(1920, 1080) 1.75 rts 6 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9584417 } widths 306/300/293/158 need 384/384/384 | before lab false gun 0.63
+(1920, 1080) 1.75 rts 6 build 2: s 1.75 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/423/293/158 need 384/384/384 | before lab false gun 1.00
+(1920, 1080) 1.75 rts 6 build 4: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/389/293/158 need 384/384/384 | before lab false gun 0.79
+(1920, 1080) 1.75 rts 6 build 6: s 1.75 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9584417 } widths 306/300/293/158 need 384/384/384 | before lab false gun 0.63
+(1920, 1080) 2 squads 1 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/495 | before lab false gun 0.77
+(1920, 1080) 2 squads 1 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 2 squads 1 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 2 squads 4 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 2 squads 4 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2 squads 4 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2 squads 9 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 2 squads 9 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2 squads 9 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2 squads 1 build 2: s 1.9 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/372/293/159 need 339/361/448 | before lab false gun 0.77
+(1920, 1080) 2 squads 1 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 2 squads 1 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 2 rts 6 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 2 rts 6 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2 rts 6 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2 rts 6 build 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 2 rts 6 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2 rts 6 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 1 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/495 | before lab false gun 0.77
+(1920, 1080) 2.5 squads 1 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 1 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 4 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 2.5 squads 4 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 4 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 9 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 2.5 squads 9 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 9 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 1 build 2: s 1.9 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/372/293/159 need 339/361/448 | before lab false gun 0.77
+(1920, 1080) 2.5 squads 1 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 2.5 squads 1 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 2.5 rts 6 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 2.5 rts 6 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2.5 rts 6 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2.5 rts 6 build 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 2.5 rts 6 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 2.5 rts 6 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 3 squads 1 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/495 | before lab false gun 0.77
+(1920, 1080) 3 squads 1 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 3 squads 1 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/495 | before lab false gun 0.60
+(1920, 1080) 3 squads 4 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 3 squads 4 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 3 squads 4 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 3 squads 9 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 339/403/505 | before lab false gun 0.77
+(1920, 1080) 3 squads 9 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 3 squads 9 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/403/505 | before lab false gun 0.60
+(1920, 1080) 3 squads 1 build 2: s 1.9 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/372/293/159 need 339/361/448 | before lab false gun 0.77
+(1920, 1080) 3 squads 1 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.8305391 } widths 180/339/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 3 squads 1 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/328/293/159 need 339/361/448 | before lab false gun 0.60
+(1920, 1080) 3 rts 6 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 3 rts 6 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 3 rts 6 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 3 rts 6 build 2: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/404/293/159 need 384/384/384 | before lab false gun 0.77
+(1920, 1080) 3 rts 6 build 4: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/302/293/159 need 384/384/384 | before lab false gun 0.60
+(1920, 1080) 3 rts 6 build 6: s 1.9 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6869164 } widths 219/300/293/159 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 0.75 squads 1 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 337/401/502 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 1 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 337/401/502 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 1 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 337/401/502 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 4 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 337/401/513 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 4 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 337/401/513 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 4 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 337/401/513 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 9 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 337/401/512 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 9 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 337/401/512 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 9 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 337/401/512 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 1 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 337/360/454 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 1 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 337/360/454 | before lab true gun 1.00
+(2560, 1440) 0.75 squads 1 build 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 337/360/454 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 build 2: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/1342/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 build 4: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/1240/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.75 rts 6 build 6: s 1 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/1138/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 332/394/488 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 332/394/488 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 332/394/488 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 4 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 4 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 4 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 9 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 9 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 9 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 332/394/498 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 build 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 332/354/442 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 build 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 332/354/442 | before lab true gun 1.00
+(2560, 1440) 0.9 squads 1 build 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 332/354/442 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 build 2: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/915/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 build 4: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/813/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 0.9 rts 6 build 6: s 1.2 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/711/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 335/398/489 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 335/398/489 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 335/398/489 | before lab true gun 1.00
+(2560, 1440) 1 squads 4 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 4 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 4 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 9 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 9 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 9 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 335/398/500 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 build 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 335/357/444 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 build 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 335/357/444 | before lab true gun 1.00
+(2560, 1440) 1 squads 1 build 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 335/357/444 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 build 2: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/678/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 build 4: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/576/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1 rts 6 build 6: s 1.35 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/474/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 1 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 333/395/497 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 1 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 333/395/497 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 1 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 333/395/497 | before lab false gun 1.00
+(2560, 1440) 1.1 squads 4 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 333/395/508 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 4 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 333/395/508 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 4 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 333/395/508 | before lab false gun 1.00
+(2560, 1440) 1.1 squads 9 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 333/395/507 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 9 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 333/395/507 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 9 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 333/395/507 | before lab false gun 1.00
+(2560, 1440) 1.1 squads 1 build 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 333/355/450 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 1 build 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 333/355/450 | before lab true gun 1.00
+(2560, 1440) 1.1 squads 1 build 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 333/355/450 | before lab false gun 1.00
+(2560, 1440) 1.1 rts 6 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1.1 rts 6 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1.1 rts 6 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.1 rts 6 build 2: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/547/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1.1 rts 6 build 4: s 1.45 lab true GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/445/737/158 need 384/384/384 | before lab true gun 1.00
+(2560, 1440) 1.1 rts 6 build 6: s 1.45 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/443/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 339/403/488 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 4: s 1.65 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/367/737/158 need 339/403/488 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 339/403/488 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 4 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 4 4: s 1.65 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/367/737/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 4 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 9 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 9 4: s 1.65 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/367/737/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 9 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 339/403/498 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 build 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 339/362/442 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 build 4: s 1.65 lab true GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/367/737/158 need 339/362/442 | before lab false gun 1.00
+(2560, 1440) 1.25 squads 1 build 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 339/362/442 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 4: s 1.65 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/399/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 build 2: s 1.65 lab true GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/433/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 build 4: s 1.65 lab true GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/399/737/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.25 rts 6 build 6: s 1.65 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 487/573/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 337/401/492 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 337/401/492 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 337/401/492 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 4 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 4 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 4 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 9 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 9 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 9 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 337/401/502 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 build 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 337/360/445 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 build 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 337/360/445 | before lab false gun 1.00
+(2560, 1440) 1.5 squads 1 build 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 337/360/445 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 build 2: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 283/506/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 build 4: s 2 lab false GunFit { stubs: false, swap: true, name: true, scale: 1.0 } widths 385/404/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.5 rts 6 build 6: s 2 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 387/402/293/158 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.75 squads 1 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 336/399/495 | before lab false gun 1.00
+(2560, 1440) 1.75 squads 1 4: s 2.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/349/293/159 need 336/399/495 | before lab false gun 0.77
+(2560, 1440) 1.75 squads 1 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.82117355 } widths 262/336/293/159 need 336/399/495 | before lab false gun 0.61
+(2560, 1440) 1.75 squads 4 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 336/399/505 | before lab false gun 1.00
+(2560, 1440) 1.75 squads 4 4: s 2.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/349/293/159 need 336/399/505 | before lab false gun 0.77
+(2560, 1440) 1.75 squads 4 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.82117355 } widths 262/336/293/159 need 336/399/505 | before lab false gun 0.61
+(2560, 1440) 1.75 squads 9 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 336/399/505 | before lab false gun 1.00
+(2560, 1440) 1.75 squads 9 4: s 2.35 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 249/349/293/159 need 336/399/505 | before lab false gun 0.77
+(2560, 1440) 1.75 squads 9 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.82117355 } widths 262/336/293/159 need 336/399/505 | before lab false gun 0.61
+(2560, 1440) 1.75 squads 1 build 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 336/358/448 | before lab false gun 1.00
+(2560, 1440) 1.75 squads 1 build 4: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/381/293/159 need 336/358/448 | before lab false gun 0.77
+(2560, 1440) 1.75 squads 1 build 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.82117355 } widths 262/336/293/159 need 336/358/448 | before lab false gun 0.61
+(2560, 1440) 1.75 rts 6 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.75 rts 6 4: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/381/293/159 need 384/384/384 | before lab false gun 0.77
+(2560, 1440) 1.75 rts 6 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9340491 } widths 298/300/293/159 need 384/384/384 | before lab false gun 0.61
+(2560, 1440) 1.75 rts 6 build 2: s 2.35 lab false GunFit { stubs: false, swap: true, name: false, scale: 1.0 } widths 183/415/293/159 need 384/384/384 | before lab false gun 1.00
+(2560, 1440) 1.75 rts 6 build 4: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 217/381/293/159 need 384/384/384 | before lab false gun 0.77
+(2560, 1440) 1.75 rts 6 build 6: s 2.35 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9340491 } widths 298/300/293/159 need 384/384/384 | before lab false gun 0.61
+(2560, 1440) 2 squads 1 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/489 | before lab false gun 0.75
+(2560, 1440) 2 squads 1 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 2 squads 1 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 2 squads 4 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 2 squads 4 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2 squads 4 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2 squads 9 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 2 squads 9 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2 squads 9 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2 squads 1 build 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/362/443 | before lab false gun 0.75
+(2560, 1440) 2 squads 1 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 2 squads 1 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 2 rts 6 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 2 rts 6 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2 rts 6 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2 rts 6 build 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 2 rts 6 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2 rts 6 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 1 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/489 | before lab false gun 0.75
+(2560, 1440) 2.5 squads 1 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 1 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 4 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 2.5 squads 4 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 4 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 9 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 2.5 squads 9 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 9 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 1 build 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/362/443 | before lab false gun 0.75
+(2560, 1440) 2.5 squads 1 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 2.5 squads 1 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 2.5 rts 6 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 2.5 rts 6 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2.5 rts 6 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2.5 rts 6 build 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 2.5 rts 6 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 2.5 rts 6 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 3 squads 1 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/489 | before lab false gun 0.75
+(2560, 1440) 3 squads 1 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 3 squads 1 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/489 | before lab false gun 0.60
+(2560, 1440) 3 squads 4 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 3 squads 4 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 3 squads 4 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 3 squads 9 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/404/499 | before lab false gun 0.75
+(2560, 1440) 3 squads 9 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 3 squads 9 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/404/499 | before lab false gun 0.60
+(2560, 1440) 3 squads 1 build 2: s 2.55 lab false GunFit { stubs: false, swap: false, name: false, scale: 1.0 } widths 147/366/293/158 need 340/362/443 | before lab false gun 0.75
+(2560, 1440) 3 squads 1 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.79649025 } widths 173/340/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 3 squads 1 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.6 } widths 191/321/293/158 need 340/362/443 | before lab false gun 0.60
+(2560, 1440) 3 rts 6 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 3 rts 6 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 3 rts 6 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 3 rts 6 build 2: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 1.0 } widths 115/398/293/158 need 384/384/384 | before lab false gun 0.75
+(2560, 1440) 3 rts 6 build 4: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.9793623 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
+(2560, 1440) 3 rts 6 build 6: s 2.55 lab false GunFit { stubs: true, swap: false, name: false, scale: 0.66621184 } widths 213/300/293/158 need 384/384/384 | before lab false gun 0.60
