@@ -1271,6 +1271,8 @@ fn moving_on_skips_crystals_the_mould_ate_from_or_a_soldier_works() {
 #[test]
 fn an_aim_spread_turns_the_shots_within_the_spread() {
     let (mut a, mut b) = (small(3), small(3));
+    // Dead on (the default until 11-15, now the rifle's 0.5) against 2.5.
+    a.rules.spread = 0.0;
     b.rules.spread = 2.5;
     for g in [&mut a, &mut b] {
         for k in 0..g.soldiers.len() {
@@ -1509,11 +1511,14 @@ fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster(
     let n = g.members(0).len();
     let fired: Vec<_> = g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).collect();
     assert_eq!(fired.len(), n, "every member fires on the same step");
-    // Each flies toward the point.
+    // Each flies toward the point, within the rifle's aim spread.
+    let sc = g.s();
     for s in &fired {
         let a = (p.1 - s.from.1).atan2(p.0 - s.from.0);
         let b = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
-        assert!((a - b).abs() < 0.05 || s.hit.is_some(), "a volley shot off the aim");
+        let d = (p.0 - s.from.0).hypot(p.1 - s.from.1).max(0.1);
+        let off = (g.gun(0).spread * sc / d).atan();
+        assert!((a - b).abs() < 0.05 + off || s.hit.is_some(), "a volley shot off the aim");
     }
     // Volleys over 6 s, not controlled and controlled.
     let count = |g: &mut Game<BigDish>| {
@@ -2824,4 +2829,47 @@ fn letting_go_stops_the_steer_keeps_orders_and_a_bought_soldier_joins_a_squad() 
     assert_eq!(g.soldiers[k].squad as usize, g.live_squads()[0], "the new soldier joins the lowest live squad");
     // A replay line round-trips.
     assert_eq!(Cmd::parse(&Cmd::Active(u8::MAX).to_line()), Some(Cmd::Active(u8::MAX)));
+}
+
+/// The rifle's base spread (owner 11-15 08:10Z) lets a bullet's spread
+/// multiplier show: the same frame's shots, drawing the same numbers, turn
+/// four times as far with a x4 spread bullet loaded (before, the rifle's
+/// spread was 0 and no bullet turned a shot).
+#[test]
+fn a_spread_bullet_widens_the_rifles_aim() {
+    use super::super::bullets::Ammo;
+    use super::super::rounds::{Card, Deck};
+    let (mut a, mut b) = (small(3), small(3));
+    assert!(a.gun(0).spread > 0.0, "the rifle has a base spread");
+    let wide = Ammo { spread: 400, ..Ammo::default() };
+    assert!(b.apply(Cmd::Load(0, Some(Deck::new(&[Card::Ammo(wide)])))));
+    assert!(a.apply(Cmd::Load(0, Some(Deck::new(&[Card::Ammo(Ammo::default())])))));
+    for g in [&mut a, &mut b] {
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+    }
+    let turn = |p: &Shot, aim: (f32, f32)| {
+        let (u, v) = ((p.to.0 - p.from.0, p.to.1 - p.from.1), (aim.0 - p.from.0, aim.1 - p.from.1));
+        (u.0 * v.1 - u.1 * v.0).atan2(u.0 * v.0 + u.1 * v.1).abs()
+    };
+    for _ in 0..15 * 60 {
+        let aims: Vec<_> = a.soldiers.iter().map(|s| s.aim).collect();
+        a.step();
+        b.step();
+        if !a.last_shots.is_empty() {
+            assert_eq!(a.last_shots.len(), b.last_shots.len());
+            let mut wider = 0;
+            for (p, q) in a.last_shots.iter().zip(&b.last_shots) {
+                let k = a.soldiers.iter().position(|s| (s.x, s.y) == p.from).expect("its soldier");
+                let at = aims[k].expect("its target");
+                let (ta, tb) = (turn(p, at), turn(q, at));
+                assert!(tb + 1e-4 >= ta, "a x4 bullet turned less: {tb} against {ta}");
+                wider += (tb > 2.0 * ta && tb > 1e-3) as u32;
+            }
+            assert!(wider > 0, "no shot turned wider with the spread bullet");
+            return;
+        }
+    }
+    panic!("no volley");
 }

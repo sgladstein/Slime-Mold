@@ -34,6 +34,12 @@ below slipped past the tests.
 - **Spread on bullet cards does nothing on the rifle and long gun** (their
   spread is 0; `turn.rs` multiplies it), yet `Ammo::grade` prices it.
   Owner question: a small base spread, or an additive bullet spread.
+  **Answered 11-15 08:10Z: "Small base spread on both"**: rifle 0.5 cells
+  (`guns::RIFLE_SPREAD`, now also `Rules::spread`'s default, so the
+  standard rifle every unarmed squad fires), long gun 0.3. Test
+  `a_spread_bullet_widens_the_rifles_aim`: a x4 spread bullet turns the
+  same frame's shots four times as far. Default shots in every mode now
+  scatter up to 0.5 cells at the target (they were dead on).
 - **Fire kills counted unevenly**: the GPU's `firekill` adds to the strike
   counter (`wstat[3]`), so the next kill burst claims them; the CPU counts
   `burned()` only on burn-trail frames. Stats and score only.

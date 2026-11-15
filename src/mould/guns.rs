@@ -55,6 +55,10 @@ pub const SHOTS_MAX: u32 = 6;
 /// Budget a planet deeper, as a fraction of the kind's (and the cap).
 pub const DEPTH_BUDGET: f32 = 0.12;
 pub const DEPTH_BUDGET_MAX: f32 = 2.5;
+/// The rifle's aim spread, dish cells at the target: `Rules::spread`'s
+/// default, so the standard gun and a rolled rifle's average agree.
+pub const RIFLE_SPREAD: f32 = 0.5;
+
 /// Range and rate a planet deeper (and the cap); spread falls as much.
 pub const DEPTH_STAT: f32 = 0.04;
 pub const DEPTH_STAT_MAX: f32 = 1.4;
@@ -117,9 +121,13 @@ impl GunKind {
     /// The kind's average gun at depth 1, before any roll.
     pub fn average(self) -> Gun {
         let (range, rate, spread, shots, budget, slots) = match self {
-            GunKind::Rifle => (24.0, 1.0, 0.0, 1, 10, 4),
+            // Rifle and long gun spread 0.5 and 0.3 cells (owner, 11-15
+            // 08:10Z, "Small base spread on both"): at 0 a bullet's spread
+            // multiplier (`Ammo::spread`, Buckshot x2.5, Needle tighter)
+            // scaled nothing, yet `Ammo::grade` priced it.
+            GunKind::Rifle => (24.0, 1.0, RIFLE_SPREAD, 1, 10, 4),
             GunKind::Carbine => (15.0, 2.2, 1.5, 1, 8, 5),
-            GunKind::Long => (40.0, 0.5, 0.0, 1, 12, 3),
+            GunKind::Long => (40.0, 0.5, 0.3, 1, 12, 3),
             GunKind::Scatter => (13.0, 0.6, 5.0, 4, 9, 3),
         };
         Gun { kind: self, depth: 1, range, rate, spread, shots, budget, slots, grade: 1.0 }
