@@ -6,6 +6,7 @@ updated: 2026-11-15
 sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/menu-fixes-2026-11-15/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -50,7 +51,7 @@ A separate mode beside the campaign (Run on the start menu, or
 map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 2% on
 every planet since 11-15; it was 25% on planet 1 down to 10%, and the owner
 kept winning with slime left; under 3% the slime is broken and its
-stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. A
+stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. The goal on the HUD counts it out: "counting from 1:00" and the walkers now before the peak starts counting, then the walkers now against the count to reach ("12,630 walkers now → 252", [report](../../Reports/menu-fixes-2026-11-15/README.md)). A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells guns and gun cards
 that get better deeper; a lost planet ends the run. The shop page has two

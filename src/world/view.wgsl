@@ -1548,6 +1548,33 @@ fn soil_share(x: f32, y: f32) -> Soil {
     return o;
 }
 
+// The water at (x, y), bilinear over the 2 x 2 cells round it: the wet
+// share (any water) and the deep share. For the plants over water
+// (`shaded`); the water's own crisp edge is `soil_share`'s.
+fn water_share(x: f32, y: f32) -> vec2<f32> {
+    let ux = x - 0.5; let uy = y - 0.5;
+    let ix = i32(floor(ux)); let iy = i32(floor(uy));
+    let f = vec2<f32>(ux - floor(ux), uy - floor(uy));
+    var o = vec2<f32>(0.0);
+    for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < 2; i++) {
+            let g = ground[cidx(clamp(ix + i, 0, i32(P.ww) - 1), clamp(iy + j, 0, i32(P.wh) - 1))];
+            let wt = mix(1.0 - f.x, f.x, f32(i)) * mix(1.0 - f.y, f.y, f32(j));
+            if ((g & 15u) == WET) {
+                o.x += wt;
+                if (((g >> 4u) & 7u) == SOIL_DEEP) { o.y += wt; }
+            }
+        }
+    }
+    return o;
+}
+
+// How much thinner plants are drawn over water (their density for the
+// crowns' size, so the stems shrink and the water shows between).
+const WATER_THIN: f32 = 0.65;
+// And how much of their flat far-view cover is taken off over water.
+const WATER_VEIL: f32 = 0.6;
+
 // Is cell (ix, iy) deep water?
 fn deep_at(ix: i32, iy: i32) -> f32 {
     let g = ground[cidx(clamp(ix, 0, i32(P.ww) - 1), clamp(iy, 0, i32(P.wh) - 1))];
@@ -1980,7 +2007,27 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     if (P.plant_at != 0u) {
         // Char: near-black grey with a crisp edge (a narrow rise of the
         // per-pixel char, a few pixels at zoom 24), a little ash grain.
-        pl = plant_layer(x, y, pp.d, pp.heat > 0.002);
+        // Over water the plants thin out so the water shows between
+        // them, and none lie over deep water (whole-game review, 11-15:
+        // the rivers vanished under reeds within two minutes, the reeds
+        // spreading over the shallows and the plants' spline bleeding
+        // over the narrow deep channel). Only the look: the reeds still
+        // grow there, and burn.
+        // Zoomed out, where the crowns fade to their flat mean cover, that
+        // cover is veiled over water too (the shallows read green at zoom
+        // 4 with the thinning alone).
+        var dp = pp.d;
+        var ws = vec2<f32>(0.0);
+        if (dot(dp, vec4<f32>(1.0)) > 0.003) {
+            ws = water_share(x, y);
+            dp *= (1.0 - WATER_THIN * ws.x) * (1.0 - smoothstep(0.25, 0.6, ws.y));
+        }
+        pl = plant_layer(x, y, dp, pp.heat > 0.002);
+        if (ws.x > 0.0) {
+            let far = 1.0 - clamp(pl.fw / max(pl.cover, 1e-3), 0.0, 1.0);
+            let veil = 1.0 - WATER_VEIL * ws.x * far;
+            pl.rgb *= veil; pl.cover *= veil;
+        }
         let gv = m.vis * under;
         let pv = pl.cover * gv;
         m.albedo = m.albedo * (1.0 - pv) + pl.rgb * gv;
