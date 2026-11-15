@@ -493,7 +493,9 @@ impl<W: World> Game<W> {
         // stand on (seen on the Fork: a squad steered into the V wall
         // stood still, its anchor waiting for members whose places were
         // in the wall).
-        if self.rules.squads && !(self.standable(q.0, q.1) && self.walk_line(p, q)) {
+        // A column's place (`funnel`) is on the way the anchor came, often
+        // round a corner from it: no straight line asked.
+        if self.rules.squads && !(self.standable(q.0, q.1) && (self.in_column(k) || self.walk_line(p, q))) {
             p
         } else {
             q

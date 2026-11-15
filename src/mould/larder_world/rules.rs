@@ -358,6 +358,10 @@ pub struct Rules {
     /// soldiers joining it. Off, the game plays as before (squad commands
     /// still apply, but nothing sends them).
     pub squads: bool,
+    /// Squads funnel through places narrower than their formation (on;
+    /// `funnel`, owner 2026-11-15). Off, the formation's places that fall
+    /// in rock all go to the anchor, as before.
+    pub funnel: bool,
     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
     /// rid of the whole larder system"), a crystal is *drained* or
     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
@@ -505,6 +509,7 @@ impl Default for Rules {
             sink: 1.0,
             lead: super::LeadRules::default(),
             squads: false,
+            funnel: true,
             larder: true,
             guard: 120.0,
             guard_walkers: 8,
