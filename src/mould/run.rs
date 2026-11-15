@@ -167,6 +167,9 @@ pub fn head_start(area: f32) -> f32 {
 
 /// The goal: the slime down to this share of its peak, on every planet.
 ///
+/// 1% since the owner's 11-15 18:02Z ("We are still winning the game with
+/// too many slime left. Drop it to 1% of peak"); 2% before.
+///
 /// Why 2% (owner, 11-15 03:02Z: "right now how it's set up I feel like I
 /// keep winning before I've actually killed everything"): it was a
 /// quarter on planet 1 down to a tenth from planet 6, so a planet was won
@@ -184,7 +187,7 @@ pub fn shrink_goal(_depth: u32) -> f32 {
 }
 
 /// `shrink_goal` on every planet.
-pub const WIN_SHARE: f32 = 0.02;
+pub const WIN_SHARE: f32 = 0.01;
 
 /// The slime's surges by planet, 1 to 8 (past the end the last): the food
 /// it eats to build one, as a share of the sandbox's (`SURGE_FOOD`, 150,
