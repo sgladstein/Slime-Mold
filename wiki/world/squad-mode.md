@@ -7,6 +7,7 @@ sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/free-camera-2026-11-15/README.md
+  - Reports/guards-2026-11-15/README.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/squad-mode-2026-11-14/README.md
 code:
@@ -43,8 +44,11 @@ brings it back), so the campaign keeps the old mode (owner 08:09Z). Detail: [rep
 - **Orders.** Right click sends, Ctrl + right click drains or guards a crystal,
   Shift queues up to six. Formations: blob (default), line, wedge, ring.
 - **Guards.** A squad draining or building with slime near posts a share of
-  itself as guards (key I: none, some, more); 3 of 8 cost about a fifth of the
-  work (`cover.rs`).
+  itself as guards (key I: none, some, more) at the work's edge on the slime's
+  side; 3 of 8 cost about a fifth of the work (`cover.rs`). Posted out in the
+  slime's film (#276) they died for nothing; at the edge they killed a third
+  more slime than none and the workers were bitten less, 4 of 4 seeds
+  ([report](../../Reports/guards-2026-11-15/README.md)).
 - **Healing is an order** (#330): tell a squad to heal (Heal button, key L; the
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order
@@ -65,6 +69,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 07:57Z: "squad mode is default mode".
 - 2026-11-15 08:09Z: "No campaign can stay the old mode".
 - 2026-11-15 07:41Z: "Healing should be a specific action".
+- 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).
 
 ## Open

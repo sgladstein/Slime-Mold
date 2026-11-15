@@ -122,6 +122,10 @@ impl Building {
 /// A pump's levels (`Game::upgrade`).
 pub const PUMP_LEVELS: u8 = 3;
 
+/// A pump stops once its crystal holds this share of its starting charge
+/// or less (`Game::pump_flows`): the mould has eaten it.
+pub const PUMP_DRY: f32 = 0.01;
+
 /// How far out a turret's shot starts, in its touch radii: the tip of the
 /// barrels the window draws (`Marks::turret`, the head one touch radius
 /// with barrels to 1.7).
@@ -181,8 +185,8 @@ pub struct BuildRules {
     pub pump_rate: f32,
     /// The share of its crystal's starting charge a level-1 pump draws a
     /// second (`Game::pump_draw`): bigger crystals pay more (owner,
-    /// 2026-11-15). 1/150: a crystal pumped dry in two and a half minutes
-    /// at level 1.
+    /// 2026-11-15). 1/150: a crystal's worth every two and a half minutes
+    /// at level 1, for ever, since a pump does not drain it.
     pub pump_share: f32,
     /// Each pump level past the first multiplies its draw by this...
     pub pump_up_rate: f32,
@@ -374,6 +378,15 @@ impl<W: World> Game<W> {
         r.pump_rate.max(r.pump_share * full) * r.pump_up_rate.powi(i32::from(bd.level.max(1)) - 1)
     }
 
+    /// Whether a pump on crystal `c` pays: the crystal holds more than
+    /// `PUMP_DRY` of its starting charge. A pump never drains it (owner,
+    /// 2026-11-15), so only the mould eating it stops one; the share, not
+    /// 0, because a crystal eaten down keeps crumbs on its cells.
+    pub fn pump_flows(&self, c: usize) -> bool {
+        let start = self.start_charge.get(c).copied().unwrap_or(0.0);
+        self.world.crystals().get(c).is_some_and(|x| start > 0.0 && x.1 > PUMP_DRY * start)
+    }
+
     /// The food each food's worth of charge pump `b` draws banks
     /// (`pump_up_yield` a level past the first).
     pub fn pump_yield(&self, b: usize) -> f32 {
@@ -515,7 +528,7 @@ impl<W: World> Game<W> {
 
     /// The buildings' turn before the frame: their units (and a turret's
     /// shot) into the frame, a lure's food out of the bank.
-    pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>, dt: f32) {
+    pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>) {
         let r = self.rules;
         let b = r.build;
         let sc = self.s();
@@ -571,12 +584,15 @@ impl<W: World> Game<W> {
                 }
                 Kind::Pump => {
                     if let Some(c) = bd.crystal {
-                        // From its middle over the whole crystal (it stood
-                        // on the crystal's edge, drawing within 4 cells,
-                        // until 2026-11-15). Bigger crystals give more
-                        // (`pump_draw`).
-                        u.take = self.pump_draw(k) * dt * r.charge;
-                        u.take_r = self.world.crystal_r(c) + sc;
+                        // No take from the dish: a pump never drains its
+                        // crystal (owner, 2026-11-15 17:14Z: "Pumped crystals
+                        // last forever", the pump's edge over hand draining).
+                        // It pays `pump_draw` in `building_out` while the
+                        // crystal has charge, so only the mould eating it
+                        // ends a pump. Until then (PR #322) it took
+                        // `pump_draw` of charge a second through `UnitIn::take`
+                        // over the whole crystal and pumped a crystal dry in
+                        // 2.5 minutes. Bigger crystals give more (`pump_draw`).
                         // The mould wears it over the crystal it stands on.
                         u.touch = u.touch.max(self.world.crystal_r(c));
                         u.smell_r = b.lure_r * sc;
@@ -616,18 +632,23 @@ impl<W: World> Game<W> {
         bd.aim = u.target;
         bd.dense = u.dense;
         bd.drew = 0.0;
-        let up = bd.up();
-        if up && bd.kind == Kind::Pump && u.took > 0.0 {
-            bd.working = true;
-            let level = bd.level.max(1);
-            let food = u.took / r.charge * r.build.pump_up_yield.powi(i32::from(level) - 1);
-            bd.drew = food;
-            self.bank += food;
-            self.harvested += food;
-            self.pumped += food;
+        let (up, kind, crystal) = (bd.up(), bd.kind, bd.crystal);
+        if up && kind == Kind::Pump {
+            if let Some(c) = crystal.filter(|&c| self.pump_flows(c)) {
+                let food = self.pump_draw(k) * dt * self.pump_yield(k);
+                let bd = &mut self.buildings[k];
+                bd.working = true;
+                bd.drew = food;
+                self.bank += food;
+                self.harvested += food;
+                self.pumped += food;
+                // The crystal's working spot still lights under the rig
+                // (`Game::last_takes`), with the charge the food stands for.
+                self.last_takes.push(super::Take { by: None, crystal: c, at: self.buildings[k].at, took: food * r.charge });
+            }
         }
         // By mass, as the larder's steal: the bank's loss follows the body's cover, not its walker count.
-        if up && bd.kind == Kind::Outpost && u.touching > 0 {
+        if up && kind == Kind::Outpost && u.touching > 0 {
             let take = (r.steal * r.mass * u.touching as f32 * dt).min(self.bank.max(0.0));
             self.bank -= take;
             self.stolen += take;
@@ -877,8 +898,34 @@ mod tests {
         // `Building::drew`, the window's draw line, is the pump's take.
         assert!((drew - g.pumped).abs() < 1e-3 * want, "drew {drew}, pumped {}", g.pumped);
         assert!((g.pumped - want).abs() < 0.05 * want, "pumped {} in 10 s", g.pumped);
-        assert!(g.bank > bank && charge - g.world.crystals()[c].1 > 0.9 * want * g.rules.charge);
-        assert!(g.take_share() > 0.5, "the pump's take is the squad's");
+        assert!(g.bank > bank);
+        // A pump never drains its crystal (owner, 2026-11-15: "Pumped
+        // crystals last forever"); only the mould eats it.
+        assert!(g.world.crystals()[c].1 >= charge - 1e-3 * charge, "{} of {charge} left", g.world.crystals()[c].1);
+        assert_eq!(g.taken[c], 0.0, "the pump took no charge");
+        assert!(g.last_takes.iter().any(|t| t.by.is_none() && t.crystal == c), "the crystal's working spot lights");
+    }
+
+    #[test]
+    fn a_pumped_crystal_lasts_until_the_mould_eats_it() {
+        let mut g = small(5);
+        let (c, centre) = g.crystal_at(g.larder).unwrap();
+        assert!(g.build(Kind::Pump, centre));
+        assert!(g.pump_flows(c));
+        // The mould eating it down to crumbs (here by hand) stops the pump.
+        let d = &mut g.world;
+        for i in 0..d.charge.len() {
+            if usize::from(d.pile_of[i]) == c + 1 {
+                d.charge[i] = 0.0;
+            }
+        }
+        d.pile_charge[c] = 0.0;
+        assert!(!g.pump_flows(c), "an eaten crystal pays nothing");
+        let pumped = g.pumped;
+        for _ in 0..g.rules.tps {
+            g.step();
+        }
+        assert_eq!(g.pumped, pumped, "no pay from an eaten crystal");
     }
 
     #[test]
