@@ -7,6 +7,7 @@ sources:
   - CLAUDE.md
   - HANDOFF.md
   - Reports/build-flow-2026-11-14/README.md
+  - Reports/card-text-2026-11-15.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/larder-crater-2s-2026-11-14.md
@@ -36,6 +37,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
 | 2026-11-15 03:02 | A run's planet is won only when the slime is nearly gone: the goal is 2% of its peak on every planet (`WIN_SHARE`; it was 25% on planet 1 down to 10%), under the broken line where stragglers off food starve by themselves (`Rules::broken` 3%, kept) | "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" | [run](world/run.md), [report](../Reports/roguelike-run-2026-11-14/README.md) |
+| 2026-11-15 02:57 | Gun-card text is one short sentence each with its key number (`draw::card_face`, at most 60 characters); the kinds read Bullet, Next bullet and Always (`CardKind::label`; were Payload, Modifier, Trigger, Flight); how to click and drag is on the shop's hint line, not every card | "The text for all the gun cards is too much. They should be simplified and clarified" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/card-text-2026-11-15.md) |
 | 2026-11-14 20:32 | The player arranges the gun: it fires its slots left to right (`Run::gun` no longer sorts); in the run shop a card dragged onto a slot goes there (a card for sale is bought into it, `Run::buy_into`), onto the bag comes out, and Q and E move the focused card. A card put in without a slot still lands before the first bullet (`Run::put_in`) | "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around" | [run](world/run.md), [report](../Reports/gun-order-2026-11-14.md) |
 | 2026-11-14 20:22 | Every effect's light is the size of its damage: a bullet and its hit light their strike (`Bullet::r`, `Shot::r`), a burst its own radius (a bomb's kill core, not its throw ring); muzzles and embers 1 cell (`MUZZLE_LIGHT`) | "the blast light affect should only be the size of the damage. The same for all affects." | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
 | 2026-11-14 20:03-20:09 | A bullet's hit must not send a big wave over the slime: shot lights cut to 2.5 cells (`SHOT_LIGHT`; a bullet's was 7) and a burst's to 1.5 radii (was 3). Fire from blasts in the new plants is the plants thread's to tune | "even the sniper which is just range and pierce send outs these big circular affects. It is not good."; "each bullet that hit has a huge wave that goes out. it is too much" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |

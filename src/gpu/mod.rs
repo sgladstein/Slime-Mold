@@ -217,6 +217,8 @@ pub struct Settings {
     /// dish instead with a disc or home start (`haze`).
     pub disc: f32,
     pub haze: f32,
+    /// Each start an organic outline (`BigParams::start_shape`).
+    pub start_shape: bool,
     /// Settings set by the trail a walker stands in (36 Points):
     /// s = min(trail x `trail_scale`, 1), 0 off; each setting is its base
     /// plus amp x s^power, `[amp, power]` (angles in degrees).
@@ -488,6 +490,7 @@ impl Settings {
             start: Start::Spread,
             disc: 180.0,
             haze: 0.0,
+            start_shape: false,
             trail_scale: 0.0,
             reach_by: [0.0, 1.0],
             angle_by: [0.0, 1.0],
@@ -896,6 +899,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         respawn: s.respawn,
         blob_r: if s.start == Start::Disc { s.disc / scale as f32 } else { 0.0 },
         haze: if s.start == Start::Spread { 0.0 } else { s.haze },
+        start_shape: s.start_shape,
         sense_scale: s.trail_scale,
         offset_mod: s.reach_by,
         angle_mod: [s.angle_by[0].to_radians(), s.angle_by[1]],

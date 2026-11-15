@@ -629,7 +629,7 @@ impl StartMenu {
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Left/Right change  ·  Backspace or click the row: default  ·  Esc back",
             Page::Keys => "Esc or F1 back",
-            Page::Shop => "Click or Enter buys  ·  drag a card to a slot, or Q and E, to change the order the gun fires  ·  Esc closes a folder, then the shop",
+            Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
         c.text_fit(Weight::Medium, 12.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, FAINT);
     }
@@ -1102,8 +1102,8 @@ impl StartMenu {
                 (folders[f].clone(), format!("Open: {n} to unlock or upgrade, as the command card's own page."), String::new(), String::new(), true)
             }
             Some(Hit::FolderBack) => ("Back".into(), "Back to the first page of upgrades.".into(), String::new(), String::new(), true),
-            Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "The gun fires its slots left to right, again and again. Drag a card here from the bag, or click a bag card to put it in.".into(), String::new(), String::new(), true),
-            _ => ("Point at a tile".into(), "Upgrades on the left, guns and their bullet cards on the right. Bright tiles are what your points buy now. The gun fires its cards left to right: drag a card to another slot (or Q and E) to change the order, click a card in the gun to take it out, click a bag card to put it in.".into(), String::new(), String::new(), true),
+            Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "Drag a card here.".into(), String::new(), String::new(), true),
+            _ => ("Point at a tile".into(), "The gun fires its cards left to right. Drag a card to a slot to move it; click a card to take it out or put it in.".into(), String::new(), String::new(), true),
         };
         c.text_fit(Weight::SemiBold, 15.0 * s, (r.x + p, r.y + 22.0 * s), Align::Left, &name, r.w - 2.0 * p - 120.0 * s, TEXT);
         let tag = if price.is_empty() { state } else if state.is_empty() { format!("{price} points") } else { format!("{price} points  ·  {state}") };
