@@ -324,7 +324,7 @@ fn item_icon(key: &str) -> Icon {
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
         "lure" => Icon::Bait,
-        "pump" => Icon::Crystal,
+        "pump+" => Icon::Crystal,
         "outpost" => Icon::Hold,
         "siren" => Icon::Alert,
         "blast" => Icon::Grenade,

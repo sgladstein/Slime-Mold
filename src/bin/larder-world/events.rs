@@ -115,7 +115,9 @@ impl ApplicationHandler for App {
                 // playtest, 2026-11-14 20:12Z); unpaused it steers the squad
                 // and is the card's letters, as before. A key let go while
                 // paused still lets go of a steer held from before the pause.
-                self.controls.wasd_pan = self.paused && self.game.as_ref().is_some_and(|g| g.end.is_none());
+                // With no squad controlled (Esc, `SquadInput::free`) it pans
+                // unpaused too.
+                self.controls.wasd_pan = (self.paused || self.squad_free()) && self.game.as_ref().is_some_and(|g| g.end.is_none());
                 if self.controls.wasd_pan && !self.hud.menu_open() && slime_mould::world::controls::wasd_index(code).is_some() {
                     if !pressed {
                         self.squad_key(code, false, event.repeat, true);
