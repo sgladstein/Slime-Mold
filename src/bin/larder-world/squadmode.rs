@@ -11,6 +11,8 @@
 //!   and guards it (a slow income while no slime is on it, for as long as
 //!   it holds), **Ctrl + right click** drains it (fast, until it is gone
 //!   for both sides). No larder in this mode (`Rules::larder`).
+//!   On a half-built building it goes back to raising it (`resume`; no
+//!   new placement, nothing paid again).
 //! - **1-9** or **Ctrl + wheel** switch squads; the wheel zooms, about
 //!   the squad while the camera follows it.
 //! - **Y** splits it; the half nearer the cursor becomes a new squad and
@@ -112,6 +114,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
+        ("Right click a half-built building".into(), "Back to building it (nothing paid again)".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
@@ -470,6 +473,13 @@ impl App {
                 if down {
                     // On the minimap: where it shows, as in the RTS round.
                     if let (Some(at), Some(q)) = (self.cursor_minimap().or_else(|| self.cursor_world()), self.active()) {
+                        // On an unfinished building: back to raising it, no
+                        // new placement or price (owner 2026-11-15). Ctrl
+                        // still drains the crystal under a pump rig.
+                        let b = self.game.as_ref().filter(|_| !self.ctrl).and_then(|g| g.unfinished_at(at));
+                        if b.is_some_and(|b| self.resume(&[], b)) {
+                            return true;
+                        }
                         // On a crystal: stand by it and guard it; Ctrl drains it.
                         let o = match self.order_for(at) {
                             Order::Clear(x, y) if !self.ctrl => Order::Move(x, y),

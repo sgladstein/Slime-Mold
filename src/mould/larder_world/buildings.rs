@@ -491,6 +491,17 @@ impl<W: World> Game<W> {
             .map(|(b, _)| b)
     }
 
+    /// The unfinished building a click at `p` means (owner 2026-11-15:
+    /// "If you start building something but have to stop you should just
+    /// need to click again to get the squad to resume building"): a ghost
+    /// under the click (`ghost_at`), else the pump rig still going up on
+    /// the crystal under it, whose rim reaches past a ghost's footprint.
+    /// The window sends builders back to it with `Order::Build`: no new
+    /// placement, so nothing is paid twice.
+    pub fn unfinished_at(&self, p: (f32, f32)) -> Option<usize> {
+        self.ghost_at(p).or_else(|| self.pump_crystal(p).and_then(|c| self.pump_on(c)).filter(|&b| !self.buildings[b].up()))
+    }
+
     /// Switch lure or siren `k` on or off. True if it is one.
     pub fn toggle(&mut self, k: usize) -> bool {
         match self.buildings.get_mut(k) {
