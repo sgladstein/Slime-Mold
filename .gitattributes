@@ -1,3 +1,10 @@
 # Windows scripts keep CRLF so cmd.exe reads them right on any checkout.
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+# The report index and the pages list gain one line a report, and two
+# threads adding theirs at once always conflicted at the end of the file
+# (#343's merge of main, 2026-11-15, among many). `union` keeps both sides'
+# lines, so the merge queue and a hand merge take both without a stop.
+# GitHub's web "Update branch" may not honour it; git merge does.
+Reports/README.md merge=union
+Reports/pages.md merge=union

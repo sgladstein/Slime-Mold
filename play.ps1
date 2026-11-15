@@ -23,6 +23,13 @@ if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
 # 1. Update. Never touch local edits: with uncommitted changes, or with no
 #    network, it says so and plays the code that is already here.
 if (Get-Command git -ErrorAction SilentlyContinue) {
+    # The game rewrites its replay (larder-world-replay-MAP-SEED.txt) beside
+    # it. Two were committed by mistake (#192) and untracked again on
+    # 2026-11-15, so playing Flats seed 1 or planet 2 left a "local change"
+    # and updates stopped. Set this copy's replays aside while updating and
+    # put them back after, so they never block an update and are not lost.
+    $replays = @(git ls-files -m -- 'larder-world-replay-*.txt')
+    foreach ($f in $replays) { Copy-Item -Force $f "$f.keep"; git checkout -- $f }
     $dirty = git status --porcelain --untracked-files=no
     if ($dirty) {
         Say "You have local changes, so I'm not updating. Playing the code as it is." Yellow
@@ -40,6 +47,7 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
             if ($LASTEXITCODE -ne 0) { Say "Couldn't update (offline?). Playing the last code you had." Yellow }
         }
     }
+    foreach ($f in $replays) { if (Test-Path "$f.keep") { Move-Item -Force "$f.keep" $f } }
 } else {
     Say "git not found; playing the code as it is." Yellow
 }

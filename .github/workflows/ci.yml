@@ -1,8 +1,8 @@
-# CI for the mould game. Kept to two jobs on purpose: the repo is private, so
-# Actions minutes are billed, and the whole crate builds and tests in a few
-# minutes on one runner. The toolchain is pinned to match rust-toolchain.toml
-# (Pixel_Physics learned that a floating `@stable` turns clippy red on its own
-# schedule).
+# CI for the mould game. It was two jobs while the repo was private and
+# Actions minutes were billed; since it went public (2026-11-12) the tests
+# run as four parallel parts (the `test` job's notes). The toolchain is
+# pinned to match rust-toolchain.toml (Pixel_Physics learned that a floating
+# `@stable` turns clippy red on its own schedule).
 name: CI
 
 on:
@@ -70,12 +70,47 @@ jobs:
       # the wiki, so without this step the lint would never run in CI.
       - name: wiki lint
         run: python3 wiki/lint.py
+      # No tracked file the .gitignore names (2026-11-15). #192 committed
+      # two of the game's replays (larder-world-replay-*.txt); the game
+      # rewrites them on every round there, so the owner's play.cmd saw
+      # "local changes" and stopped updating, and #293's .gitignore line
+      # could not help a file already tracked. This fails any commit that
+      # adds one again, or anything else .gitignore says stays out.
+      - name: no ignored files tracked
+        run: |
+          bad=$(git ls-files -ci --exclude-standard)
+          if [ -n "$bad" ]; then
+            echo "::error::tracked files that .gitignore excludes (git rm --cached them):"
+            echo "$bad"
+            exit 1
+          fi
 
+  # The tests, split four ways so they run side by side (whole-game review,
+  # 2026-11-15). One `cargo test` ran its binaries one after another: on
+  # #340's run (2026-11-15) the build took 90 s, then the library 230 s,
+  # the window (larder-world) 196 s and the GPU sandbox (mouldgpu) 128 s,
+  # 10 min 45 s in all. Each part now builds only what it tests and runs
+  # alone, so CI waits for the slowest part plus its build, not the sum.
+  # The repo is public (2026-11-12), so the extra runners cost no minutes.
+  #
+  # The parts cover every test target between them, by construction:
+  # - lib: the library's unit tests.
+  # - window and window smoke: larder-world's tests, split by name. One
+  #   takes the tests whose names hold `the_window_plays` (the smoke rounds,
+  #   the slow ones), the other skips exactly those, so a new test lands in
+  #   one of the two whatever it is called.
+  # - rest: every other binary (cargo metadata lists them, so a new binary
+  #   is tested without editing this file), the examples, the doc tests, and
+  #   clippy over all targets.
   test:
-    name: test + clippy
+    name: test (${{ matrix.part }})
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [lib, window, window smoke, rest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,18 +118,36 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.98
         with:
           components: clippy
+      # One cache a part: each builds a different set of targets, and parts
+      # sharing a key would race to save it (the first one wins).
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --all-targets --release --locked -- -D warnings
-      # The GPU sandbox's twin tests (`src/bin/mouldgpu.rs`: one GPU tick
-      # against one CPU tick, the same seed twice, the crowd limit) run on
-      # Mesa's software Vulkan (lavapipe); the runner has no GPU. With
-      # MOULDGPU_TEST_GPU=1 a missing adapter fails them; elsewhere they
-      # skip. They take about 2 s on lavapipe (2026-11-11).
+        with:
+          key: ${{ matrix.part }}
+      - if: matrix.part == 'rest'
+        run: cargo clippy --all-targets --release --locked -- -D warnings
+      # The GPU tests (the sandbox's twin tests in `src/bin/mouldgpu.rs`,
+      # the window's smoke rounds) run on Mesa's software Vulkan
+      # (lavapipe); the runner has no GPU. With MOULDGPU_TEST_GPU=1 a
+      # missing adapter fails them; elsewhere they skip. Every part gets
+      # it: the library and the window have GPU tests too.
       - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
-      - run: cargo test --release --locked
+      - name: cargo test (${{ matrix.part }})
         env:
           MOULDGPU_TEST_GPU: "1"
           WGPU_BACKEND: vulkan
+          PART: ${{ matrix.part }}
+        run: |
+          case "$PART" in
+            lib) cargo test --release --locked --lib ;;
+            window) cargo test --release --locked --bin larder-world -- --skip the_window_plays ;;
+            "window smoke") cargo test --release --locked --bin larder-world the_window_plays ;;
+            rest)
+              bins=$(cargo metadata --no-deps --format-version 1 --locked \
+                | jq -r '.packages[].targets[] | select((.kind == ["bin"] and .name != "larder-world") or .kind == ["test"]) | "--\(.kind[0]) \(.name)"')
+              echo "targets: $bins"
+              cargo test --release --locked $bins --examples
+              cargo test --release --locked --doc ;;
+          esac
 
   sound:
     name: sound device builds (organ)
