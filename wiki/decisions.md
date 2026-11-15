@@ -2,7 +2,7 @@
 title: The owner's rulings and decided choices
 kind: method
 status: current
-updated: 2026-11-12
+updated: 2026-11-15
 sources:
   - CLAUDE.md
   - HANDOFF.md
@@ -11,6 +11,7 @@ sources:
   - Reports/mould-sound-2026-11-10.md
   - Reports/rts-design-2026-11-10.md
   - Reports/testing-practice-2026-11-12.md
+  - Reports/whole-game-review-2026-11-15/README.md
 code:
   - Params::pieces
 ---
@@ -31,6 +32,7 @@ artifact links are left out; the quotes are kept in the sources named.
 
 | When | Ruling | Owner's words | Source |
 |---|---|---|---|
+| 2026-11-15 08:35 | After a multi-agent review, anything every reviewer agrees on is built without waiting for the owner (sent to the owning thread, or a new thread); a decision without a clear answer waits for the owner, listed with a recommendation | "After the main work is in. Anything where everyone agrees, just start building. If there are decisions to be made without a clear solution that we can wait to discuss" | [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
 | 2026-11-14 03:52, card 03:55 | PRs merge through a merge queue instead of each thread re-merging main and re-running CI. GitHub's queue is for organization-owned repos only, so the queue is our own Actions workflow (`.github/workflows/merge-queue.yml`, label `queue`) rather than moving the repo to an org | "yes" (to setting up a merge queue); card "Build our own queue in Actions" | [CLAUDE.md](../CLAUDE.md) |
 | 2026-11-12 23:14 | The project stays proprietary, all rights reserved, so it can be sold later: no open-source licence. [LICENSE](../LICENSE) grants nothing beyond reading; every dependency must offer a permissive licence (`scripts/licensecheck.sh`). The repo being public (since 2026-11-12 01:40, for Actions billing) does not change this | "Can we add a license to this project on GitHub in case I decide to want to monetize it later? I don't want open source" | [LICENSE](../LICENSE) |
 | 2026-11-12 17:26, card | Build first, balance later: a feature or look lands when it works and can be seen; a census is not its gate. Balance never blocks looks or features (retune the numbers; never hold one area for balance in another). A census only answers a strategy question (player AI, a shared default, dominance before a milestone or playtest, mission difficulty, an owner question), named with its runner time, under about an hour without the owner's OK | "It seems like for every feature we build we run lots of tests for balance to see if it beats random. Sometimes this is hours of testing." ... "We were developing bad looking slimes because more runners killed the player too easily (instead of rebalancing)." (17:00); card "Adopt as written" | [review](../Reports/testing-practice-2026-11-12.md) |

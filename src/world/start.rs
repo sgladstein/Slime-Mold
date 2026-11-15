@@ -416,6 +416,13 @@ impl StartMenu {
     /// takes a gun card out; anywhere else, or its own slot, nothing.
     fn drop_at(&self, i: usize, p: (f32, f32)) -> Option<StartEvent> {
         let (from, _) = self.slot_of(i);
+        // Only where the page shows: a slot or the bag scrolled under the
+        // title or the buttons takes no drop. (The slots keep their places
+        // in the list, so `k` is the slot's own number: dropping only those
+        // scrolled away from the list once moved a card to the wrong slot.)
+        if self.body.is_some_and(|b| !b.contains(p)) {
+            return None;
+        }
         if let Some(k) = self.slot_rects.iter().position(|r| r.contains(p)) {
             return (from != Some(k)).then_some(StartEvent::Move(i, k));
         }
@@ -710,7 +717,6 @@ impl StartMenu {
             r.h = y1 - y0;
             r.h > 0.0
         });
-        self.slot_rects.retain(|r| r.bottom() > body.y && r.y < body.bottom());
         if self.scroll_max > 0.0 {
             // Where the page is: a thin bar down the right edge.
             let track = Rect::new(sw - 12.0 * s, body.y + 8.0 * s, 5.0 * s, body.h - 16.0 * s);
@@ -1560,6 +1566,51 @@ mod tests {
 
     fn centre(r: Rect) -> (f32, f32) {
         (r.x + r.w / 2.0, r.y + r.h / 2.0)
+    }
+
+    /// Scrolled so the gun's slots are partly under the title, a drop
+    /// lands in the slot it is let go on, by its own number, and one let
+    /// go over the title (on a slot scrolled under it) does nothing
+    /// (11-15 review: the slot list was cut to the shown ones, so a drop
+    /// moved the card to the wrong slot).
+    #[test]
+    fn a_drop_after_scrolling_lands_in_its_own_slot() {
+        let mut m = menu();
+        // A gun of twelve slots: several rows of them.
+        let mut sh = shop(14);
+        sh.slots = 12;
+        m.shop = Some(sh);
+        m.show(Page::Shop);
+        let mut c = Canvas::new((1280, 720));
+        c.ui.user = 2.0;
+        c.clear();
+        m.draw(&mut c);
+        assert!(m.scroll_max > 0.0, "the shop scrolls at 200% on 1280 x 720");
+        // Scroll until the first slot is above the page's rows.
+        let body = m.body.unwrap();
+        let mut k = None;
+        for _ in 0..200 {
+            m.wheel(-1);
+            c.clear();
+            m.draw(&mut c);
+            if m.slot_rects[0].bottom() < body.y {
+                k = (1..m.slot_rects.len()).find(|&j| body.contains(centre(m.slot_rects[j])));
+                if k.is_some() {
+                    break;
+                }
+            }
+        }
+        let card = m.card_groups().into_iter().flat_map(|(_, v)| v).find(|&i| m.rect_of(Hit::Buy(i)).is_some()).expect("a card in view");
+        let k = k.expect("a slot past the first in view with the first scrolled away");
+        {
+            let to = centre(m.slot_rects[k]);
+            assert_eq!(drag(&mut m, &mut c, Hit::Buy(card), to), vec![StartEvent::Move(card, k)]);
+        }
+        let hidden = m.slot_rects[0];
+        {
+            assert!(hidden.bottom() < body.y);
+            assert!(drag(&mut m, &mut c, Hit::Buy(card), centre(hidden)).is_empty(), "a slot scrolled under the title takes no drop");
+        }
     }
 
     /// The owner, 20:32Z: "When I buy a card it goes into the gun but I
