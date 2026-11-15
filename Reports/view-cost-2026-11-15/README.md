@@ -78,8 +78,29 @@ all view passes, 3 rounds; raw: `runner-out/view-cost-18d6e1b8-vs-113d37e8-20261
 | planet 8, zoom 6 | 3.22 | 3.01 | 2.98 |
 | planet 8, zoom 24 | 2.86 | 2.86 | 2.84 |
 
-The final build's A/B (2011eb65: 1-4, packing reverted) is below once the
-1070 has run it.
+Without the packing (2011eb65) the fork's screen pass was still 0.15-0.18
+ms slower than main's at zoom 6 and 24 (2.50 against 2.35, 2.05 against
+1.87): `base` held the terrain's fields (`TerAt`) across `shaded`. Now
+`terrain_over` works the terrain out again after `shaded` (registers,
+inferred from the result).
+
+## The final A/B (837d3225 against main's shader)
+
+3 rounds; raw: `runner-out/view-cost-837d3225-vs-113d37e8-20261114-192229/`
+@ 0305405c. Medians, ms, all view passes; "no skip" is 837d3225 with the
+rock skip (change 1) left out:
+
+| View | main | 837d3225 | no skip |
+| --- | --- | --- | --- |
+| fork, zoom 1 | 5.15 | 1.78 | 2.98 |
+| fork, zoom 6 | 3.02 | 2.81 | 2.81 |
+| fork, zoom 24 | 2.05 | 2.00 | 2.00 |
+| planet 8, zoom 6 | 3.24 | 2.91 | 3.04 |
+| planet 8, zoom 24 | 2.87 | 2.73 | 2.86 |
+
+Faster than main at every view: 3.4 ms at zoom 1, 0.2-0.3 ms at zoom 6,
+0.05-0.14 ms at zoom 24. The rock skip is 1.2 ms of the zoom 1 saving and
+0.13 ms on the planet; the rest is `prep`.
 
 ## Tried and dropped
 
