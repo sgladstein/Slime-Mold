@@ -79,6 +79,38 @@ Measured with the reviewer's `measure.py`. Each figure is round one → round tw
 - **Slime-coloured film p10:** 13 of 14 planet-seeds at 78 or above. Jungle went 85 → 79 and 82 → 78. Highlands 1 is 75.
 - **The review's film p10 on fen:** stays at 73. The film's floor does not reach it, because those pixels are the faint fringe past the last walkers and the veins' cast shadow on the mud. That fringe is exactly what the edge-sharpness test keeps at ground value. Lifting it is the change that widened the edge to 1.74 cells (dead-ends 11-15). So a p10 at 80 everywhere and an edge as sharp as the walkers pull against each other; this cut keeps the edge.
 
+## The film measure now counts film only (art lead, 11-15 05:12Z)
+
+The art lead ruled to keep the edge: the owner's sharpness complaint outranks a p10 number, and the fringe past the last walkers is meant to be ground. The reviewer's `Reports/levelgen-review-2026-11-15/raw/aesthetics/measure.py` changes accordingly:
+
+- **What counts as film.** `film_p10` now counts only new slime pixels that show the slime's own colour at 60 s (R-B > 45, the same test as its `slime1`). Those are the pixels with walkers under them.
+- **What it leaves out.** The faint fringe past the last walkers and the veins' cast shadow on the ground, which by design keep the ground's colour.
+- **The old count** is kept as `film_p10_all`.
+- **Running it.** The run folder can now be set with `VO_R=DIR`, and the script finds its helper (`worldrect.py`) beside itself.
+
+Do not chase `film_p10_all`: its low end is ground, not film.
+
+Re-measured with the changed script. The before run is main 66dd92fe, before #317; the after run is this branch, which also carries #315, #317 and other merges.
+
+| Planet, seed | film p10 (walked) before → after |
+| --- | --- |
+| Meadow 1 | 81 → 86 |
+| Meadow 2 | 81 → 85 |
+| Barrens 1 | 96 → 96 |
+| Barrens 2 | 96 → 103 |
+| Fen 1 | 73 → 82 |
+| Fen 2 | 75 → 96 |
+| Valley 1 | 74 → 85 |
+| Valley 2 | 89 → 88 |
+| Jungle 1 | 62 → 75 |
+| Jungle 2 | 65 → 77 |
+| Highlands 1 | 69 → 73 |
+| Highlands 2 | 72 → 78 |
+| Caves 1 | 68 → 87 |
+| Caves 2 | 67 → 83 |
+
+**Result.** 10 of 14 planet-seeds are at 80 or above, up from 4. Jungle (75, 77) and highlands (73, 78) are still under. Both are above their rock (41-56) and soft rock (44-66).
+
 ## Pictures
 
 - `<biome>-z12-before.png` and `<biome>-z12-after.png`: the landing site of each planet, seed 1, at zoom 12 and 1 s. Before is round one's build with `PLAIN_AMP` at 0 (main's flat slate soil); after is round two.
