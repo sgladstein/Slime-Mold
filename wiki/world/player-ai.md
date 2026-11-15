@@ -4,12 +4,15 @@ kind: tool
 status: current
 updated: 2026-11-14
 sources:
+  - Reports/ai-mass-2026-11-13.md
+  - Reports/ai-rations-2026-11-12.md
   - Reports/larder-ai-2026-11-11.md
   - Reports/larder-m3-2026-11-11.md
   - Reports/larder-world-ai-2026-11-12.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/larder-world-tiers-2026-11-12.md
   - Reports/plan-matrix-2026-11-12.md
+  - Reports/plan-matrix-c-2026-11-14.md
   - Reports/plan-matrix-take-2026-11-14.md
   - Reports/plan-matrix-tiers-2026-11-14.md
 code:
