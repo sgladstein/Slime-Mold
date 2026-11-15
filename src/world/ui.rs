@@ -573,6 +573,68 @@ pub struct Hud {
     /// The loadout's swap command, as last drawn.
     cycle: Option<u32>,
     started: Instant,
+    /// The hover card's timing (`HoverCard`).
+    card: HoverCard,
+}
+
+/// When the card over the world shows (owner, 11-15 07:54Z: "the overlay
+/// that pops up when I hover over the molds home crystal is annoying when
+/// I am trying to shoot the slime that are always over the crystal. It
+/// should maybe go away after a couple seconds"). It waits for the cursor
+/// to rest on a thing (`REST`), stays `SHOW` seconds, fades out, and then
+/// stays away until the cursor goes to something else; a click puts it
+/// away too. Until then it showed the whole time the cursor was on the
+/// thing, beside the cursor, over whatever was being shot at.
+#[derive(Clone, Debug)]
+struct HoverCard {
+    /// What the cursor is on (the card's title) and since when it rested.
+    key: Option<String>,
+    still: Instant,
+    at: (f32, f32),
+    /// When it showed for `key`; `shut` once it went away.
+    shown: Option<Instant>,
+    shut: bool,
+}
+
+impl HoverCard {
+    const REST: f32 = 0.35;
+    const SHOW: f32 = 2.0;
+    const FADE: f32 = 0.4;
+
+    fn new() -> Self {
+        HoverCard { key: None, still: Instant::now(), at: (0.0, 0.0), shown: None, shut: false }
+    }
+
+    /// How opaque the card for `key` is now (0: not drawn).
+    fn alpha(&mut self, key: Option<&str>, now: Instant) -> f32 {
+        if self.key.as_deref() != key {
+            *self = HoverCard { key: key.map(str::to_string), still: now, at: self.at, shown: None, shut: false };
+        }
+        if self.key.is_none() || self.shut {
+            return 0.0;
+        }
+        let shown = match self.shown {
+            Some(t) => t,
+            None if now.duration_since(self.still).as_secs_f32() >= Self::REST => *self.shown.insert(now),
+            None => return 0.0,
+        };
+        let age = now.duration_since(shown).as_secs_f32();
+        if age >= Self::SHOW + Self::FADE {
+            self.shut = true;
+            return 0.0;
+        }
+        (1.0 - (age - Self::SHOW) / Self::FADE).clamp(0.0, 1.0)
+    }
+
+    /// The cursor moved: waiting to show, it starts its rest again.
+    fn moved(&mut self, p: (f32, f32), now: Instant) {
+        if (p.0 - self.at.0).abs() + (p.1 - self.at.1).abs() > 4.0 {
+            self.at = p;
+            if self.shown.is_none() {
+                self.still = now;
+            }
+        }
+    }
 }
 
 impl Default for Hud {
@@ -583,7 +645,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new() }
     }
 
     /// The menu is open (the game should pause).
@@ -645,6 +707,9 @@ impl Hud {
 
     pub fn moved(&mut self, p: Option<(f32, f32)>) {
         self.hover = p;
+        if let Some(p) = p {
+            self.card.moved(p, Instant::now());
+        }
     }
 
     fn activate(&mut self, index: usize, out: &mut Vec<HudEvent>) {
@@ -670,6 +735,9 @@ impl Hud {
             Button::Right => 1,
             Button::Middle => 2,
         };
+        if pressed && self.card.key.is_some() {
+            self.card.shut = true;
+        }
         if pressed {
             let (took, out) = self.button_inner(b, true, cam, shift);
             self.took[k] = took;
@@ -971,10 +1039,23 @@ impl Hud {
         // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
         // menu should go on the far left to fill the rest of the screen"),
         // the selection panel filling the row between it and the command
-        // card (one card row tall, owner 08:33Z). Where that leaves the
-        // selection under 240 units the strip goes back over the panels.
-        let gun_w = m.loadout.as_ref().map(|l| loadout_w(l, b));
-        let gun = gun_w.map(|w| Rect::new(8.0 * b, top_of, w, panel_h)).filter(|g| card.x - 8.0 * b - (g.right() + 8.0 * b) >= 240.0 * b);
+        // card (one card row tall, owner 08:33Z). Always in the row (owner,
+        // 11-15 07:51Z: "everything was supposed to be on one row, why is
+        // the gun in a seperate row on top"): where the selection would
+        // keep under 300 units the strip draws smaller (down to 60%), and
+        // then the selection gives way. Until then it went back over the
+        // panels (`.filter(.. >= 240 units)`), which a big UI size or a
+        // gun with many slots did: 200% on 2560 x 1440 moved it up.
+        let mut gb = b;
+        let gun_w = m.loadout.as_ref().map(|l| {
+            let w = loadout_w(l, b);
+            let room = card.x - 8.0 * b - 8.0 * b - 8.0 * b - 300.0 * b;
+            if w > room {
+                gb = b * (room / w).clamp(0.6, 1.0);
+            }
+            loadout_w(l, gb)
+        });
+        let gun = gun_w.map(|w| Rect::new(8.0 * b, top_of, w, panel_h));
         let left = gun.map_or(8.0 * b, |g| g.right() + 8.0 * b);
         let sel = Rect::new(left, top_of, (card.x - 8.0 * b - left).max(0.0), panel_h);
         // With nothing selected the selection panel collapses to a strip
@@ -989,7 +1070,7 @@ impl Hud {
         // Before the command card, so the card's tooltips cover it; its
         // own card tooltip after.
         self.cycle = m.loadout.as_ref().and_then(|l| l.cycle.map(|c| c.0));
-        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, b));
+        let tip = m.loadout.as_ref().and_then(|l| self.loadout_draw(l, gun, sel, empty, card, c, gb));
         self.command_card(m, card, c, b);
         match (&m.loadout, tip) {
             (Some(l), Some((k, r))) if k < l.cards.len() => self.card_tip(&l.cards[k], r, c, s),
@@ -998,8 +1079,10 @@ impl Hud {
         }
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
-        if let (Some(h), Some(p), None) = (&m.hover, self.hover, self.targeting) {
-            self.hover_card(h, p, c, s);
+        let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
+        let a = self.card.alpha(key, Instant::now());
+        if let (Some(h), Some(p), true) = (&m.hover, self.hover, a > 0.0) {
+            self.hover_card(h, p, a, c, s);
         }
         self.end = m.end.is_some();
         if let Some((title, lines)) = &m.end {
@@ -1221,25 +1304,42 @@ impl Hud {
         let mine = p.rows.iter().find(|q| q.active);
         let n = p.rows.len();
         let head = if n == 1 { "1 squad".to_string() } else { format!("{n} squads") };
-        let hw = c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT);
-        // The buttons from the right end of the header line.
+        // The header's buttons, from the right end; smaller, then without
+        // the header word, where they would run over it (the Let go button
+        // made "1 squad" read "1 squa" under them at 150%, 11-15). Then
+        // without their keys, and last a button that still does not fit is
+        // left off (Guards first) rather than drawn over the gun strip.
+        let label = |l: &str, k: &Option<String>, keys: bool| match k {
+            Some(k) if keys => format!("{l}  {k}"),
+            _ => l.to_string(),
+        };
+        let guards = format!("Guards: {}", p.cover);
+        let row_w = |c: &Canvas, px: f32, keys: bool| {
+            [("Let go", &p.free_key), ("Combine", &p.combine_key), ("Split", &p.split_key), (guards.as_str(), &p.cover_key)].iter().map(|(l, k)| c.atlas.measure(Weight::SemiBold, px, &label(l, k, keys)) + 26.0 * s).sum::<f32>()
+        };
+        let head_w = c.atlas.measure(Weight::SemiBold, 16.0 * s, &head) + 12.0 * s;
+        let (bpx, keys, with_head) = [(13.5, true, true), (12.0, true, true), (12.0, true, false), (12.0, false, false)]
+            .into_iter()
+            .map(|(px, keys, h)| (px * s, keys, h))
+            .find(|&(px, keys, h)| row_w(c, px, keys) + if h { head_w } else { 0.0 } <= inner.w)
+            .unwrap_or((12.0 * s, false, false));
+        let hw = if with_head { c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT) } else { -12.0 * s };
         let bh = 22.0 * s;
         let mut bx = inner.right();
         let mut tip: Option<(String, Rect)> = None;
-        let guards = format!("Guards: {}", p.cover);
         let none = None;
         let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
-        for (label, key, off, hit, about) in [
+        for (label_text, key, off, hit, about) in [
             ("Let go", &p.free_key, &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
             ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
             ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
             (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
         ] {
-            let text = match key {
-                Some(k) => format!("{label}  {k}"),
-                None => label.to_string(),
-            };
-            let w = c.atlas.measure(Weight::SemiBold, 13.5 * s, &text) + 20.0 * s;
+            let text = label(label_text, key, keys);
+            let w = c.atlas.measure(Weight::SemiBold, bpx, &text) + 20.0 * s;
+            if bx - w < inner.x {
+                continue;
+            }
             bx -= w;
             let b = Rect::new(bx, inner.y, w, bh);
             bx -= 6.0 * s;
@@ -1247,7 +1347,7 @@ impl Hud {
             let (t, bt) = if hot && off.is_none() { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             c.panel(b, 6.0 * s, t, bt, 1.0, EDGE);
             self.hits.push((b, if off.is_none() { hit } else { Hit::Panel }));
-            c.text(Weight::SemiBold, 13.5 * s, (b.x + b.w / 2.0, b.y + 16.0 * s), Align::Centre, &text, if off.is_some() { FAINT } else { TEXT });
+            c.text(Weight::SemiBold, bpx, (b.x + b.w / 2.0, b.y + 16.0 * s), Align::Centre, &text, if off.is_some() { FAINT } else { TEXT });
             if hot {
                 tip = Some((off.clone().unwrap_or_else(|| about.to_string()), b));
             }
@@ -1255,7 +1355,10 @@ impl Hud {
         let sub = mine.map(|q| format!("commanding {}, {} soldiers", q.name, q.soldiers)).or_else(|| p.free.then(|| "none commanded: all on their own, WASD pans".to_string()));
         if let Some(sub) = sub {
             let left = inner.x + hw + 12.0 * s;
-            c.text_fit(Weight::Medium, 13.5 * s, (left, inner.y + 15.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
+            // (Not a lone "..." where the buttons leave no room.)
+            if bx - left - 6.0 * s >= 70.0 * s {
+                c.text_fit(Weight::Medium, 13.5 * s, (left, inner.y + 15.0 * s), Align::Left, &sub, bx - left - 6.0 * s, MUTED);
+            }
         }
         // Wider than a soldier's card since the UI review (11-15; 72): the
         // squad's state ("holding", "working") on the tile, not only in
@@ -1789,7 +1892,7 @@ impl Hud {
 
     /// What is under the cursor, in a small card beside it: name, health
     /// and a line of stats.
-    fn hover_card(&mut self, info: &Info, p: (f32, f32), c: &mut Canvas, s: f32) {
+    fn hover_card(&mut self, info: &Info, p: (f32, f32), a: f32, c: &mut Canvas, s: f32) {
         let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
         let stats = info.stats.iter().map(|(l, v)| format!("{l} {v}")).collect::<Vec<_>>().join("  ·  ");
         let w = (c.atlas.measure(Weight::SemiBold, 14.0 * s, &info.title).max(c.atlas.measure(Weight::Medium, 12.0 * s, &stats)).max(c.atlas.measure(Weight::Medium, 12.0 * s, &info.subtitle)) + 28.0 * s).max(200.0 * s);
@@ -1798,22 +1901,22 @@ impl Hud {
         let x = (p.0 + 20.0 * s).min(sw - w - 8.0 * s).max(8.0 * s);
         let y = (p.1 + 20.0 * s).min(self.bottom - h - 8.0 * s).min(sh - h - 8.0 * s).max(self.top + 8.0 * s);
         let r = Rect::new(x, y, w, h);
-        c.shadow(r, 10.0 * s, 14.0 * s, 3.0 * s, SHADOW);
-        c.panel(r, 10.0 * s, [34, 40, 49, 245], [24, 29, 36, 248], 1.0, alpha(info.colour, 0.5));
+        c.shadow(r, 10.0 * s, 14.0 * s, 3.0 * s, alpha(SHADOW, a));
+        c.panel(r, 10.0 * s, alpha([34, 40, 49, 245], a), alpha([24, 29, 36, 248], a), 1.0, alpha(info.colour, 0.5 * a));
         let mut ty = r.y + 22.0 * s;
-        c.icon(info.icon, (r.x + 12.0 * s, ty - 14.0 * s), 16.0 * s, info.colour);
-        c.text(Weight::SemiBold, 14.0 * s, (r.x + 34.0 * s, ty), Align::Left, &info.title, TEXT);
+        c.icon(info.icon, (r.x + 12.0 * s, ty - 14.0 * s), 16.0 * s, alpha(info.colour, a));
+        c.text(Weight::SemiBold, 14.0 * s, (r.x + 34.0 * s, ty), Align::Left, &info.title, alpha(TEXT, a));
         ty += 18.0 * s;
-        c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &info.subtitle, w - 28.0 * s, MUTED);
+        c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &info.subtitle, w - 28.0 * s, alpha(MUTED, a));
         if let Some((f, words)) = &info.hp {
             ty += 18.0 * s;
             let ww = c.atlas.measure(Weight::SemiBold, 12.0 * s, words);
-            c.bar(Rect::new(r.x + 14.0 * s, ty - 8.0 * s, w - 40.0 * s - ww, 6.0 * s), *f, health_colour(*f), TRACK);
-            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 14.0 * s, ty), Align::Right, words, TEXT);
+            c.bar(Rect::new(r.x + 14.0 * s, ty - 8.0 * s, w - 40.0 * s - ww, 6.0 * s), *f, alpha(health_colour(*f), a), alpha(TRACK, a));
+            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 14.0 * s, ty), Align::Right, words, alpha(TEXT, a));
         }
         if !stats.is_empty() {
             ty += 18.0 * s;
-            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &stats, w - 28.0 * s, MUTED);
+            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 14.0 * s, ty), Align::Left, &stats, w - 28.0 * s, alpha(MUTED, a));
         }
     }
 
