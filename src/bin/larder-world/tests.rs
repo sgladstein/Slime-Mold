@@ -850,7 +850,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     assert_eq!(app.name, "planet:1:1");
     app.prepare();
     let m = app.model(None, None);
-    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Beat the slime")), "{:?}", m.objective);
+    assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out the slime")), "{:?}", m.objective);
     // Turrets are on the build page; walls are owned from the start.
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
