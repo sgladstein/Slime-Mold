@@ -378,6 +378,14 @@ pub struct Rules {
     /// lays a thin film nearly everywhere, so with 0 no crystal paid on
     /// the Fork.
     pub guard_walkers: u32,
+    /// With no larder, the share of `harvest` a soldier drains by hand
+    /// (owner, 2026-11-15: "I just run to the biggest Crystal harvest the
+    /// whole thing and I have a full squad of 40 within the first 30
+    /// seconds"; pumps are the main income now, `BuildRules::pump_share`).
+    /// 1 was the old rule: a starting squad of four draining 120 food a
+    /// second. With the larder, carrying is its own brake and this is
+    /// not read.
+    pub hand: f32,
     /// Defenders while a squad works (`squads`, owner 2026-11-14 15:06Z):
     /// some of a harvesting or building squad stand guard against nearby
     /// slime while the rest work (`Game::cover_turn`).
@@ -513,6 +521,7 @@ impl Default for Rules {
             larder: true,
             guard: 120.0,
             guard_walkers: 8,
+            hand: 0.2,
             cover: super::CoverRules::default(),
             heal: super::HealRules::default(),
             spread: 0.0,

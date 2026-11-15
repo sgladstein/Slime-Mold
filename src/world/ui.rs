@@ -319,6 +319,9 @@ pub struct SquadRow {
     /// shows the link button only while `near` (owner 15:49Z: "you can
     /// only link when touching").
     pub linked: bool,
+    /// Runs on its own orders: neither the one you command nor linked with
+    /// it. Its tile says AUTO (owner 2026-11-15 02:58Z).
+    pub auto: bool,
 }
 
 /// The squad mode's squads, drawn in the selection panel's place as a
@@ -343,6 +346,10 @@ pub struct SquadPanel {
     /// Guards button, which cycles it (`HudEvent::SquadCover`).
     pub cover: String,
     pub cover_key: Option<String>,
+    /// No squad commanded (Esc): the header says so and Let go greys out.
+    pub free: bool,
+    /// Let go's key ("Esc"), shown on it; it sends `HudEvent::SquadFree`.
+    pub free_key: Option<String>,
 }
 
 /// What the game shows this frame.
@@ -366,6 +373,10 @@ pub struct Model {
     /// Beside the cursor while placing: the cost of what is drawn so far,
     /// or why it cannot go there.
     pub ghost_note: Option<String>,
+    /// Where the ghost snaps to instead of the cursor, and its radius in
+    /// world cells (a pump onto its crystal's middle, owner 2026-11-15:
+    /// "it should automatically center itself on the crystal").
+    pub ghost_snap: Option<((f32, f32), f32)>,
     /// A small card by the cursor for what is under it (an enemy, the
     /// mould), leaving the selection panel alone.
     pub hover: Option<Info>,
@@ -454,6 +465,8 @@ pub enum HudEvent {
     SquadSplit,
     SquadCombine,
     SquadCover,
+    /// The squad panel's Let go: command no squad.
+    SquadFree,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -476,6 +489,7 @@ enum Hit {
     SquadSplit,
     SquadCombine,
     SquadCover,
+    SquadFree,
 }
 
 #[derive(Clone, Debug)]
@@ -778,6 +792,7 @@ impl Hud {
             Hit::SquadCombine => out.push(HudEvent::SquadCombine),
             Hit::SquadLink(r) => out.push(HudEvent::SquadLink(r)),
             Hit::SquadCover => out.push(HudEvent::SquadCover),
+            Hit::SquadFree => out.push(HudEvent::SquadFree),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
                 out.push(HudEvent::Menu(MenuItem::Opened));
@@ -1189,7 +1204,9 @@ impl Hud {
         let mut tip: Option<(String, Rect)> = None;
         let guards = format!("Guards: {}", p.cover);
         let none = None;
+        let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
         for (label, key, off, hit, about) in [
+            ("Let go", &p.free_key, &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
             ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
             ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
             (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
@@ -1211,13 +1228,14 @@ impl Hud {
                 tip = Some((off.clone().unwrap_or_else(|| about.to_string()), b));
             }
         }
-        if let Some(q) = mine {
-            let sub = format!("commanding {}, {} soldiers", q.name, q.soldiers);
+        let sub = mine.map(|q| format!("commanding {}, {} soldiers", q.name, q.soldiers)).or_else(|| p.free.then(|| "none commanded: all on their own, WASD pans".to_string()));
+        if let Some(sub) = sub {
             let left = inner.x + hw + 12.0 * s;
             c.text_fit(Weight::Medium, 12.5 * s, (left, inner.y + 14.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
         }
         let ch = 54.0 * s;
-        let cw = 72.0 * s;
+        // Wider than a soldier's card (72) for the AUTO / YOU tag.
+        let cw = 86.0 * s;
         let cgap = 7.0 * s;
         let top = inner.y + 26.0 * s;
         let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
@@ -1252,6 +1270,12 @@ impl Hud {
             c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
             c.text(Weight::SemiBold, 17.0 * s, (cell.x + 32.0 * s, cell.y + 36.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
             c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
+            // Right of the count: AUTO on a squad running on its own, YOU
+            // on the one you command (owner 2026-11-15 02:58Z).
+            let tag = if q.active { Some(("YOU", ACCENT)) } else if q.auto { Some(("AUTO", GOOD)) } else { None };
+            if let Some((t, ink)) = tag {
+                c.text(Weight::SemiBold, 10.5 * s, (cell.right() - 6.0 * s, cell.y + 35.0 * s), Align::Right, t, ink);
+            }
             if can_link {
                 let (t, b) = if on_link { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
                 c.panel(link, 4.0 * s, t, b, 1.0, if q.linked { alpha(ACCENT, 0.8) } else { EDGE });
@@ -1645,7 +1669,14 @@ impl Hud {
         let Some(at) = self.aim(p, cam) else { return };
         let col = if m.ghost_ok { [96, 230, 150, 255] } else { [245, 96, 96, 255] };
         let fill = alpha(col, 0.28);
+        let snap = m.ghost_snap.filter(|_| matches!(t.target, Target::Point { .. }));
+        if let Some((c, radius)) = snap {
+            // A ring only: the crystal stays in sight under it.
+            world.ring(c, radius, col);
+            world.ring(c, radius * 0.96, alpha(col, 0.6));
+        }
         match t.target {
+            Target::Point { .. } if snap.is_some() => {}
             Target::Point { radius } => {
                 world.disc(at, radius, fill, false);
                 world.ring(at, radius, col);
@@ -2018,8 +2049,8 @@ mod tests {
 
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
-        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false };
-        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()) };
+        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false, auto: !active };
+        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), free: false, free_key: Some("Esc".into()) };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
             r.m.squads = Some(panel.clone());
@@ -2057,6 +2088,18 @@ mod tests {
             r.m.squads = Some(SquadPanel { combine_off: Some("No other squad".into()), ..panel.clone() });
             r.draw();
             assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadCombine));
+            // Let go: command no squad; greyed once none is commanded.
+            r.m.squads = Some(panel.clone());
+            r.draw();
+            let b = find(&r, Hit::SquadFree);
+            assert!(b.x >= 0.0 && b.right() <= screen.0 as f32, "{screen:?}: Let go at {b:?}");
+            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadFree]));
+            let free = SquadPanel { free: true, rows: panel.rows.iter().map(|q| SquadRow { active: false, auto: true, ..q.clone() }).collect(), ..panel.clone() };
+            r.m.squads = Some(free);
+            r.draw();
+            assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadFree), "nothing to let go of");
+            let b = find(&r, Hit::Squad(0));
+            assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(0)]), "a tile still takes command");
         }
     }
 

@@ -18,6 +18,12 @@
 //!   out into a squad of their own. **J** joins the nearest squad within
 //!   reach into it.
 //! - **T** cycles its formation: blob, line, wedge, ring.
+//! - **Esc** lets go of it (and the panel's Let go button): nothing is
+//!   controlled, every squad keeps its last orders, fires at slime in reach
+//!   and guards on its own ("auto" on its tile and over it), and WASD pans
+//!   the camera. A number, a tile, a click on a squad or Space takes command
+//!   again; a second Esc opens the menu (owner 2026-11-15 02:58Z: "a way to
+//!   deselect so that you're not actually controlling any specific squad").
 //! - The command card works as in the RTS round, for the squad, with its
 //!   letters moved off WASD (`squad_card_key`).
 //!
@@ -96,7 +102,9 @@ pub(super) fn squad_card_key(id: u32, key: KeyCode) -> Option<KeyCode> {
 pub(super) fn squad_help() -> Vec<(String, String)> {
     let k = |c: KeyCode| key_name(c).unwrap_or_default();
     [
-        ("WASD".to_string(), "Steer your squad; the camera follows it (paused: pan the camera)".to_string()),
+        ("WASD".to_string(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
+        ("Esc".into(), "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into()),
+        ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
         ("Hold left button".into(), "Every soldier in it fires at the cursor at once".into()),
         ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
@@ -130,6 +138,13 @@ pub(super) struct SquadInput {
     /// The cursor's world point this frame: the aim, sent between steps
     /// (`aim`), and where the controlled squad's guns point.
     pub(super) want: Option<(f32, f32)>,
+    /// No squad controlled (Esc, the panel's Let go): every squad runs on
+    /// its own and WASD pans the camera. Kept apart from `Game::active`
+    /// being None, which also happens when the controlled squad dies, when
+    /// the next one is taken at once.
+    pub(super) free: bool,
+    /// The squad controlled before letting go, for Space.
+    last: Option<u8>,
 }
 
 impl SquadInput {
@@ -176,6 +191,39 @@ impl App {
         self.game.as_ref().and_then(|g| g.active).map(|q| q as u8)
     }
 
+    /// The squad mode with no squad controlled (`SquadInput::free`).
+    pub(super) fn squad_free(&self) -> bool {
+        self.sq.as_ref().is_some_and(|sq| sq.free) && self.game.as_ref().is_some_and(|g| g.end.is_none())
+    }
+
+    /// Lets go of the controlled squad (Esc, the panel's Let go): it and
+    /// its link stop steering and volleying and keep their other orders.
+    pub(super) fn let_go(&mut self) {
+        let Some(q) = self.active() else { return };
+        self.squad_unfocus();
+        if let Some(g) = self.game.as_mut() {
+            g.apply(Cmd::Active(u8::MAX));
+        }
+        if let Some(sq) = self.sq.as_mut() {
+            sq.free = true;
+            sq.last = Some(q);
+            sq.follow = false;
+            sq.put = None;
+            sq.steer = (0.0, 0.0);
+            sq.face_at = None;
+        }
+        self.controls.selected.clear();
+        self.hud.alert("No squad controlled: each runs on its own orders. WASD pans; click a squad, its number or Space to take command", None, theme::TEXT);
+    }
+
+    /// With none controlled: the live squad nearest the world point, if a
+    /// soldier of it is within a few cells (a click on a squad takes it).
+    fn squad_at(&self, at: (f32, f32)) -> Option<u8> {
+        let g = self.game.as_ref()?;
+        let near = (3.0 * g.world.scale()).max(14.0 / self.camera.zoom);
+        g.soldiers.iter().filter(|s| s.alive).map(|s| (s.squad, (s.x - at.0).hypot(s.y - at.1))).filter(|&(_, d)| d <= near).min_by(|a, b| a.1.total_cmp(&b.1)).map(|x| x.0)
+    }
+
     /// The world point under the cursor, or None over the HUD or the
     /// minimap: the world behind them is hidden (review after the bug
     /// sweep, 2026-11-14: a volley held over the bottom bar swung to the
@@ -202,7 +250,20 @@ impl App {
         }
         if first {
             let wasd = [KeyCode::KeyW, KeyCode::KeyA, KeyCode::KeyS, KeyCode::KeyD];
+            if code == KeyCode::Escape {
+                // Esc lets go of the squad before it opens the menu; a
+                // building being placed is called off first (the HUD's).
+                if pressed && !repeat && !self.squad_free() && self.active().is_some() && self.hud.targeting().is_none() && !self.hud.menu_open() {
+                    self.let_go();
+                    return true;
+                }
+                return false;
+            }
             if let Some(i) = wasd.iter().position(|&k| k == code) {
+                if self.squad_free() {
+                    // The controls pan (`Controls::wasd_pan`).
+                    return false;
+                }
                 let sq = self.sq.as_mut().unwrap();
                 sq.keys[i] = pressed;
                 if pressed {
@@ -212,6 +273,15 @@ impl App {
                 return true;
             }
             if code == KeyCode::Space {
+                if pressed && !repeat && self.squad_free() {
+                    // Take command again: the last squad, else the first.
+                    let g = self.game.as_ref().unwrap();
+                    let last = self.sq.as_ref().and_then(|sq| sq.last).filter(|&q| !g.members(q as usize).is_empty());
+                    if let Some(q) = last.or_else(|| g.live_squads().first().map(|&q| q as u8)) {
+                        self.switch_to(q);
+                    }
+                    return true;
+                }
                 if pressed && !repeat {
                     let sq = self.sq.as_mut().unwrap();
                     sq.follow = true;
@@ -304,6 +374,17 @@ impl App {
 
     fn switch_to(&mut self, q: u8) {
         let Some(g) = self.game.as_mut() else { return };
+        if self.sq.as_ref().is_some_and(|sq| sq.free) {
+            if g.members(q as usize).is_empty() || !g.apply(Cmd::Active(q)) {
+                return;
+            }
+            let sq = self.sq.as_mut().unwrap();
+            sq.free = false;
+            sq.follow = true;
+            sq.put = None;
+            self.steer_new_squad();
+            return;
+        }
         if g.active.is_some_and(|a| g.linked(a).contains(&(q as usize))) {
             // Again: the camera comes to it.
             if let Some(sq) = self.sq.as_mut() {
@@ -344,6 +425,21 @@ impl App {
             Button::Left if self.shift && down => false,
             // On the minimap: the controls move the camera there.
             Button::Left if down && self.cursor_minimap().is_some() => false,
+            Button::Left if self.squad_free() => {
+                // A click on a squad takes command of it.
+                if down {
+                    if let Some(q) = self.cursor_world().and_then(|at| self.squad_at(at)) {
+                        self.switch_to(q);
+                    }
+                }
+                !(!down && self.controls_dragging())
+            }
+            Button::Right if self.squad_free() => {
+                if down {
+                    self.hud.alert("No squad controlled: click a squad, its tile or its number to give it orders", None, theme::WARN);
+                }
+                true
+            }
             Button::Left => {
                 let at = self.cursor_world();
                 let Some(q) = self.active() else { return true };
@@ -459,6 +555,17 @@ impl App {
         let Some(g) = self.game.as_mut() else { return };
         // The screen edge does not pan: the cursor is the aim.
         self.controls.edge = false;
+        let sq = self.sq.as_mut().unwrap();
+        if sq.free {
+            // None controlled: the camera is the player's, nobody is
+            // selected, and the cursor still says where a squad is.
+            if at.is_some() {
+                sq.want = at;
+            }
+            sq.follow = false;
+            self.controls.selected.clear();
+            return;
+        }
         if g.active.is_none_or(|q| g.members(q).is_empty()) {
             if let Some(&q) = g.live_squads().first() {
                 g.apply(Cmd::Active(q as u8));
@@ -531,6 +638,9 @@ impl App {
                     note.push(sq.formation.name().to_string());
                 }
                 let guards = g.members(q).iter().filter(|&&k| g.soldiers[k].cover).count();
+                if g.active != Some(q) && !g.leads(q) {
+                    note.push("on its own".into());
+                }
                 note.push(if sq.fire.is_some() {
                     "firing".to_string()
                 } else if sq.work.is_some() && guards > 0 {
@@ -550,7 +660,7 @@ impl App {
                 }
                 let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
                 let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));
-                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked }
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked, auto: !g.leads(q) }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());
@@ -574,6 +684,8 @@ impl App {
             },
             cover: g.active.map_or("some", |a| g.squads[a].cover.name()).to_string(),
             cover_key: key_name(GUARDS),
+            free: g.active.is_none(),
+            free_key: Some("Esc".into()),
         })
     }
 
@@ -581,13 +693,22 @@ impl App {
     pub(super) fn squad_panel_event(&mut self, ev: HudEvent) {
         let Some(g) = self.game.as_mut() else { return };
         let live = g.live_squads();
-        let Some(q) = g.active else { return };
         match ev {
             HudEvent::Squad(r) => {
                 if let Some(&o) = live.get(r) {
                     self.switch_to(o as u8);
                 }
+                return;
             }
+            HudEvent::SquadFree => {
+                self.let_go();
+                return;
+            }
+            _ => {}
+        }
+        let Some(g) = self.game.as_mut() else { return };
+        let Some(q) = g.active else { return };
+        match ev {
             HudEvent::SquadInto(r) => {
                 if let Some(&o) = live.get(r).filter(|&&o| o != q && overlapping(g, q).contains(&o)) {
                     g.apply(Cmd::Merge(q as u8, o as u8));

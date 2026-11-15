@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-15
 sources:
   - Reports/gun-order-2026-11-14.md
+  - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
 code:
   - LADDER
@@ -56,7 +57,7 @@ drags a card onto a slot to move it, buys a card for sale straight into a
 slot, drags one onto the bag to take it out, or presses Q and E; a card
 put in without a slot lands before the first bullet (`Run::put_in`)
 ([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime sheds most of its walkers in its first half minute on every planet, so a big planet's slime does not cover it ([report](../../Reports/roguelike-run-2026-11-14/README.md), *Run pacing*). Locked buildings and tools show
-locked on the command card. Dev mode adds rows to jump planets, add points
+locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
 

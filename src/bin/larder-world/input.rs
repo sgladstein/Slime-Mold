@@ -227,7 +227,7 @@ impl App {
                     self.larder_sel = false;
                 }
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
-                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover) => self.squad_panel_event(ev),
+                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover | HudEvent::SquadFree) => self.squad_panel_event(ev),
                 HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
                 HudEvent::Idle => {
                     let after = self.controls.selected.first().copied();
@@ -337,6 +337,24 @@ impl App {
                                 }
                             }
                             None => self.hud.alert("No unfinished building there", None, theme::WARN),
+                        }
+                    }
+                }
+                // The pump on a crystal that has one upgrades it.
+                HudEvent::Point { id: PUMP, at } if self.game.as_ref().is_some_and(|g| g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some()) => {
+                    if let Some(g) = self.game.as_mut() {
+                        let b = g.pump_crystal(at).and_then(|c| g.pump_on(c)).unwrap();
+                        let price = g.upgrade_price(b);
+                        if g.apply(Cmd::Upgrade(b)) {
+                            let rate = g.pump_draw(b) * g.pump_yield(b);
+                            self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(g.buildings[b].at), theme::GOOD);
+                        } else {
+                            let why = match price {
+                                Some(p) => format!("Upgrading the pump costs {p:.0} food"),
+                                None if !g.buildings[b].up() => "The pump is still being built".to_string(),
+                                None => "The pump is at its top level".to_string(),
+                            };
+                            self.hud.alert(&why, None, theme::WARN);
                         }
                     }
                 }
