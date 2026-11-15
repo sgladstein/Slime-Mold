@@ -457,6 +457,11 @@ pub struct Settings {
     pub surge_lean: u32,
     pub surge_dash: u32,
     pub surge_haste: f32,
+    /// The food scent's keep a step and a reached pile's share of it
+    /// (`BigParams::scent_keep`, `fed_scent`; keys since 11-15, the whole-
+    /// game review's W44, so a film can turn scent up).
+    pub scent_keep: f32,
+    pub fed_scent: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -626,6 +631,8 @@ impl Settings {
             surge_lean: t.surge_lean,
             surge_dash: t.surge_dash,
             surge_haste: t.surge_haste,
+            scent_keep: t.scent_keep,
+            fed_scent: t.fed_scent,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -888,6 +895,8 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "surge_lean" => s.surge_lean = int()?.min(crate::mould::big::SURGE_MAX),
         "surge_dash" => s.surge_dash = int()?.min(crate::mould::big::SURGE_MAX),
         "surge_haste" => s.surge_haste = f()?,
+        "scent_keep" => s.scent_keep = f()?.clamp(0.0, 1.0),
+        "fed_scent" => s.fed_scent = f()?.max(0.0),
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
         "roam_far" => s.roam_far = f()?,
         "roam_share" => s.roam_share = f()?,
@@ -1046,6 +1055,8 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         surge_lean: s.surge_lean,
         surge_dash: s.surge_dash,
         surge_haste: s.surge_haste,
+        scent_keep: s.scent_keep,
+        fed_scent: s.fed_scent,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,

@@ -215,6 +215,9 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     if l.grow > 0.0 {
         clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
     }
+    // How often it surges here (`run::enemy_keys`; on the clock's line so the
+    // heading keeps two lines, the run thread's ask).
+    clock += &format!("; it surges every {:.0} s", run::surge_secs(l.depth));
     if r.depth == run::PLANETS {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");
     }
