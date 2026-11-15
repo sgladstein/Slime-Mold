@@ -92,8 +92,10 @@ cargo test --release
 cargo clippy --all-targets --release --locked -- -D warnings
 ```
 
-CI runs both on every pull request and every push to main, plus a build of
-the organ's sound device for macOS and Windows (`.github/workflows/ci.yml`).
+CI runs both on every pull request and every push to main, the tests split
+into four parallel jobs (library, window, window smoke rounds, the rest),
+plus a build of the organ's sound device for macOS and Windows
+(`.github/workflows/ci.yml`).
 A pull request that changes only `Reports/`, `handoff/`, `research/`, `wiki/`
 or `*.md` skips both build jobs. Sound on Linux needs
 `--features audio-alsa` and `libasound2-dev`.

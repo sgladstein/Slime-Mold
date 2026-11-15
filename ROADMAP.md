@@ -8,7 +8,7 @@ detail, numbers and gates stay in each plan's own source, linked below.
 decisions are listed only there (wiki rule 5); this page points to them by
 number.
 
-**Refreshed 2026-11-12 ~04:50Z** by the game integration thread: the paused
+**Refreshed 2026-11-15 ~12:00Z** by the whole-game review thread: a new *Now* band for the roguelike run in squad mode; the 11-12 band is kept below it as *Earlier*. **Refreshed 2026-11-12 ~04:50Z** by the game integration thread: the paused
 G, E and R bands (owner, 11-10 20:55Z: today's dishes are unlikely to be the
 real games; the direction is RTS-type games, now the Larder World) moved to
 *Archive* at the end, and the Larder World game threads got rows in *Now*.
@@ -36,9 +36,40 @@ closed, its track is unowned until a new thread takes it; say so in its row.
 Work in a band can run in parallel; a step starts when what it depends on
 is done.
 
-### Now: the Larder World game (11-12)
+### Now: the roguelike run in squad mode (11-15)
 
-While the owner can't playtest and the 1070 is busy (11-14), the work to run in the cloud, what waits, and the picks the reviewers settle are in [`Reports/cloud-plan-2026-11-14.md`](Reports/cloud-plan-2026-11-14.md).
+The game is the run in squad mode (owner, 11-15 08:30Z): eight planets,
+squad control, pumps as income, rolled guns and cards from a shop between
+planets. Every row serves one of the owner's three asks: **an enemy that
+progresses and presses**, **guns that are a main draw**, **menus that don't
+get in the way**. Ranked by the whole-game review
+([report](Reports/whole-game-review-2026-11-15/README.md),
+[page](https://claude.ai/artifact/UMU3R7fPu166PQ96n6gGpU)); the W numbers
+are its findings. A thread that starts work for the run adds or updates
+its row here in the same PR.
+
+| # | Step | Owner | Waits on | State |
+| --- | --- | --- | --- | --- |
+| N1 | **Enemy progression across the run**: what the slime does to you at each depth (`run::LADDER`, per-depth switches), the squad's kill rate against the slime's mass by depth on one page, one still per tier on its planet, idle loses by 5:00 as a smoke check; the stuck rule (`count_stuck`) not ending a healthy run; `Goal::Shrink` on mass; a play log from the window (W3, W6, W8, W13, W14, W17, W30) | *Run and enemy progression* (new thread asked for 11-15) | the owner's D3 for the ladder's axes | not started. Re-check on main 11-15: planet 1 idle 22,410 walkers at 4:00 and the squad 4 -> 2; planet 3 two of four pumps worn to 0 by 3:00 |
+| N2 | **The slime's behaviour and numbers**: surges, the depth curve (`run::enemy_keys`), rule keys for `pump_smell`, `scent_keep`, `fed_scent`; a short flinch from fire; the alarm haze only on the slime (W1, W19, W44, W46) | *Improve the slime enemy* | nothing | #336 (shape C in the run), #338 (thicken) and #343 (surges) merged |
+| N3 | **The 40-soldier rush**: drain the biggest crystal and buy to 40 still wins (40 soldiers at 2:00 on planet 1 against the live slime); brakes allowed by the no-upkeep ruling are prices, the slime eating the bank, or things worth buying (W5) | N1's thread, with the economy | the owner's D7 (brake now, or play the new slime first) | open |
+| N4 | **Guns that are a draw**: muzzle flash by kind, recoil, bullets in flight, the killed walkers sprayed from the hit (#342); the blast glow's square edge; the light cap dropping muzzles first; body() saturating in dense slime; per-kind and per-payload sound (W18, W26, W27, W41, W55) | *Make the guns look satisfying* | the owner's D5 (payload card at the start) and D6 (shake, hit-stop) | #342 in test |
+| N5 | **Menus, shop, HUD and keys** (Run first on the start menu; walkers now -> goal beside the bar) | *Review menus, shop and HUD layout* | nothing | #324, #334 merged |
+| N6 | **Planets**: per planet, check the nest bowl doesn't keep its slime home (planet 1's still fills its rock ring at 4:00; planet 3's covers the map); twists and rescue planets after N1 moves (W12) | *Generate roguelike levels procedurally* | N1 for twists | #337 caves merged |
+| N7 | **Engineering chores**: CI's three test binaries in parallel (lib 230 s, window 197 s, GPU 127 s one after another); `merge=union` for `Reports/README.md` and `Reports/pages.md`; untrack the two replay files; a window test of a run in squad mode; `Args: Default`; later batched bursts (one GPU sync per payload hit today) and a game `Session` in the library (W31-W35, W40, W42, W47) | *Engineering chores* (new thread asked for 11-15) | nothing | not started |
+| N8 | **The 1070**: twins and timings pending since 11-14 in one batch | *Run jobs on Scott's desktop PC* | the PC on | #339 timed shape C at run scale |
+| N9 | **Playtest pack** for the owner's next session: what changed since 11-15 08:30Z (shape C in the run, thicken, breakaway, squads default, heal order, gun look), each with its key and a clip | coordinator | N4's first merge | not started |
+
+**Parked (11-15), restart only on an owner ask** (the review's W23; the
+owner's D4 and D12 decide the first two): new campaign missions and RTS
+control features (both keep working); the own mould's GPU follow-ups; the
+player AI and strategy censuses (owner 11-14 01:08Z); the per-tier core
+values (no core since 11-12); the dish games and RTS demos (archived).
+
+### Earlier: the Larder World game (11-12 to 11-14)
+
+The rows below are the Larder World build-up; each still records its
+thread's state. The 11-14 cloud plan is in [`Reports/cloud-plan-2026-11-14.md`](Reports/cloud-plan-2026-11-14.md).
 
 Every row edits or reads the same game; who owns which shared piece, and
 the merge order, are in *Larder World: shared rules and merge order*, below.
