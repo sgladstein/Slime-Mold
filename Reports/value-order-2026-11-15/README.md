@@ -98,3 +98,28 @@ The measure is the reviewer's own, `measure.py` on branch `claude/project-thread
 ## Cost
 
 Every change is a constant or a few ALU operations in passes that already run. The far view samples one cell per pixel, where the boxed view sampled up to nine before. No new texture reads were added at zoom 1 and above.
+
+## Follow-up: crystal floor and the film's inside (art lead, 11-15 03:08Z)
+
+The table above is #317's first cut. Its follow-up, measured the same way (cells read first cut / follow-up):
+
+- **Crystal faces get a luma floor of 112 that fades in with the charge,** so spent stone stays dark. Meadow 2 went from 101 to 112, caves 1 from 109 to 112, and caves 2 from 105 to 112. Every planet-seed is now at 112 or above.
+- **The thin film is lifted toward 95 grey, gated by its thickness** (`smoothstep(0.01, 0.05, th)`). The thickness carries the walkers' count, so the faint tail past the last walkers stays ground. The thin-film shade floor goes from 0.70 to 0.85.
+  - Slime-coloured film p10 reaches 80 or above on 11 of 14 planet-seeds, up from 9. The three under are jungle 2 (74), highlands 1 (75) and caves 2 (79).
+  - The review's film p10 rose by 0 to 9.
+  - `the_slime_edge_is_as_sharp_as_its_walkers` passes.
+
+| Planet, seed | Slime-coloured film p10/p25 |
+| --- | --- |
+| 2-1 | 99/116 -> 103/121 |
+| 2-2 | 93/109 -> 97/113 |
+| 3-1 | 86/102 -> 93/108 |
+| 3-2 | 85/100 -> 92/107 |
+| 4-1 | 78/95 -> 81/98 |
+| 4-2 | 107/133 -> 117/135 |
+| 5-1 | 79/101 -> 82/108 |
+| 5-2 | 73/95 -> 74/101 |
+| 6-1 | 74/92 -> 75/95 |
+| 6-2 | 80/108 -> 82/113 |
+| 7-1 | 81/102 -> 88/112 |
+| 7-2 | 75/90 -> 79/96 |
