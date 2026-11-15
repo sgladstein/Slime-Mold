@@ -314,17 +314,46 @@ pub struct Canvas {
     /// The rows (top, bottom pixels) shapes drawn from now on keep to: a
     /// page that scrolls under its title and buttons. `clear` resets it.
     pub clip: Option<(f32, f32)>,
+    /// Every text run drawn this frame, for the layout tests: text inside
+    /// its panel, off other text, not under its size (the three-reviewer
+    /// review, 11-15: the tests checked hits, not what the owner sees).
+    #[cfg(test)]
+    pub runs: Vec<Run>,
+}
+
+/// A text run as drawn: its left, baseline, advance width and size, and
+/// its glyphs' ink, the pixels they cover (left, top, right, bottom;
+/// empty for spaces only).
+#[cfg(test)]
+#[derive(Clone, Debug)]
+pub struct Run {
+    pub x: f32,
+    pub base: f32,
+    pub w: f32,
+    pub px: f32,
+    pub text: String,
+    pub ink: (f32, f32, f32, f32),
 }
 
 impl Canvas {
     pub fn new(screen: (u32, u32)) -> Self {
-        Canvas { prims: Vec::new(), atlas: Atlas::new(), screen, ui: UiSize::default(), clip: None }
+        Canvas {
+            prims: Vec::new(),
+            atlas: Atlas::new(),
+            screen,
+            ui: UiSize::default(),
+            clip: None,
+            #[cfg(test)]
+            runs: Vec::new(),
+        }
     }
 
     /// Starts a frame (and empties the atlas if the last frame filled it).
     pub fn clear(&mut self) {
         self.prims.clear();
         self.clip = None;
+        #[cfg(test)]
+        self.runs.clear();
         if self.atlas.full {
             self.atlas.reset();
         }
@@ -416,6 +445,8 @@ impl Canvas {
         let mut pen = x0;
         let mut last = None;
         let base = at.1.round();
+        #[cfg(test)]
+        let mut ink = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
         for ch in text.chars() {
             let id = f.glyph_id(ch);
             if let Some(l) = last {
@@ -424,11 +455,17 @@ impl Canvas {
             if let Some(s) = self.atlas.glyph(weight, ch, size) {
                 let x = (pen.round() as i32 + s.dx) as f32;
                 let y = (base as i32 + s.dy) as f32;
+                #[cfg(test)]
+                if s.w > 0 && s.h > 0 {
+                    ink = (ink.0.min(x), ink.1.min(y), ink.2.max(x + s.w as f32), ink.3.max(y + s.h as f32));
+                }
                 self.push(Prim { uv: (s.u, s.v), ..Prim::new(MASK, (x, y), (x + s.w as f32, y + s.h as f32), colour) });
             }
             pen += f.h_advance(id);
             last = Some(id);
         }
+        #[cfg(test)]
+        self.runs.push(Run { x: x0, base: at.1, w, px, text: text.to_string(), ink });
         w
     }
 
