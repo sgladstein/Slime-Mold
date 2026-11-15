@@ -929,7 +929,15 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // the bronze orange, the panic's colour.
     let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
     let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
-    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
+    var gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
+    // The film's inside lifted toward 95 in grey with its own light (art
+    // lead 11-15: thin film from 80, above rock and soft rock), gated by
+    // the thickness, which carries the walkers' count (`prep`), so the
+    // faint tail past the last walkers keeps the ground's value and the
+    // edge stays as sharp as its walkers. Lifted everywhere it widened
+    // the edge from 0.96 to 1.74 cells (dead-ends 11-15).
+    let gel_l = dot(gel, vec3<f32>(0.299, 0.587, 0.114));
+    gel += vivid * max(95.0 - gel_l, 0.0) / max(lum, 1.0) * smoothstep(FILM_LIFT_A, FILM_LIFT_B, th);
     // Tried and reverted 11-15: lifting the gel to 100 grey with its own
     // light (rule 2, film from 80). It barely moved the review's film p10,
     // whose low end is the veins' shaded far flank (the shade floor in
@@ -1713,7 +1721,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // at 65-80 on slime-coloured pixels, the far flank of the frontier's
     // veins, which fell to 0.4 of the light). Thick veins keep their full
     // relief.
-    let thin_floor = 0.15 + 0.55 * smoothstep(0.005, 0.04, th_here) * (1.0 - smoothstep(0.25, 0.6, th_here));
+    let thin_floor = 0.15 + 0.7 * smoothstep(0.005, 0.04, th_here) * (1.0 - smoothstep(0.25, 0.6, th_here));
     var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
@@ -1847,7 +1855,15 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // The faces' light compressed toward the middle while charged
             // (a shaded face of a live crystal stays above 110 in grey;
             // the spent stone keeps the full relief of its steps).
-            let rock = alb * max(mix(gs, 1.0 + 0.6 * (gs - 1.0), v), 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
+            var rock = alb * max(mix(gs, 1.0 + 0.6 * (gs - 1.0), v), 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
+            // And a floor: a face holding charge never reads under 112 in
+            // grey with its glow (art lead 11-15: crystals are the
+            // objective; the compression alone left meadow 2 at 101 and
+            // caves at 105-109, shaded faces and part-charged cells). The
+            // floor fades in with the charge, so spent stone stays dark.
+            let rl = dot(rock + glow, vec3<f32>(0.299, 0.587, 0.114));
+            let want = 112.0 * smoothstep(0.15, 0.45, v);
+            rock *= max(1.0, (want - (rl - dot(rock, vec3<f32>(0.299, 0.587, 0.114)))) / max(dot(rock, vec3<f32>(0.299, 0.587, 0.114)), 1.0));
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
@@ -2270,6 +2286,8 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
+const FILM_LIFT_A: f32 = 0.01;
+const FILM_LIFT_B: f32 = 0.05;
 const OFF_MAP_RGB: vec3<f32> = vec3<f32>(12.0, 13.0, 16.0);
 
 // A measuring aid (off in the game): with it on, each shaded pixel is drawn
