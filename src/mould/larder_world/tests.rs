@@ -2555,3 +2555,25 @@ fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
     d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
     assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
 }
+
+#[test]
+fn a_link_whose_controlled_squad_dies_hands_control_to_the_rest() {
+    let mut g = squads(8);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let b = g.active.unwrap();
+    assert!(g.apply(Cmd::Link(b as u8, 0)));
+    // The controlled squad is wiped out: the rest of its link takes over
+    // (until 11-15 Active refused them as linked, a soft-lock).
+    for k in g.members(b) {
+        g.soldiers[k].alive = false;
+    }
+    assert!(g.members(b).is_empty());
+    assert!(g.apply(Cmd::Active(0)), "the live squad of the link takes control");
+    assert_eq!(g.active, Some(0));
+}

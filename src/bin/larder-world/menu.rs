@@ -203,7 +203,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let mut rules = Rules::default();
     r.rules(&mut rules);
     let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
-    let gun = r.carried();
+    let gun = r.armed();
     let rows = r
         .shop()
         .into_iter()

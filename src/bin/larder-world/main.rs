@@ -858,8 +858,8 @@ impl App {
             // copy its gun, `Squad::offshoot`).
             game.apply(Cmd::Arm(0, Some(gun_of(spec, a.seed, depth)?)));
         } else if let Some(r) = &a.run {
-            // A run lands with the gun it carries (`Run::carried`).
-            game.apply(Cmd::Arm(0, Some(r.carried())));
+            // A run lands with the gun it carries, upgraded (`Run::armed`).
+            game.apply(Cmd::Arm(0, Some(r.armed())));
         }
         let mut kit = KitRules::default();
         if let Some(r) = &a.run {
