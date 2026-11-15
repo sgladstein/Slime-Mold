@@ -3,11 +3,13 @@
 //! keys, quit), the campaign's mission list, an options page for the
 //! window's switches in tabs with the focused one's note and default
 //! beside them, and the key card (its last tab; also F1 or ? from any
-//! page). The inner pages (Options, the keys, the campaign) fit one
-//! screen under a one-line header and page a list too long for it rather
-//! than scroll (owner, 11-15 17:31Z: "Having to scroll is horrible");
-//! the main page and the shop still scroll until the owner picks their
-//! layouts (`Reports/menu-layout-research-2026-11-15/`).
+//! page), and the run shop / gun range armory (`shop`). Every page fits
+//! one screen at every UI size and pages a list too long for it rather
+//! than scroll (owner, 11-15 17:31Z: "Having to scroll is horrible"):
+//! the inner pages (Options, the keys, the campaign) under a one-line
+//! header, the main page as menu A and the shop as shop B, the owner's
+//! picks of 19:37Z (`Reports/menu-layout-research-2026-11-15/`,
+//! `Reports/shop-b-2026-11-15/`).
 //!
 //! Like the HUD (`ui`), it holds no game rules: the game hands it the
 //! missions, the options (name, choices, default) and the key card, draws
@@ -29,6 +31,8 @@ use super::canvas::{Align, Canvas, Rect, Rgba, Weight};
 use super::controls::Button;
 use super::icons::Icon;
 use super::ui::theme::*;
+
+mod shop;
 
 /// One switch on the options page: its value is `choices[at]`.
 #[derive(Clone, Debug, PartialEq)]
@@ -101,24 +105,31 @@ pub struct Entry {
 /// screen (buildings and tools should be separate menus that you open up).
 /// The second area of the screen is for Guns/bullet cards." The first
 /// shop, #280, was one list of uniform rows in columns.)
+///
+/// Since Shop B (owner's pick, 11-15 19:37Z) every area is a tab of one
+/// counter, so Buildings and Tools are tabs like Squad, not folders.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShopArea {
-    /// A tile on the upgrade grid's first page, as on the command card.
+    /// A tile on the tab named by the row's `group` (Squad, Buildings,
+    /// Tools, Dev mode); with no group, a button on the bottom bar (the gun
+    /// range's tools).
     Upgrades,
-    /// A tile in the folder named by the row's `group` (Buildings, Tools),
-    /// opened from the grid as the command card's Q and E pages are.
-    Folder,
-    /// A gun card in the armory.
+    /// A gun, a row of the Guns tab's table.
     Guns,
-    /// A bullet card: those `on` fill the carried gun's slots, the rest sit
-    /// under their `group` (the bag, for sale).
+    /// A bullet card: those `on` fill the carried gun's slots, those in
+    /// the `BAG` group sit in the bag under them, the rest on the tab named
+    /// by their `group` (Cards; the range's Bullets and its shelves).
     Cards,
 }
+
+/// The group of the cards owned and out of the gun.
+pub const BAG: &str = "In the bag";
 
 /// A row of the run's shop page (the game fills it: `mould::run::Run::shop`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShopRow {
-    /// The folder or heading it sits under.
+    /// The tab it sits on (a card's shelf, `BAG`, "Guns", an upgrade's
+    /// group; an empty group is a tool on the shop's bottom bar).
     pub group: String,
     pub area: ShopArea,
     pub icon: Icon,
@@ -143,12 +154,17 @@ pub struct ShopRow {
     /// A rolled bullet's set (slug, needle, buckshot), as a glyph in the
     /// card's corner, as the HUD's loadout strip badges it.
     pub badge: Option<Icon>,
+    /// Its place in a grid of bullets, row and column, each as an order
+    /// and a name (the gun range's shelf: shape by payload, so its tiles
+    /// need no names). A tab lays out as the grid only when each of its
+    /// cards has its own cell.
+    pub cell: Option<((u8, String), (u8, String))>,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None }
     }
 }
 
@@ -165,31 +181,9 @@ pub struct Shop {
     /// The carried gun's slots and its budget (used, all).
     pub slots: u32,
     pub budget: (u32, u32),
-    /// A folder's icon by its name (the command card's page button);
-    /// a folder not named shows its first row's.
-    pub folder_icons: Vec<(String, Icon)>,
     /// The gun range's armory, not a run's shop: its buttons go back to
     /// the range or leave it, and Esc goes back to the range.
     pub range: bool,
-}
-
-/// Where everything on the shop page goes at one scale.
-struct ShopPlan {
-    s: f32,
-    left: Rect,
-    right: Rect,
-    tiles: Vec<(Rect, Hit)>,
-    guns: Vec<(Rect, usize)>,
-    /// The carried gun's slots: the card in each, if any.
-    slots: Vec<(Rect, Option<usize>)>,
-    cards: Vec<(Rect, usize)>,
-    /// Below the slots: a gun card dropped here comes out.
-    bag: Rect,
-    heads: Vec<((f32, f32), String)>,
-    detail: Rect,
-    fits: bool,
-    /// It fits the window's width (the height can scroll).
-    fits_w: bool,
 }
 
 /// The Options page's last tab, the key list (also F1 or ?).
@@ -268,17 +262,21 @@ enum Hit {
     Sandbox,
     Run,
     Range,
+    /// A shop row: a click picks it (the pane tells it), Enter buys it.
     Buy(usize),
-    /// Open the shop's folder `k` (`StartMenu::folders`), or close it.
-    Folder(usize),
-    FolderBack,
+    /// Shop row `i` bought or done at once (the pane's button, the gun
+    /// range's tools).
+    Do(usize),
+    /// The shop's tab `k`.
+    ShopTab(usize),
+    /// The bag's cards a page back or on (a bag fuller than its row).
+    BagFlip(isize),
     /// An empty slot of the carried gun (a place to drop a card).
     Slot(usize),
     Next,
     EndRun,
     Campaign,
     Options,
-    Keys,
     EditMaps,
     RandomPlanet,
     Quit,
@@ -316,8 +314,12 @@ pub struct StartMenu {
     pub shop: Option<Shop>,
     /// A run is under way: the main page's Run row goes back to it.
     pub run_live: bool,
-    /// The shop's open folder, by name.
-    folder: Option<String>,
+    /// The shop's tab showing, whether the player has picked something
+    /// on it (the pane tells the focused row; until then, the planet
+    /// ahead), and the bag's page.
+    shop_tab: usize,
+    picked: bool,
+    bag_sheet: usize,
     /// Which row the keyboard is on, on this page.
     pub focus: usize,
     /// The page the key card goes back to.
@@ -359,14 +361,15 @@ const FOOT: f32 = 44.0;
 /// How far the pointer moves, held down on a card, before a click becomes
 /// a drag (pixels).
 const DRAG_FROM: f32 = 6.0;
-/// A bullet card in the shop, UI units (landscape since the UI review,
-/// 11-15: 78 x 98 before).
-const CARD_W: f32 = 184.0;
-const CARD_H: f32 = 64.0;
+/// A bullet card in the shop, UI units: half the 184 x 64 of the UI
+/// review's landscape cards (owner, 11-15 17:41Z; 78 x 98 portrait before
+/// that), stretched on the counter to fill its rows.
+const CARD_W: f32 = 150.0;
+const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, folder: None, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1 }
+        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1 }
     }
 
     /// The option named `key`.
@@ -385,7 +388,7 @@ impl StartMenu {
         }
         self.page = page;
         self.focus = 0;
-        self.folder = None;
+        (self.shop_tab, self.picked, self.bag_sheet) = (0, false, 0);
         self.scroll = 0.0;
         self.sheet = 0;
     }
@@ -453,6 +456,14 @@ impl StartMenu {
         // the keyboard's row picks the page, so it takes the focus (and an
         // option's tab opens).
         if !self.drawn.iter().any(|(_, h)| *h == hit) {
+            // (On the shop, the tab that holds it.)
+            if let (Page::Shop, Hit::Buy(i)) = (self.page, hit) {
+                if let Some(k) = self.shop_tabs().iter().position(|t| t.rows.contains(&i)) {
+                    if k != self.shop_tab {
+                        self.open_shop_tab(k);
+                    }
+                }
+            }
             if let (Page::Options, Hit::Reset(i)) = (self.page, hit) {
                 if let Some(k) = self.options.get(i).and_then(|o| self.tabs().iter().position(|t| t == tab_name(o))) {
                     self.opt_tab = k;
@@ -460,6 +471,8 @@ impl StartMenu {
             }
             if let Some(k) = self.rows().iter().position(|&h| h == hit) {
                 self.focus = k;
+                // (The shop's bag turns to it, as for the keyboard.)
+                self.follow = true;
             }
         }
         if let Some(r) = self.drawn.iter().find(|(_, h)| *h == hit).map(|(r, _)| *r) {
@@ -478,47 +491,6 @@ impl StartMenu {
         self.scroll = self.scroll.clamp(0.0, self.scroll_max.max(self.scroll));
     }
 
-    /// Opens the shop's folder `name` (the pictures; a click does it in play).
-    pub fn open_folder(&mut self, name: &str) {
-        if self.folders().iter().any(|f| f == name) {
-            self.folder = Some(name.to_string());
-            self.focus = 0;
-        }
-    }
-
-    /// The shop's folders, in the order their rows come.
-    fn folders(&self) -> Vec<String> {
-        let mut f: Vec<String> = Vec::new();
-        for r in self.shop.iter().flat_map(|s| &s.rows).filter(|r| r.area == ShopArea::Folder) {
-            if !f.contains(&r.group) {
-                f.push(r.group.clone());
-            }
-        }
-        f
-    }
-
-    /// The upgrade grid's tiles on the page showing (the first, or a folder).
-    fn grid(&self) -> Vec<Hit> {
-        let Some(shop) = &self.shop else { return Vec::new() };
-        let of = |area: ShopArea, group: Option<&String>| -> Vec<Hit> { shop.rows.iter().enumerate().filter(|(_, r)| r.area == area && group.is_none_or(|g| r.group == *g)).map(|(i, _)| Hit::Buy(i)).collect() };
-        match &self.folder {
-            Some(f) => std::iter::once(Hit::FolderBack).chain(of(ShopArea::Folder, Some(f))).collect(),
-            None => of(ShopArea::Upgrades, None).into_iter().chain((0..self.folders().len()).map(Hit::Folder)).collect(),
-        }
-    }
-
-    /// The bullet cards out of the gun, by heading, in the order they come.
-    fn card_groups(&self) -> Vec<(String, Vec<usize>)> {
-        let mut g: Vec<(String, Vec<usize>)> = Vec::new();
-        for (i, r) in self.shop.iter().flat_map(|s| s.rows.iter().enumerate()).filter(|(_, r)| r.area == ShopArea::Cards && !r.on) {
-            match g.iter_mut().find(|(h, _)| *h == r.group) {
-                Some((_, v)) => v.push(i),
-                None => g.push((r.group.clone(), vec![i])),
-            }
-        }
-        g
-    }
-
     /// Shop row `i`'s slot in the carried gun (0 fires first), if it is
     /// a card in the gun, and how many cards the gun holds.
     fn slot_of(&self, i: usize) -> (Option<usize>, usize) {
@@ -532,36 +504,21 @@ impl StartMenu {
     /// takes a gun card out; anywhere else, or its own slot, nothing.
     fn drop_at(&self, i: usize, p: (f32, f32)) -> Option<StartEvent> {
         let (from, _) = self.slot_of(i);
-        // Only where the page shows: a slot or the bag scrolled under the
-        // title or the buttons takes no drop. (The slots keep their places
-        // in the list, so `k` is the slot's own number: dropping only those
-        // scrolled away from the list once moved a card to the wrong slot.)
-        if self.body.is_some_and(|b| !b.contains(p)) {
-            return None;
-        }
+        // (The slots keep their places in the list, so `k` is the slot's
+        // own number: when the shop scrolled, dropping only those in view
+        // once moved a card to the wrong slot. It no longer scrolls.)
         if let Some(k) = self.slot_rects.iter().position(|r| r.contains(p)) {
             return (from != Some(k)).then_some(StartEvent::Move(i, k));
         }
         (from.is_some() && self.bag.is_some_and(|b| b.contains(p))).then_some(StartEvent::Buy(i))
     }
 
-    /// The shop's tiles in reading order: the grid, the guns, the gun's
-    /// cards, the rest of the cards.
-    fn shop_rows(&self) -> Vec<Hit> {
-        let Some(shop) = &self.shop else { return vec![Hit::Next, Hit::EndRun] };
-        let area = |a: ShopArea, on: bool| shop.rows.iter().enumerate().filter(move |(_, r)| r.area == a && (a != ShopArea::Cards || r.on == on)).map(|(i, _)| Hit::Buy(i));
-        let mut v = self.grid();
-        v.extend(area(ShopArea::Guns, false));
-        v.extend(area(ShopArea::Cards, true));
-        v.extend(self.card_groups().into_iter().flat_map(|(_, c)| c).map(Hit::Buy));
-        v.extend([Hit::Next, Hit::EndRun]);
-        v
-    }
-
     /// The rows the keyboard walks on this page, top to bottom.
     fn rows(&self) -> Vec<Hit> {
         match self.page {
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options, Hit::Keys]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            // (No Keys row since 11-15: the key list is Options' last tab,
+            // and F1 or ? opens it from anywhere.)
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
             Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
             Page::Keys => vec![Hit::Back],
@@ -571,12 +528,8 @@ impl StartMenu {
 
     fn back(&mut self) {
         if self.page == Page::Shop {
-            if let Some(f) = self.folder.take() {
-                // Back on the grid, on the folder's tile.
-                let k = self.folders().iter().position(|x| *x == f).unwrap_or(0);
-                self.focus = self.rows().iter().position(|&h| h == Hit::Folder(k)).unwrap_or(0);
-                return;
-            }
+            // A refused buy's notice stays in the shop.
+            self.notice = None;
         }
         let to = if self.page == Page::Keys { self.keys_from } else { Page::Main };
         let from = self.page;
@@ -586,7 +539,7 @@ impl StartMenu {
             let led = match from {
                 Page::Missions => Hit::Campaign,
                 Page::Options => Hit::Options,
-                Page::Keys => Hit::Keys,
+                Page::Keys => Hit::Options,
                 Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => Hit::Range,
                 Page::Shop => Hit::Run,
                 Page::Main => Hit::Run,
@@ -601,18 +554,18 @@ impl StartMenu {
             Hit::Sandbox => return Some(StartEvent::Sandbox),
             Hit::Run => return Some(StartEvent::Run),
             Hit::Range => return Some(StartEvent::Range),
-            Hit::Buy(i) => return Some(StartEvent::Buy(i)),
-            Hit::Folder(k) => {
-                self.folder = self.folders().get(k).cloned();
-                self.focus = 0;
+            // (A new try: the game says again if it can't be done.)
+            Hit::Buy(i) | Hit::Do(i) => {
+                self.notice = None;
+                return Some(StartEvent::Buy(i));
             }
-            Hit::FolderBack => self.back(),
+            Hit::ShopTab(k) => self.open_shop_tab(k),
+            Hit::BagFlip(by) => self.bag_sheet = (self.bag_sheet as isize + by).max(0) as usize,
             Hit::Slot(_) => {}
             Hit::Next => return Some(StartEvent::NextLevel),
             Hit::EndRun => return Some(StartEvent::EndRun),
             Hit::Campaign => self.show(Page::Missions),
             Hit::Options => self.show(Page::Options),
-            Hit::Keys => self.show(Page::Keys),
             Hit::Quit => return Some(StartEvent::Quit),
             Hit::EditMaps => return Some(StartEvent::EditMaps),
             Hit::RandomPlanet => return Some(StartEvent::RandomPlanet),
@@ -648,15 +601,15 @@ impl StartMenu {
     fn flip(&mut self, by: isize) {
         let n = self.sheets.max(1) as isize;
         self.sheet = (self.sheet as isize + by).rem_euclid(n) as usize;
-        if matches!(self.page, Page::Options | Page::Missions) {
+        if matches!(self.page, Page::Options | Page::Missions | Page::Shop) {
             self.focus = self.sheet * self.per.max(1);
         }
     }
 
-    /// Esc (or a right click) on the gun range's armory, no folder open:
-    /// back to the range, not to the main page.
+    /// Esc (or a right click) on the gun range's armory: back to the
+    /// range, not to the main page.
     fn leaves_armory(&self) -> bool {
-        self.page == Page::Shop && self.folder.is_none() && self.shop.as_ref().is_some_and(|s| s.range)
+        self.page == Page::Shop && self.shop.as_ref().is_some_and(|s| s.range)
     }
 
     pub fn moved(&mut self, p: Option<(f32, f32)>) {
@@ -715,6 +668,14 @@ impl StartMenu {
                         self.options[i].at = self.options[i].default;
                         return Vec::new();
                     }
+                    // A shop row clicked is picked: the pane tells it and
+                    // its button (or Enter) buys it (Shop B, 11-15: a click
+                    // bought at once, and the box telling what was bought
+                    // had often scrolled away).
+                    Hit::Buy(_) if self.page == Page::Shop => {
+                        self.pick_row(h);
+                        return Vec::new();
+                    }
                     h => h,
                 };
                 self.act(h).into_iter().collect()
@@ -744,6 +705,19 @@ impl StartMenu {
             KeyCode::Tab if self.tabbed() => {
                 let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
                 self.open_tab(at + 1);
+            }
+            // The shop's tabs: Tab goes round, 1 to 9 pick one.
+            KeyCode::Tab if self.page == Page::Shop => self.open_shop_tab(self.shop_tab + 1),
+            _ if self.page == Page::Shop && digit(code).is_some_and(|n| n >= 1 && n <= self.shop_tabs().len()) => {
+                self.open_shop_tab(digit(code).unwrap_or(1) - 1);
+            }
+            // The shop's first arrow or Enter picks the row the keyboard is
+            // on (the tab's first), rather than passing it or buying it
+            // unseen.
+            KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyW | KeyCode::KeyS | KeyCode::KeyA | KeyCode::KeyD | KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space
+                if self.page == Page::Shop && !self.picked =>
+            {
+                self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
             KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys => {
@@ -833,23 +807,30 @@ impl StartMenu {
             let f = k as f32 / 40.0;
             c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
         }
+        // The shop and the gun range's armory: one screen of their own
+        // (`shop.rs`, Shop B), never scrolled.
+        if self.page == Page::Shop {
+            let rows = self.rows();
+            let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
+            (self.scroll, self.scroll_max, self.body) = (0.0, 0.0, None);
+            self.shop_page(c, s, focus);
+            self.drawn = self.hits.clone();
+            return;
+        }
         let x = if inner { 40.0 * s } else { 48.0 * s };
         let w = (560.0 * s).min(sw - 2.0 * x);
-        if !inner {
-            c.text(Weight::SemiBold, 44.0 * s, (x, 96.0 * s), Align::Left, &self.title, TEXT);
-            let sub = match self.page {
-                Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "The gun range: build a gun, then shoot",
-                Page::Shop => "The run: spend your points, then land",
-                _ => "A mould that grows, feeds and fights back",
-            };
-            c.text(Weight::Medium, 17.0 * s, (x, 127.0 * s), Align::Left, sub, MUTED);
+        if self.page == Page::Main {
+            // The title on the main page only, and smaller (44 at 96 until
+            // 11-15, with the rows from 160: the list ran under the hint at
+            // 200%; the owner picked menu A, names with one caption box).
+            c.text(Weight::SemiBold, 36.0 * s, (x, 64.0 * s), Align::Left, &self.title, TEXT);
+            c.text(Weight::Medium, 15.0 * s, (x, 90.0 * s), Align::Left, "A mould that grows, feeds and fights back", MUTED);
         }
-        let top = if inner { HEAD * s + 16.0 * s } else { 160.0 * s };
+        let top = if inner { HEAD * s + 16.0 * s } else { 100.0 * s };
         let rows = self.rows();
         let focus = rows.get(self.focus.min(rows.len().saturating_sub(1))).copied();
-        // The rows the page scrolls in: under the title, over the hint (and
-        // the shop's two buttons).
-        let foot = if self.page == Page::Shop { 108.0 * s } else { FOOT * s };
+        // The rows the page scrolls in: under the title, over the hint.
+        let foot = FOOT * s;
         let body = Rect::new(0.0, top - 4.0 * s, sw, (sh - foot - top + 4.0 * s).max(1.0));
         self.body = Some(body);
         self.scroll = self.scroll.clamp(0.0, self.scroll_max);
@@ -860,7 +841,8 @@ impl StartMenu {
             Page::Missions => self.missions_page(c, x, at, w, s, focus),
             Page::Options => self.options_page(c, x, at, w, s, focus),
             Page::Keys => self.keys_page(c, x, at, w, s),
-            Page::Shop => self.shop_page(c, x, at, s, focus),
+            // (Its own frame, above.)
+            Page::Shop => at,
         };
         c.clip = None;
         self.scroll_max = (bottom + self.scroll + 12.0 * s - body.bottom()).max(0.0);
@@ -899,28 +881,24 @@ impl StartMenu {
             let ty = track.y + (track.h - th) * (self.scroll / self.scroll_max);
             c.rrect(Rect::new(track.x, ty, track.w, th), 2.5 * s, [255, 255, 255, 90]);
         }
-        if self.page == Page::Shop {
-            if let Some(shop) = &self.shop {
-                // The buttons sit over the hint line, fixed.
-                let by = sh - 96.0 * s;
-                let (next, end) = if shop.range { ("Back to the range", "Leave the range") } else { ("Land on the next planet", "Give up the run") };
-                self.item(Rect::new(x, by, 240.0 * s, 44.0 * s), next, "", Hit::Next, true, focus == Some(Hit::Next), c, s);
-                self.item(Rect::new(x + 252.0 * s, by, 170.0 * s, 44.0 * s), end, "", Hit::EndRun, false, focus == Some(Hit::EndRun), c, s);
-            }
-        }
         let hint = match self.page {
-            Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys",
+            Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys  ·  Options holds the key list",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Up/Down pick  ·  Left/Right change  ·  Backspace resets  ·  Tab next tab  ·  Esc back",
             Page::Keys if self.sheets > 1 && self.tabbed() => "Left/Right next page  ·  Tab next tab  ·  Esc or F1 back",
             Page::Keys if self.sheets > 1 => "Left/Right next page  ·  Esc or F1 back",
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
-            Page::Shop if self.shop.as_ref().is_some_and(|s| s.range) => "Click takes a card  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back to the range",
-            Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
+            Page::Shop => "",
         };
         let pager_w = if paged { 170.0 * s } else { 0.0 };
-        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, MUTED);
+        // On the main page a notice from the game (why the map editor did
+        // not start) takes the hint's place, in full view.
+        let (hint, ink) = match &self.notice {
+            Some(n) if self.page == Page::Main => (n.as_str(), WARN),
+            _ => (hint, MUTED),
+        };
+        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, ink);
     }
 
     fn glass(&mut self, r: Rect, c: &mut Canvas, s: f32) {
@@ -956,41 +934,75 @@ impl StartMenu {
         self.hits.push((r, hit));
     }
 
-    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, w: f32, s: f32, focus: Option<Hit>) -> f32 {
+    /// The main page (the owner's pick, 11-15 19:37Z, menu A of the
+    /// research's blind pair): the ways to play, then Options and the map
+    /// editor, then Quit, as names alone in one column, and one caption box
+    /// beside the row under the cursor (else the keyboard's) saying what it
+    /// is. Until then every row carried its line under its name, 66 units
+    /// a row, and at 200% the list ran under the hint and scrolled.
+    fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size is not a rule
         // ("Free play, with ui 200%", the review 11-15).
         let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && o.key != "ui").map(|o| format!("{} {}", o.label, o.value())).collect();
         let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
-        // the run is the game; Sandbox led and was lit before).
-        let mut items: Vec<(&str, String, Hit, bool)> = vec![
-            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true),
-            ("Sandbox", sandbox, Hit::Sandbox, false),
-            ("Campaign", campaign, Hit::Campaign, false),
+        // the run is the game; Sandbox led and was lit before). A gap
+        // before Options and before Quit.
+        let mut items: Vec<(&str, String, Hit, bool, bool)> = vec![
+            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true, false),
+            ("Sandbox", sandbox, Hit::Sandbox, false, false),
+            ("Campaign", campaign, Hit::Campaign, false, false),
         ];
         if self.planets {
             let depth = self.option("planet").map_or("1", |o| o.value());
-            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false));
+            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false, false));
         }
         items.extend([
-            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false),
-            ("Options", "The mould's and the squad's switches".into(), Hit::Options, false),
-            ("Keys", "F1 or ? in the game too".into(), Hit::Keys, false),
+            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false),
+            ("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, true),
         ]);
         if self.edit_maps {
-            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false));
+            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false, false));
         }
-        items.push(("Quit", String::new(), Hit::Quit, false));
-        let mut y = top + 12.0 * s;
-        for (label, sub, hit, primary) in items {
-            let h = if sub.is_empty() { 50.0 * s } else { 66.0 * s };
-            self.item(Rect::new(x, y, w.min(500.0 * s), h), label, &sub, hit, primary, focus == Some(hit), c, s);
-            y += h + 12.0 * s;
+        items.push(("Quit", "Close the game".into(), Hit::Quit, false, true));
+        let longest = items.iter().map(|it| c.atlas.measure(Weight::SemiBold, 18.0 * s, it.0)).fold(0.0f32, f32::max);
+        let w = (longest + 48.0 * s).max(280.0 * s);
+        let (rh, gap) = (40.0 * s, 4.0 * s);
+        let mut y = top + 8.0 * s;
+        let mut placed = Vec::new();
+        for (label, sub, hit, primary, apart) in items {
+            if apart {
+                y += 12.0 * s;
+            }
+            let r = Rect::new(x, y, w, rh);
+            self.item(r, label, "", hit, primary, focus == Some(hit), c, s);
+            placed.push((r, label.to_string(), sub, hit));
+            y += rh + gap;
         }
-        if let Some(n) = self.notice.clone() {
-            c.text_fit(Weight::Medium, 14.0 * s, (x, y + 14.0 * s), Align::Left, &n, w, WARN);
-            y += 24.0 * s;
+        // The row under the cursor, else the keyboard's.
+        let hot = placed.iter().position(|p| self.hover.is_some_and(|h| p.0.contains(h)));
+        let told = hot.or_else(|| placed.iter().position(|p| focus == Some(p.3))).map(|k| placed.swap_remove(k)).map(|(r, n, sub, _)| (r, n, sub));
+        // (A notice, such as why the map editor did not start, takes the
+        // hint's line: `draw`.)
+        // The caption box beside the row it tells, with a notch toward it.
+        if let Some((r, name, sub)) = told {
+            let bx = r.right() + 18.0 * s;
+            let bw = (380.0 * s).min(c.screen.0 as f32 - x - bx);
+            let tw = bw - 32.0 * s;
+            let lines = Self::count(c, Weight::Medium, 15.0 * s, tw, &sub);
+            let bh = 48.0 * s + lines * 22.0 * s;
+            let by = r.y.min(c.screen.1 as f32 - FOOT * s - 12.0 * s - bh);
+            let b = Rect::new(bx, by, bw, bh);
+            c.shadow(b, 10.0 * s, 18.0 * s, 4.0 * s, SHADOW);
+            c.panel(b, 10.0 * s, PANEL_TOP, PANEL_BOTTOM, 1.0, EDGE);
+            let mid = r.y + r.h / 2.0;
+            for k in 0..6 {
+                let d = 6.0 - k as f32;
+                c.rrect(Rect::new(bx - d * s, mid - d * s, (d + 1.0) * s, 2.0 * d * s), 0.0, PANEL_TOP);
+            }
+            c.text(Weight::SemiBold, 18.0 * s, (bx + 16.0 * s, by + 30.0 * s), Align::Left, &name, TEXT);
+            self.lines(c, Weight::Medium, 15.0 * s, (bx + 16.0 * s, by + 54.0 * s), tw, 22.0 * s, &sub, [201, 210, 219, 255]);
         }
         y
     }
@@ -1333,396 +1345,10 @@ impl StartMenu {
         panel.bottom()
     }
 
-    /// The shop page laid out at scale `s` from `top`: the upgrade grid on
-    /// the left (six tiles a row, as the command card is six by two, with a
-    /// box under it saying what the tile under the cursor does), the
-    /// armory on the right (gun cards, the carried gun's slots, the bullet
-    /// cards by heading). The grid keeps the height of its tallest page so
-    /// opening a folder does not move the rest.
-    fn shop_plan(&self, shop: &Shop, screen: (f32, f32), x: f32, top: f32, s: f32, foot: f32) -> ShopPlan {
-        let (sw, sh) = screen;
-        // Sizes from the UI review (11-15, "the text seems too small ...
-        // not always making the best use of space"): tiles 60 -> 78 with
-        // their names at 12.5, not 9.5 (which the fit shrank to 7.5); the
-        // bullet cards 78 x 98 portrait -> 184 x 64 landscape, as the
-        // armory had width to spare and ran out of height (the page shrank
-        // to fit, so taller cards only made every word smaller).
-        let (t, g, p, head) = (78.0 * s, 7.0 * s, 14.0 * s, 30.0 * s);
-        let cols = 6usize;
-        let left_w = 2.0 * p + cols as f32 * t + (cols - 1) as f32 * g;
-        let pages = std::iter::once(shop.rows.iter().filter(|r| r.area == ShopArea::Upgrades).count() + self.folders().len())
-            .chain(self.folders().into_iter().map(|f| 1 + shop.rows.iter().filter(|r| r.area == ShopArea::Folder && r.group == f).count()));
-        let grid_rows = pages.max().unwrap_or(1).div_ceil(cols).max(1);
-        let grid_h = grid_rows as f32 * t + (grid_rows - 1) as f32 * g;
-        let detail_h = 136.0 * s;
-        let left = Rect::new(x, top, left_w, head + 8.0 * s + grid_h + 12.0 * s + detail_h + p);
-        let mut tiles = Vec::new();
-        for (k, h) in self.grid().into_iter().enumerate() {
-            let (row, col) = (k / cols, k % cols);
-            tiles.push((Rect::new(left.x + p + col as f32 * (t + g), left.y + head + 8.0 * s + row as f32 * (t + g), t, t), h));
-        }
-        let detail = Rect::new(left.x + p, left.y + head + 8.0 * s + grid_h + 12.0 * s, left_w - 2.0 * p, detail_h);
-        // The armory: what is left of the width.
-        // Under the upgrades, the screen's width, where beside them it would
-        // hold one gun card a row (a big UI size: 200% on 1920 x 1080 left
-        // it a column 777 pixels wide, every card under the last).
-        let (gw, gh) = (262.0 * s, 166.0 * s);
-        let stacked = sw - x - (left.right() + 16.0 * s) < 2.0 * gw + g + 2.0 * p;
-        let (rx, rtop) = if stacked { (x, left.bottom() + 16.0 * s) } else { (left.right() + 16.0 * s, top) };
-        let rw = sw - x - rx;
-        let (cw, ch) = (CARD_W * s, CARD_H * s);
-        let mut heads = Vec::new();
-        let (x0, x1) = (rx + p, rx + rw - p);
-        let mut y = rtop + head + 8.0 * s;
-        heads.push(((x0, rtop + 24.0 * s), "Guns".to_string()));
-        // Lays `n` boxes `w` by `h` in rows from `y`; returns them and the
-        // height used.
-        let flow = |n: usize, w: f32, h: f32, y: f32| -> (Vec<Rect>, f32) {
-            let per = (((x1 - x0) + g) / (w + g)).floor().max(1.0) as usize;
-            let rects: Vec<Rect> = (0..n).map(|k| Rect::new(x0 + (k % per) as f32 * (w + g), y + (k / per) as f32 * (h + g), w, h)).collect();
-            let rows = n.div_ceil(per);
-            (rects, if rows == 0 { 0.0 } else { rows as f32 * (h + g) - g })
-        };
-        let gun_rows: Vec<usize> = shop.rows.iter().enumerate().filter(|(_, r)| r.area == ShopArea::Guns).map(|(i, _)| i).collect();
-        let (rects, used) = flow(gun_rows.len(), gw, gh, y);
-        let guns: Vec<(Rect, usize)> = rects.into_iter().zip(gun_rows).collect();
-        y += used + 14.0 * s;
-        // The carried gun's slots, the cards in it first.
-        let on: Vec<usize> = shop.rows.iter().enumerate().filter(|(_, r)| r.area == ShopArea::Cards && r.on).map(|(i, _)| i).collect();
-        let n_slots = (shop.slots as usize).max(on.len());
-        heads.push(((x0, y + 19.0 * s), format!("In the gun, fired left to right  ·  budget {} of {}  ·  {} of {} slots", shop.budget.0, shop.budget.1, on.len(), shop.slots)));
-        y += head;
-        let (rects, used) = flow(n_slots, cw, ch, y);
-        let slots: Vec<(Rect, Option<usize>)> = rects.into_iter().enumerate().map(|(k, r)| (r, on.get(k).copied())).collect();
-        y += used + 14.0 * s;
-        let mut cards = Vec::new();
-        let bag_top = y;
-        for (name, idx) in self.card_groups() {
-            heads.push(((x0, y + 19.0 * s), name));
-            y += head;
-            let (rects, used) = flow(idx.len(), cw, ch, y);
-            cards.extend(rects.into_iter().zip(idx));
-            y += used + 14.0 * s;
-        }
-        // Room for two card groups (for sale, in the bag) of a row each,
-        // there or not: sized to its contents, the page shrank the moment
-        // the first card went into the bag and grew back when it left
-        // (owner, 11-15 02:58Z: "everything shifts in the shop. Once you
-        // add a bag that shouldn't happen"). The scale now changes only
-        // when a group needs a second row.
-        let groups = self.card_groups().len();
-        y += 2usize.saturating_sub(groups) as f32 * (head + ch + 14.0 * s);
-        let right = Rect::new(rx, rtop, rw, if stacked { y - rtop } else { (y - rtop).max(left.h) });
-        let bag = Rect::new(rx, bag_top, rw, (right.bottom() - bag_top).max(0.0));
-        let room = sh - foot - top;
-        let fits_w = rw >= gw + 2.0 * p && left.right() <= sw;
-        let fits = left.h <= room && right.bottom() - top <= room && fits_w;
-        ShopPlan { s, left, right, tiles, guns, slots, cards, bag, heads, detail, fits, fits_w }
-    }
-
-    fn shop_page(&mut self, c: &mut Canvas, x: f32, top: f32, s: f32, focus: Option<Hit>) -> f32 {
-        let (sw, sh) = (c.screen.0 as f32, c.screen.1 as f32);
-        let Some(shop) = self.shop.clone() else { return top };
-        c.text_fit(Weight::SemiBold, 20.0 * s, (x, top + 15.0 * s), Align::Left, &shop.heading, sw - 2.0 * x - 200.0 * s, TEXT);
-        let mut y = top + 38.0 * s;
-        for l in &shop.lines {
-            c.text_fit(Weight::Medium, 14.5 * s, (x, y), Align::Left, l, sw - 2.0 * x, MUTED);
-            y += 21.0 * s;
-        }
-        c.text(Weight::SemiBold, 22.0 * s, (sw - x, top + 16.0 * s), Align::Right, &shop.purse, ACCENT);
-        // The layout starts a little over the UI's own size and shrinks
-        // until both areas fit above the buttons, but not under the UI's
-        // size: past that the page scrolls (it went down to whatever fitted
-        // until 11-15, about 0.6 for the gun range's armory at 1080 lines:
-        // "I cannot read any of the text"). Only the width shrinks it
-        // further.
-        let body = y + 2.0 * s;
-        let foot_s = s;
-        // (Laid out from the unscrolled top, so the scale does not change
-        // as the page scrolls.)
-        let shift = self.scroll;
-        let mut k = s * 1.3;
-        let plan = loop {
-            let plan = self.shop_plan(&shop, (sw, sh), x, body + shift, k, 108.0 * foot_s);
-            if plan.fits || (plan.fits_w && k <= s) || k < 0.3 {
-                break plan;
-            }
-            k = if plan.fits_w { (k * 0.92).max(s) } else { k * 0.92 };
-        };
-        let plan = self.shop_plan(&shop, (sw, sh), x, body, plan.s, 108.0 * foot_s);
-        let s = plan.s;
-        self.glass(plan.left, c, s);
-        self.glass(plan.right, c, s);
-        let title = match &self.folder {
-            Some(f) => format!("Upgrades  ›  {f}"),
-            None if shop.range => "The range".to_string(),
-            None => "Upgrades".to_string(),
-        };
-        c.text(Weight::SemiBold, 14.5 * s, (plan.left.x + 14.0 * s, plan.left.y + 24.0 * s), Align::Left, &title, MUTED);
-        for (at, h) in &plan.heads {
-            c.text_fit(Weight::SemiBold, 14.5 * s, *at, Align::Left, h, plan.right.w - 28.0 * s, MUTED);
-        }
-        let hot = |r: Rect| self.hover.is_some_and(|p| r.contains(p));
-        // What the detail box describes: the tile under the cursor, else
-        // the keyboard's.
-        let mut shown = focus;
-        let folders = self.folders();
-        for &(r, h) in &plan.tiles {
-            if hot(r) {
-                shown = Some(h);
-            }
-            let focused = focus == Some(h);
-            match h {
-                Hit::Buy(i) => self.tile(&shop.rows[i], r, hot(r), focused, c, s),
-                Hit::Folder(f) => {
-                    let inside: Vec<&ShopRow> = shop.rows.iter().filter(|x| x.area == ShopArea::Folder && x.group == folders[f]).collect();
-                    let icon = shop.folder_icons.iter().find(|(n, _)| *n == folders[f]).map(|x| x.1).or(inside.first().map(|x| x.icon)).unwrap_or(Icon::Menu);
-                    let any = inside.iter().any(|x| x.ready);
-                    self.folder_tile(&folders[f], icon, any, r, hot(r), focused, c, s);
-                }
-                _ => self.folder_tile("Back", Icon::Close, false, r, hot(r), focused, c, s),
-            }
-            self.hits.push((r, h));
-        }
-        for &(r, i) in &plan.guns {
-            if hot(r) {
-                shown = Some(Hit::Buy(i));
-            }
-            self.gun_card(&shop.rows[i], r, hot(r), focus == Some(Hit::Buy(i)), c, s);
-            self.hits.push((r, Hit::Buy(i)));
-        }
-        self.slot_rects = plan.slots.iter().map(|x| x.0).collect();
-        self.bag = Some(plan.bag);
-        let drag = self.drag.filter(|&i| i < shop.rows.len());
-        // The slot a drag would land in, and the card's own place.
-        let target = drag.and_then(|i| self.hover.and_then(|p| self.drop_at(i, p)));
-        let mut from = None;
-        for (k, &(r, i)) in plan.slots.iter().enumerate() {
-            match i {
-                Some(i) => {
-                    if hot(r) {
-                        shown = Some(Hit::Buy(i));
-                    }
-                    self.bullet_card(&shop.rows[i], r, hot(r) && drag.is_none(), focus == Some(Hit::Buy(i)), c, s);
-                    self.hits.push((r, Hit::Buy(i)));
-                    if drag == Some(i) {
-                        from = Some(r);
-                    }
-                }
-                None => {
-                    if hot(r) {
-                        shown = Some(Hit::Slot(k));
-                    }
-                    c.rrect(r, 9.0 * s, [255, 255, 255, 6]);
-                    c.outline(r, 9.0 * s, 1.0, [255, 255, 255, 30]);
-                    c.text(Weight::Medium, 13.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 4.5 * s), Align::Centre, "empty", FAINT);
-                    self.hits.push((r, Hit::Slot(k)));
-                }
-            }
-            // Its place in the firing order.
-            c.text(Weight::SemiBold, 12.0 * s, (r.x + 8.0 * s, r.y + 19.0 * s), Align::Left, &format!("{}", k + 1), with_alpha(TEXT, 0.6));
-        }
-        for &(r, i) in &plan.cards {
-            if hot(r) {
-                shown = Some(Hit::Buy(i));
-            }
-            self.bullet_card(&shop.rows[i], r, hot(r) && drag.is_none(), focus == Some(Hit::Buy(i)), c, s);
-            self.hits.push((r, Hit::Buy(i)));
-            if drag == Some(i) {
-                from = Some(r);
-            }
-        }
-        if let (Some(i), Some(p)) = (drag, self.hover) {
-            // The card left behind shows as a hole; where it would land is
-            // ringed; the card itself rides under the pointer.
-            if let Some(r) = from {
-                c.rrect(r, 9.0 * s, [4, 6, 8, 170]);
-                c.outline(r, 9.0 * s, 1.0, [255, 255, 255, 40]);
-            }
-            match target {
-                Some(StartEvent::Move(_, k)) => {
-                    let r = self.slot_rects[k];
-                    c.outline(r.inset(-3.0 * s), 12.0 * s, 2.5 * s, ACCENT);
-                    c.rrect(Rect::new(r.x - 5.0 * s, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, ACCENT);
-                }
-                Some(_) => c.outline(plan.bag.inset(4.0 * s), 12.0 * s, 2.0 * s, with_alpha(ACCENT, 0.7)),
-                None => {}
-            }
-            let (w, h) = plan.slots.first().map_or((CARD_W * s, CARD_H * s), |x| (x.0.w, x.0.h));
-            let r = Rect::new(p.0 - w / 2.0, p.1 - h * 0.4, w, h);
-            // (Over everything, not kept to the scrolling rows.)
-            let clip = c.clip.take();
-            c.rrect(Rect::new(r.x + 4.0 * s, r.y + 6.0 * s, w, h), 10.0 * s, [0, 0, 0, 110]);
-            self.bullet_card(&shop.rows[i], r, true, false, c, s);
-            c.clip = clip;
-            shown = Some(Hit::Buy(i));
-        }
-        self.detail(&shop, shown, &folders, plan.detail, c, s);
-        // (The buttons are `draw`'s, fixed under the scrolling page.)
-        let _ = foot_s;
-        plan.left.bottom().max(plan.right.bottom())
-    }
-
-    /// A tile's face: bright when a pick does something, dark when not.
-    #[allow(clippy::too_many_arguments)]
-    fn face(&self, r: Rect, ready: bool, on: bool, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
-        let (t, b) = match (ready || on, hot) {
-            (true, false) => (BUTTON_TOP, BUTTON_BOTTOM),
-            (true, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
-            (false, false) => ([18, 22, 28, 235], [13, 16, 21, 235]),
-            (false, true) => ([28, 33, 40, 240], [20, 24, 30, 240]),
-        };
-        let edge = if on { [96, 190, 255, 200] } else if ready { [255, 255, 255, 34] } else { [255, 255, 255, 12] };
-        c.panel(r, 9.0 * s, t, b, if on { 1.5 * s } else { 1.0 }, edge);
-        if focused {
-            c.outline(r.inset(-2.0 * s), 11.0 * s, 1.5 * s, ACCENT);
-        }
-    }
-
-    /// An upgrade tile, drawn as the command card draws a command: the
-    /// icon in the middle, the name under it, levels as pips, the price.
-    #[allow(clippy::too_many_arguments)]
-    fn tile(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
-        let owned = row.level.1 > 0 && row.level.0 >= row.level.1;
-        self.face(r, row.ready || owned, false, hot, focused, c, s);
-        let dim: f32 = if row.ready || owned { 1.0 } else { 0.42 };
-        // A long name ("More cards on the gun") goes on two lines under a
-        // smaller icon rather than shrinking to nothing.
-        let ink = with_alpha(TEXT, dim.max(0.6));
-        let room = r.w - 8.0 * s;
-        let lines = if c.atlas.measure(Weight::SemiBold, 11.5 * s, &row.name) > room - 2.0 * s { c.wrap(Weight::SemiBold, 11.5 * s, room, &row.name) } else { vec![row.name.clone()] };
-        let ic = if lines.len() > 1 { 22.0 * s } else { 28.0 * s };
-        c.icon(row.icon, (r.x + (r.w - ic) / 2.0, r.y + 8.0 * s), ic, with_alpha(if owned { GOOD } else { row.tint }, dim));
-        if lines.len() > 1 {
-            c.text_fit(Weight::SemiBold, 11.5 * s, (r.x + r.w / 2.0, r.y + 44.0 * s), Align::Centre, &lines[0], room, ink);
-            c.text_fit(Weight::SemiBold, 11.5 * s, (r.x + r.w / 2.0, r.y + 57.0 * s), Align::Centre, &lines[1..].join(" "), room, ink);
-        } else {
-            let px = fit_px(c, &row.name, 12.5 * s, 11.5 * s, room - 2.0 * s);
-            c.text_fit(Weight::SemiBold, px, (r.x + r.w / 2.0, r.y + 54.0 * s), Align::Centre, &row.name, room, ink);
-        }
-        if row.level.1 > 1 {
-            let d = 5.0 * s;
-            for k in 0..row.level.1 {
-                let at = Rect::new(r.x + 6.0 * s + k as f32 * (d + 2.5 * s), r.bottom() - 11.0 * s, d, d);
-                c.rrect(at, d / 2.0, if k < row.level.0 { ACCENT } else { [255, 255, 255, 40] });
-            }
-        }
-        if owned {
-            c.icon(Icon::Check, (r.right() - 17.0 * s, r.y + 5.0 * s), 13.0 * s, GOOD);
-        } else if !row.price.is_empty() {
-            c.text(Weight::SemiBold, 12.0 * s, (r.right() - 5.0 * s, r.bottom() - 5.0 * s), Align::Right, &row.price, with_alpha(if row.ready { ENERGY } else { BAD }, 0.95));
-        }
-    }
-
-    /// A folder on the grid (or its way back): its icon, its name and a
-    /// dot when something in it can be bought now.
-    #[allow(clippy::too_many_arguments)]
-    fn folder_tile(&self, name: &str, icon: Icon, any: bool, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
-        self.face(r, true, false, hot, focused, c, s);
-        c.outline(r.inset(3.0 * s), 7.0 * s, 1.0, [96, 190, 255, 60]);
-        let ic = 28.0 * s;
-        c.icon(icon, (r.x + (r.w - ic) / 2.0, r.y + 9.0 * s), ic, ACCENT);
-        c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + r.w / 2.0, r.y + 54.0 * s), Align::Centre, name, r.w - 6.0 * s, TEXT);
-        c.text(Weight::SemiBold, 14.0 * s, (r.right() - 6.0 * s, r.bottom() - 4.0 * s), Align::Right, if name == "Back" { "‹" } else { "›" }, MUTED);
-        if any {
-            c.rrect(Rect::new(r.right() - 13.0 * s, r.y + 6.0 * s, 7.0 * s, 7.0 * s), 3.5 * s, ENERGY);
-        }
-    }
-
-    /// A gun card: its kind's icon, its name, its price or where it is,
-    /// and its numbers as bars.
-    #[allow(clippy::too_many_arguments)]
-    fn gun_card(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
-        self.face(r, row.ready, row.on, hot, focused, c, s);
-        let p = 12.0 * s;
-        let dim = if row.ready || row.on { 1.0 } else { 0.5 };
-        let ic = 34.0 * s;
-        c.icon(row.icon, (r.x + p, r.y + p), ic, with_alpha(row.tint, dim));
-        c.text_fit(Weight::SemiBold, 17.0 * s, (r.x + p + ic + 10.0 * s, r.y + p + 14.0 * s), Align::Left, &row.name, r.w - 2.0 * p - ic - 10.0 * s, with_alpha(TEXT, dim.max(0.6)));
-        let (tag, col) = if !row.price.is_empty() {
-            (format!("{}  ·  {}", row.price, row.state), if row.ready { ACCENT } else { BAD })
-        } else {
-            (row.state.clone(), if row.on { GOOD } else { MUTED })
-        };
-        c.text_fit(Weight::Medium, 13.5 * s, (r.x + p + ic + 10.0 * s, r.y + p + 33.0 * s), Align::Left, &tag, r.w - 2.0 * p - ic - 10.0 * s, col);
-        let mut y = r.y + 66.0 * s;
-        let step = ((r.bottom() - p - y + 6.0 * s) / row.bars.len().max(1) as f32).min(19.0 * s);
-        for (label, f, value) in &row.bars {
-            c.text(Weight::Medium, 12.5 * s, (r.x + p, y + 4.5 * s), Align::Left, label, MUTED);
-            let bar = Rect::new(r.x + p + 62.0 * s, y - 1.0 * s, r.w - 2.0 * p - 62.0 * s - 52.0 * s, 6.0 * s);
-            c.bar(bar, *f, with_alpha(row.tint, 0.85 * dim), [255, 255, 255, 22]);
-            c.text(Weight::SemiBold, 12.5 * s, (r.right() - p, y + 4.5 * s), Align::Right, value, with_alpha(TEXT, dim.max(0.6)));
-            y += step;
-        }
-    }
-
-    /// A bullet card: a band of its kind's colour, its icon, its name, its
-    /// budget cost as pips and its price.
-    #[allow(clippy::too_many_arguments)]
-    fn bullet_card(&self, row: &ShopRow, r: Rect, hot: bool, focused: bool, c: &mut Canvas, s: f32) {
-        // Landscape since the UI review (11-15): the icon at the left, the
-        // name, its budget cost as pips and its price beside it.
-        self.face(r, row.ready, row.on, hot, focused, c, s);
-        let dim = if row.ready || row.on { 1.0 } else { 0.45 };
-        c.rrect(Rect::new(r.x + 6.0 * s, r.y + 4.0 * s, r.w - 12.0 * s, 3.0 * s), 1.5 * s, with_alpha(row.tint, 0.9 * dim));
-        let ic = 30.0 * s;
-        c.icon(row.icon, (r.x + 22.0 * s, r.y + (r.h - ic) / 2.0 + 3.0 * s), ic, with_alpha(row.tint, dim));
-        let tx = r.x + 22.0 * s + ic + 10.0 * s;
-        let mut room = r.right() - 8.0 * s - tx;
-        if let Some(b) = row.badge {
-            let bs = 15.0 * s;
-            c.icon(b, (r.right() - bs - 7.0 * s, r.y + 12.0 * s), bs, with_alpha(TEXT, 0.85 * dim.max(0.6)));
-            room -= bs + 4.0 * s;
-        }
-        let px = fit_px(c, &row.name, 13.5 * s, 11.5 * s, room);
-        c.text_fit(Weight::SemiBold, px, (tx, r.y + 28.0 * s), Align::Left, &row.name, room, with_alpha(TEXT, dim.max(0.6)));
-        let d = 6.0 * s;
-        let foot = r.bottom() - 13.0 * s;
-        for k in 0..row.cost.min(6) {
-            c.rrect(Rect::new(tx + k as f32 * (d + 2.5 * s), foot - d / 2.0 - 4.0 * s, d, d), d / 2.0, with_alpha(ENERGY, 0.85 * dim.max(0.6)));
-        }
-        if row.cost == 0 {
-            c.text(Weight::Medium, 12.0 * s, (tx, foot), Align::Left, "free", MUTED);
-        }
-        if !row.price.is_empty() {
-            c.text(Weight::SemiBold, 13.5 * s, (r.right() - 8.0 * s, foot), Align::Right, &row.price, if row.ready { ACCENT } else { BAD });
-        }
-    }
-
-    /// The box under the grid: what the tile under the cursor (or the
-    /// keyboard's) is, does and costs.
-    #[allow(clippy::too_many_arguments)]
-    fn detail(&self, shop: &Shop, shown: Option<Hit>, folders: &[String], r: Rect, c: &mut Canvas, s: f32) {
-        c.panel(r, 9.0 * s, [10, 13, 17, 220], [8, 10, 13, 220], 1.0, [255, 255, 255, 14]);
-        let p = 12.0 * s;
-        let (name, about, price, state, ready) = match shown {
-            Some(Hit::Buy(i)) => {
-                let row = &shop.rows[i];
-                (row.name.clone(), row.about.clone(), row.price.clone(), row.state.clone(), row.ready)
-            }
-            Some(Hit::Folder(f)) => {
-                let n = shop.rows.iter().filter(|x| x.area == ShopArea::Folder && x.group == folders[f]).count();
-                (folders[f].clone(), format!("Open: {n} to unlock or upgrade, as the command card's own page."), String::new(), String::new(), true)
-            }
-            Some(Hit::FolderBack) => ("Back".into(), "Back to the first page of upgrades.".into(), String::new(), String::new(), true),
-            Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "Drag a card here.".into(), String::new(), String::new(), true),
-            _ => ("Point at a tile".into(), "The gun fires its cards left to right. Drag a card to a slot to move it; click a card to take it out or put it in.".into(), String::new(), String::new(), true),
-        };
-        c.text_fit(Weight::SemiBold, 17.0 * s, (r.x + p, r.y + 24.0 * s), Align::Left, &name, r.w - 2.0 * p - 150.0 * s, TEXT);
-        let tag = if price.is_empty() { state } else if state.is_empty() { format!("{price} points") } else { format!("{price} points  ·  {state}") };
-        c.text_fit(Weight::SemiBold, 14.0 * s, (r.right() - p, r.y + 24.0 * s), Align::Right, &tag, 150.0 * s, if !price.is_empty() && !ready { BAD } else { ACCENT });
-        let lead = 19.5 * s;
-        let lines = c.wrap(Weight::Medium, 14.0 * s, r.w - 2.0 * p, &about);
-        let room = ((r.h - 38.0 * s) / lead).floor().max(1.0) as usize;
-        for (k, l) in lines.iter().take(room).enumerate() {
-            c.text(Weight::Medium, 14.0 * s, (r.x + p, r.y + 48.0 * s + k as f32 * lead), Align::Left, l, MUTED);
-        }
-    }
-
     /// The pages the last drawn list took: an Options tab, the key list or
     /// the campaign (1 elsewhere). The fit tests'.
     pub fn sheets(&self) -> usize {
-        if matches!(self.page, Page::Options | Page::Keys | Page::Missions) {
+        if matches!(self.page, Page::Options | Page::Keys | Page::Missions | Page::Shop) {
             self.sheets
         } else {
             1
@@ -1743,16 +1369,6 @@ impl StartMenu {
     /// drawn (the drag films, `drag=`).
     pub fn slot_at(&self, k: usize) -> Option<(f32, f32)> {
         self.slot_rects.get(k).map(|r| (r.x + r.w / 2.0, r.y + r.h / 2.0))
-    }
-
-    /// The centre of the first card out of the gun named `name`, as last
-    /// drawn; else of the last gun card so named (the one on sale, or the
-    /// gun range's rack, after those owned).
-    pub fn card_at(&self, name: &str) -> Option<(f32, f32)> {
-        let shop = self.shop.as_ref()?;
-        let gun = shop.rows.iter().rposition(|r| r.area == ShopArea::Guns && r.name == name);
-        let i = self.card_groups().into_iter().flat_map(|(_, c)| c).find(|&i| shop.rows[i].name == name).or(gun)?;
-        self.rect_of(Hit::Buy(i)).map(|r| (r.x + r.w / 2.0, r.y + r.h / 2.0))
     }
 
     /// A point in the bag's area (a gun card dropped there comes out).
@@ -1831,15 +1447,18 @@ mod tests {
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit], "up from the top wraps to quit");
     }
 
-    /// A shop like the run's: `n` bullet cards beside eight upgrades, two
-    /// folders, three guns.
+    /// A shop like the run's: `n` bullet cards (the first three in the
+    /// gun, half in the bag, the rest on offer) beside eight Squad
+    /// upgrades, seven Buildings, five Tools and three guns. Rows 0-7 are
+    /// the Squad's, 8-14 Buildings, 15-19 Tools, 20-22 guns (20 carried),
+    /// cards from 23.
     fn shop(n: usize) -> Shop {
         let mut rows = Vec::new();
         let mut add = |group: &str, area: ShopArea, k: usize| {
             let mut r = ShopRow::new(group, area, Icon::Wall, &format!("{group} {k}"));
             (r.about, r.price, r.state, r.ready, r.level) = ("Does it".into(), format!("{}", 100 + k), "0/3".into(), k.is_multiple_of(2), (1, 3));
             if area == ShopArea::Guns {
-                r.bars = vec![("Range".into(), 0.5, "24".into()), ("Rate".into(), 0.3, "1.0".into()), ("Budget".into(), 0.4, "10".into()), ("Slots".into(), 0.6, "4".into())];
+                r.bars = vec![("Range".into(), 0.5, "24".into()), ("Rate".into(), 0.3 + 0.1 * k as f32, "1.0".into()), ("Budget".into(), 0.4, "10".into()), ("Slots".into(), 0.6, "4".into())];
             }
             r.cost = k as u32 % 4;
             r.on = area == ShopArea::Cards && k < 3 || area == ShopArea::Guns && k == 0;
@@ -1849,91 +1468,130 @@ mod tests {
             add("Squad", ShopArea::Upgrades, k);
         }
         for k in 0..7 {
-            add("Buildings", ShopArea::Folder, k);
+            add("Buildings", ShopArea::Upgrades, k);
         }
         for k in 0..5 {
-            add("Tools", ShopArea::Folder, k);
+            add("Tools", ShopArea::Upgrades, k);
         }
         for k in 0..3 {
             add("Guns", ShopArea::Guns, k);
         }
         for k in 0..n {
-            add(if k < n / 2 { "In the bag" } else { "For sale" }, ShopArea::Cards, k);
+            add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), folder_icons: Vec::new(), range: false }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false }
     }
 
-    /// Every tile of the shop, on the first grid page and in each folder,
-    /// and the two buttons, are on screen, apart and clickable at every
-    /// size, with as many cards as a run gathers and more.
-    #[test]
-    fn the_shop_fits_and_its_rows_pick() {
-        for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
-            for user in crate::world::settings::STEPS {
-                for n in [6, 14, 24] {
-                    for folder in [None, Some(0), Some(1)] {
-                        let mut m = menu();
-                        m.shop = Some(shop(n));
-                        m.show(Page::Shop);
-                        if let Some(k) = folder {
-                            m.act(Hit::Folder(k));
-                        }
-                        let mut c = Canvas::new(screen);
-                        c.ui.user = user;
-                        let mut rects: Vec<Rect> = Vec::new();
-                        // Each scrolled into view (the page scrolls since
-                        // 11-15), then where it sits on the whole page.
-                        for h in m.rows() {
-                            shown(&mut m, &mut c, h);
-                            let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {user} {n} {folder:?}: {h:?} not drawn"));
-                            assert!(r.bottom() <= screen.1 as f32 + 0.5 && r.right() <= screen.0 as f32 + 0.5 && r.x >= 0.0, "{screen:?} at {user}, {n} cards: {h:?} {r:?} off screen");
-                            let fixed = matches!(h, Hit::Next | Hit::EndRun);
-                            let r = if fixed { Rect::new(r.x, r.y + 1e5, r.w, r.h) } else { Rect::new(r.x, r.y + m.scroll, r.w, r.h) };
-                            assert!(rects.iter().all(|q| !(q.x < r.right() && r.x < q.right() && q.y < r.bottom() && r.y < q.bottom())), "{screen:?} at {user}, {n} cards: {h:?} overlaps");
-                            rects.push(r);
-                        }
-                    }
-                }
+    /// The gun range's armory as the game fills it, with the longest
+    /// names: eight guns, twenty bullets on a grid of four shapes by five
+    /// payloads, fourteen modifiers on two shelves, `bag` cards in the bag,
+    /// a six-slot gun with two in it, and the range's five tools.
+    fn armory(bag: usize) -> Shop {
+        let mut rows = Vec::new();
+        for k in 0..8 {
+            let mut r = ShopRow::new("Guns", ShopArea::Guns, Icon::Rifle, ["Rifle", "Carbine", "Long gun", "Scattergun"][k % 4]);
+            r.on = k == 0;
+            r.state = if k == 0 { "carried" } else if k < 4 { "armory" } else { "free" }.into();
+            r.ready = k > 0;
+            r.about = "Fast and short, a little wild. More slots. From planet 4.".into();
+            r.bars = vec![("Range".into(), 0.5, "24".into()), ("Rate".into(), 0.1 * k as f32, "1.0/s".into()), ("Aim".into(), 0.9, "0.5".into()), ("Budget".into(), 0.4, "10".into()), ("Slots".into(), 0.6, "4".into())];
+            if k % 4 == 3 {
+                r.bars.insert(3, ("Shots".into(), 0.6, "4".into()));
+            }
+            rows.push(r);
+        }
+        let (sets, shells) = (["Standard", "Slug", "Needle", "Buckshot"], ["Bullet", "Blast", "Bomb", "Gas", "Germ"]);
+        for (a, set) in sets.iter().enumerate() {
+            for (b, shell) in shells.iter().enumerate() {
+                let mut r = ShopRow::new("Bullets", ShopArea::Cards, Icon::Blast, &format!("{set} {}", shell.to_lowercase()));
+                (r.ready, r.state, r.cost, r.badge) = (true, "free".into(), (a + b) as u32 % 6 + 1, Some(Icon::Slug));
+                r.cell = Some(((a as u8, set.to_string()), (b as u8, shell.to_string())));
+                r.about = "Puts slime where it hits to sleep. Needle: its own damage, speed, range and spread. Budget 3.".into();
+                rows.push(r);
             }
         }
+        let mods = ["Thrift", "Scorch", "Smother", "Wide", "Scatter", "Quiet", "Delay", "Thick", "Pierce", "Split", "Bait", "Faster rate", "Spread wide", "Double tap"];
+        for (k, name) in mods.iter().enumerate() {
+            let group = if k < 6 { "Cards for the next bullet" } else { "Cards for every bullet" };
+            let mut r = ShopRow::new(group, ShopArea::Cards, Icon::Wide, name);
+            (r.ready, r.state, r.cost) = (true, "free".into(), k as u32 % 3);
+            rows.push(r);
+        }
+        for k in 0..bag + 2 {
+            let mut r = ShopRow::new(BAG, ShopArea::Cards, Icon::Gas, &format!("Buckshot gas {k}"));
+            (r.ready, r.on, r.state, r.cost) = (true, k < 2, if k < 2 { format!("slot {}", k + 1) } else { "in the bag".into() }, 2);
+            rows.push(r);
+        }
+        for name in ["New rolls", "Deeper rolls", "Shallower rolls", "Empty the gun", "Empty the bag"] {
+            let mut r = ShopRow::new("", ShopArea::Upgrades, Icon::Fast, name);
+            (r.ready, r.about) = (true, "Roll the shelf's bullets and the rack's guns again.".into());
+            rows.push(r);
+        }
+        let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true }
+    }
+
+    /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
+    /// pane tells it; its button or Enter buys it. The tabs open by a
+    /// click, Tab and their number; Land and Give up act at once; Esc goes
+    /// back to the main page, on Run.
+    #[test]
+    fn the_shops_rows_pick_and_buy() {
         let mut m = menu();
-        m.shop = Some(shop(6));
+        m.shop = Some(shop(8));
         m.show(Page::Shop);
         let mut c = Canvas::new((1280, 800));
-        assert_eq!(click(&mut m, &mut c, Hit::Buy(3)), vec![StartEvent::Buy(3)]);
-        // Buildings is a folder: its tiles show once it is opened.
-        assert!(m.rect_of(Hit::Buy(8)).is_none());
-        assert!(click(&mut m, &mut c, Hit::Folder(0)).is_empty());
-        assert_eq!(click(&mut m, &mut c, Hit::Buy(8)), vec![StartEvent::Buy(8)]);
-        assert!(m.rect_of(Hit::Buy(0)).is_none(), "the first page's tiles are put away");
-        assert!(click(&mut m, &mut c, Hit::FolderBack).is_empty());
-        assert!(click(&mut m, &mut c, Hit::Folder(1)).is_empty());
-        assert_eq!(click(&mut m, &mut c, Hit::Buy(15)), vec![StartEvent::Buy(15)], "the first tool");
-        // Esc closes the folder first, onto its tile, then the shop.
-        m.key(KeyCode::Escape, true);
-        assert_eq!((m.page, m.rows()[m.focus]), (Page::Shop, Hit::Folder(1)));
-        // Guns and cards pick from either area.
-        assert_eq!(click(&mut m, &mut c, Hit::Buy(20)), vec![StartEvent::Buy(20)], "a gun");
-        assert_eq!(click(&mut m, &mut c, Hit::Buy(25)), vec![StartEvent::Buy(25)], "a card");
+        let names = |m: &StartMenu| m.shop_tabs().into_iter().map(|t| t.name).collect::<Vec<_>>();
+        assert_eq!(names(&m), ["Cards", "Guns", "Squad", "Buildings", "Tools"]);
+        // A card on offer (rows 27-30): a click picks it, the pane's button
+        // buys it, and so does Enter.
+        assert!(click(&mut m, &mut c, Hit::Buy(27)).is_empty(), "a click picks");
+        assert!(m.picked && m.rows()[m.focus] == Hit::Buy(27));
+        assert_eq!(click(&mut m, &mut c, Hit::Do(27)), vec![StartEvent::Buy(27)], "the pane's button buys");
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(27)], "so does Enter");
+        // The upgrades on their tabs.
+        assert!(click(&mut m, &mut c, Hit::ShopTab(3)).is_empty());
+        assert_eq!(names(&m)[m.shop_tab], "Buildings");
+        c.clear();
+        m.draw(&mut c);
+        assert!(m.rect_of(Hit::Buy(0)).is_none() && m.rect_of(Hit::Buy(27)).is_none(), "the other tabs' rows are put away");
+        assert!(m.rect_of(Hit::Buy(23)).is_some() && m.rect_of(Hit::Buy(26)).is_some(), "the gun and the bag stay");
+        assert!(click(&mut m, &mut c, Hit::Buy(8)).is_empty());
+        assert_eq!(click(&mut m, &mut c, Hit::Do(8)), vec![StartEvent::Buy(8)]);
+        // Tab goes round; a number picks a tab, nothing picked on it.
+        m.key(KeyCode::Tab, true);
+        assert_eq!(names(&m)[m.shop_tab], "Tools");
+        m.key(KeyCode::Digit2, true);
+        assert_eq!((names(&m)[m.shop_tab].as_str(), m.picked), ("Guns", false));
+        // The keyboard's first key picks the tab's first row (the carried
+        // gun heads the table) rather than buying it unseen.
+        assert!(m.key(KeyCode::Enter, true).is_empty(), "the first Enter picks");
+        assert_eq!((m.rows()[m.focus], m.picked), (Hit::Buy(20), true));
+        m.key(KeyCode::ArrowRight, true);
+        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(21)]);
+        // The carried gun's button does nothing; a gun card's takes it out.
+        assert!(click(&mut m, &mut c, Hit::Buy(20)).is_empty());
+        assert!(m.rect_of(Hit::Do(20)).is_none(), "the carried gun has no button");
+        assert!(click(&mut m, &mut c, Hit::Buy(23)).is_empty());
+        assert_eq!(StartMenu::button_of(&m.shop.as_ref().unwrap().rows[23]), ("Take it out of the gun".to_string(), true));
+        assert_eq!(click(&mut m, &mut c, Hit::Do(23)), vec![StartEvent::Buy(23)]);
         assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
         assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
-        m.focus = 0;
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(0)]);
-        m.key(KeyCode::ArrowRight, true);
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(1)], "right walks the grid");
+        // A refused buy's notice shows in the shop and goes with it.
+        m.notice = Some("Scorch: not enough points, or locked".into());
         m.key(KeyCode::Escape, true);
-        assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Run));
+        assert_eq!((m.page, m.rows()[m.focus], m.notice.as_deref()), (Page::Main, Hit::Run, None));
     }
 
     /// The shop stays put when a card goes into the bag or comes out of
-    /// it (owner, 11-15 02:58Z): the same scale, the same gun, slot and
-    /// tile places, at every screen and UI size.
+    /// it (owner, 11-15 02:58Z): the gun's slots, the bag, the tabs and
+    /// the buttons keep their places at every screen and UI size.
     #[test]
     fn the_shop_holds_still_when_the_bag_fills() {
         let place = |bag: bool, screen: (u32, u32), user: f32| {
             let mut sh = shop(6);
             for r in sh.rows.iter_mut().filter(|r| r.area == ShopArea::Cards && !r.on) {
-                r.group = if bag && r.name.ends_with('3') { "In the bag" } else { "For sale" }.into();
+                r.group = if bag && r.name.ends_with('3') { BAG } else { "Cards" }.into();
             }
             let mut m = menu();
             m.shop = Some(sh);
@@ -1941,8 +1599,9 @@ mod tests {
             let mut c = Canvas::new(screen);
             c.ui.user = user;
             m.draw(&mut c);
-            let mut at: Vec<(Hit, Rect)> = m.rows().into_iter().filter(|h| !matches!(h, Hit::Buy(i) if *i >= 23)).filter_map(|h| Some((h, m.rect_of(h)?))).collect();
+            let mut at: Vec<(Hit, Rect)> = m.hits.iter().filter(|(_, h)| matches!(h, Hit::Slot(_) | Hit::ShopTab(_) | Hit::Next | Hit::EndRun)).map(|&(r, h)| (h, r)).collect();
             at.extend(m.slot_rects.iter().map(|&r| (Hit::Next, r)));
+            at.extend(m.bag.map(|r| (Hit::EndRun, r)));
             at
         };
         for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
@@ -1954,26 +1613,31 @@ mod tests {
 
     /// The gun range's armory is the shop page with its own buttons: Back
     /// to the range goes on to the round (`NextLevel`), and so do Esc and
-    /// a right click with no folder open; Leave the range is `EndRun`. The
-    /// main page's Gun range row opens it.
+    /// a right click; Leave the range is `EndRun`; its tools act at once.
+    /// The main page's Gun range row opens it.
     #[test]
     fn the_gun_ranges_armory_goes_back_to_the_range() {
         let mut m = menu();
         let mut c = Canvas::new((1280, 800));
         assert_eq!(click(&mut m, &mut c, Hit::Range), vec![StartEvent::Range]);
         assert!(m.rows().iter().position(|&h| h == Hit::Range) < m.rows().iter().position(|&h| h == Hit::Options), "before Options");
-        let mut shop = shop(6);
-        shop.range = true;
-        m.shop = Some(shop);
+        m.shop = Some(armory(3));
         m.show(Page::Shop);
+        let names: Vec<String> = m.shop_tabs().into_iter().map(|t| t.name).collect();
+        assert_eq!(names, ["Guns", "Bullets", "Cards for the next bullet", "Cards for every bullet"]);
+        let tool = m.shop.as_ref().unwrap().rows.iter().position(|r| r.name == "Deeper rolls").unwrap();
+        assert_eq!(click(&mut m, &mut c, Hit::Do(tool)), vec![StartEvent::Buy(tool)], "a tool acts at once");
         assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
         assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
         assert_eq!(m.key(KeyCode::Escape, true), vec![StartEvent::NextLevel]);
         assert_eq!(m.button(Button::Right, true), vec![StartEvent::NextLevel]);
-        // A folder open: Esc closes it first.
-        m.act(Hit::Folder(0));
-        assert!(m.key(KeyCode::Escape, true).is_empty());
-        assert_eq!((m.page, m.folder.as_deref()), (Page::Shop, None));
+        // The bullets lie on their grid: a shape's row, a payload's column.
+        m.open_shop_tab(1);
+        c.clear();
+        m.draw(&mut c);
+        let at = |m: &StartMenu, name: &str| m.rect_of(Hit::Buy(m.shop.as_ref().unwrap().rows.iter().position(|r| r.name == name).unwrap())).unwrap();
+        let (a, b, d) = (at(&m, "Standard bullet"), at(&m, "Standard germ"), at(&m, "Buckshot bullet"));
+        assert!((a.y - b.y).abs() < 0.5 && b.x > a.x && (a.x - d.x).abs() < 0.5 && d.y > a.y, "a row a shape, a column a payload");
         // The run's shop goes back to the main page, on Run.
         m.shop.as_mut().unwrap().range = false;
         assert!(m.key(KeyCode::Escape, true).is_empty());
@@ -2001,57 +1665,37 @@ mod tests {
         (r.x + r.w / 2.0, r.y + r.h / 2.0)
     }
 
-    /// Scrolled so the gun's slots are partly under the title, a drop
-    /// lands in the slot it is let go on, by its own number, and one let
-    /// go over the title (on a slot scrolled under it) does nothing
-    /// (11-15 review: the slot list was cut to the shown ones, so a drop
-    /// moved the card to the wrong slot).
+    /// A card dragged from the counter onto any slot of a six-slot gun, at
+    /// 200% on a small screen, lands in that slot by its own number (the
+    /// 11-15 review: when the shop scrolled, a drop could land in the wrong
+    /// slot); one let go on the top bar does nothing.
     #[test]
-    fn a_drop_after_scrolling_lands_in_its_own_slot() {
+    fn a_drop_lands_in_its_own_slot() {
         let mut m = menu();
-        // A gun of twelve slots: several rows of them.
         let mut sh = shop(14);
-        sh.slots = 12;
+        sh.slots = 6;
         m.shop = Some(sh);
         m.show(Page::Shop);
         let mut c = Canvas::new((1280, 720));
         c.ui.user = 2.0;
         c.clear();
         m.draw(&mut c);
-        assert!(m.scroll_max > 0.0, "the shop scrolls at 200% on 1280 x 720");
-        // Scroll until the first slot is above the page's rows.
-        let body = m.body.unwrap();
-        let mut k = None;
-        for _ in 0..200 {
-            m.wheel(-1);
-            c.clear();
-            m.draw(&mut c);
-            if m.slot_rects[0].bottom() < body.y {
-                k = (1..m.slot_rects.len()).find(|&j| body.contains(centre(m.slot_rects[j])));
-                if k.is_some() {
-                    break;
-                }
-            }
-        }
-        let card = m.card_groups().into_iter().flat_map(|(_, v)| v).find(|&i| m.rect_of(Hit::Buy(i)).is_some()).expect("a card in view");
-        let k = k.expect("a slot past the first in view with the first scrolled away");
-        {
+        assert!(!m.scrolls());
+        let card = 30;
+        assert!(m.rect_of(Hit::Buy(card)).is_some(), "a card on the counter");
+        for k in 0..6 {
             let to = centre(m.slot_rects[k]);
-            assert_eq!(drag(&mut m, &mut c, Hit::Buy(card), to), vec![StartEvent::Move(card, k)]);
+            assert_eq!(drag(&mut m, &mut c, Hit::Buy(card), to), vec![StartEvent::Move(card, k)], "slot {k}");
         }
-        let hidden = m.slot_rects[0];
-        {
-            assert!(hidden.bottom() < body.y);
-            assert!(drag(&mut m, &mut c, Hit::Buy(card), centre(hidden)).is_empty(), "a slot scrolled under the title takes no drop");
-        }
+        assert!(drag(&mut m, &mut c, Hit::Buy(card), (300.0, 10.0)).is_empty(), "the top bar takes no drop");
     }
 
     /// The owner, 20:32Z: "When I buy a card it goes into the gun but I
     /// don't see how to move cards around." A card dragged onto a slot
-    /// moves there (a bag card goes in at that slot), onto the bag comes
-    /// out, onto its own slot or nowhere does nothing; a short wobble is
-    /// still a click; Q and E move the focused card a slot and the focus
-    /// follows.
+    /// moves there (a bag card or one on offer goes in at that slot), onto
+    /// the bag comes out, onto its own slot or nowhere does nothing; a
+    /// short wobble is still a click, which picks it; Q and E move the
+    /// focused card a slot and the focus follows.
     #[test]
     fn cards_drag_to_slots_and_q_and_e_move_them() {
         let mut m = menu();
@@ -2060,11 +1704,10 @@ mod tests {
         let mut c = Canvas::new((1600, 900));
         c.clear();
         m.draw(&mut c);
-        // Rows 23-25 are in the gun (slots 1-3), slot 4 is empty, 26-30 in
-        // the bag or for sale.
+        // Rows 23-25 are in the gun (slots 1-3), slot 4 is empty, 26 in the
+        // bag, 27-30 on offer.
         let (first, gun3) = (23, 25);
         assert_eq!((m.slot_of(gun3), m.slot_of(26)), ((Some(2), 3), (None, 3)));
-        // (The shop does not change here, so neither does its layout.)
         let slot: Vec<(f32, f32)> = m.slot_rects.iter().map(|&r| centre(r)).collect();
         assert_eq!(slot.len(), 4);
         assert_eq!(drag(&mut m, &mut c, Hit::Buy(first), slot[2]), vec![StartEvent::Move(first, 2)], "first to third");
@@ -2072,18 +1715,20 @@ mod tests {
         assert!(drag(&mut m, &mut c, Hit::Buy(gun3), slot[2]).is_empty(), "its own slot");
         assert!(m.rect_of(Hit::Slot(3)).is_some(), "the empty slot is a target");
         assert_eq!(drag(&mut m, &mut c, Hit::Buy(26), slot[3]), vec![StartEvent::Move(26, 3)], "a bag card into the empty slot");
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(27), slot[1]), vec![StartEvent::Move(27, 1)], "a bag card in between");
-        let bag = m.rect_of(Hit::Buy(28)).unwrap();
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(first), (bag.right() + 4.0, bag.y + 4.0)), vec![StartEvent::Buy(first)], "onto the bag: out");
+        assert_eq!(drag(&mut m, &mut c, Hit::Buy(27), slot[1]), vec![StartEvent::Move(27, 1)], "one on offer, bought into a slot");
+        let bag = m.bag.unwrap();
+        assert_eq!(drag(&mut m, &mut c, Hit::Buy(first), (bag.right() - 4.0, bag.y + 4.0)), vec![StartEvent::Buy(first)], "onto the bag: out");
         assert!(drag(&mut m, &mut c, Hit::Buy(26), centre(bag)).is_empty(), "a bag card onto the bag");
         assert!(drag(&mut m, &mut c, Hit::Buy(first), (5.0, 5.0)).is_empty(), "let go nowhere");
-        assert!(drag(&mut m, &mut c, Hit::Buy(20), slot[0]).is_empty(), "guns do not drag");
-        // A wobble under `DRAG_FROM` is a click.
+        m.open_shop_tab(1);
+        assert!(drag(&mut m, &mut c, Hit::Buy(21), slot[0]).is_empty(), "guns do not drag");
+        // A wobble under `DRAG_FROM` is a click: it picks the card.
         let r = m.rect_of(Hit::Buy(first)).unwrap();
         m.moved(Some(centre(r)));
         m.button(Button::Left, true);
         m.moved(Some((centre(r).0 + 3.0, centre(r).1)));
-        assert_eq!(m.button(Button::Left, false), vec![StartEvent::Buy(first)]);
+        assert!(m.button(Button::Left, false).is_empty());
+        assert!(m.picked && m.rows()[m.focus] == Hit::Buy(first));
         // Q and E: the focus is on the second card in the gun.
         m.focus = m.rows().iter().position(|&h| h == Hit::Buy(first + 1)).unwrap();
         let at = m.focus;
@@ -2154,12 +1799,13 @@ mod tests {
         assert!(m.rect_of(Hit::EditMaps).is_none());
         m.edit_maps = true;
         assert_eq!(click(&mut m, &mut c, Hit::EditMaps), vec![StartEvent::EditMaps]);
-        // Quit is still last, and Esc from the key card lands on Keys.
+        // Quit is still last, and Esc from the key card lands on Options
+        // (whose last tab it is; the main page has no Keys row since 11-15).
         m.key(KeyCode::ArrowUp, true);
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit]);
         m.show(Page::Keys);
         m.key(KeyCode::Escape, true);
-        assert_eq!(m.rows()[m.focus], Hit::Keys);
+        assert_eq!(m.rows()[m.focus], Hit::Options);
     }
 
     #[test]
@@ -2276,7 +1922,7 @@ mod tests {
             click(&mut m, &mut c, Hit::Campaign);
             assert_eq!(click(&mut m, &mut c, Hit::Mission(2)), vec![StartEvent::Mission(2)], "{screen:?}");
             click(&mut m, &mut c, Hit::Back);
-            click(&mut m, &mut c, Hit::Keys);
+            m.key(KeyCode::F1, true);
             assert_eq!(m.page, Page::Keys);
             click(&mut m, &mut c, Hit::Back);
             assert_eq!(click(&mut m, &mut c, Hit::Quit), vec![StartEvent::Quit]);
@@ -2305,9 +1951,7 @@ mod tests {
                 let size = |user: f32| {
                     let mut m = menu();
                     m.keys = (0..40).map(|k| (format!("K{k}"), "Does a thing".to_string())).collect();
-                    let mut sh = shop(14);
-                    sh.range = page == Page::Shop;
-                    m.shop = Some(sh);
+                    m.shop = Some(if page == Page::Shop { armory(9) } else { shop(14) });
                     m.show(page);
                     let mut c = Canvas::new(screen);
                     c.ui.user = user;
@@ -2322,7 +1966,8 @@ mod tests {
                         m.draw(&mut c);
                         let h = m.rows()[m.focus];
                         let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {page:?} at {user}: {h:?} scrolled away"));
-                        let b = m.body.unwrap();
+                        // (The shop is one screen of its own, no body.)
+                        let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
                         let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions) && h == Hit::Back);
@@ -2330,7 +1975,9 @@ mod tests {
                         assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
                     }
                     let probe = match page {
-                        Page::Shop => Hit::Buy(0),
+                        // (Land: the bottom bar's, whose height is fixed;
+                        // the counter's rows shrink to fit before they page.)
+                        Page::Shop => Hit::Next,
                         Page::Options => Hit::Reset(0),
                         Page::Missions => Hit::Mission(0),
                         Page::Keys | Page::Main => Hit::Back,
@@ -2344,13 +1991,7 @@ mod tests {
                 let (b, pb) = size(2.0);
                 let grew = pb / pa;
                 assert!(grew > 1.25, "{screen:?}: 200% is capped to {grew}x");
-                if page == Page::Shop {
-                    // The shop starts a little over the UI's size where it
-                    // has room, but is never under it: a tile is 78 units.
-                    assert!(a >= 78.0 * pa * 0.97 && b >= 78.0 * pb * 0.97, "{screen:?}: the shop's tiles {a} at 100%, {b} at 200%, under the UI size");
-                } else {
-                    assert!(b >= a * grew * 0.9, "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)");
-                }
+                assert!(b >= a * grew * 0.9, "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)");
             }
         }
     }
@@ -2384,16 +2025,15 @@ mod tests {
     }
 
     /// The owner, 11-15 17:31Z: "Having to scroll is horrible. That's not
-    /// professional." Every Options tab, every page of the key list and
-    /// the campaign fit one screen at the worst sizes (16:9 and 21:9 at
+    /// professional." The main page, every Options tab, every page of the
+    /// key list and the campaign fit one screen at the worst sizes (16:9 and 21:9 at
     /// 200%, a small laptop at 175%, the window as it opens at 125%, and
     /// smaller than the game opens): nothing scrolls, every button and
     /// word is on the screen, no two words' glyphs touch, none under 12.5
     /// units, and the options' tabs and the campaign need no second page
-    /// at any of them. The main page and the shop join when the owner has
-    /// picked their layouts (`Reports/menu-layout-research-2026-11-15/`).
+    /// at any of them. The shop joins with its new layout.
     #[test]
-    fn the_inner_pages_fit_one_screen() {
+    fn the_menu_pages_fit_one_screen() {
         let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0)];
         for (screen, user) in sizes {
             let (sw, sh) = (screen.0 as f32, screen.1 as f32);
@@ -2406,7 +2046,7 @@ mod tests {
                 for (r, h) in &m.hits {
                     assert!(r.x >= -0.5 && r.y >= -0.5 && r.right() <= sw + 0.5 && r.bottom() <= sh + 0.5, "{at}: {h:?} {r:?} off the screen");
                 }
-                assert!(m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
+                assert!(matches!(m.page, Page::Main | Page::Shop) || m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
                 let runs: Vec<_> = c.runs.iter().filter(|t| t.ink.0 < t.ink.2).collect();
                 for (k, t) in runs.iter().enumerate() {
                     assert!(t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh, "{at}: {:?} {:?} off the screen", t.text, t.ink);
@@ -2459,6 +2099,43 @@ mod tests {
                 let at = format!("{screen:?} at {user}, Campaign row {row}");
                 check(&m, &c, &at);
                 assert_eq!(m.sheets(), 1, "{at}: the campaign takes {} pages", m.sheets());
+            }
+            // The main page with every row it can have (Random planet, the
+            // map editor) and a notice, each row focused in turn, its
+            // caption box beside it.
+            m.planets = true;
+            m.edit_maps = true;
+            m.notice = Some("The map editor did not start: larder-edit was not found next to the game".into());
+            m.show(Page::Main);
+            for row in 0..m.rows().len() {
+                m.focus = row;
+                draw(&mut m, &mut c);
+                check(&m, &c, &format!("{screen:?} at {user}, main row {row}"));
+            }
+            // The run's shop (as a run has it, and with 30 cards, a full
+            // bag that pages, and a six-slot gun) and the gun range's
+            // armory (with a small bag and a full one): every tab with each
+            // of its rows picked (the pane tells it), and on the first tab
+            // the gun's, the bag's and the bottom bar's too.
+            let mut big = shop(30);
+            big.slots = 6;
+            for (name, sh) in [("shop", shop(14)), ("full shop", big), ("armory", armory(3)), ("full armory", armory(14))] {
+                m.shop = Some(sh);
+                m.show(Page::Shop);
+                draw(&mut m, &mut c);
+                check(&m, &c, &format!("{screen:?} at {user}, {name}, nothing picked"));
+                for tab in 0..m.shop_tabs().len() {
+                    m.open_shop_tab(tab);
+                    let n = if tab == 0 { m.rows().len() } else { m.shop_tabs()[tab].rows.len() };
+                    for row in 0..n {
+                        (m.focus, m.picked, m.follow) = (row, true, true);
+                        draw(&mut m, &mut c);
+                        let h = m.rows()[row];
+                        let at = format!("{screen:?} at {user}, {name} tab {tab}, {h:?} picked");
+                        check(&m, &c, &at);
+                        assert!(m.rect_of(h).is_some(), "{at}: not drawn");
+                    }
+                }
             }
         }
     }

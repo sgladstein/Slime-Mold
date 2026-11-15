@@ -36,6 +36,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // window shows it (the menu's pictures).
     let mut shop_run = None;
     if let Some((p, flag)) = menu_page {
+        // `menu=shop-mid@TAB@NAME`: the shop on its tab TAB with the row
+        // NAME picked (its pane), as a click picks it (Shop B, 11-15).
+        let (flag, extra) = flag.split_once('@').unwrap_or((flag, ""));
         let mut m = start_menu(&app.args);
         // The gun range's armory (`range=SEED menu=shop`) over its round,
         // as H opens it; a drag changes the range's gun. Not paused: the
@@ -55,7 +58,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             // `menu=shop-mid` films a run three planets in: cards in the
             // gun and the bag, a second gun bought, armour and turrets, and
-            // points left; `shop-build` and `shop-tools` with that folder open.
+            // points left; `shop-build` and `shop-tools` with that tab open,
+            // `shop-mid@TAB@NAME` with that tab open and that row picked.
             if flag != "shop" {
                 r.won(2);
                 r.won(3);
@@ -89,8 +93,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         }
         m.show(p);
         match flag {
-            "shop-build" => m.open_folder("Buildings"),
-            "shop-tools" => m.open_folder("Tools"),
+            "shop-build" => {
+                m.open_shop_tab_named("Buildings");
+            }
+            "shop-tools" => {
+                m.open_shop_tab_named("Tools");
+            }
             // Options' second and third tabs (11-15), as Tab opens them.
             "options-planet" | "options-mould" => {
                 for _ in 0..if flag == "options-planet" { 1 } else { 2 } {
@@ -98,6 +106,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
             _ => {}
+        }
+        let mut extra = extra.split('@');
+        if let Some(tab) = extra.next().filter(|t| !t.is_empty()) {
+            if !m.open_shop_tab_named(tab) {
+                return Err(format!("menu=...@{tab}: no such shop tab"));
+            }
+        }
+        if let Some(name) = extra.next() {
+            if !m.pick_named(name) {
+                return Err(format!("menu=...@{name}: no such row on the tab"));
+            }
         }
         app.menu = Some(m);
     }
@@ -119,6 +138,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let drags: Vec<&(String, String)> = drags.iter().filter(|d| d.0 != "go").collect();
     let still = if go { at.iter().take_while(|&&t| t < at[0].floor() + 1.0).count() } else { at.len() };
     if !drags.is_empty() {
+        // The shop's tab that holds the first card dragged (Shop B, 11-15:
+        // the cards for sale are on a tab of their own).
+        if let (Some(m), Some(a)) = (app.menu.as_mut(), drags.iter().map(|d| d.0.as_str()).find(|a| a.parse::<usize>().is_err() && *a != "bag")) {
+            m.open_shop_tab_named(a);
+        }
         app.prepare();
         let m = app.menu.as_ref().ok_or("drag= needs menu=shop..")?;
         let at = |s: &str| match s.parse::<usize>() {
@@ -199,6 +223,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     j if j == held => {
                         m.moved(Some(b));
                         events = m.button(slime_mould::world::Button::Left, false);
+                        // A click picks (Shop B); Enter then buys it.
+                        if a == b && events.is_empty() {
+                            events = m.key(winit::keyboard::KeyCode::Enter, true);
+                        }
                     }
                     _ => m.moved(Some(b)),
                 }

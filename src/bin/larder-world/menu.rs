@@ -14,7 +14,8 @@
 use super::*;
 use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
-use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu};
+use slime_mould::mould::bullets::{Set, Shell};
+use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
 /// (the number before the dash). Files that do not parse are skipped, with
@@ -243,7 +244,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     if r.range {
         lines = vec![
             "Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(),
-            format!("Guns and bullets are rolled as on planet {}; the tiles on the left roll them again, deeper or shallower", r.depth),
+            format!("Guns and bullets are rolled as on planet {}; the buttons along the bottom roll them again, deeper or shallower", r.depth),
         ];
     }
     // The cards' words and colours as the HUD's loadout strip shows them,
@@ -262,9 +263,10 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 Group::Dev if r.range => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
-                Group::Build | Group::Tools | Group::Dev => (row.group.name().to_string(), ShopArea::Folder),
+                // Each a tab of the shop's counter (Shop B, 11-15).
+                Group::Build | Group::Tools | Group::Dev => (row.group.name().to_string(), ShopArea::Upgrades),
                 Group::Guns => ("Guns".to_string(), ShopArea::Guns),
-                _ => (if row.price.is_empty() { "In the bag" } else { "For sale" }.to_string(), ShopArea::Cards),
+                _ => (if row.price.is_empty() { BAG } else { "Cards" }.to_string(), ShopArea::Cards),
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
@@ -286,6 +288,15 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     if let rounds::Card::Ammo(a) = c {
                         // A rolled bullet: its set as a badge.
                         s.badge = Some(draw::ammo_icon(a.set));
+                        // The range's shelf holds one of each shape and
+                        // payload: a grid of them, so its tiles need no
+                        // names (all three menu researchers, 11-15).
+                        if r.range {
+                            let set = Set::ALL.iter().position(|&x| x == a.set).unwrap_or(0) as u8;
+                            let shell = Shell::ALL.iter().position(|&x| x == a.shell).unwrap_or(0) as u8;
+                            let payload = if a.shell == Shell::Plain { "Bullet".to_string() } else { draw::capital(a.shell.key()) };
+                            s.cell = Some(((set, draw::capital(a.set.key())), (shell, payload)));
+                        }
                     }
                 }
                 Face::Gun(g) => {
@@ -315,7 +326,6 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         rows,
         slots: gun.slots,
         budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
-        folder_icons: vec![(Group::Build.name().into(), Icon::Turret), (Group::Tools.name().into(), Icon::Grenade), (Group::Dev.name().into(), Icon::Fast)],
         range: r.range,
     }
 }
@@ -329,7 +339,7 @@ fn range_shelf(row: &run::Row) -> &'static str {
             rounds::Kind::Flight => "Cards for every bullet",
             _ => "Cards for the next bullet",
         },
-        _ => "In the bag",
+        _ => BAG,
     }
 }
 
@@ -386,6 +396,8 @@ fn gun_bars(g: &slime_mould::mould::guns::Gun) -> Vec<(String, f32, String)> {
 
 /// A page by its `menu=` name.
 pub(super) fn page_named(name: &str) -> Option<Page> {
+    // (`shop-mid@TAB@NAME`: a tab and a pick, `headless`.)
+    let name = name.split('@').next().unwrap_or(name);
     Some(match name {
         "1" | "main" => Page::Main,
         "campaign" | "missions" => Page::Missions,
