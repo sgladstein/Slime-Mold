@@ -19,11 +19,16 @@ reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 One line per subject; the page holds the detail. The owner's rulings:
 [`wiki/decisions.md`](wiki/decisions.md).
 
-**Live work: Larder World.** A squad against several mould species in a
-persistent world on the GPU big dish, with energy crystals that drain
-(owner, 11-11 14:06Z: "Put everything into the world version").
+**Live work: the roguelike run in squad mode** (owner, 11-15 08:30Z: the
+game they play and judge by). Eight generated planets toward the slime's
+core world, one slime a planet, a shop between, squad control, pumps as
+income, rolled guns and cards. Their three asks: an enemy that progresses and
+presses, guns that are a main draw, menus that don't get in the way. The
+whole-game review (11-15, [report](Reports/whole-game-review-2026-11-15/README.md))
+ranks what to do; ROADMAP's *Now* band is cut around it.
 
-- [Larder World](wiki/world/larder.md): phases W0-W5; W1a's crystals, terrain and walls are on the CPU big dish; W0 [growth and starving](wiki/model/growth.md) is built on the CPU and the GPU (PR #73, after #63); next W1b, those fields on the GPU, then Larder in the world ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)).
+- [The roguelike run](wiki/world/run.md): 8 planets, shop, dev mode, gun range; since #336 the slime is shape C under the tier and grows (planet 1 idle 22,410 walkers at 4:00, planet 3 wears pumps down by 3:00); the drain-and-buy rush still reaches 40 soldiers by 2:00 and no thread yet owns the enemy's progression by planet.
+- [Larder World](wiki/world/larder.md): the world the run is played in (crystals, terrain, walls, GPU big dish); W1a and W0 [growth and starving](wiki/model/growth.md) built; the larder itself is RTS-only (missions), squad mode has none.
 - [Planets](wiki/world/planets.md): the roguelike run's levels, generated from a seed and a depth (`mould::levelgen`), eight biomes in a set order to the core world; all at today's map size until maps carry their own.
 - [Plants](wiki/world/plants.md): a new plant field in four kinds, separate from the old grass (owner, 11-14), on CPU and GPU and drawn; fire through plants, lit by scorch rounds and blasts, stopped by water, reeds and the slime's body; maps carry plants in B.
 - [The mould tiers](wiki/world/mould-tiers.md): the difficulty ladder; Sporer, Sleeper and Swarmer built ([the life cycle](wiki/model/life-cycle.md)).
@@ -58,6 +63,8 @@ references stay right.
 7. **Bloomfront's open questions** (fog of war from a held quantity; two keepers or three-to-four), now folded into Larder World's. ([`Reports/rts-design-2026-11-10.md`](Reports/rts-design-2026-11-10.md))
 8. **Larder World's open questions:** world size, how a world ends, whether two soldier teams are allies or rivals, fog of war, what carries between campaign worlds. ([roadmap](Reports/larder-world-roadmap-2026-11-11.md)) For the campaign, how a mission ends and what carries (unlocked verbs only) are decided (owner, 11-12 04:44Z; [design](Reports/larder-campaign-2026-11-12.md)); world size, allies or rivals and fog stay open.
 9. ~~**Cutting the mould off its crystals**~~ Decided 11-13 15:53Z: withering, at half the blind A/B/C's speed (`wither` 0.01 in shape C's keys; "B is the best but still too fast", "Lets just double it and call it good. I will have to playtest"). Asked the same minute (15:53-15:57Z, "if possible", an inspiration): a cut-off part acts like a scared animal, more reckless, and either runs back to the main body or goes straight for the soldiers, with no stronger attack. Built 11-13 (`panic` 2, on in shape C, default-on rule; `panic=0` turns it off): it charges a unit within 20 cells or else runs for a crystal with food, after a 1.5 s lean that creeps at half its pace (`panic_creep` 0.5, the game designer's review: a lean at its own pace already outran a soldier), and a charge at a unit gives up after a 0.5 s dash (`panic_dash` 15) so a squad that pulls back in time gets clear; [films](https://claude.ai/artifact/SRxAj8nri2iGAsvE4DFGbP) await the owner's playtest. ([decisions](wiki/decisions-game.md); [report, *A cut-off part withers*](Reports/fed-mould-2026-11-13/README.md))
+
+10. **From the whole-game review (11-15)**, each with the reviewers' recommendation ([report](Reports/whole-game-review-2026-11-15/README.md), *Owner decisions*; [page](https://claude.ai/artifact/UMU3R7fPu166PQ96n6gGpU)): D3 what rises from planet to planet (rec.: one thing each tier does to you); D5 a payload card in the run's starting gun (rec.: yes); D6 camera shake and hit-stop under "everything on screen is the simulation" (rec.: rule after a 10 s film of each); D7 brake the 40-soldier rush now or after playing the shape C slime (rec.: play first); D4 freeze the campaign and RTS control (rec.: freeze); D10 drop the outpost from the run shop and hold the lure and siren (rec.: yes); D2 breakaway on in the run from planet 2 (rec.: yes, in the playtest pack); D12 park the own mould; D8 new slime rules GPU-first; D9 Windows only.
 
 Decided and not yet built: **the forest floor from above** (owner's card,
 11-10 16:04Z) as the first out-of-the-dish game. What it needs, in this repo

@@ -1,0 +1,238 @@
+<title>Larder whole-game review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column of field notes; each finding is a row of claim + counts beside its still, stacking on phones. */
+:root {
+  --bg: #f3f4ef; --panel: #ffffff; --ink: #1d2420; --muted: #56605a; --line: #d9ddd3;
+  --slime: #c97a00; --slime-soft: #fbecd0; --moss: #2f5a45; --moss-soft: #e1ece5;
+  --warn: #9b3b1f; --warn-soft: #f6e1d8;
+  --display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141815; --panel: #1c211e; --ink: #e6e9e3; --muted: #9ca69f; --line: #2e3631;
+  --slime: #f0a52a; --slime-soft: #3a2c12; --moss: #8cc5a6; --moss-soft: #1f2e26;
+  --warn: #f08a68; --warn-soft: #3a2018; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #141815; --panel: #1c211e; --ink: #e6e9e3; --muted: #9ca69f; --line: #2e3631;
+  --slime: #f0a52a; --slime-soft: #3a2c12; --moss: #8cc5a6; --moss-soft: #1f2e26;
+  --warn: #f08a68; --warn-soft: #3a2018; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 1060px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(28px, 4.4vw, 42px); }
+h2 { font-size: 24px; margin-top: 48px; padding-top: 16px; border-top: 2px solid var(--ink); }
+h3 { font-size: 19px; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 18px; color: var(--muted); margin-top: 12px; }
+.meta { font: 13px/1.5 var(--mono); color: var(--muted); margin-top: 14px; letter-spacing: .02em; }
+.stack { display: grid; gap: 14px; }
+.section-intro { margin-top: 12px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; border: 1px solid var(--line); display: block; }
+figcaption { font-size: 14px; color: var(--muted); }
+figcaption b { color: var(--ink); font-weight: 600; }
+.tag { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 5px 7px; border-radius: 3px; }
+.tag.before { background: var(--line); color: var(--muted); }
+.tag.now { background: var(--slime-soft); color: var(--slime); }
+.tablewrap { overflow-x: auto; margin-top: 20px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font: 600 12px/1.3 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.finding { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 22px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.finding:last-of-type { border-bottom: 0; }
+.finding .rank { font: 700 13px/1 var(--mono); color: var(--slime); letter-spacing: .06em; }
+.finding .who { font: 12px/1.4 var(--mono); color: var(--muted); }
+.finding ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.finding li { max-width: 62ch; }
+.act { background: var(--moss-soft); border-radius: 4px; padding: 10px 12px; font-size: 15px; }
+.act b { color: var(--moss); }
+.wait { background: var(--warn-soft); border-radius: 4px; padding: 10px 12px; font-size: 15px; }
+.wait b { color: var(--warn); }
+.decisions { display: grid; gap: 12px; margin-top: 20px; }
+.decision { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; display: grid; gap: 6px; }
+.decision .q { font-weight: 600; }
+.decision .rec { font-size: 15px; }
+.decision .rec b { color: var(--moss); }
+.decision .why { font-size: 14px; color: var(--muted); }
+.shortlist { margin: 16px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+a { color: var(--moss); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--slime); outline-offset: 2px; }
+code { font: 0.9em var(--mono); background: var(--line); padding: 1px 4px; border-radius: 3px; }
+@media (max-width: 760px) { .pair, .finding { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Larder whole-game review</h1>
+    <p class="lede">Five reviewers each played the game for themselves on the cloud machine (first-time player, game director, simulation to play, engineering health, roadmap and process), then one merge ranked and checked their findings. Your 08:30Z play notes were the only human evidence; scripted hands are controls, never "players".</p>
+    <p class="meta">15 Nov 2026 · review on main 17f2e5b8 · re-checked on main 40f34e48 · llvmpipe, seed 1, one seed per picture (looks, not measurements)</p>
+  </header>
+
+  <h2>The enemy changed while the review ran</h2>
+  <p class="section-intro">All five reviewers' top finding was that the run's slime shrinks to its home crystal in 30 s and sits there, so there is no rush and nothing to defend. That was true when they filmed it, and it matched what you saw. But the run was playing the bare race slime by mistake. #336 (shape C in the run), #338 (fed slime thickens) and #339 (thick slime breaks away) merged during the review, so I filmed the same planets again on today's main.</p>
+  <div class="pair">
+    <figure>
+      <span class="tag before">Before · 17f2e5b8</span>
+      <img src="img/before-p1-idle-300s.jpg" alt="Planet 1 at 5:00: one small slime ring on its home crystal, the rest of the map untouched">
+      <figcaption><b>Planet 1, idle, 5:00.</b> 1,515 walkers on the home crystal, squad untouched, 0 shots.</figcaption>
+    </figure>
+    <figure>
+      <span class="tag now">Now · 40f34e48</span>
+      <img src="img/now-p1-idle-240s.jpg" alt="Planet 1 at 4:00: two large slime bodies, a trickle reaching the squad">
+      <figcaption><b>Planet 1, idle, 4:00.</b> 22,410 walkers, 7,815 of them thick; 460 shots; the idle squad is down from 4 to 2.</figcaption>
+    </figure>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Capture (seed 1)</th><th>Before</th><th>Now</th></tr></thead>
+      <tbody>
+        <tr><td>Planet 3, idle</td><td class="num">1,581 at 1:00, 1,658 at 2:30; 15 of 16 crystals untouched</td><td class="num">46,434 at 1:00, 28,554 at 2:00, a network across the map</td></tr>
+        <tr><td>Planet 1, squad hand</td><td class="num">slime wiped by 0:26-0:30</td><td class="num">16,241 at 2:00; 7 of 8 soldiers left</td></tr>
+        <tr><td>Planet 1, pumps hand</td><td class="num">pumps 200/200; run lost to the "stuck" rule at 1:37</td><td class="num">one pump worn to 75/200 by 3:00</td></tr>
+        <tr><td>Planet 3, pumps hand</td><td class="num">not filmed</td><td class="num">2 of 4 pumps worn to 0 by 3:00, others 25 and 87</td></tr>
+        <tr><td>Planet 1, greedy hand (your plan)</td><td class="num">38 soldiers at 2:00</td><td class="num">40 soldiers at 2:00; slime 10,461</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="section-intro">So "the slime sits and nothing needs defending" is largely fixed on main, and the next playtest should show it. Your plan still works, though: drain the biggest crystal and buy to 40 soldiers by 2:00. The ranking below is re-cut around what is still true.</p>
+
+  <h2>Where to focus now</h2>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">1 · GUNS ARE NOT YET A DRAW</span>
+      <h3>A plain rifle hit is close to invisible; all the spectacle is in payload cards</h3>
+      <span class="who">four of five reviewers · your note: "They should really be one of the draws of the game"</span>
+      <ul>
+        <li>Zoom 20 on planet 4: four rifles kill about 80 walkers a second, with no visible bullet, flash or hit across three frames.</li>
+        <li>On planet 1 at zoom 14, kills go from 167 to 483 in 1.4 s and the slime's edge barely moves. The drawn body saturates, so a dense body looks the same with fewer walkers in it.</li>
+        <li>A blast's glow is clipped to a square, and a blast flings 0 walkers (only the bomb flings).</li>
+        <li>The run starts with the plain rifle. The planet-1 shop offered no blast or bomb.</li>
+      </ul>
+      <p class="act"><b>Building now (guns thread):</b> every plain hit becomes a small simulated burst that flings a few walkers and opens a one-cell crater, with the bullet drawn in flight and the soldier's recoil. It goes to you as a blind A/B GIF. Also the square-glow fix and a body look that shows thinning in dense slime.</p>
+      <p class="wait"><b>Waiting for you:</b> start the run with one payload card (D5), and whether camera shake and hit-stop are allowed (D6).</p>
+    </div>
+    <div class="stack">
+      <figure><img src="img/rifle-vs-blast-close.jpg" alt="Left: plain rifle shots into slime, small flashes. Right: a blast, bright wash of light and debris"><figcaption><b>Plain rifle (left) against a blast (right)</b>, close zoom.</figcaption></figure>
+      <figure><img src="img/hits-invisible.jpg" alt="Four frames of soldiers firing into a slime edge that barely changes"><figcaption><b>Planet 1, zoom 14, 17.6 to 19.0 s:</b> kills 167 → 483, and the edge barely moves.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">2 · THE SNOWBALL</span>
+      <h3>Drain, buy to 40, march still wins, even against the live slime</h3>
+      <span class="who">first-time player, roadmap · re-checked on main</span>
+      <ul>
+        <li>Greedy hand on planet 1, squad mode: 13 soldiers at 0:30, 22 at 1:00, <b>40 at 2:00</b>, with 13,301 food drained by hand.</li>
+        <li>Hand income grows with the number of soldiers, so the army compounds. Upkeep is ruled out (your ruling and the dead-ends list). The allowed brakes are prices, the slime eating the bank, or things worth buying.</li>
+      </ul>
+      <p class="wait"><b>Waiting for you (D7):</b> brake it now through the economy (cap how many soldiers can drain one crystal, or raise the soldier price 10% each), or first play the new slime and see whether it brakes the rush by itself.</p>
+    </div>
+    <figure><img src="img/now-p1-greedy-120s.jpg" alt="Planet 1 at 2:00: one squad of 40 soldiers, the upper crystal drained, slime on its home crystal"><figcaption><b>Now, planet 1, greedy, 2:00:</b> 40 soldiers in one squad; slime 10,461.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">3 · NOBODY OWNS ENEMY PROGRESSION</span>
+      <h3>What the slime does to you should change planet by planet, and no thread owns that</h3>
+      <span class="who">game director, roadmap · four reviewers on the ladder</span>
+      <ul>
+        <li>The roguelike thread is finished. The slime thread owns the slime's numbers, not the ladder. The run's wiki page says the slime's size "is the slime's economy, not the run's".</li>
+        <li>Per depth, the run sets only a tier and a walker count. The guns stack range and rate 2 to 4 times over a run.</li>
+        <li>The tiers were tuned on other maps. On run planets most of them barely look like themselves.</li>
+      </ul>
+      <p class="act"><b>Asked for a new thread, "Run and enemy progression":</b> it owns the ladder, a page plotting your squad's kill rate against the slime's mass by depth, one still per tier on its planet, a run smoke check (idle loses by 5:00), and the stuck-rule fix below.</p>
+      <p class="wait"><b>Waiting for you (D3):</b> what rises from planet to planet. The recommendation is one thing each tier does to you: the Drifter eats your drained crystal, the Sprawler cuts your supply, the Trunk cords to your pumps, the Swarmer's alarm brings the body.</p>
+    </div>
+    <figure><img src="img/now-p3-pumps-180s.jpg" alt="Planet 3 at 3:00: slime network over most of the map, squad on a worn pump"><figcaption><b>Now, planet 3, pumps hand, 3:00:</b> 26,807 walkers in a network; two of four pumps worn to 0.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">4 · THE STUCK RULE</span>
+      <h3>The run can end while the squad is healthy</h3>
+      <span class="who">game director · code unchanged on main</span>
+      <ul>
+        <li>"Mission lost: No food to buy or fire with since 1:07", with 4 soldiers at full health, because the pumps ran dry and the bank was under a soldier's price.</li>
+        <li>A second counts as stuck when there are no new shots, no harvest and the bank is short, even while the squad is walking. In squad mode firing is free, so "fire with" is not true.</li>
+      </ul>
+      <p class="act"><b>Going to the new run thread:</b> a walking squad or a standing pump is not stuck; warn before ending.</p>
+    </div>
+    <figure><img src="img/01-run-p1-lost-to-stuck-097s.jpg" alt="End screen: mission lost, no food to buy or fire with"><figcaption><b>Before, planet 1, 1:37:</b> run over with 4 healthy soldiers.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">5 · A HIT SHOULD MOVE THE SLIME</span>
+      <h3>The model can already flinch, and that would make hits read</h3>
+      <span class="who">simulation to play</span>
+      <ul>
+        <li>With a short alarm memory and a pull-back weight, the body recoils from fire: 661 kills at 19 s against 483. The flee and wary rules failed a census earlier. Under build first, balance later, that is a tuning note, not a veto.</li>
+        <li>The alarm field currently washes the whole screen mint (right half). It should draw only on the slime, or at a tenth of its strength.</li>
+      </ul>
+      <p class="act"><b>Going to the slime thread, with the guns thread:</b> a short flinch (alarm keep about 0.9) on every tier, shown as an A/B.</p>
+    </div>
+    <figure><img src="img/hit-flinch.jpg" alt="Left: default slime under fire. Right: slime pulling back under fire, mint alarm haze across the frame"><figcaption><b>Default (left) and flinch (right)</b>, planet 1, 19 s.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">6 · THE REPO STILL DESCRIBES THE OLD GAME</span>
+      <h3>ROADMAP and HANDOFF don't show the run in squad mode</h3>
+      <span class="who">roadmap, engineering health</span>
+      <ul>
+        <li>ROADMAP's <i>Now</i> band still says "while the owner can't playtest". HANDOFF still names the dish game's next step. The main Larder wiki page is 43 KB against a 12 KB cap.</li>
+        <li>Your 08:30Z priorities and "levels 15-20 min to 1 h+" have no rows in the decisions page. Nothing is marked parked.</li>
+        <li>Your own play leaves no record the threads can read. Tools aren't in the replay, and replays don't carry across machines.</li>
+      </ul>
+      <p class="act"><b>This thread does it next:</b> a <i>Now</i> band built around the run in squad mode (enemy progression, the slime, a reason to defend, guns, menus, planets, bugs, the 1070, a playtest pack), a short "where the game stands" in HANDOFF, the 11-15 rulings recorded, and a parked list. A play log (time to N soldiers, splits, pumps, shots) goes to the new run thread.</p>
+    </div>
+    <figure><img src="img/05-run-p4-plain-rifle-zoom20-060s.jpg" alt="Planet 4 at zoom 20: four soldiers at the slime's edge, no visible shots"><figcaption><b>Before, planet 4, zoom 20, 1:00:</b> four rifles firing, nothing to see.</figcaption></figure>
+  </div>
+
+  <div class="finding">
+    <div class="stack">
+      <span class="rank">7 · ENGINEERING THAT SLOWS EVERY THREAD</span>
+      <h3>Cheap fixes to CI, the merge queue and tests</h3>
+      <span class="who">engineering health</span>
+      <ul>
+        <li>CI runs three test binaries one after another (lib 230 s, window 197 s, GPU 127 s). Running them side by side saves about 6 minutes a PR.</li>
+        <li>Shared index files (<code>Reports/README.md</code>, <code>pages.md</code>) bounce PRs off the queue. A union merge rule would stop that.</li>
+        <li>Two replay files are still tracked and can stop <code>play.cmd</code> from pulling.</li>
+        <li>No window test plays squad mode in a run.</li>
+        <li>Bigger, later: every payload hit stalls the GPU with 1-3 read-backs (about 36 a second at 12 bombs a second), and the light cap drops muzzle flashes first at 40 soldiers. Both stand in the way of richer guns.</li>
+      </ul>
+      <p class="act"><b>Asked for a new engineering-chores thread</b> for the first four. The GPU stall and caps go to the guns thread, for timing on the 1070.</p>
+    </div>
+    <figure><img src="img/blast-square-edge.jpg" alt="A blast's light with straight square edges"><figcaption><b>A blast's glow clipped to a square</b> (guns thread, item 1).</figcaption></figure>
+  </div>
+
+  <h2>Waiting for you</h2>
+  <p class="section-intro">None of these blocks the work above. Each has the reviewers' recommendation.</p>
+  <div class="decisions">
+    <div class="decision"><span class="q">D3. What should rise from planet to planet?</span><span class="rec"><b>Recommended:</b> one thing each tier does to you, with numbers behind it.</span><span class="why">Alternatives: reach, appetite and an answer to your build (game director); an economic ladder (simulation); pressure keyed on your gun's grade (engineering).</span></div>
+    <div class="decision"><span class="q">D5. Start every run with one payload card in the gun?</span><span class="rec"><b>Recommended:</b> yes, one rolled payload card.</span><span class="why">Today the satisfying shots are behind shop luck.</span></div>
+    <div class="decision"><span class="q">D6. Are camera shake and hit-stop allowed?</span><span class="rec"><b>Recommended:</b> look at a 10 s film of each, then rule.</span><span class="why">They paint nothing, so the game director reads "everything on screen is the simulation" as allowing them. No ruling covers them yet.</span></div>
+    <div class="decision"><span class="q">D7. Brake the 40-soldier snowball now, or after you've played the new slime?</span><span class="rec"><b>Recommended:</b> play first. If 40 by 2:00 is still the plan, try a per-crystal drain cap and a rising soldier price.</span><span class="why">The first-time player wanted it now. The others said a slower route to the same blob is still the only plan unless the enemy presses, and on main it now does.</span></div>
+    <div class="decision"><span class="q">D4. Freeze the campaign and RTS control (they keep working, but get no new features)?</span><span class="rec"><b>Recommended:</b> freeze.</span><span class="why">Alternatives: fold missions 1-3 into run planets 1-3, or rework mission 1 so the slime contests the crystals.</span></div>
+    <div class="decision"><span class="q">D10. Drop the outpost from the run shop, and hold the lure and siren?</span><span class="rec"><b>Recommended:</b> drop the outpost now. Bring the lure and siren back once the new slime shows it answers them. Fold the blast, gas and germ tools into gun cards after the gun pass.</span><span class="why">Squad mode has no larder, and the lure drew nothing at 130 or 250 units.</span></div>
+    <div class="decision"><span class="q">D2. Turn breakaway (roam) on in the run, and from which planet?</span><span class="rec"><b>Recommended:</b> on from planet 2, in the next playtest pack, with a clip.</span><span class="why">It is built and twin-tested, and it is now less urgent because the shape C slime moves on its own. Against it: it steers straight at a chosen crystal and travels as specks.</span></div>
+    <div class="decision"><span class="q">D12, D8, D9 (lower stakes)</span><span class="rec"><b>Recommended:</b> park your own mould until pumps are contested; build new slime rules GPU-first, held by a pinned llvmpipe test; Windows only.</span><span class="why">Each one is set out with both sides in the report.</span></div>
+  </div>
+
+  <h2>Also in the report</h2>
+  <ul class="shortlist">
+    <li>Missed directions: a slime that grows on a clock and sends fronts you can see coming; linking nests' food so your split attacks pay; the Grudge (the tier that remembers you) in the run; a kill spilling food the body comes back for; char as a firebreak; gun sound per kind and payload.</li>
+    <li>Crystals never regrow, so a pumped map is settled by minute 3. Rivers disappear under reeds within two minutes. The goal bar counts walker slots, not mass.</li>
+    <li>All 59 findings with scores, both sides of each decision, and the five reviewers' files: <a href="https://github.com/sgladstein/Slime-Mold/blob/main/Reports/whole-game-review-2026-11-15/README.md">Reports/whole-game-review-2026-11-15/</a>.</li>
+  </ul>
+</div>
