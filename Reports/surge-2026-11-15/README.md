@@ -189,6 +189,14 @@ eats more), and the longest wait is twice the old beat:
 
 The shop's clock line says "it surges as it feeds, at least every N s".
 
+Frame cost and twins (GTX 1070 at 0bb20d4d, PR #350, `larder-world
+bench=20 mode=squads hand=squads seed=1`; raw `claude/project-thread-26drse`
+a9f33a00, `runner-out/surge-pr350-0bb20d4d/`): both twins pass (the squad
+twin's game-timed case included). Every frame p50 4.73 and p95 5.35 ms with
+food-driven surges, 4.73 and 5.34 with `set=surge_food=0`; GPU tail p95
+4.53 both. No cost shows. Neither run surged in its 20 s (identical t 20 s
+lines), so the meter's per-step cost is what was timed, not a surge's.
+
 ## Not done
 
 - The tell is the creep alone. A brighter front while it gathers (more
