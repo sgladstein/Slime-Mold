@@ -83,6 +83,13 @@ pub struct Items {
     /// map's ground moisture and how much it varies, for fire
     /// (`plants::moisture`); None, the engine's 0.15 and 0.3.
     pub moisture: Option<(f32, f32)>,
+    /// The map's flora: how its plants are drawn up close (the map's
+    /// `flora N` line, the level generator's biome, `levelgen::Biome` in
+    /// order: 0 meadow, 1 barrens, 2 fen, 3 valley, 4 jungle, 5
+    /// highlands, 6 caves, 7 core; view.wgsl's `plant_layer`). Looks
+    /// only: the plants' kinds and amounts are the simulation's either
+    /// way. None draws flora 0.
+    pub flora: Option<u8>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -127,6 +134,10 @@ impl Items {
                     want(2)?;
                     it.moisture = Some((v[0], v[1]));
                 }
+                "flora" => {
+                    want(1)?;
+                    it.flora = Some(v[0].clamp(0.0, 255.0) as u8);
+                }
                 "wall" => {
                     want(6)?;
                     it.walls.push(Wall { a: (v[0], v[1]), b: (v[2], v[3]), thick: v[4], hp: v[5] });
@@ -154,6 +165,9 @@ impl Items {
         }
         if let Some((b, s)) = self.moisture {
             out += &format!("moisture {b} {s}\n");
+        }
+        if let Some(f) = self.flora {
+            out += &format!("flora {f}\n");
         }
         out
     }
@@ -320,7 +334,7 @@ impl Map {
         };
         let k = MAP_SCALE;
         let crystals = (0..d.piles.len()).map(|p| Crystal { x: d.piles[p].0 * k, y: d.piles[p].1 * k, r: d.pile_rs[p] * k, charge: d.pile_fill[p] }).collect();
-        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new(), moisture: d.moisture_of };
+        let items = Items { crystals, moulds: d.homes.iter().map(|&(x, y)| (x * k, y * k)).collect(), landing: d.landing.map(|(x, y)| (x * k, y * k)), walls: Vec::new(), moisture: d.moisture_of, flora: d.flora_of };
         Map { w, h, ground, plants, items }
     }
 }
@@ -361,6 +375,7 @@ pub fn river(ford: bool, bridge: bool) -> Map {
         landing: Some((300.0, 500.0)),
         walls: Vec::new(),
         moisture: None,
+        flora: None,
     };
     Map { w: MAP_W, h: MAP_H, ground, items, plants: Vec::new() }
 }

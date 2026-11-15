@@ -2638,6 +2638,7 @@ fn bar_map(w: usize, h: usize, bar: bool) -> crate::mould::map::Map {
         landing: Some((300.0, 320.0)),
         walls: Vec::new(),
         moisture: None,
+        flora: None,
     };
     crate::mould::map::Map { w, h, ground, plants: Vec::new(), items }
 }

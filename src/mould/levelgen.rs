@@ -1525,7 +1525,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
 
     // Crystals.
-    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), ..Items::default() };
+    let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), flora: Some(p.biome as u8), ..Items::default() };
     let clear = |ground: &[u8], items: &Items, c: (f32, f32), rad: f32, gap: f32| -> bool {
         if c.0 < rad + 24.0 || c.1 < rad + 24.0 || c.0 > wf - rad - 24.0 || c.1 > hf - rad - 24.0 {
             return false;
@@ -2473,8 +2473,10 @@ mod tests {
     // below). Then planet 4 (river valley): no dune clay over deep water
     // or bridges, no bridge planks by the nests (bug check, 11-15). Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
-    // which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xe2ddd9586ec43882, 0xb4183e35b474ba49, 0x4bbbb8f96e6ea1d0, 0x3115a9964abbe8ea, 0x6a8d5a9e7fc09b42];
+    // which finds the same nearest sites as the full scan. Then the item
+    // text's `flora` line (11-15, plants thread: each biome's plant forms
+    // in the view); the ground and plants are unchanged.
+    const PINNED: [u64; 8] = [0x31a97874cb9b66b2, 0x05ee9fb9fe6acccf, 0x77d2aa3e848817cf, 0x2fc27e472ef07b75, 0xeca63c4d4f44f7b5, 0x98a0f8e45acb1f79, 0x47c0bc9a485a3bf4, 0x1ac9df36bc070b41];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -2510,7 +2512,8 @@ mod tests {
         assert_eq!(got, want, "{got:#x?}");
     }
 
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xed340d330b560ca6), (2, 7, 0xd5aadd1084ba294b), (3, 3, 0xd52ae9aac6f968a1), (4, 2, 0xfd8ff1e75f8c498b), (7, 2, 0x3b2d28599f006f92), (8, 3, 0x5b18385312867bbf)];
+    // Re-pinned for the item text's `flora` line (11-15, plants thread).
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xbcd97c484c456cd6), (2, 7, 0x3507985a7be94f1e), (3, 3, 0x56903e94c75d0b1b), (4, 2, 0x3da28134f1603a64), (7, 2, 0xe94734ba05e5d96c), (8, 3, 0x715adb2b8edeb69c)];
 
     /// The fallback, built for every planet of seeds 1-4, passes the checks
     /// the attempts must (technical review, 2026-11-15: 6 of 96 failed
@@ -2545,7 +2548,7 @@ mod tests {
                 }
             }
             let crystals = (0..6).map(|k| Crystal { x: 400.0 + 12.0 * k as f32, y: 200.0, r: 6.0, charge: 100.0 }).collect();
-            let items = Items { crystals, moulds: vec![(450.0, 100.0)], landing: Some((100.0, 160.0)), walls: Vec::new(), moisture: None };
+            let items = Items { crystals, moulds: vec![(450.0, 100.0)], landing: Some((100.0, 160.0)), walls: Vec::new(), moisture: None, flora: None };
             Map { w, h, ground, plants: Vec::new(), items }
         };
         let open = |m: &Map| {
