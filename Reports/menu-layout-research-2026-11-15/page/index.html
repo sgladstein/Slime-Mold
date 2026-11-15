@@ -1,0 +1,1533 @@
+<title>Menus, Shop and Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* One column: the options for each screen, drawn to scale, with what each costs beside it. */
+:root { --bg:#f3f4f6; --fg:#16191d; --muted:#5b6370; --panel:#ffffff; --line:#d9dde3; --accent:#1f8fa8; --tag:#b4561f; --pick:#7a5ec8;
+  --display:"Space Grotesk",Inter,system-ui,sans-serif; --body:Inter,system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; --tag:#f0a070; --pick:#b39cf0; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; --tag:#f0a070; --pick:#b39cf0; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 var(--body); padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:32px 56px }
+main { max-width:1080px; margin:0 auto; display:grid; gap:36px }
+h1 { font:600 2rem/1.15 var(--display); margin:0; text-wrap:balance }
+h2 { font:600 1.3rem/1.3 var(--display); margin:0; text-wrap:balance }
+h3 { font:600 1.02rem/1.35 var(--display); margin:0 }
+p { margin:0; max-width:70ch }
+.lede { color:var(--muted) }
+section { display:grid; gap:14px; min-width:0 }
+figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; min-width:0 }
+figure img, figure svg.mock { display:block; width:100%; height:auto }
+figcaption { padding:10px 14px; font-size:.9rem; color:var(--muted) }
+figcaption b { color:var(--fg); font-weight:600 }
+.tag { display:inline-block; font:600 .72rem/1 var(--body); letter-spacing:.06em; text-transform:uppercase; margin-right:8px; color:var(--tag) }
+.pick .tag { color:var(--pick) }
+.pair { display:grid; gap:12px }
+.cost { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) }
+.box { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; display:grid; gap:6px; min-width:0 }
+.box h3 { color:var(--pick) }
+ol, ul { margin:0; padding-left:1.3em; display:grid; gap:4px; max-width:74ch }
+.note { color:var(--muted); font-size:.9rem }
+.take { border-left:3px solid var(--accent); padding:4px 0 4px 12px }
+.take b { color:var(--accent) }
+.card-fig svg.mock { max-width:760px; margin:0 auto; padding:10px }
+.card-fig.narrow svg.mock { max-width:640px }
+.debate { display:grid; gap:18px }
+.debate article { display:grid; gap:8px; padding-top:14px; border-top:1px solid var(--line) }
+code { font-size:.88em }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>One screen, no scrolling: the menus, the shop and the command card</h1>
+    <p class="lede">You asked for menus and a shop that fit one screen, researched against how professional games do it, and for changes to the command card. Three researchers worked independently, each from a different pool of games: roguelikes and deckbuilders, strategy and squad games, and console and big-text interfaces. Every mockup here is drawn to scale at the hardest size, <b>1000 × 565 UI units</b>: 1920×1080 at 200%, or 2560×1440 at 250%. Text is at the game's own sizes or larger. Nothing is built yet.</p>
+  </header>
+
+  <section>
+    <h2>Today at 200%</h2>
+    <div class="pair">
+      <figure><img src="today-main-200.webp" alt="Main menu today at 200 percent" loading="lazy"><figcaption><b>Main menu:</b> 4½ of 9 entries show. The rest are below the fold.</figcaption></figure>
+      <figure><img src="today-shop-200.webp" alt="Shop today at 200 percent" loading="lazy"><figcaption><b>Shop:</b> only the upgrades show. The guns, your gun's slots, the cards for sale and the bag are all below. The title, the subtitle and the briefing take 39% of the height.</figcaption></figure>
+      <figure><img src="today-options-200.webp" alt="Options today at 200 percent" loading="lazy"><figcaption><b>Options:</b> 5 of 17 rows show, and the notes are cut off with "…".</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What all three agree on</h2>
+    <p>I'd build these whichever layouts you pick.</p>
+    <ol>
+      <li><b>The big "Larder World" title only on the main menu.</b> Inner pages get a one-line header. That alone gives back 130 to 220 of the 565 units.</li>
+      <li><b>One fixed info pane on the right.</b> It shows what the mouse is over, else what the keys are on, else what you last clicked, else the next planet's briefing. A description can't scroll away.</li>
+      <li><b>In the shop, your gun's slots and the bag stay on screen,</b> because every purchase goes into the gun.</li>
+      <li><b>Tiles about half today's size, as you said:</b> a card tile goes from about 190 × 62 to 104 × 50. Names stay on the tiles; the stats and the full text move to the pane. A gun for sale is compared with yours, with up and down arrows.</li>
+      <li><b>The armory gets tabs</b> (Guns, Bullets, Modifiers), and the bullets go in a grid of shape by payload, so the tiles need no names.</li>
+      <li><b>Options gets tabs, one-line rows and a note pane.</b> Keys becomes one of its tabs; F1 still opens it in play.</li>
+      <li><b>Every list gets a maximum</b>: the bag, the cards on offer, a gun's slots. Nothing fits one screen if a row can grow without end.</li>
+      <li><b>A test that draws every page at the worst sizes</b> and fails if anything is cut off or would need to scroll, so a new setting can't quietly bring the scrolling back.</li>
+      <li><b>Wide screens are shorter.</b> The UI size is capped so the screen stays at least 1000 units wide and 540 tall, so a 21:9 monitor at 200% gives 1280 × 540, 25 units shorter than these mockups. Each layout here has that much to spare, and the fit test will cover it.</li>
+    </ol>
+    <p class="note">On the sub-menus that expand and shrink: none of the three found a professional game that uses them for a shop. They move things under the cursor and hide what's on offer. Tabs, or folders that open in place, give the same grouping without that.</p>
+  </section>
+
+  <section>
+    <h2>Pick 1: the shop</h2>
+    <p>The researchers split on this one, so it's a blind pair: which of them backed which stays off this page. Both keep the gun, the bag, the pane and the buttons in the same places, and both fit at 1000 × 565.</p>
+    <div class="pair">
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Shop A at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="40.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="40.0" x2="1000.0" y2="40.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="26.0" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Planet 4 of 8  ·  Nezanus next  ·  Wipe out the slime: cut it to 2% of its peak</text>
+<text x="976.0" y="27.0" font-size="17" fill="#4ea6e6" font-weight="600" text-anchor="end">670 points</text>
+<rect x="12.0" y="46.0" width="640.0" height="455.0" rx="8" fill="#151b22" fill-opacity="0.55"/>
+<text x="92.0" y="64.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="start">Long gun</text>
+<text x="166.0" y="64.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">·  budget 8 of 16  ·  3 of 3 slots  ·  fired left to right</text>
+<text x="24.0" y="102.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUN</text>
+<rect x="92.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#5d84e6"/>
+<path d="M100.1 98.7 L105 93.8 L109.9 98.7 M100.1 102.9 L105 98.0 L109.9 102.9" fill="none" stroke="#5d84e6" stroke-width="1.8"/>
+<text x="97.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">1</text>
+<text x="117.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Thrift</text>
+<rect x="204.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="224.0,98.0 219.9,99.2 221.9,102.9 218.2,100.9 217.0,105.0 215.8,100.9 212.1,102.9 214.1,99.2 210.0,98.0 214.1,96.8 212.1,93.1 215.8,95.1 217.0,91.0 218.2,95.1 221.9,93.1 219.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="209.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">2</text>
+<text x="229.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Slug bomb</text>
+<circle cx="231.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="236.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="242.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="247.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="253.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="258.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="316.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="320.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="336.0,98.0 331.9,99.2 333.9,102.9 330.2,100.9 329.0,105.0 327.8,100.9 324.1,102.9 326.1,99.2 322.0,98.0 326.1,96.8 324.1,93.1 327.8,95.1 329.0,91.0 330.2,95.1 333.9,93.1 331.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="321.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">3</text>
+<text x="341.0" y="90.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="341.0" y="103.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">blast</text>
+<circle cx="343.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="348.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="354.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<text x="432.0" y="102.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">a gun has 2 to 6 slots</text>
+<text x="24.0" y="160.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">BAG</text>
+<rect x="92.0" y="130.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="132.0" width="96.0" height="2.2" rx="1" fill="#9474e6"/>
+<circle cx="102.2" cy="157.1" r="3.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="105.7" cy="154.6" r="3.9" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="108.5" cy="157.4" r="2.8" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="117.0" y="148.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buckshot</text>
+<text x="117.0" y="161.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">gas</text>
+<circle cx="119.0" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="124.5" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="204.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="256.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="316.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="368.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="428.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="480.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="540.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="592.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<text x="24.0" y="174.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">5 at most</text>
+<line x1="92.0" y1="190.0" x2="648.0" y2="190.0" stroke="#2c3641" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="24.0" y="194.0" font-size="10" fill="#5d6873" font-weight="600" text-anchor="start">FOR SALE</text>
+<text x="24.0" y="228.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">CARDS</text>
+<rect x="92.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="98.0" y="221.3" width="14.0" height="5.3" rx="2.7" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="117.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Needle bullet</text>
+<circle cx="119.0" cy="233.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="190.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="204.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="210.0" y="221.3" width="14.0" height="5.3" rx="2.7" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="229.0" y="216.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="229.0" y="229.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">bullet</text>
+<circle cx="231.0" cy="240.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="302.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">90</text>
+<rect x="316.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<rect x="320.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M322 224.0 L336 224.0 M331.8 219.8 L336 224.0 L331.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="341.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Scorch</text>
+<circle cx="343.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="348.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="354.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="414.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="428.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="432.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M434 224.0 L448 224.0 M443.8 219.8 L448 224.0 L443.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="453.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Smother</text>
+<circle cx="455.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="460.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="526.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="540.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="544.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M546 224.0 L560 224.0 M555.8 219.8 L560 224.0 L555.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="565.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Wide</text>
+<circle cx="567.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="572.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="638.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">80</text>
+<text x="24.0" y="286.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUNS</text>
+<rect x="92.0" y="256.0" width="178.7" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M100.0 278.5 L120.0 278.5 L120.0 282.0 L109.0 282.0 L106.5 288.0 L102.5 288.0 L104.5 282.0 L100.0 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="128.0" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Rifle</text>
+<text x="128.0" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">armory</text>
+<text x="262.7" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">free</text>
+<rect x="278.7" y="256.0" width="178.7" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M286.66666666666663 278.5 L306.66666666666663 278.5 L306.66666666666663 282.0 L295.66666666666663 282.0 L293.16666666666663 288.0 L289.16666666666663 288.0 L291.16666666666663 282.0 L286.66666666666663 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="314.7" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="314.7" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">for sale</text>
+<text x="449.3" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">290</text>
+<rect x="465.3" y="256.0" width="178.7" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M473.3333333333333 278.5 L493.3333333333333 278.5 L493.3333333333333 282.0 L482.3333333333333 282.0 L479.8333333333333 288.0 L475.8333333333333 288.0 L477.8333333333333 282.0 L473.3333333333333 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="501.3" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="501.3" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">for sale</text>
+<text x="636.0" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">240</text>
+<text x="24.0" y="344.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">SQUAD</text>
+<rect x="92.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="106" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="100.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Armour</text>
+<circle cx="120.0" cy="329.0" r="1.9" fill="#4ea6e6" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="125.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="131.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="136.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="190.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">240</text>
+<rect x="204.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="218" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="212.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Heavier shots</text>
+<circle cx="232.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="237.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="243.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="248.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="302.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">120</text>
+<rect x="316.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="330" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="324.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Faster trigger</text>
+<circle cx="344.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="349.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="355.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="360.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="414.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">120</text>
+<rect x="428.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="442" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="436.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Longer barrels</text>
+<circle cx="456.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="461.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="467.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="526.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="540.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="554" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="548.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Bigger landing</text>
+<circle cx="568.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="573.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="579.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="584.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="638.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="92.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="106" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="100.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Supply drop</text>
+<circle cx="120.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="125.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="131.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="136.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="190.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="204.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="218" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="212.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Quick hands</text>
+<circle cx="232.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="237.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="243.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="302.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="316.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="330" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="324.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">More cards</text>
+<circle cx="344.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="349.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="414.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="428.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="442" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="436.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buildings</text>
+<text x="524.0" y="391.0" font-size="16" fill="#8e9aa7" font-weight="400" text-anchor="end">›</text>
+<rect x="540.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="554" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="548.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Tools</text>
+<text x="636.0" y="391.0" font-size="16" fill="#8e9aa7" font-weight="400" text-anchor="end">›</text>
+<text x="92.0" y="440.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">Buildings and Tools open in place of these two rows, with a Back tile</text>
+<rect x="664.0" y="50.0" width="312.0" height="451.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M679 76 L701 76 M694.4 69.4 L701 76 L694.4 82.6" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="710.0" y="82.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Scorch</text>
+<text x="680.0" y="106.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Bullet modifier  ·  150 points</text>
+<text x="680.0" y="134.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Bullets burn a line the slime avoids.</text>
+<text x="680.0" y="162.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Budget</text>
+<text x="960.0" y="162.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="end">3</text>
+<text x="680.0" y="183.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Your gun after it</text>
+<text x="960.0" y="183.0" font-size="13" fill="#6cd08a" font-weight="500" text-anchor="end">11 of 16</text>
+<text x="680.0" y="204.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Free slot</text>
+<text x="960.0" y="204.0" font-size="13" fill="#8e9aa7" font-weight="500" text-anchor="end">none: goes to the bag</text>
+<text x="680.0" y="231.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Or drag it onto a slot: it takes that card&#x27;s</text>
+<text x="680.0" y="248.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">place, which goes to the bag.</text>
+<rect x="680.0" y="447.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="694.0" y="472.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Buy  ·  150 points</text>
+<rect x="0.0" y="509.0" width="1000.0" height="56.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="509.0" x2="1000.0" y2="509.0" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="24.0" y="515.0" width="220.0" height="38.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="38.0" y="539.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Land on the next planet</text>
+<rect x="254.0" y="515.0" width="150.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="268.0" y="539.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Give up the run</text>
+<text x="976.0" y="539.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="end">Click selects  ·  Enter buys  ·  drag into the gun  ·  Esc back</text>
+</svg></div><figcaption><span class="tag">Shop A</span><b>One board.</b> Everything for sale is on screen at once: cards, guns and upgrades. The mouse is on Scorch.</figcaption></figure>
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Shop A at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="40.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="40.0" x2="1000.0" y2="40.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="26.0" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Planet 4 of 8  ·  Nezanus next  ·  Wipe out the slime: cut it to 2% of its peak</text>
+<text x="976.0" y="27.0" font-size="17" fill="#4ea6e6" font-weight="600" text-anchor="end">670 points</text>
+<rect x="12.0" y="46.0" width="640.0" height="455.0" rx="8" fill="#151b22" fill-opacity="0.55"/>
+<text x="92.0" y="64.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="start">Long gun</text>
+<text x="166.0" y="64.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">·  budget 8 of 16  ·  3 of 3 slots  ·  fired left to right</text>
+<text x="24.0" y="102.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUN</text>
+<rect x="92.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#5d84e6"/>
+<path d="M100.1 98.7 L105 93.8 L109.9 98.7 M100.1 102.9 L105 98.0 L109.9 102.9" fill="none" stroke="#5d84e6" stroke-width="1.8"/>
+<text x="97.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">1</text>
+<text x="117.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Thrift</text>
+<rect x="204.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="224.0,98.0 219.9,99.2 221.9,102.9 218.2,100.9 217.0,105.0 215.8,100.9 212.1,102.9 214.1,99.2 210.0,98.0 214.1,96.8 212.1,93.1 215.8,95.1 217.0,91.0 218.2,95.1 221.9,93.1 219.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="209.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">2</text>
+<text x="229.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Slug bomb</text>
+<circle cx="231.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="236.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="242.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="247.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="253.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="258.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="316.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="320.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="336.0,98.0 331.9,99.2 333.9,102.9 330.2,100.9 329.0,105.0 327.8,100.9 324.1,102.9 326.1,99.2 322.0,98.0 326.1,96.8 324.1,93.1 327.8,95.1 329.0,91.0 330.2,95.1 333.9,93.1 331.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="321.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">3</text>
+<text x="341.0" y="90.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="341.0" y="103.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">blast</text>
+<circle cx="343.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="348.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="354.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<text x="432.0" y="102.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">a gun has 2 to 6 slots</text>
+<text x="24.0" y="160.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">BAG</text>
+<rect x="92.0" y="130.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="132.0" width="96.0" height="2.2" rx="1" fill="#9474e6"/>
+<circle cx="102.2" cy="157.1" r="3.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="105.7" cy="154.6" r="3.9" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="108.5" cy="157.4" r="2.8" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="117.0" y="148.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buckshot</text>
+<text x="117.0" y="161.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">gas</text>
+<circle cx="119.0" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="124.5" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="204.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="256.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="316.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="368.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="428.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="480.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="540.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="592.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<text x="24.0" y="174.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">5 at most</text>
+<line x1="92.0" y1="190.0" x2="648.0" y2="190.0" stroke="#2c3641" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="24.0" y="194.0" font-size="10" fill="#5d6873" font-weight="600" text-anchor="start">FOR SALE</text>
+<text x="24.0" y="228.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">CARDS</text>
+<rect x="92.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="98.0" y="221.3" width="14.0" height="5.3" rx="2.7" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="117.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Needle bullet</text>
+<circle cx="119.0" cy="233.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="190.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="204.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="210.0" y="221.3" width="14.0" height="5.3" rx="2.7" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="229.0" y="216.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="229.0" y="229.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">bullet</text>
+<circle cx="231.0" cy="240.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="302.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">90</text>
+<rect x="316.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="320.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M322 224.0 L336 224.0 M331.8 219.8 L336 224.0 L331.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="341.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Scorch</text>
+<circle cx="343.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="348.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="354.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="414.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="428.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="432.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M434 224.0 L448 224.0 M443.8 219.8 L448 224.0 L443.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="453.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Smother</text>
+<circle cx="455.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="460.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="526.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="540.0" y="198.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="544.0" y="200.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M546 224.0 L560 224.0 M555.8 219.8 L560 224.0 L555.8 228.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="565.0" y="221.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Wide</text>
+<circle cx="567.0" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="572.5" cy="233.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="638.0" y="236.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">80</text>
+<text x="24.0" y="286.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUNS</text>
+<rect x="92.0" y="256.0" width="178.7" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M100.0 278.5 L120.0 278.5 L120.0 282.0 L109.0 282.0 L106.5 288.0 L102.5 288.0 L104.5 282.0 L100.0 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="128.0" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Rifle</text>
+<text x="128.0" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">armory</text>
+<text x="262.7" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">free</text>
+<rect x="278.7" y="256.0" width="178.7" height="50.0" rx="5" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<path d="M286.66666666666663 278.5 L306.66666666666663 278.5 L306.66666666666663 282.0 L295.66666666666663 282.0 L293.16666666666663 288.0 L289.16666666666663 288.0 L291.16666666666663 282.0 L286.66666666666663 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="314.7" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="314.7" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">for sale</text>
+<text x="449.3" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">290</text>
+<rect x="465.3" y="256.0" width="178.7" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M473.3333333333333 278.5 L493.3333333333333 278.5 L493.3333333333333 282.0 L482.3333333333333 282.0 L479.8333333333333 288.0 L475.8333333333333 288.0 L477.8333333333333 282.0 L473.3333333333333 282.0 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="501.3" y="277.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="501.3" y="294.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">for sale</text>
+<text x="636.0" y="294.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">240</text>
+<text x="24.0" y="344.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">SQUAD</text>
+<rect x="92.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="106" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="100.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Armour</text>
+<circle cx="120.0" cy="329.0" r="1.9" fill="#4ea6e6" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="125.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="131.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="136.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="190.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">240</text>
+<rect x="204.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="218" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="212.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Heavier shots</text>
+<circle cx="232.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="237.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="243.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="248.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="302.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">120</text>
+<rect x="316.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="330" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="324.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Faster trigger</text>
+<circle cx="344.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="349.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="355.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="360.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="414.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">120</text>
+<rect x="428.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="442" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="436.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Longer barrels</text>
+<circle cx="456.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="461.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="467.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="526.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="540.0" y="314.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="554" cy="329" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="548.0" y="355.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Bigger landing</text>
+<circle cx="568.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="573.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="579.0" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="584.5" cy="329.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="638.0" y="333.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="92.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="106" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="100.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Supply drop</text>
+<circle cx="120.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="125.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="131.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="136.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="190.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="204.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="218" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="212.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Quick hands</text>
+<circle cx="232.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="237.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="243.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="302.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="316.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="330" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="324.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">More cards</text>
+<circle cx="344.0" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<circle cx="349.5" cy="387.0" r="1.9" fill="none" stroke="#4ea6e6" stroke-width="0.9"/>
+<text x="414.0" y="391.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="428.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="442" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="436.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buildings</text>
+<text x="524.0" y="391.0" font-size="16" fill="#8e9aa7" font-weight="400" text-anchor="end">›</text>
+<rect x="540.0" y="372.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="554" cy="387" r="5.6" fill="none" stroke="#8e9aa7" stroke-width="1.7"/>
+<text x="548.0" y="413.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Tools</text>
+<text x="636.0" y="391.0" font-size="16" fill="#8e9aa7" font-weight="400" text-anchor="end">›</text>
+<text x="92.0" y="440.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">Buildings and Tools open in place of these two rows, with a Back tile</text>
+<rect x="664.0" y="50.0" width="312.0" height="451.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M679 73.25 L701 73.25 L701 77.1 L688.9 77.1 L686.15 83.7 L681.75 83.7 L683.95 77.1 L679 77.1 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="710.0" y="82.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Carbine</text>
+<text x="680.0" y="106.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Gun · 290 points · against your Long gun</text>
+<text x="680.0" y="134.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Fast and short, a little wild. More slots.</text>
+<text x="680.0" y="164.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start"></text>
+<text x="856.0" y="162.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="end">this</text>
+<text x="906.0" y="162.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="end">yours</text>
+<text x="680.0" y="182.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Range</text>
+<text x="856.0" y="182.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">19</text>
+<text x="906.0" y="182.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">35</text>
+<text x="960.0" y="182.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="206.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Rate</text>
+<text x="856.0" y="206.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">2.2/s</text>
+<text x="906.0" y="206.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">0.6/s</text>
+<text x="960.0" y="206.0" font-size="13" fill="#6cd08a" font-weight="400" text-anchor="end">▲</text>
+<text x="680.0" y="230.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Spread</text>
+<text x="856.0" y="230.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">1.1</text>
+<text x="906.0" y="230.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">0.3</text>
+<text x="960.0" y="230.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="254.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Budget</text>
+<text x="856.0" y="254.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">15</text>
+<text x="906.0" y="254.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">16</text>
+<text x="960.0" y="254.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="278.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Slots</text>
+<text x="856.0" y="278.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">5</text>
+<text x="906.0" y="278.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">3</text>
+<text x="960.0" y="278.0" font-size="13" fill="#6cd08a" font-weight="400" text-anchor="end">▲</text>
+<rect x="680.0" y="447.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="694.0" y="472.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Buy  ·  290 points</text>
+<rect x="0.0" y="509.0" width="1000.0" height="56.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="509.0" x2="1000.0" y2="509.0" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="24.0" y="515.0" width="220.0" height="38.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="38.0" y="539.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Land on the next planet</text>
+<rect x="254.0" y="515.0" width="150.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="268.0" y="539.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Give up the run</text>
+<text x="976.0" y="539.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="end">Click selects  ·  Enter buys  ·  drag into the gun  ·  Esc back</text>
+</svg></div><figcaption><span class="tag">Shop A</span>The mouse is on the 290-point Carbine: the pane compares it with your Long gun.</figcaption></figure>
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Shop B at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="40.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="40.0" x2="1000.0" y2="40.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="26.0" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Planet 4 of 8  ·  Nezanus next  ·  Wipe out the slime: cut it to 2% of its peak</text>
+<text x="976.0" y="27.0" font-size="17" fill="#4ea6e6" font-weight="600" text-anchor="end">670 points</text>
+<rect x="12.0" y="46.0" width="640.0" height="455.0" rx="8" fill="#151b22" fill-opacity="0.55"/>
+<text x="92.0" y="64.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="start">Long gun</text>
+<text x="166.0" y="64.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">·  budget 8 of 16  ·  3 of 3 slots  ·  fired left to right</text>
+<text x="24.0" y="102.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUN</text>
+<rect x="92.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#5d84e6"/>
+<path d="M100.1 98.7 L105 93.8 L109.9 98.7 M100.1 102.9 L105 98.0 L109.9 102.9" fill="none" stroke="#5d84e6" stroke-width="1.8"/>
+<text x="97.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">1</text>
+<text x="117.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Thrift</text>
+<rect x="204.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="224.0,98.0 219.9,99.2 221.9,102.9 218.2,100.9 217.0,105.0 215.8,100.9 212.1,102.9 214.1,99.2 210.0,98.0 214.1,96.8 212.1,93.1 215.8,95.1 217.0,91.0 218.2,95.1 221.9,93.1 219.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="209.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">2</text>
+<text x="229.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Slug bomb</text>
+<circle cx="231.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="236.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="242.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="247.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="253.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="258.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="316.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="320.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="336.0,98.0 331.9,99.2 333.9,102.9 330.2,100.9 329.0,105.0 327.8,100.9 324.1,102.9 326.1,99.2 322.0,98.0 326.1,96.8 324.1,93.1 327.8,95.1 329.0,91.0 330.2,95.1 333.9,93.1 331.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="321.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">3</text>
+<text x="341.0" y="90.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="341.0" y="103.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">blast</text>
+<circle cx="343.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="348.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="354.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<text x="432.0" y="102.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">a gun has 2 to 6 slots</text>
+<text x="24.0" y="160.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">BAG</text>
+<rect x="92.0" y="130.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="132.0" width="96.0" height="2.2" rx="1" fill="#9474e6"/>
+<circle cx="102.2" cy="157.1" r="3.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="105.7" cy="154.6" r="3.9" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="108.5" cy="157.4" r="2.8" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="117.0" y="148.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buckshot</text>
+<text x="117.0" y="161.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">gas</text>
+<circle cx="119.0" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="124.5" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="204.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="256.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="316.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="368.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="428.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="480.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="540.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="592.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<text x="24.0" y="174.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">5 at most</text>
+<rect x="24.0" y="192.0" width="81.4" height="30.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.4"/>
+<text x="36.0" y="212.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="start">Cards</text>
+<text x="95.4" y="212.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">5</text>
+<rect x="113.4" y="192.0" width="73.7" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="125.4" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Guns</text>
+<text x="177.2" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">3</text>
+<rect x="195.2" y="192.0" width="81.4" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="207.2" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Squad</text>
+<text x="266.6" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">8</text>
+<rect x="284.6" y="192.0" width="146.9" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="296.6" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Build and tools</text>
+<text x="421.6" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">12</text>
+<text x="648.0" y="212.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="end">1 2 3 4 switch</text>
+<rect x="24.0" y="230.0" width="624.0" height="271.0" rx="8" fill="#151b22" fill-opacity="0.9" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="36.0" y="242.0" width="190.0" height="62.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="40.0" y="244.0" width="182.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="45.0" y="271.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="67.0" y="271.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Needle bullet</text>
+<circle cx="69.0" cy="283.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="220.0" y="286.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">100</text>
+<rect x="236.0" y="242.0" width="190.0" height="62.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="240.0" y="244.0" width="182.0" height="2.2" rx="1" fill="#d9a441"/>
+<rect x="245.0" y="271.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<text x="267.0" y="271.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard bullet</text>
+<circle cx="269.0" cy="283.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<text x="420.0" y="286.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">90</text>
+<rect x="436.0" y="242.0" width="190.0" height="62.0" rx="5" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<rect x="440.0" y="244.0" width="182.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M445 274.0 L461 274.0 M456.2 269.2 L461 274.0 L456.2 278.8" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="467.0" y="271.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Scorch</text>
+<circle cx="469.0" cy="283.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="474.5" cy="283.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="480.0" cy="283.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="620.0" y="286.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="36.0" y="314.0" width="190.0" height="62.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="40.0" y="316.0" width="182.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M45 346.0 L61 346.0 M56.2 341.2 L61 346.0 L56.2 350.8" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="67.0" y="343.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Smother</text>
+<circle cx="69.0" cy="355.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="74.5" cy="355.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="220.0" y="358.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">150</text>
+<rect x="236.0" y="314.0" width="190.0" height="62.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="240.0" y="316.0" width="182.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M245 346.0 L261 346.0 M256.2 341.2 L261 346.0 L256.2 350.8" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="267.0" y="343.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Wide</text>
+<circle cx="269.0" cy="355.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="274.5" cy="355.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<text x="420.0" y="358.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">80</text>
+<text x="36.0" y="489.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">room for up to 9 cards on offer here</text>
+<rect x="664.0" y="50.0" width="312.0" height="451.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M679 76 L701 76 M694.4 69.4 L701 76 L694.4 82.6" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="710.0" y="82.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Scorch</text>
+<text x="680.0" y="106.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Bullet modifier  ·  150 points</text>
+<text x="680.0" y="134.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Bullets burn a line the slime avoids.</text>
+<text x="680.0" y="162.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Budget</text>
+<text x="960.0" y="162.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="end">3</text>
+<text x="680.0" y="183.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Your gun after it</text>
+<text x="960.0" y="183.0" font-size="13" fill="#6cd08a" font-weight="500" text-anchor="end">11 of 16</text>
+<text x="680.0" y="204.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Free slot</text>
+<text x="960.0" y="204.0" font-size="13" fill="#8e9aa7" font-weight="500" text-anchor="end">none: goes to the bag</text>
+<text x="680.0" y="231.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Or drag it onto a slot: it takes that card&#x27;s</text>
+<text x="680.0" y="248.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">place, which goes to the bag.</text>
+<rect x="680.0" y="447.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="694.0" y="472.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Buy  ·  150 points</text>
+<rect x="0.0" y="509.0" width="1000.0" height="56.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="509.0" x2="1000.0" y2="509.0" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="24.0" y="515.0" width="220.0" height="38.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="38.0" y="539.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Land on the next planet</text>
+<rect x="254.0" y="515.0" width="150.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="268.0" y="539.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Give up the run</text>
+<text x="976.0" y="539.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="end">Click selects  ·  Enter buys  ·  drag into the gun  ·  Esc back</text>
+</svg></div><figcaption><span class="tag">Shop B</span><b>A counter with tabs.</b> Cards, Guns, Squad, and Build and tools; the number on each tab is how many are for sale there. The mouse is on Scorch.</figcaption></figure>
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Shop B at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="40.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="40.0" x2="1000.0" y2="40.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="26.0" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Planet 4 of 8  ·  Nezanus next  ·  Wipe out the slime: cut it to 2% of its peak</text>
+<text x="976.0" y="27.0" font-size="17" fill="#4ea6e6" font-weight="600" text-anchor="end">670 points</text>
+<rect x="12.0" y="46.0" width="640.0" height="455.0" rx="8" fill="#151b22" fill-opacity="0.55"/>
+<text x="92.0" y="64.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="start">Long gun</text>
+<text x="166.0" y="64.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">·  budget 8 of 16  ·  3 of 3 slots  ·  fired left to right</text>
+<text x="24.0" y="102.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUN</text>
+<rect x="92.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#5d84e6"/>
+<path d="M100.1 98.7 L105 93.8 L109.9 98.7 M100.1 102.9 L105 98.0 L109.9 102.9" fill="none" stroke="#5d84e6" stroke-width="1.8"/>
+<text x="97.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">1</text>
+<text x="117.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Thrift</text>
+<rect x="204.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="224.0,98.0 219.9,99.2 221.9,102.9 218.2,100.9 217.0,105.0 215.8,100.9 212.1,102.9 214.1,99.2 210.0,98.0 214.1,96.8 212.1,93.1 215.8,95.1 217.0,91.0 218.2,95.1 221.9,93.1 219.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="209.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">2</text>
+<text x="229.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Slug bomb</text>
+<circle cx="231.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="236.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="242.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="247.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="253.0" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="258.5" cy="107.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="316.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="320.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#e07a3a"/>
+<polygon points="336.0,98.0 331.9,99.2 333.9,102.9 330.2,100.9 329.0,105.0 327.8,100.9 324.1,102.9 326.1,99.2 322.0,98.0 326.1,96.8 324.1,93.1 327.8,95.1 329.0,91.0 330.2,95.1 333.9,93.1 331.9,96.8" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<text x="321.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">3</text>
+<text x="341.0" y="90.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<text x="341.0" y="103.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">blast</text>
+<circle cx="343.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="348.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="354.0" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="114.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<text x="432.0" y="102.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">a gun has 2 to 6 slots</text>
+<text x="24.0" y="160.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">BAG</text>
+<rect x="92.0" y="130.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="132.0" width="96.0" height="2.2" rx="1" fill="#9474e6"/>
+<circle cx="102.2" cy="157.1" r="3.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="105.7" cy="154.6" r="3.9" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="108.5" cy="157.4" r="2.8" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="117.0" y="148.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buckshot</text>
+<text x="117.0" y="161.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">gas</text>
+<circle cx="119.0" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="124.5" cy="172.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="204.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="256.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="316.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="368.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="428.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="480.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="540.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="592.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<text x="24.0" y="174.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">5 at most</text>
+<rect x="24.0" y="192.0" width="81.4" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="36.0" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Cards</text>
+<text x="95.4" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">5</text>
+<rect x="113.4" y="192.0" width="73.7" height="30.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.4"/>
+<text x="125.4" y="212.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="start">Guns</text>
+<text x="177.2" y="212.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">3</text>
+<rect x="195.2" y="192.0" width="81.4" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="207.2" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Squad</text>
+<text x="266.6" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">8</text>
+<rect x="284.6" y="192.0" width="146.9" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="296.6" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Build and tools</text>
+<text x="421.6" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">12</text>
+<text x="648.0" y="212.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="end">1 2 3 4 switch</text>
+<rect x="24.0" y="230.0" width="624.0" height="271.0" rx="8" fill="#151b22" fill-opacity="0.9" stroke="#2c3641" stroke-width="1.0"/>
+<text x="40.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="start">Gun</text>
+<text x="300.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Range</text>
+<text x="362.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Rate</text>
+<text x="430.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Spread</text>
+<text x="498.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Budget</text>
+<text x="552.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Slots</text>
+<text x="620.0" y="254.0" font-size="12" fill="#8e9aa7" font-weight="600" text-anchor="end">Price</text>
+<rect x="30.0" y="264.0" width="612.0" height="34.0" rx="5" fill="#18222c" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M41 278.75 L59 278.75 L59 281.9 L49.1 281.9 L46.85 287.3 L43.25 287.3 L45.05 281.9 L41 281.9 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="68.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Long gun (yours)</text>
+<text x="300.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="end">35</text>
+<text x="362.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="end">0.6/s</text>
+<text x="430.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="end">0.3</text>
+<text x="498.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="end">16</text>
+<text x="552.0" y="286.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="end">3</text>
+<text x="620.0" y="286.0" font-size="13" fill="#4ea6e6" font-weight="500" text-anchor="end"></text>
+<path d="M41 318.75 L59 318.75 L59 321.9 L49.1 321.9 L46.85 327.3 L43.25 327.3 L45.05 321.9 L41 321.9 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="68.0" y="326.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Rifle (armory)</text>
+<text x="300.0" y="326.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">24</text>
+<text x="362.0" y="326.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">1.0/s</text>
+<text x="430.0" y="326.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">0.5</text>
+<text x="498.0" y="326.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">10</text>
+<text x="552.0" y="326.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">4</text>
+<text x="620.0" y="326.0" font-size="13" fill="#4ea6e6" font-weight="500" text-anchor="end">free</text>
+<rect x="30.0" y="344.0" width="612.0" height="34.0" rx="5" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<path d="M41 358.75 L59 358.75 L59 361.9 L49.1 361.9 L46.85 367.3 L43.25 367.3 L45.05 361.9 L41 361.9 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="68.0" y="366.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="300.0" y="366.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">19</text>
+<text x="362.0" y="366.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">2.2/s</text>
+<text x="430.0" y="366.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">1.1</text>
+<text x="498.0" y="366.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">15</text>
+<text x="552.0" y="366.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">5</text>
+<text x="620.0" y="366.0" font-size="13" fill="#4ea6e6" font-weight="500" text-anchor="end">290</text>
+<path d="M41 398.75 L59 398.75 L59 401.9 L49.1 401.9 L46.85 407.3 L43.25 407.3 L45.05 401.9 L41 401.9 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="68.0" y="406.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="start">Carbine</text>
+<text x="300.0" y="406.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">18</text>
+<text x="362.0" y="406.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">3.6/s</text>
+<text x="430.0" y="406.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">1.8</text>
+<text x="498.0" y="406.0" font-size="14" fill="#ef7a6a" font-weight="500" text-anchor="end">10</text>
+<text x="552.0" y="406.0" font-size="14" fill="#6cd08a" font-weight="500" text-anchor="end">5</text>
+<text x="620.0" y="406.0" font-size="13" fill="#4ea6e6" font-weight="500" text-anchor="end">240</text>
+<text x="40.0" y="438.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">green: better than yours  ·  red: worse</text>
+<rect x="664.0" y="50.0" width="312.0" height="451.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M679 73.25 L701 73.25 L701 77.1 L688.9 77.1 L686.15 83.7 L681.75 83.7 L683.95 77.1 L679 77.1 Z" fill="none" stroke="#e7ecf1" stroke-width="1.5"/>
+<text x="710.0" y="82.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Carbine</text>
+<text x="680.0" y="106.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Gun · 290 points · against your Long gun</text>
+<text x="680.0" y="134.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Fast and short, a little wild. More slots.</text>
+<text x="680.0" y="164.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start"></text>
+<text x="856.0" y="162.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="end">this</text>
+<text x="906.0" y="162.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="end">yours</text>
+<text x="680.0" y="182.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Range</text>
+<text x="856.0" y="182.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">19</text>
+<text x="906.0" y="182.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">35</text>
+<text x="960.0" y="182.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="206.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Rate</text>
+<text x="856.0" y="206.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">2.2/s</text>
+<text x="906.0" y="206.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">0.6/s</text>
+<text x="960.0" y="206.0" font-size="13" fill="#6cd08a" font-weight="400" text-anchor="end">▲</text>
+<text x="680.0" y="230.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Spread</text>
+<text x="856.0" y="230.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">1.1</text>
+<text x="906.0" y="230.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">0.3</text>
+<text x="960.0" y="230.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="254.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Budget</text>
+<text x="856.0" y="254.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">15</text>
+<text x="906.0" y="254.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">16</text>
+<text x="960.0" y="254.0" font-size="13" fill="#ef7a6a" font-weight="400" text-anchor="end">▼</text>
+<text x="680.0" y="278.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Slots</text>
+<text x="856.0" y="278.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="end">5</text>
+<text x="906.0" y="278.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="end">3</text>
+<text x="960.0" y="278.0" font-size="13" fill="#6cd08a" font-weight="400" text-anchor="end">▲</text>
+<rect x="680.0" y="447.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="694.0" y="472.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Buy  ·  290 points</text>
+<rect x="0.0" y="509.0" width="1000.0" height="56.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="509.0" x2="1000.0" y2="509.0" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="24.0" y="515.0" width="220.0" height="38.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="38.0" y="539.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Land on the next planet</text>
+<rect x="254.0" y="515.0" width="150.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="268.0" y="539.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Give up the run</text>
+<text x="976.0" y="539.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="end">Click selects  ·  Enter buys  ·  drag into the gun  ·  Esc back</text>
+</svg></div><figcaption><span class="tag">Shop B</span>The Guns tab: a table of every gun against yours. The mouse is on the 290-point Carbine.</figcaption></figure>
+    </div>
+    <div class="cost">
+      <div class="box"><h3>Shop A costs</h3><ul>
+        <li>No clicks to see anything: every price is on screen.</li>
+        <li>Dense. Upgrade names have to be short ("More cards").</li>
+        <li>About 70 units spare at this size. A sixth card on offer, a bigger bag or a 6-slot gun fills a row, and then something has to give.</li>
+        <li>Buildings and Tools are folders that open in place of the upgrade rows, with a Back tile.</li>
+      </ul></div>
+      <div class="box"><h3>Shop B costs</h3><ul>
+        <li>One click, or a number key, to see another kind of thing for sale. While you look at cards, the guns and upgrades are hidden.</li>
+        <li>Each tab has room to grow: up to 9 cards, every gun in one table, all buildings and tools without folders.</li>
+        <li>Tiles can be larger than in A.</li>
+        <li>The tab numbers have to do the job of showing what's on offer, or a player skips a tab and misses the gun that wins the run.</li>
+      </ul></div>
+    </div>
+    <p class="note">Both: the Buy button acts on the selected item, so the pane doesn't change while the mouse travels to it. Dragging from the shelf onto a slot buys and places in one move.</p>
+  </section>
+
+  <section>
+    <h2>Pick 2: the main menu</h2>
+    <p>Also a blind pair. Both fit, with no extra clicks to start anything.</p>
+    <div class="pair">
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Main menu A at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.1"/>
+<defs><linearGradient id="scrim-MainmenuAat1000by565units" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#0e1318" stop-opacity="0.88"/><stop offset="0.55" stop-color="#0e1318" stop-opacity="0.55"/><stop offset="0.8" stop-color="#0e1318" stop-opacity="0"/></linearGradient></defs>
+<rect width="1000" height="565" fill="url(#scrim-MainmenuAat1000by565units)"/>
+<text x="32.0" y="62.0" font-size="36" fill="#e7ecf1" font-weight="700" text-anchor="start">Larder World</text>
+<text x="32.0" y="86.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="start">A mould that grows, feeds and fights back</text>
+<rect x="32.0" y="108.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="48.0" y="134.0" font-size="18" fill="#ffffff" font-weight="600" text-anchor="start">Run</text>
+<rect x="32.0" y="152.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="178.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Sandbox</text>
+<rect x="32.0" y="196.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="222.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Campaign</text>
+<rect x="32.0" y="240.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="266.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Random planet</text>
+<rect x="32.0" y="284.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="310.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Gun range</text>
+<rect x="32.0" y="340.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="366.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Options</text>
+<rect x="32.0" y="384.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="410.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Edit maps</text>
+<rect x="32.0" y="440.0" width="280.0" height="40.0" rx="6" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="466.0" font-size="18" fill="#e7ecf1" font-weight="500" text-anchor="start">Quit</text>
+<rect x="330.0" y="108.0" width="360.0" height="84.0" rx="8" fill="#151b22" fill-opacity="0.95" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M330 122 L322 128 L330 134" fill="#151b22" stroke="#2c3641"/>
+<text x="346.0" y="136.0" font-size="18" fill="#e7ecf1" font-weight="600" text-anchor="start">Run</text>
+<text x="346.0" y="160.0" font-size="14" fill="#c9d2db" font-weight="400" text-anchor="start">Planet after planet toward the slime&#x27;s home</text>
+<text x="346.0" y="180.0" font-size="14" fill="#c9d2db" font-weight="400" text-anchor="start">world; upgrades between</text>
+<text x="32.0" y="547.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Up/Down and Enter, or click  ·  F1 keys</text>
+<text x="330.0" y="210.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="start">the box moves with the mouse or the keys</text>
+</svg></div><figcaption><span class="tag">Menu A</span><b>Names only, one caption box.</b> The box beside the list shows the subtitle of the entry you point at or move to.</figcaption></figure>
+      <figure class="pick"><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Main menu B at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.1"/>
+<defs><linearGradient id="scrim-MainmenuBat1000by565units" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#0e1318" stop-opacity="0.88"/><stop offset="0.55" stop-color="#0e1318" stop-opacity="0.55"/><stop offset="0.8" stop-color="#0e1318" stop-opacity="0"/></linearGradient></defs>
+<rect width="1000" height="565" fill="url(#scrim-MainmenuBat1000by565units)"/>
+<text x="32.0" y="62.0" font-size="36" fill="#e7ecf1" font-weight="700" text-anchor="start">Larder World</text>
+<text x="32.0" y="86.0" font-size="14" fill="#8e9aa7" font-weight="400" text-anchor="start">A mould that grows, feeds and fights back</text>
+<rect x="32.0" y="106.0" width="540.0" height="60.0" rx="7" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="48.0" y="131.0" font-size="17" fill="#ffffff" font-weight="600" text-anchor="start">Run</text>
+<text x="48.0" y="152.0" font-size="13" fill="#e6f2fc" font-weight="400" text-anchor="start">Planet after planet toward the slime&#x27;s home world; upgrades between</text>
+<rect x="32.0" y="172.0" width="540.0" height="60.0" rx="7" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="197.0" font-size="17" fill="#e7ecf1" font-weight="600" text-anchor="start">Sandbox</text>
+<text x="48.0" y="218.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Free play on the map, with today&#x27;s defaults</text>
+<rect x="32.0" y="238.0" width="540.0" height="60.0" rx="7" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="263.0" font-size="17" fill="#e7ecf1" font-weight="600" text-anchor="start">Campaign</text>
+<text x="48.0" y="284.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">8 missions, one new verb each</text>
+<rect x="32.0" y="304.0" width="540.0" height="60.0" rx="7" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="329.0" font-size="17" fill="#e7ecf1" font-weight="600" text-anchor="start">Random planet</text>
+<text x="48.0" y="350.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">A new generated planet, planet 1 of a run (Options: Planet)</text>
+<rect x="32.0" y="370.0" width="540.0" height="60.0" rx="7" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="48.0" y="395.0" font-size="17" fill="#e7ecf1" font-weight="600" text-anchor="start">Gun range</text>
+<text x="48.0" y="416.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Every gun, card and bullet, free: build a gun and shoot the slime</text>
+<rect x="32.0" y="442.0" width="130.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="46.0" y="466.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Options</text>
+<rect x="172.0" y="442.0" width="130.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="186.0" y="466.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Edit maps</text>
+<rect x="472.0" y="442.0" width="100.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="486.0" y="466.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Quit</text>
+<text x="32.0" y="547.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Up/Down and Enter, or click  ·  F1 keys</text>
+</svg></div><figcaption><span class="tag">Menu B</span><b>The ways to play as cards with their subtitles,</b> and Options, Edit maps and Quit in a row below.</figcaption></figure>
+    </div>
+    <div class="cost">
+      <div class="box"><h3>Menu A costs</h3><ul><li>You read a subtitle only by pointing at its entry or moving to it.</li><li>Room for several more entries.</li></ul></div>
+      <div class="box"><h3>Menu B costs</h3><ul><li>Every subtitle is always visible.</li><li>Room for one more way to play; a seventh needs another layout.</li></ul></div>
+    </div>
+    <p class="note">Both: Keys moves into Options. The tagline stays; at this size there is room for it.</p>
+  </section>
+
+  <section>
+    <h2>The armory</h2>
+    <p>The same frame as the shop. All three researchers put tabs here, because the armory is a catalogue of everything (8 guns, 20 bullets, 14 modifiers), not an offer of a few.</p>
+    <figure><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Armory at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="40.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="40.0" x2="1000.0" y2="40.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="26.0" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">The gun range&#x27;s armory  ·  everything is free  ·  guns rolled as on planet 3</text>
+<text x="976.0" y="27.0" font-size="17" fill="#4ea6e6" font-weight="600" text-anchor="end">Free</text>
+<text x="92.0" y="64.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="start">Rifle</text>
+<text x="140.0" y="64.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">·  budget 4 of 10  ·  2 of 4 slots</text>
+<text x="24.0" y="102.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">GUN</text>
+<rect x="92.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="96.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#9474e6"/>
+<circle cx="102.2" cy="99.0" r="3.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="105.7" cy="96.6" r="3.9" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="108.5" cy="99.4" r="2.8" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="97.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">1</text>
+<text x="117.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Needle gas</text>
+<circle cx="119.0" cy="107.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="124.5" cy="107.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="130.0" cy="107.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="204.0" y="72.0" width="104.0" height="50.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="208.0" y="74.0" width="96.0" height="2.2" rx="1" fill="#38b6a6"/>
+<path d="M210 98.0 L224 98.0 M219.8 93.8 L224 98.0 L219.8 102.2" fill="none" stroke="#38b6a6" stroke-width="1.8"/>
+<text x="209.0" y="86.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="start">2</text>
+<text x="229.0" y="95.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Wide</text>
+<circle cx="231.0" cy="107.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<circle cx="236.5" cy="107.0" r="1.9" fill="#38b6a6" stroke="#38b6a6" stroke-width="0.9"/>
+<rect x="316.0" y="72.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="321.0" y="86.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">3</text>
+<text x="368.0" y="101.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle">empty</text>
+<rect x="428.0" y="72.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="433.0" y="86.0" font-size="10" fill="#5d6873" font-weight="400" text-anchor="start">4</text>
+<text x="480.0" y="101.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle">empty</text>
+<text x="24.0" y="160.0" font-size="11" fill="#8e9aa7" font-weight="600" text-anchor="start">BAG</text>
+<rect x="92.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="144.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="204.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="256.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="316.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="368.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="428.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="480.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="540.0" y="130.0" width="104.0" height="50.0" rx="5" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<text x="592.0" y="159.0" font-size="11" fill="#5d6873" font-weight="400" text-anchor="middle"></text>
+<rect x="24.0" y="192.0" width="73.7" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="36.0" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Guns</text>
+<text x="87.7" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">8</text>
+<rect x="105.7" y="192.0" width="97.0" height="30.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.4"/>
+<text x="117.7" y="212.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="start">Bullets</text>
+<text x="192.7" y="212.0" font-size="12" fill="#4ea6e6" font-weight="500" text-anchor="end">20</text>
+<rect x="210.7" y="192.0" width="115.3" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="222.7" y="212.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Modifiers</text>
+<text x="316.0" y="212.0" font-size="12" fill="#5d6873" font-weight="500" text-anchor="end">14</text>
+<rect x="24.0" y="230.0" width="624.0" height="271.0" rx="8" fill="#151b22" fill-opacity="0.9" stroke="#2c3641" stroke-width="1.0"/>
+<text x="163.0" y="250.0" font-size="12" fill="#d9a441" font-weight="600" text-anchor="middle">Bullet</text>
+<text x="265.0" y="250.0" font-size="12" fill="#e07a3a" font-weight="600" text-anchor="middle">Blast</text>
+<text x="367.0" y="250.0" font-size="12" fill="#e07a3a" font-weight="600" text-anchor="middle">Bomb</text>
+<text x="469.0" y="250.0" font-size="12" fill="#9474e6" font-weight="600" text-anchor="middle">Gas</text>
+<text x="571.0" y="250.0" font-size="12" fill="#5fd45c" font-weight="600" text-anchor="middle">Germ</text>
+<text x="38.0" y="285.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Standard</text>
+<rect x="116.0" y="258.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="120.0" y="260.0" width="86.0" height="2" rx="1" fill="#d9a441"/>
+<rect x="126.0" y="278.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<circle cx="150.0" cy="281.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<rect x="218.0" y="258.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="222.0" y="260.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="244.0,281.0 239.3,282.4 241.7,286.7 237.4,284.3 236.0,289.0 234.6,284.3 230.3,286.7 232.7,282.4 228.0,281.0 232.7,279.6 230.3,275.3 234.6,277.7 236.0,273.0 237.4,277.7 241.7,275.3 239.3,279.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="252.0" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="257.5" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="263.0" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="320.0" y="258.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="324.0" y="260.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="346.0,281.0 341.3,282.4 343.7,286.7 339.4,284.3 338.0,289.0 336.6,284.3 332.3,286.7 334.7,282.4 330.0,281.0 334.7,279.6 332.3,275.3 336.6,277.7 338.0,273.0 339.4,277.7 343.7,275.3 341.3,279.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="354.0" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="365.0" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="370.5" cy="281.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="422.0" y="258.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="426.0" y="260.0" width="86.0" height="2" rx="1" fill="#9474e6"/>
+<circle cx="436.8" cy="282.2" r="3.6" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="440.8" cy="279.4" r="4.4" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="444.0" cy="282.6" r="3.2" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="456.0" cy="281.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="461.5" cy="281.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="467.0" cy="281.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="524.0" y="258.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="528.0" y="260.0" width="86.0" height="2" rx="1" fill="#5fd45c"/>
+<circle cx="542" cy="281.0" r="4.0" fill="none" stroke="#5fd45c" stroke-width="1.8"/>
+<circle cx="549.2" cy="281.0" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="287.2" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="287.2" r="1.6" fill="#5fd45c"/>
+<circle cx="534.8" cy="281.0" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="274.8" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="274.8" r="1.6" fill="#5fd45c"/>
+<circle cx="558.0" cy="281.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="563.5" cy="281.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="569.0" cy="281.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="574.5" cy="281.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<text x="38.0" y="335.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Slug</text>
+<rect x="116.0" y="308.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="120.0" y="310.0" width="86.0" height="2" rx="1" fill="#d9a441"/>
+<rect x="126.0" y="328.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<circle cx="150.0" cy="331.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<circle cx="155.5" cy="331.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<rect x="218.0" y="308.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="222.0" y="310.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="244.0,331.0 239.3,332.4 241.7,336.7 237.4,334.3 236.0,339.0 234.6,334.3 230.3,336.7 232.7,332.4 228.0,331.0 232.7,329.6 230.3,325.3 234.6,327.7 236.0,323.0 237.4,327.7 241.7,325.3 239.3,329.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="252.0" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="257.5" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="263.0" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="320.0" y="308.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="324.0" y="310.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="346.0,331.0 341.3,332.4 343.7,336.7 339.4,334.3 338.0,339.0 336.6,334.3 332.3,336.7 334.7,332.4 330.0,331.0 334.7,329.6 332.3,325.3 336.6,327.7 338.0,323.0 339.4,327.7 343.7,325.3 341.3,329.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="354.0" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="365.0" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="370.5" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="376.0" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="381.5" cy="331.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="422.0" y="308.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="426.0" y="310.0" width="86.0" height="2" rx="1" fill="#9474e6"/>
+<circle cx="436.8" cy="332.2" r="3.6" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="440.8" cy="329.4" r="4.4" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="444.0" cy="332.6" r="3.2" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="456.0" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="461.5" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="467.0" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="472.5" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="478.0" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="483.5" cy="331.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="524.0" y="308.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="528.0" y="310.0" width="86.0" height="2" rx="1" fill="#5fd45c"/>
+<circle cx="542" cy="331.0" r="4.0" fill="none" stroke="#5fd45c" stroke-width="1.8"/>
+<circle cx="549.2" cy="331.0" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="337.2" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="337.2" r="1.6" fill="#5fd45c"/>
+<circle cx="534.8" cy="331.0" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="324.8" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="324.8" r="1.6" fill="#5fd45c"/>
+<circle cx="558.0" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="563.5" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="569.0" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="574.5" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="580.0" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="585.5" cy="331.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<text x="38.0" y="385.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Needle</text>
+<rect x="116.0" y="358.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="120.0" y="360.0" width="86.0" height="2" rx="1" fill="#d9a441"/>
+<rect x="126.0" y="378.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<circle cx="150.0" cy="381.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<rect x="218.0" y="358.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="222.0" y="360.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="244.0,381.0 239.3,382.4 241.7,386.7 237.4,384.3 236.0,389.0 234.6,384.3 230.3,386.7 232.7,382.4 228.0,381.0 232.7,379.6 230.3,375.3 234.6,377.7 236.0,373.0 237.4,377.7 241.7,375.3 239.3,379.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="252.0" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="257.5" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="263.0" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="268.5" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="320.0" y="358.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="324.0" y="360.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="346.0,381.0 341.3,382.4 343.7,386.7 339.4,384.3 338.0,389.0 336.6,384.3 332.3,386.7 334.7,382.4 330.0,381.0 334.7,379.6 332.3,375.3 336.6,377.7 338.0,373.0 339.4,377.7 343.7,375.3 341.3,379.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="354.0" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="365.0" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="370.5" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="376.0" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="381.5" cy="381.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="422.0" y="358.0" width="94.0" height="44.0" rx="5" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<rect x="426.0" y="360.0" width="86.0" height="2" rx="1" fill="#9474e6"/>
+<circle cx="436.8" cy="382.2" r="3.6" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="440.8" cy="379.4" r="4.4" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="444.0" cy="382.6" r="3.2" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="456.0" cy="381.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="461.5" cy="381.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<circle cx="467.0" cy="381.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="524.0" y="358.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="528.0" y="360.0" width="86.0" height="2" rx="1" fill="#5fd45c"/>
+<circle cx="542" cy="381.0" r="4.0" fill="none" stroke="#5fd45c" stroke-width="1.8"/>
+<circle cx="549.2" cy="381.0" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="387.2" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="387.2" r="1.6" fill="#5fd45c"/>
+<circle cx="534.8" cy="381.0" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="374.8" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="374.8" r="1.6" fill="#5fd45c"/>
+<circle cx="558.0" cy="381.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="563.5" cy="381.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="569.0" cy="381.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="574.5" cy="381.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="580.0" cy="381.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<text x="38.0" y="435.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="start">Buckshot</text>
+<rect x="116.0" y="408.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="120.0" y="410.0" width="86.0" height="2" rx="1" fill="#d9a441"/>
+<rect x="126.0" y="428.0" width="16.0" height="6.1" rx="3.0" fill="none" stroke="#d9a441" stroke-width="1.8"/>
+<circle cx="150.0" cy="431.0" r="1.9" fill="#d9a441" stroke="#d9a441" stroke-width="0.9"/>
+<rect x="218.0" y="408.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="222.0" y="410.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="244.0,431.0 239.3,432.4 241.7,436.7 237.4,434.3 236.0,439.0 234.6,434.3 230.3,436.7 232.7,432.4 228.0,431.0 232.7,429.6 230.3,425.3 234.6,427.7 236.0,423.0 237.4,427.7 241.7,425.3 239.3,429.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="252.0" cy="431.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="257.5" cy="431.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="320.0" y="408.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="324.0" y="410.0" width="86.0" height="2" rx="1" fill="#e07a3a"/>
+<polygon points="346.0,431.0 341.3,432.4 343.7,436.7 339.4,434.3 338.0,439.0 336.6,434.3 332.3,436.7 334.7,432.4 330.0,431.0 334.7,429.6 332.3,425.3 336.6,427.7 338.0,423.0 339.4,427.7 343.7,425.3 341.3,429.6" fill="none" stroke="#e07a3a" stroke-width="1.6"/>
+<circle cx="354.0" cy="431.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="359.5" cy="431.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<circle cx="365.0" cy="431.0" r="1.9" fill="#e07a3a" stroke="#e07a3a" stroke-width="0.9"/>
+<rect x="422.0" y="408.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="426.0" y="410.0" width="86.0" height="2" rx="1" fill="#9474e6"/>
+<circle cx="436.8" cy="432.2" r="3.6" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="440.8" cy="429.4" r="4.4" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="444.0" cy="432.6" r="3.2" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="456.0" cy="431.0" r="1.9" fill="#9474e6" stroke="#9474e6" stroke-width="0.9"/>
+<rect x="524.0" y="408.0" width="94.0" height="44.0" rx="5" fill="#1b232c" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="528.0" y="410.0" width="86.0" height="2" rx="1" fill="#5fd45c"/>
+<circle cx="542" cy="431.0" r="4.0" fill="none" stroke="#5fd45c" stroke-width="1.8"/>
+<circle cx="549.2" cy="431.0" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="437.2" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="437.2" r="1.6" fill="#5fd45c"/>
+<circle cx="534.8" cy="431.0" r="1.6" fill="#5fd45c"/>
+<circle cx="538.4" cy="424.8" r="1.6" fill="#5fd45c"/>
+<circle cx="545.6" cy="424.8" r="1.6" fill="#5fd45c"/>
+<circle cx="558.0" cy="431.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="563.5" cy="431.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<circle cx="569.0" cy="431.0" r="1.9" fill="#5fd45c" stroke="#5fd45c" stroke-width="0.9"/>
+<rect x="664.0" y="50.0" width="312.0" height="451.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="685.6" cy="77.7" r="5.0" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="691.1" cy="73.8" r="6.1" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<circle cx="695.5" cy="78.2" r="4.4" fill="none" stroke="#9474e6" stroke-width="1.6"/>
+<text x="710.0" y="82.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Needle gas</text>
+<text x="680.0" y="106.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Bullet  ·  budget 3  ·  free</text>
+<text x="680.0" y="134.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">Puts slime where it hits to sleep. Needle:</text>
+<text x="680.0" y="154.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">its own damage, speed, range and spread.</text>
+<text x="680.0" y="182.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Budget</text>
+<text x="960.0" y="182.0" font-size="13" fill="#e7ecf1" font-weight="500" text-anchor="end">3</text>
+<text x="680.0" y="203.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Your gun after it</text>
+<text x="960.0" y="203.0" font-size="13" fill="#6cd08a" font-weight="500" text-anchor="end">7 of 10</text>
+<text x="680.0" y="230.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Rows are the bullet&#x27;s shape, columns what it</text>
+<text x="680.0" y="247.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">does. Drag a tile onto a slot, or click it and</text>
+<text x="680.0" y="264.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">press Enter.</text>
+<rect x="680.0" y="447.0" width="280.0" height="40.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="694.0" y="472.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Put in the gun</text>
+<rect x="0.0" y="509.0" width="1000.0" height="56.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="509.0" x2="1000.0" y2="509.0" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="24.0" y="515.0" width="170.0" height="38.0" rx="6" fill="#3d8fd0" stroke="#62b2ee" stroke-width="1.0"/>
+<text x="38.0" y="539.4" font-size="15" fill="#ffffff" font-weight="500" text-anchor="start">Back to the range</text>
+<rect x="204.0" y="515.0" width="140.0" height="38.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="218.0" y="539.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Leave the range</text>
+<rect x="372.0" y="519.0" width="76.2" height="30.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="383.0" y="538.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">New rolls</text>
+<rect x="454.2" y="519.0" width="62.7" height="30.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="465.2" y="538.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Deeper</text>
+<rect x="522.9" y="519.0" width="79.6" height="30.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="533.9" y="538.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Shallower</text>
+<rect x="608.5" y="519.0" width="105.8" height="30.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="619.5" y="538.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Empty the gun</text>
+<rect x="720.3" y="519.0" width="105.8" height="30.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="731.3" y="538.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Empty the bag</text>
+</svg></div><figcaption>The <b>Bullets</b> tab: rows are the bullet's shape, columns what it does, so the tiles need no names. The dots are the budget each takes. The five range tools move to the bottom bar. The <b>Guns</b> tab is the same table as Shop B's.</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Options</h2>
+    <figure><div><svg class="mock" viewBox="0 0 1000 565" role="img" aria-label="Options at 1000 by 565 units" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="1000" height="565" fill="#1c2a1d"/>
+<image href="dish.webp" x="0" y="0" width="1000" height="565" preserveAspectRatio="xMidYMid slice"/>
+<rect width="1000" height="565" fill="#0e1318" fill-opacity="0.74"/>
+<rect x="0.0" y="0.0" width="1000.0" height="48.0" rx="0" fill="#0c1116" fill-opacity="0.94"/>
+<line x1="0.0" y1="48.0" x2="1000.0" y2="48.0" stroke="#2c3641" stroke-width="1.0"/>
+<text x="24.0" y="31.0" font-size="20" fill="#e7ecf1" font-weight="700" text-anchor="start">Options</text>
+<rect x="130.0" y="9.0" width="62.3" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="143.0" y="29.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Game</text>
+<rect x="200.3" y="9.0" width="69.7" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="213.3" y="29.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Planet</text>
+<rect x="277.9" y="9.0" width="93.1" height="30.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.4"/>
+<text x="290.9" y="29.0" font-size="14" fill="#e7ecf1" font-weight="600" text-anchor="start">The mould</text>
+<rect x="379.0" y="9.0" width="58.1" height="30.0" rx="6" fill="#141a20" stroke="#2c3641" stroke-width="1.0"/>
+<text x="392.0" y="29.0" font-size="14" fill="#8e9aa7" font-weight="500" text-anchor="start">Keys</text>
+<rect x="866.0" y="6.0" width="110.0" height="36.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="880.0" y="29.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Back</text>
+<text x="968.0" y="35.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Esc</text>
+<rect x="24.0" y="62.0" width="540.0" height="360.0" rx="8" fill="#151b22" fill-opacity="0.92" stroke="#2c3641" stroke-width="1.0"/>
+<text x="42.0" y="92.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Panic</text>
+<rect x="364.0" y="73.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="91.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="92.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">2</text>
+<rect x="522.0" y="73.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="91.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="136.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Wither</text>
+<rect x="364.0" y="117.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="135.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="136.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">0.01</text>
+<rect x="522.0" y="117.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="135.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="180.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Shared food</text>
+<rect x="364.0" y="161.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="179.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="180.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">0.05</text>
+<rect x="522.0" y="161.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="179.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="224.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Condense</text>
+<rect x="364.0" y="205.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="223.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="224.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">0</text>
+<rect x="522.0" y="205.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="223.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="268.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Breakaway</text>
+<rect x="364.0" y="249.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="267.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="268.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">0</text>
+<rect x="522.0" y="249.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="267.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="312.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Thicken</text>
+<rect x="364.0" y="293.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="311.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="312.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">2</text>
+<rect x="522.0" y="293.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="311.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<rect x="28.0" y="330.0" width="532.0" height="40.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<text x="42.0" y="356.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Surge</text>
+<circle cx="95.4" cy="351" r="3" fill="#e6b450"/>
+<rect x="364.0" y="337.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="355.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="356.0" font-size="15" fill="#e6b450" font-weight="600" text-anchor="middle">1800</text>
+<rect x="522.0" y="337.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="355.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<text x="42.0" y="400.0" font-size="16" fill="#e7ecf1" font-weight="500" text-anchor="start">Flinch</text>
+<rect x="364.0" y="381.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="377.0" y="399.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&lt;</text>
+<text x="456.0" y="400.0" font-size="15" fill="#e7ecf1" font-weight="600" text-anchor="middle">0.9</text>
+<rect x="522.0" y="381.0" width="26.0" height="26.0" rx="5" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="535.0" y="399.0" font-size="14" fill="#e7ecf1" font-weight="500" text-anchor="middle">&gt;</text>
+<rect x="584.0" y="62.0" width="392.0" height="360.0" rx="8" fill="#151b22" fill-opacity="0.97" stroke="#2c3641" stroke-width="1.0"/>
+<text x="600.0" y="94.0" font-size="20" fill="#e7ecf1" font-weight="600" text-anchor="start">Surge</text>
+<text x="600.0" y="122.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">When the slime has eaten enough from its crystals,</text>
+<text x="600.0" y="142.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">the slime near your soldiers and buildings creeps</text>
+<text x="600.0" y="162.0" font-size="14" fill="#e7ecf1" font-weight="400" text-anchor="start">toward them, then lunges.</text>
+<text x="600.0" y="192.0" font-size="14" fill="#c9d2db" font-weight="400" text-anchor="start">The value is the longest wait between surges, in</text>
+<text x="600.0" y="212.0" font-size="14" fill="#c9d2db" font-weight="400" text-anchor="start">steps: 1800 is 60 s. 0 is off.</text>
+<text x="600.0" y="246.0" font-size="13" fill="#8e9aa7" font-weight="400" text-anchor="start">Now 1800  ·  default 900 (30 s)</text>
+<rect x="600.0" y="262.0" width="190.0" height="36.0" rx="6" fill="#1e2731" stroke="#2c3641" stroke-width="1.0"/>
+<text x="614.0" y="285.4" font-size="15" fill="#e7ecf1" font-weight="500" text-anchor="start">Back to the default</text>
+<text x="782.0" y="291.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Bksp</text>
+<text x="24.0" y="547.0" font-size="12" fill="#8e9aa7" font-weight="400" text-anchor="start">Up/Down pick  ·  Left/Right change  ·  Tab next tab  ·  Esc back</text>
+</svg></div><figcaption>Four tabs. <b>Game:</b> UI and text size, Control, Rounds, Bullet speed, Dev mode. <b>Planet:</b> Sandbox map, Planet, Your own mould, Plants. <b>The mould:</b> the eight rules shown. <b>Keys.</b> The pane holds the whole note, the default and the reset button, so notes stop being cut off.</figcaption></figure>
+    <div class="take"><p><b>A question for you.</b> Planet and The mould are rules for a game more than settings. Two of the researchers suggest moving them to a setup page that shows when you start Sandbox or Random planet, beside its Start button. That costs one more screen before a sandbox game, and the rules stop being one click from the main menu. You tune these often, so I'd keep them in Options unless you want the split.</p></div>
+  </section>
+
+  <section>
+    <h2>The command card</h2>
+    <figure><img src="today-card-125.webp" alt="The squad panel and command card today at 125 percent" loading="lazy"><figcaption><b>Today</b> in squad mode, at 125%: Hold fire and Defend sit apart from Free fire, two tiles are empty (Stop and Rally are off in squad mode), and Heal and Guards are in the squad panel.</figcaption></figure>
+    <p>Your clear asks are in both cards below. Hold fire, Defend and Free fire sit side by side, as Z, X and C do on the keyboard. Lay a wall moves to the Build page. Pump gets a main slot. Heal moves onto the card, and Guards with it, so the squad panel keeps Split, Combine and Let go. That frees about 150 units of the bar, which is enough for the card's labels at 125% even in the window the game opens in. No tile is empty.</p>
+    <figure class="card-fig"><div><svg class="mock" viewBox="0 0 746 128" role="img" aria-label="Card 1" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="746" height="128" fill="#0e1318"/>
+<rect x="0.0" y="0.0" width="746.0" height="128.0" rx="10" fill="#151b22" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="10.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="26" cy="31.0" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 31.0H23.55 M28.45 31.0H33 M26 24.0V28.55 M26 33.45V38.0" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Attack-move</text>
+<text x="120.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">R</text>
+<rect x="132.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M148 24.0 C155 29.6 153.6 38.0 148 38.0 C142.4 38.0 141 31.0 145.9 28.9 C146.6 32.4 149.4 31.7 148 24.0Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Burn line</text>
+<text x="242.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">F</text>
+<rect x="254.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<polygon points="276.1,34.5 270.0,38.0 263.9,34.5 263.9,27.5 270.0,24.0 276.1,27.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Drain crystal</text>
+<text x="364.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">G</text>
+<rect x="376.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M387.1 26.1L396.9 35.9M396.9 26.1L387.1 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Hold fire</text>
+<text x="486.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Z</text>
+<rect x="498.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<path d="M507 31.0Q514 23.299999999999997 521 31.0Q514 38.7 507 31.0Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="514" cy="31.0" r="2.1" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Defend</text>
+<text x="608.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">X</text>
+<rect x="620.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="636" cy="31.0" r="6.3" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="636" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Free fire</text>
+<text x="730.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">C</text>
+<rect x="10.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M26 73.4V84.6M20.4 79.0H31.6" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/>
+<text x="40.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Heal</text>
+<text x="120.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">L</text>
+<rect x="132.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="146.6" cy="76.2" r="2.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M141.7 84.6Q146.6 78.3 151.5 84.6 M152.9 74.1V78.3M150.8 76.2H155" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buy soldier</text>
+<text x="162.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">400</text>
+<text x="242.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">B</text>
+<rect x="254.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<polygon points="276.1,82.5 270.0,86.0 263.9,82.5 263.9,75.5 270.0,72.0 276.1,75.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M270 75.85V82.15 M267.55 79.7L270 82.15L272.45 79.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Pump</text>
+<text x="284.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="364.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">U</text>
+<rect x="376.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M387.1 84.6H396.9 M389.2 84.6V78.3H394.8V84.6 M392 78.3L396.2 72.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Build</text>
+<text x="486.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Q</text>
+<rect x="498.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="514" cy="80.4" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M514 75.85V73.05H517.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Tools</text>
+<text x="608.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">E</text>
+<rect x="620.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M636 72.0L641.6 74.8V79.0Q641.6 83.9 636 86.0Q630.4 83.9 630.4 79.0V74.8Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Guards: some</text>
+<text x="730.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">I</text>
+<text x="10.0" y="121.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">gold edge: moved here (Heal and Guards from the squad panel, Pump from the Build page)</text>
+</svg></div><figcaption><b>Card 1:</b> 12 buttons, three for the fire modes.</figcaption></figure>
+    <figure class="card-fig narrow"><div><svg class="mock" viewBox="0 0 624 128" role="img" aria-label="Card 2" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="624" height="128" fill="#0e1318"/>
+<rect x="0.0" y="0.0" width="624.0" height="128.0" rx="10" fill="#151b22" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="10.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="26" cy="31.0" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 31.0H23.55 M28.45 31.0H33 M26 24.0V28.55 M26 33.45V38.0" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Attack-move</text>
+<text x="120.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">R</text>
+<rect x="132.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M148 24.0 C155 29.6 153.6 38.0 148 38.0 C142.4 38.0 141 31.0 145.9 28.9 C146.6 32.4 149.4 31.7 148 24.0Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Burn line</text>
+<text x="242.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">F</text>
+<rect x="254.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<polygon points="276.1,34.5 270.0,38.0 263.9,34.5 263.9,27.5 270.0,24.0 276.1,27.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Drain crystal</text>
+<text x="364.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">G</text>
+<rect x="376.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1d3348" stroke="#4ea6e6" stroke-width="1.6"/>
+<path d="M385 31.0Q392 23.299999999999997 399 31.0Q392 38.7 385 31.0Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="392" cy="31.0" r="2.1" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Fire: defend</text>
+<text x="486.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">X</text>
+<rect x="498.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M514 25.4V36.6M508.4 31.0H519.6" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/>
+<text x="528.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Heal</text>
+<text x="608.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">L</text>
+<rect x="10.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="24.6" cy="76.2" r="2.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.7 84.6Q24.6 78.3 29.5 84.6 M30.9 74.1V78.3M28.8 76.2H33" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Buy soldier</text>
+<text x="40.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">400</text>
+<text x="120.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">B</text>
+<rect x="132.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<polygon points="154.1,82.5 148.0,86.0 141.9,82.5 141.9,75.5 148.0,72.0 154.1,75.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M148 75.85V82.15 M145.55 79.7L148 82.15L150.45 79.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Pump</text>
+<text x="162.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="242.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">U</text>
+<rect x="254.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M265.1 84.6H274.9 M267.2 84.6V78.3H272.8V84.6 M270 78.3L274.2 72.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Build</text>
+<text x="364.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Q</text>
+<rect x="376.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="392" cy="80.4" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M392 75.85V73.05H395.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Tools</text>
+<text x="486.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">E</text>
+<rect x="498.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M514 72.0L519.6 74.8V79.0Q519.6 83.9 514 86.0Q508.4 83.9 508.4 79.0V74.8Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Guards: some</text>
+<text x="608.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">I</text>
+<text x="10.0" y="121.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">one fire button: a click goes hold, defend, free; Z, X and C still pick one</text>
+</svg></div><figcaption><b>Card 2:</b> 10 buttons in 5 columns, one fire button that cycles. The card is 122 units narrower, which leaves more of the bar for labels.</figcaption></figure>
+    <div class="take"><p><b>My take: Card 1.</b> Three modes you switch under pressure read best as three buttons, with the lit one showing the mode, and one press reaches any of them. A cycling button can overshoot. Games with three or more stances tend to show them all (Age of Empires II's four stance buttons); games with an on/off choice use one toggle (Total War's fire at will, Company of Heroes' hold fire). Both of those are from memory, not checked. In RTS mode, either card keeps Stop and Rally. Pump takes U, so Sow your mould (own mould only) needs another key.</p></div>
+
+    <h3 style="margin-top:8px">The open questions</h3>
+    <div class="debate">
+      <article>
+        <h3>Is Burn a line needed?</h3>
+        <p>What it does today: the soldiers stand back from the middle of the line and fire at five points along it in turn, whether slime has reached it yet or not. Parked on Defend, soldiers fire only at slime within 7.5 cells of themselves or on the crystal they work. Parked on Free fire, they fire at the thickest slime in reach, which is usually the bulk, not the thin edge crossing your gap. So Burn is the one order that says where the fire goes. With scorch or blast cards it also keeps a line burning.</p>
+        <p>Options: keep it; cut it, and let parked squads cover the rest; or fold it into a Guard order (next).</p>
+      </article>
+      <article>
+        <h3>Defend as it is, or click to defend a spot or building?</h3>
+        <ul>
+          <li><b>(a) As it is:</b> a fire mode that shoots only slime near the soldier.</li>
+          <li><b>(b) An order:</b> click a spot or building, and the squad goes there and keeps slime off it.</li>
+          <li><b>(c) One Guard order on F, in place of Burn a line:</b> click a spot, a building or a crystal to guard it, or drag a line to guard the line, which is today's Burn. The Defend fire mode stays as the safe default for a squad that isn't guarding. Right-click on a crystal already guards it, so "guard" keeps one meaning; the squad's "Guards: none, some, more" (how many keep watch while the rest work) would become "Lookouts" so the words don't clash.</li>
+        </ul>
+        <div class="take"><p><b>My take: (c).</b> One button answers both questions. It changes how squads behave, so I'd build it with the squad thread after the layout work.</p></div>
+      </article>
+      <article>
+        <h3>A Cancel button, or click a building to cancel, destroy and see its status?</h3>
+        <p>Today, Cancel a build is a tool on the Build page: pick it, then click a half-built building to get its whole price back. A finished building can't be removed.</p>
+        <ul>
+          <li><b>(a) Keep the tool.</b></li>
+          <li><b>(b) Click a building to select it.</b> The squad panel shows its health, level and state, and the card shows its actions: cancel, demolish, upgrade a pump, switch a lure. That's how StarCraft II and Age of Empires do it (from memory). The catch: in squad mode a left click fires and a right click sends the squad, or resumes a half-built building, so both clicks are taken. It works with no squad commanded (after Esc), or with Alt and a click.</li>
+          <li><b>(c) Point at it.</b> A small card shows the building's health, level and state, and keys act on what's under the cursor: Delete cancels a half-built one for its whole price or demolishes a finished one, U upgrades a pump, J switches a lure. That's Factorio's way (from memory). The home crystal's hover card already works like this without blocking shots.</li>
+        </ul>
+        <div class="take"><p><b>My take: (c), plus (b) when no squad is commanded,</b> and then the Cancel tool goes. One question for you: what should demolishing a finished building pay back? I'd say half its price.</p></div>
+      </article>
+      <article>
+        <h3>A build or tool that stays selected?</h3>
+        <p>Today, Q opens the Build page and each building has its own key (Q then T for a turret), and Shift with a click keeps the tool, so you can place several in a row. The sticky version: the Build button shows the last building you placed, its key places another, and a click on it opens the page.</p>
+        <p>The cost: the key's meaning depends on what you built last, so in a fight Q might drop a turret when you meant to open the menu. Photoshop's tool groups work this way; RTS games tend to keep their keys fixed, as StarCraft II's grid keys do (both from memory).</p>
+        <div class="take"><p><b>My take: not now.</b> Pump on the main card covers the building you place most, and Shift already repeats. Worth another look if a playtest shows a lot of "Q, then the same key".</p></div>
+      </article>
+      <article>
+        <h3>The Build page, reorganised</h3>
+        <figure class="card-fig"><div><svg class="mock" viewBox="0 0 746 110" role="img" aria-label="Build page today" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="746" height="110" fill="#0e1318"/>
+<rect x="0.0" y="0.0" width="746.0" height="110.0" rx="10" fill="#151b22" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="10.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M21.1 36.6H30.9 M23.2 36.6V30.3H28.8V36.6 M26 30.3L30.2 24.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Turret</text>
+<text x="40.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="120.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">T</text>
+<rect x="132.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="148" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M143.1 26.1Q141 31.0 143.1 35.9 M152.9 26.1Q155 31.0 152.9 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lure</text>
+<text x="162.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="242.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">L</text>
+<rect x="254.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<polygon points="276.1,34.5 270.0,38.0 263.9,34.5 263.9,27.5 270.0,24.0 276.1,27.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M270 27.85V34.15 M267.55 31.7L270 34.15L272.45 31.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Pump</text>
+<text x="284.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="364.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">U</text>
+<rect x="376.0" y="10.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="498.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="514" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M509.1 26.1Q507 31.0 509.1 35.9 M518.9 26.1Q521 31.0 518.9 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lures on/off</text>
+<text x="608.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">J</text>
+<rect x="620.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M631.1 34.5Q631.1 24.0 636 24.0Q640.9 24.0 640.9 34.5Z M629 36.6H643" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Siren</text>
+<text x="650.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="730.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Y</text>
+<rect x="10.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="132.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="254.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M265.1 74.1L274.9 83.9M274.9 74.1L265.1 83.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Cancel a build</text>
+<text x="364.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">C</text>
+<rect x="376.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="498.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="620.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M631.1 74.1L640.9 83.9M640.9 74.1L631.1 83.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Back</text>
+<text x="730.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Q</text>
+</svg></div><figcaption><b>Today</b> in squad mode: three places, a switch and Cancel scattered over the grid, with five empty tiles.</figcaption></figure>
+        <figure class="card-fig"><div><svg class="mock" viewBox="0 0 746 128" role="img" aria-label="Build page proposed" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="746" height="128" fill="#0e1318"/>
+<rect x="0.0" y="0.0" width="746.0" height="128.0" rx="10" fill="#151b22" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="10.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M21.1 36.6H30.9 M23.2 36.6V30.3H28.8V36.6 M26 30.3L30.2 24.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Turret</text>
+<text x="40.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="120.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">T</text>
+<rect x="132.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<polygon points="154.1,34.5 148.0,38.0 141.9,34.5 141.9,27.5 148.0,24.0 154.1,27.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M148 27.85V34.15 M145.55 31.7L148 34.15L150.45 31.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Pump</text>
+<text x="162.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="242.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">U</text>
+<rect x="254.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M263 26.8H277V35.2H263Z M263 31.0H277 M267.9 26.8V31.0 M272.1 31.0V35.2" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Wall</text>
+<text x="284.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">20/cell</text>
+<text x="364.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">V</text>
+<rect x="376.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="392" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M387.1 26.1Q385 31.0 387.1 35.9 M396.9 26.1Q399 31.0 396.9 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lure</text>
+<text x="406.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="486.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">L</text>
+<rect x="498.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M509.1 34.5Q509.1 24.0 514 24.0Q518.9 24.0 518.9 34.5Z M507 36.6H521" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Siren</text>
+<text x="528.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="608.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Y</text>
+<rect x="620.0" y="10.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="10.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="26" cy="79.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M21.1 74.1Q19 79.0 21.1 83.9 M30.9 74.1Q33 79.0 30.9 83.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lures on/off</text>
+<text x="120.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">J</text>
+<rect x="132.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="254.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="376.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="498.0" y="58.0" width="116.0" height="42.0" rx="6" fill="none" stroke="#2c3641" stroke-width="1.0" stroke-dasharray="4 3"/>
+<rect x="620.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M631.1 74.1L640.9 83.9M640.9 74.1L631.1 83.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Back</text>
+<text x="730.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Q</text>
+<text x="10.0" y="121.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">row 1: what you place, most built first; row 2: the switch and Back (Outpost fills the gap in RTS mode)</text>
+</svg></div><figcaption><b>Option 1, tidied:</b> the things you place along the top, the wall among them; the switch and Back below. If the Cancel tool stays (option a above), it takes a tile in the bottom row.</figcaption></figure>
+        <figure class="card-fig"><div><svg class="mock" viewBox="0 0 746 128" role="img" aria-label="Build and tools on one page" font-family="Inter, system-ui, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<rect width="746" height="128" fill="#0e1318"/>
+<rect x="0.0" y="0.0" width="746.0" height="128.0" rx="10" fill="#151b22" stroke="#2c3641" stroke-width="1.0"/>
+<rect x="10.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M21.1 36.6H30.9 M23.2 36.6V30.3H28.8V36.6 M26 30.3L30.2 24.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Turret</text>
+<text x="40.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="120.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">T</text>
+<rect x="132.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<polygon points="154.1,34.5 148.0,38.0 141.9,34.5 141.9,27.5 148.0,24.0 154.1,27.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M148 27.85V34.15 M145.55 31.7L148 34.15L150.45 31.7" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Pump</text>
+<text x="162.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">500</text>
+<text x="242.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">U</text>
+<rect x="254.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M263 26.8H277V35.2H263Z M263 31.0H277 M267.9 26.8V31.0 M272.1 31.0V35.2" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Wall</text>
+<text x="284.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">20/cell</text>
+<text x="364.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">V</text>
+<rect x="376.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="392" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M387.1 26.1Q385 31.0 387.1 35.9 M396.9 26.1Q399 31.0 396.9 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lure</text>
+<text x="406.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="486.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">L</text>
+<rect x="498.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M509.1 34.5Q509.1 24.0 514 24.0Q518.9 24.0 518.9 34.5Z M507 36.6H521" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="28.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Siren</text>
+<text x="528.0" y="43.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="608.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Y</text>
+<rect x="620.0" y="10.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<circle cx="636" cy="31.0" r="2.4" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M631.1 26.1Q629 31.0 631.1 35.9 M640.9 26.1Q643 31.0 640.9 35.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="36.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Lures on/off</text>
+<text x="730.0" y="46.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">J</text>
+<rect x="10.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<circle cx="26" cy="80.4" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 75.85V73.05H29.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Blast</text>
+<text x="40.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">60</text>
+<text x="120.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">B</text>
+<rect x="132.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M148 72.0 C155 77.6 153.6 86.0 148 86.0 C142.4 86.0 141 79.0 145.9 76.9 C146.6 80.4 149.4 79.7 148 72.0Z" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="162.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Det cord</text>
+<text x="162.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">3/cell</text>
+<text x="242.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">C</text>
+<rect x="254.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<circle cx="270" cy="80.4" r="4.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M270 75.85V73.05H273.5" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Mine</text>
+<text x="284.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">80</text>
+<text x="364.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">R</text>
+<rect x="376.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<circle cx="392" cy="79.0" r="3.1" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="397.6" cy="75.5" r="1.4" fill="#e7ecf1"/><circle cx="386.4" cy="82.5" r="1.4" fill="#e7ecf1"/><circle cx="387.8" cy="74.1" r="1.4" fill="#e7ecf1"/>
+<text x="406.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Germ</text>
+<text x="406.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">300</text>
+<text x="486.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">G</text>
+<rect x="498.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#c9a24a" stroke-width="1.6"/>
+<path d="M509.8 74.8H518.2L509.8 83.2H518.2" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="528.0" y="76.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Sleep gas</text>
+<text x="528.0" y="91.0" font-size="11" fill="#4ea6e6" font-weight="500" text-anchor="start">150</text>
+<text x="608.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">F</text>
+<rect x="620.0" y="58.0" width="116.0" height="42.0" rx="6" fill="#1b222b" stroke="#2c3641" stroke-width="1.0"/>
+<path d="M631.1 74.1L640.9 83.9M640.9 74.1L631.1 83.9" fill="none" stroke="#e7ecf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="650.0" y="84.0" font-size="12" fill="#e7ecf1" font-weight="500" text-anchor="start">Back</text>
+<text x="730.0" y="94.0" font-size="10" fill="#8e9aa7" font-weight="400" text-anchor="end">Q</text>
+<text x="10.0" y="121.0" font-size="11" fill="#8e9aa7" font-weight="400" text-anchor="start">gold edge: the Tools page&#x27;s five, with the keys they have today; the main card&#x27;s Tools tile is freed</text>
+</svg></div><figcaption><b>Option 2, Build and Tools on one page:</b> in squad mode the six building tiles and the five tools fill the page exactly, and their keys don't clash. The main card's Tools tile is freed, so either card above has a spare slot (for Formation, say). In RTS mode the Outpost needs a thirteenth tile, so RTS keeps two pages.</figcaption></figure>
+        <div class="take"><p><b>My take: option 2.</b> One page for everything you place or throw, one key (Q) to reach it, and no page that is half empty.</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>What I'd build, in order</h2>
+    <ol>
+      <li>The fit test, at 1000 × 562, 1280 × 540 (21:9), 1280 × 720 and 1920 × 1080.</li>
+      <li>The shared frame: the one-line header, the bottom bar and the info pane.</li>
+      <li>The main menu, Options, the shop and the armory, one at a time, each with before and after GIFs at 200% and 125%.</li>
+      <li>The command card and the Build page.</li>
+      <li>Later, with the threads that own them: Guard with the squad thread, and pointing at a building with the build thread.</li>
+    </ol>
+    <p class="note">The three researchers' reports are in the repository under <code>Reports/menu-layout-research-2026-11-15/</code>, with their sources. Each marks what it checked in a source and what it recalls.</p>
+  </section>
+</main>

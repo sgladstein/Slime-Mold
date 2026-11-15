@@ -1,0 +1,183 @@
+<title>Menus, Shop and Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* One column: the options for each screen, drawn to scale, with what each costs beside it. */
+:root { --bg:#f3f4f6; --fg:#16191d; --muted:#5b6370; --panel:#ffffff; --line:#d9dde3; --accent:#1f8fa8; --tag:#b4561f; --pick:#7a5ec8;
+  --display:"Space Grotesk",Inter,system-ui,sans-serif; --body:Inter,system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; --tag:#f0a070; --pick:#b39cf0; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#0f1215; --fg:#e8ebee; --muted:#98a1ad; --panel:#171b20; --line:#2a3038; --accent:#5cc4dc; --tag:#f0a070; --pick:#b39cf0; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 var(--body); padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:32px 56px }
+main { max-width:1080px; margin:0 auto; display:grid; gap:36px }
+h1 { font:600 2rem/1.15 var(--display); margin:0; text-wrap:balance }
+h2 { font:600 1.3rem/1.3 var(--display); margin:0; text-wrap:balance }
+h3 { font:600 1.02rem/1.35 var(--display); margin:0 }
+p { margin:0; max-width:70ch }
+.lede { color:var(--muted) }
+section { display:grid; gap:14px; min-width:0 }
+figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; min-width:0 }
+figure img, figure svg.mock { display:block; width:100%; height:auto }
+figcaption { padding:10px 14px; font-size:.9rem; color:var(--muted) }
+figcaption b { color:var(--fg); font-weight:600 }
+.tag { display:inline-block; font:600 .72rem/1 var(--body); letter-spacing:.06em; text-transform:uppercase; margin-right:8px; color:var(--tag) }
+.pick .tag { color:var(--pick) }
+.pair { display:grid; gap:12px }
+.cost { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) }
+.box { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; display:grid; gap:6px; min-width:0 }
+.box h3 { color:var(--pick) }
+ol, ul { margin:0; padding-left:1.3em; display:grid; gap:4px; max-width:74ch }
+.note { color:var(--muted); font-size:.9rem }
+.take { border-left:3px solid var(--accent); padding:4px 0 4px 12px }
+.take b { color:var(--accent) }
+.card-fig svg.mock { max-width:760px; margin:0 auto; padding:10px }
+.card-fig.narrow svg.mock { max-width:640px }
+.debate { display:grid; gap:18px }
+.debate article { display:grid; gap:8px; padding-top:14px; border-top:1px solid var(--line) }
+code { font-size:.88em }
+</style>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>One screen, no scrolling: the menus, the shop and the command card</h1>
+    <p class="lede">You asked for menus and a shop that fit one screen, researched against how professional games do it, and for changes to the command card. Three researchers worked independently, each from a different pool of games: roguelikes and deckbuilders, strategy and squad games, and console and big-text interfaces. Every mockup here is drawn to scale at the hardest size, <b>1000 × 565 UI units</b>: 1920×1080 at 200%, or 2560×1440 at 250%. Text is at the game's own sizes or larger. Nothing is built yet.</p>
+  </header>
+
+  <section>
+    <h2>Today at 200%</h2>
+    <div class="pair">
+      <figure><img src="today-main-200.webp" alt="Main menu today at 200 percent" loading="lazy"><figcaption><b>Main menu:</b> 4½ of 9 entries show. The rest are below the fold.</figcaption></figure>
+      <figure><img src="today-shop-200.webp" alt="Shop today at 200 percent" loading="lazy"><figcaption><b>Shop:</b> only the upgrades show. The guns, your gun's slots, the cards for sale and the bag are all below. The title, the subtitle and the briefing take 39% of the height.</figcaption></figure>
+      <figure><img src="today-options-200.webp" alt="Options today at 200 percent" loading="lazy"><figcaption><b>Options:</b> 5 of 17 rows show, and the notes are cut off with "…".</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What all three agree on</h2>
+    <p>I'd build these whichever layouts you pick.</p>
+    <ol>
+      <li><b>The big "Larder World" title only on the main menu.</b> Inner pages get a one-line header. That alone gives back 130 to 220 of the 565 units.</li>
+      <li><b>One fixed info pane on the right.</b> It shows what the mouse is over, else what the keys are on, else what you last clicked, else the next planet's briefing. A description can't scroll away.</li>
+      <li><b>In the shop, your gun's slots and the bag stay on screen,</b> because every purchase goes into the gun.</li>
+      <li><b>Tiles about half today's size, as you said:</b> a card tile goes from about 190 × 62 to 104 × 50. Names stay on the tiles; the stats and the full text move to the pane. A gun for sale is compared with yours, with up and down arrows.</li>
+      <li><b>The armory gets tabs</b> (Guns, Bullets, Modifiers), and the bullets go in a grid of shape by payload, so the tiles need no names.</li>
+      <li><b>Options gets tabs, one-line rows and a note pane.</b> Keys becomes one of its tabs; F1 still opens it in play.</li>
+      <li><b>Every list gets a maximum</b>: the bag, the cards on offer, a gun's slots. Nothing fits one screen if a row can grow without end.</li>
+      <li><b>A test that draws every page at the worst sizes</b> and fails if anything is cut off or would need to scroll, so a new setting can't quietly bring the scrolling back.</li>
+      <li><b>Wide screens are shorter.</b> The UI size is capped so the screen stays at least 1000 units wide and 540 tall, so a 21:9 monitor at 200% gives 1280 × 540, 25 units shorter than these mockups. Each layout here has that much to spare, and the fit test will cover it.</li>
+    </ol>
+    <p class="note">On the sub-menus that expand and shrink: none of the three found a professional game that uses them for a shop. They move things under the cursor and hide what's on offer. Tabs, or folders that open in place, give the same grouping without that.</p>
+  </section>
+
+  <section>
+    <h2>Pick 1: the shop</h2>
+    <p>The researchers split on this one, so it's a blind pair: which of them backed which stays off this page. Both keep the gun, the bag, the pane and the buttons in the same places, and both fit at 1000 × 565.</p>
+    <div class="pair">
+      <figure class="pick"><div>{{svg:shop_a_card}}</div><figcaption><span class="tag">Shop A</span><b>One board.</b> Everything for sale is on screen at once: cards, guns and upgrades. The mouse is on Scorch.</figcaption></figure>
+      <figure class="pick"><div>{{svg:shop_a_gun}}</div><figcaption><span class="tag">Shop A</span>The mouse is on the 290-point Carbine: the pane compares it with your Long gun.</figcaption></figure>
+      <figure class="pick"><div>{{svg:shop_b_card}}</div><figcaption><span class="tag">Shop B</span><b>A counter with tabs.</b> Cards, Guns, Squad, and Build and tools; the number on each tab is how many are for sale there. The mouse is on Scorch.</figcaption></figure>
+      <figure class="pick"><div>{{svg:shop_b_gun}}</div><figcaption><span class="tag">Shop B</span>The Guns tab: a table of every gun against yours. The mouse is on the 290-point Carbine.</figcaption></figure>
+    </div>
+    <div class="cost">
+      <div class="box"><h3>Shop A costs</h3><ul>
+        <li>No clicks to see anything: every price is on screen.</li>
+        <li>Dense. Upgrade names have to be short ("More cards").</li>
+        <li>About 70 units spare at this size. A sixth card on offer, a bigger bag or a 6-slot gun fills a row, and then something has to give.</li>
+        <li>Buildings and Tools are folders that open in place of the upgrade rows, with a Back tile.</li>
+      </ul></div>
+      <div class="box"><h3>Shop B costs</h3><ul>
+        <li>One click, or a number key, to see another kind of thing for sale. While you look at cards, the guns and upgrades are hidden.</li>
+        <li>Each tab has room to grow: up to 9 cards, every gun in one table, all buildings and tools without folders.</li>
+        <li>Tiles can be larger than in A.</li>
+        <li>The tab numbers have to do the job of showing what's on offer, or a player skips a tab and misses the gun that wins the run.</li>
+      </ul></div>
+    </div>
+    <p class="note">Both: the Buy button acts on the selected item, so the pane doesn't change while the mouse travels to it. Dragging from the shelf onto a slot buys and places in one move.</p>
+  </section>
+
+  <section>
+    <h2>Pick 2: the main menu</h2>
+    <p>Also a blind pair. Both fit, with no extra clicks to start anything.</p>
+    <div class="pair">
+      <figure class="pick"><div>{{svg:menu_a}}</div><figcaption><span class="tag">Menu A</span><b>Names only, one caption box.</b> The box beside the list shows the subtitle of the entry you point at or move to.</figcaption></figure>
+      <figure class="pick"><div>{{svg:menu_b}}</div><figcaption><span class="tag">Menu B</span><b>The ways to play as cards with their subtitles,</b> and Options, Edit maps and Quit in a row below.</figcaption></figure>
+    </div>
+    <div class="cost">
+      <div class="box"><h3>Menu A costs</h3><ul><li>You read a subtitle only by pointing at its entry or moving to it.</li><li>Room for several more entries.</li></ul></div>
+      <div class="box"><h3>Menu B costs</h3><ul><li>Every subtitle is always visible.</li><li>Room for one more way to play; a seventh needs another layout.</li></ul></div>
+    </div>
+    <p class="note">Both: Keys moves into Options. The tagline stays; at this size there is room for it.</p>
+  </section>
+
+  <section>
+    <h2>The armory</h2>
+    <p>The same frame as the shop. All three researchers put tabs here, because the armory is a catalogue of everything (8 guns, 20 bullets, 14 modifiers), not an offer of a few.</p>
+    <figure><div>{{svg:armory}}</div><figcaption>The <b>Bullets</b> tab: rows are the bullet's shape, columns what it does, so the tiles need no names. The dots are the budget each takes. The five range tools move to the bottom bar. The <b>Guns</b> tab is the same table as Shop B's.</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Options</h2>
+    <figure><div>{{svg:options}}</div><figcaption>Four tabs. <b>Game:</b> UI and text size, Control, Rounds, Bullet speed, Dev mode. <b>Planet:</b> Sandbox map, Planet, Your own mould, Plants. <b>The mould:</b> the eight rules shown. <b>Keys.</b> The pane holds the whole note, the default and the reset button, so notes stop being cut off.</figcaption></figure>
+    <div class="take"><p><b>A question for you.</b> Planet and The mould are rules for a game more than settings. Two of the researchers suggest moving them to a setup page that shows when you start Sandbox or Random planet, beside its Start button. That costs one more screen before a sandbox game, and the rules stop being one click from the main menu. You tune these often, so I'd keep them in Options unless you want the split.</p></div>
+  </section>
+
+  <section>
+    <h2>The command card</h2>
+    <figure><img src="today-card-125.webp" alt="The squad panel and command card today at 125 percent" loading="lazy"><figcaption><b>Today</b> in squad mode, at 125%: Hold fire and Defend sit apart from Free fire, two tiles are empty (Stop and Rally are off in squad mode), and Heal and Guards are in the squad panel.</figcaption></figure>
+    <p>Your clear asks are in both cards below. Hold fire, Defend and Free fire sit side by side, as Z, X and C do on the keyboard. Lay a wall moves to the Build page. Pump gets a main slot. Heal moves onto the card, and Guards with it, so the squad panel keeps Split, Combine and Let go. That frees about 150 units of the bar, which is enough for the card's labels at 125% even in the window the game opens in. No tile is empty.</p>
+    <figure class="card-fig"><div>{{svg:card_one}}</div><figcaption><b>Card 1:</b> 12 buttons, three for the fire modes.</figcaption></figure>
+    <figure class="card-fig narrow"><div>{{svg:card_two}}</div><figcaption><b>Card 2:</b> 10 buttons in 5 columns, one fire button that cycles. The card is 122 units narrower, which leaves more of the bar for labels.</figcaption></figure>
+    <div class="take"><p><b>My take: Card 1.</b> Three modes you switch under pressure read best as three buttons, with the lit one showing the mode, and one press reaches any of them. A cycling button can overshoot. Games with three or more stances tend to show them all (Age of Empires II's four stance buttons); games with an on/off choice use one toggle (Total War's fire at will, Company of Heroes' hold fire). Both of those are from memory, not checked. In RTS mode, either card keeps Stop and Rally. Pump takes U, so Sow your mould (own mould only) needs another key.</p></div>
+
+    <h3 style="margin-top:8px">The open questions</h3>
+    <div class="debate">
+      <article>
+        <h3>Is Burn a line needed?</h3>
+        <p>What it does today: the soldiers stand back from the middle of the line and fire at five points along it in turn, whether slime has reached it yet or not. Parked on Defend, soldiers fire only at slime within 7.5 cells of themselves or on the crystal they work. Parked on Free fire, they fire at the thickest slime in reach, which is usually the bulk, not the thin edge crossing your gap. So Burn is the one order that says where the fire goes. With scorch or blast cards it also keeps a line burning.</p>
+        <p>Options: keep it; cut it, and let parked squads cover the rest; or fold it into a Guard order (next).</p>
+      </article>
+      <article>
+        <h3>Defend as it is, or click to defend a spot or building?</h3>
+        <ul>
+          <li><b>(a) As it is:</b> a fire mode that shoots only slime near the soldier.</li>
+          <li><b>(b) An order:</b> click a spot or building, and the squad goes there and keeps slime off it.</li>
+          <li><b>(c) One Guard order on F, in place of Burn a line:</b> click a spot, a building or a crystal to guard it, or drag a line to guard the line, which is today's Burn. The Defend fire mode stays as the safe default for a squad that isn't guarding. Right-click on a crystal already guards it, so "guard" keeps one meaning; the squad's "Guards: none, some, more" (how many keep watch while the rest work) would become "Lookouts" so the words don't clash.</li>
+        </ul>
+        <div class="take"><p><b>My take: (c).</b> One button answers both questions. It changes how squads behave, so I'd build it with the squad thread after the layout work.</p></div>
+      </article>
+      <article>
+        <h3>A Cancel button, or click a building to cancel, destroy and see its status?</h3>
+        <p>Today, Cancel a build is a tool on the Build page: pick it, then click a half-built building to get its whole price back. A finished building can't be removed.</p>
+        <ul>
+          <li><b>(a) Keep the tool.</b></li>
+          <li><b>(b) Click a building to select it.</b> The squad panel shows its health, level and state, and the card shows its actions: cancel, demolish, upgrade a pump, switch a lure. That's how StarCraft II and Age of Empires do it (from memory). The catch: in squad mode a left click fires and a right click sends the squad, or resumes a half-built building, so both clicks are taken. It works with no squad commanded (after Esc), or with Alt and a click.</li>
+          <li><b>(c) Point at it.</b> A small card shows the building's health, level and state, and keys act on what's under the cursor: Delete cancels a half-built one for its whole price or demolishes a finished one, U upgrades a pump, J switches a lure. That's Factorio's way (from memory). The home crystal's hover card already works like this without blocking shots.</li>
+        </ul>
+        <div class="take"><p><b>My take: (c), plus (b) when no squad is commanded,</b> and then the Cancel tool goes. One question for you: what should demolishing a finished building pay back? I'd say half its price.</p></div>
+      </article>
+      <article>
+        <h3>A build or tool that stays selected?</h3>
+        <p>Today, Q opens the Build page and each building has its own key (Q then T for a turret), and Shift with a click keeps the tool, so you can place several in a row. The sticky version: the Build button shows the last building you placed, its key places another, and a click on it opens the page.</p>
+        <p>The cost: the key's meaning depends on what you built last, so in a fight Q might drop a turret when you meant to open the menu. Photoshop's tool groups work this way; RTS games tend to keep their keys fixed, as StarCraft II's grid keys do (both from memory).</p>
+        <div class="take"><p><b>My take: not now.</b> Pump on the main card covers the building you place most, and Shift already repeats. Worth another look if a playtest shows a lot of "Q, then the same key".</p></div>
+      </article>
+      <article>
+        <h3>The Build page, reorganised</h3>
+        <figure class="card-fig"><div>{{svg:build_today}}</div><figcaption><b>Today</b> in squad mode: three places, a switch and Cancel scattered over the grid, with five empty tiles.</figcaption></figure>
+        <figure class="card-fig"><div>{{svg:build_new}}</div><figcaption><b>Option 1, tidied:</b> the things you place along the top, the wall among them; the switch and Back below. If the Cancel tool stays (option a above), it takes a tile in the bottom row.</figcaption></figure>
+        <figure class="card-fig"><div>{{svg:build_tools}}</div><figcaption><b>Option 2, Build and Tools on one page:</b> in squad mode the six building tiles and the five tools fill the page exactly, and their keys don't clash. The main card's Tools tile is freed, so either card above has a spare slot (for Formation, say). In RTS mode the Outpost needs a thirteenth tile, so RTS keeps two pages.</figcaption></figure>
+        <div class="take"><p><b>My take: option 2.</b> One page for everything you place or throw, one key (Q) to reach it, and no page that is half empty.</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>What I'd build, in order</h2>
+    <ol>
+      <li>The fit test, at 1000 × 562, 1280 × 540 (21:9), 1280 × 720 and 1920 × 1080.</li>
+      <li>The shared frame: the one-line header, the bottom bar and the info pane.</li>
+      <li>The main menu, Options, the shop and the armory, one at a time, each with before and after GIFs at 200% and 125%.</li>
+      <li>The command card and the Build page.</li>
+      <li>Later, with the threads that own them: Guard with the squad thread, and pointing at a building with the build thread.</li>
+    </ol>
+    <p class="note">The three researchers' reports are in the repository under <code>Reports/menu-layout-research-2026-11-15/</code>, with their sources. Each marks what it checked in a source and what it recalls.</p>
+  </section>
+</main>
