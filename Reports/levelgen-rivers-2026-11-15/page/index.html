@@ -1,0 +1,182 @@
+<title>Rivers Off the Nests</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Cave tunnels of varying width, lobed caverns and rooms (11-15): before and after. Same look as the doors page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --rock: #8f969d; --road: #3c4a3a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.diagram { max-width: 680px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font: 500 13px var(--body); fill: var(--muted); }
+.diagram text.k { fill: var(--fg); font-weight: 600; }
+.stats { font: 12.5px/1.45 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+.planet { display: grid; gap: 10px; }
+.planet h3 small { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin-left: 8px; }
+.figs.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.view { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 6px; }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · river valleys and core worlds · 2026-11-15</div>
+<h1>Rivers Off the Nests</h1>
+<p>Rivers run across the route between the landing and the nests, and the second nest often stood right on one. Water is cleared round a nest, so the river ran dry there and the nest itself became the crossing: the slime held it from the start. Now each river moves along the route the least it must to keep off every nest's bowl, and its fords and bridge keep farther off still. Every picture pairs main (before) with this change (after): same planet, same seed, same moment.</p>
+<div class="score">
+<div><b>River by a nest</b><span class="n">19 → 0</span><span class="muted">of 40 river-valley nests with river water within 220 map cells (the bowl reaches about 190). Core worlds with rivers: 7 → 0 of 15.</span></div>
+<div><b>Fords and bridges</b><span class="n">31 → 0</span><span class="muted">within 320 map cells of a nest, of 57 → 51 on 20 valleys. The nearest went from 45 cells off to 320.</span></div>
+<div><b>What it costs</b><span class="n">7 → 4</span><span class="muted">valleys with two rivers: a second river with no room is left out. First-try builds 18 → 17 of 20; build 265 → 277 ms.</span></div>
+</div>
+<p class="muted">Distances are straight from a nest's centre in map cells, two to a dish cell. Moving a river rolls the rest of the planet again, so crystals and rock differ between the pictures; the landing and the nests stay put.</p>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>The whole valley</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag p">play</span><span class="tag">2 valleys</span><span class="tag">zoom 2, 1 s</span></div></div></div>
+<p>The squad lands on the right; the nests are on the left.</p>
+<div class="planet"><h3>Seed 1, Nezanus</h3>
+<p class="stats">river water from the second nest <b>118 → 225</b> map cells · the first nest <b>407 → 527</b></p>
+<p>Before, the river stops at the lower nest's bowl and starts again below it: the bowl is the way across. After, the river runs the map's height, between the landing and both nests.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/whole-4-1-before.webp" alt="River valley seed 1, the whole map at zoom 2 at 1 s, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/whole-4-1-after.webp" alt="River valley seed 1, the whole map at zoom 2 at 1 s, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 5, Verrith</h3>
+<p class="stats">river water from the second nest <b>119 → 224</b> · its bridge <b>147 → none</b> (this river rolled no bridge)</p>
+<p>Before, the bridge stood at the second nest's door. After, the river runs clear of both bowls.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/whole-4-5-before.webp" alt="River valley seed 5, the whole map at zoom 2 at 1 s, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/whole-4-5-after.webp" alt="River valley seed 5, the whole map at zoom 2 at 1 s, after" loading="lazy"></figure>
+</div>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>The slime's first minute</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag p">play</span><span class="tag">films</span><span class="tag">zoom 3</span></div></div></div>
+<p>From the second nest at zoom 3, a frame every 3 s to 58 s, no hands on the controls.</p>
+<div class="planet"><h3>Seed 5, Verrith</h3>
+<p>Before, the slime is on the bridge by the end of the minute, the river to the bowl's right. After, the river is off to the right of the frame's middle and the slime reaches for the crystals on this side of it.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><video src="pics/film-4-5-before.mp4" poster="pics/film-4-5-before.webp" autoplay muted loop playsinline controls></video></figure>
+<figure><span class="ba after">After</span><video src="pics/film-4-5-after.mp4" poster="pics/film-4-5-after.webp" autoplay muted loop playsinline controls></video></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 1, Nezanus</h3>
+<p>Before, the river comes down to the bowl's top right and ends there. After, it passes outside the bowl's rim on the right; the slime sends a thread toward it along the back road, which crosses the river there in the shallows.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><video src="pics/film-4-1-before.mp4" poster="pics/film-4-1-before.webp" autoplay muted loop playsinline controls></video></figure>
+<figure><span class="ba after">After</span><video src="pics/film-4-1-after.mp4" poster="pics/film-4-1-after.webp" autoplay muted loop playsinline controls></video></figure>
+</div>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>The layouts</h2>
+<div class="tags"><span class="tag">false colour</span><span class="tag">3 planets</span></div></div></div>
+<p>Before on the left, after on the right. Deep water dark blue, shallows light blue, bridge decks brown, rock grey, hedges magenta, crystals cyan, nests ringed red, the landing a yellow square.</p>
+<div class="planet"><h3>Valley seed 1, Nezanus</h3>
+<figure><img src="pics/fc-4-1.webp" alt="River valley seed 1, the layout before and after" loading="lazy"></figure></div>
+<div class="planet"><h3>Valley seed 5, Verrith</h3>
+<figure><img src="pics/fc-4-5.webp" alt="River valley seed 5, the layout before and after" loading="lazy"></figure></div>
+<div class="planet"><h3>Core world seed 11, Ixkis</h3>
+<p class="stats">river water from its nests <b>840, 114, 137 → 383, 287, 252</b></p>
+<p>Before, the second river ran past two of the three nests, through their bowls. After, it runs between those two and the third, clear of all three.</p>
+<figure><img src="pics/fc-8-11.webp" alt="Core world seed 11, the layout before and after" loading="lazy"></figure></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>Measured</h2>
+<div class="tags"><span class="tag">20 valleys</span><span class="tag">5 core worlds with rivers</span><span class="tag">seeds 1-20</span></div></div></div>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>Valley nests with river water within 220 (of 40)</td><td>19</td><td>0</td></tr>
+<tr><td>Valley nests' nearest river water, median (least)</td><td>302 (118)</td><td>450 (221)</td></tr>
+<tr><td>Core-world nests with river water within 220 (of 15)</td><td>7</td><td>0</td></tr>
+<tr><td>Core-world nests' nearest river water, median (least)</td><td>223 (114)</td><td>400 (231)</td></tr>
+<tr><td>Valley fords and bridges within 220 / 320 of a nest</td><td>16 / 31 of 57</td><td>0 / 0 of 51</td></tr>
+<tr><td>Valley fords and bridges, nearest / median</td><td>45 / 286</td><td>320 / 437</td></tr>
+<tr><td>Core-world fords and bridges within 220 / 320 of a nest</td><td>6 / 8 of 26</td><td>0 / 0 of 26</td></tr>
+<tr><td>Valleys with two rivers</td><td>7</td><td>4</td></tr>
+<tr><td>First-try builds, valleys / core worlds (of 20)</td><td>18 / 17</td><td>17 / 17</td></tr>
+<tr><td>Valley build, mean per planet (median of three runs)</td><td>265 ms</td><td>277 ms</td></tr>
+</tbody></table></div>
+<p class="muted">The back road to a nest's breach is still made shallow where it crosses deep water, so a shallow crossing can sit just outside a bowl (18 of 40 valley nests have one within 300). That is the road to the breach; the fords and bridges the river is given are all 320 or more away.</p>
+</section>
+
+<section class="sec">
+<h2>Tried on the way</h2>
+<ul>
+<li><b>A second river at the clearest place when nothing cleared both nests:</b> on 4 of 20 valleys it ran between the two nests, through both bowls. Now a second river with no room is left out.</li>
+</ul>
+</section>
+
+<section class="sec">
+<h2>Not done here, and next</h2>
+<ul>
+<li><b>One river or two:</b> whether a valley with one river plays as well as one with two is for your play.</li>
+<li><b>Next:</b> cave gates off pools, the last of the reviews' map items.</li>
+</ul>
+</section>
+
+</div>

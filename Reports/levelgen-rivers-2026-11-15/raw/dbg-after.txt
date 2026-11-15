@@ -1,0 +1,126 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts
+DBG fords [334] bridge None
+DBG fords [334] bridge None
+4 1 Nezanus river-valley [Outcrops Rivers Dunes veins] 0 191 | 14 9% 53% 18% 0% 4% 12 | 613 946 144 | 100% | 6/22 6/22 | 
+DBG fords [558] bridge None
+DBG fords [558] bridge None
+4 2 Ullukar river-valley [Ridges Rivers Dunes richer-farther] 0 292 | 22 13% 36% 32% 0% 3% 0 | 643 935 56 | 100% | 6/20 6/20 | 
+DBG fords [463] bridge None
+DBG fords [463] bridge None
+4 3 Veskenar river-valley [Ridges Rivers Dunes scattered] 0 204 | 22 12% 45% 30% 0% 1% 0 | 685 898 68 | 100% | 6/20 6/20 | 
+DBG fords [332] bridge None
+DBG fords [414, 542] bridge Some(320)
+DBG fords [489, 322] bridge None
+DBG fords [498, 327] bridge None
+DBG fords [332] bridge None
+DBG fords [414, 542] bridge Some(320)
+DBG fords [489, 322] bridge None
+DBG fords [498, 327] bridge None
+4 4 Phelae river-valley [Ridges Rivers Sand richer-farther] 3 791 | 22 13% 14% 0% 0% 2% 0 | 617 977 84 | 100% | 8/22 6/22 | 1 crystals cannot be reached / nest 1: no way round 16 wide / nest 0: the direct way is wider than 10
+DBG fords [414, 626] bridge None
+DBG fords [414, 626] bridge None
+4 5 Verrith river-valley [Ridges Rivers Sand fields] 0 204 | 15 10% 24% 0% 0% 4% 4 | 608 949 93 | 100% | 6/20 8/20 | 
+DBG fords [404] bridge None
+DBG fords [404] bridge None
+4 6 Dredix river-valley [Outcrops Rivers Dunes veins] 0 177 | 7 7% 55% 16% 0% 4% 4 | 678 871 137 | 100% | 8/24 6/18 | 
+DBG fords [590, 373] bridge None
+DBG fords [590, 373] bridge None
+4 7 Quado river-valley [Outcrops Rivers Dunes fields] 0 241 | 15 8% 53% 24% 0% 3% 4 | 852 989 120 | 100% | 6/22 6/22 | 
+DBG fords [412, 545] bridge Some(322)
+DBG fords [714] bridge Some(408)
+DBG fords [412, 545] bridge Some(322)
+DBG fords [714] bridge Some(408)
+4 8 Aro river-valley [Ridges Rivers Dunes veins] 1 394 | 16 13% 49% 19% 0% 4% 4 | 665 911 76 | 100% | 6/20 6/20 | nest 1: no way round 16 wide
+DBG fords [426, 320] bridge None
+DBG fords [426, 320] bridge None
+4 9 Berzen river-valley [Ridges Rivers Dunes richer-farther] 0 236 | 22 10% 41% 35% 0% 2% 0 | 625 959 49 | 100% | 6/20 6/20 | 
+DBG fords [329] bridge Some(591)
+DBG fords [329] bridge Some(591)
+4 10 Ixris river-valley [Ridges Rivers Dunes richer-farther] 0 208 | 22 13% 36% 31% 0% 4% 4 | 716 931 85 | 100% | 8/18 6/20 | 
+DBG fords [423] bridge None
+DBG fords [423] bridge None
+4 11 Karra river-valley [Ridges Rivers Dunes veins] 0 286 | 11 13% 51% 15% 0% 2% 0 | 652 858 129 | 100% | 8/22 6/22 | 
+DBG fords [450, 687] bridge Some(329)
+DBG fords [450, 687] bridge Some(329)
+4 12 Qualunus river-valley [Ridges Rivers Sand veins] 0 300 | 10 14% 17% 0% 0% 2% 0 | 629 1025 137 | 100% | 6/20 6/20 | 
+DBG fords [443, 669] bridge None
+DBG fords [443, 669] bridge None
+4 13 Quathith river-valley [Ridges Rivers Dunes fields] 0 221 | 14 11% 44% 23% 0% 3% 4 | 589 980 52 | 100% | 6/20 8/20 | 
+DBG fords [395] bridge Some(634)
+DBG fords [660] bridge None
+DBG fords [395] bridge Some(634)
+DBG fords [660] bridge None
+4 14 Muko river-valley [Ridges Rivers Dunes veins] 0 193 | 10 11% 48% 17% 0% 7% 0 | 673 1004 148 | 100% | 6/20 6/20 | 
+DBG fords [511, 356] bridge None
+DBG fords [837, 471] bridge Some(680)
+DBG fords [511, 356] bridge None
+DBG fords [837, 471] bridge Some(680)
+4 15 Gridezor river-valley [Ridges Rivers Dunes veins] 0 320 | 12 14% 47% 17% 0% 4% 0 | 713 1041 104 | 100% | 6/22 6/22 | 
+DBG fords [337] bridge None
+DBG fords [337] bridge None
+4 16 Zole river-valley [Outcrops Rivers Sand fields] 0 198 | 12 8% 23% 0% 0% 4% 4 | 632 909 82 | 100% | 6/22 6/22 | 
+DBG fords [413] bridge None
+DBG fords [385] bridge Some(536)
+DBG fords [440] bridge Some(621)
+DBG fords [413] bridge None
+DBG fords [385] bridge Some(536)
+DBG fords [440] bridge Some(621)
+4 17 Drerae river-valley [Outcrops Rivers Sand fields] 1 409 | 16 9% 26% 0% 0% 9% 0 | 714 881 91 | 100% | 6/20 6/20 | nearest crystal 205 cells' walk from the landing
+DBG fords [404] bridge None
+DBG fords [404] bridge None
+4 18 Thadarum river-valley [Ridges Rivers Dunes fields] 0 199 | 13 11% 44% 24% 0% 3% 0 | 620 940 88 | 100% | 8/22 6/22 | 
+DBG fords [437] bridge None
+DBG fords [437] bridge None
+4 19 Lorrukar river-valley [Ridges Rivers Dunes fields] 0 219 | 14 11% 44% 23% 0% 3% 0 | 655 857 80 | 100% | 8/22 6/22 | 
+DBG fords [358, 610] bridge None
+DBG fords [474, 362] bridge None
+DBG fords [358, 610] bridge None
+DBG fords [474, 362] bridge None
+4 20 Grizen river-valley [Ridges Rivers Dunes veins] 0 291 | 11 12% 45% 17% 0% 7% 4 | 684 922 125 | 100% | 6/20 6/20 | 
+20 planets, 279 ms each on average
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | doors: direct/round per nest | failed attempts
+8 1 Quamar core [Rooms Dry Mixed fields] 0 637 | 43 13% 17% 23% 7% 0% 244 | 1427 1544 195 | 100% | 6/20 6/22 6/20 | 
+8 2 Lozo core [Ridges Streams Mixed jackpot] 0 796 | 61 6% 13% 24% 6% 6% 281 | 1492 2212 183 | 100% | 8/22 6/26 6/26 | 
+8 3 Ulren core [Pillars Streams Mixed jackpot] 0 819 | 61 10% 20% 20% 5% 9% 244 | 1277 2196 176 | 100% | 6/26 6/26 8/26 | 
+8 4 Zoremor core [Pillars Lakes Mixed veins] 0 845 | 47 10% 16% 22% 3% 23% 258 | 1273 2223 180 | 100% | 6/18 8/24 6/22 | 
+DBG fords [440, 483] bridge Some(485)
+DBG fords [735, 538] bridge None
+DBG fords [440, 483] bridge Some(485)
+DBG fords [735, 538] bridge None
+8 5 Ixvek core [Rooms Rivers Mixed jackpot] 0 1173 | 61 13% 21% 19% 5% 4% 266 | 1305 2128 110 | 99% | 8/20 6/20 8/20 | 
+8 6 Vethix core [Outcrops Dry Mixed fields] 0 598 | 51 5% 25% 23% 7% 0% 323 | 1289 2163 196 | 100% | 6/24 8/24 6/24 | 
+8 7 Zothunus core [Outcrops Pools Mixed fields] 0 619 | 44 5% 10% 25% 2% 39% 237 | 1374 2187 104 | 100% | 8/26 8/30 6/24 | 
+8 8 Berskothor core [Rooms Streams Mixed jackpot] 1 1327 | 61 13% 21% 18% 6% 3% 209 | 1304 2234 100 | 100% | 6/20 6/20 6/18 | nest 0: the direct way is wider than 10
+8 9 Grimon core [Pillars Pools Mixed scattered] 0 656 | 95 9% 9% 29% 2% 29% 116 | 1356 2245 136 | 100% | 8/22 6/22 8/20 | 
+8 10 Berssum core [Ridges Dry Mixed veins] 1 1237 | 43 5% 27% 18% 7% 0% 336 | 1326 2216 155 | 100% | 6/26 6/32 6/30 | nest 0: the direct way is wider than 10
+DBG fords [567, 393] bridge Some(498)
+DBG fords [400, 389] bridge None
+DBG fords [356, 424] bridge Some(489)
+DBG fords [472, 392] bridge Some(349)
+DBG fords [567, 393] bridge Some(498)
+DBG fords [400, 389] bridge None
+DBG fords [356, 424] bridge Some(489)
+DBG fords [472, 392] bridge Some(349)
+8 11 Ixkis core [Outcrops Rivers Mixed fields] 1 1695 | 50 4% 20% 23% 7% 4% 338 | 1365 2021 143 | 100% | 6/20 6/22 6/22 | nest 0: the direct way is wider than 10
+DBG fords [646, 472] bridge None
+DBG fords [707] bridge Some(447)
+DBG fords [646, 472] bridge None
+DBG fords [707] bridge Some(447)
+8 12 Orvizek core [Ridges Rivers Mixed richer-farther] 0 969 | 95 6% 22% 23% 5% 5% 250 | 1550 2328 120 | 100% | 6/20 6/20 6/18 | 
+8 13 Avivae core [Pillars Streams Mixed scattered] 0 1025 | 95 9% 19% 24% 6% 3% 215 | 1415 2012 84 | 100% | 8/24 8/20 6/26 | 
+8 14 Orrrar core [Rooms Dry Mixed veins] 0 652 | 40 12% 17% 22% 6% 0% 267 | 1520 2135 184 | 99% | 8/22 6/24 6/20 | 
+8 15 Orrrae core [Pillars Dry Mixed richer-farther] 0 597 | 95 8% 24% 20% 7% 0% 272 | 1324 2172 68 | 100% | 8/26 6/22 8/28 | 
+DBG fords [824] bridge None
+DBG fords [560] bridge Some(898)
+DBG fords [824] bridge None
+DBG fords [560] bridge Some(898)
+8 16 Quasson core [Outcrops Rivers Mixed fields] 0 995 | 51 4% 28% 17% 7% 3% 329 | 1371 2150 156 | 100% | 8/22 8/22 6/22 | 
+DBG fords [514, 614] bridge None
+DBG fords [476] bridge None
+DBG fords [514, 614] bridge None
+DBG fords [476] bridge None
+8 17 Zoskimon core [Rooms Rivers Mixed scattered] 0 1208 | 95 12% 19% 22% 6% 3% 197 | 1450 2342 196 | 99% | 8/20 6/20 6/18 | 
+8 18 Yakis core [Ridges Streams Mixed fields] 0 951 | 45 6% 20% 26% 7% 3% 333 | 1265 2159 194 | 100% | 8/30 6/26 6/30 | 
+8 19 Muske core [Pillars Lakes Mixed richer-farther] 0 1241 | 94 9% 13% 22% 3% 25% 77 | 1384 1940 72 | 100% | 8/22 6/22 6/20 | 
+8 20 Grissaskis core [Ridges Streams Mixed jackpot] 0 661 | 61 5% 17% 25% 5% 7% 293 | 1295 2162 144 | 100% | 6/30 6/30 10/30 | 
+20 planets, 935 ms each on average
