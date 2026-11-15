@@ -589,6 +589,16 @@ impl App {
                     v.minimap = !v.minimap;
                 }
             }
+            // The scent view (owner 11-15 20:54Z: "Is there a way for me to
+            // view the mold scent?"): the food scent and the trail, the two
+            // fields the mould's walkers smell, over the dimmed world.
+            KeyCode::F2 => {
+                if let Some(v) = self.view.as_mut() {
+                    v.scent = !v.scent;
+                    let what = if v.scent { "Scent view: blue is food scent, pink is trail (F2 off)" } else { "Scent view off" };
+                    self.hud.alert(what, None, theme::ACCENT);
+                }
+            }
             KeyCode::KeyK => {
                 if let Some(l) = self.listener.as_mut() {
                     l.voice = !l.voice;
