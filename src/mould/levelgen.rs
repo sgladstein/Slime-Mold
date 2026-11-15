@@ -736,6 +736,91 @@ fn wobbly(r: &mut Rng, a: (f32, f32), b: (f32, f32), k: usize, wobble: f32) -> V
         .collect()
 }
 
+/// The cheapest way over `ground` from `from` to `to`, in steps of 8 map
+/// cells, smoothed: rock costs 6 times plain ground and deep water 3 times,
+/// with `noise` (0-1) making it wander; never where `shut` holds (`from`
+/// and `to` excepted). `None` if `shut` walls `to` off.
+///
+/// A nest's road follows the ground this way, not a straight line: cut
+/// straight, it ran as a wide boulevard right across the caves and through
+/// the highlands' ridges (2026-11-15).
+fn route(w: usize, h: usize, ground: &[u8], from: (f32, f32), to: (f32, f32), noise: &Field, shut: impl Fn((f32, f32)) -> bool) -> Option<Vec<(f32, f32)>> {
+    const RB: usize = 8;
+    let (bw, bh) = (w / RB, h / RB);
+    let bin = |p: (f32, f32)| ((p.1.max(0.0) as usize / RB).min(bh - 1)) * bw + (p.0.max(0.0) as usize / RB).min(bw - 1);
+    let (s, t) = (bin(from), bin(to));
+    // A bin's cost, by its centre and four corners; 0 for shut.
+    let cost: Vec<f32> = (0..bw * bh)
+        .map(|i| {
+            let (x, y) = ((i % bw) * RB, (i / bw) * RB);
+            let c = ((x + RB / 2) as f32, (y + RB / 2) as f32);
+            if i != s && i != t && shut(c) {
+                return 0.0;
+            }
+            let mut c = 0.0;
+            for (dx, dy) in [(RB / 2, RB / 2), (0, 0), (RB - 1, 0), (0, RB - 1), (RB - 1, RB - 1)] {
+                let g = ground[(y + dy) * w + x + dx];
+                c += if g & G_ROCK != 0 { 6.0 } else if g == DEEP { 3.0 } else { 1.0 };
+            }
+            c / 5.0 * (0.7 + 0.6 * noise.at(x + RB / 2, y + RB / 2))
+        })
+        .collect();
+    use std::cmp::Reverse;
+    let mut best = vec![u32::MAX; bw * bh];
+    let mut prev = vec![usize::MAX; bw * bh];
+    let mut heap = std::collections::BinaryHeap::new();
+    best[s] = 0;
+    heap.push(Reverse((0u32, s)));
+    while let Some(Reverse((d, i))) = heap.pop() {
+        if i == t {
+            break;
+        }
+        if d > best[i] {
+            continue;
+        }
+        let (x, y) = ((i % bw) as i32, (i / bw) as i32);
+        for (dx, dy, step) in [(1, 0, 10.0), (-1, 0, 10.0), (0, 1, 10.0), (0, -1, 10.0), (1, 1, 14.14), (1, -1, 14.14), (-1, 1, 14.14), (-1, -1, 14.14)] {
+            let (nx, ny) = (x + dx, y + dy);
+            if nx < 0 || ny < 0 || nx >= bw as i32 || ny >= bh as i32 {
+                continue;
+            }
+            let j = ny as usize * bw + nx as usize;
+            if cost[j] == 0.0 {
+                continue;
+            }
+            let nd = d + ((cost[i].max(1.0) + cost[j]) * 0.5 * step) as u32;
+            if nd < best[j] {
+                best[j] = nd;
+                prev[j] = i;
+                heap.push(Reverse((nd, j)));
+            }
+        }
+    }
+    if best[t] == u32::MAX {
+        return None;
+    }
+    let mut bins = vec![t];
+    while *bins.last().unwrap() != s {
+        bins.push(prev[*bins.last().unwrap()]);
+    }
+    bins.reverse();
+    // A point every 4 bins (32 map cells), the ends exact, then cut corners
+    // twice (Chaikin), so the 8 directions of the steps don't show.
+    let mut pts: Vec<(f32, f32)> = vec![from];
+    pts.extend(bins.iter().skip(4).step_by(4).filter(|&&i| i != t).map(|&i| (((i % bw) * RB + RB / 2) as f32, ((i / bw) * RB + RB / 2) as f32)));
+    pts.push(to);
+    for _ in 0..2 {
+        let mut out = vec![pts[0]];
+        for sg in pts.windows(2) {
+            out.push((sg[0].0 * 0.75 + sg[1].0 * 0.25, sg[0].1 * 0.75 + sg[1].1 * 0.25));
+            out.push((sg[0].0 * 0.25 + sg[1].0 * 0.75, sg[0].1 * 0.25 + sg[1].1 * 0.75));
+        }
+        out.push(*pts.last().unwrap());
+        pts = out;
+    }
+    Some(pts)
+}
+
 /// Turning a vector by fixed steps (constants, not `cos`, so every machine
 /// turns it the same): 15 degrees.
 const C15: f32 = 0.965_925_8;
@@ -743,6 +828,11 @@ const S15: f32 = 0.258_819_04;
 
 fn turn15(v: (f32, f32)) -> (f32, f32) {
     (v.0 * C15 - v.1 * S15, v.0 * S15 + v.1 * C15)
+}
+
+/// `turn15` one way (`side` 1) or the other (-1).
+fn turn15_to(v: (f32, f32), side: f32) -> (f32, f32) {
+    (v.0 * C15 - side * v.1 * S15, side * v.0 * S15 + v.1 * C15)
 }
 
 /// Distance from `q` to the segment `a`-`b`.
@@ -867,11 +957,13 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     // Off the edges by a share of the map, at least 150 map cells, so the
     // slime's start (a blob of radius 130-190 map cells at the default
     // walkers) isn't cut by the frame: at 110 and 100 map cells, 6 of 16
-    // first nests sat on an edge (looks review, 2026-11-15). Apart by 0.3 of the map's width, not a
-    // fixed 280 cells: at 6x the nearest pair was 0.14-0.19 of the width on
-    // 5 of 8 core worlds, and seed 1's three nests shared 7% of the map
-    // (play review). The spacing gives way a step at a time where the far
-    // part has no room, so a planet never loses a nest.
+    // first nests sat on an edge (looks review, 2026-11-15). Apart by 0.3
+    // of the map's width (470 cells at least, below), not a fixed 280: at
+    // 6x the nearest pair was 0.14-0.19 of the width on 5 of 8 core
+    // worlds, and seed 1's three nests shared 7% of the map (play review).
+    // The spacing gives way a step at a time where the far part has no
+    // room (on a map below today's area, down to 400 cells, below which
+    // the bowls would meet).
     let (mx, my) = ((0.16 * wf).clamp(150.0, 240.0), (0.2 * hf).clamp(150.0, 240.0));
     let mut nests: Vec<(f32, f32)> = Vec::new();
     let mut first = (far.0.clamp(mx, wf - mx), far.1.clamp(my, hf - my));
@@ -884,7 +976,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
     nests.push(first);
-    let apart = (0.3 * wf).max(280.0);
+    // At least 470 map cells: two bowls and the road round one fit
+    // between (`Bowl`; at 364, 0.3 of planet 4's width, a nest by an edge
+    // had no side for its road on 8 of 64 planets).
+    let apart = (0.3 * wf).max(470.0);
     for _ in 1..rc.nests {
         let mut best: Option<((f32, f32), f32)> = None;
         for t in 0..400 {
@@ -901,7 +996,14 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 best = Some((q, near));
             }
         }
-        if let Some((q, _)) = best {
+        // Below today's area, not where two bowls would run into each
+        // other (each reaches up to 192 cells out): a map that small, such
+        // as a cave asked for at 0.6 of today's area, gets fewer nests. At
+        // 175 apart there, the two bowls made one cavern with no way round
+        // (every attempt failed `check`). Not on the bigger maps the run
+        // plays: dropping a nest under 400 apart there failed 7 of 20 river
+        // valleys' first tries, which pass `check` with the nests closer.
+        if let Some((q, _)) = best.filter(|b| b.1 >= 400.0 || wf * hf >= (MAP_W * MAP_H) as f32) {
             nests.push(q);
         }
     }
@@ -1558,6 +1660,224 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
     }
 
+    // Front doors and back roads. The play review (2026-11-15) found 4 of
+    // 112 nests with both a direct way at most 10 dish cells wide (a door
+    // to hold, wall or turret) and a way round at least 16 wide (an open
+    // approach): the open planets had no cheap choke, and on the river
+    // valleys, highlands and caves every way in was narrow. So each nest
+    // sits in a bowl inside a rock rim. A door 7-9 dish cells wide faces
+    // the landing; a breach 28-35 wide opens 105-150 degrees round to one
+    // side; and a road 20-23 wide runs from the landing to in front of the
+    // door, then round the outside of the rim to the breach. The road
+    // follows the ground (`route`), cuts rock where it must and is made
+    // shallow across deep water; it is kept clear of crystals, pillars,
+    // rings and hedges (`lanes`). The door is the direct way, the road the
+    // way round, and `check` holds every nest to both (`doors`).
+    struct Bowl {
+        q: (f32, f32),
+        inner: f32,
+        thick: f32,
+        front: (f32, f32),
+        back: (f32, f32),
+        door: f32,
+        breach: f32,
+    }
+    let mut bowls: Vec<Bowl> = Vec::new();
+    let mut lanes: Vec<(Vec<(f32, f32)>, f32)> = Vec::new();
+    let clear_cell = |ground: &mut [u8], i: usize| {
+        if ground[i] & G_ROCK != 0 {
+            ground[i] = 0;
+        } else if ground[i] == DEEP {
+            ground[i] = G_WET;
+        }
+    };
+    // Each bowl's rim: room inside for the slime's start and a fight, and
+    // small enough that a bowl and the road round it fit across planet 1
+    // (496 map cells high) and beside a second nest 0.3 of the width away.
+    // Shots stop at rock, so the rim needn't enclose the gun's whole
+    // range of the nest (`doors` counts only ground in sight of it).
+    let sizes: Vec<(f32, f32, f32)> = (0..nests.len())
+        .map(|_| {
+            let thick = r.range(26.0, 36.0);
+            let inner = r.range(104.0, 136.0);
+            // The most the rim reaches, with its wobble.
+            (thick, inner, inner * 1.15 + thick * 1.4)
+        })
+        .collect();
+    for (k, &q) in nests.iter().enumerate() {
+        let (thick, inner, outer) = sizes[k];
+        let front = unit(landing.0 - q.0, landing.1 - q.1);
+        let hw = r.range(40.0, 46.0);
+        let ra = outer + hw + 8.0;
+        // The road's arc, from in front of the door round to the breach
+        // `turns` steps of 15, on one side. From the door, not from 60
+        // degrees round: the road's leg from the landing to 60 degrees,
+        // then a short arc, was as quick a way to the breach as to the door
+        // on the caves and big planets (12 of 64 failed `check`), and in
+        // the caves the door's lane could end in rock.
+        let arc = |turns: usize, side: f32| -> Vec<(f32, f32)> {
+            let mut v = front;
+            let mut pts = vec![(q.0 + v.0 * ra, q.1 + v.1 * ra)];
+            for _ in 1..=turns {
+                v = turn15_to(v, side);
+                pts.push((q.0 + v.0 * ra, q.1 + v.1 * ra));
+            }
+            pts
+        };
+        // How far the arc keeps inside the map's walkable ground and off
+        // the other nests' bowls (negative where it doesn't fit).
+        // The other bowls, each with the road's room round it.
+        let others: Vec<((f32, f32), f32)> = nests.iter().zip(&sizes).enumerate().filter(|&(j, _)| j != k).map(|(_, (&o, sz))| (o, sz.2 + hw + 12.0)).collect();
+        // From the landing to the arc's start, round any bowl in the way: a
+        // waypoint beside it on the side the straight line passes. (Straight,
+        // the road to the far nest ran through the near nest's bowl on 9 of
+        // 64 planets.)
+        let legs = |to: (f32, f32)| -> Vec<(f32, f32)> {
+            let mut way = vec![landing, to];
+            for _ in 0..4 {
+                let hit = way.windows(2).enumerate().find_map(|(i, sg)| others.iter().find(|&&(o, room)| seg_dist(o, sg[0], sg[1]) < room).map(|&(o, room)| (i, o, room)));
+                let Some((i, o, room)) = hit else { break };
+                let (a, b) = (way[i], way[i + 1]);
+                let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+                let t = (((o.0 - a.0) * dx + (o.1 - a.1) * dy) / (dx * dx + dy * dy).max(1e-6)).clamp(0.0, 1.0);
+                let near = (a.0 + dx * t, a.1 + dy * t);
+                let n = if dist(near, o) > 1.0 { unit(near.0 - o.0, near.1 - o.1) } else { unit(-dy, dx) };
+                way.insert(i + 1, (o.0 + n.0 * (room + 24.0), o.1 + n.1 * (room + 24.0)));
+            }
+            way
+        };
+        // The road's lead, from the landing to in front of the door: over
+        // the ground (`route`), off the map's edges and the other bowls;
+        // straight legs round the bowls, wobbled, if that finds none.
+        let door_front = (q.0 + front.0 * ra, q.1 + front.1 * ra);
+        let shut = |c: (f32, f32)| {
+            (dist(c, landing) >= 160.0 && c.0.min(c.1).min(wf - c.0).min(hf - c.1) < hw + RIM_MAP as f32) || dist(c, q) < outer + hw * 0.5 || others.iter().any(|&(o, room)| dist(o, c) < room)
+        };
+        let lead = route(w, h, &ground, landing, door_front, &rough, shut).unwrap_or_else(|| {
+            let mut road = vec![landing];
+            for sg in legs(door_front).windows(2) {
+                let pieces = ((dist(sg[0], sg[1]) / 120.0) as usize).max(2);
+                road.extend(&wobbly(&mut r, sg[0], sg[1], pieces, 18.0)[1..]);
+            }
+            road
+        });
+        // How far the arc keeps inside the map's walkable ground and off
+        // the other bowls (negative where it doesn't fit).
+        let room = |pts: &[(f32, f32)]| {
+            pts.iter()
+                .map(|&a| {
+                    let edge = a.0.min(a.1).min(wf - a.0).min(hf - a.1) - hw - RIM_MAP as f32;
+                    let other = others.iter().map(|&(o, room)| dist(o, a) - room + 4.0).fold(f32::MAX, f32::min);
+                    edge.min(other)
+                })
+                .fold(f32::MAX, f32::min)
+        };
+        // The breach as far round as the road fits, 150 degrees down to
+        // 105, on a side that fits, either if both do. (At 90 the way round
+        // on a big map was within reach of the walk to the door.)
+        let mut pick = None;
+        for turns in (7..=10).rev() {
+            let fits: Vec<f32> = [1.0f32, -1.0].into_iter().filter(|&sd| room(&arc(turns, sd)) >= 0.0).collect();
+            if !fits.is_empty() {
+                pick = Some((turns, fits[r.below(fits.len())]));
+                break;
+            }
+        }
+        let (turns, side) = pick.unwrap_or_else(|| (7, if room(&arc(7, 1.0)) >= room(&arc(7, -1.0)) { 1.0 } else { -1.0 }));
+        let pts = arc(turns, side);
+        let mut back = front;
+        for _ in 0..turns {
+            back = turn15_to(back, side);
+        }
+        let mut road = lead;
+        road.extend(&pts[1..]);
+        road.push((q.0 + back.0 * inner * 0.55, q.1 + back.1 * inner * 0.55));
+        lanes.push((road, hw));
+        bowls.push(Bowl { q, inner, thick, front, back, door: r.range(14.0, 18.0), breach: r.range(56.0, 70.0) });
+    }
+    // The roads first, then the rims over them (a road can't cut another
+    // nest's rim), then the bowls, doors and breaches.
+    for (pts, hw) in &lanes {
+        along_line(w, h, pts, hw * 1.2, |i, _, d| {
+            if d < hw * (0.92 + 0.16 * fine.at(i % w, i / w)) {
+                clear_cell(&mut ground, i);
+            }
+        });
+    }
+    let cross = |v: (f32, f32), u: (f32, f32)| (v.0 * u.1 - v.1 * u.0).abs();
+    let dot = |v: (f32, f32), u: (f32, f32)| v.0 * u.0 + v.1 * u.1;
+    for pass in 0..2 {
+        for b in &bowls {
+            let m = b.inner * 1.3 + b.thick * 1.7 + 60.0;
+            for y in ((b.q.1 - m).max(0.0) as usize)..((b.q.1 + m).max(0.0) as usize).min(h) {
+                for x in ((b.q.0 - m).max(0.0) as usize)..((b.q.0 + m).max(0.0) as usize).min(w) {
+                    let v = (x as f32 + 0.5 - b.q.0, y as f32 + 0.5 - b.q.1);
+                    let rho = len(v.0, v.1);
+                    // Lobed and knobbly, not a ring: the noises sit near
+                    // 0.5 (most within 0.25-0.75), so at first, at 0.16
+                    // and 0.5, the rim read as a drawn circle in game
+                    // (2026-11-15).
+                    let inner = b.inner * (1.0 + 0.6 * (rough.at(x, y) - 0.5));
+                    let outer = inner + b.thick * (0.3 + 1.4 * fine.at(x, y));
+                    let door = dot(v, b.front) > 0.0 && cross(v, b.front) < b.door;
+                    let breach = dot(v, b.back) > 0.0 && cross(v, b.back) < b.breach * (0.9 + 0.2 * fine.at(x, y));
+                    let i = y * w + x;
+                    if pass == 0 {
+                        if rho >= inner && rho < outer && !door && !breach {
+                            ground[i] = G_ROCK;
+                        }
+                    } else if rho < inner || ((door || breach) && rho > inner * 0.5 && rho < outer + 40.0) {
+                        clear_cell(&mut ground, i);
+                    }
+                }
+            }
+        }
+    }
+    // Each door's lane: straight on toward the landing, as narrow as the
+    // door, until it meets open ground (at once, on open planets; in the
+    // caves, the nearest tunnel or cavern).
+    for b in &bowls {
+        let outer = b.inner * 1.15 + b.thick * 1.4;
+        let mut end = outer + 30.0;
+        while end < outer + 600.0 {
+            let p = (b.q.0 + b.front.0 * end, b.q.1 + b.front.1 * end);
+            if p.0 < 0.0 || p.1 < 0.0 || p.0 >= wf || p.1 >= hf || ground[p.1 as usize * w + p.0 as usize] & G_ROCK == 0 {
+                break;
+            }
+            end += 8.0;
+        }
+        let door = vec![(b.q.0 + b.front.0 * b.inner * 0.6, b.q.1 + b.front.1 * b.inner * 0.6), (b.q.0 + b.front.0 * (end + 16.0), b.q.1 + b.front.1 * (end + 16.0))];
+        along_line(w, h, &door, b.door, |i, _, _| clear_cell(&mut ground, i));
+        lanes.push((door, b.door));
+        lanes.push((vec![(b.q.0 + b.back.0 * b.inner * 0.5, b.q.1 + b.back.1 * b.inner * 0.5), (b.q.0 + b.back.0 * (outer + 50.0), b.q.1 + b.back.1 * (outer + 50.0))], b.breach));
+    }
+    // In the caves, a cavern the rims cut off is filled in: a rim across
+    // the tunnels round a nest left caverns behind it with no way in, and
+    // their crystals failed `check` (3 of 8 cave planets, 2026-11-15). A
+    // cave with no way in is rock. Deep pools count as a way through here,
+    // as they did before the bowls.
+    if rc.openness == Openness::Caves {
+        let mut seen = vec![false; w * h];
+        let start = (landing.1 as usize).min(h - 1) * w + (landing.0 as usize).min(w - 1);
+        let mut stack = vec![start];
+        seen[start] = true;
+        while let Some(i) = stack.pop() {
+            let (x, y) = (i % w, i / w);
+            for (nx, ny) in [(x.wrapping_sub(1), y), (x + 1, y), (x, y.wrapping_sub(1)), (x, y + 1)] {
+                if nx < w && ny < h && !seen[ny * w + nx] && ground[ny * w + nx] & G_ROCK == 0 {
+                    seen[ny * w + nx] = true;
+                    stack.push(ny * w + nx);
+                }
+            }
+        }
+        for (g, seen) in ground.iter_mut().zip(&seen) {
+            if !seen && *g & G_ROCK == 0 {
+                *g = G_ROCK;
+            }
+        }
+    }
+    let in_lane = |c: (f32, f32), gap: f32| lanes.iter().any(|(pts, half)| pts.windows(2).any(|s| seg_dist(c, s[0], s[1]) < half + gap));
+
     // Crystals.
     let mut items = Items { landing: Some(landing), moisture: Some(p.biome.moisture()), flora: Some(p.biome as u8), ..Items::default() };
     let clear = |ground: &[u8], items: &Items, c: (f32, f32), rad: f32, gap: f32| -> bool {
@@ -1590,28 +1910,46 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         items.crystals.push(Crystal { x: q.0.round(), y: q.1.round(), r: rad.round(), charge });
         items.moulds.push((q.0.round(), q.1.round()));
     }
-    // One near the landing, toward the middle: a fair start.
+    // One near the landing, toward the middle: a fair start. Off the
+    // roads, which leave the landing toward the middle too: on one there,
+    // it narrowed the way round to 10 (highlands seed 3, 2026-11-15). Then
+    // any way round the landing and a little farther (a landing by the
+    // edge, its roads fanning out inward, had no room within 140), and last
+    // as before, on a road if need be.
     let inward = unit(wf / 2.0 - landing.0, hf / 2.0 - landing.1);
-    for _ in 0..400 {
+    for tries in 0..1200 {
+        let phase = tries / 400;
         let (dx, dy) = (r.range(-1.0, 1.0), r.range(-1.0, 1.0));
         let l = len(dx, dy);
-        if !(0.2..=1.0).contains(&l) || (dx * inward.0 + dy * inward.1) / l < 0.3 {
+        if !(0.2..=1.0).contains(&l) || (phase != 1 && (dx * inward.0 + dy * inward.1) / l < 0.3) {
             continue;
         }
-        let d = r.range(85.0, 140.0);
+        let d = r.range(85.0, if phase == 1 { 220.0 } else { 140.0 });
         let c = (landing.0 + dx / l * d, landing.1 + dy / l * d);
         let rad = r.range(24.0, 28.0);
-        // In the landing's own region: across a ridge, the nearest crystal
-        // was a long walk round (rocky rooms, 2026-11-14).
-        let home = c.0 > 0.0 && c.1 > 0.0 && c.0 < wf && c.1 < hf && region[c.1 as usize * w + c.0 as usize] == 0;
-        if home && clear(&ground, &items, c, rad, 30.0) {
+        // In the landing's own region, or in plain sight of it: across a
+        // ridge, the nearest crystal was a long walk round (rocky rooms,
+        // 2026-11-14). In sight, as the region alone left a landing in a
+        // small room no room off its roads (highlands seed 4, 2026-11-15).
+        let inside = c.0 > 0.0 && c.1 > 0.0 && c.0 < wf && c.1 < hf;
+        let seen = || {
+            let n = (d / 2.0) as usize;
+            (0..=n).all(|j| {
+                let t = j as f32 / n as f32;
+                let g = ground[(landing.1 + (c.1 - landing.1) * t) as usize * w + (landing.0 + (c.0 - landing.0) * t) as usize];
+                g & G_ROCK == 0 && g != DEEP
+            })
+        };
+        let home = inside && (region[c.1 as usize * w + c.0 as usize] == 0 || seen());
+        if home && (phase == 2 || !in_lane(c, rad + 8.0)) && clear(&ground, &items, c, rad, 30.0) {
             items.crystals.push(Crystal { x: c.0.round(), y: c.1.round(), r: rad.round(), charge: [192.0, 256.0][r.below(2)] });
             break;
         }
     }
     // The rest by the pattern. `put` places one if its ground is clear.
     let put = |items: &mut Items, ground: &[u8], c: (f32, f32), rad: f32, charge: f32, gap: f32| -> bool {
-        let ok = clear(ground, items, c, rad, gap);
+        // Off the roads, doors and breaches.
+        let ok = !in_lane(c, rad + 8.0) && clear(ground, items, c, rad, gap);
         if ok {
             items.crystals.push(Crystal { x: c.0.round(), y: c.1.round(), r: rad.round(), charge });
         }
@@ -1776,7 +2114,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
         let c = (r.range(30.0, wf - 30.0), r.range(30.0, hf - 30.0));
         let in_arena = arena[region[(c.1 as usize).min(h - 1) * w + (c.0 as usize).min(w - 1)] as usize];
-        if in_arena || dist(c, landing) < 150.0 || nests.iter().any(|&q| dist(q, c) < 120.0) || items.crystals.iter().any(|k| dist((k.x, k.y), c) < k.r + 36.0) || pillars.iter().any(|&(q, _)| dist(q, c) < 46.0) {
+        if in_arena || in_lane(c, 20.0) || dist(c, landing) < 150.0 || nests.iter().any(|&q| dist(q, c) < 120.0) || items.crystals.iter().any(|k| dist((k.x, k.y), c) < k.r + 36.0) || pillars.iter().any(|&(q, _)| dist(q, c) < 46.0) {
             continue;
         }
         pillars.push((c, r.range(7.0, 15.0)));
@@ -1813,7 +2151,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         // Across the slot, its ends in the ridge's rock.
         let half = rad + 8.0;
         let pts = wobbly(&mut r, (c.0 - t.0 * half, c.1 - t.1 * half), (c.0 + t.0 * half, c.1 + t.1 * half), 4, 5.0);
-        hedge(&mut r, &mut items.walls, &pts);
+        // No gate across a road or a nest's door or breach.
+        if !pts.iter().any(|&p| in_lane(p, 10.0)) {
+            hedge(&mut r, &mut items.walls, &pts);
+        }
     }
     for f in &fronts {
         let Some(g) = f.gate else { continue };
@@ -1827,7 +2168,9 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
         let half = rad + 8.0;
         let pts = wobbly(&mut r, at_line(s, u - half), at_line(s, u + half), 4, 5.0);
-        hedge(&mut r, &mut items.walls, &pts);
+        if !pts.iter().any(|&p| in_lane(p, 10.0)) {
+            hedge(&mut r, &mut items.walls, &pts);
+        }
     }
     for (k, &q) in nests.iter().enumerate() {
         if !r.chance(rc.ring) {
@@ -1853,13 +2196,15 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let u = turn15(v);
             let mid = unit(v.0 + u.0, v.1 + u.1);
             // Each arc's last piece is its gap. No hedge on water (the looks
-            // review found hedges laid across lakes).
+            // review found hedges laid across lakes), nor across the
+            // breach: there the ring shut the way round (jungle, 2026-11-15).
+            // The ring's gap toward the landing is the door's.
             let j = (i + 24 - start) % 24;
             let (arc, next) = (j * arcs / 24, ((j + 1) % 24) * arcs / 24);
             let (ra, rb) = (radii[i], radii[(i + 1) % 24]);
             let (a, b) = ((q.0 + v.0 * ra, q.1 + v.1 * ra), (q.0 + u.0 * rb, q.1 + u.1 * rb));
             let half = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
-            if next == arc && mid.0 * to.0 + mid.1 * to.1 < 0.85 && inside(a, 8.0) && inside(b, 8.0) && dry(&ground, a) && dry(&ground, half) && dry(&ground, b) {
+            if next == arc && mid.0 * to.0 + mid.1 * to.1 < 0.85 && inside(a, 8.0) && inside(b, 8.0) && dry(&ground, a) && dry(&ground, half) && dry(&ground, b) && ![a, half, b].iter().any(|&p| in_lane(p, 4.0)) {
                 hedge(&mut r, &mut items.walls, &[a, b]);
             }
             v = u;
@@ -1884,6 +2229,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                         || items.crystals.iter().any(|c| dist((c.x, c.y), p) < c.r + 34.0)
                         || ground[p.1 as usize * w + p.0 as usize] & G_ROCK != 0
                         || !dry(&ground, p)
+                        || in_lane(p, 16.0)
                         || arena[region[p.1 as usize * w + p.0 as usize] as usize]
                 };
                 if blocked(at) || blocked(b) || !dry(&ground, ((at.0 + b.0) / 2.0, (at.1 + b.1) / 2.0)) {
@@ -2425,7 +2771,9 @@ pub fn check(p: &Planet, m: &Map) -> Vec<String> {
     if s.to_nest == u32::MAX {
         out.push("a nest cannot be reached".into());
     } else {
-        if (s.to_first as f32) < 0.6 * w {
+        // Less the door's straight way in: a nest's bowl opens a door
+        // facing the landing, so the walk to it runs nearly straight.
+        if (s.to_first as f32) < 0.6 * w - 60.0 {
             out.push(format!("the far nest is {} cells' walk from the landing", s.to_first));
         }
         if (s.to_nest as f32) < 0.45 * w {
@@ -2449,8 +2797,163 @@ pub fn check(p: &Planet, m: &Map) -> Vec<String> {
     if s.rock > most {
         out.push(format!("{:.0}% rock", s.rock * 100.0));
     }
-    if it.moulds.len() < rc.nests {
+    // Below today's area a map may be too small for two bowls 400 apart
+    // (`build_with`'s nests): one nest will do there. The run's planets
+    // with more than one nest are all bigger.
+    let want = if m.w * m.h >= MAP_W * MAP_H { rc.nests } else { 1 };
+    if it.moulds.len() < want {
         out.push(format!("{} of {} nests placed", it.moulds.len(), rc.nests));
+    }
+    out.extend(door_problems(p, m));
+    out
+}
+
+/// The widest the direct way into a nest may be, and the least the way
+/// round must be, in dish cells (play review, 2026-11-15; its
+/// `localchoke.py`).
+pub const DOOR_MAX: u32 = 10;
+pub const ROAD_MIN: u32 = 16;
+
+/// The longest a direct way may be, from the shortest walk `l0` (map
+/// cells): 15% longer, as the play review measured, but at most 250 cells
+/// (62 dish cells) longer. On the 6x core world 15% is 330 cells, so any
+/// way round a nest's bowl short of its far side counted as direct.
+fn direct_limit(l0: u32) -> u32 {
+    l0.saturating_add(((l0 as f32 * 0.15) as u32).min(250))
+}
+
+/// Walks over the walking bins whose clearance is at least a level, from
+/// the landing to each nest's gun range, made as they are asked for.
+struct Ways {
+    bw: usize,
+    bh: usize,
+    open: Vec<bool>,
+    /// Bins to the nearest shut bin, by a 3-4 chamfer (thirds of a bin).
+    clear: Vec<u16>,
+    landing: (f32, f32),
+    /// Each nest's bins: within the gun's range (24 dish cells) of its
+    /// home crystal's rim, as the play review measured, and in sight of
+    /// the nest.
+    goals: Vec<Vec<usize>>,
+    walks: Vec<(u16, Vec<u32>)>,
+}
+
+impl Ways {
+    fn new(p: &Planet, m: &Map) -> Ways {
+        let (bw, bh, open) = walkable(m, p.size, true);
+        let clear = chamfer(bw, bh, |i| !open[i]);
+        // No rock between: shots stop at rock (`Rules::aim_min`'s sight
+        // check), so a squad outside a nest's rim can't shoot it.
+        let (w, h) = p.size;
+        let sight = |a: (f32, f32), b: (f32, f32)| {
+            let k = (dist(a, b) / 2.0).ceil().max(1.0) as usize;
+            (0..=k).all(|i| {
+                let t = i as f32 / k as f32;
+                let (x, y) = ((a.0 + (b.0 - a.0) * t) as usize, (a.1 + (b.1 - a.1) * t) as usize);
+                x >= w || y >= h || m.ground[y * w + x] & G_ROCK == 0
+            })
+        };
+        let goals = m
+            .items
+            .moulds
+            .iter()
+            .map(|&q| {
+                let home = m.items.crystals.iter().find(|c| dist((c.x, c.y), q) < 2.0).map_or(40.0, |c| c.r);
+                let rad = home + 96.0;
+                let (x0, x1) = (((q.0 - rad) / BIN as f32).max(0.0) as usize, (((q.0 + rad) / BIN as f32) as usize).min(bw - 1));
+                let (y0, y1) = (((q.1 - rad) / BIN as f32).max(0.0) as usize, (((q.1 + rad) / BIN as f32) as usize).min(bh - 1));
+                let mut out = Vec::new();
+                for by in y0..=y1 {
+                    for bx in x0..=x1 {
+                        let c = ((bx * BIN) as f32 + 2.0, (by * BIN) as f32 + 2.0);
+                        if open[by * bw + bx] && dist(c, q) <= rad && sight(c, q) {
+                            out.push(by * bw + bx);
+                        }
+                    }
+                }
+                out
+            })
+            .collect();
+        Ways { bw, bh, open, clear, landing: m.items.landing.unwrap_or((0.0, 0.0)), goals, walks: Vec::new() }
+    }
+
+    /// The shortest walk to nest `k` over bins at least `level` bins clear
+    /// (`u32::MAX` if there is none).
+    fn walk(&mut self, level: u16, k: usize) -> u32 {
+        if !self.walks.iter().any(|w| w.0 == level) {
+            let open: Vec<bool> = self.open.iter().zip(&self.clear).map(|(&o, &c)| o && c >= 3 * level).collect();
+            self.walks.push((level, walk_from(self.bw, self.bh, &open, self.landing)));
+        }
+        let d = &self.walks.iter().find(|w| w.0 == level).unwrap().1;
+        self.goals[k].iter().map(|&i| d[i]).min().unwrap_or(u32::MAX)
+    }
+
+    /// Dish cells across, for a clearance level: the narrowing in
+    /// `walkable` took a bin off each side.
+    fn width(level: u16) -> u32 {
+        2 * level as u32 + 2
+    }
+}
+
+/// Each nest's direct way and way round, in dish cells: the widest route
+/// from the landing to within the gun's range of the nest, in its sight,
+/// at most 15% (and 250 cells) longer than the shortest (`direct_limit`), and the widest route of any
+/// length; soft rock kept. (0, 0) where none reaches it. As the play
+/// review's `localchoke.py` measured them, on the checks' walking bins,
+/// but counting only ground in sight of the nest: shots stop at rock.
+pub fn doors(p: &Planet, m: &Map) -> Vec<(u32, u32)> {
+    let mut ways = Ways::new(p, m);
+    let top = ways.clear.iter().copied().filter(|&c| c != u16::MAX).max().unwrap_or(0) / 3;
+    (0..m.items.moulds.len())
+        .map(|k| {
+            let l0 = ways.walk(1, k);
+            if l0 == u32::MAX {
+                return (0, 0);
+            }
+            // The highest level at which `ok` holds (it holds at 1, and
+            // fails above some level).
+            let best = |ways: &mut Ways, ok: &dyn Fn(u32) -> bool| {
+                let (mut lo, mut hi) = (1u16, top.max(1));
+                while lo < hi {
+                    let mid = (lo + hi).div_ceil(2);
+                    if ok(ways.walk(mid, k)) {
+                        lo = mid;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                Ways::width(lo)
+            };
+            let limit = direct_limit(l0);
+            let direct = best(&mut ways, &|d| d <= limit);
+            let round = best(&mut ways, &|d| d != u32::MAX);
+            (direct, round)
+        })
+        .collect()
+}
+
+/// What `check` asks of each nest's ways in: no direct way wider than
+/// `DOOR_MAX`, and a way round at least `ROAD_MIN` wide. Three walks, not
+/// `doors`'s searches.
+fn door_problems(p: &Planet, m: &Map) -> Vec<String> {
+    let mut ways = Ways::new(p, m);
+    // The least level wider than the door may be, and the least the road
+    // must keep.
+    let wide = (1u16..).find(|&l| Ways::width(l) > DOOR_MAX).unwrap();
+    let road = (1u16..).find(|&l| Ways::width(l) >= ROAD_MIN).unwrap();
+    let mut out = Vec::new();
+    for k in 0..m.items.moulds.len() {
+        let l0 = ways.walk(1, k);
+        if l0 == u32::MAX {
+            out.push(format!("nest {k} cannot be reached past soft rock"));
+            continue;
+        }
+        if ways.walk(wide, k) <= direct_limit(l0) {
+            out.push(format!("nest {k}: the direct way is wider than {DOOR_MAX}"));
+        }
+        if ways.walk(road, k) == u32::MAX {
+            out.push(format!("nest {k}: no way round {ROAD_MIN} wide"));
+        }
     }
     out
 }
@@ -2522,12 +3025,15 @@ mod tests {
     // every planet again for the reviews' map fixes (11-15): nests spaced
     // by the map's width and kept off its edges, streams and rivers
     // capped, nest rings in arcs, no hedges on water, straight bridges and
-    // tapered fords. Round
-    // 2's depths 3-8 had kept their pins through the tiled region scan,
-    // which finds the same nearest sites as the full scan. The item
-    // text's `flora` line (11-15, plants thread: each biome's plant forms
-    // in the view) changed every print, not the ground or plants.
-    const PINNED: [u64; 8] = [0x4248ae7dda524c5b, 0xcef08c74cac2a3bd, 0x7309e5cd22a3f1c0, 0xda3c7d0ca2863128, 0x5aaebb4ee1f789c3, 0x9a3af4e927eb6590, 0xac64bbe4671a004d, 0x2aa09380fbc2fa0e];
+    // tapered fords. Round 2's depths 3-8 had kept their pins through the
+    // tiled region scan, which finds the same nearest sites as the full
+    // scan. The item text's `flora` line (11-15, plants thread: each
+    // biome's plant forms in the view) changed every print, not the ground
+    // or plants. Then every planet again for the front doors and back
+    // roads (11-15): a rock bowl round each nest, roads over the ground,
+    // the landing's crystal and the rings off the roads, cut-off caverns
+    // filled.
+    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xce90c672ed6a76a3, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0x7829c12a5aab8f47, 0x6f978d8f3d2eb49a];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -2563,9 +3069,30 @@ mod tests {
         assert_eq!(got, want, "{got:#x?}");
     }
 
-    // Re-pinned for the item text's `flora` line too (11-15, plants thread).
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xb19a25facfdeb1f3), (2, 7, 0xec0b8f1be60e8710), (3, 3, 0x18a8436223cfa9e5), (4, 2, 0x352fcb9a2397a9ec), (7, 2, 0x788c6611712fa087), (8, 3, 0x3e2d695aca77b799)];
+    // Re-pinned for the item text's `flora` line too (11-15, plants
+    // thread), then for the front doors and back roads.
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x2c613f7a6c18fa9b), (3, 3, 0x7ceef0691a3a7c28), (4, 2, 0x4e2314e4cf250d1e), (7, 2, 0xcff905ed38edd8e0), (8, 3, 0x935543c061cbb714)];
 
+    /// Every nest has a front door and a back road (play review,
+    /// 2026-11-15: 4 of 112 had both): on seeds 1-6 of every planet, the
+    /// direct way in is at most `DOOR_MAX` dish cells wide and the way
+    /// round at least `ROAD_MIN`. And the door is a door: the direct way
+    /// is no narrower than 6, so a squad still files through it.
+    #[test]
+    fn every_nest_has_a_front_door_and_a_back_road() {
+        let mut bad = Vec::new();
+        for d in 1..=8 {
+            for s in 1..=6 {
+                let p = planet(s, d);
+                for (k, (direct, round)) in doors(&p, &level(s, d)).into_iter().enumerate() {
+                    if !(6..=DOOR_MAX).contains(&direct) || round < ROAD_MIN {
+                        bad.push(format!("planet {d} seed {s} nest {k}: direct {direct}, round {round}"));
+                    }
+                }
+            }
+        }
+        assert!(bad.is_empty(), "{}", bad.join("\n"));
+    }
     /// Nests keep off the map's edges by at least 150 map cells, and two
     /// nests stand at least a fifth of the map's width apart (0.3 wanted;
     /// the spacing gives way only where the far part has no room), over
