@@ -642,11 +642,51 @@ draws seeds 1-6 before and after from the map files (`page4/`, by
 `raw/make_page4.py`). The rest of each map changes too, because the arenas
 draw from the generator's dice.
 
+## Planets at full size (11-15 00:00-00:20Z)
+
+The 1070 retimed #307's head (5eddca7c) with `bench=30 seed=1 spread=0`.
+Raw output is on claude/project-thread-26drse @ ed2cc3ad, in
+`runner-out/levelgen-pr307-5eddca7c/`. The deciding measure, named before
+the run, was the step max after the first game second at 6x: under 8 ms on
+both hands, with prepare max under 4 ms.
+
+| Run | Step max after 1 s | Prepare max | Frame max | Frame p50 |
+| --- | --- | --- | --- | --- |
+| planet:8:1:6, every command | 7.59 ms (37.84 at d70b8d14) | 1.71 ms | 14.90 ms | 8.19 ms |
+| planet:5:1:2, every command | 6.06 ms (18.48) | 2.46 ms | 11.28 ms | 6.03 ms |
+| planet:8:1:6, rush | 1.84 ms | 1.74 ms | 7.08 ms | 6.44 ms |
+
+The rush run's step max in frames that finish a step was 9.35 ms, inside
+its first second, and its card started down-clocked at 822 MHz. The
+measure passed, so `GROW_CAP` is now 6. Planets 6-8 take their full 2.8x,
+4x and 6x, and are re-pinned. Planet 8's pin is now the 6x pin.
+
+Building a planet at full size was slow on streams worlds. `along_line`
+tested every segment of a polyline at every cell of its box. A stream
+wanders across a 6x map in about a hundred pieces, so a planet's streams
+took 3-5 s. Each segment now marks only the cells near its own box, and
+each cell keeps its least distance. That gives the same distances and the
+same calls in the same order: the 150 planets below print the same before
+and after.
+
+Seeds 1-50, depths 6-8 (`raw/planets-6-8-full-size-1-50.txt`), build time
+on this cloud machine:
+
+| Planet | First attempt passed | Mean | Max |
+| --- | --- | --- | --- |
+| 6 (2.8x) | 39 of 50 | 310 ms | 1,159 ms |
+| 7 (4x) | 44 of 50 | 317 ms | 768 ms |
+| 8 (6x) | 46 of 50 | 743 ms (1,239 before) | 4,357 ms (5,131) |
+
+The worst core world, seed 17, needed five attempts. Building the next
+planet while the shop is open would hide even that.
+
 ## Next
 
-1. **Planets to the owner's 6x** once the 1070 has timed the gas fix; a
-   three-agent adversarial review (owner, 19:12Z and 19:32Z), held until
-   the owner says go (22:33Z).
+1. **The three-agent review**: aesthetics, fun and technical (owner,
+   23:59Z), each also examining every feature of the world, with the
+   aesthetics section by the graphics lead. It is held until the owner says
+   go.
 2. **Every strategy can win**: the check that each nest has an open
    approach and a choke, after a short read on how StarCraft map
    generators score chokepoints and fairness (owner's question, 17:24Z).

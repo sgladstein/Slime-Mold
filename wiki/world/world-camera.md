@@ -2,7 +2,7 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/building-looks-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md

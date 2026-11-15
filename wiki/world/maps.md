@@ -2,7 +2,7 @@
 title: Larder World maps
 kind: design
 status: open
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/ground-kinds-2026-11-14/README.md
   - Reports/larder-maps-2026-11-11.md

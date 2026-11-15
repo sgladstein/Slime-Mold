@@ -1,0 +1,152 @@
+depth seed name biome [openness water soil pattern] attempt ms | crystals rock sand clay barren wet walls | walk: nest first crystal | open charge | failed attempts
+6 1 Nedarro highlands [Rooms Dry Cracks fields] 2 666 | 22 19% 0% 69% 0% 0% 16 | 1074 1495 68 | 89% | nearest crystal 350 cells' walk from the landing; only 2% of the charge is open without breaking soft rock / 4 crystals cannot be reached
+6 2 Karon highlands [Ridges Dry Cracks richer-farther] 0 229 | 40 10% 0% 76% 0% 0% 8 | 1120 1596 60 | 100% | 
+6 3 Sossozen highlands [Rooms Pools Cracks jackpot] 0 249 | 26 19% 0% 55% 0% 15% 16 | 1064 1517 56 | 52% | 
+6 4 Quazus highlands [Rooms Pools Cracks richer-farther] 0 263 | 39 20% 0% 52% 0% 20% 8 | 1460 1460 60 | 95% | 
+6 5 Lothek highlands [Ridges Dry Cracks fields] 1 517 | 21 9% 0% 77% 0% 0% 20 | 1321 1673 79 | 100% | 15 crystals cannot be reached; a nest cannot be reached; only 38% of the charge is open without breaking soft rock
+6 6 Soma highlands [Rooms Dry Clay scattered] 0 174 | 40 20% 0% 37% 0% 0% 8 | 1531 1531 50 | 51% | 
+6 7 Muthith highlands [Rooms Dry Cracks jackpot] 0 222 | 26 18% 0% 69% 0% 0% 24 | 963 1633 61 | 100% | 
+6 8 Muskirar highlands [Ridges Dry Cracks jackpot] 0 229 | 26 9% 0% 76% 0% 0% 4 | 1361 1972 90 | 100% | 
+6 9 Yassoren highlands [Rooms Dry Clay jackpot] 0 178 | 25 21% 0% 26% 0% 0% 0 | 1593 2124 54 | 100% | 
+6 10 Ixskova highlands [Rooms Dry Cracks fields] 0 216 | 23 20% 0% 69% 0% 0% 8 | 1080 1436 61 | 100% | 
+6 11 Grida highlands [Ridges Dry Clay fields] 0 194 | 22 10% 0% 44% 0% 0% 4 | 1160 1594 92 | 100% | 
+6 12 Muvis highlands [Rooms Dry Clay richer-farther] 1 380 | 40 18% 0% 41% 0% 0% 24 | 1024 1776 60 | 95% | 1 crystals cannot be reached
+6 13 Quazix highlands [Rooms Dry Cracks jackpot] 0 217 | 26 19% 0% 69% 0% 0% 0 | 1971 2549 52 | 100% | 
+6 14 Grirrelar highlands [Rooms Pools Cracks jackpot] 1 558 | 26 18% 0% 48% 0% 26% 12 | 1608 1732 56 | 100% | nearest crystal 311 cells' walk from the landing
+6 15 Berthor highlands [Rooms Pools Cracks scattered] 0 253 | 39 20% 0% 49% 0% 24% 12 | 1535 2293 58 | 99% | 
+6 16 Pherrith highlands [Rooms Dry Cracks jackpot] 0 239 | 26 17% 0% 69% 0% 0% 4 | 1280 1604 52 | 100% | 
+6 17 Nevolo highlands [Rooms Pools Cracks jackpot] 1 574 | 26 20% 0% 45% 0% 29% 20 | 1531 1531 68 | 99% | nearest crystal 220 cells' walk from the landing
+6 18 Anavix highlands [Rooms Dry Cracks fields] 0 213 | 21 21% 0% 67% 0% 0% 8 | 1252 1668 78 | 100% | 
+6 19 Thadide highlands [Ridges Pools Cracks scattered] 0 288 | 40 8% 0% 55% 0% 28% 4 | 1875 1875 61 | 100% | 
+6 20 Quasken highlands [Rooms Dry Clay jackpot] 0 176 | 25 20% 0% 42% 0% 0% 8 | 1556 1642 95 | 100% | 
+6 21 Quamekon highlands [Ridges Pools Cracks richer-farther] 0 269 | 40 8% 0% 55% 0% 28% 8 | 1257 1902 59 | 100% | 
+6 22 Sokix highlands [Ridges Pools Cracks scattered] 0 322 | 40 11% 0% 54% 0% 27% 12 | 1084 1752 74 | 100% | 
+6 23 Drezus highlands [Rooms Pools Clay scattered] 0 237 | 40 19% 0% 33% 0% 33% 8 | 1626 1830 49 | 100% | 
+6 24 Drenor highlands [Ridges Pools Cracks fields] 0 270 | 22 12% 0% 53% 0% 27% 8 | 1266 1266 83 | 100% | 
+6 25 Karrokek highlands [Rooms Dry Cracks richer-farther] 0 256 | 39 21% 0% 65% 0% 0% 8 | 1355 1677 143 | 100% | 
+6 26 Ixrrodum highlands [Rooms Dry Cracks richer-farther] 0 222 | 40 19% 0% 69% 0% 0% 20 | 1005 1506 68 | 95% | 
+6 27 Vekunor highlands [Ridges Dry Cracks richer-farther] 0 260 | 40 11% 0% 74% 0% 0% 4 | 1412 1412 54 | 100% | 
+6 28 Sokith highlands [Ridges Pools Cracks jackpot] 0 285 | 26 8% 0% 55% 0% 29% 16 | 1021 1451 52 | 100% | 
+6 29 Lorratha highlands [Rooms Pools Clay fields] 0 236 | 19 20% 0% 26% 0% 33% 4 | 1371 1773 48 | 100% | 
+6 30 Thalolith highlands [Rooms Dry Cracks richer-farther] 0 217 | 40 19% 0% 67% 0% 0% 8 | 1070 1642 77 | 100% | 
+6 31 Nerror highlands [Rooms Pools Clay fields] 0 224 | 22 20% 0% 30% 0% 24% 0 | 1158 1279 60 | 100% | 
+6 32 Zolae highlands [Rooms Dry Clay fields] 0 210 | 26 20% 0% 36% 0% 0% 8 | 1160 1796 84 | 99% | 
+6 33 Ixnuzek highlands [Rooms Dry Cracks fields] 2 673 | 22 20% 0% 67% 0% 0% 8 | 1712 2112 56 | 97% | 1 crystals cannot be reached; nearest crystal 524 cells' walk from the landing / nearest crystal 280 cells' walk from the landing
+6 34 Soma highlands [Rooms Dry Cracks richer-farther] 0 212 | 40 20% 0% 68% 0% 0% 0 | 1635 2252 62 | 100% | 
+6 35 Ixda highlands [Ridges Pools Cracks richer-farther] 1 579 | 40 9% 0% 56% 0% 27% 12 | 1870 1870 67 | 100% | 17 crystals cannot be reached; a nest cannot be reached; only 15% of the charge is open without breaking soft rock
+6 36 Ornethith highlands [Ridges Dry Clay fields] 0 193 | 23 8% 0% 55% 0% 0% 0 | 1202 1664 101 | 100% | 
+6 37 Uldunae highlands [Rooms Dry Clay jackpot] 0 176 | 26 19% 0% 37% 0% 0% 16 | 1696 1994 54 | 100% | 
+6 38 Orrron highlands [Ridges Dry Cracks richer-farther] 0 229 | 40 9% 0% 77% 0% 0% 0 | 1787 2224 95 | 100% | 
+6 39 Sovar highlands [Rooms Pools Cracks jackpot] 0 256 | 26 19% 0% 56% 0% 16% 20 | 1098 1591 72 | 100% | 
+6 40 Drethokix highlands [Ridges Dry Clay fields] 0 198 | 25 9% 0% 41% 0% 0% 20 | 1475 1565 79 | 100% | 
+6 41 Griva highlands [Rooms Dry Cracks jackpot] 1 459 | 25 19% 0% 69% 0% 0% 4 | 1481 1734 185 | 100% | 1 crystals cannot be reached
+6 42 Lotha highlands [Rooms Dry Cracks jackpot] 4 1159 | 25 20% 0% 69% 0% 0% 8 | 1174 1508 157 | 99% | 1 crystals cannot be reached / 1 crystals cannot be reached / only 5% of the charge is open without breaking soft rock / 17 crystals cannot be reached; a nest cannot be reached; only 48% of the charge is open without breaking soft rock
+6 43 Ixsken highlands [Rooms Pools Cracks jackpot] 1 511 | 26 20% 0% 52% 0% 19% 8 | 1341 1902 62 | 100% | 1 crystals cannot be reached
+6 44 Yazis highlands [Rooms Dry Clay fields] 0 193 | 21 19% 0% 39% 0% 0% 8 | 1378 1471 56 | 100% | 
+6 45 Avivis highlands [Rooms Dry Clay fields] 0 184 | 20 19% 0% 36% 0% 0% 12 | 1808 1808 58 | 100% | 
+6 46 Adezae highlands [Ridges Dry Cracks scattered] 0 239 | 40 10% 0% 76% 0% 0% 0 | 1815 1815 66 | 100% | 
+6 47 Thassumix highlands [Rooms Dry Clay fields] 0 268 | 23 19% 0% 29% 0% 0% 0 | 1411 1754 87 | 100% | 
+6 48 Berron highlands [Ridges Dry Clay jackpot] 0 201 | 26 8% 0% 41% 0% 0% 8 | 1254 1615 74 | 100% | 
+6 49 Yarilo highlands [Rooms Pools Cracks fields] 1 546 | 22 20% 0% 50% 0% 23% 12 | 1229 2406 54 | 100% | nearest crystal 323 cells' walk from the landing
+6 50 Yarris highlands [Rooms Dry Clay scattered] 0 175 | 39 20% 0% 35% 0% 0% 12 | 1177 1418 92 | 82% | 
+7 1 Vekum cave [Caves Dry Sand scattered] 1 483 | 54 56% 12% 0% 0% 0% 28 | 1816 2350 48 | 100% | only 17% of the charge is open without breaking soft rock
+7 2 Lothaskar cave [Caves Pools Sand jackpot] 0 306 | 36 58% 6% 7% 0% 15% 48 | 1509 2094 56 | 96% | 
+7 3 Tharro cave [Caves Pools Sand jackpot] 0 312 | 36 56% 7% 9% 0% 11% 32 | 2212 2212 52 | 99% | 
+7 4 Pherro cave [Caves Dry Clay jackpot] 0 242 | 36 55% 0% 17% 0% 0% 52 | 1571 1634 56 | 99% | 
+7 5 Quarror cave [Caves Pools Plain jackpot] 0 363 | 36 58% 0% 11% 0% 13% 52 | 1752 2168 56 | 100% | 
+7 6 Drenus cave [Caves Pools Clay scattered] 1 626 | 44 55% 0% 18% 0% 11% 68 | 1512 2407 53 | 99% | only 8% of the charge is open without breaking soft rock
+7 7 Zozith cave [Caves Dry Sand scattered] 0 234 | 55 57% 12% 0% 0% 0% 40 | 1674 2385 48 | 100% | 
+7 8 Quane cave [Caves Dry Sand veins] 2 768 | 12 55% 12% 0% 0% 0% 48 | 1280 2121 58 | 100% | only 8% of the charge is open without breaking soft rock / nearest crystal 643 cells' walk from the landing
+7 9 Quassor cave [Caves Dry Sand jackpot] 0 265 | 35 56% 15% 0% 0% 0% 56 | 1308 1930 52 | 97% | 
+7 10 Neren cave [Caves Pools Plain scattered] 0 298 | 31 57% 0% 9% 0% 14% 24 | 1425 2221 47 | 100% | 
+7 11 Thavar cave [Caves Pools Plain veins] 0 290 | 13 56% 0% 9% 0% 15% 52 | 1119 1716 63 | 100% | 
+7 12 Kavurae cave [Caves Pools Clay veins] 0 300 | 13 57% 0% 18% 0% 14% 36 | 1508 2188 54 | 100% | 
+7 13 Sorrorrith cave [Caves Dry Sand jackpot] 0 235 | 36 56% 13% 0% 0% 0% 48 | 1592 2151 52 | 99% | 
+7 14 Nezum cave [Caves Pools Clay veins] 0 294 | 11 56% 0% 18% 0% 15% 32 | 1565 2410 56 | 100% | 
+7 15 Drele cave [Caves Dry Sand veins] 0 231 | 29 56% 14% 0% 0% 0% 64 | 1588 2312 54 | 100% | 
+7 16 Griskae cave [Caves Pools Clay fields] 0 332 | 23 55% 0% 18% 0% 11% 68 | 1276 2201 52 | 100% | 
+7 17 Grisso cave [Caves Pools Sand jackpot] 0 301 | 34 55% 7% 9% 0% 15% 52 | 1246 2113 68 | 98% | 
+7 18 Somum cave [Caves Pools Sand jackpot] 0 289 | 36 56% 7% 8% 0% 13% 52 | 1334 2180 54 | 100% | 
+7 19 Soris cave [Caves Dry Sand scattered] 0 243 | 55 55% 16% 0% 0% 0% 40 | 2007 2063 54 | 100% | 
+7 20 Thavevus cave [Caves Dry Clay veins] 0 242 | 19 57% 0% 23% 0% 0% 44 | 1440 1856 64 | 100% | 
+7 21 Kanor cave [Caves Pools Sand veins] 0 302 | 13 53% 8% 9% 0% 12% 48 | 1259 1512 51 | 100% | 
+7 22 Ulssar cave [Caves Dry Plain scattered] 0 232 | 54 58% 0% 0% 0% 0% 60 | 1684 2019 48 | 97% | 
+7 23 Lolithe cave [Caves Pools Sand veins] 0 293 | 10 56% 4% 10% 0% 20% 56 | 1763 2308 68 | 100% | 
+7 24 Thaskanek cave [Caves Pools Clay veins] 0 288 | 18 56% 0% 15% 0% 14% 44 | 1400 1631 52 | 100% | 
+7 25 Grimo cave [Caves Pools Clay scattered] 0 291 | 35 56% 0% 16% 0% 13% 44 | 1529 2326 53 | 92% | 
+7 26 Ulzix cave [Caves Pools Plain jackpot] 0 294 | 36 56% 0% 9% 0% 10% 44 | 1783 2346 50 | 99% | 
+7 27 Munaskus cave [Caves Pools Plain jackpot] 0 305 | 36 56% 0% 9% 0% 13% 40 | 1433 2213 53 | 97% | 
+7 28 Zoro cave [Caves Pools Plain veins] 0 295 | 13 57% 0% 9% 0% 12% 60 | 2266 2266 54 | 100% | 
+7 29 Ixkeror cave [Caves Pools Clay scattered] 0 309 | 31 56% 0% 15% 0% 17% 60 | 1479 2276 52 | 89% | 
+7 30 Kamaror cave [Caves Dry Plain veins] 0 241 | 18 56% 0% 0% 0% 0% 68 | 1098 2056 61 | 99% | 
+7 31 Sonen cave [Caves Pools Plain veins] 1 620 | 14 55% 0% 9% 0% 15% 48 | 1248 1803 56 | 100% | only 7% of the charge is open without breaking soft rock
+7 32 Soskis cave [Caves Pools Clay jackpot] 0 307 | 35 58% 0% 15% 0% 14% 64 | 2334 2444 48 | 97% | 
+7 33 Bervavae cave [Caves Dry Clay veins] 0 232 | 16 57% 0% 21% 0% 0% 52 | 1706 2188 58 | 100% | 
+7 34 Drerrar cave [Caves Dry Sand scattered] 0 231 | 55 59% 10% 0% 0% 0% 36 | 1523 2552 59 | 98% | 
+7 35 Arruvor cave [Caves Pools Sand scattered] 0 315 | 40 56% 6% 10% 0% 10% 52 | 2419 2488 48 | 100% | 
+7 36 Lothor cave [Caves Pools Sand jackpot] 0 309 | 34 57% 5% 10% 0% 17% 48 | 1843 2332 60 | 64% | 
+7 37 Lorar cave [Caves Pools Sand jackpot] 1 608 | 36 57% 8% 10% 0% 8% 56 | 1846 2108 54 | 98% | only 14% of the charge is open without breaking soft rock
+7 38 Aladen cave [Caves Dry Plain jackpot] 0 309 | 35 56% 0% 0% 0% 0% 40 | 1632 2074 60 | 99% | 
+7 39 Pheskurum cave [Caves Dry Clay veins] 0 231 | 17 56% 0% 19% 0% 0% 24 | 1398 2409 54 | 100% | 
+7 40 Arrude cave [Caves Pools Sand veins] 0 288 | 16 55% 5% 9% 0% 13% 44 | 1400 2268 56 | 99% | 
+7 41 Zonilen cave [Caves Dry Plain veins] 0 233 | 14 56% 0% 0% 0% 0% 56 | 1119 1627 64 | 100% | 
+7 42 Vera cave [Caves Pools Clay veins] 0 292 | 18 55% 0% 20% 0% 10% 44 | 1791 2297 55 | 78% | 
+7 43 Orrus cave [Caves Dry Plain veins] 0 262 | 16 56% 0% 0% 0% 0% 48 | 2317 2558 54 | 100% | 
+7 44 Assudus cave [Caves Dry Plain veins] 0 239 | 19 56% 0% 0% 0% 0% 56 | 1759 2338 56 | 100% | 
+7 45 Yalo cave [Caves Pools Plain jackpot] 0 295 | 28 57% 0% 10% 0% 20% 76 | 1841 2268 51 | 72% | 
+7 46 Ixrelum cave [Caves Dry Sand veins] 1 466 | 22 53% 14% 0% 0% 0% 56 | 1216 1952 56 | 100% | nearest crystal 665 cells' walk from the landing
+7 47 Orkadix cave [Caves Dry Clay veins] 0 240 | 15 55% 0% 22% 0% 0% 36 | 1379 1698 60 | 100% | 
+7 48 Quamo cave [Caves Pools Sand scattered] 0 304 | 37 55% 6% 9% 0% 12% 40 | 1388 2158 52 | 100% | 
+7 49 Venenar cave [Caves Pools Clay veins] 0 289 | 14 57% 0% 16% 0% 15% 68 | 1702 1702 52 | 98% | 
+7 50 Zorarrix cave [Caves Dry Clay jackpot] 0 252 | 36 57% 0% 22% 0% 0% 48 | 1517 2212 48 | 100% | 
+8 1 Quamar core [Rooms Dry Mixed fields] 0 439 | 45 15% 17% 22% 7% 0% 281 | 1748 1748 74 | 99% | 
+8 2 Lozo core [Ridges Streams Mixed jackpot] 0 591 | 61 5% 13% 22% 6% 17% 374 | 1779 2433 58 | 100% | 
+8 3 Ulren core [Pillars Streams Mixed jackpot] 0 609 | 61 10% 18% 18% 5% 15% 328 | 1328 2248 68 | 87% | 
+8 4 Zoremor core [Pillars Lakes Mixed veins] 0 660 | 52 10% 16% 22% 4% 22% 317 | 1342 2813 68 | 65% | 
+8 5 Ixvek core [Rooms Rivers Mixed jackpot] 0 679 | 61 13% 21% 19% 5% 8% 271 | 1876 2437 60 | 99% | 
+8 6 Vethix core [Outcrops Dry Mixed fields] 0 430 | 46 4% 25% 23% 7% 0% 391 | 1288 2163 65 | 100% | 
+8 7 Zothunus core [Outcrops Pools Mixed fields] 0 517 | 46 4% 10% 26% 2% 39% 338 | 1608 2363 60 | 94% | 
+8 8 Berskothor core [Rooms Streams Mixed jackpot] 0 512 | 60 14% 19% 18% 6% 9% 285 | 1697 2556 104 | 99% | 
+8 9 Grimon core [Pillars Pools Mixed scattered] 0 586 | 95 10% 9% 30% 3% 27% 333 | 1996 2352 60 | 100% | 
+8 10 Berssum core [Ridges Dry Mixed veins] 0 454 | 53 5% 24% 26% 7% 0% 361 | 1540 2652 50 | 100% | 
+8 11 Ixkis core [Outcrops Rivers Mixed fields] 0 684 | 52 4% 24% 23% 6% 4% 337 | 1571 3052 86 | 92% | 
+8 12 Orvizek core [Ridges Rivers Mixed richer-farther] 0 846 | 95 5% 23% 25% 5% 4% 333 | 1799 2785 92 | 100% | 
+8 13 Avivae core [Pillars Streams Mixed scattered] 0 596 | 95 10% 19% 23% 6% 8% 323 | 1660 2076 56 | 100% | 
+8 14 Orrrar core [Rooms Dry Mixed veins] 0 420 | 46 15% 17% 23% 6% 0% 279 | 1840 2662 69 | 100% | 
+8 15 Orrrae core [Pillars Dry Mixed richer-farther] 0 449 | 95 10% 24% 20% 7% 0% 309 | 1974 2340 64 | 100% | 
+8 16 Quasson core [Outcrops Rivers Mixed fields] 0 747 | 44 5% 27% 18% 7% 3% 420 | 1439 2368 58 | 56% | 
+8 17 Zoskimon core [Rooms Rivers Mixed scattered] 5 4357 | 94 15% 19% 20% 6% 3% 280 | 2437 3644 51 | 66% | 1 crystals cannot be reached / 1 crystals cannot be reached / only 49% of the charge is open without breaking soft rock / only 37% of the charge is open without breaking soft rock / nearest crystal 381 cells' walk from the landing
+8 18 Yakis core [Ridges Streams Mixed fields] 0 558 | 46 5% 18% 24% 6% 13% 385 | 2296 2298 80 | 100% | 
+8 19 Muske core [Pillars Lakes Mixed richer-farther] 0 713 | 94 9% 14% 22% 3% 24% 327 | 2816 2887 73 | 97% | 
+8 20 Grissaskis core [Ridges Streams Mixed jackpot] 0 573 | 61 5% 17% 24% 5% 11% 356 | 1335 2148 72 | 100% | 
+8 21 Muthith core [Outcrops Rivers Mixed richer-farther] 1 1512 | 95 3% 26% 20% 6% 9% 396 | 3334 3597 56 | 99% | only 8% of the charge is open without breaking soft rock
+8 22 Quaskumen core [Rooms Dry Mixed veins] 1 920 | 58 14% 19% 20% 7% 0% 269 | 1530 2500 83 | 90% | nearest crystal 513 cells' walk from the landing
+8 23 Kassor core [Outcrops Lakes Mixed veins] 0 718 | 42 4% 12% 22% 3% 40% 389 | 2063 2697 68 | 59% | 
+8 24 Yamix core [Ridges Lakes Mixed jackpot] 0 729 | 61 5% 13% 22% 2% 37% 353 | 2500 3356 79 | 84% | 
+8 25 Vedo core [Rooms Rivers Mixed jackpot] 0 745 | 61 14% 19% 19% 6% 5% 269 | 1408 3173 63 | 100% | 
+8 26 Grirukek core [Pillars Lakes Mixed fields] 0 710 | 48 10% 9% 24% 4% 23% 326 | 2005 2016 54 | 100% | 
+8 27 Yavek core [Outcrops Pools Mixed fields] 0 583 | 48 3% 10% 28% 3% 41% 391 | 1748 2285 60 | 100% | 
+8 28 Ixne core [Outcrops Streams Mixed richer-farther] 0 557 | 95 4% 16% 22% 6% 17% 396 | 1713 2659 62 | 98% | 
+8 29 Quama core [Rooms Lakes Mixed fields] 0 765 | 47 14% 9% 19% 3% 39% 298 | 1668 1959 53 | 88% | 
+8 30 Lolix core [Outcrops Lakes Mixed fields] 0 720 | 47 4% 12% 24% 4% 33% 404 | 2150 2342 72 | 84% | 
+8 31 Nenae core [Ridges Rivers Mixed jackpot] 0 772 | 61 6% 21% 21% 6% 4% 345 | 1424 2487 56 | 100% | 
+8 32 Zozethus core [Ridges Lakes Mixed veins] 0 674 | 54 7% 11% 24% 3% 31% 384 | 1512 2000 65 | 99% | 
+8 33 Lossum core [Outcrops Lakes Mixed fields] 0 754 | 44 3% 12% 20% 5% 33% 378 | 1677 2322 66 | 100% | 
+8 34 Kade core [Outcrops Streams Mixed richer-farther] 0 580 | 95 3% 17% 23% 5% 19% 365 | 1685 2438 60 | 97% | 
+8 35 Yavum core [Ridges Pools Mixed veins] 0 862 | 55 6% 11% 26% 3% 32% 363 | 1716 2332 104 | 100% | 
+8 36 Drekokis core [Outcrops Pools Mixed fields] 0 560 | 49 4% 9% 30% 4% 29% 360 | 1472 2208 60 | 100% | 
+8 37 Thanis core [Rooms Rivers Mixed scattered] 1 1377 | 95 15% 18% 20% 6% 5% 258 | 1889 2044 85 | 60% | only 42% of the charge is open without breaking soft rock
+8 38 Zozix core [Outcrops Streams Mixed veins] 0 529 | 45 4% 25% 19% 7% 9% 351 | 1327 2236 57 | 100% | 
+8 39 Mussix core [Outcrops Streams Mixed jackpot] 0 550 | 61 4% 21% 20% 4% 15% 338 | 1672 2600 76 | 100% | 
+8 40 Somen core [Pillars Rivers Mixed scattered] 0 787 | 95 10% 22% 22% 7% 3% 302 | 2331 2468 56 | 100% | 
+8 41 Sorre core [Rooms Rivers Mixed veins] 0 832 | 50 16% 24% 14% 5% 10% 249 | 1680 2046 188 | 98% | 
+8 42 Grimith core [Rooms Pools Mixed fields] 0 617 | 49 15% 13% 25% 3% 21% 271 | 1706 2682 52 | 100% | 
+8 43 Ixrrar core [Outcrops Pools Mixed scattered] 0 546 | 95 3% 14% 25% 3% 33% 371 | 1631 2313 76 | 95% | 
+8 44 Verrenum core [Outcrops Dry Mixed fields] 0 479 | 44 4% 22% 26% 6% 0% 386 | 1577 1577 52 | 95% | 
+8 45 Veskuko core [Pillars Lakes Mixed richer-farther] 0 668 | 95 9% 13% 23% 3% 29% 338 | 1536 2848 60 | 98% | 
+8 46 Vezon core [Ridges Rivers Mixed veins] 0 764 | 50 6% 22% 20% 7% 3% 368 | 3658 3658 58 | 100% | 
+8 47 Ixskon core [Outcrops Dry Mixed veins] 0 427 | 52 4% 20% 23% 8% 0% 399 | 1644 2398 52 | 100% | 
+8 48 Berskor core [Pillars Rivers Mixed jackpot] 0 693 | 61 10% 19% 21% 6% 9% 343 | 1405 3829 60 | 84% | 
+8 49 Zorriko core [Pillars Lakes Mixed scattered] 0 670 | 95 9% 9% 21% 2% 39% 322 | 1760 2157 65 | 100% | 
+8 50 Ixssamum core [Ridges Dry Mixed richer-farther] 0 641 | 95 6% 21% 23% 6% 0% 341 | 1385 2580 56 | 100% | 
+150 planets, 457 ms each on average
