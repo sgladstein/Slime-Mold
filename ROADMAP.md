@@ -432,7 +432,9 @@ slot, a word a cell), and it appends passes 55-59 (`ripen`, `massclear`,
 row, 912 to 928 (11-14, `ROAM_AT` 912: `roam`, `roam_far`, `roam_land`,
 `roam_share`, the breakaway). Correction (11-14): 188 and 236 are no longer
 spare (`gas_keep`, `fling_st`), so no words are spare; a new rule grows
-Params by a row.
+Params by a row. Then (11-15) the slime-enemy thread's thickening
+(`BigParams::thicken`) took `ccrowd`'s top byte (bits 24-31, tenths of a
+birth's energy); the condense radius keeps bits 16-23, now masked.
 
 ## Keeping this page true
 

@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/condense-2026-11-14/README.md
   - Reports/fed-mould-2026-11-13/README.md
@@ -12,6 +12,7 @@ sources:
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
   - Reports/slime-enemy-review-2026-11-12.md
+  - Reports/thicken-2026-11-15/README.md
 code:
   - BigDish::alive
   - BigDish::dense
@@ -34,6 +35,7 @@ code:
   - BigParams::start_energy
   - BigParams::starve
   - BigParams::tether
+  - BigParams::thicken
   - BigParams::upkeep
   - CLAIM_BIRTH
   - DRAW_BIRTH
@@ -89,6 +91,18 @@ bolt red's 105). **Breakaway** (`BigParams::roam`, off by default, needs
 condensing; owner 11-14 15:06Z): every `roam` steps a condensed piece may
 leave together for the nearest untouched crystal at least `roam_far` cells
 away, running like a panicking walker, and lands and feeds there.
+
+**Thickening** (11-15, `BigParams::thicken`, both engines; **on in shape
+C at 2**): a walker that banks `thicken` times a birth's energy without
+dividing (no free slot or cell) turns condensed in place, paying a
+birth's cost; nothing is absorbed and births go on, so mass grows past
+the slots, up to twice. Before it, C filled its 50,000 slots at 3:00 on the
+CPU race world eating three times its upkeep and got no stronger; with it,
+mass 90,739 and 90,226 at 7:00 (seeds 1-2) holding every crystal and
+30,338 and 32,577 held to 4
+([thicken](../../Reports/thicken-2026-11-15/README.md)). The owner's word,
+11-15 08:34Z: the slime should "keep getting stronger by holding onto its
+crystals and getting more of them".
 
 ## Owner's word
 

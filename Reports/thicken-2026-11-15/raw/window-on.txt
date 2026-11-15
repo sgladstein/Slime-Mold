@@ -1,0 +1,48 @@
+  t 15 s: mould 22068, soldiers 8, bank 423, harvested 0, shots 198, killed 2711, took 0%, crystals left 0.999; squad at 277.1,134.7
+  dense: 338 condensed or thick walkers, mass 22406
+  t 30 s: mould 22246, soldiers 8, bank 460, harvested 0, shots 301, killed 3251, took 0%, crystals left 0.997; squad at 276.2,135.7
+  dense: 805 condensed or thick walkers, mass 23051
+  t 45 s: mould 23455, soldiers 8, bank 570, harvested 0, shots 444, killed 3498, took 0%, crystals left 0.995; squad at 276.2,135.7
+  dense: 1195 condensed or thick walkers, mass 24650
+  t 60 s: mould 25566, soldiers 8, bank 681, harvested 0, shots 588, killed 3725, took 0%, crystals left 0.992; squad at 276.2,135.7
+  dense: 1927 condensed or thick walkers, mass 27493
+  t 75 s: mould 28221, soldiers 8, bank 777, harvested 0, shots 741, killed 4039, took 0%, crystals left 0.988; squad at 276.2,135.7
+  dense: 3243 condensed or thick walkers, mass 31464
+  t 90 s: mould 20805, soldiers 8, bank 836, harvested 0, shots 891, killed 4379, took 0%, crystals left 0.983; squad at 276.2,135.7
+  dense: 4530 condensed or thick walkers, mass 25335
+  t 105 s: mould 20834, soldiers 8, bank 909, harvested 0, shots 1033, killed 4708, took 0%, crystals left 0.978; squad at 276.2,135.7
+  dense: 5658 condensed or thick walkers, mass 26492
+  t 120 s: mould 22939, soldiers 8, bank 968, harvested 0, shots 1186, killed 5052, took 0%, crystals left 0.973; squad at 276.2,135.7
+  dense: 6683 condensed or thick walkers, mass 29622
+  t 135 s: mould 24962, soldiers 8, bank 1005, harvested 0, shots 1329, killed 5381, took 0%, crystals left 0.968; squad at 276.2,135.7
+  dense: 7581 condensed or thick walkers, mass 32543
+  t 150 s: mould 26961, soldiers 8, bank 1056, harvested 0, shots 1478, killed 5726, took 0%, crystals left 0.964; squad at 276.2,135.7
+  dense: 8421 condensed or thick walkers, mass 35382
+  t 165 s: mould 28772, soldiers 8, bank 1108, harvested 0, shots 1630, killed 6109, took 0%, crystals left 0.959; squad at 276.2,135.7
+  dense: 9180 condensed or thick walkers, mass 37952
+  t 180 s: mould 30503, soldiers 8, bank 1152, harvested 0, shots 1774, killed 6506, took 0%, crystals left 0.954; squad at 276.2,135.7
+  dense: 9850 condensed or thick walkers, mass 40353
+  t 195 s: mould 32235, soldiers 7, bank 1167, harvested 0, shots 1925, killed 6945, took 0%, crystals left 0.949; squad at 276.2,135.7
+  dense: 10448 condensed or thick walkers, mass 42683
+  t 210 s: mould 34023, soldiers 7, bank 1196, harvested 0, shots 2069, killed 7315, took 0%, crystals left 0.944; squad at 276.2,135.7
+  dense: 10988 condensed or thick walkers, mass 45011
+  t 225 s: mould 35795, soldiers 7, bank 1218, harvested 0, shots 2203, killed 7715, took 0%, crystals left 0.940; squad at 276.2,135.7
+  dense: 11476 condensed or thick walkers, mass 47271
+  t 240 s: mould 37399, soldiers 7, bank 1248, harvested 0, shots 2341, killed 8201, took 0%, crystals left 0.935; squad at 276.2,135.7
+  dense: 11935 condensed or thick walkers, mass 49334
+  t 255 s: mould 38954, soldiers 7, bank 1248, harvested 0, shots 2478, killed 8703, took 0%, crystals left 0.930; squad at 276.2,135.7
+  dense: 12362 condensed or thick walkers, mass 51316
+  t 270 s: mould 40599, soldiers 5, bank 1262, harvested 0, shots 2598, killed 9116, took 0%, crystals left 0.925; squad at 276.6,135.2
+  dense: 12757 condensed or thick walkers, mass 53356
+  t 285 s: mould 42099, soldiers 5, bank 1270, harvested 0, shots 2715, killed 9551, took 0%, crystals left 0.920; squad at 276.6,135.2
+  dense: 13153 condensed or thick walkers, mass 55252
+  t 300 s: mould 43613, soldiers 5, bank 1277, harvested 0, shots 2832, killed 10010, took 0%, crystals left 0.916; squad at 276.6,135.2
+  dense: 13494 condensed or thick walkers, mass 57107
+  t 315 s: mould 45069, soldiers 4, bank 1299, harvested 0, shots 2941, killed 10500, took 0%, crystals left 0.911; squad at 275.9,134.3
+  dense: 13838 condensed or thick walkers, mass 58907
+  t 330 s: mould 46590, soldiers 4, bank 1306, harvested 0, shots 3029, killed 10966, took 0%, crystals left 0.906; squad at 275.9,134.3
+  dense: 14152 condensed or thick walkers, mass 60742
+  t 345 s: mould 47995, soldiers 2, bank 1314, harvested 0, shots 3095, killed 11428, took 0%, crystals left 0.901; squad at 274.8,134.2
+  dense: 14460 condensed or thick walkers, mass 62455
+  t 360 s: mould 49301, soldiers 2, bank 1314, harvested 0, shots 3128, killed 11747, took 0%, crystals left 0.897; squad at 274.8,134.2
+  dense: 14853 condensed or thick walkers, mass 64154

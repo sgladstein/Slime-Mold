@@ -38,7 +38,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 5] = ["panic", "wither", "energy_flow", "condense", "roam"];
+const ENGINE_OPTS: [&str; 6] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -88,6 +88,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // default; how often (steps) a condensed piece may leave for an
         // untouched crystal. Needs Condense.
         ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off"),
+        // A fed slime that cannot divide thickens (11-15,
+        // `BigParams::thicken`): on in shape C at 2, a birth's energy
+        // twice over.
+        ("thicken", "Thicken", &["0", "1.5", "2", "3"][..], "Slime fed past what it can spread into thickens in place (bronze, twice as tough), so holding crystals makes it stronger; 0 is off"),
         // Plants (11-14, `mould::plants`): on by default; a stand-in
         // field on maps without their own. Fire from blasts and scorch
         // rounds burns through them.

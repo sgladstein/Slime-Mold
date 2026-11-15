@@ -434,6 +434,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
         }
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
+        // Condensed or thickened walkers (11-15, the thickening films):
+        // how many, and the mould's mass (a condensed walker twice).
+        if g.world.e.condenses {
+            let e = &g.world.e;
+            let words = e.dense_of();
+            let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
+            let thick = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::DENSE != 0).count();
+            println!("  dense: {thick} condensed or thick walkers, mass {}", g.mould + thick);
+        }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.
         let live: Vec<_> = g.soldiers.iter().filter(|s| s.alive).collect();
