@@ -714,7 +714,13 @@ struct Edge {
     /// Border cells (map cell indices).
     cells: Vec<u32>,
     pass: Option<((f32, f32), f32)>,
+    /// A cave tunnel's way, every 8 map cells. Empty off the caves.
+    way: Vec<WayPoint>,
 }
+
+/// A point on a cave tunnel's way: the point, the way's direction there and
+/// the tunnel's half-width.
+type WayPoint = ((f32, f32), (f32, f32), f32);
 
 /// Attempt `attempt` at `p`, unchecked (`generate` checks each).
 pub fn build(p: &Planet, attempt: u32) -> Map {
@@ -1179,7 +1185,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                 if a != b {
                     let (lo, hi) = (a.min(b), a.max(b));
                     if edge_of[lo * ns + hi] == usize::MAX {
-                        edges.push(Edge { a: lo, b: hi, kind: Border::Open, tree: false, cells: Vec::new(), pass: None });
+                        edges.push(Edge { a: lo, b: hi, kind: Border::Open, tree: false, cells: Vec::new(), pass: None, way: Vec::new() });
                         edge_of[lo * ns + hi] = edges.len() - 1;
                         edge_of[hi * ns + lo] = edges.len() - 1;
                     }
@@ -1447,6 +1453,16 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let mid = pts[pts.len() / 2];
             let (mx, my) = ((mid.0.max(0.0) as usize).min(w - 1), (mid.1.max(0.0) as usize).min(h - 1));
             e.pass = Some((mid, wide(tw, mx, my)));
+            for s in pts.windows(2) {
+                let (d, dir) = (dist(s[0], s[1]), unit(s[1].0 - s[0].0, s[1].1 - s[0].1));
+                let mut t = 0.0;
+                while t < d {
+                    let q = (s[0].0 + dir.0 * t, s[0].1 + dir.1 * t);
+                    let (x, y) = ((q.0.max(0.0) as usize).min(w - 1), (q.1.max(0.0) as usize).min(h - 1));
+                    e.way.push((q, dir, wide(tw, x, y)));
+                    t += 8.0;
+                }
+            }
         }
     }
     for y in 0..h {
@@ -2383,6 +2399,63 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         let Some((c, rad)) = e.pass else { continue };
         let (sa, sb) = (sites[e.a], sites[e.b]);
         let t = unit(-(sb.1 - sa.1), sb.0 - sa.0);
+        // A cave gate stands on dry ground. At the tunnel's middle, the
+        // first place tried, a pool could fill the tunnel: 40 of 163 cave
+        // gates had soft rock in water, 138 of 652 pieces (20 caves,
+        // 2026-11-15; the map fixes' report, *Not fixed here*). So where
+        // the middle is wet the gate moves along its tunnel, nearest the
+        // middle first, to the first place where the ground across the
+        // tunnel and 12 cells either side of it is dry and both ends are
+        // rock (in a tunnel, not a cavern).
+        let wet_across = |c: (f32, f32), t: (f32, f32), along: (f32, f32), half: f32| {
+            (-2..=2).any(|k| {
+                let o = k as f32 * 6.0;
+                let mut v = -half - 2.0;
+                let mut wet = false;
+                while v <= half + 2.0 && !wet {
+                    wet = !dry(&ground, (c.0 + t.0 * v + along.0 * o, c.1 + t.1 * v + along.1 * o));
+                    v += 1.0;
+                }
+                wet
+            })
+        };
+        let rock_at = |p: (f32, f32)| inside(p, 1.0) && ground[p.1 as usize * w + p.0 as usize] & G_ROCK != 0;
+        let (c, t, rad) = if e.way.is_empty() || !wet_across(c, t, (t.1, -t.0), rad + 8.0) {
+            (c, t, rad)
+        } else {
+            let mid = e.way.len() / 2;
+            let mut order: Vec<usize> = (0..e.way.len()).collect();
+            order.sort_by_key(|&i| i.abs_diff(mid));
+            order
+                .into_iter()
+                .map(|i| e.way[i])
+                .find(|&(q, dir, wd)| {
+                    let n = (-dir.1, dir.0);
+                    let half = wd + 8.0;
+                    rock_at((q.0 + n.0 * half, q.1 + n.1 * half)) && rock_at((q.0 - n.0 * half, q.1 - n.1 * half)) && !wet_across(q, n, dir, half)
+                })
+                .map_or((c, t, rad), |(q, dir, wd)| (q, (-dir.1, dir.0), wd))
+        };
+        // Where no dry place in a tunnel has rock at both ends (on cave seed
+        // 2, three of ten gates' tunnels were wet all along), the gate
+        // stands on a sill: the water under it, 16-30 cells either side (a
+        // ragged edge, by the fine noise), is let out (the clay under a pool
+        // stays), so the soft rock sits on a bank. At 14 cells either side
+        // the bank was a thin dark line beside the gate at zoom 6.
+        if !e.way.is_empty() && wet_across(c, t, (t.1, -t.0), rad + 8.0) {
+            let along = (t.1, -t.0);
+            let half = rad + 8.0;
+            let m = half + 30.0;
+            for y in ((c.1 - m).max(0.0) as usize)..((c.1 + m).max(0.0) as usize).min(h) {
+                for x in ((c.0 - m).max(0.0) as usize)..((c.0 + m).max(0.0) as usize).min(w) {
+                    let (dx, dy) = (x as f32 + 0.5 - c.0, y as f32 + 0.5 - c.1);
+                    if (dx * t.0 + dy * t.1).abs() <= half + 3.0 && (dx * along.0 + dy * along.1).abs() <= 16.0 + 14.0 * fine.at(x, y) && ground[y * w + x] & G_ROCK == 0 {
+                        let i = y * w + x;
+                        ground[i] = if ground[i] == G_DEEP { 0 } else { ground[i] & !G_WET };
+                    }
+                }
+            }
+        }
         // Across the slot, its ends in the ridge's rock.
         let half = rad + 8.0;
         let pts = wobbly(&mut r, (c.0 - t.0 * half, c.1 - t.1 * half), (c.0 + t.0 * half, c.1 + t.1 * half), 4, 5.0);
@@ -3315,7 +3388,8 @@ mod tests {
     // (7:2) re-pinned for lobed caverns and tunnels of varying width.
     // All but the meadow's (1:17) re-pinned for each biome's opening.
     // The valley (4:2) re-pinned for rivers off the nests.
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x9cf43bc6b64daab9), (3, 3, 0x162f0835a692b0e6), (4, 2, 0x6ec7406552e2d2ff), (7, 2, 0xcc062e2508003a37), (8, 3, 0xd8db02e2b122e92e)];
+    // The cave (7:2), which rolled pools, re-pinned for gates off pools.
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x9cf43bc6b64daab9), (3, 3, 0x162f0835a692b0e6), (4, 2, 0x6ec7406552e2d2ff), (7, 2, 0x1bbca9c8f72e8eaa), (8, 3, 0xd8db02e2b122e92e)];
 
     /// Each biome opens its own way (`Opening`): three small crystals close
     /// by in the jungle, a rich one a climb away in the highlands, a rich
@@ -3452,6 +3526,23 @@ mod tests {
             }
         }
         assert!(bad.is_empty(), "{}", bad.join("\n"));
+    }
+    /// Cave gates stand on dry ground (2026-11-15): on cave seeds 2, 3, 5
+    /// and 6, which rolled pools, no soft-rock piece crosses water. Before,
+    /// 40 of 163 cave gates over 20 caves had a piece in water (5 on seed 2).
+    #[test]
+    fn cave_gates_keep_out_of_pools() {
+        for s in [2, 3, 5, 6] {
+            let m = level(s, 7);
+            for wl in &m.items.walls {
+                let n = (dist(wl.a, wl.b) as usize).max(1);
+                for k in 0..=n {
+                    let f = k as f32 / n as f32;
+                    let (x, y) = ((wl.a.0 + (wl.b.0 - wl.a.0) * f) as usize, (wl.a.1 + (wl.b.1 - wl.a.1) * f) as usize);
+                    assert!(x >= m.w || y >= m.h || m.ground[y * m.w + x] & G_WET == 0, "cave seed {s}: soft rock {:?}-{:?} in water at ({x}, {y})", wl.a, wl.b);
+                }
+            }
+        }
     }
     /// Rivers keep off the nests (2026-11-15): on river valley seeds 1-6,
     /// no river water (wet, deep or a bridge deck) within `RIVER_OFF` of a

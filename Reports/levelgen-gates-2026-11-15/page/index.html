@@ -1,0 +1,184 @@
+<title>Cave Gates</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Cave tunnels of varying width, lobed caverns and rooms (11-15): before and after. Same look as the doors page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --rock: #8f969d; --road: #3c4a3a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.diagram { max-width: 680px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font: 500 13px var(--body); fill: var(--muted); }
+.diagram text.k { fill: var(--fg); font-weight: 600; }
+.stats { font: 12.5px/1.45 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+.planet { display: grid; gap: 10px; }
+.planet h3 small { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin-left: 8px; }
+.figs.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.view { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 6px; }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · caves · 2026-11-15</div>
+<h1>Cave Gates</h1>
+<p>A cave gate is a band of soft rock across a tunnel: the lock on that way through. It stood at the tunnel's middle, so where the tunnel held a pool the soft rock lay across water. Now a gate on a wet tunnel moves along it to the nearest dry place with rock at both ends; where the tunnel is a pool all along, the gate stands on a dry bank. Every picture pairs main (before) with this change (after): same planet, same seed, same moment, 1 s in.</p>
+<div class="score">
+<div><b>Gates in water</b><span class="n">40 → 1</span><span class="muted">of 163 → 164 soft-rock chains over 20 caves with a piece in water. Pieces: 138 → 2 of 652 → 656.</span></div>
+<div><b>How</b><span class="n">19 · 49</span><span class="muted">gates moved along their tunnel (a median of 38 map cells, at most 84) · gates on a dry bank.</span></div>
+<div><b>What it costs</b><span class="n">none seen</span><span class="muted">dry caves are the same maps byte for byte. First-try builds 19 → 19 of 20; build 595 → 571 ms; walks, open charge and doors the same.</span></div>
+</div>
+<p class="muted">Distances in map cells, two to a dish cell. Only caves that rolled pools change (11 of 20); the rest of each planet is the same.</p>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>A gate moves to the dry end</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag">2 caves</span><span class="tag">zoom 3 and 6, 1 s</span></div></div></div>
+<p>The gate is the pale band in the middle of each frame.</p>
+<div class="planet"><h3>Seed 2, Lothaskar</h3>
+<p class="stats">soft rock in water on this cave <b>5 → 0</b> gates · this gate moved <b>about 40</b> map cells</p>
+<p>Before, the gate stood across the tunnel where its pool opens out, water at its lower end. After, it stands further up the tunnel, rock at both ends and dry ground under it; the pool is all on one side.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-2-z3-before.webp" alt="Cave seed 2 at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-2-z3-after.webp" alt="Cave seed 2 at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-2-z6-before.webp" alt="Cave seed 2's gate at zoom 6, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-2-z6-after.webp" alt="Cave seed 2's gate at zoom 6, after" loading="lazy"></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 11, Thavar</h3>
+<p class="stats">soft rock in water on this cave <b>5 → 0</b> gates · this gate moved <b>about 55</b> map cells</p>
+<p>Before, a pool ran under the gate's lower half. After, the gate stands at the tunnel's dry end, and the pool stays where it was.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-11-z3-before.webp" alt="Cave seed 11 at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-11-z3-after.webp" alt="Cave seed 11 at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-11-z6-before.webp" alt="Cave seed 11's gate at zoom 6, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-11-z6-after.webp" alt="Cave seed 11's gate at zoom 6, after" loading="lazy"></figure>
+</div>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>A gate on a dry bank</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag">your eyes</span><span class="tag">zoom 3 and 6, 1 s</span></div></div></div>
+<div class="planet"><h3>Seed 16, Griskae</h3>
+<p class="stats">soft rock in water on this cave <b>5 → 0</b> gates · this tunnel is a pool all along</p>
+<p>Before, the gate stood in the water. After, the water under it and 16-30 cells either side is let out, with a ragged edge; the clay under a pool stays, so the bank is the dark blue-grey strip either side of the soft rock. 49 gates stand on a bank like this, most of them gates that were dry already but had water within a few cells. Whether it reads well close up is for your eyes.</p>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-16-z3-before.webp" alt="Cave seed 16 at zoom 3, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-16-z3-after.webp" alt="Cave seed 16 at zoom 3, after" loading="lazy"></figure>
+</div>
+<div class="pair">
+<figure><span class="ba">Before</span><img src="pics/gate-16-z6-before.webp" alt="Cave seed 16's gate at zoom 6, before" loading="lazy"></figure>
+<figure><span class="ba after">After</span><img src="pics/gate-16-z6-after.webp" alt="Cave seed 16's gate at zoom 6, after" loading="lazy"></figure>
+</div>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>The layouts</h2>
+<div class="tags"><span class="tag">false colour</span><span class="tag">2 caves</span></div></div></div>
+<p>Before on the left, after on the right. Water blue, tunnels and caverns olive, rock grey, soft rock magenta, crystals cyan, nests ringed red, the landing a yellow square.</p>
+<div class="planet"><h3>Seed 2, Lothaskar</h3>
+<figure><img src="pics/fc-7-2.webp" alt="Cave seed 2, the layout before and after" loading="lazy"></figure></div>
+<div class="planet"><h3>Seed 16, Griskae</h3>
+<figure><img src="pics/fc-7-16.webp" alt="Cave seed 16, the layout before and after" loading="lazy"></figure></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>Measured</h2>
+<div class="tags"><span class="tag">20 caves</span><span class="tag">seeds 1-20</span></div></div></div>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>Soft-rock chains with a piece in water</td><td>40 of 163</td><td>1 of 164</td></tr>
+<tr><td>Soft-rock pieces in water</td><td>138 of 652</td><td>2 of 656</td></tr>
+<tr><td>Caves with soft rock in water (11 rolled pools)</td><td>11</td><td>1</td></tr>
+<tr><td>Gates moved along their tunnel</td><td></td><td>19 (median 38, at most 84 cells)</td></tr>
+<tr><td>Gates on a dry bank</td><td></td><td>49</td></tr>
+<tr><td>Wet share of the map</td><td></td><td>1 point less on 4 of the 11 pool caves</td></tr>
+<tr><td>Dry caves (9)</td><td></td><td>the same maps, byte for byte</td></tr>
+<tr><td>Walks, open charge, doors</td><td></td><td>the same on every seed</td></tr>
+<tr><td>First-try builds (of 20)</td><td>19</td><td>19</td></tr>
+<tr><td>Build, mean per planet (median of three runs)</td><td>595 ms</td><td>571 ms</td></tr>
+</tbody></table></div>
+<p class="muted">The one left: a gate on seed 18 touches water at one sample point, at a joint of its pieces. Seed 3 has one more gate: a gate is left out where it would cross a road or a nest's door, and the one whose tunnel's middle crossed a road now stands further along, off it.</p>
+</section>
+
+<section class="sec">
+<h2>Tried on the way</h2>
+<ul>
+<li><b>Moving the gate alone:</b> 40 → 31 gates in water. Many tunnels are wet all along, so the bank was added.</li>
+<li><b>A bank 14 cells either side:</b> at zoom 6 it read as a thin dark line beside the gate. 16-30 cells, ragged, reads as a bank.</li>
+</ul>
+</section>
+
+<section class="sec">
+<h2>Not done here</h2>
+<ul>
+<li><b>The bank's look:</b> the dark clay bank on seed 16 is for your eyes at zoom 6 and closer.</li>
+<li>This was the last of the three reviews' map items.</li>
+</ul>
+</section>
+
+</div>
