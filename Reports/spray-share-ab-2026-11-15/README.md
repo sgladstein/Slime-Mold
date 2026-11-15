@@ -12,6 +12,10 @@ Page: [Spray A/B](https://claude.ai/artifact/KmajibGgb5iWouC1fqyFHF)
 (archived in `page/`). The key is in [`raw/ab-key.txt`](raw/ab-key.txt),
 off the page.
 
+**Outcome** (owner, 21:37Z): "I see no difference. Am I crazy?" The clips
+were pixel-identical in 25 of 30 range frames; the share stays 1 and the
+droplets were made bolder ([gun feel](../gun-feel-2026-11-15/README.md)).
+
 ## What was built
 
 `squad::Frame::spray_share` (`Rules::spray_share`, default 1;

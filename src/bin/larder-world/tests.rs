@@ -1418,3 +1418,31 @@ fn a_building_selected_shows_its_card_and_acts() {
     assert_eq!(g.bank, before + 0.5 * g.rules.build.turret_cost);
     assert_eq!(app.building_sel, None);
 }
+
+/// **Shake and hit-stop feel blasts only** (D6, 11-15): a bomb-sized blast
+/// (6 kills, 80 thrown: size 0.24) adds 0.12 + 0.6 x 0.24 to the shake at
+/// `shake=1` and holds the game 0.05 + 0.07 x 0.24 s at `hitstop=1`; a
+/// second within 0.6 s shakes again but does not hold; blasts already felt
+/// do nothing; both at 0 (the default) do nothing.
+#[test]
+fn blasts_shake_and_hold_only_when_asked() {
+    use slime_mould::mould::rounds::{Card, Pop};
+    let pop = |tick: u64| Pop { burst: Default::default(), payload: Card::Bomb, tick, killed: 6, flung: 80 };
+    let (mut felt, mut trauma, mut stop, mut cool) = (0u64, 0.0f32, 0.0f32, 0.0f32);
+    feel(&[pop(10)], &mut felt, &mut trauma, &mut stop, &mut cool, (0.0, 0.0));
+    assert_eq!((trauma, stop, felt), (0.0, 0.0, 10), "off by default, but felt");
+    let (mut felt, mut trauma, mut stop, mut cool) = (0u64, 0.0f32, 0.0f32, 0.0f32);
+    let size = 6.0 / 150.0 + 80.0 / 400.0;
+    feel(&[pop(10)], &mut felt, &mut trauma, &mut stop, &mut cool, (1.0, 1.0));
+    assert!((trauma - (0.12 + 0.6 * size)).abs() < 1e-6, "shake {trauma}");
+    assert!((stop - (0.05 + 0.07 * size)).abs() < 1e-6, "hold {stop}");
+    assert_eq!(cool, 0.6);
+    // Felt already: nothing more.
+    let t0 = trauma;
+    feel(&[pop(10)], &mut felt, &mut trauma, &mut stop, &mut cool, (1.0, 1.0));
+    assert_eq!(trauma, t0);
+    // A new one inside the 0.6 s: more shake, no new hold.
+    stop = 0.0;
+    feel(&[pop(10), pop(12)], &mut felt, &mut trauma, &mut stop, &mut cool, (1.0, 1.0));
+    assert!(trauma > t0 && stop == 0.0, "shake {trauma}, hold {stop}");
+}

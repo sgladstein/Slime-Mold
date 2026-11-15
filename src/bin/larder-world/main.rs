@@ -459,6 +459,18 @@ struct Args {
     /// hit, in seconds (`Rules::spray_secs`; 0 none), and the share of the
     /// kills that fly (`Rules::spray_share`, 1 all), for films and A/Bs.
     spray: Option<(f32, f32)>,
+    /// `shake=K`: camera shake on blasts (the whole-game review's D6; the
+    /// owner 11-15 21:41Z: "Let me see the video"), K times the normal
+    /// strength; 0, the default, none.
+    shake: f32,
+    /// `hitstop=K`: the game holds still for a moment when a big blast
+    /// lands (D6), K times the normal hold; 0, the default, none.
+    hitstop: f32,
+    /// `real=1`: a headless frame sequence steps the window's way, a
+    /// frame's real seconds at a time from the first frame on, so a
+    /// hit-stop shows as held frames (the frames' times are real time, not
+    /// game time; `headless`).
+    real: bool,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -567,6 +579,35 @@ const FLINCH_HP: f32 = 3.0;
 /// How long a flinch lasts, seconds.
 const FLINCH: f32 = 0.2;
 
+/// The camera shake's wobble at full trauma, screen pixels, and how fast
+/// the trauma falls, a second (`App::shake`; D6, 11-15).
+const SHAKE_PX: f32 = 12.0;
+const SHAKE_FALL: f32 = 2.2;
+
+/// **Feel a blast** (the whole-game review's D6, 11-15: camera shake and
+/// hit-stop, both off unless `shake=` or `hitstop=`): each blast since
+/// `felt` adds to the shake by its size (its kills over 150 and its throw
+/// over 400, up to 1), 0.12 to 0.72 of a full shake at `shake=1` (a bomb
+/// of 6 kills and 80 thrown, size 0.24, adds 0.26); the biggest, if at
+/// least a fifth of full size and none in the last 0.6 s, holds the game
+/// still for 0.05 to 0.12 s at `hitstop=1` (that bomb: 0.067 s, two frames
+/// at 30). Plain hits do neither: in a fight every volley would.
+fn feel(pops: &[slime_mould::mould::rounds::Pop], felt: &mut u64, trauma: &mut f32, stop: &mut f32, stop_cool: &mut f32, (shake, hold): (f32, f32)) {
+    let mut big = 0.0f32;
+    for p in pops.iter().rev().take_while(|p| p.tick > *felt) {
+        let size = (p.killed as f32 / 150.0 + p.flung as f32 / 400.0).min(1.0);
+        *trauma = (*trauma + shake * (0.12 + 0.6 * size)).min(1.0);
+        big = big.max(size);
+    }
+    if let Some(p) = pops.last() {
+        *felt = (*felt).max(p.tick);
+    }
+    if hold > 0.0 && big >= 0.2 && *stop_cool <= 0.0 {
+        *stop = hold * (0.05 + 0.07 * big);
+        *stop_cool = 0.6;
+    }
+}
+
 /// How long a turret's kick and muzzle flash last, seconds.
 const TURRET_SHOT: f32 = 0.16;
 /// How fast a turret's head turns toward its aim between shots, radians a
@@ -628,6 +669,18 @@ struct App {
     spread: bool,
     /// Game seconds owed to the game (the accumulator).
     owed: f32,
+    /// The camera's shake, 0-1 (`shake=`; D6): each blast adds to it by
+    /// its size, it falls by `SHAKE_FALL` a second, and the camera wobbles
+    /// by its square (`shake`).
+    trauma: f32,
+    /// The window's real seconds, for the shake's wobble.
+    clock: f32,
+    /// A hit-stop (`hitstop=`; D6): real seconds the game holds still, and
+    /// until another may start.
+    stop: f32,
+    stop_cool: f32,
+    /// The newest blast's tick already felt (`feel`).
+    felt: u64,
     /// How far into the next step a headless picture is taken, 0-1 (it
     /// draws whole steps; `between`), or None in the window.
     sub: Option<f32>,
@@ -772,6 +825,11 @@ impl App {
             fast: false,
             spread: true,
             owed: 0.0,
+            trauma: 0.0,
+            clock: 0.0,
+            stop: 0.0,
+            stop_cool: 0.0,
+            felt: 0,
             sub: None,
             last_frame: Instant::now(),
             shift: false,
@@ -1206,6 +1264,15 @@ impl App {
         if self.paused || g.end.is_some() { 1.0 } else { (self.owed / step).clamp(0.0, 1.0) }
     }
 
+    /// The camera's shake now, world cells (`shake=`; D6): the square of
+    /// the trauma times `SHAKE_PX` screen pixels, wobbling on two sums of
+    /// sines at unrelated rates so it never settles into a pattern.
+    fn shake(&self) -> (f32, f32) {
+        let a = self.trauma * self.trauma * SHAKE_PX / self.camera.zoom.max(1e-3);
+        let c = self.clock;
+        (a * (0.6 * (c * 41.0).sin() + 0.4 * (c * 67.0 + 1.7).sin()), a * (0.6 * (c * 53.0 + 0.9).sin() + 0.4 * (c * 29.0 + 2.3).sin()))
+    }
+
     /// Ages the window's notes of the game by `dt` seconds: tracers,
     /// muzzle flashes and kicks, takes and flinches.
     fn age_notes(&mut self, dt: f32) {
@@ -1228,6 +1295,16 @@ impl App {
     /// Steps the game for `dt` real seconds and keeps the window's notes
     /// (facing, flashes, tracers, alerts).
     fn step(&mut self, dt: f32) {
+        self.clock += dt;
+        self.trauma = (self.trauma - SHAKE_FALL * dt).max(0.0);
+        self.stop_cool = (self.stop_cool - dt).max(0.0);
+        // A hit-stop holds the game and its notes still (the flash, the
+        // tracers, the burst's light stay where they are); the step in
+        // flight on the GPU waits for the next frame.
+        if self.stop > 0.0 {
+            self.stop = (self.stop - dt).max(0.0);
+            return;
+        }
         self.age_notes(dt);
         // A step a command finished since the last frame (`catch_up`).
         self.catch_up();
@@ -1247,6 +1324,7 @@ impl App {
             g.finish_step();
             kit_between(&mut self.kit, g, &self.controls.selected);
             self.rounds.after_step(g);
+            feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
             self.finished.0 += 1;
             shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
             turret_fired(g, &mut self.blooks);
@@ -1273,6 +1351,7 @@ impl App {
                 g.finish_step();
                 kit_between(&mut self.kit, g, &self.controls.selected);
                 self.rounds.after_step(g);
+                feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
                 self.finished.1 += 1;
                 shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
                 turret_fired(g, &mut self.blooks);
@@ -1434,6 +1513,7 @@ impl App {
         self.seen = g.world.ticks();
         kit_between(&mut self.kit, g, &self.controls.selected);
         self.rounds.after_step(g);
+        feel(&self.rounds.pops, &mut self.felt, &mut self.trauma, &mut self.stop, &mut self.stop_cool, (self.args.shake, self.args.hitstop));
         shot_marks(g, &mut self.tracers, &mut self.looks, self.listener.as_mut());
         turret_fired(g, &mut self.blooks);
         step_notes(g, &mut self.blooks, &mut self.looks, &mut self.banked);
@@ -1493,9 +1573,16 @@ impl App {
         }
         let ear = self.ear();
         self.hear(dt, ear);
+        // The shake moves the camera for this frame's picture only: the
+        // HUD is drawn on its own layer, and the cursor's aim reads the
+        // still camera.
+        let still = self.camera;
+        let (sx, sy) = self.shake();
+        (self.camera.x, self.camera.y) = (still.x + sx, still.y + sy);
         self.prepare();
-        let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
         let camera = self.camera;
+        (self.camera.x, self.camera.y) = (still.x, still.y);
+        let (Some(p), Some(view)) = (&self.pixels, self.view.as_ref()) else { return };
         let mut canvas_pass = self.canvas_pass.as_mut();
         let res = p.render_with(|enc, target, ctx| {
             view.record(enc, &camera, None);
@@ -1727,6 +1814,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args.keys.extend(keys.iter().map(|(k, v)| (k.to_string(), v.to_string())));
             }
             "wade" => args.wade = Some(v.parse()?),
+            "shake" => args.shake = v.parse()?,
+            "hitstop" => args.hitstop = v.parse()?,
+            "real" => args.real = v != "0",
             "sink" => args.sink = Some(v.parse()?),
             // `spray=SECS[,SHARE]`: the spray's seconds (0 off) and the
             // share of each shot's kills that spray (`Rules::spray_share`).
