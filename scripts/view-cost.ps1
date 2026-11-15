@@ -14,7 +14,8 @@
 # also times that commit's own shader (its exe) beside this one, A/B.
 #
 # Send back summary.txt; commit the whole output folder to a runner branch.
-# A timing run needs the PC to itself (booking.md).
+# A timing run needs the PC to itself (booking.md). -Only "none,lobe" times
+# just those variants (and the -Compare commit).
 
 param(
     [switch]$DryRun,
@@ -23,7 +24,9 @@ param(
     [string]$Repo = "C:\Users\Scott\Code\Slime Mold",
     [string]$Tree = "C:\Users\Scott\Code\sm-perf",
     [string]$Out = "C:\Users\Scott\Code\view-cost-out",
-    [int]$Rounds = 2
+    [int]$Rounds = 2,
+    # Only these variants (comma-separated, e.g. "none,lobe"); empty: all.
+    [string]$Only = ""
 )
 $ErrorActionPreference = "Continue"
 
@@ -84,6 +87,7 @@ if (-not $DryRun) {
             if (-not $s.Contains($e.old)) { "knockout $($p.Name): text not found, skipped"; $ok = $false; break }
             $s = $s.Replace($e.old, $e.new)
         }
+        if ($ok -and $Only -ne "" -and -not (($Only -split ",") -contains $p.Name)) { $ok = $false }
         if ($ok) {
             [IO.File]::WriteAllText((Join-Path $dir "v-$($p.Name).wgsl"), $s)
             $variants += $p.Name

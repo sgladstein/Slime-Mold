@@ -245,6 +245,31 @@ const CHAR_RGB: vec3<f32> = vec3<f32>(25.0, 24.0, 23.0);
 // were mixed into each cell's material through a 3 x 3 Gaussian and
 // blended between cells: soft blobs with no texture.
 struct PlantPx { d: vec4<f32>, heat: f32, char: f32, fresh: f32 }
+// Each shown cell's plant words, packed by `prep` after the terrain cells
+// in `tcell` (from word `fhalf`, eight a cell in `tidx` order): the
+// density by kind (d where the cell's kind is, 0 elsewhere), the heat, the
+// char, and the fresh fire (0 where the heat is 0), as f32 bits. The
+// pixels' B-spline reads them eight adjacent words a cell; read from the
+// engine's plant blocks they were five words a cell, each block a dish
+// apart, and on the GTX 1070 that was about 0.85 ms of the frame at zoom 6
+// and 24 (`plant_px` knocked out, Reports/view-cost-2026-11-15). The sums
+// are the same products in the same order, so the pixels are unchanged.
+fn plant_pack(t: u32, c: u32) {
+    let d = plant_d(c);
+    var dv = vec4<f32>(0.0);
+    if (d > 0.0) {
+        let k = plant_k(c);
+        dv = d * vec4<f32>(f32(k == 0u), f32(k == 1u), f32(k == 2u), f32(k == 3u));
+    }
+    let hc = plant_heat(c);
+    var fr = 0.0;
+    if (hc > 0.0) { fr = plant_fresh(c); }
+    let b = P.fhalf + 8u * t;
+    tcell[b] = bitcast<u32>(dv.x); tcell[b + 1u] = bitcast<u32>(dv.y);
+    tcell[b + 2u] = bitcast<u32>(dv.z); tcell[b + 3u] = bitcast<u32>(dv.w);
+    tcell[b + 4u] = bitcast<u32>(hc); tcell[b + 5u] = bitcast<u32>(plant_char(c));
+    tcell[b + 6u] = bitcast<u32>(fr);
+}
 fn plant_px(x: f32, y: f32) -> PlantPx {
     var o: PlantPx;
     o.d = vec4<f32>(0.0); o.heat = 0.0; o.char = 0.0; o.fresh = 0.0;
@@ -255,16 +280,15 @@ fn plant_px(x: f32, y: f32) -> PlantPx {
     for (var j = 0; j < 4; j++) {
         for (var q = 0; q < 4; q++) {
             let w = wx[q] * wy[j];
-            let c = cidx(ix - 1 + q, iy - 1 + j);
-            let d = plant_d(c);
-            if (d > 0.0) {
-                let k = plant_k(c);
-                o.d += w * d * vec4<f32>(f32(k == 0u), f32(k == 1u), f32(k == 2u), f32(k == 3u));
-            }
-            let hc = plant_heat(c);
+            // The cell as `cidx` clamps it to the map, then its packed words.
+            let cx = clamp(ix - 1 + q, 0, i32(P.ww) - 1); let cy = clamp(iy - 1 + j, 0, i32(P.wh) - 1);
+            let b = P.fhalf + 8u * tidx(cx, cy);
+            let dv = vec4<f32>(bitcast<f32>(tcell[b]), bitcast<f32>(tcell[b + 1u]), bitcast<f32>(tcell[b + 2u]), bitcast<f32>(tcell[b + 3u]));
+            o.d += w * dv;
+            let hc = bitcast<f32>(tcell[b + 4u]);
             o.heat += w * hc;
-            if (hc > 0.0) { o.fresh += w * plant_fresh(c); }
-            o.char += w * plant_char(c);
+            o.fresh += w * bitcast<f32>(tcell[b + 6u]);
+            o.char += w * bitcast<f32>(tcell[b + 5u]);
         }
     }
     return o;
@@ -1198,7 +1222,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
-        tcell[(gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine] = ter_prep(P.ox + i32(gid.x / P.fine), P.oy + i32(gid.y / P.fine));
+        let t = (gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine;
+        let cx = P.ox + i32(gid.x / P.fine); let cy = P.oy + i32(gid.y / P.fine);
+        tcell[t] = ter_prep(cx, cy);
+        if (P.plant_at != 0u && cx >= 0 && cy >= 0 && cx < i32(P.ww) && cy < i32(P.wh)) { plant_pack(t, cidx(cx, cy)); }
     }
     // The colour's thickness counts the walkers on their own too (owner,
     // 11-14: lone walkers read dim): an explorer lays little trail, so by
