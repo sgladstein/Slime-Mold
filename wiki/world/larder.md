@@ -310,7 +310,9 @@ seeds to 2:00, it changed who wins on no steady side (soldiers left fewer
 on 3 seeds, more on 1, p 0.63), and the CPU test holds 27 walkers on a
 spot under steady fire against 383; four strengths are up as a blind A/B
 for the owner ([flinch](../../Reports/flinch-2026-11-15/README.md)). The
-start menu's Options page sets it (Flinch, 0 off).
+start menu's Options page sets it (Flinch, 0 off). On the GTX 1070 it
+leaves the frame where it was (p95 7.8 ms on planet 1) and costs the
+engine's step 0.05 ms.
 Taking crystals barely shrinks C: at its cap it eats three times its
 upkeep, so on one crystal of 23 it holds 50,000 walkers for two minutes
 before it falls (10,369 at six). Making size follow held food, and a

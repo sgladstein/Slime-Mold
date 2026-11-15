@@ -144,6 +144,31 @@ WGSL's `select` runs both arms, so with the haze off (`alarm_look=0`) the
 1070's `base` pass still paid 0.11 ms of #354's 0.16
 (`Reports/alarm-look-2026-11-15/README.md`, *On the GTX 1070*).
 
+### On the GTX 1070 (added after #356)
+
+The PC runner timed `bench=45 run=1:1 mode=squads hand=squads
+screen=1920x1080 passes=60 viewpasses=60` at a82c0159 with the flinch
+(A, the default 0.9) and without (B, `flinch=0`), interleaved A B A B; the
+GPU idle before each, run 3 started on a down-clocked card (835 MHz). Raw
+files: branch `claude/project-thread-26drse` at cbbb5ad5,
+`runner-out/flinch-pr356-a82c0159/`. Times in ms:
+
+| Run | Frame p50 / p95 | GPU tail p50 / p95 | GPU step | View (`base`) |
+|---|---|---|---|---|
+| 1, flinch | 6.95 / 7.79 | 6.54 / 6.82 | 0.731 | 6.421 (6.001) |
+| 2, off | 6.99 / 7.78 | 6.58 / 6.85 | 0.677 | 6.289 (5.887) |
+| 3, flinch | 7.01 / 7.83 | 6.59 / 6.89 | 0.730 | 6.405 (5.986) |
+| 4, off | 7.01 / 7.81 | 6.59 / 6.87 | 0.678 | 6.308 (5.903) |
+
+The frame does not move (p95 7.79-7.83 against 7.78-7.81). The engine's
+step costs 0.05 ms more (0.73 against 0.68): the alarm spread in the trail
+pass (0.154 against 0.134) and the shot passes, which run on 55 of 60
+steps with the field on against 15 without (the `shout` row, the alarm a
+shot lays, 0.003). The view's `base` pass costs about 0.1 ms more, as the
+haze now draws round the squad on planet 1. At 45 s the two games differ
+(with the flinch 10,711 walkers, 7 soldiers, 4,333 killed; without
+10,053, 5 and 5,263), as the flinch changes play.
+
 ## Before trying again
 
 `Reports/dead-ends.md` lines on the flee (2026-11-12): the flee (keep
