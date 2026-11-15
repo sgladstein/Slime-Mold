@@ -52,7 +52,10 @@ zoomed in, each burning crown takes the heat at its centre and burns
 hotter while fresh (engine block 8 `PB_FRESH`, view only), ember grains
 show the heat left on burnt ground, and char is near-black grey; a fresh
 crown's top burns white-hot (luma ~240, over the slime's highlight; art
-lead 11-15). Plants, char and soil detail are gone under any slime by
+lead 11-15). Over water plants are drawn thinner and over deep water not
+at all, so rivers stay blue as reeds spread over the shallows (look only;
+[rivers under reeds](../../Reports/river-reeds-2026-11-15/README.md)).
+Plants, char and soil detail are gone under any slime by
 mid-film (`vis`, [report](../../Reports/review-fixes-2026-11-15/README.md)).
 Each planet draws its own plant forms (`flora_form`, keyed by the map's
 `flora` line, the biome): barrens dry thorn clumps, fen dark olive-brown moss hummocks with
@@ -87,4 +90,5 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
 
 - [plants report](../../Reports/plants-2026-11-14/README.md), *brainstorm*.
 - [plants look](../../Reports/plants-look-2026-11-14/README.md), *crowns sized by the field, fire per crown*.
+- [rivers under reeds](../../Reports/river-reeds-2026-11-15/README.md), *plants thinner over water, none over deep water*.
 - [review fixes](../../Reports/review-fixes-2026-11-15/README.md), *plants under the slime, white-hot fire front*.
