@@ -1,0 +1,14 @@
+start 15:26:15Z free KB 3780352 gpu 0,0,0,0,0 % C free GB 31
+build a82c head=a82c01596f039dccd25d72138247436934ebfb76
+build a82c exit=0 15:27:58Z
+warmup start 15:27:58Z card 139 MHz, 405 MHz, 27, 6.61 W
+warmup exit=0 15:28:11Z card 1999 MHz, 4006 MHz, 32, 43.02 W
+run 1 (a82c:bench=45 run=1:1 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60) start 15:28:16Z gpu 0,0,0,0,0 % card 1999 MHz, 4006 MHz, 31, 42.88 W free KB 3890664
+run 1 exit=0 15:28:38Z
+run 2 (a82c:bench=45 run=1:1 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60 flinch=0) start 15:28:43Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 37, 42.97 W free KB 3897104
+run 2 exit=0 15:29:05Z
+run 3 (a82c:bench=45 run=1:1 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60) start 15:29:10Z gpu 0,0,0,0,0 % card 835 MHz, 810 MHz, 40, 8.40 W free KB 3914764
+run 3 exit=0 15:29:32Z
+run 4 (a82c:bench=45 run=1:1 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60 flinch=0) start 15:29:37Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 46, 45.01 W free KB 3909600
+run 4 exit=0 15:29:59Z
+ALL DONE 15:29:59Z
