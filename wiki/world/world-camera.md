@@ -21,6 +21,7 @@ sources:
   - Reports/spent-crystals-2026-11-14/README.md
   - Reports/start-menu-2026-11-14/README.md
   - Reports/turret-look-2026-11-14/README.md
+  - Reports/ui-review-2026-11-15/README.md
   - Reports/ui-size-2026-11-14/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
@@ -127,7 +128,7 @@ the cast the shown soldier's next shot fires lit, a tooltip
 per card and a swap button (H, `NEXT_ROUND`); the same change cut the
 bottom panels from 20% of the screen to 15% (160 of 1080 pixels, 120 of
 800), collapses the selection panel when nothing is selected, and opens
-the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The whole UI, the map editor's panel included, lays out in `UiSize::px` pixels a unit (2026-11-14): the height's share of 1080 lines as before, with the window's DPI scale as a floor and the player's size (75% to 300%, Ctrl + / Ctrl -, the Options page, `ui=`) over it, capped so the bottom bar stays under a third of the screen, and saved in `settings.txt`; the same day the owner asked for a wider, shorter bottom bar, so the gun cards are a panel at its far left, the command card is 6 x 2 and the squad one row filling the middle, 113 of 1080 pixels (10.5%), the minimap standing at its old height in the corner ([report](../../Reports/ui-size-2026-11-14/README.md)); since 11-14 20:19Z (owner: the bar "changes totally when you zoom in") the minimap shows at every zoom, in the row at the bar's height, and the bar's panels draw at 92% (104 pixels at 100%) so the layout never changes with zoom ([report](../../Reports/steady-hud-2026-11-14/README.md)). The game itself is `cargo run --release
+the camera in the band above them ([report](../../Reports/gun-card-hud-2026-11-14/README.md)). The whole UI, the map editor's panel included, lays out in `UiSize::px` pixels a unit (2026-11-14): the height's share of 1080 lines as before, with the window's DPI scale as a floor and the player's size (75% to 300%, Ctrl + / Ctrl -, the Options page, `ui=`) over it, capped so the bottom bar stays under a third of the screen, and saved in `settings.txt`; the same day the owner asked for a wider, shorter bottom bar, so the gun cards are a panel at its far left, the command card is 6 x 2 and the squad one row filling the middle, 113 of 1080 pixels (10.5%), the minimap standing at its old height in the corner ([report](../../Reports/ui-size-2026-11-14/README.md)); since 11-14 20:19Z (owner: the bar "changes totally when you zoom in") the minimap shows at every zoom, in the row at the bar's height, and the bar's panels draw at 92% (104 pixels at 100%) so the layout never changes with zoom ([report](../../Reports/steady-hud-2026-11-14/README.md)). On 11-15 (owner: "the text seems too small ... not always making the best use of space") the bar went back to the full unit (113 pixels), the command buttons became 116 x 42 with their names beside the icons (square again when the row is too short, as at 150% on 1080 lines), squad tiles show the squad's state, and the menus, key list and run shop got 13 to 15 unit text, landscape bullet cards in the shop and no minimap over full-screen menus ([report](../../Reports/ui-review-2026-11-15/README.md)). The game itself is `cargo run --release
 --bin larder-world` (W2c,
 [report](../../Reports/larder-world-roadmap-2026-11-11.md)): the Larder
 rules on the GPU world through this camera, UI and look. The GPU sandbox's
@@ -208,3 +209,4 @@ as lines.
 - [The game UI over the Larder world](../../Reports/world-ui-2026-11-11.md).
 - [The loadout panel](../../Reports/gun-card-hud-2026-11-14/README.md).
 - [UI and text size](../../Reports/ui-size-2026-11-14/README.md).
+- [Menus, shop and HUD review](../../Reports/ui-review-2026-11-15/README.md).

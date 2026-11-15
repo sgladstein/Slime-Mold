@@ -662,7 +662,12 @@ impl Recipe {
         // length, not the area.
         let area = (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32;
         let more = |n: usize, k: f32| (n as f32 * k + 0.5).floor() as usize;
-        Recipe { pass: (rc.pass.0 * narrow, rc.pass.1 * narrow), regions: more(rc.regions, area), small: more(rc.small, area), big: more(rc.big, area.sqrt()), hedges: more(rc.hedges, area), arenas: more(rc.arenas, area), rivers: more(rc.rivers, area.sqrt()), ..rc }
+        // Streams keep their count on a bigger map and rivers stop at two:
+        // grown with the route's length, a 6x core world had 5-10 streams
+        // webbed over the whole map and up to four parallel rivers, the
+        // same obstacle four times (looks and play reviews, 2026-11-15).
+        let rivers = if water == W::Streams { rc.rivers } else { more(rc.rivers, area.sqrt()).min(2) };
+        Recipe { pass: (rc.pass.0 * narrow, rc.pass.1 * narrow), regions: more(rc.regions, area), small: more(rc.small, area), big: more(rc.big, area.sqrt()), hedges: more(rc.hedges, area), arenas: more(rc.arenas, area), rivers, ..rc }
     }
 }
 
@@ -859,24 +864,45 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let far = (wf - landing.0, hf - landing.1);
 
     // Nests: the first across the map, the rest in the far part, apart.
+    // Off the edges by a share of the map, at least 150 map cells, so the
+    // slime's start (a blob of radius 130-190 map cells at the default
+    // walkers) isn't cut by the frame: at 110 and 100 map cells, 6 of 16
+    // first nests sat on an edge (looks review, 2026-11-15). Apart by 0.3 of the map's width, not a
+    // fixed 280 cells: at 6x the nearest pair was 0.14-0.19 of the width on
+    // 5 of 8 core worlds, and seed 1's three nests shared 7% of the map
+    // (play review). The spacing gives way a step at a time where the far
+    // part has no room, so a planet never loses a nest.
+    let (mx, my) = ((0.16 * wf).clamp(150.0, 240.0), (0.2 * hf).clamp(150.0, 240.0));
     let mut nests: Vec<(f32, f32)> = Vec::new();
-    let mut first = (far.0.clamp(110.0, wf - 110.0), far.1.clamp(100.0, hf - 100.0));
+    let mut first = (far.0.clamp(mx, wf - mx), far.1.clamp(my, hf - my));
     for _ in 0..40 {
         let q = (far.0 + r.range(-0.15, 0.15) * wf, far.1 + r.range(-0.3, 0.3) * hf);
-        let q = (q.0.clamp(110.0, wf - 110.0), q.1.clamp(100.0, hf - 100.0));
+        let q = (q.0.clamp(mx, wf - mx), q.1.clamp(my, hf - my));
         if dist(q, landing) > 0.6 * wf {
             first = q;
             break;
         }
     }
     nests.push(first);
+    let apart = (0.3 * wf).max(280.0);
     for _ in 1..rc.nests {
-        for _ in 0..300 {
-            let q = (r.range(110.0, wf - 110.0), r.range(100.0, hf - 100.0));
-            if dist(q, landing) > 0.5 * wf && nests.iter().all(|&n| dist(n, q) > 280.0) {
-                nests.push(q);
+        let mut best: Option<((f32, f32), f32)> = None;
+        for t in 0..400 {
+            let q = (r.range(mx, wf - mx), r.range(my, hf - my));
+            if dist(q, landing) <= 0.5 * wf {
+                continue;
+            }
+            let near = nests.iter().map(|&n| dist(n, q)).fold(f32::INFINITY, f32::min);
+            if near > apart * (1.0 - 0.1 * (t / 50) as f32) {
+                best = Some((q, near));
                 break;
             }
+            if best.is_none_or(|b| near > b.1) {
+                best = Some((q, near));
+            }
+        }
+        if let Some((q, _)) = best {
+            nests.push(q);
         }
     }
     let axis = unit(first.0 - landing.0, first.1 - landing.1);
@@ -1482,11 +1508,19 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                     let (sa, u) = (along(at) + warp_x.at(x, y) * 1.6, across(at));
                     for rv in &rivers {
                         let off = (sa - rv.s).abs() - rv.half * (0.9 + 0.2 * rough.at(x, y));
-                        if off < 0.0 && rv.bridge.is_some_and(|(bu, bh)| (u - bu).abs() < bh) {
+                        // The bridge's deck is straight and runs 6 cells past
+                        // the widest the banks reach. At first it was the
+                        // river's own ragged outline (looks review,
+                        // 2026-11-15).
+                        if (sa - rv.s).abs() < rv.half * 1.1 + 6.0 && rv.bridge.is_some_and(|(bu, bh)| (u - bu).abs() < bh) {
                             soil = G_BRIDGE;
                         } else if off < 0.0 {
-                            let ford = rv.fords.iter().any(|&(fu, fr)| (u - fu).abs() < fr);
-                            water = water.max(if off < -8.0 && !ford { 2 } else { 1 });
+                            // A ford: shallow right across, the deep part
+                            // narrowing to it over 9 cells either side, so
+                            // its edge runs smooth. At first the deep part
+                            // stopped square at the ford's edge, a box.
+                            let taper = rv.fords.iter().map(|&(fu, fr)| (fr + 9.0 - (u - fu).abs()).max(0.0)).fold(0.0, f32::max);
+                            water = water.max(if off < -8.0 - 2.5 * taper { 2 } else { 1 });
                         } else if off < 12.0 && soil == 0 {
                             // Sand on the banks.
                             soil = G_SAND;
@@ -1768,6 +1802,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     // as grown: one straight bar, the first try, read as UI, and perfect
     // arcs as selection rings (graphics lead, 2026-11-14).
     let inside = |p: (f32, f32), m: f32| p.0 > m && p.1 > m && p.0 < wf - m && p.1 < hf - m;
+    let dry = |ground: &[u8], p: (f32, f32)| ground[(p.1.max(0.0) as usize).min(h - 1) * w + (p.0.max(0.0) as usize).min(w - 1)] & G_WET == 0;
     for e in &edges {
         if e.kind != Border::Gate {
             continue;
@@ -1800,20 +1835,31 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         }
         let rad = items.crystals[k].r + 55.0;
         let to = unit(landing.0 - q.0, landing.1 - q.1);
-        // The radius wanders round the ring, smoothly.
+        // Two or three arcs, each at its own radius with a gap between, not
+        // one round ring: rings read as bullseyes (looks review,
+        // 2026-11-15). The radius still wanders along each arc, smoothly.
+        let arcs = 2 + r.below(2);
+        let start = r.below(24);
+        let lift = [0.0f32, 0.16, -0.1];
         let mut radii = [0.0f32; 24];
         let mut off = 0.0;
-        for v in radii.iter_mut() {
+        for (i, v) in radii.iter_mut().enumerate() {
             off = off * 0.6 + r.range(-0.07, 0.07);
-            *v = rad * (1.0 + off);
+            let arc = ((i + 24 - start) % 24) * arcs / 24;
+            *v = rad * (1.0 + off + lift[arc]);
         }
         let mut v = (1.0f32, 0.0f32);
         for i in 0..24 {
             let u = turn15(v);
             let mid = unit(v.0 + u.0, v.1 + u.1);
+            // Each arc's last piece is its gap. No hedge on water (the looks
+            // review found hedges laid across lakes).
+            let j = (i + 24 - start) % 24;
+            let (arc, next) = (j * arcs / 24, ((j + 1) % 24) * arcs / 24);
             let (ra, rb) = (radii[i], radii[(i + 1) % 24]);
             let (a, b) = ((q.0 + v.0 * ra, q.1 + v.1 * ra), (q.0 + u.0 * rb, q.1 + u.1 * rb));
-            if mid.0 * to.0 + mid.1 * to.1 < 0.85 && inside(a, 8.0) && inside(b, 8.0) {
+            let half = ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
+            if next == arc && mid.0 * to.0 + mid.1 * to.1 < 0.85 && inside(a, 8.0) && inside(b, 8.0) && dry(&ground, a) && dry(&ground, half) && dry(&ground, b) {
                 hedge(&mut r, &mut items.walls, &[a, b]);
             }
             v = u;
@@ -1837,9 +1883,10 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
                         || edges.iter().any(|e| e.pass.is_some_and(|(c, rad)| dist(p, c) < rad + 30.0))
                         || items.crystals.iter().any(|c| dist((c.x, c.y), p) < c.r + 34.0)
                         || ground[p.1 as usize * w + p.0 as usize] & G_ROCK != 0
+                        || !dry(&ground, p)
                         || arena[region[p.1 as usize * w + p.0 as usize] as usize]
                 };
-                if blocked(at) || blocked(b) {
+                if blocked(at) || blocked(b) || !dry(&ground, ((at.0 + b.0) / 2.0, (at.1 + b.1) / 2.0)) {
                     break;
                 }
                 pts.push(b);
@@ -2471,12 +2518,16 @@ mod tests {
     // the core world's arenas and nest hedges (23:30Z), and planets 6-8 at
     // their full 2.8x, 4x and 6x (`GROW_CAP` 6; planet 8 is the big pin
     // below). Then planet 4 (river valley): no dune clay over deep water
-    // or bridges, no bridge planks by the nests (bug check, 11-15). Round
+    // or bridges, no bridge planks by the nests (bug check, 11-15). Then
+    // every planet again for the reviews' map fixes (11-15): nests spaced
+    // by the map's width and kept off its edges, streams and rivers
+    // capped, nest rings in arcs, no hedges on water, straight bridges and
+    // tapered fords. Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
-    // which finds the same nearest sites as the full scan. Then the item
+    // which finds the same nearest sites as the full scan. The item
     // text's `flora` line (11-15, plants thread: each biome's plant forms
-    // in the view); the ground and plants are unchanged.
-    const PINNED: [u64; 8] = [0x31a97874cb9b66b2, 0x05ee9fb9fe6acccf, 0x77d2aa3e848817cf, 0x2fc27e472ef07b75, 0xeca63c4d4f44f7b5, 0x98a0f8e45acb1f79, 0x47c0bc9a485a3bf4, 0x1ac9df36bc070b41];
+    // in the view) changed every print, not the ground or plants.
+    const PINNED: [u64; 8] = [0x4248ae7dda524c5b, 0xcef08c74cac2a3bd, 0x7309e5cd22a3f1c0, 0xda3c7d0ca2863128, 0x5aaebb4ee1f789c3, 0x9a3af4e927eb6590, 0xac64bbe4671a004d, 0x2aa09380fbc2fa0e];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -2512,8 +2563,31 @@ mod tests {
         assert_eq!(got, want, "{got:#x?}");
     }
 
-    // Re-pinned for the item text's `flora` line (11-15, plants thread).
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xbcd97c484c456cd6), (2, 7, 0x3507985a7be94f1e), (3, 3, 0x56903e94c75d0b1b), (4, 2, 0x3da28134f1603a64), (7, 2, 0xe94734ba05e5d96c), (8, 3, 0x715adb2b8edeb69c)];
+    // Re-pinned for the item text's `flora` line too (11-15, plants thread).
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xb19a25facfdeb1f3), (2, 7, 0xec0b8f1be60e8710), (3, 3, 0x18a8436223cfa9e5), (4, 2, 0x352fcb9a2397a9ec), (7, 2, 0x788c6611712fa087), (8, 3, 0x3e2d695aca77b799)];
+
+    /// Nests keep off the map's edges by at least 150 map cells, and two
+    /// nests stand at least a fifth of the map's width apart (0.3 wanted;
+    /// the spacing gives way only where the far part has no room), over
+    /// seeds 1-6 of every planet (reviews, 2026-11-15).
+    #[test]
+    fn nests_keep_off_the_edges_and_apart() {
+        for d in 1..=8 {
+            for s in 1..=6 {
+                let m = level(s, d);
+                let (wf, hf) = (m.w as f32, m.h as f32);
+                let ns = &m.items.moulds;
+                for &(x, y) in ns {
+                    assert!(x.min(y).min(wf - x).min(hf - y) >= 150.0 - 1e-3, "planet {d} seed {s}: a nest at ({x}, {y})");
+                }
+                for (i, a) in ns.iter().enumerate() {
+                    for b in &ns[i + 1..] {
+                        assert!(dist(*a, *b) >= 0.2 * wf, "planet {d} seed {s}: nests {:.0} apart on a map {wf} wide", dist(*a, *b));
+                    }
+                }
+            }
+        }
+    }
 
     /// The fallback, built for every planet of seeds 1-4, passes the checks
     /// the attempts must (technical review, 2026-11-15: 6 of 96 failed

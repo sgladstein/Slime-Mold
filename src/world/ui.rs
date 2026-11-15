@@ -66,6 +66,17 @@ use theme::*;
 /// bottom HUD bar is 160 of 800 px high") 58, 6 and 10, a 214-pixel bar
 /// at 1080 lines (20%); now 42, 5 and 8, 160 pixels (15%).
 const CELL: f32 = 42.0;
+/// A labelled command button's width (UI review, 11-15: the owner, "the
+/// text seems too small ... not always making the best use of space"). The
+/// card's buttons were 42-unit squares with only an icon, a 9-pixel key
+/// letter and a 9-pixel cost, while the selection panel beside them held
+/// one squad tile in 1,100 pixels of empty glass. Now each button is this
+/// wide with its name beside the icon, the same height, so the bar keeps
+/// its row and its height; a window too narrow for it (or a big UI size)
+/// falls back to the square buttons (`LABEL_ROOM`).
+const CELL_W: f32 = 116.0;
+/// The selection panel's least width, bar units, for the labelled card.
+const LABEL_ROOM: f32 = 340.0;
 const CELL_GAP: f32 = 5.0;
 const CARD_PAD: f32 = 8.0;
 /// The command card's grid. 4 x 3 until the owner's ask of 11-14 08:33Z
@@ -85,8 +96,11 @@ const CARD_ROWS: u8 = 2;
 /// at the bar's height, and the gun cards, selection, squad tiles and
 /// command card draw at 92% so the row still fits: at the 200% UI size on
 /// 1920x1080 the selection keeps 300 units (at 1 it would have 160, under
-/// the 240 where the gun strip leaves its own panel).
-const BAR: f32 = 0.92;
+/// the 240 where the gun strip leaves its own panel). Back to 1 after the
+/// UI review (11-15, "the text seems too small"): the command card's square
+/// buttons now give way when the row is short (`LABEL_ROOM`), which is
+/// what 92% bought, so the bar is 113 of 1080 pixels again (it was 104).
+const BAR: f32 = 1.0;
 /// The minimap's widest, in bar units (a wide world's minimap stops here
 /// and is letterboxed in its frame).
 const MINIMAP_W: f32 = 300.0;
@@ -94,8 +108,13 @@ const MINIMAP_W: f32 = 300.0;
 /// The loadout strip's width: its slots, the name and state, and Swap.
 fn loadout_w(l: &Loadout, s: f32) -> f32 {
     let slots = l.slots.max(l.cards.len()).max(1) as f32;
-    2.0 * 6.0 * s + slots * 34.0 * s + (slots - 1.0) * 4.0 * s + 8.0 * s + 112.0 * s + if l.cycle.is_some() { 26.0 * s + 6.0 * s } else { 0.0 }
+    2.0 * 8.0 * s + slots * LOADOUT_CELL * s + (slots - 1.0) * 5.0 * s + 10.0 * s + LOADOUT_INFO * s + if l.cycle.is_some() { 30.0 * s + 6.0 * s } else { 0.0 }
 }
+/// The loadout strip's card slots and its name column, UI units: 34 and
+/// 112 until the UI review (11-15), a 51-unit strip in a 105-unit panel
+/// with the gun's name at 12 pixels.
+const LOADOUT_CELL: f32 = 46.0;
+const LOADOUT_INFO: f32 = 124.0;
 
 /// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
 /// the twelve slots in reading order, wrapped at six.
@@ -911,7 +930,7 @@ impl Hud {
         // zoom (owner, 11-14 20:19Z).
         let cell = CELL * b;
         let gap = CELL_GAP * b;
-        let card_w = CARD_COLS as f32 * cell + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
+        let card_of = |w: f32| CARD_COLS as f32 * w + (CARD_COLS - 1) as f32 * gap + 2.0 * pad;
         let (_, inset_bottom) = Hud::insets(c.screen, c.ui);
         let panel_h = inset_bottom - 8.0 * b;
         let base = sh - 8.0 * b;
@@ -943,6 +962,11 @@ impl Hud {
             }
             right = f.x - 8.0 * b;
         }
+        // Labelled buttons where the selection keeps `LABEL_ROOM` beside
+        // them (and the gun strip its own panel); square ones where not.
+        let gun_w0 = m.loadout.as_ref().map_or(0.0, |l| loadout_w(l, b) + 8.0 * b);
+        let wide = card_of(CELL_W * b);
+        let card_w = if right - wide - 16.0 * b - 8.0 * b - gun_w0 >= LABEL_ROOM * b { wide } else { card_of(cell) };
         let card = Rect::new(right - card_w, top_of, card_w, panel_h);
         // The gun cards' panel at the bar's far left (owner, 08:46Z: "gun/card
         // menu should go on the far left to fill the rest of the screen"),
@@ -1050,20 +1074,20 @@ impl Hud {
         }
         // The objective, centred.
         if let Some(obj) = &m.objective {
-            let ow = c.atlas.measure(Weight::Medium, 13.0 * s, obj) + 40.0 * s;
+            let ow = c.atlas.measure(Weight::Medium, 14.0 * s, obj) + 40.0 * s;
             let r = Rect::new((sw - ow) / 2.0, y + 3.0 * s, ow, h - 6.0 * s);
             self.glass(r, r.h / 2.0, c, s);
             c.icon(Icon::Target, (r.x + 12.0 * s, r.y + (r.h - 14.0 * s) / 2.0), 14.0 * s, ACCENT);
-            c.text(Weight::Medium, 13.0 * s, (r.x + 30.0 * s, base - 1.0 * s), Align::Left, obj, TEXT);
+            c.text(Weight::Medium, 14.0 * s, (r.x + 30.0 * s, base - 1.0 * s), Align::Left, obj, TEXT);
         }
     }
 
     fn tip_small(&mut self, text: &str, at: (f32, f32), c: &mut Canvas, s: f32) {
-        let w = c.atlas.measure(Weight::Medium, 12.0 * s, text) + 16.0 * s;
-        let r = Rect::new(at.0, at.1, w, 24.0 * s);
+        let w = c.atlas.measure(Weight::Medium, 13.5 * s, text) + 18.0 * s;
+        let r = Rect::new(at.0, at.1, w, 27.0 * s);
         c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, SHADOW);
         c.panel(r, 6.0 * s, [36, 42, 50, 245], [28, 33, 40, 245], 1.0, EDGE);
-        c.text(Weight::Medium, 12.0 * s, (r.x + 8.0 * s, r.y + 16.0 * s), Align::Left, text, TEXT);
+        c.text(Weight::Medium, 13.5 * s, (r.x + 9.0 * s, r.y + 18.5 * s), Align::Left, text, TEXT);
     }
 
     fn selection_panel(&mut self, m: &Model, controls: &Controls, r: Rect, c: &mut Canvas, s: f32) {
@@ -1079,11 +1103,11 @@ impl Hud {
         let y = r.y - chip_h - 6.0 * s;
         if m.idle > 0 {
             let label = format!("{}", m.idle);
-            let w = 34.0 * s + c.atlas.measure(Weight::SemiBold, 12.0 * s, &label);
+            let w = 34.0 * s + c.atlas.measure(Weight::SemiBold, 13.0 * s, &label);
             let chip = Rect::new(x, y, w, chip_h);
             self.chip(chip, Hit::Idle, false, c, s);
             c.icon(Icon::Idle, (chip.x + 8.0 * s, chip.y + 4.0 * s), 16.0 * s, WARN);
-            c.text(Weight::SemiBold, 12.0 * s, (chip.x + 28.0 * s, chip.y + 16.5 * s), Align::Left, &label, TEXT);
+            c.text(Weight::SemiBold, 13.0 * s, (chip.x + 28.0 * s, chip.y + 17.0 * s), Align::Left, &label, TEXT);
             if self.hover.is_some_and(|p| chip.contains(p)) {
                 self.tip_small("Idle soldiers: select the next", (chip.x, chip.y - 30.0 * s), c, s);
             }
@@ -1125,8 +1149,8 @@ impl Hud {
             // The collapsed strip: one line.
             let mid = r.y + r.h / 2.0;
             c.icon(Icon::Soldier, (r.x + 14.0 * s, mid - 9.0 * s), 18.0 * s, FAINT);
-            let tw = c.text(Weight::SemiBold, 13.0 * s, (r.x + 40.0 * s, mid + 4.5 * s), Align::Left, "Nothing selected", MUTED);
-            c.text_fit(Weight::Medium, 12.0 * s, (r.x + 48.0 * s + tw, mid + 4.5 * s), Align::Left, "click or drag to select", r.w - 62.0 * s - tw, FAINT);
+            let tw = c.text(Weight::SemiBold, 14.0 * s, (r.x + 40.0 * s, mid + 5.0 * s), Align::Left, "Nothing selected", MUTED);
+            c.text_fit(Weight::Medium, 13.0 * s, (r.x + 48.0 * s + tw, mid + 5.0 * s), Align::Left, "click or drag to select", r.w - 62.0 * s - tw, FAINT);
             return;
         }
         // Every selected unit as a card.
@@ -1134,9 +1158,9 @@ impl Hud {
         let mean = m.selection.iter().map(|q| q.hp).sum::<f32>() / n as f32;
         let hurt = m.selection.iter().filter(|q| q.hp < 0.6).count();
         let head = format!("{n} selected");
-        let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
+        let hw = c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT);
         let sub = if hurt > 0 { format!("{:.0}% health on average, {hurt} hurt", mean * 100.0) } else { format!("{:.0}% health on average", mean * 100.0) };
-        c.text(Weight::Medium, 12.5 * s, (inner.x + hw + 12.0 * s, inner.y + 14.0 * s), Align::Left, &sub, MUTED);
+        c.text(Weight::Medium, 13.5 * s, (inner.x + hw + 12.0 * s, inner.y + 15.0 * s), Align::Left, &sub, MUTED);
         let cw = 54.0 * s;
         let cgap = 7.0 * s;
         let top = inner.y + 26.0 * s;
@@ -1197,7 +1221,7 @@ impl Hud {
         let mine = p.rows.iter().find(|q| q.active);
         let n = p.rows.len();
         let head = if n == 1 { "1 squad".to_string() } else { format!("{n} squads") };
-        let hw = c.text(Weight::SemiBold, 15.0 * s, (inner.x, inner.y + 14.0 * s), Align::Left, &head, TEXT);
+        let hw = c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT);
         // The buttons from the right end of the header line.
         let bh = 22.0 * s;
         let mut bx = inner.right();
@@ -1215,7 +1239,7 @@ impl Hud {
                 Some(k) => format!("{label}  {k}"),
                 None => label.to_string(),
             };
-            let w = c.atlas.measure(Weight::SemiBold, 12.5 * s, &text) + 20.0 * s;
+            let w = c.atlas.measure(Weight::SemiBold, 13.5 * s, &text) + 20.0 * s;
             bx -= w;
             let b = Rect::new(bx, inner.y, w, bh);
             bx -= 6.0 * s;
@@ -1223,7 +1247,7 @@ impl Hud {
             let (t, bt) = if hot && off.is_none() { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             c.panel(b, 6.0 * s, t, bt, 1.0, EDGE);
             self.hits.push((b, if off.is_none() { hit } else { Hit::Panel }));
-            c.text(Weight::SemiBold, 12.5 * s, (b.x + b.w / 2.0, b.y + 15.5 * s), Align::Centre, &text, if off.is_some() { FAINT } else { TEXT });
+            c.text(Weight::SemiBold, 13.5 * s, (b.x + b.w / 2.0, b.y + 16.0 * s), Align::Centre, &text, if off.is_some() { FAINT } else { TEXT });
             if hot {
                 tip = Some((off.clone().unwrap_or_else(|| about.to_string()), b));
             }
@@ -1231,11 +1255,16 @@ impl Hud {
         let sub = mine.map(|q| format!("commanding {}, {} soldiers", q.name, q.soldiers)).or_else(|| p.free.then(|| "none commanded: all on their own, WASD pans".to_string()));
         if let Some(sub) = sub {
             let left = inner.x + hw + 12.0 * s;
-            c.text_fit(Weight::Medium, 12.5 * s, (left, inner.y + 14.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
+            c.text_fit(Weight::Medium, 13.5 * s, (left, inner.y + 15.0 * s), Align::Left, &sub, (bx - left - 6.0 * s).max(0.0), MUTED);
         }
+        // Wider than a soldier's card since the UI review (11-15; 72): the
+        // squad's state ("holding", "working") on the tile, not only in
+        // its tooltip, in the room the panel had spare.
+        // (Narrower, down to the old 72, where the row cannot hold them all.)
         let ch = 54.0 * s;
-        // Wider than a soldier's card (72) for the AUTO / YOU tag.
-        let cw = 86.0 * s;
+        // (At least 86, for the squad thread's AUTO / YOU tag.)
+        let cgap0 = 7.0 * s;
+        let cw = ((inner.w + cgap0) / n.max(1) as f32 - cgap0).clamp(86.0 * s, 136.0 * s);
         let cgap = 7.0 * s;
         let top = inner.y + 26.0 * s;
         let cols = ((inner.w + cgap) / (cw + cgap)).floor().max(1.0) as usize;
@@ -1265,16 +1294,25 @@ impl Hud {
             c.panel(cell, 8.0 * s, t, b, if q.active || q.linked { 2.0 * s } else { 1.0 }, edge);
             self.hits.push((cell, Hit::Squad(k)));
             // The hotkey, top left; the soldiers, big; their health along the foot.
-            c.text(Weight::SemiBold, 12.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
+            c.text(Weight::SemiBold, 13.0 * s, (cell.x + 7.0 * s, cell.y + 15.0 * s), Align::Left, &q.key, if q.active { ACCENT } else { MUTED });
             let ink = if q.active { ACCENT } else { TEXT };
             c.icon(Icon::Soldier, (cell.x + 8.0 * s, cell.y + 19.0 * s), 20.0 * s, ink);
-            c.text(Weight::SemiBold, 17.0 * s, (cell.x + 32.0 * s, cell.y + 36.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
+            let nw = c.text(Weight::SemiBold, 19.0 * s, (cell.x + 32.0 * s, cell.y + 37.0 * s), Align::Left, &format!("{}", q.soldiers), ink);
             c.bar(Rect::new(cell.x + 6.0 * s, cell.bottom() - 11.0 * s, cw - 12.0 * s, 5.0 * s), q.hp, health_colour(q.hp), TRACK);
             // Right of the count: AUTO on a squad running on its own, YOU
-            // on the one you command (owner 2026-11-15 02:58Z).
+            // on the one you command (owner 2026-11-15 02:58Z); the
+            // squad's state between the count and the tag where it fits.
             let tag = if q.active { Some(("YOU", ACCENT)) } else if q.auto { Some(("AUTO", GOOD)) } else { None };
+            let mut end = cell.right() - 6.0 * s;
             if let Some((t, ink)) = tag {
-                c.text(Weight::SemiBold, 10.5 * s, (cell.right() - 6.0 * s, cell.y + 35.0 * s), Align::Right, t, ink);
+                let tw = c.text(Weight::SemiBold, 11.5 * s, (end, cell.y + 36.0 * s), Align::Right, t, ink);
+                end -= tw + 8.0 * s;
+            }
+            if let Some(state) = q.note.as_deref().and_then(|n| n.split(", ").find(|w| !w.is_empty())) {
+                let sx = cell.x + 32.0 * s + nw + 8.0 * s;
+                if end - sx >= 30.0 * s {
+                    c.text_fit(Weight::Medium, 12.5 * s, (sx, cell.y + 36.0 * s), Align::Left, state, end - sx, MUTED);
+                }
             }
             if can_link {
                 let (t, b) = if on_link { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
@@ -1300,7 +1338,7 @@ impl Hud {
         }
         if let Some((t, at)) = tip {
             let sw = c.screen.0 as f32;
-            let w = c.atlas.measure(Weight::Medium, 12.0 * s, &t) + 16.0 * s;
+            let w = c.atlas.measure(Weight::Medium, 13.5 * s, &t) + 18.0 * s;
             self.tip_small(&t, (at.x.min(sw - 8.0 * s - w).max(8.0 * s), at.y - 30.0 * s), c, s);
         }
     }
@@ -1321,13 +1359,13 @@ impl Hud {
         let x = t.right() + 16.0 * s;
         let w = r.right() - x;
         c.text_fit(Weight::SemiBold, 18.0 * s, (x, r.y + 18.0 * s), Align::Left, &info.title, w, TEXT);
-        c.text_fit(Weight::Medium, 12.5 * s, (x, r.y + 36.0 * s), Align::Left, &info.subtitle, w, MUTED);
+        c.text_fit(Weight::Medium, 13.5 * s, (x, r.y + 37.0 * s), Align::Left, &info.subtitle, w, MUTED);
         let mut y = r.y + 50.0 * s;
         if let Some((f, words)) = &info.hp {
             c.icon(Icon::Heart, (x, y - 1.0 * s), 14.0 * s, health_colour(*f));
             let bw = (w - 110.0 * s).max(60.0 * s);
             c.bar(Rect::new(x + 20.0 * s, y + 3.0 * s, bw, 7.0 * s), *f, health_colour(*f), TRACK);
-            c.text(Weight::SemiBold, 12.5 * s, (x + 28.0 * s + bw, y + 11.0 * s), Align::Left, words, TEXT);
+            c.text(Weight::SemiBold, 13.5 * s, (x + 28.0 * s + bw, y + 11.0 * s), Align::Left, words, TEXT);
             y += 24.0 * s;
         }
         let colw = w / 2.0;
@@ -1338,11 +1376,11 @@ impl Hud {
             if sy > r.bottom() {
                 break;
             }
-            let lw = c.text(Weight::Medium, 12.0 * s, (sx, sy), Align::Left, label, MUTED);
-            c.text_fit(Weight::SemiBold, 12.5 * s, (sx + lw + 8.0 * s, sy), Align::Left, value, colw - lw - 16.0 * s, TEXT);
+            let lw = c.text(Weight::Medium, 13.0 * s, (sx, sy), Align::Left, label, MUTED);
+            c.text_fit(Weight::SemiBold, 13.5 * s, (sx + lw + 8.0 * s, sy), Align::Left, value, colw - lw - 16.0 * s, TEXT);
         }
         if let Some(n) = &info.note {
-            c.text_fit(Weight::Medium, 12.0 * s, (x, r.bottom() - 2.0 * s), Align::Left, n, w, WARN);
+            c.text_fit(Weight::Medium, 13.0 * s, (x, r.bottom() - 2.0 * s), Align::Left, n, w, WARN);
         }
     }
 
@@ -1351,12 +1389,16 @@ impl Hud {
         let pad = CARD_PAD * s;
         let cell = CELL * s;
         let gap = CELL_GAP * s;
+        // The buttons' width from the card's (`draw` picks square or
+        // labelled).
+        let cw = (r.w - 2.0 * pad - (CARD_COLS - 1) as f32 * gap) / CARD_COLS as f32;
+        let labelled = cw > cell * 1.5;
         let x0 = r.x + pad;
         let y0 = r.bottom() - pad - CARD_ROWS as f32 * cell - (CARD_ROWS - 1) as f32 * gap;
         // Empty slots, faintly, so the grid reads as a grid.
         for j in 0..CARD_ROWS {
             for i in 0..CARD_COLS {
-                let b = Rect::new(x0 + i as f32 * (cell + gap), y0 + j as f32 * (cell + gap), cell, cell);
+                let b = Rect::new(x0 + i as f32 * (cw + gap), y0 + j as f32 * (cell + gap), cw, cell);
                 c.rrect(b, 10.0 * s, [255, 255, 255, 8]);
             }
         }
@@ -1364,7 +1406,7 @@ impl Hud {
         for (k, cmd) in m.commands.iter().enumerate() {
             let (row, col) = card_slot(cmd.slot);
             let (row, col) = (row as f32, col as f32);
-            let b = Rect::new(x0 + col * (cell + gap), y0 + row * (cell + gap), cell, cell);
+            let b = Rect::new(x0 + col * (cw + gap), y0 + row * (cell + gap), cw, cell);
             let hot = self.hover.is_some_and(|p| b.contains(p));
             let down = hot && self.pressed == Some(Hit::Command(k));
             let aiming = self.targeting.is_some_and(|t| t.id == cmd.id);
@@ -1379,24 +1421,58 @@ impl Hud {
             let edge = if aiming || cmd.on { alpha(ACCENT, 0.9) } else { [255, 255, 255, 30] };
             c.panel(b, 10.0 * s, t, bt, if cmd.on || aiming { 1.5 * s } else { 1.0 }, edge);
             let dim = if cmd.ready { 1.0 } else { 0.38 };
-            let ic = 22.0 * s;
-            c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, alpha(if cmd.on { ACCENT } else { TEXT }, dim));
-            // The hotkey, top left.
-            if let Some(k) = key_name(cmd.key) {
-                c.text(Weight::SemiBold, 10.0 * s, (b.x + 4.5 * s, b.y + 11.5 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
-            }
-            if let Some(cost) = &cmd.cost {
-                let cw = c.atlas.measure(Weight::SemiBold, 9.5 * s, cost);
-                let cx = b.right() - 4.0 * s - cw;
-                c.text(Weight::SemiBold, 9.5 * s, (cx, b.bottom() - 3.5 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
-                c.icon(cmd.cost_icon, (cx - 10.0 * s, b.bottom() - 12.0 * s), 8.5 * s, alpha(ENERGY, dim.max(0.6)));
+            let ink = alpha(if cmd.on { ACCENT } else { TEXT }, dim);
+            if labelled {
+                // The icon at the left, the name beside it on one or two
+                // lines (or one line and the cost), the key top right.
+                let ic = 20.0 * s;
+                c.icon(cmd.icon, (b.x + 8.0 * s, b.y + (cell - ic) / 2.0), ic, ink);
+                let tx = b.x + 8.0 * s + ic + 7.0 * s;
+                let key = key_name(cmd.key);
+                let kw = key.as_ref().map_or(0.0, |k| c.atlas.measure(Weight::SemiBold, 11.5 * s, k) + 9.0 * s);
+                let room = b.right() - tx - 6.0 * s;
+                if let Some(k) = &key {
+                    c.text(Weight::SemiBold, 11.5 * s, (b.right() - 6.0 * s, b.bottom() - 6.0 * s), Align::Right, k, alpha(MUTED, dim.max(0.6)));
+                }
+                let label = short_label(&cmd.name);
+                let words = alpha(TEXT, dim.max(0.55));
+                // The name on the first line (shrunk a little, to 11.5, before
+                // it wraps), then the cost or the rest of the name; the
+                // key at the bottom right, so the first line has the width.
+                let px = fit_px(c, &label, 13.0 * s, 11.5 * s, room);
+                let one = c.atlas.measure(Weight::SemiBold, px, &label) <= room;
+                let second = room - kw;
+                if let Some(cost) = &cmd.cost {
+                    c.text_fit(Weight::SemiBold, px, (tx, b.y + 18.0 * s), Align::Left, &label, room, words);
+                    c.icon(cmd.cost_icon, (tx, b.y + 24.5 * s), 11.0 * s, alpha(ENERGY, dim.max(0.6)));
+                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx + 14.0 * s, b.y + 34.0 * s), Align::Left, cost, second - 14.0 * s, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
+                } else if one {
+                    c.text(Weight::SemiBold, px, (tx, b.y + cell / 2.0 + 4.5 * s), Align::Left, &label, words);
+                } else {
+                    let (first, rest) = split_label(c, &label, 12.0 * s, room);
+                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx, b.y + 18.0 * s), Align::Left, &first, room, words);
+                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx, b.y + 34.0 * s), Align::Left, &rest, second, words);
+                }
+            } else {
+                let ic = 22.0 * s;
+                c.icon(cmd.icon, (b.x + (cell - ic) / 2.0, b.y + (cell - ic) / 2.0 - 2.0 * s), ic, ink);
+                // The hotkey, top left.
+                if let Some(k) = key_name(cmd.key) {
+                    c.text(Weight::SemiBold, 11.0 * s, (b.x + 4.5 * s, b.y + 12.0 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
+                }
+                if let Some(cost) = &cmd.cost {
+                    let cw = c.atlas.measure(Weight::SemiBold, 10.5 * s, cost);
+                    let cx = b.right() - 4.0 * s - cw;
+                    c.text(Weight::SemiBold, 10.5 * s, (cx, b.bottom() - 3.5 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
+                    c.icon(cmd.cost_icon, (cx - 11.0 * s, b.bottom() - 13.0 * s), 9.5 * s, alpha(ENERGY, dim.max(0.6)));
+                }
             }
             if cmd.cooldown > 0.0 {
                 // A dark wipe over the part still to go (a ring round the
                 // edge read as a broken border), and the time left.
-                c.ring(b, 10.0 * s, cell, cmd.cooldown.min(1.0), [0, 0, 0, 150]);
+                c.ring(b, 10.0 * s, b.w.max(b.h), cmd.cooldown.min(1.0), [0, 0, 0, 150]);
                 if let Some(wt) = &cmd.wait {
-                    c.text(Weight::SemiBold, 15.0 * s, (b.x + cell / 2.0, b.y + cell / 2.0 + 5.0 * s), Align::Centre, wt, TEXT);
+                    c.text(Weight::SemiBold, 15.0 * s, (b.x + b.w / 2.0, b.y + cell / 2.0 + 5.0 * s), Align::Centre, wt, TEXT);
                 }
             }
             self.hits.push((b, Hit::Command(k)));
@@ -1421,12 +1497,12 @@ impl Hud {
     /// state, whose tooltip is the whole loadout) and its rectangle.
     #[allow(clippy::too_many_arguments)]
     fn loadout_draw(&mut self, l: &Loadout, panel: Option<Rect>, sel: Rect, collapsed: bool, card: Rect, c: &mut Canvas, s: f32) -> Option<(usize, Rect)> {
-        let pad = 6.0 * s;
-        let cell = 34.0 * s;
-        let gap = 4.0 * s;
+        let pad = 8.0 * s;
+        let cell = LOADOUT_CELL * s;
+        let gap = 5.0 * s;
         let slots = l.slots.max(l.cards.len()).max(1);
-        let info_w = 112.0 * s;
-        let swap = 26.0 * s;
+        let info_w = LOADOUT_INFO * s;
+        let swap = 30.0 * s;
         let w = loadout_w(l, s);
         let h = 2.0 * pad + cell + 5.0 * s;
         // Its own panel at the bar's far left (11-14 08:46Z), the strip
@@ -1467,12 +1543,12 @@ impl Hud {
             c.panel(b, 7.0 * s, shade(frame, 0.30 * dim), shade(frame, 0.12 * dim), if k.next { 2.0 * s } else { 1.0 * s }, edge);
             // The kind's stripe along the top, as a card's frame.
             c.rrect(Rect::new(b.x + 5.0 * s, b.y + 3.0 * s, b.w - 10.0 * s, 2.0 * s), 1.0 * s, alpha(frame, 0.9 * dim));
-            let ic = 20.0 * s;
+            let ic = 26.0 * s;
             if let Some(icon) = k.icon {
                 c.icon(icon, (b.x + (b.w - ic) / 2.0, b.y + (b.h - ic) / 2.0 + 1.5 * s), ic, alpha(k.colour, dim));
             }
             if let Some(badge) = k.badge {
-                let bs = 12.0 * s;
+                let bs = 14.0 * s;
                 c.icon(badge, (b.right() - bs - 2.0 * s, b.bottom() - bs - 2.0 * s), bs, alpha(TEXT, 0.9 * dim));
             }
             if k.next {
@@ -1486,17 +1562,17 @@ impl Hud {
         }
         let cards_w = slots as f32 * cell + (slots - 1) as f32 * gap;
         // The name and the state.
-        let tx = r.x + pad + cards_w + 8.0 * s;
+        let tx = r.x + pad + cards_w + 10.0 * s;
         // The gun's icon ahead of the name, the name after it.
         let gx = if let Some((icon, ..)) = &l.gun {
-            c.icon(*icon, (tx, y + 1.5 * s), 16.0 * s, MUTED);
-            19.0 * s
+            c.icon(*icon, (tx, y + 4.0 * s), 18.0 * s, MUTED);
+            22.0 * s
         } else {
             0.0
         };
-        c.text_fit(Weight::SemiBold, 13.0 * s, (tx + gx, y + 14.0 * s), Align::Left, &l.name, info_w - gx, TEXT);
+        c.text_fit(Weight::SemiBold, 15.0 * s, (tx + gx, y + 18.0 * s), Align::Left, &l.name, info_w - gx, TEXT);
         let (state, col) = if l.cards.is_empty() { ("Plain shots", MUTED) } else { ("A card a shot", GOOD) };
-        c.text_fit(Weight::Medium, 11.0 * s, (tx, y + 30.0 * s), Align::Left, state, info_w, col);
+        c.text_fit(Weight::Medium, 13.0 * s, (tx, y + 38.0 * s), Align::Left, state, info_w, col);
         let words = Rect::new(tx - 4.0 * s, r.y, info_w + 4.0 * s, r.h);
         if tip.is_none() && self.hover.is_some_and(|p| words.contains(p)) {
             tip = Some((usize::MAX, words));
@@ -1507,7 +1583,7 @@ impl Hud {
             let (t, bt) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
             c.panel(b, 6.0 * s, t, bt, 1.0, [255, 255, 255, 30]);
             let k = key_name(key).unwrap_or_else(|| "~".into());
-            c.text(Weight::SemiBold, 12.0 * s, (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s), Align::Centre, &k, TEXT);
+            c.text(Weight::SemiBold, 13.0 * s, (b.x + b.w / 2.0, b.y + b.h / 2.0 + 4.5 * s), Align::Centre, &k, TEXT);
             self.hits.push((b, Hit::Cycle));
             if hot {
                 tip = Some((usize::MAX - 1, b));
@@ -1536,8 +1612,8 @@ impl Hud {
                 None => "The button: the next loadout".into(),
             });
         }
-        let w = 260.0 * s;
-        let h = 40.0 * s + lines.len() as f32 * 18.0 * s;
+        let w = 300.0 * s;
+        let h = 40.0 * s + lines.len() as f32 * 19.5 * s;
         let sw = c.screen.0 as f32;
         let x = (b.x + b.w / 2.0 - w / 2.0).min(sw - 8.0 * s - w).max(8.0 * s);
         let r = Rect::new(x, (b.y - 14.0 * s - h).max(8.0 * s), w, h);
@@ -1548,18 +1624,18 @@ impl Hud {
         c.text(Weight::SemiBold, 15.0 * s, (r.x + 38.0 * s, y), Align::Left, &l.name, TEXT);
         y += 22.0 * s;
         for t in &lines {
-            c.text_fit(Weight::Medium, 12.5 * s, (r.x + 14.0 * s, y), Align::Left, t, w - 28.0 * s, MUTED);
-            y += 18.0 * s;
+            c.text_fit(Weight::Medium, 13.5 * s, (r.x + 14.0 * s, y), Align::Left, t, w - 28.0 * s, MUTED);
+            y += 19.5 * s;
         }
     }
 
     /// A gun card's tooltip, above the loadout strip.
     fn card_tip(&mut self, k: &GunCard, b: Rect, c: &mut Canvas, s: f32) {
-        let w = 290.0 * s;
-        let px = 12.5 * s;
+        let w = 320.0 * s;
+        let px = 13.5 * s;
         let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &k.about);
         let extra = if k.idle { 22.0 * s } else { 0.0 };
-        let h = 18.0 * s + 22.0 * s + lines.len() as f32 * 18.0 * s + 10.0 * s + extra;
+        let h = 18.0 * s + 22.0 * s + lines.len() as f32 * 19.5 * s + 10.0 * s + extra;
         let sw = c.screen.0 as f32;
         let x = (b.x + b.w / 2.0 - w / 2.0).min(sw - 8.0 * s - w).max(8.0 * s);
         let r = Rect::new(x, (b.y - 14.0 * s - h).max(8.0 * s), w, h);
@@ -1579,7 +1655,7 @@ impl Hud {
         y += 22.0 * s;
         for l in &lines {
             c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
-            y += 18.0 * s;
+            y += 19.5 * s;
         }
         if k.idle {
             c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "No bullet after it: it does nothing", w - 28.0 * s, WARN);
@@ -1587,11 +1663,11 @@ impl Hud {
     }
 
     fn tooltip(&mut self, cmd: &Command, b: Rect, card: Rect, c: &mut Canvas, s: f32) {
-        let w = 300.0 * s;
-        let px = 12.5 * s;
+        let w = 340.0 * s;
+        let px = 13.5 * s;
         let lines = c.wrap(Weight::Medium, px, w - 28.0 * s, &cmd.about);
         let why = if cmd.ready { None } else { cmd.why_not.clone() };
-        let h = 18.0 * s + 22.0 * s + if cmd.about.is_empty() { 0.0 } else { lines.len() as f32 * 18.0 * s + 8.0 * s } + if why.is_some() { 20.0 * s } else { 0.0 } + 10.0 * s;
+        let h = 18.0 * s + 22.0 * s + if cmd.about.is_empty() { 0.0 } else { lines.len() as f32 * 19.5 * s + 8.0 * s } + if why.is_some() { 20.0 * s } else { 0.0 } + 10.0 * s;
         // Not `clamp`: it panics when the card is narrower than the tip.
         let x = (b.x + b.w / 2.0 - w / 2.0).min(card.right() - w).max(8.0 * s);
         let r = Rect::new(x, card.y - h - 10.0 * s, w, h);
@@ -1617,12 +1693,12 @@ impl Hud {
         if !cmd.about.is_empty() {
             for l in &lines {
                 c.text(Weight::Medium, px, (r.x + 14.0 * s, y), Align::Left, l, MUTED);
-                y += 18.0 * s;
+                y += 19.5 * s;
             }
             y += 6.0 * s;
         }
         if let Some(wn) = why {
-            c.text_fit(Weight::SemiBold, 12.5 * s, (r.x + 14.0 * s, y), Align::Left, &wn, w - 28.0 * s, BAD);
+            c.text_fit(Weight::SemiBold, 13.5 * s, (r.x + 14.0 * s, y), Align::Left, &wn, w - 28.0 * s, BAD);
         }
         let hint = match cmd.target {
             Target::Instant => None,
@@ -1630,7 +1706,7 @@ impl Hud {
             _ => Some("Click to place it"),
         };
         if let (Some(hn), true) = (hint, cmd.ready) {
-            c.text(Weight::Medium, 11.0 * s, (r.right() - 14.0 * s, r.bottom() - 9.0 * s), Align::Right, hn, FAINT);
+            c.text(Weight::Medium, 12.5 * s, (r.right() - 14.0 * s, r.bottom() - 9.0 * s), Align::Right, hn, MUTED);
         }
     }
 
@@ -1642,13 +1718,13 @@ impl Hud {
             let age = now.duration_since(a.when).as_secs_f32();
             let life = ALERT_LIFE.as_secs_f32();
             let fade = ((life - age) / ALERT_FADE).clamp(0.0, 1.0);
-            let w = c.atlas.measure(Weight::Medium, 13.0 * s, &a.text) + 46.0 * s;
+            let w = c.atlas.measure(Weight::Medium, 14.0 * s, &a.text) + 46.0 * s;
             let r = Rect::new(8.0 * s, y, w, 32.0 * s);
             c.shadow(r, 8.0 * s, 12.0 * s, 3.0 * s, alpha(SHADOW, fade));
             c.panel(r, 8.0 * s, alpha(PANEL_TOP, fade), alpha(PANEL_BOTTOM, fade), 1.0, alpha(EDGE, fade));
             c.rrect(Rect::new(r.x, r.y + 6.0 * s, 3.0 * s, r.h - 12.0 * s), 1.5 * s, alpha(a.colour, fade));
             c.icon(Icon::Alert, (r.x + 12.0 * s, r.y + 8.0 * s), 16.0 * s, alpha(a.colour, fade));
-            c.text(Weight::Medium, 13.0 * s, (r.x + 34.0 * s, r.y + 21.0 * s), Align::Left, &a.text, alpha(TEXT, fade));
+            c.text(Weight::Medium, 14.0 * s, (r.x + 34.0 * s, r.y + 21.5 * s), Align::Left, &a.text, alpha(TEXT, fade));
             y += 38.0 * s;
             // A ping where it happened: a ring that opens over a second, on
             // the world and the minimap.
@@ -1760,7 +1836,7 @@ impl Hud {
             (false, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
         };
         c.panel(r, 9.0 * s, t, b, 1.0, [255, 255, 255, 34]);
-        c.text(Weight::SemiBold, 14.0 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.0 * s), Align::Centre, label, TEXT);
+        c.text(Weight::SemiBold, 15.5 * s, (r.x + r.w / 2.0, r.y + r.h / 2.0 + 5.5 * s), Align::Centre, label, TEXT);
         self.hits.push((r, hit));
     }
 
@@ -1777,7 +1853,7 @@ impl Hud {
                 let h = 84.0 * s + items.len() as f32 * (bh + 10.0 * s) + 14.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 22.0 * s, (r.x + w / 2.0, r.y + 44.0 * s), Align::Centre, "Paused", TEXT);
-                c.text(Weight::Medium, 12.5 * s, (r.x + w / 2.0, r.y + 64.0 * s), Align::Centre, "Esc to resume", MUTED);
+                c.text(Weight::Medium, 14.0 * s, (r.x + w / 2.0, r.y + 65.0 * s), Align::Centre, "Esc to resume", MUTED);
                 let mut y = r.y + 84.0 * s;
                 for (label, hit, primary) in items {
                     self.wide_button(Rect::new(r.x + 24.0 * s, y, w - 48.0 * s, bh), label, hit, primary, c, s);
@@ -1806,15 +1882,15 @@ impl Hud {
                     }
                 }
                 rows.extend(m.help.iter().cloned());
-                let w = 560.0 * s;
-                let lh = 24.0 * s;
+                let w = 620.0 * s;
+                let lh = 25.0 * s;
                 let h = 80.0 * s + rows.len() as f32 * lh + 70.0 * s;
                 let r = self.modal(w, h, c, s);
                 c.text(Weight::SemiBold, 20.0 * s, (r.x + 28.0 * s, r.y + 42.0 * s), Align::Left, "Controls", TEXT);
                 let mut y = r.y + 76.0 * s;
                 for (k, what) in &rows {
-                    c.text(Weight::SemiBold, 13.0 * s, (r.x + 28.0 * s, y), Align::Left, k, ACCENT);
-                    c.text_fit(Weight::Medium, 13.0 * s, (r.x + 200.0 * s, y), Align::Left, what, w - 228.0 * s, TEXT);
+                    c.text(Weight::SemiBold, 14.5 * s, (r.x + 28.0 * s, y), Align::Left, k, ACCENT);
+                    c.text_fit(Weight::Medium, 14.5 * s, (r.x + 210.0 * s, y), Align::Left, what, w - 238.0 * s, TEXT);
                     y += lh;
                 }
                 self.wide_button(Rect::new(r.x + w - 24.0 * s - 120.0 * s, r.bottom() - 24.0 * s - 38.0 * s, 120.0 * s, 38.0 * s), "Back", Hit::Back, true, c, s);
@@ -1873,6 +1949,40 @@ impl Hud {
     /// Seconds since the HUD was made (for UI animations).
     pub fn age(&self) -> f32 {
         self.started.elapsed().as_secs_f32()
+    }
+}
+
+/// A command's name as its button shows it: the little words dropped
+/// ("Harvest a crystal" reads "Harvest crystal"); the tooltip keeps the
+/// whole name.
+pub fn short_label(name: &str) -> String {
+    name.split(' ').filter(|w| !matches!(*w, "a" | "an" | "the" | "your")).collect::<Vec<_>>().join(" ")
+}
+
+/// A label cut in two for a two-line button: at the last space (or
+/// hyphen) whose first part fits `room`.
+fn split_label(c: &Canvas, label: &str, px: f32, room: f32) -> (String, String) {
+    let cuts: Vec<usize> = label.char_indices().filter(|&(_, ch)| ch == ' ' || ch == '-').map(|(i, _)| i).collect();
+    for &i in cuts.iter().rev() {
+        let keep = if label[i..].starts_with('-') { i + 1 } else { i };
+        let first = &label[..keep];
+        if c.atlas.measure(Weight::SemiBold, px, first) <= room {
+            return (first.to_string(), label[i + 1..].trim().to_string());
+        }
+    }
+    match cuts.first() {
+        Some(&i) => (label[..i].to_string(), label[i + 1..].trim().to_string()),
+        None => (label.to_string(), String::new()),
+    }
+}
+
+/// Text size from `px` down to `least` that fits `max` wide.
+fn fit_px(c: &Canvas, text: &str, px: f32, least: f32, max: f32) -> f32 {
+    let w = c.atlas.measure(Weight::SemiBold, px, text);
+    if w <= max {
+        px
+    } else {
+        (px * max / w).max(least)
     }
 }
 
