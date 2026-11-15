@@ -410,8 +410,10 @@ pub struct Rules {
     pub heal: super::HealRules,
     /// Aim spread, dish cells at the target: each shot's line turns by a
     /// uniform angle that moves its aim up to this far to either side of
-    /// the target. 0 (the default) aims dead on and draws no random
-    /// number, so games stay as they were. A look switch for the owner's
+    /// the target. 0 aims dead on and draws no random number. The default
+    /// is the rifle's `guns::RIFLE_SPREAD` since 11-15 (owner 08:10Z: a
+    /// small base spread, so bullet cards' spread shows on it); until
+    /// then 0, so games stayed as they were. A look switch for the owner's
     /// A/B (game designer, 11-12): a fixed-radius strike repeated on one
     /// target reads as a round stamp; a smaller strike scattered over a
     /// wider patch at the same kills a second may read as gunfire.
@@ -540,7 +542,7 @@ impl Default for Rules {
             hand: 0.2,
             cover: super::CoverRules::default(),
             heal: super::HealRules::default(),
-            spread: 0.0,
+            spread: crate::mould::guns::RIFLE_SPREAD,
             crystal_solid: true,
             mass: 1.0,
             broken: 0.03,

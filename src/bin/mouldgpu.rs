@@ -4608,7 +4608,11 @@ mod tests {
         // the squad clears the mould to about 800 walkers by 30 s, where
         // the 8% band is under 70 walkers and the engines' drift (808 /
         // 894) crosses it. The range is game side, the same on both.
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, ..Rules::default() };
+        // Dead-on aim (`spread` 0, the default until 11-15): the rifle's
+        // 0.5-cell spread is game side, the same on both, but it moved
+        // seed 3's chaos past the band (1377 GPU against 1266 CPU walkers
+        // at 25 s here; killed 1443 against 1172 with craters).
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted
@@ -4869,7 +4873,8 @@ mod tests {
         // reason: 951 GPU against 1049 CPU at 30 s with them on. And whole
         // walking maps (`Rules::map_pops`): sliced, 1585 GPU against 1316
         // CPU at 25 s.
-        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, map_pops: usize::MAX, ..Rules::default() };
+        // Dead-on aim, as the fleeing twin (the rifle's 0.5-cell spread, 11-15).
+        let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, map_pops: usize::MAX, spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted
