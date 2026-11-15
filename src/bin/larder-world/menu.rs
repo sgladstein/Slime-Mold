@@ -195,9 +195,17 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
     let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
-    if r.depth == run::PLANETS {
-        lines.push("The slime's home world: beat it and the run is won".into());
+    // The level's clock and head start (`run::clock`, `run::head_start`).
+    let cap = l.mission.rules(Rules::default()).cap;
+    let secs = cap.round() as u32;
+    let mut clock = format!("{}:{:02} on the clock", secs / 60, secs % 60);
+    if l.grow > 0.0 {
+        clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
     }
+    if r.depth == run::PLANETS {
+        clock = format!("The slime's home world: beat it and the run is won. {clock}");
+    }
+    lines.push(clock);
     // The cards' words and colours as the HUD's loadout strip shows them,
     // with the run's own rules.
     let mut rules = Rules::default();
@@ -227,11 +235,13 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     s.icon = icon;
                     s.tint = kind.colour(draw::payload_colour(c));
                     s.cost = c.cost();
-                    s.about = format!("{}, budget {}. {}", kind.label(), c.cost(), row.about.replacen(c.about(), &words, 1));
+                    // Its kind and words, the run's note after them (too
+                    // big for the gun), its budget last (owner 11-15
+                    // 02:57Z: the cards' text "should be simplified").
+                    s.about = format!("{} Budget {}.", row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1), c.cost());
                     if let rounds::Card::Ammo(a) = c {
-                        // A rolled bullet: its set as a badge, its numbers.
+                        // A rolled bullet: its set as a badge.
                         s.badge = Some(draw::ammo_icon(a.set));
-                        s.about = format!("{}: {}. {}", a.title(), a.line(), row.about.replacen(c.about(), &words, 1));
                     }
                 }
                 Face::Gun(g) => {
@@ -239,7 +249,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     // No gun is labelled lucky (owner 18:18Z).
                     s.tint = theme::TEXT;
                     s.bars = gun_bars(&g);
-                    s.about = format!("{}. {}", g.kind.about(), row.about);
+                    s.about = format!("{} {}", g.kind.about(), row.about);
                 }
                 Face::Dev => s.icon = Icon::Fast,
             }

@@ -1209,58 +1209,71 @@ pub(super) fn payload_colour(c: rounds::Card) -> [u8; 4] {
     [g[0], g[1], g[2], 255]
 }
 
-/// A card's glyph, frame and words for the loadout panel, with the round's
-/// own numbers.
+/// A card's glyph, frame and words for the loadout panel and the shop,
+/// with the round's own numbers: a short sentence, the kind said beside
+/// it (`CardKind::label`). The owner, 11-15 02:57Z: "The text for all the
+/// gun cards is too much. They should be simplified and clarified". Until
+/// then each card had one to three sentences, a rolled bullet its numbers
+/// twice with a standard bullet's beside them, and the shop added how to
+/// click and drag to every card.
 pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
     let split_n = w.split_n;
     use rounds::Card as C;
     let k = &r.kit;
     match c {
-        C::Plain => (Icon::Bullet, CardKind::Payload, "A plain bullet: its strike and nothing more, at the gun's own range and spread.".into()),
-        // A rolled bullet (owner 16:46Z): its payload's words after its
-        // numbers; its set's glyph when it is plain.
+        C::Plain => (Icon::Bullet, CardKind::Payload, "Just its hit.".into()),
+        // A rolled bullet (owner 16:46Z): its numbers, then what its
+        // payload does; its set's glyph when it is plain.
         C::Ammo(a) => {
             let (icon, words) = match a.shell {
-                rounds::Shell::Plain => (ammo_icon(a.set), "Its strike and nothing more.".to_string()),
+                rounds::Shell::Plain => (ammo_icon(a.set), String::new()),
                 s => {
                     let (i, _, w) = card_face(s.card(), r, w);
-                    (i, w)
+                    (i, format!(" {w}"))
                 }
             };
-            let d = format!(
-                "{}: damage {:.1} (a standard bullet's {:.0}: a hole {:.1} times as wide), {:.1}x speed, {:.1}x range, {:.1}x spread.",
-                a.title(),
-                a.damage(),
-                rounds::Ammo::standard(a.shell).damage(),
-                a.reach(),
-                a.speed(),
-                a.range(),
-                a.spread()
-            );
-            (icon, CardKind::Payload, format!("{d} {words}"))
+            (icon, CardKind::Payload, format!("{}.{words}", ammo_numbers(&a)))
         }
-        C::Blast => (Icon::Blast, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells, leaves a crater the mould shuns, and lays alarm.", k.blast_r)),
-        C::Gas => (Icon::Gas, CardKind::Payload, format!("Where the shot hits: the walkers within {:.0} cells fall asleep where they are. Spares the squad.", k.gas_r)),
-        C::Germ => (Icon::Germ, CardKind::Payload, format!("Where the shot hits: infects the walkers within {:.0} cells; the sickness spreads through the body.", k.germ_r)),
-        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Where the shot hits: kills the walkers within {:.0} cells and throws the living mould out to {:.0} cells straight outward; it lands and lives on.", r.bomb_r, r.bomb_r * r.bomb_ring)),
-        C::Wide => (Icon::Wide, CardKind::Modifier, format!("The next payload is {:.1} times as wide.", r.wide)),
-        C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("The next payload goes off as {} smaller bursts round the hit.", r.scatter_n)),
-        C::Quiet => (Icon::Quiet, CardKind::Modifier, "The next payload lays no alarm: a sleeper is not woken, a skittish mould is not warned.".into()),
-        C::Delay => (Icon::Delay, CardKind::Trigger, format!("The next payload lodges and goes off {:.0} s later, once the mould has flowed back over the hole.", r.delay_secs)),
-        C::Thick => (Icon::Thick, CardKind::Trigger, format!("The next payload lodges and waits until {} walkers crowd within {:.0} cells (at most {:.0} s): the mould sets off its own trap.", r.thick_n, r.thick_r, r.thick_secs)),
-        C::Pierce => (Icon::Pierce, CardKind::Flight, "Every bullet flies on through one more slime hit, striking each.".into()),
-        C::Split => (Icon::Split, CardKind::Flight, format!("Every bullet breaks into {split_n} pieces where it lands, fanned on past the hit.")),
+        C::Blast => (Icon::Blast, CardKind::Payload, format!("Kills slime within {:.0} cells and leaves a crater.", k.blast_r)),
+        C::Gas => (Icon::Gas, CardKind::Payload, format!("Puts slime within {:.0} cells to sleep.", k.gas_r)),
+        C::Germ => (Icon::Germ, CardKind::Payload, format!("Infects slime within {:.0} cells; the sickness spreads.", k.germ_r)),
+        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Kills slime within {:.0} cells and throws the rest {:.0} cells out.", r.bomb_r, r.bomb_r * r.bomb_ring)),
+        C::Wide => (Icon::Wide, CardKind::Modifier, format!("Its hit is {:.1}x wider.", r.wide)),
+        C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("Its hit becomes {} smaller ones.", r.scatter_n)),
+        C::Quiet => (Icon::Quiet, CardKind::Modifier, "It doesn't alarm the slime.".into()),
+        C::Delay => (Icon::Delay, CardKind::Trigger, format!("It goes off {:.0} s after landing.", r.delay_secs)),
+        C::Thick => (Icon::Thick, CardKind::Trigger, format!("It waits until slime crowds round it (up to {:.0} s).", r.thick_secs)),
+        C::Pierce => (Icon::Pierce, CardKind::Flight, "Bullets go through one slime hit.".into()),
+        C::Split => (Icon::Split, CardKind::Flight, format!("Bullets split in {split_n} where they land.")),
         // Trails (2026-11-14): each reuses the glyph of the field it lays.
-        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Every bullet burns the mould along its flight, {:.0} cells wide, and leaves a line of crater for {:.0} s: a fire line the mould shuns.", 2.0 * r.trail_r, r.trail_crater_secs)),
-        C::Bait => (Icon::Bait, CardKind::Flight, format!("Every bullet leaves a {:.0}-cell line of food scent along its flight: every mould follows it, into your fire or a scorch line.", 2.0 * r.trail_r)),
-        C::Mist => (Icon::Gas, CardKind::Flight, format!("Every bullet leaves a thin gas cloud along its flight ({:.1} a disc): the mould that drifts into it sleeps.", r.trail_cloud)),
+        C::Scorch => (Icon::Burn, CardKind::Flight, format!("Bullets burn a line the slime avoids for {:.0} s.", r.trail_crater_secs)),
+        C::Bait => (Icon::Bait, CardKind::Flight, "Bullets leave a scent line the slime follows.".into()),
+        C::Mist => (Icon::Gas, CardKind::Flight, "Bullets leave a thin sleeping gas.".into()),
         // Range (owner, 11-14 08:39Z): reuses free fire's target glyph.
-        C::Range => (Icon::Target, CardKind::Flight, format!("Every soldier sees and shoots {:.0}% further ({:.0} cells a card), mouse-aimed volleys too.", 100.0 * w.range_card, w.range * w.range_card)),
+        C::Range => (Icon::Target, CardKind::Flight, format!("Shoots {:.0}% farther ({:.0} cells).", 100.0 * w.range_card, w.range * w.range_card)),
         // The owner's notes (11-14 15:06Z): rate of fire, reduce cost, disrupt scent.
-        C::Rate => (Icon::Fast, CardKind::Flight, format!("Every soldier fires {:.0} times as often a card, volleys too.", 1.0 + w.rate_card)),
-        C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less of the gun's budget. Does nothing in a fight.", rounds::THRIFT)),
-        C::Smother => (Icon::Close, CardKind::Flight, format!("Every bullet wipes the food scent along its flight, {:.0} cells wide: the mould there loses the way to its food until the scent spreads back.", 2.0 * r.trail_r)),
+        C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
+        C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
+        C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food.".into()),
     }
+}
+
+/// A rolled bullet's numbers in a line: "Damage 6.3, speed 1.9x, range
+/// 1.7x, spread 0.6x".
+pub(super) fn ammo_numbers(a: &rounds::Ammo) -> String {
+    format!("Damage {:.1}, speed {:.1}x, range {:.1}x, spread {:.1}x", a.damage(), a.speed(), a.range(), a.spread())
+}
+
+/// A card's words with its kind before them ("Next bullet: its hit is
+/// 1.6x wider."), as the shop's detail box says them; Thrift works on a
+/// card, not a bullet, so says only its own.
+pub(super) fn card_words(c: rounds::Card, kind: CardKind, words: &str) -> String {
+    if c == rounds::Card::Thrift {
+        return words.to_string();
+    }
+    let mut w = words.chars();
+    let first = w.next().map(|f| f.to_lowercase().collect::<String>()).unwrap_or_default();
+    format!("{}: {first}{}", kind.label(), w.as_str())
 }
 
 /// A bullet set's glyph (`mould::bullets::Set`): the shop's and the
@@ -1293,7 +1306,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
-        about = format!("{about} Costs {} of the gun's budget.", c.cost());
+        about = format!("{about} Budget {}.", c.cost());
         let flight = kind == CardKind::Flight;
         let idle = !flight && runs[i] >= payloads;
         let goes_with = if flight { None } else { payload_of(runs[i]) };
@@ -1303,7 +1316,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             (_, None) => [146, 156, 168, 255],
         };
         if kind == CardKind::Payload && !castable(c.ammo().map_or(c, |a| a.shell.card())) {
-            about.push_str(" Not on this world yet: it casts nothing here.");
+            about.push_str(" Not on this world yet.");
         }
         // A rolled payload bullet's set in the corner (its glyph is its
         // payload's); a plain one's glyph is already its set.

@@ -87,6 +87,9 @@ pub struct Level {
     pub walkers: f32,
     /// The goal, the bonus and the rules, as a campaign mission.
     pub mission: Mission,
+    /// Game seconds the slime grows alone before the squad lands
+    /// (`head_start`); 0 on planets no bigger than today's map.
+    pub grow: f32,
 }
 
 /// Planets in a run; the last is the slime's home world (the core world,
@@ -110,6 +113,45 @@ pub const REF_OPEN: f32 = 0.93;
 pub fn open_scale(m: &Map) -> f32 {
     let open = m.ground.iter().filter(|&&g| g & G_ROCK == 0).count() as f32;
     open / (m.ground.len().max(1) as f32 * REF_OPEN)
+}
+
+/// The planet's area as a share of today's map (`MAP_W` x `MAP_H`): 0.6 on
+/// planet 1, 6 on the core world (`levelgen::AREA`).
+pub fn area_of(p: &Planet) -> f32 {
+    (p.size.0 * p.size.1) as f32 / (MAP_W * MAP_H) as f32
+}
+
+/// The level's clock (`Rules::cap`, game seconds) for a planet of `area`
+/// (`area_of`): 15 minutes on planet 1's 0.6 and 7.5 minutes more for
+/// each whole map of area, in half minutes: 15:00, 16:30, 18:00, 21:00,
+/// 25:30, 31:30, 40:30 and 55:30 on today's eight planets.
+///
+/// Why (the planet review, 11-15, finding 6): the clock was 900 s on
+/// every planet, while the walk to the far nest grows from 14 s to 60 s
+/// and the slime about 1.6x a planet, so the owner's "15/20 minutes to 1
+/// hour+" a level (11-14 15:33Z) was not wired up. Linear in area, not in
+/// its square root (the walk): the slime and the crystals scale with
+/// area, and the clock is for clearing them, not for crossing the map.
+pub fn clock(area: f32) -> f32 {
+    let secs = 900.0 + 450.0 * (area - 0.6).max(0.0);
+    (secs / 30.0).round() * 30.0
+}
+
+/// Game seconds the slime grows alone before the squad lands on a planet
+/// of `area` (`area_of`): none up to today's map, then a minute for each
+/// time the map's width doubles (60 x (sqrt(area) - 1)): 11, 25, 40, 60
+/// and 87 s on planets 4-8.
+///
+/// Why (the planet review, 11-15, finding 5): the core world's slime
+/// covered 3% of the map at 60 s against 24-26% on planet 1, so the
+/// biggest planet looked the emptiest. A front spreads at the same speed
+/// on any map, so the cover a map shows at a given time falls with its
+/// width; growing it first, by the width, lands the squad on a planet
+/// whose slime has already spread, laid its trail and burnt its plants
+/// ("the core world arrives already digested"). Planets 1-3 land on a
+/// fresh slime as before.
+pub fn head_start(area: f32) -> f32 {
+    (60.0 * (area.sqrt() - 1.0)).max(0.0).round()
 }
 
 /// The goal: the slime down to this share of its peak. Gentler early
@@ -414,14 +456,15 @@ impl Run {
             bonus: Some(Bonus::LoseAtMost(2)),
             // Free play's bite (2), not the missions' older 1: walking into
             // the slime is very deadly (owner, 11-12).
-            rules: vec![("drain".into(), Rules::default().drain)],
+            // The clock grows with the planet (`clock`).
+            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), clock(area_of(&planet)))],
             own: false,
         };
         // Walkers scale with the planet's area too (the level-gen thread,
         // 11-14 17:50Z: the same count covered a third of the smaller
         // planet 1 by 30 s, and would be a corner of a 6x core world).
-        let area = (planet.size.0 * planet.size.1) as f32 / (MAP_W * MAP_H) as f32;
-        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area, mission }
+        let area = area_of(&planet);
+        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers: (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area, mission, grow: head_start(area) }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -672,7 +715,7 @@ impl Run {
                 face: Face::Gun(*g),
                 on,
                 name: title(&g.title()),
-                about: if on { format!("{}. Carried: every soldier lands with it", g.line()) } else { format!("{}. In the armory: pick to carry it", g.line()) },
+                about: if on { "Your squad carries it.".into() } else { "Click to carry it instead.".into() },
                 price: String::new(),
                 state: if on { "carried".into() } else { "armory".into() },
                 ready: !on,
@@ -681,11 +724,11 @@ impl Run {
         }
         for (i, g) in self.gun_offers.iter().enumerate() {
             let p = gun_price(g);
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("{}. Found on planet {}", g.line(), g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Gun(i) });
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_price(c);
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: format!("{} For sale: click to buy it (into the gun when it fits), or drag it onto a slot", c.about()), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
+            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price: p.to_string(), state: "for sale".into(), ready: p <= self.points, pick: Pick::Offer(i) });
         }
         let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
@@ -696,9 +739,12 @@ impl Run {
                 face: Face::Card(c),
                 on,
                 name: card_title(c),
-                about: if on { format!("{} Slot {slot} of the gun, fired in turn: click to take it out, drag it to another slot (or Q and E) to move it", c.about()) } else if fits { format!("{} In the bag: click to put it in the gun, or drag it to a slot", c.about()) } else { format!("{} In the bag: over the gun's budget or slots, take a card out first", c.about()) },
+                // Its words only; how to click and drag is on the shop's
+                // hint line (owner 11-15 02:57Z: the cards' text "is too
+                // much"). Its slot is its state.
+                about: if on || fits { c.about().into() } else { format!("{} Too big for the gun now.", c.about()) },
                 price: String::new(),
-                state: if on { "in the gun".into() } else { "in the bag".into() },
+                state: if on { format!("slot {slot}") } else { "in the bag".into() },
                 ready: on || fits,
                 pick: Pick::Card(i),
             });
@@ -814,9 +860,12 @@ mod tests {
         for d in 1..=10 {
             r.depth = d;
             let l = r.level();
-            assert!(l.walkers > walkers, "more walkers deeper");
+            // A cell's walkers grow deeper, so a smaller planet (a breather)
+            // can have fewer in all.
+            let dense = l.walkers / area_of(&r.planet());
+            assert!(dense > walkers, "more walkers a cell deeper");
             assert!(shrink_goal(d) <= goals);
-            (walkers, goals) = (l.walkers, shrink_goal(d));
+            (walkers, goals) = (dense, shrink_goal(d));
             assert_eq!(l, Run { depth: d, ..Run::new(7) }.level());
             assert_eq!(l.ground, Ground::Planet { seed: 7, depth: d });
             assert_eq!(levelgen::spec_planet(&l.mission.map, 0), Some(Ok(levelgen::planet(7, d))), "the window reads the planet back from the mission's map");
@@ -827,10 +876,26 @@ mod tests {
         assert_eq!(levelgen::CORE_DEPTH, PLANETS);
     }
 
+    /// The planet review's finding 6 and 5 (11-15): the clock grows with
+    /// the planet's area from 15 minutes, and the slime grows first on
+    /// planets bigger than today's map.
+    #[test]
+    fn bigger_planets_get_a_longer_clock_and_a_grown_slime() {
+        let at: Vec<(f32, f32)> = levelgen::AREA.iter().map(|&a| (clock(a), head_start(a))).collect();
+        assert_eq!(at, [(900.0, 0.0), (990.0, 0.0), (1080.0, 0.0), (1260.0, 11.0), (1530.0, 25.0), (1890.0, 40.0), (2430.0, 60.0), (3330.0, 87.0)]);
+        let mut r = Run::new(3);
+        for d in 1..=PLANETS {
+            r.depth = d;
+            let (l, a) = (r.level(), area_of(&r.planet()));
+            let cap = l.mission.rules(Rules::default()).cap;
+            assert_eq!((cap, l.grow), (clock(a), head_start(a)), "planet {d}: the level's rules carry its clock");
+        }
+    }
+
     #[test]
     fn a_level_is_a_mission_the_campaign_would_take() {
         let l = Run::new(1).level();
-        let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain);
+        let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, clock(0.6));
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
     }
 
@@ -894,7 +959,7 @@ mod tests {
         // The shop numbers the slots in firing order and says how to move.
         let rows: Vec<Row> = r.shop().into_iter().filter(|row| row.on && matches!(row.pick, Pick::Card(_))).collect();
         assert_eq!(rows.len(), 4);
-        assert!(rows[1].about.contains("Slot 2 of the gun") && rows[1].about.contains("drag it"), "{}", rows[1].about);
+        assert_eq!((rows[1].state.as_str(), rows[1].about.as_str()), ("slot 2", Card::Quiet.about()));
         assert!(rows.iter().map(|row| row.name.clone()).eq(["Gas", "Quiet", "Blast", "Wide"].map(String::from)));
         // A card for sale dragged onto slot 1: bought and put there; one
         // the gun has no room for is bought into the bag.

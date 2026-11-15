@@ -7,6 +7,7 @@ sources:
   - CLAUDE.md
   - HANDOFF.md
   - Reports/build-flow-2026-11-14/README.md
+  - Reports/card-text-2026-11-15.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
@@ -37,6 +38,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
 | 2026-11-15 02:58 | Squad mode has a way to control no squad: Esc (and the panel's Let go) lets go, every squad runs on its own orders and shows AUTO, and WASD then pans the camera even unpaused | "There should be a way to deselect so that you're not actually controlling any specific squad in there and then you can move around the map using wasd and it's easier to confirm that the squad is now running on its own automated protocol" | [Larder](world/larder.md), [report](../Reports/free-camera-2026-11-15/README.md) |
+| 2026-11-15 02:57 | Gun-card text is one short sentence each with its key number (`draw::card_face`, at most 60 characters); the kinds read Bullet, Next bullet and Always (`CardKind::label`; were Payload, Modifier, Trigger, Flight); how to click and drag is on the shop's hint line, not every card | "The text for all the gun cards is too much. They should be simplified and clarified" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/card-text-2026-11-15.md) |
 | 2026-11-14 20:32 | The player arranges the gun: it fires its slots left to right (`Run::gun` no longer sorts); in the run shop a card dragged onto a slot goes there (a card for sale is bought into it, `Run::buy_into`), onto the bag comes out, and Q and E move the focused card. A card put in without a slot still lands before the first bullet (`Run::put_in`) | "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around" | [run](world/run.md), [report](../Reports/gun-order-2026-11-14.md) |
 | 2026-11-14 20:22 | Every effect's light is the size of its damage: a bullet and its hit light their strike (`Bullet::r`, `Shot::r`), a burst its own radius (a bomb's kill core, not its throw ring); muzzles and embers 1 cell (`MUZZLE_LIGHT`) | "the blast light affect should only be the size of the damage. The same for all affects." | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
 | 2026-11-14 20:03-20:09 | A bullet's hit must not send a big wave over the slime: shot lights cut to 2.5 cells (`SHOT_LIGHT`; a bullet's was 7) and a burst's to 1.5 radii (was 3). Fire from blasts in the new plants is the plants thread's to tune | "even the sniper which is just range and pierce send outs these big circular affects. It is not good."; "each bullet that hit has a huge wave that goes out. it is too much" | [squad toolkit](world/squad-toolkit.md), [report](../Reports/shot-lights-2026-11-14.md) |
