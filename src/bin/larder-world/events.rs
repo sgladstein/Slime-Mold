@@ -79,7 +79,7 @@ impl ApplicationHandler for App {
                     if let Some(c) = self.canvas.as_mut() {
                         c.screen = (size.width, size.height);
                     }
-                    if self.in_menu() {
+                    if self.in_menu() && !self.armory {
                         self.menu_camera();
                     }
                 }

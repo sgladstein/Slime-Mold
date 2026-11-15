@@ -778,10 +778,13 @@ impl App {
                 Resource { icon: Icon::Mould, colour: [196, 220, 120, 255], label: if g.world.garden.is_some() { "The enemy mould: walkers alive".into() } else { "The mould: walkers alive".into() }, value: thousands(g.mould), rate: g.core_down.map(|_| "core taken".into()) },
                 Resource { icon: Icon::Target, colour: theme::ACCENT, label: "Your share of the charge gone from the crystals (with the mould's size, the score at 15:00)".into(), value: format!("{:.0}%", took * 100.0), rate: None },
             ],
-            clock: format!("{} / {}", clock(t), clock(r.cap)),
+            // The gun range has no time limit to show.
+            clock: if self.args.range.is_some() { clock(t) } else { format!("{} / {}", clock(t), clock(r.cap)) },
             speed: if self.paused { Some("Paused".into()) } else if self.fast { Some("x4".into()) } else { None },
             objective: Some(if let Some(tr) = &self.mission {
                 tr.progress_line()
+            } else if self.args.range.is_some() {
+                "Gun range: H opens the armory, B buys soldiers, N a new map".into()
             } else if g.core_rule.kind == CoreKind::Headless {
                 "Wipe out the mould, or out-harvest it and cut it down by 15:00".into()
             } else if g.core_down.is_some() {
@@ -1171,7 +1174,9 @@ impl App {
             slots: (gun.slots as usize).max(1),
             gun: Some((gun_icon(gun.kind), capital(&gun.title()), gun.line())),
             // The budget (owner's card, 11-14 15:34Z) under the cards.
-            note: if round.is_empty() {
+            note: if self.args.range.is_some() {
+                Some(if round.is_empty() { "No cards: H, the armory".into() } else { format!("Cost {} of {}  ·  H, the armory", rounds::cost(&round), gun.budget) })
+            } else if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))

@@ -12,6 +12,10 @@ impl App {
     /// too since 11-14), kept for the next game too: H, or the loadout
     /// strip's button.
     pub(super) fn next_round(&mut self) {
+        // The gun range builds its gun in the armory, which H opens.
+        if self.args.range.is_some() {
+            return self.open_armory();
+        }
         // A run's gun is what its shop built.
         if self.args.run.is_some() {
             self.hud.alert("In a run the gun holds the cards you bought: change it in the shop between planets", None, theme::WARN);
@@ -61,6 +65,9 @@ impl App {
     /// playtest sees the kinds and how far their rolls stray. Goes through
     /// `Cmd::Arm`, so the replay keeps it.
     pub(super) fn next_gun(&mut self) {
+        if self.args.range.is_some() {
+            return self.open_armory();
+        }
         // A run's guns come from its shop (the roguelike thread).
         if self.args.run.is_some() {
             self.hud.alert("In a run the squad's gun is the one it carries: change it in the shop between planets", None, theme::WARN);
@@ -84,6 +91,9 @@ impl App {
     /// sets and how far their rolls stray. Goes through `Cmd::Load`, so
     /// the replay keeps it.
     pub(super) fn next_bullets(&mut self) {
+        if self.args.range.is_some() {
+            return self.open_armory();
+        }
         if self.args.run.is_some() {
             self.hud.alert("In a run the gun holds the bullets you bought: change them in the shop between planets", None, theme::WARN);
             return;
