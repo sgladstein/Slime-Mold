@@ -29,6 +29,7 @@ sources:
   - Reports/shot-damage-2026-11-12.md
   - Reports/ui-review-2026-11-15/README.md
   - Reports/ui-scale-2026-11-15/README.md
+  - Reports/whole-game-review-2026-11-15/README.md
 code:
   - Params::pieces
 ---
@@ -43,6 +44,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 08:30 | The game the owner plays and judges by is the roguelike run in squad mode; the work it most needs is an enemy that progresses and presses ("especially when your guns get stronger"), guns that are a main draw, and menus and shortcuts that don't get in the way | "3) squad mode on roguelike run"; "There needs to be more interesting progression in the enemy"; "The gun graphics need work. They should really be one of the draws of the game. They need to be really satisfying." | [run](world/run.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
 | 2026-11-15 08:10 | The rifle and the long gun get a small base aim spread, 0.5 and 0.3 cells (`guns::RIFLE_SPREAD`, `Rules::spread`), so a bullet card's spread multiplier (Buckshot wider, Needle tighter) shows on every gun | Card "Fix spread bullets on the rifle and long gun how?": "Small base spread on both" | [bug check](../Reports/bug-check-2026-11-15/README.md) |
 | 2026-11-15 07:57 | Squad mode is the default: the window (play.cmd, the start menu's Control option, sandbox, Random planet, a run, the gun range) plays it unless `mode=rts` or Control: rts says otherwise. The campaign's missions stay RTS (they are written for the larder), and the no-window films, censuses and bench keep RTS unless they say `mode=squads` | "squad mode is default mode" | [Larder World](world/larder.md) |
 | 2026-11-15 07:56 | Every screen follows the UI size, the start menu, options, key card, run shop and gun range included; a page taller than the window scrolls rather than shrinking | "Changing the UI /text percentage increase does do what it should the menus are unaffected. The gun range is unaffected (I cannot read any of the text). I am guessing the shop doesn't change." | [world camera](world/world-camera.md), [report](../Reports/ui-scale-2026-11-15/README.md) |
