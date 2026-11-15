@@ -195,9 +195,17 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
     let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
-    if r.depth == run::PLANETS {
-        lines.push("The slime's home world: beat it and the run is won".into());
+    // The level's clock and head start (`run::clock`, `run::head_start`).
+    let cap = l.mission.rules(Rules::default()).cap;
+    let secs = cap.round() as u32;
+    let mut clock = format!("{}:{:02} on the clock", secs / 60, secs % 60);
+    if l.grow > 0.0 {
+        clock += &format!("; the slime spreads for {:.0} s before you land", l.grow);
     }
+    if r.depth == run::PLANETS {
+        clock = format!("The slime's home world: beat it and the run is won. {clock}");
+    }
+    lines.push(clock);
     // The cards' words and colours as the HUD's loadout strip shows them,
     // with the run's own rules.
     let mut rules = Rules::default();
