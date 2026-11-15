@@ -137,6 +137,7 @@ pub struct View {
     /// The plants' first cell block in `news` (words; 0 off,
     /// `set_plants`).
     plant_at: u32,
+    flora: u32,
     ripe_at: u32,
     lag: u32,
     lean: u32,
@@ -263,6 +264,7 @@ impl View {
             news_on: false,
             dense_at: 0,
             plant_at: 0,
+            flora: 0,
             ripe_at: 0,
             lag: 0,
             lean: 0,
@@ -566,7 +568,10 @@ impl View {
     /// / 4 + `gpu::PLANT_HEAD`): the plants as a ground layer between the
     /// soil and the slime, fire's heat as glowing flame, the char as burnt
     /// ground. `None` hides them.
-    pub fn set_plants(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32) {
+    /// `flora` is the map's (`map::Items::flora`): which forms its plants
+    /// take up close.
+    pub fn set_plants(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32, flora: u32) {
+        self.flora = flora;
         match news {
             Some((n, s)) => {
                 if !self.news_on && self.dense_at == 0 {
@@ -737,7 +742,7 @@ impl View {
         for v in [self.dense_at, self.ripe_at, Self::fine_half(self.screen), self.stride * self.screen.1] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, 0] {
+        for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, self.flora] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {

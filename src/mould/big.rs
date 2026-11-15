@@ -1488,6 +1488,8 @@ pub struct BigDish {
     pub fire_steps: u32,
     /// The map's `moisture BASE SPREAD` line, kept for `Map::of_dish`.
     pub moisture_of: Option<(f32, f32)>,
+    /// The map's flora (`Items::flora`), for the view's plant forms.
+    pub flora_of: Option<u8>,
     /// Fire's kills the game has been told of (`World::burned`).
     pub fire_told: u64,
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
@@ -1729,6 +1731,7 @@ impl BigDish {
             moist: Vec::new(),
             fire_steps: 0,
             moisture_of: None,
+            flora_of: None,
             fire_told: 0,
             gassed: Vec::new(),
             flung: Vec::new(),
@@ -1815,6 +1818,9 @@ impl BigDish {
     /// cell's capacity; empty (plants off) when neither gives any.
     fn place_plants(&mut self, map: Option<&Map>) {
         use crate::mould::plants as pl;
+        // The biome's flora is the map's even with no plants on it: the
+        // ground's look reads it too (ground thread, 11-15).
+        self.flora_of = map.and_then(|m| m.items.flora);
         let has_map = map.is_some_and(|m| !m.plants.is_empty());
         if !has_map && self.p.plant_fill <= 0.0 {
             return;
