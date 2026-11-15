@@ -782,7 +782,7 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers)?;
+            run_shape(&mut s, l.walkers, l.depth)?;
         }
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.

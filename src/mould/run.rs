@@ -186,6 +186,36 @@ pub fn shrink_goal(_depth: u32) -> f32 {
 /// `shrink_goal` on every planet.
 pub const WIN_SHARE: f32 = 0.02;
 
+/// The slime's surge period (`BigParams::surge_every`, steps, 30 a game
+/// second), its lunge (`surge_dash`, steps) and its thickening threshold
+/// (`thicken`, a birth's energy) by planet, 1 to 8; past the end the last.
+/// The sandbox's shape C is 900, 30 and 2.
+const SURGE_EVERY: [u32; 8] = [1200, 1200, 900, 900, 750, 600, 600, 450];
+const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
+const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
+
+/// **The slime gets fiercer deeper** (2026-11-15, the slime-enemy thread;
+/// the run thread agreed the curve): engine keys over shape C's on a run's
+/// planet, before the tier's and the menu's own (`run_shape`). The slime
+/// surges more often and lunges longer, and thickens sooner, so it presses
+/// harder and gets tougher faster from what it holds. Planet 1 surges every
+/// 40 s, gentler than the sandbox's 30; the core world every 15 s, lunging
+/// 1.8 s. Why: the owner, 11-15 08:30Z, wants "more interesting
+/// progression in the enemy ... and increase in challenge ... especially
+/// when your guns get stronger"; until now depth grew only the walkers
+/// and changed the tier. The surge's reach follows the guns already (the
+/// gun's range plus `Rules::panic_margin`).
+pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
+    let i = (depth.max(1) as usize - 1).min(SURGE_EVERY.len() - 1);
+    vec![("surge", SURGE_EVERY[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))]
+}
+
+/// A planet's surge period in game seconds (`enemy_keys`), for the shop.
+pub fn surge_secs(depth: u32) -> f32 {
+    let i = (depth.max(1) as usize - 1).min(SURGE_EVERY.len() - 1);
+    SURGE_EVERY[i] as f32 / 30.0
+}
+
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {
     150 + 50 * depth + 50 * u32::from(stars.saturating_sub(1))
@@ -956,6 +986,27 @@ fn title(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Deeper, the slime surges no less often, lunges no shorter and
+    /// thickens no later; planet 1 is gentler than the sandbox's shape C
+    /// and the core world fiercer, and every key is one the engine takes.
+    #[test]
+    fn the_slime_gets_fiercer_deeper() {
+        let get = |d: u32, k: &str| enemy_keys(d).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
+        for d in 1..=10 {
+            assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash") && get(d + 1, "thicken") <= get(d, "thicken"), "planet {d}");
+            assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
+            let mut p = crate::mould::big::BigParams::today();
+            for (k, v) in enemy_keys(d) {
+                crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
+            }
+            assert!(p.surge_every > 0 && p.surge_dash > 0 && p.thicken > 0.0);
+        }
+        let (_, c) = crate::mould::larder_world::shape_keys("c").unwrap();
+        let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
+        assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);
+        assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash") && get(PLANETS, "thicken") < get(1, "thicken"));
+    }
 
     #[test]
     fn levels_get_harder_and_the_same_seed_gives_the_same_run() {
