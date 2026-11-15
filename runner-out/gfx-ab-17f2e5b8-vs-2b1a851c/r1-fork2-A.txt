@@ -1,0 +1,14 @@
+runner note: build A; round 1; command lw-A.exe map=fork bench=30 hand=farm centre=175,215,6; idle samples 4,2,1,2,2 % (check under 10%); card 797 MHz, 810 MHz, 56, 11.60 W
+larder-world machine at the start: RAM 3.2 GB free of 8.0; GPU memory 1524 MB in use of 8192, 3% busy; on the GPU too: steamwebhelper.exe, claude.exe, explorer.exe, steam.exe, msedgewebview2.exe, SystemSettings.exe, SearchApp.exe, TextInputHost.exe, Video.UI.exe, StartMenuExperienceHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+  view: zoom 6 at 175,215
+larder-world bench: fork seed 1, 512 x 320 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2; hand farm, 30 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 106.8 MB for 512 x 320 cells (652 bytes a cell), the biggest 16.7 MB
+  1800 frames, 450 game steps; 0.06 read-backs a step, 0.00 waits a step (0.03 ms a step waiting); steps finished once in 449, when the next was due 0
+  every frame (1800 of them), ms: frame p50 4.46 p95 5.35 max 12.87; step  p50 0.05 p95 0.81 max 6.06; prepare  p50 0.20 p95 0.39 max 3.44; record  p50 0.14 p95 0.27 max 3.55; GPU tail  p50 3.82 p95 4.38 max 6.58
+  frames with a step (450 of them), ms: frame p50 4.82 p95 6.07 max 10.19; step  p50 0.69 p95 1.32 max 5.88; prepare  p50 0.19 p95 0.32 max 1.90; record  p50 0.15 p95 0.28 max 3.55; GPU tail  p50 3.72 p95 4.20 max 5.30
+  after the first game second (1740 frames), ms: frame max 12.87; step max 6.06; prepare max 3.44
+  ground refresh: 29 of them, ms: mean 0.35 max 0.59, of which the read-back at most 0.28; 5266 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 30 s: mould 23571, soldiers 1, buildings 0, harvested 1292, shots 120, killed 1944
+  machine at the end: RAM 3.0 GB free of 8.0; GPU memory 1732 MB in use of 8192, 1% busy; on the GPU too: steamwebhelper.exe, claude.exe, explorer.exe, steam.exe, msedgewebview2.exe, SystemSettings.exe, SearchApp.exe, TextInputHost.exe, Video.UI.exe, StartMenuExperienceHost.exe, ShellExperienceHost.exe
