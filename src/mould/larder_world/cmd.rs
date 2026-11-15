@@ -233,8 +233,10 @@ impl<W: World> Game<W> {
         let a = self.rng.f32() * std::f32::consts::TAU;
         // A bought soldier joins the controlled squad, at its side (owner,
         // 2026-11-14 04:18Z); with none controlled it starts at the larder
-        // on the rally order, as before.
-        let join = self.active.filter(|&q| self.rules.squads && !self.members(q).is_empty());
+        // on the rally order, as before. In the squad mode with none
+        // controlled (deselected, owner 2026-11-15 02:58Z) it joins the
+        // lowest live squad: there is no larder to start at.
+        let join = self.active.filter(|&q| !self.members(q).is_empty()).or_else(|| self.live_squads().first().copied()).filter(|_| self.rules.squads);
         let at = join.and_then(|q| self.middle(q));
         self.add_soldier_at(at.unwrap_or(self.larder), a);
         let gather = join.is_some_and(|q| self.squads[q].steer == (0.0, 0.0) && self.squads[q].dest.is_none());

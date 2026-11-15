@@ -227,7 +227,7 @@ impl App {
                     self.larder_sel = false;
                 }
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
-                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover) => self.squad_panel_event(ev),
+                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover | HudEvent::SquadFree) => self.squad_panel_event(ev),
                 HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
                 HudEvent::Idle => {
                     let after = self.controls.selected.first().copied();

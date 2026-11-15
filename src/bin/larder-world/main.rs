@@ -1262,7 +1262,8 @@ impl App {
         if !self.in_menu() {
             // WASD pans only while paused (`Controls::wasd_pan`): set here
             // too, so a key held through P stops panning as play resumes.
-            self.controls.wasd_pan &= self.paused && self.game.as_ref().is_some_and(|g| g.end.is_none());
+            // (Also with no squad controlled, `SquadInput::free`.)
+            self.controls.wasd_pan &= (self.paused || self.squad_free()) && self.game.as_ref().is_some_and(|g| g.end.is_none());
             self.controls.update(&mut self.camera, dt);
             self.squad_frame(dt);
         }

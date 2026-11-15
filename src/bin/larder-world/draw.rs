@@ -387,14 +387,22 @@ impl App {
         }
         if g.rules.squads {
             // Each squad's number over its middle (the key that controls
-            // it: its id + 1, kept while it lives), the controlled one bright.
+            // it: its id + 1, kept while it lives), the controlled one bright,
+            // the rest "auto": they run on their own orders (owner
+            // 2026-11-15 02:58Z: "easier to confirm that the squad is now
+            // running on its own"). A squad linked with the controlled one
+            // is commanded with it, so it is not auto.
             for q in g.live_squads() {
                 let n = q;
                 if let Some(m) = g.middle(q) {
                     let lit = g.active == Some(q);
                     let colour = if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
-                    let label = format!("{}{}", n + 1, if lit { " *" } else { "" });
-                    self.marks.label(m, (-4.0, -(4.0 * sc * zoom).clamp(14.0, 60.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
+                    let label = format!("{}{}", n + 1, if lit { " *" } else if g.leads(q) { "" } else { " auto" });
+                    // Above its topmost soldier, so the soldiers' sprites
+                    // don't cover the number (the longer "N auto" label of
+                    // 11-15 showed only its tail over a spread squad).
+                    let top = g.members(q).iter().map(|&k| g.soldiers[k].y).fold(m.1, f32::min);
+                    self.marks.label((m.0, top), (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0)), &label, if lit { 2.0 } else { 1.5 }, colour);
                 }
             }
         }

@@ -2786,3 +2786,42 @@ fn a_link_whose_controlled_squad_dies_hands_control_to_the_rest() {
     assert!(g.apply(Cmd::Active(0)), "the live squad of the link takes control");
     assert_eq!(g.active, Some(0));
 }
+
+/// **Letting go of every squad** (owner 2026-11-15 02:58Z: "a way to
+/// deselect so that you're not actually controlling any specific squad"):
+/// `Cmd::Active(u8::MAX)` stops the one let go (and its link) steering and
+/// volleying, keeps its sent order, takes the lead edge from it, and a
+/// soldier bought meanwhile still joins a squad (there is no larder).
+#[test]
+fn letting_go_stops_the_steer_keeps_orders_and_a_bought_soldier_joins_a_squad() {
+    let mut g = squads(4);
+    g.bank = 1e6;
+    for _ in 0..3 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    let b = g.split(0, (m.0 + 30.0, m.1)).expect("a split");
+    assert_eq!(g.active, Some(b));
+    let to = open_near(&g, 20.0);
+    g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+    let sent = g.squads[0].dest;
+    assert!(sent.is_some());
+    g.apply(Cmd::Steer(b as u8, (1.0, 0.0)));
+    g.apply(Cmd::Fire(b as u8, Some(m)));
+    assert!(g.leads(b));
+    assert!(g.apply(Cmd::Active(u8::MAX)));
+    assert_eq!(g.active, None);
+    assert_eq!(g.squads[b].steer, (0.0, 0.0), "let go, it stops steering");
+    assert!(g.squads[b].fire.is_none(), "and stops volleying");
+    assert!(!g.leads(b) && !g.leads(0), "no squad has the lead's edge");
+    assert_eq!(g.squads[0].dest, sent, "the other keeps the order it was sent on");
+    let n = g.alive();
+    assert!(g.apply(Cmd::Buy));
+    assert_eq!(g.alive(), n + 1);
+    let k = g.soldiers.len() - 1;
+    assert_eq!(g.soldiers[k].squad as usize, g.live_squads()[0], "the new soldier joins the lowest live squad");
+    // A replay line round-trips.
+    assert_eq!(Cmd::parse(&Cmd::Active(u8::MAX).to_line()), Some(Cmd::Active(u8::MAX)));
+}

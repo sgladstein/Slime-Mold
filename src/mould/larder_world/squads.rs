@@ -848,9 +848,20 @@ impl<W: World> Game<W> {
                 true
             }
             Cmd::Active(q) => {
-                // u8::MAX lets go of every squad.
+                // u8::MAX lets go of every squad (owner 2026-11-15 02:58Z:
+                // deselect, so every squad runs on its own). The one let go
+                // stops steering and volleying, as on a switch, and keeps
+                // its other orders; it no longer faces the cursor.
                 if q == u8::MAX {
-                    self.active = None;
+                    if let Some(old) = self.active.take() {
+                        for r in self.linked(old) {
+                            self.squads[r].fire = None;
+                            if self.squads[r].steer != (0.0, 0.0) {
+                                self.squads[r].steer = (0.0, 0.0);
+                                self.squads[r].dest = self.middle(r);
+                            }
+                        }
+                    }
                     return true;
                 }
                 if (q as usize) >= SQUADS_MAX || self.members(q as usize).is_empty() {
