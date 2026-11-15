@@ -1326,6 +1326,7 @@ impl App {
             }
             if let Some(v) = self.view.as_mut() {
                 v.minimap_box = None;
+                v.minimap_off = true;
                 v.set_marks(&self.marks);
             }
             return;
@@ -1340,6 +1341,7 @@ impl App {
         }
         if let Some(v) = self.view.as_mut() {
             v.minimap_box = self.hud.minimap_box;
+            v.minimap_off = false;
             v.set_marks(&self.marks);
             v.set_lights(&self.lights);
         }

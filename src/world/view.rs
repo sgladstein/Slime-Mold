@@ -189,6 +189,9 @@ pub struct View {
     /// Where the UI wants it: a box it is fitted into (`minimap_in`);
     /// `None` the bottom-right corner.
     pub minimap_box: Option<(u32, u32, u32, u32)>,
+    /// Hidden for now (a full-screen menu is up: the unframed minimap sat
+    /// on the run shop's armory; UI review, 11-15).
+    pub minimap_off: bool,
     has_overlay: bool,
     has_vis: bool,
     n_marks: u32,
@@ -291,6 +294,7 @@ impl View {
             stride,
             minimap: true,
             minimap_box: None,
+            minimap_off: false,
             has_overlay: false,
             has_vis: false,
             n_marks: 0,
@@ -671,7 +675,7 @@ impl View {
 
     /// The minimap's rectangle this frame, if drawn.
     pub fn minimap_rect(&self, cam: &Camera) -> Option<(u32, u32, u32, u32)> {
-        if !self.minimap {
+        if !self.minimap || self.minimap_off {
             return None;
         }
         // A HUD that frames the minimap shows it at every zoom (Larder
