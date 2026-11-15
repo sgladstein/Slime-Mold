@@ -243,6 +243,11 @@ pub struct BuildRules {
     /// it, 3 cells plus the soldier's place in its squad's sunflower round
     /// the ghost, so a squad walked round to stand on every side.
     pub reach: f32,
+    /// The share of its price a standing building pays back when pulled
+    /// down (`Game::demolish`, the building card's Demolish). The owner
+    /// has not ruled it (2026-11-15); half, as the menus thread proposed,
+    /// so pulling down and rebuilding elsewhere costs something.
+    pub demolish: f32,
 }
 
 impl Default for BuildRules {
@@ -280,6 +285,7 @@ impl Default for BuildRules {
             drain: 1.0,
             anywhere: true,
             reach: 6.0,
+            demolish: 0.5,
         }
     }
 }
@@ -485,9 +491,34 @@ impl<W: World> Game<W> {
         Some(price)
     }
 
+    /// Pull down standing building `b` (`Cmd::Demolish`): it is gone and
+    /// `BuildRules::demolish` of its price comes back. Not a wall: its
+    /// cells are the world's (the GPU dish has no way to lift them yet),
+    /// and not a ghost (`unbuild` calls those off for the whole price).
+    /// The food returned, or None.
+    pub fn demolish(&mut self, b: usize) -> Option<f32> {
+        let bd = self.buildings.get(b).copied().filter(|bd| bd.alive && bd.built >= 1.0 && !matches!(bd.kind, Kind::Wall { .. }))?;
+        let back = self.rules.build.demolish * self.build_price(bd.kind, bd.at);
+        self.buildings[b].alive = false;
+        self.bank += back;
+        self.spent -= back;
+        Some(back)
+    }
+
     /// The ghost nearest `p` within its footprint and a cell, if any (the
     /// window's cancel click; a wall by its line).
     pub fn ghost_at(&self, p: (f32, f32)) -> Option<usize> {
+        self.nearest_building(p, |bd| bd.built < 1.0)
+    }
+
+    /// The live building nearest `p` within its footprint and a cell,
+    /// standing or not (the window's click that selects a building, owner
+    /// 2026-11-15 19:51Z).
+    pub fn building_at(&self, p: (f32, f32)) -> Option<usize> {
+        self.nearest_building(p, |_| true)
+    }
+
+    fn nearest_building(&self, p: (f32, f32), keep: impl Fn(&Building) -> bool) -> Option<usize> {
         let r = (self.rules.build.touch + 1.0) * self.s();
         let d = |bd: &Building| {
             let q = match bd.kind {
@@ -497,7 +528,7 @@ impl<W: World> Game<W> {
             (q.0 - p.0).hypot(q.1 - p.1)
         };
         (0..self.buildings.len())
-            .filter(|&b| self.buildings[b].alive && self.buildings[b].built < 1.0)
+            .filter(|&b| self.buildings[b].alive && keep(&self.buildings[b]))
             .map(|b| (b, d(&self.buildings[b])))
             .filter(|&(_, x)| x <= r)
             .min_by(|a, b| a.1.total_cmp(&b.1))

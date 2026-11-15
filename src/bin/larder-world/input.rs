@@ -254,11 +254,41 @@ impl App {
         }
     }
 
-    /// A burn line shared out: each soldier keeps the whole line burning
-    /// (`Order::Burn`) from its own place along it.
-    pub(super) fn burn(&mut self, ids: &[usize], from: (f32, f32), to: (f32, f32)) {
-        if !self.squad_order(Order::Burn(from, to)) {
-            self.order_all(ids, |_| Order::Burn(from, to));
+    /// The selected building's card (`App::building_card`): call it off,
+    /// pull it down, upgrade it or switch it.
+    fn building_action(&mut self, id: u32) {
+        let Some(b) = self.building_sel else { return };
+        let Some(g) = self.game.as_mut() else { return };
+        let Some(bd) = g.buildings.get(b).copied().filter(|bd| bd.alive) else { return };
+        let what = match bd.kind {
+            Kind::Wall { .. } => "wall",
+            k => k.name(),
+        };
+        match id {
+            CANCEL_BUILD => {
+                let back = g.build_price(bd.kind, bd.at);
+                if g.apply(Cmd::Unbuild(b)) {
+                    self.hud.alert(&format!("Called off the {what}: {back:.0} food back"), Some(bd.at), theme::GOOD);
+                    self.building_sel = None;
+                }
+            }
+            DEMOLISH => {
+                let back = g.rules.build.demolish * g.build_price(bd.kind, bd.at);
+                if g.apply(Cmd::Demolish(b)) {
+                    self.hud.alert(&format!("Pulled down the {what}: {back:.0} food back"), Some(bd.at), theme::GOOD);
+                    self.building_sel = None;
+                }
+            }
+            UPGRADE => {
+                if g.apply(Cmd::Upgrade(b)) {
+                    let rate = g.pump_draw(b) * g.pump_yield(b);
+                    self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
+                }
+            }
+            SWITCH => {
+                g.apply(Cmd::Toggle(b));
+            }
+            _ => {}
         }
     }
 
@@ -286,7 +316,7 @@ impl App {
                     self.larder_sel = false;
                 }
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
-                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover | HudEvent::SquadHeal | HudEvent::SquadFree) => self.squad_panel_event(ev),
+                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadFree) => self.squad_panel_event(ev),
                 HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
                 HudEvent::Idle => {
                     let after = self.controls.selected.first().copied();
@@ -314,6 +344,25 @@ impl App {
                 }
                 HudEvent::Command { id } => match id {
                     NEXT_ROUND => self.next_round(),
+                    CANCEL_BUILD | DEMOLISH | UPGRADE | SWITCH => self.building_action(id),
+                    HEAL_ORDER => self.squad_heal(),
+                    LOOKOUTS => self.squad_lookouts(),
+                    // The fire button (Card 2): hold, defend, free, round
+                    // again; a mixed selection goes to the stance after the
+                    // first soldier's.
+                    FIRE => {
+                        if let Some(g) = self.game.as_mut() {
+                            let next = match sel.first().map(|&k| g.soldiers[k].stance) {
+                                Some(Stance::HoldFire) => Stance::Defend,
+                                Some(Stance::Defend) => Stance::Free,
+                                _ => Stance::HoldFire,
+                            };
+                            for &k in &sel {
+                                g.apply(Cmd::Stance(k, next));
+                            }
+                            self.hud.alert(&format!("Fire: {}", stance_name(next)), None, theme::TEXT);
+                        }
+                    }
                     STOP => self.order_all(&sel, |_| Order::Hold),
                     HOLD_FIRE | DEFEND | FREE => {
                         let st = match id {
@@ -372,6 +421,13 @@ impl App {
                 HudEvent::Point { id: HARVEST, at } if self.squad_order(Order::Clear(at.0, at.1)) => {}
                 HudEvent::Point { id: HARVEST, at } => self.order_all(&sel, |_| Order::Clear(at.0, at.1)),
                 HudEvent::Point { id: RALLY, at } => self.rally(at),
+                // Guard (owner 2026-11-15 19:51Z, in Burn a line's place):
+                // the squad as one, as its other orders, else each soldier.
+                HudEvent::Point { id: GUARD, at } => {
+                    if !self.squad_order(Order::Guard(at.0, at.1)) {
+                        self.order_all(&sel, |_| Order::Guard(at.0, at.1));
+                    }
+                }
                 // A then click: on the core's ring, attack the core; else
                 // attack-move there.
                 HudEvent::Point { id: ATTACK, at } => {
@@ -444,7 +500,6 @@ impl App {
                     self.use_tool(tool);
                 }
                 HudEvent::Line { id: T_CORD, from, to } => self.use_tool(Tool::Cord(from, to)),
-                HudEvent::Line { id: BURN, from, to } => self.burn(&sel, from, to),
                 HudEvent::Line { id: WALL, from, to } => {
                     if let Some(g) = self.game.as_mut() {
                         let price = g.wall_price(from, to);

@@ -71,7 +71,7 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
-pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_MUZZLE};
 use buildings::Who;
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -111,6 +111,10 @@ struct Paths {
 
 /// Orders a soldier can hold in its queue after the one it is doing.
 pub const QUEUE: usize = 8;
+/// What a Guard order keeps round a crystal's rim or a building's
+/// footprint, dish cells (`Game::zone_at`): slime this near what is
+/// guarded is coming onto it.
+pub const GUARD_RIM: f32 = 3.0;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Soldier {

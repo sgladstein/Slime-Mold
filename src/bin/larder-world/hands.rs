@@ -100,6 +100,9 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "greedy" {
         return greedy_hand(g);
     }
+    if hand == "guard" {
+        return guard_hand(g);
+    }
     // `build`: farm, with a pump on the larder's crystal, two turrets on
     // the road to the core and a lure past them (the look at buildings);
     // `siren` the same with a siren in the lure's place (a tier's look).
@@ -595,5 +598,45 @@ fn guardwork_hand(g: &mut Game<GpuWorld>) {
             g.harvested,
             g.killed
         );
+    }
+}
+
+/// `hand=guard` (squad mode; the command card's Guard, 2026-11-15): eight
+/// soldiers, then at 1 s the squad is told to guard the slimed crystal
+/// nearest it (the nearest crystal if none is slimed), and holds there on
+/// Defend, so the film shows the zone it keeps and what it shoots in it.
+pub(super) fn guard_hand(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    let sc = g.world.scale();
+    while t < 1.0 && g.bank >= g.rules.soldier_cost && g.alive() < 8 {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    let Some(q) = g.active else { return };
+    // `GUARD_MOVE=1`: the same crystal by a plain move (the right click
+    // before Guard), for the paired check; the zone's walkers each second.
+    let plain = std::env::var("GUARD_MOVE").is_ok();
+    let sent = g.log.iter().find_map(|(_, c)| match c {
+        Cmd::SquadOrder(_, Order::Guard(x, y) | Order::Move(x, y)) => Some((*x, *y)),
+        _ => None,
+    });
+    if let Some(p) = sent {
+        let (m, r) = g.zone_at(p);
+        println!("  guard zone t {t:.0} s: {} walkers in it, {} killed", g.world.walkers_in(m, r), g.killed);
+        return;
+    }
+    if t < 1.0 {
+        return;
+    }
+    let Some(m) = g.middle(q) else { return };
+    let cs = g.world.crystals();
+    let d = |c: (f32, f32)| (c.0 - m.0).hypot(c.1 - m.1);
+    let slimed = |i: usize| g.world.walkers_in(cs[i].0, g.world.crystal_r(i) + 4.0 * sc) > 50;
+    let pick = (0..cs.len()).filter(|&i| cs[i].1 > 0.0 && slimed(i)).min_by(|&a, &b| d(cs[a].0).total_cmp(&d(cs[b].0))).or_else(|| (0..cs.len()).filter(|&i| cs[i].1 > 0.0).min_by(|&a, &b| d(cs[a].0).total_cmp(&d(cs[b].0))));
+    if let Some(i) = pick {
+        let c = cs[i].0;
+        println!("  guard t {t:.1} s: squad {} guards crystal {i} at {:.0},{:.0} ({:.0} cells off)", q + 1, c.0, c.1, d(c) / sc);
+        g.apply(Cmd::SquadOrder(q as u8, if plain { Order::Move(c.0, c.1) } else { Order::Guard(c.0, c.1) }));
     }
 }

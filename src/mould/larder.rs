@@ -213,6 +213,11 @@ pub enum Order {
     /// Walk to building `k`'s site and raise it (the world game's
     /// `larder_world::buildings`; M3 has no buildings and holds).
     Build(usize),
+    /// Guard this point (the world game's Guard, owner 2026-11-15 19:51Z,
+    /// in Burn a line's place on the card): stand by it and shoot slime
+    /// that comes onto it, a crystal or a building there with its edge
+    /// (`larder_world::Game::guard_zone`). M3 plays it as a move.
+    Guard(f32, f32),
 }
 
 /// **A player's command**, as the window gives it. Every command goes
@@ -240,6 +245,7 @@ impl Cmd {
                 Order::Attack => format!("order {k} attack"),
                 Order::Fight(x, y) => format!("order {k} fight {x} {y}"),
                 Order::Build(b) => format!("order {k} build {b}"),
+                Order::Guard(x, y) => format!("order {k} guard {x} {y}"),
             },
             Cmd::Stance(k, st) => format!(
                 "stance {k} {}",
@@ -272,6 +278,7 @@ impl Cmd {
                     "attack" => Order::Attack,
                     "fight" => Order::Fight(f(3)?, f(4)?),
                     "build" => Order::Build(w.get(3)?.parse().ok()?),
+                    "guard" => Order::Guard(f(3)?, f(4)?),
                     _ => return None,
                 },
             ),
@@ -989,7 +996,7 @@ impl Game {
         }
         match s.order {
             Order::Hold | Order::Build(_) => self.defend(k, here),
-            Order::Move(x, y) | Order::Fight(x, y) => {
+            Order::Move(x, y) | Order::Fight(x, y) | Order::Guard(x, y) => {
                 let o = slot(k);
                 self.walk(k, (x + o.0, y + o.1), 0.5);
                 self.defend(k, here);

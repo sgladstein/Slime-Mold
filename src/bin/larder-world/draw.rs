@@ -153,6 +153,7 @@ fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: 
             Order::Clear(x, y) => Some((x, y)),
             Order::Attack => Some(g.core),
             Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Order::Guard(x, y) => Some((x, y)),
             Order::Build(b) => g.buildings.get(b).map(|b| b.at),
             Order::Hold => None,
         };
@@ -415,6 +416,28 @@ impl App {
         }
         if self.larder_sel {
             self.marks.selected(g.larder, 3.6 * sc * zoom);
+        }
+        // The building selected (option b), ringed as a soldier is.
+        if let Some(bd) = self.building_sel.and_then(|b| g.buildings.get(b)).filter(|bd| bd.alive && self.controls.selected.is_empty()) {
+            let at = match bd.kind {
+                Kind::Wall { to } => ((bd.at.0 + to.0) / 2.0, (bd.at.1 + to.1) / 2.0),
+                _ => bd.at,
+            };
+            self.marks.selected(at, (g.rules.build.touch + 1.0) * sc * zoom);
+        }
+        // What is guarded (`Order::Guard`, `Squad::guard`): the zone its
+        // guards keep, a ring in the order line's white, so the player sees
+        // what the order covers.
+        let mut zones: Vec<((f32, f32), f32)> = g.soldiers.iter().filter_map(|s| match s.order {
+            Order::Guard(x, y) if s.alive => Some(g.zone_at((x, y))),
+            _ => None,
+        }).collect();
+        if g.rules.squads {
+            zones.extend(g.live_squads().into_iter().filter_map(|q| g.squads[q].guard.map(|p| g.zone_at(p))));
+        }
+        zones.dedup();
+        for (p, r) in zones {
+            self.marks.ring(p, r, [200, 230, 255, 150]);
         }
         if let Order::Move(x, y) | Order::Clear(x, y) = g.rally {
             if self.larder_sel || !self.controls.selected.is_empty() {
@@ -921,6 +944,7 @@ impl App {
                 Order::Build(..) => Some(Icon::Wall),
                 Order::Clear(..) => Some(Icon::Crystal),
                 Order::Burn(..) => Some(Icon::Burn),
+                Order::Guard(..) => Some(Icon::Shield),
                 Order::Attack => Some(Icon::Attack),
             };
             Card { id: k, icon: Icon::Soldier, team: 0, hp: s.hp / r.hp, badge }
@@ -947,6 +971,7 @@ impl App {
                 Order::Clear(..) if s.homing => "carrying charge home",
                 Order::Clear(..) => "harvesting a crystal",
                 Order::Burn(..) => "holding a burn line",
+                Order::Guard(..) => "guarding",
                 Order::Attack => "attacking the core",
             };
             m.info = Some(Info {
@@ -966,6 +991,9 @@ impl App {
                 ],
                 note: None,
             });
+        }
+        if let Some(bk) = self.building_sel.filter(|_| sel.is_empty()).filter(|&bk| g.buildings.get(bk).is_some_and(|bd| bd.alive)) {
+            m.info = Some(self.building_info(g, bk));
         }
         if self.larder_sel && sel.is_empty() {
             m.info = Some(Info {
@@ -1009,64 +1037,121 @@ impl App {
             }
         }
         let any = !sel.is_empty();
+        let squads = self.sq.is_some();
         let stance = sel.first().map(|&k| g.soldiers[k].stance).filter(|&f| sel.iter().all(|&k| g.soldiers[k].stance == f));
         let need = |cost: f32| (g.bank < cost).then(|| format!("Need {:.0} more food", cost - g.bank));
-        let no_sel = || Some("Select soldiers first".to_string());
+        let no_sel = || Some(if squads { "Take command of a squad first".to_string() } else { "Select soldiers first".to_string() });
         let full = g.alive() >= r.max_squad;
+        let b = r.build;
+        let room = g.standing() < b.max;
+        // A building placed by a click (the build page's, and Pump on the
+        // main card, owner's Card 2 of 2026-11-15 19:38Z).
+        let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
+            target: Target::Point { radius: b.touch * sc },
+            cost: Some(format!("{cost:.0}")),
+            ready: g.bank >= cost && room,
+            why_not: if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) },
+            about,
+            ..Command::new(id, slot, icon, name, key)
+        };
+        let pump = |slot: (u8, u8)| place(PUMP, slot, Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("The main income. Snaps onto a crystal and draws it into the bank, more from bigger crystals ({:.1}% of its food a second, at least {:.0}). Click a pumped crystal to upgrade it: {:.0} food, {:.1}x the draw and {:.2}x the food a level, 3 levels.", b.pump_share * 100.0, b.pump_rate, b.pump_up_cost, b.pump_up_rate, b.pump_up_yield));
+        // The card's slots are (row, column) on its 5 x 2 grid (`ui::CARD_COLS`).
+        // Card 2 (owner 2026-11-15 19:38Z): one fire button that cycles,
+        // Pump on the main card, Heal and Lookouts off the squad panel onto
+        // it, the wall on the Build page, no empty tile. Burn a line went
+        // (owner 19:51Z) and Guard took its F.
+        let at = |rts: (u8, u8), sq: (u8, u8)| if squads { sq } else { rts };
+        let fire_name = match stance {
+            Some(Stance::HoldFire) => "Fire: hold",
+            Some(Stance::Free) => "Fire: free",
+            Some(Stance::Defend) => "Fire: defend",
+            None if any => "Fire: mixed",
+            None => "Fire",
+        };
+        let fire_about = format!(
+            "Click to cycle what the soldiers shoot by themselves: hold fire (nothing), defend (only mould within {:.0} cells, on a crystal it works or on what it guards; the default) and free fire (the thickest mould in reach, {:.0} cells{}). Z, X and C pick one.",
+            r.defend,
+            g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)),
+            if r.price > 0.0 { format!("; every shot costs {:.0} food", r.price) } else { String::new() }
+        );
         let mut cmds = vec![
             Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Walk there, stopping to fire freely at any mould in reach on the way. Click the core to attack it: stand on it with no mould near for {:.0} s and it can grow no more. Shift queues it.", r.core_secs), ..Command::new(ATTACK, (0, 0), Icon::Attack, "Attack-move", KeyCode::KeyA) },
             Command { ready: any, why_not: no_sel(), about: "Drop the order and stand still; still fires by its stance.".into(), ..Command::new(STOP, (0, 1), Icon::Stop, "Stop", KeyCode::KeyS) },
-            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Go to a crystal, hold it, and carry its charge to the larder, {:.0} food a load. Right-click on a crystal does the same.", r.carry), ..Command::new(HARVEST, (0, 2), Icon::Crystal, "Harvest a crystal", KeyCode::KeyG) },
-            Command { target: Target::Line { width: r.strike * sc }, ready: any, why_not: no_sel(), about: "Stand by a line and keep firing along it, so the mould cannot cross.".into(), ..Command::new(BURN, (0, 3), Icon::Burn, "Burn a line", KeyCode::KeyF) },
-            Command { ready: any, on: stance == Some(Stance::HoldFire), why_not: no_sel(), about: "Do not shoot at all.".into(), ..Command::new(HOLD_FIRE, (1, 0), Icon::Close, "Hold fire", KeyCode::KeyZ) },
-            Command { ready: any, on: stance == Some(Stance::Defend), why_not: no_sel(), about: format!("Shoot only mould touching the soldier, within {:.0} cells, or on the crystal it is harvesting. The default.", r.defend), ..Command::new(DEFEND, (1, 1), Icon::Eye, "Defend", KeyCode::KeyX) },
-            Command { ready: any, on: stance == Some(Stance::Free), why_not: no_sel(), about: format!("Shoot the thickest mould in reach, {:.0} cells.{}", g.gun_range(sel.first().map_or(0, |&k| g.soldiers[k].squad as usize)), if r.price > 0.0 { format!(" Every shot costs {:.0} food.", r.price) } else { String::new() }), ..Command::new(FREE, (1, 2), Icon::Target, "Free fire", KeyCode::KeyC) },
+            Command { target: Target::Point { radius: 2.0 * sc }, ready: any, why_not: no_sel(), about: format!("Go to a crystal, hold it, and carry its charge to the larder, {:.0} food a load. Right-click on a crystal does the same.", r.carry), ..Command::new(HARVEST, at((0, 2), (0, 2)), Icon::Crystal, "Harvest a crystal", KeyCode::KeyG) },
+            Command {
+                target: Target::Point { radius: r.guard_r * sc },
+                ready: any,
+                why_not: no_sel(),
+                about: format!("Click a spot, a building or a crystal: the {} goes there and shoots mould coming onto it ({:.0} cells round a spot, {:.0} past a crystal's or a building's edge), on top of its own defence, till it gets another order. Not on hold fire.", if squads { "squad" } else { "soldier" }, r.guard_r, GUARD_RIM),
+                ..Command::new(GUARD, at((0, 3), (0, 1)), Icon::Shield, "Guard", KeyCode::KeyF)
+            },
+            Command {
+                ready: any,
+                why_not: no_sel(),
+                about: fire_about,
+                also: vec![(KeyCode::KeyZ, HOLD_FIRE), (KeyCode::KeyX, DEFEND), (KeyCode::KeyC, FREE)],
+                ..Command::new(FIRE, at((0, 4), (0, 3)), match stance {
+                    Some(Stance::HoldFire) => Icon::Close,
+                    Some(Stance::Free) => Icon::Target,
+                    _ => Icon::Eye,
+                }, fire_name, KeyCode::KeyX)
+            },
             Command {
                 cost: Some(format!("{:.0}", r.soldier_cost)),
                 ready: g.bank >= r.soldier_cost && !full,
                 why_not: if full { Some(format!("The squad is at its most, {}", r.max_squad)) } else { need(r.soldier_cost) },
                 about: "A new soldier at the larder.".into(),
-                ..Command::new(BUY, (2, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
+                ..Command::new(BUY, (1, 0), Icon::Recruit, "Buy a soldier", KeyCode::KeyB)
             },
+            pump((1, 1)),
+            Command { about: "Turrets, pumps, walls, lures and sirens.".into(), ..Command::new(BUILD_PAGE, at((1, 3), (1, 2)), Icon::Turret, "Build", KeyCode::KeyQ) },
             Command {
-                target: Target::Line { width: r.wall_width * sc },
-                cost: Some(format!("{:.0}/cell", r.wall_cost)),
-                ready: g.bank >= r.wall_cost,
-                why_not: need(r.wall_cost),
-                about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
-                ..Command::new(WALL, (2, 1), Icon::Wall, "Lay a wall", KeyCode::KeyV)
+                about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
+                ..Command::new(TOOLS_PAGE, at((1, 4), (1, 3)), Icon::Grenade, "Tools", KeyCode::KeyE)
             },
         ];
-        // The rally point at (1, 3), or on the build page with the larder's
+        // The squad's own orders, off the squad panel (Card 2): Heal and
+        // its lookouts while it works.
+        if let (true, Some(a)) = (squads, g.active) {
+            let heal_off = super::squadmode::heal_off(g, a);
+            cmds.push(Command { ready: heal_off.is_none(), why_not: heal_off, about: "The squad stops where it is and heals, paying food from the bank: fast by a crystal you hold, slow elsewhere. Any order ends it.".into(), ..Command::new(HEAL_ORDER, (0, 4), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
+            let cover = g.squads[a].cover;
+            cmds.push(Command {
+                about: format!("How many of the squad keep watch with slime near while it drains or builds: none, some or more (now {}). Click to change. Lookouts work slower but shoot what comes.", cover.name()),
+                ..Command::new(LOOKOUTS, (1, 4), Icon::Eye, &format!("Lookouts: {}", cover.name()), super::squadmode::LOOKOUTS_KEY)
+            });
+        } else if squads {
+            cmds.push(Command { ready: false, why_not: no_sel(), about: "The squad stops where it is and heals for food.".into(), ..Command::new(HEAL_ORDER, (0, 4), Icon::Heart, "Heal", super::squadmode::HEAL_KEY) });
+            cmds.push(Command { ready: false, why_not: no_sel(), about: "How many of the squad keep watch while it drains or builds.".into(), ..Command::new(LOOKOUTS, (1, 4), Icon::Eye, "Lookouts", super::squadmode::LOOKOUTS_KEY) });
+        }
+        // The rally point at (1, 2), or on the build page with the larder's
         // other places when sowing has that slot (own=1 fills the main
-        // page). It lay at (2, 2), under the Build button, so only R
-        // reached it (bug sweep, 2026-11-14).
+        // page). The squad mode has none (`squad_card_key`).
         let rally = Command {
             target: Target::Point { radius: 2.0 * sc },
             ready: true,
             about: "Where bought soldiers go: on a crystal they start harvesting it, elsewhere they walk there. Also: select the larder and right-click.".into(),
-            ..Command::new(RALLY, if g.world.garden.is_some() { (1, 2) } else { (1, 3) }, Icon::Move, "Rally point", KeyCode::KeyR)
+            ..Command::new(RALLY, (1, 2), Icon::Move, "Rally point", KeyCode::KeyR)
         };
         let mut rally = Some(rally);
         if g.world.garden.is_none() {
             cmds.extend(rally.take());
         }
-        // The player's own mould (own=1): Sow on the main page (the free slot),
-        // Road on the tools page beside the det cord (main's slots are full).
+        // The player's own mould (own=1): Sow on the main page in the RTS
+        // round (the rally point's slot), on the tools page in the squad
+        // mode (its main page is full); Road on the tools page.
         let mut road: Option<Command> = None;
+        let mut sow: Option<Command> = None;
         if let Some(gd) = &g.world.garden {
             let all = |t: Task| any && sel.iter().all(|&k| gd.tasks.get(k) == Some(&t));
-            cmds.push(Command { ready: any, on: all(Task::Feed), why_not: no_sel(), about: format!("Sow your own mould (green): while on, the soldier spends {:.0} food a second from the bank, spread as charge where it walks, which your mould eats and grows on. Walk it where you want the mould to go. Press again to stop.", gd.tend.feed), ..Command::new(SOW, (1, 3), Icon::Crystal, "Sow your mould", KeyCode::KeyW) });
-            road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 2), Icon::Move, "Lay a road", KeyCode::KeyY) });
+            let s = Command { ready: any, on: all(Task::Feed), why_not: no_sel(), about: format!("Sow your own mould (green): while on, the soldier spends {:.0} food a second from the bank, spread as charge where it walks, which your mould eats and grows on. Walk it where you want the mould to go. Press again to stop.", gd.tend.feed), ..Command::new(SOW, if squads { (1, 1) } else { (1, 2) }, Icon::Crystal, "Sow your mould", KeyCode::KeyW) };
+            if squads {
+                sow = Some(s);
+            } else {
+                cmds.push(s);
+            }
+            road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your mould's trail where the soldier walks, free: your mould follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 0), Icon::Move, "Lay a road", KeyCode::KeyY) });
         }
-        cmds.push(Command {
-            about: "Turrets, lures, pumps, outposts and sirens.".into(),
-            ..Command::new(BUILD_PAGE, (2, 2), Icon::Turret, "Build", KeyCode::KeyQ)
-        });
-        cmds.push(Command {
-            about: "The squad's tools: blast, det cord, mine, germ, sleep gas. Every soldier at the larder picks one up; a selected soldier there takes up to five, and each one held costs carry.".into(),
-            ..Command::new(TOOLS_PAGE, (2, 3), Icon::Grenade, "Tools", KeyCode::KeyE)
-        });
         if self.tools_page {
             let k = &self.kit;
             let kr = k.rules;
@@ -1083,40 +1168,35 @@ impl App {
                 tool(T_BLAST, (0, 0), Icon::Grenade, "Blast", KeyCode::KeyB, Target::Point { radius: kr.blast_r * sc }, kr.blast_price, true, format!("Kills the mould within {:.0} cells and leaves a crater it can't hold trail in for {:.0} s. The blast's alarm wakes and stirs the mould nearby. Thrown by a soldier holding a tool within {:.0} cells.", kr.blast_r, kr.crater_secs, kr.reach)),
                 tool(T_CORD, (0, 1), Icon::Burn, "Det cord", KeyCode::KeyC, Target::Line { width: 2.0 * kr.cord_r * sc }, kr.cord_price, true, format!("A line of small blasts, each with its crater: a cut the mould can't knit for {:.0} s. {:.0} food a cell, at most {:.0} cells.", kr.crater_secs, kr.cord_price, kr.cord_max)),
                 tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when {} walkers stand within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
-                tool(T_GERM, (1, 0), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
-                tool(T_GAS, (1, 1), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
-                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyE) },
+                tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
+                tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyE) },
             ];
             cmds.extend(road);
+            cmds.extend(sow);
         }
         if self.build_page {
-            let b = r.build;
             let lures = g.buildings.iter().filter(|q| q.alive && matches!(q.kind, Kind::Lure | Kind::Siren)).count();
-            let room = g.standing() < b.max;
-            let ghosts = g.buildings.iter().filter(|q| q.alive && !q.up()).count();
-            let place = |id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode, cost: f32, about: String| Command {
-                target: Target::Point { radius: b.touch * sc },
-                cost: Some(format!("{cost:.0}")),
-                ready: g.bank >= cost && room,
-                why_not: if room { need(cost) } else { Some(format!("At most {} buildings", b.max)) },
-                about,
-                ..Command::new(id, slot, icon, name, key)
-            };
+            // Option 1 of the build page (owner 2026-11-15 19:53Z): what you
+            // place along the top, the wall among them, most built first;
+            // the switch and Back below. Cancel a build left it: click the
+            // building instead (`App::building_sel`).
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down.", b.turret_range, b.turret_every)),
-                place(LURE, (0, 1), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
-                place(PUMP, (0, 2), Icon::Crystal, "Pump", KeyCode::KeyU, b.pump_cost, format!("The main income. Snaps onto a crystal and draws it into the bank, more from bigger crystals ({:.1}% of its food a second, at least {:.0}). Click a pumped crystal to upgrade it: {:.0} food, {:.1}x the draw and {:.2}x the food a level, 3 levels.", b.pump_share * 100.0, b.pump_rate, b.pump_up_cost, b.pump_up_rate, b.pump_up_yield)),
-                place(OUTPOST, (0, 3), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
-                place(SIREN, (1, 1), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
+                pump((0, 1)),
                 Command {
-                    target: Target::Point { radius: b.touch * sc },
-                    ready: ghosts > 0,
-                    why_not: Some("Nothing being built".into()),
-                    about: "Click a building that is not finished yet to call it off. Its whole price comes back, and its builders go on to their next order.".into(),
-                    ..Command::new(CANCEL_BUILD, (2, 0), Icon::Close, "Cancel a build", KeyCode::KeyC)
+                    target: Target::Line { width: r.wall_width * sc },
+                    cost: Some(format!("{:.0}/cell", r.wall_cost)),
+                    ready: g.bank >= r.wall_cost,
+                    why_not: need(r.wall_cost),
+                    about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
+                    ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
+                place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
+                place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
-                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (2, 3), Icon::Close, "Back", KeyCode::KeyQ) },
+                place(OUTPOST, (1, 1), Icon::Hold, "Outpost", KeyCode::KeyI, b.outpost_cost, "A second drop-off for carried charge. It smells of your bank, and mould touching it eats from the bank.".into()),
+                Command { about: "Back to the soldiers' commands.".into(), ..Command::new(BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyQ) },
             ];
             // No Outpost without the larder (the squad mode): with nothing
             // carried home its only effects were smelling of the bank and
@@ -1128,7 +1208,7 @@ impl App {
         }
         // The squad mode: the card's letters off WASD (`squad_card_key`),
         // its words for a game with no larder.
-        if self.sq.is_some() {
+        if squads {
             cmds = cmds
                 .into_iter()
                 .filter_map(|mut c| {
@@ -1145,6 +1225,11 @@ impl App {
                     Some(c)
                 })
                 .collect();
+        }
+        // A building clicked with no soldiers or squad (owner 2026-11-15
+        // 19:51Z, option b): its own card.
+        if let Some(bk) = self.building_sel.filter(|_| sel.is_empty()).filter(|&bk| g.buildings.get(bk).is_some_and(|bd| bd.alive)) {
+            cmds = self.building_card(g, bk);
         }
         // A run's locks (`Run::has`): what its shop has not unlocked shows,
         // dimmed, with where to get it.
@@ -1265,7 +1350,10 @@ impl App {
         ] };
         m.main_menu = self.base.is_some();
         m.loadout = Some(self.loadout(g, &sel));
-        m.squads = self.squad_panel();
+        // A building selected takes the panel for its own state (option
+        // b); a click on open ground, a tile's number or Space gives the
+        // squads back.
+        m.squads = if self.building_sel.is_some() && m.info.is_some() && sel.is_empty() { None } else { self.squad_panel() };
         m
     }
 
@@ -1573,4 +1661,128 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
         T_GERM => "germ",
         _ => return None,
     })
+}
+
+/// A building's icon on its card and panel.
+fn building_icon(k: Kind) -> Icon {
+    match k {
+        Kind::Turret => Icon::Turret,
+        Kind::Lure => Icon::Bait,
+        Kind::Pump => Icon::Crystal,
+        Kind::Outpost => Icon::Hold,
+        Kind::Siren => Icon::Alert,
+        Kind::Wall { .. } => Icon::Wall,
+    }
+}
+
+/// A building's name with a capital, for the panel's title.
+fn building_title(k: Kind) -> String {
+    let n = match k {
+        Kind::Wall { .. } => "wall",
+        k => k.name(),
+    };
+    let mut c = n.chars();
+    c.next().map_or(String::new(), |f| f.to_uppercase().chain(c).collect())
+}
+
+/// The selected building (owner 2026-11-15 19:51Z, option b: "Click a
+/// building to select it when no squad is selected"): its panel and its
+/// card. The research's take (Reports/menu-layout-research-2026-11-15):
+/// in the squad mode the left button fires and the right sends, so the
+/// click selects only with no squad commanded.
+impl App {
+    /// The panel: health, level and state.
+    pub(super) fn building_info(&self, g: &Game<GpuWorld>, bk: usize) -> Info {
+        let bd = g.buildings[bk];
+        let mut stats = Vec::new();
+        let subtitle = if !bd.up() {
+            stats.push(("Built".into(), format!("{:.0}%", bd.built * 100.0)));
+            let builders = g.soldiers.iter().filter(|s| s.alive && s.order == Order::Build(bk)).count();
+            stats.push(("Builders".into(), format!("{builders}")));
+            if builders == 0 { "being built, nobody on it".to_string() } else { "being built".to_string() }
+        } else {
+            match bd.kind {
+                Kind::Pump => {
+                    stats.push(("Level".into(), format!("{} of {PUMP_LEVELS}", bd.level)));
+                    stats.push(("Draws".into(), format!("{:.0} food a second", g.pump_draw(bk) * g.pump_yield(bk))));
+                    // The level in the subtitle: the panel's stats show only
+                    // where it is wide.
+                    let doing = if bd.crystal.is_some_and(|c| g.pump_flows(c)) { format!("pumping {:.0} food a second", g.pump_draw(bk) * g.pump_yield(bk)) } else { "its crystal is spent".into() };
+                    format!("level {} of {PUMP_LEVELS}, {doing}", bd.level)
+                }
+                Kind::Turret => {
+                    stats.push(("Range".into(), format!("{:.0} cells", g.rules.build.turret_range)));
+                    if bd.working { "firing".into() } else { "watching".into() }
+                }
+                Kind::Lure | Kind::Siren => {
+                    if bd.on { "on".into() } else { "off".into() }
+                }
+                Kind::Outpost => "standing".into(),
+                Kind::Wall { .. } => "standing; the mould wears it slowly".into(),
+            }
+        };
+        stats.push(("Mould on it".into(), format!("{}", bd.touching)));
+        Info {
+            icon: building_icon(bd.kind),
+            colour: theme::TEXT,
+            title: building_title(bd.kind),
+            subtitle,
+            hp: Some((bd.hp / bd.max_hp.max(1.0), format!("{:.0} / {:.0}", bd.hp, bd.max_hp))),
+            stats,
+            note: Some("Its actions are on the card. Click open ground to put it down.".into()),
+        }
+    }
+
+    /// The card: call off a ghost, pull down a standing building (half its
+    /// price back: the refund is not ruled, the menus thread's proposal),
+    /// upgrade a pump, switch a lure or siren.
+    pub(super) fn building_card(&self, g: &Game<GpuWorld>, bk: usize) -> Vec<Command> {
+        let bd = g.buildings[bk];
+        let price = g.build_price(bd.kind, bd.at);
+        let mut cmds = Vec::new();
+        if !bd.up() {
+            cmds.push(Command {
+                cost: Some(format!("+{price:.0}")),
+                about: format!("Call it off: its whole price, {price:.0} food, comes back, and its builders go on to their next order."),
+                ..Command::new(CANCEL_BUILD, (0, 0), Icon::Close, "Call it off", KeyCode::Delete)
+            });
+        } else {
+            let wall = matches!(bd.kind, Kind::Wall { .. });
+            let back = g.rules.build.demolish * price;
+            cmds.push(Command {
+                cost: (!wall).then(|| format!("+{back:.0}")),
+                ready: !wall,
+                why_not: wall.then(|| "A wall can't be pulled down yet: the mould wears it away".to_string()),
+                about: format!("Pull it down: {:.0}% of its price, {back:.0} food, comes back.", g.rules.build.demolish * 100.0),
+                ..Command::new(DEMOLISH, (0, 0), Icon::Close, "Demolish", KeyCode::Delete)
+            });
+        }
+        if bd.kind == Kind::Pump {
+            let up = g.upgrade_price(bk);
+            let need = up.filter(|&p| g.bank < p);
+            cmds.push(Command {
+                cost: up.map(|p| format!("{p:.0}")),
+                ready: up.is_some() && need.is_none(),
+                why_not: Some(match (up, need) {
+                    (_, Some(p)) => format!("Need {:.0} more food", p - g.bank),
+                    (None, _) if !bd.up() => "Still being built".to_string(),
+                    _ => "At its top level".to_string(),
+                }),
+                about: format!("The next level: {:.1}x the draw and {:.2}x the food from it. {PUMP_LEVELS} levels.", g.rules.build.pump_up_rate, g.rules.build.pump_up_yield),
+                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Upgrade", KeyCode::KeyU)
+            });
+        }
+        if matches!(bd.kind, Kind::Lure | Kind::Siren) {
+            cmds.push(Command {
+                about: if bd.on { "Switch it off: no scent, no calls, till you switch it on.".into() } else { "Switch it on again.".into() },
+                ..Command::new(SWITCH, (0, 1), Icon::Bait, if bd.on { "Switch off" } else { "Switch on" }, KeyCode::KeyJ)
+            });
+        }
+        for c in &mut cmds {
+            if c.ready {
+                c.why_not = None;
+            }
+        }
+        cmds
+    }
 }

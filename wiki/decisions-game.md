@@ -9,6 +9,7 @@ sources:
   - Reports/bug-check-2026-11-15/README.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/card-text-2026-11-15.md
+  - Reports/command-card-2026-11-15/README.md
   - Reports/fed-mould-2026-11-13/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
@@ -45,6 +46,9 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-15 19:53 | The Build page is option 1: what you place along the top (turret, pump, wall, lure, siren), the lures' switch and Back below; Build and Tools stay separate pages, and Cancel a build leaves the page for a click on the building | "Build option 1" | [squad mode](world/squad-mode.md), [report](../Reports/command-card-2026-11-15/README.md) |
+| 2026-11-15 19:51 | Burn a line is removed (`Order::Burn` stays in the engine for the dish game and the scripted hands); a Guard order on F takes its place, option (c): click a spot, building or crystal and the squad goes there and keeps slime off it; Defend stays the default fire mode for a squad not guarding; the squad's Guards setting is renamed Lookouts. With no squad selected a click on a building selects it, option (b): the panel shows its health, level and state, the card its actions (call off, demolish, upgrade a pump, switch a lure). The demolish refund was not ruled: half the price (`BuildRules::demolish`) | "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected." | [squad mode](world/squad-mode.md), [report](../Reports/command-card-2026-11-15/README.md) |
+| 2026-11-15 19:38 | The command card is Card 2: 5 x 2, one fire button that cycles hold, defend and free (Z, X and C still pick one), Pump on the main card, Heal and Guards off the squad panel onto it, the wall on the Build page, no empty tile | "Card 2" | [world camera and UI](world/world-camera.md), [report](../Reports/command-card-2026-11-15/README.md) |
 | 2026-11-15 18:00 | Guards while working are reviewed and kept, improved: they stand at the work's edge on the slime's side instead of out in its film (`cover.rs`) | "Have someone review the guards while harvesting option. It doesn't seem to work well. Either improve it or remove it." | [squad mode](world/squad-mode.md), [report](../Reports/guards-2026-11-15/README.md) |
 | 2026-11-15 17:14 | A pump never drains its crystal: it pays its draw (`Game::pump_draw`) for as long as the crystal has charge, so only the slime eating the crystal stops it (`Game::pump_flows`, `PUMP_DRY`); hand draining still empties a crystal, and the slime's eating is unchanged | "when building a pump on a crystal, it shouldn't drain it away. That should be one of the advantages of pumping over harvesting. Pumped crystals last forever" | [economy](world/economy.md), [report](../Reports/pump-economy-2026-11-15/README.md) |
 | 2026-11-15 08:30 | The game the owner plays and judges by is the roguelike run in squad mode; the work it most needs is an enemy that progresses and presses ("especially when your guns get stronger"), guns that are a main draw, and menus and shortcuts that don't get in the way | "3) squad mode on roguelike run"; "There needs to be more interesting progression in the enemy"; "The gun graphics need work. They should really be one of the draws of the game. They need to be really satisfying." | [run](world/run.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
