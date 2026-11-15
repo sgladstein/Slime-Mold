@@ -1,0 +1,45 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 35.2 s (the slime has eaten 103 food)
+  surge 2 starts at t 56.3 s (the slime has eaten 205 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-060s-near.png
+  CPU: ground field 1.44 ms (once a game second), model and HUD 0.081 ms a frame
+  t 60 s: mould 15183, soldiers 4, bank 111, harvested 1212, shots 96, killed 574, took 0%, crystals left 0.990; squad at 302.1,47.8
+  surge: the slime ate 225 food (3.7/s); meter 19.3 of 103, 2 surges
+  dense: 2231 condensed or thick walkers, mass 17414 (readout 17414)
+  squad: touching 0.0 mean, 0 most; health 91 mean
+    pump at (374, 25): hp 200 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 94 / 200, built 0.5, standing
+    pumped 1212 food
+  surge 3 starts at t 76.0 s (the slime has eaten 308 food)
+  surge 4 starts at t 95.9 s (the slime has eaten 411 food)
+  surge 5 starts at t 115.3 s (the slime has eaten 513 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-120s-near.png
+  CPU: ground field 2.81 ms (once a game second), model and HUD 0.135 ms a frame
+  t 120 s: mould 16341, soldiers 4, bank 290, harvested 2430, shots 219, killed 1812, took 0%, crystals left 0.976; squad at 301.8,47.9
+  surge: the slime ate 539 food (4.5/s); meter 25.2 of 103, 5 surges
+  dense: 4133 condensed or thick walkers, mass 20474 (readout 20474)
+  squad: touching 0.0 mean, 0 most; health 38 mean
+    pump at (374, 25): hp 181 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 12 / 200, built 1.0, standing, working
+    pumped 2430 food
+  surge 6 starts at t 134.3 s (the slime has eaten 616 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-150s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/drift-20-6/planet-1-1-pumps-150s-near.png
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.088 ms a frame
+  t 150 s: mould 17861, soldiers 1, bank 341, harvested 2995, shots 272, killed 2398, took 0%, crystals left 0.968; squad at 301.6,43.2
+  surge: the slime ate 703 food (4.7/s); meter 87.3 of 103, 6 surges
+  dense: 4906 condensed or thick walkers, mass 22767 (readout 22767)
+  squad: touching 0.0 mean, 0 most; health 21 mean
+    pump at (374, 25): hp 143 / 200, built 1.0, standing, working
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pump at (290, 50): hp 0 / 200, built 1.0, worn down
+    pumped 2995 food

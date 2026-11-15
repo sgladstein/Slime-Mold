@@ -1,0 +1,33 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 25 s alone in 83.7 s
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-030s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-030s-near.png
+  CPU: ground field 9.01 ms (once a game second), model and HUD 0.116 ms a frame
+  t 30 s: mould 89158, soldiers 4, bank 1997, harvested 0, shots 92, killed 26, took 0%, crystals left 0.994; squad at 256.6,292.3
+  surge: the slime ate 303 food (10.1/s); meter 302.6 of 430, 0 surges
+  dense: 5445 condensed or thick walkers, mass 94603 (readout 94603)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  surge 1 starts at t 41.9 s (the slime has eaten 431 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-060s-near.png
+  CPU: ground field 17.02 ms (once a game second), model and HUD 0.068 ms a frame
+  t 60 s: mould 81266, soldiers 4, bank 1988, harvested 0, shots 219, killed 233, took 0%, crystals left 0.986; squad at 326.4,323.7
+  surge: the slime ate 644 food (10.7/s); meter 213.1 of 430, 1 surges
+  dense: 7705 condensed or thick walkers, mass 88971 (readout 88971)
+  squad: touching 0.2 mean, 1 most; health 87 mean
+  surge 2 starts at t 76.7 s (the slime has eaten 862 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-090s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-090s-near.png
+  CPU: ground field 7.55 ms (once a game second), model and HUD 0.076 ms a frame
+  t 90 s: mould 57392, soldiers 4, bank 1977, harvested 0, shots 357, killed 751, took 0%, crystals left 0.978; squad at 332.2,324.3
+  surge: the slime ate 1050 food (11.7/s); meter 188.4 of 430, 2 surges
+  dense: 10458 condensed or thick walkers, mass 67850 (readout 67850)
+  squad: touching 0.0 mean, 0 most; health 55 mean
+  surge 3 starts at t 105.9 s (the slime has eaten 1293 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/does/spore-hot/planet-5-1-stand-120s-near.png
+  CPU: ground field 5.69 ms (once a game second), model and HUD 0.114 ms a frame
+  t 120 s: mould 63771, soldiers 3, bank 1960, harvested 0, shots 488, killed 1290, took 0%, crystals left 0.968; squad at 344.1,327.9
+  surge: the slime ate 1518 food (12.6/s); meter 225.1 of 430, 3 surges
+  dense: 13740 condensed or thick walkers, mass 77511 (readout 77511)
+  squad: touching 0.0 mean, 0 most; health 20 mean

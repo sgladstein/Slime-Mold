@@ -238,6 +238,69 @@ pub fn surge_secs(depth: u32) -> f32 {
     LONGEST_WAIT[depth_index(depth)] as f32 / 30.0
 }
 
+/// What a tier does to you: one thing each rung of `LADDER` does to the
+/// player, on top of its shape (owner, 2026-11-15 21:41Z, the whole-game
+/// review's D3, "Agreed. We can test it out"; the first-time player's
+/// table). A test: each row is game rules (`Rules::set` names, set in
+/// `Run::rules`) and engine keys (`gpu::set` names, set over the tier's own
+/// in the window), measured by the films in
+/// `Reports/run-progression-2026-11-15/does-to-you.md`. New engine rules
+/// for a row belong to the slime-enemy thread; the numbers here are this
+/// thread's.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct DoesToYou {
+    /// One sentence for the planet card.
+    pub says: &'static str,
+    pub rules: &'static [(&'static str, f32)],
+    pub keys: &'static [(&'static str, &'static str)],
+}
+
+/// `DoesToYou` by tier (the plain mould and the Grudge do nothing extra).
+pub fn does_to_you(tier: Tier) -> DoesToYou {
+    let none = DoesToYou { says: "", rules: &[], keys: &[] };
+    match tier {
+        // A pump smells of food 20 times a soldier's scent over 15 dish
+        // cells (`BuildRules::pump_smell`, `lure_r`, which only pumps use in
+        // a run: lures are not sold). Planet 1 seed 1, pumps hand: the far
+        // pump stood at 197 of 200 hp at 2:00 with no smell, and was worn
+        // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
+        // weak to see.
+        Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off", rules: SPRAWLER_RULES, keys: &[] },
+        // The same smell on planet 3 (pumps hand): the first two pumps at
+        // 185 and 167 hp at 2:30 without it, 160 and 160 with it (modest:
+        // the Trunk's cords are slow to turn).
+        Tier::Trunk => DoesToYou { says: "It runs its cords to your pumps", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
+        Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast", rules: SWARMER_RULES, keys: SWARMER_KEYS },
+        Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
+        Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
+        _ => none,
+    }
+}
+
+// The films behind the rows below: run seed 1, one seed each, health is
+// the squad's mean at 2:00 (`does-to-you.md`).
+// Sprawler, planet 2, idle: a soldier smells 4 over 4 dish cells
+// (`Rules::smell` 0.5, `smell_r` 2): 2 soldiers at 13 health at 2:00 ->
+// the squad gone by 1:30.
+const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
+// Swarmer, planet 4, attack-move: a surge reaches 25 cells past the gun's
+// range (`Rules::panic_margin` 5) and lunges at 3x (`surge_haste` 2):
+// health 74 -> 29. Tried and backfired: the alarm louder (alarm_relay 20,
+// alarm_weight 6), health 74 -> 95 and kills 4,537 -> 878, the body
+// drawn to the wounds instead of the squad.
+const SWARMER_RULES: &[(&str, f32)] = &[("panic_margin", 25.0)];
+const SWARMER_KEYS: &[(&str, &str)] = &[("surge_haste", "3")];
+// Sporer, planet 5, attack-move: bursts at an alarm of 0.3, not the
+// tier's 1, at 0.2 a step, not 0.05: 4 soldiers at 27 health -> none.
+// Tried: burst 0.2 alone (health 20, 3 soldiers: weak); burst 0.5 with
+// spore_rate 1e-4 (health 74: backfired, the spores left the fight).
+const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "0.3")];
+// Sleeper, planet 6, attack-move: wakes at an alarm of 0.3, not 1: one
+// soldier at 14 health -> the squad gone by 1:30. Tried and backfired:
+// wake_alarm 3 (a higher bar is a deeper sleep: 4 soldiers at 99).
+const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
+
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {
     150 + 50 * depth + 50 * u32::from(stars.saturating_sub(1))
@@ -286,7 +349,11 @@ pub struct Item {
 
 /// Everything the shop sells but cards. Unlock keys (`max` 1) are what
 /// `Run::has` answers for the window's command card.
-pub const ITEMS: [Item; 20] = [
+/// The lure, the siren and the outpost are not sold (owner, 2026-11-15
+/// 21:41Z, the whole-game review's D10): the outpost is out of the run,
+/// and the lure and siren stay out until they visibly draw the slime. The
+/// window hides them from a run's build card (`run_hidden`).
+pub const ITEMS: [Item; 17] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -297,12 +364,9 @@ pub const ITEMS: [Item; 20] = [
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
     Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
-    Item { key: "lure", name: "Lures", group: Group::Build, about: "Unlocks the lure, food scent the slime follows", max: 1, cost: 150, needs: None },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
-    Item { key: "outpost", name: "Outposts", group: Group::Build, about: "Unlocks the outpost, a second drop-off", max: 1, cost: 150, needs: None },
-    Item { key: "siren", name: "Sirens", group: Group::Build, about: "Unlocks the siren, which sets off the slime's kinds", max: 1, cost: 150, needs: None },
     Item { key: "blast", name: "Blasts", group: Group::Tools, about: "Unlocks the thrown blast and its crater", max: 1, cost: 150, needs: None },
     Item { key: "mine", name: "Mines", group: Group::Tools, about: "Unlocks the mine, a blast the slime sets off", max: 1, cost: 150, needs: None },
     Item { key: "cord", name: "Det cord", group: Group::Tools, about: "Unlocks det cord, a line of blasts", max: 1, cost: 200, needs: None },
@@ -575,6 +639,13 @@ impl Run {
 
     /// The game's rules with the squad's and the buildings' upgrades.
     pub fn rules(&self, r: &mut Rules) {
+        // What this planet's tier does to you (`does_to_you`); not in the
+        // gun range, which plays no planet.
+        if !self.range {
+            for &(k, v) in does_to_you(self.level().tier).rules {
+                assert!(r.set(k, v), "does_to_you: no rule {k}");
+            }
+        }
         let l = |k| f32::from(self.level_of(k));
         r.hp *= 1.0 + 0.25 * l("hp");
         r.strike *= 1.0 + 0.2 * l("strike");
@@ -1341,6 +1412,42 @@ mod tests {
         for t in LADDER {
             let mut s = crate::gpu::larder_world::race_settings(1, 2, 5000);
             assert!(t.settings(&mut s).is_ok(), "{}", t.name());
+        }
+    }
+
+    /// Every rung does something to you (`does_to_you`, owner 11-15
+    /// 21:41Z), with rules the game takes and keys the GPU engine takes,
+    /// and the run sets the rules on its planet but not in the gun range.
+    #[test]
+    fn every_ladder_tier_does_something_to_you() {
+        for (d, t) in LADDER.iter().enumerate() {
+            let does = does_to_you(*t);
+            assert!(!does.says.is_empty() && (!does.rules.is_empty() || !does.keys.is_empty()), "{}", t.name());
+            let mut s = crate::gpu::larder_world::race_settings(1, 2, 5000);
+            t.settings(&mut s).unwrap();
+            for &(k, v) in does.keys {
+                assert!(crate::gpu::set(&mut s, k, v).is_ok(), "{} key {k}", t.name());
+            }
+            let mut run = Run::new(1);
+            run.depth = d as u32 + 1;
+            assert_eq!(run.level().tier, *t);
+            let mut r = Rules::default();
+            run.rules(&mut r);
+            if *t == Tier::Drifter {
+                assert_eq!((r.build.pump_smell, r.build.lure_r), (20.0, 15.0));
+            }
+        }
+        let mut r = Rules::default();
+        Run::range(1).rules(&mut r);
+        assert_eq!(r.build.pump_smell, Rules::default().build.pump_smell);
+    }
+
+    /// The outpost, lure and siren are not sold in a run (owner 11-15
+    /// 21:41Z, D10).
+    #[test]
+    fn the_run_shop_sells_no_outpost_lure_or_siren() {
+        for k in ["outpost", "lure", "siren"] {
+            assert!(ITEMS.iter().all(|i| i.key != k), "{k}");
         }
     }
 

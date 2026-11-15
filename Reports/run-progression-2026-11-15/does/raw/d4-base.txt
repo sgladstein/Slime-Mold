@@ -1,0 +1,214 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 11 s alone in 20.2 s
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-004s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-004s-near.png
+  CPU: ground field 4.35 ms (once a game second), model and HUD 0.082 ms a frame
+  t 4 s: mould 53473, soldiers 4, bank 2000, harvested 0, shots 16, killed 28, took 0%, crystals left 0.999; squad at 528.5,203.5
+  surge: the slime ate 21 food (5.2/s); meter 20.8 of 327, 0 surges
+  dense: 1267 condensed or thick walkers, mass 54740 (readout 54740)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-008s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-008s-near.png
+  CPU: ground field 3.25 ms (once a game second), model and HUD 0.072 ms a frame
+  t 8 s: mould 53445, soldiers 4, bank 2000, harvested 0, shots 34, killed 56, took 0%, crystals left 0.999; squad at 519.9,203.5
+  surge: the slime ate 42 food (5.3/s); meter 42.4 of 327, 0 surges
+  dense: 1668 condensed or thick walkers, mass 55113 (readout 55113)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-012s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-012s-near.png
+  CPU: ground field 10.18 ms (once a game second), model and HUD 0.074 ms a frame
+  t 12 s: mould 53464, soldiers 4, bank 2000, harvested 0, shots 52, killed 108, took 0%, crystals left 0.998; squad at 512.9,203.4
+  surge: the slime ate 65 food (5.4/s); meter 65.2 of 327, 0 surges
+  dense: 1938 condensed or thick walkers, mass 55402 (readout 55402)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-016s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-016s-near.png
+  CPU: ground field 7.17 ms (once a game second), model and HUD 0.090 ms a frame
+  t 16 s: mould 53540, soldiers 4, bank 2000, harvested 0, shots 69, killed 130, took 0%, crystals left 0.997; squad at 501.5,200.9
+  surge: the slime ate 89 food (5.6/s); meter 89.2 of 327, 0 surges
+  dense: 2142 condensed or thick walkers, mass 55682 (readout 55682)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-020s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-020s-near.png
+  CPU: ground field 7.42 ms (once a game second), model and HUD 0.078 ms a frame
+  t 20 s: mould 53658, soldiers 4, bank 2000, harvested 0, shots 85, killed 138, took 0%, crystals left 0.996; squad at 478.4,192.4
+  surge: the slime ate 114 food (5.7/s); meter 114.1 of 327, 0 surges
+  dense: 2339 condensed or thick walkers, mass 55997 (readout 55997)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-024s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-024s-near.png
+  CPU: ground field 12.36 ms (once a game second), model and HUD 0.208 ms a frame
+  t 24 s: mould 53746, soldiers 4, bank 2000, harvested 0, shots 103, killed 185, took 0%, crystals left 0.996; squad at 477.4,192.2
+  surge: the slime ate 140 food (5.8/s); meter 139.8 of 327, 0 surges
+  dense: 2560 condensed or thick walkers, mass 56306 (readout 56306)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-028s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-028s-near.png
+  CPU: ground field 5.36 ms (once a game second), model and HUD 0.072 ms a frame
+  t 28 s: mould 53850, soldiers 4, bank 2000, harvested 0, shots 122, killed 250, took 0%, crystals left 0.995; squad at 477.0,192.2
+  surge: the slime ate 166 food (5.9/s); meter 166.3 of 327, 0 surges
+  dense: 2879 condensed or thick walkers, mass 56729 (readout 56729)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-032s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-032s-near.png
+  CPU: ground field 4.91 ms (once a game second), model and HUD 0.114 ms a frame
+  t 32 s: mould 54002, soldiers 4, bank 2000, harvested 0, shots 141, killed 282, took 0%, crystals left 0.994; squad at 477.0,192.2
+  surge: the slime ate 194 food (6.0/s); meter 193.5 of 327, 0 surges
+  dense: 3204 condensed or thick walkers, mass 57206 (readout 57206)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-036s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-036s-near.png
+  CPU: ground field 11.12 ms (once a game second), model and HUD 0.125 ms a frame
+  t 36 s: mould 54146, soldiers 4, bank 2000, harvested 0, shots 158, killed 320, took 0%, crystals left 0.993; squad at 477.0,192.2
+  surge: the slime ate 221 food (6.1/s); meter 221.2 of 327, 0 surges
+  dense: 3517 condensed or thick walkers, mass 57663 (readout 57663)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-040s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-040s-near.png
+  CPU: ground field 3.17 ms (once a game second), model and HUD 0.091 ms a frame
+  t 40 s: mould 54304, soldiers 4, bank 2000, harvested 0, shots 166, killed 324, took 0%, crystals left 0.992; squad at 424.3,182.8
+  surge: the slime ate 249 food (6.2/s); meter 249.0 of 327, 0 surges
+  dense: 3785 condensed or thick walkers, mass 58089 (readout 58089)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-044s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-044s-near.png
+  CPU: ground field 3.26 ms (once a game second), model and HUD 0.129 ms a frame
+  t 44 s: mould 54207, soldiers 4, bank 2000, harvested 0, shots 183, killed 588, took 0%, crystals left 0.991; squad at 410.2,179.5
+  surge: the slime ate 277 food (6.3/s); meter 277.0 of 327, 0 surges
+  dense: 4038 condensed or thick walkers, mass 58245 (readout 58245)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-048s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-048s-near.png
+  CPU: ground field 7.43 ms (once a game second), model and HUD 0.083 ms a frame
+  t 48 s: mould 54091, soldiers 4, bank 2000, harvested 0, shots 203, killed 871, took 0%, crystals left 0.990; squad at 407.2,178.4
+  surge: the slime ate 305 food (6.4/s); meter 305.2 of 327, 0 surges
+  dense: 4301 condensed or thick walkers, mass 58392 (readout 58392)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  surge 1 starts at t 51.1 s (the slime has eaten 327 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-052s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-052s-near.png
+  CPU: ground field 5.76 ms (once a game second), model and HUD 0.228 ms a frame
+  t 52 s: mould 53979, soldiers 4, bank 2000, harvested 0, shots 221, killed 1163, took 0%, crystals left 0.989; squad at 402.9,177.7
+  surge: the slime ate 334 food (6.4/s); meter 6.7 of 327, 1 surges
+  dense: 4501 condensed or thick walkers, mass 58480 (readout 58480)
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-056s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-056s-near.png
+  CPU: ground field 8.94 ms (once a game second), model and HUD 0.118 ms a frame
+  t 56 s: mould 54000, soldiers 4, bank 2000, harvested 0, shots 239, killed 1319, took 0%, crystals left 0.988; squad at 402.9,177.7
+  surge: the slime ate 362 food (6.5/s); meter 35.5 of 327, 1 surges
+  dense: 4722 condensed or thick walkers, mass 58722 (readout 58722)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-060s-near.png
+  CPU: ground field 8.57 ms (once a game second), model and HUD 0.214 ms a frame
+  t 60 s: mould 54051, soldiers 4, bank 2000, harvested 0, shots 258, killed 1481, took 0%, crystals left 0.987; squad at 402.9,177.7
+  surge: the slime ate 392 food (6.5/s); meter 64.7 of 327, 1 surges
+  dense: 4942 condensed or thick walkers, mass 58993 (readout 58993)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-064s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-064s-near.png
+  CPU: ground field 5.91 ms (once a game second), model and HUD 0.070 ms a frame
+  t 64 s: mould 54049, soldiers 4, bank 2000, harvested 0, shots 276, killed 1679, took 0%, crystals left 0.987; squad at 402.9,177.7
+  surge: the slime ate 421 food (6.6/s); meter 94.3 of 327, 1 surges
+  dense: 5110 condensed or thick walkers, mass 59159 (readout 59159)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-068s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-068s-near.png
+  CPU: ground field 6.93 ms (once a game second), model and HUD 0.142 ms a frame
+  t 68 s: mould 54061, soldiers 4, bank 2000, harvested 0, shots 295, killed 1907, took 0%, crystals left 0.986; squad at 402.9,177.7
+  surge: the slime ate 451 food (6.6/s); meter 124.2 of 327, 1 surges
+  dense: 5344 condensed or thick walkers, mass 59405 (readout 59405)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-072s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-072s-near.png
+  CPU: ground field 8.62 ms (once a game second), model and HUD 0.083 ms a frame
+  t 72 s: mould 54036, soldiers 4, bank 2000, harvested 0, shots 314, killed 2152, took 0%, crystals left 0.985; squad at 398.3,177.0
+  surge: the slime ate 481 food (6.7/s); meter 154.5 of 327, 1 surges
+  dense: 5522 condensed or thick walkers, mass 59558 (readout 59558)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-076s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-076s-near.png
+  CPU: ground field 8.93 ms (once a game second), model and HUD 0.378 ms a frame
+  t 76 s: mould 39561, soldiers 4, bank 2000, harvested 0, shots 331, killed 2292, took 0%, crystals left 0.984; squad at 382.0,173.3
+  surge: the slime ate 512 food (6.7/s); meter 185.0 of 327, 1 surges
+  dense: 5723 condensed or thick walkers, mass 45284 (readout 45284)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-080s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-080s-near.png
+  CPU: ground field 6.79 ms (once a game second), model and HUD 0.082 ms a frame
+  t 80 s: mould 33647, soldiers 4, bank 2000, harvested 0, shots 350, killed 2552, took 0%, crystals left 0.983; squad at 368.2,171.0
+  surge: the slime ate 543 food (6.8/s); meter 215.7 of 327, 1 surges
+  dense: 5915 condensed or thick walkers, mass 39562 (readout 39562)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-084s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-084s-near.png
+  CPU: ground field 3.46 ms (once a game second), model and HUD 0.074 ms a frame
+  t 84 s: mould 31603, soldiers 4, bank 2000, harvested 0, shots 368, killed 2882, took 0%, crystals left 0.982; squad at 365.3,170.5
+  surge: the slime ate 574 food (6.8/s); meter 246.6 of 327, 1 surges
+  dense: 6092 condensed or thick walkers, mass 37695 (readout 37695)
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-088s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-088s-near.png
+  CPU: ground field 3.18 ms (once a game second), model and HUD 0.069 ms a frame
+  t 88 s: mould 30794, soldiers 4, bank 2000, harvested 0, shots 387, killed 3192, took 0%, crystals left 0.981; squad at 364.6,170.3
+  surge: the slime ate 604 food (6.9/s); meter 277.5 of 327, 1 surges
+  dense: 6275 condensed or thick walkers, mass 37069 (readout 37069)
+  squad: touching 0.2 mean, 1 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-092s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-092s-near.png
+  CPU: ground field 5.78 ms (once a game second), model and HUD 0.125 ms a frame
+  t 92 s: mould 30474, soldiers 4, bank 2000, harvested 0, shots 405, killed 3485, took 0%, crystals left 0.980; squad at 361.7,169.8
+  surge: the slime ate 635 food (6.9/s); meter 308.5 of 327, 1 surges
+  dense: 6498 condensed or thick walkers, mass 36972 (readout 36972)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+  surge 2 starts at t 94.4 s (the slime has eaten 654 food)
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-096s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-096s-near.png
+  CPU: ground field 3.22 ms (once a game second), model and HUD 0.072 ms a frame
+  t 96 s: mould 30301, soldiers 4, bank 2000, harvested 0, shots 423, killed 3754, took 0%, crystals left 0.979; squad at 356.7,169.0
+  surge: the slime ate 666 food (6.9/s); meter 12.4 of 327, 2 surges
+  dense: 6697 condensed or thick walkers, mass 36998 (readout 36998)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-100s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-100s-near.png
+  CPU: ground field 5.61 ms (once a game second), model and HUD 0.121 ms a frame
+  t 100 s: mould 30351, soldiers 4, bank 2000, harvested 0, shots 443, killed 3913, took 0%, crystals left 0.978; squad at 356.1,168.8
+  surge: the slime ate 697 food (7.0/s); meter 43.3 of 327, 2 surges
+  dense: 6902 condensed or thick walkers, mass 37253 (readout 37253)
+  squad: touching 0.0 mean, 0 most; health 92 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-104s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-104s-near.png
+  CPU: ground field 3.49 ms (once a game second), model and HUD 0.071 ms a frame
+  t 104 s: mould 30407, soldiers 4, bank 2000, harvested 0, shots 460, killed 4084, took 0%, crystals left 0.977; squad at 356.1,168.8
+  surge: the slime ate 729 food (7.0/s); meter 74.8 of 327, 2 surges
+  dense: 7119 condensed or thick walkers, mass 37526 (readout 37526)
+  squad: touching 0.0 mean, 0 most; health 86 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-108s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-108s-near.png
+  CPU: ground field 3.44 ms (once a game second), model and HUD 0.072 ms a frame
+  t 108 s: mould 30530, soldiers 4, bank 2000, harvested 0, shots 479, killed 4203, took 0%, crystals left 0.976; squad at 356.1,168.8
+  surge: the slime ate 761 food (7.0/s); meter 106.7 of 327, 2 surges
+  dense: 7350 condensed or thick walkers, mass 37880 (readout 37880)
+  squad: touching 0.2 mean, 1 most; health 81 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-112s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-112s-near.png
+  CPU: ground field 3.25 ms (once a game second), model and HUD 0.075 ms a frame
+  t 112 s: mould 30666, soldiers 4, bank 2000, harvested 0, shots 497, killed 4317, took 0%, crystals left 0.975; squad at 356.1,168.8
+  surge: the slime ate 793 food (7.1/s); meter 138.6 of 327, 2 surges
+  dense: 7558 condensed or thick walkers, mass 38224 (readout 38224)
+  squad: touching 0.2 mean, 1 most; health 78 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-116s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-116s-near.png
+  CPU: ground field 4.57 ms (once a game second), model and HUD 0.117 ms a frame
+  t 116 s: mould 30809, soldiers 4, bank 2000, harvested 0, shots 515, killed 4415, took 0%, crystals left 0.974; squad at 356.1,168.8
+  surge: the slime ate 825 food (7.1/s); meter 170.5 of 327, 2 surges
+  dense: 7774 condensed or thick walkers, mass 38583 (readout 38583)
+  squad: touching 0.8 mean, 2 most; health 75 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/film/d4-base/planet-4-1-stand-120s-near.png
+  CPU: ground field 3.36 ms (once a game second), model and HUD 0.102 ms a frame
+  t 120 s: mould 30967, soldiers 4, bank 2000, harvested 0, shots 535, killed 4537, took 0%, crystals left 0.973; squad at 356.1,168.8
+  surge: the slime ate 857 food (7.1/s); meter 202.5 of 327, 2 surges
+  dense: 7960 condensed or thick walkers, mass 38927 (readout 38927)
+  squad: touching 0.2 mean, 1 most; health 74 mean

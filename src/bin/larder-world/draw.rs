@@ -1234,6 +1234,7 @@ impl App {
         // A run's locks (`Run::has`): what its shop has not unlocked shows,
         // dimmed, with where to get it.
         if let Some(run) = &self.args.run {
+            cmds.retain(|c| !run_hidden(c.id));
             for c in &mut cmds {
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
@@ -1641,6 +1642,14 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
 /// just outside the crystal and its pylons a little further.
 pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
     g.world.crystal_r(c) * 1.3
+}
+
+/// Buildings a run never offers (owner, 2026-11-15 21:41Z, D10): the
+/// outpost is out, and the lure and siren (with their on/off switch) stay
+/// out until they visibly draw the slime. The shop doesn't sell them
+/// (`run::ITEMS`).
+pub(super) fn run_hidden(id: u32) -> bool {
+    matches!(id, LURE | LURES | SIREN | OUTPOST)
 }
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {
