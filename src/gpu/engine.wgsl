@@ -165,9 +165,13 @@ struct Params {
     deep_step: f32, _g1: f32, _g2: f32, _g3: f32,
     // The surge row (11-15, the slime-enemy thread, `BigParams::surge_every`;
     // Params grew from 944 to 960): the steps between surges (0 off), the
-    // creep's and the lunge's steps, and the lunge's haste. The reach is
-    // panic's (`panic_r2`), the creep's pace `panic_creep`.
-    surge_every: u32, surge_lean: u32, surge_dash: u32, surge_haste: f32,
+    // creep's steps in the low half of `surge_ld` and the lunge's in the
+    // high, the step the game's last surge began on (`surge_at`, 0 the
+    // clock), and the lunge's haste. The reach is panic's (`panic_r2`), the
+    // creep's pace `panic_creep`. Lean and lunge share a word (each at most
+    // `SURGE_MAX`, 0xFFFF) since food-driven surges, so `surge_at` took no
+    // new row.
+    surge_every: u32, surge_ld: u32, surge_at: u32, surge_haste: f32,
     // The spray row (gun look, 2026-11-15; Params grew from 960 to 976, after the surge row):
     // a shot's spray (`squad::Frame::spray`): its longest flight in fine
     // steps (0 off), its first speed in dish cells a fine step and the
@@ -684,17 +688,25 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
 
 // The body surges (`BigParams::surge_every`, the CPU's `surge_haste` and
 // `nearest_threat`): on one clock for the dish, the first a whole period
-// in, a calm walker (not panicking, not breaking away) within `panic_r2` of
-// a unit runs for the nearest (ties to the first), at `panic_creep` of its
-// pace for `surge_lean` steps, then at `surge_haste` for `surge_dash`.
-// (x, y, haste); (-1, -1, 0) when calm. The units are searched only while
-// the clock is in a surge.
+// in, or once from the step the game sets (`surge_at`, when the slime has
+// eaten enough), a calm walker (not panicking, not breaking away) within
+// `panic_r2` of a unit runs for the nearest (ties to the first), at
+// `panic_creep` of its pace for the lean's steps, then at `surge_haste`
+// for the lunge's. (x, y, haste); (-1, -1, 0) when calm. The units are
+// searched only while a surge runs.
 fn surge_to(here: u32) -> vec3<f32> {
     let t = S.t + 1u;
-    if (P.surge_every == 0u || t < P.surge_every) { return vec3<f32>(-1.0, -1.0, 0.0); }
-    let ph = t % P.surge_every;
+    // The game's surge (`surge_at`) or the clock's, the first a whole
+    // period in, as the CPU's `surge_haste`.
+    var started = P.surge_every;
+    if (P.surge_at > 0u) { started = P.surge_at; }
+    if (P.surge_every == 0u || t < started) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    var ph = t % P.surge_every;
+    if (P.surge_at > 0u) { ph = t - P.surge_at; }
+    let lean = P.surge_ld & 0xFFFFu;
+    let dash = P.surge_ld >> 16u;
     var haste = 0.0;
-    if (ph < P.surge_lean) { haste = P.panic_creep; } else if (ph - P.surge_lean < P.surge_dash) { haste = P.surge_haste; }
+    if (ph < lean) { haste = P.panic_creep; } else if (ph - lean < dash) { haste = P.surge_haste; }
     if (haste <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let cx = i32(here % P.w);
     let cy = i32(here / P.w);

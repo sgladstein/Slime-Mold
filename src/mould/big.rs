@@ -99,6 +99,8 @@ pub const PANIC_DASH_MAX: u32 = 0xFFFF;
 /// The longest surge lean and lunge (`BigParams::surge_lean`,
 /// `surge_dash`), steps.
 pub const SURGE_MAX: u32 = 0xFFFF;
+/// `BigParams::surge_at` before the game's first surge: calm.
+pub const SURGE_WAIT: u32 = u32::MAX;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -729,6 +731,19 @@ pub struct BigParams {
     pub surge_lean: u32,
     pub surge_dash: u32,
     pub surge_haste: f32,
+    /// **The game times the surges** (2026-11-15, food-driven surges; 0
+    /// keeps the clock above). Nonzero, the step the last surge began on
+    /// (`self.steps + 1` of its first step): the lean and the lunge run
+    /// from it, once, and the body is calm until the game sets the next.
+    /// `SURGE_WAIT` (u32::MAX) holds the body calm before the first. The
+    /// game sets it when the slime has eaten `Rules::surge_food` from its
+    /// crystals (`Game::surge_meter`), so a slime holding more crystals
+    /// surges sooner; `surge_every` stays the switch and the longest wait.
+    /// Why one word set by the game rather than a meter on each engine:
+    /// the GPU would need a sum of every walker's bite each step, and the
+    /// game already reads each crystal's charge and each unit's take a
+    /// frame, which is what the slime ate, on both worlds alike.
+    pub surge_at: u32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1287,6 +1302,7 @@ impl BigParams {
             surge_lean: 45,
             surge_dash: 30,
             surge_haste: 2.0,
+            surge_at: 0,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -2572,12 +2588,16 @@ impl BigDish {
     /// `panic_creep` while the body gathers, `surge_haste` while it lunges,
     /// else 0. One clock for the whole dish.
     pub fn surge_haste(&self) -> f32 {
-        let every = self.p.surge_every as u64;
+        let (every, at) = (self.p.surge_every as u64, self.p.surge_at as u64);
         let t = self.steps + 1;
-        if every == 0 || t < every {
+        // The game's surge (`surge_at`) or the clock's, the first a whole
+        // period in.
+        let started = if at > 0 { at } else { every };
+        if every == 0 || t < started {
             return 0.0;
         }
-        let (ph, lean) = (t % every, self.p.surge_lean.min(SURGE_MAX) as u64);
+        let ph = if at > 0 { t - at } else { t % every };
+        let lean = self.p.surge_lean.min(SURGE_MAX) as u64;
         if ph < lean {
             self.p.panic_creep.max(PANIC_CREEP_MIN)
         } else if ph < lean + self.p.surge_dash.min(SURGE_MAX) as u64 {
@@ -5534,6 +5554,30 @@ mod tests {
         // Between surges (the clock calm all the run), nothing changes.
         let calm = run(BigParams { surge_every: 1_000_000, ..grow.clone() }, Some(probe), 20);
         assert_eq!(calm.2, base.2, "before the first surge the body moves as without it");
+        // The game's surge (`surge_at`, food-driven surges): held for the
+        // game (`SURGE_WAIT`) the body is calm; begun on the run's first
+        // step it closes in, though the clock alone would be calm.
+        let wait = run(BigParams { surge_every: 1_000_000, surge_at: SURGE_WAIT, ..grow.clone() }, Some(probe), 20);
+        assert_eq!(wait.2, base.2, "held for the game, the body is calm");
+        let timed = run(BigParams { surge_every: 1_000_000, surge_at: steps + 1, surge_lean: 3, surge_dash: steps, surge_haste: 2.0, ..grow.clone() }, Some(probe), 20);
+        eprintln!("the game's surge: mean distance {:.1} -> {:.1}", timed.0, timed.1);
+        assert!(timed.1 < base.1 && timed.1 < timed.0, "the game's surge closes in");
+        // Its phases, step by step: the clock's beat, then the game's once.
+        let mut d = BigDish::new(BigParams { surge_every: 100, surge_lean: 3, surge_dash: 5, surge_haste: 2.0, ..grow.clone() });
+        let creep = d.p.panic_creep.max(PANIC_CREEP_MIN);
+        let at = |d: &mut BigDish, step: u64| {
+            d.steps = step - 1;
+            d.surge_haste()
+        };
+        let clock: Vec<f32> = [99, 100, 102, 103, 107, 108, 200, 203].iter().map(|&t| at(&mut d, t)).collect();
+        assert_eq!(clock, [0.0, creep, creep, 2.0, 2.0, 0.0, creep, 2.0], "the clock: a whole period in, then every period");
+        d.p.surge_at = SURGE_WAIT;
+        assert!([100, 200, 1_000].iter().all(|&t| at(&mut d, t) == 0.0), "held for the game");
+        d.p.surge_at = 150;
+        let game: Vec<f32> = [149, 150, 152, 153, 157, 158, 200, 203, 250].iter().map(|&t| at(&mut d, t)).collect();
+        assert_eq!(game, [0.0, creep, creep, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0], "the game's: once, from its step, the clock's beat ignored");
+        d.p.surge_every = 0;
+        assert_eq!(at(&mut d, 150), 0.0, "surge 0 is off, whatever the game sets");
     }
 
     #[test]

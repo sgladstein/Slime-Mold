@@ -90,6 +90,15 @@ pub trait World {
     /// dish cells): the game keeps it past the gun's range
     /// (`Rules::panic_margin`). A world with no panic ignores it.
     fn set_panic_r(&mut self, _r: f32) {}
+    /// The surges' switch and longest wait, fine steps
+    /// (`BigParams::surge_every`; 0 off, or a world with no surge).
+    fn surge_every(&self) -> u32 {
+        0
+    }
+    /// The step the game's last surge began on (`BigParams::surge_at`):
+    /// the game times the surges by what the slime eats (`Rules::surge_food`).
+    /// A world with no surge ignores it.
+    fn set_surge_at(&mut self, _at: u32) {}
     /// A full pile's scent a step, which a soldier's smell is a share of.
     fn food_deposit(&self) -> f32;
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
@@ -232,6 +241,14 @@ impl World for BigDish {
 
     fn set_panic_r(&mut self, r: f32) {
         self.p.panic_r = r;
+    }
+
+    fn surge_every(&self) -> u32 {
+        self.p.surge_every
+    }
+
+    fn set_surge_at(&mut self, at: u32) {
+        self.p.surge_at = at;
     }
 
     fn food_deposit(&self) -> f32 {

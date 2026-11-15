@@ -470,7 +470,33 @@ pub struct Rules {
     /// first rule's margin (29 at range 24). Negative leaves the world's
     /// own `panic_r` (a test or a probe that sets it).
     pub panic_margin: f32,
+    /// **The slime surges when it has eaten** (2026-11-15, the slime-enemy
+    /// thread with the game designer, after #343's fixed clock): food (in
+    /// the bank's units, `charge` a food) the slime eats from its crystals
+    /// to build one surge (`Game::surge_meter`). When the meter holds this
+    /// much and `surge_min` game seconds have passed since the last surge
+    /// (or the landing), the next surge starts and the meter empties; with
+    /// nothing eaten one still comes after the world's `surge_every`, the
+    /// longest wait. 0 keeps the world's fixed clock. Works only on a world
+    /// whose slime surges (`World::surge_every` above 0).
+    /// Why: the owner, 11-15 08:34Z, wants the slime to "keep getting
+    /// stronger by holding onto its crystals and getting more of them". A
+    /// fixed beat ignored that; this one comes sooner the more crystals the
+    /// slime holds, and taking crystals or starving it pushes it back.
+    /// On at 150 food (`SURGE_FOOD`) with a floor of 10 s; shape C's
+    /// `surge` of 1800 steps (60 s) is the longest wait. On the Fork
+    /// (squad mode, seed 1, no soldier near) C eats 2.3 food a second in
+    /// its first 10 s, 6.9 at 50-60 s and 11 at 150-180 s as it spreads
+    /// over its crystals, so its first surge comes at about 43 s, against
+    /// the old beat's 30, and the gaps shrink to about 14 s by 3:00: nine
+    /// surges in three minutes against six (Reports/surge-2026-11-15/README.md,
+    /// *Food-driven*). 120 brought the gaps to 11 s by 2:00.
+    pub surge_food: f32,
+    pub surge_min: f32,
 }
+
+/// `Rules::surge_food`'s default: food the slime eats to build a surge.
+pub const SURGE_FOOD: f32 = 150.0;
 
 impl Rules {
     /// **Set one rule by name** (the window's `set=NAME=V`, 2026-11-15, the
@@ -485,6 +511,8 @@ impl Rules {
             "smell_r" => &mut self.smell_r,
             "hoard" => &mut self.hoard,
             "panic_margin" => &mut self.panic_margin,
+            "surge_food" => &mut self.surge_food,
+            "surge_min" => &mut self.surge_min,
             "range" => &mut self.range,
             "drain" => &mut self.drain,
             "cap" => &mut self.cap,
@@ -576,6 +604,8 @@ impl Default for Rules {
             broken: 0.03,
             broken_starve: 50.0,
             panic_margin: 5.0,
+            surge_food: SURGE_FOOD,
+            surge_min: 10.0,
         }
     }
 }

@@ -869,6 +869,17 @@ impl World for GpuWorld {
         self.s.panic_r = r;
     }
 
+    fn surge_every(&self) -> u32 {
+        self.s.surge_every
+    }
+
+    /// Written to the GPU with the next step's params, and kept on the
+    /// mirror dish's params so a twin's CPU copy reads the same.
+    fn set_surge_at(&mut self, at: u32) {
+        self.s.surge_at = at;
+        self.e.dish.p.surge_at = at;
+    }
+
     fn food_deposit(&self) -> f32 {
         self.e.dish.p.food_deposit
     }
@@ -1051,6 +1062,12 @@ mod tests {
         }
         fn set_panic_r(&mut self, r: f32) {
             self.g.set_panic_r(r)
+        }
+        fn surge_every(&self) -> u32 {
+            self.g.surge_every()
+        }
+        fn set_surge_at(&mut self, at: u32) {
+            self.g.set_surge_at(at)
         }
         fn food_deposit(&self) -> f32 {
             self.g.food_deposit()

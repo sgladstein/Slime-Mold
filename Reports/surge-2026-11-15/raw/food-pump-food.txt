@@ -1,0 +1,68 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 3.96 ms (once a game second), model and HUD 0.056 ms a frame
+  t 30 s: mould 22604, soldiers 8, bank 1360, harvested 937, shots 330, killed 2569, took 92%, crystals left 0.967; squad at 292.5,126.1
+  surge: the slime ate 82 food (2.7/s); meter 81.6 of 150, 0 surges
+  dense: 805 condensed or thick walkers, mass 23409
+  squad: touching 0.2 mean, 1 most; health 72 mean
+    pump at (165, 150): hp 123 / 200, built 1.0, standing, working
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 41 / 200, built 1.0, standing, working
+    pumped 937 food
+  surge 1 starts at t 46.9 s (the slime has eaten 150 food)
+  CPU: ground field 3.16 ms (once a game second), model and HUD 0.062 ms a frame
+  t 60 s: mould 24592, soldiers 7, bank 1654, harvested 1231, shots 657, killed 3636, took 85%, crystals left 0.952; squad at 330.0,142.9
+  surge: the slime ate 228 food (3.8/s); meter 78.0 of 150, 1 surges
+  dense: 1671 condensed or thick walkers, mass 26263
+  squad: touching 0.6 mean, 1 most; health 34 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1231 food
+  surge 2 starts at t 69.1 s (the slime has eaten 300 food)
+  surge 3 starts at t 84.9 s (the slime has eaten 451 food)
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.058 ms a frame
+  t 90 s: mould 20160, soldiers 4, bank 1654, harvested 1231, shots 893, killed 4139, took 71%, crystals left 0.943; squad at 330.0,142.9
+  surge: the slime ate 501 food (5.6/s); meter 50.1 of 150, 3 surges
+  dense: 4348 condensed or thick walkers, mass 24508
+  squad: touching 0.5 mean, 1 most; health 36 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1231 food
+  surge 4 starts at t 100.3 s (the slime has eaten 601 food)
+  surge 5 starts at t 115.7 s (the slime has eaten 751 food)
+  CPU: ground field 2.60 ms (once a game second), model and HUD 0.060 ms a frame
+  t 120 s: mould 22207, soldiers 3, bank 1654, harvested 1231, shots 1110, killed 4664, took 61%, crystals left 0.934; squad at 329.5,142.2
+  surge: the slime ate 793 food (6.6/s); meter 42.2 of 150, 5 surges
+  dense: 6561 condensed or thick walkers, mass 28768
+  squad: touching 0.3 mean, 1 most; health 19 mean
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1231 food
+  surge 6 starts at t 131.1 s (the slime has eaten 901 food)
+  surge 7 starts at t 146.5 s (the slime has eaten 1051 food)
+  CPU: ground field 4.42 ms (once a game second), model and HUD 0.055 ms a frame
+  t 150 s: mould 26744, soldiers 0, bank 1654, harvested 1231, shots 1226, killed 5008, took 53%, crystals left 0.924
+  surge: the slime ate 1086 food (7.2/s); meter 34.5 of 150, 7 surges
+  dense: 8303 condensed or thick walkers, mass 35047
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1231 food
+  surge 8 starts at t 161.9 s (the slime has eaten 1202 food)
+  surge 9 starts at t 177.2 s (the slime has eaten 1352 food)
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.061 ms a frame
+  t 180 s: mould 31278, soldiers 0, bank 1654, harvested 1231, shots 1226, killed 5008, took 47%, crystals left 0.915
+  surge: the slime ate 1380 food (7.7/s); meter 27.7 of 150, 9 surges
+  dense: 9777 condensed or thick walkers, mass 41055
+    pump at (165, 150): hp 0 / 200, built 1.0, worn down
+    pump at (347, 150): hp 0 / 200, built 1.0, worn down
+    pump at (60, 225): hp 0 / 200, built 1.0, worn down
+    pump at (450, 225): hp 0 / 200, built 1.0, worn down
+    pumped 1231 food

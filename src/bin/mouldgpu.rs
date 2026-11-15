@@ -4114,6 +4114,12 @@ mod tests {
         // offset changes which walkers move how far.
         let surge = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, panic_r: 10.0, ..base.clone() };
         let surge_scared = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, ..scared.clone() };
+        // And the game's surge (`surge_at`, food-driven surges, 11-15): set
+        // after the warm-up so the frame's first step is the lunge's first
+        // by `surge_at`, while the clock alone would be calm (its period is
+        // far longer than the dish has run), so an engine that reads the
+        // clock and not the game's step moves no walker.
+        let timed = Settings { surge_every: 1_000_000, surge_lean: 4, surge_dash: 6, surge_haste: 3.0, surge_at: 1, panic_r: 10.0, ..surge.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4140,6 +4146,7 @@ mod tests {
             ("condensed walkers break, the rest spray", dense, 0, 0.0, 3, 1.0),
             ("plain, the body surges at the squad", surge, 0, 0.0, 0, 1.0),
             ("plain, a cut-off part charges and the body surges", surge_scared, 0, 0.0, 0, 1.0),
+            ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4163,7 +4170,16 @@ mod tests {
                 }
             }
             let dense_before = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
-            if s.surge_every > 0 {
+            if s.surge_at > 0 {
+                // The game's surge began `lean` steps before the frame's
+                // first step (t0), so t0 lunges; the clock would be calm.
+                let t0 = cpu.steps as u32 + 1;
+                cpu.p.surge_at = 0;
+                assert_eq!(cpu.surge_haste(), 0.0, "{name}: the clock alone is calm");
+                s.surge_at = t0 - s.surge_lean;
+                cpu.p.surge_at = s.surge_at;
+                assert_eq!(cpu.surge_haste(), s.surge_haste, "{name}: the frame's first step lunges");
+            } else if s.surge_every > 0 {
                 // The frame's first step (t0) at the lunge's first: t0 % every
                 // = lean.
                 let t0 = cpu.steps as u32 + 1;
