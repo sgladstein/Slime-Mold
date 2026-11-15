@@ -126,8 +126,9 @@ Each report's own "next steps" section has the reasons and numbers:
   with its archived source.
 - **Merging.** Label the PR `queue`; `.github/workflows/merge-queue.yml`
   merges it onto current main (with up to four other queued PRs) as a merge
-  commit, runs both CI jobs ("test + clippy" and "sound device builds
-  (organ)") on that candidate, and fast-forwards main when green. GitHub's own
+  commit, runs CI (the tests as four parallel parts: lib, window, window
+  smoke, rest with clippy; and "sound device builds (organ)") on that
+  candidate, and fast-forwards main when green. GitHub's own
   merge queue is for organization-owned repos only (2026-11-14). PRs that
   change only `Reports/`, `handoff/`, `research/`, `wiki/` or `*.md` skip the
   two build jobs (PR #5), so they show as skipped, which is green.
