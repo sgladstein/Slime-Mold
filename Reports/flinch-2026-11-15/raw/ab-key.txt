@@ -1,0 +1,5 @@
+# The flinch A/B (https://claude.ai/artifact/NiqQovqWtGqbzBX9YsM1bS): letter, flinch (BigParams::flinch; 0 is off).
+A 0.95
+B 0
+C 0.8
+D 0.9

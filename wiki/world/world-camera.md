@@ -188,7 +188,9 @@ quarter of its first strength since 2026-11-15 (`View::set_alarm_look`,
 `ALARM_LOOK`; at full, a squad's fire on the Swarmer's planet washed the
 frame mint), and over open ground only, so a wall face draws no bright
 edge ([alarm look](../../Reports/alarm-look-2026-11-15/README.md), a
-blind A/B of four strengths for the owner). A soldier the slime bites flinches every 3 hp of damage, the
+blind A/B of four strengths for the owner; on the GTX 1070 the change cost
+the view's base pass 0.16 ms on planet 4, most of it the wall-aware
+sample, and since the flinch PR a strength of 0 samples nothing). A soldier the slime bites flinches every 3 hp of damage, the
 bitten side flushing hot (`Marks::soldier_bitten`;
 [building looks](../../Reports/building-looks-2026-11-14/README.md))
 ([units read](../../Reports/units-read-2026-11-14/README.md), [follow-up](../../Reports/units-read-2026-11-14/followup.md), [harvest](../../Reports/units-read-2026-11-14/harvest.md); [world look, *Buildings*](../../Reports/world-look-2026-11-11.md)). Ground byte 3 holds elevation, left 0 until the

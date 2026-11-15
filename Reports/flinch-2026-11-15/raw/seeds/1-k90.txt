@@ -1,0 +1,236 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.075 ms a frame
+  t 10 s: mould 13078, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 214.5,118.5
+  surge: the slime ate 23 food (2.3/s); meter 22.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.09 ms (once a game second), model and HUD 0.139 ms a frame
+  t 10 s: mould 13078, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 210.7,120.0
+  surge: the slime ate 23 food (2.3/s); meter 23.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.69 ms (once a game second), model and HUD 0.222 ms a frame
+  t 11 s: mould 13078, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 207.0,121.4
+  surge: the slime ate 24 food (2.3/s); meter 24.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.39 ms (once a game second), model and HUD 0.329 ms a frame
+  t 11 s: mould 13078, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 203.3,122.8
+  surge: the slime ate 25 food (2.3/s); meter 24.6 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.73 ms (once a game second), model and HUD 0.123 ms a frame
+  t 11 s: mould 13072, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 200.5,123.9
+  surge: the slime ate 25 food (2.3/s); meter 25.1 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13072
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.92 ms (once a game second), model and HUD 0.138 ms a frame
+  t 11 s: mould 13072, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 196.7,125.3
+  surge: the slime ate 26 food (2.3/s); meter 25.8 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13072
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.078 ms a frame
+  t 12 s: mould 13072, soldiers 8, bank 400, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 193.0,126.8
+  surge: the slime ate 26 food (2.3/s); meter 26.4 of 103, 0 surges
+  dense: 7 condensed or thick walkers, mass 13079
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.247 ms a frame
+  t 12 s: mould 13072, soldiers 8, bank 400, harvested 0, shots 1, killed 2, took 0%, crystals left 0.999; squad at 189.3,128.2
+  surge: the slime ate 27 food (2.3/s); meter 27.1 of 103, 0 surges
+  dense: 23 condensed or thick walkers, mass 13095
+  squad: touching 0.1 mean, 1 most; health 100 mean
+  CPU: ground field 2.33 ms (once a game second), model and HUD 0.122 ms a frame
+  t 12 s: mould 13055, soldiers 8, bank 400, harvested 0, shots 3, killed 11, took 0%, crystals left 0.999; squad at 186.5,129.2
+  surge: the slime ate 28 food (2.3/s); meter 27.6 of 103, 0 surges
+  dense: 38 condensed or thick walkers, mass 13093
+  squad: touching 0.1 mean, 1 most; health 100 mean
+  CPU: ground field 5.92 ms (once a game second), model and HUD 0.114 ms a frame
+  t 12 s: mould 13055, soldiers 8, bank 400, harvested 0, shots 5, killed 29, took 0%, crystals left 0.999; squad at 183.2,130.5
+  surge: the slime ate 28 food (2.3/s); meter 28.2 of 103, 0 surges
+  dense: 53 condensed or thick walkers, mass 13108
+  squad: touching 0.5 mean, 3 most; health 100 mean
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.198 ms a frame
+  t 13 s: mould 13055, soldiers 8, bank 400, harvested 0, shots 8, killed 50, took 0%, crystals left 0.999; squad at 179.9,131.8
+  surge: the slime ate 29 food (2.3/s); meter 28.9 of 103, 0 surges
+  dense: 87 condensed or thick walkers, mass 13142
+  squad: touching 0.5 mean, 2 most; health 99 mean
+  CPU: ground field 3.21 ms (once a game second), model and HUD 0.113 ms a frame
+  t 13 s: mould 13055, soldiers 8, bank 400, harvested 0, shots 12, killed 79, took 0%, crystals left 0.999; squad at 177.4,133.1
+  surge: the slime ate 30 food (2.3/s); meter 29.5 of 103, 0 surges
+  dense: 108 condensed or thick walkers, mass 13163
+  squad: touching 0.6 mean, 2 most; health 99 mean
+  CPU: ground field 2.54 ms (once a game second), model and HUD 0.124 ms a frame
+  t 13 s: mould 12980, soldiers 8, bank 400, harvested 0, shots 14, killed 88, took 0%, crystals left 0.999; squad at 174.5,134.5
+  surge: the slime ate 30 food (2.3/s); meter 30.0 of 103, 0 surges
+  dense: 130 condensed or thick walkers, mass 13110
+  squad: touching 0.5 mean, 2 most; health 99 mean
+  CPU: ground field 7.83 ms (once a game second), model and HUD 0.286 ms a frame
+  t 13 s: mould 12980, soldiers 8, bank 400, harvested 0, shots 16, killed 102, took 0%, crystals left 0.999; squad at 170.5,136.2
+  surge: the slime ate 31 food (2.3/s); meter 30.7 of 103, 0 surges
+  dense: 153 condensed or thick walkers, mass 13133
+  squad: touching 0.5 mean, 4 most; health 99 mean
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.123 ms a frame
+  t 14 s: mould 12980, soldiers 8, bank 400, harvested 0, shots 17, killed 124, took 0%, crystals left 0.999; squad at 167.6,137.3
+  surge: the slime ate 31 food (2.3/s); meter 31.3 of 103, 0 surges
+  dense: 176 condensed or thick walkers, mass 13156
+  squad: touching 0.8 mean, 4 most; health 99 mean
+  CPU: ground field 2.23 ms (once a game second), model and HUD 0.129 ms a frame
+  t 14 s: mould 12980, soldiers 8, bank 400, harvested 0, shots 21, killed 157, took 0%, crystals left 0.999; squad at 163.9,138.6
+  surge: the slime ate 32 food (2.3/s); meter 32.0 of 103, 0 surges
+  dense: 197 condensed or thick walkers, mass 13177
+  squad: touching 0.2 mean, 2 most; health 98 mean
+  CPU: ground field 5.12 ms (once a game second), model and HUD 0.302 ms a frame
+  t 14 s: mould 12891, soldiers 8, bank 400, harvested 0, shots 24, killed 184, took 0%, crystals left 0.999; squad at 160.8,139.7
+  surge: the slime ate 32 food (2.3/s); meter 32.5 of 103, 0 surges
+  dense: 214 condensed or thick walkers, mass 13105
+  squad: touching 0.1 mean, 1 most; health 98 mean
+  CPU: ground field 1.53 ms (once a game second), model and HUD 0.088 ms a frame
+  t 14 s: mould 12891, soldiers 8, bank 400, harvested 0, shots 26, killed 194, took 0%, crystals left 0.999; squad at 156.7,140.9
+  surge: the slime ate 33 food (2.3/s); meter 33.1 of 103, 0 surges
+  dense: 234 condensed or thick walkers, mass 13125
+  squad: touching 0.0 mean, 0 most; health 98 mean
+  CPU: ground field 2.42 ms (once a game second), model and HUD 0.160 ms a frame
+  t 15 s: mould 12891, soldiers 8, bank 400, harvested 0, shots 28, killed 194, took 0%, crystals left 0.998; squad at 152.8,142.0
+  surge: the slime ate 34 food (2.3/s); meter 33.8 of 103, 0 surges
+  dense: 251 condensed or thick walkers, mass 13142
+  squad: touching 0.6 mean, 2 most; health 98 mean
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.121 ms a frame
+  t 15 s: mould 12891, soldiers 8, bank 400, harvested 0, shots 31, killed 237, took 0%, crystals left 0.998; squad at 149.7,143.0
+  surge: the slime ate 34 food (2.3/s); meter 34.5 of 103, 0 surges
+  dense: 277 condensed or thick walkers, mass 13168
+  squad: touching 0.1 mean, 1 most; health 98 mean
+  CPU: ground field 4.07 ms (once a game second), model and HUD 0.241 ms a frame
+  t 15 s: mould 12812, soldiers 8, bank 400, harvested 0, shots 32, killed 263, took 0%, crystals left 0.998; squad at 147.9,143.8
+  surge: the slime ate 35 food (2.3/s); meter 35.0 of 103, 0 surges
+  dense: 294 condensed or thick walkers, mass 13106
+  squad: touching 0.2 mean, 1 most; health 98 mean
+  CPU: ground field 6.05 ms (once a game second), model and HUD 0.131 ms a frame
+  t 15 s: mould 12812, soldiers 8, bank 400, harvested 0, shots 34, killed 470, took 0%, crystals left 0.998; squad at 144.9,145.5
+  surge: the slime ate 36 food (2.3/s); meter 35.6 of 103, 0 surges
+  dense: 311 condensed or thick walkers, mass 13123
+  squad: touching 0.4 mean, 2 most; health 98 mean
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.123 ms a frame
+  t 16 s: mould 12812, soldiers 8, bank 400, harvested 0, shots 39, killed 481, took 0%, crystals left 0.998; squad at 142.5,147.2
+  surge: the slime ate 36 food (2.3/s); meter 36.3 of 103, 0 surges
+  dense: 333 condensed or thick walkers, mass 13145
+  squad: touching 0.9 mean, 4 most; health 97 mean
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.079 ms a frame
+  t 16 s: mould 12812, soldiers 8, bank 400, harvested 0, shots 41, killed 584, took 0%, crystals left 0.998; squad at 139.8,148.5
+  surge: the slime ate 37 food (2.3/s); meter 37.0 of 103, 0 surges
+  dense: 350 condensed or thick walkers, mass 13162
+  squad: touching 0.6 mean, 4 most; health 97 mean
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.082 ms a frame
+  t 16 s: mould 12376, soldiers 8, bank 400, harvested 0, shots 42, killed 698, took 0%, crystals left 0.998; squad at 137.6,149.6
+  surge: the slime ate 37 food (2.3/s); meter 37.5 of 103, 0 surges
+  dense: 362 condensed or thick walkers, mass 12738
+  squad: touching 0.5 mean, 2 most; health 97 mean
+  CPU: ground field 6.12 ms (once a game second), model and HUD 0.176 ms a frame
+  t 16 s: mould 12376, soldiers 8, bank 400, harvested 0, shots 46, killed 744, took 0%, crystals left 0.998; squad at 134.3,150.2
+  surge: the slime ate 38 food (2.3/s); meter 38.2 of 103, 0 surges
+  dense: 379 condensed or thick walkers, mass 12755
+  squad: touching 0.4 mean, 2 most; health 96 mean
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.135 ms a frame
+  t 17 s: mould 12376, soldiers 8, bank 400, harvested 0, shots 47, killed 787, took 0%, crystals left 0.998; squad at 131.3,151.5
+  surge: the slime ate 39 food (2.3/s); meter 38.8 of 103, 0 surges
+  dense: 400 condensed or thick walkers, mass 12776
+  squad: touching 0.8 mean, 4 most; health 95 mean
+  CPU: ground field 2.28 ms (once a game second), model and HUD 0.145 ms a frame
+  t 17 s: mould 12376, soldiers 8, bank 400, harvested 0, shots 51, killed 840, took 0%, crystals left 0.998; squad at 128.5,152.8
+  surge: the slime ate 40 food (2.4/s); meter 39.5 of 103, 0 surges
+  dense: 417 condensed or thick walkers, mass 12793
+  squad: touching 2.1 mean, 7 most; health 94 mean
+  CPU: ground field 1.43 ms (once a game second), model and HUD 0.094 ms a frame
+  t 17 s: mould 12243, soldiers 8, bank 400, harvested 0, shots 52, killed 840, took 0%, crystals left 0.998; squad at 126.6,153.2
+  surge: the slime ate 40 food (2.4/s); meter 40.0 of 103, 0 surges
+  dense: 424 condensed or thick walkers, mass 12667
+  squad: touching 3.1 mean, 9 most; health 93 mean
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.277 ms a frame
+  t 17 s: mould 12243, soldiers 8, bank 400, harvested 0, shots 60, killed 983, took 0%, crystals left 0.998; squad at 126.6,152.4
+  surge: the slime ate 41 food (2.4/s); meter 40.7 of 103, 0 surges
+  dense: 436 condensed or thick walkers, mass 12679
+  squad: touching 1.0 mean, 4 most; health 93 mean
+  CPU: ground field 2.35 ms (once a game second), model and HUD 0.118 ms a frame
+  t 18 s: mould 12243, soldiers 8, bank 400, harvested 0, shots 60, killed 983, took 0%, crystals left 0.998; squad at 125.8,152.3
+  surge: the slime ate 41 food (2.4/s); meter 41.4 of 103, 0 surges
+  dense: 451 condensed or thick walkers, mass 12694
+  squad: touching 2.0 mean, 5 most; health 92 mean
+  CPU: ground field 6.08 ms (once a game second), model and HUD 0.116 ms a frame
+  t 18 s: mould 12243, soldiers 8, bank 400, harvested 0, shots 68, killed 1066, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 42 food (2.4/s); meter 42.1 of 103, 0 surges
+  dense: 469 condensed or thick walkers, mass 12712
+  squad: touching 1.6 mean, 8 most; health 91 mean
+  CPU: ground field 2.46 ms (once a game second), model and HUD 0.306 ms a frame
+  t 18 s: mould 12015, soldiers 8, bank 400, harvested 0, shots 68, killed 1066, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 43 food (2.4/s); meter 42.6 of 103, 0 surges
+  dense: 481 condensed or thick walkers, mass 12496
+  squad: touching 2.2 mean, 10 most; health 90 mean
+  CPU: ground field 2.38 ms (once a game second), model and HUD 0.121 ms a frame
+  t 18 s: mould 12015, soldiers 8, bank 400, harvested 0, shots 76, killed 1167, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 43 food (2.4/s); meter 43.3 of 103, 0 surges
+  dense: 491 condensed or thick walkers, mass 12506
+  squad: touching 1.5 mean, 7 most; health 89 mean
+  CPU: ground field 6.79 ms (once a game second), model and HUD 0.170 ms a frame
+  t 19 s: mould 12015, soldiers 8, bank 400, harvested 0, shots 76, killed 1167, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 44 food (2.4/s); meter 44.0 of 103, 0 surges
+  dense: 506 condensed or thick walkers, mass 12521
+  squad: touching 1.5 mean, 7 most; health 88 mean
+  CPU: ground field 3.19 ms (once a game second), model and HUD 0.330 ms a frame
+  t 19 s: mould 12015, soldiers 8, bank 400, harvested 0, shots 84, killed 1223, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 45 food (2.4/s); meter 44.7 of 103, 0 surges
+  dense: 520 condensed or thick walkers, mass 12535
+  squad: touching 0.5 mean, 3 most; health 88 mean
+  CPU: ground field 2.37 ms (once a game second), model and HUD 0.326 ms a frame
+  t 19 s: mould 11802, soldiers 8, bank 400, harvested 0, shots 84, killed 1294, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 45 food (2.4/s); meter 45.3 of 103, 0 surges
+  dense: 527 condensed or thick walkers, mass 12329
+  squad: touching 1.4 mean, 5 most; health 88 mean
+  CPU: ground field 3.42 ms (once a game second), model and HUD 0.244 ms a frame
+  t 19 s: mould 11802, soldiers 8, bank 400, harvested 0, shots 92, killed 1340, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 46 food (2.4/s); meter 46.0 of 103, 0 surges
+  dense: 543 condensed or thick walkers, mass 12345
+  squad: touching 0.1 mean, 1 most; health 87 mean
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.114 ms a frame
+  t 20 s: mould 11802, soldiers 8, bank 400, harvested 0, shots 92, killed 1366, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 47 food (2.4/s); meter 46.7 of 103, 0 surges
+  dense: 547 condensed or thick walkers, mass 12349
+  squad: touching 1.0 mean, 5 most; health 87 mean
+  CPU: ground field 1.48 ms (once a game second), model and HUD 0.188 ms a frame
+  t 20 s: mould 11802, soldiers 8, bank 400, harvested 0, shots 100, killed 1407, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 47 food (2.4/s); meter 47.4 of 103, 0 surges
+  dense: 564 condensed or thick walkers, mass 12366
+  squad: touching 0.0 mean, 0 most; health 86 mean
+  CPU: ground field 2.50 ms (once a game second), model and HUD 0.435 ms a frame
+  t 20 s: mould 11675, soldiers 8, bank 400, harvested 0, shots 100, killed 1431, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  dense: 572 condensed or thick walkers, mass 12247
+  squad: touching 0.1 mean, 1 most; health 86 mean
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.119 ms a frame
+  t 30 s: mould 10029, soldiers 8, bank 400, harvested 0, shots 228, killed 3949, took 0%, crystals left 0.996; squad at 142.3,121.8
+  surge: the slime ate 80 food (2.7/s); meter 80.2 of 103, 0 surges
+  dense: 722 condensed or thick walkers, mass 10751
+  squad: touching 0.2 mean, 1 most; health 79 mean
+  surge 1 starts at t 35.3 s (the slime has eaten 103 food)
+  CPU: ground field 3.16 ms (once a game second), model and HUD 0.077 ms a frame
+  t 45 s: mould 10394, soldiers 8, bank 419, harvested 0, shots 341, killed 5230, took 0%, crystals left 0.993; squad at 126.8,154.1
+  surge: the slime ate 149 food (3.3/s); meter 46.0 of 103, 1 surges
+  dense: 1238 condensed or thick walkers, mass 11632
+  squad: touching 0.5 mean, 1 most; health 59 mean
+  surge 2 starts at t 56.5 s (the slime has eaten 205 food)
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.158 ms a frame
+  t 60 s: mould 10890, soldiers 8, bank 444, harvested 0, shots 498, killed 7580, took 0%, crystals left 0.990; squad at 126.8,154.1
+  surge: the slime ate 223 food (3.7/s); meter 17.1 of 103, 2 surges
+  dense: 1835 condensed or thick walkers, mass 12725
+  squad: touching 0.0 mean, 0 most; health 44 mean
+  surge 3 starts at t 77.7 s (the slime has eaten 308 food)
+  CPU: ground field 2.31 ms (once a game second), model and HUD 0.101 ms a frame
+  t 90 s: mould 10535, soldiers 5, bank 479, harvested 0, shots 755, killed 11204, took 0%, crystals left 0.983; squad at 124.7,154.9
+  surge: the slime ate 369 food (4.1/s); meter 61.2 of 103, 3 surges
+  dense: 2510 condensed or thick walkers, mass 13045
+  squad: touching 0.0 mean, 0 most; health 41 mean
+  surge 4 starts at t 98.4 s (the slime has eaten 411 food)
+  surge 5 starts at t 118.6 s (the slime has eaten 514 food)
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.084 ms a frame
+  t 120 s: mould 11318, soldiers 1, bank 483, harvested 0, shots 888, killed 13395, took 0%, crystals left 0.977; squad at 126.7,153.1
+  surge: the slime ate 521 food (4.3/s); meter 7.1 of 103, 5 surges
+  dense: 3263 condensed or thick walkers, mass 14581
+  squad: touching 2.0 mean, 2 most; health 23 mean

@@ -368,6 +368,9 @@ pub struct Settings {
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
+    /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
+    /// `alarm_weight` when the world is made (`Settings::flinched`).
+    pub flinch: f32,
     /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
     /// walker pays a tick, what it starts with, what it divides at, what a
     /// division costs, the chance a tick that a walker at zero dies, and
@@ -499,6 +502,13 @@ pub struct Settings {
 }
 
 impl Settings {
+    /// These settings with the flinch folded into the alarm
+    /// (`big::flinch_alarm`), as `BigDish` folds its params when made.
+    pub fn flinched(mut self) -> Self {
+        (self.alarm_keep, self.alarm_weight) = crate::mould::big::flinch_alarm(self.alarm_keep, self.alarm_weight, self.flinch);
+        self
+    }
+
     /// The phase 2 big dish: the `nose` rule at 100,000 walkers, food on,
     /// the game's look (examples/bigdish.rs preset `dense`, spread start).
     pub fn big_dish() -> Self {
@@ -600,6 +610,7 @@ impl Settings {
             alarm_keep: t.alarm_keep,
             alarm_weight: t.alarm_weight,
             alarm_relay: t.alarm_relay,
+            flinch: t.flinch,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
             birth_energy: t.birth_energy,
@@ -864,6 +875,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "gas_sleep" => s.gas_sleep = f()?,
         "alarm_keep" => s.alarm_keep = f()?,
         "alarm_weight" => s.alarm_weight = f()?,
+        "flinch" => s.flinch = f()?.max(0.0),
         "alarm_relay" => s.alarm_relay = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
@@ -1025,6 +1037,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         alarm_keep: s.alarm_keep,
         alarm_weight: s.alarm_weight,
         alarm_relay: s.alarm_relay,
+        flinch: s.flinch,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
         birth_energy: s.birth_energy,

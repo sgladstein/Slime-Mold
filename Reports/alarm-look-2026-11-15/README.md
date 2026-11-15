@@ -107,10 +107,38 @@ cost here; the earlier run with the window's own camera, where the fight
 was not in view, gave 123.86 against 123.87 ms. The deciding numbers are
 the 1070's, booked through the PC runner once the PR is up.
 
+### On the GTX 1070 (added after #354 merged)
+
+The PC runner timed `bench=45 run=1:4 mode=squads hand=squads
+screen=1920x1080 centre=380,300,6 viewpasses=60` (planet 4, the Swarmer,
+whose alarm field runs all game) on main before (85dab55a) and on this
+change (26262751), and the change with `alarm_look=0` and `=1`. The GPU
+was idle before each; single runs, not interleaved, and runs 2 and 4
+started on a down-clocked card. Raw files: branch
+`claude/project-thread-26drse` at 774cec3e,
+`runner-out/haze-pr354-85dab55a-vs-26262751/`. Times in ms:
+
+| Run | Frame p50 | Frame p95 | View | `base` pass |
+|---|---|---|---|---|
+| Before | 8.06 | 8.87 | 7.171 | 6.224 |
+| After, a quarter (the default) | 8.25 | 9.08 | 7.327 | 6.381 |
+| After, `alarm_look=0` | 8.23 | 9.00 | 7.282 | 6.332 |
+| After, `alarm_look=1` | 8.29 | 9.10 | 7.365 | 6.415 |
+
+The game line at 45 s is the same in all four (52,105 walkers, 8
+soldiers, 404 shots, 3,724 killed). The deciding number, the `base` pass,
+went from 6.224 to 6.381 ms (+0.16, 2.5%); the other view passes did not
+move. **Correction:** the first paragraph above says the haze samples
+nothing where it draws nothing. It did not: WGSL's `select` runs both its
+arms, so `alarm_at` (now with four ground reads beside its four alarm
+reads) ran on every pixel, and with the haze off the pass was still
++0.11 ms. The flinch PR (`Reports/flinch-2026-11-15/README.md`) makes it
+a branch, so a strength of 0 samples nothing.
+
 ## Not done
 
 - W19, the flinch (alarm keep about 0.9 and weight -1 on every tier):
-  next, as its own A/B.
+  next, as its own A/B (done the same day: `Reports/flinch-2026-11-15/`).
 - The haze's colour and its fill/front split are unchanged; the knob only
   scales them.
 
