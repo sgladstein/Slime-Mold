@@ -33,6 +33,7 @@ sources:
   - Reports/soldier-controls-2026-11-12.md
   - Reports/species-gpu-2026-11-11.md
   - Reports/squad-mode-2026-11-14/README.md
+  - Reports/surge-2026-11-15/README.md
   - Reports/units-read-2026-11-14/README.md
   - research/sources/creeper-world-2025.md
 code:
@@ -267,6 +268,14 @@ the soldiers for about 3 s before it lands, against about 1.5 s, and a
 charge at a unit gives up after a 0.5 s dash (`panic_dash` 15), so a
 squad that pulls back in time gets clear (5 of 6 seeds at 24 cells,
 half a second late) and one that stands does not ([fed mould, *A cut-off part panics*](../../Reports/fed-mould-2026-11-13/README.md)).
+Since 11-15 the whole body **surges** too (`surge_every` 900 in shape C,
+both engines): every 30 s the slime joined to its crystals within the
+same reach of a soldier or building creeps at the nearest for 1.5 s,
+then lunges for 1 s at twice its pace. Standing at the edge to shoot is
+no longer safe: on the Fork the first lunge took 2 of 9 soldiers by
+32.5 s (9 of 9 without) and the second wiped the last 3. A squad out of
+reach is untouched, so the surge presses the player only where the body
+already is ([surge](../../Reports/surge-2026-11-15/README.md)).
 Taking crystals barely shrinks C: at its cap it eats three times its
 upkeep, so on one crystal of 23 it holds 50,000 walkers for two minutes
 before it falls (10,369 at six). Making size follow held food, and a
