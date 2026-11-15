@@ -211,6 +211,12 @@ pub struct Rules {
     pub charge: f32,
     /// Defend fires on mould this near, dish cells.
     pub defend: f32,
+    /// A Guard order's zone round a plain spot, dish cells (a crystal's or
+    /// a building's is its own edge plus `GUARD_RIM`): slime in it is shot
+    /// whatever the stance but hold fire (`Game::guard_zone`, owner
+    /// 2026-11-15 19:51Z). About the defend reach, so a guard on open
+    /// ground covers the ground it stands round.
+    pub guard_r: f32,
     /// Walkers the aimed 4 x 4 block must hold before a soldier fires at
     /// it. 1 (any): on rush seed 2 over 200 s, 1 wasted 1 shot of 200 and
     /// killed 1,600 walkers, 2 killed 1,486 and 4 killed 1,452, once the
@@ -566,6 +572,7 @@ impl Default for Rules {
             carry: 300.0,
             charge: 64.0,
             defend: 7.5,
+            guard_r: 8.0,
             aim_min: 1,
             core_r: 5.0,
             core_secs: 5.0,

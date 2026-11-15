@@ -157,7 +157,7 @@ fn gun_of(spec: &str, seed: u64, depth: u32) -> Result<Gun, String> {
     let kind = GunKind::parse(what).ok_or_else(|| format!("gun={spec}: rifle, carbine, long, scatter or roll"))?;
     Ok(if s.is_some() { Gun::roll_kind(kind, seed, depth) } else { kind.average_at(depth) })
 }
-use slime_mould::mould::larder_world::{TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{GUARD_RIM, PUMP_LEVELS, TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::run::{Ground as RunGround, Run};
 use slime_mould::mould::map::Map;
@@ -220,7 +220,9 @@ commands! {
     ATTACK = 1,
     STOP = 2,
     HARVEST = 3,
-    BURN = 4,
+    // Burn a line's id until the owner removed it (2026-11-15 19:51Z):
+    // Guard took its place and its F (`Order::Guard`).
+    GUARD = 4,
     HOLD_FIRE = 5,
     DEFEND = 6,
     FREE = 7,
@@ -255,6 +257,17 @@ commands! {
     // The build page's cancel (2026-11-14, the build-flow thread): click a
     // ghost to call it off for its whole price back (`Cmd::Unbuild`).
     CANCEL_BUILD = 29,
+    // Card 2 (owner 2026-11-15 19:38Z): the one fire button that cycles the
+    // stances (Z, X and C still give HOLD_FIRE, DEFEND and FREE), and the
+    // squad's Heal and Lookouts off the squad panel.
+    FIRE = 30,
+    HEAL_ORDER = 31,
+    LOOKOUTS = 32,
+    // A building clicked with nothing else selected (owner 19:51Z, option
+    // b): its card's actions. CANCEL_BUILD calls off a ghost there.
+    DEMOLISH = 33,
+    UPGRADE = 34,
+    SWITCH = 35,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -381,6 +394,11 @@ const RULE_KEY: &str = "set:";
 struct Args {
     /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
     squads: bool,
+    /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
+    /// what the player does before frame N's picture, one step a frame
+    /// (`headless::card_step`): main, build, tools, free, pick, fire, and
+    /// the building card's upgrade, demolish, switch.
+    card: Vec<String>,
     /// None: the race world from noise.
     map: Option<String>,
     seed: u64,
@@ -619,6 +637,10 @@ struct App {
     /// The larder is selected (a click on it with no soldier picked): its
     /// card shows, and right click sets its rally point.
     larder_sel: bool,
+    /// The building selected (a click on it with no soldier or squad;
+    /// owner 2026-11-15 19:51Z, option b): the panel shows its state and
+    /// the card its actions (`App::building_card`).
+    building_sel: Option<usize>,
     /// Alerts already given: crystals dry, the core taken, the larder
     /// robbed (game second), out of food.
     dry: Vec<bool>,
@@ -753,6 +775,7 @@ impl App {
             last_sent: None,
             ctrl: false,
             larder_sel: false,
+            building_sel: None,
             dry: Vec::new(),
             core_told: false,
             broken_told: false,
@@ -1084,6 +1107,8 @@ impl App {
         self.blooks.clear();
         self.tracers.clear();
         self.controls.selected.clear();
+        self.controls.burn_lines = false;
+        self.building_sel = None;
         self.controls.groups = Default::default();
         self.hud.cancel_targeting();
         (self.owed, self.core_told, self.robbed_at, self.stolen, self.broke, self.saved) = (0.0, false, None, 0.0, false, false);
@@ -1765,6 +1790,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // down each frame after the first (films of a page taller than
             // the window, 11-15).
             "scroll" => scroll = v.parse::<i32>()?,
+            "card" => args.card = v.split('/').map(String::from).collect(),
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).

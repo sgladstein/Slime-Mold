@@ -123,16 +123,17 @@ fn the_window_plays_the_real_game() {
     assert!(wounded > 0, "no wound in the look after {} shots", g.shots);
     app.prepare();
     let m = app.model(None, None);
-    // The soldiers' nine, the rally point, the build page's key (Q) and
-    // the tools page's (E).
-    assert_eq!(m.commands.len(), 12);
+    // Card 2 (2026-11-15): attack-move, stop, harvest, guard, the fire
+    // button; buy, pump, the rally point, Build (Q) and Tools (E).
+    assert_eq!(m.commands.len(), 10);
     assert!(m.end.is_none());
-    // The build page: turret, lure, pump, outpost, siren, cancel (none to
-    // cancel yet), the lures' switch, back.
+    // The build page, option 1: what you place along the top, the wall
+    // among them; the lures' switch, the outpost and Back below. (Cancel
+    // a build left it: click the building.)
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Lure", "Pump", "Outpost", "Siren", "Cancel a build", "Lures, sirens on/off", "Back"]);
-    assert!(!m.commands[5].ready, "nothing being built");
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Wall", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
+    assert!(!m.commands[5].ready, "no lures to switch");
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take
@@ -568,7 +569,9 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     let key_of = |name: &str| m.commands.iter().find(|c| c.name == name).map(|c| c.key);
     assert_eq!(key_of("Drain a crystal"), Some(KeyCode::KeyG));
     assert_eq!(key_of("Attack-move"), Some(KeyCode::KeyR));
-    assert_eq!(key_of("Defend"), Some(KeyCode::KeyX));
+    // Card 2: one fire button; X still picks Defend.
+    let fire = m.commands.iter().find(|c| c.id == FIRE).unwrap();
+    assert!(fire.also.contains(&(KeyCode::KeyX, DEFEND)) && fire.also.contains(&(KeyCode::KeyZ, HOLD_FIRE)) && fire.also.contains(&(KeyCode::KeyC, FREE)));
     assert!(m.help_base.as_ref().is_some_and(|h| h.iter().any(|r| r.1.starts_with("Split"))), "F1 lists the squad's keys");
     // G is the card's: it aims a drain, and merges nothing.
     assert!(!app.squad_key(KeyCode::KeyG, true, false, false));
@@ -654,11 +657,12 @@ fn every_command_card_page_has_its_own_slots_and_keys() {
     }
 }
 
-/// **The card's burn reaches a moving squad** (review after the bug sweep,
-/// 2026-11-14): given soldier by soldier, a squad steered with WASD took
-/// its own order back at its next step, so F + drag did nothing.
+/// **The card's Guard reaches a moving squad** (Burn a line's test until
+/// the owner removed it, 2026-11-15 19:51Z; the review after the bug sweep,
+/// 11-14: an order given soldier by soldier was taken back at the squad's
+/// next step). The squad walks to the spot as one and keeps its zone.
 #[test]
-fn the_cards_burn_reaches_a_moving_squad() {
+fn the_cards_guard_reaches_a_moving_squad() {
     let Some((device, queue)) = gpu() else { return };
     let mut app = offscreen(squad_args(true), (640, 400), &device, &queue).unwrap();
     let dt = 1.0 / 60.0;
@@ -667,21 +671,24 @@ fn the_cards_burn_reaches_a_moving_squad() {
         app.squad_frame(dt);
         app.step(dt);
     }
-    let (from, to) = {
+    app.squad_key(KeyCode::KeyD, false, false, true);
+    let at = {
         let g = app.game.as_ref().unwrap();
         let m = g.active.and_then(|q| g.middle(q)).unwrap();
         let sc = g.world.scale();
-        ((m.0 + 4.0 * sc, m.1 - 6.0 * sc), (m.0 + 4.0 * sc, m.1 + 6.0 * sc))
+        g.nearest_standable((m.0 + 6.0 * sc, m.1), 8.0 * sc).unwrap()
     };
-    app.hud_event(HudEvent::Line { id: BURN, from, to }).unwrap();
+    app.hud_event(HudEvent::Point { id: GUARD, at }).unwrap();
     for _ in 0..30 {
         app.squad_frame(dt);
         app.step(dt);
     }
     let g = app.game.as_ref().unwrap();
     let q = g.active.unwrap();
-    let burning = g.members(q).iter().filter(|&&k| matches!(g.soldiers[k].order, Order::Burn(..))).count();
-    assert_eq!(burning, g.members(q).len(), "every member of the squad burns the line half a second later");
+    assert_eq!(g.squads[q].guard, Some(at), "the squad guards the spot");
+    for k in g.members(q) {
+        assert_eq!(g.guard_zone(k), Some(g.zone_at(at)), "soldier {k} keeps the zone");
+    }
 }
 
 /// **The minimap in the squad mode** (review after the bug sweep,
@@ -860,11 +867,12 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     app.prepare();
     let m = app.model(None, None);
     assert!(m.objective.as_deref().is_some_and(|o| o.starts_with("Wipe out the slime")), "{:?}", m.objective);
-    // Turrets are on the build page; walls are owned from the start.
-    let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
-    assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
+    // Turrets and walls are on the build page (Card 2); walls are owned
+    // from the start.
     app.build_page = true;
     let m = app.model(None, None);
+    let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
+    assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
     assert!(!turret.ready && turret.why_not.as_deref().is_some_and(|w| w.starts_with("Locked")));
     app.build_page = false;
@@ -1376,4 +1384,37 @@ fn the_menus_real_lists_fit_one_screen() {
             }
         }
     }
+}
+
+/// **A building clicked with no squad commanded** (owner 2026-11-15
+/// 19:51Z, option b): its panel and card; the card's Demolish pulls it
+/// down for half its price, and a pump's Upgrade raises its level.
+#[test]
+fn a_building_selected_shows_its_card_and_acts() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(squad_args(true), (1280, 720), &device, &queue).unwrap();
+    app.squad_frame(1.0 / 60.0);
+    let g = app.game.as_mut().unwrap();
+    g.bank = 1e6;
+    g.rules.build.raise = 0.0;
+    let sc = g.world.scale();
+    let m = g.active.and_then(|q| g.middle(q)).unwrap();
+    let at = (6..40).filter_map(|d| g.nearest_standable((m.0 + d as f32 * sc, m.1), 4.0 * sc)).find(|&p| g.build_blocked(Kind::Turret, p).is_none()).unwrap();
+    assert!(g.apply(Cmd::Build(Kind::Turret, at)));
+    let b = g.buildings.len() - 1;
+    // A click on it while a squad is commanded fires; let go, it selects.
+    app.let_go();
+    app.building_sel = app.game.as_ref().unwrap().building_at(at);
+    assert_eq!(app.building_sel, Some(b));
+    app.controls.selected.clear();
+    let mdl = app.model(None, None);
+    assert_eq!(mdl.info.as_ref().map(|i| i.title.as_str()), Some("Turret"));
+    let ids: Vec<u32> = mdl.commands.iter().map(|c| c.id).collect();
+    assert_eq!(ids, vec![DEMOLISH], "a turret's card");
+    let before = app.game.as_ref().unwrap().bank;
+    app.hud_event(HudEvent::Command { id: DEMOLISH }).unwrap();
+    let g = app.game.as_ref().unwrap();
+    assert!(!g.buildings[b].alive);
+    assert_eq!(g.bank, before + 0.5 * g.rules.build.turret_cost);
+    assert_eq!(app.building_sel, None);
 }

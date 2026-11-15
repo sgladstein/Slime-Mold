@@ -22,6 +22,9 @@ pub enum Cmd {
     Unbuild(usize),
     /// Upgrade pump `b` a level (`Game::upgrade`), paid now.
     Upgrade(usize),
+    /// Pull down standing building `b` (`Game::demolish`), part of its
+    /// price back. Appended last in replay words, as every new command.
+    Demolish(usize),
     /// Shift + an order: soldier `k` does it after the ones it has
     /// (`Soldier::queue`); a soldier holding starts it at once.
     Queue(usize, Order),
@@ -84,6 +87,7 @@ impl Cmd {
             Cmd::Toggle(k) => format!("toggle {k}"),
             Cmd::Unbuild(b) => format!("unbuild {b}"),
             Cmd::Upgrade(b) => format!("upgrade {b}"),
+            Cmd::Demolish(b) => format!("demolish {b}"),
             Cmd::Queue(k, o) => format!("queue{}", &super::super::larder::Cmd::Order(k, o).to_line()["order".len()..]),
             Cmd::Rally(o) => format!("rally{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Send(b) => format!("send {b}"),
@@ -117,6 +121,7 @@ impl Cmd {
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
             "unbuild" => return Some(Cmd::Unbuild(w.get(1)?.parse().ok()?)),
             "upgrade" => return Some(Cmd::Upgrade(w.get(1)?.parse().ok()?)),
+            "demolish" => return Some(Cmd::Demolish(w.get(1)?.parse().ok()?)),
             "send" => return Some(Cmd::Send(w.get(1)?.parse().ok()?)),
             "steer" => return Some(Cmd::Steer(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
             "fire" if w.get(2) == Some(&"none") => return Some(Cmd::Fire(w.get(1)?.parse().ok()?, None)),
@@ -221,6 +226,7 @@ impl<W: World> Game<W> {
             Cmd::Toggle(k) => self.toggle(k),
             Cmd::Unbuild(b) => self.unbuild(b).is_some(),
             Cmd::Upgrade(b) => self.upgrade(b),
+            Cmd::Demolish(b) => self.demolish(b).is_some(),
             Cmd::Send(b) => self.send(b).is_some(),
             Cmd::Rally(o) => {
                 self.rally = o;
@@ -391,6 +397,33 @@ impl<W: World> Game<W> {
         self.soldiers[k].order = o;
     }
 
+    /// What soldier `k` guards, if anything: its own `Order::Guard`, or in
+    /// the squad mode its squad's `Squad::guard`. The zone is a crystal
+    /// there with its rim, a building there with its footprint, each and
+    /// `GUARD_RIM` more, else `Rules::guard_r` round the spot: middle and
+    /// radius, fine cells.
+    pub fn guard_zone(&self, k: usize) -> Option<((f32, f32), f32)> {
+        let s = self.soldiers[k];
+        let p = match s.order {
+            Order::Guard(x, y) => (x, y),
+            _ if self.rules.squads => self.squads.get(s.squad as usize)?.guard?,
+            _ => return None,
+        };
+        Some(self.zone_at(p))
+    }
+
+    /// The zone a Guard order at `p` keeps (`guard_zone`).
+    pub fn zone_at(&self, p: (f32, f32)) -> ((f32, f32), f32) {
+        let sc = self.s();
+        if let Some((i, c)) = self.crystal_at(p) {
+            return (c, self.world.crystal_r(i) + GUARD_RIM * sc);
+        }
+        if let Some(b) = self.building_at(p).filter(|&b| !matches!(self.buildings[b].kind, Kind::Wall { .. })) {
+            return (self.buildings[b].at, (self.rules.build.touch + GUARD_RIM) * sc);
+        }
+        (p, self.rules.guard_r * sc)
+    }
+
     /// Where soldier `k` fires this frame, if anywhere (fine cells).
     pub(super) fn target(&mut self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
@@ -437,6 +470,11 @@ impl<W: World> Game<W> {
             Stance::Defend => {
                 // Presence, any walker at any mass: one on a soldier is one to shoot.
                 let mut ok = s.touching > 0 || near((s.x, s.y), self.rules.defend * sc);
+                // Guarding (`Order::Guard`, or its squad's `Squad::guard`):
+                // slime on what it guards too.
+                if let Some((p, r)) = self.guard_zone(k) {
+                    ok |= near(p, r);
+                }
                 if let Order::Clear(x, y) = s.order {
                     if let Some((i, c)) = self.crystal_at((x, y)) {
                         ok |= near(c, self.world.crystal_r(i) + 2.0 * sc);

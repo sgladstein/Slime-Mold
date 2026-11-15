@@ -194,6 +194,11 @@ pub struct Squad {
     /// whole. Nothing heals otherwise (owner 2026-11-15 07:41Z: "Healing
     /// should be a specific action").
     pub heal: bool,
+    /// Told to guard this point (`Order::Guard` as a squad order, owner
+    /// 2026-11-15 19:51Z): it goes there and its members shoot slime in
+    /// the zone (`Game::guard_zone`) on top of their own defence, till it
+    /// is steered or given another order.
+    pub guard: Option<(f32, f32)>,
 }
 
 /// Orders a squad holds queued.
@@ -220,6 +225,7 @@ impl Default for Squad {
             gun: None,
             deck: None,
             heal: false,
+            guard: None,
         }
     }
 }
@@ -731,7 +737,19 @@ impl<W: World> Game<W> {
         self.squads[q].steer = (0.0, 0.0);
         self.squads[q].work = None;
         self.squads[q].heal = false;
+        self.squads[q].guard = None;
         match o {
+            // A guard walks there as a squad, as a move does, and keeps the
+            // zone once there (`Squad::guard`).
+            Order::Guard(x, y) => {
+                self.squads[q].guard = Some((x, y));
+                self.squads[q].dest = Some((x, y));
+                self.squads[q].fight = false;
+                for k in self.members(q) {
+                    self.soldiers[k].queued = 0;
+                    self.soldiers[k].cover = false;
+                }
+            }
             Order::Move(x, y) | Order::Fight(x, y) => {
                 self.squads[q].dest = Some((x, y));
                 self.squads[q].fight = matches!(o, Order::Fight(..));
@@ -769,6 +787,7 @@ impl<W: World> Game<W> {
                     self.squads[q].dest = None;
                     self.squads[q].fight = false;
                     self.squads[q].heal = false;
+                    self.squads[q].guard = None;
                 } else if was != (0.0, 0.0) {
                     // Let go: settle round where it stands.
                     self.squads[q].dest = self.middle(q);

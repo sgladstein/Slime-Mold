@@ -233,9 +233,13 @@ impl ApplicationHandler for App {
                 for c in self.controls.button(b, down, &units, &mut self.camera, mm) {
                     match c {
                         UiCommand::Order { units, at } => self.order_at(&units, at),
-                        UiCommand::Burn { units, from, to } => self.burn(&units, from, to),
                         UiCommand::Select(picked) if self.sq.is_some() => self.squad_picked(&picked),
-                        UiCommand::Select(picked) => self.larder_sel = picked.is_empty() && self.on_larder(point),
+                        UiCommand::Select(picked) => {
+                            self.larder_sel = picked.is_empty() && self.on_larder(point);
+                            // Nobody picked and no larder: a building under
+                            // the click is selected (option b, 11-15).
+                            self.building_sel = if picked.is_empty() && !self.larder_sel { point.and_then(|p| self.game.as_ref()?.building_at(p)) } else { None };
+                        }
                         _ => {}
                     }
                 }

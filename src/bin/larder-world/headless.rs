@@ -439,6 +439,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             None if select => (0..g.soldiers.len()).collect(),
             None => Vec::new(),
         };
+        if let Some(step) = app.args.card.get(fi).cloned() {
+            card_step(&mut app, &step)?;
+        }
+        if app.sq.as_ref().is_some_and(|q| q.free) {
+            app.controls.selected.clear();
+        }
         app.hud.moved(hover);
         app.controls.cursor = hover;
         // `hand=buildq` with `hover=`: the turret is being placed under the
@@ -677,4 +683,37 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
         }
         (l.hp, l.carry) = (s.hp, s.carry);
     }
+}
+
+/// One step of `card=` before a frame's picture: what a player clicks on
+/// the card or the world (the command card's films, 2026-11-15).
+fn card_step(app: &mut App, step: &str) -> Result<(), String> {
+    match step {
+        "main" | "" => (app.build_page, app.tools_page) = (false, false),
+        "build" => (app.build_page, app.tools_page) = (true, false),
+        "tools" => (app.build_page, app.tools_page) = (false, true),
+        // Esc: no squad commanded, so a click on a building selects it.
+        "free" => app.let_go(),
+        // A click on the newest building (as the squad mode's click does
+        // with no squad commanded).
+        "pick" => {
+            app.let_go();
+            app.building_sel = app.game.as_ref().and_then(|g| (0..g.buildings.len()).rev().find(|&b| g.buildings[b].alive));
+        }
+        "fire" => {
+            app.hud_event(HudEvent::Command { id: FIRE })?;
+        }
+        "upgrade" | "demolish" | "switch" | "cancel" => {
+            let id = match step {
+                "upgrade" => UPGRADE,
+                "demolish" => DEMOLISH,
+                "switch" => SWITCH,
+                _ => CANCEL_BUILD,
+            };
+            app.hud_event(HudEvent::Command { id })?;
+        }
+        _ => return Err(format!("card=: no step {step} (main, build, tools, free, pick, fire, upgrade, demolish, switch, cancel)")),
+    }
+    println!("  card: {step}");
+    Ok(())
 }

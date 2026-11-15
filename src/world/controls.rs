@@ -88,6 +88,10 @@ pub struct Controls {
     pub shift: bool,
     /// F is held: a left drag is a burn line.
     pub burn: bool,
+    /// Whether F + drag lays a burn line at all. Larder World turns it off:
+    /// the owner removed Burn a line there (2026-11-15 19:51Z) and its F
+    /// is Guard; the other windows keep it.
+    pub burn_lines: bool,
     /// The arrow keys pan (off in the sandbox, whose arrows pick controls).
     pub arrows_pan: bool,
     /// Edge scrolling (off when the window is not focused).
@@ -114,7 +118,7 @@ pub fn wasd_index(code: KeyCode) -> Option<usize> {
 
 impl Controls {
     pub fn new(team: u8) -> Self {
-        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, arrows_pan: true, edge: true, wasd_pan: false, arrows: [false; 4], wasd: [false; 4], drag: None, last_group: None, last_pick: None }
+        Controls { team, selected: Vec::new(), groups: Default::default(), cursor: None, ctrl: false, shift: false, burn: false, burn_lines: true, arrows_pan: true, edge: true, wasd_pan: false, arrows: [false; 4], wasd: [false; 4], drag: None, last_group: None, last_pick: None }
     }
 
     fn mine<'a>(&self, units: &'a [Unit]) -> impl Iterator<Item = &'a Unit> + 'a {
@@ -252,7 +256,7 @@ impl Controls {
     /// Ctrl, Shift, digits, arrows when they pan) give nothing.
     pub fn key(&mut self, code: KeyCode, pressed: bool, repeat: bool, units: &[Unit], cam: &mut Camera) -> Vec<UiCommand> {
         match code {
-            KeyCode::KeyF => {
+            KeyCode::KeyF if self.burn_lines => {
                 self.burn = pressed;
                 return Vec::new();
             }
