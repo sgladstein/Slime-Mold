@@ -100,7 +100,7 @@ armory over the paused round and Back re-arms every squad
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
-- The core world's frame cost with C (about 340,000 walkers in 700,000 slots): to time on the 1070.
+- The core world with C: 364,924 walkers, frame p95 12-14 ms on the 1070 (planet 1 4.6 ms) and a 12 s head-start pause before landing; kept until play says otherwise.
 
 ## Sources
 

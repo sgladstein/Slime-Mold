@@ -295,10 +295,25 @@ between 1:00 and 2:00, which a fresh start would have counted as 60% of
 the goal (the head start covers it, 87 s before landing, but the core
 world's settling should be checked in play).
 
-Frame cost: not yet timed on the 1070. The core world's 340,000 walkers
-in 700,000 slots is about 14 times C's sandbox; a GPU step scales with
-walkers. The PC runner times it next; if it is too slow, the slots and the
-walkers come down together (the walker factor's area term), not the shape.
+Frame cost on the GTX 1070 (PC runner, 11-15 08:55Z, at 51f47b83,
+`larder-world run=1:D bench=60 hand=farm`; raw output on branch
+claude/project-thread-26drse at bbce4031, `runner-out/runc-51f47b83/`;
+runs 1 and 3 started with the card down-clocked):
+
+| Planet | Walkers | Head start | Frame p50 / p95 / max, ms | GPU tail p95, ms |
+|---|---|---|---|---|
+| 1 (400x248) | 12,860 | none | 4.00 / 4.55 / 7.30 | 3.89 |
+| 5 (728x456) | 86,416 | 25 s in 1.0 s | 5.33 / 5.92 / 43.18 | 5.25 |
+| 8 core (1256x784) | 364,924 | 87 s in 12.1 s | 6.90 / 11.98 / 312.34 (65.06 after the first second) | 6.81 |
+| 8 core, `grow=0` | | none | 8.34 / 13.82 / 16.10 | 8.60 |
+
+Every planet holds 60 fps at p95 (under 16.7 ms); the core world costs
+about three times planet 1's frame. Its head start is a 12 s pause before
+landing, and its first second has one 312 ms step. GPU memory 884 MB at the
+start, 1,151 MB at the end, of the 1070's 8 GB. Kept as built; if the
+landing pause or the core world's 12-14 ms p95 bothers play, the walkers
+and slots come down together on the big planets (the area term), or the
+head start runs a coarser step.
 
 Checks: `the_menu_starts_a_runs_level_like_a_mission` (C's walkers by the
 level, no keys in the args: C goes on in `start`),
