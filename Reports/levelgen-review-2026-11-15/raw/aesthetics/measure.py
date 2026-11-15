@@ -1,11 +1,11 @@
 # Grey-luminance measures per planet from the whole-map frames at 1 s and 60 s,
 # registered to the map file: ground classes, slime film/thick, crystals, cyan.
-import sys, json
-sys.path.insert(0, '/home/user/review-aesthetics/scripts')
+import sys, json, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from PIL import Image, ImageDraw
 from worldrect import rect
-R = '/home/user/review-aesthetics/'
+R = os.environ.get('VO_R', '/home/user/review-aesthetics/')  # run folder (11-15: settable, for before/after runs)
 def luma(a): return 0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]
 def pct(v, q): return float(np.percentile(v, q)) if len(v) > 50 else None
 res = {}
@@ -75,12 +75,23 @@ for d in range(1, 9):
             v = L1[mk]
             if len(v) > 80:
                 out['classes'][k] = {'n': int(len(v)), 'p10': pct(v, 10), 'p50': pct(v, 50), 'p90': pct(v, 90)}
-        sv = L60[newslime]
-        under = L1[newslime]
+        # The film counts only pixels with walkers under them (art lead and
+        # crystals thread, 11-15): the slime's own colour shows there at 60 s
+        # (warm > 45, the same test as `slime1`). The faint fringe past the
+        # last walkers and the veins' cast shadow on the ground beside them
+        # keep the ground's colour by design (the owner's sharpness ruling,
+        # `the_slime_edge_is_as_sharp_as_its_walkers`), and counting them put
+        # film p10 at 49-90, under rock, on pixels that are not film.
+        # `film_p10_all` keeps the old count.
+        sv_all = L60[newslime]
+        walked = newslime & (warm60 > 45)
+        sv = L60[walked]
+        under = L1[walked]
+        newslime = walked
         if len(sv) > 200:
             thin_cut = np.percentile(sv, 25)
             thin = newslime & (L60 <= thin_cut)
-            out['slime'] = {'n': int(len(sv)), 'film_p10': pct(sv, 10), 'film_p25': pct(sv, 25), 'p50': pct(sv, 50), 'thick_p90': pct(sv, 90), 'thick_p99': pct(sv, 99),
+            out['slime'] = {'n': int(len(sv)), 'film_p10': pct(sv, 10), 'film_p10_all': pct(sv_all, 10), 'film_p25': pct(sv, 25), 'p50': pct(sv, 50), 'thick_p90': pct(sv, 90), 'thick_p99': pct(sv, 99),
                             'share_not_above_ground_by_10': float(np.mean(sv <= under + 10)),
                             'film_minus_ground_p50': pct((L60 - L1)[thin], 50)}
             # slime over each ground class: film (p10) vs that class's bare p90
