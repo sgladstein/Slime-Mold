@@ -78,3 +78,11 @@ llvmpipe cap is lifted.
   outline with rounded corners, but the steps are in the data.
 - A faint light rim along some reed beds over deep water is the engine's
   own colour (`tint`) on those cells, not a drawn effect.
+
+## 2026-11-15: the spline skip's seams (bug check)
+
+The skip tested the 2 x 2 cells round a pixel, but the spline reads 4 x 4,
+and the bank, shallow margin, bridge shadow and depth read its shares as a
+distance, so they stepped at cell middles near every shore and bridge. The
+skip now needs all 16 cells to be one ground:
+[bug check](../bug-check-2026-11-15/README.md#cost-of-fix-3).

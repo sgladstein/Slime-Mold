@@ -499,12 +499,31 @@ impl Run {
         self.guns.get(self.carry).copied().unwrap_or_else(first_gun)
     }
 
+    /// The carried gun as the squad fires it: its range and rate with the
+    /// squad's "Longer barrels" and "Faster trigger" (`rules` puts the same
+    /// levels on `Rules::range` and `shot_every`, which only the standard
+    /// rifle reads; a squad armed with its own gun reads the gun's, so
+    /// until 11-15 those two upgrades did nothing in a run).
+    pub fn armed(&self) -> Gun {
+        let l = |k| f32::from(self.level_of(k));
+        let g = self.carried();
+        Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g }
+    }
+
     /// The carried gun's card budget (`rounds::fit_gun`).
     pub fn budget(&self) -> u32 {
         self.carried().budget
     }
 
-    /// Card `c` would fit in the gun beside what it holds.
+    /// The gun as it sits fits its budget and slots.
+    fn fits_now(&self) -> bool {
+        rounds::fit_gun(self.gun(), &self.carried()).is_ok()
+    }
+
+    /// Card `c` would fit in the gun beside what it holds, at its end. The
+    /// cost depends on the order (a `Thrift` cuts the card after it), so a
+    /// card put anywhere else is checked again where it lands (`put_in`,
+    /// `move_to`).
     pub fn fits(&self, c: Card) -> bool {
         let mut g = self.gun();
         g.push(c);
@@ -553,6 +572,12 @@ impl Run {
             None => self.cards.iter().rposition(|o| o.1).map_or(self.cards.len(), |k| k + 1),
         };
         self.cards.insert(at, (c, true));
+        // Checked where it went: in front of a `Thrift`'s card it takes
+        // the cut from that card (Thrift, Bomb, Germ on a budget of 7 took
+        // a Quiet to cost 8). Over the budget it goes to the bag.
+        if !self.fits_now() {
+            self.cards[at].1 = false;
+        }
         at
     }
 
@@ -589,6 +614,7 @@ impl Run {
         if !on && !self.fits(c) {
             return false;
         }
+        let was = self.cards.clone();
         self.cards.remove(i);
         let ons: Vec<usize> = self.cards.iter().enumerate().filter(|(_, o)| o.1).map(|(k, _)| k).collect();
         let at = match ons.get(slot) {
@@ -596,6 +622,13 @@ impl Run {
             None => ons.last().map_or(self.cards.len(), |&k| k + 1),
         };
         self.cards.insert(at, (c, true));
+        // A move that takes a card out from behind a `Thrift`, or puts one
+        // there, changes the cost: one that leaves the gun over its budget
+        // does not happen.
+        if !self.fits_now() {
+            self.cards = was;
+            return false;
+        }
         true
     }
 
@@ -777,6 +810,8 @@ impl Run {
                 match self.cards.get(i) {
                     Some(c) if c.1 => {
                         self.cards[i].1 = false;
+                        // A `Thrift` out puts its card back at full cost.
+                        self.refit();
                         true
                     }
                     Some(_) if room => {
@@ -1071,5 +1106,41 @@ mod tests {
             let mut s = crate::gpu::larder_world::race_settings(1, 2, 5000);
             assert!(t.settings(&mut s).is_ok(), "{}", t.name());
         }
+    }
+
+    #[test]
+    fn a_thrift_cannot_take_the_gun_over_its_budget() {
+        let mut r = Run::new(1);
+        r.guns[0].budget = 7;
+        r.points = 9999;
+        r.cards = vec![(Card::Thrift, true), (Card::Bomb, true), (Card::Germ, true)];
+        r.offers = vec![Card::Quiet];
+        r.pick(Pick::Offer(0));
+        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok(), "bought in: {:?} costs {}", r.gun(), rounds::cost(&r.gun()));
+        let mut r = Run::new(1);
+        r.guns[0].budget = 6;
+        r.cards = vec![(Card::Thrift, true), (Card::Bomb, true), (Card::Germ, true)];
+        r.pick(Pick::Card(0));
+        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok(), "thrift out: {:?} costs {}", r.gun(), rounds::cost(&r.gun()));
+        // Dragged to the end the Thrift cuts nothing: the move is refused.
+        let mut r = Run::new(1);
+        r.guns[0].budget = 6;
+        r.cards = vec![(Card::Thrift, true), (Card::Bomb, true), (Card::Germ, true)];
+        assert!(!r.pick(Pick::Move(0, 9)));
+        assert_eq!(r.gun(), vec![Card::Thrift, Card::Bomb, Card::Germ]);
+    }
+
+    #[test]
+    fn barrels_and_trigger_reach_the_carried_gun() {
+        let mut r = Run::new(1);
+        let g = r.carried();
+        r.points = 99_999;
+        for k in ["range", "rate"] {
+            let i = ITEMS.iter().position(|it| it.key == k).unwrap();
+            assert!(r.pick(Pick::Item(i)));
+        }
+        let a = r.armed();
+        assert!((a.range - (g.range + 3.0)).abs() < 1e-4, "{} then {}", g.range, a.range);
+        assert!((a.rate - g.rate / 0.85).abs() < 1e-4, "{} then {}", g.rate, a.rate);
     }
 }
