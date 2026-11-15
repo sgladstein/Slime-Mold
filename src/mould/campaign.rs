@@ -262,7 +262,7 @@ const RULE_KEYS: [&str; 9] = ["price", "start_bank", "squad", "soldier_cost", "c
 pub const MISSION_DRAIN: f32 = 1.0;
 
 /// Seconds from the design: a stuck or overrun run this long ends the
-/// mission; two stars need the goal before `TWO_STARS`.
+/// mission; two stars need the goal before `two_stars` of its clock.
 pub const STUCK_END: f32 = 30.0;
 pub const OVERRUN_END: f32 = 30.0;
 /// `hold`: a soldier within this many dish cells of a crystal's edge holds
@@ -278,6 +278,12 @@ pub const SHRINK_FROM: f32 = 60.0;
 /// or harvested) before the bar counts (`Goal::Take`).
 pub const TAKE_FROM: f32 = 0.1;
 pub const TWO_STARS: f32 = 720.0;
+/// `TWO_STARS` for a clock of `cap` seconds: the same four fifths of it,
+/// so a run's longer clocks on bigger planets (`run::clock`) give their
+/// second star as late in the round as the missions' 15:00 does.
+pub fn two_stars(cap: f32) -> f32 {
+    TWO_STARS * cap / 900.0
+}
 /// The arc's phase edges, game seconds (landing, contact, pressure, climax).
 pub const PHASES: [f32; 3] = [120.0, 360.0, 660.0];
 
@@ -596,7 +602,7 @@ impl Tracker {
         let graded = |best: f32| if best >= 0.5 { 1 } else { 0 };
         let v = |cause, stars| Some(Verdict { cause, at: t, stars, best: self.best });
         self.verdict = if met {
-            v(Cause::Goal, 1 + u8::from(t < TWO_STARS) + u8::from(bonus))
+            v(Cause::Goal, 1 + u8::from(t < two_stars(r.cap)) + u8::from(bonus))
         } else if matches!(g.end, Some(End::SquadWiped(_))) {
             // With the reserve on, an empty squad is no loss while a recruit
             // can still come; the Game ends the round when none can.
@@ -609,7 +615,7 @@ impl Tracker {
             // Only a squad goal can't be met by wiping the mould.
             match self.mission.goal {
                 Goal::Squad { .. } => v(Cause::MouldWiped, graded(self.best)),
-                _ => v(Cause::Goal, 1 + u8::from(t < TWO_STARS) + u8::from(bonus)),
+                _ => v(Cause::Goal, 1 + u8::from(t < two_stars(r.cap)) + u8::from(bonus)),
             }
         } else if t >= r.cap || matches!(g.end, Some(End::Cap(_))) {
             v(Cause::Cap, graded(self.best))
