@@ -59,6 +59,7 @@ mod turn;
 mod score;
 mod shapes;
 mod squads;
+mod funnel;
 mod cover;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -353,6 +354,8 @@ pub struct Game<W: World> {
     /// changed since ranks its members by index until it is matched again.
     pub(super) ranks: Vec<u16>,
     pub(super) ranked: [u16; SQUADS_MAX],
+    /// Each squad's column through narrow places (`funnel`).
+    pub(super) columns: Vec<funnel::Column>,
     /// Crystals guarded at the last count (`Rules::larder` off), and what
     /// guarding has paid in all.
     pub guarded: Vec<usize>,
@@ -470,6 +473,7 @@ impl<W: World> Game<W> {
             active: None,
             ranks: Vec::new(),
             ranked: [0; SQUADS_MAX],
+            columns: vec![funnel::Column::default(); SQUADS_MAX],
             guarded: Vec::new(),
             healed: 0.0,
             guard_paid: 0.0,
@@ -626,3 +630,5 @@ impl<W: World> Game<W> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod narrow_tests;
