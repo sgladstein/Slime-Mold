@@ -9,6 +9,7 @@ sources:
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/surge-2026-11-15/README.md
+  - Reports/whole-game-review-2026-11-15/README.md
 code:
   - LADDER
   - PLANETS
@@ -97,9 +98,11 @@ armory over the paused round and Back re-arms every squad
 - 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 - 2026-11-15 02:55Z: "I need a test environment built where I can play with the guns and cards and bullets."
+- 2026-11-15 08:30Z (play notes for the whole-game review): "I mostly run to the biggest crystal, harvest and create new soliders until I have 40 soliders and then I attack the slime. That is not what I want to play though"; "Some enemy slimes just hang at their home crystal ... They don't attach my pumping crystals so no need to defend"; "There needs to be more interesting progression in the enemy"; the real game is squad mode in the run; "The gun graphics need work. They should really be one of the draws of the game."
 
 ## Open
 
+- The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; no thread owns what the enemy does to you planet by planet; the stuck rule (`count_stuck`) ends a run with a healthy squad when the bank is short.
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
@@ -110,3 +113,4 @@ armory over the paused round and Back re-arms every squad
 - [report](../../Reports/roguelike-run-2026-11-14/README.md), *What was built*.
 - [arranging the gun](../../Reports/gun-order-2026-11-14.md), *What was built*.
 - [the gun range](../../Reports/gun-range-2026-11-15.md), *What was built*.
+- [the whole-game review](../../Reports/whole-game-review-2026-11-15/README.md), *Re-check on main after the review*.
