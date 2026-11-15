@@ -427,9 +427,14 @@ impl<W: World> Game<W> {
         }
         let (w, h) = self.world.size();
         let gi = cell(w, h, to);
-        // A steered squad's `to` moves with it: a map to a point half a
-        // lead off serves it.
-        let near = if sent { MAP_NEAR * self.s() } else { lead / 2.0 };
+        // A steered squad's `to` moves with it: a map to a point within
+        // `STEER_NEAR` serves it. Half a lead, at first, was less than the
+        // `to` moves each time the anchor does, so every move asked for a
+        // new map and the anchor waited for it: a squad steered into rock
+        // took 26 s to get round a bar at 1x against 13 s with whole maps,
+        // and stood still 798 of 900 steps at 6x (technical review,
+        // 2026-11-15; 13.6 and 16.4 s at 10 dish cells).
+        let near = if sent { MAP_NEAR * self.s() } else { STEER_NEAR * self.s() };
         let Some(key) = self.map_for(gi, to, near) else {
             // Its map is being built (`pump_maps`): the anchor waits.
             return from;
@@ -854,7 +859,10 @@ impl<W: World> Game<W> {
                 // A link is commanded as one (owner 15:49Z: "When they are
                 // linked, I cannot choose who i am commanding between them.
                 // I only command all of them").
-                if self.active.is_some_and(|a| self.linked(a).contains(&(q as usize))) {
+                // A dead controlled squad holds nothing: its link still
+                // names the live ones, and refusing them left nothing to
+                // command when the controlled squad of a link was wiped out.
+                if self.active.is_some_and(|a| !self.members(a).is_empty() && self.linked(a).contains(&(q as usize))) {
                     return false;
                 }
                 if let Some(old) = self.active.filter(|&o| o != q as usize) {

@@ -1,0 +1,43 @@
+
+running 4 tests
+test mould::larder_world::review_tests::review_stale_maps_wait_behind_asks ... STALE 6x mover=false: moved 0 times in 40 steps before the wall; stale map rebuilt at step Some(7) after it (the mover moved 0 times meanwhile)
+STALE 6x mover=true: moved 4 times in 40 steps before the wall; stale map rebuilt at step Some(14) after it (the mover moved 1 times meanwhile)
+ok
+test mould::larder_world::review_tests::review_steered_squad_round_rock ... STEER 1024x640 whole=false: past the bar at Some(26.333334) s; anchor still 201 steps, a map building or asked 211 steps; middle at map (482, 521); step max 23.9 ms; wall 2.7 s
+STEER 1024x640 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 22.2 ms; wall 1.8 s
+STEER 2512x1568 whole=false: past the bar at None s; anchor still 798 steps, a map building or asked 806 steps; middle at map (392, 428); step max 110.0 ms; wall 21.7 s
+STEER 2512x1568 whole=true: past the bar at Some(12.866667) s; anchor still 0 steps, a map building or asked 0 steps; middle at map (481, 521); step max 162.0 ms; wall 10.3 s
+ok
+test mould::larder_world::review_tests::review_walking_map_cache_thrash ... THRASH 1024x640 fine 512x320 cache 48: 8 goals, all served by step 10, then unserved 0 goal-steps of 12000 (0.0%); pump mean 0.06 ms max 13.3 ms
+THRASH 1024x640 fine 512x320 cache 48: 16 goals, all served by step 19, then unserved 0 goal-steps of 24000 (0.0%); pump mean 0.07 ms max 22.1 ms
+THRASH 1024x640 fine 512x320 cache 48: 17 goals, all served by step 20, then unserved 0 goal-steps of 25500 (0.0%); pump mean 0.07 ms max 7.9 ms
+THRASH 1024x640 fine 512x320 cache 48: 18 goals, all served by step 22, then unserved 0 goal-steps of 27000 (0.0%); pump mean 0.07 ms max 8.1 ms
+THRASH 1024x640 fine 512x320 cache 48: 24 goals, all served by step 29, then unserved 0 goal-steps of 36000 (0.0%); pump mean 0.09 ms max 8.9 ms
+THRASH 1024x640 fine 512x320 cache 48: 32 goals, all served by step 38, then unserved 0 goal-steps of 48000 (0.0%); pump mean 0.13 ms max 8.4 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 8 goals, all served by step 59, then unserved 0 goal-steps of 12000 (0.0%); pump mean 0.24 ms max 15.6 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 16 goals, all served by step 118, then unserved 0 goal-steps of 24000 (0.0%); pump mean 0.60 ms max 33.4 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 17 goals, all served by step 125, then unserved 0 goal-steps of 25500 (0.0%); pump mean 0.53 ms max 24.2 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 18 goals, all served by step 132, then unserved 1368 goal-steps of 27000 (5.1%); pump mean 6.83 ms max 73.2 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 24 goals, all served by step 176, then unserved 9420 goal-steps of 36000 (26.2%); pump mean 9.15 ms max 76.2 ms
+THRASH 2512x1568 fine 1256x784 cache 17: 32 goals, all served by step 235, then unserved 19746 goal-steps of 48000 (41.1%); pump mean 5.97 ms max 115.2 ms
+ok
+test mould::larder_world::review_tests::review_walls_in_succession_restart_the_build ... WALLS 1024x640: a wall every 2 steps (0.13 s): first map at step Some(3)
+WALLS 1024x640: a wall every 4 steps (0.27 s): first map at step Some(2)
+WALLS 1024x640: a wall every 6 steps (0.40 s): first map at step Some(2)
+WALLS 1024x640: a wall every 8 steps (0.53 s): first map at step Some(2)
+WALLS 1024x640: a wall every 10 steps (0.67 s): first map at step Some(2)
+WALLS 1024x640: a wall every 16 steps (1.07 s): first map at step Some(2)
+WALLS 2512x1568: a wall every 2 steps (0.13 s): first map at step None
+WALLS 2512x1568: a wall every 4 steps (0.27 s): first map at step None
+WALLS 2512x1568: a wall every 6 steps (0.40 s): first map at step None
+WALLS 2512x1568: a wall every 8 steps (0.53 s): first map at step Some(15)
+WALLS 2512x1568: a wall every 10 steps (0.67 s): first map at step Some(8)
+WALLS 2512x1568: a wall every 16 steps (1.07 s): first map at step Some(8)
+ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 464 filtered out; finished in 84.08s
+
+
+real	1m24.092s
+user	1m5.394s
+sys	0m0.879s

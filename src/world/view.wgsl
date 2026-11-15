@@ -1366,19 +1366,28 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     // big body), nothing to do (art lead 11-14: early-outs; cost both ways
     // in Reports/river-look-2026-11-14).
     if (bare <= 0.03) { return vec4<f32>(1.0, 0.0, 0.0, 0.0); }
-    // Where the four cells round the pixel are one ground (kind and soil),
-    // which is most pixels, the 4 x 4 spline is skipped: a boundary (where
-    // two shares cross) only lies between cells that differ, so the crisp
-    // shares here are that ground's alone. (Art lead, 11-14 22:15Z: the
-    // ground had grown by about half on llvmpipe over four looks.)
+    // Where the 4 x 4 cells the spline reads are one ground (kind and
+    // soil), which is most pixels, the spline is skipped: its shares are
+    // then that ground's alone, exactly. (Art lead, 11-14 22:15Z: the
+    // ground had grown by about half on llvmpipe over four looks.) The
+    // first skip (#305) tested only the 2 x 2 cells round the pixel, but
+    // the spline reaches a cell further, and the bank, the shallow margin,
+    // the bridge's shadow and the depth read its shares as a distance: at
+    // every cell middle half a cell to a cell and a half off a shore or a
+    // bridge they jumped (a hard step of 56 to 89 in brightness at 24 px a
+    // cell beside the River's bridge, bug check 11-15).
     var so: Soil;
     let ux = i32(floor(x - 0.5)); let uy = i32(floor(y - 0.5));
-    let cx0 = clamp(ux, 0, i32(P.ww) - 1); let cx1 = clamp(ux + 1, 0, i32(P.ww) - 1);
-    let cy0 = clamp(uy, 0, i32(P.wh) - 1); let cy1 = clamp(uy + 1, 0, i32(P.wh) - 1);
-    let g0 = ground[cidx(cx0, cy0)] & 127u;
+    let g0 = ground[cidx(clamp(ux, 0, i32(P.ww) - 1), clamp(uy, 0, i32(P.wh) - 1))] & 127u;
     let k0 = g0 & 15u; let sk0 = g0 >> 4u;
-    if ((ground[cidx(cx1, cy0)] & 127u) == g0 && (ground[cidx(cx0, cy1)] & 127u) == g0
-        && (ground[cidx(cx1, cy1)] & 127u) == g0 && !(k0 != WET && sk0 == SOIL_BRIDGE)) {
+    var one = !(k0 != WET && sk0 == SOIL_BRIDGE);
+    for (var j = -1; j < 3 && one; j++) {
+        for (var i = -1; i < 3; i++) {
+            let c = cidx(clamp(ux + i, 0, i32(P.ww) - 1), clamp(uy + j, 0, i32(P.wh) - 1));
+            if ((ground[c] & 127u) != g0) { one = false; break; }
+        }
+    }
+    if (one) {
         so.w = vec4<f32>(0.0); so.wg = vec2<f32>(0.0); so.bridge = 0.0; so.bg = vec2<f32>(0.0);
         if (k0 == WET) { so.w.w = 1.0; } else if (sk0 == 1u) { so.w.x = 1.0; } else if (sk0 == 2u) { so.w.y = 1.0; } else if (sk0 == 3u) { so.w.z = 1.0; }
         so.deep = select(0.0, 1.0, k0 == WET && sk0 == SOIL_DEEP);
