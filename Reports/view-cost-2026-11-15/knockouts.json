@@ -98,15 +98,5 @@
    "old": "            let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);",
    "new": "            let hot = 0u;"
   }
- ],
- "lobe": [
-  {
-   "old": "            let re = r * (1.0 + lobe * sin((5.0 + floor(4.0 * h2)) * atan2(rel.y, rel.x) + 6.2831853 * h1));",
-   "new": "            let re = r * (1.0 + lobe * lobe_wave(rel / max(dd, 1e-20), 5u + u32(floor(4.0 * h2)), 6.2831853 * h1));"
-  },
-  {
-   "old": "fn crowns(x: f32, y: f32, s: f32,",
-   "new": "// sin(n theta + phi) for the unit vector u = (cos theta, sin theta).\nfn lobe_wave(u: vec2<f32>, n: u32, phi: f32) -> f32 {\n    let u2 = vec2<f32>(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);\n    let u4 = vec2<f32>(u2.x * u2.x - u2.y * u2.y, 2.0 * u2.x * u2.y);\n    var z = vec2<f32>(u4.x * u.x - u4.y * u.y, u4.x * u.y + u4.y * u.x);\n    if (n >= 6u) { z = vec2<f32>(u4.x * u2.x - u4.y * u2.y, u4.x * u2.y + u4.y * u2.x); }\n    if (n >= 7u) { let z6 = z; z = vec2<f32>(z6.x * u.x - z6.y * u.y, z6.x * u.y + z6.y * u.x); }\n    if (n >= 8u) { z = vec2<f32>(u4.x * u4.x - u4.y * u4.y, 2.0 * u4.x * u4.y); }\n    return z.y * cos(phi) + z.x * sin(phi);\n}\n\nfn crowns(x: f32, y: f32, s: f32,"
-  }
  ]
 }

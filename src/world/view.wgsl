@@ -245,31 +245,6 @@ const CHAR_RGB: vec3<f32> = vec3<f32>(25.0, 24.0, 23.0);
 // were mixed into each cell's material through a 3 x 3 Gaussian and
 // blended between cells: soft blobs with no texture.
 struct PlantPx { d: vec4<f32>, heat: f32, char: f32, fresh: f32 }
-// Each shown cell's plant words, packed by `prep` after the terrain cells
-// in `tcell` (from word `fhalf`, eight a cell in `tidx` order): the
-// density by kind (d where the cell's kind is, 0 elsewhere), the heat, the
-// char, and the fresh fire (0 where the heat is 0), as f32 bits. The
-// pixels' B-spline reads them eight adjacent words a cell; read from the
-// engine's plant blocks they were five words a cell, each block a dish
-// apart, and on the GTX 1070 that was about 0.85 ms of the frame at zoom 6
-// and 24 (`plant_px` knocked out, Reports/view-cost-2026-11-15). The sums
-// are the same products in the same order, so the pixels are unchanged.
-fn plant_pack(t: u32, c: u32) {
-    let d = plant_d(c);
-    var dv = vec4<f32>(0.0);
-    if (d > 0.0) {
-        let k = plant_k(c);
-        dv = d * vec4<f32>(f32(k == 0u), f32(k == 1u), f32(k == 2u), f32(k == 3u));
-    }
-    let hc = plant_heat(c);
-    var fr = 0.0;
-    if (hc > 0.0) { fr = plant_fresh(c); }
-    let b = P.fhalf + 8u * t;
-    tcell[b] = bitcast<u32>(dv.x); tcell[b + 1u] = bitcast<u32>(dv.y);
-    tcell[b + 2u] = bitcast<u32>(dv.z); tcell[b + 3u] = bitcast<u32>(dv.w);
-    tcell[b + 4u] = bitcast<u32>(hc); tcell[b + 5u] = bitcast<u32>(plant_char(c));
-    tcell[b + 6u] = bitcast<u32>(fr);
-}
 fn plant_px(x: f32, y: f32) -> PlantPx {
     var o: PlantPx;
     o.d = vec4<f32>(0.0); o.heat = 0.0; o.char = 0.0; o.fresh = 0.0;
@@ -280,15 +255,16 @@ fn plant_px(x: f32, y: f32) -> PlantPx {
     for (var j = 0; j < 4; j++) {
         for (var q = 0; q < 4; q++) {
             let w = wx[q] * wy[j];
-            // The cell as `cidx` clamps it to the map, then its packed words.
-            let cx = clamp(ix - 1 + q, 0, i32(P.ww) - 1); let cy = clamp(iy - 1 + j, 0, i32(P.wh) - 1);
-            let b = P.fhalf + 8u * tidx(cx, cy);
-            let dv = vec4<f32>(bitcast<f32>(tcell[b]), bitcast<f32>(tcell[b + 1u]), bitcast<f32>(tcell[b + 2u]), bitcast<f32>(tcell[b + 3u]));
-            o.d += w * dv;
-            let hc = bitcast<f32>(tcell[b + 4u]);
+            let c = cidx(ix - 1 + q, iy - 1 + j);
+            let d = plant_d(c);
+            if (d > 0.0) {
+                let k = plant_k(c);
+                o.d += w * d * vec4<f32>(f32(k == 0u), f32(k == 1u), f32(k == 2u), f32(k == 3u));
+            }
+            let hc = plant_heat(c);
             o.heat += w * hc;
-            o.fresh += w * bitcast<f32>(tcell[b + 6u]);
-            o.char += w * bitcast<f32>(tcell[b + 5u]);
+            if (hc > 0.0) { o.fresh += w * plant_fresh(c); }
+            o.char += w * plant_char(c);
         }
     }
     return o;
@@ -309,6 +285,17 @@ struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
 // spiky and a tree's crown leafy, not a pebble: the first cut's round
 // domes read as cobbles, and seven deep lobes on every tuft as stars);
 // `relief` is how strongly its dome is lit.
+// sin(n theta + phi) for the unit vector u = (cos theta, sin theta).
+fn lobe_wave(u: vec2<f32>, n: u32, phi: f32) -> f32 {
+    let u2 = vec2<f32>(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
+    let u4 = vec2<f32>(u2.x * u2.x - u2.y * u2.y, 2.0 * u2.x * u2.y);
+    var z = vec2<f32>(u4.x * u.x - u4.y * u.y, u4.x * u.y + u4.y * u.x);
+    if (n >= 6u) { z = vec2<f32>(u4.x * u2.x - u4.y * u2.y, u4.x * u2.y + u4.y * u2.x); }
+    if (n >= 7u) { let z6 = z; z = vec2<f32>(z6.x * u.x - z6.y * u.y, z6.x * u.y + z6.y * u.x); }
+    if (n >= 8u) { z = vec2<f32>(u4.x * u4.x - u4.y * u4.y, 2.0 * u4.x * u4.y); }
+    return z.y * cos(phi) + z.x * sin(phi);
+}
+
 fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lobe: f32, relief: f32) -> Crown {
     var o: Crown;
     o.a = 0.0; o.lit = 1.0; o.tone = 0.5; o.dome = 0.0; o.at = vec2<f32>(x, y);
@@ -329,7 +316,11 @@ fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lob
             let rel = q - ctr;
             let dd = length(rel);
             if (dd > r * (1.0 + lobe) + aa) { continue; }
-            let re = r * (1.0 + lobe * sin((5.0 + floor(4.0 * h2)) * atan2(rel.y, rel.x) + 6.2831853 * h1));
+            // sin(n theta + phi) without the angle: (cos theta, sin theta)
+            // to the n-th power as a complex number (`lobe_wave`); atan2 and
+            // sin cost the 1070 0.03 ms at zoom 6 and 24 (performance
+            // thread, 11-15), and the pixels match to 1/255.
+            let re = r * (1.0 + lobe * lobe_wave(rel / max(dd, 1e-20), 5u + u32(floor(4.0 * h2)), 6.2831853 * h1));
             let a = clamp((re - dd) / aa + 0.5, 0.0, 1.0);
             if (a <= 0.0) { continue; }
             let u = min(dd / max(re, 1e-4), 1.0);
@@ -1222,10 +1213,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
-        let t = (gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine;
-        let cx = P.ox + i32(gid.x / P.fine); let cy = P.oy + i32(gid.y / P.fine);
-        tcell[t] = ter_prep(cx, cy);
-        if (P.plant_at != 0u && cx >= 0 && cy >= 0 && cx < i32(P.ww) && cy < i32(P.wh)) { plant_pack(t, cidx(cx, cy)); }
+        tcell[(gid.y / P.fine) * (P.rw / P.fine) + gid.x / P.fine] = ter_prep(P.ox + i32(gid.x / P.fine), P.oy + i32(gid.y / P.fine));
     }
     // The colour's thickness counts the walkers on their own too (owner,
     // 11-14: lone walkers read dim): an explorer lays little trail, so by
