@@ -1,0 +1,10 @@
+per nest: direct way width (widest route at most 15% longer than the shortest) / widest route of any length, dish cells; walls kept
+1 meadow    nests  8: direct way <=10 wide  1; some way >=16 wide  7; both  1 | 18/32 27/27 33/33 26/26 10/20 12/20 28/28 12/14
+2 barrens   nests  8: direct way <=10 wide  3; some way >=16 wide  6; both  2 | 7/16 15/15 6/6 8/16 24/28 18/18 11/16 14/26
+3 fen       nests  8: direct way <=10 wide  2; some way >=16 wide  6; both  0 | 14/18 20/26 12/20 10/10 6/14 36/44 14/16 34/35
+4 valley    nests 16: direct way <=10 wide 12; some way >=16 wide  0; both  0 | 7/12 14/14 6/6 6/6 8/10 8/10 10/10 10/10 7/7 7/7 4/13 12/13 12/12 12/12 8/8 8/8
+5 jungle    nests 16: direct way <=10 wide  9; some way >=16 wide  5; both  1 | 4/12 8/12 15/15 18/24 8/10 10/12 11/11 2/10 6/13 10/13 12/14 10/14 10/16 18/20 17/17 12/17
+6 highlands nests 16: direct way <=10 wide 13; some way >=16 wide  0; both  0 | 8/8 8/8 7/8 7/8 8/14 12/14 4/4 4/4 8/8 2/8 0/0 0/0 11/11 11/14 10/10 10/10
+7 caves     nests 16: direct way <=10 wide 16; some way >=16 wide  0; both  0 | 4/4 4/4 4/6 4/6 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4 4/4
+8 core      nests 24: direct way <=10 wide 15; some way >=16 wide  9; both  0 | 8/11 8/12 8/12 16/16 16/16 16/16 6/7 6/0 8/8 6/6 6/0 4/6 4/4 4/4 4/4 13/21 16/16 16/18 11/16 14/18 18/18 10/12 2/12 10/12
+all nests with both: [4, 112]

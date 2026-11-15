@@ -15,7 +15,11 @@ pub(super) const PATHS_EVERY: f32 = 30.0;
 /// started again from empty at 48 before 11-14, when every soldier then
 /// built its map again at once.
 pub(super) const MAPS_MAX: usize = 48;
-const MAP_CELLS_MAX: usize = 16 << 20;
+/// 32M cells (128 MB of distances, 34 maps at 6x). At 16M a 6x planet
+/// kept 17 maps, and 18 or more live goals thrashed the cache: with 24, a
+/// quarter of goal-steps went unserved while their maps were rebuilt for
+/// ever (technical review, 2026-11-15).
+const MAP_CELLS_MAX: usize = 32 << 20;
 
 /// Cells taken off a walking map's queue in one step (`MapBuild`), across
 /// the maps being built: a step's fixed cost, whatever the number of
@@ -32,6 +36,10 @@ pub(super) const MAP_POPS: usize = 1 << 17;
 /// dish cells, when that goal is in a straight walk of its own: a squad's
 /// formation slots share one map instead of building one a slot.
 pub(super) const MAP_NEAR: f32 = 4.0;
+
+/// How far from a steered squad's moving goal another goal's walking map
+/// serves it, dish cells (`guide`).
+pub(super) const STEER_NEAR: f32 = 10.0;
 
 /// How far past a solid crystal's rim a soldier stands to harvest or
 /// bank, dish cells (`Rules::crystal_solid`).
@@ -420,6 +428,9 @@ impl<W: World> Game<W> {
             let b = self.paths.building.take().expect("a map being built");
             let read = self.paths.maps.get(&b.goal).map_or(step, |m| m.1);
             self.paths.stale.retain(|&k| k != b.goal);
+            if std::mem::take(&mut self.paths.build_stale) {
+                self.paths.stale.push(b.goal);
+            }
             self.paths.maps.insert(b.goal, (b.dist, read));
             self.trim_maps();
             if pops == 0 {
@@ -449,9 +460,13 @@ impl<W: World> Game<W> {
         let mut keys: Vec<usize> = self.paths.maps.keys().copied().collect();
         keys.sort_unstable();
         self.paths.stale = keys;
-        if let Some(b) = self.paths.building.take() {
-            let step = self.paths.step;
-            self.paths.asked.insert(0, (b.goal, step));
+        // A map being built finishes on the ground it started on and goes
+        // stale then, walked meanwhile like the rest. Starting it again,
+        // as at first, starved it: at 6x a wall going up every 6 steps or
+        // less left a waiting goal with no map in 600 steps (technical
+        // review, 2026-11-15).
+        if self.paths.building.is_some() {
+            self.paths.build_stale = true;
         }
     }
 

@@ -1,0 +1,313 @@
+<title>Planet Reviews</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* The three reviews of the procedural planets (11-15), merged into one ranked list. Same look as the levelgen pages before it. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · planets 1-8 · three reviews · 2026-11-15</div>
+<h1>Planet Reviews</h1>
+<p>Three reviewers looked at the eight procedural planets as they are on main today (6x core world, commit 4494ad4f): one only at the looks, one only at whether they make good play, one only at the code. The graphics lead checked the looks brief first. Below is one list, most important first, with the reviewers' own pictures and numbers. Looks come first where two findings are close, since looks are your first concern.</p>
+<div class="score">
+<div><b class="looks">Looks</b><span class="n">11</span><span class="muted">findings. Planets 1-8, seeds 1 and 2, whole map at 1 s and 60 s, 116 close views at zoom 6, 12 and 24, five clips. Grey luma measured against the map files.</span></div>
+<div><b class="playc">Play</b><span class="n">9</span><span class="muted">findings. 64 planets measured for routes, chokes, walls and sight; the six designed maps as a control; six short games by the AI hands.</span></div>
+<div><b class="techc">Technical</b><span class="n">7</span><span class="muted">findings, all fixed in this thread with a test each (see the end). 320 planets swept; walking maps timed at 1x and 6x.</span></div>
+</div>
+<p class="muted">Tags say who would make each change: <b>map</b> is this thread (levelgen), <b>drawing</b> the graphics and ground threads (<code>view.wgsl</code>, <code>view.rs</code>), <b>run</b> the roguelike run thread. [M] is measured, [J] a reviewer's judgement.</p>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>Zoomed out, the big planets switch to a different, unshaded picture</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">drawing</span></div></div></div>
+<p>Below zoom 1 the view skips its shading (<code>src/world/view.rs:731-737</code>). The 6x core world fits a 1280x800 window at zoom 0.86, so its whole-map view becomes navy ground, brown rock and flat crystals brighter than the slime. The same happens on any screen under about 900 px tall, and the minimap uses this picture on every planet. Nobody had looked below zoom 1 before. [M]</p>
+<div class="figs two">
+<figure><img src="pics/far-view-6x.webp" alt="The 6x core world at zoom 0.86: navy ground, brown rock, bright flat crystals" loading="lazy"><figcaption><b>Core world, seed 1, fit to 1280x800 (zoom 0.86), 60 s.</b> The far view: no shading, rock brown, crystals brighter than the slime.</figcaption></figure>
+<figure><img src="pics/shaded-6x.webp" alt="The same core world at 1600x1000, shaded" loading="lazy"><figcaption><b>The same world fit to 1600x1000 (zoom 1.07), 1 s.</b> The shaded picture the game draws everywhere else.</figcaption></figure>
+</div>
+<figure><img src="pics/minimap.webp" alt="Two minimaps, both dark navy" loading="lazy"><figcaption><b>Minimaps:</b> the 6x core world (left) and a 1x fen (right). Both are the far view, so the minimap never looks like the game.</figcaption></figure>
+<div class="fix"><strong>Fix</strong><span>Run the shaded path below zoom 1 at <code>fine=1</code>; failing that, give the far view the shaded view's colours.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>Rock and soft rock are brighter than the thin slime, and soft rock than the crystals</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">drawing</span></div></div></div>
+<p>The style guide's value order puts rock and walls below thin slime, and crystals above both. On all 14 planet-seeds measured, rock (98) and soft rock (107-123) are brighter than the slime's thin film, and soft rock is brighter than the crystals on 12 of the 13 that have it. The film does stay above every bare soil: only 1-10% of newly covered pixels are within 10 levels of the ground under them. [M]</p>
+<div class="tbl"><table>
+<thead><tr><th>Planet, seed</th><th>Thin film (10th pct)</th><th>Slime median</th><th>Rock</th><th>Soft rock</th><th>Crystal</th><th>Brightest soil or plant</th></tr></thead>
+<tbody>
+<tr><td>1 meadow, 1</td><td>71</td><td>97</td><td class="bad">98</td><td class="bad">123</td><td>109</td><td>81</td></tr>
+<tr><td>1 meadow, 2</td><td>68</td><td>97</td><td>–</td><td class="bad">123</td><td>126</td><td>51</td></tr>
+<tr><td>2 barrens, 1</td><td>86</td><td>127</td><td class="bad">98</td><td class="bad">123</td><td>121</td><td>59</td></tr>
+<tr><td>2 barrens, 2</td><td>85</td><td>127</td><td class="bad">98</td><td>–</td><td>113</td><td>60</td></tr>
+<tr><td>3 fen, 1</td><td>66</td><td>114</td><td class="bad">98</td><td class="bad">122</td><td>123</td><td>51</td></tr>
+<tr><td>3 fen, 2</td><td>66</td><td>108</td><td class="bad">98</td><td class="bad">123</td><td>111</td><td>59</td></tr>
+<tr><td>4 valley, 1</td><td>67</td><td>113</td><td class="bad">98</td><td class="bad">123</td><td>122</td><td>57</td></tr>
+<tr><td>4 valley, 2</td><td>76</td><td>154</td><td class="bad">98</td><td>–</td><td>102</td><td>57</td></tr>
+<tr><td>5 jungle, 1</td><td>49</td><td>114</td><td class="bad">98</td><td class="bad">123</td><td>116</td><td class="bad">87</td></tr>
+<tr><td>5 jungle, 2</td><td>51</td><td>114</td><td class="bad">98</td><td class="bad">123</td><td>106</td><td class="bad">122</td></tr>
+<tr><td>6 highlands, 1</td><td>63</td><td>111</td><td class="bad">98</td><td class="bad">107</td><td>106</td><td>51</td></tr>
+<tr><td>6 highlands, 2</td><td>64</td><td>112</td><td class="bad">98</td><td class="bad">123</td><td>96</td><td>49</td></tr>
+<tr><td>7 caves, 1</td><td>56</td><td>120</td><td class="bad">98</td><td class="bad">98</td><td>93</td><td>61</td></tr>
+<tr><td>7 caves, 2</td><td>51</td><td>100</td><td class="bad">98</td><td class="bad">98</td><td>94</td><td>56</td></tr>
+</tbody></table></div>
+<p class="muted">Grey luma, 0-255, from the whole-map frames at 1 s and 60 s registered to the map files (<code>raw/aesthetics/measure.py</code>). Marked: brighter than the thin film. Planet 8 is left out because at 1280x800 it is the far view (finding 1).</p>
+<div class="fix"><strong>Fix</strong><span>Rock to about 70 and soft rock to about 80, or a film floor of about 110. Rerun <code>measure.py</code> until the film beats the walls on every planet.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>The biomes differ only in layout, so close up they look alike, and three of them play alike</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">drawing</span><span class="tag">map</span></div></div></div>
+<ul>
+<li>On planets 1-6 the ground's median luma is 33-51: every biome is the same dark green-grey with different shapes on it. [M]</li>
+<li>Grey thumbnails at 1 s: 5 of 8 biomes named by eye (Caves, Core, Jungle, Highlands, Barrens). Meadow, Fen and River valley are dark ground with black water. [M]</li>
+<li>At zoom 12, your usual view, with no nest or crystal in frame: 4 of 8 by eye. Meadow, Fen, River valley and Core are interchangeable; the core world at zoom 12 is a meadow. [M]</li>
+<li>In play, barrens and fen are no further apart than two seeds of one biome (1.01), fen and valley 1.11, meadow and barrens 1.13. 6 of 8 fens rolled only pools, which soldiers walk through, so for soldiers they play as meadows. [M]</li>
+</ul>
+<div class="figs two">
+<figure><img src="pics/thumbs-colour.webp" alt="Contact sheet of planets 1-8, seeds 1 and 2, at 1 s" loading="lazy"><figcaption><b>Planets 1-8, seeds 1 (top two rows) and 2, at 1 s.</b> The slime's start disc is the same bright circle on every planet.</figcaption></figure>
+<figure><img src="pics/thumbs-grey.webp" alt="The same contact sheet in grey" loading="lazy"><figcaption><b>The same in grey:</b> 5 of 8 nameable.</figcaption></figure>
+</div>
+<figure><img src="pics/ident-z12.webp" alt="Zoom 12 views of every planet with no nest or crystal" loading="lazy"><figcaption><b>Zoom 12, no nest or crystal, seeds 1 and 2:</b> 4 of 8 nameable by eye. Jungle's canopy is the best close look in the game; Highlands' crack mesh reads as floor tiles.</figcaption></figure>
+<div class="tbl"><table>
+<thead><tr><th>Most alike</th><th>First</th><th>Second</th><th>Third</th></tr></thead>
+<tbody>
+<tr><td>Looks, zoom 1</td><td>Meadow / Fen</td><td>Barrens / River valley</td><td>Jungle / Highlands</td></tr>
+<tr><td>Looks, zoom 12</td><td>Meadow / Fen</td><td>River valley / Core</td><td>Fen / Highlands</td></tr>
+<tr><td>Play</td><td>Barrens / Fen</td><td>Fen / River valley</td><td>Meadow / Barrens</td></tr>
+</tbody></table></div>
+<div class="fix"><strong>Fix</strong><span>Drawing: a zoom-12 signature for each biome from its own soil materials and plant kinds, as RimWorld and Don't Starve do. Map: a signature ground per biome (cracked ash on Barrens, say), and fens that roll lakes 3:1 over pools.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">4</div><div><h2>Almost no nest has both a narrow front door and a wide way round: 4 of 112</h2>
+<div class="tags"><span class="tag p">Play</span><span class="tag">map</span></div></div></div>
+<p>The checks only ask whether everything can be reached. The planets come out as two kinds of play, not eight. [M]</p>
+<ul>
+<li><b>Open</b> (planets 1-3, most jungles and cores): a route at least 16 dish cells wide reaches every nest, but holding a line takes 40-110 cells of wall, 800-2,200 food against a 2,000 start. Turtles have no cheap choke.</li>
+<li><b>Funnels</b> (planets 4, 6 and 7): every route to every nest passes a gap 4-14 wide. Gun builds have no open approach on any of 8 seeds, and the core world lacks one on 5 of 8.</li>
+</ul>
+<div class="tbl"><table>
+<thead><tr><th>Planet</th><th>Nests (seeds 1-8)</th><th>Direct way at most 10 wide</th><th>Some way at least 16 wide</th><th>Both</th></tr></thead>
+<tbody>
+<tr><td>1 meadow</td><td>8</td><td>1</td><td>7</td><td class="bad">1</td></tr>
+<tr><td>2 barrens</td><td>8</td><td>3</td><td>6</td><td class="bad">2</td></tr>
+<tr><td>3 fen</td><td>8</td><td>2</td><td>6</td><td class="bad">0</td></tr>
+<tr><td>4 river valley</td><td>16</td><td>12</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>5 jungle</td><td>16</td><td>9</td><td>5</td><td class="bad">1</td></tr>
+<tr><td>6 highlands</td><td>16</td><td>13</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>7 caves</td><td>16</td><td>16</td><td>0</td><td class="bad">0</td></tr>
+<tr><td>8 core</td><td>24</td><td>15</td><td>9</td><td class="bad">0</td></tr>
+</tbody></table></div>
+<p class="muted">Widths in dish cells (a gun reaches 24), walls kept; the direct way is the widest route at most 15% longer than the shortest (<code>raw/fun/localchoke.py</code>).</p>
+<div class="figs two">
+<figure><img src="pics/layouts-1-4.webp" alt="False-colour layouts of planets 1-4, seeds 1-4" loading="lazy"><figcaption><b>Planets 1-4, seeds 1-4, from the map files.</b> Grey rock, blue water (dark: deep), magenta soft rock, cyan crystals, red rings nests, yellow square the landing. Each map scaled to the same width.</figcaption></figure>
+<figure><img src="pics/layouts-5-8.webp" alt="False-colour layouts of planets 5-8, seeds 1-4" loading="lazy"><figcaption><b>Planets 5-8, seeds 1-4.</b> Highlands and caves funnel every nest; jungle and core are open fields with clutter.</figcaption></figure>
+</div>
+<div class="fix"><strong>Fix (this thread)</strong><span>Make the checks ask for a front door and a back road for each nest. On funnel planets widen one pass or tunnel to 16; on open planets lay a ridge with a pass across the direct way. First experiment: 50 seeds a biome, count the nests that pass.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">5</div><div><h2>The core world doesn't read as the climax</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">map</span><span class="tag">run</span></div></div></div>
+<ul>
+<li>Looks: at zoom 12 it is a meadow. Seed 1 is covered in rock fragments and seed 2 in a web of streams, because the stream count grows with the square root of the area. The hedge rings round its nests make bullseyes. [M]</li>
+<li>The slime covers 3% of the whole map at 60 s, against 24-26% on planet 1. These renders used the default slime, not the run's bigger one, so this may be smaller in a real run. [M, unconfirmed in the run]</li>
+<li>Play: nests are kept 280 cells apart at every size. At 6x the nearest pair is 0.14-0.19 of the map's width on 5 of 8 seeds, and on seed 1 all three nests share 7% of the map. Its play features sit close to highlands (1.06) and jungle (1.11): a remix. Seed 5 has four parallel rivers and a widest route of 4. [M]</li>
+</ul>
+<div class="figs two">
+<figure><img src="pics/core-streams.webp" alt="Core world seed 2 with a web of streams" loading="lazy"><figcaption><b>Core world, seed 2, 1 s:</b> the stream web over the whole map.</figcaption></figure>
+<figure><img src="pics/core-nests.webp" alt="False-colour core world seed 1 with three nests close together" loading="lazy"><figcaption><b>Core world, seed 1, map file:</b> three nests (red rings) in the top-left corner, sharing 7% of the map.</figcaption></figure>
+<figure><img src="pics/nest-ring.webp" alt="A core world nest at zoom 6 inside a beige hedge ring" loading="lazy"><figcaption><b>Core world, seed 2, a nest at zoom 6, 1 s:</b> a perfect gold disc in a beige ring, at the map's edge.</figcaption></figure>
+<figure><img src="pics/core-rivers.webp" alt="False-colour core world seed 5 with four rivers" loading="lazy"><figcaption><b>Core world, seed 5, map file:</b> four parallel rivers, the same obstacle four times; widest route 4.</figcaption></figure>
+</div>
+<div class="fix"><strong>Fix</strong><span>Map: nests 0.3 of the map's width apart; streams capped at the 1x count; each ring broken into two or three offset arcs. With the run thread: grow the slime before you land, by area, so its trail and the plants it burnt stain the ground and the core world arrives already digested.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">6</div><div><h2>The run's pace is one steady climb with no breather and the same clock and opening everywhere</h2>
+<div class="tags"><span class="tag p">Play</span><span class="tag">run</span><span class="tag">map</span></div></div></div>
+<div class="tbl"><table>
+<thead><tr><th>Planet</th><th>Area</th><th>Nests</th><th>Slime (x planet 1)</th><th>Walk to far nest</th><th>Difficulty / novelty [J]</th></tr></thead>
+<tbody>
+<tr><td>1 meadow</td><td>0.6</td><td>1</td><td>1.0</td><td>14 s</td><td>low / high</td></tr>
+<tr><td>2 barrens</td><td>0.8</td><td>1</td><td>1.6</td><td>18 s</td><td>low / low</td></tr>
+<tr><td>3 fen</td><td>1.0</td><td>1</td><td>2.3</td><td>21 s</td><td>low / low</td></tr>
+<tr><td>4 river valley</td><td>1.4</td><td>2</td><td>3.7</td><td>27 s</td><td class="bad">spike / high</td></tr>
+<tr><td>5 jungle</td><td>2.0</td><td>2</td><td>6.0</td><td>32 s</td><td>up / mid</td></tr>
+<tr><td>6 highlands</td><td>2.8</td><td>2</td><td>9.3</td><td>40 s</td><td>up / low</td></tr>
+<tr><td>7 caves</td><td>4.0</td><td>2</td><td>14.7</td><td>56 s</td><td>up / high</td></tr>
+<tr><td>8 core</td><td>6.0</td><td>3</td><td>24</td><td>60 s</td><td>up / low</td></tr>
+</tbody></table></div>
+<ul>
+<li>The slime grows about 1.6x a planet with no breather: likely bored on 2-3, swamped on 4 (twice the nests and the first funnel), slogging on 7. [J]</li>
+<li>The clock is 900 s on every planet; your "15-20 minutes to an hour" isn't wired up. [M]</li>
+<li>Every planet opens the same way: the first crystal is 12-26 cells from the landing on 64 of 64. [M]</li>
+<li>Crystal energy per unit of area falls from 4 to 1 between planets 1 and 8. Nothing says so. [M]</li>
+</ul>
+<div class="fix"><strong>Fix</strong><span>Run: the clock grows with area; a smaller rich planet as a breather around planet 6 (as Noita's Holy Mountain is between biomes). Map: the landing crystal's distance and size set per biome; the crystal thinning named as a difficulty dial, or big crystals scaled with area.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">7</div><div><h2>Caves: rock is the backdrop's colour, and every tunnel is 4-6 wide</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">drawing</span><span class="tag">map</span></div></div></div>
+<p>Cave rock is (96, 98, 102), the colour of the backdrop outside the world, so the map's edge vanishes, and the flat rock field turns the caverns into a node graph. In play, every route is 4-6 wide on 8 of 8 seeds and the mean sight line is 15-17, under the gun's reach of 24, so range upgrades are wasted there. [M]</p>
+<figure><img src="pics/caves.webp" alt="Cave planet seed 1: dark caverns joined by tunnels on a grey rock field" loading="lazy"><figcaption><b>Caves, seed 1, 1 s:</b> rock and the backdrop are one grey; the caverns read as a diagram.</figcaption></figure>
+<div class="fix"><strong>Fix</strong><span>Drawing: a darker backdrop and darker, textured rock; perhaps no sky light, so only crystals and slime light the caverns (The Riftbreaker, Noita). Map: irregular caverns, tunnels 5-15 wide, a cavern arena or two.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">8</div><div><h2>Clay cracks and plant crowns are drawn through the slime</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">drawing</span></div></div></div>
+<p><code>view.wgsl:1592-1593</code> fades them by the film's computed thickness, not by how much film is drawn, so the clay's crack mesh shows on top of thick slime and plant crowns show as dark specks in the film. [M]</p>
+<figure class="narrow" style="max-width:640px"><img src="pics/cracks-through-slime.webp" alt="Clay crack lines drawn across the gold slime" loading="lazy"><figcaption><b>Meadow, seed 2, zoom 12:</b> the crack mesh drawn over the slime.</figcaption></figure>
+<div class="fix"><strong>Fix</strong><span>Fade them by the drawn film's cover.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">9</div><div><h2>Fords can't be seen, bridges are ragged, and deep water stops only you</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag p">Play</span><span class="tag">map</span><span class="tag">drawing</span></div></div></div>
+<ul>
+<li>Fords are 6-7 luma off deep water: invisible at zoom 1, and box-shaped. [M]</li>
+<li>The bridge deck follows the river's rough outline and has plank artefacts (<code>levelgen.rs:1441-1446</code>). [M]</li>
+<li>The slime crosses deep water at 0.2 of its speed; on valley seed 1 it was on the squad's bank by 150 s. A moat that stops you, not it. [M, J]</li>
+<li>Lakes and their reed fringes look good. [J]</li>
+</ul>
+<div class="figs">
+<figure><img src="pics/fords.webp" alt="A river with two fords, normal and with contrast raised" loading="lazy" style="max-width:330px"><figcaption><b>Valley, seed 1, zoom 1:</b> as drawn (left) and with contrast raised 3x (right), where the two fords show.</figcaption></figure>
+<figure><img src="pics/bridge.webp" alt="A plank bridge with a ragged outline at zoom 24" loading="lazy"><figcaption><b>Valley, seed 2, a bridge at zoom 24:</b> the deck takes the river's ragged edge.</figcaption></figure>
+<figure><img src="pics/valley.webp" alt="False-colour valley seed 6 with a river, a ford and a bridge" loading="lazy"><figcaption><b>Valley, seed 6, map file:</b> the ford (light blue) and the bridge (brown) are the only ways over.</figcaption></figure>
+</div>
+<div class="fix"><strong>Fix</strong><span>Map: a straight deck running past both banks, and a ford edge without the roughness noise. Drawing: shallow water at least 15 luma above deep. The moat is your call (question 1 below).</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">10</div><div><h2>Hedges read as interface, and nests sit on the map's edge</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">drawing</span><span class="tag">map</span></div></div></div>
+<ul>
+<li>Soft-rock hedges are beige tubes with a soft shadow, brighter than the crystals. They cross lakes and don't look grown; where one meets rock the seam is a 25 px blur. [M]</li>
+<li>6 of the 16 first nests sit 55 world cells from a map edge, so the slime's home is cut off by the frame. Every start is a perfect gold disc. [M]</li>
+<li>In play the gaps in the nests' rings make natural kill boxes, which is good. [J]</li>
+</ul>
+<figure class="narrow" style="max-width:420px"><img src="pics/hedge-water.webp" alt="A soft-rock hedge running across water" loading="lazy"><figcaption><b>Fen, seed 2, zoom 12:</b> a hedge laid across water, and its blurred joint with rock.</figcaption></figure>
+<div class="fix"><strong>Fix</strong><span>Drawing: a plant-like hedge material and a crisp joint. Map: no hedges on water; nests at least 120 world cells from the edge. Slime thread: a ragged start instead of a disc.</span></div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">11</div><div><h2>Soft edges, a still front and a dim fire</h2>
+<div class="tags"><span class="tag l">Looks</span><span class="tag">drawing</span></div></div></div>
+<ul>
+<li>Rock's lit rim is crisp at zoom 24, but its shaded side is a soft band of 20-25 px. Slime over water is soft too. [M]</li>
+<li>Fire is a soft orange-red blob about 40 px across. Its brightest pixels (179) don't beat the slime's (181), and its hue sits right beside the slime's amber. [M]</li>
+<li>From 55 to 59 s the slime's front stands still at the reeds and the water; only its body shimmers. [M]</li>
+</ul>
+<div class="figs">
+<figure><img src="pics/rock-edge.webp" alt="A rock edge at zoom 24 with a soft shaded side" loading="lazy" style="max-width:480px"><figcaption><b>Meadow, seed 1, rock at zoom 24.</b></figcaption></figure>
+<figure><video src="pics/fire.mp4" autoplay muted loop playsinline aria-label="Fire on meadow seed 1 at zoom 12"></video><figcaption><b>Fire, meadow seed 1, zoom 12, 4 s.</b> No brighter than the slime.</figcaption></figure>
+<figure><video src="pics/front-fen.mp4" autoplay muted loop playsinline aria-label="Slime front on fen seed 1 at zoom 12"></video><figcaption><b>The slime's front, fen seed 1, zoom 12, 55-59 s.</b></figcaption></figure>
+</div>
+<div class="fix"><strong>Fix</strong><span>A 2 px shade plus a cast shadow for rock; fire with a crisp edge, brighter than the slime.</span></div>
+</section>
+
+<section class="sec item">
+<h2>What already works</h2>
+<div class="good">
+<ul>
+<li>The jungle canopy is the best close-zoom look in the game, and plant patch edges are smooth at zoom 24.</li>
+<li>Plants no longer cover the bare biomes edge to edge (Barrens 10.6% cover, Caves 4%), a fix from the first art review.</li>
+<li>Crystals are the only cyan on the map; lakes, reed fringes, sand ripples and dunes look good; the landing is a clean pad.</li>
+<li>Two seeds of a biome do give different maps, and caves stand apart from every other biome in play.</li>
+<li>The thin slime film is above every bare soil.</li>
+</ul>
+</div>
+</section>
+
+<section class="sec item">
+<h2>Technical: all seven fixed in this thread</h2>
+<p>Each fix has a test. They go up as one pull request with this report.</p>
+<div class="tbl"><table>
+<thead><tr><th>Finding</th><th>Before</th><th>After</th></tr></thead>
+<tbody>
+<tr><td>A squad steered into rock waited for a new walking map every move</td><td>26.3 s round a bar at 1x (12.9 s with whole maps); never in 60 s at 6x</td><td class="ok">13.6 s at 1x, 16.4 s at 6x</td></tr>
+<tr><td>The walking-map cache at 6x held 17 maps</td><td>24 live goals: 26% of goal-steps unserved, maps rebuilt for ever</td><td class="ok">34 maps (128 MB); 24 goals served every step</td></tr>
+<tr><td>Walls going up in quick succession restarted the map being built</td><td>a wall every 6 steps or less: no map in 600 steps at 6x</td><td class="ok">a wall every 2 steps: served within 30 steps</td></tr>
+<tr><td>The checks walked the dish's rim, which the game can't</td><td>planet 5 seed 39 passed with 3 of 20 crystals reachable in the game</td><td class="ok">the 12-cell rim is shut in the checks</td></tr>
+<tr><td>The fallback map was neither open nor checked</td><td>6 of 96 forced fallbacks failed their own checks</td><td class="ok">an open plan, up to 4 tries; 32 of 32 pass</td></tr>
+<tr><td>A wall worn to rubble read back the whole ground buffer</td><td>3.9 MB at 6x, about 3 ms on the 1070 (estimate)</td><td class="ok">only the wall cells are read</td></tr>
+<tr><td>Test gaps</td><td>the 6x pin repeated planet 8 seed 1; no scheduling tests</td><td class="ok">six new pins (pillars, oases, lakes, ridges over a river, cave pools, a 6x core); four walking-map tests</td></tr>
+</tbody></table></div>
+<p class="muted">Still to do: the pins have only run on Linux. The PC runner can run them on Windows.</p>
+</section>
+
+<section class="sec item">
+<h2>Questions only your play can answer</h2>
+<ol class="qs">
+<li>Is a moat that stops only you fun or unfair?</li>
+<li>Do planets 2 and 3 feel like the tutorial again?</li>
+<li>Is 15 minutes enough at 6x, and is a minute's walk to the front fine?</li>
+<li>Are the 4-wide cave tunnels tense or tedious?</li>
+<li>Do the jungle's hedges read as a maze or as clutter?</li>
+<li>Is the same opening on every planet a comfort or sameness?</li>
+</ol>
+</section>
+
+<section class="sec item">
+<p class="muted">Frames from <code>larder-world map=planet:D:S seed=S hand=idle</code> on software Vulkan (llvmpipe) at 1280x800 unless stated; layouts drawn from <code>cargo run --release --example planets</code> map files. The three full reports, the briefs and every script are in <code>Reports/levelgen-review-2026-11-15/</code>.</p>
+</section>
+
+</div>

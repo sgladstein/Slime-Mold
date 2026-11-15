@@ -248,10 +248,32 @@ pub fn generate(p: &Planet) -> Map {
             return m;
         }
     }
-    // Every attempt failed a check (none has, over the seeds the tests
-    // walk): an open plan, with no ridges, which reaches everything.
-    build_with(p, ATTEMPTS, Some(Recipe { open: 1.0, gate: 0.0, outcrop: 2.0, ..Recipe::of(p) }))
+    fallback(p)
 }
+
+/// The planet when every attempt fails a check (none has, over 1,600
+/// planets): an open plan that reaches everything, the biome's water and
+/// soil kept, tried up to `FALLBACKS` times for one that passes (the
+/// nests' places are still dice: 2 of 32 first tries put the far nest
+/// too far), else the last. At first it was one try that kept the
+/// biome's openness, fronts, pillars, hedges and rings: 6 of 96 forced
+/// fallbacks failed their own checks (planet 8 seed 11 with 46% of its
+/// charge open) and a cave's was 54% rock (technical review, 2026-11-15).
+pub fn fallback(p: &Planet) -> Map {
+    let rc = Recipe::of(p);
+    let open = Recipe { openness: Openness::Open, open: 1.0, front: 0.0, fronts: 0, gate: 0.0, outcrop: 2.0, pillars: 0, ring: 0.0, hedges: 0, ..rc };
+    let mut m = build_with(p, ATTEMPTS, Some(open));
+    for k in 1..FALLBACKS {
+        if check(p, &m).is_empty() {
+            break;
+        }
+        m = build_with(p, ATTEMPTS + k, Some(open));
+    }
+    m
+}
+
+/// Tries of the open plan before the fallback keeps one that fails.
+const FALLBACKS: u32 = 4;
 
 // ---------------------------------------------------------------------
 // Randomness: SplitMix64, keyed by seed, depth and a stream.
@@ -2181,6 +2203,14 @@ pub fn walkable(m: &Map, size: (usize, usize), walls: bool) -> (usize, usize, Ve
     }
     // Narrow by one bin.
     let mut out = open.clone();
+    // The dish has no agar within 3 dish cells (12 map cells) of its edge
+    // (`big::rect`), so the game walks none of it: those bins are shut
+    // after the narrowing, which models a squad's width against rock, not
+    // against the rim. Treating the edge as open, at first, passed a
+    // planet whose landing reached 3 of 20 crystals in the game, round a
+    // ridge's end through the rim (planet 5 seed 39, technical review,
+    // 2026-11-15).
+    let rim = RIM_MAP.div_ceil(BIN);
     for by in 0..bh {
         for bx in 0..bw {
             if !open[by * bw + bx] {
@@ -2193,8 +2223,19 @@ pub fn walkable(m: &Map, size: (usize, usize), walls: bool) -> (usize, usize, Ve
             }
         }
     }
+    for by in 0..bh {
+        for bx in 0..bw {
+            if bx < rim || by < rim || bx + rim >= bw || by + rim >= bh {
+                out[by * bw + bx] = false;
+            }
+        }
+    }
     (bw, bh, out)
 }
+
+/// The dish's rim, map cells: no agar within 3 dish cells of the edge
+/// (`BigDish::with_map`).
+const RIM_MAP: usize = 12;
 
 /// Walking distance in map cells from `from` to every bin (`u32::MAX` where
 /// it cannot reach), 5 a side step and 7 a diagonal over `open`.
@@ -2456,15 +2497,65 @@ mod tests {
         assert_eq!(ground[at(2, 2)], 0, "outside the island");
     }
 
-    /// The core world at the owner's 6x area, pinned too: the bigger maps
-    /// run more of the generator's loops, on every machine the same.
+    /// The dials seed 1 never rolls, pinned too: pillars (planet 1 seed
+    /// 17), oases (2:7), lakes (3:3), ridges across a river with its fords
+    /// and bridges (4:2), a cave with pools (7:2), and a core world of
+    /// pillars and streams at the full 6x (8:3). Until 2026-11-15 the big
+    /// pin here was planet 8 seed 1 again, the same as `PINNED[7]`
+    /// (technical review, finding 7).
     #[test]
-    fn a_big_planet_is_pinned() {
-        let (_, m) = spec("planet:8:1:6", 1).unwrap().unwrap();
-        assert_eq!(print(&m), PINNED_BIG, "{:#x}", print(&m));
+    fn every_dial_is_pinned() {
+        let got: Vec<u64> = MORE_PINNED.iter().map(|&(d, s, _)| print(&level(s, d))).collect();
+        let want: Vec<u64> = MORE_PINNED.iter().map(|p| p.2).collect();
+        assert_eq!(got, want, "{got:#x?}");
     }
 
-    const PINNED_BIG: u64 = 0x6a8d5a9e7fc09b42;
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0xed340d330b560ca6), (2, 7, 0xd5aadd1084ba294b), (3, 3, 0xd52ae9aac6f968a1), (4, 2, 0xfd8ff1e75f8c498b), (7, 2, 0x3b2d28599f006f92), (8, 3, 0x5b18385312867bbf)];
+
+    /// The fallback, built for every planet of seeds 1-4, passes the checks
+    /// the attempts must (technical review, 2026-11-15: 6 of 96 failed
+    /// when it kept the biome's fronts, pillars and hedges).
+    #[test]
+    fn every_fallback_passes_its_checks() {
+        let mut bad = Vec::new();
+        for d in 1..=8 {
+            for s in 1..=4 {
+                let p = planet(s, d);
+                let fails = check(&p, &fallback(&p));
+                if !fails.is_empty() {
+                    bad.push(format!("planet {d} seed {s}: {fails:?}"));
+                }
+            }
+        }
+        assert!(bad.is_empty(), "{} of 32 fallbacks fail:\n{}", bad.len(), bad.join("\n"));
+    }
+
+    /// The checks walk none of the dish's rim, where the game has no agar
+    /// (technical review, 2026-11-15): a map whose only way from the
+    /// landing to the crystals is round a ridge's end along the rim fails,
+    /// and passes again with the ridge stopping short of the rim's width.
+    #[test]
+    fn the_checks_walk_inside_the_dish_rim() {
+        let (w, h) = (512, 320);
+        let ridge = |gap: usize| {
+            let mut ground = vec![0u8; w * h];
+            for y in gap..h {
+                for x in 250..262 {
+                    ground[y * w + x] = G_ROCK;
+                }
+            }
+            let crystals = (0..6).map(|k| Crystal { x: 400.0 + 12.0 * k as f32, y: 200.0, r: 6.0, charge: 100.0 }).collect();
+            let items = Items { crystals, moulds: vec![(450.0, 100.0)], landing: Some((100.0, 160.0)), walls: Vec::new(), moisture: None };
+            Map { w, h, ground, plants: Vec::new(), items }
+        };
+        let open = |m: &Map| {
+            let (bw, bh, ok) = walkable(m, (w, h), false);
+            let d = walk_from(bw, bh, &ok, (100.0, 160.0));
+            d[(280 / BIN) * bw + 400 / BIN] != u32::MAX
+        };
+        assert!(!open(&ridge(RIM_MAP)), "a ridge from the far edge to the rim's inner side shuts the way");
+        assert!(open(&ridge(RIM_MAP + 3 * BIN)), "a way round its end inside the rim");
+    }
 
     /// Each planet's plants: the share of its map cells with any, and the
     /// mean density over all of them (plants are drawn as crowns sized by

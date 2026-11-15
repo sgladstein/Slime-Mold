@@ -296,7 +296,7 @@ impl<W: World> Game<W> {
                     }
                     if u.touching > 0 {
                         if self.first_touch.is_none() {
-                            self.first_touch = Some(self.world.ticks() as f32 / r.tps as f32);
+                            self.first_touch = Some((self.world.ticks() - self.landed) as f32 / r.tps as f32);
                         }
                         // Whole walkers: each bites `drain` at any mass, so walking into a thick body is very deadly (owner 11-12 22:22Z, #174).
                         s.hp -= r.drain * u.touching as f32 * dt;
