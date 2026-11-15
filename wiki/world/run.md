@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/roguelike-run-2026-11-14/README.md
@@ -17,14 +17,19 @@ code:
   - Run::put_in
   - Run::rules
   - Run::shop
+  - WIN_SHARE
   - ammo_price
+  - area_of
+  - clock
   - gun_price
+  - head_start
   - reward
   - run_args
   - shells_at
   - shop_of
   - shop_plan
   - shrink_goal
+  - two_stars
 ---
 
 # The roguelike run
@@ -33,8 +38,10 @@ code:
 
 A separate mode beside the campaign (Run on the start menu, or
 `run=SEED`): eight planets on the way to the slime's home world, each one
-map with one slime to cut to `shrink_goal` of its peak (25% on planet 1 down
-to 10%), the tier climbing `LADDER` and walkers a fifth more each planet. A
+map with one slime to cut to `shrink_goal` of its peak (`WIN_SHARE`, 2% on
+every planet since 11-15; it was 25% on planet 1 down to 10%, and the owner
+kept winning with slime left; under 3% the slime is broken and its
+stragglers off food starve, `Rules::broken`), the tier climbing `LADDER` and walkers a fifth more each planet. A
 won planet pays points for a shop between planets that upgrades the squad,
 unlocks and upgrades buildings and tools, and sells guns and gun cards
 that get better deeper; a lost planet ends the run. The shop page has two
@@ -48,7 +55,7 @@ slots hold the cards. The gun fires its slots left to right; the player
 drags a card onto a slot to move it, buys a card for sale straight into a
 slot, drags one onto the bag to take it out, or presses Q and E; a card
 put in without a slot lands before the first bullet (`Run::put_in`)
-([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). Locked buildings and tools show
+([report](../../Reports/gun-order-2026-11-14.md)). Bullets are rolled (`Ammo::roll`, two a shop, priced by `ammo_price`); the fixed payload cards are no longer sold. Walkers scale with depth and the planet's area, then its open cells at level start (`open_scale`). The clock grows with the planet's area (`clock`: 15:00 on planet 1 to 55:30 on the core world; two stars before four fifths of it, `two_stars`), and on planets bigger than today's map the slime grows alone first (`head_start`: 11 to 87 s on planets 4-8), the clock starting on landing. The slime sheds most of its walkers in its first half minute on every planet, so a big planet's slime does not cover it ([report](../../Reports/roguelike-run-2026-11-14/README.md), *Run pacing*). Locked buildings and tools show
 locked on the command card. Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
@@ -60,12 +67,16 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 - 2026-11-14 15:26Z: level generation is its own thread; this one reviews it "but you don't do level generation".
 - 2026-11-14 16:55Z: "Guns and bullets should have icons. This whole menu should not just be uniform buttons. There should be one area for unlocking/upgrading that should match the player menu from the screen (buildings and tools should be separate menus that you open up). The second area of the screen is for Guns/bullet cards."
 - 2026-11-14 20:32Z: "How do I actually build and adjust my guns. When I buy a card it goes into the gun but I don't see how to move cards around".
+- 2026-11-15 02:58Z: "everything shifts in the shop. Once you add a bag that shouldn't happen" (fixed: the page reserves two card groups).
+- 2026-11-15 03:02Z: "I know I originally said getting the last few slime stragglers is annoying but right now how it's set up I feel like I keep winning before I've actually killed everything. So maybe we need a different threshold or something" (`WIN_SHARE` 2%).
 - 2026-11-14 15:33Z: "There should be a dev mode to control what level planet i go to"; rare planets with base remains or soldiers are "more of a rescue the human planet".
 
 ## Open
 
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
+- A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
+- The slime's size on big planets: it settles at about 7,300 walkers on the core world from 65,600, so the area scaling does not reach play; the slime's economy, not the run's.
 
 ## Sources
 

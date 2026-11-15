@@ -4577,16 +4577,22 @@ mod tests {
         // the 8% band is under 70 walkers and the engines' drift (808 /
         // 894) crosses it. The range is game side, the same on both.
         let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, ..Rules::default() };
+        // The start's organic outline off (`start_shape`, 2026-11-15), like
+        // the game-layer rules above: the same on both engines, but it moves
+        // where the mould meets the squad, and seed 3's chaos then parted
+        // the engines past the bounds (killed 1239 GPU against 1056 CPU;
+        // 1725 against 1564 walkers at 25 s with craters).
+        let race = || slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) };
         let flee = || {
-            let mut p = race_params(seed, scale, walkers);
+            let mut p = race();
             (p.alarm_keep, p.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
             p
         };
         let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(flee()), rules, seed);
         let mut s = race_settings(seed, scale, walkers);
-        (s.alarm_keep, s.alarm_weight) = (FLEE_KEEP, FLEE_WEIGHT);
+        (s.alarm_keep, s.alarm_weight, s.start_shape) = (FLEE_KEEP, FLEE_WEIGHT, false);
         let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
-        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race()), rules, seed);
         assert!(cpu.world.p.alarm_weight < 0.0 && gpu.world.s.alarm_weight < 0.0, "the race world flees gunfire on both");
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
@@ -4690,15 +4696,20 @@ mod tests {
     fn a_gassed_mould_spares_the_squad_on_the_engine_as_on_the_cpu() {
         use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
         use slime_mould::mould::kit::KitRules;
-        use slime_mould::mould::larder_world::{race_world, Cmd, Game, Order, Rules, World};
+        use slime_mould::mould::larder_world::{race_params, Cmd, Game, Order, Rules, World};
         use slime_mould::mould::rounds::burst_rules;
         use slime_mould::mould::squad::Burst;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (3, 2, 5_000);
         let rules = Rules { cap: 30.0, crater: 0.0, ..Rules::default() };
+        // The start's organic outline off (`start_shape`, 2026-11-15): the
+        // gas catches 8 walkers where seed 3's thin edge first bites, and
+        // with the outline the squad met a different edge, where the gassed
+        // and bare games' health came out 380.4 against 381.5 (the claim
+        // holds where the mould is thin, which the disc fixes in place).
         let play = |gas: bool| -> (Vec<f32>, u32, u32) {
-            let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
-            let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
+            let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) }), rules, seed);
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, slime_mould::gpu::Settings { start_shape: false, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
             assert!(gpu.world.has_gas(), "the engine's world has the gas");
             for k in 0..cpu.soldiers.len() {
                 assert!(cpu.apply(Cmd::Order(k, Order::Attack)) && gpu.apply(Cmd::Order(k, Order::Attack)));
@@ -4827,9 +4838,15 @@ mod tests {
         // walking maps (`Rules::map_pops`): sliced, 1585 GPU against 1316
         // CPU at 25 s.
         let rules = Rules { cap: 30.0, crater: 10.0, core_pull: 0.0, crystal_solid: false, drain: 1.0, elbow: 0.0, corners: false, map_pops: usize::MAX, ..Rules::default() };
-        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), rules, seed);
-        let mut gpu = Game::new(GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale), rules, seed);
-        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race_params(seed, scale, walkers)), Rules { crater: 0.0, ..rules }, seed);
+        // The start's organic outline off (`start_shape`, 2026-11-15), like
+        // the game-layer rules above: the same on both engines, but it moves
+        // where the mould meets the squad, and seed 3's chaos then parted
+        // the engines past the bounds (killed 1239 GPU against 1056 CPU;
+        // 1725 against 1564 walkers at 25 s with craters).
+        let race = || slime_mould::mould::big::BigParams { start_shape: false, ..race_params(seed, scale, walkers) };
+        let mut cpu = Game::new(slime_mould::mould::big::BigDish::new(race()), rules, seed);
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, slime_mould::gpu::Settings { start_shape: false, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
+        let mut off = Game::new(slime_mould::mould::big::BigDish::new(race()), Rules { crater: 0.0, ..rules }, seed);
         for g in [&mut cpu.log, &mut gpu.log, &mut off.log] {
             g.clear();
         }

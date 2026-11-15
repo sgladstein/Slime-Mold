@@ -444,6 +444,26 @@ fn taking_the_plain_moulds_home_stops_nothing() {
     assert!(g.core_down.is_none() && g.world.p.birth_energy.is_finite());
 }
 
+/// A head start (`head_start`, the run's big planets, 11-15): the slime
+/// grows alone first, the world's ticks run on, and the game's clock still
+/// starts at 0:00 on landing, so the cap and the goals count from there.
+#[test]
+fn a_head_start_grows_the_slime_and_the_clock_starts_on_landing() {
+    let r = Rules { build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+    let fresh = race_world(3, 1, 1_000);
+    let mut grown = race_world(3, 1, 1_000);
+    head_start(&mut grown, 10.0, &r);
+    assert_eq!(grown.ticks(), 10 * u64::from(r.tps));
+    assert_ne!(grown.living(), fresh.living(), "the slime lived on alone");
+    let mut g = Game::new(grown, Rules { cap: 2.0, ..r }, 3);
+    assert_eq!(g.time(), 0.0);
+    while g.end.is_none() {
+        g.step();
+    }
+    assert!(matches!(g.end, Some(End::Cap(_))));
+    assert!((g.time() - 2.0).abs() < 0.1, "the cap counts from landing, not from the world's start: {}", g.time());
+}
+
 #[test]
 fn the_squad_starts_far_from_the_mould() {
     let g = small(1);
@@ -2554,6 +2574,48 @@ fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
     let mut d = dirs.clone();
     d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
     assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
+}
+
+/// Each start is an organic shape, not a disc (planet review, 2026-11-15:
+/// "every start is a perfect gold disc"): the 90th-percentile reach of the
+/// walkers in each of 24 sectors round the start varies by far more than
+/// the disc's on the same open world,
+/// every walker is placed, and seeds differ.
+#[test]
+fn a_start_is_an_organic_shape_not_a_disc() {
+    let reach = |p: crate::mould::big::BigParams| {
+        let d = BigDish::new(p);
+        // The living (the rest are empty slots), about their own middle.
+        let live: Vec<(f32, f32)> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| (d.walkers[k].0, d.walkers[k].1)).collect();
+        let n = live.len() as f32;
+        let (hx, hy) = (live.iter().map(|w| w.0).sum::<f32>() / n, live.iter().map(|w| w.1).sum::<f32>() / n);
+        let mut by: Vec<Vec<f32>> = vec![Vec::new(); 24];
+        for &(x, y) in &live {
+            let (dx, dy) = (x - hx, y - hy);
+            let a = ((dy.atan2(dx) / std::f32::consts::TAU + 1.0).fract() * 24.0) as usize % 24;
+            by[a].push(dx.hypot(dy));
+        }
+        let far: Vec<f32> = by
+            .iter_mut()
+            .map(|v| {
+                v.sort_by(f32::total_cmp);
+                v.get(v.len() * 9 / 10).copied().unwrap_or(0.0)
+            })
+            .collect();
+        let mean = far.iter().sum::<f32>() / 24.0;
+        let sd = (far.iter().map(|f| (f - mean).powi(2)).sum::<f32>() / 24.0).sqrt();
+        (sd / mean, live.len(), far)
+    };
+    // On open ground, so rock does not clip either.
+    let open = |seed, shape| crate::mould::big::BigParams { start_shape: shape, terrain_rock: 0.0, terrain_wet: 0.0, haze: 0.0, ..race_params(seed, 1, 500) };
+    for seed in [1, 2, 3] {
+        let (cv, n, far) = reach(open(seed, true));
+        let (cv_disc, n_disc, _) = reach(open(seed, false));
+        eprintln!("seed {seed}: organic {cv:.3}, disc {cv_disc:.3}");
+        assert_eq!(n, n_disc, "seed {seed}: every walker placed");
+        assert!(cv > cv_disc + 0.1, "seed {seed}: the start's reach varies by {cv:.3} of its mean, the disc's {cv_disc:.3}: {far:?}");
+    }
+    assert_ne!(reach(open(1, true)).2, reach(open(2, true)).2, "two seeds, one shape");
 }
 
 // Walking maps at the core world's 6x (technical review, 2026-11-15):

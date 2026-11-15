@@ -633,7 +633,7 @@ impl StartMenu {
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Left/Right change  ·  Backspace or click the row: default  ·  Esc back",
             Page::Keys => "Esc or F1 back",
-            Page::Shop => "Click or Enter buys  ·  drag a card to a slot, or Q and E, to change the order the gun fires  ·  Esc closes a folder, then the shop",
+            Page::Shop => "Click or Enter buys  ·  drag cards (or Q and E) to set the gun's order  ·  Esc back",
         };
         c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x, MUTED);
     }
@@ -842,6 +842,14 @@ impl StartMenu {
             cards.extend(rects.into_iter().zip(idx));
             y += used + 14.0 * s;
         }
+        // Room for two card groups (for sale, in the bag) of a row each,
+        // there or not: sized to its contents, the page shrank the moment
+        // the first card went into the bag and grew back when it left
+        // (owner, 11-15 02:58Z: "everything shifts in the shop. Once you
+        // add a bag that shouldn't happen"). The scale now changes only
+        // when a group needs a second row.
+        let groups = self.card_groups().len();
+        y += 2usize.saturating_sub(groups) as f32 * (head + ch + 14.0 * s);
         let right = Rect::new(rx, top, rw, (y - top).max(left.h));
         let bag = Rect::new(rx, bag_top, rw, (right.bottom() - bag_top).max(0.0));
         let room = sh - foot - top;
@@ -1126,8 +1134,8 @@ impl StartMenu {
                 (folders[f].clone(), format!("Open: {n} to unlock or upgrade, as the command card's own page."), String::new(), String::new(), true)
             }
             Some(Hit::FolderBack) => ("Back".into(), "Back to the first page of upgrades.".into(), String::new(), String::new(), true),
-            Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "The gun fires its slots left to right, again and again. Drag a card here from the bag, or click a bag card to put it in.".into(), String::new(), String::new(), true),
-            _ => ("Point at a tile".into(), "Upgrades on the left, guns and their bullet cards on the right. Bright tiles are what your points buy now. The gun fires its cards left to right: drag a card to another slot (or Q and E) to change the order, click a card in the gun to take it out, click a bag card to put it in.".into(), String::new(), String::new(), true),
+            Some(Hit::Slot(k)) => (format!("Slot {}: empty", k + 1), "Drag a card here.".into(), String::new(), String::new(), true),
+            _ => ("Point at a tile".into(), "The gun fires its cards left to right. Drag a card to a slot to move it; click a card to take it out or put it in.".into(), String::new(), String::new(), true),
         };
         c.text_fit(Weight::SemiBold, 17.0 * s, (r.x + p, r.y + 24.0 * s), Align::Left, &name, r.w - 2.0 * p - 150.0 * s, TEXT);
         let tag = if price.is_empty() { state } else if state.is_empty() { format!("{price} points") } else { format!("{price} points  ·  {state}") };
@@ -1340,6 +1348,33 @@ mod tests {
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(1)], "right walks the grid");
         m.key(KeyCode::Escape, true);
         assert_eq!((m.page, m.rows()[m.focus]), (Page::Main, Hit::Run));
+    }
+
+    /// The shop stays put when a card goes into the bag or comes out of
+    /// it (owner, 11-15 02:58Z): the same scale, the same gun, slot and
+    /// tile places, at every screen and UI size.
+    #[test]
+    fn the_shop_holds_still_when_the_bag_fills() {
+        let place = |bag: bool, screen: (u32, u32), user: f32| {
+            let mut sh = shop(6);
+            for r in sh.rows.iter_mut().filter(|r| r.area == ShopArea::Cards && !r.on) {
+                r.group = if bag && r.name.ends_with('3') { "In the bag" } else { "For sale" }.into();
+            }
+            let mut m = menu();
+            m.shop = Some(sh);
+            m.show(Page::Shop);
+            let mut c = Canvas::new(screen);
+            c.ui.user = user;
+            m.draw(&mut c);
+            let mut at: Vec<(Hit, Rect)> = m.rows().into_iter().filter(|h| !matches!(h, Hit::Buy(i) if *i >= 23)).filter_map(|h| Some((h, m.rect_of(h)?))).collect();
+            at.extend(m.slot_rects.iter().map(|&r| (Hit::Next, r)));
+            at
+        };
+        for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
+            for user in crate::world::settings::STEPS {
+                assert_eq!(place(false, screen, user), place(true, screen, user), "{screen:?} at {user}: the shop moved when a card went into the bag");
+            }
+        }
     }
 
     /// Drags `from` to `to` (both as last drawn): press, move past

@@ -254,10 +254,12 @@ pub enum CardKind {
 impl CardKind {
     pub fn label(self) -> &'static str {
         match self {
-            CardKind::Payload => "Payload",
-            CardKind::Modifier => "Modifier",
-            CardKind::Trigger => "Trigger",
-            CardKind::Flight => "Flight",
+            // In plain words (owner 11-15 02:57Z: the cards' text "should
+            // be simplified and clarified"): what the card works on.
+            // Until then: Payload, Modifier, Trigger, Flight.
+            CardKind::Payload => "Bullet",
+            CardKind::Modifier | CardKind::Trigger => "Next bullet",
+            CardKind::Flight => "Always",
         }
     }
 
@@ -1629,7 +1631,7 @@ impl Hud {
             y += 19.5 * s;
         }
         if k.idle {
-            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "After the last payload: it does nothing", w - 28.0 * s, WARN);
+            c.text_fit(Weight::SemiBold, 12.0 * s, (r.x + 14.0 * s, y + 4.0 * s), Align::Left, "No bullet after it: it does nothing", w - 28.0 * s, WARN);
         }
     }
 

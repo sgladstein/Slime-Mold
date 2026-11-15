@@ -206,7 +206,11 @@ impl View {
     /// A view of `world_frame` (`world.0 x world.1` RGBA `u32`s) on a screen
     /// `screen` pixels.
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, world_frame: &wgpu::Buffer, world: (usize, usize), screen: (u32, u32)) -> Self {
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(SHADER.into()) });
+        // `LARDER_VIEW_WGSL=PATH` swaps in another copy of this shader, for
+        // timing a change on the 1070 without a rebuild (performance
+        // thread, 11-15: each part's cost measured by leaving it out).
+        let source = std::env::var("LARDER_VIEW_WGSL").ok().and_then(|p| std::fs::read_to_string(p).ok()).unwrap_or_else(|| SHADER.to_string());
+        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("view"), source: wgpu::ShaderSource::Wgsl(source.into()) });
         let entry = |binding: u32, ty: wgpu::BufferBindingType| wgpu::BindGroupLayoutEntry {
             binding,
             visibility: wgpu::ShaderStages::COMPUTE,
@@ -692,6 +696,20 @@ impl View {
     /// With `stamp`, timestamps at the first pass's start and the last
     /// pass's end, at the indices given.
     pub fn record(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>) {
+        self.record_with(enc, cam, stamp, None);
+    }
+
+    /// The names of the view's passes, as `record_each` stamps them.
+    pub const PASS_NAMES: [&'static str; 6] = ["base", "marks", "compose", "specks", "prep", "drain"];
+
+    /// As `record`, with each pass stamped alone in `qs` (begin at 2 q, end
+    /// at 2 q + 1, q the pass's place in this frame); returns each pass's
+    /// index in `PASS_NAMES`, in order. (The bench's `viewpasses=`.)
+    pub fn record_each(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, qs: &wgpu::QuerySet) -> Vec<usize> {
+        self.record_with(enc, cam, None, Some(qs))
+    }
+
+    fn record_with(&self, enc: &mut wgpu::CommandEncoder, cam: &Camera, stamp: Option<(&wgpu::QuerySet, Option<u32>, Option<u32>)>, each: Option<&wgpu::QuerySet>) -> Vec<usize> {
         let mm = self.minimap_rect(cam).unwrap_or((0, 0, 0, 0));
         let mut b: Vec<u8> = Vec::with_capacity(PARAMS_BYTES);
         for v in [self.screen.0, self.screen.1, self.stride, self.world.0 as u32, self.world.1 as u32, self.n_marks, self.has_vis as u32, self.has_overlay as u32] {
@@ -754,14 +772,18 @@ impl View {
         }
         let last = passes.len() - 1;
         for (q, &(p, (x, y))) in passes.iter().enumerate() {
-            let writes = stamp
-                .map(|(qs, begin, end)| wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin.filter(|_| q == 0), end_of_pass_write_index: end.filter(|_| q == last) })
-                .filter(|w| w.beginning_of_pass_write_index.is_some() || w.end_of_pass_write_index.is_some());
+            let writes = match each {
+                Some(qs) => Some(wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: Some(2 * q as u32), end_of_pass_write_index: Some(2 * q as u32 + 1) }),
+                None => stamp
+                    .map(|(qs, begin, end)| wgpu::ComputePassTimestampWrites { query_set: qs, beginning_of_pass_write_index: begin.filter(|_| q == 0), end_of_pass_write_index: end.filter(|_| q == last) })
+                    .filter(|w| w.beginning_of_pass_write_index.is_some() || w.end_of_pass_write_index.is_some()),
+            };
             let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor { label: Some("view"), timestamp_writes: writes });
             pass.set_pipeline(&self.pipes[p]);
             pass.set_bind_group(0, &self.group, &[]);
             pass.dispatch_workgroups(x, y, 1);
         }
+        passes.into_iter().map(|p| p.0).collect()
     }
 
     /// Copies the result into a texture the screen's size (the window's).
