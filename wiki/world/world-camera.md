@@ -2,7 +2,7 @@
 title: The world camera and UI
 kind: mechanism
 status: current
-updated: 2026-11-14
+updated: 2026-11-15
 sources:
   - Reports/building-looks-2026-11-14/README.md
   - Reports/crisp-terrain-2026-11-14/README.md
@@ -25,6 +25,7 @@ sources:
   - Reports/units-read-2026-11-14/README.md
   - Reports/units-read-2026-11-14/followup.md
   - Reports/units-read-2026-11-14/harvest.md
+  - Reports/view-cost-2026-11-15/README.md
   - Reports/world-camera-2026-11-11.md
   - Reports/world-look-2026-11-11.md
   - Reports/world-ui-2026-11-11.md
@@ -68,6 +69,7 @@ code:
   - UiSize::px
   - View::fine
   - View::record
+  - View::record_each
   - View::set_alarm
   - View::set_alive
   - View::set_body_density
@@ -89,7 +91,10 @@ and below 1 down to the fit, each pixel the mean of its cells), a minimap
 from the same frame, marks drawn on the GPU (up to `MAX_MARKS` 2,048), and
 Larder's controls in world cells, given out as `UiCommand`s. On the GTX 1070
 the view costs 0.32-0.42 ms a frame at 1920 x 1080, and 0.8-1.2 ms with the
-look below.
+look below. With today's ground, plants and fire the 1070's view is
+1.9-3.0 ms at zoom 1-24 (2026-11-15); plants are the largest part, and
+`bench=S viewpasses=N` with `scripts/view-cost.ps1` times each pass and each
+part of the shading ([view cost](../../Reports/view-cost-2026-11-15/README.md)).
 
 In `larder-world` the soldiers take RTS orders
 ([report](../../Reports/soldier-controls-2026-11-12.md)): Shift queues any
