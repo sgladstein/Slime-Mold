@@ -300,6 +300,9 @@ fn main() {
     let mut mass = None::<f32>;
     let mut m = Mould::default();
     let mut map = None::<(String, Map)>;
+    // A map grows the window's plants on each seed (`plants::stand_in`,
+    // 2026-11-15; before, the census played designed maps bare).
+    let mut plants = true;
     // The engines each game runs on: false the CPU big dish, true the GPU.
     let mut engines = vec![false];
     for a in std::env::args().skip(1) {
@@ -407,6 +410,7 @@ fn main() {
                 let name = path.file_name().unwrap().to_str().unwrap().to_string();
                 map = Some((name.clone(), Map::load(&dir, &name).unwrap_or_else(|e| panic!("{e}"))));
             }
+            "plants" => plants = v != "0",
             _ => panic!("unknown {k}"),
         }
     }
@@ -499,9 +503,10 @@ fn main() {
     }
     assert!(m.tier.is_none() || engines == [false], "tier= plays on the CPU only");
     let map = map.as_ref().map(|(_, m)| m);
+    let grow = |seed: u64| map.map(|m| if plants { slime_mould::mould::plants::planted(m, seed) } else { m.clone() });
     if sliver {
         for &seed in &seeds {
-            slivers(seed, scale, walkers, rules, &m, map);
+            slivers(seed, scale, walkers, rules, &m, grow(seed).as_ref());
         }
         return;
     }
@@ -510,7 +515,7 @@ fn main() {
         std::fs::create_dir_all(&dir).expect("look dir");
         for &seed in &seeds {
             for hand in &hands {
-                let r = play(seed, scale, walkers, rules, &m, hand, map, Some((&dir, every)), None);
+                let r = play(seed, scale, walkers, rules, &m, hand, grow(seed).as_ref(), Some((&dir, every)), None);
                 println!("{hand} seed {seed}: {} at {:.0} s, score {:+.3}", r.end, r.t, r.score);
             }
         }
@@ -545,7 +550,7 @@ fn main() {
                     if *on_gpu && dev.is_none() {
                         dev = Some(gpu());
                     }
-                    let r = play(*seed, scale, walkers, rules, &m, hand, map, None, dev.as_ref().filter(|_| *on_gpu));
+                    let r = play(*seed, scale, walkers, rules, &m, hand, grow(*seed).as_ref(), None, dev.as_ref().filter(|_| *on_gpu));
                     println!(
                         "{hand:>6} seed {seed:>2}{}: {:>11} at {:>5.0} s, score {:+.3}; soldiers {:>2}, mould {:>6}, bank {:>6.0}, harvested {:>6.0}, stolen {:>5.0}, shots {:>5}, killed {:>6}, crystals left {:.3}; {:.2} ms a tick, think {:.0} us mean, {:.0} at most; score1 {:+.3}; near {:.0}, touched at {:.0} s, stuck {} s{}; peak {}; built {}; trace {}",
                         if engines.len() > 1 { format!(" {}", engine_name(*on_gpu)) } else { String::new() },
