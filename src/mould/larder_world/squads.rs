@@ -854,7 +854,10 @@ impl<W: World> Game<W> {
                 // A link is commanded as one (owner 15:49Z: "When they are
                 // linked, I cannot choose who i am commanding between them.
                 // I only command all of them").
-                if self.active.is_some_and(|a| self.linked(a).contains(&(q as usize))) {
+                // A dead controlled squad holds nothing: its link still
+                // names the live ones, and refusing them left nothing to
+                // command when the controlled squad of a link was wiped out.
+                if self.active.is_some_and(|a| !self.members(a).is_empty() && self.linked(a).contains(&(q as usize))) {
                     return false;
                 }
                 if let Some(old) = self.active.filter(|&o| o != q as usize) {
