@@ -2410,6 +2410,55 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
     }
 }
 
+/// Walking maps (bug check, 2026-11-15): a goal's own built map serves it
+/// before a neighbour's, and maps gone stale are rebuilt even while new
+/// goals are asked for every step, as in a long fight.
+#[test]
+fn stale_walking_maps_are_rebuilt_while_goals_keep_coming() {
+    let m = crate::mould::map::river(true, false);
+    let mut g = Game::new(BigDish::with_map(race_params(1, 2, 500), &m), Rules::default(), 1);
+    let (w, h) = g.world.size();
+    let ok = g.standable_cells();
+    let open: Vec<usize> = (0..w * h).filter(|&i| ok[i] && i % w > 2 && i % w < w - 2).collect();
+    let mid = |k: usize| ((k % w) as f32 + 0.5, (k / w) as f32 + 0.5);
+
+    // Own map first: with the cell to its left built too, a goal on the
+    // edge between them (as near both middles; ties go to the lower cell)
+    // gets its own.
+    let gi = open[open.len() / 2];
+    assert!(ok[gi - 1]);
+    g.paths.maps.insert(gi - 1, (vec![0; w * h], 0));
+    g.paths.maps.insert(gi, (vec![0; w * h], 0));
+    let edge = ((gi % w) as f32, (gi / w) as f32 + 0.5);
+    assert_eq!(g.map_for(gi, edge, super::paths::MAP_NEAR * g.s()), Some(gi));
+    g.paths.maps.clear();
+
+    // One map built, then stale; a new goal is asked for every step.
+    let a = open[open.len() / 3];
+    let mut built = false;
+    for _ in 0..20 {
+        built = g.map_for(a, mid(a), 0.0).is_some();
+        if built {
+            break;
+        }
+        g.pump_maps();
+    }
+    assert!(built, "the first map was built");
+    g.stale_maps();
+    assert_eq!(g.paths.stale, vec![a]);
+    let mut rebuilt = None;
+    for step in 0..40 {
+        let b = open[(open.len() / 2 + step * 997) % open.len()];
+        g.map_for(b, mid(b), 0.0);
+        g.pump_maps();
+        if !g.paths.stale.contains(&a) && g.paths.building.as_ref().is_none_or(|b| b.goal != a) {
+            rebuilt = Some(step);
+            break;
+        }
+    }
+    assert!(rebuilt.is_some(), "the stale map was never rebuilt while goals kept coming");
+}
+
 // Guns (owner 2026-11-14 16:46Z: "The squad owns the gun. Each gun defines
 // the budget and slot count and range, spread, rate of fire as actual
 // numbers").
@@ -2505,4 +2554,26 @@ fn a_scattergun_fires_a_fan_of_bullets_a_shot() {
     let mut d = dirs.clone();
     d.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-4 && (a.1 - b.1).abs() < 1e-4);
     assert!(d.len() > dirs.len() / 2, "the fan's bullets fly apart");
+}
+
+#[test]
+fn a_link_whose_controlled_squad_dies_hands_control_to_the_rest() {
+    let mut g = squads(8);
+    for _ in 0..5 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let m = g.middle(0).unwrap();
+    assert!(g.apply(Cmd::Split(0, (m.0 + 30.0, m.1))));
+    let b = g.active.unwrap();
+    assert!(g.apply(Cmd::Link(b as u8, 0)));
+    // The controlled squad is wiped out: the rest of its link takes over
+    // (until 11-15 Active refused them as linked, a soft-lock).
+    for k in g.members(b) {
+        g.soldiers[k].alive = false;
+    }
+    assert!(g.members(b).is_empty());
+    assert!(g.apply(Cmd::Active(0)), "the live squad of the link takes control");
+    assert_eq!(g.active, Some(0));
 }

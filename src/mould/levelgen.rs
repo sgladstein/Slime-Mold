@@ -144,8 +144,7 @@ pub struct Planet {
 /// Each planet's map area as a share of the designed maps' (1024 x 640):
 /// the owner's "first planet about 60% of today's map, today's size by
 /// planet 3 or 4, up to 6 the area for the core world" (2026-11-14 15:33Z).
-/// Past the core world, the core world's. `GROW_CAP` holds it at twice
-/// today's for now.
+/// Past the core world, the core world's. `GROW_CAP` caps it.
 pub const AREA: [f32; 8] = [0.6, 0.8, 1.0, 1.4, 2.0, 2.8, 4.0, 6.0];
 
 /// The biggest share `size_at` gives. The technical lead (2026-11-14
@@ -155,9 +154,13 @@ pub const AREA: [f32; 8] = [0.6, 0.8, 1.0, 1.4, 2.0, 2.8, 4.0, 6.0];
 /// size, but the window's ground refresh (`refresh_ground`, once a game
 /// second: a charge read-back and every cell's code on the CPU) peaks at
 /// 4.6, 8.4, 23.6 and 32.9 ms, a dropped frame or two every second from
-/// 4x. So 2x (planets 5-8) until that refresh touches only the cells that
-/// change. `planet:D:S:AREA` asks for any share up to `AREA_MAX`.
-pub const GROW_CAP: f32 = 2.0;
+/// 4x. So 2x (planets 5-8) until that refresh touched only the cells that
+/// change. Then the refresh gathers only crystal and wall cells (`Gather`,
+/// #302), walking maps are built a slice a step (#306: the rush hand's step
+/// max 1.72 ms at 6x on the 1070) and the gas press reads back only its
+/// words (#307), so the cap is the owner's 6x. `planet:D:S:AREA` asks for
+/// any share up to `AREA_MAX`.
+pub const GROW_CAP: f32 = 6.0;
 
 /// The biggest share a `planet:D:S:AREA` spec may ask for.
 pub const AREA_MAX: f32 = 6.0;
@@ -735,12 +738,34 @@ fn along_line(w: usize, h: usize, pts: &[(f32, f32)], reach: f32, mut f: impl Fn
     }
     let (xa, xb) = ((x0 - reach).max(0.0) as usize, ((x1 + reach).max(0.0) as usize + 1).min(w));
     let (ya, yb) = ((y0 - reach).max(0.0) as usize, ((y1 + reach).max(0.0) as usize + 1).min(h));
+    if xa >= xb || ya >= yb {
+        return;
+    }
+    // Each segment marks only the cells within `reach` of its own box, and
+    // a cell keeps its least distance: the same distances and calls, in
+    // the same order, as testing every segment at every cell of the line's
+    // box. That was 3-5 s for a planet's streams at 6x, where a stream
+    // wanders right across the map in about a hundred pieces.
+    let bw = xb - xa;
+    let mut near = vec![f32::MAX; bw * (yb - ya)];
+    for s in pts.windows(2) {
+        let (sx0, sx1) = (s[0].0.min(s[1].0) - reach, s[0].0.max(s[1].0) + reach);
+        let (sy0, sy1) = (s[0].1.min(s[1].1) - reach, s[0].1.max(s[1].1) + reach);
+        let (ca, cb) = ((sx0.max(0.0) as usize).max(xa), ((sx1.max(0.0) as usize) + 2).min(xb));
+        let (ra, rb) = ((sy0.max(0.0) as usize).max(ya), ((sy1.max(0.0) as usize) + 2).min(yb));
+        for y in ra..rb {
+            for x in ca..cb {
+                let d = seg_dist((x as f32 + 0.5, y as f32 + 0.5), s[0], s[1]);
+                let k = (y - ya) * bw + (x - xa);
+                near[k] = near[k].min(d);
+            }
+        }
+    }
     for y in ya..yb {
         for x in xa..xb {
-            let at = (x as f32 + 0.5, y as f32 + 0.5);
-            let d = pts.windows(2).map(|s| seg_dist(at, s[0], s[1])).fold(f32::MAX, f32::min);
+            let d = near[(y - ya) * bw + (x - xa)];
             if d < reach {
-                f(y * w + x, at, d);
+                f(y * w + x, (x as f32 + 0.5, y as f32 + 0.5), d);
             }
         }
     }
@@ -761,6 +786,27 @@ fn wander(r: &mut Rng, w: f32, h: f32, from: (f32, f32), dir: (f32, f32), piece:
         dir = bend(dir, bendk);
     }
     pts
+}
+
+/// The dunes' clay islands under the crystals, as on the Flats: big and
+/// ragged, since exact circles read as decals or holes (graphics lead,
+/// 2026-11-14). Not on rock, deep water or a bridge: their kind is the
+/// whole soil nibble, and clay over deep water (0x41 to 0x21) made wet clay
+/// a soldier can wade, an unplanned ford `cut_fords` never saw (bug check,
+/// 2026-11-15: 26 of 32 dune planets over seeds 1-40).
+fn clay_islands(ground: &mut [u8], w: usize, h: usize, crystals: &[Crystal], soil_b: &Field, fine: &Field) {
+    for c in crystals {
+        let m = c.r * 2.4;
+        for y in ((c.y - m * 1.4).max(0.0) as usize)..((c.y + m * 1.4) as usize).min(h) {
+            for x in ((c.x - m * 1.4).max(0.0) as usize)..((c.x + m * 1.4) as usize).min(w) {
+                let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6 + (fine.at(x, y) - 0.5) * 1.2;
+                let i = y * w + x;
+                if d < 1.0 && ground[i] & G_ROCK == 0 && ground[i] != G_DEEP && ground[i] != G_BRIDGE {
+                    ground[i] = (ground[i] & 0x0F) | G_CLAY;
+                }
+            }
+        }
+    }
 }
 
 fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
@@ -1437,8 +1483,14 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             if dl < 150.0 + ragged {
                 (soil, water) = (0, 0);
             }
-            if water > 0 && (dn < 100.0 || dl < 170.0) {
+            // No water by the nests or the landing, and no bridge either:
+            // a bridge cell has no water of its own, so clearing only the
+            // water left planks on dry land there (bug check, 2026-11-15).
+            if dn < 100.0 || dl < 170.0 {
                 water = 0;
+                if soil == G_BRIDGE {
+                    soil = 0;
+                }
             }
             if ground[i] & G_ROCK == 0 {
                 ground[i] = match water {
@@ -1686,20 +1738,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
 
     // Dunes: clay islands under the crystals, as on the Flats.
     if rc.soil == Soil::Dunes {
-        for c in &items.crystals {
-            // Big and ragged: exact circles read as decals or holes
-            // (graphics lead, 2026-11-14).
-            let m = c.r * 2.4;
-            for y in ((c.y - m * 1.4).max(0.0) as usize)..((c.y + m * 1.4) as usize).min(h) {
-                for x in ((c.x - m * 1.4).max(0.0) as usize)..((c.x + m * 1.4) as usize).min(w) {
-                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), (c.x, c.y)) / m + (soil_b.at(x, y) - 0.5) * 0.6 + (fine.at(x, y) - 0.5) * 1.2;
-                    let i = y * w + x;
-                    if d < 1.0 && ground[i] & G_ROCK == 0 {
-                        ground[i] = (ground[i] & 0x0F) | G_CLAY;
-                    }
-                }
-            }
-        }
+        clay_islands(&mut ground, w, h, &items.crystals, &soil_b, &fine);
     }
 
     // Soft rock: gates across passes, rings round nests, hedges. Each is a
@@ -2388,10 +2427,34 @@ mod tests {
     // the fingerprint, deep water, bridges and fords, and planets 4-8 at
     // up to 2x (`GROW_CAP`); then each biome's moisture line and plants
     // that tell the biomes apart, their edges faded (11-14 22:30Z), and
-    // the core world's arenas and nest hedges (23:30Z). Round
+    // the core world's arenas and nest hedges (23:30Z), and planets 6-8 at
+    // their full 2.8x, 4x and 6x (`GROW_CAP` 6; planet 8 is the big pin
+    // below). Then planet 4 (river valley): no dune clay over deep water
+    // or bridges, no bridge planks by the nests (bug check, 11-15). Round
     // 2's depths 3-8 had kept their pins through the tiled region scan,
     // which finds the same nearest sites as the full scan.
-    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xb1627ecda86170b9, 0xb4183e35b474ba49, 0x28119240444e1a15, 0xdba4d1b2f67c2781, 0x6b3b05cfebb07976];
+    const PINNED: [u64; 8] = [0xd666b9438ccc867a, 0xe3cb0be0566fbfba, 0xea0723b2b040124d, 0xe2ddd9586ec43882, 0xb4183e35b474ba49, 0x4bbbb8f96e6ea1d0, 0x3115a9964abbe8ea, 0x6a8d5a9e7fc09b42];
+
+    /// The dunes' clay islands leave rock, deep water and bridges as they
+    /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
+    #[test]
+    fn clay_islands_keep_deep_water_and_bridges() {
+        let (w, h) = (64, 64);
+        let flat = Field::new(w, h, |_, _| 0.5);
+        let mut ground = vec![0u8; w * h];
+        let at = |x: usize, y: usize| y * w + x;
+        ground[at(30, 32)] = G_DEEP;
+        ground[at(31, 32)] = G_BRIDGE;
+        ground[at(33, 32)] = G_ROCK;
+        ground[at(34, 32)] = G_WET;
+        clay_islands(&mut ground, w, h, &[Crystal { x: 32.0, y: 32.0, r: 4.0, charge: 0.0 }], &flat, &flat);
+        assert_eq!(ground[at(30, 32)], G_DEEP);
+        assert_eq!(ground[at(31, 32)], G_BRIDGE);
+        assert_eq!(ground[at(33, 32)], G_ROCK);
+        assert_eq!(ground[at(34, 32)], G_WET | G_CLAY, "shallow water takes the clay under it");
+        assert_eq!(ground[at(32, 30)], G_CLAY);
+        assert_eq!(ground[at(2, 2)], 0, "outside the island");
+    }
 
     /// The core world at the owner's 6x area, pinned too: the bigger maps
     /// run more of the generator's loops, on every machine the same.

@@ -100,6 +100,9 @@ struct Paths {
     building: Option<MapBuild>,
     /// Built maps to build again (a wall went up, or `PATHS_EVERY`).
     stale: Vec<usize>,
+    /// Whether the last map started was an asked goal's: with both asked
+    /// and stale maps waiting, starts take turns (`pump_maps`).
+    asked_last: bool,
 }
 
 /// Orders a soldier can hold in its queue after the one it is doing.
