@@ -40,6 +40,14 @@ pub const G_BARREN: u8 = 0x30;
 /// it, so a planet that water cuts off is rebuilt.
 const DEEP: u8 = G_DEEP;
 
+/// How near a river's water may run to a nest, in map cells from the nest:
+/// outside its bowl (up to 192 out) with room for the road round it.
+pub const RIVER_OFF: f32 = 220.0;
+
+/// How near a river's fords and bridge may sit to a nest, where the river
+/// has room (map cells from the nest).
+pub const CROSSING_OFF: f32 = 320.0;
+
 /// How many builds `generate` tries before it falls back to an open plan.
 pub const ATTEMPTS: u32 = 24;
 
@@ -1545,16 +1553,84 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let mut stream = vec![false; if rc.water == Water::Streams { n } else { 0 }];
     if rc.water == Water::Rivers {
         let k = rc.rivers;
+        // Each nest's surroundings in the rivers' coordinate (`along` plus
+        // the warp, as the river is drawn below): points every 6 cells
+        // within `RIVER_OFF` + 100 of it, with their distance to the nest.
+        let ring: Vec<Vec<(f32, f32)>> = nests
+            .iter()
+            .map(|&q| {
+                let reach = RIVER_OFF + 100.0;
+                let mut pts = Vec::new();
+                let mut y = (q.1 - reach).max(0.0);
+                while y < (q.1 + reach).min(hf - 1.0) {
+                    let mut x = (q.0 - reach).max(0.0);
+                    while x < (q.0 + reach).min(wf - 1.0) {
+                        let dd = dist((x, y), q);
+                        if dd < reach {
+                            pts.push((along((x, y)) + warp_x.at(x as usize, y as usize) * 1.6, dd));
+                        }
+                        x += 6.0;
+                    }
+                    y += 6.0;
+                }
+                pts
+            })
+            .collect();
+        // How near a river at `s` with half-width `half` runs to any nest:
+        // its widest reach is `half * 1.1` (the rough banks).
+        let off_nests = |s: f32, half: f32| {
+            ring.iter().flatten().filter(|&&(sa, _)| (sa - s).abs() < half * 1.1).map(|&(_, dd)| dd).fold(f32::MAX, f32::min)
+        };
+        let mut placed: Vec<f32> = Vec::new();
         for j in 0..k {
-            let s = span * (0.5 + (j as f32 - (k as f32 - 1.0) / 2.0) * 0.18 + r.range(-0.03, 0.03));
+            let want = span * (0.5 + (j as f32 - (k as f32 - 1.0) / 2.0) * 0.18 + r.range(-0.03, 0.03));
             // At least 40 map cells across (10-14 of the 256 x 160 grid the
             // graphics lead counts in, 4 map cells each): at 34 the river
             // read as a thin line at zoom 1 (graphics lead, 2026-11-14 18:56Z).
             let half = r.range(22.0, 28.0);
+            // Off the nests (the three reviews' map item, 2026-11-15): a
+            // river through a nest's bowl is cleared within 100 cells of
+            // the nest, so the nest itself became the crossing, and on 19
+            // of 40 river-valley nests river water ran within 220 cells
+            // (valley seed 2's near nest sat by the bridge: the slime held
+            // it from the start). So the river moves along the route, the
+            // least it must, to keep `RIVER_OFF` from every nest and 130
+            // from the other river; its fords and bridge, on it, keep off
+            // too. The places tried run from a quarter of the way to the
+            // first nest (and 230 cells, past the landing's dry ground) to
+            // nine tenths. Where none clears them, a second river is left
+            // out: with the second nest partway along the route there is
+            // seldom room for two (at first the clearest place was taken,
+            // and on 4 of 20 valleys that ran the second river between the
+            // two nests, through both bowls). A first river takes the
+            // clearest place.
+            let options: Vec<f32> = (0..=80).map(|i| (span * (0.25 + 0.65 * i as f32 / 80.0)).max(230.0)).filter(|&c| placed.iter().all(|&p| (p - c).abs() > 130.0)).collect();
+            let s = if off_nests(want, half) >= RIVER_OFF {
+                want
+            } else if let Some(c) = options.iter().copied().filter(|&c| off_nests(c, half) >= RIVER_OFF).min_by(|a, b| (a - want).abs().total_cmp(&(b - want).abs())) {
+                c
+            } else if placed.is_empty() {
+                options.iter().copied().max_by(|a, b| off_nests(*a, half).total_cmp(&off_nests(*b, half))).unwrap_or(want)
+            } else {
+                continue;
+            };
+            placed.push(s);
             let room: Vec<f32> = (-300..300).map(|i| i as f32 * 8.0).filter(|&u| {
                 let q = at_line(s, u);
                 q.0 > 60.0 && q.1 > 60.0 && q.0 < wf - 60.0 && q.1 < hf - 60.0
             }).collect();
+            // The fords and the bridge keep `CROSSING_OFF` from the nests
+            // where the river has room: with the river off the bowls, a ford
+            // could still sit at the bowl's door (1 of 20 valleys' nests
+            // had one within 230 cells). Where the river is (through the
+            // warp, as it is drawn) at a place along it.
+            let on_river = |u: f32| {
+                let q = at_line(s, u);
+                let (x, y) = (q.0.clamp(0.0, wf - 1.0) as usize, q.1.clamp(0.0, hf - 1.0) as usize);
+                at_line(s - warp_x.at(x, y) * 1.6, u)
+            };
+            let off: Vec<f32> = room.iter().copied().filter(|&u| nests.iter().all(|&q| dist(on_river(u), q) >= CROSSING_OFF)).collect();
+            let room = if off.is_empty() { room } else { off };
             let mut fords = Vec::new();
             if !room.is_empty() {
                 fords.push((room[r.below(room.len())], r.range(26.0, 36.0)));
@@ -3195,8 +3271,9 @@ mod tests {
     // Then the caves (planet 7) alone for lobed caverns, tunnels of
     // varying width and arenas (11-15).
     // Then planets 2-8 for each biome's opening crystals (`Opening`,
-    // 11-15); the meadow keeps its start and its pin.
-    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x689ef2ee1bd03e2b, 0x88abf15af468b6c7, 0x69c90a5d19933cad, 0x1c111e19292277c5, 0x6e94308f248ff649, 0x800af9fb4a2f4910, 0x6f215522f0271821];
+    // 11-15); the meadow keeps its start and its pin. Then the river
+    // valley (planet 4) alone for rivers off the nests (11-15).
+    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x689ef2ee1bd03e2b, 0x88abf15af468b6c7, 0x3a3ec87750ebb333, 0x1c111e19292277c5, 0x6e94308f248ff649, 0x800af9fb4a2f4910, 0x6f215522f0271821];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -3237,7 +3314,8 @@ mod tests {
     // rolled lakes before lakes went to 3 to 1, and kept its pin. The cave
     // (7:2) re-pinned for lobed caverns and tunnels of varying width.
     // All but the meadow's (1:17) re-pinned for each biome's opening.
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x9cf43bc6b64daab9), (3, 3, 0x162f0835a692b0e6), (4, 2, 0x0e0f0073e680b114), (7, 2, 0xcc062e2508003a37), (8, 3, 0xd8db02e2b122e92e)];
+    // The valley (4:2) re-pinned for rivers off the nests.
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x9cf43bc6b64daab9), (3, 3, 0x162f0835a692b0e6), (4, 2, 0x6ec7406552e2d2ff), (7, 2, 0xcc062e2508003a37), (8, 3, 0xd8db02e2b122e92e)];
 
     /// Each biome opens its own way (`Opening`): three small crystals close
     /// by in the jungle, a rich one a climb away in the highlands, a rich
@@ -3374,6 +3452,32 @@ mod tests {
             }
         }
         assert!(bad.is_empty(), "{}", bad.join("\n"));
+    }
+    /// Rivers keep off the nests (2026-11-15): on river valley seeds 1-6,
+    /// no river water (wet, deep or a bridge deck) within `RIVER_OFF` of a
+    /// nest, less the 6-cell step its places are tried at. Before, valley
+    /// seed 1's second nest had river water 100 cells off (the water
+    /// cleared round it), and 19 of 40 valley nests had it within 220.
+    #[test]
+    fn rivers_keep_off_the_nests() {
+        for s in 1..=6 {
+            let m = level(s, 4);
+            for (k, &q) in m.items.moulds.iter().enumerate() {
+                let reach = RIVER_OFF - 8.0;
+                let (x0, x1) = ((q.0 - reach).max(0.0) as usize, ((q.0 + reach) as usize).min(m.w));
+                let (y0, y1) = ((q.1 - reach).max(0.0) as usize, ((q.1 + reach) as usize).min(m.h));
+                let mut nearest = f32::MAX;
+                for y in y0..y1 {
+                    for x in x0..x1 {
+                        let g = m.ground[y * m.w + x];
+                        if g & G_ROCK == 0 && (g & G_WET != 0 || g == G_BRIDGE) {
+                            nearest = nearest.min(dist((x as f32 + 0.5, y as f32 + 0.5), q));
+                        }
+                    }
+                }
+                assert!(nearest >= reach, "valley seed {s} nest {k}: river water {nearest:.0} cells off");
+            }
+        }
     }
     /// With `Recipe::moat` on, a fen's nests sit in moats (2026-11-15): on
     /// seeds 1-6, at least a tenth of the ground 100-260 map cells from

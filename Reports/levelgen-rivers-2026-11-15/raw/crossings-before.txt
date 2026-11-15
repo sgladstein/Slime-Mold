@@ -1,0 +1,2 @@
+planet 4: 20 planets with rivers, 57 fords and bridges; within 220 of a nest 16, within 320 31; nearest 45; median 286
+planet 8: 5 planets with rivers, 26 fords and bridges; within 220 of a nest 6, within 320 8; nearest 27; median 440
