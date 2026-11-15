@@ -787,6 +787,8 @@ impl App {
         if let Some(l) = &level {
             run_shape(&mut s, l.walkers, l.depth)?;
         }
+        // The food the planet's slime eats to build a surge (`run::surge_food`).
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers));
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.
         if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
@@ -863,6 +865,9 @@ impl App {
         // The run's upgrades over the level's rules.
         if let Some(r) = &a.run {
             r.rules(&mut rules);
+        }
+        if let Some(f) = surge_food {
+            rules.surge_food = f;
         }
         // The gun range: no clock to beat and a bank that never runs dry,
         // so soldiers can always be bought (B) and the round never ends on

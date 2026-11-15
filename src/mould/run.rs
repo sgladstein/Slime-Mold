@@ -186,11 +186,17 @@ pub fn shrink_goal(_depth: u32) -> f32 {
 /// `shrink_goal` on every planet.
 pub const WIN_SHARE: f32 = 0.02;
 
-/// The slime's surge period (`BigParams::surge_every`, steps, 30 a game
-/// second), its lunge (`surge_dash`, steps) and its thickening threshold
-/// (`thicken`, a birth's energy) by planet, 1 to 8; past the end the last.
-/// The sandbox's shape C is 900, 30 and 2.
-const SURGE_EVERY: [u32; 8] = [1200, 1200, 900, 900, 750, 600, 600, 450];
+/// The slime's surges by planet, 1 to 8 (past the end the last): the food
+/// it eats to build one, as a share of the sandbox's (`SURGE_FOOD`, 150,
+/// times the level's walkers), the longest wait between them
+/// (`BigParams::surge_every`, steps, 30 a game second), its lunge
+/// (`surge_dash`, steps) and its thickening threshold (`thicken`, a
+/// birth's energy). The sandbox's shape C is 1 (150 food), 1800 (60 s), 30
+/// and 2. Until food-driven surges (later on 11-15) the surges came on a
+/// fixed beat of half these waits (40 s on planet 1 to 15 s on planet 8);
+/// the food shares keep that curve's ratios to the sandbox's 30 s.
+const SURGE_FOOD_SHARE: [f32; 8] = [1.33, 1.33, 1.0, 1.0, 0.83, 0.67, 0.67, 0.5];
+const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
 
@@ -198,22 +204,35 @@ const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
 /// the run thread agreed the curve): engine keys over shape C's on a run's
 /// planet, before the tier's and the menu's own (`run_shape`). The slime
 /// surges more often and lunges longer, and thickens sooner, so it presses
-/// harder and gets tougher faster from what it holds. Planet 1 surges every
-/// 40 s, gentler than the sandbox's 30; the core world every 15 s, lunging
+/// harder and gets tougher faster from what it holds. Planet 1's slime
+/// needs a third more food for a surge than the sandbox's and waits up to
+/// 80 s; the core world's half as much, waiting at most 30 s and lunging
 /// 1.8 s. Why: the owner, 11-15 08:30Z, wants "more interesting
 /// progression in the enemy ... and increase in challenge ... especially
 /// when your guns get stronger"; until now depth grew only the walkers
 /// and changed the tier. The surge's reach follows the guns already (the
 /// gun's range plus `Rules::panic_margin`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
-    let i = (depth.max(1) as usize - 1).min(SURGE_EVERY.len() - 1);
-    vec![("surge", SURGE_EVERY[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))]
+    let i = depth_index(depth);
+    vec![("surge", LONGEST_WAIT[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))]
 }
 
-/// A planet's surge period in game seconds (`enemy_keys`), for the shop.
+fn depth_index(depth: u32) -> usize {
+    (depth.max(1) as usize - 1).min(LONGEST_WAIT.len() - 1)
+}
+
+/// The food a planet's slime eats to build a surge (`Rules::surge_food`):
+/// its share of the sandbox's, times the level's walkers (`Level::walkers`,
+/// as the slime's slots are), since a bigger slime on a bigger planet
+/// eats more and would otherwise surge at the floor all game.
+pub fn surge_food(depth: u32, walkers: f32) -> f32 {
+    SURGE_FOOD_SHARE[depth_index(depth)] * crate::mould::larder_world::SURGE_FOOD * walkers.max(0.1)
+}
+
+/// A planet's longest wait between surges in game seconds (`enemy_keys`),
+/// for the shop.
 pub fn surge_secs(depth: u32) -> f32 {
-    let i = (depth.max(1) as usize - 1).min(SURGE_EVERY.len() - 1);
-    SURGE_EVERY[i] as f32 / 30.0
+    LONGEST_WAIT[depth_index(depth)] as f32 / 30.0
 }
 
 /// Points a won level pays: more the deeper it was and the more stars.
@@ -1001,7 +1020,10 @@ mod tests {
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             assert!(p.surge_every > 0 && p.surge_dash > 0 && p.thicken > 0.0);
+            assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
         }
+        let c_food = crate::mould::larder_world::SURGE_FOOD;
+        assert!(surge_food(1, 1.0) > c_food && surge_food(PLANETS, 1.0) < c_food);
         let (_, c) = crate::mould::larder_world::shape_keys("c").unwrap();
         let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
         assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);

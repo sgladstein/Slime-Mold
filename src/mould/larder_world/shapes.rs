@@ -76,8 +76,15 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // without it all 9 stood at 34 s; the second, at 61.5 s, wiped the
     // last 3. With the scripted squads hand and four pumps, the pumps fed
     // 1,070 food against 1,252 (Reports/surge-2026-11-15/README.md).
-    // `surge=0` turns it off.
-    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "900")];
+    // `surge=0` turns it off. Since food-driven surges (later on 11-15) the
+    // game starts each surge once the slime has eaten `Rules::surge_food`
+    // (150 food) from its crystals, at least 10 s after the last, and
+    // `surge` is the longest wait: 1800 steps, 60 s. On the Fork the slime
+    // eats 2.3 food a second at the start, 6.9 at a minute and 11 at three
+    // as it spreads over its crystals, so the first surge comes at about
+    // 43 s and the gaps shrink to about 14 s; a slime cut off its crystals
+    // waits the whole minute.
+    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "1800")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),

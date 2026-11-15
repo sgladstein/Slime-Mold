@@ -100,15 +100,104 @@ curve and asked for it to sit on the shop's clock line.
 | Thicken at (births' energy) | 2.0 | 2.0 | 1.8 | 1.7 | 1.6 | 1.5 | 1.4 | 1.3 |
 
 Planet 1 is gentler than the sandbox's C (30 s, 1 s, 2.0) and the core
-world fiercer. Test `run::tests::the_slime_gets_fiercer_deeper`.
+world fiercer. Test `run::tests::the_slime_gets_fiercer_deeper`. (PR #347.
+Since food-driven surges, below, the period's ratios became the food a
+surge needs and twice the period the longest wait.)
+
+## Food-driven (later on 11-15)
+
+Agreed with the game designer after #343: a fixed beat ignored what the
+owner asked for (11-15 08:34Z, the slime should "keep getting stronger by
+holding onto its crystals and getting more of them").
+
+**The rule.** The game keeps a meter (`Game::time_surges`, each frame on
+both worlds): what the slime ate this frame is the crystals' charge gone
+since the last frame, less what the units took (pumps and soldiers), as
+food (`Rules::charge` a food). A surge starts on the next step once the
+meter holds `Rules::surge_food` and `Rules::surge_min` game seconds have
+passed since the last surge (or the landing), or once the world's
+`surge_every` has passed, eaten or not, so it is the longest wait. The
+meter then empties. The engine gets the step through `BigParams::surge_at`
+(`World::set_surge_at`), and the lean and lunge run once from it.
+`SURGE_WAIT` (u32::MAX) holds the body calm before the game's first surge.
+`surge_every` 0 is still off, and `set=surge_food=0` gives the fixed clock
+back.
+
+**On:** 150 food, a floor of 10 s, and shape C's `surge` raised from 900 to
+1800 (a longest wait of 60 s). The menu's Surge option is now the longest
+wait (0, 900, 1800, 3600).
+
+GPU: no new row. `surge_lean` and `surge_dash` share the row's second word
+(low and high half, each at most `SURGE_MAX` 0xFFFF), and the third word
+is `surge_at`.
+
+### Measured
+
+Window, Fork, squad mode, seed 1, software Vulkan, to 3:00 (`raw/food-*`,
+`raw/eating-*`).
+
+What the slime eats, with no soldier near (idle hand, fixed clock; food a
+second over each span):
+
+| 0-10 s | 10-20 | 20-30 | 30-40 | 40-50 | 50-60 | 60-75 | 75-90 | 90-120 | 120-150 | 150-180 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2.3 | 2.8 | 3.7 | 4.7 | 5.9 | 6.9 | 8.4 | 9.7 | 9.8 | 10.4 | 11.2 |
+
+It eats more as it spreads over its crystals, so the surges come faster as
+the game goes on:
+
+| Run | Surge starts (s) | In 3:00 |
+|---|---|---|
+| Fixed clock (`surge=900 set=surge_food=0`) | 30, 60, 90, 120, 150, 180 | 6 |
+| Food, idle hand | 42.7, 64.5, 81.3, 96.7, 112.1, 127.3, 142.1, 156.3, 169.9 | 9 |
+| Food, four pumps on its arms' crystals | 46.9, 69.1, 84.9, 100.3, 115.7, 131.1, 146.5, 161.9, 177.2 | 9 |
+
+The gaps shrink from 22 s to 14 s. The pumps take enough that each surge
+comes 3-7 s later. Its eating barely moves with the surges (1,466 food
+eaten by 3:00 against 1,474 on the clock).
+
+Edge hand (the squad at the body's edge firing): the first surge comes at
+43.7 s, against 31.5 on the clock, on a squad 13 s more worn (mean health
+44 at 30 s), and wipes it at 46 s. On the clock it was wiped at 62 s,
+and at 51 s without surges. One seed and one scripted hand, so it is a
+tuning note, not a balance reading.
+
+Twins: the squad twin gets a third surge case, "the game times the
+surge". `surge_at` puts the frame's first step at the lunge's first, while
+the clock alone (a period of 1,000,000 steps) would be calm. It gives 586
+calm walkers surging, 0 walkers off and 0 slots apart. A planted GPU bug
+that ignores `surge_at` fails it, and so does one that swaps the packed
+lean and lunge. CPU tests: `the_body_surges_at_a_unit_in_reach` gains the
+phases step by step (the clock's beat, then the game's once from its
+step, held by `SURGE_WAIT`, off with `surge_every` 0).
+`the_slime_surges_when_it_has_eaten` (race world) checks three things.
+With `surge_food` 0 the world keeps its clock. Fed (a meter that fills in
+a second), 14 surges come exactly 5.0 s apart at the floor. Starved (a
+meter it can't fill), they come 20.0 s apart at the ceiling. The slime
+there eats 0.21 food a second.
+
+By planet (`run::surge_food`, `enemy_keys`): the food a surge needs is a
+share of the sandbox's 150 times the level's walkers (a bigger slime
+eats more), and the longest wait is twice the old beat:
+
+| Planet | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Food a surge (x walkers) | 200 | 200 | 150 | 150 | 125 | 100 | 100 | 75 |
+| Longest wait (s) | 80 | 80 | 60 | 60 | 50 | 40 | 40 | 30 |
+| Lunge (s) | 1.0 | 1.0 | 1.0 | 1.2 | 1.4 | 1.5 | 1.5 | 1.8 |
+| Thicken at | 2.0 | 2.0 | 1.8 | 1.7 | 1.6 | 1.5 | 1.4 | 1.3 |
+
+The shop's clock line says "it surges as it feeds, at least every N s".
 
 ## Not done
 
 - The tell is the creep alone. A brighter front while it gathers (more
   trail laid, so the look shows it) would read better; to try if the
-  owner can't see it coming.
-- Progression by planet depth: shorter periods, longer lunges and lower
-  `thicken` on deeper planets, with the run thread (it owns `run.rs`).
-- One shared clock. Per-crystal clocks, or a surge strength that grows
-  with the thick share, are the next levers if a single beat reads as
-  mechanical.
+  owner can't see it coming. The game designer prefers the slime swelling
+  or brightening as the meter fills over a HUD meter.
+- The meter counts net eating: with `crystal_regrow` on (off in the game)
+  regrowth hides some of it, and the player's own mould's eating counts
+  too (`own=1`, off by default).
+- One surge for the whole body. Per-crystal surges, or a surge strength
+  that grows with the thick share, are the next levers if a single beat
+  reads as mechanical.

@@ -738,6 +738,12 @@ impl World for Later {
     fn set_panic_r(&mut self, r: f32) {
         World::set_panic_r(&mut self.d, r)
     }
+    fn surge_every(&self) -> u32 {
+        World::surge_every(&self.d)
+    }
+    fn set_surge_at(&mut self, at: u32) {
+        World::set_surge_at(&mut self.d, at)
+    }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)
     }
@@ -2924,4 +2930,48 @@ fn rules_set_by_name() {
     assert!(r.set("pump_smell", 2.0) && r.build.pump_smell == 2.0);
     assert!(r.set("panic_margin", 7.0) && r.panic_margin == 7.0);
     assert!(!r.set("no_such_rule", 1.0));
+}
+
+/// Food-driven surges (`Rules::surge_food`, `Game::time_surges`, 11-15):
+/// the meter fills with what the slime eats from its crystals, a surge
+/// starts once it is full and `surge_min` has passed, or once the world's
+/// `surge_every` has whatever it ate, and with `surge_food` 0 the world
+/// keeps its own clock.
+#[test]
+fn the_slime_surges_when_it_has_eaten() {
+    let play = |food: f32, min: f32| {
+        let mut d = race_world(1, 1, 1_000);
+        d.p.surge_every = 20 * 15 * d.p.substeps as u32;
+        let r = Rules { surge_food: food, surge_min: min, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+        let mut g = Game::new(d, r, 1);
+        let held = g.world.p.surge_at;
+        let (mut starts, mut last) = (Vec::new(), held);
+        while g.time() < 70.0 && g.end.is_none() {
+            g.step();
+            if g.world.p.surge_at != last {
+                last = g.world.p.surge_at;
+                let fine = (g.rules.tps * g.world.fine_steps()) as f32;
+                assert_eq!(last as u64, g.world.ticks() * g.world.fine_steps() as u64 + 1, "it starts on the next step");
+                starts.push((last as f32 - 1.0) / fine);
+            }
+        }
+        (g, held, starts)
+    };
+    let (g, held, starts) = play(0.0, 10.0);
+    assert!(held == 0 && starts.is_empty() && g.surges == 0, "surge_food 0: the world's clock");
+    assert!(g.slime_ate > 0.0, "the slime eats from its crystals: {}", g.slime_ate);
+    let rate = g.slime_ate / g.time();
+    // Fed: the meter fills in about a second, so every surge waits for the
+    // floor (5 s).
+    let (g, held, starts) = play(rate, 5.0);
+    let gaps: Vec<f32> = std::iter::once(starts[0] - g.landed as f32 / g.rules.tps as f32).chain(starts.windows(2).map(|w| w[1] - w[0])).collect();
+    eprintln!("eats {rate:.2} food/s; fed: {} surges, gaps {gaps:?}", g.surges);
+    assert_eq!(held, SURGE_WAIT, "the game holds the body until its first surge");
+    assert!(g.surges as usize == starts.len() && starts.len() >= 8, "{starts:?}");
+    assert!(gaps.iter().all(|&s| (5.0..5.5).contains(&s)), "each at the floor: {gaps:?}");
+    // Starved (a meter it can't fill): only the longest wait, 20 s.
+    let (g, _, starts) = play(1.0e9, 5.0);
+    let gaps: Vec<f32> = std::iter::once(starts[0] - g.landed as f32 / g.rules.tps as f32).chain(starts.windows(2).map(|w| w[1] - w[0])).collect();
+    eprintln!("starved: gaps {gaps:?}");
+    assert!(starts.len() >= 3 && gaps.iter().all(|&s| (20.0..20.5).contains(&s)), "each at the ceiling: {gaps:?}");
 }

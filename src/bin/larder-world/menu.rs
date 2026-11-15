@@ -94,7 +94,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         ("thicken", "Thicken", &["0", "1.5", "2", "3"][..], "Slime fed past what it can spread into thickens in place (bronze, twice as tough), so holding crystals makes it stronger; 0 is off"),
         // The body surges (11-15, `BigParams::surge_every`): steps between
         // surges (30 a second); on in shape C at 900 (30 s).
-        ("surge", "Surge", &["0", "600", "900", "1800"][..], "Every so often the slime near your soldiers and buildings creeps toward them, then lunges; steps between surges (900 is 30 s); 0 is off"),
+        ("surge", "Surge", &["0", "900", "1800", "3600"][..], "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off"),
         // Plants (11-14, `mould::plants`): on by default; a stand-in
         // field on maps without their own. Fire from blasts and scorch
         // rounds burns through them.
@@ -215,7 +215,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     }
     // How often it surges here (`run::enemy_keys`; on the clock's line so the
     // heading keeps two lines, the run thread's ask).
-    clock += &format!("; it surges every {:.0} s", run::surge_secs(l.depth));
+    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.depth));
     if r.depth == run::PLANETS {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");
     }

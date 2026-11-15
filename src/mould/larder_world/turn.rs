@@ -328,6 +328,7 @@ impl<W: World> Game<W> {
             self.after_dry(k, Some(i));
         }
         self.check_core();
+        self.time_surges(out.units.iter().map(|u| u.took as f64).sum());
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
@@ -347,6 +348,52 @@ impl<W: World> Game<W> {
     pub(super) fn keep_panic_reach(&mut self) {
         if self.rules.panic_margin >= 0.0 {
             self.world.set_panic_r(self.gun_range_max() + self.rules.panic_margin);
+        }
+    }
+
+    /// **Food-driven surges** (`Rules::surge_food`), each frame: the meter
+    /// fills with what the slime ate (the crystals' charge gone since the
+    /// last frame, less the `took` the units harvested, as food), and a
+    /// surge starts on the next step (`World::set_surge_at`) once the meter
+    /// is full and `surge_min` has passed since the last, or once the
+    /// world's `surge_every` has, eaten or not. The meter then empties. On
+    /// a world with no surge, or with `surge_food` 0, the world keeps its
+    /// own clock.
+    pub(super) fn time_surges(&mut self, took: f64) {
+        let r = self.rules;
+        let now: f64 = self.world.crystals().iter().map(|c| c.1 as f64).sum();
+        let ate = (self.charge_was - now - took).max(0.0);
+        self.charge_was = now;
+        self.slime_ate += (ate / r.charge.max(1e-6) as f64) as f32;
+        let every = self.world.surge_every();
+        if r.surge_food <= 0.0 || every == 0 {
+            return;
+        }
+        let fine = self.world.fine_steps().max(1) as u64;
+        let step = self.world.ticks() * fine;
+        if !self.surge_timed {
+            self.take_surges();
+            return;
+        }
+        self.surge_meter += (ate / r.charge.max(1e-6) as f64) as f32;
+        let since = step.saturating_sub(self.surge_last);
+        let min = (r.surge_min.max(0.0) * (r.tps as u64 * fine) as f32).round() as u64;
+        if (self.surge_meter >= r.surge_food && since >= min) || since >= every as u64 {
+            self.world.set_surge_at((step + 1).min(SURGE_WAIT as u64 - 1) as u32);
+            self.surge_last = step;
+            self.surge_meter = 0.0;
+            self.surges += 1;
+        }
+    }
+
+    /// The game takes the surges from the world's clock (`time_surges`):
+    /// calm until the meter fills, counted from now (the landing).
+    pub(super) fn take_surges(&mut self) {
+        if self.rules.surge_food > 0.0 && self.world.surge_every() > 0 {
+            self.world.set_surge_at(SURGE_WAIT);
+            self.surge_last = self.world.ticks() * self.world.fine_steps().max(1) as u64;
+            self.surge_meter = 0.0;
+            self.surge_timed = true;
         }
     }
 

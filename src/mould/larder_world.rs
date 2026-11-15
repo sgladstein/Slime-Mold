@@ -74,7 +74,7 @@ pub use cover::{Cover, CoverRules, HealRules};
 pub use buildings::{BuildRules, Building, Kind, TURRET_MUZZLE};
 use buildings::Who;
 
-use super::big::{BigDish, BigParams, LIFE_DEAD};
+use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
 use super::Rng;
 pub use super::guns::Gun;
@@ -364,6 +364,19 @@ pub struct Game<W: World> {
     pub guard_paid: f32,
     /// Health soldiers have healed resting by a held crystal (`HealRules`).
     pub healed: f32,
+    /// Food-driven surges (`Rules::surge_food`, `Game::time_surges`): food
+    /// the slime has eaten since the last surge (the meter), surges the
+    /// game has started, the fine step the last began on (or the landing),
+    /// whether the game times them, and the crystals' charge at the last
+    /// frame.
+    pub surge_meter: f32,
+    pub surges: u32,
+    /// Food the slime has eaten from its crystals since the landing, as
+    /// the meter counts it (with surges timed or not).
+    pub slime_ate: f32,
+    surge_last: u64,
+    surge_timed: bool,
+    charge_was: f64,
     /// The step handed to the world and not yet finished (`begin_step`).
     flight: Option<Flight>,
 }
@@ -480,8 +493,16 @@ impl<W: World> Game<W> {
             guarded: Vec::new(),
             healed: 0.0,
             guard_paid: 0.0,
+            surge_meter: 0.0,
+            surges: 0,
+            slime_ate: 0.0,
+            surge_last: 0,
+            surge_timed: false,
+            charge_was: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();
+        g.charge_was = g.crystal_full.iter().map(|&c| c as f64).sum();
+        g.take_surges();
         g.solid = g.solid_now();
         g.keep_panic_reach();
         for k in 0..rules.squad {

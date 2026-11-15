@@ -91,7 +91,8 @@ pub const ROAM_AT: usize = 912;
 pub const GROUND_AT: usize = 928;
 /// The surge row (`BigParams::surge_every`, 11-15, the slime-enemy thread;
 /// Params grew from 944 to 960): the steps between surges, the creep's and
-/// the lunge's steps, the lunge's haste.
+/// the lunge's steps in one word (low and high half), the step the game's
+/// last surge began on (`surge_at`), the lunge's haste.
 pub const SURGE_AT: usize = 944;
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
@@ -457,6 +458,9 @@ pub struct Settings {
     pub surge_lean: u32,
     pub surge_dash: u32,
     pub surge_haste: f32,
+    /// The step the game's last surge began on (`BigParams::surge_at`; 0
+    /// the clock above): set by the game (`World::set_surge_at`), not a key.
+    pub surge_at: u32,
     /// The food scent's keep a step and a reached pile's share of it
     /// (`BigParams::scent_keep`, `fed_scent`; keys since 11-15, the whole-
     /// game review's W44, so a film can turn scent up).
@@ -631,6 +635,7 @@ impl Settings {
             surge_lean: t.surge_lean,
             surge_dash: t.surge_dash,
             surge_haste: t.surge_haste,
+            surge_at: t.surge_at,
             scent_keep: t.scent_keep,
             fed_scent: t.fed_scent,
             lone_step: t.lone_step,
@@ -1055,6 +1060,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         surge_lean: s.surge_lean,
         surge_dash: s.surge_dash,
         surge_haste: s.surge_haste,
+        surge_at: s.surge_at,
         scent_keep: s.scent_keep,
         fed_scent: s.fed_scent,
         lone_step: s.lone_step,
@@ -2010,7 +2016,7 @@ impl Engine {
         b.extend(f32_bytes(&[t.deep_step, 0.0, 0.0, 0.0]));
         assert_eq!(b.len(), SURGE_AT, "Params rows before the surge row moved");
         let sm = crate::mould::big::SURGE_MAX;
-        b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm), s.surge_dash.min(sm)]));
+        b.extend(u32_bytes(&[s.surge_every, s.surge_lean.min(sm) | s.surge_dash.min(sm) << 16, s.surge_at]));
         b.extend(f32_bytes(&[s.surge_haste]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;

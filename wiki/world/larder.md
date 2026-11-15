@@ -64,6 +64,7 @@ code:
   - Game::settled_ticks
   - Game::standable
   - Game::take_share
+  - Game::time_surges
   - Game::with_tier
   - GpuWorld
   - GpuWorld::frame_start
@@ -81,6 +82,7 @@ code:
   - Rules::funnel
   - Rules::home_dry
   - Rules::sink
+  - Rules::surge_food
   - Rules::wade
   - Tier::core
   - Tracker
@@ -275,7 +277,17 @@ then lunges for 1 s at twice its pace. Standing at the edge to shoot is
 no longer safe: on the Fork the first lunge took 2 of 9 soldiers by
 32.5 s (9 of 9 without) and the second wiped the last 3. A squad out of
 reach is untouched, so the surge presses the player only where the body
-already is ([surge](../../Reports/surge-2026-11-15/README.md)).
+already is ([surge](../../Reports/surge-2026-11-15/README.md)). Later that
+day the surges became **food-driven** (`Rules::surge_food` 150, on;
+`Game::time_surges`): a surge comes once the slime has eaten 150 food
+from its crystals (the crystals' charge gone less what the units took), at
+least 10 s after the last and at most shape C's `surge`, now 1800 steps
+(60 s), the longest wait; the engine gets the step through
+`BigParams::surge_at`. On the Fork C eats 2.3 food a second at first and
+11 by 3:00, so the first surge comes at 43 s and the gaps shrink from 22 s
+to 14 s: nine surges in three minutes against the clock's six, each 3-7 s
+later with four pumps taking food. A run's planets scale the food with the
+level's walkers (`run::surge_food`).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,
