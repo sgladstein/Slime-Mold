@@ -437,7 +437,7 @@ pub struct Settings {
     pub condense_r: u8,
     /// Condensed slime breaks away (`BigParams::roam`, `roam_far`,
     /// `roam_share`; 11-14): steps between chances to leave, 0 off; needs
-    /// `condense`.
+    /// `condense` or `thicken`.
     pub roam: u32,
     pub roam_far: f32,
     pub roam_share: f32,
@@ -1963,7 +1963,10 @@ impl Engine {
         // cells as the CPU's `roam_pick` counts them, and the share sent.
         assert_eq!(b.len(), ROAM_AT, "Params rows before the breakaway row moved");
         let sc = self.dish.p.scale as f32;
-        let roam = if condense > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
+        // Condensed or thickened slime may break away (11-15: the CPU's
+        // `roam_of`; until then only condensed, and with thickening alone the
+        // CPU marked breakaways the GPU never made).
+        let roam = if condense > 0 || thick > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));

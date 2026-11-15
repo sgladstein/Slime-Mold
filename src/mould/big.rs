@@ -660,7 +660,8 @@ pub struct BigParams {
     pub condense_crowd: u32,
     pub condense_r: u8,
     /// **Condensed slime breaks away** (2026-11-14, the condense thread; 0
-    /// is off, needs `condense`). The owner, 15:06Z: "When slime condensed
+    /// is off, needs `condense` or, since 11-15, `thicken`: a thickened
+    /// walker is dense slime too, so breakaway works in shape C). The owner, 15:06Z: "When slime condensed
     /// it can become a separate entity that behaves different exploring
     /// further, eating crystals." Every `roam` steps after it condensed, a
     /// condensed walker picks the nearest crystal with at least
@@ -2389,7 +2390,9 @@ impl BigDish {
 
     /// The crystal (pile) breakaway walker `k` runs for (`BigParams::roam`).
     pub fn roam_of(&self, k: usize) -> Option<usize> {
-        if self.p.roam == 0 || self.p.condense == 0 {
+        // Condensed or thickened (`thicken`, 11-15): either is dense slime
+        // that may break away; the GPU's `roaming` and `write_params` the same.
+        if self.p.roam == 0 || (self.p.condense == 0 && self.p.thicken <= 0.0) {
             return None;
         }
         let w = *self.dense.get(k)?;

@@ -334,7 +334,7 @@ const ABSORB_STEPS: u32 = 15u;
 const ROAM_BIT: u32 = 0x40000u;
 const ROAM_SHIFT: u32 = 19u;
 const ROAM_FRESH: f32 = 0.8;
-fn roaming(k: u32) -> bool { return ripens() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
+fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
 // The dense state is on for condensing or thickening (`BigParams::thicken`,
 // 11-15, the slime-enemy thread: a fed walker that cannot divide turns
 // condensed in place); only condensing ripens, absorbs and stops births

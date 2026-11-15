@@ -87,7 +87,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         // Condensed slime breaks away (11-14, `BigParams::roam`): off by
         // default; how often (steps) a condensed piece may leave for an
         // untouched crystal. Needs Condense.
-        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed pieces leave together for an untouched crystal far away; needs Condense; 0 is off"),
+        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed or thick slime leaves for an untouched crystal far away; needs Condense or Thicken; 0 is off"),
         // A fed slime that cannot divide thickens (11-15,
         // `BigParams::thicken`): on in shape C at 2, a birth's energy
         // twice over.

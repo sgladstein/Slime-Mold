@@ -68,6 +68,21 @@ Window (`larder-world look=DIR mode=squads hand=squads seed=1
 mass 64,154 at 6:00 against 49,950 (14,853 thick), soldiers 2 against 3.
 One seed and a scripted hand, so not a balance reading.
 
+## Breakaway
+
+The condense thread read the diff against its code (11-15 09:10Z) and found
+one mismatch: with thickening on, `condense` 0 and `roam` > 0 (shape C plus
+the menu's Breakaway), the GPU sent no `roam` while the CPU still marked
+thickened walkers as breakaways (they never moved, but the words differed).
+Fixed by letting thick slime break away too, on both engines (`roam_of`,
+`roaming`, `write_params`), so Breakaway works in shape C without Condense.
+Thick walkers thicken one at a time, so they leave as a trickle toward far
+crystals rather than as a piece. New twin dish "thicken roam" (condense 0):
+2,086 thick, 758 on the way, 381 left and 10 landed in the tick, 0 words off.
+The 1070 twin at 295c2c10 (before this fix) passed: 0 words off in every
+case (`claude/project-thread-26drse` 3ef036e2,
+`runner-out/twin-pr338-295c2c10/twin.txt`).
+
 ## Not done
 
 - One level: a body that holds everything long enough stops at twice
