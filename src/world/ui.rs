@@ -110,6 +110,13 @@ fn loadout_w(l: &Loadout, s: f32) -> f32 {
     let slots = l.slots.max(l.cards.len()).max(1) as f32;
     2.0 * 8.0 * s + slots * LOADOUT_CELL * s + (slots - 1.0) * 5.0 * s + 10.0 * s + LOADOUT_INFO * s + if l.cycle.is_some() { 30.0 * s + 6.0 * s } else { 0.0 }
 }
+/// A padlock `h` tall with its top left at `p`, 0.8 h wide: the shackle,
+/// then the body over its foot.
+fn lock_glyph(c: &mut Canvas, p: (f32, f32), h: f32, col: Rgba) {
+    c.outline(Rect::new(p.0 + 0.17 * h, p.1, 0.46 * h, 0.62 * h), 0.23 * h, 0.12 * h, col);
+    c.rrect(Rect::new(p.0, p.1 + 0.42 * h, 0.8 * h, 0.58 * h), 0.12 * h, col);
+}
+
 /// The loadout strip's card slots and its name column, UI units: 34 and
 /// 112 until the UI review (11-15), a 51-unit strip in a 105-unit panel
 /// with the gun's name at 12 pixels.
@@ -190,11 +197,13 @@ pub struct Command {
     pub about: String,
     /// Shown in the tooltip, in red, when it is not ready.
     pub why_not: Option<String>,
+    /// Not had yet (a run's shop sells it): drawn with a lock, not a price.
+    pub locked: bool,
 }
 
 impl Command {
     pub fn new(id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode) -> Self {
-        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None }
+        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None, locked: false }
     }
 }
 
@@ -341,6 +350,9 @@ pub struct SquadRow {
     /// Runs on its own orders: neither the one you command nor linked with
     /// it. Its tile says AUTO (owner 2026-11-15 02:58Z).
     pub auto: bool,
+    /// What it is doing, one word or two ("firing", "holding"), on its
+    /// tile; the note keeps the rest. Empty: the note's first word.
+    pub state: String,
 }
 
 /// The squad mode's squads, drawn in the selection panel's place as a
@@ -425,6 +437,9 @@ pub struct Model {
     pub loadout: Option<Loadout>,
     /// The squad mode's squads, a panel at the top right.
     pub squads: Option<SquadPanel>,
+    /// The player is steering (WASD in the squad mode): the screen moves
+    /// under a still cursor, so the hover card stays away (`HoverCard`).
+    pub aiming: bool,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -581,6 +596,8 @@ pub struct Hud {
     started: Instant,
     /// The hover card's timing (`HoverCard`).
     card: HoverCard,
+    /// The mouse buttons held (left, right, middle): no hover card then.
+    held: [bool; 3],
 }
 
 /// When the card over the world shows (owner, 11-15 07:54Z: "the overlay
@@ -611,10 +628,18 @@ impl HoverCard {
         HoverCard { key: None, still: Instant::now(), at: (0.0, 0.0), shown: None, shut: false }
     }
 
-    /// How opaque the card for `key` is now (0: not drawn).
-    fn alpha(&mut self, key: Option<&str>, now: Instant) -> f32 {
+    /// How opaque the card for `key` is now (0: not drawn). `quiet`: a
+    /// mouse button is held or the squad is steered, so the player is
+    /// aiming. The card goes, and what the cursor reaches meanwhile stays
+    /// shut until it is on something else (the three-reviewer review,
+    /// 11-15: a click put away only the card already up, so aim sliding
+    /// onto the home crystal mid-volley still raised one 0.35 s later).
+    fn alpha(&mut self, key: Option<&str>, now: Instant, quiet: bool) -> f32 {
         if self.key.as_deref() != key {
-            *self = HoverCard { key: key.map(str::to_string), still: now, at: self.at, shown: None, shut: false };
+            *self = HoverCard { key: key.map(str::to_string), still: now, at: self.at, shown: None, shut: quiet };
+        }
+        if quiet {
+            self.shut = true;
         }
         if self.key.is_none() || self.shut {
             return 0.0;
@@ -651,7 +676,7 @@ impl Default for Hud {
 
 impl Hud {
     pub fn new() -> Self {
-        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new() }
+        Hud { scale: 1.0, hits: Vec::new(), hover: None, pressed: None, targeting: None, menu: None, help_direct: false, alerts: Vec::new(), commands: Vec::new(), bottom: 0.0, minimap_box: None, minimap: None, top: 0.0, world: (1.0, 1.0), end: false, took: [false; 3], ghost_ok: true, ghost_note: None, cycle: None, started: Instant::now(), card: HoverCard::new(), held: [false; 3] }
     }
 
     /// The menu is open (the game should pause).
@@ -744,6 +769,7 @@ impl Hud {
         if pressed && self.card.key.is_some() {
             self.card.shut = true;
         }
+        self.held[k] = pressed;
         if pressed {
             let (took, out) = self.button_inner(b, true, cam, shift);
             self.took[k] = took;
@@ -1087,7 +1113,8 @@ impl Hud {
         self.alerts_draw(c, world, s);
         self.ghost(m, cam, c, world, s);
         let key = m.hover.as_ref().filter(|_| self.hover.is_some() && self.targeting.is_none()).map(|h| h.title.as_str());
-        let a = self.card.alpha(key, Instant::now());
+        let quiet = m.aiming || self.held.iter().any(|&h| h);
+        let a = self.card.alpha(key, Instant::now(), quiet);
         if let (Some(h), Some(p), true) = (&m.hover, self.hover, a > 0.0) {
             self.hover_card(h, p, a, c, s);
         }
@@ -1308,7 +1335,6 @@ impl Hud {
     /// count): its hotkey, soldiers, their health, and a + that brings it
     /// into the squad you command. The one you command is outlined.
     fn squad_tiles(&mut self, p: &SquadPanel, inner: Rect, c: &mut Canvas, s: f32) {
-        let mine = p.rows.iter().find(|q| q.active);
         let n = p.rows.len();
         let head = if n == 1 { "1 squad".to_string() } else { format!("{n} squads") };
         // The header's buttons, from the right end; smaller, then without
@@ -1321,9 +1347,24 @@ impl Hud {
             _ => l.to_string(),
         };
         let guards = format!("Guards: {}", p.cover);
-        let row_w = |c: &Canvas, px: f32, keys: bool| {
-            [("Let go", &p.free_key), ("Combine", &p.combine_key), ("Split", &p.split_key), (guards.as_str(), &p.cover_key)].iter().map(|(l, k)| c.atlas.measure(Weight::SemiBold, px, &label(l, k, keys)) + 26.0 * s).sum::<f32>()
-        };
+        let none = None;
+        let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
+        // A key shows only while it does this: the card's letters come
+        // first, so with the build page open I, Y, J and L place an
+        // outpost, a siren, switch the lures and place a lure (the
+        // three-reviewer review, 11-15: the header still said Guards I).
+        let taken: Vec<String> = self.commands.iter().filter_map(|c| key_name(c.key)).collect();
+        let shown = |k: &Option<String>| k.clone().filter(|k| !taken.contains(k));
+        // (One list, measured and drawn: the fit first counted four buttons
+        // and #330's Heal, a fifth, then ran over "1 squad" at 150%.)
+        let buttons = [
+            ("Let go", shown(&p.free_key), &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
+            ("Combine", shown(&p.combine_key), &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
+            ("Split", shown(&p.split_key), &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
+            (guards.as_str(), shown(&p.cover_key), &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
+            ("Heal", shown(&p.heal_key), &p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
+        ];
+        let row_w = |c: &Canvas, px: f32, keys: bool| buttons.iter().map(|(l, k, ..)| c.atlas.measure(Weight::SemiBold, px, &label(l, k, keys)) + 26.0 * s).sum::<f32>();
         let head_w = c.atlas.measure(Weight::SemiBold, 16.0 * s, &head) + 12.0 * s;
         let (bpx, keys, with_head) = [(13.5, true, true), (12.0, true, true), (12.0, true, false), (12.0, false, false)]
             .into_iter()
@@ -1331,21 +1372,26 @@ impl Hud {
             .find(|&(px, keys, h)| row_w(c, px, keys) + if h { head_w } else { 0.0 } <= inner.w)
             .unwrap_or((12.0 * s, false, false));
         let hw = if with_head { c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT) } else { -12.0 * s };
+        // Nothing left of here: the header word, or the panel's edge.
+        let floor = inner.x + hw + 12.0 * s;
+        // Where they still do not fit, Guards goes first, then Heal (the
+        // review, 11-15: a narrow panel kept Guards and dropped Heal, the
+        // owner's 07:41 order), then Combine.
+        let mut keep = [true; 5];
+        for drop in [3, 4, 1] {
+            let used: f32 = buttons.iter().zip(keep).filter(|(_, k)| *k).map(|((l, k, ..), _)| c.atlas.measure(Weight::SemiBold, bpx, &label(l, k, keys)) + 26.0 * s).sum();
+            if inner.right() - used >= floor {
+                break;
+            }
+            keep[drop] = false;
+        }
         let bh = 22.0 * s;
         let mut bx = inner.right();
         let mut tip: Option<(String, Rect)> = None;
-        let none = None;
-        let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
-        for (label_text, key, off, hit, about) in [
-            ("Let go", &p.free_key, &free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
-            ("Combine", &p.combine_key, &p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
-            ("Split", &p.split_key, &p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
-            (guards.as_str(), &p.cover_key, &none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
-            ("Heal", &p.heal_key, &p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
-        ] {
-            let text = label(label_text, key, keys);
+        for ((label_text, key, off, hit, about), _) in buttons.into_iter().zip(keep).filter(|(_, k)| *k) {
+            let text = label(label_text, &key, keys);
             let w = c.atlas.measure(Weight::SemiBold, bpx, &text) + 20.0 * s;
-            if bx - w < inner.x {
+            if bx - w < floor {
                 continue;
             }
             bx -= w;
@@ -1360,12 +1406,15 @@ impl Hud {
                 tip = Some((off.clone().unwrap_or_else(|| about.to_string()), b));
             }
         }
-        let sub = mine.map(|q| format!("commanding {}, {} soldiers", q.name, q.soldiers)).or_else(|| p.free.then(|| "none commanded: all on their own, WASD pans".to_string()));
-        if let Some(sub) = sub {
+        // With none commanded, a line says so where it fits whole. (It said
+        // "commanding Squad 1, 4 soldiers" too, which the outlined YOU tile
+        // shows, cut to "commandin..." where short: dropped in the review,
+        // 11-15.)
+        if p.free && with_head {
+            let sub = "none commanded: all on their own, WASD pans";
             let left = inner.x + hw + 12.0 * s;
-            // (Not a lone "..." where the buttons leave no room.)
-            if bx - left - 6.0 * s >= 70.0 * s {
-                c.text_fit(Weight::Medium, 13.5 * s, (left, inner.y + 15.0 * s), Align::Left, &sub, bx - left - 6.0 * s, MUTED);
+            if c.atlas.measure(Weight::Medium, 13.5 * s, sub) <= bx - left - 6.0 * s {
+                c.text(Weight::Medium, 13.5 * s, (left, inner.y + 15.0 * s), Align::Left, sub, MUTED);
             }
         }
         // Wider than a soldier's card since the UI review (11-15; 72): the
@@ -1419,7 +1468,10 @@ impl Hud {
                 let tw = c.text(Weight::SemiBold, 11.5 * s, (end, cell.y + 36.0 * s), Align::Right, t, ink);
                 end -= tw + 8.0 * s;
             }
-            if let Some(state) = q.note.as_deref().and_then(|n| n.split(", ").find(|w| !w.is_empty())) {
+            // Its activity ("firing", "holding"): the note's first word was
+            // "on its own" for an AUTO squad, beside the AUTO tag.
+            let first = q.note.as_deref().and_then(|n| n.split(", ").find(|w| !w.is_empty()));
+            if let Some(state) = Some(q.state.as_str()).filter(|t| !t.is_empty()).or(first) {
                 let sx = cell.x + 32.0 * s + nw + 8.0 * s;
                 if end - sx >= 30.0 * s {
                     c.text_fit(Weight::Medium, 12.5 * s, (sx, cell.y + 36.0 * s), Align::Left, state, end - sx, MUTED);
@@ -1553,10 +1605,19 @@ impl Hud {
                 let px = fit_px(c, &label, 13.0 * s, 11.5 * s, room);
                 let one = c.atlas.measure(Weight::SemiBold, px, &label) <= room;
                 let second = room - kw;
-                if let Some(cost) = &cmd.cost {
+                // Locked: a lock and "Locked" where the price goes, grey. A
+                // red price read as "can't afford" with the bank full (the
+                // review, 11-15).
+                let cost = if cmd.locked { Some("Locked") } else { cmd.cost.as_deref() };
+                if let Some(cost) = cost {
                     c.text_fit(Weight::SemiBold, px, (tx, b.y + 18.0 * s), Align::Left, &label, room, words);
-                    c.icon(cmd.cost_icon, (tx, b.y + 24.5 * s), 11.0 * s, alpha(ENERGY, dim.max(0.6)));
-                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx + 14.0 * s, b.y + 34.0 * s), Align::Left, cost, second - 14.0 * s, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
+                    if cmd.locked {
+                        lock_glyph(c, (tx + 1.0 * s, b.y + 24.5 * s), 11.0 * s, alpha(MUTED, 0.95));
+                    } else {
+                        c.icon(cmd.cost_icon, (tx, b.y + 24.5 * s), 11.0 * s, alpha(ENERGY, dim.max(0.6)));
+                    }
+                    let col = if cmd.locked { MUTED } else if cmd.ready { ENERGY } else { BAD };
+                    c.text_fit(Weight::SemiBold, 12.0 * s, (tx + 14.0 * s, b.y + 34.0 * s), Align::Left, cost, second - 14.0 * s, alpha(col, 0.95));
                 } else if one {
                     c.text(Weight::SemiBold, px, (tx, b.y + cell / 2.0 + 4.5 * s), Align::Left, &label, words);
                 } else {
@@ -1571,7 +1632,9 @@ impl Hud {
                 if let Some(k) = key_name(cmd.key) {
                     c.text(Weight::SemiBold, 11.0 * s, (b.x + 4.5 * s, b.y + 12.0 * s), Align::Left, &k, alpha(TEXT, 0.72 * dim.max(0.6)));
                 }
-                if let Some(cost) = &cmd.cost {
+                if cmd.locked {
+                    lock_glyph(c, (b.right() - 13.0 * s, b.bottom() - 14.0 * s), 10.5 * s, alpha(MUTED, 0.95));
+                } else if let Some(cost) = &cmd.cost {
                     let cw = c.atlas.measure(Weight::SemiBold, 10.5 * s, cost);
                     let cx = b.right() - 4.0 * s - cw;
                     c.text(Weight::SemiBold, 10.5 * s, (cx, b.bottom() - 3.5 * s), Align::Left, cost, alpha(if cmd.ready { ENERGY } else { BAD }, 0.95));
@@ -1681,8 +1744,16 @@ impl Hud {
         } else {
             0.0
         };
-        c.text_fit(Weight::SemiBold, 15.0 * s, (tx + gx, y + 18.0 * s), Align::Left, &l.name, info_w - gx, TEXT);
-        let (state, col) = if l.cards.is_empty() { ("Plain shots", MUTED) } else { ("A card a shot", GOOD) };
+        // The gun's name first ("Rifle"), then what its cards make: the
+        // loadout's name, or plain shots. (It read "Plain / Plain shots"
+        // with the gun only an icon: the review, 11-15.)
+        let (head, state, col) = match &l.gun {
+            Some((_, gun, _)) if l.cards.is_empty() => (gun.as_str(), "Plain shots", MUTED),
+            Some((_, gun, _)) => (gun.as_str(), l.name.as_str(), GOOD),
+            None if l.cards.is_empty() => (l.name.as_str(), "Plain shots", MUTED),
+            None => (l.name.as_str(), "A card a shot", GOOD),
+        };
+        c.text_fit(Weight::SemiBold, 15.0 * s, (tx + gx, y + 18.0 * s), Align::Left, head, info_w - gx, TEXT);
         c.text_fit(Weight::Medium, 13.0 * s, (tx, y + 38.0 * s), Align::Left, state, info_w, col);
         let words = Rect::new(tx - 4.0 * s, r.y, info_w + 4.0 * s, r.h);
         if tip.is_none() && self.hover.is_some_and(|p| words.contains(p)) {
@@ -1905,9 +1976,13 @@ impl Hud {
         let stats = info.stats.iter().map(|(l, v)| format!("{l} {v}")).collect::<Vec<_>>().join("  ·  ");
         let w = (c.atlas.measure(Weight::SemiBold, 14.0 * s, &info.title).max(c.atlas.measure(Weight::Medium, 12.0 * s, &stats)).max(c.atlas.measure(Weight::Medium, 12.0 * s, &info.subtitle)) + 28.0 * s).max(200.0 * s);
         let h = 22.0 * s + 18.0 * s + if info.hp.is_some() { 18.0 * s } else { 0.0 } + if stats.is_empty() { 0.0 } else { 18.0 * s } + 12.0 * s;
-        // Below right of the cursor, kept on the screen and off the panels.
-        let x = (p.0 + 20.0 * s).min(sw - w - 8.0 * s).max(8.0 * s);
-        let y = (p.1 + 20.0 * s).min(self.bottom - h - 8.0 * s).min(sh - h - 8.0 * s).max(self.top + 8.0 * s);
+        // Below right of the cursor, kept on the screen and off the panels:
+        // where it would not fit it goes to the cursor's other side, not
+        // under it (it slid left or up onto the cursor near the right edge
+        // and the bar, the review 11-15).
+        let x = if p.0 + 20.0 * s + w <= sw - 8.0 * s { p.0 + 20.0 * s } else { (p.0 - 20.0 * s - w).max(8.0 * s) };
+        let foot = self.bottom.min(sh) - 8.0 * s;
+        let y = if p.1 + 20.0 * s + h <= foot { p.1 + 20.0 * s } else { (p.1 - 20.0 * s - h).max(self.top + 8.0 * s) };
         let r = Rect::new(x, y, w, h);
         c.shadow(r, 10.0 * s, 14.0 * s, 3.0 * s, alpha(SHADOW, a));
         c.panel(r, 10.0 * s, alpha([34, 40, 49, 245], a), alpha([24, 29, 36, 248], a), 1.0, alpha(info.colour, 0.5 * a));
@@ -2285,9 +2360,94 @@ mod tests {
         }
     }
 
+    /// The squad header's buttons, with a gun loaded, at every UI size:
+    /// none overlaps another and all stay in the squad panel, off the gun
+    /// strip (11-15: at 150% the fifth, Heal, ran over "1 squad"; the fit
+    /// had counted four. The header word itself is not in the hits: the
+    /// code keeps buttons right of it, `floor`).
+    /// The hover card's clock: it waits for the cursor to rest, shows,
+    /// fades and stays shut for that thing; held buttons or steering keep
+    /// it away, and what the aim reaches meanwhile stays shut too (the
+    /// review, 11-15: aim sliding onto the home crystal mid-volley raised
+    /// a card).
+    #[test]
+    fn the_hover_card_waits_fades_and_keeps_out_of_a_volley() {
+        use std::time::Duration;
+        let t0 = Instant::now();
+        let at = |secs: f32| t0 + Duration::from_secs_f32(secs);
+        let mut h = HoverCard::new();
+        assert_eq!(h.alpha(Some("Crystal A"), at(0.0), false), 0.0, "not before the rest");
+        assert_eq!(h.alpha(Some("Crystal A"), at(0.2), false), 0.0);
+        assert_eq!(h.alpha(Some("Crystal A"), at(0.4), false), 1.0, "up after 0.35 s");
+        let fading = h.alpha(Some("Crystal A"), at(0.4 + HoverCard::SHOW + 0.2), false);
+        assert!(fading > 0.0 && fading < 1.0, "fading: {fading}");
+        assert_eq!(h.alpha(Some("Crystal A"), at(3.0), false), 0.0, "gone after 2 s and the fade");
+        assert_eq!(h.alpha(Some("Crystal A"), at(9.0), false), 0.0, "and stays gone for it");
+        assert_eq!(h.alpha(Some("Crystal B"), at(9.0), false), 0.0, "something else waits its rest");
+        assert_eq!(h.alpha(Some("Crystal B"), at(9.5), false), 1.0);
+        // A volley: the card goes, and the home crystal reached mid-volley
+        // does not come up, during it or after it.
+        assert_eq!(h.alpha(Some("Crystal B"), at(9.6), true), 0.0, "a held button puts it away");
+        assert_eq!(h.alpha(Some("Home"), at(9.7), true), 0.0);
+        assert_eq!(h.alpha(Some("Home"), at(12.0), true), 0.0);
+        assert_eq!(h.alpha(Some("Home"), at(13.0), false), 0.0, "still shut once the button is up");
+        // Moving off and back on brings it again after the rest.
+        assert_eq!(h.alpha(None, at(14.0), false), 0.0);
+        assert_eq!(h.alpha(Some("Home"), at(14.1), false), 0.0);
+        assert_eq!(h.alpha(Some("Home"), at(14.5), false), 1.0);
+    }
+
+    /// The squad header shows a key only where it does that: with the
+    /// build page's letters on the card, Guards, Split, Combine and Heal
+    /// lose theirs (the review, 11-15).
+    #[test]
+    fn the_squad_header_shows_no_key_the_card_takes() {
+        let row = |k: &str, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: 4, hp: 0.5, note: Some("holding".into()), active, near: false, linked: false, auto: !active, state: String::new() };
+        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        // Each header button's width: a key shown makes it wider.
+        let widths = |cmds: Vec<Command>| {
+            let mut r = Rig::new((2560, 1440));
+            r.m.squads = Some(panel.clone());
+            r.m.commands = cmds;
+            r.draw();
+            let w = |h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| b.w).unwrap();
+            (w(Hit::SquadSplit), w(Hit::SquadHeal), w(Hit::SquadCombine))
+        };
+        let (split, heal, combine) = widths(Vec::new());
+        let (split_b, heal_b, combine_b) = widths(vec![Command::new(1, (0, 0), Icon::Turret, "Siren", KeyCode::KeyY), Command::new(2, (0, 1), Icon::Turret, "Lure", KeyCode::KeyL)]);
+        assert!(split_b < split - 5.0 && heal_b < heal - 5.0, "Y and L are the card's: split {split} -> {split_b}, heal {heal} -> {heal_b}");
+        assert!((combine_b - combine).abs() < 0.5, "J is not on that card: {combine} -> {combine_b}");
+    }
+
+    #[test]
+    fn the_squad_header_keeps_clear_at_every_size() {
+        let row = |k: &str, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: 4, hp: 0.8, note: Some("holding".into()), active, near: false, linked: false, auto: !active, state: String::new() };
+        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit, Hit::SquadCover, Hit::SquadHeal];
+        for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
+            for user in crate::world::settings::STEPS {
+                let mut r = Rig::new(screen);
+                r.m.squads = Some(panel.clone());
+                r.m.loadout = Some(loadout());
+                r.c.ui.user = user;
+                r.draw();
+                let tile = r.hud.hits.iter().find(|(_, h)| *h == Hit::Squad(0)).map(|(b, _)| *b).unwrap();
+                let bs: Vec<Rect> = r.hud.hits.iter().filter(|(_, h)| heads.contains(h)).map(|(b, _)| *b).collect();
+                assert!(!bs.is_empty(), "{screen:?} at {user}: no header buttons");
+                for (k, b) in bs.iter().enumerate() {
+                    // (The tiles start at the panel's inner edge, right of the gun strip.)
+                    assert!(b.x >= tile.x - 0.5, "{screen:?} at {user}: a header button {b:?} left of the squad panel ({tile:?})");
+                    for c in &bs[k + 1..] {
+                        assert!(b.right() <= c.x + 0.5 || c.right() <= b.x + 0.5, "{screen:?} at {user}: {b:?} and {c:?} overlap");
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
-        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false, auto: !active };
+        let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false, auto: !active, state: String::new() };
         let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);

@@ -96,6 +96,9 @@ pub const PANIC_PILES: usize = 64;
 pub const PANIC_CREEP_MIN: f32 = 0.01;
 /// The longest dash (`BigParams::panic_dash`), steps.
 pub const PANIC_DASH_MAX: u32 = 0xFFFF;
+/// The longest surge lean and lunge (`BigParams::surge_lean`,
+/// `surge_dash`), steps.
+pub const SURGE_MAX: u32 = 0xFFFF;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -701,6 +704,31 @@ pub struct BigParams {
     /// sooner it does. Reuses condensing's state and look; `condense`
     /// (the ripening and absorbing) stays its own switch.
     pub thicken: f32,
+    /// **The body surges** (2026-11-15, the slime-enemy thread; 0 is off).
+    /// Every `surge_every` steps, the first a whole period after the start,
+    /// the walkers joined to the body (not panicking, not breaking away)
+    /// within `panic_r` of a unit (`BigDish::threats`: a soldier or a
+    /// building, as a panicking walker charges) creep toward the nearest
+    /// for `surge_lean` steps at `panic_creep` of their pace (the tell: the
+    /// front facing the unit swells toward it), then lunge at it at
+    /// `surge_haste` times their pace for `surge_dash` steps, by their
+    /// sensors' direction alone, as a panicking walker runs. One shared
+    /// clock, so the whole front surges at once and the player can learn
+    /// its beat. The reach follows the guns, as panic's does (the world's
+    /// `panic_r` is the gun's range plus `Rules::panic_margin`), so a squad
+    /// in range of the slime is always in the surge's.
+    /// Why: the owner, 11-15 08:30Z: some slimes "just hang at their home
+    /// crystal ... So their is no rush. They don't attach my pumping
+    /// crystals so no need to defend", and the enemy needs "more
+    /// interesting progression ... and increase in challenge ...
+    /// especially when your guns get stronger". Before it only the
+    /// soldiers' scent, the home pull, panic and the tiers' specials drew
+    /// the slime to the player; a body joined to its crystals followed its
+    /// food and never pressed (Reports/slime-review-2026-11-15/README.md).
+    pub surge_every: u32,
+    pub surge_lean: u32,
+    pub surge_dash: u32,
+    pub surge_haste: f32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1255,6 +1283,10 @@ impl BigParams {
             roam_far: 30.0,
             roam_share: 0.5,
             thicken: 0.0,
+            surge_every: 0,
+            surge_lean: 45,
+            surge_dash: 30,
+            surge_haste: 2.0,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -2451,15 +2483,7 @@ impl BigDish {
     /// the nearest crystal with more than `PANIC_LEFT` left; whole cells,
     /// so the GPU picks the same.
     fn panic_target(&self, cx: i64, cy: i64) -> Option<(f32, f32, bool)> {
-        let r = self.p.panic_r * self.p.scale as f32;
-        let r2 = (r.max(0.0) * r.max(0.0)).floor() as i64;
-        let mut best: Option<(i64, i64, i64)> = None;
-        for &(ux, uy) in self.threats.iter().take(crate::mould::squad::UNITS_MAX) {
-            let d2 = (ux - cx) * (ux - cx) + (uy - cy) * (uy - cy);
-            if d2 <= r2 && best.is_none_or(|b| d2 < b.0) {
-                best = Some((d2, ux, uy));
-            }
-        }
+        let mut best = self.nearest_threat(cx, cy);
         let unit = best.is_some();
         if best.is_none() && !self.charge.is_empty() {
             for j in 0..self.piles.len().min(PANIC_PILES) {
@@ -2475,6 +2499,40 @@ impl BigDish {
             }
         }
         best.map(|(_, x, y)| (x as f32 + 0.5, y as f32 + 0.5, unit))
+    }
+
+    /// The nearest unit to fine cell (`cx`, `cy`) within `panic_r`, ties
+    /// to the first: (squared distance, x, y), whole cells.
+    fn nearest_threat(&self, cx: i64, cy: i64) -> Option<(i64, i64, i64)> {
+        let r = self.p.panic_r * self.p.scale as f32;
+        let r2 = (r.max(0.0) * r.max(0.0)).floor() as i64;
+        let mut best: Option<(i64, i64, i64)> = None;
+        for &(ux, uy) in self.threats.iter().take(crate::mould::squad::UNITS_MAX) {
+            let d2 = (ux - cx) * (ux - cx) + (uy - cy) * (uy - cy);
+            if d2 <= r2 && best.is_none_or(|b| d2 < b.0) {
+                best = Some((d2, ux, uy));
+            }
+        }
+        best
+    }
+
+    /// The surge's haste on the step being made (`BigParams::surge_every`):
+    /// `panic_creep` while the body gathers, `surge_haste` while it lunges,
+    /// else 0. One clock for the whole dish.
+    pub fn surge_haste(&self) -> f32 {
+        let every = self.p.surge_every as u64;
+        let t = self.steps + 1;
+        if every == 0 || t < every {
+            return 0.0;
+        }
+        let (ph, lean) = (t % every, self.p.surge_lean.min(SURGE_MAX) as u64);
+        if ph < lean {
+            self.p.panic_creep.max(PANIC_CREEP_MIN)
+        } else if ph < lean + self.p.surge_dash.min(SURGE_MAX) as u64 {
+            self.p.surge_haste
+        } else {
+            0.0
+        }
     }
 
     /// Walker `k`'s haste charging a unit (`panic_dash`): `haste` (its
@@ -2798,6 +2856,8 @@ impl BigDish {
         // (walker, heading, step) of each walker that could not move.
         let mut blocked: Vec<(u32, f32, f32)> = Vec::new();
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
+        // The surge's clock (`surge_every`), one for the dish.
+        let surge = self.surge_haste();
         let nsp = self.species_trail.len().max(1);
         // Life cycle (`spore_rate` and below): walkers that were spores or
         // dormant as the step began, and ordinary walkers that fruit or fall
@@ -2920,6 +2980,15 @@ impl BigDish {
             }
             if let (Some((_, _, unit)), true) = (scared, haste > 0.0) {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
+            }
+            // The body surges (`surge_every`): a walker joined to it (not
+            // panicking, not breaking away) within reach of a unit runs for
+            // the nearest, creeping and then lunging on the shared clock.
+            if surge > 0.0 && haste <= 0.0 && scared.is_none() {
+                if let Some((_, ux, uy)) = self.nearest_threat(x.floor() as i64, y.floor() as i64) {
+                    scared = Some((ux as f32 + 0.5, uy as f32 + 0.5, true));
+                    st *= surge;
+                }
             }
             if let (true, Some((tx, ty, _))) = (look, scared) {
                 let read = |a: f32| {
@@ -5316,6 +5385,62 @@ mod tests {
         assert!(kept == living.len() && broke == kept, "withering breaks every condensed walker first: {kept} of {} live, {broke} broken", living.len());
         w.tick();
         assert!(living.iter().all(|&k| !w.lives(k)), "and then kills them");
+    }
+
+    /// The body surges (`surge_every`, 2026-11-15): off changes nothing; on,
+    /// with no unit in reach nothing; with a unit in reach the body's
+    /// walkers near it close on it during the creep and the lunge, and
+    /// between surges they move as without it.
+    #[test]
+    fn the_body_surges_at_a_unit_in_reach() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, panic_r: 12.0, ..small(2, 1) };
+        // From a grown mould, `ticks` ticks with a unit (or none) at `at`;
+        // the hash, and the mean distance to `at` of the walkers living at
+        // the start within reach of it, before and after.
+        let run = |p: BigParams, at: Option<(i64, i64)>, ticks: u32| {
+            let mut d = BigDish::new(p);
+            for _ in 0..40 {
+                d.tick();
+            }
+            let (ux, uy) = at.unwrap_or((d.w as i64 / 2, d.h as i64 / 2));
+            d.threats = at.into_iter().collect();
+            let r = d.p.panic_r * d.p.scale as f32;
+            let to = |d: &BigDish, k: usize| (d.walkers[k].0 - ux as f32 - 0.5).hypot(d.walkers[k].1 - uy as f32 - 0.5);
+            let who: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && to(&d, k) <= r).collect();
+            let mean = |d: &BigDish| who.iter().map(|&k| to(d, k)).sum::<f32>() / who.len().max(1) as f32;
+            let before = mean(&d);
+            let steps = d.steps;
+            for _ in 0..ticks {
+                d.tick();
+            }
+            (before, mean(&d), d.hash(), who.len(), steps)
+        };
+        // A unit beside the mould: the living walker nearest the dish's middle.
+        let probe = {
+            let mut d = BigDish::new(grow.clone());
+            for _ in 0..40 {
+                d.tick();
+            }
+            let (cx, cy) = (d.w as f32 / 2.0, d.h as f32 / 2.0);
+            let k = (0..d.walkers.len()).filter(|&k| d.lives(k)).min_by(|&a, &b| (d.walkers[a].0 - cx).hypot(d.walkers[a].1 - cy).total_cmp(&(d.walkers[b].0 - cx).hypot(d.walkers[b].1 - cy))).unwrap();
+            (d.walkers[k].0 as i64 + 6, d.walkers[k].1 as i64)
+        };
+        let base = run(grow.clone(), Some(probe), 20);
+        let off = run(BigParams { surge_every: 0, ..grow.clone() }, Some(probe), 20);
+        assert_eq!(base.2, off.2, "surge 0 changes nothing");
+        // Every step from the warm-up's end is creep then lunge: a period of
+        // 1 step past the warm-up would surge at once, so a short one.
+        let steps = base.4 as u32;
+        let surge = BigParams { surge_every: steps / 2, surge_lean: 3, surge_dash: steps, surge_haste: 2.0, ..grow.clone() };
+        let alone = run(surge.clone(), None, 20);
+        let plain = run(grow.clone(), None, 20);
+        assert_eq!(alone.2, plain.2, "with no unit in reach nothing surges");
+        let on = run(surge, Some(probe), 20);
+        eprintln!("surge: {} walkers in reach; mean distance {:.1} -> {:.1} surging, {:.1} -> {:.1} not", on.3, on.0, on.1, base.0, base.1);
+        assert!(on.3 > 0 && on.1 < base.1 && on.1 < on.0, "walkers in reach close on the unit");
+        // Between surges (the clock calm all the run), nothing changes.
+        let calm = run(BigParams { surge_every: 1_000_000, ..grow.clone() }, Some(probe), 20);
+        assert_eq!(calm.2, base.2, "before the first surge the body moves as without it");
     }
 
     #[test]

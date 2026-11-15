@@ -65,7 +65,19 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // 90,739 at 7:00 and still rising (50,000 without); held to its 4
     // nearest crystals, 30,338 (Reports/thicken-2026-11-15/README.md).
     // `thicken=0` turns it off.
-    const C: [(&str, &str); 6] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2")];
+    // The body surges (`BigParams::surge_every` 900, 2026-11-15). The
+    // owner, 11-15 08:30Z: some slimes "just hang at their home crystal
+    // ... So their is no rush ... no need to defend", and the enemy needs
+    // to "increase in challenge ... especially when your guns get
+    // stronger". Every 30 s the slime within the gun's range plus 5 of a
+    // soldier or building creeps toward it for 1.5 s, then lunges for 1 s
+    // at twice its pace. In the window (Fork, squad mode, the edge hand,
+    // seed 1) the first surge, at 31.5 s, took 2 of 9 soldiers, where
+    // without it all 9 stood at 34 s; the second, at 61.5 s, wiped the
+    // last 3. With the scripted squads hand and four pumps, the pumps fed
+    // 1,070 food against 1,252 (Reports/surge-2026-11-15/README.md).
+    // `surge=0` turns it off.
+    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "900")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),

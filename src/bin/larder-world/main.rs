@@ -366,7 +366,10 @@ const LOADOUTS: [(&str, &str); 30] = [
     ("sniper", "range+range+pierce"),
 ];
 
-#[derive(Clone)]
+/// `Default` so a test or a tool names only the fields it sets (`..Default::default()`);
+/// before, each of 18 literals spelled out all 23 fields and every new
+/// field touched every one of them (whole-game review, 2026-11-15).
+#[derive(Clone, Default)]
 struct Args {
     /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
     squads: bool,
@@ -1538,7 +1541,7 @@ struct Bench {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, keys: Vec::new(), voice: true, mission: None, crater: None, aim: None, core_pull: None, mass: None, own: false, wade: None, sink: None, round: 0, bullet: None, squads: false, run: None, dev: false, gun: None, ammo: None, grow: None, range: None };
+    let mut args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, voice: true, ..Default::default() };
     let (mut look, mut hand, mut at, mut screen, mut wav) = (None, "rush".to_string(), vec![5.0, 30.0, 60.0], (1280u32, 800u32), None);
     let (mut bench_secs, mut fps, mut stamps, mut grid, mut fast, mut passes) = (None::<f32>, 60.0f32, true, 0usize, false, 0u32);
     let (mut settle, mut squad1, mut spread) = (false, false, true);

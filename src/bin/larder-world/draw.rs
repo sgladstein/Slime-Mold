@@ -809,6 +809,8 @@ impl App {
                 "Take the mould's core, or out-harvest it and cut it down by 15:00".into()
             }),
             idle: g.soldiers.iter().filter(|s| s.alive && s.order == Order::Hold).count(),
+            // No hover card while WASD steers (the screen moves under a still cursor).
+            aiming: self.sq.as_ref().is_some_and(|q| q.steering()),
             ..Model::default()
         };
         m.selection = sel.iter().map(|&k| {
@@ -1051,6 +1053,7 @@ impl App {
             for c in &mut cmds {
                 if run_lock(c.id).is_some_and(|k| !run.has(k)) {
                     c.ready = false;
+                    c.locked = true;
                     c.why_not = Some("Locked: unlock it in the shop between planets".into());
                     c.about = format!("Locked in this run (the shop sells it). {}", c.about);
                 }
@@ -1208,12 +1211,16 @@ impl App {
             // The budget (owner's card, 11-14 15:34Z) under the cards.
             note: if self.args.range.is_some() {
                 Some(if round.is_empty() { "No cards: H, the armory".into() } else { format!("Cost {} of {}  ·  H, the armory", rounds::cost(&round), gun.budget) })
+            } else if self.args.run.is_some() {
+                // (A run's gun is what its shop built: H only refused there,
+                // so it has no button; the review, 11-15.)
+                Some(if round.is_empty() { "No cards: the shop between planets sells them".into() } else { format!("Cost {} of {}  ·  change it in the shop between planets", rounds::cost(&round), gun.budget) })
             } else if round.is_empty() {
                 Some("No cards: H or the button for a loadout".into())
             } else {
                 Some(format!("Cost {} of {}", rounds::cost(&round), gun.budget))
             },
-            cycle: Some((NEXT_ROUND, KeyCode::KeyH)),
+            cycle: if self.args.run.is_some() { None } else { Some((NEXT_ROUND, KeyCode::KeyH)) },
         }
     }
 }

@@ -938,6 +938,49 @@ fn clay_islands(ground: &mut [u8], w: usize, h: usize, crystals: &[Crystal], soi
     }
 }
 
+/// How a planet opens: the crystals by the landing, by biome. Every planet
+/// opened the same way before, one crystal 85-140 map cells off toward the
+/// middle (play review, 2026-11-15: "the first crystal is 12-26 cells from
+/// the landing on 64 of 64 planets"; Age of Empires II gives each map a
+/// start built for it). The meadow keeps that start.
+struct Opening {
+    /// Crystals placed by the landing.
+    count: usize,
+    /// How far off, map cells, first toward the middle (or the slime).
+    near: (f32, f32),
+    /// The farthest, any way round, when `near` has no room.
+    far: f32,
+    /// Radius, map cells.
+    size: (f32, f32),
+    charges: &'static [f32],
+    /// Toward the nearest nest, not the map's middle.
+    toward_slime: bool,
+}
+
+impl Opening {
+    fn of(b: Biome) -> Opening {
+        let base = Opening { count: 1, near: (85.0, 140.0), far: 220.0, size: (24.0, 28.0), charges: &[192.0, 256.0], toward_slime: false };
+        match b {
+            // A gentle start, as on every planet before.
+            Biome::Meadow => base,
+            // Lean: one small crystal a walk off.
+            Biome::Barrens => Opening { near: (140.0, 185.0), far: 220.0, size: (18.0, 22.0), charges: &[128.0, 192.0], ..base },
+            // Two middling crystals, a squad's choice of bank.
+            Biome::Fen => Opening { count: 2, near: (100.0, 160.0), size: (20.0, 24.0), charges: &[192.0], ..base },
+            // One big crystal across the valley floor.
+            Biome::Valley => Opening { near: (120.0, 180.0), far: 240.0, size: (28.0, 32.0), charges: &[256.0, 384.0], ..base },
+            // Three small ones close by in the undergrowth.
+            Biome::Jungle => Opening { count: 3, near: (60.0, 110.0), far: 160.0, size: (15.0, 18.0), charges: &[128.0], ..base },
+            // One rich crystal, a climb away.
+            Biome::Highlands => Opening { near: (150.0, 195.0), far: 230.0, size: (28.0, 31.0), charges: &[384.0], ..base },
+            // Two small ones in the landing's own cavern.
+            Biome::Caves => Opening { count: 2, near: (50.0, 95.0), far: 140.0, size: (18.0, 22.0), charges: &[192.0], ..base },
+            // A rich crystal toward the slime: fought over from the start.
+            Biome::Core => Opening { near: (180.0, 230.0), far: 260.0, size: (34.0, 38.0), charges: &[512.0], toward_slime: true, ..base },
+        }
+    }
+}
+
 fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let rc = recipe.unwrap_or_else(|| Recipe::of(p));
     let (w, h) = p.size;
@@ -2017,40 +2060,49 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         items.crystals.push(Crystal { x: q.0.round(), y: q.1.round(), r: rad.round(), charge });
         items.moulds.push((q.0.round(), q.1.round()));
     }
-    // One near the landing, toward the middle: a fair start. Off the
-    // roads, which leave the landing toward the middle too: on one there,
-    // it narrowed the way round to 10 (highlands seed 3, 2026-11-15). Then
-    // any way round the landing and a little farther (a landing by the
-    // edge, its roads fanning out inward, had no room within 140), and last
-    // as before, on a road if need be.
-    let inward = unit(wf / 2.0 - landing.0, hf / 2.0 - landing.1);
-    for tries in 0..1200 {
-        let phase = tries / 400;
-        let (dx, dy) = (r.range(-1.0, 1.0), r.range(-1.0, 1.0));
-        let l = len(dx, dy);
-        if !(0.2..=1.0).contains(&l) || (phase != 1 && (dx * inward.0 + dy * inward.1) / l < 0.3) {
-            continue;
-        }
-        let d = r.range(85.0, if phase == 1 { 220.0 } else { 140.0 });
-        let c = (landing.0 + dx / l * d, landing.1 + dy / l * d);
-        let rad = r.range(24.0, 28.0);
-        // In the landing's own region, or in plain sight of it: across a
-        // ridge, the nearest crystal was a long walk round (rocky rooms,
-        // 2026-11-14). In sight, as the region alone left a landing in a
-        // small room no room off its roads (highlands seed 4, 2026-11-15).
-        let inside = c.0 > 0.0 && c.1 > 0.0 && c.0 < wf && c.1 < hf;
-        let seen = || {
-            let n = (d / 2.0) as usize;
-            (0..=n).all(|j| {
-                let t = j as f32 / n as f32;
-                let g = ground[(landing.1 + (c.1 - landing.1) * t) as usize * w + (landing.0 + (c.0 - landing.0) * t) as usize];
-                g & G_ROCK == 0 && g != DEEP
-            })
-        };
-        let home = inside && (region[c.1 as usize * w + c.0 as usize] == 0 || seen());
-        if home && (phase == 2 || !in_lane(c, rad + 8.0)) && clear(&ground, &items, c, rad, 30.0) {
-            items.crystals.push(Crystal { x: c.0.round(), y: c.1.round(), r: rad.round(), charge: [192.0, 256.0][r.below(2)] });
-            break;
+    // The opening, by biome (`Opening`): one near the landing, toward the
+    // middle, on the meadow, as on every planet before. Off the roads,
+    // which leave the landing toward the middle too: on one there, it
+    // narrowed the way round to 10 (highlands seed 3, 2026-11-15). Then any
+    // way round the landing and a little farther (a landing by the edge,
+    // its roads fanning out inward, had no room within 140), and last as
+    // before, on a road if need be.
+    let op = Opening::of(p.biome);
+    let inward = if op.toward_slime {
+        let q = nests.iter().copied().min_by(|&a, &b| dist(a, landing).total_cmp(&dist(b, landing))).unwrap_or((wf / 2.0, hf / 2.0));
+        unit(q.0 - landing.0, q.1 - landing.1)
+    } else {
+        unit(wf / 2.0 - landing.0, hf / 2.0 - landing.1)
+    };
+    for _ in 0..op.count {
+        for tries in 0..1200 {
+            let phase = tries / 400;
+            let (dx, dy) = (r.range(-1.0, 1.0), r.range(-1.0, 1.0));
+            let l = len(dx, dy);
+            if !(0.2..=1.0).contains(&l) || (phase != 1 && (dx * inward.0 + dy * inward.1) / l < 0.3) {
+                continue;
+            }
+            let d = r.range(op.near.0, if phase == 1 { op.far } else { op.near.1 });
+            let c = (landing.0 + dx / l * d, landing.1 + dy / l * d);
+            let rad = r.range(op.size.0, op.size.1);
+            // In the landing's own region, or in plain sight of it: across a
+            // ridge, the nearest crystal was a long walk round (rocky rooms,
+            // 2026-11-14). In sight, as the region alone left a landing in a
+            // small room no room off its roads (highlands seed 4, 2026-11-15).
+            let inside = c.0 > 0.0 && c.1 > 0.0 && c.0 < wf && c.1 < hf;
+            let seen = || {
+                let n = (d / 2.0) as usize;
+                (0..=n).all(|j| {
+                    let t = j as f32 / n as f32;
+                    let g = ground[(landing.1 + (c.1 - landing.1) * t) as usize * w + (landing.0 + (c.0 - landing.0) * t) as usize];
+                    g & G_ROCK == 0 && g != DEEP
+                })
+            };
+            let home = inside && (region[c.1 as usize * w + c.0 as usize] == 0 || seen());
+            if home && (phase == 2 || !in_lane(c, rad + 8.0)) && clear(&ground, &items, c, rad, 30.0) {
+                items.crystals.push(Crystal { x: c.0.round(), y: c.1.round(), r: rad.round(), charge: op.charges[r.below(op.charges.len())] });
+                break;
+            }
         }
     }
     // The rest by the pattern. `put` places one if its ground is clear.
@@ -3142,7 +3194,9 @@ mod tests {
     // filled. Then the fens (planet 3) alone for lakes 3 to 1 (11-15).
     // Then the caves (planet 7) alone for lobed caverns, tunnels of
     // varying width and arenas (11-15).
-    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xa99364b348fcba57, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0xb73dc87f4dc86a6b, 0x6f978d8f3d2eb49a];
+    // Then planets 2-8 for each biome's opening crystals (`Opening`,
+    // 11-15); the meadow keeps its start and its pin.
+    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x689ef2ee1bd03e2b, 0x88abf15af468b6c7, 0x69c90a5d19933cad, 0x1c111e19292277c5, 0x6e94308f248ff649, 0x800af9fb4a2f4910, 0x6f215522f0271821];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -3182,7 +3236,29 @@ mod tests {
     // thread), then for the front doors and back roads. The fen (3:3)
     // rolled lakes before lakes went to 3 to 1, and kept its pin. The cave
     // (7:2) re-pinned for lobed caverns and tunnels of varying width.
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x2c613f7a6c18fa9b), (3, 3, 0x7ceef0691a3a7c28), (4, 2, 0x4e2314e4cf250d1e), (7, 2, 0xf6b5705040028d94), (8, 3, 0x935543c061cbb714)];
+    // All but the meadow's (1:17) re-pinned for each biome's opening.
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x9cf43bc6b64daab9), (3, 3, 0x162f0835a692b0e6), (4, 2, 0x0e0f0073e680b114), (7, 2, 0xcc062e2508003a37), (8, 3, 0xd8db02e2b122e92e)];
+
+    /// Each biome opens its own way (`Opening`): three small crystals close
+    /// by in the jungle, a rich one a climb away in the highlands, a rich
+    /// one toward the slime on the core world. Every planet opened with one
+    /// crystal 85-140 map cells off before (play review, 2026-11-15).
+    #[test]
+    fn each_biome_opens_its_own_way() {
+        for s in 1..=3 {
+            let near = |d: u32, f: &dyn Fn(&Crystal, f32) -> bool| {
+                let m = level(s, d);
+                let land = m.items.landing.unwrap();
+                m.items.crystals.iter().filter(|c| f(c, dist((c.x, c.y), land))).count()
+            };
+            let small = near(5, &|c, d| d <= 165.0 && c.r <= 18.0 && c.charge == 128.0);
+            assert!(small >= 3, "jungle {s}: {small} small crystals by the landing");
+            let rich = near(6, &|c, d| d <= 235.0 && c.charge == 384.0);
+            assert!(rich >= 1, "highlands {s}: no rich crystal by the landing");
+            let core = near(8, &|c, d| d <= 265.0 && c.r >= 34.0 && c.charge == 512.0);
+            assert!(core >= 1, "core {s}: no rich crystal by the landing");
+        }
+    }
 
     /// Each cell's distance to the nearest cell where `open` is false,
     /// exactly (Felzenszwalb and Huttenlocher's squared distance transform,
