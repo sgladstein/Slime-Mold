@@ -211,6 +211,12 @@ pub struct Rules {
     pub charge: f32,
     /// Defend fires on mould this near, dish cells.
     pub defend: f32,
+    /// A Guard order's zone round a plain spot, dish cells (a crystal's or
+    /// a building's is its own edge plus `GUARD_RIM`): slime in it is shot
+    /// whatever the stance but hold fire (`Game::guard_zone`, owner
+    /// 2026-11-15 19:51Z). About the defend reach, so a guard on open
+    /// ground covers the ground it stands round.
+    pub guard_r: f32,
     /// Walkers the aimed 4 x 4 block must hold before a soldier fires at
     /// it. 1 (any): on rush seed 2 over 200 s, 1 wasted 1 shot of 200 and
     /// killed 1,600 walkers, 2 killed 1,486 and 4 killed 1,452, once the
@@ -360,6 +366,9 @@ pub struct Rules {
     /// seconds: none (`spray=0` in the window). (A first version threw the
     /// living mould past the strike and let it live: 22% fewer kills by 30
     /// s, 1 to 29 walkers in the air, too few to see; `Reports/dead-ends.md`.)
+    /// 0.3 s and 5 cells until the bold spray (11-15: the owner saw no
+    /// difference between all of a hit's kills flying and a quarter); now
+    /// 0.45 s and 7, drawn hot in their own layer (`view.wgsl`).
     pub spray_secs: f32,
     pub spray_reach: f32,
     /// The share of a shot's kills that spray (`squad::Frame::spray_share`;
@@ -583,6 +592,7 @@ impl Default for Rules {
             carry: 300.0,
             charge: 64.0,
             defend: 7.5,
+            guard_r: 8.0,
             aim_min: 1,
             core_r: 5.0,
             core_secs: 5.0,
@@ -603,8 +613,8 @@ impl Default for Rules {
             seek: true,
             crater: 2.0,
             sink: 1.0,
-            spray_secs: 0.3,
-            spray_reach: 5.0,
+            spray_secs: 0.45,
+            spray_reach: 7.0,
             spray_share: 1.0,
             lead: super::LeadRules::default(),
             squads: false,

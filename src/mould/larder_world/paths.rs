@@ -512,7 +512,9 @@ impl<W: World> Game<W> {
         let off = |p: (f32, f32)| self.place_at(k, p);
         match s.order {
             Order::Hold => None,
-            Order::Move(x, y) | Order::Fight(x, y) => Some(off((x, y))),
+            // A guard stands round what it guards as a move does: a crystal
+            // there moves it to the rim (`goal`).
+            Order::Move(x, y) | Order::Fight(x, y) | Order::Guard(x, y) => Some(off((x, y))),
             Order::Build(b) => {
                 // Straight at the site until in reach (`BuildRules::reach`),
                 // then stand and raise it from there, on the side it came

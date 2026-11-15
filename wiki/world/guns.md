@@ -6,6 +6,7 @@ updated: 2026-11-15
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-feel-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
@@ -50,8 +51,13 @@ every walker a shot kills flies out of the hit back toward the shooter as
 a droplet and dies where it lands, so kills are as without it
 (`Rules::spray_secs`, `spray=0` turns it off;
 [gun look](../../Reports/gun-look-2026-11-15/README.md)). How much of the
-kill flies (`Rules::spray_share`, 1 all) is a blind A/B for the owner
-([spray A/B](../../Reports/spray-share-ab-2026-11-15/README.md)).
+kill flies (`Rules::spray_share`, 1 all) went to the owner as a blind
+A/B ([spray A/B](../../Reports/spray-share-ab-2026-11-15/README.md)); they
+saw no difference, and the droplets were made bolder: their own layer in
+the view, a dark rim, white-hot cooling to orange, 0.45 s and 7 cells
+([gun feel](../../Reports/gun-feel-2026-11-15/README.md)). Camera shake
+and hit-stop on blasts are built and off (`shake=K`, `hitstop=K`; the
+review's D6, waiting on the owner).
 
 ## Owner's word
 

@@ -76,10 +76,12 @@ pub(super) fn overlapping(g: &Game<GpuWorld>, q: usize) -> Vec<usize> {
 pub(super) const SPLIT: KeyCode = KeyCode::KeyY;
 pub(super) const MERGE: KeyCode = KeyCode::KeyJ;
 pub(super) const FORMATION: KeyCode = KeyCode::KeyT;
-pub(super) const GUARDS: KeyCode = KeyCode::KeyI;
-/// Heal (owner 2026-11-15 07:41Z: "Healing should be a specific action").
-/// L is the build page's Lure, which the card takes first there.
-pub(super) const HEAL: KeyCode = KeyCode::KeyL;
+/// The card's Lookouts and Heal (Card 2, 2026-11-15 19:38Z; they were the
+/// squad panel's Guards and Heal). Heal: owner 2026-11-15 07:41Z,
+/// "Healing should be a specific action". On the build page I and L are
+/// the outpost and the lure's, as every card key is that page's there.
+pub(super) const LOOKOUTS_KEY: KeyCode = KeyCode::KeyI;
+pub(super) const HEAL_KEY: KeyCode = KeyCode::KeyL;
 
 /// The bearing (radians) the cursor must swing round the controlled
 /// squad's middle before a line or wedge turns to it again (`aim`).
@@ -120,8 +122,9 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
         (k(MERGE), "Combine: a squad overlapping yours joins it".into()),
         ("Ctrl + 1-9".into(), "Link that squad with yours while they touch (again: unlink); a link is commanded as one".into()),
-        (k(GUARDS), "Guards while working: none, some, more".into()),
-        (k(HEAL), "Heal: the squad stops and heals for food (fast by a crystal you hold)".into()),
+        (k(LOOKOUTS_KEY), "Lookouts while working: none, some, more (on the card)".into()),
+        (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
+        ("Click a building".into(), "With no squad commanded: select it (its health and state; cancel, demolish, upgrade, switch)".into()),
         (k(FORMATION), "Formation: blob, line, wedge, ring".into()),
         ("Wheel, middle drag".into(), "Zoom, pan; Space brings the camera back".into()),
     ]
@@ -303,7 +306,7 @@ impl App {
             }
             return false;
         }
-        let ours = matches!(code, SPLIT | MERGE | FORMATION | GUARDS | HEAL) || digit(code).is_some();
+        let ours = matches!(code, SPLIT | MERGE | FORMATION) || digit(code).is_some();
         if !pressed || repeat || !ours {
             return ours;
         }
@@ -323,19 +326,6 @@ impl App {
                 } else {
                     self.hud.alert("No squad overlaps yours: bring them together to combine, or link them (Ctrl + its number)", None, theme::WARN);
                 }
-            }
-            HEAL => {
-                // The whole link: it is commanded as one.
-                if g.apply(Cmd::Heal(q)) {
-                    self.hud.alert("Healing: stand still; fast by a crystal you hold, slow elsewhere, food from the bank", None, theme::TEXT);
-                }
-            }
-            GUARDS => {
-                let c = g.squads[q as usize].cover.next();
-                for r in g.linked(q as usize) {
-                    g.apply(Cmd::Cover(r as u8, c));
-                }
-                self.hud.alert(&format!("Guards while working: {}", c.name()), None, theme::TEXT);
             }
             FORMATION => {
                 let f = g.squads[q as usize].formation.next();
@@ -391,6 +381,7 @@ impl App {
     }
 
     fn switch_to(&mut self, q: u8) {
+        self.building_sel = None;
         let Some(g) = self.game.as_mut() else { return };
         if self.sq.as_ref().is_some_and(|sq| sq.free) {
             if g.members(q as usize).is_empty() || !g.apply(Cmd::Active(q)) {
@@ -444,10 +435,16 @@ impl App {
             // On the minimap: the controls move the camera there.
             Button::Left if down && self.cursor_minimap().is_some() => false,
             Button::Left if self.squad_free() => {
-                // A click on a squad takes command of it.
+                // A click on a squad takes command of it; else on a
+                // building, selects it (owner 2026-11-15 19:51Z, option b:
+                // only with no squad commanded, where the left button
+                // doesn't fire), else lets go of one selected.
                 if down {
-                    if let Some(q) = self.cursor_world().and_then(|at| self.squad_at(at)) {
+                    let at = self.cursor_world();
+                    if let Some(q) = at.and_then(|at| self.squad_at(at)) {
                         self.switch_to(q);
+                    } else {
+                        self.building_sel = at.and_then(|at| self.game.as_ref()?.building_at(at));
                     }
                 }
                 !(!down && self.controls_dragging())
@@ -640,6 +637,19 @@ impl App {
     }
 }
 
+/// Why the card's Heal would do nothing for squad `a` now (everyone whole,
+/// or healing already), or None.
+pub(super) fn heal_off(g: &Game<GpuWorld>, a: usize) -> Option<String> {
+    let ms: Vec<usize> = g.linked(a).into_iter().flat_map(|r| g.members(r)).collect();
+    if ms.iter().all(|&k| g.soldiers[k].hp >= g.rules.hp) {
+        Some("Everyone in the squad is at full health".to_string())
+    } else if g.squads[a].heal {
+        Some("Healing: give it another order to stop".to_string())
+    } else {
+        None
+    }
+}
+
 fn digit(code: KeyCode) -> Option<usize> {
     [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6, KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9].iter().position(|&k| k == code)
 }
@@ -710,22 +720,29 @@ impl App {
             } else {
                 None
             },
-            cover: g.active.map_or("some", |a| g.squads[a].cover.name()).to_string(),
-            cover_key: key_name(GUARDS),
-            heal_key: key_name(HEAL),
-            heal_off: g.active.and_then(|a| {
-                let ms: Vec<usize> = g.linked(a).into_iter().flat_map(|r| g.members(r)).collect();
-                if ms.iter().all(|&k| g.soldiers[k].hp >= g.rules.hp) {
-                    Some("Everyone in the squad is at full health".to_string())
-                } else if g.squads[a].heal {
-                    Some("Healing: give it another order to stop".to_string())
-                } else {
-                    None
-                }
-            }),
             free: g.active.is_none(),
             free_key: Some("Esc".into()),
         })
+    }
+
+    /// The card's Heal: the squad you command (and its link, commanded as
+    /// one) stops and heals.
+    pub(super) fn squad_heal(&mut self) {
+        let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
+        if g.apply(Cmd::Heal(q)) {
+            self.hud.alert("Healing: stand still; fast by a crystal you hold, slow elsewhere, food from the bank", None, theme::TEXT);
+        }
+    }
+
+    /// The card's Lookouts: the next setting for the squad you command and
+    /// its link.
+    pub(super) fn squad_lookouts(&mut self) {
+        let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
+        let c = g.squads[q as usize].cover.next();
+        for r in g.linked(q as usize) {
+            g.apply(Cmd::Cover(r as u8, c));
+        }
+        self.hud.alert(&format!("Lookouts while working: {}", c.name()), None, theme::TEXT);
     }
 
     /// A squad panel event: command a squad, bring one in, split, combine.
@@ -760,16 +777,6 @@ impl App {
                     } else if overlapping(g, q).contains(&o) {
                         g.apply(Cmd::Link(q as u8, o as u8));
                     }
-                }
-            }
-            HudEvent::SquadHeal => {
-                g.apply(Cmd::Heal(q as u8));
-            }
-            HudEvent::SquadCover => {
-                // The whole link: it is commanded as one.
-                let c = g.squads[q].cover.next();
-                for r in g.linked(q) {
-                    g.apply(Cmd::Cover(r as u8, c));
                 }
             }
             HudEvent::SquadSplit => {

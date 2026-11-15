@@ -83,8 +83,11 @@ const CARD_PAD: f32 = 8.0;
 /// ("re-arrange the bottom menu to be one row for the squad and two rows
 /// for the other buttons so the whole thing is wider but shorter"): 6 x 2,
 /// the 4 x 3 slots read in order (`card_slot`), so the bar went from 160
-/// to 113 units at 1080 lines (15% to 10% of the screen).
-const CARD_COLS: u8 = 6;
+/// to 113 units at 1080 lines (15% to 10% of the screen). 5 x 2 since the
+/// owner's Card 2 (2026-11-15 19:38Z): one fire button that cycles in the
+/// three stances' place, Burn a line gone for Guard, no empty tile; 122
+/// units narrower labelled, which goes to the selection's labels.
+const CARD_COLS: u8 = 5;
 const CARD_ROWS: u8 = 2;
 /// The bottom bar's size against the rest of the HUD. Until the owner's
 /// playtest of 11-14 20:19Z the bar drew at 1 and the minimap kept the
@@ -149,15 +152,11 @@ fn loadout_w(l: &Loadout, f: GunFit, s: f32) -> f32 {
 /// allocator and by `squad_tiles`, and drawn by `squad_tiles` (the fit
 /// once counted four buttons and #330's Heal, a fifth, then ran over
 /// "1 squad" at 150%).
-fn header_labels(p: &SquadPanel, taken: &[String]) -> [(String, Option<String>); 5] {
+/// Guards (now Lookouts) and Heal moved onto the command card with the
+/// owner's Card 2 (2026-11-15 19:38Z), which freed about 150 units here.
+fn header_labels(p: &SquadPanel, taken: &[String]) -> [(String, Option<String>); 3] {
     let shown = |k: &Option<String>| k.clone().filter(|k| !taken.contains(k));
-    [
-        ("Let go".into(), shown(&p.free_key)),
-        ("Combine".into(), shown(&p.combine_key)),
-        ("Split".into(), shown(&p.split_key)),
-        (format!("Guards: {}", p.cover), shown(&p.cover_key)),
-        ("Heal".into(), shown(&p.heal_key)),
-    ]
+    [("Let go".into(), shown(&p.free_key)), ("Combine".into(), shown(&p.combine_key)), ("Split".into(), shown(&p.split_key))]
 }
 
 /// A header button's text: its label, and its key where `keys`.
@@ -199,11 +198,11 @@ fn lock_glyph(c: &mut Canvas, p: (f32, f32), h: f32, col: Rgba) {
 const LOADOUT_CELL: f32 = 46.0;
 const LOADOUT_INFO: f32 = 124.0;
 
-/// A command's place on the 6 x 2 card from its 4 x 3 `slot` (row, col):
-/// the twelve slots in reading order, wrapped at six.
+/// A command's place on the card: its `slot` (row, column), kept on the
+/// grid. (Until Card 2, 2026-11-15, slots were the old 4 x 3 card's, read
+/// in order onto the 6 x 2 one.)
 fn card_slot(slot: (u8, u8)) -> (u8, u8) {
-    let k = slot.0.min(2) * 4 + slot.1.min(3);
-    (k / CARD_COLS, k % CARD_COLS)
+    (slot.0.min(CARD_ROWS - 1), slot.1.min(CARD_COLS - 1))
 }
 /// The selection panel's height with nothing selected.
 const COLLAPSED: f32 = 40.0;
@@ -252,7 +251,7 @@ pub enum Target {
 pub struct Command {
     /// The game's own id, echoed back in `HudEvent`s.
     pub id: u32,
-    /// Row (0-2) and column (0-3) on the card.
+    /// Row (0-1) and column (0-4) on the card.
     pub slot: (u8, u8),
     pub icon: Icon,
     pub name: String,
@@ -275,11 +274,15 @@ pub struct Command {
     pub why_not: Option<String>,
     /// Not had yet (a run's shop sells it): drawn with a lock, not a price.
     pub locked: bool,
+    /// Keys that give another command at once, tried before every button's
+    /// own key: the fire button's Z, X and C pick hold, defend and free
+    /// while a click cycles them (Card 2, 2026-11-15).
+    pub also: Vec<(KeyCode, u32)>,
 }
 
 impl Command {
     pub fn new(id: u32, slot: (u8, u8), icon: Icon, name: &str, key: KeyCode) -> Self {
-        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None, locked: false }
+        Command { id, slot, icon, name: name.into(), key, cost: None, cost_icon: Icon::Crystal, ready: true, on: false, cooldown: 0.0, wait: None, target: Target::Instant, about: String::new(), why_not: None, locked: false, also: Vec::new() }
     }
 }
 
@@ -449,14 +452,6 @@ pub struct SquadPanel {
     /// Why a button would do nothing now (greyed, the reason its tooltip).
     pub split_off: Option<String>,
     pub combine_off: Option<String>,
-    /// The squad you command's guards while it works ("some"), on the
-    /// Guards button, which cycles it (`HudEvent::SquadCover`).
-    pub cover: String,
-    pub cover_key: Option<String>,
-    /// The Heal button's key, and why it would do nothing (everyone whole,
-    /// or healing already); it sends `HudEvent::SquadHeal`.
-    pub heal_key: Option<String>,
-    pub heal_off: Option<String>,
     /// No squad commanded (Esc): the header says so and Let go greys out.
     pub free: bool,
     /// Let go's key ("Esc"), shown on it; it sends `HudEvent::SquadFree`.
@@ -575,11 +570,9 @@ pub enum HudEvent {
     /// The squad panel: link the squad on row `r` with the one you command,
     /// or unlink it.
     SquadLink(usize),
-    /// The squad panel's Split, Combine and Guards buttons.
+    /// The squad panel's Split and Combine buttons.
     SquadSplit,
     SquadCombine,
-    SquadCover,
-    SquadHeal,
     /// The squad panel's Let go: command no squad.
     SquadFree,
 }
@@ -603,8 +596,6 @@ enum Hit {
     SquadLink(usize),
     SquadSplit,
     SquadCombine,
-    SquadCover,
-    SquadHeal,
     SquadFree,
 }
 
@@ -991,8 +982,6 @@ impl Hud {
             Hit::SquadSplit => out.push(HudEvent::SquadSplit),
             Hit::SquadCombine => out.push(HudEvent::SquadCombine),
             Hit::SquadLink(r) => out.push(HudEvent::SquadLink(r)),
-            Hit::SquadCover => out.push(HudEvent::SquadCover),
-            Hit::SquadHeal => out.push(HudEvent::SquadHeal),
             Hit::SquadFree => out.push(HudEvent::SquadFree),
             Hit::MenuButton => {
                 self.menu = Some(MenuPage::Main);
@@ -1071,6 +1060,16 @@ impl Hud {
         }
         if ctrl {
             return (false, out);
+        }
+        // A button's other keys first (the fire button's Z, X and C), then
+        // the buttons' own.
+        if let Some((i, id)) = self.commands.iter().enumerate().find_map(|(i, c)| c.also.iter().find(|a| a.0 == code).map(|a| (i, a.1))) {
+            if self.commands[i].ready {
+                out.push(HudEvent::Command { id });
+            } else {
+                self.activate(i, &mut out);
+            }
+            return (true, out);
         }
         if let Some(i) = self.commands.iter().position(|c| c.key == code) {
             self.activate(i, &mut out);
@@ -1495,7 +1494,6 @@ impl Hud {
         // without their keys, and last a button that still does not fit is
         // left off rather than drawn over the gun strip. A key shows only
         // while it does this (`header_labels`).
-        let none = None;
         let free_off = p.free.then(|| "No squad commanded: every squad runs on its own. Click a tile or a squad, or press its number, to command it".to_string());
         let taken: Vec<String> = self.commands.iter().filter_map(|c| key_name(c.key)).collect();
         let labels = header_labels(p, &taken);
@@ -1503,8 +1501,6 @@ impl Hud {
             (&free_off, Hit::SquadFree, "Let go: command no squad. Each keeps its orders, fires and guards on its own, and WASD pans the camera"),
             (&p.combine_off, Hit::SquadCombine, "Combine: the nearest squad that overlaps yours joins it"),
             (&p.split_off, Hit::SquadSplit, "Split: the front half of the squad you command becomes a new squad, and you command it"),
-            (&none, Hit::SquadCover, "Guards: how many of your squad defend while it harvests or builds with slime near (none, some, more); click to change"),
-            (&p.heal_off, Hit::SquadHeal, "Heal: the squad stops where it is and heals for food from the bank, fully in 10 s by a crystal you hold, in a minute elsewhere; any other order stops it"),
         ];
         let buttons: Vec<_> = labels.iter().zip(what).map(|((l, k), (off, hit, about))| (l.as_str(), k.clone(), off, hit, about)).collect();
         let label = header_text;
@@ -1516,16 +1512,12 @@ impl Hud {
         let hw = if with_head { c.text(Weight::SemiBold, 16.0 * s, (inner.x, inner.y + 15.0 * s), Align::Left, &head, TEXT) } else { -12.0 * s };
         // Nothing left of here: the header word, or the panel's edge.
         let floor = inner.x + hw + 12.0 * s;
-        // Where they still do not fit, Guards goes first, then Heal (the
-        // review, 11-15: a narrow panel kept Guards and dropped Heal, the
-        // owner's 07:41 order), then Combine.
-        let mut keep = [true; 5];
-        for drop in [3, 4, 1] {
-            let used: f32 = buttons.iter().zip(keep).filter(|(_, k)| *k).map(|((l, k, ..), _)| c.atlas.measure(Weight::SemiBold, bpx, &label(l, k, keys)) + 26.0 * s).sum();
-            if inner.right() - used >= floor {
-                break;
-            }
-            keep[drop] = false;
+        // Where they still do not fit, Combine goes first. (Guards, then
+        // Heal, went before it until both moved onto the card, Card 2.)
+        let mut keep = [true; 3];
+        let used: f32 = buttons.iter().map(|(l, k, ..)| c.atlas.measure(Weight::SemiBold, bpx, &label(l, k, keys)) + 26.0 * s).sum();
+        if inner.right() - used < floor {
+            keep[1] = false;
         }
         let bh = 22.0 * s;
         let mut bx = inner.right();
@@ -2390,6 +2382,7 @@ pub fn key_name(k: KeyCode) -> Option<String> {
         KeyZ => "Z",
         Tab => "Tab",
         Space => "Space",
+        Delete => "Del",
         _ => return None,
     };
     Some(s.into())
@@ -2489,19 +2482,30 @@ mod tests {
         assert_eq!(r.click(Button::Left, false), (true, vec![]));
     }
 
-    /// The 4 x 3 slots land on twelve different places of the 6 x 2 card,
-    /// in reading order.
+    /// Card 2 (owner 2026-11-15 19:38Z): five by two, a slot is its own
+    /// place, and one past the edge stays on the card.
     #[test]
-    fn the_command_card_is_six_by_two_in_reading_order() {
-        let places: Vec<(u8, u8)> = (0..3).flat_map(|r| (0..4).map(move |c| card_slot((r, c)))).collect();
-        assert_eq!(places[0], (0, 0));
-        assert_eq!(places[5], (0, 5));
-        assert_eq!(places[6], (1, 0));
-        assert_eq!(places[11], (1, 5));
-        let mut sorted = places.clone();
-        sorted.sort();
-        sorted.dedup();
-        assert_eq!(sorted.len(), 12);
+    fn the_command_card_is_five_by_two() {
+        assert_eq!((CARD_COLS, CARD_ROWS), (5, 2));
+        let places: Vec<(u8, u8)> = (0..2).flat_map(|r| (0..5).map(move |c| card_slot((r, c)))).collect();
+        assert_eq!(places, (0..2).flat_map(|r| (0..5).map(move |c| (r, c))).collect::<Vec<_>>());
+        assert_eq!(card_slot((2, 6)), (1, 4));
+    }
+
+    /// A button's other keys (the fire button's Z, X and C) give their own
+    /// command, before any button's key; its click gives its own.
+    #[test]
+    fn a_buttons_other_keys_give_their_commands() {
+        let mut r = Rig::new((1920, 1080));
+        r.m.commands = vec![Command { also: vec![(KeyCode::KeyZ, 50), (KeyCode::KeyX, 51)], ..Command::new(NOW, (0, 0), Icon::Eye, "Fire", KeyCode::KeyX) }];
+        r.draw();
+        assert_eq!(r.key(KeyCode::KeyX), (true, vec![HudEvent::Command { id: 51 }]));
+        assert_eq!(r.key(KeyCode::KeyZ), (true, vec![HudEvent::Command { id: 50 }]));
+        let b = r.hud.command_rect(NOW).unwrap();
+        r.at((b.x + b.w / 2.0, b.y + b.h / 2.0));
+        r.draw();
+        assert!(r.click(Button::Left, true).0);
+        assert_eq!(r.click(Button::Left, false), (true, vec![HudEvent::Command { id: NOW }]));
     }
 
     /// The UI size (owner, 11-14 08:07Z): at every step on every screen the
@@ -2567,12 +2571,12 @@ mod tests {
     }
 
     /// The squad header shows a key only where it does that: with the
-    /// build page's letters on the card, Guards, Split, Combine and Heal
-    /// lose theirs (the review, 11-15).
+    /// build page's letters on the card, Split and Combine lose theirs (the
+    /// review, 11-15; Guards and Heal are on the card since Card 2).
     #[test]
     fn the_squad_header_shows_no_key_the_card_takes() {
         let row = |k: &str, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: 4, hp: 0.5, note: Some("holding".into()), active, near: false, linked: false, auto: !active, state: String::new() };
-        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free: false, free_key: Some("Esc".into()) };
         // Each header button's width: a key shown makes it wider.
         let widths = |cmds: Vec<Command>| {
             let mut r = Rig::new((2560, 1440));
@@ -2580,19 +2584,19 @@ mod tests {
             r.m.commands = cmds;
             r.draw();
             let w = |h: Hit| r.hud.hits.iter().find(|(_, x)| *x == h).map(|(b, _)| b.w).unwrap();
-            (w(Hit::SquadSplit), w(Hit::SquadHeal), w(Hit::SquadCombine))
+            (w(Hit::SquadSplit), w(Hit::SquadCombine))
         };
-        let (split, heal, combine) = widths(Vec::new());
-        let (split_b, heal_b, combine_b) = widths(vec![Command::new(1, (0, 0), Icon::Turret, "Siren", KeyCode::KeyY), Command::new(2, (0, 1), Icon::Turret, "Lure", KeyCode::KeyL)]);
-        assert!(split_b < split - 5.0 && heal_b < heal - 5.0, "Y and L are the card's: split {split} -> {split_b}, heal {heal} -> {heal_b}");
+        let (split, combine) = widths(Vec::new());
+        let (split_b, combine_b) = widths(vec![Command::new(1, (0, 0), Icon::Turret, "Siren", KeyCode::KeyY), Command::new(2, (0, 1), Icon::Turret, "Lure", KeyCode::KeyL)]);
+        assert!(split_b < split - 5.0, "Y is the card's: split {split} -> {split_b}");
         assert!((combine_b - combine).abs() < 0.5, "J is not on that card: {combine} -> {combine_b}");
     }
 
     #[test]
     fn the_squad_header_keeps_clear_at_every_size() {
         let row = |k: &str, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: 4, hp: 0.8, note: Some("holding".into()), active, near: false, linked: false, auto: !active, state: String::new() };
-        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
-        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit, Hit::SquadCover, Hit::SquadHeal];
+        let panel = SquadPanel { rows: vec![row("1", true)], split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free: false, free_key: Some("Esc".into()) };
+        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit];
         for screen in [(1280, 800), (1920, 1080), (2560, 1440)] {
             for user in crate::world::settings::STEPS {
                 let mut r = Rig::new(screen);
@@ -2617,7 +2621,7 @@ mod tests {
     #[test]
     fn squad_tiles_command_a_squad_bring_one_in_and_split_and_combine() {
         let row = |k: &str, n: usize, active: bool| SquadRow { key: k.into(), name: format!("Squad {k}"), soldiers: n, hp: 0.8, note: Some("holding".into()), active, near: k == "3", linked: false, auto: !active, state: String::new() };
-        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        let panel = SquadPanel { rows: vec![row("1", 8, true), row("2", 3, false), row("3", 1, false)], split_key: Some("X".into()), combine_key: Some("G".into()), split_off: None, combine_off: None, free: false, free_key: Some("Esc".into()) };
         for screen in [(1920, 1080), (1280, 720), (640, 360), (3840, 2160)] {
             let mut r = Rig::new(screen);
             r.m.squads = Some(panel.clone());
@@ -2639,10 +2643,6 @@ mod tests {
             assert!(r.hud.hits.iter().all(|(_, h)| *h != Hit::SquadLink(1)), "a squad not touching yours can't be linked");
             let b = find(&r, Hit::SquadLink(2));
             assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadLink(2)]));
-            let b = find(&r, Hit::SquadCover);
-            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadCover]));
-            let b = find(&r, Hit::SquadHeal);
-            assert_eq!(press(&mut r, b), (true, vec![HudEvent::SquadHeal]));
             let b = find(&r, Hit::Squad(1));
             // Left of the +, so the tile itself.
             assert_eq!(press(&mut r, Rect::new(b.x, b.y + b.h / 2.0, b.w / 3.0, b.h / 2.0)), (true, vec![HudEvent::Squad(1)]));
@@ -2705,20 +2705,34 @@ mod tests {
     /// drawn. Returns the cases for the printout.
     fn bar_cases(mut each: impl FnMut((u32, u32), f32, &str, usize, &Rig)) {
         let row = |k: usize| SquadRow { key: format!("{}", k + 1), name: format!("Squad {}", k + 1), soldiers: 4 + k, hp: 0.8, note: Some("holding".into()), active: k == 0, near: k == 1, linked: false, auto: k != 0, state: if k == 0 { "firing".into() } else { "holding".into() } };
-        let panel = |n: usize| SquadPanel { rows: (0..n).map(row).collect(), split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, cover: "some".into(), cover_key: Some("I".into()), heal_key: Some("L".into()), heal_off: None, free: false, free_key: Some("Esc".into()) };
+        let panel = |n: usize| SquadPanel { rows: (0..n).map(row).collect(), split_key: Some("Y".into()), combine_key: Some("J".into()), split_off: None, combine_off: None, free: false, free_key: Some("Esc".into()) };
         let gun = |slots: usize| Loadout { slots, cards: loadout().cards.into_iter().cycle().take(slots - 1).collect(), gun: Some((Icon::Rifle, "Rifle".into(), "range 20, 2 a second".into())), ..loadout() };
+        // The squad mode's Card 2 and its build page (option 1), as the
+        // game words them (owner 2026-11-15).
         let main = || -> Vec<Command> {
-            [("Move", KeyCode::KeyM), ("Attack-move", KeyCode::KeyA), ("Hold", KeyCode::KeyH), ("Harvest", KeyCode::KeyR), ("Stance", KeyCode::KeyT), ("Build", KeyCode::KeyQ), ("Tools", KeyCode::KeyE), ("Formation", KeyCode::KeyF)]
-                .into_iter()
-                .enumerate()
-                .map(|(k, (n, key))| Command::new(k as u32 + 1, ((k / 4) as u8, (k % 4) as u8), Icon::Move, n, key))
-                .collect()
+            [
+                ("Attack-move", KeyCode::KeyR, None),
+                ("Guard", KeyCode::KeyF, None),
+                ("Drain a crystal", KeyCode::KeyG, None),
+                ("Fire: defend", KeyCode::KeyX, None),
+                ("Heal", KeyCode::KeyL, None),
+                ("Buy a soldier", KeyCode::KeyB, Some("400")),
+                ("Pump", KeyCode::KeyU, Some("500")),
+                ("Build", KeyCode::KeyQ, None),
+                ("Tools", KeyCode::KeyE, None),
+                ("Lookouts: some", KeyCode::KeyI, None),
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(k, (n, key, cost))| Command { cost: cost.map(Into::into), ..Command::new(k as u32 + 1, ((k / 5) as u8, (k % 5) as u8), Icon::Move, n, key) })
+            .collect()
         };
         let build = || -> Vec<Command> {
-            [("Turret", KeyCode::KeyT, "120"), ("Wall", KeyCode::KeyV, "40"), ("Lure", KeyCode::KeyL, "60"), ("Pump", KeyCode::KeyP, "150"), ("Outpost", KeyCode::KeyI, "200"), ("Siren", KeyCode::KeyY, "80"), ("Lures on", KeyCode::KeyJ, "0")]
+            [("Turret", KeyCode::KeyT, "500"), ("Pump", KeyCode::KeyU, "500"), ("Wall", KeyCode::KeyV, "20/cell"), ("Lure", KeyCode::KeyL, "300"), ("Siren", KeyCode::KeyY, "300"), ("Lures, sirens on/off", KeyCode::KeyJ, ""), ("Outpost", KeyCode::KeyI, "400")]
                 .into_iter()
                 .enumerate()
-                .map(|(k, (n, key, cost))| Command { cost: Some(cost.into()), locked: k == 4, ..Command::new(k as u32 + 1, ((k / 4) as u8, (k % 4) as u8), Icon::Turret, n, key) })
+                .map(|(k, (n, key, cost))| Command { cost: (!cost.is_empty()).then(|| cost.into()), locked: k == 6, ..Command::new(k as u32 + 1, ((k / 5) as u8, (k % 5) as u8), Icon::Turret, n, key) })
+                .chain([Command::new(9, (1, 4), Icon::Close, "Back", KeyCode::KeyQ)])
                 .collect()
         };
         for screen in [(1600, 972), (1600, 1000), (1280, 800), (1920, 1080), (2560, 1440)] {
@@ -2774,7 +2788,7 @@ mod tests {
 
     #[test]
     fn the_bottom_row_keeps_its_text_at_every_size() {
-        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit, Hit::SquadCover, Hit::SquadHeal];
+        let heads = [Hit::SquadFree, Hit::SquadCombine, Hit::SquadSplit];
         let (mut cases, mut shrunk, mut labelled) = (0, Vec::new(), 0);
         bar_cases(|screen, user, what, slots, r| {
             cases += 1;
@@ -2816,7 +2830,7 @@ mod tests {
             // stops at 60%), so labels are never bought with one.
             if r.m.squads.is_some() {
                 let drawn = heads.iter().filter(|h| r.hud.hits.iter().any(|(_, x)| x == *h)).count();
-                assert!(drawn == 5 || (fit.scale <= 0.6 && !lab), "{at}: {drawn} squad buttons drawn, {fit:?}");
+                assert!(drawn == heads.len() || (fit.scale <= 0.6 && !lab), "{at}: {drawn} squad buttons drawn, {fit:?}");
             }
             labelled += *lab as usize;
         });

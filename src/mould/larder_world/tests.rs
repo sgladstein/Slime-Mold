@@ -2182,6 +2182,52 @@ fn a_ghost_called_off_pays_back_its_price_and_its_builders_move_on() {
     let n = g.buildings.len() - 1;
     assert!(g.buildings[n].up());
     assert!(!g.apply(Cmd::Unbuild(n)));
+    // ... it is pulled down instead, for half its price (`Cmd::Demolish`,
+    // the building card; half, owner 2026-11-15 21:37Z).
+    assert_eq!(g.building_at(c), Some(n), "a click on it finds it, standing");
+    let before = g.bank;
+    assert!(g.apply(Cmd::Demolish(n)));
+    assert_eq!(g.bank, before + 0.5 * g.rules.build.turret_cost);
+    assert!(!g.buildings[n].alive && !g.apply(Cmd::Demolish(n)), "once");
+    assert_eq!(Cmd::parse(&Cmd::Demolish(4).to_line()), Some(Cmd::Demolish(4)));
+    // A wall stands in the world's cells: not pulled down.
+    let w0 = room_near(&g, (x - 12.0 * sc, y + 12.0 * sc));
+    assert!(g.apply(Cmd::Wall(w0, (w0.0 + 4.0 * sc, w0.1))));
+    let w = g.buildings.len() - 1;
+    assert!(g.buildings[w].up() && !g.apply(Cmd::Demolish(w)));
+}
+
+/// **Guard** (owner 2026-11-15 19:51Z, in Burn a line's place): a soldier
+/// guarding a spot shoots slime in its zone that defend alone would leave,
+/// and its zone round a crystal is the crystal's rim and `GUARD_RIM`.
+#[test]
+fn a_guard_shoots_slime_on_what_it_guards() {
+    let mut g = small(1);
+    let sc = g.s();
+    let s0 = g.soldiers[0];
+    // Slime 10 cells off: past defend's 7.5, inside a guard zone round it.
+    let slime = (s0.x + 10.0 * sc, s0.y);
+    let set = |g: &mut Game<BigDish>| {
+        let s = &mut g.soldiers[0];
+        s.aim = Some(slime);
+        s.dense = 50;
+        s.touching = 0;
+    };
+    g.soldiers[0].order = Order::Hold;
+    set(&mut g);
+    assert!(g.clear_line((s0.x, s0.y), slime), "open ground by the larder");
+    assert_eq!(g.target(0), None, "defend leaves slime 10 cells off");
+    g.soldiers[0].order = Order::Guard(slime.0 + 2.0 * sc, slime.1);
+    set(&mut g);
+    assert_eq!(g.target(0), Some(slime), "a guard shoots it on the spot it guards");
+    g.soldiers[0].stance = Stance::HoldFire;
+    assert_eq!(g.target(0), None, "not on hold fire");
+    // Round a crystal: its rim and GUARD_RIM.
+    let (c, _) = g.world.crystals()[0];
+    let ((m, r), i) = (g.zone_at(c), 0);
+    assert_eq!(m, c);
+    assert!((r - (g.world.crystal_r(i) + GUARD_RIM * sc)).abs() < 1e-3);
+    assert_eq!(Cmd::parse(&Cmd::Order(2, Order::Guard(1.5, 3.0)).to_line()), Some(Cmd::Order(2, Order::Guard(1.5, 3.0))));
 }
 
 /// **A squad sent past a dead end goes round it** (2026-11-14, the squad

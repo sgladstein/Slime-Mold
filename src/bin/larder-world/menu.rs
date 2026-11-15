@@ -152,12 +152,13 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("A, click", "Attack-move; on the core, attack it"),
         ("S", "Stop"),
         ("G", "Harvest"),
-        ("F, drag", "Burn a line"),
-        ("Z / X / C", "Hold fire, defend, free fire"),
+        ("F, click", "Guard a spot, building or crystal: keep slime off it"),
+        ("Z / X / C", "Hold fire, defend, free fire (the fire button cycles them)"),
         ("B", "Buy a soldier (or select the larder)"),
-        ("V, drag", "Lay a wall"),
+        ("U, click", "Place a pump on a crystal (again on one: upgrade it)"),
         ("R", "The larder's rally point"),
-        ("Q", "Build page: turret, lure, pump, outpost, siren"),
+        ("Q", "Build page: turret, pump, wall (V, drag), lure, siren, outpost"),
+        ("Click a building", "With no soldier selected: select it (cancel, demolish, upgrade, switch)"),
         ("E", "Tools page: blast, det cord, mine"),
         ("H", "Next round loadout"),
         ("Shift+H", "Roll a test gun for the squad (rifle, carbine, long gun, scattergun in turn)"),
@@ -167,6 +168,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Tab", "Four times faster, or back"),
         ("N", "Next map"),
         ("M", "Minimap"),
+        ("F2", "Scent view: what the mould smells"),
         ("O / K", "Sound; the mould's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
@@ -180,7 +182,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     squad.extend(squad_help());
     // The card's letters as `squad_card_key` moves them.
     let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
-    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(BURN, KeyCode::KeyF)), "The card for the squad: attack-move, drain, burn".into()));
+    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(GUARD, KeyCode::KeyF)), "The card for the squad: attack-move, drain, guard".into()));
     squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
     if squads {
         squad.push(("RTS round".into(), "Options: Control, rts".into()));

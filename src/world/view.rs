@@ -148,9 +148,11 @@ pub struct View {
     look: wgpu::Buffer,
     ground: wgpu::Buffer,
     walkers: wgpu::Buffer,
-    /// Two screens of words: the walkers' specks (`draw_specks`), then the
+    /// Three screens of words: the walkers' specks (`draw_specks`), then the
     /// absorbed walkers' streaks (`draw_absorbed`, 11-14), a buffer half of
-    /// their own so the specks' calm/lean/bolt fields keep their room.
+    /// their own so the specks' calm/lean/bolt fields keep their room, then
+    /// the flung walkers' droplets (the bold spray, 11-15: a layer and a
+    /// heat a pixel, by `atomicMax`).
     specks: wgpu::Buffer,
     /// Each walker's energy, when the world grows (`set_alive`): a slot
     /// below 0 is empty or dead and draws no speck.
@@ -233,6 +235,10 @@ pub struct View {
     /// Hidden for now (a full-screen menu is up: the unframed minimap sat
     /// on the run shop's armory; UI review, 11-15).
     pub minimap_off: bool,
+    /// The scent view (F2 in Larder World, 11-15): the world dimmed under
+    /// the food scent (blue, with contour lines) and the trail (pink), the
+    /// two fields a walker smells. Needs the look (`set_look`).
+    pub scent: bool,
     has_overlay: bool,
     has_vis: bool,
     n_marks: u32,
@@ -272,7 +278,7 @@ impl View {
         let vis = storage(device, "visibility", 16);
         let (stride, out, overlay, top) = Self::screen_buffers(device, screen);
         let (look, ground, walkers) = (storage(device, "look", 16), storage(device, "ground", 16), storage(device, "walkers", 16));
-        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 8);
+        let specks = storage(device, "specks", stride as u64 * screen.1 as u64 * 12);
         let atlas = Self::atlas(device, queue);
         let (hcell, mcell, tcell) = Self::cell_buffers(device, screen);
         let alive = storage(device, "alive", 16);
@@ -342,6 +348,7 @@ impl View {
             minimap: true,
             minimap_box: None,
             minimap_off: false,
+            scent: false,
             has_overlay: false,
             has_vis: false,
             n_marks: 0,
@@ -662,7 +669,7 @@ impl View {
     pub fn resize(&mut self, screen: (u32, u32)) {
         let (stride, out, overlay, top) = Self::screen_buffers(&self.device, screen);
         (self.stride, self.out, self.overlay, self.top, self.screen) = (stride, out, overlay, top, screen);
-        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 8);
+        self.specks = storage(&self.device, "specks", stride as u64 * screen.1 as u64 * 12);
         (self.hcell, self.mcell, self.tcell) = Self::cell_buffers(&self.device, screen);
         self.fgrid = Self::fine_buffer(&self.device, screen);
         self.has_overlay = false;
@@ -798,7 +805,7 @@ impl View {
         for v in [self.alarm_side, self.alarm_full.to_bits(), self.plant_at, self.flora] {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.alarm_look.0.to_bits(), self.alarm_look.1.to_bits(), 0, 0] {
+        for v in [self.alarm_look.0.to_bits(), self.alarm_look.1.to_bits(), self.scent as u32, 0] {
             b.extend(v.to_le_bytes());
         }
         if live == 2 {
@@ -1051,6 +1058,86 @@ mod tests {
     /// "The crystals are pixelated"): a pointy-top hexagon's edge, the
     /// slanted ones too, falls where the hexagon is, to under a third of a
     /// cell, not on the cells' staircase.
+    #[test]
+    fn the_scent_view_washes_scent_and_trail_and_its_lines_are_a_pixel_or_two_at_any_zoom() {
+        // The scent view (F2, 11-15): the look's byte 3 (scent) a ramp along
+        // x, byte 0 (trail) full in the top rows. On, the scent reads blue,
+        // the trail pink, and every contour line across the ramp is one to
+        // three pixels wide, close up as well as far (owner: crisp zoomed in).
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (64usize, 40usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let mut look = vec![0u32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let scent = (x * 255 / (w - 1)) as u32;
+                let trail = if y < 8 { 255 } else { 0 };
+                look[y * w + x] = trail | scent << 24;
+            }
+        }
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &vec![0u8; w * h * 4]);
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let screen = (384, 240);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        for zoom in [6.0f32, 24.0] {
+            let mut cam = Camera::new((w, h), screen);
+            cam.zoom_to(zoom, (0.0, 0.0));
+            let shot = |view: &mut View, cam: &Camera, on: bool| {
+                view.scent = on;
+                let mut enc = dev.create_command_encoder(&Default::default());
+                view.record(&mut enc, cam, None);
+                q.submit([enc.finish()]);
+                view.picture()
+            };
+            // Strong scent, no trail: bluer with the view on.
+            cam.centre_on((52.0, 30.0));
+            let (off, on) = (shot(&mut view, &cam, false), shot(&mut view, &cam, true));
+            let (sx, sy) = cam.to_screen((52.3, 30.0));
+            let (a, b) = (
+                off.get_pixel(sx as u32, sy as u32).0,
+                on.get_pixel(sx as u32, sy as u32).0,
+            );
+            assert!(
+                b[2] as i32 > b[0] as i32 + 60 && b[2] > a[2],
+                "zoom {zoom}: scent blue {a:?} -> {b:?}"
+            );
+            // Trail, no scent: pink.
+            cam.centre_on((4.0, 3.0));
+            let on = shot(&mut view, &cam, true);
+            let (sx, sy) = cam.to_screen((4.0, 3.0));
+            let p = on.get_pixel(sx as u32, sy as u32).0;
+            assert!(p[0] as i32 > p[1] as i32 + 60, "zoom {zoom}: trail pink {p:?}");
+            // The lines across the ramp, along a row: each run of near-white
+            // pixels is 1 to 3 wide, and there are some.
+            cam.centre_on((32.0, 24.0));
+            let on = shot(&mut view, &cam, true);
+            let (mut runs, mut run) = (Vec::new(), 0);
+            for x in 0..screen.0 {
+                let p = on.get_pixel(x, 120).0;
+                if p[0] > 150 && p[1] > 170 && p[2] > 200 {
+                    run += 1
+                } else if run > 0 {
+                    runs.push(run);
+                    run = 0
+                }
+            }
+            assert!(!runs.is_empty(), "zoom {zoom}: contour lines drawn");
+            assert!(
+                runs.iter().all(|&r| (1..=3).contains(&r)),
+                "zoom {zoom}: line widths {runs:?}"
+            );
+        }
+    }
+
     #[test]
     fn crystals_are_their_hexagons_to_the_pixel() {
         let Some((dev, q)) = test_gpu() else { return };

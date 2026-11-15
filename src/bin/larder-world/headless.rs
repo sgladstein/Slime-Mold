@@ -243,8 +243,14 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
         }
+        // `real=1` (D6, 11-15): past the first frame, one window frame of
+        // `t` less the last frame's time in real seconds, so a hit-stop
+        // holds the game still across frames as the window does.
+        let real = app.args.real && fi > 0;
+        let mut once = real;
         // A mission's verdict stops the steps, as the game's end does.
-        while app.game.as_ref().is_some_and(|g| g.time() < t && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
+        while app.game.as_ref().is_some_and(|g| (once || (!real && g.time() < t)) && g.end.is_none()) && app.mission.as_ref().is_none_or(|m| m.verdict.is_none()) {
+            once = false;
             let g = app.game.as_mut().unwrap();
             let sec = g.world.ticks() / g.rules.tps as u64;
             if sec != last_sec {
@@ -332,7 +338,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
             let raids = app.game.as_ref().map_or(0, |g| g.raids.sent.len());
-            app.step(step);
+            app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
@@ -439,8 +445,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let step_s = g.rules.frame_ticks as f32 / g.rules.tps as f32;
         let into = (1.0 - (g.time() - t) / step_s).clamp(0.0, 1.0);
         let notes = (app.looks.clone(), app.tracers.clone());
-        app.sub = Some(into);
-        app.age_notes(into * step_s);
+        if !app.args.real {
+            app.sub = Some(into);
+            app.age_notes(into * step_s);
+        }
         let g = app.game.as_ref().unwrap();
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
@@ -448,6 +456,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             None if select => (0..g.soldiers.len()).collect(),
             None => Vec::new(),
         };
+        if let Some(step) = app.args.card.get(fi).cloned() {
+            card_step(&mut app, &step)?;
+        }
+        if app.sq.as_ref().is_some_and(|q| q.free) {
+            app.controls.selected.clear();
+        }
         app.hud.moved(hover);
         app.controls.cursor = hover;
         // `hand=buildq` with `hover=`: the turret is being placed under the
@@ -467,6 +481,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let zoom = if tag == "all" { app.camera.fit() } else { fixed.map_or(6.0, |f| f.2) };
             app.camera.zoom_to(zoom, app.camera.to_screen(app.camera.centre()));
             app.camera.centre_on(if tag == "all" { (app.camera.world.0 / 2.0, app.camera.world.1 / 2.0) } else { centre });
+            if tag == "near" {
+                let (sx, sy) = app.shake();
+                (app.camera.x, app.camera.y) = (app.camera.x + sx, app.camera.y + sy);
+            }
             app.prepare();
             let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
             let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("shot") });
@@ -479,7 +497,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
-        (app.looks, app.tracers) = notes;
+        if !app.args.real {
+            (app.looks, app.tracers) = notes;
+        }
         app.sub = None;
         let g = app.game.as_ref().unwrap();
         let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / app.charge0.iter().sum::<f32>().max(1.0);
@@ -686,4 +706,37 @@ pub(super) fn step_notes(g: &Game<GpuWorld>, blooks: &mut Vec<BuildingLook>, loo
         }
         (l.hp, l.carry) = (s.hp, s.carry);
     }
+}
+
+/// One step of `card=` before a frame's picture: what a player clicks on
+/// the card or the world (the command card's films, 2026-11-15).
+fn card_step(app: &mut App, step: &str) -> Result<(), String> {
+    match step {
+        "main" | "" => (app.build_page, app.tools_page) = (false, false),
+        "build" => (app.build_page, app.tools_page) = (true, false),
+        "tools" => (app.build_page, app.tools_page) = (false, true),
+        // Esc: no squad commanded, so a click on a building selects it.
+        "free" => app.let_go(),
+        // A click on the newest building (as the squad mode's click does
+        // with no squad commanded).
+        "pick" => {
+            app.let_go();
+            app.building_sel = app.game.as_ref().and_then(|g| (0..g.buildings.len()).rev().find(|&b| g.buildings[b].alive));
+        }
+        "fire" => {
+            app.hud_event(HudEvent::Command { id: FIRE })?;
+        }
+        "upgrade" | "demolish" | "switch" | "cancel" => {
+            let id = match step {
+                "upgrade" => UPGRADE,
+                "demolish" => DEMOLISH,
+                "switch" => SWITCH,
+                _ => CANCEL_BUILD,
+            };
+            app.hud_event(HudEvent::Command { id })?;
+        }
+        _ => return Err(format!("card=: no step {step} (main, build, tools, free, pick, fire, upgrade, demolish, switch, cancel)")),
+    }
+    println!("  card: {step}");
+    Ok(())
 }

@@ -51,7 +51,12 @@ struct V {
     flora: u32,
     // How strongly the alarm haze draws (`View::set_alarm_look`, 11-15):
     // on bare ground and on the slime, 1 as drawn on 11-14.
-    alarm_ground: f32, alarm_slime: f32, pad0: u32, pad1: u32,
+    alarm_ground: f32, alarm_slime: f32,
+    // The scent view (`View::scent`, F2 in Larder World, 11-15): 1 dims the
+    // world and washes over it the two fields a walker's sensor adds up
+    // (the engine's `sense_at`): the food scent (the look's byte 3) in
+    // blue with its contour lines, and the mould's trail (byte 0) in pink.
+    scent_view: u32, pad1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1240,12 +1245,58 @@ const BODY_S: f32 = 1.1;
 // The engine's scent at (x, y) (the look's byte 3, 1 - e^(-scent/60)),
 // bilinear over the four cells round it.
 fn look_scent(x: f32, y: f32) -> f32 {
+    return look_byte(x, y, 3u);
+}
+
+// The look's byte k at (x, y), bilinear over the four cells round it.
+fn look_byte(x: f32, y: f32, k: u32) -> f32 {
     let fx = x - 0.5; let fy = y - 0.5;
     let ix = i32(floor(fx)); let iy = i32(floor(fy));
     let tx = fx - f32(ix); let ty = fy - f32(iy);
-    let a = mix(byte(look[cidx(ix, iy)], 3u), byte(look[cidx(ix + 1, iy)], 3u), tx);
-    let b = mix(byte(look[cidx(ix, iy + 1)], 3u), byte(look[cidx(ix + 1, iy + 1)], 3u), tx);
+    let a = mix(byte(look[cidx(ix, iy)], k), byte(look[cidx(ix + 1, iy)], k), tx);
+    let b = mix(byte(look[cidx(ix, iy + 1)], k), byte(look[cidx(ix + 1, iy + 1)], k), tx);
     return mix(a, b, ty);
+}
+
+// The scent view (F2): what the mould smells, over the dimmed world. The
+// food scent (byte 3, 1 - e^(-scent/60)) is a blue wash by its strength
+// with a contour line every eighth of the way to full, a pixel wide at any
+// zoom (the line's width is set in screen pixels from the field's slope,
+// so it stays sharp close up, owner 11-14 20:21Z: play is zoomed in); the
+// slime climbs those lines. The trail (byte 0, the engine's soft curve of
+// it) is a pink wash: it shows trail where no walker stands, such as a
+// road or a bait round's line, which the slime's own look (trail x
+// walkers) does not draw. Nothing here is painted: both are the engine's
+// fields as this frame's look holds them.
+const SCENT_RGB = vec3<f32>(70.0, 170.0, 255.0);
+const TRAIL_RGB = vec3<f32>(255.0, 90.0, 190.0);
+const SCENT_LINES: f32 = 8.0;
+fn scent_view(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
+    var c = c0 * 0.32;
+    let tr = look_byte(x, y, 0u);
+    c = mix(c, TRAIL_RGB, clamp(tr, 0.0, 1.0) * 0.75);
+    let s = look_byte(x, y, 3u);
+    c = mix(c, SCENT_RGB, clamp(s, 0.0, 1.0) * 0.7);
+    if (s > 0.01) {
+        let h = 0.5;
+        let gx = (look_byte(x + h, y, 3u) - look_byte(x - h, y, 3u)) / (2.0 * h);
+        let gy = (look_byte(x, y + h, 3u) - look_byte(x, y - h, 3u)) / (2.0 * h);
+        // The field's change a screen pixel, and the pixels to the nearest line.
+        let per_px = max(length(vec2<f32>(gx, gy)) / P.zoom, 1.0e-5);
+        let v = s * SCENT_LINES;
+        let px = abs(fract(v + 0.5) - 0.5) / SCENT_LINES / per_px;
+        let line = 1.0 - smoothstep(0.5, 1.5, px);
+        c = mix(c, vec3<f32>(225.0, 245.0, 255.0), line * 0.85);
+    }
+    // The crystals stay as drawn (the food the scent comes from), their
+    // hexagon's edge antialiased to a pixel: under the wash they vanished
+    // and the scent's rings circled nothing (first film, 11-15).
+    let k1 = gem_near(x, y);
+    if (k1 > 0u) {
+        let inside = clamp(gem_in(k1 - 1u, x, y).x * P.zoom + 0.5, 0.0, 1.0);
+        c = mix(c, c0 * 0.9, inside);
+    }
+    return c;
 }
 
 // The engine's alarm on cell (ix, iy) (the germ fields' second block).
@@ -2698,21 +2749,45 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // spray of squares (the square was 2 zoom / 4 + 1 pixels a side: 13 x
     // 13 at zoom 24). A shot's spray droplet slows to a stop, so its tail
     // shortens as it lands.
-    if (w.w > 0.0) {
-        let rh = max(P.zoom / 4.0, 0.75);
-        let len = max(clamp(0.8 * w.w, 0.5, 3.0) * P.zoom, 2.0);
+    // The bold spray (11-15, the owner 21:37Z on the share A/B: "I see no
+    // difference"): the droplets added 6 calm walkers a pixel, and a calm
+    // walker's light falls to under 0.02 in the body (`base`), so over the
+    // slime a droplet all but vanished and the two shares differed in 5 of
+    // 30 frames. Now each droplet is drawn in its own screen of words (the
+    // specks' third, `atomicMax` of a layer and a heat): a head zoom / 3.2
+    // pixels across the radius and its tail, inside a dark rim zoom / 12
+    // pixels wide (at least one), so it reads over the bright body and
+    // the dark ground alike. A shot's spray droplet (the engine writes its
+    // flight below 0) is a killed walker blown out: white-hot while it is
+    // fast, cooling to deep orange as it slows to land. A blast's throw is
+    // living mould and keeps its gold.
+    if (w.w != 0.0) {
+        let spray = w.w < 0.0;
+        let fl = abs(w.w);
+        let rh = max(P.zoom / 3.2, 1.0);
+        let rim = max(P.zoom / 12.0, 1.0);
+        let len = max(clamp(0.8 * fl, 0.5, 3.0) * P.zoom, 2.0);
         let dir = vec2<f32>(cos(w.z), sin(w.z));
         let tail = s - dir * len;
-        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + 1.0)));
-        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + 1.0)));
+        // Heat by its flight a tick: about 0.9 cells for the fastest
+        // droplet as it leaves (`spray_reach` 7 over 0.45 s; its tail at
+        // zoom 12 about 9 pixels), under 0.2 as the slowest lands.
+        var heat = 0u;
+        if (spray) { heat = u32(round(255.0 * clamp((fl - 0.2) / 0.6, 0.0, 1.0))); }
+        let lo = vec2<i32>(floor(min(s, tail) - vec2<f32>(rh + rim + 1.0)));
+        let hi = vec2<i32>(ceil(max(s, tail) + vec2<f32>(rh + rim + 1.0)));
         for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
             for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
                 let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
                 let t = clamp(dot(s - p, dir) / len, 0.0, 1.0);
                 let r = rh * (1.0 - 0.7 * t);
-                if (distance(p, s - dir * (t * len)) <= r) {
-                    atomicAdd(&specks[u32(qy) * P.stride + u32(qx)], select(6u, 3u, t > 0.5));
-                }
+                let d = distance(p, s - dir * (t * len));
+                // The layer: 2 the droplet, 1 its rim; the tail cooler
+                // than the head.
+                var v = 0u;
+                if (d <= r) { v = (2u << 8u) | u32(f32(heat) * (1.0 - 0.5 * t)); }
+                else if (d <= r + rim) { v = 1u << 8u; }
+                if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
             }
         }
         return;
@@ -2733,6 +2808,13 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
 }
 
+// A flung walker's droplet (`draw_specks`, the bold spray, 11-15): its
+// rim, a blast's living throw, and a shot's spray from fast (hot) to
+// landing (cool).
+const DROP_RIM: vec3<f32> = vec3<f32>(34.0, 18.0, 6.0);
+const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
+const DROP_HOT: vec3<f32> = vec3<f32>(255.0, 246.0, 214.0);
+const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // Off the map in the shaded view: darker than any ground or rock.
 // The micro-look's strength: the first cut (one) read only as a faint
@@ -2835,11 +2917,26 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // warm-white outright, as the phases below do.
             let hot = atomicExchange(&specks[P.shalf + y * P.stride + x], 0u);
             c = mix(c, ABSORB_RGB, min(f32(hot) * 0.3, 0.9));
+            // A flung walker's droplet (`draw_specks`, the bold spray): its
+            // dark rim, then the droplet, a spray's by its heat.
+            let drop = atomicExchange(&specks[2u * P.shalf + y * P.stride + x], 0u);
+            if ((drop >> 8u) == 1u) { c = mix(c, DROP_RIM, 0.8); }
+            if ((drop >> 8u) == 2u) {
+                let hh = f32(drop & 255u) / 255.0;
+                var dc = DROP_GOLD;
+                if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
+                c = mix(c, dc, 0.95);
+            }
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a
             // bolting piece read red on the first film).
             c = mix(c, vec3<f32>(255.0, 178.0, 40.0), min(f32((n >> 10u) & 1023u) * (0.4 / 15.0), 0.75));
             c = mix(c, vec3<f32>(235.0, 52.0, 40.0), min(f32(n >> 20u) * (0.5 / 15.0), 0.85));
+            // Rock and walls only dim: the scent there is 0, and its lines
+            // would trace their faces.
+            if (P.scent_view != 0u) {
+                if (ta.cov >= 1.0) { c *= 0.32; } else { c = scent_view(c, fx, fy); }
+            }
             if (DEBUG_ID) { c = debug_id(fx, fy); }
         } else if (fx >= 0.0 && fy >= 0.0 && fx < f32(P.ww) && fy < f32(P.wh)) {
             if (P.zoom >= 1.0) {
@@ -2850,6 +2947,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let size = 1.0 / P.zoom;
                 c = boxed(wx, wy, size, min(u32(ceil(size)), 4u));
             }
+            if (P.scent_view != 0u && P.shade == 1u) { c = scent_view(c, fx, fy); }
         }
     }
     out[y * P.stride + x] = pack(c);

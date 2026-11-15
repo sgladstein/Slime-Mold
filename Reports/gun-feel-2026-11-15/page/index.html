@@ -1,0 +1,126 @@
+<title>Gun Feel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; each before/after pair side by side (stacked on a phone), its counts under it in mono */
+:root{
+  --bg:#eef0ee; --panel:#e0e4e1; --fg:#161a19; --muted:#56605c; --line:#c5cbc7;
+  --flash:#b86a00; --slime:#c98a12; --crystal:#137f95; --before:#6b7470;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16.5px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0;letter-spacing:.01em}
+h1{font-size:2.5rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--flash)}
+.lede{color:var(--muted);font-size:1.04rem;max-width:68ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+li{min-width:0}
+code{font:.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--flash);color:#1a1200;border-color:var(--flash)}
+button:focus-visible{outline:2px solid var(--crystal);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair.one{grid-template-columns:1fr}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:720px){.pair,.quad,.tri{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+video{width:100%;max-width:100%;aspect-ratio:16/5;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+.tag{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.tag.b{color:var(--before)} .tag.a{color:var(--flash)}
+figcaption{font-size:.92rem;color:var(--muted)}
+.counts{font:12.5px/1.55 var(--mono);color:var(--fg);background:var(--panel);padding:7px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.short{background:var(--panel);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.9rem}
+footer{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){video{animation:none}}
+.sides{display:grid;grid-template-columns:1fr 1fr}
+.sides .tag{padding:2px 0}
+</style>
+<main>
+<header>
+  <span class="eyebrow">Larder World · guns · 2026-11-15</span>
+  <h1>A bolder spray, camera shake and hit-stop</h1>
+  <p class="lede">You saw no difference in the spray A/B, and the frames agreed: the two versions differed in 5 of 30 frames. The droplets were drawn as ordinary walker specks, which the slime body dims to almost nothing. They now have their own layer. Below that are the camera shake and the hit-stop you asked to see, each next to the same moment with it off.</p>
+</header>
+
+<div class="bar">
+  <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
+  <span class="hint">Every clip is real time at 30 frames a second, zoom 12. Left is off or today's; right is the new one.</span>
+</div>
+
+<section>
+  <h2>The spray, bolder (on by default)</h2>
+  <p>Each walker a shot kills is still a real walker flying out of the hit, and the kills are the same. It is now a bigger droplet with a dark rim, white-hot while it is fast and cooling to deep orange as it lands. It flies 0.45 s and up to 7 cells (it was 0.3 s and 5). Slime thrown by a bomb keeps its gold, with the same rim.</p>
+  <figure><div class="sides"><span class="tag b">Today</span><span class="tag a">New</span></div>
+    <video src="spray-range.mp4" autoplay muted loop playsinline></video>
+    <div class="counts">Gun range, four soldiers, 2.5 to 4 s     both: shots 16  killed 133
+frames that differ from today's: 28 of 45 (up to 6,623 pixels)</div></figure>
+  <figure><div class="sides"><span class="tag b">Today</span><span class="tag a">New</span></div>
+    <video src="spray-fork.mp4" autoplay muted loop playsinline></video>
+    <div class="counts">The Fork, eight soldiers holding with plain rounds, 30 to 31.5 s     both: shots 218  killed 1,200
+frames that differ from today's: 35 of 45 (up to 10,394 pixels)</div></figure>
+</section>
+
+<section>
+  <h2>Camera shake (off unless turned on)</h2>
+  <p>Each blast shakes the camera by its size: what it kills and throws. Plain hits don't shake it, because in a fight every volley would. The HUD stays still. These are 10 seconds of eight soldiers firing bombs on the Fork, 30 to 40 s.</p>
+  <figure><div class="sides"><span class="tag b">Off</span><span class="tag a">Shake</span></div>
+    <video src="shake-pair.mp4" autoplay muted loop playsinline></video>
+    <div class="counts">both: 180 bombs, shots 272, killed 3,169 by 40 s
+shake: the camera moved in 85 of 300 frames; 2.2 pixels or less in 9 of 10, 4 or more in 14, at most 11</div></figure>
+</section>
+
+<section>
+  <h2>Hit-stop (off unless turned on)</h2>
+  <p>When a big blast lands, the game holds still for a moment (0.05 to 0.12 s by its size, at most once every 0.6 s). The flash and the flying slime hold too. The right side falls a little behind the left as the holds add up.</p>
+  <figure><div class="sides"><span class="tag b">Off</span><span class="tag a">Hit-stop</span></div>
+    <video src="stop-pair.mp4" autoplay muted loop playsinline></video>
+    <div class="counts">off: shots 272, killed 3,169 by 40 s of game
+hit-stop: 16 holds of 1 to 4 frames, 35 frames held (1.2 s of the 10);
+          at the end of the clip the game is at 39 s: shots 265, killed 3,109</div></figure>
+</section>
+
+<section class="short">
+  <h2>What's next</h2>
+  <p>The bolder spray goes in now, on by default. Shake and hit-stop stay off. If you want either one in the game, say which, and I'll turn it on by default and give it a switch in Options.</p>
+</section>
+
+<footer>Frames from <code>larder-world look=DIR hand=hold@150,265 bank=8000 rounds=bomb centre=158,268,12 real=1 [shake=1 | hitstop=1] at=30,30.033,...</code>, <code>rounds=plain</code> for the Fork spray, and <code>range=7 hand=stand centre=258,121,12</code> for the gun range. Software Vulkan; today's build is main at 6d072828. Source in <code>Reports/gun-feel-2026-11-15/</code>.</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('slow');
+  var vids=document.querySelectorAll('video');
+  function set(on){
+    b.setAttribute('aria-pressed',on?'true':'false');
+    vids.forEach(function(v){v.playbackRate=on?0.25:1;});
+    try{localStorage.setItem('gunfeel-slow',on?'1':'0');}catch(e){}
+  }
+  var on=false;
+  try{on=localStorage.getItem('gunfeel-slow')==='1';}catch(e){}
+  vids.forEach(function(v){v.addEventListener('loadedmetadata',function(){v.playbackRate=on?0.25:1;});});
+  b.addEventListener('click',function(){on=!on;set(on);});
+  set(on);
+})();
+</script>
