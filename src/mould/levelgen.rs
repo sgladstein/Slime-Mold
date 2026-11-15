@@ -561,6 +561,14 @@ pub struct Recipe {
     /// Open arenas (the core world): field regions with every border to
     /// their neighbours open and no outcrops, fronts or hedges in them.
     pub arenas: usize,
+    /// A moat of deep water round each nest's rock rim, the rock a thinner
+    /// lip inside it, the door a bridge across the moat. Off on every
+    /// biome: made for the fens (the planet reviews could name only 4 of 8
+    /// biomes at zoom 12, and every bowl's rim was the same grey rock), but
+    /// in game the slime covers most of the moat by 30 s and it then reads
+    /// as little more than a thinner rim (2026-11-15). Up to the owner, as
+    /// a blind A/B (`Reports/levelgen-fen-moats-2026-11-15/`).
+    pub moat: bool,
 }
 
 /// Open arenas on the core world (`Recipe::arenas`), on the 1024 x 640
@@ -584,7 +592,10 @@ impl Recipe {
         let (open, water, soil, pattern): Odds = match p.biome {
             Biome::Meadow => (&[(O::Open, 3), (O::Outcrops, 2), (O::Pillars, 1)], &[(W::Pools, 2), (W::Dry, 1), (W::Streams, 1)], &[(S::Plain, 2), (S::Sand, 1), (S::Clay, 1)], &[(P::Scattered, 3), (P::Fields, 3), (P::Richer, 2), (P::Veins, 1), (P::Jackpot, 1)]),
             Biome::Barrens => (&[(O::Open, 2), (O::Outcrops, 2), (O::Pillars, 1)], &[(W::Dry, 1)], &[(S::Bands, 1), (S::Oases, 1)], &[(P::Scattered, 2), (P::Veins, 2), (P::Richer, 2), (P::Jackpot, 1)]),
-            Biome::Fen => (&[(O::Open, 2), (O::Outcrops, 2)], &[(W::Lakes, 2), (W::Pools, 2)], &[(S::Clay, 2), (S::Plain, 1)], &[(P::Veins, 3), (P::Fields, 2), (P::Scattered, 2), (P::Richer, 1)]),
+            // Lakes 3 to 1: at 2 to 2, 6 of 8 fens in the planet reviews
+            // rolled only pools, which a squad walks through, and played
+            // like the barrens (2026-11-15).
+            Biome::Fen => (&[(O::Open, 2), (O::Outcrops, 2)], &[(W::Lakes, 3), (W::Pools, 1)], &[(S::Clay, 2), (S::Plain, 1)], &[(P::Veins, 3), (P::Fields, 2), (P::Scattered, 2), (P::Richer, 1)]),
             Biome::Valley => (&[(O::Ridges, 2), (O::Outcrops, 1)], &[(W::Rivers, 1)], &[(S::Dunes, 2), (S::Sand, 1)], &[(P::Fields, 3), (P::Veins, 2), (P::Richer, 2), (P::Scattered, 1)]),
             Biome::Jungle => (&[(O::Outcrops, 2), (O::Open, 1)], &[(W::Streams, 2), (W::Pools, 1)], &[(S::Clay, 2), (S::Plain, 1)], &[(P::Scattered, 3), (P::Fields, 2), (P::Jackpot, 1), (P::Richer, 1)]),
             Biome::Highlands => (&[(O::Rooms, 3), (O::Ridges, 1)], &[(W::Dry, 2), (W::Pools, 1)], &[(S::Cracks, 2), (S::Clay, 1)], &[(P::Fields, 3), (P::Jackpot, 2), (P::Richer, 2), (P::Scattered, 1)]),
@@ -620,6 +631,7 @@ impl Recipe {
             hedges: 0,
             arenas: 0,
             rivers: 0,
+            moat: false,
         };
         // Openness: the rock.
         let rc = match openness {
@@ -1677,6 +1689,8 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         q: (f32, f32),
         inner: f32,
         thick: f32,
+        /// The most the rim (or moat) reaches.
+        reach: f32,
         front: (f32, f32),
         back: (f32, f32),
         door: f32,
@@ -1701,7 +1715,8 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let thick = r.range(26.0, 36.0);
             let inner = r.range(104.0, 136.0);
             // The most the rim reaches, with its wobble.
-            (thick, inner, inner * 1.15 + thick * 1.4)
+            let reach = inner * 1.15 + thick * if rc.moat { 1.9 } else { 1.4 };
+            (thick, inner, reach)
         })
         .collect();
     for (k, &q) in nests.iter().enumerate() {
@@ -1793,7 +1808,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
         road.extend(&pts[1..]);
         road.push((q.0 + back.0 * inner * 0.55, q.1 + back.1 * inner * 0.55));
         lanes.push((road, hw));
-        bowls.push(Bowl { q, inner, thick, front, back, door: r.range(14.0, 18.0), breach: r.range(56.0, 70.0) });
+        bowls.push(Bowl { q, inner, thick, reach: outer, front, back, door: r.range(14.0, 18.0), breach: r.range(56.0, 70.0) });
     }
     // The roads first, then the rims over them (a road can't cut another
     // nest's rim), then the bowls, doors and breaches.
@@ -1806,26 +1821,71 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     }
     let cross = |v: (f32, f32), u: (f32, f32)| (v.0 * u.1 - v.1 * u.0).abs();
     let dot = |v: (f32, f32), u: (f32, f32)| v.0 * u.0 + v.1 * u.1;
+    // A rim's inner edge, its rock's outer edge and its moat's outer edge
+    // at a cell. Lobed and knobbly, not a ring: the noises sit near 0.5
+    // (most within 0.25-0.75), so at first, at 0.16 and 0.5, the rim read
+    // as a drawn circle in game (2026-11-15). A moat (`Recipe::moat`) lies
+    // outside a thinner rock lip, wide where the lip is thin. Deep water
+    // alone, as the whole rim, held nothing: the slime's start covered the
+    // moat by 1 s (its start fills every cell of its disc but rock), the
+    // moat never showed, and shots fly over deep water (fens, 2026-11-15).
+    let rim_at = |b: &Bowl, x: usize, y: usize| {
+        let inner = b.inner * (1.0 + 0.6 * (rough.at(x, y) - 0.5));
+        let f = fine.at(x, y);
+        if rc.moat {
+            let lip = inner + b.thick * (0.3 + 1.0 * f);
+            (inner, lip, lip + b.thick * (0.6 + 1.0 * (1.0 - f)))
+        } else {
+            let lip = inner + b.thick * (0.3 + 1.4 * f);
+            (inner, lip, lip)
+        }
+    };
+    // A moat's door is a bridge: a straight deck along the door from 6
+    // cells inside the water's nearest reach to 6 past its farthest, as
+    // the rivers' decks (planet reviews: a deck that followed the bank's
+    // outline read as a mistake).
+    let decks: Vec<(f32, f32)> = bowls
+        .iter()
+        .map(|b| {
+            if !rc.moat {
+                return (0.0, -1.0);
+            }
+            let side = (-b.front.1, b.front.0);
+            let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+            for c in [-b.door, 0.0, b.door] {
+                for t in (b.inner as usize / 2)..(b.reach as usize + 8) {
+                    let p = (b.q.0 + b.front.0 * t as f32 + side.0 * c, b.q.1 + b.front.1 * t as f32 + side.1 * c);
+                    if p.0 < 0.0 || p.1 < 0.0 || p.0 >= wf || p.1 >= hf {
+                        continue;
+                    }
+                    let (_, lip, outer) = rim_at(b, p.0 as usize, p.1 as usize);
+                    let rho = dist(p, b.q);
+                    if rho >= lip && rho < outer {
+                        lo = lo.min(t as f32);
+                        hi = hi.max(t as f32);
+                    }
+                }
+            }
+            (lo - 6.0, hi + 6.0)
+        })
+        .collect();
     for pass in 0..2 {
-        for b in &bowls {
-            let m = b.inner * 1.3 + b.thick * 1.7 + 60.0;
+        for (b, deck) in bowls.iter().zip(&decks) {
+            let m = b.inner * 1.3 + b.thick * 2.0 + 60.0;
             for y in ((b.q.1 - m).max(0.0) as usize)..((b.q.1 + m).max(0.0) as usize).min(h) {
                 for x in ((b.q.0 - m).max(0.0) as usize)..((b.q.0 + m).max(0.0) as usize).min(w) {
                     let v = (x as f32 + 0.5 - b.q.0, y as f32 + 0.5 - b.q.1);
                     let rho = len(v.0, v.1);
-                    // Lobed and knobbly, not a ring: the noises sit near
-                    // 0.5 (most within 0.25-0.75), so at first, at 0.16
-                    // and 0.5, the rim read as a drawn circle in game
-                    // (2026-11-15).
-                    let inner = b.inner * (1.0 + 0.6 * (rough.at(x, y) - 0.5));
-                    let outer = inner + b.thick * (0.3 + 1.4 * fine.at(x, y));
+                    let (inner, lip, outer) = rim_at(b, x, y);
                     let door = dot(v, b.front) > 0.0 && cross(v, b.front) < b.door;
                     let breach = dot(v, b.back) > 0.0 && cross(v, b.back) < b.breach * (0.9 + 0.2 * fine.at(x, y));
                     let i = y * w + x;
                     if pass == 0 {
                         if rho >= inner && rho < outer && !door && !breach {
-                            ground[i] = G_ROCK;
+                            ground[i] = if rho < lip { G_ROCK } else { DEEP };
                         }
+                    } else if rc.moat && door && (deck.0..=deck.1).contains(&dot(v, b.front)) {
+                        ground[i] = G_BRIDGE;
                     } else if rho < inner || ((door || breach) && rho > inner * 0.5 && rho < outer + 40.0) {
                         clear_cell(&mut ground, i);
                     }
@@ -1837,7 +1897,7 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     // door, until it meets open ground (at once, on open planets; in the
     // caves, the nearest tunnel or cavern).
     for b in &bowls {
-        let outer = b.inner * 1.15 + b.thick * 1.4;
+        let outer = b.reach;
         let mut end = outer + 30.0;
         while end < outer + 600.0 {
             let p = (b.q.0 + b.front.0 * end, b.q.1 + b.front.1 * end);
@@ -3032,8 +3092,8 @@ mod tests {
     // or plants. Then every planet again for the front doors and back
     // roads (11-15): a rock bowl round each nest, roads over the ground,
     // the landing's crystal and the rings off the roads, cut-off caverns
-    // filled.
-    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xce90c672ed6a76a3, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0x7829c12a5aab8f47, 0x6f978d8f3d2eb49a];
+    // filled. Then the fens (planet 3) alone for lakes 3 to 1 (11-15).
+    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xa99364b348fcba57, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0x7829c12a5aab8f47, 0x6f978d8f3d2eb49a];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -3070,7 +3130,8 @@ mod tests {
     }
 
     // Re-pinned for the item text's `flora` line too (11-15, plants
-    // thread), then for the front doors and back roads.
+    // thread), then for the front doors and back roads. The fen (3:3)
+    // rolled lakes before lakes went to 3 to 1, and kept its pin.
     const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x2c613f7a6c18fa9b), (3, 3, 0x7ceef0691a3a7c28), (4, 2, 0x4e2314e4cf250d1e), (7, 2, 0xcff905ed38edd8e0), (8, 3, 0x935543c061cbb714)];
 
     /// Every nest has a front door and a back road (play review,
@@ -3092,6 +3153,40 @@ mod tests {
             }
         }
         assert!(bad.is_empty(), "{}", bad.join("\n"));
+    }
+    /// With `Recipe::moat` on, a fen's nests sit in moats (2026-11-15): on
+    /// seeds 1-6, at least a tenth of the ground 100-260 map cells from
+    /// each nest is deep water (13-30% with the moats, 0% on 5 of 6
+    /// without), and the door is a bridge (a deck within 260 cells of the
+    /// nest). Off, as on every biome now, no bridge by a meadow's nest.
+    #[test]
+    fn moats_ring_the_nests_with_a_bridge() {
+        let near = |m: &Map, q: (f32, f32), lo: f32, hi: f32, g: u8| {
+            let (mut n, mut hit) = (0, 0);
+            for y in 0..m.h {
+                for x in 0..m.w {
+                    let d = dist((x as f32 + 0.5, y as f32 + 0.5), q);
+                    if d >= lo && d < hi {
+                        n += 1;
+                        hit += (m.ground[y * m.w + x] == g) as usize;
+                    }
+                }
+            }
+            (hit, n)
+        };
+        for s in 1..=6 {
+            let p = planet(s, 3);
+            let m = build_with(&p, 0, Some(Recipe { moat: true, ..Recipe::of(&p) }));
+            for (k, &q) in m.items.moulds.iter().enumerate() {
+                let (deep, n) = near(&m, q, 100.0, 260.0, G_DEEP);
+                assert!(deep * 10 >= n, "fen seed {s} nest {k}: {deep} of {n} cells deep");
+                assert!(near(&m, q, 0.0, 260.0, G_BRIDGE).0 > 0, "fen seed {s} nest {k}: no bridge");
+            }
+            let m = level(s, 1);
+            for &q in &m.items.moulds {
+                assert_eq!(near(&m, q, 0.0, 260.0, G_BRIDGE).0, 0, "meadow seed {s}: a bridge by the nest");
+            }
+        }
     }
     /// Nests keep off the map's edges by at least 150 map cells, and two
     /// nests stand at least a fifth of the map's width apart (0.3 wanted;

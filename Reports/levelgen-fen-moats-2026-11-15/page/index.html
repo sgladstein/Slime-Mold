@@ -1,0 +1,225 @@
+<title>Fen Lakes and Rims</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Fen lakes 3 to 1, and a blind A/B of the fen nest's rim (11-15). Same look as the doors page; the A/B key is in raw/ab-key.txt, never on this page. */
+:root {
+  --bg: #11161b; --panel: #182028; --line: #2a3540; --fg: #e3e9ee; --muted: #93a2ae;
+  --slime: #e8a43a; --rock: #8f969d; --road: #3c4a3a; --crystal: #3fc6dc; --play: #8fc37a; --tech: #8fa8e8; --done: #8fc37a;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; } }
+:root[data-theme="light"] { --bg: #eef1f3; --panel: #ffffff; --line: #d3dae0; --fg: #172028; --muted: #55636f; --slime: #a8650a; --rock: #9ba2a9; --road: #cfd8c4; --crystal: #0e7f93; --play: #3f7a2c; --tech: #3753a8; --done: #3f7a2c; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 72px; display: grid; gap: 40px; }
+h1 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; }
+h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; font-size: clamp(21px, 3vw, 26px); line-height: 1.2; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 20px; max-width: 72ch; }
+li + li { margin-top: 4px; }
+code { font: 13px/1.4 var(--mono); }
+.top, .sec { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--slime); }
+.muted { color: var(--muted); }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.score div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.score b { font: 600 15px/1.2 var(--display); }
+.score .n { font: 600 30px/1 var(--display); }
+.looks { color: var(--slime); } .playc { color: var(--play); } .techc { color: var(--tech); }
+.item { display: grid; gap: 14px; padding-top: 26px; border-top: 1px solid var(--line); }
+.ihead { display: flex; gap: 16px; align-items: flex-start; }
+.rank { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--slime); color: var(--slime); font: 600 20px/1 var(--display); border-radius: 50%; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); }
+.tag.l { color: var(--slime); border-color: color-mix(in srgb, var(--slime) 45%, transparent); }
+.tag.p { color: var(--play); border-color: color-mix(in srgb, var(--play) 45%, transparent); }
+.tag.t { color: var(--tech); border-color: color-mix(in srgb, var(--tech) 45%, transparent); }
+.fix { display: grid; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--slime); background: var(--panel); max-width: 80ch; }
+.fix strong { font-family: var(--display); font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.figs.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+figure img, figure video { width: 100%; height: auto; display: block; border-radius: 4px; background: #000; }
+figure.narrow img { max-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 70ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 500 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+td.bad { color: var(--slime); font-weight: 600; }
+td.ok { color: var(--done); }
+.good { display: grid; gap: 6px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.qs { display: grid; gap: 8px; counter-reset: q; padding: 0; list-style: none; }
+.qs li { padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.figs.one { grid-template-columns: 1fr; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ba { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ba.after { color: var(--slime); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.diagram { max-width: 680px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram text { font: 500 13px var(--body); fill: var(--muted); }
+.diagram text.k { fill: var(--fg); font-weight: 600; }
+.stats { font: 12.5px/1.45 var(--mono); color: var(--muted); }
+.stats b { color: var(--fg); font-weight: 500; }
+.planet { display: grid; gap: 10px; }
+.planet h3 small { font: 500 12px var(--mono); color: var(--muted); letter-spacing: 0.04em; margin-left: 8px; }
+.figs.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.ab { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.ab .lab { font: 600 15px/1 var(--display); color: var(--slime); letter-spacing: 0.04em; }
+.ab figcaption { font: 12.5px/1.45 var(--mono); }
+.view { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 6px; }
+.ask { display: grid; gap: 8px; padding: 16px 18px; border: 1px solid var(--slime); border-radius: 6px; background: var(--panel); max-width: 80ch; }
+.ask strong { font: 600 18px/1.3 var(--display); }
+</style>
+<div class="wrap">
+
+<header class="top">
+<div class="eyebrow">Roguelike run · planet 3, the fens · 2026-11-15</div>
+<h1>Fen Lakes and Rims</h1>
+<p>The looks review found the fens played like the barrens: 6 of 8 had rolled only pools, which a squad walks straight through. Fens now roll lakes 3 times in 4, deep water a squad has to go round. And every nest's rim was the same grey rock on every biome, so the fen nest got a second rim to try. Which one reads better in play is your call, below, as a blind A/B.</p>
+<div class="score">
+<div><b>Fens with lakes</b><span class="n">8 → 15</span><span class="muted">of 20 fens (seeds 1-20). Lakes were rolled 2 times in 4, now 3 in 4.</span></div>
+<div><b>The rim</b><span class="n">A or B</span><span class="muted">Two rims for a fen nest, both on the new lakes. Films and stills below, same seed and moment side by side, with the counts under each.</span></div>
+<div><b>What it costs</b><span class="n">18 → 18-19</span><span class="muted">first-try passes of 20 (19 on one rim). Build 96 → 102 ms (machine noise). Crystals 13 either way.</span></div>
+</div>
+</header>
+
+<section class="item">
+<div class="ihead"><div class="rank">1</div><div><h2>Which rim for a fen nest?</h2>
+<div class="tags"><span class="tag l">looks</span><span class="tag">blind A/B</span><span class="tag">4 fens</span></div></div></div>
+<p>One side is the rock rim every nest has today. The other is a thinner rock lip with a moat of deep water round it, crossed by a bridge at the door. Soldiers can't wade the moat; the slime crawls across it, and shots fly over it. Both have the same front door and breach. Which side is which stays off this page.</p>
+<p class="muted">Frames from the game itself (llvmpipe, no hands on the controls), centred on the nest. "Door / way round" is the planet's own check of that nest, in dish cells.</p>
+<div class="ask"><strong>Reply A or B.</strong><span>Or "neither": either way the lakes stay. The pick sets the fen's rim; I'd look at the jungle and the meadow next.</span></div>
+<div class="planet"><h3>Seed 4, Zovor<small>the first minute, a frame every 3 s</small></h3>
+<div class="ab">
+<figure><span class="lab">A</span><video src="pics/ab-3-4-film-A.mp4" autoplay muted loop playsinline controls></video><figcaption>door / way round <b>8 / 22</b> · crystals <b>12</b> · rock <b>2%</b></figcaption></figure>
+<figure><span class="lab">B</span><video src="pics/ab-3-4-film-B.mp4" autoplay muted loop playsinline controls></video><figcaption>door / way round <b>8 / 22</b> · crystals <b>11</b> · rock <b>2%</b></figcaption></figure>
+</div></div>
+<div class="planet"><h3>Seed 7, Pheske<small>the first minute, a frame every 3 s</small></h3>
+<div class="ab">
+<figure><span class="lab">A</span><video src="pics/ab-3-7-film-A.mp4" autoplay muted loop playsinline controls></video><figcaption>door / way round <b>6 / 18</b> · crystals <b>16</b> · rock <b>6%</b></figcaption></figure>
+<figure><span class="lab">B</span><video src="pics/ab-3-7-film-B.mp4" autoplay muted loop playsinline controls></video><figcaption>door / way round <b>6 / 20</b> · crystals <b>16</b> · rock <b>5%</b></figcaption></figure>
+</div></div>
+<div class="planet"><h3>Seed 1, Drevix<small>stills</small></h3>
+<div class="view">Zoom 3, 1 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-1-z3-1s-A.webp" alt="Fen seed 1, A, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 16</b> · crystals <b>10</b> · rock <b>7%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-1-z3-1s-B.webp" alt="Fen seed 1, B, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>10</b> · rock <b>6%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 3, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-1-z3-30s-A.webp" alt="Fen seed 1, A, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 16</b> · crystals <b>10</b> · rock <b>7%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-1-z3-30s-B.webp" alt="Fen seed 1, B, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>10</b> · rock <b>6%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 5, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-1-z5-30s-A.webp" alt="Fen seed 1, A, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 16</b> · crystals <b>10</b> · rock <b>7%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-1-z5-30s-B.webp" alt="Fen seed 1, B, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>10</b> · rock <b>6%</b></figcaption></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 4, Zovor<small>stills</small></h3>
+<div class="view">Zoom 3, 1 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-4-z3-1s-A.webp" alt="Fen seed 4, A, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>12</b> · rock <b>2%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-4-z3-1s-B.webp" alt="Fen seed 4, B, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>11</b> · rock <b>2%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 3, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-4-z3-30s-A.webp" alt="Fen seed 4, A, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>12</b> · rock <b>2%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-4-z3-30s-B.webp" alt="Fen seed 4, B, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>11</b> · rock <b>2%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 5, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-4-z5-30s-A.webp" alt="Fen seed 4, A, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>12</b> · rock <b>2%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-4-z5-30s-B.webp" alt="Fen seed 4, B, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>8 / 22</b> · crystals <b>11</b> · rock <b>2%</b></figcaption></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 7, Pheske<small>stills</small></h3>
+<div class="view">Zoom 3, 1 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-7-z3-1s-A.webp" alt="Fen seed 7, A, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>16</b> · rock <b>6%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-7-z3-1s-B.webp" alt="Fen seed 7, B, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 20</b> · crystals <b>16</b> · rock <b>5%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 3, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-7-z3-30s-A.webp" alt="Fen seed 7, A, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>16</b> · rock <b>6%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-7-z3-30s-B.webp" alt="Fen seed 7, B, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 20</b> · crystals <b>16</b> · rock <b>5%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 5, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-7-z5-30s-A.webp" alt="Fen seed 7, A, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 18</b> · crystals <b>16</b> · rock <b>6%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-7-z5-30s-B.webp" alt="Fen seed 7, B, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 20</b> · crystals <b>16</b> · rock <b>5%</b></figcaption></figure>
+</div>
+</div>
+<div class="planet"><h3>Seed 15, Thassus<small>stills</small></h3>
+<div class="view">Zoom 3, 1 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-15-z3-1s-A.webp" alt="Fen seed 15, A, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 28</b> · crystals <b>15</b> · rock <b>4%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-15-z3-1s-B.webp" alt="Fen seed 15, B, zoom 3, 1 s" loading="lazy"><figcaption>door / way round <b>6 / 22</b> · crystals <b>14</b> · rock <b>3%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 3, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-15-z3-30s-A.webp" alt="Fen seed 15, A, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 28</b> · crystals <b>15</b> · rock <b>4%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-15-z3-30s-B.webp" alt="Fen seed 15, B, zoom 3, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 22</b> · crystals <b>14</b> · rock <b>3%</b></figcaption></figure>
+</div>
+<div class="view">Zoom 5, 30 s</div>
+<div class="ab">
+<figure><span class="lab">A</span><img src="pics/ab-3-15-z5-30s-A.webp" alt="Fen seed 15, A, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 28</b> · crystals <b>15</b> · rock <b>4%</b></figcaption></figure>
+<figure><span class="lab">B</span><img src="pics/ab-3-15-z5-30s-B.webp" alt="Fen seed 15, B, zoom 5, 30 s" loading="lazy"><figcaption>door / way round <b>6 / 22</b> · crystals <b>14</b> · rock <b>3%</b></figcaption></figure>
+</div>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">2</div><div><h2>Fens roll lakes</h2>
+<div class="tags"><span class="tag p">play</span><span class="tag">20 fens</span></div></div></div>
+<p>Two fens that rolled pools before and lakes now, in false colour: the map before this change on the left, after on the right. Pools are shallow, the slime's step halves on them, but a squad walks through. A lake's middle is deep: soldiers go round it, and it splits the fen into banks.</p>
+<div class="key"><span><i style="background:#5f643c"></i>ground</span><span><i style="background:#3c648c"></i>shallow water</span><span><i style="background:#192850"></i>deep water</span><span><i style="background:#aa783c"></i>bridge</span><span><i style="background:#96969b"></i>rock</span><span><i style="background:#3cdce6"></i>crystal</span><span><i style="border:2px solid #ff3c28"></i>nest</span><span><i style="border:2px solid #ffe600"></i>landing</span></div>
+<div class="figs one">
+<figure><img src="pics/fc-lakes-3-1.webp" alt="Fen seed 1 in false colour: pools before, lakes after" loading="lazy"><figcaption><b>Seed 1, Drevix.</b> Pools → lakes. Water 30% → 21% of the ground, now deep in the middle; crystals 7 → 10; rock 7% → 7%; door / way round 6 / 20 → 6 / 16.</figcaption></figure>
+<figure><img src="pics/fc-lakes-3-7.webp" alt="Fen seed 7 in false colour: pools before, lakes after" loading="lazy"><figcaption><b>Seed 7, Pheske.</b> Pools → lakes. Water 23% → 14%; crystals 16 → 16; rock 6% → 6%; door / way round 6 / 20 → 6 / 18.</figcaption></figure>
+</div>
+</section>
+
+<section class="item">
+<div class="ihead"><div class="rank">3</div><div><h2>Measured</h2>
+<div class="tags"><span class="tag">20 fens</span><span class="tag">seeds 1-20</span></div></div></div>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Before</th><th>Lakes, rock rims</th><th>Lakes, moats</th></tr></thead>
+<tbody>
+<tr><td>Fens with lakes</td><td>8</td><td class="ok">15</td><td class="ok">15</td></tr>
+<tr><td>First-try passes</td><td>18</td><td>18</td><td>19</td></tr>
+<tr><td>Median build</td><td>96 ms</td><td>102 ms</td><td>104 ms</td></tr>
+<tr><td>Median rock share</td><td>5.5%</td><td>5.5%</td><td>4.5%</td></tr>
+<tr><td>Median crystals</td><td>13</td><td>13</td><td>13</td></tr>
+<tr><td>Door (dish cells)</td><td>6-8</td><td>6-8</td><td>6-8</td></tr>
+<tr><td>Way round</td><td>18-30, median 24</td><td>16-30, median 22</td><td>16-30, median 20</td></tr>
+</tbody></table></div>
+<p class="muted">The columns name the variants, so the table sits apart from the pictures. Build times are within this machine's noise: the meadow, unchanged, went 54 → 62 ms in the same runs. No other planet changed; their 140 map pictures are byte-identical to before.</p>
+</section>
+
+<section class="sec">
+<h2>Tried on the way</h2>
+<ul>
+<li><b>Deep water as the whole rim, no rock.</b> The slime's start covered it by 1 s: the start fills every cell of its disc but rock. And shots fly over deep water, so the moat would have had to reach past the gun's range of the nest to keep the door and breach the only ways in.</li>
+</ul>
+</section>
+
+<section class="sec">
+<h2>Not done here, and next</h2>
+<ul>
+<li><b>The jungle and the meadow.</b> A thorn hedge is soft rock, which the slime wears through in 20-30 s, so the bowl would open on every side; a ring of boulders leaves gaps a soldier walks through. Each needs a rule of its own first.</li>
+<li><b>The slime's start on water.</b> It fills deep water inside its disc; that is the organic start's rule, not the map's.</li>
+<li><b>Next:</b> cave tunnels 5-15 wide, a landing crystal per biome, and nests kept off river crossings.</li>
+</ul>
+</section>
+
+</div>
