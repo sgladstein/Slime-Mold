@@ -1484,6 +1484,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // `menu=0` never; with no arguments at all the window opens on it.
     // With `look=`, `menu=PAGE` films that page over the round.
     let mut menu_flag: Option<String> = None;
+    // Whether the command line says `mode=`: if not, a window plays the
+    // squad mode (owner 2026-11-15 07:57Z: "squad mode is default mode");
+    // the no-window films and censuses (`look=`) and the bench keep the RTS round they
+    // were written for unless they say `mode=squads`.
+    let mut mode_given = false;
     // (`ui=` alone still opens on the menu: it only sizes the UI.)
     let bare = std::env::args().skip(1).all(|a| a.starts_with("ui="));
     let mut ui = None;
@@ -1510,6 +1515,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "dev" => args.dev = v != "0",
             "grow" => args.grow = Some(v.parse()?),
             "mode" => {
+                mode_given = true;
                 args.squads = match v {
                     "squads" => true,
                     "rts" => false,
@@ -1654,6 +1660,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The pictures and the bench draw at `ui=` or 100%, never at a size
     // saved on this machine; the window opens at the saved size.
     set_ui_user(ui.unwrap_or_else(|| if look.is_some() || bench_secs.is_some() { 1.0 } else { settings::saved_ui() }));
+    if !mode_given && look.is_none() && bench_secs.is_none() {
+        args.squads = true;
+    }
     let base = args.clone();
     // A run keeps its tier's mould, as a mission does.
     if let Some(r) = args.run.as_mut() {

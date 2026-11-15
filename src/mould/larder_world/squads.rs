@@ -189,6 +189,11 @@ pub struct Squad {
     /// loadout, `Rounds::round`). Read it through `Game::mods` and
     /// `Rounds::cards_of`.
     pub deck: Option<Deck>,
+    /// Told to heal (`Cmd::Heal`): it stands where it is and its members
+    /// heal for food (`Game::heal`) till it gets another order or all are
+    /// whole. Nothing heals otherwise (owner 2026-11-15 07:41Z: "Healing
+    /// should be a specific action").
+    pub heal: bool,
 }
 
 /// Orders a squad holds queued.
@@ -214,6 +219,7 @@ impl Default for Squad {
             link: NO_LINK,
             gun: None,
             deck: None,
+            heal: false,
         }
     }
 }
@@ -686,7 +692,7 @@ impl<W: World> Game<W> {
     /// where it stands in the link, so the link arrives as it walked.
     pub(super) fn squad_cmd(&mut self, c: Cmd) -> bool {
         let q = match c {
-            Cmd::Steer(q, _) | Cmd::SquadOrder(q, _) | Cmd::SquadQueue(q, _) | Cmd::Fire(q, _) | Cmd::Face(q, _) if (q as usize) < SQUADS_MAX => q as usize,
+            Cmd::Steer(q, _) | Cmd::SquadOrder(q, _) | Cmd::SquadQueue(q, _) | Cmd::Fire(q, _) | Cmd::Face(q, _) | Cmd::Heal(q) if (q as usize) < SQUADS_MAX => q as usize,
             _ => return self.squad_one(c),
         };
         let group = self.linked(q);
@@ -710,6 +716,7 @@ impl<W: World> Game<W> {
                 Cmd::SquadQueue(_, o) => Cmd::SquadQueue(r8, shift(o, m)),
                 Cmd::Fire(_, p) => Cmd::Fire(r8, p),
                 Cmd::Face(_, p) => Cmd::Face(r8, p),
+                Cmd::Heal(_) => Cmd::Heal(r8),
                 _ => unreachable!(),
             };
             any |= self.squad_one(one);
@@ -723,6 +730,7 @@ impl<W: World> Game<W> {
     pub(super) fn send_squad(&mut self, q: usize, o: Order) {
         self.squads[q].steer = (0.0, 0.0);
         self.squads[q].work = None;
+        self.squads[q].heal = false;
         match o {
             Order::Move(x, y) | Order::Fight(x, y) => {
                 self.squads[q].dest = Some((x, y));
@@ -760,6 +768,7 @@ impl<W: World> Game<W> {
                 if d != (0.0, 0.0) {
                     self.squads[q].dest = None;
                     self.squads[q].fight = false;
+                    self.squads[q].heal = false;
                 } else if was != (0.0, 0.0) {
                     // Let go: settle round where it stands.
                     self.squads[q].dest = self.middle(q);
@@ -814,6 +823,25 @@ impl<W: World> Game<W> {
                 let g = if rest.len() < 2 { NO_LINK } else { rest[0] as u8 };
                 for r in rest {
                     self.squads[r].link = g;
+                }
+                true
+            }
+            Cmd::Heal(q) if ok(q) => {
+                // Stop where it stands and heal: no work, no guards, nothing
+                // queued.
+                let q = q as usize;
+                let m = self.members(q);
+                if m.is_empty() {
+                    return false;
+                }
+                let sq = &mut self.squads[q];
+                (sq.steer, sq.dest, sq.work, sq.queued, sq.heal) = ((0.0, 0.0), None, None, 0, true);
+                for k in m {
+                    let s = &mut self.soldiers[k];
+                    s.order = Order::Hold;
+                    s.cover = false;
+                    s.queued = 0;
+                    s.homing = false;
                 }
                 true
             }
