@@ -235,7 +235,9 @@ pub const ITEMS: [Item; 20] = [
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
     Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
     Item { key: "lure", name: "Lures", group: Group::Build, about: "Unlocks the lure, food scent the slime follows", max: 1, cost: 150, needs: None },
-    Item { key: "pump", name: "Pumps", group: Group::Build, about: "Unlocks the pump, which draws a crystal into the bank", max: 1, cost: 200, needs: None },
+    // Pumps are the main income and never locked (owner, 2026-11-15:
+    // "pumps do not start locked"); the shop sells their power instead.
+    Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
     Item { key: "outpost", name: "Outposts", group: Group::Build, about: "Unlocks the outpost, a second drop-off", max: 1, cost: 150, needs: None },
     Item { key: "siren", name: "Sirens", group: Group::Build, about: "Unlocks the siren, which sets off the slime's kinds", max: 1, cost: 150, needs: None },
     Item { key: "blast", name: "Blasts", group: Group::Tools, about: "Unlocks the thrown blast and its crater", max: 1, cost: 150, needs: None },
@@ -493,7 +495,10 @@ impl Run {
         r.start_bank += 500.0 * l("bank");
         r.harvest *= 1.0 + 0.25 * l("harvest");
         let t = l("turret+");
+        let p = l("pump+");
         let b = &mut r.build;
+        b.pump_share *= 1.0 + 0.25 * p;
+        b.pump_rate *= 1.0 + 0.25 * p;
         b.turret_hp *= 1.0 + 0.3 * t;
         b.turret_range += 3.0 * t;
         b.turret_every *= 0.85f32.powf(t);
