@@ -25,10 +25,10 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use slime_mould::mould::organ::{self, Note, Organ};
 use slime_mould::mould::render::{self, QuitArm, View};
 use slime_mould::mould::{Tool, H, STEPS_PER_FRAME, W};
-use pixels::{Pixels, ScalingMode, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::{ElementState, MouseButton, WindowEvent};
@@ -328,7 +328,11 @@ impl ApplicationHandler for Handler {
 /// cannot be reused as it is because it plays the lab's voice bank only.
 /// Compiled where `audio::device` is; elsewhere an empty shell that drops
 /// the notes.
-#[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+#[cfg(any(
+    target_os = "macos",
+    target_os = "windows",
+    all(target_os = "linux", feature = "audio-alsa")
+))]
 mod speaker {
     use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 
@@ -362,8 +366,12 @@ mod speaker {
 
     fn open() -> Result<(cpal::Stream, SyncSender<Note>), String> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or_else(|| "no output device".to_string())?;
-        let supported = device.default_output_config().map_err(|e| format!("no output config: {e}"))?;
+        let device = host
+            .default_output_device()
+            .ok_or_else(|| "no output device".to_string())?;
+        let supported = device
+            .default_output_config()
+            .map_err(|e| format!("no output config: {e}"))?;
         let format = supported.sample_format();
         let config = supported.config();
         let (tx, rx) = sync_channel(256);
@@ -379,7 +387,12 @@ mod speaker {
         Ok((stream, tx))
     }
 
-    fn build<T>(device: &cpal::Device, config: cpal::StreamConfig, mut voices: Voices, rx: Receiver<Note>) -> Result<cpal::Stream, String>
+    fn build<T>(
+        device: &cpal::Device,
+        config: cpal::StreamConfig,
+        mut voices: Voices,
+        rx: Receiver<Note>,
+    ) -> Result<cpal::Stream, String>
     where
         T: SizedSample + FromSample<f32>,
     {
@@ -409,7 +422,11 @@ mod speaker {
     }
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
+#[cfg(not(any(
+    target_os = "macos",
+    target_os = "windows",
+    all(target_os = "linux", feature = "audio-alsa")
+)))]
 mod speaker {
     use slime_mould::mould::organ::Note;
 

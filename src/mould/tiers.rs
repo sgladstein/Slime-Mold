@@ -75,10 +75,23 @@ pub enum Tier {
 
 /// The shared keys of the spore flight: spores follow the food scent,
 /// home only on their second half, land on food, and lay a little trail.
-const SPORE: [(&str, &str); 4] = [("spore_scent", "1"), ("spore_reach", "36"), ("spore_land", "1"), ("spore_deposit", "0.2")];
+const SPORE: [(&str, &str); 4] = [
+    ("spore_scent", "1"),
+    ("spore_reach", "36"),
+    ("spore_land", "1"),
+    ("spore_deposit", "0.2"),
+];
 
 impl Tier {
-    pub const ALL: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge];
+    pub const ALL: [Tier; 7] = [
+        Tier::Drifter,
+        Tier::Sprawler,
+        Tier::Trunk,
+        Tier::Sporer,
+        Tier::Sleeper,
+        Tier::Swarmer,
+        Tier::Grudge,
+    ];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -120,7 +133,14 @@ impl Tier {
             // squad on 2 of 4 (0 before); strike 0.45 -> 0.33, idle 0.05
             // both. It grows bigger, as the rejected arm said; that is now
             // the point.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "16"), ("hunger_at", "1"), ("sensor_offset", "18")],
+            Tier::Drifter => vec![
+                ("sensor_angle", "90"),
+                ("keep", "0.93"),
+                ("blocked_deposit", "1"),
+                ("hunger_scent", "16"),
+                ("hunger_at", "1"),
+                ("sensor_offset", "18"),
+            ],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
@@ -129,7 +149,13 @@ impl Tier {
             // explorers (age 0) and leave food before they eat. At 200 it
             // holds 17 crystals on seeds 1 and 2, and on dev seeds 1-4
             // random lost the squad 2 of 4 while wall and strike won 4 of 4.
-            Tier::Sprawler => vec![("explore_steps", "200"), ("explore_spread", "1"), ("keep", "0.8"), ("step", "1.5"), ("sensor_offset", "18")],
+            Tier::Sprawler => vec![
+                ("explore_steps", "200"),
+                ("explore_spread", "1"),
+                ("keep", "0.8"),
+                ("step", "1.5"),
+                ("sensor_offset", "18"),
+            ],
             // Reach 27 with keep 0.97 drew the widest cords but stopped
             // growing at about 1,900 walkers; crowd 0 starved (1,000); two
             // trail passes thicken them further but the GPU has no such key.
@@ -140,7 +166,12 @@ impl Tier {
             // fruit at once (spore_burst with spore_alarm).
             Tier::Sporer => {
                 let mut k = SPORE.to_vec();
-                k.extend([("spore_rate", "0.00001"), ("spore_burst", "0.05"), ("spore_alarm", "1"), ("alarm_keep", "0.98")]);
+                k.extend([
+                    ("spore_rate", "0.00001"),
+                    ("spore_burst", "0.05"),
+                    ("spore_alarm", "1"),
+                    ("alarm_keep", "0.98"),
+                ]);
                 k
             }
             Tier::Sleeper => vec![
@@ -165,7 +196,13 @@ impl Tier {
             // 16 strikes 2 s apart leave a peak of about 250 that halves in
             // about 40 s; read at +0.5 beside trail and scent
             // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
-            Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5")],
+            Tier::Grudge => vec![
+                ("alarm_keep", "0.98"),
+                ("alarm_weight", "3"),
+                ("scar_keep", "0.9999"),
+                ("scar_gain", "0.01"),
+                ("scar_weight", "0.5"),
+            ],
         }
     }
 
@@ -185,10 +222,17 @@ impl Tier {
             // walls). Measured when the plain mould still had a fixed core:
             // dev seeds 1-4, craters on: strike +0.96 mean against farm
             // +0.94 and wall +0.91, level; random lost its squad on 2.
-            Tier::Sprawler => Some(Core { kind: CoreKind::Headless, pull: 0.0, ..plain }),
+            Tier::Sprawler => Some(Core {
+                kind: CoreKind::Headless,
+                pull: 0.0,
+                ..plain
+            }),
             // The whole body converges on soldiers at its core: random's
             // squad wiped on 4 of 4 dev seeds (at 8 too).
-            Tier::Grudge => Some(Core { pull: GRUDGE_PULL, ..plain }),
+            Tier::Grudge => Some(Core {
+                pull: GRUDGE_PULL,
+                ..plain
+            }),
             _ => None,
         }
     }
@@ -210,7 +254,12 @@ impl Tier {
         // Set on a copy, so a refusal leaves `s` as it was.
         let mut t = s.clone();
         for (k, v) in self.keys() {
-            crate::gpu::set(&mut t, k, v).map_err(|e| format!("tier {} needs {k}, which the GPU engine does not take yet ({e})", self.name()))?;
+            crate::gpu::set(&mut t, k, v).map_err(|e| {
+                format!(
+                    "tier {} needs {k}, which the GPU engine does not take yet ({e})",
+                    self.name()
+                )
+            })?;
         }
         *s = t;
         Ok(())
@@ -252,18 +301,38 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "panic_creep" => p.panic_creep = f()?,
         "panic_dash" => p.panic_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         // Dense slime condenses (`BigParams::condense`, both engines since 11-14).
-        "condense" => p.condense = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
+        "condense" => {
+            p.condense = v
+                .parse::<u32>()
+                .map_err(|e| format!("{key}={v}: {e}"))?
+                .min(super::big::RIPE)
+        }
         "condense_crowd" => p.condense_crowd = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         "condense_r" => p.condense_r = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 8),
         // Condensed slime breaks away (`BigParams::roam`, both engines since 11-14).
-        "roam" => p.roam = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
+        "roam" => {
+            p.roam = v
+                .parse::<u32>()
+                .map_err(|e| format!("{key}={v}: {e}"))?
+                .min(super::big::RIPE)
+        }
         "roam_far" => p.roam_far = f()?,
         "roam_share" => p.roam_share = f()?,
         "thicken" => p.thicken = f()?,
         // The body surges (`BigParams::surge_every`, both engines since 11-15).
         "surge" => p.surge_every = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
-        "surge_lean" => p.surge_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
-        "surge_dash" => p.surge_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
+        "surge_lean" => {
+            p.surge_lean = v
+                .parse::<u32>()
+                .map_err(|e| format!("{key}={v}: {e}"))?
+                .min(super::big::SURGE_MAX)
+        }
+        "surge_dash" => {
+            p.surge_dash = v
+                .parse::<u32>()
+                .map_err(|e| format!("{key}={v}: {e}"))?
+                .min(super::big::SURGE_MAX)
+        }
         "surge_haste" => p.surge_haste = f()?,
         // The food scent (W44 of the whole-game review, 11-15).
         "scent_keep" => p.scent_keep = f()?.clamp(0.0, 1.0),
@@ -324,7 +393,12 @@ mod tests {
             assert_eq!(Tier::from_name(t.name()), Some(t));
             let mut p = BigParams::today();
             t.apply(&mut p);
-            assert_ne!(format!("{p:?}"), format!("{:?}", BigParams::today()), "{} changed nothing", t.name());
+            assert_ne!(
+                format!("{p:?}"),
+                format!("{:?}", BigParams::today()),
+                "{} changed nothing",
+                t.name()
+            );
         }
         assert_eq!(Tier::from_name("hunter"), None);
     }
@@ -339,17 +413,25 @@ mod tests {
         assert!(on(Tier::Sporer).spore_rate > 0.0 && on(Tier::Sporer).spore_burst > 0.0);
         assert!(on(Tier::Sleeper).sleep_rate > 0.0 && on(Tier::Sleeper).sleep_rest > 0);
         assert!(on(Tier::Swarmer).alarm_weight > 0.0 && on(Tier::Swarmer).sleep_rate == 0.0);
-        assert!((on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6, "degrees become radians");
+        assert!(
+            (on(Tier::Drifter).sensor_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-6,
+            "degrees become radians"
+        );
         assert!(on(Tier::Sprawler).explore_steps > 0 && on(Tier::Sprawler).explore_spread > 0.0);
         {
             use crate::mould::larder_world::{Core, CoreKind, Rules};
             let plain = Core::of(&Rules::default());
             assert_eq!(Tier::Sprawler.core().map(|c| c.kind), Some(CoreKind::Headless));
-            assert!(Tier::Grudge.core().is_some_and(|c| c.kind == CoreKind::Headless && c.pull > plain.pull));
+            assert!(Tier::Grudge
+                .core()
+                .is_some_and(|c| c.kind == CoreKind::Headless && c.pull > plain.pull));
             assert!(Tier::Trunk.core().is_none() && Tier::Drifter.core().is_none());
         }
         assert!(on(Tier::Grudge).scar_weight > 0.0 && on(Tier::Grudge).alarm_weight > 0.0);
-        assert!(on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle && on(Tier::Trunk).keep > BigParams::today().keep);
+        assert!(
+            on(Tier::Trunk).sensor_angle < BigParams::today().sensor_angle
+                && on(Tier::Trunk).keep > BigParams::today().keep
+        );
         // Every tier with an alarm rule keeps its alarm (a field that decays
         // in one step does nothing).
         for t in [Tier::Sporer, Tier::Sleeper, Tier::Swarmer, Tier::Grudge] {
@@ -360,7 +442,12 @@ mod tests {
 
     #[test]
     fn a_tier_runs_and_leaves_the_default_off() {
-        let mut p = BigParams { walkers: 600, piles: 3, seed: 3, ..BigParams::today() };
+        let mut p = BigParams {
+            walkers: 600,
+            piles: 3,
+            seed: 3,
+            ..BigParams::today()
+        };
         Tier::Sleeper.apply(&mut p);
         let mut d = crate::mould::big::BigDish::new(p);
         for _ in 0..240 {
@@ -375,7 +462,17 @@ mod tests {
         // Growth on, every walker off food falls asleep at once; no food
         // wakes them (`wake_scent` out of reach).
         let dormant_after = |sleep_death: f32| {
-            let p = BigParams { walkers: 400, capacity: 800, upkeep: 0.01, piles: 1, seed: 5, sleep_rate: 1.0, wake_scent: 1e9, sleep_death, ..BigParams::today() };
+            let p = BigParams {
+                walkers: 400,
+                capacity: 800,
+                upkeep: 0.01,
+                piles: 1,
+                seed: 5,
+                sleep_rate: 1.0,
+                wake_scent: 1e9,
+                sleep_death,
+                ..BigParams::today()
+            };
             let mut d = crate::mould::big::BigDish::new(p);
             for _ in 0..600 {
                 d.tick();
@@ -408,7 +505,12 @@ mod tests {
             assert_ne!(format!("{s:?}"), before, "{} changed nothing", t.name());
             let mut want = crate::gpu::big_params(&crate::gpu::Settings::big_dish(), 1, false);
             t.apply(&mut want);
-            assert_eq!(format!("{:?}", crate::gpu::big_params(&s, 1, false)), format!("{want:?}"), "{}", t.name());
+            assert_eq!(
+                format!("{:?}", crate::gpu::big_params(&s, 1, false)),
+                format!("{want:?}"),
+                "{}",
+                t.name()
+            );
             // The sandbox's `tier=` key sets the same.
             let mut by_key = crate::gpu::Settings::big_dish();
             crate::gpu::set(&mut by_key, "tier", t.name()).unwrap();
@@ -430,8 +532,16 @@ mod tests {
                 t.apply(&mut cpu);
                 let mut s = race_settings(seed, scale, walkers);
                 t.settings(&mut s).unwrap_or_else(|e| panic!("{e}"));
-                let gpu = BigParams { substeps: cpu.substeps, ..engine_params(&s, scale) };
-                assert_eq!(format!("{gpu:?}"), format!("{cpu:?}"), "{} seed {seed} scale {scale}", t.name());
+                let gpu = BigParams {
+                    substeps: cpu.substeps,
+                    ..engine_params(&s, scale)
+                };
+                assert_eq!(
+                    format!("{gpu:?}"),
+                    format!("{cpu:?}"),
+                    "{} seed {seed} scale {scale}",
+                    t.name()
+                );
             }
         }
     }

@@ -5,7 +5,22 @@ use super::*;
 
 impl App {
     pub(super) fn units(&self) -> Vec<Unit> {
-        self.game.as_ref().map(|g| g.soldiers.iter().enumerate().map(|(id, s)| Unit { id, team: 0, x: s.x, y: s.y, alive: s.alive }).collect()).unwrap_or_default()
+        self.game
+            .as_ref()
+            .map(|g| {
+                g.soldiers
+                    .iter()
+                    .enumerate()
+                    .map(|(id, s)| Unit {
+                        id,
+                        team: 0,
+                        x: s.x,
+                        y: s.y,
+                        alive: s.alive,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     /// The next loadout this world can cast (every card on the GPU world
@@ -18,14 +33,22 @@ impl App {
         }
         // A run's gun is what its shop built.
         if self.args.run.is_some() {
-            self.hud.alert("In a run the gun holds the cards you bought: change it in the shop between planets", None, theme::WARN);
+            self.hud.alert(
+                "In a run the gun holds the cards you bought: change it in the shop between planets",
+                None,
+                theme::WARN,
+            );
             return;
         }
-        let ok = |l: &str| self.game.as_ref().is_none_or(|g| rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
-            rounds::Card::Gas => g.world.has_gas(),
-            rounds::Card::Germ => g.world.has_germ(),
-            _ => true,
-        }));
+        let ok = |l: &str| {
+            self.game.as_ref().is_none_or(|g| {
+                rounds::parse(l).unwrap_or_default().iter().all(|c| match c {
+                    rounds::Card::Gas => g.world.has_gas(),
+                    rounds::Card::Germ => g.world.has_germ(),
+                    _ => true,
+                })
+            })
+        };
         let mut i = self.round;
         for _ in 0..LOADOUTS.len() {
             i = (i + 1) % LOADOUTS.len();
@@ -55,7 +78,11 @@ impl App {
                 "Round".to_string()
             }
         };
-        let what = if cards == "none" { format!("{whose}: plain shots") } else { format!("{whose}: {name} ({}), a card a shot", cards.replace('+', ", ")) };
+        let what = if cards == "none" {
+            format!("{whose}: plain shots")
+        } else {
+            format!("{whose}: {name} ({}), a card a shot", cards.replace('+', ", "))
+        };
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
@@ -70,7 +97,11 @@ impl App {
         }
         // A run's guns come from its shop (the roguelike thread).
         if self.args.run.is_some() {
-            self.hud.alert("In a run the squad's gun is the one it carries: change it in the shop between planets", None, theme::WARN);
+            self.hud.alert(
+                "In a run the squad's gun is the one it carries: change it in the shop between planets",
+                None,
+                theme::WARN,
+            );
             return;
         }
         let Some(g) = self.game.as_mut() else { return };
@@ -78,7 +109,11 @@ impl App {
         let n = self.gun_rolls;
         self.gun_rolls += 1;
         let kind = GunKind::ALL[n as usize % GunKind::ALL.len()];
-        let gun = Gun::roll_kind(kind, self.args.seed.wrapping_mul(1_000_003) ^ n as u64, self.planet_depth);
+        let gun = Gun::roll_kind(
+            kind,
+            self.args.seed.wrapping_mul(1_000_003) ^ n as u64,
+            self.planet_depth,
+        );
         g.apply(Cmd::Arm(q as u8, Some(gun)));
         let what = format!("Gun: {}, {}", draw::capital(&gun.title()), gun.line());
         self.hud.alert(&what, None, theme::ACCENT);
@@ -95,7 +130,11 @@ impl App {
             return self.open_armory();
         }
         if self.args.run.is_some() {
-            self.hud.alert("In a run the gun holds the bullets you bought: change them in the shop between planets", None, theme::WARN);
+            self.hud.alert(
+                "In a run the gun holds the bullets you bought: change them in the shop between planets",
+                None,
+                theme::WARN,
+            );
             return;
         }
         let Some(g) = self.game.as_mut() else { return };
@@ -106,13 +145,21 @@ impl App {
         let cards = bullet_load(&gun, self.args.seed, n, self.planet_depth);
         g.apply(Cmd::Load(q as u8, Some(rounds::Deck::new(&cards))));
         let names: Vec<String> = cards.iter().map(|c| c.title()).collect();
-        let what = format!("Bullets: {} (cost {} of {})", names.join(", "), rounds::cost(&cards), gun.budget);
+        let what = format!(
+            "Bullets: {} (cost {} of {})",
+            names.join(", "),
+            rounds::cost(&cards),
+            gun.budget
+        );
         self.hud.alert(&what, None, theme::ACCENT);
     }
 
     pub(super) fn living(&self, ids: &[usize]) -> Vec<usize> {
         let Some(g) = &self.game else { return Vec::new() };
-        ids.iter().copied().filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive)).collect()
+        ids.iter()
+            .copied()
+            .filter(|&k| g.soldiers.get(k).is_some_and(|s| s.alive))
+            .collect()
     }
 
     /// An order to each soldier; with Shift held, queued after what each
@@ -122,7 +169,11 @@ impl App {
         let queue = self.shift;
         if let Some(g) = self.game.as_mut() {
             for (n, k) in ids.into_iter().enumerate() {
-                g.apply(if queue { Cmd::Queue(k, o(n)) } else { Cmd::Order(k, o(n)) });
+                g.apply(if queue {
+                    Cmd::Queue(k, o(n))
+                } else {
+                    Cmd::Order(k, o(n))
+                });
             }
         }
     }
@@ -133,7 +184,11 @@ impl App {
     /// given soldier by soldier, a squad on the move took them back at its
     /// next step (`Game::squad_turn`; bug sweep, 2026-11-14).
     pub(super) fn squad_order(&mut self, o: Order) -> bool {
-        let q = self.game.as_ref().filter(|g| g.rules.squads && self.sq.is_some()).and_then(|g| g.active);
+        let q = self
+            .game
+            .as_ref()
+            .filter(|g| g.rules.squads && self.sq.is_some())
+            .and_then(|g| g.active);
         match (q, self.game.as_mut()) {
             (Some(q), Some(g)) => g.apply(Cmd::SquadOrder(q as u8, o)),
             _ => false,
@@ -164,12 +219,19 @@ impl App {
     /// that move took the build order back the next step).
     pub(super) fn builders(&mut self, sel: &[usize]) {
         let Some(g) = &self.game else { return };
-        let Some(b) = g.buildings.len().checked_sub(1) else { return };
+        let Some(b) = g.buildings.len().checked_sub(1) else {
+            return;
+        };
         if g.buildings[b].built >= 1.0 {
             return;
         }
         let squad = g.active.filter(|_| self.sq.is_some() && !self.shift);
-        let last = self.last_sent.filter(|&k| self.shift && g.soldiers.get(k).is_some_and(|s| s.alive && matches!(s.order, Order::Build(_))));
+        let last = self.last_sent.filter(|&k| {
+            self.shift
+                && g.soldiers
+                    .get(k)
+                    .is_some_and(|s| s.alive && matches!(s.order, Order::Build(_)))
+        });
         let picked = !self.living(sel).is_empty();
         if picked && squad.is_none() {
             return self.order_all(sel, |_| Order::Build(b));
@@ -181,7 +243,8 @@ impl App {
             g.apply(Cmd::Queue(k, Order::Build(b)));
         } else if g.apply(Cmd::Send(b)) {
             // The one soldier `send` put on it.
-            self.last_sent = (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Build(b));
+            self.last_sent =
+                (0..g.soldiers.len()).find(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Build(b));
         }
     }
 
@@ -196,13 +259,19 @@ impl App {
     /// unfinished or nobody went.
     pub(super) fn resume(&mut self, sel: &[usize], b: usize) -> bool {
         let Some(g) = &self.game else { return false };
-        let Some(bd) = g.buildings.get(b).copied().filter(|bd| bd.alive && bd.built < 1.0) else { return false };
+        let Some(bd) = g.buildings.get(b).copied().filter(|bd| bd.alive && bd.built < 1.0) else {
+            return false;
+        };
         let squad = g.active.filter(|_| g.rules.squads && self.sq.is_some());
         let picked = self.living(sel);
         let shift = self.shift;
         let went = if let Some(q) = squad {
             let g = self.game.as_mut().unwrap();
-            g.apply(if shift { Cmd::SquadQueue(q as u8, Order::Build(b)) } else { Cmd::SquadOrder(q as u8, Order::Build(b)) })
+            g.apply(if shift {
+                Cmd::SquadQueue(q as u8, Order::Build(b))
+            } else {
+                Cmd::SquadOrder(q as u8, Order::Build(b))
+            })
         } else if !picked.is_empty() {
             self.order_all(&picked, |_| Order::Build(b));
             true
@@ -215,7 +284,11 @@ impl App {
                 k => k.name(),
             };
             let done = (bd.built * 100.0).floor();
-            self.hud.alert(&format!("Back to the {what} ({done:.0}% built)"), Some(bd.at), theme::GOOD);
+            self.hud.alert(
+                &format!("Back to the {what} ({done:.0}% built)"),
+                Some(bd.at),
+                theme::GOOD,
+            );
         }
         went
     }
@@ -286,7 +359,14 @@ impl App {
                     self.larder_sel = false;
                 }
                 HudEvent::Deselect(k) => self.controls.selected.retain(|&q| q != k),
-                ev @ (HudEvent::Squad(_) | HudEvent::SquadInto(_) | HudEvent::SquadLink(_) | HudEvent::SquadSplit | HudEvent::SquadCombine | HudEvent::SquadCover | HudEvent::SquadHeal | HudEvent::SquadFree) => self.squad_panel_event(ev),
+                ev @ (HudEvent::Squad(_)
+                | HudEvent::SquadInto(_)
+                | HudEvent::SquadLink(_)
+                | HudEvent::SquadSplit
+                | HudEvent::SquadCombine
+                | HudEvent::SquadCover
+                | HudEvent::SquadHeal
+                | HudEvent::SquadFree) => self.squad_panel_event(ev),
                 HudEvent::Group(g) => self.controls.selected = self.living(&self.controls.groups[g].clone()),
                 HudEvent::Idle => {
                     let after = self.controls.selected.first().copied();
@@ -344,7 +424,11 @@ impl App {
                     T_BACK => self.tools_page = false,
                     LURES => {
                         if let Some(g) = self.game.as_mut() {
-                            let lures: Vec<usize> = (0..g.buildings.len()).filter(|&k| g.buildings[k].alive && matches!(g.buildings[k].kind, Kind::Lure | Kind::Siren)).collect();
+                            let lures: Vec<usize> = (0..g.buildings.len())
+                                .filter(|&k| {
+                                    g.buildings[k].alive && matches!(g.buildings[k].kind, Kind::Lure | Kind::Siren)
+                                })
+                                .collect();
                             // All on if any is off, else all off.
                             let on = lures.iter().any(|&k| !g.buildings[k].on);
                             for k in lures {
@@ -358,7 +442,11 @@ impl App {
                         if let Some(g) = self.game.as_mut() {
                             if g.apply(Cmd::Buy) {
                                 let s = *g.soldiers.last().unwrap();
-                                let what = if g.rules.squads { "A soldier has joined your squad" } else { "A soldier has joined at the larder" };
+                                let what = if g.rules.squads {
+                                    "A soldier has joined your squad"
+                                } else {
+                                    "A soldier has joined at the larder"
+                                };
                                 self.hud.alert(what, Some((s.x, s.y)), theme::GOOD);
                             }
                         }
@@ -377,7 +465,11 @@ impl App {
                 HudEvent::Point { id: ATTACK, at } => {
                     let Some(g) = &self.game else { return Ok(false) };
                     let on_core = (at.0 - g.core.0).hypot(at.1 - g.core.1) <= g.rules.core_r * g.world.scale() * 1.5;
-                    let o = if on_core { Order::Attack } else { Order::Fight(at.0, at.1) };
+                    let o = if on_core {
+                        Order::Attack
+                    } else {
+                        Order::Fight(at.0, at.1)
+                    };
                     if !self.squad_order(o) {
                         self.order_all(&sel, |_| o);
                     }
@@ -392,7 +484,11 @@ impl App {
                                 };
                                 if g.apply(Cmd::Unbuild(b)) {
                                     let back = g.build_price(g.buildings[b].kind, g.buildings[b].at);
-                                    self.hud.alert(&format!("Called off the {what}: {back:.0} food back"), Some(g.buildings[b].at), theme::GOOD);
+                                    self.hud.alert(
+                                        &format!("Called off the {what}: {back:.0} food back"),
+                                        Some(g.buildings[b].at),
+                                        theme::GOOD,
+                                    );
                                 }
                             }
                             None => self.hud.alert("No unfinished building there", None, theme::WARN),
@@ -407,13 +503,25 @@ impl App {
                     self.resume(&sel, b);
                 }
                 // The pump on a crystal that has one upgrades it.
-                HudEvent::Point { id: PUMP, at } if self.game.as_ref().is_some_and(|g| g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some()) => {
+                HudEvent::Point { id: PUMP, at }
+                    if self
+                        .game
+                        .as_ref()
+                        .is_some_and(|g| g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some()) =>
+                {
                     if let Some(g) = self.game.as_mut() {
                         let b = g.pump_crystal(at).and_then(|c| g.pump_on(c)).unwrap();
                         let price = g.upgrade_price(b);
                         if g.apply(Cmd::Upgrade(b)) {
                             let rate = g.pump_draw(b) * g.pump_yield(b);
-                            self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(g.buildings[b].at), theme::GOOD);
+                            self.hud.alert(
+                                &format!(
+                                    "Pump upgraded to level {}: {rate:.0} food a second",
+                                    g.buildings[b].level
+                                ),
+                                Some(g.buildings[b].at),
+                                theme::GOOD,
+                            );
                         } else {
                             let why = match price {
                                 Some(p) => format!("Upgrading the pump costs {p:.0} food"),
@@ -428,13 +536,20 @@ impl App {
                     if let Some(g) = self.game.as_mut() {
                         let kind = build_kind(id).unwrap();
                         if let Some(why) = g.build_blocked(kind, at) {
-                            self.hud.alert(&format!("Can't build a {} there: {why}", kind.name()), None, theme::WARN);
+                            self.hud.alert(
+                                &format!("Can't build a {} there: {why}", kind.name()),
+                                None,
+                                theme::WARN,
+                            );
                         } else if g.apply(Cmd::Build(kind, at)) {
                             self.builders(&sel);
                         }
                     }
                 }
-                HudEvent::Point { id: id @ (T_BLAST | T_MINE | T_GERM | T_GAS), at } => {
+                HudEvent::Point {
+                    id: id @ (T_BLAST | T_MINE | T_GERM | T_GAS),
+                    at,
+                } => {
                     let tool = match id {
                         T_BLAST => Tool::Blast(at),
                         T_MINE => Tool::Mine(at),
@@ -449,7 +564,13 @@ impl App {
                     if let Some(g) = self.game.as_mut() {
                         let price = g.wall_price(from, to);
                         if !g.apply(Cmd::Wall(from, to)) {
-                            let why = if g.bank < price { format!("A wall that long costs {price:.0} food") } else if let Some(why) = g.build_blocked(Kind::Wall { to }, from) { format!("Can't build a wall there: {why}") } else { "Can't build a wall there".to_string() };
+                            let why = if g.bank < price {
+                                format!("A wall that long costs {price:.0} food")
+                            } else if let Some(why) = g.build_blocked(Kind::Wall { to }, from) {
+                                format!("Can't build a wall there: {why}")
+                            } else {
+                                "Can't build a wall there".to_string()
+                            };
                             self.hud.alert(&why, None, theme::WARN);
                         } else {
                             self.builders(&sel);
@@ -497,7 +618,9 @@ impl App {
 
     pub(super) fn next_idle(&self, after: Option<usize>) -> Option<usize> {
         let g = self.game.as_ref()?;
-        let idle: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Hold).collect();
+        let idle: Vec<usize> = (0..g.soldiers.len())
+            .filter(|&k| g.soldiers[k].alive && g.soldiers[k].order == Order::Hold)
+            .collect();
         let start = after.and_then(|a| idle.iter().position(|&k| k > a)).unwrap_or(0);
         idle.get(start).copied()
     }
@@ -506,7 +629,11 @@ impl App {
         match code {
             KeyCode::KeyP | KeyCode::Pause => self.paused = !self.paused,
             KeyCode::Tab => self.fast = !self.fast,
-            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert("In a run the next map is the next planet: beat this one", None, theme::WARN),
+            KeyCode::KeyN if self.args.run.is_some() => self.hud.alert(
+                "In a run the next map is the next planet: beat this one",
+                None,
+                theme::WARN,
+            ),
             KeyCode::KeyN => {
                 // On a generated planet, N rolls a new one at the same depth;
                 // one with its seed in the name (`planet:D:SEED`) goes on to
@@ -515,10 +642,20 @@ impl App {
                 if let Some(next) = self.args.map.as_deref().and_then(next_planet) {
                     self.name = next.clone();
                     self.args.map = Some(next);
-                } else if self.args.map.as_deref().is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some()) {
+                } else if self
+                    .args
+                    .map
+                    .as_deref()
+                    .is_some_and(|m| slime_mould::mould::levelgen::spec_planet(m, 0).is_some())
+                {
                     self.args.seed = fresh_seed();
                 } else {
-                    let next = self.args.map.as_deref().and_then(|m| MAPS.iter().position(|&n| n == m)).map_or(0, |i| (i + 1) % MAPS.len());
+                    let next = self
+                        .args
+                        .map
+                        .as_deref()
+                        .and_then(|m| MAPS.iter().position(|&n| n == m))
+                        .map_or(0, |i| (i + 1) % MAPS.len());
                     self.args.map = Some(MAPS[next].to_string());
                     self.name = MAPS[next].to_string();
                 }
@@ -534,10 +671,28 @@ impl App {
                     v.minimap = !v.minimap;
                 }
             }
+            // The scent view (owner 11-15 20:54Z: "Is there a way for me to
+            // view the mold scent?"): the food scent and the trail, the two
+            // fields the mould's walkers smell, over the dimmed world.
+            KeyCode::F2 => {
+                if let Some(v) = self.view.as_mut() {
+                    v.scent = !v.scent;
+                    let what = if v.scent {
+                        "Scent view: blue is food scent, pink is trail (F2 off)"
+                    } else {
+                        "Scent view off"
+                    };
+                    self.hud.alert(what, None, theme::ACCENT);
+                }
+            }
             KeyCode::KeyK => {
                 if let Some(l) = self.listener.as_mut() {
                     l.voice = !l.voice;
-                    let what = if l.voice { "The mould's voice on" } else { "The mould's voice off" };
+                    let what = if l.voice {
+                        "The mould's voice on"
+                    } else {
+                        "The mould's voice off"
+                    };
                     self.hud.alert(what, None, theme::ACCENT);
                 }
             }

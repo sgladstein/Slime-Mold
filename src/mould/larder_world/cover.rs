@@ -108,7 +108,14 @@ pub struct CoverRules {
 
 impl Default for CoverRules {
     fn default() -> Self {
-        CoverRules { some: 1.0 / 3.0, more: 0.5, sense: 30.0, near: 20, slow: 0.6, work_fire: 0.5 }
+        CoverRules {
+            some: 1.0 / 3.0,
+            more: 0.5,
+            sense: 30.0,
+            near: 20,
+            slow: 0.6,
+            work_fire: 0.5,
+        }
     }
 }
 
@@ -131,7 +138,13 @@ pub struct HealRules {
 
 impl Default for HealRules {
     fn default() -> Self {
-        HealRules { rate: 10.0, away: 100.0 / 60.0, wait: 1.0, cost: 0.25, near: 10.0 }
+        HealRules {
+            rate: 10.0,
+            away: 100.0 / 60.0,
+            wait: 1.0,
+            cost: 0.25,
+            near: 10.0,
+        }
     }
 }
 
@@ -148,8 +161,14 @@ impl Walkers {
     fn within(&self, at: (f32, f32), r: f32) -> u32 {
         let (cx, cy) = (at.0 / self.bin, at.1 / self.bin);
         let rr = r / self.bin;
-        let (x0, x1) = ((cx - rr).floor().max(0.0) as usize, ((cx + rr).ceil() as usize).min(self.gw.saturating_sub(1)));
-        let (y0, y1) = ((cy - rr).floor().max(0.0) as usize, ((cy + rr).ceil() as usize).min(self.gh.saturating_sub(1)));
+        let (x0, x1) = (
+            (cx - rr).floor().max(0.0) as usize,
+            ((cx + rr).ceil() as usize).min(self.gw.saturating_sub(1)),
+        );
+        let (y0, y1) = (
+            (cy - rr).floor().max(0.0) as usize,
+            ((cy + rr).ceil() as usize).min(self.gh.saturating_sub(1)),
+        );
         let mut n = 0;
         for y in y0..=y1 {
             for x in x0..=x1 {
@@ -167,7 +186,12 @@ impl<W: World> Game<W> {
         let bin = (self.s() as usize).max(1);
         let grid = self.world.mould_grid(bin)?;
         let (w, h) = self.world.size();
-        Some(Walkers { grid, gw: w.div_ceil(bin), gh: h.div_ceil(bin), bin: bin as f32 })
+        Some(Walkers {
+            grid,
+            gw: w.div_ceil(bin),
+            gh: h.div_ceil(bin),
+            bin: bin as f32,
+        })
     }
 
     /// Where squad `q`'s work is: the crystal or building its workers are
@@ -207,11 +231,17 @@ impl<W: World> Game<W> {
             }
             let m = self.members(q);
             let o = self.soldiers[m[0]].order;
-            if matches!(o, Order::Clear(..) | Order::Build(_)) && 2 * m.iter().filter(|&&k| self.soldiers[k].order == o).count() > m.len() {
+            if matches!(o, Order::Clear(..) | Order::Build(_))
+                && 2 * m.iter().filter(|&&k| self.soldiers[k].order == o).count() > m.len()
+            {
                 self.squads[q].work = Some(o);
             }
         }
-        let busy: Vec<usize> = self.live_squads().into_iter().filter(|&q| self.squads[q].work.is_some()).collect();
+        let busy: Vec<usize> = self
+            .live_squads()
+            .into_iter()
+            .filter(|&q| self.squads[q].work.is_some())
+            .collect();
         if busy.is_empty() {
             return;
         }
@@ -242,7 +272,10 @@ impl<W: World> Game<W> {
             // Done: nobody on the work any more (the crystal ran dry, the
             // building stands, or the player sent them elsewhere). The
             // defenders come in, and the squad starts what it has queued.
-            if !m.iter().any(|&k| self.soldiers[k].order == work && !self.soldiers[k].cover) {
+            if !m
+                .iter()
+                .any(|&k| self.soldiers[k].order == work && !self.soldiers[k].cover)
+            {
                 self.squads[q].work = None;
                 let mid = self.middle(q);
                 for &k in &m {
@@ -262,13 +295,19 @@ impl<W: World> Game<W> {
             // the walk went by attack-move, stopped at every slime they saw
             // on the way, and held up the workers with them (the film's
             // first cut, Fork seed 1: 5 of 8 never reached the crystal).
-            let there = self.middle(q).is_some_and(|c| (c.0 - at.0).hypot(c.1 - at.1) <= r.sense * sc);
+            let there = self
+                .middle(q)
+                .is_some_and(|c| (c.0 - at.0).hypot(c.1 - at.1) <= r.sense * sc);
             // Guards already out stay till the slime is half as near, so a
             // count about the threshold doesn't send them out and back each
             // second (seen in the film: 0, 1, 0 guards at 47-50 s).
             let out = m.iter().any(|&k| self.soldiers[k].cover);
             let call = if out { r.near / 2 } else { r.near };
-            let want = if near < call || n < 2 || !there { 0 } else { ((n as f32 * share).round() as usize).clamp(usize::from(share > 0.0), n - 1) };
+            let want = if near < call || n < 2 || !there {
+                0
+            } else {
+                ((n as f32 * share).round() as usize).clamp(usize::from(share > 0.0), n - 1)
+            };
             // Which way the slime is: the walkers in twelve bearings at half
             // the sensing range, summed as a vector.
             let mut v = (0.0f32, 0.0f32);
@@ -283,7 +322,11 @@ impl<W: World> Game<W> {
             // Keep the defenders already out (no reshuffle), call the ones
             // nearest the slime's side first.
             let mut on: Vec<usize> = m.iter().copied().filter(|&k| self.soldiers[k].cover).collect();
-            let mut off: Vec<usize> = m.iter().copied().filter(|&k| !self.soldiers[k].cover && self.soldiers[k].order == work).collect();
+            let mut off: Vec<usize> = m
+                .iter()
+                .copied()
+                .filter(|&k| !self.soldiers[k].cover && self.soldiers[k].order == work)
+                .collect();
             let toward = |g: &Self, k: usize| {
                 let s = &g.soldiers[k];
                 -((s.x - at.0) * base.cos() + (s.y - at.1) * base.sin())
@@ -311,14 +354,19 @@ impl<W: World> Game<W> {
                 let p = if self.standable(p.0, p.1) && self.solid_at(p).is_none() {
                     p
                 } else {
-                    self.nearest_standable(p, 6.0 * sc).unwrap_or((self.soldiers[k].x, self.soldiers[k].y))
+                    self.nearest_standable(p, 6.0 * sc)
+                        .unwrap_or((self.soldiers[k].x, self.soldiers[k].y))
                 };
                 // Walks to its post, then stands and fights there (an
                 // attack-move to it stopped at the first slime in reach).
                 let s = &mut self.soldiers[k];
                 let far = (s.x - p.0).hypot(s.y - p.1) > 2.0 * sc;
                 s.cover = true;
-                s.order = if far { Order::Move(p.0, p.1) } else { Order::Fight(p.0, p.1) };
+                s.order = if far {
+                    Order::Move(p.0, p.1)
+                } else {
+                    Order::Fight(p.0, p.1)
+                };
                 s.homing = false;
             }
         }

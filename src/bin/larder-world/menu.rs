@@ -12,9 +12,9 @@
 //! `look=DIR` films that page over the round (the pictures on the page).
 
 use super::*;
+use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::mould::run::{self as run, Pick};
 use slime_mould::mould::run::{Face, Group};
-use slime_mould::mould::bullets::{Set, Shell};
 use slime_mould::world::start::{Entry, Opt, Page, Shop, ShopArea, ShopRow, StartEvent, StartMenu, BAG};
 
 /// The campaign's missions, as `mission=STEM` names them, in their order
@@ -26,9 +26,18 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
     let mut out: Vec<(u32, String, Mission)> = Vec::new();
     for e in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
         let p = e.path();
-        let Some(stem) = p.file_stem().and_then(|s| s.to_str()).filter(|_| p.extension().is_some_and(|x| x == "txt")) else { continue };
+        let Some(stem) = p
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .filter(|_| p.extension().is_some_and(|x| x == "txt"))
+        else {
+            continue;
+        };
         let n = stem.split('-').next().and_then(|d| d.parse().ok()).unwrap_or(u32::MAX);
-        match std::fs::read_to_string(&p).map_err(|e| e.to_string()).and_then(|t| Mission::parse(&t)) {
+        match std::fs::read_to_string(&p)
+            .map_err(|e| e.to_string())
+            .and_then(|t| Mission::parse(&t))
+        {
             Ok(m) => out.push((n, stem.to_string(), m)),
             Err(e) => eprintln!("larder-world: {}: {e}", p.display()),
         }
@@ -39,7 +48,16 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 8] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"];
+const ENGINE_OPTS: [&str; 8] = [
+    "panic",
+    "wither",
+    "energy_flow",
+    "condense",
+    "roam",
+    "thicken",
+    "surge",
+    "flinch",
+];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -50,7 +68,10 @@ const DISH_OPTS: [&str; 2] = ["map", "own"];
 
 /// The dish options' values, to tell when one moved.
 fn dish_key(m: &StartMenu) -> Vec<String> {
-    DISH_OPTS.iter().filter_map(|k| m.option(k).map(|o| o.value().to_string())).collect()
+    DISH_OPTS
+        .iter()
+        .filter_map(|k| m.option(k).map(|o| o.value().to_string()))
+        .collect()
 }
 
 /// The value a key last took in `keys` (the last wins, as `gpu::set` plays them).
@@ -61,7 +82,12 @@ fn key_value<'a>(keys: &'a [(String, String)], k: &str) -> Option<&'a str> {
 /// The options page for the command line's `base` (its values preset).
 pub(super) fn options(base: &Args) -> Vec<Opt> {
     let (_, c) = shape_keys(DEFAULT_SHAPE).expect("the default shape");
-    let c_default = |k: &str| c.iter().find(|(n, _)| *n == k).map(|(_, v)| v.to_string()).unwrap_or_else(|| "0".into());
+    let c_default = |k: &str| {
+        c.iter()
+            .find(|(n, _)| *n == k)
+            .map(|(_, v)| v.to_string())
+            .unwrap_or_else(|| "0".into())
+    };
     let map_now = base.map.clone().unwrap_or_else(|| "noise".into());
     let maps: Vec<&str> = MAPS.iter().copied().chain(["noise"]).collect();
     // The GPU world casts no germ yet (H skips those loadouts too); gas
@@ -114,14 +140,31 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     }
     // The run's dev mode (owner, 11-14 15:33Z): the shop's rows to jump
     // planets, add points and redraw cards. A run's setting, not a round's.
-    o.push(Opt::new("dev", "Dev mode", &["off", "on"], "off", if base.dev { "on" } else { "off" }, "The run's shop gets rows to jump planets, add points and redraw the cards"));
+    o.push(Opt::new(
+        "dev",
+        "Dev mode",
+        &["off", "on"],
+        "off",
+        if base.dev { "on" } else { "off" },
+        "The run's shop gets rows to jump planets, add points and redraw the cards",
+    ));
     // The UI's size (owner, 11-14 08:07Z): turned here it takes effect at
     // once and is saved; not a round's setting, so `round_args` skips it.
     let sizes: Vec<String> = settings::STEPS.iter().map(|&v| settings::percent(v)).collect();
     let sizes: Vec<&str> = sizes.iter().map(String::as_str).collect();
     // First on the page (the review, 11-15: it was the last of 15 rows,
     // below the fold, and the one the owner needed).
-    o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
+    o.insert(
+        0,
+        Opt::new(
+            "ui",
+            "UI and text size",
+            &sizes,
+            "100%",
+            &settings::percent(ui_user()),
+            "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere",
+        ),
+    );
     // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
     // the game's own settings, the planet's, and the mould's rules, each
     // tab one screen; the key list is the last tab. Tabs come in the
@@ -130,7 +173,9 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         .map(|opt| {
             let tab = match opt.key.as_str() {
                 "map" | "planet" | "own" | "plants" => "Planet",
-                "panic" | "wither" | "energy_flow" | "condense" | "roam" | "thicken" | "surge" | "flinch" => "The mould",
+                "panic" | "wither" | "energy_flow" | "condense" | "roam" | "thicken" | "surge" | "flinch" => {
+                    "The mould"
+                }
                 _ => "Game",
             };
             opt.in_tab(tab)
@@ -148,7 +193,10 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Right click", "Move; on a crystal, harvest it"),
         ("Shift + order", "Queue it after the current orders"),
         ("Ctrl + 1-9, 1-9", "Make a group, select it (twice: look)"),
-        ("Wheel, middle drag", "Zoom, pan; arrows, the screen edge and WASD while paused pan"),
+        (
+            "Wheel, middle drag",
+            "Zoom, pan; arrows, the screen edge and WASD while paused pan",
+        ),
         ("A, click", "Attack-move; on the core, attack it"),
         ("S", "Stop"),
         ("G", "Harvest"),
@@ -160,13 +208,17 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("Q", "Build page: turret, lure, pump, outpost, siren"),
         ("E", "Tools page: blast, det cord, mine"),
         ("H", "Next round loadout"),
-        ("Shift+H", "Roll a test gun for the squad (rifle, carbine, long gun, scattergun in turn)"),
+        (
+            "Shift+H",
+            "Roll a test gun for the squad (rifle, carbine, long gun, scattergun in turn)",
+        ),
         ("Ctrl+H", "Roll test bullets for the squad, as many as its gun holds"),
         ("H (gun range)", "The armory: every gun, card and bullet, free"),
         ("P", "Pause"),
         ("Tab", "Four times faster, or back"),
         ("N", "Next map"),
         ("M", "Minimap"),
+        ("F2", "Scent view: what the mould smells"),
         ("O / K", "Sound; the mould's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
@@ -176,12 +228,30 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
     .iter()
     .map(|&(k, v)| (k.to_string(), v.to_string()))
     .collect();
-    let mut squad = vec![("Squad mode".to_string(), "Options: Control, squads (or mode=squads)".to_string())];
+    let mut squad = vec![(
+        "Squad mode".to_string(),
+        "Options: Control, squads (or mode=squads)".to_string(),
+    )];
     squad.extend(squad_help());
     // The card's letters as `squad_card_key` moves them.
-    let k = |id: u32, key: KeyCode| squad_card_key(id, key).and_then(slime_mould::world::ui::key_name).unwrap_or_default();
-    squad.push((format!("{}, {}, {}", k(ATTACK, KeyCode::KeyA), k(HARVEST, KeyCode::KeyG), k(BURN, KeyCode::KeyF)), "The card for the squad: attack-move, drain, burn".into()));
-    squad.push((format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)), "Mine, sleep gas (A, S and D steer)".into()));
+    let k = |id: u32, key: KeyCode| {
+        squad_card_key(id, key)
+            .and_then(slime_mould::world::ui::key_name)
+            .unwrap_or_default()
+    };
+    squad.push((
+        format!(
+            "{}, {}, {}",
+            k(ATTACK, KeyCode::KeyA),
+            k(HARVEST, KeyCode::KeyG),
+            k(BURN, KeyCode::KeyF)
+        ),
+        "The card for the squad: attack-move, drain, burn".into(),
+    ));
+    squad.push((
+        format!("{}, {} (tools page)", k(T_MINE, KeyCode::KeyD), k(T_GAS, KeyCode::KeyS)),
+        "Mine, sleep gas (A, S and D steer)".into(),
+    ));
     if squads {
         squad.push(("RTS round".into(), "Options: Control, rts".into()));
         squad.into_iter().chain(rts).collect()
@@ -194,7 +264,18 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
 pub(super) fn start_menu(base: &Args) -> StartMenu {
     let entries = missions()
         .into_iter()
-        .map(|(stem, m)| Entry { stem, detail: format!("{}{}", title_case(&m.map), m.tier.as_ref().map_or(String::new(), |t| format!(", {}", title_case(t)))), name: m.name, says: m.says })
+        .map(|(stem, m)| Entry {
+            stem,
+            detail: format!(
+                "{}{}",
+                title_case(&m.map),
+                m.tier
+                    .as_ref()
+                    .map_or(String::new(), |t| format!(", {}", title_case(t)))
+            ),
+            name: m.name,
+            says: m.says,
+        })
         .collect();
     let mut menu = StartMenu::new("Larder World", entries, options(base), key_card(base.squads));
     menu.edit_maps = true;
@@ -225,7 +306,14 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
 pub(super) fn shop_of(r: &Run) -> Shop {
     let l = r.level();
     let p = r.planet();
-    let mut lines = vec![format!("{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers", r.line(), p.name, p.biome.name(), title_case(l.tier.name()), l.walkers)];
+    let mut lines = vec![format!(
+        "{}. Next: {}, a {} planet; the slime is {}, {:.1} times the first planet's walkers",
+        r.line(),
+        p.name,
+        p.biome.name(),
+        title_case(l.tier.name()),
+        l.walkers
+    )];
     // The level's clock and head start (`run::clock`, `run::head_start`).
     let cap = l.mission.rules(Rules::default()).cap;
     let secs = cap.round() as u32;
@@ -235,7 +323,10 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     }
     // How often it surges here (`run::enemy_keys`; on the clock's line so the
     // heading keeps two lines, the run thread's ask).
-    clock += &format!("; it surges as it feeds, at least every {:.0} s", run::surge_secs(l.depth));
+    clock += &format!(
+        "; it surges as it feeds, at least every {:.0} s",
+        run::surge_secs(l.depth)
+    );
     if r.depth == run::PLANETS {
         clock = format!("The slime's home world: beat it and the run is won. {clock}");
     }
@@ -250,7 +341,10 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     // with the run's own rules.
     let mut rules = Rules::default();
     r.rules(&mut rules);
-    let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
+    let rr = RoundRules {
+        budget: r.budget(),
+        ..RoundRules::default()
+    };
     let gun = r.armed();
     let rows = r
         .shop()
@@ -261,11 +355,16 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // card works on, then the bag.
                 Group::Dev if r.range => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
-                Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
+                Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => {
+                    ("Squad".to_string(), ShopArea::Upgrades)
+                }
                 // Each a tab of the shop's counter (Shop B, 11-15).
                 Group::Build | Group::Tools | Group::Dev => (row.group.name().to_string(), ShopArea::Upgrades),
                 Group::Guns => ("Guns".to_string(), ShopArea::Guns),
-                _ => (if row.price.is_empty() { BAG } else { "Cards" }.to_string(), ShopArea::Cards),
+                _ => (
+                    if row.price.is_empty() { BAG } else { "Cards" }.to_string(),
+                    ShopArea::Cards,
+                ),
             };
             let mut s = ShopRow::new(&group, area, Icon::Upgrade, &row.name);
             (s.about, s.price, s.state, s.ready, s.on) = (row.about.clone(), row.price, row.state, row.ready, row.on);
@@ -283,7 +382,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                     // Its kind and words, the run's note after them (too
                     // big for the gun), its budget last (owner 11-15
                     // 02:57Z: the cards' text "should be simplified").
-                    s.about = format!("{} Budget {}.", row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1), c.cost());
+                    s.about = format!(
+                        "{} Budget {}.",
+                        row.about.replacen(c.about(), &draw::card_words(c, kind, &words), 1),
+                        c.cost()
+                    );
                     if let rounds::Card::Ammo(a) = c {
                         // A rolled bullet: its set as a badge.
                         s.badge = Some(draw::ammo_icon(a.set));
@@ -293,7 +396,11 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                         if r.range {
                             let set = Set::ALL.iter().position(|&x| x == a.set).unwrap_or(0) as u8;
                             let shell = Shell::ALL.iter().position(|&x| x == a.shell).unwrap_or(0) as u8;
-                            let payload = if a.shell == Shell::Plain { "Bullet".to_string() } else { draw::capital(a.shell.key()) };
+                            let payload = if a.shell == Shell::Plain {
+                                "Bullet".to_string()
+                            } else {
+                                draw::capital(a.shell.key())
+                            };
                             s.cell = Some(((set, draw::capital(a.set.key())), (shell, payload)));
                         }
                     }
@@ -319,9 +426,17 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         })
         .collect();
     Shop {
-        heading: if r.range { "The gun range".into() } else { format!("{} next: {}", l.mission.name, l.mission.says) },
+        heading: if r.range {
+            "The gun range".into()
+        } else {
+            format!("{} next: {}", l.mission.name, l.mission.says)
+        },
         lines,
-        purse: if r.range { "Free".into() } else { format!("{} points", r.points) },
+        purse: if r.range {
+            "Free".into()
+        } else {
+            format!("{} points", r.points)
+        },
         rows,
         slots: gun.slots,
         budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
@@ -475,7 +590,9 @@ impl App {
     /// Sandbox would start with today's options), the camera on the whole
     /// map.
     pub(super) fn open_menu(&mut self) -> Result<(), String> {
-        let Some((base, chosen)) = self.base.clone() else { return Ok(()) };
+        let Some((base, chosen)) = self.base.clone() else {
+            return Ok(());
+        };
         let menu = self.menu.take().unwrap_or_else(|| start_menu(&base));
         self.args = round_args(&base, chosen, &menu, &StartEvent::Sandbox);
         self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
@@ -491,17 +608,27 @@ impl App {
         self.camera.set_inset(0.0, 0.0);
         let z = self.camera.fit();
         self.camera.zoom_to(z, self.camera.to_screen(self.camera.centre()));
-        self.camera.centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
+        self.camera
+            .centre_on((self.camera.world.0 / 2.0, self.camera.world.1 / 2.0));
     }
 
     /// A key or a click on the menu (`input`): what it picked, after the
     /// dish behind is started again if it turned a world option (`DISH_OPTS`).
-    pub(super) fn menu_input(&mut self, input: impl FnOnce(&mut StartMenu) -> Vec<StartEvent>) -> Result<Vec<StartEvent>, String> {
-        let Some(m) = self.menu.as_mut() else { return Ok(Vec::new()) };
+    pub(super) fn menu_input(
+        &mut self,
+        input: impl FnOnce(&mut StartMenu) -> Vec<StartEvent>,
+    ) -> Result<Vec<StartEvent>, String> {
+        let Some(m) = self.menu.as_mut() else {
+            return Ok(Vec::new());
+        };
         let before = dish_key(m);
         let picks = input(m);
         // The UI size option, applied the moment it turns.
-        if let Some(v) = m.option("ui").and_then(|o| settings::parse_size(o.value())).filter(|&v| v != ui_user()) {
+        if let Some(v) = m
+            .option("ui")
+            .and_then(|o| settings::parse_size(o.value()))
+            .filter(|&v| v != ui_user())
+        {
             self.set_ui(v);
         }
         let Some(m) = self.menu.as_mut() else { return Ok(picks) };
@@ -534,14 +661,22 @@ impl App {
                     self.close_armory();
                 } else {
                     // Into the range, armed from the armory.
-                    let (Some((base, chosen)), Some(r), Some(menu)) = (self.base.clone(), self.range.clone(), self.menu.take()) else { return Ok(false) };
+                    let (Some((base, chosen)), Some(r), Some(menu)) =
+                        (self.base.clone(), self.range.clone(), self.menu.take())
+                    else {
+                        return Ok(false);
+                    };
                     self.args = range_args(&base, chosen, &menu, &r);
                     self.round = self.args.round;
                     self.name = self.args.map.clone().unwrap_or_else(|| "noise".into());
                     self.parked = Some(menu);
                     self.start()?;
                     self.paused = false;
-                    self.hud.alert("The gun range: I opens the armory, B buys soldiers, N a new map", None, theme::ACCENT);
+                    self.hud.alert(
+                        "The gun range: I opens the armory, B buys soldiers, N a new map",
+                        None,
+                        theme::ACCENT,
+                    );
                 }
             }
             StartEvent::EndRun if self.ranging() => {
@@ -559,11 +694,15 @@ impl App {
             }
             StartEvent::Run if self.run.is_some() => self.show_shop(),
             StartEvent::Run | StartEvent::NextLevel => {
-                let Some((base, _)) = self.base.clone() else { return Ok(false) };
+                let Some((base, _)) = self.base.clone() else {
+                    return Ok(false);
+                };
                 let mut r = self.run.take().unwrap_or_else(|| {
                     // A new run on a new seed each time (the clock), so two
                     // runs differ; `run=SEED` on the command line repeats one.
-                    let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_secs());
+                    let seed = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map_or(1, |d| d.as_secs());
                     Run::new(seed)
                 });
                 let Some(menu) = self.menu.take() else { return Ok(false) };
@@ -581,7 +720,15 @@ impl App {
                         let p: Pick = row.pick;
                         if !r.pick(p) {
                             if let Some(m) = self.menu.as_mut() {
-                                m.notice = Some(format!("{}: {}", row.name, if row.ready { "can't be done" } else { "not enough points, or locked" }));
+                                m.notice = Some(format!(
+                                    "{}: {}",
+                                    row.name,
+                                    if row.ready {
+                                        "can't be done"
+                                    } else {
+                                        "not enough points, or locked"
+                                    }
+                                ));
                             }
                         }
                     }
@@ -600,7 +747,10 @@ impl App {
                         };
                         if !done {
                             if let Some(m) = self.menu.as_mut() {
-                                m.notice = Some(format!("{}: over the gun's budget or slots, or not enough points", row.name));
+                                m.notice = Some(format!(
+                                    "{}: over the gun's budget or slots, or not enough points",
+                                    row.name
+                                ));
                             }
                         }
                     }
@@ -608,7 +758,10 @@ impl App {
                 self.show_shop();
             }
             StartEvent::EndRun => {
-                let line = self.run.take().map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
+                let line = self
+                    .run
+                    .take()
+                    .map(|r| format!("Run given up on planet {}: {}", r.depth, r.line()));
                 if let Some(m) = self.menu.as_mut() {
                     m.run_live = false;
                     m.shop = None;
@@ -626,7 +779,9 @@ impl App {
                 }
             }
             pick => {
-                let (Some((base, chosen)), Some(menu)) = (self.base.clone(), self.menu.take()) else { return Ok(false) };
+                let (Some((base, chosen)), Some(menu)) = (self.base.clone(), self.menu.take()) else {
+                    return Ok(false);
+                };
                 self.args = round_args(&base, chosen, &menu, &pick);
                 if pick == StartEvent::RandomPlanet {
                     self.args.seed = fresh_seed();
@@ -662,7 +817,10 @@ impl App {
 
     /// The shop page on show is the gun range's armory.
     fn ranging(&self) -> bool {
-        self.menu.as_ref().and_then(|m| m.shop.as_ref()).is_some_and(|s| s.range)
+        self.menu
+            .as_ref()
+            .and_then(|m| m.shop.as_ref())
+            .is_some_and(|s| s.range)
     }
 
     /// The run the shop page on show buys for: the range's in its
@@ -694,7 +852,8 @@ impl App {
             return;
         }
         let Some((base, _)) = self.base.clone() else {
-            self.hud.alert("The armory is on the start menu's Gun range", None, theme::WARN);
+            self.hud
+                .alert("The armory is on the start menu's Gun range", None, theme::WARN);
             return;
         };
         self.menu = Some(self.parked.take().unwrap_or_else(|| start_menu(&base)));
@@ -715,7 +874,13 @@ impl App {
         }
         self.paused = false;
         let Some(r) = self.range.clone() else { return };
-        self.rounds = Rounds::new(r.gun(), RoundRules { budget: r.budget(), ..RoundRules::default() });
+        self.rounds = Rounds::new(
+            r.gun(),
+            RoundRules {
+                budget: r.budget(),
+                ..RoundRules::default()
+            },
+        );
         if let Some(g) = self.game.as_mut() {
             let gun = r.carried();
             for q in 0..g.squads.len() {
@@ -724,7 +889,11 @@ impl App {
             }
         }
         let cards: Vec<String> = r.gun().iter().map(|c| c.title()).collect();
-        let what = if cards.is_empty() { format!("{}, no cards: plain shots", draw::capital(&r.carried().title())) } else { format!("{}: {}", draw::capital(&r.carried().title()), cards.join(", ")) };
+        let what = if cards.is_empty() {
+            format!("{}, no cards: plain shots", draw::capital(&r.carried().title()))
+        } else {
+            format!("{}: {}", draw::capital(&r.carried().title()), cards.join(", "))
+        };
         self.hud.alert(&what, None, theme::ACCENT);
         self.args.range = Some(r);
     }
@@ -750,8 +919,12 @@ impl App {
     /// shop, or the main menu with the run's line when it is over. With
     /// no menu (`menu=0`) the next planet starts at once.
     pub(super) fn carry_on(&mut self) -> Result<(), String> {
-        let Some(v) = self.mission.as_ref().and_then(|t| t.verdict) else { return Ok(()) };
-        let Some(mut r) = self.args.run.clone() else { return Ok(()) };
+        let Some(v) = self.mission.as_ref().and_then(|t| t.verdict) else {
+            return Ok(());
+        };
+        let Some(mut r) = self.args.run.clone() else {
+            return Ok(());
+        };
         if v.stars > 0 {
             r.won(v.stars);
         } else {
@@ -769,7 +942,13 @@ impl App {
             self.run = Some(r);
             return self.start();
         }
-        let over = r.over.then(|| if r.victory() { format!("The home world is free: the run is won. {}", r.line()) } else { format!("The run ended on planet {}: {}", r.depth, r.line()) });
+        let over = r.over.then(|| {
+            if r.victory() {
+                format!("The home world is free: the run is won. {}", r.line())
+            } else {
+                format!("The run ended on planet {}: {}", r.depth, r.line())
+            }
+        });
         self.run = if r.over { None } else { Some(r) };
         self.back_to_menu()?;
         if let Some(m) = self.menu.as_mut() {
@@ -800,13 +979,19 @@ impl App {
 /// The Planet option's value for the command line's map: its depth when
 /// the map is a planet, else the first.
 fn planet_now(base: &Args) -> String {
-    base.map.as_deref().and_then(|m| slime_mould::mould::levelgen::spec_planet(m, base.seed)).and_then(Result::ok).map_or("1".into(), |p| p.depth.min(8).to_string())
+    base.map
+        .as_deref()
+        .and_then(|m| slime_mould::mould::levelgen::spec_planet(m, base.seed))
+        .and_then(Result::ok)
+        .map_or("1".into(), |p| p.depth.min(8).to_string())
 }
 
 /// A seed for a new planet: the clock's, kept to six digits so the title's
 /// "seed 482913" can be typed back as `seed=` to play the planet again.
 pub(super) fn fresh_seed() -> u64 {
-    let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64);
+    let t = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(1, |d| d.as_nanos() as u64);
     t % 1_000_000
 }
 
@@ -817,5 +1002,9 @@ fn launch_editor() -> Result<(), String> {
     if !exe.exists() {
         return Err("No map editor built: cargo build --release --bin larder-edit".into());
     }
-    std::process::Command::new(&exe).current_dir(env!("CARGO_MANIFEST_DIR")).spawn().map(|_| ()).map_err(|e| format!("The map editor did not start: {e}"))
+    std::process::Command::new(&exe)
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("The map editor did not start: {e}"))
 }

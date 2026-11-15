@@ -44,5 +44,9 @@ pub(super) fn default_shape(args: &mut Args) {
     let (walkers, keys) = shape_keys(DEFAULT_SHAPE).expect("the default shape is on the shapes page");
     args.walkers = walkers;
     let given = std::mem::take(&mut args.keys);
-    args.keys = keys.iter().map(|(k, v)| (k.to_string(), v.to_string())).chain(given).collect();
+    args.keys = keys
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .chain(given)
+        .collect();
 }

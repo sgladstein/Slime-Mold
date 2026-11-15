@@ -71,7 +71,9 @@ pub trait World {
     /// 2026-11-14).
     fn open_cells(&self) -> Vec<bool> {
         let (w, h) = self.size();
-        (0..w * h).map(|i| self.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).collect()
+        (0..w * h)
+            .map(|i| self.open((i % w) as f32 + 0.5, (i / w) as f32 + 0.5))
+            .collect()
     }
     /// Ground a shot flies over: open ground and deep water (shots fly over
     /// water; only rock, a wall or the rim stops them). The default is
@@ -190,12 +192,19 @@ impl World for BigDish {
     }
 
     fn mass(&self) -> usize {
-        self.living() + (0..self.walkers.len()).filter(|&k| self.lives(k) && self.is_dense(k)).count()
+        self.living()
+            + (0..self.walkers.len())
+                .filter(|&k| self.lives(k) && self.is_dense(k))
+                .count()
     }
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {
         let s = self.p.scale as f32;
-        self.piles.iter().enumerate().map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0))).collect()
+        self.piles
+            .iter()
+            .enumerate()
+            .map(|(p, &(x, y))| ((x * s, y * s), self.pile_charge.get(p).copied().unwrap_or(0.0)))
+            .collect()
     }
 
     fn crystal_r(&self, c: usize) -> f32 {

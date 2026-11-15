@@ -64,7 +64,15 @@ impl Opt {
         }
         let find = |v: &str| c.iter().position(|x| x == v).unwrap_or(0);
         let (default, at) = (find(default), find(current));
-        Opt { key: key.into(), label: label.into(), choices: c, default, at, note: note.into(), tab: String::new() }
+        Opt {
+            key: key.into(),
+            label: label.into(),
+            choices: c,
+            default,
+            at,
+            note: note.into(),
+            tab: String::new(),
+        }
     }
 
     /// The same option on the Options page's tab `tab`.
@@ -164,7 +172,23 @@ pub struct ShopRow {
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None }
+        ShopRow {
+            group: group.into(),
+            area,
+            icon,
+            tint: TEXT,
+            name: name.into(),
+            about: String::new(),
+            price: String::new(),
+            state: String::new(),
+            ready: false,
+            on: false,
+            level: (0, 0),
+            bars: Vec::new(),
+            cost: 0,
+            badge: None,
+            cell: None,
+        }
     }
 }
 
@@ -191,7 +215,11 @@ const KEYS_TAB: &str = "Keys";
 
 /// The tab `o` sits on.
 fn tab_name(o: &Opt) -> &str {
-    if o.tab.is_empty() { "Game" } else { &o.tab }
+    if o.tab.is_empty() {
+        "Game"
+    } else {
+        &o.tab
+    }
 }
 
 /// The page of a list `per` rows a page that holds row `at`, as the range
@@ -369,7 +397,39 @@ const CARD_H: f32 = 50.0;
 
 impl StartMenu {
     pub fn new(title: &str, missions: Vec<Entry>, options: Vec<Opt>, keys: Vec<(String, String)>) -> Self {
-        StartMenu { title: title.into(), missions, options, keys, page: Page::Main, edit_maps: false, planets: false, notice: None, shop: None, run_live: false, shop_tab: 0, picked: false, bag_sheet: 0, focus: 0, keys_from: Page::Main, hover: None, pressed: None, press_at: None, drag: None, slot_rects: Vec::new(), bag: None, hits: Vec::new(), scroll: 0.0, scroll_max: 0.0, body: None, drawn: Vec::new(), follow: false, opt_tab: 0, sheet: 0, sheets: 1, per: 1 }
+        StartMenu {
+            title: title.into(),
+            missions,
+            options,
+            keys,
+            page: Page::Main,
+            edit_maps: false,
+            planets: false,
+            notice: None,
+            shop: None,
+            run_live: false,
+            shop_tab: 0,
+            picked: false,
+            bag_sheet: 0,
+            focus: 0,
+            keys_from: Page::Main,
+            hover: None,
+            pressed: None,
+            press_at: None,
+            drag: None,
+            slot_rects: Vec::new(),
+            bag: None,
+            hits: Vec::new(),
+            scroll: 0.0,
+            scroll_max: 0.0,
+            body: None,
+            drawn: Vec::new(),
+            follow: false,
+            opt_tab: 0,
+            sheet: 0,
+            sheets: 1,
+            per: 1,
+        }
     }
 
     /// The option named `key`.
@@ -410,8 +470,12 @@ impl StartMenu {
     /// The options on the tab showing, by index.
     fn tab_opts(&self) -> Vec<usize> {
         let tabs = self.tabs();
-        let Some(name) = tabs.get(self.opt_tab).filter(|n| *n != KEYS_TAB) else { return Vec::new() };
-        (0..self.options.len()).filter(|&i| tab_name(&self.options[i]) == name).collect()
+        let Some(name) = tabs.get(self.opt_tab).filter(|n| *n != KEYS_TAB) else {
+            return Vec::new();
+        };
+        (0..self.options.len())
+            .filter(|&i| tab_name(&self.options[i]) == name)
+            .collect()
     }
 
     /// Shows the Options page's tab `k` (the last is the key list).
@@ -465,7 +529,11 @@ impl StartMenu {
                 }
             }
             if let (Page::Options, Hit::Reset(i)) = (self.page, hit) {
-                if let Some(k) = self.options.get(i).and_then(|o| self.tabs().iter().position(|t| t == tab_name(o))) {
+                if let Some(k) = self
+                    .options
+                    .get(i)
+                    .and_then(|o| self.tabs().iter().position(|t| t == tab_name(o)))
+                {
                     self.opt_tab = k;
                 }
             }
@@ -495,7 +563,13 @@ impl StartMenu {
     /// a card in the gun, and how many cards the gun holds.
     fn slot_of(&self, i: usize) -> (Option<usize>, usize) {
         let Some(shop) = &self.shop else { return (None, 0) };
-        let on: Vec<usize> = shop.rows.iter().enumerate().filter(|(_, r)| r.area == ShopArea::Cards && r.on).map(|(k, _)| k).collect();
+        let on: Vec<usize> = shop
+            .rows
+            .iter()
+            .enumerate()
+            .filter(|(_, r)| r.area == ShopArea::Cards && r.on)
+            .map(|(k, _)| k)
+            .collect();
         (on.iter().position(|&k| k == i), on.len())
     }
 
@@ -518,9 +592,20 @@ impl StartMenu {
         match self.page {
             // (No Keys row since 11-15: the key list is Options' last tab,
             // and F1 or ? opens it from anywhere.)
-            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign].into_iter().chain(self.planets.then_some(Hit::RandomPlanet)).chain([Hit::Range, Hit::Options]).chain(self.edit_maps.then_some(Hit::EditMaps)).chain([Hit::Quit]).collect(),
+            Page::Main => [Hit::Run, Hit::Sandbox, Hit::Campaign]
+                .into_iter()
+                .chain(self.planets.then_some(Hit::RandomPlanet))
+                .chain([Hit::Range, Hit::Options])
+                .chain(self.edit_maps.then_some(Hit::EditMaps))
+                .chain([Hit::Quit])
+                .collect(),
             Page::Missions => (0..self.missions.len()).map(Hit::Mission).chain([Hit::Back]).collect(),
-            Page::Options => self.tab_opts().into_iter().map(Hit::Reset).chain([Hit::ResetAll, Hit::Back]).collect(),
+            Page::Options => self
+                .tab_opts()
+                .into_iter()
+                .map(Hit::Reset)
+                .chain([Hit::ResetAll, Hit::Back])
+                .collect(),
             Page::Keys => vec![Hit::Back],
             Page::Shop => self.shop_rows(),
         }
@@ -531,7 +616,11 @@ impl StartMenu {
             // A refused buy's notice stays in the shop.
             self.notice = None;
         }
-        let to = if self.page == Page::Keys { self.keys_from } else { Page::Main };
+        let to = if self.page == Page::Keys {
+            self.keys_from
+        } else {
+            Page::Main
+        };
         let from = self.page;
         self.show(to);
         // Back on the main page, on the row that led away.
@@ -616,7 +705,11 @@ impl StartMenu {
         self.hover = p;
         // Held down on a bullet card and moved: a drag.
         if let (None, Some(Hit::Buy(i)), Some(a), Some(p)) = (self.drag, self.pressed, self.press_at, p) {
-            let card = self.page == Page::Shop && self.shop.as_ref().is_some_and(|s| s.rows.get(i).is_some_and(|r| r.area == ShopArea::Cards));
+            let card = self.page == Page::Shop
+                && self
+                    .shop
+                    .as_ref()
+                    .is_some_and(|s| s.rows.get(i).is_some_and(|r| r.area == ShopArea::Cards));
             if card && (p.0 - a.0).hypot(p.1 - a.1) > DRAG_FROM {
                 self.drag = Some(i);
             }
@@ -703,7 +796,11 @@ impl StartMenu {
             }
             KeyCode::Escape if self.leaves_armory() => return vec![StartEvent::NextLevel],
             KeyCode::Tab if self.tabbed() => {
-                let at = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
+                let at = if self.page == Page::Keys {
+                    self.tabs().len() - 1
+                } else {
+                    self.opt_tab
+                };
                 self.open_tab(at + 1);
             }
             // The shop's tabs: Tab goes round, 1 to 9 pick one.
@@ -714,14 +811,28 @@ impl StartMenu {
             // The shop's first arrow or Enter picks the row the keyboard is
             // on (the tab's first), rather than passing it or buying it
             // unseen.
-            KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyW | KeyCode::KeyS | KeyCode::KeyA | KeyCode::KeyD | KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space
+            KeyCode::ArrowUp
+            | KeyCode::ArrowDown
+            | KeyCode::ArrowLeft
+            | KeyCode::ArrowRight
+            | KeyCode::KeyW
+            | KeyCode::KeyS
+            | KeyCode::KeyA
+            | KeyCode::KeyD
+            | KeyCode::Enter
+            | KeyCode::NumpadEnter
+            | KeyCode::Space
                 if self.page == Page::Shop && !self.picked =>
             {
                 self.picked = true;
             }
             KeyCode::PageUp | KeyCode::PageDown => self.flip(if code == KeyCode::PageUp { -1 } else { 1 }),
             KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD if self.page == Page::Keys => {
-                self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
+                self.flip(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) {
+                    -1
+                } else {
+                    1
+                });
             }
             KeyCode::Escape | KeyCode::Backspace if code == KeyCode::Escape || self.page != Page::Options => {
                 if self.page != Page::Main {
@@ -735,11 +846,19 @@ impl StartMenu {
             }
             KeyCode::ArrowUp | KeyCode::KeyW => self.focus = (self.focus + rows.len() - 1) % rows.len(),
             KeyCode::ArrowDown | KeyCode::KeyS => self.focus = (self.focus + 1) % rows.len(),
-            KeyCode::ArrowLeft | KeyCode::KeyA if self.page == Page::Shop => self.focus = (self.focus + rows.len() - 1) % rows.len(),
-            KeyCode::ArrowRight | KeyCode::KeyD if self.page == Page::Shop => self.focus = (self.focus + 1) % rows.len(),
+            KeyCode::ArrowLeft | KeyCode::KeyA if self.page == Page::Shop => {
+                self.focus = (self.focus + rows.len() - 1) % rows.len()
+            }
+            KeyCode::ArrowRight | KeyCode::KeyD if self.page == Page::Shop => {
+                self.focus = (self.focus + 1) % rows.len()
+            }
             KeyCode::ArrowLeft | KeyCode::ArrowRight | KeyCode::KeyA | KeyCode::KeyD => {
                 if let Some(Hit::Reset(i)) = row {
-                    self.options[i].turn(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) { -1 } else { 1 });
+                    self.options[i].turn(if matches!(code, KeyCode::ArrowLeft | KeyCode::KeyA) {
+                        -1
+                    } else {
+                        1
+                    });
                 }
             }
             KeyCode::Enter | KeyCode::NumpadEnter | KeyCode::Space => {
@@ -753,7 +872,11 @@ impl StartMenu {
             KeyCode::KeyQ | KeyCode::KeyE if self.page == Page::Shop => {
                 if let Some(Hit::Buy(i)) = row {
                     if let (Some(k), n) = self.slot_of(i) {
-                        let to = if code == KeyCode::KeyQ { k.checked_sub(1) } else { Some(k + 1).filter(|&t| t < n) };
+                        let to = if code == KeyCode::KeyQ {
+                            k.checked_sub(1)
+                        } else {
+                            Some(k + 1).filter(|&t| t < n)
+                        };
                         if let Some(to) = to {
                             self.focus = self.focus + to - k;
                             return vec![StartEvent::Move(i, to)];
@@ -805,7 +928,11 @@ impl StartMenu {
         // (Forty thin steps: twelve showed as bands on the 1600-wide shot.)
         for k in 0..40 {
             let f = k as f32 / 40.0;
-            c.rrect(Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh), 0.0, [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2]);
+            c.rrect(
+                Rect::new(0.0, 0.0, shade_w * (1.0 - f), sh),
+                0.0,
+                [4, 6, 8, (9.0 * (1.0 - f)) as u8 + 2],
+            );
         }
         // The shop and the gun range's armory: one screen of their own
         // (`shop.rs`, Shop B), never scrolled.
@@ -823,8 +950,22 @@ impl StartMenu {
             // The title on the main page only, and smaller (44 at 96 until
             // 11-15, with the rows from 160: the list ran under the hint at
             // 200%; the owner picked menu A, names with one caption box).
-            c.text(Weight::SemiBold, 36.0 * s, (x, 64.0 * s), Align::Left, &self.title, TEXT);
-            c.text(Weight::Medium, 15.0 * s, (x, 90.0 * s), Align::Left, "A mould that grows, feeds and fights back", MUTED);
+            c.text(
+                Weight::SemiBold,
+                36.0 * s,
+                (x, 64.0 * s),
+                Align::Left,
+                &self.title,
+                TEXT,
+            );
+            c.text(
+                Weight::Medium,
+                15.0 * s,
+                (x, 90.0 * s),
+                Align::Left,
+                "A mould that grows, feeds and fights back",
+                MUTED,
+            );
         }
         let top = if inner { HEAD * s + 16.0 * s } else { 100.0 * s };
         let rows = self.rows();
@@ -885,7 +1026,9 @@ impl StartMenu {
             Page::Main => "Up/Down and Enter, or click  ·  F1 or ? keys  ·  Options holds the key list",
             Page::Missions => "1-9 or Enter starts a mission  ·  Esc back",
             Page::Options => "Up/Down pick  ·  Left/Right change  ·  Backspace resets  ·  Tab next tab  ·  Esc back",
-            Page::Keys if self.sheets > 1 && self.tabbed() => "Left/Right next page  ·  Tab next tab  ·  Esc or F1 back",
+            Page::Keys if self.sheets > 1 && self.tabbed() => {
+                "Left/Right next page  ·  Tab next tab  ·  Esc or F1 back"
+            }
             Page::Keys if self.sheets > 1 => "Left/Right next page  ·  Esc or F1 back",
             Page::Keys if self.tabbed() => "Tab next tab  ·  Esc or F1 back",
             Page::Keys => "Esc or F1 back",
@@ -898,7 +1041,15 @@ impl StartMenu {
             Some(n) if self.page == Page::Main => (n.as_str(), WARN),
             _ => (hint, MUTED),
         };
-        c.text_fit(Weight::Medium, 13.5 * s, (x, sh - 28.0 * s), Align::Left, hint, sw - 2.0 * x - pager_w, ink);
+        c.text_fit(
+            Weight::Medium,
+            13.5 * s,
+            (x, sh - 28.0 * s),
+            Align::Left,
+            hint,
+            sw - 2.0 * x - pager_w,
+            ink,
+        );
     }
 
     fn glass(&mut self, r: Rect, c: &mut Canvas, s: f32) {
@@ -909,7 +1060,17 @@ impl StartMenu {
 
     /// A button row: `label` big, `sub` muted under it.
     #[allow(clippy::too_many_arguments)]
-    fn item(&mut self, r: Rect, label: &str, sub: &str, hit: Hit, primary: bool, focused: bool, c: &mut Canvas, s: f32) {
+    fn item(
+        &mut self,
+        r: Rect,
+        label: &str,
+        sub: &str,
+        hit: Hit,
+        primary: bool,
+        focused: bool,
+        c: &mut Canvas,
+        s: f32,
+    ) {
         let hot = focused || self.hover.is_some_and(|p| r.contains(p));
         let (t, b) = match (primary, hot) {
             (true, false) => ([70, 156, 222, 255], [50, 124, 186, 255]),
@@ -925,11 +1086,33 @@ impl StartMenu {
         // (17 and 12.5 until the UI review, 11-15: "the text seems too
         // small".)
         if sub.is_empty() {
-            c.text(Weight::SemiBold, 18.0 * s, (r.x + pad, r.y + r.h / 2.0 + 6.5 * s), Align::Left, label, TEXT);
+            c.text(
+                Weight::SemiBold,
+                18.0 * s,
+                (r.x + pad, r.y + r.h / 2.0 + 6.5 * s),
+                Align::Left,
+                label,
+                TEXT,
+            );
         } else {
-            c.text(Weight::SemiBold, 18.0 * s, (r.x + pad, r.y + r.h / 2.0 - 3.0 * s), Align::Left, label, TEXT);
+            c.text(
+                Weight::SemiBold,
+                18.0 * s,
+                (r.x + pad, r.y + r.h / 2.0 - 3.0 * s),
+                Align::Left,
+                label,
+                TEXT,
+            );
             let col = if primary { [220, 236, 250, 255] } else { MUTED };
-            c.text_fit(Weight::Medium, 14.0 * s, (r.x + pad, r.y + r.h / 2.0 + 17.0 * s), Align::Left, sub, r.w - 2.0 * pad, col);
+            c.text_fit(
+                Weight::Medium,
+                14.0 * s,
+                (r.x + pad, r.y + r.h / 2.0 + 17.0 * s),
+                Align::Left,
+                sub,
+                r.w - 2.0 * pad,
+                col,
+            );
         }
         self.hits.push((r, hit));
     }
@@ -943,30 +1126,76 @@ impl StartMenu {
     fn main_page(&mut self, c: &mut Canvas, x: f32, top: f32, _w: f32, s: f32, focus: Option<Hit>) -> f32 {
         // The rules changed, by their labels; the UI size is not a rule
         // ("Free play, with ui 200%", the review 11-15).
-        let changed: Vec<String> = self.options.iter().filter(|o| !o.is_default() && o.key != "ui").map(|o| format!("{} {}", o.label, o.value())).collect();
-        let sandbox = if changed.is_empty() { "Free play on the map, with today's defaults".to_string() } else { format!("Free play, with {}", changed.join(", ")) };
+        let changed: Vec<String> = self
+            .options
+            .iter()
+            .filter(|o| !o.is_default() && o.key != "ui")
+            .map(|o| format!("{} {}", o.label, o.value()))
+            .collect();
+        let sandbox = if changed.is_empty() {
+            "Free play on the map, with today's defaults".to_string()
+        } else {
+            format!("Free play, with {}", changed.join(", "))
+        };
         let campaign = format!("{} missions, one new verb each", self.missions.len());
         // The run first, and the one lit (the whole-game review, 11-15:
         // the run is the game; Sandbox led and was lit before). A gap
         // before Options and before Quit.
         let mut items: Vec<(&str, String, Hit, bool, bool)> = vec![
-            (if self.run_live { "Back to the run" } else { "Run" }, if self.run_live { "The shop, then the next planet".into() } else { "Planet after planet toward the slime's home world; upgrades between".into() }, Hit::Run, true, false),
+            (
+                if self.run_live { "Back to the run" } else { "Run" },
+                if self.run_live {
+                    "The shop, then the next planet".into()
+                } else {
+                    "Planet after planet toward the slime's home world; upgrades between".into()
+                },
+                Hit::Run,
+                true,
+                false,
+            ),
             ("Sandbox", sandbox, Hit::Sandbox, false, false),
             ("Campaign", campaign, Hit::Campaign, false, false),
         ];
         if self.planets {
             let depth = self.option("planet").map_or("1", |o| o.value());
-            items.push(("Random planet", format!("A new generated planet, planet {depth} of a run (Options: Planet)"), Hit::RandomPlanet, false, false));
+            items.push((
+                "Random planet",
+                format!("A new generated planet, planet {depth} of a run (Options: Planet)"),
+                Hit::RandomPlanet,
+                false,
+                false,
+            ));
         }
         items.extend([
-            ("Gun range", "Every gun, card and bullet, free: build a gun and shoot the slime".into(), Hit::Range, false, false),
-            ("Options", "The UI size, the game and the planet, the mould's rules, and the keys".into(), Hit::Options, false, true),
+            (
+                "Gun range",
+                "Every gun, card and bullet, free: build a gun and shoot the slime".into(),
+                Hit::Range,
+                false,
+                false,
+            ),
+            (
+                "Options",
+                "The UI size, the game and the planet, the mould's rules, and the keys".into(),
+                Hit::Options,
+                false,
+                true,
+            ),
         ]);
         if self.edit_maps {
-            items.push(("Edit maps", "Draw a map in the map editor".into(), Hit::EditMaps, false, false));
+            items.push((
+                "Edit maps",
+                "Draw a map in the map editor".into(),
+                Hit::EditMaps,
+                false,
+                false,
+            ));
         }
         items.push(("Quit", "Close the game".into(), Hit::Quit, false, true));
-        let longest = items.iter().map(|it| c.atlas.measure(Weight::SemiBold, 18.0 * s, it.0)).fold(0.0f32, f32::max);
+        let longest = items
+            .iter()
+            .map(|it| c.atlas.measure(Weight::SemiBold, 18.0 * s, it.0))
+            .fold(0.0f32, f32::max);
         let w = (longest + 48.0 * s).max(280.0 * s);
         let (rh, gap) = (40.0 * s, 4.0 * s);
         let mut y = top + 8.0 * s;
@@ -982,7 +1211,10 @@ impl StartMenu {
         }
         // The row under the cursor, else the keyboard's.
         let hot = placed.iter().position(|p| self.hover.is_some_and(|h| p.0.contains(h)));
-        let told = hot.or_else(|| placed.iter().position(|p| focus == Some(p.3))).map(|k| placed.swap_remove(k)).map(|(r, n, sub, _)| (r, n, sub));
+        let told = hot
+            .or_else(|| placed.iter().position(|p| focus == Some(p.3)))
+            .map(|k| placed.swap_remove(k))
+            .map(|(r, n, sub, _)| (r, n, sub));
         // (A notice, such as why the map editor did not start, takes the
         // hint's line: `draw`.)
         // The caption box beside the row it tells, with a notch toward it.
@@ -999,10 +1231,30 @@ impl StartMenu {
             let mid = r.y + r.h / 2.0;
             for k in 0..6 {
                 let d = 6.0 - k as f32;
-                c.rrect(Rect::new(bx - d * s, mid - d * s, (d + 1.0) * s, 2.0 * d * s), 0.0, PANEL_TOP);
+                c.rrect(
+                    Rect::new(bx - d * s, mid - d * s, (d + 1.0) * s, 2.0 * d * s),
+                    0.0,
+                    PANEL_TOP,
+                );
             }
-            c.text(Weight::SemiBold, 18.0 * s, (bx + 16.0 * s, by + 30.0 * s), Align::Left, &name, TEXT);
-            self.lines(c, Weight::Medium, 15.0 * s, (bx + 16.0 * s, by + 54.0 * s), tw, 22.0 * s, &sub, [201, 210, 219, 255]);
+            c.text(
+                Weight::SemiBold,
+                18.0 * s,
+                (bx + 16.0 * s, by + 30.0 * s),
+                Align::Left,
+                &name,
+                TEXT,
+            );
+            self.lines(
+                c,
+                Weight::Medium,
+                15.0 * s,
+                (bx + 16.0 * s, by + 54.0 * s),
+                tw,
+                22.0 * s,
+                &sub,
+                [201, 210, 219, 255],
+            );
         }
         y
     }
@@ -1022,7 +1274,11 @@ impl StartMenu {
         let tx = x + c.text(Weight::SemiBold, 22.0 * s, (x, 36.0 * s), Align::Left, name, TEXT) + 24.0 * s;
         let back = Rect::new(sw - x - 116.0 * s, 10.0 * s, 116.0 * s, 36.0 * s);
         if self.tabbed() {
-            let lit = if self.page == Page::Keys { self.tabs().len() - 1 } else { self.opt_tab };
+            let lit = if self.page == Page::Keys {
+                self.tabs().len() - 1
+            } else {
+                self.opt_tab
+            };
             let mut tx = tx;
             for (k, t) in self.tabs().iter().enumerate() {
                 let w = c.atlas.measure(Weight::SemiBold, 15.0 * s, t) + 28.0 * s;
@@ -1037,8 +1293,22 @@ impl StartMenu {
                     (false, true) => (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM),
                     (false, false) => (BUTTON_TOP, BUTTON_BOTTOM),
                 };
-                c.panel(r, 8.0 * s, top, bottom, 1.0, if on { ACCENT } else { [255, 255, 255, 30] });
-                c.text(Weight::SemiBold, 15.0 * s, (r.x + 14.0 * s, r.y + 22.5 * s), Align::Left, t, if on { TEXT } else { MUTED });
+                c.panel(
+                    r,
+                    8.0 * s,
+                    top,
+                    bottom,
+                    1.0,
+                    if on { ACCENT } else { [255, 255, 255, 30] },
+                );
+                c.text(
+                    Weight::SemiBold,
+                    15.0 * s,
+                    (r.x + 14.0 * s, r.y + 22.5 * s),
+                    Align::Left,
+                    t,
+                    if on { TEXT } else { MUTED },
+                );
                 self.hits.push((r, Hit::Tab(k)));
                 tx = r.right() + 8.0 * s;
             }
@@ -1050,14 +1320,32 @@ impl StartMenu {
     #[allow(clippy::too_many_arguments)]
     fn small_button(&mut self, r: Rect, label: &str, key: &str, hit: Hit, focused: bool, c: &mut Canvas, s: f32) {
         let hot = focused || self.hover.is_some_and(|p| r.contains(p));
-        let (t, b) = if hot { (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM) } else { (BUTTON_TOP, BUTTON_BOTTOM) };
+        let (t, b) = if hot {
+            (BUTTON_HOVER_TOP, BUTTON_HOVER_BOTTOM)
+        } else {
+            (BUTTON_TOP, BUTTON_BOTTOM)
+        };
         c.panel(r, 8.0 * s, t, b, 1.0, [255, 255, 255, 34]);
         if focused {
             c.outline(r.inset(-2.0 * s), 10.0 * s, 1.5 * s, ACCENT);
         }
-        c.text(Weight::SemiBold, 16.0 * s, (r.x + 14.0 * s, r.y + r.h / 2.0 + 6.0 * s), Align::Left, label, TEXT);
+        c.text(
+            Weight::SemiBold,
+            16.0 * s,
+            (r.x + 14.0 * s, r.y + r.h / 2.0 + 6.0 * s),
+            Align::Left,
+            label,
+            TEXT,
+        );
         if !key.is_empty() {
-            c.text(Weight::Medium, 12.5 * s, (r.right() - 10.0 * s, r.y + r.h / 2.0 + 5.0 * s), Align::Right, key, MUTED);
+            c.text(
+                Weight::Medium,
+                12.5 * s,
+                (r.right() - 10.0 * s, r.y + r.h / 2.0 + 5.0 * s),
+                Align::Right,
+                key,
+                MUTED,
+            );
         }
         self.hits.push((r, hit));
     }
@@ -1073,11 +1361,32 @@ impl StartMenu {
         let label = format!("{} of {}", self.sheet + 1, self.sheets);
         let lw = c.atlas.measure(Weight::SemiBold, 14.5 * s, &label) + 20.0 * s;
         let prev = Rect::new(next.x - lw - bw, y, bw, 30.0 * s);
-        c.text(Weight::SemiBold, 14.5 * s, (prev.right() + lw / 2.0, y + 20.0 * s), Align::Centre, &label, TEXT);
+        c.text(
+            Weight::SemiBold,
+            14.5 * s,
+            (prev.right() + lw / 2.0, y + 20.0 * s),
+            Align::Centre,
+            &label,
+            TEXT,
+        );
         for (r, by, t) in [(prev, -1isize, "<"), (next, 1, ">")] {
             let hot = self.hover.is_some_and(|p| r.contains(p));
-            c.panel(r, 7.0 * s, if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP }, if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM }, 1.0, [255, 255, 255, 30]);
-            c.text(Weight::SemiBold, 15.0 * s, (r.x + r.w / 2.0, r.y + 20.0 * s), Align::Centre, t, TEXT);
+            c.panel(
+                r,
+                7.0 * s,
+                if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP },
+                if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM },
+                1.0,
+                [255, 255, 255, 30],
+            );
+            c.text(
+                Weight::SemiBold,
+                15.0 * s,
+                (r.x + r.w / 2.0, r.y + 20.0 * s),
+                Align::Centre,
+                t,
+                TEXT,
+            );
             self.hits.push((r, Hit::Flip(by)));
         }
     }
@@ -1116,7 +1425,14 @@ impl StartMenu {
         let panel = Rect::new(x, top, lw, shown.len().max(1) as f32 * rh + 16.0 * s);
         self.glass(panel, c, s);
         if n == 0 {
-            c.text(Weight::Medium, 16.0 * s, (x + 20.0 * s, top + 34.0 * s), Align::Left, "No missions found", MUTED);
+            c.text(
+                Weight::Medium,
+                16.0 * s,
+                (x + 20.0 * s, top + 34.0 * s),
+                Align::Left,
+                "No missions found",
+                MUTED,
+            );
         }
         let mut told = None;
         let mut y = panel.y + 8.0 * s;
@@ -1136,8 +1452,24 @@ impl StartMenu {
             }
             let base = row.y + row.h / 2.0 + 6.0 * s;
             let dw = c.atlas.measure(Weight::Medium, 14.0 * s, &e.detail).min(row.w * 0.4);
-            c.text_fit(Weight::SemiBold, 17.0 * s, (row.x + 14.0 * s, base), Align::Left, &format!("{}. {}", i + 1, e.name), row.w - dw - 44.0 * s, TEXT);
-            c.text_fit(Weight::Medium, 14.0 * s, (row.right() - 14.0 * s, base), Align::Right, &e.detail, row.w * 0.4, MUTED);
+            c.text_fit(
+                Weight::SemiBold,
+                17.0 * s,
+                (row.x + 14.0 * s, base),
+                Align::Left,
+                &format!("{}. {}", i + 1, e.name),
+                row.w - dw - 44.0 * s,
+                TEXT,
+            );
+            c.text_fit(
+                Weight::Medium,
+                14.0 * s,
+                (row.right() - 14.0 * s, base),
+                Align::Right,
+                &e.detail,
+                row.w * 0.4,
+                MUTED,
+            );
             self.hits.push((row, Hit::Mission(i)));
             y += rh;
         }
@@ -1146,16 +1478,34 @@ impl StartMenu {
         if let Some(e) = told.or((n > 0).then_some(0)).map(|i| (i, self.missions[i].clone())) {
             let (i, e) = e;
             let tw = nw - 36.0 * s;
-            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &format!("{}. {}", i + 1, e.name)) * 28.0 + Self::count(c, Weight::Medium, 15.5 * s, tw, &e.says) * 23.0 + Self::count(c, Weight::Medium, 14.0 * s, tw, &e.detail) * 21.0;
+            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &format!("{}. {}", i + 1, e.name)) * 28.0
+                + Self::count(c, Weight::Medium, 15.5 * s, tw, &e.says) * 23.0
+                + Self::count(c, Weight::Medium, 14.0 * s, tw, &e.detail) * 21.0;
             let need = (36.0 + 10.0 + 48.0) * s + lines * s;
             let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(220.0 * s).max(need).min(room));
             self.glass(r, c, s);
             let px = r.x + 18.0 * s;
             let mut y = r.y + 36.0 * s;
-            y += self.lines(c, Weight::SemiBold, 21.0 * s, (px, y), tw, 28.0 * s, &format!("{}. {}", i + 1, e.name), TEXT) + 6.0 * s;
+            y += self.lines(
+                c,
+                Weight::SemiBold,
+                21.0 * s,
+                (px, y),
+                tw,
+                28.0 * s,
+                &format!("{}. {}", i + 1, e.name),
+                TEXT,
+            ) + 6.0 * s;
             y += self.lines(c, Weight::Medium, 15.5 * s, (px, y), tw, 23.0 * s, &e.says, TEXT) + 4.0 * s;
             self.lines(c, Weight::Medium, 14.0 * s, (px, y), tw, 21.0 * s, &e.detail, MUTED);
-            c.text(Weight::Medium, 13.5 * s, (px, r.bottom() - 18.0 * s), Align::Left, &format!("Click or {} starts it", i + 1), MUTED);
+            c.text(
+                Weight::Medium,
+                13.5 * s,
+                (px, r.bottom() - 18.0 * s),
+                Align::Left,
+                &format!("Click or {} starts it", i + 1),
+                MUTED,
+            );
         }
         panel.bottom()
     }
@@ -1172,7 +1522,17 @@ impl StartMenu {
     /// Wrapped text from a first baseline at `at`; the height it took
     /// (to the next first baseline).
     #[allow(clippy::too_many_arguments)]
-    fn lines(&self, c: &mut Canvas, weight: Weight, px: f32, at: (f32, f32), max: f32, lead: f32, text: &str, colour: Rgba) -> f32 {
+    fn lines(
+        &self,
+        c: &mut Canvas,
+        weight: Weight,
+        px: f32,
+        at: (f32, f32),
+        max: f32,
+        lead: f32,
+        text: &str,
+        colour: Rgba,
+    ) -> f32 {
         if text.is_empty() {
             return 0.0;
         }
@@ -1195,7 +1555,13 @@ impl StartMenu {
         let room = self.room(c, top, s);
         let per = ((room - 16.0 * s) / rh).floor().max(1.0) as usize;
         // The page follows the keyboard's row.
-        if let Some(k) = focus.and_then(|h| if let Hit::Reset(i) = h { opts.iter().position(|&o| o == i) } else { None }) {
+        if let Some(k) = focus.and_then(|h| {
+            if let Hit::Reset(i) = h {
+                opts.iter().position(|&o| o == i)
+            } else {
+                None
+            }
+        }) {
             self.sheet = k / per;
         }
         let (shown, pages) = sheet_of(n, per, self.sheet);
@@ -1223,24 +1589,63 @@ impl StartMenu {
             // The value between its arrows.
             let aw = 30.0 * s;
             let vw = 130.0 * s;
-            let next = Rect::new(row.right() - 8.0 * s - aw, row.y + (row.h - 30.0 * s) / 2.0, aw, 30.0 * s);
+            let next = Rect::new(
+                row.right() - 8.0 * s - aw,
+                row.y + (row.h - 30.0 * s) / 2.0,
+                aw,
+                30.0 * s,
+            );
             let prev = Rect::new(next.x - vw - aw, next.y, aw, 30.0 * s);
             let base = row.y + row.h / 2.0 + 6.0 * s;
             let lx = row.x + 14.0 * s;
-            let label_w = c.text_fit(Weight::SemiBold, 17.0 * s, (lx, base), Align::Left, &o.label, prev.x - lx - 30.0 * s, TEXT);
+            let label_w = c.text_fit(
+                Weight::SemiBold,
+                17.0 * s,
+                (lx, base),
+                Align::Left,
+                &o.label,
+                prev.x - lx - 30.0 * s,
+                TEXT,
+            );
             if !o.is_default() {
                 // Moved off its default: a dot after the name (the note
                 // says what it was).
-                c.rrect(Rect::new(lx + label_w + 8.0 * s, base - 9.0 * s, 7.0 * s, 7.0 * s), 3.5 * s, WARN);
+                c.rrect(
+                    Rect::new(lx + label_w + 8.0 * s, base - 9.0 * s, 7.0 * s, 7.0 * s),
+                    3.5 * s,
+                    WARN,
+                );
             }
             for (r, by, label) in [(prev, -1isize, "<"), (next, 1, ">")] {
                 let hot = self.hover.is_some_and(|p| r.contains(p));
-                c.panel(r, 7.0 * s, if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP }, if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM }, 1.0, [255, 255, 255, 30]);
-                c.text(Weight::SemiBold, 15.0 * s, (r.x + r.w / 2.0, r.y + 20.0 * s), Align::Centre, label, TEXT);
+                c.panel(
+                    r,
+                    7.0 * s,
+                    if hot { BUTTON_HOVER_TOP } else { BUTTON_TOP },
+                    if hot { BUTTON_HOVER_BOTTOM } else { BUTTON_BOTTOM },
+                    1.0,
+                    [255, 255, 255, 30],
+                );
+                c.text(
+                    Weight::SemiBold,
+                    15.0 * s,
+                    (r.x + r.w / 2.0, r.y + 20.0 * s),
+                    Align::Centre,
+                    label,
+                    TEXT,
+                );
                 self.hits.push((r, Hit::Turn(i, by)));
             }
             let vc = if o.is_default() { TEXT } else { WARN };
-            c.text_fit(Weight::SemiBold, 16.0 * s, (prev.right() + vw / 2.0, base), Align::Centre, o.value(), vw - 8.0 * s, vc);
+            c.text_fit(
+                Weight::SemiBold,
+                16.0 * s,
+                (prev.right() + vw / 2.0, base),
+                Align::Centre,
+                o.value(),
+                vw - 8.0 * s,
+                vc,
+            );
             y += rh;
         }
         // The note: the row under the cursor, else the keyboard's, else
@@ -1261,10 +1666,17 @@ impl StartMenu {
         let tail = 8.0 * s + fl * 19.0 * s + 66.0 * s;
         // As tall as the list, or as the note needs.
         let need = told.as_ref().map_or(0.0, |(_, o)| {
-            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &o.label) * 28.0 + Self::count(c, Weight::Medium, 15.5 * s, tw, &o.note) * 23.0 + Self::count(c, Weight::Medium, 14.0 * s, tw, &state(o)) * 21.0;
+            let lines = Self::count(c, Weight::SemiBold, 21.0 * s, tw, &o.label) * 28.0
+                + Self::count(c, Weight::Medium, 15.5 * s, tw, &o.note) * 23.0
+                + Self::count(c, Weight::Medium, 14.0 * s, tw, &state(o)) * 21.0;
             (48.0 + if o.is_default() { -10.0 } else { 30.0 }) * s + lines * s
         });
-        let r = Rect::new(x + lw + 20.0 * s, top, nw, panel.h.max(300.0 * s).max(need + tail).min(room));
+        let r = Rect::new(
+            x + lw + 20.0 * s,
+            top,
+            nw,
+            panel.h.max(300.0 * s).max(need + tail).min(room),
+        );
         self.glass(r, c, s);
         let px = r.x + 18.0 * s;
         let all = Rect::new(px, r.bottom() - 54.0 * s, (190.0 * s).min(tw), 40.0 * s);
@@ -1282,8 +1694,24 @@ impl StartMenu {
                 }
             }
         }
-        c.paragraph(Weight::Medium, 13.0 * s, (px, all.y - 12.0 * s - (fl - 1.0) * 19.0 * s), tw, 19.0 * s, foot, MUTED);
-        self.small_button(all, "All to defaults", "", Hit::ResetAll, focus == Some(Hit::ResetAll), c, s);
+        c.paragraph(
+            Weight::Medium,
+            13.0 * s,
+            (px, all.y - 12.0 * s - (fl - 1.0) * 19.0 * s),
+            tw,
+            19.0 * s,
+            foot,
+            MUTED,
+        );
+        self.small_button(
+            all,
+            "All to defaults",
+            "",
+            Hit::ResetAll,
+            focus == Some(Hit::ResetAll),
+            c,
+            s,
+        );
         panel.bottom().max(r.bottom())
     }
 
@@ -1378,13 +1806,25 @@ impl StartMenu {
 
     /// The centre of the button that starts mission `i`, as last drawn.
     pub fn mission_at(&self, i: usize) -> Option<(f32, f32)> {
-        self.rect_of(Hit::Mission(i)).map(|r| (r.x + r.w / 2.0, r.y + r.h / 2.0))
+        self.rect_of(Hit::Mission(i))
+            .map(|r| (r.x + r.w / 2.0, r.y + r.h / 2.0))
     }
 }
 
 fn digit(code: KeyCode) -> Option<usize> {
     use KeyCode as K;
-    let ds = [K::Digit0, K::Digit1, K::Digit2, K::Digit3, K::Digit4, K::Digit5, K::Digit6, K::Digit7, K::Digit8, K::Digit9];
+    let ds = [
+        K::Digit0,
+        K::Digit1,
+        K::Digit2,
+        K::Digit3,
+        K::Digit4,
+        K::Digit5,
+        K::Digit6,
+        K::Digit7,
+        K::Digit8,
+        K::Digit9,
+    ];
     ds.iter().position(|&d| d == code)
 }
 
@@ -1393,10 +1833,31 @@ mod tests {
     use super::*;
 
     fn menu() -> StartMenu {
-        let missions = (1..=3).map(|i| Entry { stem: format!("{i}-m"), name: format!("M{i}"), says: "Do it".into(), detail: "Fork".into() }).collect();
+        let missions = (1..=3)
+            .map(|i| Entry {
+                stem: format!("{i}-m"),
+                name: format!("M{i}"),
+                says: "Do it".into(),
+                detail: "Fork".into(),
+            })
+            .collect();
         let options = vec![
-            Opt::new("own", "Own mould", &["off", "on"], "off", "off", "A second mould of yours"),
-            Opt::new("panic", "Panic", &["0", "1", "2", "4"], "2", "2", "A cut-off part panics"),
+            Opt::new(
+                "own",
+                "Own mould",
+                &["off", "on"],
+                "off",
+                "off",
+                "A second mould of yours",
+            ),
+            Opt::new(
+                "panic",
+                "Panic",
+                &["0", "1", "2", "4"],
+                "2",
+                "2",
+                "A cut-off part panics",
+            ),
         ];
         StartMenu::new("Larder World", missions, options, vec![("A".into(), "Attack".into())])
     }
@@ -1412,7 +1873,9 @@ mod tests {
 
     fn click(m: &mut StartMenu, c: &mut Canvas, hit: Hit) -> Vec<StartEvent> {
         shown(m, c, hit);
-        let r = m.rect_of(hit).unwrap_or_else(|| panic!("{hit:?} not drawn on {:?}", m.page));
+        let r = m
+            .rect_of(hit)
+            .unwrap_or_else(|| panic!("{hit:?} not drawn on {:?}", m.page));
         m.moved(Some((r.x + r.w / 2.0, r.y + r.h / 2.0)));
         assert!(m.button(Button::Left, true).is_empty());
         m.button(Button::Left, false)
@@ -1421,7 +1884,10 @@ mod tests {
     #[test]
     fn an_option_starts_at_a_given_value_and_keeps_its_default() {
         let o = Opt::new("bullet", "Bullets", &["0", "45"], "45", "30", "");
-        assert_eq!((o.value(), o.choices[o.default].as_str(), o.is_default()), ("30", "45", false));
+        assert_eq!(
+            (o.value(), o.choices[o.default].as_str(), o.is_default()),
+            ("30", "45", false)
+        );
         let o = Opt::new("wither", "Wither", &["0"], "0.01", "0.01", "");
         assert!(o.is_default() && o.choices.len() == 2);
     }
@@ -1431,7 +1897,11 @@ mod tests {
         let mut m = menu();
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Run], "the run is first");
         m.key(KeyCode::ArrowDown, true);
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Sandbox], "the sandbox is second");
+        assert_eq!(
+            m.key(KeyCode::Enter, true),
+            vec![StartEvent::Sandbox],
+            "the sandbox is second"
+        );
         m.key(KeyCode::ArrowDown, true);
         assert!(m.key(KeyCode::Enter, true).is_empty());
         assert_eq!(m.page, Page::Missions);
@@ -1444,7 +1914,11 @@ mod tests {
         m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
         m.key(KeyCode::ArrowUp, true);
-        assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Quit], "up from the top wraps to quit");
+        assert_eq!(
+            m.key(KeyCode::Enter, true),
+            vec![StartEvent::Quit],
+            "up from the top wraps to quit"
+        );
     }
 
     /// A shop like the run's: `n` bullet cards (the first three in the
@@ -1456,9 +1930,20 @@ mod tests {
         let mut rows = Vec::new();
         let mut add = |group: &str, area: ShopArea, k: usize| {
             let mut r = ShopRow::new(group, area, Icon::Wall, &format!("{group} {k}"));
-            (r.about, r.price, r.state, r.ready, r.level) = ("Does it".into(), format!("{}", 100 + k), "0/3".into(), k.is_multiple_of(2), (1, 3));
+            (r.about, r.price, r.state, r.ready, r.level) = (
+                "Does it".into(),
+                format!("{}", 100 + k),
+                "0/3".into(),
+                k.is_multiple_of(2),
+                (1, 3),
+            );
             if area == ShopArea::Guns {
-                r.bars = vec![("Range".into(), 0.5, "24".into()), ("Rate".into(), 0.3 + 0.1 * k as f32, "1.0".into()), ("Budget".into(), 0.4, "10".into()), ("Slots".into(), 0.6, "4".into())];
+                r.bars = vec![
+                    ("Range".into(), 0.5, "24".into()),
+                    ("Rate".into(), 0.3 + 0.1 * k as f32, "1.0".into()),
+                    ("Budget".into(), 0.4, "10".into()),
+                    ("Slots".into(), 0.6, "4".into()),
+                ];
             }
             r.cost = k as u32 % 4;
             r.on = area == ShopArea::Cards && k < 3 || area == ShopArea::Guns && k == 0;
@@ -1479,7 +1964,15 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false }
+        Shop {
+            heading: "Planet 2 next".into(),
+            lines: vec!["1 planet freed".into()],
+            purse: "200 points".into(),
+            rows,
+            slots: 4,
+            budget: (6, 10),
+            range: false,
+        }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -1489,46 +1982,116 @@ mod tests {
     fn armory(bag: usize) -> Shop {
         let mut rows = Vec::new();
         for k in 0..8 {
-            let mut r = ShopRow::new("Guns", ShopArea::Guns, Icon::Rifle, ["Rifle", "Carbine", "Long gun", "Scattergun"][k % 4]);
+            let mut r = ShopRow::new(
+                "Guns",
+                ShopArea::Guns,
+                Icon::Rifle,
+                ["Rifle", "Carbine", "Long gun", "Scattergun"][k % 4],
+            );
             r.on = k == 0;
-            r.state = if k == 0 { "carried" } else if k < 4 { "armory" } else { "free" }.into();
+            r.state = if k == 0 {
+                "carried"
+            } else if k < 4 {
+                "armory"
+            } else {
+                "free"
+            }
+            .into();
             r.ready = k > 0;
             r.about = "Fast and short, a little wild. More slots. From planet 4.".into();
-            r.bars = vec![("Range".into(), 0.5, "24".into()), ("Rate".into(), 0.1 * k as f32, "1.0/s".into()), ("Aim".into(), 0.9, "0.5".into()), ("Budget".into(), 0.4, "10".into()), ("Slots".into(), 0.6, "4".into())];
+            r.bars = vec![
+                ("Range".into(), 0.5, "24".into()),
+                ("Rate".into(), 0.1 * k as f32, "1.0/s".into()),
+                ("Aim".into(), 0.9, "0.5".into()),
+                ("Budget".into(), 0.4, "10".into()),
+                ("Slots".into(), 0.6, "4".into()),
+            ];
             if k % 4 == 3 {
                 r.bars.insert(3, ("Shots".into(), 0.6, "4".into()));
             }
             rows.push(r);
         }
-        let (sets, shells) = (["Standard", "Slug", "Needle", "Buckshot"], ["Bullet", "Blast", "Bomb", "Gas", "Germ"]);
+        let (sets, shells) = (
+            ["Standard", "Slug", "Needle", "Buckshot"],
+            ["Bullet", "Blast", "Bomb", "Gas", "Germ"],
+        );
         for (a, set) in sets.iter().enumerate() {
             for (b, shell) in shells.iter().enumerate() {
-                let mut r = ShopRow::new("Bullets", ShopArea::Cards, Icon::Blast, &format!("{set} {}", shell.to_lowercase()));
+                let mut r = ShopRow::new(
+                    "Bullets",
+                    ShopArea::Cards,
+                    Icon::Blast,
+                    &format!("{set} {}", shell.to_lowercase()),
+                );
                 (r.ready, r.state, r.cost, r.badge) = (true, "free".into(), (a + b) as u32 % 6 + 1, Some(Icon::Slug));
                 r.cell = Some(((a as u8, set.to_string()), (b as u8, shell.to_string())));
-                r.about = "Puts slime where it hits to sleep. Needle: its own damage, speed, range and spread. Budget 3.".into();
+                r.about =
+                    "Puts slime where it hits to sleep. Needle: its own damage, speed, range and spread. Budget 3."
+                        .into();
                 rows.push(r);
             }
         }
-        let mods = ["Thrift", "Scorch", "Smother", "Wide", "Scatter", "Quiet", "Delay", "Thick", "Pierce", "Split", "Bait", "Faster rate", "Spread wide", "Double tap"];
+        let mods = [
+            "Thrift",
+            "Scorch",
+            "Smother",
+            "Wide",
+            "Scatter",
+            "Quiet",
+            "Delay",
+            "Thick",
+            "Pierce",
+            "Split",
+            "Bait",
+            "Faster rate",
+            "Spread wide",
+            "Double tap",
+        ];
         for (k, name) in mods.iter().enumerate() {
-            let group = if k < 6 { "Cards for the next bullet" } else { "Cards for every bullet" };
+            let group = if k < 6 {
+                "Cards for the next bullet"
+            } else {
+                "Cards for every bullet"
+            };
             let mut r = ShopRow::new(group, ShopArea::Cards, Icon::Wide, name);
             (r.ready, r.state, r.cost) = (true, "free".into(), k as u32 % 3);
             rows.push(r);
         }
         for k in 0..bag + 2 {
             let mut r = ShopRow::new(BAG, ShopArea::Cards, Icon::Gas, &format!("Buckshot gas {k}"));
-            (r.ready, r.on, r.state, r.cost) = (true, k < 2, if k < 2 { format!("slot {}", k + 1) } else { "in the bag".into() }, 2);
+            (r.ready, r.on, r.state, r.cost) = (
+                true,
+                k < 2,
+                if k < 2 {
+                    format!("slot {}", k + 1)
+                } else {
+                    "in the bag".into()
+                },
+                2,
+            );
             rows.push(r);
         }
-        for name in ["New rolls", "Deeper rolls", "Shallower rolls", "Empty the gun", "Empty the bag"] {
+        for name in [
+            "New rolls",
+            "Deeper rolls",
+            "Shallower rolls",
+            "Empty the gun",
+            "Empty the bag",
+        ] {
             let mut r = ShopRow::new("", ShopArea::Upgrades, Icon::Fast, name);
             (r.ready, r.about) = (true, "Roll the shelf's bullets and the rack's guns again.".into());
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true }
+        Shop {
+            heading: "The gun range".into(),
+            lines,
+            purse: "Free".into(),
+            rows,
+            slots: 6,
+            budget: (4, 10),
+            range: true,
+        }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
@@ -1547,15 +2110,25 @@ mod tests {
         // buys it, and so does Enter.
         assert!(click(&mut m, &mut c, Hit::Buy(27)).is_empty(), "a click picks");
         assert!(m.picked && m.rows()[m.focus] == Hit::Buy(27));
-        assert_eq!(click(&mut m, &mut c, Hit::Do(27)), vec![StartEvent::Buy(27)], "the pane's button buys");
+        assert_eq!(
+            click(&mut m, &mut c, Hit::Do(27)),
+            vec![StartEvent::Buy(27)],
+            "the pane's button buys"
+        );
         assert_eq!(m.key(KeyCode::Enter, true), vec![StartEvent::Buy(27)], "so does Enter");
         // The upgrades on their tabs.
         assert!(click(&mut m, &mut c, Hit::ShopTab(3)).is_empty());
         assert_eq!(names(&m)[m.shop_tab], "Buildings");
         c.clear();
         m.draw(&mut c);
-        assert!(m.rect_of(Hit::Buy(0)).is_none() && m.rect_of(Hit::Buy(27)).is_none(), "the other tabs' rows are put away");
-        assert!(m.rect_of(Hit::Buy(23)).is_some() && m.rect_of(Hit::Buy(26)).is_some(), "the gun and the bag stay");
+        assert!(
+            m.rect_of(Hit::Buy(0)).is_none() && m.rect_of(Hit::Buy(27)).is_none(),
+            "the other tabs' rows are put away"
+        );
+        assert!(
+            m.rect_of(Hit::Buy(23)).is_some() && m.rect_of(Hit::Buy(26)).is_some(),
+            "the gun and the bag stay"
+        );
         assert!(click(&mut m, &mut c, Hit::Buy(8)).is_empty());
         assert_eq!(click(&mut m, &mut c, Hit::Do(8)), vec![StartEvent::Buy(8)]);
         // Tab goes round; a number picks a tab, nothing picked on it.
@@ -1573,14 +2146,20 @@ mod tests {
         assert!(click(&mut m, &mut c, Hit::Buy(20)).is_empty());
         assert!(m.rect_of(Hit::Do(20)).is_none(), "the carried gun has no button");
         assert!(click(&mut m, &mut c, Hit::Buy(23)).is_empty());
-        assert_eq!(StartMenu::button_of(&m.shop.as_ref().unwrap().rows[23]), ("Take it out of the gun".to_string(), true));
+        assert_eq!(
+            StartMenu::button_of(&m.shop.as_ref().unwrap().rows[23]),
+            ("Take it out of the gun".to_string(), true)
+        );
         assert_eq!(click(&mut m, &mut c, Hit::Do(23)), vec![StartEvent::Buy(23)]);
         assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
         assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
         // A refused buy's notice shows in the shop and goes with it.
         m.notice = Some("Scorch: not enough points, or locked".into());
         m.key(KeyCode::Escape, true);
-        assert_eq!((m.page, m.rows()[m.focus], m.notice.as_deref()), (Page::Main, Hit::Run, None));
+        assert_eq!(
+            (m.page, m.rows()[m.focus], m.notice.as_deref()),
+            (Page::Main, Hit::Run, None)
+        );
     }
 
     /// The shop stays put when a card goes into the bag or comes out of
@@ -1599,14 +2178,23 @@ mod tests {
             let mut c = Canvas::new(screen);
             c.ui.user = user;
             m.draw(&mut c);
-            let mut at: Vec<(Hit, Rect)> = m.hits.iter().filter(|(_, h)| matches!(h, Hit::Slot(_) | Hit::ShopTab(_) | Hit::Next | Hit::EndRun)).map(|&(r, h)| (h, r)).collect();
+            let mut at: Vec<(Hit, Rect)> = m
+                .hits
+                .iter()
+                .filter(|(_, h)| matches!(h, Hit::Slot(_) | Hit::ShopTab(_) | Hit::Next | Hit::EndRun))
+                .map(|&(r, h)| (h, r))
+                .collect();
             at.extend(m.slot_rects.iter().map(|&r| (Hit::Next, r)));
             at.extend(m.bag.map(|r| (Hit::EndRun, r)));
             at
         };
         for screen in [(1280, 720), (1600, 900), (1920, 1080)] {
             for user in crate::world::settings::STEPS {
-                assert_eq!(place(false, screen, user), place(true, screen, user), "{screen:?} at {user}: the shop moved when a card went into the bag");
+                assert_eq!(
+                    place(false, screen, user),
+                    place(true, screen, user),
+                    "{screen:?} at {user}: the shop moved when a card went into the bag"
+                );
             }
         }
     }
@@ -1620,13 +2208,30 @@ mod tests {
         let mut m = menu();
         let mut c = Canvas::new((1280, 800));
         assert_eq!(click(&mut m, &mut c, Hit::Range), vec![StartEvent::Range]);
-        assert!(m.rows().iter().position(|&h| h == Hit::Range) < m.rows().iter().position(|&h| h == Hit::Options), "before Options");
+        assert!(
+            m.rows().iter().position(|&h| h == Hit::Range) < m.rows().iter().position(|&h| h == Hit::Options),
+            "before Options"
+        );
         m.shop = Some(armory(3));
         m.show(Page::Shop);
         let names: Vec<String> = m.shop_tabs().into_iter().map(|t| t.name).collect();
-        assert_eq!(names, ["Guns", "Bullets", "Cards for the next bullet", "Cards for every bullet"]);
-        let tool = m.shop.as_ref().unwrap().rows.iter().position(|r| r.name == "Deeper rolls").unwrap();
-        assert_eq!(click(&mut m, &mut c, Hit::Do(tool)), vec![StartEvent::Buy(tool)], "a tool acts at once");
+        assert_eq!(
+            names,
+            ["Guns", "Bullets", "Cards for the next bullet", "Cards for every bullet"]
+        );
+        let tool = m
+            .shop
+            .as_ref()
+            .unwrap()
+            .rows
+            .iter()
+            .position(|r| r.name == "Deeper rolls")
+            .unwrap();
+        assert_eq!(
+            click(&mut m, &mut c, Hit::Do(tool)),
+            vec![StartEvent::Buy(tool)],
+            "a tool acts at once"
+        );
         assert_eq!(click(&mut m, &mut c, Hit::Next), vec![StartEvent::NextLevel]);
         assert_eq!(click(&mut m, &mut c, Hit::EndRun), vec![StartEvent::EndRun]);
         assert_eq!(m.key(KeyCode::Escape, true), vec![StartEvent::NextLevel]);
@@ -1635,9 +2240,27 @@ mod tests {
         m.open_shop_tab(1);
         c.clear();
         m.draw(&mut c);
-        let at = |m: &StartMenu, name: &str| m.rect_of(Hit::Buy(m.shop.as_ref().unwrap().rows.iter().position(|r| r.name == name).unwrap())).unwrap();
-        let (a, b, d) = (at(&m, "Standard bullet"), at(&m, "Standard germ"), at(&m, "Buckshot bullet"));
-        assert!((a.y - b.y).abs() < 0.5 && b.x > a.x && (a.x - d.x).abs() < 0.5 && d.y > a.y, "a row a shape, a column a payload");
+        let at = |m: &StartMenu, name: &str| {
+            m.rect_of(Hit::Buy(
+                m.shop
+                    .as_ref()
+                    .unwrap()
+                    .rows
+                    .iter()
+                    .position(|r| r.name == name)
+                    .unwrap(),
+            ))
+            .unwrap()
+        };
+        let (a, b, d) = (
+            at(&m, "Standard bullet"),
+            at(&m, "Standard germ"),
+            at(&m, "Buckshot bullet"),
+        );
+        assert!(
+            (a.y - b.y).abs() < 0.5 && b.x > a.x && (a.x - d.x).abs() < 0.5 && d.y > a.y,
+            "a row a shape, a column a payload"
+        );
         // The run's shop goes back to the main page, on Run.
         m.shop.as_mut().unwrap().range = false;
         assert!(m.key(KeyCode::Escape, true).is_empty());
@@ -1685,9 +2308,16 @@ mod tests {
         assert!(m.rect_of(Hit::Buy(card)).is_some(), "a card on the counter");
         for k in 0..6 {
             let to = centre(m.slot_rects[k]);
-            assert_eq!(drag(&mut m, &mut c, Hit::Buy(card), to), vec![StartEvent::Move(card, k)], "slot {k}");
+            assert_eq!(
+                drag(&mut m, &mut c, Hit::Buy(card), to),
+                vec![StartEvent::Move(card, k)],
+                "slot {k}"
+            );
         }
-        assert!(drag(&mut m, &mut c, Hit::Buy(card), (300.0, 10.0)).is_empty(), "the top bar takes no drop");
+        assert!(
+            drag(&mut m, &mut c, Hit::Buy(card), (300.0, 10.0)).is_empty(),
+            "the top bar takes no drop"
+        );
     }
 
     /// The owner, 20:32Z: "When I buy a card it goes into the gun but I
@@ -1710,18 +2340,47 @@ mod tests {
         assert_eq!((m.slot_of(gun3), m.slot_of(26)), ((Some(2), 3), (None, 3)));
         let slot: Vec<(f32, f32)> = m.slot_rects.iter().map(|&r| centre(r)).collect();
         assert_eq!(slot.len(), 4);
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(first), slot[2]), vec![StartEvent::Move(first, 2)], "first to third");
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(gun3), slot[0]), vec![StartEvent::Move(gun3, 0)], "third to first");
+        assert_eq!(
+            drag(&mut m, &mut c, Hit::Buy(first), slot[2]),
+            vec![StartEvent::Move(first, 2)],
+            "first to third"
+        );
+        assert_eq!(
+            drag(&mut m, &mut c, Hit::Buy(gun3), slot[0]),
+            vec![StartEvent::Move(gun3, 0)],
+            "third to first"
+        );
         assert!(drag(&mut m, &mut c, Hit::Buy(gun3), slot[2]).is_empty(), "its own slot");
         assert!(m.rect_of(Hit::Slot(3)).is_some(), "the empty slot is a target");
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(26), slot[3]), vec![StartEvent::Move(26, 3)], "a bag card into the empty slot");
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(27), slot[1]), vec![StartEvent::Move(27, 1)], "one on offer, bought into a slot");
+        assert_eq!(
+            drag(&mut m, &mut c, Hit::Buy(26), slot[3]),
+            vec![StartEvent::Move(26, 3)],
+            "a bag card into the empty slot"
+        );
+        assert_eq!(
+            drag(&mut m, &mut c, Hit::Buy(27), slot[1]),
+            vec![StartEvent::Move(27, 1)],
+            "one on offer, bought into a slot"
+        );
         let bag = m.bag.unwrap();
-        assert_eq!(drag(&mut m, &mut c, Hit::Buy(first), (bag.right() - 4.0, bag.y + 4.0)), vec![StartEvent::Buy(first)], "onto the bag: out");
-        assert!(drag(&mut m, &mut c, Hit::Buy(26), centre(bag)).is_empty(), "a bag card onto the bag");
-        assert!(drag(&mut m, &mut c, Hit::Buy(first), (5.0, 5.0)).is_empty(), "let go nowhere");
+        assert_eq!(
+            drag(&mut m, &mut c, Hit::Buy(first), (bag.right() - 4.0, bag.y + 4.0)),
+            vec![StartEvent::Buy(first)],
+            "onto the bag: out"
+        );
+        assert!(
+            drag(&mut m, &mut c, Hit::Buy(26), centre(bag)).is_empty(),
+            "a bag card onto the bag"
+        );
+        assert!(
+            drag(&mut m, &mut c, Hit::Buy(first), (5.0, 5.0)).is_empty(),
+            "let go nowhere"
+        );
         m.open_shop_tab(1);
-        assert!(drag(&mut m, &mut c, Hit::Buy(21), slot[0]).is_empty(), "guns do not drag");
+        assert!(
+            drag(&mut m, &mut c, Hit::Buy(21), slot[0]).is_empty(),
+            "guns do not drag"
+        );
         // A wobble under `DRAG_FROM` is a click: it picks the card.
         let r = m.rect_of(Hit::Buy(first)).unwrap();
         m.moved(Some(centre(r)));
@@ -1764,7 +2423,10 @@ mod tests {
                 for h in m.rows() {
                     shown(&mut m, &mut c, h);
                     let r = m.rect_of(h).unwrap_or_else(|| panic!("{h:?} not drawn"));
-                    assert!(r.bottom() <= screen.1 as f32 - 30.0, "{screen:?} at {user}: {h:?} {r:?} reaches the hint line");
+                    assert!(
+                        r.bottom() <= screen.1 as f32 - 30.0,
+                        "{screen:?} at {user}: {h:?} {r:?} reaches the hint line"
+                    );
                 }
             }
         }
@@ -1827,10 +2489,16 @@ mod tests {
         assert!(m.options.iter().all(|o| o.is_default()));
         click(&mut m, &mut c, Hit::Turn(1, 1));
         click(&mut m, &mut c, Hit::Reset(1));
-        assert!(!m.option("panic").unwrap().is_default(), "a click on the row only takes the focus");
+        assert!(
+            !m.option("panic").unwrap().is_default(),
+            "a click on the row only takes the focus"
+        );
         assert_eq!(m.rows()[m.focus], Hit::Reset(1));
         click(&mut m, &mut c, Hit::Default(1));
-        assert!(m.option("panic").unwrap().is_default(), "its \"back to\" line resets it");
+        assert!(
+            m.option("panic").unwrap().is_default(),
+            "its \"back to\" line resets it"
+        );
         c.clear();
         m.draw(&mut c);
         assert!(m.rect_of(Hit::Default(1)).is_none(), "and goes once it is the default");
@@ -1841,7 +2509,14 @@ mod tests {
     #[test]
     fn all_to_defaults_keeps_the_ui_size() {
         let mut m = menu();
-        m.options.push(Opt::new("ui", "UI and text size", &["100%", "150%", "200%"], "100%", "200%", ""));
+        m.options.push(Opt::new(
+            "ui",
+            "UI and text size",
+            &["100%", "150%", "200%"],
+            "100%",
+            "200%",
+            "",
+        ));
         let mut c = Canvas::new((1280, 800));
         m.show(Page::Options);
         click(&mut m, &mut c, Hit::Turn(1, 1));
@@ -1873,7 +2548,14 @@ mod tests {
                 let mut m = menu();
                 // As many options as the game has, and more.
                 for k in 0..20 {
-                    m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does"));
+                    m.options.push(Opt::new(
+                        &format!("o{k}"),
+                        "An option",
+                        &["0", "1"],
+                        "0",
+                        "0",
+                        "What it does",
+                    ));
                 }
                 m.show(Page::Options);
                 let mut c = Canvas::new(screen);
@@ -1883,9 +2565,15 @@ mod tests {
                     shown(&mut m, &mut c, h);
                     let r = m.rect_of(h).unwrap();
                     // (Back is in the header, over the body.)
-                    assert!(h == Hit::Back || (r.y >= m.body.unwrap().y && r.bottom() <= m.body.unwrap().bottom() + 0.5), "{screen:?} at {user}: {h:?} {r:?} not in view");
+                    assert!(
+                        h == Hit::Back || (r.y >= m.body.unwrap().y && r.bottom() <= m.body.unwrap().bottom() + 0.5),
+                        "{screen:?} at {user}: {h:?} {r:?} not in view"
+                    );
                     assert_eq!(m.scroll_max, 0.0, "{screen:?} at {user}: the options page scrolls");
-                    assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {h:?} {r:?}");
+                    assert!(
+                        r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32,
+                        "{screen:?} at {user}: {h:?} {r:?}"
+                    );
                 }
             }
         }
@@ -1902,7 +2590,10 @@ mod tests {
                 c.ui.user = user;
                 shown(&mut m, &mut c, Hit::Quit);
                 let r = m.rect_of(Hit::Quit).unwrap();
-                assert!(r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32, "{screen:?} at {user}: {r:?}");
+                assert!(
+                    r.bottom() <= screen.1 as f32 && r.right() <= screen.0 as f32,
+                    "{screen:?} at {user}: {r:?}"
+                );
                 m.scroll = 0.0;
                 c.clear();
                 m.draw(&mut c);
@@ -1918,9 +2609,17 @@ mod tests {
         for screen in [(640, 400), (1280, 800), (1920, 1080), (3840, 2160)] {
             let mut m = menu();
             let mut c = Canvas::new(screen);
-            assert_eq!(click(&mut m, &mut c, Hit::Sandbox), vec![StartEvent::Sandbox], "{screen:?}");
+            assert_eq!(
+                click(&mut m, &mut c, Hit::Sandbox),
+                vec![StartEvent::Sandbox],
+                "{screen:?}"
+            );
             click(&mut m, &mut c, Hit::Campaign);
-            assert_eq!(click(&mut m, &mut c, Hit::Mission(2)), vec![StartEvent::Mission(2)], "{screen:?}");
+            assert_eq!(
+                click(&mut m, &mut c, Hit::Mission(2)),
+                vec![StartEvent::Mission(2)],
+                "{screen:?}"
+            );
             click(&mut m, &mut c, Hit::Back);
             m.key(KeyCode::F1, true);
             assert_eq!(m.page, Page::Keys);
@@ -1965,14 +2664,23 @@ mod tests {
                         c.clear();
                         m.draw(&mut c);
                         let h = m.rows()[m.focus];
-                        let r = m.rect_of(h).unwrap_or_else(|| panic!("{screen:?} {page:?} at {user}: {h:?} scrolled away"));
+                        let r = m
+                            .rect_of(h)
+                            .unwrap_or_else(|| panic!("{screen:?} {page:?} at {user}: {h:?} scrolled away"));
                         // (The shop is one screen of its own, no body.)
                         let b = m.body.unwrap_or(Rect::new(0.0, 0.0, screen.0 as f32, screen.1 as f32));
                         // The shop's two buttons and the inner pages'
                         // header are fixed, over and under the body.
-                        let fixed = matches!(h, Hit::Next | Hit::EndRun) || (matches!(page, Page::Options | Page::Keys | Page::Missions) && h == Hit::Back);
-                        assert!(r.y >= 0.0 && r.bottom() <= screen.1 as f32, "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen");
-                        assert!(fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5), "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}");
+                        let fixed = matches!(h, Hit::Next | Hit::EndRun)
+                            || (matches!(page, Page::Options | Page::Keys | Page::Missions) && h == Hit::Back);
+                        assert!(
+                            r.y >= 0.0 && r.bottom() <= screen.1 as f32,
+                            "{screen:?} {page:?} at {user}: {h:?} {r:?} off the screen"
+                        );
+                        assert!(
+                            fixed || (r.y >= b.y - 0.5 && r.bottom() <= b.bottom() + 0.5),
+                            "{screen:?} {page:?} at {user}: {h:?} {r:?} not in view of {b:?}"
+                        );
                     }
                     let probe = match page {
                         // (Land: the bottom bar's, whose height is fixed;
@@ -1991,7 +2699,10 @@ mod tests {
                 let (b, pb) = size(2.0);
                 let grew = pb / pa;
                 assert!(grew > 1.25, "{screen:?}: 200% is capped to {grew}x");
-                assert!(b >= a * grew * 0.9, "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)");
+                assert!(
+                    b >= a * grew * 0.9,
+                    "{screen:?} {page:?}: 200% drew {b} against {a} at 100% (the size grew {grew}x)"
+                );
             }
         }
     }
@@ -2000,24 +2711,84 @@ mod tests {
     /// game's, 11-15), some of them long.
     fn full_menu() -> StartMenu {
         let long = "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off";
-        let mut options = vec![Opt::new("ui", "UI and text size", &["75%", "100%", "200%"], "100%", "200%", "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere")];
-        for (k, tab) in [("map", "Planet"), ("planet", "Planet"), ("own", "Planet"), ("plants", "Planet")] {
-            options.push(Opt::new(k, "Your own mould", &["off", "on"], "off", "on", "A green mould the squad sows and feeds; sandbox on the race world").in_tab(tab));
+        let mut options = vec![Opt::new(
+            "ui",
+            "UI and text size",
+            &["75%", "100%", "200%"],
+            "100%",
+            "200%",
+            "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere",
+        )];
+        for (k, tab) in [
+            ("map", "Planet"),
+            ("planet", "Planet"),
+            ("own", "Planet"),
+            ("plants", "Planet"),
+        ] {
+            options.push(
+                Opt::new(
+                    k,
+                    "Your own mould",
+                    &["off", "on"],
+                    "off",
+                    "on",
+                    "A green mould the squad sows and feeds; sandbox on the race world",
+                )
+                .in_tab(tab),
+            );
         }
         for k in ["mode", "rounds", "bullet", "dev"] {
-            options.push(Opt::new(k, "Bullet speed", &["0", "30", "45", "60", "90"], "45", "0", "Dish cells a game second a shot flies; 0 is the instant ray"));
+            options.push(Opt::new(
+                k,
+                "Bullet speed",
+                &["0", "30", "45", "60", "90"],
+                "45",
+                "0",
+                "Dish cells a game second a shot flies; 0 is the instant ray",
+            ));
         }
-        for k in ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"] {
-            options.push(Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The mould"));
+        for k in [
+            "panic",
+            "wither",
+            "energy_flow",
+            "condense",
+            "roam",
+            "thicken",
+            "surge",
+            "flinch",
+        ] {
+            options.push(
+                Opt::new(k, "Shared food", &["0", "0.025", "0.05", "0.1"], "0.05", "0", long).in_tab("The mould"),
+            );
         }
-        let missions = ["Landfall", "First contact", "The gaps", "Cut the cord", "Kill zone", "The nest", "Spore season", "Two moulds"]
-            .iter()
-            .map(|n| Entry { stem: n.to_lowercase(), name: n.to_string(), says: "Grow your squad to 12 and harvest 3 crystals at once, then hold them while the slime surges".into(), detail: "The Passes, The Swarmer".into() })
-            .collect();
+        let missions = [
+            "Landfall",
+            "First contact",
+            "The gaps",
+            "Cut the cord",
+            "Kill zone",
+            "The nest",
+            "Spore season",
+            "Two moulds",
+        ]
+        .iter()
+        .map(|n| Entry {
+            stem: n.to_lowercase(),
+            name: n.to_string(),
+            says: "Grow your squad to 12 and harvest 3 crystals at once, then hold them while the slime surges".into(),
+            detail: "The Passes, The Swarmer".into(),
+        })
+        .collect();
         let keys = (0..46)
             .map(|k| match k % 5 {
-                0 => ("Right click a half-built building".to_string(), "Back to building it (nothing paid again)".to_string()),
-                1 => ("Esc".into(), "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into()),
+                0 => (
+                    "Right click a half-built building".to_string(),
+                    "Back to building it (nothing paid again)".to_string(),
+                ),
+                1 => (
+                    "Esc".into(),
+                    "Let go of the squad: every squad runs on its own and WASD pans; Esc again: the menu".into(),
+                ),
                 _ => (format!("Ctrl + {k}"), "Make a group, select it".into()),
             })
             .collect();
@@ -2034,7 +2805,16 @@ mod tests {
     /// at any of them. The shop joins with its new layout.
     #[test]
     fn the_menu_pages_fit_one_screen() {
-        let sizes = [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1920, 1080), 1.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((640, 400), 1.0), ((2560, 1440), 3.0)];
+        let sizes = [
+            ((1920, 1080), 2.0),
+            ((1280, 540), 2.0),
+            ((1280, 720), 2.0),
+            ((1920, 1080), 1.0),
+            ((1280, 800), 1.75),
+            ((1600, 972), 1.25),
+            ((640, 400), 1.0),
+            ((2560, 1440), 3.0),
+        ];
         for (screen, user) in sizes {
             let (sw, sh) = (screen.0 as f32, screen.1 as f32);
             let mut m = full_menu();
@@ -2044,16 +2824,37 @@ mod tests {
             let check = |m: &StartMenu, c: &Canvas, at: &str| {
                 assert!(!m.scrolls(), "{at}: scrolls by {}", m.scroll_max);
                 for (r, h) in &m.hits {
-                    assert!(r.x >= -0.5 && r.y >= -0.5 && r.right() <= sw + 0.5 && r.bottom() <= sh + 0.5, "{at}: {h:?} {r:?} off the screen");
+                    assert!(
+                        r.x >= -0.5 && r.y >= -0.5 && r.right() <= sw + 0.5 && r.bottom() <= sh + 0.5,
+                        "{at}: {h:?} {r:?} off the screen"
+                    );
                 }
-                assert!(matches!(m.page, Page::Main | Page::Shop) || m.hits.iter().any(|(_, h)| *h == Hit::Back), "{at}: no Back");
+                assert!(
+                    matches!(m.page, Page::Main | Page::Shop) || m.hits.iter().any(|(_, h)| *h == Hit::Back),
+                    "{at}: no Back"
+                );
                 let runs: Vec<_> = c.runs.iter().filter(|t| t.ink.0 < t.ink.2).collect();
                 for (k, t) in runs.iter().enumerate() {
-                    assert!(t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh, "{at}: {:?} {:?} off the screen", t.text, t.ink);
-                    assert!(t.px >= 12.5 * s - 0.01, "{at}: {:?} at {} px, under 12.5 x {s}", t.text, t.px);
+                    assert!(
+                        t.ink.0 >= 0.0 && t.ink.1 >= 0.0 && t.ink.2 <= sw && t.ink.3 <= sh,
+                        "{at}: {:?} {:?} off the screen",
+                        t.text,
+                        t.ink
+                    );
+                    assert!(
+                        t.px >= 12.5 * s - 0.01,
+                        "{at}: {:?} at {} px, under 12.5 x {s}",
+                        t.text,
+                        t.px
+                    );
                     for u in &runs[k + 1..] {
-                        let apart = t.ink.2 <= u.ink.0 || u.ink.2 <= t.ink.0 || t.ink.3 <= u.ink.1 || u.ink.3 <= t.ink.1;
-                        assert!(apart, "{at}: {:?} {:?} and {:?} {:?} overlap", t.text, t.ink, u.text, u.ink);
+                        let apart =
+                            t.ink.2 <= u.ink.0 || u.ink.2 <= t.ink.0 || t.ink.3 <= u.ink.1 || u.ink.3 <= t.ink.1;
+                        assert!(
+                            apart,
+                            "{at}: {:?} {:?} and {:?} {:?} overlap",
+                            t.text, t.ink, u.text, u.ink
+                        );
                     }
                 }
             };
@@ -2119,14 +2920,23 @@ mod tests {
             // the gun's, the bag's and the bottom bar's too.
             let mut big = shop(30);
             big.slots = 6;
-            for (name, sh) in [("shop", shop(14)), ("full shop", big), ("armory", armory(3)), ("full armory", armory(14))] {
+            for (name, sh) in [
+                ("shop", shop(14)),
+                ("full shop", big),
+                ("armory", armory(3)),
+                ("full armory", armory(14)),
+            ] {
                 m.shop = Some(sh);
                 m.show(Page::Shop);
                 draw(&mut m, &mut c);
                 check(&m, &c, &format!("{screen:?} at {user}, {name}, nothing picked"));
                 for tab in 0..m.shop_tabs().len() {
                     m.open_shop_tab(tab);
-                    let n = if tab == 0 { m.rows().len() } else { m.shop_tabs()[tab].rows.len() };
+                    let n = if tab == 0 {
+                        m.rows().len()
+                    } else {
+                        m.shop_tabs()[tab].rows.len()
+                    };
                     for row in 0..n {
                         (m.focus, m.picked, m.follow) = (row, true, true);
                         draw(&mut m, &mut c);
@@ -2146,9 +2956,18 @@ mod tests {
     #[test]
     fn a_long_list_pages_instead_of_scrolling() {
         let mut m = full_menu();
-        m.missions = (0..30).map(|i| Entry { stem: format!("{i}"), name: format!("Mission {i}"), says: "Do it".into(), detail: "The Fork".into() }).collect();
+        m.missions = (0..30)
+            .map(|i| Entry {
+                stem: format!("{i}"),
+                name: format!("Mission {i}"),
+                says: "Do it".into(),
+                detail: "The Fork".into(),
+            })
+            .collect();
         for k in 0..30 {
-            m.options.push(Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The mould"));
+            m.options.push(
+                Opt::new(&format!("o{k}"), "An option", &["0", "1"], "0", "0", "What it does").in_tab("The mould"),
+            );
         }
         let mut c = Canvas::new((1920, 1080));
         c.ui.user = 2.0;
@@ -2167,7 +2986,10 @@ mod tests {
                 c.clear();
                 m.draw(&mut c);
                 let h = m.rows()[row];
-                assert!(m.rect_of(h).is_some(), "{page:?}: row {row} {h:?} not drawn when focused");
+                assert!(
+                    m.rect_of(h).is_some(),
+                    "{page:?}: row {row} {h:?} not drawn when focused"
+                );
                 assert!(!m.scrolls(), "{page:?}: scrolls");
             }
             // The pager's arrows: on, round to the first, and back.

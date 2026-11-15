@@ -72,7 +72,14 @@ impl Ground {
 /// end the hardest three take turns. The Grudge joins once the GPU engine
 /// takes its scar keys (`Tier::settings` refuses it today; the test below
 /// keeps every rung playable).
-pub const LADDER: [Tier; 6] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper];
+pub const LADDER: [Tier; 6] = [
+    Tier::Drifter,
+    Tier::Sprawler,
+    Tier::Trunk,
+    Tier::Swarmer,
+    Tier::Sporer,
+    Tier::Sleeper,
+];
 
 /// One level: what the window needs to start it.
 #[derive(Clone, Debug, PartialEq)]
@@ -217,7 +224,11 @@ const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
 /// gun's range plus `Rules::panic_margin`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
-    vec![("surge", LONGEST_WAIT[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))]
+    vec![
+        ("surge", LONGEST_WAIT[i].to_string()),
+        ("surge_dash", SURGE_DASH[i].to_string()),
+        ("thicken", format!("{}", THICKEN[i])),
+    ]
 }
 
 fn depth_index(depth: u32) -> usize {
@@ -287,28 +298,188 @@ pub struct Item {
 /// Everything the shop sells but cards. Unlock keys (`max` 1) are what
 /// `Run::has` answers for the window's command card.
 pub const ITEMS: [Item; 20] = [
-    Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
-    Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
-    Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
-    Item { key: "range", name: "Longer barrels", group: Group::Squad, about: "3 more cells of sight and reach", max: 3, cost: 100, needs: None },
-    Item { key: "squad", name: "Bigger landing", group: Group::Squad, about: "Two more soldiers land with you", max: 4, cost: 150, needs: None },
-    Item { key: "bank", name: "Supply drop", group: Group::Squad, about: "Land with 500 more food in the bank", max: 4, cost: 100, needs: None },
-    Item { key: "harvest", name: "Quick hands", group: Group::Squad, about: "Soldiers take a quarter more from a crystal each second", max: 3, cost: 100, needs: None },
-    Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
-    Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
-    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
-    Item { key: "lure", name: "Lures", group: Group::Build, about: "Unlocks the lure, food scent the slime follows", max: 1, cost: 150, needs: None },
+    Item {
+        key: "hp",
+        name: "Armour",
+        group: Group::Squad,
+        about: "Soldiers take a quarter more biting before they fall",
+        max: 4,
+        cost: 120,
+        needs: None,
+    },
+    Item {
+        key: "strike",
+        name: "Heavier shots",
+        group: Group::Squad,
+        about: "Each shot kills a fifth more slime",
+        max: 4,
+        cost: 120,
+        needs: None,
+    },
+    Item {
+        key: "rate",
+        name: "Faster trigger",
+        group: Group::Squad,
+        about: "Soldiers fire 15% sooner",
+        max: 4,
+        cost: 120,
+        needs: None,
+    },
+    Item {
+        key: "range",
+        name: "Longer barrels",
+        group: Group::Squad,
+        about: "3 more cells of sight and reach",
+        max: 3,
+        cost: 100,
+        needs: None,
+    },
+    Item {
+        key: "squad",
+        name: "Bigger landing",
+        group: Group::Squad,
+        about: "Two more soldiers land with you",
+        max: 4,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "bank",
+        name: "Supply drop",
+        group: Group::Squad,
+        about: "Land with 500 more food in the bank",
+        max: 4,
+        cost: 100,
+        needs: None,
+    },
+    Item {
+        key: "harvest",
+        name: "Quick hands",
+        group: Group::Squad,
+        about: "Soldiers take a quarter more from a crystal each second",
+        max: 3,
+        cost: 100,
+        needs: None,
+    },
+    Item {
+        key: "walls",
+        name: "Walls",
+        group: Group::Build,
+        about: "Unlocks laying walls",
+        max: 1,
+        cost: 100,
+        needs: None,
+    },
+    Item {
+        key: "turret",
+        name: "Turrets",
+        group: Group::Build,
+        about: "Unlocks the turret, a gun that does not move",
+        max: 1,
+        cost: 200,
+        needs: None,
+    },
+    Item {
+        key: "turret+",
+        name: "Turret power",
+        group: Group::Build,
+        about: "Turrets: 30% tougher, 3 cells more reach, fire 15% sooner",
+        max: 3,
+        cost: 150,
+        needs: Some("turret"),
+    },
+    Item {
+        key: "lure",
+        name: "Lures",
+        group: Group::Build,
+        about: "Unlocks the lure, food scent the slime follows",
+        max: 1,
+        cost: 150,
+        needs: None,
+    },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
-    Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
-    Item { key: "outpost", name: "Outposts", group: Group::Build, about: "Unlocks the outpost, a second drop-off", max: 1, cost: 150, needs: None },
-    Item { key: "siren", name: "Sirens", group: Group::Build, about: "Unlocks the siren, which sets off the slime's kinds", max: 1, cost: 150, needs: None },
-    Item { key: "blast", name: "Blasts", group: Group::Tools, about: "Unlocks the thrown blast and its crater", max: 1, cost: 150, needs: None },
-    Item { key: "mine", name: "Mines", group: Group::Tools, about: "Unlocks the mine, a blast the slime sets off", max: 1, cost: 150, needs: None },
-    Item { key: "cord", name: "Det cord", group: Group::Tools, about: "Unlocks det cord, a line of blasts", max: 1, cost: 200, needs: None },
-    Item { key: "gas", name: "Sleep gas", group: Group::Tools, about: "Unlocks sleep gas", max: 1, cost: 200, needs: None },
-    Item { key: "tools+", name: "Cheaper tools", group: Group::Tools, about: "Every tool costs a fifth less", max: 3, cost: 120, needs: None },
-    Item { key: "draw", name: "More cards on offer", group: Group::Cards, about: "One more gun card on offer in every shop", max: 2, cost: 100, needs: None },
+    Item {
+        key: "pump+",
+        name: "Pump power",
+        group: Group::Build,
+        about: "Pumps draw a quarter more from their crystals each second",
+        max: 3,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "outpost",
+        name: "Outposts",
+        group: Group::Build,
+        about: "Unlocks the outpost, a second drop-off",
+        max: 1,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "siren",
+        name: "Sirens",
+        group: Group::Build,
+        about: "Unlocks the siren, which sets off the slime's kinds",
+        max: 1,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "blast",
+        name: "Blasts",
+        group: Group::Tools,
+        about: "Unlocks the thrown blast and its crater",
+        max: 1,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "mine",
+        name: "Mines",
+        group: Group::Tools,
+        about: "Unlocks the mine, a blast the slime sets off",
+        max: 1,
+        cost: 150,
+        needs: None,
+    },
+    Item {
+        key: "cord",
+        name: "Det cord",
+        group: Group::Tools,
+        about: "Unlocks det cord, a line of blasts",
+        max: 1,
+        cost: 200,
+        needs: None,
+    },
+    Item {
+        key: "gas",
+        name: "Sleep gas",
+        group: Group::Tools,
+        about: "Unlocks sleep gas",
+        max: 1,
+        cost: 200,
+        needs: None,
+    },
+    Item {
+        key: "tools+",
+        name: "Cheaper tools",
+        group: Group::Tools,
+        about: "Every tool costs a fifth less",
+        max: 3,
+        cost: 120,
+        needs: None,
+    },
+    Item {
+        key: "draw",
+        name: "More cards on offer",
+        group: Group::Cards,
+        about: "One more gun card on offer in every shop",
+        max: 2,
+        cost: 100,
+        needs: None,
+    },
 ];
 
 /// What the run owns at the start: walls (the plainest defence).
@@ -353,7 +524,9 @@ pub fn shells_at(depth: u32) -> Vec<Shell> {
 /// A rolled bullet's price in points: its shell's budget cost, how well
 /// it rolled (`Ammo::grade`) and how deep it was found, in tens.
 pub fn ammo_price(a: &Ammo) -> u32 {
-    let p = (40.0 + 20.0 * a.shell.base() as f32) * a.grade().max(0.4).powf(1.5) * (1.0 + 0.1 * (a.depth.max(1) - 1) as f32);
+    let p = (40.0 + 20.0 * a.shell.base() as f32)
+        * a.grade().max(0.4).powf(1.5)
+        * (1.0 + 0.1 * (a.depth.max(1) - 1) as f32);
     ((p / 10.0).round() as u32).max(1) * 10
 }
 
@@ -502,7 +675,23 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
+        Run {
+            seed,
+            depth: 1,
+            points: 0,
+            owned,
+            cards: Vec::new(),
+            offers: Vec::new(),
+            guns: vec![first_gun()],
+            carry: 0,
+            gun_offers: Vec::new(),
+            stars: Vec::new(),
+            over: false,
+            dev: false,
+            rerolls: 0,
+            beaten: false,
+            range: false,
+        }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -562,7 +751,10 @@ impl Run {
             // Free play's bite (2), not the missions' older 1: walking into
             // the slime is very deadly (owner, 11-12).
             // The clock grows with the planet (`clock`).
-            rules: vec![("drain".into(), Rules::default().drain), ("cap".into(), clock(area_of(&planet)))],
+            rules: vec![
+                ("drain".into(), Rules::default().drain),
+                ("cap".into(), clock(area_of(&planet))),
+            ],
             own: false,
         };
         // Walkers scale with the planet's area too (the level-gen thread,
@@ -570,7 +762,18 @@ impl Run {
         // planet 1 by 30 s, and would be a corner of a 6x core world).
         let area = area_of(&planet);
         let walkers = (1.0 + WALKERS_PER_DEPTH * (d - 1) as f32) * area * size_roll(seed);
-        Level { depth: d, seed, ground: Ground::Planet { seed: self.seed, depth: d }, tier, walkers, mission, grow: head_start(area) }
+        Level {
+            depth: d,
+            seed,
+            ground: Ground::Planet {
+                seed: self.seed,
+                depth: d,
+            },
+            tier,
+            walkers,
+            mission,
+            grow: head_start(area),
+        }
     }
 
     /// The game's rules with the squad's and the buildings' upgrades.
@@ -616,7 +819,11 @@ impl Run {
     pub fn armed(&self) -> Gun {
         let l = |k| f32::from(self.level_of(k));
         let g = self.carried();
-        Gun { range: g.range + 3.0 * l("range"), rate: g.rate / 0.85f32.powf(l("rate")), ..g }
+        Gun {
+            range: g.range + 3.0 * l("range"),
+            rate: g.rate / 0.85f32.powf(l("rate")),
+            ..g
+        }
     }
 
     /// The carried gun's card budget (`rounds::fit_gun`).
@@ -645,7 +852,11 @@ impl Run {
     /// the last bought came out.)
     fn refit(&mut self) {
         while rounds::fit_gun(self.gun(), &self.carried()).is_err() {
-            let last = |bullet: bool| self.cards.iter().rposition(|c| c.1 && (c.0.kind() == Kind::Payload) == bullet);
+            let last = |bullet: bool| {
+                self.cards
+                    .iter()
+                    .rposition(|c| c.1 && (c.0.kind() == Kind::Payload) == bullet)
+            };
             match last(false).or_else(|| last(true)) {
                 Some(i) => self.cards[i].1 = false,
                 None => break,
@@ -722,13 +933,21 @@ impl Run {
     /// Owned card `i` into gun slot `slot`, the rest after it moved on one;
     /// a slot past the last card is the end.
     fn move_to(&mut self, i: usize, slot: usize) -> bool {
-        let Some(&(c, on)) = self.cards.get(i) else { return false };
+        let Some(&(c, on)) = self.cards.get(i) else {
+            return false;
+        };
         if !on && !self.fits(c) {
             return false;
         }
         let was = self.cards.clone();
         self.cards.remove(i);
-        let ons: Vec<usize> = self.cards.iter().enumerate().filter(|(_, o)| o.1).map(|(k, _)| k).collect();
+        let ons: Vec<usize> = self
+            .cards
+            .iter()
+            .enumerate()
+            .filter(|(_, o)| o.1)
+            .map(|(k, _)| k)
+            .collect();
         let at = match ons.get(slot) {
             Some(&k) => k,
             None => ons.last().map_or(self.cards.len(), |&k| k + 1),
@@ -758,17 +977,33 @@ impl Run {
             self.offers.clear();
             for (i, &shell) in Shell::ALL.iter().enumerate() {
                 for (j, &set) in Set::ALL.iter().enumerate() {
-                    let a = if set == Set::Standard { Ammo::standard(shell) } else { Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.depth) };
+                    let a = if set == Set::Standard {
+                        Ammo::standard(shell)
+                    } else {
+                        Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.depth)
+                    };
                     self.offers.push(Card::Ammo(a));
                 }
             }
-            self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
-            self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.depth)).collect();
+            self.offers
+                .extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
+            self.gun_offers = GunKind::ALL
+                .iter()
+                .enumerate()
+                .map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.depth))
+                .collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;
-        let pool: Vec<Card> = Card::ALL.into_iter().filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.depth)).collect();
-        let fresh: Vec<Card> = pool.iter().copied().filter(|c| !self.cards.iter().any(|o| o.0 == *c)).collect();
+        let pool: Vec<Card> = Card::ALL
+            .into_iter()
+            .filter(|&c| c.kind() != Kind::Payload && card_power(c).is_some_and(|p| power_from(p) <= self.depth))
+            .collect();
+        let fresh: Vec<Card> = pool
+            .iter()
+            .copied()
+            .filter(|c| !self.cards.iter().any(|o| o.0 == *c))
+            .collect();
         let mut from = if fresh.is_empty() { pool } else { fresh };
         let mut z = mix(mix(mix(self.seed ^ 0xC0FF_EE00) ^ u64::from(self.depth)) ^ self.rerolls);
         self.offers.clear();
@@ -778,14 +1013,18 @@ impl Run {
             z = mix(z);
             let shell = shells[(z % shells.len() as u64) as usize];
             let set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
-            self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
+            self.offers
+                .push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
         }
         while self.offers.len() < n + AMMO_OFFER && !from.is_empty() {
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
         }
         // Guns for the planet ahead, each its own seed.
-        self.gun_offers = (0..GUN_OFFER as u64).map(|k| Gun::roll(mix(z ^ (0x6755_4E00 + k)), self.depth)).filter(|g| !self.guns.contains(g)).collect();
+        self.gun_offers = (0..GUN_OFFER as u64)
+            .map(|k| Gun::roll(mix(z ^ (0x6755_4E00 + k)), self.depth))
+            .filter(|g| !self.guns.contains(g))
+            .collect();
     }
 
     /// The current level was won with `stars` (1-3): its points, the next
@@ -827,12 +1066,36 @@ impl Run {
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
             let state = if it.max == 1 {
-                if l > 0 { "owned".to_string() } else { "locked".to_string() }
+                if l > 0 {
+                    "owned".to_string()
+                } else {
+                    "locked".to_string()
+                }
             } else {
                 format!("{l}/{}", it.max)
             };
-            let about = if needs { format!("{} (needs {})", it.about, it.needs.and_then(|k| ITEMS.iter().find(|x| x.key == k)).map_or("", |x| x.name)) } else { it.about.to_string() };
-            rows.push(Row { group: it.group, face: Face::Item(it.key), on: false, name: it.name.into(), about, price: price.map_or(String::new(), |p| p.to_string()), state, ready: !needs && price.is_some_and(|p| p <= self.points), pick: Pick::Item(i) });
+            let about = if needs {
+                format!(
+                    "{} (needs {})",
+                    it.about,
+                    it.needs
+                        .and_then(|k| ITEMS.iter().find(|x| x.key == k))
+                        .map_or("", |x| x.name)
+                )
+            } else {
+                it.about.to_string()
+            };
+            rows.push(Row {
+                group: it.group,
+                face: Face::Item(it.key),
+                on: false,
+                name: it.name.into(),
+                about,
+                price: price.map_or(String::new(), |p| p.to_string()),
+                state,
+                ready: !needs && price.is_some_and(|p| p <= self.points),
+                pick: Pick::Item(i),
+            });
         }
         for (i, g) in self.guns.iter().enumerate() {
             let on = i == self.carry;
@@ -841,7 +1104,11 @@ impl Run {
                 face: Face::Gun(*g),
                 on,
                 name: title(&g.title()),
-                about: if on { "Your squad carries it.".into() } else { "Click to carry it instead.".into() },
+                about: if on {
+                    "Your squad carries it.".into()
+                } else {
+                    "Click to carry it instead.".into()
+                },
                 price: String::new(),
                 state: if on { "carried".into() } else { "armory".into() },
                 ready: !on,
@@ -850,13 +1117,41 @@ impl Run {
         }
         for (i, g) in self.gun_offers.iter().enumerate() {
             let p = gun_price(g);
-            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Guns, face: Face::Gun(*g), on: false, name: title(&g.title()), about: format!("From planet {}.", g.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Gun(i) });
+            let (price, state) = if self.range {
+                (String::new(), "free".into())
+            } else {
+                (p.to_string(), "for sale".into())
+            };
+            rows.push(Row {
+                group: Group::Guns,
+                face: Face::Gun(*g),
+                on: false,
+                name: title(&g.title()),
+                about: format!("From planet {}.", g.depth),
+                price,
+                state,
+                ready: self.range || p <= self.points,
+                pick: Pick::Gun(i),
+            });
         }
         for (i, &c) in self.offers.iter().enumerate() {
             let p = card_price(c);
-            let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Cards, face: Face::Card(c), on: false, name: card_title(c), about: c.about().into(), price, state, ready: self.range || p <= self.points, pick: Pick::Offer(i) });
+            let (price, state) = if self.range {
+                (String::new(), "free".into())
+            } else {
+                (p.to_string(), "for sale".into())
+            };
+            rows.push(Row {
+                group: Group::Cards,
+                face: Face::Card(c),
+                on: false,
+                name: card_title(c),
+                about: c.about().into(),
+                price,
+                state,
+                ready: self.range || p <= self.points,
+                pick: Pick::Offer(i),
+            });
         }
         let mut slot = 0;
         for (i, &(c, on)) in self.cards.iter().enumerate() {
@@ -870,27 +1165,95 @@ impl Run {
                 // Its words only; how to click and drag is on the shop's
                 // hint line (owner 11-15 02:57Z: the cards' text "is too
                 // much"). Its slot is its state.
-                about: if on || fits { c.about().into() } else { format!("{} Too big for the gun now.", c.about()) },
+                about: if on || fits {
+                    c.about().into()
+                } else {
+                    format!("{} Too big for the gun now.", c.about())
+                },
                 price: String::new(),
-                state: if on { format!("slot {slot}") } else { "in the bag".into() },
+                state: if on {
+                    format!("slot {slot}")
+                } else {
+                    "in the bag".into()
+                },
                 ready: on || fits,
                 pick: Pick::Card(i),
             });
         }
         if self.range {
-            let row = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: String::new(), ready: true, pick };
-            rows.push(row("New rolls", "Roll the shelf's bullets and the rack's guns again.".into(), Pick::DevReroll));
-            rows.push(row("Deeper rolls", format!("Roll them as on planet {} (now {}).", (self.depth + 1).min(PLANETS), self.depth), Pick::DevDepth(1)));
-            rows.push(row("Shallower rolls", format!("Roll them as on planet {} (now {}).", self.depth.saturating_sub(1).max(1), self.depth), Pick::DevDepth(-1)));
-            rows.push(row("Empty the gun", "Every card in the gun back to the bag.".into(), Pick::EmptyGun));
-            rows.push(row("Empty the bag", "Throw away the cards in the bag.".into(), Pick::EmptyBag));
+            let row = |name: &str, about: String, pick| Row {
+                group: Group::Dev,
+                face: Face::Dev,
+                on: false,
+                name: name.into(),
+                about,
+                price: String::new(),
+                state: String::new(),
+                ready: true,
+                pick,
+            };
+            rows.push(row(
+                "New rolls",
+                "Roll the shelf's bullets and the rack's guns again.".into(),
+                Pick::DevReroll,
+            ));
+            rows.push(row(
+                "Deeper rolls",
+                format!(
+                    "Roll them as on planet {} (now {}).",
+                    (self.depth + 1).min(PLANETS),
+                    self.depth
+                ),
+                Pick::DevDepth(1),
+            ));
+            rows.push(row(
+                "Shallower rolls",
+                format!(
+                    "Roll them as on planet {} (now {}).",
+                    self.depth.saturating_sub(1).max(1),
+                    self.depth
+                ),
+                Pick::DevDepth(-1),
+            ));
+            rows.push(row(
+                "Empty the gun",
+                "Every card in the gun back to the bag.".into(),
+                Pick::EmptyGun,
+            ));
+            rows.push(row(
+                "Empty the bag",
+                "Throw away the cards in the bag.".into(),
+                Pick::EmptyBag,
+            ));
         }
         if self.dev && !self.range {
-            let dev = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: "dev".into(), ready: true, pick };
-            rows.push(dev("Next planet deeper", format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)), Pick::DevDepth(1)));
-            rows.push(dev("Next planet shallower", format!("Land on planet {} instead", self.depth.saturating_sub(1).max(1)), Pick::DevDepth(-1)));
+            let dev = |name: &str, about: String, pick| Row {
+                group: Group::Dev,
+                face: Face::Dev,
+                on: false,
+                name: name.into(),
+                about,
+                price: String::new(),
+                state: "dev".into(),
+                ready: true,
+                pick,
+            };
+            rows.push(dev(
+                "Next planet deeper",
+                format!("Land on planet {} instead", (self.depth + 1).min(PLANETS)),
+                Pick::DevDepth(1),
+            ));
+            rows.push(dev(
+                "Next planet shallower",
+                format!("Land on planet {} instead", self.depth.saturating_sub(1).max(1)),
+                Pick::DevDepth(-1),
+            ));
             rows.push(dev("1,000 points", "Free points".into(), Pick::DevPoints));
-            rows.push(dev("Redraw the cards", "A fresh offer of gun cards".into(), Pick::DevReroll));
+            rows.push(dev(
+                "Redraw the cards",
+                "A fresh offer of gun cards".into(),
+                Pick::DevReroll,
+            ));
         }
         rows
     }
@@ -899,7 +1262,9 @@ impl Run {
     pub fn pick(&mut self, p: Pick) -> bool {
         match p {
             Pick::Item(i) => {
-                let Some(price) = self.price(i).filter(|&c| c <= self.points) else { return false };
+                let Some(price) = self.price(i).filter(|&c| c <= self.points) else {
+                    return false;
+                };
                 if ITEMS[i].needs.is_some_and(|k| !self.has(k)) {
                     return false;
                 }
@@ -912,7 +1277,11 @@ impl Run {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
                 // The range swaps a rack gun for the owned one of its kind,
                 // which goes on the rack (four of each, either way back).
-                if let Some(k) = self.range.then(|| self.guns.iter().position(|o| o.kind == g.kind)).flatten() {
+                if let Some(k) = self
+                    .range
+                    .then(|| self.guns.iter().position(|o| o.kind == g.kind))
+                    .flatten()
+                {
                     self.gun_offers[i] = std::mem::replace(&mut self.guns[k], g);
                     self.carry = k;
                     self.refit();
@@ -988,7 +1357,12 @@ impl Run {
     /// One line on the run so far, for the shop and the end.
     pub fn line(&self) -> String {
         let stars: u32 = self.stars.iter().map(|&s| u32::from(s)).sum();
-        format!("{} planet{} freed, {stars} star{}", self.stars.len(), if self.stars.len() == 1 { "" } else { "s" }, if stars == 1 { "" } else { "s" })
+        format!(
+            "{} planet{} freed, {stars} star{}",
+            self.stars.len(),
+            if self.stars.len() == 1 { "" } else { "s" },
+            if stars == 1 { "" } else { "s" }
+        )
     }
 }
 
@@ -1014,23 +1388,41 @@ mod tests {
     /// and the core world fiercer, and every key is one the engine takes.
     #[test]
     fn the_slime_gets_fiercer_deeper() {
-        let get = |d: u32, k: &str| enemy_keys(d).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
+        let get = |d: u32, k: &str| {
+            enemy_keys(d)
+                .into_iter()
+                .find(|(n, _)| *n == k)
+                .map(|(_, v)| v.parse::<f32>().unwrap())
+                .unwrap()
+        };
         for d in 1..=10 {
-            assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash") && get(d + 1, "thicken") <= get(d, "thicken"), "planet {d}");
+            assert!(
+                get(d + 1, "surge") <= get(d, "surge")
+                    && get(d + 1, "surge_dash") >= get(d, "surge_dash")
+                    && get(d + 1, "thicken") <= get(d, "thicken"),
+                "planet {d}"
+            );
             assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(d) {
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
             assert!(p.surge_every > 0 && p.surge_dash > 0 && p.thicken > 0.0);
-            assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
+            assert!(
+                surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0),
+                "planet {d}"
+            );
         }
         let c_food = crate::mould::larder_world::SURGE_FOOD;
         assert!(surge_food(1, 1.0) > c_food && surge_food(PLANETS, 1.0) < c_food);
         let (_, c) = crate::mould::larder_world::shape_keys("c").unwrap();
         let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
         assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);
-        assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash") && get(PLANETS, "thicken") < get(1, "thicken"));
+        assert!(
+            get(PLANETS, "surge") < get(1, "surge")
+                && get(PLANETS, "surge_dash") > get(1, "surge_dash")
+                && get(PLANETS, "thicken") < get(1, "thicken")
+        );
     }
 
     #[test]
@@ -1048,9 +1440,20 @@ mod tests {
             assert!(dense > walkers, "more walkers a cell deeper");
             assert!(shrink_goal(d) <= goals);
             (walkers, goals) = (dense, shrink_goal(d));
-            assert_eq!(l, Run { depth: d, ..Run::new(7) }.level());
+            assert_eq!(
+                l,
+                Run {
+                    depth: d,
+                    ..Run::new(7)
+                }
+                .level()
+            );
             assert_eq!(l.ground, Ground::Planet { seed: 7, depth: d });
-            assert_eq!(levelgen::spec_planet(&l.mission.map, 0), Some(Ok(levelgen::planet(7, d))), "the window reads the planet back from the mission's map");
+            assert_eq!(
+                levelgen::spec_planet(&l.mission.map, 0),
+                Some(Ok(levelgen::planet(7, d))),
+                "the window reads the planet back from the mission's map"
+            );
         }
         r.depth = 1;
         assert_eq!(r.level().tier, Tier::Drifter);
@@ -1064,13 +1467,29 @@ mod tests {
     #[test]
     fn bigger_planets_get_a_longer_clock_and_a_grown_slime() {
         let at: Vec<(f32, f32)> = levelgen::AREA.iter().map(|&a| (clock(a), head_start(a))).collect();
-        assert_eq!(at, [(900.0, 0.0), (990.0, 0.0), (1080.0, 0.0), (1260.0, 11.0), (1530.0, 25.0), (1890.0, 40.0), (2430.0, 60.0), (3330.0, 87.0)]);
+        assert_eq!(
+            at,
+            [
+                (900.0, 0.0),
+                (990.0, 0.0),
+                (1080.0, 0.0),
+                (1260.0, 11.0),
+                (1530.0, 25.0),
+                (1890.0, 40.0),
+                (2430.0, 60.0),
+                (3330.0, 87.0)
+            ]
+        );
         let mut r = Run::new(3);
         for d in 1..=PLANETS {
             r.depth = d;
             let (l, a) = (r.level(), area_of(&r.planet()));
             let cap = l.mission.rules(Rules::default()).cap;
-            assert_eq!((cap, l.grow), (clock(a), head_start(a)), "planet {d}: the level's rules carry its clock");
+            assert_eq!(
+                (cap, l.grow),
+                (clock(a), head_start(a)),
+                "planet {d}: the level's rules carry its clock"
+            );
         }
     }
 
@@ -1081,7 +1500,10 @@ mod tests {
     fn a_planets_slime_size_varies_by_seed() {
         let rolls: Vec<f32> = (0..400).map(size_roll).collect();
         assert!(rolls.iter().all(|r| (0.8..=1.25).contains(r)));
-        let (lo, hi) = (rolls.iter().cloned().fold(9.0, f32::min), rolls.iter().cloned().fold(0.0, f32::max));
+        let (lo, hi) = (
+            rolls.iter().cloned().fold(9.0, f32::min),
+            rolls.iter().cloned().fold(0.0, f32::max),
+        );
         assert!(lo < 0.82 && hi > 1.22, "{lo} {hi}");
         let under = rolls.iter().filter(|&&r| r < 1.0).count();
         assert!((160..=240).contains(&under), "{under} of 400 under 1");
@@ -1090,7 +1512,16 @@ mod tests {
     #[test]
     fn a_level_is_a_mission_the_campaign_would_take() {
         let l = Run::new(1).level();
-        let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, clock(0.6));
+        let text = format!(
+            "name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\n",
+            l.mission.name,
+            l.mission.says,
+            l.mission.map,
+            l.tier.name(),
+            shrink_goal(1),
+            Rules::default().drain,
+            clock(0.6)
+        );
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
     }
 
@@ -1098,7 +1529,12 @@ mod tests {
     fn the_shop_sells_what_the_points_buy_and_no_more() {
         let mut r = Run::new(1);
         assert!(r.has("walls") && !r.has("turret"));
-        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_))), "no points, nothing to buy");
+        assert!(
+            r.shop()
+                .iter()
+                .all(|row| !row.ready || matches!(row.pick, Pick::Card(_))),
+            "no points, nothing to buy"
+        );
         r.won(1);
         assert_eq!((r.depth, r.points), (2, reward(1, 1)));
         assert_eq!(r.offers.len(), OFFER + AMMO_OFFER);
@@ -1106,7 +1542,10 @@ mod tests {
         let power = ITEMS.iter().position(|i| i.key == "turret+").unwrap();
         assert!(!r.pick(Pick::Item(power)), "turret power needs turrets");
         assert!(r.pick(Pick::Item(turret)));
-        assert!(r.has("turret") && !r.pick(Pick::Item(turret)), "an unlock is bought once");
+        assert!(
+            r.has("turret") && !r.pick(Pick::Item(turret)),
+            "an unlock is bought once"
+        );
         assert_eq!(r.points, reward(1, 1) - 200);
         assert_eq!(reward(1, 1), 200, "the first win buys one unlock");
         assert!(!r.pick(Pick::Item(power)), "too dear now");
@@ -1128,8 +1567,17 @@ mod tests {
     #[test]
     fn cards_move_to_any_slot_and_the_gun_fires_them_in_slot_order() {
         let mut r = Run::new(3);
-        r.guns = vec![Gun { budget: 20, slots: 5, ..first_gun() }];
-        r.cards = vec![(Card::Wide, true), (Card::Blast, true), (Card::Gas, true), (Card::Quiet, false)];
+        r.guns = vec![Gun {
+            budget: 20,
+            slots: 5,
+            ..first_gun()
+        }];
+        r.cards = vec![
+            (Card::Wide, true),
+            (Card::Blast, true),
+            (Card::Gas, true),
+            (Card::Quiet, false),
+        ];
         assert_eq!(r.gun_text(), "wide+blast+gas");
         // Gas to the front: wide now widens the blast's next cast only
         // after gas.
@@ -1146,25 +1594,54 @@ mod tests {
         let quiet = r.cards.iter().position(|c| c.0 == Card::Quiet).unwrap();
         assert!(r.pick(Pick::Move(quiet, 1)));
         assert_eq!(r.gun_text(), "gas+quiet+blast+wide");
-        assert_eq!(rounds::casts(&r.gun()).len(), 2, "gas, then quiet blast; the trailing wide waits for a bullet");
+        assert_eq!(
+            rounds::casts(&r.gun()).len(),
+            2,
+            "gas, then quiet blast; the trailing wide waits for a bullet"
+        );
         // A bag card that does not fit stays in the bag.
-        r.guns = vec![Gun { budget: 9, slots: 5, ..first_gun() }];
+        r.guns = vec![Gun {
+            budget: 9,
+            slots: 5,
+            ..first_gun()
+        }];
         r.cards.push((Card::Bomb, false));
         assert!(!r.pick(Pick::Move(r.cards.len() - 1, 0)) && r.gun_text() == "gas+quiet+blast+wide");
         // The shop numbers the slots in firing order and says how to move.
-        let rows: Vec<Row> = r.shop().into_iter().filter(|row| row.on && matches!(row.pick, Pick::Card(_))).collect();
+        let rows: Vec<Row> = r
+            .shop()
+            .into_iter()
+            .filter(|row| row.on && matches!(row.pick, Pick::Card(_)))
+            .collect();
         assert_eq!(rows.len(), 4);
-        assert_eq!((rows[1].state.as_str(), rows[1].about.as_str()), ("slot 2", Card::Quiet.about()));
-        assert!(rows.iter().map(|row| row.name.clone()).eq(["Gas", "Quiet", "Blast", "Wide"].map(String::from)));
+        assert_eq!(
+            (rows[1].state.as_str(), rows[1].about.as_str()),
+            ("slot 2", Card::Quiet.about())
+        );
+        assert!(rows
+            .iter()
+            .map(|row| row.name.clone())
+            .eq(["Gas", "Quiet", "Blast", "Wide"].map(String::from)));
         // A card for sale dragged onto slot 1: bought and put there; one
         // the gun has no room for is bought into the bag.
-        r.guns = vec![Gun { budget: 20, slots: 6, ..first_gun() }];
+        r.guns = vec![Gun {
+            budget: 20,
+            slots: 6,
+            ..first_gun()
+        }];
         (r.offers, r.points) = (vec![Card::Pierce, Card::Bomb], 10_000);
         assert!(r.buy_into(0, 0));
         assert_eq!(r.gun_text(), "pierce+gas+quiet+blast+wide");
-        r.guns = vec![Gun { budget: 9, slots: 6, ..first_gun() }];
+        r.guns = vec![Gun {
+            budget: 9,
+            slots: 6,
+            ..first_gun()
+        }];
         let n = r.cards.len();
-        assert!(r.buy_into(0, 0) && r.offers.is_empty() && r.cards.len() == n + 1 && !r.cards[n].1, "bought into the bag");
+        assert!(
+            r.buy_into(0, 0) && r.offers.is_empty() && r.cards.len() == n + 1 && !r.cards[n].1,
+            "bought into the bag"
+        );
         r.points = 0;
         r.offers = vec![Card::Wide];
         assert!(!r.buy_into(0, 0) && r.offers.len() == 1, "no points, no card");
@@ -1184,18 +1661,34 @@ mod tests {
         assert_eq!(r.offers.len(), Shell::ALL.len() * Set::ALL.len() + others);
         for shell in Shell::ALL {
             for set in Set::ALL {
-                assert!(r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == shell && a.set == set)), "{shell:?} {set:?}");
+                assert!(
+                    r.offers
+                        .iter()
+                        .any(|c| matches!(c, Card::Ammo(a) if a.shell == shell && a.set == set)),
+                    "{shell:?} {set:?}"
+                );
             }
         }
-        assert_eq!(r.offers[0], Card::Ammo(Ammo::standard(Shell::Plain)), "the standard set is exact");
+        assert_eq!(
+            r.offers[0],
+            Card::Ammo(Ammo::standard(Shell::Plain)),
+            "the standard set is exact"
+        );
         let rows = r.shop();
-        assert!(rows.iter().all(|row| !matches!(row.pick, Pick::Item(_)) && row.price.is_empty() && (row.ready || row.on)), "no upgrades, nothing to pay");
+        assert!(
+            rows.iter()
+                .all(|row| !matches!(row.pick, Pick::Item(_)) && row.price.is_empty() && (row.ready || row.on)),
+            "no upgrades, nothing to pay"
+        );
         // The same card twice, free, and still on the shelf.
         let n = r.offers.len();
         assert!(r.pick(Pick::Offer(0)) && r.pick(Pick::Offer(0)));
         assert_eq!((r.offers.len(), r.cards.len(), r.points), (n, 2, 0));
         let (owned, rack) = (r.guns[0], r.gun_offers[0]);
-        assert!(r.pick(Pick::Gun(0)) && r.carry == 0 && r.guns[0] == rack && r.gun_offers[0] == owned, "a rack gun swaps for the owned one of its kind, free, and is carried");
+        assert!(
+            r.pick(Pick::Gun(0)) && r.carry == 0 && r.guns[0] == rack && r.gun_offers[0] == owned,
+            "a rack gun swaps for the owned one of its kind, free, and is carried"
+        );
         // New rolls change the rolled bullets, not the exact ones.
         let before = r.offers.clone();
         assert!(r.pick(Pick::DevReroll) && before != r.offers && before[0] == r.offers[0]);
@@ -1205,44 +1698,81 @@ mod tests {
         let mut run = Run::new(7);
         run.cards = vec![(Card::Wide, true)];
         assert!(!run.pick(Pick::EmptyGun) && !run.pick(Pick::DevReroll) && run.gun_text() == "wide");
-        assert!(!run.shop().iter().any(|row| matches!(row.pick, Pick::EmptyGun | Pick::EmptyBag)));
+        assert!(!run
+            .shop()
+            .iter()
+            .any(|row| matches!(row.pick, Pick::EmptyGun | Pick::EmptyBag)));
     }
 
     #[test]
     fn cards_fill_the_gun_to_its_budget_and_get_better_deeper() {
         let mut r = Run::new(5);
         r.restock();
-        assert!(r.offers.iter().all(|&c| card_power(c) == Some(1)), "planet 1 offers only the plainest cards");
+        assert!(
+            r.offers.iter().all(|&c| card_power(c) == Some(1)),
+            "planet 1 offers only the plainest cards"
+        );
         r.depth = 4;
         r.restock();
         assert!(r.offers.iter().all(|&c| c != Card::Germ));
         // Blast (3) and Wide (2) fill a budget of 5; Thick (1) waits in the bag.
-        r.guns = vec![Gun { budget: 5, slots: 3, ..first_gun() }];
+        r.guns = vec![Gun {
+            budget: 5,
+            slots: 3,
+            ..first_gun()
+        }];
         r.points = 10_000;
         r.offers = vec![Card::Blast, Card::Wide, Card::Thick];
         for _ in 0..3 {
             assert!(r.pick(Pick::Offer(0)));
         }
-        assert_eq!(r.gun_text(), "wide+blast", "a bought modifier goes in before the bullet");
+        assert_eq!(
+            r.gun_text(),
+            "wide+blast",
+            "a bought modifier goes in before the bullet"
+        );
         let at = |r: &Run, c: Card| r.cards.iter().position(|o| o.0 == c).unwrap();
-        assert!(!r.cards[at(&r, Card::Thick)].1 && !r.pick(Pick::Card(at(&r, Card::Thick))), "over the budget");
-        assert!(r.pick(Pick::Card(at(&r, Card::Wide))) && r.pick(Pick::Card(at(&r, Card::Thick))), "wide out, thick in");
+        assert!(
+            !r.cards[at(&r, Card::Thick)].1 && !r.pick(Pick::Card(at(&r, Card::Thick))),
+            "over the budget"
+        );
+        assert!(
+            r.pick(Pick::Card(at(&r, Card::Wide))) && r.pick(Pick::Card(at(&r, Card::Thick))),
+            "wide out, thick in"
+        );
         assert_eq!(r.gun_text(), "thick+blast");
         // A bigger gun bought is carried, and holds all three.
-        r.gun_offers = vec![Gun { budget: 7, slots: 4, ..first_gun() }];
+        r.gun_offers = vec![Gun {
+            budget: 7,
+            slots: 4,
+            ..first_gun()
+        }];
         let before = r.points;
         assert!(r.pick(Pick::Gun(0)) && r.carry == 1 && r.budget() == 7);
         assert_eq!(r.points, before - gun_price(&r.carried()));
         assert!(r.pick(Pick::Card(at(&r, Card::Wide))), "a bigger gun holds all three");
-        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok() && rounds::parse(&r.gun_text()).is_some(), "{}", r.gun_text());
+        assert!(
+            rounds::fit_gun(r.gun(), &r.carried()).is_ok() && rounds::parse(&r.gun_text()).is_some(),
+            "{}",
+            r.gun_text()
+        );
         assert_eq!(r.gun_text(), "thick+wide+blast");
         // Back to the small gun: the last card that is no bullet comes out
         // (wide), so the gun keeps its blast.
         assert!(r.pick(Pick::Carry(0)) && !r.pick(Pick::Carry(0)));
         assert_eq!(r.gun_text(), "thick+blast");
         // Slots count too: three 1-cost cards and a fourth do not fit 3 slots.
-        r.guns[0] = Gun { budget: 20, slots: 3, ..first_gun() };
-        r.cards = vec![(Card::Thick, true), (Card::Quiet, true), (Card::Delay, true), (Card::Blast, false)];
+        r.guns[0] = Gun {
+            budget: 20,
+            slots: 3,
+            ..first_gun()
+        };
+        r.cards = vec![
+            (Card::Thick, true),
+            (Card::Quiet, true),
+            (Card::Delay, true),
+            (Card::Blast, false),
+        ];
         assert!(!r.fits(Card::Blast));
         // The gun fires its cards in the order they sit, which the player
         // sets (`Pick::Move`).
@@ -1253,7 +1783,9 @@ mod tests {
             let mut r = Run::new(d);
             r.depth = d as u32;
             r.restock();
-            r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == Shell::Bomb))
+            r.offers
+                .iter()
+                .any(|c| matches!(c, Card::Ammo(a) if a.shell == Shell::Bomb))
         });
         assert!(deep);
     }
@@ -1268,7 +1800,10 @@ mod tests {
                     r.restock();
                     assert_eq!(r.gun_offers.len(), GUN_OFFER);
                     assert!(r.gun_offers.iter().all(|g| g.depth == d));
-                    r.gun_offers.iter().map(|g| g.budget as f32 / g.kind.average().budget as f32).collect::<Vec<_>>()
+                    r.gun_offers
+                        .iter()
+                        .map(|g| g.budget as f32 / g.kind.average().budget as f32)
+                        .collect::<Vec<_>>()
                 })
                 .collect();
             budgets.iter().sum::<f32>() / budgets.len() as f32
@@ -1284,7 +1819,13 @@ mod tests {
         // A better roll costs more.
         let g = GunKind::Carbine.average_at(3);
         assert!(gun_price(&Gun { grade: 1.3, ..g }) > gun_price(&g));
-        assert!(Run::new(1).shop().iter().any(|r| r.on && r.face == Face::Gun(first_gun())), "the first gun is carried");
+        assert!(
+            Run::new(1)
+                .shop()
+                .iter()
+                .any(|r| r.on && r.face == Face::Gun(first_gun())),
+            "the first gun is carried"
+        );
     }
 
     #[test]
@@ -1294,16 +1835,31 @@ mod tests {
                 let mut r = Run::new(seed);
                 r.depth = d;
                 r.restock();
-                let ammo: Vec<Ammo> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some(*a) } else { None }).collect();
+                let ammo: Vec<Ammo> = r
+                    .offers
+                    .iter()
+                    .filter_map(|c| if let Card::Ammo(a) = c { Some(*a) } else { None })
+                    .collect();
                 assert_eq!(ammo.len(), AMMO_OFFER);
-                assert!(ammo.iter().all(|a| a.shell != Shell::Germ && (d >= 4 || a.shell != Shell::Bomb)), "{ammo:?}");
-                assert!(r.offers.iter().all(|c| matches!(c, Card::Ammo(_)) || c.kind() != Kind::Payload), "the fixed payload cards are no longer sold");
+                assert!(
+                    ammo.iter()
+                        .all(|a| a.shell != Shell::Germ && (d >= 4 || a.shell != Shell::Bomb)),
+                    "{ammo:?}"
+                );
+                assert!(
+                    r.offers
+                        .iter()
+                        .all(|c| matches!(c, Card::Ammo(_)) || c.kind() != Kind::Payload),
+                    "the fixed payload cards are no longer sold"
+                );
                 assert_eq!(r.offers.len(), AMMO_OFFER + OFFER);
             }
         }
         // A better roll of the same bullet costs more points.
         let a = Ammo::roll_of(Shell::Blast, Set::Needle, 1, 3);
-        let better = (0..200u64).map(|k| Ammo::roll_of(Shell::Blast, Set::Needle, k, 3)).find(|b| b.grade() > a.grade() * 1.2);
+        let better = (0..200u64)
+            .map(|k| Ammo::roll_of(Shell::Blast, Set::Needle, k, 3))
+            .find(|b| b.grade() > a.grade() * 1.2);
         if let Some(b) = better {
             assert!(ammo_price(&b) >= ammo_price(&a));
         }
@@ -1313,7 +1869,11 @@ mod tests {
         r.points = 10_000;
         let first = r.offers[0];
         assert!(r.pick(Pick::Offer(0)) && r.cards[0] == (first, true));
-        assert!(rounds::parse(&r.gun_text()).is_some(), "a saved gun reads back: {}", r.gun_text());
+        assert!(
+            rounds::parse(&r.gun_text()).is_some(),
+            "a saved gun reads back: {}",
+            r.gun_text()
+        );
     }
 
     #[test]
@@ -1352,12 +1912,22 @@ mod tests {
         r.cards = vec![(Card::Thrift, true), (Card::Bomb, true), (Card::Germ, true)];
         r.offers = vec![Card::Quiet];
         r.pick(Pick::Offer(0));
-        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok(), "bought in: {:?} costs {}", r.gun(), rounds::cost(&r.gun()));
+        assert!(
+            rounds::fit_gun(r.gun(), &r.carried()).is_ok(),
+            "bought in: {:?} costs {}",
+            r.gun(),
+            rounds::cost(&r.gun())
+        );
         let mut r = Run::new(1);
         r.guns[0].budget = 6;
         r.cards = vec![(Card::Thrift, true), (Card::Bomb, true), (Card::Germ, true)];
         r.pick(Pick::Card(0));
-        assert!(rounds::fit_gun(r.gun(), &r.carried()).is_ok(), "thrift out: {:?} costs {}", r.gun(), rounds::cost(&r.gun()));
+        assert!(
+            rounds::fit_gun(r.gun(), &r.carried()).is_ok(),
+            "thrift out: {:?} costs {}",
+            r.gun(),
+            rounds::cost(&r.gun())
+        );
         // Dragged to the end the Thrift cuts nothing: the move is refused.
         let mut r = Run::new(1);
         r.guns[0].budget = 6;

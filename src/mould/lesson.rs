@@ -166,9 +166,7 @@ impl Lesson {
             // A snip that cut mould, not merely a click: it passed on bare
             // agar before (bug check, 2026-11-08). Salt also kills as a
             // snip, so both counters must move.
-            Step::Snip if c.snips_used > self.snips_at_start && c.snipped > self.snipped_at_start => {
-                Some(Step::Salt)
-            }
+            Step::Snip if c.snips_used > self.snips_at_start && c.snipped > self.snipped_at_start => Some(Step::Salt),
             Step::Salt if c.salt_cells > self.salt_at_start => Some(Step::Storm),
             Step::Storm if d.score.is_some() => Some(Step::Done),
             _ => None,

@@ -18,7 +18,10 @@ fn main() -> Result<(), String> {
     for f in files {
         let text = std::fs::read_to_string(&f).map_err(|e| format!("{f}: {e}"))?;
         println!("== {f}");
-        print!("{}", slime_mould::mould::playlog::summary(&slime_mould::mould::playlog::read(&text)));
+        print!(
+            "{}",
+            slime_mould::mould::playlog::summary(&slime_mould::mould::playlog::read(&text))
+        );
     }
     Ok(())
 }

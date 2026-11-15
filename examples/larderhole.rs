@@ -94,7 +94,11 @@ impl Arm {
                     }
                     "swarm" => Part::Swarm,
                     "clock" => Part::Clock(it.next().unwrap().parse().unwrap()),
-                    "crater" => Part::Crater(it.next().unwrap().parse().unwrap(), it.next().map(|v| v.parse().unwrap()), it.next().map(|v| v.parse().unwrap())),
+                    "crater" => Part::Crater(
+                        it.next().unwrap().parse().unwrap(),
+                        it.next().map(|v| v.parse().unwrap()),
+                        it.next().map(|v| v.parse().unwrap()),
+                    ),
                     "cone" => Part::Cone,
                     "aim" => {
                         let mut v = || it.next().expect("aim:R:E:S").parse().unwrap();
@@ -148,7 +152,12 @@ impl Arm {
     /// Only what a hit does changes (the alarm's pull, the crater):
     /// holding fire, it plays base's game.
     fn alarm_only(&self) -> bool {
-        self.0.iter().all(|p| matches!(p, Part::Base | Part::Off | Part::Flee(..) | Part::Swarm | Part::Crater(..) | Part::Cone | Part::Aim(..)))
+        self.0.iter().all(|p| {
+            matches!(
+                p,
+                Part::Base | Part::Off | Part::Flee(..) | Part::Swarm | Part::Crater(..) | Part::Cone | Part::Aim(..)
+            )
+        })
     }
 }
 
@@ -224,7 +233,11 @@ fn main() {
         Some(b) if arms[a].alarm_only() => b,
         _ => a,
     };
-    let jobs: Vec<(u64, usize, bool)> = seeds.iter().flat_map(|&s| (0..arms.len()).flat_map(move |a| [(s, a, true), (s, a, false)])).filter(|&(_, a, f)| f || hold_of(a) == a).collect();
+    let jobs: Vec<(u64, usize, bool)> = seeds
+        .iter()
+        .flat_map(|&s| (0..arms.len()).flat_map(move |a| [(s, a, true), (s, a, false)]))
+        .filter(|&(_, a, f)| f || hold_of(a) == a)
+        .collect();
     let next = std::sync::atomic::AtomicUsize::new(0);
     let out = std::sync::Mutex::new((0..jobs.len()).map(|_| None::<Run>).collect::<Vec<_>>());
     std::thread::scope(|sc| {
@@ -262,7 +275,10 @@ fn main() {
     let squad = squad;
     let get = |seed: u64, a: usize, shoot: bool| {
         let a = if shoot { a } else { hold_of(a) };
-        &out[jobs.iter().position(|&(s, b, f)| s == seed && b == a && f == shoot).unwrap()]
+        &out[jobs
+            .iter()
+            .position(|&(s, b, f)| s == seed && b == a && f == shoot)
+            .unwrap()]
     };
     let marks: Vec<usize> = [5.0, 10.0, fire, fire + 2.0, fire + 5.0, fire + rest]
         .iter()
@@ -280,24 +296,58 @@ fn main() {
     };
     println!("\nmedian over seeds, hole in dish cells (fire / hold) at {:?} s after the squad is set down; firing stops at {fire} s:", marks.iter().map(|i| i + 1).collect::<Vec<_>>());
     for (a, n) in names.iter().enumerate() {
-        let row = |shoot: bool| marks.iter().map(|&i| format!("{:>4.0}", median(seeds.iter().map(|&s| get(s, a, shoot).secs[i].hole as f32).collect()))).collect::<Vec<_>>().join(" ");
-        let refill = median(seeds.iter().map(|&s| {
-            let h = &get(s, a, true).secs;
-            let end = h[at].hole.max(1) as f32;
-            h[(at + 5).min(h.len() - 1)].hole as f32 / end
-        }).collect());
-        let kills = median(seeds.iter().map(|&s| get(s, a, true).secs[..=at].iter().map(|x| x.killed).sum::<u32>() as f32).collect());
-        let alive = seeds.iter().map(|&s| get(s, a, true).secs.last().unwrap().alive).sum::<usize>();
+        let row = |shoot: bool| {
+            marks
+                .iter()
+                .map(|&i| {
+                    format!(
+                        "{:>4.0}",
+                        median(seeds.iter().map(|&s| get(s, a, shoot).secs[i].hole as f32).collect())
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        let refill = median(
+            seeds
+                .iter()
+                .map(|&s| {
+                    let h = &get(s, a, true).secs;
+                    let end = h[at].hole.max(1) as f32;
+                    h[(at + 5).min(h.len() - 1)].hole as f32 / end
+                })
+                .collect(),
+        );
+        let kills = median(
+            seeds
+                .iter()
+                .map(|&s| get(s, a, true).secs[..=at].iter().map(|x| x.killed).sum::<u32>() as f32)
+                .collect(),
+        );
+        let alive = seeds
+            .iter()
+            .map(|&s| get(s, a, true).secs.last().unwrap().alive)
+            .sum::<usize>();
         let ms = median(seeds.iter().map(|&s| get(s, a, true).ms_tick as f32).collect());
-        let share = median(seeds.iter().map(|&s| {
-            let r = get(s, a, true);
-            r.secs[at].hole as f32 / r.start_cells.max(1) as f32
-        }).collect());
-        let deep = median(seeds.iter().map(|&s| {
-            let h = &get(s, a, true).secs[at.saturating_sub(4)..=at];
-            let n = h.iter().map(|x| x.hits).sum::<u32>();
-            h.iter().map(|x| x.hit_d * x.hits as f32).sum::<f32>() / n.max(1) as f32
-        }).collect());
+        let share = median(
+            seeds
+                .iter()
+                .map(|&s| {
+                    let r = get(s, a, true);
+                    r.secs[at].hole as f32 / r.start_cells.max(1) as f32
+                })
+                .collect(),
+        );
+        let deep = median(
+            seeds
+                .iter()
+                .map(|&s| {
+                    let h = &get(s, a, true).secs[at.saturating_sub(4)..=at];
+                    let n = h.iter().map(|x| x.hits).sum::<u32>();
+                    h.iter().map(|x| x.hit_d * x.hits as f32).sum::<f32>() / n.max(1) as f32
+                })
+                .collect(),
+        );
         println!("  {n:>10}: fire {}  | hold {}  | at {fire:.0} s the hole is {:.0}% of the mould in range at the start; hits land {deep:.1} dish cells out in the last 5 s of fire; 5 s after the last shot {:.0}% of the hole is left; {kills:.0} killed under fire; {alive} of {} soldiers alive at the end; {ms:.2} ms a tick", row(true), row(false), share * 100.0, refill * 100.0, seeds.len() * squad);
     }
     // Each arm against base: the hole at the end of fire, paired by seed.
@@ -330,7 +380,10 @@ fn main() {
     }
     println!("\nthe hole at {fire} s of fire against base, paired by seed (larger / smaller, ties left out; sign test, Holm over {m}):");
     for (i, (n, w, l, p, d)) in tests.iter().enumerate() {
-        println!("  {n:>10}: {w} larger, {l} smaller, median difference {d:+.0} dish cells, p {p:.4}{}", if holds[i] { ", holds" } else { "" });
+        println!(
+            "  {n:>10}: {w} larger, {l} smaller, median difference {d:+.0} dish cells, p {p:.4}{}",
+            if holds[i] { ", holds" } else { "" }
+        );
     }
 }
 
@@ -346,7 +399,10 @@ type Line = ((f32, f32), (f32, f32), Vec<(f32, f32)>);
 fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
     let sc = g.world.scale();
     let d = &g.world;
-    let live: Vec<(f32, f32)> = (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| (d.walkers[k].0, d.walkers[k].1)).collect();
+    let live: Vec<(f32, f32)> = (0..d.walkers.len())
+        .filter(|&k| d.lives(k))
+        .map(|k| (d.walkers[k].0, d.walkers[k].1))
+        .collect();
     let (c, l) = (g.core, g.larder);
     let base = (l.1 - c.1).atan2(l.0 - c.0);
     for turn in [0i32, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9] {
@@ -384,7 +440,19 @@ fn place(g: &Game<BigDish>, n: usize) -> Option<Line> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: bool, grow: f32, fire: f32, rest: f32, n: usize, look: Option<(&str, &str, f32)>) -> Run {
+fn run(
+    seed: u64,
+    scale: usize,
+    walkers: usize,
+    rules: Rules,
+    arm: &Arm,
+    shoot: bool,
+    grow: f32,
+    fire: f32,
+    rest: f32,
+    n: usize,
+    look: Option<(&str, &str, f32)>,
+) -> Run {
     let mut p = race_params(seed, scale, walkers);
     arm.apply(&mut p);
     let rules = arm.rules(rules);
@@ -467,7 +535,16 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
         }
         if let Some((dir, name, every)) = look {
             if el >= next_pic - 1e-3 {
-                crop(&g, centre, ray, &format!("{dir}/{name}-{}-s{seed}-{:04.1}s.png", if shoot { "fire" } else { "hold" }, el));
+                crop(
+                    &g,
+                    centre,
+                    ray,
+                    &format!(
+                        "{dir}/{name}-{}-s{seed}-{:04.1}s.png",
+                        if shoot { "fire" } else { "hold" },
+                        el
+                    ),
+                );
                 next_pic += every;
             }
         }
@@ -496,16 +573,36 @@ fn run(seed: u64, scale: usize, walkers: usize, rules: Rules, arm: &Arm, shoot: 
         }
     }
     if let Some((dir, name, _)) = look {
-        crop(&g, centre, ray, &format!("{dir}/{name}-{}-s{seed}-{:02.0}s.png", if shoot { "fire" } else { "hold" }, g.time() - t0));
+        crop(
+            &g,
+            centre,
+            ray,
+            &format!(
+                "{dir}/{name}-{}-s{seed}-{:02.0}s.png",
+                if shoot { "fire" } else { "hold" },
+                g.time() - t0
+            ),
+        );
     }
     // A run cut short (the squad wiped, the mould gone) repeats its last
     // second, so every run has the same marks.
     let last = secs.last().copied().unwrap_or_default();
     while secs.len() < total as usize {
-        secs.push(Sec { hits: 0, shots: 0, killed: 0, ..last });
+        secs.push(Sec {
+            hits: 0,
+            shots: 0,
+            killed: 0,
+            ..last
+        });
     }
     let ms_tick = clock.elapsed().as_secs_f64() * 1000.0 / (g.world.ticks() - ticks0).max(1) as f64;
-    Run { secs, start_cells, start_walkers, placed: placed.is_some(), ms_tick }
+    Run {
+        secs,
+        start_cells,
+        start_walkers,
+        placed: placed.is_some(),
+        ms_tick,
+    }
 }
 
 /// The 44 x 44 dish cells round the point `STAND` dish cells into the
@@ -531,7 +628,11 @@ fn crop(g: &Game<BigDish>, centre: (f32, f32), ray: (f32, f32), path: &str) {
         let n = (end.0 - sh.from.0).hypot(end.1 - sh.from.1).ceil().max(1.0) as i32;
         for k in 0..=n {
             let t = k as f32 / n as f32;
-            put(sh.from.0 + (end.0 - sh.from.0) * t, sh.from.1 + (end.1 - sh.from.1) * t, [255, 70, 60, 255]);
+            put(
+                sh.from.0 + (end.0 - sh.from.0) * t,
+                sh.from.1 + (end.1 - sh.from.1) * t,
+                [255, 70, 60, 255],
+            );
         }
     }
     for s in g.soldiers.iter().filter(|s| s.alive) {

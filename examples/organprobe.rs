@@ -128,7 +128,10 @@ fn frame_of(d: &Dish) -> image::RgbaImage {
     let scale = 2;
     let (w, h) = render::frame_size(scale);
     let mut buf = vec![0u8; (w * h * 4) as usize];
-    let view = View { keys: false, ..View::default() };
+    let view = View {
+        keys: false,
+        ..View::default()
+    };
     render::draw(d, &view, scale, &mut buf);
     image::RgbaImage::from_raw(w, h, buf).expect("frame size")
 }
@@ -144,8 +147,16 @@ fn dist_map(d: &Dish, dist: &[f32]) -> image::RgbaImage {
             let i = y * W + x;
             let c = if dist[i].is_finite() {
                 let v = (dist[i] / 150.0).min(1.0);
-                let k = if (dist[i] as u32 / 10).is_multiple_of(2) { 1.0 } else { 0.6 };
-                [((60.0 + 195.0 * v) * k) as u8, ((200.0 - 120.0 * v) * k) as u8, ((255.0 - 200.0 * v) * k) as u8]
+                let k = if (dist[i] as u32 / 10).is_multiple_of(2) {
+                    1.0
+                } else {
+                    0.6
+                };
+                [
+                    ((60.0 + 195.0 * v) * k) as u8,
+                    ((200.0 - 120.0 * v) * k) as u8,
+                    ((255.0 - 200.0 * v) * k) as u8,
+                ]
             } else if d.trail[i] > d.params.tube {
                 [90, 90, 90]
             } else {
@@ -153,7 +164,11 @@ fn dist_map(d: &Dish, dist: &[f32]) -> image::RgbaImage {
             };
             for dy in 0..s {
                 for dx in 0..s {
-                    img.put_pixel(x as u32 * s + dx, y as u32 * s + dy, image::Rgba([c[0], c[1], c[2], 255]));
+                    img.put_pixel(
+                        x as u32 * s + dx,
+                        y as u32 * s + dy,
+                        image::Rgba([c[0], c[1], c[2], 255]),
+                    );
                 }
             }
         }
@@ -215,13 +230,19 @@ fn settled(seed: u64, settle: u32) -> Option<(Dish, u64)> {
 /// quiet window, on both rulers.
 fn step0(a: &Args) {
     let sps = STEPS_PER_SECOND as u64;
-    let mut ruler = Ruler { core: a.core, ..Ruler::default() };
+    let mut ruler = Ruler {
+        core: a.core,
+        ..Ruler::default()
+    };
     // [ruler][bell] -> per-seed range over the window.
     let mut ranges: [[Vec<f32>; 3]; 2] = Default::default();
     let mut jumps: [[Vec<f32>; 3]; 2] = Default::default();
     let mut drops_all = [0u32; 3];
     let samples_per = a.window as u64 * sps;
-    println!("window {} s = {} samples, one per step; beat-jump = biggest change between samples 2 s apart", a.window, samples_per);
+    println!(
+        "window {} s = {} samples, one per step; beat-jump = biggest change between samples 2 s apart",
+        a.window, samples_per
+    );
     println!("seed  bell   grid min-max range jump |  geo min-max   range jump | gaps");
     for &seed in &a.seeds {
         let Some((mut d, joined_at)) = settled(seed, a.settle) else {
@@ -232,7 +253,9 @@ fn step0(a: &Args) {
         if let Some(dir) = &a.look {
             ruler.bells(&d);
             frame_of(&d).save(format!("{dir}/step0-s{seed}-frame.png")).unwrap();
-            dist_map(&d, &ruler.geo).save(format!("{dir}/step0-s{seed}-geo.png")).unwrap();
+            dist_map(&d, &ruler.geo)
+                .save(format!("{dir}/step0-s{seed}-geo.png"))
+                .unwrap();
         }
         let mut s: [[Vec<f32>; 3]; 2] = Default::default();
         let mut beat: [[Vec<f32>; 3]; 2] = Default::default();
@@ -276,11 +299,20 @@ fn step0(a: &Args) {
                 cols.push(format!("{lo:6.1}-{hi:6.1} {:5.1} {jump:4.1}", hi - lo));
             }
             drops_all[b] += gaps[b];
-            println!("{seed:4}  {:5} {} | {} | {}", organ::NOTE_NAMES[b], cols[0], cols[1], gaps[b]);
+            println!(
+                "{seed:4}  {:5} {} | {} | {}",
+                organ::NOTE_NAMES[b],
+                cols[0],
+                cols[1],
+                gaps[b]
+            );
         }
     }
     println!();
-    println!("wobble = max - min of the bell's distance over the {} s window, cells of tube", a.window);
+    println!(
+        "wobble = max - min of the bell's distance over the {} s window, cells of tube",
+        a.window
+    );
     println!("ruler bell   n  wobble min/p90/max   beat-jump min/p90/max   gaps (steps unreached, all seeds)");
     for (r, name) in ["grid", "geo"].iter().enumerate() {
         for b in 0..3 {
@@ -318,7 +350,10 @@ fn bend(a: &Args) {
         organ::PULSE_SPEED
     );
     println!("seed  ruler  base   peak  +ms@peak  +5s after  +15s after  kept vs twin, ms  | gaps while lit");
-    let mut ruler = Ruler { core: a.core, ..Ruler::default() };
+    let mut ruler = Ruler {
+        core: a.core,
+        ..Ruler::default()
+    };
     let mut peak_ms: [Vec<f32>; 2] = Default::default();
     let mut kept_ms: [Vec<f32>; 2] = Default::default();
     for &seed in &a.seeds {
@@ -456,8 +491,20 @@ fn play(a: &Args) {
         let first_note = o.played.len();
         let mut tally: Tally = Default::default();
         let write = si == 0 && a.frames.is_some();
-        let mut buf = vec![0u8; { let (w, h) = render::frame_size(2); (w * h * 4) as usize }];
-        let mut big = vec![0u8; { let (w, h) = render::frame_size(4); (w * h * 4) as usize }];
+        let mut buf = vec![
+            0u8;
+            {
+                let (w, h) = render::frame_size(2);
+                (w * h * 4) as usize
+            }
+        ];
+        let mut big = vec![
+            0u8;
+            {
+                let (w, h) = render::frame_size(4);
+                (w * h * 4) as usize
+            }
+        ];
         let mut frame_no = 0;
         let (on0, off0) = (o.counts.on_beat, o.counts.off_beat);
         for (pi, &(act, _, secs)) in SCRIPT.iter().enumerate() {
@@ -473,7 +520,9 @@ fn play(a: &Args) {
                         // then oats just past the wall's far end lead the
                         // regrowth round it (placed a second later, below).
                         let half = 20.0;
-                        if o.dish.begin_stroke(slime_mould::mould::Tool::Salt, mx - nx * half, my - ny * half) {
+                        if o.dish
+                            .begin_stroke(slime_mould::mould::Tool::Salt, mx - nx * half, my - ny * half)
+                        {
                             o.dish.drag_stroke(mx + nx * half, my + ny * half);
                             o.dish.end_stroke();
                         }
@@ -486,7 +535,11 @@ fn play(a: &Args) {
                     // heart: one beside each tube, then one between them.
                     let (l, m) = (&o.dish.piles[1], &o.dish.piles[2]);
                     let along = |f: f32| (l.x + (m.x - l.x) * f, l.y + (m.y - l.y) * f - 8.0);
-                    lure = vec![(start, along(0.25)), (start, along(0.75)), (start + 6 * sps, along(0.5))];
+                    lure = vec![
+                        (start, along(0.25)),
+                        (start, along(0.75)),
+                        (start + 6 * sps, along(0.5)),
+                    ];
                 }
                 _ => {}
             }
@@ -507,7 +560,8 @@ fn play(a: &Args) {
                     o.dish.set_lamp(None);
                 }
                 let t = std::time::Instant::now();
-                let beat = o.dish.t.is_multiple_of(organ::BEAT_STEPS) || (o.dish.t + 1).is_multiple_of(organ::BEAT_STEPS);
+                let beat =
+                    o.dish.t.is_multiple_of(organ::BEAT_STEPS) || (o.dish.t + 1).is_multiple_of(organ::BEAT_STEPS);
                 for _ in 0..2 {
                     for n in o.step() {
                         if let organ::Voice::Bell(b) = n.voice {
@@ -520,17 +574,34 @@ fn play(a: &Args) {
                         }
                     }
                 }
-                organ::draw(&o, &View { keys: false, ..View::default() }, 4, &mut big);
+                organ::draw(
+                    &o,
+                    &View {
+                        keys: false,
+                        ..View::default()
+                    },
+                    4,
+                    &mut big,
+                );
                 let ms = t.elapsed().as_secs_f32() * 1000.0;
                 frame_ms.push(ms);
                 if beat {
                     beat_ms.push(ms);
                 }
                 if write && (o.dish.t - t0).is_multiple_of(8) {
-                    organ::draw(&o, &View { keys: false, ..View::default() }, 2, &mut buf);
+                    organ::draw(
+                        &o,
+                        &View {
+                            keys: false,
+                            ..View::default()
+                        },
+                        2,
+                        &mut buf,
+                    );
                     let (w, h) = render::frame_size(2);
                     let img = image::RgbaImage::from_raw(w, h, buf.clone()).unwrap();
-                    img.save(format!("{}/f{frame_no:05}.png", a.frames.as_ref().unwrap())).unwrap();
+                    img.save(format!("{}/f{frame_no:05}.png", a.frames.as_ref().unwrap()))
+                        .unwrap();
                     frame_no += 1;
                 }
             }
@@ -543,7 +614,10 @@ fn play(a: &Args) {
         if write {
             let notes: Vec<organ::Note> = o.played[first_note..]
                 .iter()
-                .map(|n| organ::Note { step: n.step - t0, ..*n })
+                .map(|n| organ::Note {
+                    step: n.step - t0,
+                    ..*n
+                })
                 .collect();
             let secs = (o.dish.t - t0) as f32 / sps as f32;
             let wav = organ::render_notes(&notes, secs + 1.5, 44_100);
@@ -561,7 +635,10 @@ fn play(a: &Args) {
                 );
             }
             std::fs::write(format!("{}/organ-s{seed}-notes.txt", a.frames.as_ref().unwrap()), log).unwrap();
-            println!("wrote {frame_no} frames and {path} ({secs:.1} s, {} notes)", notes.len());
+            println!(
+                "wrote {frame_no} frames and {path} ({secs:.1} s, {} notes)",
+                notes.len()
+            );
         }
         all.push((seed, tally, on, off));
     }
@@ -574,7 +651,11 @@ fn play(a: &Args) {
             let beats = (secs as u64 * sps).div_ceil(organ::BEAT_STEPS);
             let mut row = format!("  {name:28}");
             for (b, (n, e, _, ts)) in tally[pi].iter().enumerate() {
-                let mean = if ts.is_empty() { f32::NAN } else { ts.iter().sum::<f32>() / ts.len() as f32 * 1000.0 };
+                let mean = if ts.is_empty() {
+                    f32::NAN
+                } else {
+                    ts.iter().sum::<f32>() / ts.len() as f32 * 1000.0
+                };
                 row += &format!(" | {:4} {n}+{e}/{beats} {mean:5.0}ms", organ::NOTE_NAMES[b]);
             }
             println!("{row}");
@@ -590,7 +671,13 @@ fn play(a: &Args) {
             let mut per10 = Vec::new();
             let mut echoes = 0;
             for (_, tally, _, _) in &all {
-                let m = |ts: &Vec<f32>| if ts.is_empty() { None } else { Some(ts.iter().sum::<f32>() / ts.len() as f32) };
+                let m = |ts: &Vec<f32>| {
+                    if ts.is_empty() {
+                        None
+                    } else {
+                        Some(ts.iter().sum::<f32>() / ts.len() as f32)
+                    }
+                };
                 if let (Some(x), Some(y)) = (m(&tally[0][b].3), m(&tally[pi][b].3)) {
                     shifts.push((y - x) * 1000.0);
                 }

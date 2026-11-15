@@ -71,7 +71,10 @@ pub(super) fn volley(g: &mut Game<GpuWorld>, free: bool) {
     } else if t < VOLLEY_STOP && !burning {
         // Ten dish cells long, across the way to the core.
         let half = 5.0 * sc;
-        let (a, b) = ((m.0 - u.1 * half, m.1 + u.0 * half), (m.0 + u.1 * half, m.1 - u.0 * half));
+        let (a, b) = (
+            (m.0 - u.1 * half, m.1 + u.0 * half),
+            (m.0 + u.1 * half, m.1 - u.0 * half),
+        );
         for &k in &live {
             g.apply(Cmd::Order(k, Order::Burn(a, b)));
         }
@@ -109,14 +112,28 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         let (dx, dy) = (c.0 - l.0, c.1 - l.1);
         let d = dx.hypot(dy).max(1.0);
         let (ux, uy) = (dx / d, dy / d);
-        let mut wants = vec![(Kind::Turret, (l.0 + ux * 7.0 * sc - uy * 4.0 * sc, l.1 + uy * 7.0 * sc + ux * 4.0 * sc)), (Kind::Turret, (l.0 + ux * 7.0 * sc + uy * 4.0 * sc, l.1 + uy * 7.0 * sc - ux * 4.0 * sc)), (Kind::Lure, (l.0 + ux * 13.0 * sc, l.1 + uy * 13.0 * sc))];
+        let mut wants = vec![
+            (
+                Kind::Turret,
+                (l.0 + ux * 7.0 * sc - uy * 4.0 * sc, l.1 + uy * 7.0 * sc + ux * 4.0 * sc),
+            ),
+            (
+                Kind::Turret,
+                (l.0 + ux * 7.0 * sc + uy * 4.0 * sc, l.1 + uy * 7.0 * sc - ux * 4.0 * sc),
+            ),
+            (Kind::Lure, (l.0 + ux * 13.0 * sc, l.1 + uy * 13.0 * sc)),
+        ];
         // The siren 0.6 of the way to the core, in the stem the Fork's mould
         // comes up, where its call reaches the mould.
         if hand == "siren" {
             let p = (l.0 + dx * 0.42, l.1 + dy * 0.42);
             wants[2] = (Kind::Siren, p);
             // Soldier 2 walks there so the siren is in a builder's reach.
-            if !g.buildings.iter().any(|b| b.kind == Kind::Siren) && g.soldiers.len() > 2 && g.soldiers[2].alive && g.soldiers[2].order != Order::Move(p.0, p.1) {
+            if !g.buildings.iter().any(|b| b.kind == Kind::Siren)
+                && g.soldiers.len() > 2
+                && g.soldiers[2].alive
+                && g.soldiers[2].order != Order::Move(p.0, p.1)
+            {
                 g.apply(Cmd::Order(2, Order::Move(p.0, p.1)));
             }
         }
@@ -124,7 +141,13 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         // more; the Fork's nearest is a small one a pump drains in 5 s).
         let cs = g.world.crystals();
         let big = cs.iter().map(|c| c.1).fold(0.0f32, f32::max) * 0.5;
-        if let Some(cc) = cs.iter().skip(1).filter(|c| c.1 >= big).map(|c| c.0).min_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1))) {
+        if let Some(cc) = cs
+            .iter()
+            .skip(1)
+            .filter(|c| c.1 >= big)
+            .map(|c| c.0)
+            .min_by(|a, b| (a.0 - l.0).hypot(a.1 - l.1).total_cmp(&(b.0 - l.0).hypot(b.1 - l.1)))
+        {
             wants.insert(0, (Kind::Pump, cc));
             // Soldier 0 harvests it, so the pump is in a soldier's reach.
             if g.soldiers[0].alive && g.soldiers[0].order == Order::Hold {
@@ -132,13 +155,19 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             }
         }
         for (kind, p) in wants {
-            if g.buildings.iter().any(|b| b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * sc) {
+            if g.buildings
+                .iter()
+                .any(|b| b.kind == kind && (b.at.0 - p.0).hypot(b.at.1 - p.1) < 3.0 * sc)
+            {
                 continue;
             }
-            let at = (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-                let a = k as f32 / 12.0 * std::f32::consts::TAU;
-                (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
-            }).find(|q| g.build_blocked(kind, *q).is_none());
+            let at = (0..=12)
+                .flat_map(|r| (0..12).map(move |k| (r, k)))
+                .map(|(r, k)| {
+                    let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                    (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+                })
+                .find(|q| g.build_blocked(kind, *q).is_none());
             if let Some(at) = at {
                 g.apply(Cmd::Build(kind, at));
             }
@@ -170,11 +199,17 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             let d = (c.0 - l.0).hypot(c.1 - l.1).max(1.0);
             let (ux, uy) = ((c.0 - l.0) / d, (c.1 - l.1) / d);
             for (i, side) in [0.0f32, 9.0, -9.0].into_iter().enumerate() {
-                let p = (l.0 + ux * 28.0 * sc - uy * side * sc, l.1 + uy * 28.0 * sc + ux * side * sc);
-                let at = (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-                    let a = k as f32 / 12.0 * std::f32::consts::TAU;
-                    (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
-                }).find(|q| g.build_blocked(Kind::Turret, *q).is_none());
+                let p = (
+                    l.0 + ux * 28.0 * sc - uy * side * sc,
+                    l.1 + uy * 28.0 * sc + ux * side * sc,
+                );
+                let at = (0..=12)
+                    .flat_map(|r| (0..12).map(move |k| (r, k)))
+                    .map(|(r, k)| {
+                        let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                        (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+                    })
+                    .find(|q| g.build_blocked(Kind::Turret, *q).is_none());
                 let Some(at) = at else { continue };
                 if !g.apply(Cmd::Build(Kind::Turret, at)) {
                     continue;
@@ -182,7 +217,11 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
                 let b = g.buildings.len() - 1;
                 for k in 0..g.soldiers.len() {
                     if g.soldiers[k].alive {
-                        g.apply(if i == 0 { Cmd::Order(k, Order::Build(b)) } else { Cmd::Queue(k, Order::Build(b)) });
+                        g.apply(if i == 0 {
+                            Cmd::Order(k, Order::Build(b))
+                        } else {
+                            Cmd::Queue(k, Order::Build(b))
+                        });
                     }
                 }
             }
@@ -199,7 +238,10 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // food kept back (once for rations, removed 11-14), either stand at the larder on free fire as
     // the mould comes up the stem, or walk into the body from 3 s.
     // `hold@X,Y` stands them at (X, Y) instead, world units as `centre=`.
-    let post = hand.strip_prefix("hold@").and_then(|p| p.split_once(',')).and_then(|(x, y)| Some((x.parse::<f32>().ok()?, y.parse::<f32>().ok()?)));
+    let post = hand
+        .strip_prefix("hold@")
+        .and_then(|p| p.split_once(','))
+        .and_then(|(x, y)| Some((x.parse::<f32>().ok()?, y.parse::<f32>().ok()?)));
     let hand = if post.is_some() { "hold" } else { hand };
     if hand == "hold" || hand == "push" {
         while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
@@ -224,10 +266,22 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // `sow` (own=1): farm, and soldiers 0 and 1 walk from the larder to a
     // crystal and back sowing the player's own mould (Feed while the bank
     // is over 600, else Road): `examples/garden.rs`'s sow2.
-    let sowers: &[usize] = if hand == "sow" && g.world.garden.is_some() { &[0, 1] } else { &[] };
+    let sowers: &[usize] = if hand == "sow" && g.world.garden.is_some() {
+        &[0, 1]
+    } else {
+        &[]
+    };
     if !sowers.is_empty() {
         let sc = g.world.scale();
-        let cs: Vec<(f32, f32)> = g.world.crystals().iter().skip(1).filter(|c| c.1 > 0.0).map(|c| c.0).filter(|&c| c != g.core && c != g.larder).collect();
+        let cs: Vec<(f32, f32)> = g
+            .world
+            .crystals()
+            .iter()
+            .skip(1)
+            .filter(|c| c.1 > 0.0)
+            .map(|c| c.0)
+            .filter(|&c| c != g.core && c != g.larder)
+            .collect();
         for &k in sowers {
             if k >= g.soldiers.len() || !g.soldiers[k].alive {
                 continue;
@@ -237,7 +291,11 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             if g.soldiers[k].order == Order::Hold {
                 let so = g.soldiers[k];
                 let home = (so.x - g.larder.0).hypot(so.y - g.larder.1) < 4.0 * sc;
-                let to = if home { cs.get(k % cs.len().max(1)).copied().unwrap_or(g.larder) } else { g.larder };
+                let to = if home {
+                    cs.get(k % cs.len().max(1)).copied().unwrap_or(g.larder)
+                } else {
+                    g.larder
+                };
                 g.apply(Cmd::Order(k, Order::Move(to.0, to.1)));
             }
         }
@@ -249,20 +307,29 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "far" && g.time() > 2.0 && g.buildings.is_empty() {
         let sc = g.world.scale();
         let (c, l) = (g.core, g.larder);
-        let (ux, uy) = ((c.0 - l.0) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0), (c.1 - l.1) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0));
+        let (ux, uy) = (
+            (c.0 - l.0) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0),
+            (c.1 - l.1) / (c.0 - l.0).hypot(c.1 - l.1).max(1.0),
+        );
         let mid = (l.0 + ux * 30.0 * sc, l.1 + uy * 30.0 * sc);
         let near_open = |g: &Game<GpuWorld>, p: (f32, f32), kind: Kind| {
-            (0..=12).flat_map(|r| (0..12).map(move |k| (r, k))).map(|(r, k)| {
-                let a = k as f32 / 12.0 * std::f32::consts::TAU;
-                (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
-            }).find(|q| g.build_blocked(kind, *q).is_none())
+            (0..=12)
+                .flat_map(|r| (0..12).map(move |k| (r, k)))
+                .map(|(r, k)| {
+                    let a = k as f32 / 12.0 * std::f32::consts::TAU;
+                    (p.0 + 0.5 * r as f32 * sc * a.cos(), p.1 + 0.5 * r as f32 * sc * a.sin())
+                })
+                .find(|q| g.build_blocked(kind, *q).is_none())
         };
         if let Some(at) = near_open(g, mid, Kind::Turret) {
             g.apply(Cmd::Build(Kind::Turret, at));
             g.apply(Cmd::Send(g.buildings.len() - 1));
         }
         let w = (l.0 + ux * 24.0 * sc, l.1 + uy * 24.0 * sc);
-        let (a, b) = ((w.0 - uy * 4.0 * sc, w.1 + ux * 4.0 * sc), (w.0 + uy * 4.0 * sc, w.1 - ux * 4.0 * sc));
+        let (a, b) = (
+            (w.0 - uy * 4.0 * sc, w.1 + ux * 4.0 * sc),
+            (w.0 + uy * 4.0 * sc, w.1 - ux * 4.0 * sc),
+        );
         if g.apply(Cmd::Wall(a, b)) {
             g.apply(Cmd::Send(g.buildings.len() - 1));
         }
@@ -275,7 +342,17 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         g.apply(Cmd::Buy);
     }
     let cs = g.world.crystals();
-    let target = cs.iter().enumerate().skip(1).filter(|c| c.1 .1 > 0.0).map(|(_, c)| c.0).min_by(|a, b| (a.0 - g.larder.0).hypot(a.1 - g.larder.1).total_cmp(&(b.0 - g.larder.0).hypot(b.1 - g.larder.1)));
+    let target = cs
+        .iter()
+        .enumerate()
+        .skip(1)
+        .filter(|c| c.1 .1 > 0.0)
+        .map(|(_, c)| c.0)
+        .min_by(|a, b| {
+            (a.0 - g.larder.0)
+                .hypot(a.1 - g.larder.1)
+                .total_cmp(&(b.0 - g.larder.0).hypot(b.1 - g.larder.1))
+        });
     for k in 0..g.soldiers.len() {
         // New soldiers, and harvesters of a crystal gone dry, take a new one.
         let dry = match g.soldiers[k].order {
@@ -328,17 +405,49 @@ pub(super) fn squads_hand(g: &mut Game<GpuWorld>) {
     }
     let Some(q) = g.active else { return };
     let Some(m) = g.middle(q) else { return };
-    let when = |g: &Game<GpuWorld>, f: &dyn Fn(&Cmd) -> bool| g.log.iter().find(|(_, c)| f(c)).map(|(tk, _)| *tk as f32 / tps);
+    let when =
+        |g: &Game<GpuWorld>, f: &dyn Fn(&Cmd) -> bool| g.log.iter().find(|(_, c)| f(c)).map(|(tk, _)| *tk as f32 / tps);
     let fired = when(g, &|c| matches!(c, Cmd::Fire(_, Some(_))));
     let split = when(g, &|c| matches!(c, Cmd::Split(..)));
-    let back = split.and_then(|s| g.log.iter().find(|(tk, c)| matches!(c, Cmd::Active(_)) && *tk as f32 / tps > s).map(|(tk, _)| *tk as f32 / tps));
+    let back = split.and_then(|s| {
+        g.log
+            .iter()
+            .find(|(tk, c)| matches!(c, Cmd::Active(_)) && *tk as f32 / tps > s)
+            .map(|(tk, _)| *tk as f32 / tps)
+    });
     // The thickest slime a member of `q` sees in range, and how thick.
     let sight = |g: &Game<GpuWorld>, q: usize| {
-        g.members(q).iter().filter_map(|&k| g.soldiers[k].aim.map(|a| (g.soldiers[k].dense, a, (a.0 - g.soldiers[k].x).hypot(a.1 - g.soldiers[k].y)))).filter(|&(n, _, d)| n >= g.rules.aim_min && d <= g.gun_range(q) * sc).max_by_key(|&(n, ..)| n).map(|(n, a, _)| (a, n))
+        g.members(q)
+            .iter()
+            .filter_map(|&k| {
+                g.soldiers[k].aim.map(|a| {
+                    (
+                        g.soldiers[k].dense,
+                        a,
+                        (a.0 - g.soldiers[k].x).hypot(a.1 - g.soldiers[k].y),
+                    )
+                })
+            })
+            .filter(|&(n, _, d)| n >= g.rules.aim_min && d <= g.gun_range(q) * sc)
+            .max_by_key(|&(n, ..)| n)
+            .map(|(n, a, _)| (a, n))
     };
     let cs = g.world.crystals();
-    let slimed: Vec<bool> = (0..cs.len()).map(|i| g.world.walkers_in(cs[i].0, g.world.crystal_r(i) + 2.0 * sc) > 200).collect();
-    let near = |from: (f32, f32), want: bool| cs.iter().enumerate().skip(1).filter(|&(i, c)| c.1 > 0.0 && slimed[i] == want).map(|(_, c)| c.0).min_by(|a, b| (a.0 - from.0).hypot(a.1 - from.1).total_cmp(&(b.0 - from.0).hypot(b.1 - from.1)));
+    let slimed: Vec<bool> = (0..cs.len())
+        .map(|i| g.world.walkers_in(cs[i].0, g.world.crystal_r(i) + 2.0 * sc) > 200)
+        .collect();
+    let near = |from: (f32, f32), want: bool| {
+        cs.iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, c)| c.1 > 0.0 && slimed[i] == want)
+            .map(|(_, c)| c.0)
+            .min_by(|a, b| {
+                (a.0 - from.0)
+                    .hypot(a.1 - from.1)
+                    .total_cmp(&(b.0 - from.0).hypot(b.1 - from.1))
+            })
+    };
     if std::env::var("SQ_DEBUG").is_ok() {
         eprintln!("t {t:.1} q {q} n {} mid {m:?} dest {:?} fire {:?} sight {:?} fired {fired:?} split {split:?} back {back:?}", g.members(q).len(), g.squads[q].dest, g.squads[q].fire, sight(g, q));
     }
@@ -428,7 +537,13 @@ pub(super) fn squadwork_hand(g: &mut Game<GpuWorld>) {
     };
     if std::env::var("SQ_DEBUG").is_ok() && t < 0.1 {
         for (i, c) in cs.iter().enumerate() {
-            eprintln!("crystal {i} at {:?} charge {:.0} rim {} near {}", c.0, c.1, g.world.walkers_in(c.0, g.world.crystal_r(i) + 2.0 * sc), g.world.walkers_in(c.0, 30.0 * sc));
+            eprintln!(
+                "crystal {i} at {:?} charge {:.0} rim {} near {}",
+                c.0,
+                c.1,
+                g.world.walkers_in(c.0, g.world.crystal_r(i) + 2.0 * sc),
+                g.world.walkers_in(c.0, 30.0 * sc)
+            );
         }
     }
     let ordered = g.log.iter().any(|(_, c)| matches!(c, Cmd::SquadOrder(..)));
@@ -445,24 +560,55 @@ pub(super) fn squadwork_hand(g: &mut Game<GpuWorld>) {
         g.apply(Cmd::Link(q as u8, n as u8));
         // Halfway to the biggest crystal on this side of the wall, then
         // queued: drain it.
-        let far = cs.iter().skip(1).filter(|c| c.1 > 0.5 * big).map(|c| c.0).min_by(|a, b| (a.0 - m.0).hypot(a.1 - m.1).total_cmp(&(b.0 - m.0).hypot(b.1 - m.1))).unwrap_or(m);
-        let a = g.nearest_standable(((m.0 + far.0) / 2.0, (m.1 + far.1) / 2.0), 20.0 * sc).unwrap_or(m);
+        let far = cs
+            .iter()
+            .skip(1)
+            .filter(|c| c.1 > 0.5 * big)
+            .map(|c| c.0)
+            .min_by(|a, b| (a.0 - m.0).hypot(a.1 - m.1).total_cmp(&(b.0 - m.0).hypot(b.1 - m.1)))
+            .unwrap_or(m);
+        let a = g
+            .nearest_standable(((m.0 + far.0) / 2.0, (m.1 + far.1) / 2.0), 20.0 * sc)
+            .unwrap_or(m);
         g.apply(Cmd::SquadOrder(n as u8, Order::Move(a.0, a.1)));
         g.apply(Cmd::SquadQueue(n as u8, Order::Clear(far.0, far.1)));
     }
     if std::env::var("SQ_DEBUG").is_ok() {
         let guards = g.members(q).iter().filter(|&&k| g.soldiers[k].cover).count();
-        eprintln!("t {t:.1} q {q} work {:?} guards {guards} queued {} linked {:?} healed {:.0}", g.squads[q].work, g.squads[q].queued, g.linked(q), g.healed);
+        eprintln!(
+            "t {t:.1} q {q} work {:?} guards {guards} queued {} linked {:?} healed {:.0}",
+            g.squads[q].work,
+            g.squads[q].queued,
+            g.linked(q),
+            g.healed
+        );
         if (t - 31.0).abs() < 0.05 || (t - 36.0).abs() < 0.05 {
             for r in g.live_squads() {
                 let k0 = g.members(r)[0];
-                eprintln!("  squad {r} mid {:?} dest {:?} anchor {:?} steer {:?} work {:?} link {} k0 order {:?}", g.middle(r), g.squads[r].dest, g.squads[r].anchor, g.squads[r].steer, g.squads[r].work, g.squads[r].link, g.soldiers[k0].order);
+                eprintln!(
+                    "  squad {r} mid {:?} dest {:?} anchor {:?} steer {:?} work {:?} link {} k0 order {:?}",
+                    g.middle(r),
+                    g.squads[r].dest,
+                    g.squads[r].anchor,
+                    g.squads[r].steer,
+                    g.squads[r].work,
+                    g.squads[r].link,
+                    g.soldiers[k0].order
+                );
             }
         }
         if (t - 20.0).abs() < 0.05 {
             for k in g.members(q) {
                 let s = &g.soldiers[k];
-                eprintln!("  k {k} at {:.0},{:.0} order {:?} cover {} queued {} hp {:.0}", s.x / sc, s.y / sc, s.order, s.cover, s.queued, s.hp);
+                eprintln!(
+                    "  k {k} at {:.0},{:.0} order {:?} cover {} queued {} hp {:.0}",
+                    s.x / sc,
+                    s.y / sc,
+                    s.order,
+                    s.cover,
+                    s.queued,
+                    s.hp
+                );
             }
         }
     }
@@ -496,16 +642,21 @@ fn pumps_hand(g: &mut Game<GpuWorld>) {
     // The next crystal with charge and no pump, nearest the squad.
     let s = g.soldiers[k0];
     let cs = g.world.crystals();
-    let next = (1..cs.len()).filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none()).min_by(|&a, &b| {
-        let d = |c: usize| (cs[c].0 .0 - s.x).hypot(cs[c].0 .1 - s.y);
-        d(a).total_cmp(&d(b))
-    });
+    let next = (1..cs.len())
+        .filter(|&c| cs[c].1 > 0.0 && g.pump_on(c).is_none())
+        .min_by(|&a, &b| {
+            let d = |c: usize| (cs[c].0 .0 - s.x).hypot(cs[c].0 .1 - s.y);
+            d(a).total_cmp(&d(b))
+        });
     if let Some(c) = next {
         // On its rim, toward the squad: the pump snaps to the middle.
         let (cx, cy) = cs[c].0;
         let d = (s.x - cx).hypot(s.y - cy).max(1.0);
         let r = g.world.crystal_r(c) * 0.9;
-        g.apply(Cmd::Build(Kind::Pump, (cx + (s.x - cx) / d * r, cy + (s.y - cy) / d * r)));
+        g.apply(Cmd::Build(
+            Kind::Pump,
+            (cx + (s.x - cx) / d * r, cy + (s.y - cy) / d * r),
+        ));
     }
 }
 
@@ -520,7 +671,13 @@ fn greedy_hand(g: &mut Game<GpuWorld>) {
         }
     }
     let cs = g.world.crystals();
-    let Some(c) = (1..cs.len()).filter(|&c| cs[c].1 > 0.0).max_by(|&a, &b| cs[a].1.total_cmp(&cs[b].1)).map(|c| cs[c].0) else { return };
+    let Some(c) = (1..cs.len())
+        .filter(|&c| cs[c].1 > 0.0)
+        .max_by(|&a, &b| cs[a].1.total_cmp(&cs[b].1))
+        .map(|c| cs[c].0)
+    else {
+        return;
+    };
     for k in 0..g.soldiers.len() {
         let on = matches!(g.soldiers[k].order, Order::Clear(x, y) if g.crystal_at((x, y)).is_some_and(|(i, _)| cs[i].1 > 0.0));
         if g.soldiers[k].alive && !on {
@@ -556,7 +713,10 @@ fn guardwork_hand(g: &mut Game<GpuWorld>) {
     let ordered = g.log.iter().any(|(_, c)| matches!(c, Cmd::SquadOrder(..)));
     if t >= 1.0 && !ordered {
         let Some((i, c)) = pick else { return };
-        if let Some(cv) = std::env::var("GW_COVER").ok().and_then(|v| slime_mould::mould::larder_world::Cover::parse(&v)) {
+        if let Some(cv) = std::env::var("GW_COVER")
+            .ok()
+            .and_then(|v| slime_mould::mould::larder_world::Cover::parse(&v))
+        {
             g.apply(Cmd::Cover(q as u8, cv));
         }
         if pump {
@@ -564,14 +724,21 @@ fn guardwork_hand(g: &mut Game<GpuWorld>) {
             let d = (m.0 - c.0 .0).hypot(m.1 - c.0 .1).max(1.0);
             let r = g.world.crystal_r(i) * 0.9;
             g.bank = g.bank.max(5000.0);
-            if g.apply(Cmd::Build(Kind::Pump, (c.0 .0 + (m.0 - c.0 .0) / d * r, c.0 .1 + (m.1 - c.0 .1) / d * r))) {
+            if g.apply(Cmd::Build(
+                Kind::Pump,
+                (c.0 .0 + (m.0 - c.0 .0) / d * r, c.0 .1 + (m.1 - c.0 .1) / d * r),
+            )) {
                 let b = g.buildings.len() - 1;
                 g.apply(Cmd::SquadOrder(q as u8, Order::Build(b)));
             }
         } else {
             g.apply(Cmd::SquadOrder(q as u8, Order::Clear(c.0 .0, c.0 .1)));
         }
-        eprintln!("GW pick crystal {i} at {:.0},{:.0} pump {pump}", c.0 .0 / sc, c.0 .1 / sc);
+        eprintln!(
+            "GW pick crystal {i} at {:.0},{:.0} pump {pump}",
+            c.0 .0 / sc,
+            c.0 .1 / sc
+        );
     }
     if (t - t.round()).abs() < 0.02 && t >= 1.0 {
         let m = g.members(q);
@@ -581,10 +748,20 @@ fn guardwork_hand(g: &mut Game<GpuWorld>) {
             _ => None,
         });
         let guards: Vec<usize> = m.iter().copied().filter(|&k| g.soldiers[k].cover).collect();
-        let dist: Vec<String> = guards.iter().map(|&k| at.map_or("-".into(), |a| format!("{:.0}", (g.soldiers[k].x - a.0).hypot(g.soldiers[k].y - a.1) / sc))).collect();
+        let dist: Vec<String> = guards
+            .iter()
+            .map(|&k| {
+                at.map_or("-".into(), |a| {
+                    format!("{:.0}", (g.soldiers[k].x - a.0).hypot(g.soldiers[k].y - a.1) / sc)
+                })
+            })
+            .collect();
         let bitten = m.iter().filter(|&&k| g.soldiers[k].touching > 0).count();
         let gbitten = guards.iter().filter(|&&k| g.soldiers[k].touching > 0).count();
-        let hp: f32 = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).map(|k| g.soldiers[k].hp).sum();
+        let hp: f32 = (0..g.soldiers.len())
+            .filter(|&k| g.soldiers[k].alive)
+            .map(|k| g.soldiers[k].hp)
+            .sum();
         let built = g.buildings.first().map_or(0.0, |b| b.built);
         eprintln!(
             "GW t {t:.0} work {} guards {} dist [{}] alive {} hp {hp:.0} bitten {bitten} gbitten {gbitten} built {built:.2} harvested {:.0} killed {}",

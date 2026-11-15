@@ -32,19 +32,31 @@ pub mod pieces;
 pub mod synth;
 pub mod world;
 
-#[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+#[cfg(any(
+    target_os = "macos",
+    target_os = "windows",
+    all(target_os = "linux", feature = "audio-alsa")
+))]
 mod device;
 
 /// Whether this build can open a sound device at all. `false` on a default
 /// Linux build (CI, cloud sessions), where the device file is not compiled
 /// and the window runs silent, exactly as before sound existed.
-pub const DEVICE_COMPILED: bool = cfg!(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")));
+pub const DEVICE_COMPILED: bool = cfg!(any(
+    target_os = "macos",
+    target_os = "windows",
+    all(target_os = "linux", feature = "audio-alsa")
+));
 
 /// **The speaker, or nothing.** What the window holds, so `bin/mould.rs`
 /// needs no `cfg` of its own: without a device this is an empty shell whose
 /// `send` drops the commands.
 pub struct Output {
-    #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+    #[cfg(any(
+        target_os = "macos",
+        target_os = "windows",
+        all(target_os = "linux", feature = "audio-alsa")
+    ))]
     device: device::Device,
 }
 
@@ -53,11 +65,19 @@ impl Output {
     /// device present (a VM, a container), or the host refused the stream.
     /// The caller runs silent on any `Err`.
     pub fn open(seed: u64) -> Result<Output, String> {
-        #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+        #[cfg(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        ))]
         {
             device::Device::open(seed).map(|device| Output { device })
         }
-        #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
+        #[cfg(not(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        )))]
         {
             let _ = seed;
             Err("this build has no sound device (a Linux build without --features audio-alsa)".to_string())
@@ -65,17 +85,33 @@ impl Output {
     }
 
     pub fn send(&mut self, cmds: impl IntoIterator<Item = SoundCmd>) {
-        #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+        #[cfg(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        ))]
         self.device.send(cmds);
-        #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
+        #[cfg(not(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        )))]
         drop(cmds.into_iter());
     }
 
     /// Commands dropped because the device fell behind; should stay 0.
     pub fn dropped(&self) -> u64 {
-        #[cfg(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa")))]
+        #[cfg(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        ))]
         return self.device.dropped;
-        #[cfg(not(any(target_os = "macos", target_os = "windows", all(target_os = "linux", feature = "audio-alsa"))))]
+        #[cfg(not(any(
+            target_os = "macos",
+            target_os = "windows",
+            all(target_os = "linux", feature = "audio-alsa")
+        )))]
         0
     }
 }
@@ -97,7 +133,12 @@ pub enum TextureKind {
 
 impl TextureKind {
     pub const COUNT: usize = 4;
-    pub const ALL: [TextureKind; 4] = [TextureKind::Creep, TextureKind::Feed, TextureKind::Starve, TextureKind::Wither];
+    pub const ALL: [TextureKind; 4] = [
+        TextureKind::Creep,
+        TextureKind::Feed,
+        TextureKind::Starve,
+        TextureKind::Wither,
+    ];
 
     /// The grain one of this texture's events is made of.
     pub fn grain(self) -> GrainKind {
@@ -201,18 +242,48 @@ pub enum AlertKind {
 /// ..= 1 (right); `delay` is seconds of wall clock.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SoundCmd {
-    Texture { kind: TextureKind, rate: f32, level: f32, pan: f32, spread: f32 },
-    Grain { kind: GrainKind, pan: f32, gain: f32, delay: f32 },
+    Texture {
+        kind: TextureKind,
+        rate: f32,
+        level: f32,
+        pan: f32,
+        spread: f32,
+    },
+    Grain {
+        kind: GrainKind,
+        pan: f32,
+        gain: f32,
+        delay: f32,
+    },
     /// A decaying run of grains: `rate` per second at the start, falling
     /// with time constant `secs`.
-    Burst { kind: GrainKind, rate: f32, secs: f32, pan: f32, spread: f32, gain: f32 },
-    Alert { kind: AlertKind, weight: f32, pan: f32 },
+    Burst {
+        kind: GrainKind,
+        rate: f32,
+        secs: f32,
+        pan: f32,
+        spread: f32,
+        gain: f32,
+    },
+    Alert {
+        kind: AlertKind,
+        weight: f32,
+        pan: f32,
+    },
     /// A `GrainKind::Splat` shaped by `weight` (0 ..= 1): at 0 a light wet
     /// tap, at 1 a heavy low slap about twice as long. Larder World's shot
     /// sends the share of a big kill it made (`world::kill_weight`).
-    Impact { weight: f32, pan: f32, gain: f32, delay: f32 },
+    Impact {
+        weight: f32,
+        pan: f32,
+        gain: f32,
+        delay: f32,
+    },
     /// The lamp's hum, where the lamp stands.
-    Lamp { on: bool, pan: f32 },
+    Lamp {
+        on: bool,
+        pan: f32,
+    },
     /// Larder World: **the mould's own voice**, one breathing drone for the
     /// whole body (`world::WorldListener`; design review of #96, the
     /// owner's "not one cohesive organism"). Absolute targets, re-sent
@@ -222,7 +293,15 @@ pub enum SoundCmd {
     ///
     /// `slot` 0 is the main body; 1 ..= 3 are cut-off pieces, each a
     /// fainter, higher copy (`synth::BODY_VOICES`).
-    Body { slot: u8, level: f32, pitch: f32, breath: f32, rough: f32, bright: f32, pan: f32 },
+    Body {
+        slot: u8,
+        level: f32,
+        pitch: f32,
+        breath: f32,
+        rough: f32,
+        bright: f32,
+        pan: f32,
+    },
     /// Fade every texture out (paused, a card up) or back in. One-shots
     /// still sound, so a tool used while paused still answers.
     Hush(bool),

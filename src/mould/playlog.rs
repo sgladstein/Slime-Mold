@@ -199,31 +199,93 @@ pub fn summary(r: &Read) -> String {
         return out + "no seconds logged\n";
     };
     let clock = |t: f32| format!("{}:{:02}", t as u32 / 60, t as u32 % 60);
-    out += &format!("played {} ({} seconds logged), {} commands{}\n", clock(last.t), r.secs.len(), r.cmds.len(), r.end.as_ref().map_or(String::new(), |e| format!(", {e}")));
-    let to = |n: u32| r.secs.iter().find(|s| s.soldiers >= n).map_or("never".to_string(), |s| clock(s.t));
-    out += &format!("soldiers: most {}; 10 at {}, 20 at {}, 30 at {}, 40 at {}\n", r.secs.iter().map(|s| s.soldiers).max().unwrap_or(0), to(10), to(20), to(30), to(40));
+    out += &format!(
+        "played {} ({} seconds logged), {} commands{}\n",
+        clock(last.t),
+        r.secs.len(),
+        r.cmds.len(),
+        r.end.as_ref().map_or(String::new(), |e| format!(", {e}"))
+    );
+    let to = |n: u32| {
+        r.secs
+            .iter()
+            .find(|s| s.soldiers >= n)
+            .map_or("never".to_string(), |s| clock(s.t))
+    };
+    out += &format!(
+        "soldiers: most {}; 10 at {}, 20 at {}, 30 at {}, 40 at {}\n",
+        r.secs.iter().map(|s| s.soldiers).max().unwrap_or(0),
+        to(10),
+        to(20),
+        to(30),
+        to(40)
+    );
     let most = |f: fn(&Second) -> u32| r.secs.iter().map(f).max().unwrap_or(0);
-    let first = |f: fn(&Second) -> u32| r.secs.iter().find(|s| f(s) > 0).map_or("never".to_string(), |s| clock(s.t));
-    out += &format!("squads at once: most {} (first split {})\n", most(|s| s.squads), r.secs.iter().find(|s| s.squads > 1).map_or("never".to_string(), |s| clock(s.t)));
-    out += &format!("pumps: most {} (first {}); turrets most {} (first {}); walls most {}; other buildings most {}\n", most(|s| s.pumps), first(|s| s.pumps), most(|s| s.turrets), first(|s| s.turrets), most(|s| s.walls), most(|s| s.other));
-    out += &format!("shots {}, killed {} ({:.1} a shot)\n", last.shots, last.killed, last.killed as f32 / last.shots.max(1) as f32);
+    let first = |f: fn(&Second) -> u32| {
+        r.secs
+            .iter()
+            .find(|s| f(s) > 0)
+            .map_or("never".to_string(), |s| clock(s.t))
+    };
+    out += &format!(
+        "squads at once: most {} (first split {})\n",
+        most(|s| s.squads),
+        r.secs
+            .iter()
+            .find(|s| s.squads > 1)
+            .map_or("never".to_string(), |s| clock(s.t))
+    );
+    out += &format!(
+        "pumps: most {} (first {}); turrets most {} (first {}); walls most {}; other buildings most {}\n",
+        most(|s| s.pumps),
+        first(|s| s.pumps),
+        most(|s| s.turrets),
+        first(|s| s.turrets),
+        most(|s| s.walls),
+        most(|s| s.other)
+    );
+    out += &format!(
+        "shots {}, killed {} ({:.1} a shot)\n",
+        last.shots,
+        last.killed,
+        last.killed as f32 / last.shots.max(1) as f32
+    );
     let peak = r.secs.iter().max_by_key(|s| s.mass).cloned().unwrap_or_default();
-    out += &format!("slime mass: peak {} at {}, last {}\n", peak.mass, clock(peak.t), last.mass);
+    out += &format!(
+        "slime mass: peak {} at {}, last {}\n",
+        peak.mass,
+        clock(peak.t),
+        last.mass
+    );
     // A minute at a time: kills a second against the slime's change.
     out += "minute  kills/s  mass at end  income/s  soldiers\n";
     let mut prev = Second::default();
     for m in 0..=(last.t / 60.0).ceil() as u32 {
-        let Some(s) = r.secs.iter().rfind(|s| s.t <= (m + 1) as f32 * 60.0) else { continue };
+        let Some(s) = r.secs.iter().rfind(|s| s.t <= (m + 1) as f32 * 60.0) else {
+            continue;
+        };
         if s.t <= prev.t {
             continue;
         }
         let dt = (s.t - prev.t).max(1.0);
-        out += &format!("{:>6}  {:>7.1}  {:>11}  {:>8.1}  {:>8}\n", m + 1, (s.killed.saturating_sub(prev.killed)) as f32 / dt, s.mass, (s.income - prev.income) / dt, s.soldiers);
+        out += &format!(
+            "{:>6}  {:>7.1}  {:>11}  {:>8.1}  {:>8}\n",
+            m + 1,
+            (s.killed.saturating_sub(prev.killed)) as f32 / dt,
+            s.mass,
+            (s.income - prev.income) / dt,
+            s.soldiers
+        );
         prev = s.clone();
     }
     let mut p50: Vec<f32> = r.secs.iter().map(|s| s.p50).collect();
     let mut p95: Vec<f32> = r.secs.iter().map(|s| s.p95).collect();
-    out += &format!("frame ms: median of the seconds' p50 {:.1}, of their p95 {:.1}, worst p95 {:.1}\n", quantile(&mut p50, 0.5), quantile(&mut p95.clone(), 0.5), quantile(&mut p95, 1.0));
+    out += &format!(
+        "frame ms: median of the seconds' p50 {:.1}, of their p95 {:.1}, worst p95 {:.1}\n",
+        quantile(&mut p50, 0.5),
+        quantile(&mut p95.clone(), 0.5),
+        quantile(&mut p95, 1.0)
+    );
     let mut kinds: Vec<(String, u32)> = Vec::new();
     for (_, c) in &r.cmds {
         let k = c.split_whitespace().next().unwrap_or("").to_string();
@@ -233,7 +295,14 @@ pub fn summary(r: &Read) -> String {
         }
     }
     kinds.sort_by_key(|a| std::cmp::Reverse(a.1));
-    out += &format!("commands: {}\n", kinds.iter().map(|(k, n)| format!("{k} {n}")).collect::<Vec<_>>().join(", "));
+    out += &format!(
+        "commands: {}\n",
+        kinds
+            .iter()
+            .map(|(k, n)| format!("{k} {n}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
     out
 }
 

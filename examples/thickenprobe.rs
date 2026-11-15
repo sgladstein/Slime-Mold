@@ -39,13 +39,30 @@ fn main() {
             "scale" => scale = v.parse().unwrap(),
             "grow" => grow = v.parse().unwrap(),
             "keep" => keep = v.split(',').map(|s| s.parse().unwrap()).collect(),
-            "keys" => keys = v.split('+').map(|kv| kv.split_once(':').map(|(a, b)| (a.to_string(), b.to_string())).expect("keys=k:v+k:v")).collect(),
+            "keys" => {
+                keys = v
+                    .split('+')
+                    .map(|kv| {
+                        kv.split_once(':')
+                            .map(|(a, b)| (a.to_string(), b.to_string()))
+                            .expect("keys=k:v+k:v")
+                    })
+                    .collect()
+            }
             _ => panic!("unknown {k}"),
         }
     }
     let walkers = 25_000 * scale * scale / 4;
     let cap = format!("{}", 2 * walkers);
-    let base: Vec<(String, String)> = [("capacity", cap.as_str()), ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2")].iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+    let base: Vec<(String, String)> = [
+        ("capacity", cap.as_str()),
+        ("energy_flow", "0.05"),
+        ("wither", "0.01"),
+        ("panic", "2"),
+    ]
+    .iter()
+    .map(|(a, b)| (a.to_string(), b.to_string()))
+    .collect();
     println!("thickenprobe: race world scale {scale}, {walkers} walkers, upkeep 0.0002, grow {grow} s, keys {base:?} then {keys:?}");
     for &seed in &seeds {
         for &kept in &keep {
@@ -59,7 +76,9 @@ fn main() {
             if kept > 0 {
                 // The start's middle, and the crystals nearest it kept.
                 let live: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
-                let (mx, my) = live.iter().fold((0.0, 0.0), |a, &k| (a.0 + d.walkers[k].0, a.1 + d.walkers[k].1));
+                let (mx, my) = live
+                    .iter()
+                    .fold((0.0, 0.0), |a, &k| (a.0 + d.walkers[k].0, a.1 + d.walkers[k].1));
                 let (mx, my) = (mx / live.len() as f32, my / live.len() as f32);
                 let mut order: Vec<(f32, usize)> = (0..d.piles.len())
                     .map(|j| {

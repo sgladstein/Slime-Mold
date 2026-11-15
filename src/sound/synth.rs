@@ -145,7 +145,12 @@ pub struct Spec {
 /// renders on the listening page; jitter is drawn here so two grains of one
 /// kind are never identical (the machine-gun effect).
 fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
-    let base = Spec { band_end: 1.0, freq_end: 1.0, q: 1.4, ..Spec::default() };
+    let base = Spec {
+        band_end: 1.0,
+        freq_end: 1.0,
+        q: 1.4,
+        ..Spec::default()
+    };
     match kind {
         // A wet tick as the mould pushes out: low, soft, a falling sine
         // under a dull noise band. Lower and longer than an ant's step.
@@ -216,7 +221,18 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
         // The knife: a small hard knock.
         GrainKind::Knock => {
             let f = rng.range(250.0, 700.0);
-            Spec { len: 0.07, attack: 0.0005, noise: 0.45, noise_tau: 0.008, band: f * 2.0, q: 1.0, sine: 0.5, sine_tau: 0.015, freq: f, ..base }
+            Spec {
+                len: 0.07,
+                attack: 0.0005,
+                noise: 0.45,
+                noise_tau: 0.008,
+                band: f * 2.0,
+                q: 1.0,
+                sine: 0.5,
+                sine_tau: 0.015,
+                freq: f,
+                ..base
+            }
         }
         // Mould burned under the lamp: a bright short hiss.
         GrainKind::Sizzle => Spec {
@@ -231,14 +247,43 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
         // A drop of water: a short rising sine.
         GrainKind::Drip => {
             let len = rng.range(0.02, 0.05);
-            Spec { len, attack: 0.0008, sine: 0.5, sine_tau: len / 3.5, freq: rng.range(500.0, 1300.0), freq_end: rng.range(2.2, 4.0), ..base }
+            Spec {
+                len,
+                attack: 0.0008,
+                sine: 0.5,
+                sine_tau: len / 3.5,
+                freq: rng.range(500.0, 1300.0),
+                freq_end: rng.range(2.2, 4.0),
+                ..base
+            }
         }
         // Air moving: a rising band of noise (the storm's warning).
-        GrainKind::Whoosh => Spec { len: 0.6, attack: 0.25, noise: 0.35, noise_tau: 0.16, band: 400.0, q: 0.9, band_end: 5.0, ..base },
+        GrainKind::Whoosh => Spec {
+            len: 0.6,
+            attack: 0.25,
+            noise: 0.35,
+            noise_tau: 0.16,
+            band: 400.0,
+            q: 0.9,
+            band_end: 5.0,
+            ..base
+        },
         // The storm's cut: a heavy low impact.
         GrainKind::Thud => {
             let f = rng.range(55.0, 95.0);
-            Spec { len: 0.25, attack: 0.001, noise: 0.35, noise_tau: 0.03, band: 300.0, q: 0.7, sine: 0.9, sine_tau: 0.08, freq: f, drop: 1.5, ..base }
+            Spec {
+                len: 0.25,
+                attack: 0.001,
+                noise: 0.35,
+                noise_tau: 0.03,
+                band: 300.0,
+                q: 0.7,
+                sine: 0.9,
+                sine_tau: 0.08,
+                freq: f,
+                drop: 1.5,
+                ..base
+            }
         }
         // A shot: a bright, very short crack over a small low punch, so it
         // reads as a gun and not as the mould's own wet sounds.
@@ -290,7 +335,16 @@ fn recipe(kind: GrainKind, rng: &mut Xs) -> Spec {
         },
         // A bullet flying past: a thin band of noise sweeping down, the
         // flyby.
-        GrainKind::Zip => Spec { len: 0.11, attack: 0.03, noise: 0.35, noise_tau: 0.05, band: rng.range(3000.0, 4200.0), q: 2.5, band_end: 0.45, ..base },
+        GrainKind::Zip => Spec {
+            len: 0.11,
+            attack: 0.03,
+            noise: 0.35,
+            noise_tau: 0.05,
+            band: rng.range(3000.0, 4200.0),
+            q: 2.5,
+            band_end: 0.45,
+            ..base
+        },
         // A piece's tell: a low rough growl that rises, the lean before
         // the charge.
         GrainKind::Snarl => Spec {
@@ -455,7 +509,20 @@ struct BodyVoice {
 impl Default for BodyVoice {
     fn default() -> Self {
         let s = |v: f32| Smoothed { value: v, target: v };
-        BodyVoice { level: s(0.0), pitch: s(48.0), breath: s(0.25), rough: s(0.0), bright: s(0.0), pan: s(0.0), phase: 0.0, swell: 0.0, duck: 1.0, band: Biquad::default(), rough_lp: 0.5, t: 0 }
+        BodyVoice {
+            level: s(0.0),
+            pitch: s(48.0),
+            breath: s(0.25),
+            rough: s(0.0),
+            bright: s(0.0),
+            pan: s(0.0),
+            phase: 0.0,
+            swell: 0.0,
+            duck: 1.0,
+            band: Biquad::default(),
+            rough_lp: 0.5,
+            t: 0,
+        }
     }
 }
 
@@ -474,7 +541,17 @@ struct Burst {
 
 impl Default for Burst {
     fn default() -> Self {
-        Burst { active: false, kind: GrainKind::Crackle, rate0: 0.0, secs: 0.0, t: 0.0, wait: 0.0, pan: 0.0, spread: 0.0, gain: 0.0 }
+        Burst {
+            active: false,
+            kind: GrainKind::Crackle,
+            rate0: 0.0,
+            secs: 0.0,
+            t: 0.0,
+            wait: 0.0,
+            pan: 0.0,
+            spread: 0.0,
+            gain: 0.0,
+        }
     }
 }
 
@@ -510,7 +587,13 @@ impl Reverb {
         let ap_n = [556, 441];
         let mk_c = |spread: usize| [0, 1, 2, 3].map(|i| vec![0.0f32; len(comb_n[i] + spread)]);
         let mk_a = |spread: usize| [0, 1].map(|i| vec![0.0f32; len(ap_n[i] + spread)]);
-        Reverb { combs: [mk_c(0), mk_c(23)], comb_pos: [[0; 4]; 2], comb_lp: [[0.0; 4]; 2], aps: [mk_a(0), mk_a(23)], ap_pos: [[0; 2]; 2] }
+        Reverb {
+            combs: [mk_c(0), mk_c(23)],
+            comb_pos: [[0; 4]; 2],
+            comb_lp: [[0.0; 4]; 2],
+            aps: [mk_a(0), mk_a(23)],
+            ap_pos: [[0; 2]; 2],
+        }
     }
 
     #[inline]
@@ -604,7 +687,10 @@ fn limit(x: f32) -> f32 {
 impl VoiceBank {
     pub fn new(sample_rate: u32, seed: u64) -> Self {
         let sr = sample_rate as f32;
-        let t = Texture { habit: 1.0, ..Texture::default() };
+        let t = Texture {
+            habit: 1.0,
+            ..Texture::default()
+        };
         VoiceBank {
             sr,
             rng: Xs(seed | 1),
@@ -619,8 +705,14 @@ impl VoiceBank {
             lamp: Smoothed::default(),
             lamp_pan: 0.0,
             body: [BodyVoice::default(); BODY_VOICES],
-            hush: Smoothed { value: 1.0, target: 1.0 },
-            master: Smoothed { value: DEFAULT_MASTER * DEFAULT_MASTER, target: DEFAULT_MASTER * DEFAULT_MASTER },
+            hush: Smoothed {
+                value: 1.0,
+                target: 1.0,
+            },
+            master: Smoothed {
+                value: DEFAULT_MASTER * DEFAULT_MASTER,
+                target: DEFAULT_MASTER * DEFAULT_MASTER,
+            },
             k_fast: coef(0.05, sr),
             k_slow: coef(0.4, sr),
             k_mid: coef(0.2, sr),
@@ -636,7 +728,13 @@ impl VoiceBank {
 
     pub fn apply(&mut self, cmd: SoundCmd) {
         match cmd {
-            SoundCmd::Texture { kind, rate, level, pan, spread } => {
+            SoundCmd::Texture {
+                kind,
+                rate,
+                level,
+                pan,
+                spread,
+            } => {
                 let t = &mut self.textures[kind as usize];
                 t.rate.target = rate.max(0.0);
                 t.level.target = level.max(0.0);
@@ -646,26 +744,70 @@ impl VoiceBank {
             SoundCmd::Grain { kind, pan, gain, delay } => {
                 self.spawn(kind, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255);
             }
-            SoundCmd::Burst { kind, rate, secs, pan, spread, gain } => {
+            SoundCmd::Burst {
+                kind,
+                rate,
+                secs,
+                pan,
+                spread,
+                gain,
+            } => {
                 let slot = self.bursts.iter().position(|b| !b.active).or_else(|| {
                     // Full: replace the one nearest its end.
-                    self.bursts.iter().enumerate().min_by(|a, b| (a.1.secs * 4.0 - a.1.t).total_cmp(&(b.1.secs * 4.0 - b.1.t))).map(|(i, _)| i)
+                    self.bursts
+                        .iter()
+                        .enumerate()
+                        .min_by(|a, b| (a.1.secs * 4.0 - a.1.t).total_cmp(&(b.1.secs * 4.0 - b.1.t)))
+                        .map(|(i, _)| i)
                 });
                 if let Some(i) = slot {
-                    self.bursts[i] = Burst { active: true, kind, rate0: rate, secs: secs.max(0.05), t: 0.0, wait: 0.0, pan, spread, gain };
+                    self.bursts[i] = Burst {
+                        active: true,
+                        kind,
+                        rate0: rate,
+                        secs: secs.max(0.05),
+                        t: 0.0,
+                        wait: 0.0,
+                        pan,
+                        spread,
+                        gain,
+                    };
                     self.stats.bursts += 1;
                 }
             }
             SoundCmd::Alert { kind, weight, pan } => self.alert(kind, weight, pan),
-            SoundCmd::Impact { weight, pan, gain, delay } => {
-                self.spawn_weighted(GrainKind::Splat, pan, gain, (delay.max(0.0) * self.sr) as u32, true, 255, Some(weight));
+            SoundCmd::Impact {
+                weight,
+                pan,
+                gain,
+                delay,
+            } => {
+                self.spawn_weighted(
+                    GrainKind::Splat,
+                    pan,
+                    gain,
+                    (delay.max(0.0) * self.sr) as u32,
+                    true,
+                    255,
+                    Some(weight),
+                );
                 // A heavy hit ducks the mould's voices so it still punches.
                 for b in self.body.iter_mut() {
                     b.duck = b.duck.min(1.0 - 0.6 * weight.clamp(0.0, 1.0));
                 }
             }
-            SoundCmd::Body { slot, level, pitch, breath, rough, bright, pan } => {
-                let Some(b) = self.body.get_mut(slot as usize) else { return };
+            SoundCmd::Body {
+                slot,
+                level,
+                pitch,
+                breath,
+                rough,
+                bright,
+                pan,
+            } => {
+                let Some(b) = self.body.get_mut(slot as usize) else {
+                    return;
+                };
                 b.level.target = level.clamp(0.0, 1.0);
                 b.pitch.target = pitch.clamp(20.0, 400.0);
                 b.breath.target = breath.clamp(0.02, 3.0);
@@ -693,13 +835,34 @@ impl VoiceBank {
 
     /// `spawn`, with the recipe shaped by `weight` when given (`weighted`).
     #[allow(clippy::too_many_arguments)]
-    fn spawn_weighted(&mut self, kind: GrainKind, pan: f32, gain: f32, wait: u32, from_verb: bool, tag: u8, weight: Option<f32>) {
+    fn spawn_weighted(
+        &mut self,
+        kind: GrainKind,
+        pan: f32,
+        gain: f32,
+        wait: u32,
+        from_verb: bool,
+        tag: u8,
+        weight: Option<f32>,
+    ) {
         if gain <= 1e-5 {
             return;
         }
         let kind_tag = kind as u8;
-        let slot = if from_verb && self.grains.iter().filter(|g| g.active && g.from_verb && g.kind_tag == kind_tag).count() >= PER_KIND_CAP {
-            self.grains.iter().enumerate().filter(|(_, g)| g.active && g.from_verb && g.kind_tag == kind_tag).max_by_key(|(_, g)| g.t).map(|(i, _)| i)
+        let slot = if from_verb
+            && self
+                .grains
+                .iter()
+                .filter(|g| g.active && g.from_verb && g.kind_tag == kind_tag)
+                .count()
+                >= PER_KIND_CAP
+        {
+            self.grains
+                .iter()
+                .enumerate()
+                .filter(|(_, g)| g.active && g.from_verb && g.kind_tag == kind_tag)
+                .max_by_key(|(_, g)| g.t)
+                .map(|(i, _)| i)
         } else {
             self.grains.iter().position(|g| !g.active)
         };
@@ -708,7 +871,12 @@ impl VoiceBank {
             None => {
                 self.stats.steals += 1;
                 let loud = |g: &Grain| g.noise * g.noise_env + g.sine * g.sine_env;
-                self.grains.iter().enumerate().min_by(|a, b| loud(a.1).total_cmp(&loud(b.1))).map(|(i, _)| i).unwrap_or(0)
+                self.grains
+                    .iter()
+                    .enumerate()
+                    .min_by(|a, b| loud(a.1).total_cmp(&loud(b.1)))
+                    .map(|(i, _)| i)
+                    .unwrap_or(0)
             }
         };
         let s = recipe(kind, &mut self.rng);
@@ -763,8 +931,20 @@ impl VoiceBank {
 
     fn alert(&mut self, kind: AlertKind, weight: f32, pan: f32) {
         let w = weight.clamp(0.0, 1.0);
-        let marimba = [(1.0, 1.0, 0.35), (3.93, 0.25, 0.08), (9.2, 0.08, 0.03), (0.0, 0.0, 0.1), (0.0, 0.0, 0.1)];
-        let bell = [(1.0, 1.0, 0.9), (2.0, 0.5, 0.6), (2.76, 0.35, 0.4), (5.4, 0.15, 0.2), (0.5, 0.3, 1.2)];
+        let marimba = [
+            (1.0, 1.0, 0.35),
+            (3.93, 0.25, 0.08),
+            (9.2, 0.08, 0.03),
+            (0.0, 0.0, 0.1),
+            (0.0, 0.0, 0.1),
+        ];
+        let bell = [
+            (1.0, 1.0, 0.9),
+            (2.0, 0.5, 0.6),
+            (2.76, 0.35, 0.4),
+            (5.4, 0.15, 0.2),
+            (0.5, 0.3, 1.2),
+        ];
         // (frequency, delay seconds, gain, bell?)
         let mut notes: [(f32, f32, f32, bool); 4] = [(0.0, 0.0, 0.0, false); 4];
         // C major pentatonic from C5, climbing with how much food is joined.
@@ -858,7 +1038,13 @@ impl VoiceBank {
             for (ti, kind) in TextureKind::ALL.iter().enumerate() {
                 let (rate, level, pan, spread, habit) = {
                     let t = &mut self.textures[ti];
-                    (t.rate.step(self.k_fast, self.k_slow), t.level.step(self.k_fast, self.k_slow), t.pan.step(self.k_mid, self.k_mid), t.spread.step(self.k_mid, self.k_mid), t.habit)
+                    (
+                        t.rate.step(self.k_fast, self.k_slow),
+                        t.level.step(self.k_fast, self.k_slow),
+                        t.pan.step(self.k_mid, self.k_mid),
+                        t.spread.step(self.k_mid, self.k_mid),
+                        t.habit,
+                    )
                 };
                 let rate = rate.min(TEXTURE_RATE_CAP);
                 if rate > 0.01 && hush > 0.05 && level > 1e-4 && self.rng.unit() < rate / sr {
@@ -985,7 +1171,11 @@ impl VoiceBank {
                     b.swell = (b.swell + breath / sr) % 1.0;
                     // In-breath shorter than out-breath: a skewed swell.
                     let ph = b.swell;
-                    let sw = if ph < 0.4 { (ph / 0.4 * std::f32::consts::FRAC_PI_2).sin() } else { ((1.0 - ph) / 0.6 * std::f32::consts::FRAC_PI_2).sin() };
+                    let sw = if ph < 0.4 {
+                        (ph / 0.4 * std::f32::consts::FRAC_PI_2).sin()
+                    } else {
+                        ((1.0 - ph) / 0.6 * std::f32::consts::FRAC_PI_2).sin()
+                    };
                     let swell = 0.35 + 0.65 * sw * sw;
                     b.phase = (b.phase + std::f32::consts::TAU * pitch / sr) % std::f32::consts::TAU;
                     let tone = b.phase.sin() + 0.45 * (2.0 * b.phase + 0.3).sin() + 0.2 * (3.0 * b.phase + 0.7).sin();
@@ -996,7 +1186,11 @@ impl VoiceBank {
                     let mut n = b.band.run(self.rng.bipolar() * 1.73);
                     b.rough_lp += (self.rng.unit() - b.rough_lp) * 0.004;
                     n *= 1.0 - rough + rough * 2.0 * b.rough_lp;
-                    let y = (0.55 * tone * (1.0 - 0.5 * rough) + (0.25 + 0.35 * bright + 0.3 * rough) * n * 0.25) * swell * level * b.duck * hush;
+                    let y = (0.55 * tone * (1.0 - 0.5 * rough) + (0.25 + 0.35 * bright + 0.3 * rough) * n * 0.25)
+                        * swell
+                        * level
+                        * b.duck
+                        * hush;
                     let (gl, gr) = pan_gains(pan);
                     l += y * gl;
                     r += y * gr;
@@ -1008,7 +1202,9 @@ impl VoiceBank {
             let lamp = self.lamp.step(self.k_mid, self.k_mid);
             self.room_phase = (self.room_phase + std::f32::consts::TAU * 120.0 / sr) % std::f32::consts::TAU;
             self.room_am = (self.room_am + std::f32::consts::TAU * 0.3 / sr) % std::f32::consts::TAU;
-            let hum = (self.room_phase.sin() + 0.4 * (2.0 * self.room_phase).sin() + 0.15 * (3.0 * self.room_phase).sin()) * (1.0 + 0.1 * self.room_am.sin());
+            let hum =
+                (self.room_phase.sin() + 0.4 * (2.0 * self.room_phase).sin() + 0.15 * (3.0 * self.room_phase).sin())
+                    * (1.0 + 0.1 * self.room_am.sin());
             self.room_lp += (self.rng.bipolar() - self.room_lp) * 0.02;
             let air = self.room_lp * 2.0 * ROOM_LEVEL;
             let hum = hum * 0.6 * ROOM_LEVEL * LAMP_HUM * lamp;
@@ -1048,7 +1244,13 @@ mod tests {
     }
 
     fn creep(rate: f32, level: f32) -> SoundCmd {
-        SoundCmd::Texture { kind: TextureKind::Creep, rate, level, pan: 0.0, spread: 0.3 }
+        SoundCmd::Texture {
+            kind: TextureKind::Creep,
+            rate,
+            level,
+            pan: 0.0,
+            spread: 0.3,
+        }
     }
 
     #[test]
@@ -1056,7 +1258,11 @@ mod tests {
         let run = || {
             let mut b = VoiceBank::new(48_000, 7);
             b.apply(creep(150.0, 0.5));
-            b.apply(SoundCmd::Alert { kind: AlertKind::Joined, weight: 0.8, pan: 0.0 });
+            b.apply(SoundCmd::Alert {
+                kind: AlertKind::Joined,
+                weight: 0.8,
+                pan: 0.0,
+            });
             render(&mut b, 1.0)
         };
         assert_eq!(run(), run());
@@ -1066,7 +1272,10 @@ mod tests {
     fn a_silent_bank_plays_only_the_room_tone() {
         let mut b = VoiceBank::new(48_000, 1);
         let level = rms(&render(&mut b, 1.0));
-        assert!(level > 0.0, "the room tone must be there: a dead-silent dish reads as broken");
+        assert!(
+            level > 0.0,
+            "the room tone must be there: a dead-silent dish reads as broken"
+        );
         assert!(level < 0.02, "room tone {level} is louder than a whisper");
     }
 
@@ -1080,8 +1289,15 @@ mod tests {
         busy.apply(creep(200.0, 0.8));
         let x = render(&mut busy, 1.0);
         assert!(rms(&x) > room * 3.0, "texture {} vs room {room}", rms(&x));
-        assert!(x.iter().all(|v| v.abs() <= 1.0), "the limiter let a sample past full scale");
-        assert!(busy.stats.grains_by_texture[0] > 100, "200/s for a second spawned {}", busy.stats.grains_by_texture[0]);
+        assert!(
+            x.iter().all(|v| v.abs() <= 1.0),
+            "the limiter let a sample past full scale"
+        );
+        assert!(
+            busy.stats.grains_by_texture[0] > 100,
+            "200/s for a second spawned {}",
+            busy.stats.grains_by_texture[0]
+        );
     }
 
     #[test]
@@ -1095,7 +1311,10 @@ mod tests {
         on.apply(SoundCmd::Lamp { on: false, pan: 0.0 });
         render(&mut on, 2.0);
         let after = rms(&render(&mut on, 0.5));
-        assert!(after < lit * 0.7, "the hum stayed after the lamp went out: {after} vs {lit}");
+        assert!(
+            after < lit * 0.7,
+            "the hum stayed after the lamp went out: {after} vs {lit}"
+        );
     }
 
     #[test]
@@ -1107,8 +1326,16 @@ mod tests {
         render(&mut b, 1.0);
         let before = b.stats.grains_by_texture[0];
         render(&mut b, 0.5);
-        assert!(b.stats.grains_by_texture[0] - before < 5, "a hushed texture kept spawning");
-        b.apply(SoundCmd::Grain { kind: GrainKind::Thunk, pan: 0.0, gain: 0.5, delay: 0.0 });
+        assert!(
+            b.stats.grains_by_texture[0] - before < 5,
+            "a hushed texture kept spawning"
+        );
+        b.apply(SoundCmd::Grain {
+            kind: GrainKind::Thunk,
+            pan: 0.0,
+            gain: 0.5,
+            delay: 0.0,
+        });
         render(&mut b, 0.1);
         assert_eq!(b.stats.verb_grains, 1, "a verb must still answer while paused");
     }
@@ -1128,9 +1355,18 @@ mod tests {
     fn verb_grains_of_one_kind_are_capped() {
         let mut b = VoiceBank::new(48_000, 5);
         for _ in 0..10 {
-            b.apply(SoundCmd::Grain { kind: GrainKind::Thunk, pan: 0.0, gain: 0.5, delay: 0.0 });
+            b.apply(SoundCmd::Grain {
+                kind: GrainKind::Thunk,
+                pan: 0.0,
+                gain: 0.5,
+                delay: 0.0,
+            });
         }
-        let live = b.grains.iter().filter(|g| g.active && g.kind_tag == GrainKind::Thunk as u8).count();
+        let live = b
+            .grains
+            .iter()
+            .filter(|g| g.active && g.kind_tag == GrainKind::Thunk as u8)
+            .count();
         assert_eq!(live, PER_KIND_CAP);
     }
 
@@ -1143,7 +1379,11 @@ mod tests {
         assert!(settled < 0.8, "after 40 s of no change habit is {settled}");
         b.apply(creep(300.0, 0.9));
         render(&mut b, 1.0);
-        assert!(b.textures[0].habit > 0.95, "a change should wake it, habit {}", b.textures[0].habit);
+        assert!(
+            b.textures[0].habit > 0.95,
+            "a change should wake it, habit {}",
+            b.textures[0].habit
+        );
     }
 
     /// Larder World's hit: a shot that killed many is a longer, fuller
@@ -1152,7 +1392,12 @@ mod tests {
     fn a_heavier_impact_rings_longer_and_fuller() {
         let hit = |weight: f32| {
             let mut b = VoiceBank::new(48_000, 13);
-            b.apply(SoundCmd::Impact { weight, pan: 0.0, gain: 0.5, delay: 0.0 });
+            b.apply(SoundCmd::Impact {
+                weight,
+                pan: 0.0,
+                gain: 0.5,
+                delay: 0.0,
+            });
             let x = render(&mut b, 0.6);
             let peak = x.iter().fold(0.0f32, |m, v| m.max(v.abs()));
             let tail = x.iter().rposition(|v| v.abs() > peak * 0.1).unwrap_or(0);
@@ -1160,7 +1405,10 @@ mod tests {
         };
         let (light_len, light_rms) = hit(0.0);
         let (heavy_len, heavy_rms) = hit(1.0);
-        assert!(heavy_len > light_len * 1.3, "heavy {heavy_len} s vs light {light_len} s");
+        assert!(
+            heavy_len > light_len * 1.3,
+            "heavy {heavy_len} s vs light {light_len} s"
+        );
         assert!(heavy_rms > light_rms, "heavy {heavy_rms} vs light {light_rms}");
     }
 
@@ -1168,18 +1416,33 @@ mod tests {
     /// breath rate), and a heavy hit ducks it.
     #[test]
     fn the_mould_voice_breathes_and_ducks_under_a_heavy_hit() {
-        let body = SoundCmd::Body { slot: 0, level: 0.3, pitch: 50.0, breath: 0.5, rough: 0.2, bright: 0.0, pan: 0.0 };
+        let body = SoundCmd::Body {
+            slot: 0,
+            level: 0.3,
+            pitch: 50.0,
+            breath: 0.5,
+            rough: 0.2,
+            bright: 0.0,
+            pan: 0.0,
+        };
         let mut b = VoiceBank::new(8_000, 21);
         b.apply(body);
         let x = render(&mut b, 6.0);
         let window = |i: usize| rms(&x[i * 2 * 800..(i + 1) * 2 * 800]);
         let quarters: Vec<f32> = (10..60).map(window).collect();
-        let (lo, hi) = quarters.iter().fold((f32::MAX, 0.0f32), |(a, c), &v| (a.min(v), c.max(v)));
+        let (lo, hi) = quarters
+            .iter()
+            .fold((f32::MAX, 0.0f32), |(a, c), &v| (a.min(v), c.max(v)));
         assert!(hi > lo * 1.6, "no breath: tenth-second RMS {lo}..{hi}");
         let mut quiet = VoiceBank::new(8_000, 21);
         let room = rms(&render(&mut quiet, 1.0));
         assert!(rms(&x) > room * 3.0, "voice {} vs room {room}", rms(&x));
-        b.apply(SoundCmd::Impact { weight: 1.0, pan: 0.0, gain: 0.0, delay: 0.0 });
+        b.apply(SoundCmd::Impact {
+            weight: 1.0,
+            pan: 0.0,
+            gain: 0.0,
+            delay: 0.0,
+        });
         assert!(b.body[0].duck < 0.5, "a heavy hit did not duck the voice");
         render(&mut b, 1.5);
         assert!(b.body[0].duck > 0.95, "the duck did not recover: {}", b.body[0].duck);
@@ -1189,15 +1452,30 @@ mod tests {
     fn every_recipe_and_alert_makes_a_finite_bounded_sound() {
         for kind in GrainKind::ALL {
             let mut b = VoiceBank::new(48_000, 11);
-            b.apply(SoundCmd::Grain { kind, pan: 0.0, gain: 1.0, delay: 0.0 });
+            b.apply(SoundCmd::Grain {
+                kind,
+                pan: 0.0,
+                gain: 1.0,
+                delay: 0.0,
+            });
             let x = render(&mut b, 0.8);
             assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{kind:?}");
             assert!(rms(&x) > 0.0005, "{kind:?} made no sound");
         }
-        for kind in [AlertKind::Joined, AlertKind::Bell, AlertKind::Died, AlertKind::Fallen, AlertKind::Siren] {
+        for kind in [
+            AlertKind::Joined,
+            AlertKind::Bell,
+            AlertKind::Died,
+            AlertKind::Fallen,
+            AlertKind::Siren,
+        ] {
             for w in [0.0, 0.5, 1.0] {
                 let mut b = VoiceBank::new(48_000, 12);
-                b.apply(SoundCmd::Alert { kind, weight: w, pan: 0.0 });
+                b.apply(SoundCmd::Alert {
+                    kind,
+                    weight: w,
+                    pan: 0.0,
+                });
                 let x = render(&mut b, 1.5);
                 assert!(x.iter().all(|v| v.is_finite() && v.abs() <= 1.0), "{kind:?} {w}");
                 assert!(rms(&x) > 0.001, "{kind:?} {w} made no sound");
