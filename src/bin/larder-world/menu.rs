@@ -121,7 +121,20 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     // First on the page (the review, 11-15: it was the last of 15 rows,
     // below the fold, and the one the owner needed).
     o.insert(0, Opt::new("ui", "UI and text size", &sizes, "100%", &settings::percent(ui_user()), "Every panel, card, tooltip and this menu, over the screen's own scale; Ctrl + and Ctrl - anywhere"));
-    o
+    // The page's tabs (11-15, the owner's "Having to scroll is horrible"):
+    // the game's own settings, the planet's, and the mould's rules, each
+    // tab one screen; the key list is the last tab. Tabs come in the
+    // order their first setting does.
+    o.into_iter()
+        .map(|opt| {
+            let tab = match opt.key.as_str() {
+                "map" | "planet" | "own" | "plants" => "Planet",
+                "panic" | "wither" | "energy_flow" | "condense" | "roam" | "thicken" | "surge" | "flinch" => "The mould",
+                _ => "Game",
+            };
+            opt.in_tab(tab)
+        })
+        .collect()
 }
 
 /// The key card's rows (the start menu's Keys page; in play F1 shows the
@@ -375,7 +388,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
         "1" | "main" => Page::Main,
         "campaign" | "missions" => Page::Missions,
-        "options" => Page::Options,
+        "options" | "options-planet" | "options-mould" => Page::Options,
         "keys" => Page::Keys,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" => Page::Shop,
         _ => return None,

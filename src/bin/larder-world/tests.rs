@@ -431,13 +431,12 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     app.menu = Some(start_menu(&base));
     app.open_menu().unwrap();
     app.menu.as_mut().unwrap().show(Page::Options);
-    // To the map row (the UI size is first since the review, 11-15; Right
-    // on it would turn and save the UI size).
-    let map_row = app.menu.as_ref().unwrap().options.iter().position(|o| o.key == "map").unwrap();
-    for _ in 0..map_row {
-        app.menu_input(|m| m.key(KeyCode::ArrowDown, true)).unwrap();
-    }
-    // Down to "Your own mould" and back: no restart (the round's clock runs on).
+    // To the map row, the first on the Planet tab (Options has tabs since
+    // 11-15; Right on the Game tab's first row would turn and save the UI
+    // size).
+    assert_eq!(app.menu.as_ref().unwrap().option("map").unwrap().tab, "Planet");
+    app.menu_input(|m| m.key(KeyCode::Tab, true)).unwrap();
+    // Down to Planet and back: no restart (the round's clock runs on).
     for _ in 0..3 {
         app.game.as_mut().unwrap().step();
     }
@@ -1301,4 +1300,55 @@ fn n_on_a_seeded_planet_goes_on_to_the_next_seed() {
     assert_eq!(next_planet("planet:3"), None);
     assert_eq!(next_planet("planet"), None);
     assert_eq!(next_planet("fork"), None);
+}
+
+/// The menus' own lists on one screen (owner 11-15 17:31Z: "Having to
+/// scroll is horrible. That's not professional."): every Options tab and
+/// the campaign in one page and the key list in three at most, nothing
+/// scrolling, at the worst sizes (16:9 and 21:9 at 200%, a small laptop at
+/// 175%, the window as it opens at 125%), in both control modes. The
+/// library's `the_inner_pages_fit_one_screen` checks every word's place.
+#[test]
+fn the_menus_real_lists_fit_one_screen() {
+    use slime_mould::world::start::Page;
+    for squads in [true, false] {
+        let base = Args { squads, ..Default::default() };
+        let tabs: Vec<String> = options(&base).iter().map(|o| o.tab.clone()).fold(Vec::new(), |mut t, n| {
+            if !t.contains(&n) {
+                t.push(n);
+            }
+            t
+        });
+        assert_eq!(tabs, ["Game", "Planet", "The mould"]);
+        for (screen, user) in [((1920, 1080), 2.0), ((1280, 540), 2.0), ((1280, 720), 2.0), ((1280, 800), 1.75), ((1600, 972), 1.25), ((1920, 1080), 1.0)] {
+            let at = format!("{screen:?} at {user}, squads {squads}");
+            let mut m = start_menu(&base);
+            let mut c = Canvas::new(screen);
+            c.ui.user = user;
+            let mut draw = |m: &mut StartMenu| {
+                for _ in 0..2 {
+                    c.clear();
+                    m.draw(&mut c);
+                }
+            };
+            m.show(Page::Options);
+            for tab in &tabs {
+                draw(&mut m);
+                assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the {tab} tab takes {} pages (scrolls: {})", m.sheets(), m.scrolls());
+                m.key(KeyCode::Tab, true);
+            }
+            assert_eq!(m.page, Page::Keys, "{at}: Tab after the last options tab opens the keys");
+            draw(&mut m);
+            // 49 lines in two columns: one page at 100% on 1080 lines, two
+            // in the window as it opens at 125% and at 200% on 1080, three
+            // at 200% on 720 (11-15; its text stays 15 units, the owner's
+            // "the text seems too small").
+            assert!(m.sheets() <= 3 && !m.scrolls(), "{at}: the key list takes {} pages", m.sheets());
+            m.key(KeyCode::Tab, true);
+            assert_eq!(m.page, Page::Options, "{at}: Tab on the keys goes round to the first tab");
+            m.show(Page::Missions);
+            draw(&mut m);
+            assert!(m.sheets() == 1 && !m.scrolls(), "{at}: the campaign takes {} pages", m.sheets());
+        }
+    }
 }

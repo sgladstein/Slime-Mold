@@ -91,6 +91,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         match flag {
             "shop-build" => m.open_folder("Buildings"),
             "shop-tools" => m.open_folder("Tools"),
+            // Options' second and third tabs (11-15), as Tab opens them.
+            "options-planet" | "options-mould" => {
+                for _ in 0..if flag == "options-planet" { 1 } else { 2 } {
+                    m.key(KeyCode::Tab, true);
+                }
+            }
             _ => {}
         }
         app.menu = Some(m);
