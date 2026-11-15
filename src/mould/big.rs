@@ -1810,6 +1810,9 @@ impl BigDish {
     /// cell's capacity; empty (plants off) when neither gives any.
     fn place_plants(&mut self, map: Option<&Map>) {
         use crate::mould::plants as pl;
+        // The biome's flora is the map's even with no plants on it: the
+        // ground's look reads it too (ground thread, 11-15).
+        self.flora_of = map.and_then(|m| m.items.flora);
         let has_map = map.is_some_and(|m| !m.plants.is_empty());
         if !has_map && self.p.plant_fill <= 0.0 {
             return;
@@ -1839,7 +1842,6 @@ impl BigDish {
         // Water for moisture: wet ground and deep water (soil 4).
         let water: Vec<bool> = (0..n).map(|i| (!self.wet.is_empty() && self.wet[i]) || (!self.soil.is_empty() && self.soil[i] == 4)).collect();
         self.moisture_of = map.and_then(|m| m.items.moisture);
-        self.flora_of = map.and_then(|m| m.items.flora);
         let (base, spread) = self.moisture_of.unwrap_or((0.15, 0.3));
         self.moist = pl::moisture(w, self.h, &water, &self.plant_kind, self.p.seed as u32, base, spread);
     }

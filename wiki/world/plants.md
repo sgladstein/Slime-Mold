@@ -54,9 +54,10 @@ crown's top burns white-hot (luma ~240, over the slime's highlight; art
 lead 11-15). Plants, char and soil detail are gone under any slime by
 mid-film (`vis`, [report](../../Reports/review-fixes-2026-11-15/README.md)).
 Each planet draws its own plant forms (`flora_form`, keyed by the map's
-`flora` line, the biome): barrens dry thorn clumps, fen moss cushions,
+`flora` line, the biome): barrens dry thorn clumps, fen dark olive-brown moss hummocks with
+yellow-green tips on the wettest ground (block 7, moisture),
 valley long blades, jungle star-lobed canopy, highlands lichen rosettes,
-caves pale fungus caps, core wine-red thorns and rings; a map with no
+caves pale fungus caps, core purple-magenta thorns and rings (hue 290-320, the only purple); a map with no
 `flora` line keeps the meadow forms
 ([page](https://claude.ai/artifact/GfhdLAM5txddNwy9kT43e4))
 ([page](https://claude.ai/artifact/7ZFRbDuC4ahCxKVV6wDui5),

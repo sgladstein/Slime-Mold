@@ -21,7 +21,7 @@ $W map=planet:2:1 seed=1 look="$OUT/slime" hand=idle centre=380,150,12 at=24 scr
 # Each planet's flora at zoom 12, 2 s (seed 1): a window of its most
 # typical plant kind away from the nests, picked from the planets
 # example's maps by raw/pick.py.
-for pc in "1 350 115" "2 60 25" "3 190 180" "4 565 250" "5 105 220" "6 655 140" "7 905 170" "8 875 365"; do
+for pc in "1 350 115" "2 60 25" "3 225 160" "4 565 250" "5 105 220" "6 655 140" "7 905 170" "8 875 365"; do
   set -- $pc
   $W map=planet:$1:1 seed=1 look="$OUT/flora-$1" hand=idle centre=$2,$3,12 at=2 screen=960x600 >> "$LOG" 2>&1
 done

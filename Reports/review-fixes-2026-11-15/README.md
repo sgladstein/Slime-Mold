@@ -29,15 +29,31 @@ Page: https://claude.ai/artifact/GfhdLAM5txddNwy9kT43e4 (`page/`, `raw/films.sh`
     |---|---|
     | Meadow | Fine tufts and round trees, as before |
     | Barrens | Thorn bushes in patches, dry grass blades, palm-like thorned crowns at oases |
-    | Fen | Puffy moss cushions in patches, low swamp shrubs |
+    | Fen | Dark olive-brown moss hummocks with yellow-green tips, gathered on the wettest ground; low swamp shrubs |
     | River valley | Long grass, blade by blade |
     | Jungle | A broadleaf canopy of big crowns (2.3 cells apart) over ferns |
     | Highlands | Lichen rosettes and cushion plants in patches, firs |
     | Caves | Fungi in a dark mauve-grey: caps with a dark eye, giant caps for the jungle kind, stalks for reeds |
-    | Core | Alien growth in dark wine: coral rings and thorned crowns |
+    | Core | Alien growth in purple-magenta (hue 290-320, the only purple on the map): coral rings and thorned crowns |
 
   - No flora uses cyan, which belongs to the crystals, or gold or red-orange, which belong to the slime and the fire.
   - Rejected for the fen: tight 0.35-cell cushions read as meadow. For the valley: thin blades (3 x 0.6) barely showed at zoom 12.
+- **Art lead's follow-up (11-15 02:51Z):**
+  - Meadow and fen were the closest pair: green round clumps on both. The fen's moss is now dark olive-brown (30,29,16), and each hummock's top turns yellow-green (62,74,28). The hummocks are 0.85 cells apart, against the meadow's 0.45.
+  - The hummocks gather on the wettest ground by the moisture field (block 7, `plant_moist`), which is up to 0.4 wetter within 8 cells of water. Before, they gathered by a noise alone, as an even carpet.
+  - The first cut's tips (86,96,38) over most of each dome read as a bright yellow-olive. The tips now cover only the top (dome 0.8-1).
+  - The core's flora is kept purple-magenta, because red is danger's colour. Its colours moved off the red side.
+  - Measured at zoom 12, 2 s, seed 1, on pixels with saturation over 0.2:
+
+    | | luma p10 / p50 / p90 | hue p10 / p50 / p90 |
+    |---|---|---|
+    | Meadow, planet 1 | 37 / 48 / 57 | 110 / 126 / 136 |
+    | Fen before, planet 3 | 26 / 44 / 57 | 115 / 128 / 136 |
+    | Fen now | 15 / 34 / 65 | 52 / 71 / 137 |
+    | Core before, planet 8 | 13 / 32 / 46 | 298 / 313 / 330 |
+    | Core now | 13 / 32 / 47 | 293 / 307 / 324 |
+
+    In grey, the fen is now a coarser, darker grain than the meadow, with light tips.
 
 ## Measured
 

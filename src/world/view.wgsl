@@ -195,6 +195,9 @@ fn plant_heat(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitc
 fn plant_char(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(6u, i)); }
 // How fresh a cell's fire is (the engine's `PB_FRESH`, 1 as it catches).
 fn plant_fresh(i: u32) -> f32 { return bitcast<f32>(pblock(8u, i)); }
+// The ground's moisture in cell (ix, iy) (`plants::moisture`, block 7):
+// 1 at water and up to 0.4 wetter within 8 cells of it.
+fn plant_moist(ix: i32, iy: i32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(7u, cidx(ix, iy))); }
 // Heat and freshness at world point (x, y), bilinear: a crown's flame
 // takes them at its centre (`plant_kind_layer`).
 fn heat_lin(x: f32, y: f32) -> vec2<f32> {
@@ -289,8 +292,11 @@ struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
 // and the dome's `relief`, its `shape` (0 a lobed dome, 1 a blade, 2 a
 // thorny star, 3 a cap with a dark eye, 4 a ring), `clump` (how much
 // the crowns gather into patches, by a slow noise at their centres, the
-// cover staying with the density) and its colour.
-struct Form { s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, shape: u32, clump: f32, col: vec3<f32> }
+// cover staying with the density) and its colour; `wet` gathers the
+// patches onto the wettest ground (the moisture field, so along the
+// water) instead of the noise alone, and `tip` (when not zero) is the
+// colour each crown's top turns toward.
+struct Form { s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, shape: u32, clump: f32, col: vec3<f32>, wet: f32, tip: vec3<f32> }
 // `lobe` ruffles each crown's outline (five to eight lobes, so a grass tuft is
 // spiky and a tree's crown leafy, not a pebble: the first cut's round
 // domes read as cobbles, and seven deep lobes on every tuft as stars);
@@ -316,7 +322,11 @@ fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
             if (fm.clump > 0.0) {
                 // Patches: big where a slow noise is high, none where low;
                 // a denser stand fills more of the ground between.
-                let g = vnoise(ctr * s / 5.0 + seed);
+                var g = vnoise(ctr * s / 5.0 + seed);
+                if (fm.wet > 0.0) {
+                    let mo = plant_moist(i32(floor(ctr.x * s)), i32(floor(ctr.y * s * fm.stretch)));
+                    g = mix(g, smoothstep(0.55, 0.95, mo) + 0.3 * (g - 0.5), fm.wet);
+                }
                 r *= mix(1.0, 1.45 * smoothstep(0.3, 0.7, g + 0.5 * (dk - 0.5)), fm.clump);
             }
             if (r <= 0.0) { continue; }
@@ -369,12 +379,12 @@ fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
 // simulation's; the flora (the map's `flora` line, from the level
 // generator's biome) picks how each kind grows and its colour, all
 // green except the caves' fungi and the core's alien growth, which are
-// dark mauve and wine (never cyan: the crystals' alone, nor gold or
+// dark mauve and purple (never cyan: the crystals' alone, nor gold or
 // red-orange: the slime's and the fire's).
 fn flora_form(fl: u32, k: u32) -> Form {
     // Flora 0 (meadow), and every kind a flora leaves alone.
     var f: Form;
-    f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k);
+    f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k); f.wet = 0.0; f.tip = vec3<f32>(0.0);
     if (k == 0u) { f.s = 0.45; f.r0 = 0.8; f.lobe = 0.2; f.relief = 0.35; }
     else if (k == 3u) { f.s = 1.1; f.r0 = 0.5; f.lobe = 0.25; f.relief = 0.6; }
     else if (k == 2u) { f.s = 0.4; f.r0 = 0.6; f.stretch = 2.4; f.lobe = 0.15; f.relief = 0.4; }
@@ -385,8 +395,12 @@ fn flora_form(fl: u32, k: u32) -> Form {
         else if (k == 3u) { f.shape = 2u; f.s = 1.3; f.r0 = 0.5; f.lobe = 0.45; f.clump = 0.8; f.col = vec3<f32>(58.0, 56.0, 40.0); }
         else if (k == 1u) { f.shape = 2u; f.s = 1.6; f.lobe = 0.35; f.col = vec3<f32>(30.0, 48.0, 30.0); }
     } else if (fl == 2u) {
-        // Fen: moss cushions in patches; low swamp shrubs.
-        if (k == 0u) { f.s = 0.6; f.r0 = 0.95; f.lobe = 0.03; f.relief = 0.85; f.clump = 0.8; f.col = vec3<f32>(34.0, 58.0, 36.0); }
+        // Fen: wet moss hummocks, dark olive-brown with yellow-green tips,
+        // gathered along the water (art lead 11-15: the fen's green round
+        // clumps were the closest pair with the meadow's; in grey it is a
+        // coarser, darker grain). Before: even green cushions 0.6 apart,
+        // (34,58,36), clumped by noise alone.
+        if (k == 0u) { f.s = 0.85; f.r0 = 0.95; f.lobe = 0.08; f.relief = 0.95; f.clump = 0.9; f.wet = 0.6; f.col = vec3<f32>(30.0, 29.0, 16.0); f.tip = vec3<f32>(62.0, 74.0, 28.0); }
         else if (k == 1u) { f.s = 1.1; f.r0 = 0.8; f.lobe = 0.15; f.col = vec3<f32>(24.0, 44.0, 30.0); }
     } else if (fl == 3u) {
         // River valley: long grass, blade by blade.
@@ -409,11 +423,13 @@ fn flora_form(fl: u32, k: u32) -> Form {
         else if (k == 3u) { f.s = 1.0; f.col = vec3<f32>(66.0, 60.0, 62.0); }
         else { f.shape = 1u; f.col = vec3<f32>(60.0, 56.0, 66.0); }
     } else if (fl == 7u) {
-        // The core: alien growth. Coral rings, thorned crowns; dark wine.
-        if (k == 0u) { f.shape = 4u; f.s = 0.6; f.r0 = 0.7; f.lobe = 0.1; f.col = vec3<f32>(64.0, 40.0, 52.0); }
-        else if (k == 1u) { f.shape = 2u; f.s = 1.8; f.r0 = 0.8; f.lobe = 0.4; f.relief = 0.9; f.col = vec3<f32>(52.0, 30.0, 46.0); }
-        else if (k == 3u) { f.shape = 4u; f.s = 1.0; f.col = vec3<f32>(60.0, 44.0, 50.0); }
-        else { f.shape = 1u; f.col = vec3<f32>(56.0, 38.0, 52.0); }
+        // The core: alien growth. Coral rings, thorned crowns; purple-
+        // magenta, hue 290-320, the only purple on the map (art lead
+        // 11-15: red is danger's; before, wine at hue 315-340).
+        if (k == 0u) { f.shape = 4u; f.s = 0.6; f.r0 = 0.7; f.lobe = 0.1; f.col = vec3<f32>(68.0, 40.0, 60.0); }
+        else if (k == 1u) { f.shape = 2u; f.s = 1.8; f.r0 = 0.8; f.lobe = 0.4; f.relief = 0.9; f.col = vec3<f32>(52.0, 28.0, 48.0); }
+        else if (k == 3u) { f.shape = 4u; f.s = 1.0; f.col = vec3<f32>(64.0, 44.0, 58.0); }
+        else { f.shape = 1u; f.col = vec3<f32>(58.0, 38.0, 54.0); }
     }
     return f;
 }
@@ -439,7 +455,9 @@ fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f3
         let cr = crowns(x, y, fm, dk, f32(k) * 101.0 + 7.0);
         let tint = mix(vec3<f32>(1.06, 1.0, 0.9), vec3<f32>(0.92, 1.0, 1.08), cr.tone);
         a = mix(a, cr.a, f);
-        col = mix(col, col * tint * cr.lit * (0.85 + 0.3 * cr.tone), f);
+        var cc = col;
+        if (fm.tip.x > 0.0) { cc = mix(col, fm.tip, smoothstep(0.8, 1.0, cr.dome)); }
+        col = mix(col, cc * tint * cr.lit * (0.85 + 0.3 * cr.tone), f);
         // A burning crown: its flame from the heat at its centre, so each
         // crown flares, shrinks and goes out on its own and a front has
         // the plants' own tongues and gaps (graphics lead 21:26Z). A fresh
@@ -1803,7 +1821,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             fc += sc * (1.0 - fc);
             if (ez > 0.0) {
                 var ef: Form;
-                ef.s = 0.6; ef.r0 = 0.35; ef.stretch = 1.0; ef.lobe = 0.0; ef.relief = 0.5; ef.shape = 0u; ef.clump = 0.0; ef.col = vec3<f32>(0.0);
+                ef.s = 0.6; ef.r0 = 0.35; ef.stretch = 1.0; ef.lobe = 0.0; ef.relief = 0.5; ef.shape = 0u; ef.clump = 0.0; ef.col = vec3<f32>(0.0); ef.wet = 0.0; ef.tip = vec3<f32>(0.0);
                 let em = crowns(x, y, ef, hf, 913.0);
                 let ea = em.a * ez * rest * smoothstep(0.02, 0.1, hf);
                 fl += flame_body(min(hf * (0.9 + 0.4 * em.dome) + 0.3 * pp.fresh, 1.0)) * ea * (1.0 - fc);
