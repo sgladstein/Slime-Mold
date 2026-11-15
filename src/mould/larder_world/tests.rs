@@ -738,6 +738,12 @@ impl World for Later {
     fn set_panic_r(&mut self, r: f32) {
         World::set_panic_r(&mut self.d, r)
     }
+    fn surge_every(&self) -> u32 {
+        World::surge_every(&self.d)
+    }
+    fn set_surge_at(&mut self, at: u32) {
+        World::set_surge_at(&mut self.d, at)
+    }
     fn food_deposit(&self) -> f32 {
         World::food_deposit(&self.d)
     }
@@ -983,6 +989,9 @@ fn a_replay_is_the_same_game_at_any_frame_rate() {
 fn stuck_seconds_count_a_squad_that_can_do_nothing() {
     let mut g = small(1);
     g.bank = 0.0;
+    // Shots that cost food: with free shots and charge left there is
+    // always a way on (`a_walking_squad_or_a_standing_pump_is_not_stuck`).
+    g.rules.price = 10.0;
     for k in 0..g.soldiers.len() {
         g.apply(Cmd::Stance(k, Stance::HoldFire));
     }
@@ -996,6 +1005,50 @@ fn stuck_seconds_count_a_squad_that_can_do_nothing() {
         g.step();
     }
     assert_eq!(g.stuck_run, 0);
+}
+
+#[test]
+fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
+    // Whole-game review W17 (11-15): a run ended "stuck" with four soldiers
+    // at full health walking and two pumps standing.
+    let stuck_for = |g: &mut Game<BigDish>| {
+        g.bank = 0.0;
+        g.rules.price = 10.0;
+        for _ in 0..(g.rules.tps * 10) {
+            g.step();
+        }
+        g.stuck_run
+    };
+    let hold = |g: &mut Game<BigDish>| {
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Stance(k, Stance::HoldFire));
+        }
+    };
+    // Walking: orders across the dish and back, so they keep moving.
+    let mut g = small(1);
+    hold(&mut g);
+    let (w, h) = g.world.size();
+    let s0 = (g.soldiers[0].x, g.soldiers[0].y);
+    let far = (w as f32 - s0.0, h as f32 - s0.1);
+    g.apply(Cmd::Order(0, Order::Move(far.0, far.1)));
+    assert_eq!(stuck_for(&mut g), 0, "a soldier walking is doing something");
+    // A standing pump.
+    let mut g = small(1);
+    hold(&mut g);
+    let at = (g.soldiers[0].x, g.soldiers[0].y);
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1 });
+    assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
+    // Worn down, it no longer is.
+    g.buildings[0].alive = false;
+    assert!(stuck_for(&mut g) >= 9);
+    // Free shots with charge left: never stuck, standing or not.
+    let mut g = small(1);
+    hold(&mut g);
+    g.bank = 0.0;
+    for _ in 0..(g.rules.tps * 10) {
+        g.step();
+    }
+    assert_eq!(g.stuck_run, 0, "free shots and a charged crystal are a way on");
 }
 
 #[test]
@@ -2914,4 +2967,58 @@ fn the_plants_fire_kills_count_without_a_scorch_trail() {
     assert!(g.world.fire_killed > 0, "the fire killed walkers");
     assert_eq!(g.fire_killed as u64, g.world.fire_killed, "every fire kill counted");
     assert!(g.killed >= g.fire_killed);
+}
+
+/// The window's rule keys (`set=NAME=V`, `Rules::set`, 2026-11-15, W44):
+/// a known rule takes the value, an unknown one is refused.
+#[test]
+fn rules_set_by_name() {
+    let mut r = Rules::default();
+    assert!(r.set("pump_smell", 2.0) && r.build.pump_smell == 2.0);
+    assert!(r.set("panic_margin", 7.0) && r.panic_margin == 7.0);
+    assert!(!r.set("no_such_rule", 1.0));
+}
+
+/// Food-driven surges (`Rules::surge_food`, `Game::time_surges`, 11-15):
+/// the meter fills with what the slime eats from its crystals, a surge
+/// starts once it is full and `surge_min` has passed, or once the world's
+/// `surge_every` has whatever it ate, and with `surge_food` 0 the world
+/// keeps its own clock.
+#[test]
+fn the_slime_surges_when_it_has_eaten() {
+    let play = |food: f32, min: f32| {
+        let mut d = race_world(1, 1, 1_000);
+        d.p.surge_every = 20 * 15 * d.p.substeps as u32;
+        let r = Rules { surge_food: food, surge_min: min, build: BuildRules { raise: 0.0, ..BuildRules::default() }, ..Rules::default() };
+        let mut g = Game::new(d, r, 1);
+        let held = g.world.p.surge_at;
+        let (mut starts, mut last) = (Vec::new(), held);
+        while g.time() < 70.0 && g.end.is_none() {
+            g.step();
+            if g.world.p.surge_at != last {
+                last = g.world.p.surge_at;
+                let fine = (g.rules.tps * g.world.fine_steps()) as f32;
+                assert_eq!(last as u64, g.world.ticks() * g.world.fine_steps() as u64 + 1, "it starts on the next step");
+                starts.push((last as f32 - 1.0) / fine);
+            }
+        }
+        (g, held, starts)
+    };
+    let (g, held, starts) = play(0.0, 10.0);
+    assert!(held == 0 && starts.is_empty() && g.surges == 0, "surge_food 0: the world's clock");
+    assert!(g.slime_ate > 0.0, "the slime eats from its crystals: {}", g.slime_ate);
+    let rate = g.slime_ate / g.time();
+    // Fed: the meter fills in about a second, so every surge waits for the
+    // floor (5 s).
+    let (g, held, starts) = play(rate, 5.0);
+    let gaps: Vec<f32> = std::iter::once(starts[0] - g.landed as f32 / g.rules.tps as f32).chain(starts.windows(2).map(|w| w[1] - w[0])).collect();
+    eprintln!("eats {rate:.2} food/s; fed: {} surges, gaps {gaps:?}", g.surges);
+    assert_eq!(held, SURGE_WAIT, "the game holds the body until its first surge");
+    assert!(g.surges as usize == starts.len() && starts.len() >= 8, "{starts:?}");
+    assert!(gaps.iter().all(|&s| (5.0..5.5).contains(&s)), "each at the floor: {gaps:?}");
+    // Starved (a meter it can't fill): only the longest wait, 20 s.
+    let (g, _, starts) = play(1.0e9, 5.0);
+    let gaps: Vec<f32> = std::iter::once(starts[0] - g.landed as f32 / g.rules.tps as f32).chain(starts.windows(2).map(|w| w[1] - w[0])).collect();
+    eprintln!("starved: gaps {gaps:?}");
+    assert!(starts.len() >= 3 && gaps.iter().all(|&s| (20.0..20.5).contains(&s)), "each at the ceiling: {gaps:?}");
 }

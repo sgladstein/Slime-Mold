@@ -10,3 +10,7 @@ __pycache__/
 # game on Flats seed 1 modified a tracked file and play.cmd stopped
 # updating ("You have local changes"); 2026-11-14.
 /larder-world-replay-*.txt
+# The window's play log beside the replay (`mould::playlog`,
+# `larder-world-log-MAP-SEED.txt`; read with `cargo run --release --example
+# playlog -- FILE`), 2026-11-15.
+/larder-world-log-*.txt

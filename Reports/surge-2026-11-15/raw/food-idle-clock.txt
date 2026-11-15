@@ -1,0 +1,27 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 10.23 ms (once a game second), model and HUD 0.080 ms a frame
+  t 30 s: mould 23157, soldiers 4, bank 2298, harvested 0, shots 202, killed 2424, took 0%, crystals left 0.997; squad at 256.0,112.5
+  surge: the slime ate 88 food (2.9/s); meter 0.0 of 0, 0 surges
+  dense: 803 condensed or thick walkers, mass 23960
+  squad: touching 0.8 mean, 3 most; health 43 mean
+  CPU: ground field 4.89 ms (once a game second), model and HUD 0.059 ms a frame
+  t 60 s: mould 25873, soldiers 3, bank 2913, harvested 0, shots 352, killed 3507, took 0%, crystals left 0.991; squad at 254.0,112.5
+  surge: the slime ate 263 food (4.4/s); meter 0.0 of 0, 0 surges
+  dense: 2239 condensed or thick walkers, mass 28112
+  squad: touching 0.3 mean, 1 most; health 12 mean
+  CPU: ground field 3.48 ms (once a game second), model and HUD 0.083 ms a frame
+  t 90 s: mould 21339, soldiers 0, bank 2981, harvested 0, shots 371, killed 3626, took 0%, crystals left 0.983
+  surge: the slime ate 534 food (5.9/s); meter 0.0 of 0, 0 surges
+  dense: 4603 condensed or thick walkers, mass 25942
+  CPU: ground field 3.64 ms (once a game second), model and HUD 0.053 ms a frame
+  t 120 s: mould 23860, soldiers 0, bank 2981, harvested 0, shots 371, killed 3626, took 0%, crystals left 0.973
+  surge: the slime ate 828 food (6.9/s); meter 0.0 of 0, 0 surges
+  dense: 6821 condensed or thick walkers, mass 30681
+  CPU: ground field 3.38 ms (once a game second), model and HUD 0.144 ms a frame
+  t 150 s: mould 28973, soldiers 0, bank 2981, harvested 0, shots 371, killed 3626, took 0%, crystals left 0.963
+  surge: the slime ate 1139 food (7.6/s); meter 0.0 of 0, 0 surges
+  dense: 8574 condensed or thick walkers, mass 37547
+  CPU: ground field 4.06 ms (once a game second), model and HUD 0.104 ms a frame
+  t 180 s: mould 34348, soldiers 0, bank 2981, harvested 0, shots 371, killed 3626, took 0%, crystals left 0.952
+  surge: the slime ate 1474 food (8.2/s); meter 0.0 of 0, 0 surges
+  dense: 10384 condensed or thick walkers, mass 44732

@@ -45,22 +45,62 @@ th{font-family:var(--display);font-weight:600}
 .q{border-left:3px solid var(--crystal);padding-left:12px}
 .tag{font:12px var(--mono);color:var(--crystal)}
 footer{font-size:.85rem;color:var(--muted)}
+.strip{display:flex;flex-direction:column;gap:12px;padding:0 8px}
+.strip .lab{font-size:.92rem;display:flex;justify-content:space-between;gap:8px}
+.strip .lab b{font-weight:600}
+.strip .lab span{color:var(--muted);font-variant-numeric:tabular-nums}
+.track{position:relative;height:20px;border-bottom:1px solid var(--line)}
+.dot{position:absolute;top:3px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:var(--slime);box-shadow:0 0 0 2px var(--bg);cursor:default}
+.dot::after{content:"";position:absolute;inset:-6px}
+.dot.clock{background:var(--muted)}
+.axis{position:relative;height:16px;font:12px/1 var(--mono);color:var(--muted)}
+.axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
 </style>
 <main>
 <header style="display:flex;flex-direction:column;gap:10px">
   <span class="eyebrow">Larder World · the enemy · 2026-11-15</span>
   <h1>The slime surges</h1>
-  <p class="lede">You said some slimes "just hang at their home crystal ... So their is no rush ... no need to defend". Now the body pushes back. Every 30 seconds the slime near your soldiers and buildings gathers, then lunges at them.</p>
+  <p class="lede">You said some slimes "just hang at their home crystal ... So their is no rush ... no need to defend", and that the slime should "keep getting stronger by holding onto its crystals and getting more of them". Now the body pushes back. When it has eaten enough from its crystals, the slime near your soldiers and buildings gathers, then lunges at them, and the more it eats the sooner the next one comes.</p>
 </header>
 
 <section>
   <h2>The rule</h2>
-  <p>Every 30 s, the slime within reach of a soldier or building creeps toward the nearest one for 1.5 s, so the front swells toward it. That is your warning. Then it lunges for 1 s at twice its pace. Its reach is your gun's range plus 5 cells, the same as a cut-off piece's charge, so a squad close enough to shoot the slime can be surged, and a longer-range gun moves the reach too.</p>
-  <p>It's on in shape C, so the sandbox and the run planets both play it. The start menu has a new Surge option for how often it comes (20 s, 30 s or 60 s), and 0 turns it off.</p>
+  <p>Each time the slime has eaten 150 food from its crystals, the slime within reach of a soldier or building creeps toward the nearest one for 1.5 s, so the front swells toward it. That is your warning. Then it lunges for 1 s at twice its pace. Surges are at least 10 s apart, and one still comes after 60 s even if it ate nothing. Its reach is your gun's range plus 5 cells, the same as a cut-off piece's charge, so a squad close enough to shoot the slime can be surged, and a longer-range gun moves the reach too.</p>
+  <p>It's on in shape C, so the sandbox and the run planets both play it. The start menu's Surge option sets the longest wait (30 s, 60 s or 2 minutes), and 0 turns it off.</p>
 </section>
 
 <section>
-  <h2>A squad at the edge</h2>
+  <h2>When it surges</h2>
+  <p>The first version came on a fixed 30 s beat. Now the slime eats more as it spreads over its crystals: 2.3 food a second in its first 10 s, 6.9 at one minute and 11 at three. So the surges start later and then come faster.</p>
+  <div class="strip" role="img" aria-label="Surge start times over three minutes on the Fork, seed 1: the fixed clock at 30, 60, 90, 120, 150 and 180 s; food-driven with no soldier near at 42.7, 64.5, 81.3, 96.7, 112.1, 127.3, 142.1, 156.3 and 169.9 s; food-driven with four pumps at 46.9, 69.1, 84.9, 100.3, 115.7, 131.1, 146.5, 161.9 and 177.2 s">
+    <div><div class="lab"><b>The old fixed beat</b><span>6 surges</span></div><div class="track" id="t-clock"></div></div>
+    <div><div class="lab"><b>Food, no soldier near</b><span>9 surges</span></div><div class="track" id="t-idle"></div></div>
+    <div><div class="lab"><b>Food, four pumps on its crystals</b><span>9 surges</span></div><div class="track" id="t-pump"></div></div>
+    <div class="axis" id="t-axis"></div>
+  </div>
+  <p class="lede" style="font-size:.92rem">Fork, seed 1, squad mode, game seconds 0 to 180. Hover a dot for its time.</p>
+  <div class="tbl"><table class="num">
+    <tr><th>Run</th><th>Gaps between surges (s)</th></tr>
+    <tr><td>Food, no soldier near</td><td>42.7 to the first, then 21.8, 16.8, 15.4, 15.4, 15.2, 14.8, 14.2, 13.6</td></tr>
+    <tr><td>Food, four pumps</td><td>46.9 to the first, then 22.2, 15.8, 15.4, 15.4, 15.4, 15.4, 15.4, 15.3</td></tr>
+  </table></div>
+  <p>Pumps take food the slime would have eaten, so each surge comes 3 to 7 s later. A slime you starve or cut off its crystals waits the whole minute. Squad at the edge: the first surge came at 43.7 s instead of 31.5, but on a squad already worn down by 13 more seconds of fighting, and it wiped them at 46 s. On the fixed beat they lasted to 62 s, and without surges to 51 s. That's one seed and one scripted hand, so it's a tuning note.</p>
+</section>
+
+<section>
+  <h2>By planet</h2>
+  <p>On a run, deeper slime needs less food for a surge and waits less at most. The food is also scaled by the planet's slime size, since a bigger slime eats more.</p>
+  <div class="tbl"><table class="num">
+    <tr><th>Planet</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+    <tr><td>Food a surge</td><td>200</td><td>200</td><td>150</td><td>150</td><td>125</td><td>100</td><td>100</td><td>75</td></tr>
+    <tr><td>Longest wait (s)</td><td>80</td><td>80</td><td>60</td><td>60</td><td>50</td><td>40</td><td>40</td><td>30</td></tr>
+    <tr><td>Lunge (s)</td><td>1.0</td><td>1.0</td><td>1.0</td><td>1.2</td><td>1.4</td><td>1.5</td><td>1.5</td><td>1.8</td></tr>
+  </table></div>
+  <p>The shop says "it surges as it feeds, at least every N s" for the next planet.</p>
+</section>
+
+<section>
+  <h2>A squad at the edge (the first version)</h2>
   <figure>
     <img src="first-surge.gif" alt="Fork, squad mode, 28 to 34 s: left without surges, right with; on the right the front climbs round the squad at 31.5 s and two soldiers fall">
     <figcaption><b>Fork, seed 1, squad mode, the squad at the body's edge firing, 28 to 34 s.</b> Left: no surges. Right: surges, with the lunge at 31.5 to 32.5 s.</figcaption>
@@ -86,11 +126,32 @@ footer{font-size:.85rem;color:var(--muted)}
 <section>
   <h2>What it doesn't do yet</h2>
   <ul>
-    <li>A squad more than 29 cells from the slime is out of reach, so a slime that stays home still won't come to you. Bigger slimes on run planets (the run thread's fix) and progression by depth are what bring it out.</li>
-    <li>The only warning is the creep. If you can't see a surge coming, a brighter front while it gathers is the next step.</li>
-    <li>Deeper planets should surge more often and harder. That's next, with the run thread.</li>
+    <li>A squad more than 29 cells from the slime is out of reach, so a slime that stays home still won't come to you. Bigger slimes on run planets and its growth are what bring it out.</li>
+    <li>The only warning is the creep. If you can't see a surge coming, the slime swelling or brightening as it fills up is the next step.</li>
   </ul>
 </section>
 
-<footer>Made by the slime-enemy thread. Window frames from <code>larder-world look=DIR mode=squads hand=edge seed=1 centre=256.6,245,4 [surge=900]</code> on software Vulkan. CPU and GPU agree exactly in the squad twin test. Source in Reports/surge-2026-11-15/.</footer>
+<script>
+(function(){
+  var runs={clock:[30,60,90,120,150,180],idle:[42.7,64.5,81.3,96.7,112.1,127.3,142.1,156.3,169.9],pump:[46.9,69.1,84.9,100.3,115.7,131.1,146.5,161.9,177.2]};
+  Object.keys(runs).forEach(function(k){
+    var t=document.getElementById('t-'+k);
+    runs[k].forEach(function(s,i){
+      var d=document.createElement('span');
+      d.className='dot'+(k==='clock'?' clock':'');
+      d.style.left=(s/180*100)+'%';
+      d.title='Surge '+(i+1)+' at '+s+' s';
+      t.appendChild(d);
+    });
+  });
+  var a=document.getElementById('t-axis');
+  [0,30,60,90,120,150,180].forEach(function(s){
+    var l=document.createElement('span');
+    l.style.left=(s/180*100)+'%';
+    l.textContent=String(s);
+    a.appendChild(l);
+  });
+})();
+</script>
+<footer>Made by the slime-enemy thread. Window frames from <code>larder-world look=DIR mode=squads hand=edge seed=1 centre=256.6,245,4 [surge=900]</code> on software Vulkan; surge times from <code>map=fork mode=squads hand=idle|squads|edge seed=1</code> to 3:00. CPU and GPU agree exactly in the squad twin test, the game's surge timing included. Source in Reports/surge-2026-11-15/.</footer>
 </main>

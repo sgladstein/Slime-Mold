@@ -293,11 +293,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
                 }
             }
+            let surges = app.game.as_ref().map_or(0, |g| g.surges);
             app.step(step);
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
             // they did before the step split.
             app.settle();
+            // Each surge the game starts (food-driven surges, 11-15).
+            if let Some(g) = app.game.as_ref().filter(|g| g.surges != surges) {
+                println!("  surge {} starts at t {:.1} s (the slime has eaten {:.0} food)", g.surges, g.time(), g.slime_ate);
+            }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();
                 // A step can run several ticks, so a second is counted when
@@ -382,6 +387,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
         // The squad mode follows the controlled squad, as the window does.
         let squad = g.active.and_then(|q| g.middle(q)).filter(|_| g.rules.squads).or(squad);
+        // A picture between two steps (a frame sequence at more frames
+        // than steps; gun look, 2026-11-15): the game is at the step past
+        // `t`, so the picture shows it as the window would `t` into it.
+        // Bullets glide that far along their legs (`App::between`), and
+        // flashes, kicks and hit lights are that much older; the notes go
+        // back once it is taken.
+        let step_s = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        let into = (1.0 - (g.time() - t) / step_s).clamp(0.0, 1.0);
+        let notes = (app.looks.clone(), app.tracers.clone());
+        app.sub = Some(into);
+        app.age_notes(into * step_s);
+        let g = app.game.as_ref().unwrap();
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.members(q),
@@ -419,6 +436,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
+        (app.looks, app.tracers) = notes;
+        app.sub = None;
         let g = app.game.as_ref().unwrap();
         let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / app.charge0.iter().sum::<f32>().max(1.0);
         // The CPU work the window adds: the ground field (once a game
@@ -439,6 +458,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
         }
         println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
+        // What the slime has eaten, and the surges it built (11-15,
+        // food-driven surges).
+        println!("  surge: the slime ate {:.0} food ({:.1}/s); meter {:.1} of {:.0}, {} surges", g.slime_ate, g.slime_ate / g.time().max(1e-3), g.surge_meter, g.rules.surge_food, g.surges);
         // Condensed or thickened walkers (11-15, the thickening films):
         // how many, and the mould's mass (a condensed walker twice).
         if g.world.e.condenses {
@@ -446,7 +468,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let words = e.dense_of();
             let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
             let thick = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::DENSE != 0).count();
-            println!("  dense: {thick} condensed or thick walkers, mass {}", g.mould + thick);
+            println!("  dense: {thick} condensed or thick walkers, mass {} (readout {})", g.mould + thick, g.world.mass());
         }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.
@@ -503,16 +525,24 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         l.shots(&g.last_shots);
     }
     join_looks(g, looks);
-    for s in &g.last_shots {
+    let pace = g.rules.bullet_speed * g.world.scale();
+    for (j, s) in g.last_shots.iter().enumerate() {
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
         let from = s.from;
-        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0, r: s.r });
+        let to = s.hit.unwrap_or(s.to);
+        // The drawn bullet glides along its leg at its own speed
+        // (`App::between`), so its hit lights when it gets there.
+        let delay = g.flown.get(j).filter(|_| pace > 0.0).map_or(0.0, |b| (to.0 - from.0).hypot(to.1 - from.1) / (pace * b.speed));
+        tracers.push(Tracer { from, to, hit: s.hit.is_some(), age: 0.0, r: s.r, delay });
         if !s.fired {
             continue;
         }
         if let Some(k) = s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive)) {
             looks[k].flash = FLASH;
+            looks[k].kick = KICK;
+            looks[k].cast = s.cast;
+            looks[k].shots = looks[k].shots.wrapping_add(1);
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
         }
     }

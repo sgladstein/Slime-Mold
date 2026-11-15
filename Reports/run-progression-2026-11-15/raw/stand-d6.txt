@@ -1,0 +1,33 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+head start: the slime grew 40 s alone in 77.0 s
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-001s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-001s-near.png
+  CPU: ground field 10.49 ms (once a game second), model and HUD 0.111 ms a frame
+  t 1 s: mould 138870, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 70.0,311.0
+  dense: 5447 condensed or thick walkers, mass 144317
+  squad: touching 0.0 mean, 0 most; health 100 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-030s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-030s-near.png
+  CPU: ground field 6.99 ms (once a game second), model and HUD 0.103 ms a frame
+  t 30 s: mould 132853, soldiers 4, bank 2000, harvested 0, shots 103, killed 374, took 0%, crystals left 0.990; squad at 220.9,292.7
+  dense: 13380 condensed or thick walkers, mass 146233
+  squad: touching 0.0 mean, 0 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-060s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-060s-near.png
+  CPU: ground field 10.98 ms (once a game second), model and HUD 0.114 ms a frame
+  t 60 s: mould 128203, soldiers 4, bank 2000, harvested 0, shots 241, killed 1759, took 0%, crystals left 0.979; squad at 248.6,292.9
+  dense: 16281 condensed or thick walkers, mass 144484
+  squad: touching 0.2 mean, 1 most; health 99 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-090s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-090s-near.png
+  CPU: ground field 11.78 ms (once a game second), model and HUD 0.118 ms a frame
+  t 90 s: mould 125732, soldiers 4, bank 2000, harvested 0, shots 379, killed 2828, took 0%, crystals left 0.967; squad at 249.7,292.4
+  dense: 19931 condensed or thick walkers, mass 145663
+  squad: touching 0.0 mean, 0 most; health 71 mean
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-120s-all.png
+/tmp/claude-0/-home-user/436aa0b5-2e2a-5fcc-a830-4e57c114a955/scratchpad/depths/stand-d6/planet-6-1-stand-120s-near.png
+  CPU: ground field 9.73 ms (once a game second), model and HUD 0.107 ms a frame
+  t 120 s: mould 117899, soldiers 4, bank 2000, harvested 0, shots 518, killed 4781, took 0%, crystals left 0.955; squad at 249.7,292.4
+  dense: 22145 condensed or thick walkers, mass 140044
+  squad: touching 0.0 mean, 0 most; health 71 mean
+wall 343 s

@@ -99,6 +99,8 @@ pub const PANIC_DASH_MAX: u32 = 0xFFFF;
 /// The longest surge lean and lunge (`BigParams::surge_lean`,
 /// `surge_dash`), steps.
 pub const SURGE_MAX: u32 = 0xFFFF;
+/// `BigParams::surge_at` before the game's first surge: calm.
+pub const SURGE_WAIT: u32 = u32::MAX;
 const CLAIM_BIRTH: u32 = 403;
 const DRAW_MIX: u32 = 113;
 const DRAW_FRUIT: u32 = 114;
@@ -729,6 +731,19 @@ pub struct BigParams {
     pub surge_lean: u32,
     pub surge_dash: u32,
     pub surge_haste: f32,
+    /// **The game times the surges** (2026-11-15, food-driven surges; 0
+    /// keeps the clock above). Nonzero, the step the last surge began on
+    /// (`self.steps + 1` of its first step): the lean and the lunge run
+    /// from it, once, and the body is calm until the game sets the next.
+    /// `SURGE_WAIT` (u32::MAX) holds the body calm before the first. The
+    /// game sets it when the slime has eaten `Rules::surge_food` from its
+    /// crystals (`Game::surge_meter`), so a slime holding more crystals
+    /// surges sooner; `surge_every` stays the switch and the longest wait.
+    /// Why one word set by the game rather than a meter on each engine:
+    /// the GPU would need a sum of every walker's bite each step, and the
+    /// game already reads each crystal's charge and each unit's take a
+    /// frame, which is what the slime ate, on both worlds alike.
+    pub surge_at: u32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1287,6 +1302,7 @@ impl BigParams {
             surge_lean: 45,
             surge_dash: 30,
             surge_haste: 2.0,
+            surge_at: 0,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1553,6 +1569,12 @@ pub struct BigDish {
     /// Whether a spore in flight was flung by an explosion (`fling`), not
     /// fruited; empty until the first fling. Cleared when it lands.
     pub flung: Vec<bool>,
+    /// Whether a flung spore is a shot's spray droplet (`spray_one`), which
+    /// lays nothing and dies where it lands; empty until the first spray.
+    pub doomed: Vec<bool>,
+    /// The spray's longest flight in fine steps and its first speed in dish
+    /// cells a fine step (`squad::Frame::spray`), set by the shots.
+    pub spray: (u16, f32),
     /// The gas cloud (`gas_keep`) a fine cell, else empty.
     pub gas_cloud: Vec<f32>,
     /// Walls the player built (`build_wall`), a fine cell; empty until the
@@ -1580,6 +1602,50 @@ pub struct BigDish {
 /// computes the same.
 pub fn fling_timer(steps: u16, left: f32, inv: f32) -> u16 {
     ((steps as f32 * (left * inv)).floor() as u16).clamp(1, steps.max(1))
+}
+
+/// The reciprocal of a spray's longest flight (`squad::Frame::spray`), which
+/// the engine is given rather than dividing (WGSL's division isn't exact).
+pub fn spray_inv(steps: u16) -> f32 {
+    1.0 / steps.max(1) as f32
+}
+
+/// Slot `k`'s spray hash (`squad::Frame::spray`): its droplet's flight and
+/// pace are its own, keyed on the slot alone (no seed, no step), so the
+/// engine's `strike` and `fly` draw the same.
+fn spray_hash(k: u32) -> u32 {
+    super::lowbias32(k ^ 0x5BD1_E995)
+}
+
+/// A spray droplet's flight in fine steps (`squad::Frame::spray`): the
+/// longer half of `steps`, by its slot, so a hit's droplets land one after
+/// another and not all at once.
+pub fn spray_timer(k: u32, steps: u16) -> u16 {
+    let s = steps.max(1) as u32;
+    (s - spray_hash(k) % s.div_ceil(2)) as u16
+}
+
+/// The spray's share as the engine takes it (`squad::Frame::spray_share`):
+/// a fraction of 65,536, so 1 is 65,536 and every hash's top 16 bits are
+/// under it.
+pub fn spray_share_q(share: f32) -> u32 {
+    (share.clamp(0.0, 1.0) * 65536.0).round() as u32
+}
+
+/// Whether slot `k`'s kill flies as a spray droplet at share `q`
+/// (`spray_share_q`): keyed on the slot alone, by its own hash (the
+/// flight's and pace's are another, so the share picks fast and slow
+/// droplets alike), as the engine's `strike` keys it.
+pub fn spray_picked(k: u32, q: u32) -> bool {
+    (super::lowbias32(k ^ 0x68E3_1DA4) >> 16) < q
+}
+
+/// A spray droplet's pace (`squad::Frame::spray`): 0.35 to 1 of the
+/// spray's first speed, by its slot, so a hit throws a spread and not a
+/// ring. Its speed a fine step is the first speed x this x (0.4 + 0.6 x its
+/// steps left / the longest flight): it slows to 0.4 as it lands (drag).
+pub fn spray_pace(k: u32) -> f32 {
+    0.35 + 0.65 * unit(spray_hash(k))
 }
 
 fn rect(w: usize, h: usize, margin: f32) -> Vec<bool> {
@@ -1791,6 +1857,8 @@ impl BigDish {
             fire_told: 0,
             gassed: Vec::new(),
             flung: Vec::new(),
+            doomed: Vec::new(),
+            spray: (0, 0.0),
             gas_cloud: Vec::new(),
             wall: Vec::new(),
             wall_health: Vec::new(),
@@ -2520,12 +2588,16 @@ impl BigDish {
     /// `panic_creep` while the body gathers, `surge_haste` while it lunges,
     /// else 0. One clock for the whole dish.
     pub fn surge_haste(&self) -> f32 {
-        let every = self.p.surge_every as u64;
+        let (every, at) = (self.p.surge_every as u64, self.p.surge_at as u64);
         let t = self.steps + 1;
-        if every == 0 || t < every {
+        // The game's surge (`surge_at`) or the clock's, the first a whole
+        // period in.
+        let started = if at > 0 { at } else { every };
+        if every == 0 || t < started {
             return 0.0;
         }
-        let (ph, lean) = (t % every, self.p.surge_lean.min(SURGE_MAX) as u64);
+        let ph = if at > 0 { t - at } else { t % every };
+        let lean = self.p.surge_lean.min(SURGE_MAX) as u64;
         if ph < lean {
             self.p.panic_creep.max(PANIC_CREEP_MIN)
         } else if ph < lean + self.p.surge_dash.min(SURGE_MAX) as u64 {
@@ -3761,6 +3833,9 @@ impl BigDish {
             if !self.flung.is_empty() {
                 self.flung[b] = false;
             }
+            if !self.doomed.is_empty() {
+                self.doomed[b] = false;
+            }
             if !self.spec.is_empty() {
                 self.spec[b] = self.spec[k];
             }
@@ -3855,7 +3930,16 @@ impl BigDish {
             let tt = self.life_t[k];
             // A flung walker (`fling`) flies straight at `fling_speed`.
             let flung = !self.flung.is_empty() && self.flung[k];
-            let st = p.step * if flung { p.fling_speed } else { p.spore_speed };
+            // A shot's spray droplet (`spray_one`) slows as it flies: its
+            // pace x the first speed x (0.4 + 0.6 x its steps left / the
+            // longest flight) (`spray_pace`; f32 products, as the engine's
+            // `fly`, `spray_inv` the reciprocal it is given).
+            let doomed = !self.doomed.is_empty() && self.doomed[k];
+            let st = if doomed {
+                self.spray.1 * spray_pace(k as u32) * (0.4 + 0.6 * tt as f32 * spray_inv(self.spray.0))
+            } else {
+                p.step * if flung { p.fling_speed } else { p.spore_speed }
+            };
             let homing = !flung && tt > 0 && tt <= p.spore_steps / 2;
             if so > 0.0 && homing {
                 let read = |a: f32| {
@@ -3883,10 +3967,23 @@ impl BigDish {
             let (x, y, _) = self.walkers[k];
             let i = self.cell(x, y).expect("walker inside the dish");
             let lays = if flung { p.fling_deposit } else { p.spore_deposit };
-            if lays > 0.0 {
+            if lays > 0.0 && !doomed {
                 self.lay(k, i, dep * lays);
             }
             self.life_t[k] = self.life_t[k].saturating_sub(1);
+            // A spray droplet dies where it lands: its slot is freed as a
+            // shot's `kill` frees it (it left its cell when it was thrown).
+            if doomed {
+                if self.life_t[k] == 0 {
+                    self.doomed[k] = false;
+                    self.flung[k] = false;
+                    self.life[k] = LIFE_DEAD;
+                    if !self.alive.is_empty() {
+                        self.alive[k] = false;
+                    }
+                }
+                continue;
+            }
             let lands = self.life_t[k] == 0 || (homing && p.spore_land > 0.0 && self.scent_at(x, y) > p.spore_land);
             // The crowd limit is the spore's own species' (`species_sets`),
             // and a cell a wall has taken since it flew there is no landing.
@@ -4516,6 +4613,22 @@ impl BigDish {
             }
         }
         n
+    }
+
+    /// Throws walker `k`, which a shot killed, out of the hit as a spray
+    /// droplet (`squad::Frame::spray`, gun look 2026-11-15): it leaves its
+    /// cell as a flung spore on `heading` for `steps` fine steps, lays
+    /// nothing, and dies where it lands (`life_step`). The life states,
+    /// `flung` and `doomed` must be on.
+    pub fn spray_one(&mut self, k: usize, heading: f32, steps: u16) {
+        let (wx, wy, _) = self.walkers[k];
+        let i = self.cell(wx, wy).expect("walker inside the dish");
+        self.occ[i] -= 1;
+        self.life[k] = LIFE_SPORE;
+        self.life_t[k] = steps;
+        self.flung[k] = true;
+        self.doomed[k] = true;
+        self.walkers[k].2 = heading;
     }
 
     /// **An explosion's fling** (the gun rounds' `Bomb`, 2026-11-14, after
@@ -5441,6 +5554,30 @@ mod tests {
         // Between surges (the clock calm all the run), nothing changes.
         let calm = run(BigParams { surge_every: 1_000_000, ..grow.clone() }, Some(probe), 20);
         assert_eq!(calm.2, base.2, "before the first surge the body moves as without it");
+        // The game's surge (`surge_at`, food-driven surges): held for the
+        // game (`SURGE_WAIT`) the body is calm; begun on the run's first
+        // step it closes in, though the clock alone would be calm.
+        let wait = run(BigParams { surge_every: 1_000_000, surge_at: SURGE_WAIT, ..grow.clone() }, Some(probe), 20);
+        assert_eq!(wait.2, base.2, "held for the game, the body is calm");
+        let timed = run(BigParams { surge_every: 1_000_000, surge_at: steps + 1, surge_lean: 3, surge_dash: steps, surge_haste: 2.0, ..grow.clone() }, Some(probe), 20);
+        eprintln!("the game's surge: mean distance {:.1} -> {:.1}", timed.0, timed.1);
+        assert!(timed.1 < base.1 && timed.1 < timed.0, "the game's surge closes in");
+        // Its phases, step by step: the clock's beat, then the game's once.
+        let mut d = BigDish::new(BigParams { surge_every: 100, surge_lean: 3, surge_dash: 5, surge_haste: 2.0, ..grow.clone() });
+        let creep = d.p.panic_creep.max(PANIC_CREEP_MIN);
+        let at = |d: &mut BigDish, step: u64| {
+            d.steps = step - 1;
+            d.surge_haste()
+        };
+        let clock: Vec<f32> = [99, 100, 102, 103, 107, 108, 200, 203].iter().map(|&t| at(&mut d, t)).collect();
+        assert_eq!(clock, [0.0, creep, creep, 2.0, 2.0, 0.0, creep, 2.0], "the clock: a whole period in, then every period");
+        d.p.surge_at = SURGE_WAIT;
+        assert!([100, 200, 1_000].iter().all(|&t| at(&mut d, t) == 0.0), "held for the game");
+        d.p.surge_at = 150;
+        let game: Vec<f32> = [149, 150, 152, 153, 157, 158, 200, 203, 250].iter().map(|&t| at(&mut d, t)).collect();
+        assert_eq!(game, [0.0, creep, creep, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0], "the game's: once, from its step, the clock's beat ignored");
+        d.p.surge_every = 0;
+        assert_eq!(at(&mut d, 150), 0.0, "surge 0 is off, whatever the game sets");
     }
 
     #[test]

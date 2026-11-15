@@ -265,6 +265,9 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "surge_lean" => p.surge_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
         "surge_dash" => p.surge_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
         "surge_haste" => p.surge_haste = f()?,
+        // The food scent (W44 of the whole-game review, 11-15).
+        "scent_keep" => p.scent_keep = f()?.clamp(0.0, 1.0),
+        "fed_scent" => p.fed_scent = f()?.max(0.0),
         "hunger_scent" => p.hunger_scent = f()?,
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).

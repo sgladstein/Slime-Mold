@@ -264,6 +264,9 @@ pub const MISSION_DRAIN: f32 = 1.0;
 /// Seconds from the design: a stuck or overrun run this long ends the
 /// mission; two stars need the goal before `two_stars` of its clock.
 pub const STUCK_END: f32 = 30.0;
+/// Stuck seconds in a row before the goal line warns that the mission will
+/// end (whole-game review W17, 11-15: the end came with no warning).
+pub const STUCK_WARN: f32 = 10.0;
 pub const OVERRUN_END: f32 = 30.0;
 /// `hold`: a soldier within this many dish cells of a crystal's edge holds
 /// it. Soldiers stand at its rim, not on it, since crystals turned solid
@@ -464,9 +467,9 @@ impl Tracker {
                 if self.peak == 0 {
                     return Some(0.0);
                 }
-                // A share of the mould's own peak in whole walkers, so the same goal at any mass.
+                // A share of the mould's own peak mass (`World::mass`), so the same goal at any size.
                 let peak = self.peak as f32;
-                Some(((peak - g.mould as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
+                Some(((peak - g.world.mass() as f32) / (peak * (1.0 - f))).clamp(0.0, 1.0))
             }
             // From an even share: `take_share` is 0.5 before any charge is
             // gone, which as share / f showed 83% of a 60% goal at 0:00.
@@ -544,8 +547,12 @@ impl Tracker {
             return self.verdict;
         }
         let t = g.time();
-        if g.time() >= SHRINK_FROM {
-            self.peak = self.peak.max(g.mould);
+        // Mass, not walkers (whole-game review W30, 11-15): a thickened
+        // walker is two walkers' worth, so a body that thickens is not a
+        // body that shrank. Only the shrink goal reads the peak, and the
+        // CPU's mass walks every slot, so only it counts it.
+        if g.time() >= SHRINK_FROM && matches!(self.mission.goal, Goal::Shrink(_)) {
+            self.peak = self.peak.max(g.world.mass());
         }
         let alive = g.alive();
         self.lost += self.last.alive.saturating_sub(alive);
@@ -652,6 +659,15 @@ impl Tracker {
     /// each, census v5): said on screen, the player sees why the bar still
     /// holds (design review, 06:26Z: the bar and the picture must agree).
     pub fn progress_line(&self) -> String {
+        let line = self.goal_line();
+        if self.verdict.is_none() && self.stuck_run as f32 >= STUCK_WARN {
+            let left = (STUCK_END - self.stuck_run as f32).max(0.0);
+            return format!("Nothing is happening: walk, harvest, pump or fight, or this ends in {left:.0} s. {line}");
+        }
+        line
+    }
+
+    fn goal_line(&self) -> String {
         let says = &self.mission.says;
         match (self.bar, &self.mission.goal, self.outside) {
             (Some(b), Goal::Contain { body, .. }, _) if *body > 0 => match self.thick {
@@ -965,6 +981,19 @@ mod tests {
                 s.order = Order::Move(away.0, away.1);
             }
         }).is_none(), "nobody on it, not held: best {}", tr.best);
+    }
+
+    /// Stuck seconds warn on the goal line before they end the mission
+    /// (whole-game review W17).
+    #[test]
+    fn stuck_warns_before_it_ends() {
+        let g = small(Rules::default());
+        let mut tr = Tracker::new(mission("goal shrink 0.02"), &g);
+        tr.stuck_run = STUCK_WARN as u32 - 1;
+        assert!(!tr.progress_line().contains("Nothing is happening"), "{}", tr.progress_line());
+        tr.stuck_run = STUCK_WARN as u32 + 2;
+        let line = tr.progress_line();
+        assert!(line.contains("ends in 18 s"), "{line}");
     }
 
     /// `contain` fills over the whole world and never in a corner; the leak

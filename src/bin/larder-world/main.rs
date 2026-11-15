@@ -306,6 +306,9 @@ fn sprite_kind(k: Kind) -> Option<u32> {
 /// look's fight: `examples/worldlook.rs`).
 const TRACER: f32 = 0.1;
 const FLASH: f32 = 0.07;
+/// How long a soldier's gun kicks back after a shot, seconds: it jumps
+/// back at once and eases home over this (gun look, 2026-11-15).
+const KICK: f32 = 0.14;
 /// How far a soldier walks (dish cells) before its figure turns to the way
 /// it is going (`App::step`).
 const TURN: f32 = 0.3;
@@ -366,6 +369,9 @@ const LOADOUTS: [(&str, &str); 30] = [
     ("sniper", "range+range+pierce"),
 ];
 
+/// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
+const RULE_KEY: &str = "set:";
+
 /// `Default` so a test or a tool names only the fields it sets (`..Default::default()`);
 /// before, each of 18 literals spelled out all 23 fields and every new
 /// field touched every one of them (whole-game review, 2026-11-15).
@@ -422,6 +428,10 @@ struct Args {
     /// `sink=B`: how far into the slime a shot's blast is centred, in
     /// strike radii (`Rules::sink`; 0 centres it on the first slime cell).
     sink: Option<f32>,
+    /// `spray=S[,SHARE]`: how long the slime a shot kills flies out of the
+    /// hit, in seconds (`Rules::spray_secs`; 0 none), and the share of the
+    /// kills that fly (`Rules::spray_share`, 1 all), for films and A/Bs.
+    spray: Option<(f32, f32)>,
     /// `mass=M`: one walker's fight weight (`Rules::mass`); None follows the
     /// start walkers a cell (`Rules::mass_for`).
     mass: Option<f32>,
@@ -457,6 +467,7 @@ const RANGE_CAP: f32 = 36_000.0;
 const RANGE_BANK: f32 = 100_000.0;
 
 /// A shot being drawn: its ray, whether it hit slime, and its age.
+#[derive(Clone, Copy)]
 struct Tracer {
     from: (f32, f32),
     to: (f32, f32),
@@ -465,6 +476,9 @@ struct Tracer {
     /// The strike's radius, fine cells (`Shot::r`): a hit lights only
     /// what it kills (owner 20:22Z).
     r: f32,
+    /// Seconds into the step's leg the drawn bullet reaches the hit, at
+    /// its speed (`App::between`): its light waits for it.
+    delay: f32,
 }
 
 /// What the window keeps of each soldier beside the game: the way it
@@ -488,11 +502,18 @@ struct Look {
     hurt: f32,
     flinch: f32,
     bite: f32,
+    /// Seconds left of its gun's kick from its last shot (`KICK` long),
+    /// the cast that shot carried (`Shot::cast`: its flash takes the
+    /// payload's colour) and the shots it has fired, which vary each
+    /// muzzle flash (gun look, 2026-11-15).
+    kick: f32,
+    cast: u8,
+    shots: u32,
 }
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
     }
 }
 
@@ -580,6 +601,9 @@ struct App {
     spread: bool,
     /// Game seconds owed to the game (the accumulator).
     owed: f32,
+    /// How far into the next step a headless picture is taken, 0-1 (it
+    /// draws whole steps; `between`), or None in the window.
+    sub: Option<f32>,
     last_frame: Instant,
     shift: bool,
     /// The soldier the last build with nobody selected sent (`builders`):
@@ -614,6 +638,14 @@ struct App {
     seen: u64,
     report_at: Instant,
     saved: bool,
+    /// The play log (`mould::playlog`, whole-game review W13, 11-15):
+    /// `larder-world-log-MAP-SEED.txt` beside the replay, a line a game
+    /// second, in the window only (not the headless films). The path, the
+    /// writer, the last second written, and whether the end is written.
+    log_path: Option<String>,
+    playlog: slime_mould::mould::playlog::Playlog,
+    log_sec: u64,
+    log_ended: bool,
     /// The command card shows the build page (Q).
     build_page: bool,
     /// The squad toolkit (`mould::kit`) and whether the card shows its page
@@ -709,6 +741,7 @@ impl App {
             fast: false,
             spread: true,
             owed: 0.0,
+            sub: None,
             last_frame: Instant::now(),
             shift: false,
             last_sent: None,
@@ -728,6 +761,10 @@ impl App {
             seen: 0,
             report_at: Instant::now(),
             saved: false,
+            log_path: None,
+            playlog: Default::default(),
+            log_sec: 0,
+            log_ended: false,
             build_page: false,
             kit: Kit::new(KitRules::default()),
             rounds: Rounds::new(Vec::new(), RoundRules::default()),
@@ -785,8 +822,10 @@ impl App {
         // mould; that slime shed nine tenths of its walkers in its first
         // minute on every planet (the slime-enemy thread found why).
         if let Some(l) = &level {
-            run_shape(&mut s, l.walkers)?;
+            run_shape(&mut s, l.walkers, l.depth)?;
         }
+        // The food the planet's slime eats to build a surge (`run::surge_food`).
+        let surge_food = level.as_ref().map(|l| slime_mould::mould::run::surge_food(l.depth, l.walkers));
         // A ladder name not built yet (drifter, sprawler, trunk) plays
         // the plain mould, and says so.
         if let Some(t) = mission.as_ref().and_then(|m| m.tier.as_deref()) {
@@ -802,8 +841,9 @@ impl App {
             Some(RunGround::Made(m)) => Some(m),
             _ => None,
         };
-        // Engine keys last, over the race world's and the mission's tier.
-        for (k, v) in &a.keys {
+        // Engine keys last, over the race world's and the mission's tier
+        // (`set:` keys are the game's rules, set below).
+        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY)) {
             slime_mould::gpu::set(&mut s, k, v)?;
             if k == "tier" {
                 core_tier = Tier::from_name(v);
@@ -863,6 +903,9 @@ impl App {
         if let Some(r) = &a.run {
             r.rules(&mut rules);
         }
+        if let Some(f) = surge_food {
+            rules.surge_food = f;
+        }
         // The gun range: no clock to beat and a bank that never runs dry,
         // so soldiers can always be bought (B) and the round never ends on
         // time or a wiped squad.
@@ -882,6 +925,9 @@ impl App {
         rules.mass = a.mass.unwrap_or(Rules::mass_for(walkers, a.scale));
         if let Some(w) = a.wade {
             rules.wade = w;
+        }
+        if let Some((s, share)) = a.spray {
+            (rules.spray_secs, rules.spray_share) = (s, share);
         }
         if let Some(b) = a.sink {
             rules.sink = b;
@@ -908,6 +954,13 @@ impl App {
                 let t0 = std::time::Instant::now();
                 slime_mould::mould::larder_world::head_start(&mut world, grow, &rules);
                 eprintln!("head start: the slime grew {grow:.0} s alone in {:.1} s", t0.elapsed().as_secs_f32());
+            }
+        }
+        // Rule keys (`set=NAME=V`, 11-15, W44) last, over everything above.
+        for (k, v) in a.keys.iter().filter_map(|(k, v)| k.strip_prefix(RULE_KEY).map(|k| (k, v))) {
+            let v: f32 = v.parse().map_err(|e| format!("set={k}={v}: {e}"))?;
+            if !rules.set(k, v) {
+                return Err(format!("set={k}: no such rule"));
             }
         }
         let mut game = Game::new(world, rules, a.seed).with_tier(core_tier);
@@ -1047,11 +1100,44 @@ impl App {
         if let Some(w) = &self.window {
             w.set_title(&format!("Larder World: {} (seed {})", map_title(&self.name, self.args.seed), self.args.seed));
         }
+        self.open_log();
         match &self.mission {
             Some(tr) => self.hud.alert(&format!("{}: {}", tr.mission.name, tr.mission.says), None, theme::ACCENT),
             None => self.hud.alert(&format!("{}: take the mould's core, or hold more crystals than it at 15:00", map_title(&self.name, self.args.seed)), None, theme::ACCENT),
         }
         Ok(())
+    }
+
+    /// A new round's play log (`log_path`), its header written: the map,
+    /// seed, mode, and the mission's name and tier when there is one.
+    fn open_log(&mut self) {
+        self.log_path = None;
+        self.playlog = Default::default();
+        self.log_sec = 0;
+        self.log_ended = false;
+        if self.window.is_none() {
+            return;
+        }
+        let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
+        let mut extra = vec![("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        if let Some(tr) = &self.mission {
+            extra.push(("mission", tr.mission.name.clone()));
+            extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
+        }
+        let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
+        match std::fs::write(&path, head) {
+            Ok(()) => self.log_path = Some(path),
+            Err(e) => eprintln!("larder-world: {path}: {e}"),
+        }
+    }
+
+    /// Appends `text` to the play log (nothing without one).
+    fn log_write(path: &Option<String>, text: &str) {
+        use std::io::Write;
+        let Some(path) = path else { return };
+        if let Ok(mut f) = std::fs::OpenOptions::new().append(true).open(path) {
+            let _ = f.write_all(text.as_bytes());
+        }
     }
 
     /// The round's commands, to replay it (`Game::replay`).
@@ -1065,15 +1151,31 @@ impl App {
         self.saved = true;
     }
 
-    /// Steps the game for `dt` real seconds and keeps the window's notes
-    /// (facing, flashes, tracers, alerts).
-    fn step(&mut self, dt: f32) {
+    /// How far the frame is from the last finished step to the next, 0-1:
+    /// the game seconds owed over a step. Bullets glide along the last
+    /// step's legs by it (gun look, 2026-11-15): at 15 steps a second and
+    /// 60 frames, each bullet sat still for four frames and then jumped
+    /// its 0.067 s of flight (6 fine cells), so a shot read as a dash that
+    /// blinked across the ground rather than flew.
+    fn between(&self) -> f32 {
+        if let Some(a) = self.sub {
+            return a;
+        }
+        let Some(g) = self.game.as_ref() else { return 0.0 };
+        let step = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        if self.paused || g.end.is_some() { 1.0 } else { (self.owed / step).clamp(0.0, 1.0) }
+    }
+
+    /// Ages the window's notes of the game by `dt` seconds: tracers,
+    /// muzzle flashes and kicks, takes and flinches.
+    fn age_notes(&mut self, dt: f32) {
         for t in &mut self.tracers {
             t.age += dt;
         }
-        self.tracers.retain(|t| t.age < TRACER);
+        self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
             l.flash = (l.flash - dt).max(0.0);
+            l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
             l.flinch = (l.flinch - dt).max(0.0);
         }
@@ -1081,6 +1183,12 @@ impl App {
             b.call = (b.call - dt).max(0.0);
             b.bank = (b.bank - dt).max(0.0);
         }
+    }
+
+    /// Steps the game for `dt` real seconds and keeps the window's notes
+    /// (facing, flashes, tracers, alerts).
+    fn step(&mut self, dt: f32) {
+        self.age_notes(dt);
         // A step a command finished since the last frame (`catch_up`).
         self.catch_up();
         let Some(g) = self.game.as_mut() else { return };
@@ -1164,6 +1272,22 @@ impl App {
             }
         }
         let t = g.time();
+        // The play log's line for each whole game second passed.
+        if self.log_path.is_some() {
+            let sec = (g.settled_ticks().saturating_sub(g.landed)) / g.rules.tps as u64;
+            if sec > self.log_sec {
+                self.log_sec = sec;
+                let line = self.playlog.second(g);
+                Self::log_write(&self.log_path, &line);
+            }
+            let verdict = self.mission.as_ref().and_then(|m| m.verdict.map(|_| m.cause_line()));
+            if !self.log_ended && (g.end.is_some() || verdict.is_some()) {
+                self.log_ended = true;
+                let why = verdict.unwrap_or_else(|| g.end.map(|e| e.band().to_string()).unwrap_or_default());
+                let text = format!("{}end t={t:.0} {why}\n", self.playlog.commands(g));
+                Self::log_write(&self.log_path, &text);
+            }
+        }
         // A soldier the game made inside these steps (`Rules::reserve`'s
         // free recruit) joins the notes too.
         join_looks(g, &mut self.looks);
@@ -1346,6 +1470,7 @@ impl App {
             return self.fail(event_loop, format!("render failed: {err}"));
         }
         self.frame_ms.push(t0.elapsed().as_secs_f32() * 1e3);
+        self.playlog.frame(t0.elapsed().as_secs_f32() * 1e3);
         let since = self.report_at.elapsed().as_secs_f32();
         if since >= 10.0 && !self.frame_ms.is_empty() {
             // The frame's CPU time (the game's steps, their read-backs, the
@@ -1419,7 +1544,8 @@ impl App {
             v.minimap_box = self.hud.minimap_box;
             v.minimap_off = false;
             v.set_marks(&self.marks);
-            v.set_lights(&self.lights);
+            let cam = &self.camera;
+            v.set_lights(&self.lights, (cam.x, cam.y, cam.x + cam.screen.0 / cam.zoom, cam.y + cam.screen.1 / cam.zoom));
         }
     }
 
@@ -1557,6 +1683,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "wade" => args.wade = Some(v.parse()?),
             "sink" => args.sink = Some(v.parse()?),
+            // `spray=SECS[,SHARE]`: the spray's seconds (0 off) and the
+            // share of each shot's kills that spray (`Rules::spray_share`).
+            "spray" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                args.spray = match w.as_slice() {
+                    [s] => Some((*s, 1.0)),
+                    [s, share] => Some((*s, *share)),
+                    _ => return Err("spray=SECS or spray=SECS,SHARE".into()),
+                };
+            }
             "aim" => {
                 let v: Vec<f32> = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<_, _>>()?;
                 args.aim = Some(v.try_into().map_err(|_| "aim=STRIKE,EVERY,SPREAD")?);
@@ -1625,6 +1761,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // `bank=N`: the no-window round starts with N food in the bank
             // (films of rounds, whose casts are paid from it).
             "bank" => bank = Some(v.parse::<f32>()?),
+            // `set=NAME=V`: one of the game's rules by name
+            // (`Rules::set`, such as `set=pump_smell=2`), kept
+            // with the engine keys under `set:` so a menu round keeps it.
+            "set" => {
+                let (name, val) = v.split_once('=').ok_or("set=NAME=VALUE (a rule, such as set=pump_smell=2)")?;
+                let x: f32 = val.parse().map_err(|e| format!("set={name}={val}: {e}"))?;
+                if !Rules::default().set(name, x) {
+                    return Err(format!("set={name}: no such rule").into());
+                }
+                args.keys.push((format!("{RULE_KEY}{name}"), val.to_string()));
+            }
             "centre" => {
                 // `centre=X,Y[,ZOOM]`: the near view's place and zoom (6).
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
