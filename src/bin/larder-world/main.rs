@@ -65,6 +65,7 @@
 //! the round with N food banked (films of rounds); `centre=X,Y[,ZOOM]`
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
+//! `scroll=N` with `menu=PAGE` scrolls the page N wheel notches a frame.
 //! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
 //! that tooltip (a loadout card's, 2026-11-14); `select=0` selects nobody.
 //! `drag=FROM>TO[/FROM>TO..]` with `menu=shop..` films bullet cards dragged
@@ -1483,6 +1484,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bank = None;
     let mut centre = None;
     let mut hover = None;
+    let mut scroll = 0i32;
     let mut drags: Vec<(String, String)> = Vec::new();
     let mut select = true;
     let mut cut = None;
@@ -1606,6 +1608,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     drags.push((a.to_string(), b.to_string()));
                 }
             }
+            // `scroll=N`: with `menu=PAGE`, the page scrolls N wheel notches
+            // down each frame after the first (films of a page taller than
+            // the window, 11-15).
+            "scroll" => scroll = v.parse::<i32>()?,
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).
@@ -1697,7 +1703,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select, &drags)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, page, hover, select, &drags, scroll)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
