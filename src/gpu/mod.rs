@@ -443,10 +443,14 @@ pub struct Settings {
     pub condense_r: u8,
     /// Condensed slime breaks away (`BigParams::roam`, `roam_far`,
     /// `roam_share`; 11-14): steps between chances to leave, 0 off; needs
-    /// `condense`.
+    /// `condense` or `thicken`.
     pub roam: u32,
     pub roam_far: f32,
     pub roam_share: f32,
+    /// A fed walker that cannot divide thickens (`BigParams::thicken`,
+    /// 11-15): its energy as a multiple of a birth's, 0 off; needs growth.
+    /// The GPU holds it in tenths, at most 25.5 (`ccrowd`'s top byte).
+    pub thicken: f32,
     /// Lone step (`BigParams::lone_step`, `lone_floor`, and its square's
     /// radius `body_r`): a walker with few others round it moves slower.
     pub lone_step: f32,
@@ -611,6 +615,7 @@ impl Settings {
             roam: t.roam,
             roam_far: t.roam_far,
             roam_share: t.roam_share,
+            thicken: t.thicken,
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
@@ -868,6 +873,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "condense" => s.condense = int()?.min(crate::mould::big::RIPE),
         "condense_crowd" => s.condense_crowd = int()?,
         "condense_r" => s.condense_r = int()?.clamp(1, 8) as u8,
+        "thicken" => s.thicken = f()?.clamp(0.0, 25.5),
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
         "roam_far" => s.roam_far = f()?,
         "roam_share" => s.roam_share = f()?,
@@ -1021,6 +1027,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         roam: s.roam,
         roam_far: s.roam_far,
         roam_share: s.roam_share,
+        thicken: s.thicken,
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
@@ -1779,7 +1786,7 @@ impl Engine {
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
-        self.condenses = self.grows && d.p.condense > 0;
+        self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -1950,18 +1957,26 @@ impl Engine {
         b.extend(u32_bytes(&[s.lone_r as u32, s.fed_crowd as u32]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words: dense slime condensing (11-14, the
-        // condense thread; off without growth).
+        // condense thread; off without growth). `ccrowd`'s top byte is
+        // thickening (11-15, the slime-enemy thread, `BigParams::thicken`)
+        // in tenths of a birth's energy; the radius keeps bits 16-23.
         let condense = if self.grows { s.condense.min(crate::mould::big::RIPE) } else { 0 };
+        let thick = if self.grows { thick_tenths(s.thicken) } else { 0 };
+        let r = s.condense_r.clamp(1, 8) as u32;
+        assert!(r <= 0xFF, "condense_r fits ccrowd's bits 16-23");
         b.extend(f32_bytes(&[s.fling_deposit]));
-        b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | ((s.condense_r.clamp(1, 8) as u32) << 16), stream(seed, DRAW_CONDENSE)]));
-        self.condenses = condense > 0;
+        b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | (r << 16) | (thick << 24), stream(seed, DRAW_CONDENSE)]));
+        self.condenses = condense > 0 || thick > 0;
         // The breakaway row (11-14, the condense thread; Params grew from
         // 912 to 928 for it): steps between chances to leave (0 off), how
         // far the crystal must be and how near a landing is, in whole fine
         // cells as the CPU's `roam_pick` counts them, and the share sent.
         assert_eq!(b.len(), ROAM_AT, "Params rows before the breakaway row moved");
         let sc = self.dish.p.scale as f32;
-        let roam = if condense > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
+        // Condensed or thickened slime may break away (11-15: the CPU's
+        // `roam_of`; until then only condensed, and with thickening alone the
+        // CPU marked breakaways the GPU never made).
+        let roam = if condense > 0 || thick > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));
@@ -2859,6 +2874,13 @@ fn gas_until(d: &BigDish) -> u64 {
 /// `DENSE_HEAD` words, each slot's word (`BigDish::dense`, 0 while it has
 /// none), then a word a cell, clear.
 pub const DENSE_HEAD: usize = 4;
+
+/// `Settings::thicken` as the GPU holds it: tenths, 0 to 255
+/// (`engine.wgsl`'s `thick_at`). A value with one decimal plays the same
+/// threshold on both engines.
+pub fn thick_tenths(t: f32) -> u32 {
+    (t.max(0.0) * 10.0).round().min(255.0) as u32
+}
 pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut w = vec![0u32; DENSE_HEAD];
     w.extend((0..d.walkers.len()).map(|k| d.dense.get(k).copied().unwrap_or(0)));

@@ -14,7 +14,7 @@ struct P {
 };
 
 @group(0) @binding(0) var<uniform> U: P;
-// 16 words a shape (see canvas.rs `Prim`).
+// 17 words a shape (see canvas.rs `Prim`).
 @group(0) @binding(1) var<storage, read> prims: array<u32>;
 // Tile t's shapes are items[offsets[t] .. offsets[t + 1]], in draw order.
 @group(0) @binding(2) var<storage, read> offsets: array<u32>;
@@ -70,7 +70,11 @@ fn draw(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(workgroup_id) wg
     var c = unpack(out[i]).rgb;
     let p = vec2<f32>(f32(x) + 0.5, f32(y) + 0.5);
     for (var k = a0; k < a1; k++) {
-        let b = items[k] * 16u;
+        let b = items[k] * 17u;
+        // Word 16: the rows the shape keeps to (a scrolled menu page), top
+        // and bottom as 16-bit pixels; zero for none.
+        let cl = prims[b + 16u];
+        if (cl != 0u && (p.y < f32(cl & 65535u) || p.y >= f32(cl >> 16u))) { continue; }
         let kind = prims[b];
         let lo = vec2<f32>(f(b, 1u), f(b, 2u));
         let hi = vec2<f32>(f(b, 3u), f(b, 4u));

@@ -660,7 +660,8 @@ pub struct BigParams {
     pub condense_crowd: u32,
     pub condense_r: u8,
     /// **Condensed slime breaks away** (2026-11-14, the condense thread; 0
-    /// is off, needs `condense`). The owner, 15:06Z: "When slime condensed
+    /// is off, needs `condense` or, since 11-15, `thicken`: a thickened
+    /// walker is dense slime too, so breakaway works in shape C). The owner, 15:06Z: "When slime condensed
     /// it can become a separate entity that behaves different exploring
     /// further, eating crystals." Every `roam` steps after it condensed, a
     /// condensed walker picks the nearest crystal with at least
@@ -681,6 +682,25 @@ pub struct BigParams {
     pub roam: u32,
     pub roam_far: f32,
     pub roam_share: f32,
+    /// **A fed walker that cannot divide thickens** (2026-11-15, the
+    /// slime-enemy thread; 0 is off, needs growth). An ordinary walker
+    /// whose energy after its upkeep reaches `thicken` times
+    /// `birth_energy` turns condensed where it stands (`DENSE`: two lives,
+    /// twice the bite, hold and upkeep, two walkers' worth in `mass`) and
+    /// pays a birth's cost (`birth_cost`). Nothing is absorbed and births
+    /// go on, so the mould's mass can grow past its slots, up to twice.
+    /// Why: the owner, 11-15 08:34Z, on whether a slime left alone should
+    /// keep getting stronger: "keep getting stronger by holding onto its
+    /// crystals and getting more of them (which increases how fast it
+    /// multiplies)". Shape C on the CPU race world (seed 1) fills its
+    /// 50,000 slots by 3:00 while eating three times its upkeep, and after
+    /// that its surplus only piled up as energy (mean 1.58 at 3:00, rising)
+    /// and made it no stronger. Above 1 a walker divides first whenever it
+    /// has a free slot and cell, so only energy the mould cannot spend on
+    /// births becomes thickness, and the more crystals it eats from the
+    /// sooner it does. Reuses condensing's state and look; `condense`
+    /// (the ripening and absorbing) stays its own switch.
+    pub thicken: f32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1234,6 +1254,7 @@ impl BigParams {
             roam: 0,
             roam_far: 30.0,
             roam_share: 0.5,
+            thicken: 0.0,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1450,6 +1471,8 @@ pub struct BigDish {
     /// Walkers absorbed by condensing so far, and walkers that condensed.
     pub absorbed: u64,
     pub condensed: u64,
+    /// Walkers that thickened (`BigParams::thicken`).
+    pub thickened: u64,
     /// The squad's units this frame (`squad::frame` sets them), fine cells
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
@@ -1747,6 +1770,7 @@ impl BigDish {
             dense: Vec::new(),
             absorbed: 0,
             condensed: 0,
+            thickened: 0,
             threats: Vec::new(),
             heard_cells: Vec::new(),
             heard_was: Vec::new(),
@@ -2403,7 +2427,9 @@ impl BigDish {
 
     /// The crystal (pile) breakaway walker `k` runs for (`BigParams::roam`).
     pub fn roam_of(&self, k: usize) -> Option<usize> {
-        if self.p.roam == 0 || self.p.condense == 0 {
+        // Condensed or thickened (`thicken`, 11-15): either is dense slime
+        // that may break away; the GPU's `roaming` and `write_params` the same.
+        if self.p.roam == 0 || (self.p.condense == 0 && self.p.thicken <= 0.0) {
             return None;
         }
         let w = *self.dense.get(k)?;
@@ -3478,7 +3504,10 @@ impl BigDish {
         // so no walker's death changes another's count (the GPU's `ripen`
         // pass runs before `life`).
         let condense = p.condense > 0;
-        if condense {
+        // Thickening (`thicken`) keeps the same dense state; only
+        // `condense` ripens and absorbs.
+        let thicken = p.thicken > 0.0;
+        if condense || thicken {
             if self.dense.len() != n {
                 self.dense = vec![0; n];
             }
@@ -3519,6 +3548,9 @@ impl BigDish {
                             }
                         }
                     }
+                    continue;
+                }
+                if !condense {
                     continue;
                 }
                 let (x, y, _) = self.walkers[k];
@@ -3592,6 +3624,13 @@ impl BigDish {
             let e = self.energy[k] + took - up;
             if e > 0.0 {
                 self.energy[k] = e;
+                // Fed past what a birth needs and still undivided, it
+                // thickens (`thicken`).
+                if thicken && self.dense[k] & DENSE == 0 && e >= p.thicken * p.birth_energy {
+                    self.dense[k] = DENSE;
+                    self.energy[k] = e - p.birth_cost;
+                    self.thickened += 1;
+                }
                 continue;
             }
             self.energy[k] = 0.0;
