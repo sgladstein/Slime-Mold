@@ -387,6 +387,18 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let squad = (!alive.is_empty()).then(|| (alive.iter().map(|p| p.0).sum::<f32>() / alive.len() as f32, alive.iter().map(|p| p.1).sum::<f32>() / alive.len() as f32));
         // The squad mode follows the controlled squad, as the window does.
         let squad = g.active.and_then(|q| g.middle(q)).filter(|_| g.rules.squads).or(squad);
+        // A picture between two steps (a frame sequence at more frames
+        // than steps; gun look, 2026-11-15): the game is at the step past
+        // `t`, so the picture shows it as the window would `t` into it.
+        // Bullets glide that far along their legs (`App::between`), and
+        // flashes, kicks and hit lights are that much older; the notes go
+        // back once it is taken.
+        let step_s = g.rules.frame_ticks as f32 / g.rules.tps as f32;
+        let into = (1.0 - (g.time() - t) / step_s).clamp(0.0, 1.0);
+        let notes = (app.looks.clone(), app.tracers.clone());
+        app.sub = Some(into);
+        app.age_notes(into * step_s);
+        let g = app.game.as_ref().unwrap();
         let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.members(q),
@@ -424,6 +436,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
         }
+        (app.looks, app.tracers) = notes;
+        app.sub = None;
         let g = app.game.as_ref().unwrap();
         let left: f32 = g.world.crystals().iter().map(|c| c.1).sum::<f32>() / app.charge0.iter().sum::<f32>().max(1.0);
         // The CPU work the window adds: the ground field (once a game
@@ -511,16 +525,24 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
         l.shots(&g.last_shots);
     }
     join_looks(g, looks);
-    for s in &g.last_shots {
+    let pace = g.rules.bullet_speed * g.world.scale();
+    for (j, s) in g.last_shots.iter().enumerate() {
         // Each leg is where the bullet flew this frame (game state, not an
         // effect), so a bullet draws as a short streak moving out.
         let from = s.from;
-        tracers.push(Tracer { from, to: s.hit.unwrap_or(s.to), hit: s.hit.is_some(), age: 0.0, r: s.r });
+        let to = s.hit.unwrap_or(s.to);
+        // The drawn bullet glides along its leg at its own speed
+        // (`App::between`), so its hit lights when it gets there.
+        let delay = g.flown.get(j).filter(|_| pace > 0.0).map_or(0.0, |b| (to.0 - from.0).hypot(to.1 - from.1) / (pace * b.speed));
+        tracers.push(Tracer { from, to, hit: s.hit.is_some(), age: 0.0, r: s.r, delay });
         if !s.fired {
             continue;
         }
         if let Some(k) = s.by.filter(|&k| k < looks.len() && g.soldiers.get(k).is_some_and(|q| q.alive)) {
             looks[k].flash = FLASH;
+            looks[k].kick = KICK;
+            looks[k].cast = s.cast;
+            looks[k].shots = looks[k].shots.wrapping_add(1);
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
         }
     }

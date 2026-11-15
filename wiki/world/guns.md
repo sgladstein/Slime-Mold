@@ -6,16 +6,20 @@ updated: 2026-11-15
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
+  - Reports/spray-share-ab-2026-11-15/README.md
 code:
   - Ammo::roll
   - Gun::roll
   - Run::range
   - Squad::gun
+  - muzzle_flash
+  - spray_one
 ---
 
 # Guns, bullets and gun cards
@@ -37,12 +41,24 @@ sells guns and cards, and the gun range (`Run::range`, start menu) is a free
 armory to try any of them against slime ([the run](run.md)). The H loadouts
 are test presets, not the game's way to arm. Nothing here is balanced.
 
+**The look** (owner 11-15 08:30Z: the guns "should really be one of the
+draws of the game"): a muzzle flash at the barrel's mouth whose jets are
+the gun kind's (rifle three prongs, carbine short and wide, long gun a
+lance, scattergun a fan), a recoil kick, tracers that glide between steps
+from the barrel, a hit light when the bullet gets there, and the spray:
+every walker a shot kills flies out of the hit back toward the shooter as
+a droplet and dies where it lands, so kills are as without it
+(`Rules::spray_secs`, `spray=0` turns it off;
+[gun look](../../Reports/gun-look-2026-11-15/README.md)). How much of the
+kill flies (`Rules::spray_share`, 1 all) is a blind A/B for the owner
+([spray A/B](../../Reports/spray-share-ab-2026-11-15/README.md)).
+
 ## Owner's word
 
 The quoted rulings, with times, are in [game decisions](../decisions-game.md):
 2026-11-14 16:46-16:47 (the squad owns the gun, bullets are rolled), 18:05-18:38
 (no recharge), 15:06-15:35 (costs and a budget) and 2026-11-15 02:57 (short
-card text).
+card text) and 08:30 (the guns a draw of the game).
 
 ## Open
 
@@ -51,4 +67,4 @@ card text).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md).

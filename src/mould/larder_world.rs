@@ -307,6 +307,11 @@ pub struct Game<W: World> {
     /// `squad::SHOTS_MAX`, and a shot fired past that is dropped (the
     /// newest go: the old ones are about to land).
     pub bullets: Vec<Bullet>,
+    /// The bullets as they flew the last step's legs, one each in the order
+    /// of `last_shots` (empty while shots are rays): what the window draws
+    /// gliding along each leg between steps (gun look, 2026-11-15). No
+    /// rule reads it.
+    pub flown: Vec<Bullet>,
     /// The flight cards on soldiers' bullets, and bullets a split could
     /// not add past `squad::SHOTS_MAX` (dropped, newest first, as fired
     /// shots are).
@@ -409,7 +414,7 @@ struct Flight {
 pub fn head_start<W: World>(world: &mut W, secs: f32, rules: &Rules) {
     let frames = (secs.max(0.0) * rules.tps as f32 / rules.frame_ticks.max(1) as f32).round() as u32;
     for _ in 0..frames {
-        let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink };
+        let f = Frame { units: Vec::new(), shots: Vec::new(), slime: squad::slime_trail(6.0), crater: 0, sink: rules.sink, ..Frame::default() };
         world.frame(&f, rules.frame_ticks);
     }
 }
@@ -468,6 +473,7 @@ impl<W: World> Game<W> {
             last_shots: Vec::new(),
             last_takes: Vec::new(),
             bullets: Vec::new(),
+            flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             bullets_dropped: 0,
             mould,
