@@ -45,7 +45,10 @@ struct V {
     alarm_side: u32, alarm_full: f32,
     // The plants (`View::set_plants`, 11-14): the word in `news` where the
     // engine's plant blocks start (0 off; `mould::plants`).
-    plant_at: u32, _a1: u32,
+    plant_at: u32,
+    // The map's flora (`View::set_plants`, `map::Items::flora`): which
+    // forms its plants take up close (`plant_layer`).
+    flora: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -224,6 +227,9 @@ fn plant_heat(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitc
 fn plant_char(i: u32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(6u, i)); }
 // How fresh a cell's fire is (the engine's `PB_FRESH`, 1 as it catches).
 fn plant_fresh(i: u32) -> f32 { return bitcast<f32>(pblock(8u, i)); }
+// The ground's moisture in cell (ix, iy) (`plants::moisture`, block 7):
+// 1 at water and up to 0.4 wetter within 8 cells of it.
+fn plant_moist(ix: i32, iy: i32) -> f32 { if (P.plant_at == 0u) { return 0.0; } return bitcast<f32>(pblock(7u, cidx(ix, iy))); }
 // Heat and freshness at world point (x, y), bilinear: a crown's flame
 // takes them at its centre (`plant_kind_layer`).
 fn heat_lin(x: f32, y: f32) -> vec2<f32> {
@@ -313,6 +319,16 @@ fn plant_px(x: f32, y: f32) -> PlantPx {
 // over about a pixel; `tone` is the crown's own hash (a little value and
 // hue each). No stamp or sprite: a crown's size is the field's value.
 struct Crown { a: f32, lit: f32, tone: f32, dome: f32, at: vec2<f32> }
+// One kind's form on one flora (`flora_form`): the grid's spacing `s`,
+// the crown's radius `r0` of it, `stretch` along y, the outline's `lobe`
+// and the dome's `relief`, its `shape` (0 a lobed dome, 1 a blade, 2 a
+// thorny star, 3 a cap with a dark eye, 4 a ring), `clump` (how much
+// the crowns gather into patches, by a slow noise at their centres, the
+// cover staying with the density) and its colour; `wet` gathers the
+// patches onto the wettest ground (the moisture field, so along the
+// water) instead of the noise alone, and `tip` (when not zero) is the
+// colour each crown's top turns toward.
+struct Form { s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, shape: u32, clump: f32, col: vec3<f32>, wet: f32, tip: vec3<f32> }
 // `lobe` ruffles each crown's outline (five to eight lobes, so a grass tuft is
 // spiky and a tree's crown leafy, not a pebble: the first cut's round
 // domes read as cobbles, and seven deep lobes on every tuft as stars);
@@ -328,12 +344,13 @@ fn lobe_wave(u: vec2<f32>, n: u32, phi: f32) -> f32 {
     return z.y * cos(phi) + z.x * sin(phi);
 }
 
-fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lobe: f32, relief: f32) -> Crown {
+fn crowns(x: f32, y: f32, fm: Form, dk: f32, seed: f32) -> Crown {
     var o: Crown;
     o.a = 0.0; o.lit = 1.0; o.tone = 0.5; o.dome = 0.0; o.at = vec2<f32>(x, y);
-    let q = vec2<f32>(x, y / stretch) / s;
+    let s = fm.s;
+    let q = vec2<f32>(x, y / fm.stretch) / s;
     let qi = floor(q);
-    let rr = r0 * sqrt(min(dk, 1.0));
+    let rr = fm.r0 * sqrt(min(dk, 1.0));
     let aa = 1.2 / (P.zoom * s);
     let l = normalize(LIGHT);
     var top = -1.0;
@@ -343,33 +360,126 @@ fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lob
             let h1 = hash2(c + seed);
             let h2 = hash2(c + seed + 17.3);
             let h3 = hash2(c + seed + 41.9);
-            let r = rr * (0.6 + 0.4 * h3);
             let ctr = c + 0.15 + 0.7 * vec2<f32>(h1, h2);
-            let rel = q - ctr;
+            var r = rr * (0.6 + 0.4 * h3);
+            if (fm.clump > 0.0) {
+                // Patches: big where a slow noise is high, none where low;
+                // a denser stand fills more of the ground between.
+                var g = vnoise(ctr * s / 5.0 + seed);
+                if (fm.wet > 0.0) {
+                    let mo = plant_moist(i32(floor(ctr.x * s)), i32(floor(ctr.y * s * fm.stretch)));
+                    g = mix(g, smoothstep(0.55, 0.95, mo) + 0.3 * (g - 0.5), fm.wet);
+                }
+                r *= mix(1.0, 1.45 * smoothstep(0.3, 0.7, g + 0.5 * (dk - 0.5)), fm.clump);
+            }
+            if (r <= 0.0) { continue; }
+            var rel = q - ctr;
+            var reach = r * (1.0 + fm.lobe);
+            if (fm.shape == 1u) {
+                // A blade: a thin ellipse leaning up to 35 degrees.
+                let t = (h1 - 0.5) * 1.2;
+                let cs = cos(t); let sn = sin(t);
+                rel = vec2<f32>(cs * rel.x - sn * rel.y, sn * rel.x + cs * rel.y) * vec2<f32>(2.2, 0.45);
+                reach = r * 2.4;
+            }
             let dd = length(rel);
-            if (dd > r * (1.0 + lobe) + aa) { continue; }
-            // sin(n theta + phi) without the angle: (cos theta, sin theta)
-            // to the n-th power as a complex number (`lobe_wave`); atan2 and
-            // sin cost the 1070 0.03 ms at zoom 6 and 24 (performance
-            // thread, 11-15), and the pixels match to 1/255.
-            let re = r * (1.0 + lobe * lobe_wave(rel / max(dd, 1e-20), 5u + u32(floor(4.0 * h2)), 6.2831853 * h1));
-            let a = clamp((re - dd) / aa + 0.5, 0.0, 1.0);
+            if (dd > reach + aa) { continue; }
+            var re = r;
+            if (fm.shape == 2u) {
+                // Thorns: nine to twelve sharp points (atan2 and sin only
+                // here, on the planets that grow thorns).
+                let ang = atan2(rel.y, rel.x);
+                let w = pow(0.5 + 0.5 * sin((9.0 + floor(4.0 * h2)) * ang + 6.2831853 * h1), 3.0);
+                re = r * (1.0 - 0.5 * fm.lobe + 1.5 * fm.lobe * w);
+            } else if (fm.lobe > 0.0) {
+                // sin(n theta + phi) without the angle: (cos theta, sin theta)
+                // to the n-th power as a complex number (`lobe_wave`); atan2 and
+                // sin cost the 1070 0.03 ms at zoom 6 and 24 (performance
+                // thread, 11-15), and the pixels match to 1/255.
+                re = r * (1.0 + fm.lobe * lobe_wave(rel / max(dd, 1e-20), 5u + u32(floor(4.0 * h2)), 6.2831853 * h1));
+            }
+            var a = clamp((re - dd) / aa + 0.5, 0.0, 1.0);
+            if (fm.shape == 4u) { a = min(a, clamp((dd - 0.5 * re) / aa + 0.5, 0.0, 1.0)); }
             if (a <= 0.0) { continue; }
             let u = min(dd / max(re, 1e-4), 1.0);
-            let dome = sqrt(1.0 - u * u);
+            var dome = sqrt(1.0 - u * u);
+            if (fm.shape == 4u) { dome = sqrt(max(1.0 - pow((u - 0.75) / 0.25, 2.0), 0.0)); }
             o.a = max(o.a, a);
             // The highest dome over this point is the crown seen.
             if (dome > top) {
                 top = dome;
                 let n = normalize(vec3<f32>(rel / max(r, 1e-4), max(dome, 0.05)));
-                o.lit = (1.0 + relief * (dot(n, l) - l.z)) * (1.0 - 0.35 * relief * (1.0 - dome));
+                o.lit = (1.0 + fm.relief * (dot(n, l) - l.z)) * (1.0 - 0.35 * fm.relief * (1.0 - dome));
+                // A cap's dark eye (fungi, lichen rosettes).
+                if (fm.shape == 3u) { o.lit *= 0.55 + 0.45 * smoothstep(0.12, 0.42, u); }
                 o.tone = h3;
                 o.dome = dome;
-                o.at = vec2<f32>(ctr.x * s, ctr.y * s * stretch);
+                o.at = vec2<f32>(ctr.x * s, ctr.y * s * fm.stretch);
             }
         }
     }
     return o;
+}
+
+// Each biome's plants have their own forms up close (art lead 11-15,
+// planet review #3: only 4 of 8 biomes could be named at zoom 12; the
+// plants are the biome's signature). The kinds and amounts are the
+// simulation's; the flora (the map's `flora` line, from the level
+// generator's biome) picks how each kind grows and its colour, all
+// green except the caves' fungi and the core's alien growth, which are
+// dark mauve and purple (never cyan: the crystals' alone, nor gold or
+// red-orange: the slime's and the fire's).
+fn flora_form(fl: u32, k: u32) -> Form {
+    // Flora 0 (meadow), and every kind a flora leaves alone.
+    var f: Form;
+    f.stretch = 1.0; f.shape = 0u; f.clump = 0.0; f.col = plant_rgb(k); f.wet = 0.0; f.tip = vec3<f32>(0.0);
+    if (k == 0u) { f.s = 0.45; f.r0 = 0.8; f.lobe = 0.2; f.relief = 0.35; }
+    else if (k == 3u) { f.s = 1.1; f.r0 = 0.5; f.lobe = 0.25; f.relief = 0.6; }
+    else if (k == 2u) { f.s = 0.4; f.r0 = 0.6; f.stretch = 2.4; f.lobe = 0.15; f.relief = 0.4; }
+    else { f.s = 1.7; f.r0 = 0.85; f.lobe = 0.12; f.relief = 0.9; }
+    if (fl == 1u) {
+        // Barrens: dry grass blades; thorn bushes in patches; oasis palms.
+        if (k == 0u) { f.shape = 1u; f.s = 0.55; f.r0 = 0.7; f.relief = 0.3; f.col = vec3<f32>(58.0, 60.0, 42.0); }
+        else if (k == 3u) { f.shape = 2u; f.s = 1.3; f.r0 = 0.5; f.lobe = 0.45; f.clump = 0.8; f.col = vec3<f32>(58.0, 56.0, 40.0); }
+        else if (k == 1u) { f.shape = 2u; f.s = 1.6; f.lobe = 0.35; f.col = vec3<f32>(30.0, 48.0, 30.0); }
+    } else if (fl == 2u) {
+        // Fen: wet moss hummocks, dark olive-brown with yellow-green tips,
+        // gathered along the water (art lead 11-15: the fen's green round
+        // clumps were the closest pair with the meadow's; in grey it is a
+        // coarser, darker grain). Before: even green cushions 0.6 apart,
+        // (34,58,36), clumped by noise alone.
+        if (k == 0u) { f.s = 0.85; f.r0 = 0.95; f.lobe = 0.08; f.relief = 0.95; f.clump = 0.9; f.wet = 0.6; f.col = vec3<f32>(30.0, 29.0, 16.0); f.tip = vec3<f32>(62.0, 74.0, 28.0); }
+        else if (k == 1u) { f.s = 1.1; f.r0 = 0.8; f.lobe = 0.15; f.col = vec3<f32>(24.0, 44.0, 30.0); }
+    } else if (fl == 3u) {
+        // River valley: long grass, blade by blade.
+        if (k == 0u) { f.shape = 1u; f.s = 0.6; f.r0 = 0.95; f.relief = 0.3; f.col = vec3<f32>(46.0, 68.0, 42.0); }
+    } else if (fl == 4u) {
+        // Jungle: a broadleaf canopy of big crowns over ferns.
+        if (k == 1u) { f.s = 2.3; f.r0 = 0.9; f.lobe = 0.18; f.relief = 1.0; f.col = vec3<f32>(18.0, 44.0, 26.0); }
+        else if (k == 0u) { f.shape = 2u; f.s = 0.7; f.r0 = 0.7; f.lobe = 0.4; f.relief = 0.5; f.col = vec3<f32>(30.0, 58.0, 34.0); }
+    } else if (fl == 5u) {
+        // Highlands: lichen rosettes and cushion plants in patches; firs.
+        if (k == 0u) { f.shape = 3u; f.s = 0.6; f.r0 = 0.6; f.lobe = 0.0; f.relief = 0.4; f.clump = 0.7; f.col = vec3<f32>(62.0, 64.0, 48.0); }
+        else if (k == 3u) { f.s = 0.9; f.r0 = 0.55; f.lobe = 0.06; f.relief = 0.8; f.clump = 0.5; f.col = vec3<f32>(52.0, 58.0, 40.0); }
+        else if (k == 1u) { f.shape = 2u; f.s = 1.4; f.r0 = 0.7; f.lobe = 0.3; f.col = vec3<f32>(20.0, 40.0, 30.0); }
+    } else if (fl == 6u) {
+        // Caves: fungi. Caps with a dark eye, giant ones for the jungle
+        // kind, stalks for reeds; a dark mauve-grey.
+        f.shape = 3u; f.lobe = 0.0;
+        if (k == 0u) { f.s = 0.55; f.r0 = 0.65; f.relief = 0.6; f.col = vec3<f32>(70.0, 62.0, 72.0); }
+        else if (k == 1u) { f.s = 1.9; f.r0 = 0.85; f.relief = 1.0; f.col = vec3<f32>(78.0, 66.0, 82.0); }
+        else if (k == 3u) { f.s = 1.0; f.col = vec3<f32>(66.0, 60.0, 62.0); }
+        else { f.shape = 1u; f.col = vec3<f32>(60.0, 56.0, 66.0); }
+    } else if (fl == 7u) {
+        // The core: alien growth. Coral rings, thorned crowns; purple-
+        // magenta, hue 290-320, the only purple on the map (art lead
+        // 11-15: red is danger's; before, wine at hue 315-340).
+        if (k == 0u) { f.shape = 4u; f.s = 0.6; f.r0 = 0.7; f.lobe = 0.1; f.col = vec3<f32>(68.0, 40.0, 60.0); }
+        else if (k == 1u) { f.shape = 2u; f.s = 1.8; f.r0 = 0.8; f.lobe = 0.4; f.relief = 0.9; f.col = vec3<f32>(52.0, 28.0, 48.0); }
+        else if (k == 3u) { f.shape = 4u; f.s = 1.0; f.col = vec3<f32>(64.0, 44.0, 58.0); }
+        else { f.shape = 1u; f.col = vec3<f32>(58.0, 38.0, 54.0); }
+    }
+    return f;
 }
 
 // The plant layer at (x, y): each kind's crowns, lower kinds first
@@ -381,28 +491,40 @@ fn crowns(x: f32, y: f32, s: f32, r0: f32, stretch: f32, dk: f32, seed: f32, lob
 // cover), `fw` how much of the cover is drawn as crowns (not the far
 // view's mean), for `shaded`'s mix with the smooth flame.
 struct PlantLayer { rgb: vec3<f32>, cover: f32, fl: vec3<f32>, fc: f32, fw: f32 }
-fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f32, s: f32, r0: f32, stretch: f32, lobe: f32, relief: f32, hot: bool) {
+fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f32, hot: bool) {
     if (dk <= 0.003) { return; }
-    let f = smoothstep(1.6, 3.2, s * P.zoom);
+    let fm = flora_form(P.flora, k);
+    let f = smoothstep(1.6, 3.2, fm.s * P.zoom);
     var a = plant_cover(dk);
-    var col = plant_rgb(k);
+    var col = fm.col;
     var fa = 0.0;
     var fl = vec3<f32>(0.0);
     if (f > 0.0) {
-        let cr = crowns(x, y, s, r0, stretch, dk, f32(k) * 101.0 + 7.0, lobe, relief);
+        let cr = crowns(x, y, fm, dk, f32(k) * 101.0 + 7.0);
         let tint = mix(vec3<f32>(1.06, 1.0, 0.9), vec3<f32>(0.92, 1.0, 1.08), cr.tone);
         a = mix(a, cr.a, f);
-        col = mix(col, col * tint * cr.lit * (0.85 + 0.3 * cr.tone), f);
+        var cc = col;
+        if (fm.tip.x > 0.0) { cc = mix(col, fm.tip, smoothstep(0.8, 1.0, cr.dome)); }
+        col = mix(col, cc * tint * cr.lit * (0.85 + 0.3 * cr.tone), f);
         // A burning crown: its flame from the heat at its centre, so each
         // crown flares, shrinks and goes out on its own and a front has
         // the plants' own tongues and gaps (graphics lead 21:26Z). A fresh
         // fire burns a step hotter (toward yellow), the crown's top
         // hottest.
+        // A freshly caught crown burns white-hot at its top (`FLAME_CORE`,
+        // luma ~240), above the thick slime's highlight (art lead 11-15,
+        // planet review #11, rule 2: light is the top of the value
+        // order; before, the front's luma p99 was 155 against the slime's
+        // 240), and the core fades as the fire ages (`PB_FRESH`).
         if (hot && cr.a > 0.0) {
             let hf = heat_lin(cr.at.x, cr.at.y);
             let h = (hf.x + 0.3 * hf.y * step(0.01, hf.x)) * (0.8 + 0.25 * cr.dome);
-            fa = cr.a * f * flame_cover(hf.x);
-            fl = flame_body(h) * fa;
+            // sqrt: freshness falls x 0.85 a fire step, so a crown's core
+            // stays white for about the half second it takes to catch
+            // its neighbours (linear, the front's luma p99 was 186).
+            let core = sqrt(clamp(hf.y, 0.0, 1.0)) * step(0.01, hf.x) * (0.5 + 0.5 * cr.dome);
+            fa = cr.a * f * max(flame_cover(hf.x), core);
+            fl = mix(flame_body(h), FLAME_CORE, core) * fa;
         }
     }
     (*o).rgb = (*o).rgb * (1.0 - a) + col * a;
@@ -414,15 +536,14 @@ fn plant_kind_layer(o: ptr<function, PlantLayer>, x: f32, y: f32, k: u32, dk: f3
 fn plant_layer(x: f32, y: f32, d: vec4<f32>, hot: bool) -> PlantLayer {
     var o: PlantLayer;
     o.rgb = vec3<f32>(0.0); o.cover = 0.0; o.fl = vec3<f32>(0.0); o.fc = 0.0; o.fw = 0.0;
-    // Meadow: fine spiky tufts about half a cell apart, closing up when
-    // full, lit softly.
-    plant_kind_layer(&o, x, y, 0u, d.x, 0.45, 0.8, 1.0, 0.2, 0.35, hot);
-    // Scrub: small bushes a cell apart, sand between even when full.
-    plant_kind_layer(&o, x, y, 3u, d.w, 1.1, 0.5, 1.0, 0.25, 0.6, hot);
-    // Reeds: narrow stems, long along y.
-    plant_kind_layer(&o, x, y, 2u, d.z, 0.4, 0.6, 2.4, 0.15, 0.4, hot);
-    // Jungle: crowns about 1.7 cells apart, a closed canopy when full.
-    plant_kind_layer(&o, x, y, 1u, d.y, 1.7, 0.85, 1.0, 0.12, 0.9, hot);
+    // Meadow, scrub, reeds, jungle, each in its flora's form
+    // (`flora_form`; on flora 0: fine spiky tufts half a cell apart,
+    // bushes a cell apart with sand between, narrow stems long along y,
+    // crowns 1.7 cells apart closing into a canopy).
+    plant_kind_layer(&o, x, y, 0u, d.x, hot);
+    plant_kind_layer(&o, x, y, 3u, d.w, hot);
+    plant_kind_layer(&o, x, y, 2u, d.z, hot);
+    plant_kind_layer(&o, x, y, 1u, d.y, hot);
     return o;
 }
 
@@ -439,6 +560,8 @@ fn plant_layer(x: f32, y: f32, d: vec4<f32>, hot: bool) -> PlantLayer {
 // (median luminance 82, 21:20Z cut).
 // Before: `flame` mapped heat^1.5 ember-orange-yellow with yellow from
 // 0.85, and the bulk read near white in grey (20:10Z review).
+// The white-hot core of a freshly caught fire (luma about 240).
+const FLAME_CORE: vec3<f32> = vec3<f32>(255.0, 242.0, 205.0);
 fn flame_body(h: f32) -> vec3<f32> {
     let t = clamp(h, 0.0, 1.0);
     let ember = vec3<f32>(60.0, 12.0, 3.0);
@@ -971,9 +1094,13 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // film only, where its thickness grades it.
     let opaque = smoothstep(0.05, 0.35, th);
     m.albedo = mix(mix(soil, gel, film), body_c, opaque * 0.95);
-    // How much of the ground shows through the slime here, for the
-    // plants and char that `shaded` lays per pixel under it.
-    m.vis = 1.0 - 0.95 * opaque;
+    // How much of the ground's own detail (plants, char, soil texture)
+    // shows through the slime here, gone by the thin film's middle (th
+    // 0.05) by the colour's thickness, walkers counted (art lead 11-15,
+    // planet review #8: under any slime only the slime's texture reads).
+    // Before, 1 - 0.95 x opaque left the plants whole under a film of
+    // explorers, whose height (`film_th`) is next to none.
+    m.vis = 1.0 - smoothstep(0.004, 0.05, th);
     m.glow = vec3<f32>(0.0);
     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
     m.body = 0.0;
@@ -989,7 +1116,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         let water = WET_RGB + tint * 0.4;
         let over = clamp(1.0 - exp(-5.0 * th), 0.0, 1.0) * 0.85;
         m.albedo = mix(water, m.albedo, over);
-        m.vis = 1.0 - over;
+        m.vis = min(m.vis, 1.0 - over);
         m.gloss = max(m.gloss, 0.75);
     } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
         // Under hard terrain, the soil: `terrain_over` lays the rock, wall
@@ -1712,7 +1839,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // The soil's own material where the ground is bare (the mould's film,
     // thickness by the inverse of the height curve, covers it).
     let th_here = film_th(x, y);
-    let sd = soil_detail(x, y, exp(-30.0 * th_here));
+    // Under any slime the ground's own detail (clay cracks, ripples, the
+    // plants' crowns, char) goes fully under, gone by the thin film's
+    // middle (th 0.05), so only the slime's texture reads where it lies
+    // (art lead 11-15, planet review #8: cracks and crowns showed through
+    // the film). Before, `exp(-30 th)` left 40% of it at th 0.03, and the
+    // plants took the per-fine-cell `vis` alone, 1 under any thin film.
+    let under = 1.0 - smoothstep(0.004, 0.05, th_here);
+    let sd = soil_detail(x, y, exp(-30.0 * th_here) * under * m.vis);
     m.albedo = (m.albedo + sd.yzw) * sd.x;
     // Burnt ground, then the plants, at this pixel and under the slime
     // (`vis`): one B-spline of the plant fields (`plant_px`), which the
@@ -1724,13 +1858,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         // Char: near-black grey with a crisp edge (a narrow rise of the
         // per-pixel char, a few pixels at zoom 24), a little ash grain.
         pl = plant_layer(x, y, pp.d, pp.heat > 0.002);
-        let pv = pl.cover * m.vis;
-        m.albedo = m.albedo * (1.0 - pv) + pl.rgb * m.vis;
+        let gv = m.vis * under;
+        let pv = pl.cover * gv;
+        m.albedo = m.albedo * (1.0 - pv) + pl.rgb * gv;
         m.gloss *= 1.0 - pv;
         // Over the plants too: what is left of a burnt stand is stubble.
         let ch = smoothstep(0.06, 0.3, pp.char) * (0.85 + 0.15 * smoothstep(0.3, 0.8, pp.char));
         let ash = CHAR_RGB * (0.9 + 0.2 * vnoise(vec2<f32>(x, y) * 2.3));
-        m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * m.vis);
+        m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * gv);
     }
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
@@ -1802,10 +1937,12 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let rest = 1.0 - pl.fw;
         if (hf > 0.002 && rest > 0.0) {
             let sc = flame_cover(hf) * rest * (1.0 - ez);
-            fl += flame_body(hf) * sc * (1.0 - fc);
+            fl += mix(flame_body(hf), FLAME_CORE, 0.8 * clamp(pp.fresh, 0.0, 1.0)) * sc * (1.0 - fc);
             fc += sc * (1.0 - fc);
             if (ez > 0.0) {
-                let em = crowns(x, y, 0.6, 0.35, 1.0, hf, 913.0, 0.0, 0.5);
+                var ef: Form;
+                ef.s = 0.6; ef.r0 = 0.35; ef.stretch = 1.0; ef.lobe = 0.0; ef.relief = 0.5; ef.shape = 0u; ef.clump = 0.0; ef.col = vec3<f32>(0.0); ef.wet = 0.0; ef.tip = vec3<f32>(0.0);
+                let em = crowns(x, y, ef, hf, 913.0);
                 let ea = em.a * ez * rest * smoothstep(0.02, 0.1, hf);
                 fl += flame_body(min(hf * (0.9 + 0.4 * em.dome) + 0.3 * pp.fresh, 1.0)) * ea * (1.0 - fc);
                 fc += ea * (1.0 - fc);

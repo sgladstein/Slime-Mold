@@ -97,16 +97,16 @@ impl Camera {
     /// world is centred, otherwise the view stops at the world's edge.
     pub fn clamp(&mut self) {
         let (w, h) = self.span();
-        self.x = if w >= self.world.0 { (self.world.0 - w) / 2.0 } else { self.x.clamp(0.0, self.world.0 - w) };
+        // `>=` on the bounds too, not only the spans: when the view is the
+        // world's size to within rounding, the clamp's bounds can cross by
+        // an ulp and `f32::clamp` panics (planet 5 seed 1 at 960x600,
+        // 2026-11-15: min -29.661352 > max -29.661354).
+        self.x = if w >= self.world.0 || 0.0 >= self.world.0 - w { (self.world.0 - w) / 2.0 } else { self.x.clamp(0.0, self.world.0 - w) };
         // Vertically, the band between the UI's insets is what must stay on
         // the world (with no insets, the whole screen).
         let (top, bottom) = (self.inset.0 / self.zoom, self.inset.1 / self.zoom);
         let band = h - top - bottom;
-        // The upper bound is kept at least the lower: when the band is a
-        // hair under the world, rounding made it a few ulps below `-top`
-        // and `f32::clamp` panicked (planet 5 seed 1, 960 x 600 at zoom 12,
-        // min -29.661352 > max -29.661354; 11-15, crystals thread).
-        self.y = if band >= self.world.1 { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, (self.world.1 - h + bottom).max(-top)) };
+        self.y = if band >= self.world.1 || -top >= self.world.1 - h + bottom { (self.world.1 - band) / 2.0 - top } else { self.y.clamp(-top, self.world.1 - h + bottom) };
     }
 
     /// The UI's insets changed (its panels' heights): keep the view legal.

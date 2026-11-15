@@ -1,0 +1,242 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  rounds t    1 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-001s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-001s-near.png
+  CPU: ground field 1.47 ms (once a game second), model and HUD 0.076 ms a frame
+  t 1 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    2 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-002s-near.png
+  CPU: ground field 1.67 ms (once a game second), model and HUD 0.073 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    3 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-003s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-003s-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.068 ms a frame
+  t 3 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  boom t 3.00 s at 230,110: 0 killed, 0 flung
+  rounds t    4 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-004s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-004s-near.png
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.114 ms a frame
+  t 4 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    5 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-005s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-005s-near.png
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.101 ms a frame
+  t 5 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    6 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-006s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-006s-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.070 ms a frame
+  t 6 s: mould 25004, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    7 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-007s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-007s-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.073 ms a frame
+  t 7 s: mould 25015, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    8 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-008s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-008s-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.071 ms a frame
+  t 8 s: mould 25036, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t    9 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-009s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-009s-near.png
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.071 ms a frame
+  t 9 s: mould 25062, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   10 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-010s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-010s-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.073 ms a frame
+  t 10 s: mould 25094, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   11 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-011s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-011s-near.png
+  CPU: ground field 2.33 ms (once a game second), model and HUD 0.086 ms a frame
+  t 11 s: mould 25125, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   12 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-012s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-012s-near.png
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.061 ms a frame
+  t 12 s: mould 25166, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   13 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-013s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-013s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.059 ms a frame
+  t 13 s: mould 25214, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   14 s: 1 casts (blast, gas, germ, bomb [0, 0, 0, 1]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-014s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-014s-near.png
+  CPU: ground field 2.09 ms (once a game second), model and HUD 0.059 ms a frame
+  t 14 s: mould 25255, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   15 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-015s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-015s-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.055 ms a frame
+  t 15 s: mould 25314, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   16 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-016s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-016s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.060 ms a frame
+  t 16 s: mould 25359, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   17 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-017s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-017s-near.png
+  CPU: ground field 1.30 ms (once a game second), model and HUD 0.064 ms a frame
+  t 17 s: mould 25419, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.998; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   18 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-018s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-018s-near.png
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.061 ms a frame
+  t 18 s: mould 25484, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   19 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-019s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-019s-near.png
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.057 ms a frame
+  t 19 s: mould 25547, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   20 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-020s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-020s-near.png
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.055 ms a frame
+  t 20 s: mould 25609, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   21 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-021s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-021s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.058 ms a frame
+  t 21 s: mould 25696, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   22 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-022s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-022s-near.png
+  CPU: ground field 1.40 ms (once a game second), model and HUD 0.056 ms a frame
+  t 22 s: mould 25761, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   23 s: 2 casts (blast, gas, germ, bomb [0, 0, 0, 2]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-023s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-023s-near.png
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.056 ms a frame
+  t 23 s: mould 25827, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.996; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   24 s: 3 casts (blast, gas, germ, bomb [0, 0, 0, 3]), 4 walkers killed, 1 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-024s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-024s-near.png
+  CPU: ground field 2.06 ms (once a game second), model and HUD 0.085 ms a frame
+  t 24 s: mould 25916, soldiers 4, bank 2000, harvested 0, shots 2, killed 6, took 0%, crystals left 0.996; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   25 s: 3 casts (blast, gas, germ, bomb [0, 0, 0, 3]), 4 walkers killed, 1 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-025s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-025s-near.png
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.056 ms a frame
+  t 25 s: mould 26006, soldiers 4, bank 2000, harvested 0, shots 2, killed 6, took 0%, crystals left 0.996; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   26 s: 3 casts (blast, gas, germ, bomb [0, 0, 0, 3]), 4 walkers killed, 1 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-026s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-026s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.056 ms a frame
+  t 26 s: mould 26097, soldiers 4, bank 2000, harvested 0, shots 2, killed 6, took 0%, crystals left 0.996; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   27 s: 5 casts (blast, gas, germ, bomb [0, 0, 0, 5]), 12 walkers killed, 28 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-027s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-027s-near.png
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.061 ms a frame
+  t 27 s: mould 26187, soldiers 4, bank 2000, harvested 0, shots 6, killed 16, took 0%, crystals left 0.996; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   28 s: 5 casts (blast, gas, germ, bomb [0, 0, 0, 5]), 12 walkers killed, 28 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-028s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-028s-near.png
+  CPU: ground field 1.38 ms (once a game second), model and HUD 0.063 ms a frame
+  t 28 s: mould 26284, soldiers 4, bank 2000, harvested 0, shots 6, killed 16, took 0%, crystals left 0.995; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   29 s: 5 casts (blast, gas, germ, bomb [0, 0, 0, 5]), 12 walkers killed, 28 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-029s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-029s-near.png
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.063 ms a frame
+  t 29 s: mould 26378, soldiers 4, bank 2000, harvested 0, shots 6, killed 16, took 0%, crystals left 0.995; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  rounds t   30 s: 5 casts (blast, gas, germ, bomb [0, 0, 0, 5]), 12 walkers killed, 28 flung, 0 not on this world, 0 lodged, 0 trail bursts
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-030s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/fire-12/planet-1-1-idle-030s-near.png
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.063 ms a frame
+  t 30 s: mould 26487, soldiers 4, bank 2000, harvested 0, shots 6, killed 16, took 0%, crystals left 0.995; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/nofire/planet-1-1-idle-020s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/nofire/planet-1-1-idle-020s-near.png
+  CPU: ground field 1.63 ms (once a game second), model and HUD 0.061 ms a frame
+  t 20 s: mould 25609, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/edge-12/planet-1-1-idle-020s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/edge-12/planet-1-1-idle-020s-near.png
+  CPU: ground field 1.45 ms (once a game second), model and HUD 0.052 ms a frame
+  t 20 s: mould 25609, soldiers 4, bank 2000, harvested 0, shots 1, killed 1, took 0%, crystals left 0.997; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-1/planet-1-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-1/planet-1-1-idle-002s-near.png
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.098 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 340.2,69.5
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-2/planet-2-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-2/planet-2-1-idle-002s-near.png
+  CPU: ground field 2.24 ms (once a game second), model and HUD 0.066 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 53.5,76.7
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-3/planet-3-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-3/planet-3-1-idle-002s-near.png
+  CPU: ground field 2.72 ms (once a game second), model and HUD 0.094 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 435.3,262.4
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-4/planet-4-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-4/planet-4-1-idle-002s-near.png
+  CPU: ground field 4.68 ms (once a game second), model and HUD 0.112 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 562.0,210.3
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-5/planet-5-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-5/planet-5-1-idle-002s-near.png
+  CPU: ground field 6.05 ms (once a game second), model and HUD 0.077 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 49.9,131.8
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-6/planet-6-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-6/planet-6-1-idle-002s-near.png
+  CPU: ground field 12.22 ms (once a game second), model and HUD 0.112 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 59.5,236.7
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-7/planet-7-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-7/planet-7-1-idle-002s-near.png
+  CPU: ground field 20.30 ms (once a game second), model and HUD 0.101 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 52.5,254.1
+  squad: touching 0.0 mean, 0 most; health 100 mean
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-8/planet-8-1-idle-002s-all.png
+/tmp/claude-0/-home-user/35a29366-0cd7-561b-90a3-3ea103f7cc30/scratchpad/rf3/flora-8/planet-8-1-idle-002s-near.png
+  CPU: ground field 24.65 ms (once a game second), model and HUD 0.091 ms a frame
+  t 2 s: mould 25000, soldiers 4, bank 2000, harvested 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 899.1,733.6
+  squad: touching 0.0 mean, 0 most; health 100 mean
