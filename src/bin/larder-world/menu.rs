@@ -190,7 +190,9 @@ pub(super) fn run_args(base: &Args, menu: &StartMenu, r: &Run) -> Args {
     a.map = None;
     a.own = false;
     a.seed = level.seed;
-    a.walkers = ((base.walkers as f32) * level.walkers).round() as usize;
+    // Shape C's walkers by the level (`run_walkers`); its keys go on in
+    // `start`, under the tier's (`run_shape`).
+    a.walkers = run_walkers(level.walkers);
     a.run = Some(r.clone());
     a
 }

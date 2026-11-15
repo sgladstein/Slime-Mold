@@ -179,7 +179,7 @@ What it does, core world seed 1, idle hand, llvmpipe (pictures on the page):
 | Fresh (`grow=0`) | 65,654 (three discs) | 7,335 (a tube network between the nests) |
 | With the 87 s head start | 7,292 (the network) | |
 
-**What it does not do: spread the slime over the map.** The slime sheds
+**[Corrected 11-15 08:30Z: the shedding below is the old bare slime a run played by mistake, not shape C; see *The run's slime is shape C* below.]** **What it does not do: spread the slime over the map.** The slime sheds
 most of its walkers in its first 30 s on every planet, whatever it starts
 with: planet 1 3,234 -> 1,652 at 30 s, planet 5 18,027 -> 4,053, the core
 world 65,654 -> 7,335 at 60 s (fresh, idle hand, seed 1). So the walkers
@@ -249,6 +249,61 @@ chase the owner found annoying on 11-12.
 
 Check: `run::tests::levels_get_harder_and_the_same_seed_gives_the_same_run`
 (goal no higher deeper); the window's run test reads the new goal text.
+
+## The run's slime is shape C (2026-11-15 08:45Z)
+
+The slime-enemy thread (08:23Z) traced the shedding above: a run never
+played shape C, the slime the owner chose as the default (11-12). The first
+build's `run_args` started a level "as a mission does", with no shape
+keys over the race world, so every run (the menu's Run and `run=`) played
+the bare race keys at 5,000 walkers times the level's factor, plus the
+tier's keys: upkeep 0.001, no shared food, no withering, panic or charge.
+That slime sheds about nine tenths of itself in its first minute.
+
+Now a run's level plays C under its tier: `run_shape` sets C's keys
+before the tier's in `start` (the tier still wins where it sets a key),
+and its start walkers are C's 25,000 times the level's factor
+(`run_walkers`), so planet 1 lands about 15,000 (C's sandbox density on
+0.6 of the map) and the core world about 340,000. C's slots (50,000 for
+25,000 walkers) grow by the same factor, and both by the planet's open
+cells (`open_scale`). The slime thread's note: C's growth stops at its
+slots, and it is building strength that does not need more slots ("a fed
+walker that can't divide thickens"), so the slots here are sized for cover
+and frame cost, not as the slime's growth.
+
+**A planet's slime varies** (owner, 08:34Z, answering the slime thread:
+"It should vary and be more later on"): each level's walkers are rolled
+0.8 to 1.25 times what depth and area give (`run::size_roll`, even on a
+log scale), on top of a fifth more a planet and the area.
+
+Idle hand, seed 1, llvmpipe, no head start unless said (C now):
+
+| Planet | Landing | 0:30 | 1:00 | 2:00 | Later |
+|---|---|---|---|---|---|
+| 1 (0.6) | 15,442 | 16,079 | 17,773 | 17,862 | 30,877 at 7:30, 30,883 at 10:00 |
+| 5 (2.0), 25 s head start | | | 87,786 | | 94,740 at 3:00 |
+| 5 (2.0), fresh | 90,168 | 91,700 | 95,189 | 66,429 | |
+| 8 core (6.0), fresh | 337,210 | 338,134 | 322,935 | 133,237 | |
+
+On planet 1 C grows and holds, so idle cannot win. On the big planets the
+start discs far from crystals wither (C's `wither`, a part with no news of
+food thins) before the body settles; the head start does that before
+landing. The goal's peak counts from 60 s after landing, so a withering
+start is not counted as the player's work on planets 4-8 where the head
+start runs; the core world's fresh start fell from 322,935 to 133,237
+between 1:00 and 2:00, which a fresh start would have counted as 60% of
+the goal (the head start covers it, 87 s before landing, but the core
+world's settling should be checked in play).
+
+Frame cost: not yet timed on the 1070. The core world's 340,000 walkers
+in 700,000 slots is about 14 times C's sandbox; a GPU step scales with
+walkers. The PC runner times it next; if it is too slow, the slots and the
+walkers come down together (the walker factor's area term), not the shape.
+
+Checks: `the_menu_starts_a_runs_level_like_a_mission` (C's walkers by the
+level, no keys in the args: C goes on in `start`),
+`run::tests::a_planets_slime_size_varies_by_seed`, the walker test now
+divides out the roll.
 
 ## Pictures
 

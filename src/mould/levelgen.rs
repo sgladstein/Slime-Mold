@@ -646,7 +646,7 @@ impl Recipe {
             // Walls whole and wide, few loops, small corners shut: rooms.
             O::Rooms => Recipe { regions: 12, open: 0.08, front: 0.95, loops: 0.2, gate: 0.08, ridge: 21.0, ridge_vary: 0.4, pass: (20.0, 28.0), outcrop: 2.0, ..base },
             // Every border shut; the spanning tree and the loops are tunnels.
-            O::Caves => Recipe { regions: 13, open: 0.0, front: 1.0, loops: 0.3, gate: 0.2, outcrop: 2.0, ..base },
+            O::Caves => Recipe { regions: 13, open: 0.0, front: 1.0, loops: 0.3, gate: 0.2, outcrop: 2.0, arenas: 1, ..base },
         };
         let rc = match water {
             W::Rivers => Recipe { rivers: 1 + r.chance(0.4) as usize, ..rc },
@@ -1322,17 +1322,63 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
     let mut cave_open = vec![!caves; if caves { n } else { 0 }];
     if caves {
         let spacing = (wf * hf / rc.regions as f32).sqrt() * 0.75;
+        // Each cavern lobed: its radius wanders with the angle by three
+        // harmonics (2, 3 and 5 lobes) at their own phases, by up to about
+        // a third. Round caverns on even tubes read as a node graph (looks
+        // review, 2026-11-15: rooms as discs at 0.6 roughness); the rough
+        // noise alone wobbled the rim but kept the disc. The landing's and
+        // the nests' caverns only bulge, so they keep their room.
+        // Arenas (`Recipe::arenas`) are galleries nearly as wide as the
+        // regions' spacing, a room to fight in on a route of tunnels (play
+        // review: "the caves are a slog at 4x", 2026-11-15).
         for (k, &c) in sites.iter().enumerate() {
-            let rad = if k == 0 { 130.0 } else if k <= nests.len() { 115.0 } else { spacing * r.range(0.32, 0.5) };
-            let m = rad * 1.4;
+            let rad = if k == 0 {
+                130.0
+            } else if k <= nests.len() {
+                115.0
+            } else if arena[k] {
+                spacing * r.range(0.85, 0.95)
+            } else {
+                spacing * r.range(0.32, 0.5)
+            };
+            let lobes = [(2.0, 0.16), (3.0, 0.12), (5.0, 0.07)].map(|(n, a)| (n, a, r.range(0.0, std::f32::consts::TAU)));
+            let home = k <= nests.len();
+            // The rim's radius by angle, in 256 steps round.
+            let shape: Vec<f32> = (0..256)
+                .map(|i| {
+                    let ang = i as f32 / 256.0 * std::f32::consts::TAU;
+                    let lobe: f32 = lobes.iter().map(|&(n, a, ph)| a * (n * ang + ph).cos()).sum();
+                    rad * (1.0 + if home { lobe.max(0.0) } else { lobe })
+                })
+                .collect();
+            let (lo, hi) = shape.iter().fold((f32::MAX, 0.0f32), |(lo, hi), &s| (lo.min(s), hi.max(s)));
+            // The rough noise moves the rim by up to 0.3 of its radius.
+            let m = hi * 1.4;
             for y in ((c.1 - m).max(0.0) as usize)..((c.1 + m).max(0.0) as usize).min(h) {
                 for x in ((c.0 - m).max(0.0) as usize)..((c.0 + m).max(0.0) as usize).min(w) {
-                    if dist((x as f32 + 0.5, y as f32 + 0.5), c) / rad + (rough.at(x, y) - 0.5) * 0.6 < 1.0 {
+                    let (dx, dy) = (x as f32 + 0.5 - c.0, y as f32 + 0.5 - c.1);
+                    let d = len(dx, dy);
+                    if d >= hi * 1.4 {
+                        continue;
+                    }
+                    let edge = if d < lo * 0.7 { lo } else { shape[((dy.atan2(dx) / std::f32::consts::TAU + 1.0) * 256.0) as usize % 256] };
+                    if d / edge + (rough.at(x, y) - 0.5) * 0.6 < 1.0 {
                         cave_open[y * w + x] = true;
                     }
                 }
             }
         }
+        // Each tunnel's width follows a smooth noise along its way, from
+        // 0.55 to 1.65 of its own, never under 8.5 map cells either side
+        // (8 to about 25 dish cells on the caves' planet): pinches a squad
+        // files through and galleries it spreads out in. Every tunnel was
+        // 12-18 wide all along before (20 cave planets,
+        // `Reports/levelgen-caves-2026-11-15/raw/widths.py`). A floor of 6
+        // (0.4 to 1.65) cut crystals off on 17 of 20 first tries and 5 fell
+        // back to the open plan: `walkable` narrows by a bin, so a pinch
+        // under about 8 dish cells is shut to a squad.
+        let girth = Field::new(w, h, |x, y| ((nb.fbm(x + 517.0, y - 2203.0, 55.0) - 0.5) * 3.0 + 0.5).clamp(0.0, 1.0));
+        let wide = |tw: f32, x: usize, y: usize| (tw * (0.55 + 1.1 * girth.at(x, y)) * (0.85 + 0.3 * rough.at(x, y))).max(8.5);
         for e in edges.iter_mut() {
             if e.kind == Border::Ridge {
                 continue;
@@ -1341,14 +1387,15 @@ fn build_with(p: &Planet, attempt: u32, recipe: Option<Recipe>) -> Map {
             let pieces = ((dist(a, b) / 60.0).floor() as usize).max(2);
             let pts = wobbly(&mut r, a, b, pieces, 25.0);
             let tw = r.range(rc.pass.0, rc.pass.1) * 0.6;
-            along_line(w, h, &pts, tw * 1.15, |i, _, d| {
+            along_line(w, h, &pts, tw * 1.65 * 1.15, |i, _, d| {
                 let (x, y) = (i % w, i / w);
-                if d < tw * (0.85 + 0.3 * rough.at(x, y)) {
+                if d < wide(tw, x, y) {
                     cave_open[i] = true;
                 }
             });
-            let mid = pts.len() / 2;
-            e.pass = Some((pts[mid], tw));
+            let mid = pts[pts.len() / 2];
+            let (mx, my) = ((mid.0.max(0.0) as usize).min(w - 1), (mid.1.max(0.0) as usize).min(h - 1));
+            e.pass = Some((mid, wide(tw, mx, my)));
         }
     }
     for y in 0..h {
@@ -3093,7 +3140,9 @@ mod tests {
     // roads (11-15): a rock bowl round each nest, roads over the ground,
     // the landing's crystal and the rings off the roads, cut-off caverns
     // filled. Then the fens (planet 3) alone for lakes 3 to 1 (11-15).
-    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xa99364b348fcba57, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0x7829c12a5aab8f47, 0x6f978d8f3d2eb49a];
+    // Then the caves (planet 7) alone for lobed caverns, tunnels of
+    // varying width and arenas (11-15).
+    const PINNED: [u64; 8] = [0x710b41cc2b682699, 0x20ebb73dfa9f39de, 0xa99364b348fcba57, 0x2ae5241506c4b35a, 0xa90c40d0efd19164, 0xa511f1faa02f0ce0, 0xb73dc87f4dc86a6b, 0x6f978d8f3d2eb49a];
 
     /// The dunes' clay islands leave rock, deep water and bridges as they
     /// are (bug check, 2026-11-15: clay over deep water made it wadeable).
@@ -3131,8 +3180,104 @@ mod tests {
 
     // Re-pinned for the item text's `flora` line too (11-15, plants
     // thread), then for the front doors and back roads. The fen (3:3)
-    // rolled lakes before lakes went to 3 to 1, and kept its pin.
-    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x2c613f7a6c18fa9b), (3, 3, 0x7ceef0691a3a7c28), (4, 2, 0x4e2314e4cf250d1e), (7, 2, 0xcff905ed38edd8e0), (8, 3, 0x935543c061cbb714)];
+    // rolled lakes before lakes went to 3 to 1, and kept its pin. The cave
+    // (7:2) re-pinned for lobed caverns and tunnels of varying width.
+    const MORE_PINNED: [(u32, u64, u64); 6] = [(1, 17, 0x3fcdee47fe91e8b2), (2, 7, 0x2c613f7a6c18fa9b), (3, 3, 0x7ceef0691a3a7c28), (4, 2, 0x4e2314e4cf250d1e), (7, 2, 0xf6b5705040028d94), (8, 3, 0x935543c061cbb714)];
+
+    /// Each cell's distance to the nearest cell where `open` is false,
+    /// exactly (Felzenszwalb and Huttenlocher's squared distance transform,
+    /// rows then columns), in cells.
+    fn clearance(open: &[bool], w: usize, h: usize) -> Vec<f32> {
+        const FAR: f32 = 1e12;
+        fn pass(f: &[f32]) -> Vec<f32> {
+            let n = f.len();
+            let (mut v, mut z, mut k) = (vec![0usize; n], vec![0f32; n + 1], 0usize);
+            z[0] = -FAR;
+            z[1] = FAR;
+            for q in 1..n {
+                loop {
+                    let p = v[k];
+                    let s = ((f[q] + (q * q) as f32) - (f[p] + (p * p) as f32)) / (2.0 * (q as f32 - p as f32));
+                    if s <= z[k] && k > 0 {
+                        k -= 1;
+                        continue;
+                    }
+                    if s <= z[k] {
+                        v[0] = q;
+                        z[1] = FAR;
+                        break;
+                    }
+                    k += 1;
+                    v[k] = q;
+                    z[k] = s;
+                    z[k + 1] = FAR;
+                    break;
+                }
+            }
+            k = 0;
+            (0..n)
+                .map(|q| {
+                    while z[k + 1] < q as f32 {
+                        k += 1;
+                    }
+                    let d = q as f32 - v[k] as f32;
+                    d * d + f[v[k]]
+                })
+                .collect()
+        }
+        let mut d: Vec<f32> = open.iter().map(|&o| if o { FAR } else { 0.0 }).collect();
+        for y in 0..h {
+            let row = pass(&d[y * w..(y + 1) * w]);
+            d[y * w..(y + 1) * w].copy_from_slice(&row);
+        }
+        for x in 0..w {
+            let col: Vec<f32> = (0..h).map(|y| d[y * w + x]).collect();
+            for (y, v) in pass(&col).into_iter().enumerate() {
+                d[y * w + x] = v;
+            }
+        }
+        d.into_iter().map(f32::sqrt).collect()
+    }
+
+    /// Cave tunnels pinch and widen along their way, and each cave planet
+    /// has a room to fight in away from the landing and the nests. On 20
+    /// caves before (main at 2026-11-15 08:00Z, `widths.py` in
+    /// `Reports/levelgen-caves-2026-11-15/raw/`), a tunnel was 12-13 dish
+    /// cells wide at the 10th percentile and 17-18 at the 90th, the same
+    /// all along, and the widest room away from home had 76-109 map cells
+    /// of clearance; after, 9 and 21-25, and 120-235.
+    #[test]
+    fn cave_tunnels_vary_and_open_into_rooms() {
+        for s in 1..=3 {
+            let p = planet(s, 7);
+            let m = level(s, 7);
+            let (w, h) = p.size;
+            let open: Vec<bool> = m.ground.iter().map(|&g| g & G_ROCK == 0).collect();
+            let d = clearance(&open, w, h);
+            // A tunnel's middle: a ridge of the clearance (no neighbour
+            // farther from rock), under 30 dish cells wide. Its clearance
+            // in map cells is its width in dish cells.
+            let mut widths = Vec::new();
+            for y in 1..h - 1 {
+                for x in 1..w - 1 {
+                    let c = d[y * w + x];
+                    if c > 1.0 && c < 30.0 && [(0, 1), (1, 0), (1, 1), (1, -1)].iter().all(|&(dx, dy): &(isize, isize)| {
+                        let (a, b) = (((y as isize + dy) as usize) * w + (x as isize + dx) as usize, ((y as isize - dy) as usize) * w + (x as isize - dx) as usize);
+                        c >= d[a] && c >= d[b]
+                    }) {
+                        widths.push(c);
+                    }
+                }
+            }
+            widths.sort_by(f32::total_cmp);
+            let at = |q: f32| widths[(q * (widths.len() - 1) as f32) as usize];
+            assert!(at(0.1) <= 10.5 && at(0.9) >= 19.5, "cave {s}: tunnel widths {:.1} to {:.1} (10th to 90th percentile)", at(0.1), at(0.9));
+            let land = m.items.landing.unwrap();
+            let homes: Vec<(f32, f32)> = std::iter::once(land).chain(m.items.moulds.iter().copied()).collect();
+            let room = (0..w * h).filter(|&i| homes.iter().all(|&q| dist(q, ((i % w) as f32, (i / w) as f32)) > 260.0)).map(|i| d[i]).fold(0.0, f32::max);
+            assert!(room >= 115.0, "cave {s}: the widest room away from home has {room:.0} map cells of clearance");
+        }
+    }
 
     /// Every nest has a front door and a back road (play review,
     /// 2026-11-15: 4 of 112 had both): on seeds 1-6 of every planet, the
