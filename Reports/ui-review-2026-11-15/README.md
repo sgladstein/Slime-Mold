@@ -66,3 +66,27 @@ at=1,1.25,..,6.75`. Pictures and clips by `raw/make_pics.py`.
 - The squad panel could show the active squad's orders and gun.
 - Card wording is the gun thread's (owner 02:57Z: too much text).
 - The map editor's panel (`UiSize::fixed`) was not changed.
+
+## Follow-up 11-15 08:00Z: one row and the hover card
+
+Owner 07:51Z: "In the HUD redesign everything was supposed to be on one
+row, why is the gun in a seperate row on top". The gun strip had a rule
+from before this review: where the selection panel would keep under 240
+units it went back over the panels. With this review's wider strip that
+happened at big UI sizes (2560x1440 at 200% put it above the bar). Now it
+always stays in the row and draws smaller, down to 60%, where the
+selection would keep under 300 units. Rendered at 1920x1080 100/150/200%,
+2560x1440 200% and 1280x800 150% (`run=1 mode=squads select=1 at=4`): in
+the row at all five.
+
+The squad panel's header buttons (Let go, Combine, Split, Guards) ran over
+"1 squad" at 150% and past the panel's left edge once it narrowed. They
+now step down: 13.5 to 12 units, then no header word, then no key
+letters, then a button that still does not fit is left off (Guards
+first).
+
+Owner 07:54Z: the hover card over the mould's home crystal covers the
+slime being shot. `ui::HoverCard`: the card waits for the cursor to rest
+0.35 s, shows 2 s, fades over 0.4 s, then stays away until the cursor is
+on something else; any click puts it away.
+
