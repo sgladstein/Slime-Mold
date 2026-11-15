@@ -281,8 +281,13 @@ impl App {
             }
             UPGRADE => {
                 if g.apply(Cmd::Upgrade(b)) {
-                    let rate = g.pump_draw(b) * g.pump_yield(b);
-                    self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
+                    if bd.kind == Kind::Turret {
+                        let f = g.rules.build.render_food;
+                        self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food a walker"), Some(bd.at), theme::GOOD);
+                    } else {
+                        let rate = g.pump_draw(b) * g.pump_yield(b);
+                        self.hud.alert(&format!("Pump upgraded to level {}: {rate:.0} food a second", g.buildings[b].level), Some(bd.at), theme::GOOD);
+                    }
                 }
             }
             SWITCH => {
@@ -475,6 +480,25 @@ impl App {
                                 Some(p) => format!("Upgrading the pump costs {p:.0} food"),
                                 None if !g.buildings[b].up() => "The pump is still being built".to_string(),
                                 None => "The pump is at its top level".to_string(),
+                            };
+                            self.hud.alert(&why, None, theme::WARN);
+                        }
+                    }
+                }
+                // The turret card on a standing turret renders it (the
+                // kill box pays, owner 2026-11-15: "only with an upgrade").
+                HudEvent::Point { id: TURRET, at } if self.game.as_ref().is_some_and(|g| g.turret_at(at).is_some()) => {
+                    if let Some(g) = self.game.as_mut() {
+                        let b = g.turret_at(at).unwrap();
+                        let price = g.upgrade_price(b);
+                        if g.apply(Cmd::Upgrade(b)) {
+                            let f = g.rules.build.render_food;
+                            self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food a walker"), Some(g.buildings[b].at), theme::GOOD);
+                        } else {
+                            let why = match price {
+                                Some(p) => format!("Rendering costs {p:.0} food"),
+                                None if !g.buildings[b].up() => "The turret is still being built".to_string(),
+                                None => "The turret already renders".to_string(),
                             };
                             self.hud.alert(&why, None, theme::WARN);
                         }

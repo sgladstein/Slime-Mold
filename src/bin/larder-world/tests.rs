@@ -1410,8 +1410,13 @@ fn a_building_selected_shows_its_card_and_acts() {
     let mdl = app.model(None, None);
     assert_eq!(mdl.info.as_ref().map(|i| i.title.as_str()), Some("Turret"));
     let ids: Vec<u32> = mdl.commands.iter().map(|c| c.id).collect();
-    assert_eq!(ids, vec![DEMOLISH], "a turret's card");
-    let before = app.game.as_ref().unwrap().bank;
+    assert_eq!(ids, vec![DEMOLISH, UPGRADE], "a turret's card: demolish and Render (the kill box pays, 2026-11-15)");
+    let bank = app.game.as_ref().unwrap().bank;
+    app.hud_event(HudEvent::Command { id: UPGRADE }).unwrap();
+    let g = app.game.as_ref().unwrap();
+    assert_eq!(g.buildings[b].level, 2, "it renders");
+    assert_eq!(g.bank, bank - g.rules.build.render_cost);
+    let before = g.bank;
     app.hud_event(HudEvent::Command { id: DEMOLISH }).unwrap();
     let g = app.game.as_ref().unwrap();
     assert!(!g.buildings[b].alive);

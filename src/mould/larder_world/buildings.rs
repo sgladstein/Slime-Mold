@@ -121,6 +121,8 @@ impl Building {
 
 /// A pump's levels (`Game::upgrade`).
 pub const PUMP_LEVELS: u8 = 3;
+/// A turret's levels: 2 renders the slime it kills (`BuildRules::render_food`).
+pub const TURRET_LEVELS: u8 = 2;
 
 /// A pump stops once its crystal holds this share of its starting charge
 /// or less (`Game::pump_flows`): the mould has eaten it.
@@ -199,6 +201,16 @@ pub struct BuildRules {
     /// A working pump's scent, as a multiple of a soldier's, over
     /// `lure_r` (0: none beyond its crystal's own). The pump as bait.
     pub pump_smell: f32,
+    /// **The kill box pays** (2026-11-15, the defenses thread): a turret
+    /// upgraded once (`Game::upgrade`, `render_cost` food) renders the
+    /// slime: every walker a shot kills within its range pays
+    /// `render_food` into the bank, whoever fired (`Game::render_pay`). The
+    /// owner, 21:15Z: "the kill box pays but only with an upgrade". Why
+    /// the kill and not the shot: with raids (`RaidRules`) the slime comes
+    /// to a defense in waves, and a lure with rendering turrets round it is
+    /// then a farm the player built, not a tax on the slime's trickle.
+    pub render_cost: f32,
+    pub render_food: f32,
     pub outpost_cost: f32,
     pub outpost_hp: f32,
     /// The outpost's bank smell as a share of the larder's (`Rules::hoard`).
@@ -273,6 +285,8 @@ impl Default for BuildRules {
             pump_up_yield: 1.25,
             pump_up_cost: 400.0,
             pump_smell: 0.0,
+            render_cost: 600.0,
+            render_food: 0.25,
             outpost_cost: 400.0,
             outpost_hp: 300.0,
             outpost_hoard: 0.25,
@@ -404,8 +418,44 @@ impl<W: World> Game<W> {
     /// What upgrading building `b` costs now, or None if it can't be
     /// upgraded (not a standing pump, or at `PUMP_LEVELS`).
     pub fn upgrade_price(&self, b: usize) -> Option<f32> {
-        let bd = self.buildings.get(b).filter(|bd| bd.up() && bd.kind == Kind::Pump && bd.level < PUMP_LEVELS)?;
-        Some(self.rules.build.pump_up_cost * f32::from(bd.level))
+        let bd = self.buildings.get(b).filter(|bd| bd.up())?;
+        match bd.kind {
+            Kind::Pump if bd.level < PUMP_LEVELS => Some(self.rules.build.pump_up_cost * f32::from(bd.level)),
+            Kind::Turret if bd.level < TURRET_LEVELS => Some(self.rules.build.render_cost),
+            _ => None,
+        }
+    }
+
+    /// The standing turret whose middle is within its touch of `at` (fine
+    /// cells), nearest first: the one a click on it upgrades.
+    pub fn turret_at(&self, at: (f32, f32)) -> Option<usize> {
+        let r = self.rules.build.touch * self.s() * 1.5;
+        (0..self.buildings.len())
+            .filter(|&k| self.buildings[k].alive && self.buildings[k].kind == Kind::Turret)
+            .map(|k| (k, (self.buildings[k].at.0 - at.0).hypot(self.buildings[k].at.1 - at.1)))
+            .filter(|&(_, d)| d <= r)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(k, _)| k)
+    }
+
+    /// The kill box pays (`BuildRules::render_food`): each shot's kills
+    /// that landed within a rendering turret's range, into the bank, once
+    /// a frame. Returns the food.
+    pub(super) fn render_pay(&mut self, hits: &[(Option<(f32, f32)>, u32)]) -> f32 {
+        let b = self.rules.build;
+        if b.render_food <= 0.0 {
+            return 0.0;
+        }
+        let reach = b.turret_range * self.s();
+        let renders: Vec<(f32, f32)> = self.buildings.iter().filter(|t| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|t| t.at).collect();
+        if renders.is_empty() {
+            return 0.0;
+        }
+        let n: u32 = hits.iter().filter_map(|&(h, k)| h.filter(|h| renders.iter().any(|t| (t.0 - h.0).hypot(t.1 - h.1) <= reach)).map(|_| k)).sum();
+        let food = n as f32 * b.render_food;
+        self.bank += food;
+        self.rendered += food;
+        food
     }
 
     /// Upgrade pump `b` a level (`Cmd::Upgrade`), paid from the bank at

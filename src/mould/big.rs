@@ -57,6 +57,12 @@ const DRAW_WITHER: u32 = 404;
 /// Dense slime condenses (`BigParams::condense`): which ripe walkers are
 /// absorbed and which hold the mass.
 const DRAW_CONDENSE: u32 = 405;
+/// Which walkers in a raid's reach raid (`BigParams::raid_share`), keyed
+/// on the raid's first step.
+pub const DRAW_RAID: u32 = 406;
+/// A raid's walking distance is kept on blocks of this many fine cells a
+/// side (`BigDish::raid_paths`).
+pub const RAID_BLOCK: usize = 2;
 /// A slot's condensing word (`BigDish::dense`): its ripeness, steps, in
 /// the low 16 bits, and `DENSE` once it has condensed (then the low bits
 /// count the steps since, for the look). The GPU's
@@ -744,6 +750,33 @@ pub struct BigParams {
     /// game already reads each crystal's charge and each unit's take a
     /// frame, which is what the slime ate, on both worlds alike.
     pub surge_at: u32,
+    /// **A raid** (2026-11-15, the defenses thread; `raid_at` 0 is none).
+    /// The owner, 20:56Z: "I could build a huge defense, but that just ends
+    /// with the mold clustering around its own crystals and not doing
+    /// anything", and on the options, 21:15Z: "Raids is the number 1
+    /// option". The surge reaches only units within `panic_r`, so a
+    /// defense out of that reach was never attacked. A raid is the game's
+    /// pick of one target (`raid_to`, a fine cell, x | y << 16: a pump, a
+    /// lure, a building, a squad) and a reach (`raid_r`, dish cells, round
+    /// the target): from step `raid_at` (`self.steps + 1` of its first
+    /// step), for `raid_lean` steps and then `raid_len` more, a walker
+    /// within the reach whose keyed draw (`DRAW_RAID`, on `raid_at`, so the
+    /// same walkers all raid long) is under `raid_share` runs for the
+    /// target by its sensors' direction alone, as a panicking walker runs:
+    /// at `panic_creep` of its pace through the lean (the tell: the near
+    /// side of the body swells toward the target), then at `raid_haste`.
+    /// The reach is counted from the target, so a walker stays in the raid
+    /// as it closes. A raider neither panics nor withers while the raid
+    /// runs; a breakaway (`roam`) keeps its own crystal. After the raid the
+    /// raiders are ordinary walkers again: by the target they bite and
+    /// surge, and cut off from food they panic as any piece does.
+    pub raid_at: u32,
+    pub raid_to: u32,
+    pub raid_r: f32,
+    pub raid_share: f32,
+    pub raid_lean: u32,
+    pub raid_len: u32,
+    pub raid_haste: f32,
     /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
     /// is off, needs growth and a crowd limit). A walker holding `fed_full`
     /// energy or more may step or be born into a cell holding up to
@@ -1336,6 +1369,13 @@ impl BigParams {
             surge_dash: 30,
             surge_haste: 2.0,
             surge_at: 0,
+            raid_at: 0,
+            raid_to: 0,
+            raid_r: 0.0,
+            raid_share: 0.0,
+            raid_lean: 60,
+            raid_len: 450,
+            raid_haste: 1.0,
             fed_crowd: 0,
             fed_full: 2.0,
             hunger_scent: 0.0,
@@ -1550,6 +1590,16 @@ pub struct BigDish {
     /// `DENSE`), made with the first growth step it is on; empty while
     /// off. A dead slot's word is stale until a birth clears it.
     pub dense: Vec<u32>,
+    /// **A raid's way round walls** (`BigParams::raid_at`, 2026-11-15):
+    /// each `RAID_BLOCK` block's walking distance to the raid's target
+    /// (`u32::MAX` where no way reaches), made by `raid_paths` when the
+    /// game sets a raid. A raider
+    /// steers to the sensor reading the least distance, so it walks round
+    /// walls and rock instead of piling against them. Empty: raiders steer
+    /// straight at the target. The GPU holds the same words in `news`
+    /// after the dense cells (`dense_words`), and a raider standing
+    /// where no way reaches steers straight.
+    pub raid_field: Vec<u32>,
     /// Walkers absorbed by condensing so far, and walkers that condensed.
     pub absorbed: u64,
     pub condensed: u64,
@@ -1866,6 +1916,7 @@ impl BigDish {
             heard: Vec::new(),
             news: Vec::new(),
             dense: Vec::new(),
+            raid_field: Vec::new(),
             absorbed: 0,
             condensed: 0,
             thickened: 0,
@@ -2558,6 +2609,66 @@ impl BigDish {
         best.map(|b| b.1)
     }
 
+    /// Makes `raid_field` for the raid's target (`BigParams::raid_to`), on
+    /// blocks of `RAID_BLOCK` x `RAID_BLOCK` fine cells: a block is open
+    /// when every cell in it is agar (so a thin wall never leaks), and the
+    /// distance runs over open blocks, 8 neighbours, straight steps 2 and
+    /// diagonal 3 (a diagonal may not cut a closed corner), by a bucket
+    /// queue. Cleared when no raid is set. Why blocks: on the fine cells a
+    /// heap Dijkstra took 62-65 ms on planet 8 (1256 x 784; the levelgen
+    /// thread's 6x hitch rule, 11-15), a step's hitch once a raid.
+    pub fn raid_paths(&mut self) {
+        self.raid_field = if self.p.raid_at == 0 { Vec::new() } else { raid_field_for(&self.agar, self.w, self.h, self.p.raid_to) };
+    }
+
+    /// The raid's walking distance at fine cell `i` (`raid_field`'s
+    /// block), `u32::MAX` where none reaches.
+    pub fn raid_dist(&self, i: usize) -> u32 {
+        let b = RAID_BLOCK;
+        let bw = self.w.div_ceil(b);
+        self.raid_field.get(((i / self.w) / b) * bw + (i % self.w) / b).copied().unwrap_or(u32::MAX)
+    }
+
+    /// The raid's haste on the step being made (`BigParams::raid_at`):
+    /// `panic_creep` through its lean, `raid_haste` through its run, else 0.
+    pub fn raid_haste(&self) -> f32 {
+        let at = self.p.raid_at as u64;
+        let t = self.steps + 1;
+        if at == 0 || self.p.raid_r <= 0.0 || self.p.raid_share <= 0.0 || t < at {
+            return 0.0;
+        }
+        let (ph, lean) = (t - at, self.p.raid_lean.min(SURGE_MAX) as u64);
+        if ph < lean {
+            self.p.panic_creep.max(PANIC_CREEP_MIN)
+        } else if ph < lean + self.p.raid_len.min(SURGE_MAX) as u64 {
+            self.p.raid_haste.max(PANIC_CREEP_MIN)
+        } else {
+            0.0
+        }
+    }
+
+    /// Whether walker `k` raids this step (`BigParams::raid_at`): a raid
+    /// runs, the walker is within `raid_r` of its target (whole fine cells,
+    /// as the GPU counts), it is not breaking away, and its draw keyed on
+    /// the raid's first step is under `raid_share`. Its target, (x, y) in
+    /// fine cells, when it does.
+    pub fn raid_of(&self, k: usize) -> Option<(f32, f32)> {
+        if self.raid_haste() <= 0.0 || self.roam_of(k).is_some() {
+            return None;
+        }
+        let (x, y, _) = *self.walkers.get(k)?;
+        let to = self.p.raid_to;
+        let (tx, ty) = ((to & 0xFFFF) as i64, (to >> 16) as i64);
+        let (dx, dy) = (x.floor() as i64 - tx, y.floor() as i64 - ty);
+        // Clamped as the GPU's raid row holds it (a u32 of whole cells).
+        let r = (self.p.raid_r.max(0.0) * self.p.scale as f32).min(60_000.0);
+        let r2 = (r * r).floor() as i64;
+        if dx * dx + dy * dy > r2 {
+            return None;
+        }
+        (unit(keyed(self.p.seed, self.p.raid_at as u64, DRAW_RAID, k as u32)) < self.p.raid_share).then_some((tx as f32 + 0.5, ty as f32 + 0.5))
+    }
+
     /// Whether walker `k` panics this step (`BigParams::panic`): an
     /// ordinary walker whose news is more than `wither_lag` steps old.
     pub fn panics(&self, k: usize) -> bool {
@@ -2568,7 +2679,7 @@ impl BigDish {
     /// than `wither_lag` steps old); `panic` once its news is more than
     /// `wither_lag` + `panic_lean` old.
     pub fn panic_haste(&self, k: usize) -> f32 {
-        if self.p.panic <= 0.0 || self.news.is_empty() || self.roam_of(k).is_some() {
+        if self.p.panic <= 0.0 || self.news.is_empty() || self.roam_of(k).is_some() || self.raid_of(k).is_some() {
             return 0.0;
         }
         let (age, lag) = ((self.steps + 1).saturating_sub(self.news[k]), self.p.wither_lag as u64);
@@ -2965,6 +3076,8 @@ impl BigDish {
         let look = t.is_multiple_of(p.sense_every.max(1) as u64);
         // The surge's clock (`surge_every`), one for the dish.
         let surge = self.surge_haste();
+        // The raid's clock (`raid_at`), one for the dish.
+        let raid = self.raid_haste();
         let nsp = self.species_trail.len().max(1);
         // Life cycle (`spore_rate` and below): walkers that were spores or
         // dormant as the step began, and ordinary walkers that fruit or fall
@@ -3088,6 +3201,21 @@ impl BigDish {
             if let (Some((_, _, unit)), true) = (scared, haste > 0.0) {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
             }
+            // A raid (`raid_at`): a raider runs for the raid's target, by
+            // its sensors alone (it does not panic, above): down the raid's
+            // walking distance (`raid_field`) where there is one, else
+            // straight at it.
+            let mut by_field = false;
+            if scared.is_none() {
+                if let Some((tx, ty)) = self.raid_of(k) {
+                    scared = Some((tx, ty, true));
+                    st *= raid;
+                    // Down the walking distance, unless the walker stands
+                    // where none reaches (a block a wall or rock closes):
+                    // then straight.
+                    by_field = !self.raid_field.is_empty() && self.raid_dist(here) < u32::MAX;
+                }
+            }
             // The body surges (`surge_every`): a walker joined to it (not
             // panicking, not breaking away) within reach of a unit runs for
             // the nearest, creeping and then lunging on the shared clock.
@@ -3101,6 +3229,7 @@ impl BigDish {
                 let read = |a: f32| {
                     let (c, s) = (a.cos(), a.sin());
                     match self.cell(x + c * so, y + s * so) {
+                        Some(i) if self.agar[i] && by_field => -(self.raid_dist(i) as f32),
                         Some(i) if self.agar[i] => c * (tx - x) + s * (ty - y),
                         _ => -1.0e6,
                     }
@@ -3707,7 +3836,7 @@ impl BigDish {
             // check, a walker that has not heard of food for `wither_lag`
             // steps may die, whatever it still holds; a condensed one
             // breaks instead, keeping half its energy.
-            if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 && self.roam_of(k).is_none() {
+            if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 && self.roam_of(k).is_none() && self.raid_of(k).is_none() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
@@ -4858,6 +4987,80 @@ pub(crate) fn start_shape(seed: u64, at: u32) -> Shape {
     Shape { lobes, rim: 0.45, norm: 1.0 / ms.sqrt() }
 }
 
+/// A raid's walking distance (`BigDish::raid_paths`) on ground `agar`
+/// (`w` x `h` fine cells) to fine cell `to` (x | y << 16): a free
+/// function so the game can build it off the frame (`Game::time_raids`).
+pub fn raid_field_for(agar: &[bool], w: usize, h: usize, to: u32) -> Vec<u32> {
+    let b = RAID_BLOCK;
+    let (bw, bh) = (w.div_ceil(b), h.div_ceil(b));
+    // Row by row over the fine cells (a block's cells are in `b` rows).
+    let mut open = vec![true; bw * bh];
+    for (i, &a) in agar.iter().enumerate() {
+        if !a {
+            open[((i / w) / b) * bw + (i % w) / b] = false;
+        }
+    }
+    let (tx, ty) = (((to & 0xFFFF) as usize).min(w - 1) / b, ((to >> 16) as usize).min(h - 1) / b);
+    // The search runs on a grid one closed block wider on every side,
+    // so no step needs a bounds check.
+    let pw = bw + 2;
+    let mut pad = vec![false; pw * (bh + 2)];
+    for y in 0..bh {
+        pad[(y + 1) * pw + 1..(y + 1) * pw + 1 + bw].copy_from_slice(&open[y * bw..(y + 1) * bw]);
+    }
+    let mut pd = vec![u32::MAX; pad.len()];
+    // A target in a closed block (by rock, a wall or a crystal's rim):
+    // start from the nearest open one.
+    let start = (0..bw * bh).filter(|&q| open[q]).min_by_key(|&q| {
+        let (x, y) = ((q % bw) as i64 - tx as i64, (q / bw) as i64 - ty as i64);
+        x * x + y * y
+    });
+    if let Some(start) = start {
+        let start = (start / bw + 1) * pw + start % bw + 1;
+        let p = pw as isize;
+        // (offset, cost, the two sides a diagonal passes).
+        let steps: [(isize, u32, isize, isize); 8] = [(-1, 2, 0, 0), (1, 2, 0, 0), (-p, 2, 0, 0), (p, 2, 0, 0), (-p - 1, 3, -p, -1), (-p + 1, 3, -p, 1), (p - 1, 3, p, -1), (p + 1, 3, p, 1)];
+        // Edges cost 2 or 3, so four buckets in a ring hold every
+        // distance still to settle.
+        let mut ring: [Vec<u32>; 4] = Default::default();
+        pd[start] = 0;
+        ring[0].push(start as u32);
+        let (mut at, mut left) = (0u32, 1usize);
+        while left > 0 {
+            let slot = (at % 4) as usize;
+            let now = std::mem::take(&mut ring[slot]);
+            left -= now.len();
+            for &q in &now {
+                let q = q as isize;
+                if pd[q as usize] != at {
+                    continue;
+                }
+                for &(o, c, s1, s2) in &steps {
+                    let j = (q + o) as usize;
+                    if !pad[j] || (c == 3 && (!pad[(q + s1) as usize] || !pad[(q + s2) as usize])) {
+                        continue;
+                    }
+                    let nd = at + c;
+                    if nd < pd[j] {
+                        pd[j] = nd;
+                        ring[(nd % 4) as usize].push(j as u32);
+                        left += 1;
+                    }
+                }
+            }
+            ring[slot] = now;
+            ring[slot].clear();
+            at += 1;
+        }
+    }
+    let mut d = vec![u32::MAX; bw * bh];
+    for y in 0..bh {
+        d[y * bw..(y + 1) * bw].copy_from_slice(&pd[(y + 1) * pw + 1..(y + 1) * pw + 1 + bw]);
+    }
+    d
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -5654,6 +5857,67 @@ mod tests {
         assert_eq!(game, [0.0, creep, creep, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0], "the game's: once, from its step, the clock's beat ignored");
         d.p.surge_every = 0;
         assert_eq!(at(&mut d, 150), 0.0, "surge 0 is off, whatever the game sets");
+    }
+
+    /// A raid (`raid_at`, 2026-11-15, the defenses thread): none or a
+    /// zero reach changes nothing; on, the walkers in reach whose draw is
+    /// under the share close on the target from far beyond `panic_r`,
+    /// neither panic nor wither on the way, and the rest of the body is
+    /// left as it was; its phases run once from its first step.
+    #[test]
+    fn a_raid_runs_for_its_target_from_beyond_panic_reach() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, panic_r: 4.0, panic: 2.0, wither: 0.05, wither_lag: 5, ..small(2, 1) };
+        let mut d0 = BigDish::new(grow.clone());
+        for _ in 0..40 {
+            d0.tick();
+        }
+        // The target: a dish corner far from the mould (beyond panic_r).
+        let target = (4u32, 4u32);
+        let to = |d: &BigDish, k: usize| (d.walkers[k].0 - target.0 as f32 - 0.5).hypot(d.walkers[k].1 - target.1 as f32 - 0.5);
+        let start = d0.steps as u32 + 1;
+        let run = |p: BigParams, ticks: u32| {
+            let mut d = d0.clone();
+            d.p = p;
+            let live: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
+            let raiders: Vec<usize> = live.iter().copied().filter(|&k| d.raid_of(k).is_some()).collect();
+            let near = raiders.iter().map(|&k| to(&d, k)).sum::<f32>() / raiders.len().max(1) as f32;
+            for _ in 0..ticks {
+                d.tick();
+            }
+            let after = raiders.iter().filter(|&&k| d.lives(k)).map(|&k| to(&d, k)).sum::<f32>() / raiders.len().max(1) as f32;
+            (d.hash(), raiders.len(), live.len(), near, after)
+        };
+        let base = run(grow.clone(), 20);
+        let raid = BigParams { raid_at: start, raid_to: target.0 | target.1 << 16, raid_r: 1_000.0, raid_share: 0.5, raid_lean: 3, raid_len: 60, raid_haste: 1.0, ..grow.clone() };
+        assert_eq!(run(BigParams { raid_at: 0, ..raid.clone() }, 20).0, base.0, "no raid changes nothing");
+        assert_eq!(run(BigParams { raid_r: 0.0, ..raid.clone() }, 20).0, base.0, "a zero reach changes nothing");
+        let on = run(raid.clone(), 20);
+        eprintln!("raid: {} of {} walkers raid; mean distance {:.1} -> {:.1}", on.1, on.2, on.3, on.4);
+        assert!(on.1 > on.2 / 4 && on.1 < on.2 * 3 / 4, "about half the walkers raid ({} of {})", on.1, on.2);
+        assert!(on.3 > grow.panic_r * 2.0 * 3.0, "the raiders start far beyond panic_r");
+        assert!(on.4 < on.3 - 10.0, "the raiders close on the target");
+        // A small reach takes only the walkers near the target.
+        let mid = (0..d0.walkers.len()).filter(|&k| d0.lives(k)).map(|k| to(&d0, k)).fold(f32::INFINITY, f32::min) / 2.0 + 10.0;
+        let small_reach = run(BigParams { raid_r: mid, ..raid.clone() }, 1);
+        assert!(small_reach.1 < on.1, "a smaller reach takes fewer ({} against {})", small_reach.1, on.1);
+        // A raider neither panics nor withers while the raid runs.
+        let mut d = d0.clone();
+        d.p = raid.clone();
+        for k in 0..d.news.len() {
+            d.news[k] = 1;
+        }
+        let r = (0..d.walkers.len()).find(|&k| d.lives(k) && d.raid_of(k).is_some()).expect("a raider");
+        assert!(!d.panics(r), "a raider does not panic");
+        let calm = (0..d.walkers.len()).find(|&k| d.lives(k) && d.raid_of(k).is_none()).expect("a walker out of the draw");
+        assert!(d.panics(calm), "the rest of a stale body still panics");
+        // Its phases: once from its first step, the lean at the creep.
+        let creep = d.p.panic_creep.max(PANIC_CREEP_MIN);
+        let at = |d: &mut BigDish, step: u64| {
+            d.steps = step - 1;
+            d.raid_haste()
+        };
+        let phases: Vec<f32> = [start as u64 - 1, start as u64, start as u64 + 2, start as u64 + 3, start as u64 + 62, start as u64 + 63, start as u64 + 500].iter().map(|&t| at(&mut d, t)).collect();
+        assert_eq!(phases, [0.0, creep, creep, 1.0, 1.0, 0.0, 0.0], "lean, run, then calm");
     }
 
     #[test]

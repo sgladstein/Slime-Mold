@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut app = offscreen(args, screen, &device, &queue)?;
@@ -22,7 +22,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `turret=X,Y` and the other kinds: standing from the start (the
     // building films).
     if let Some(g) = app.game.as_mut() {
-        for &(kind, at) in turrets {
+        for (i, &(kind, at)) in turrets.iter().enumerate() {
             let n = g.buildings.len();
             g.bank += g.build_price(kind, at);
             if !g.build(kind, at) {
@@ -30,6 +30,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             let b = &mut g.buildings[n];
             (b.built, b.hp) = (1.0, b.max_hp);
+            if renders.contains(&i) {
+                b.level = 2;
+            }
         }
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
@@ -334,6 +337,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
+            let raids = app.game.as_ref().map_or(0, |g| g.raids.sent.len());
             app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
@@ -342,6 +346,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // Each surge the game starts (food-driven surges, 11-15).
             if let Some(g) = app.game.as_ref().filter(|g| g.surges != surges) {
                 println!("  surge {} starts at t {:.1} s (the slime has eaten {:.0} food)", g.surges, g.time(), g.slime_ate);
+            }
+            // Each raid the game sends (11-15).
+            if let Some(g) = app.game.as_ref().filter(|g| g.raids.sent.len() != raids) {
+                let d = g.raids.sent.last().unwrap();
+                println!("  raid {} at t {:.1} s: {:?} at {:.0},{:.0}, reach {:.0} cells holding {} walkers, share {:.2}{}", g.raids.sent.len(), g.time(), d.aim, d.to.0, d.to.1, d.reach, d.held, d.share, if d.last_stand { " (last stand)" } else { "" });
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();
@@ -511,7 +520,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         if g.world.garden.is_some() {
             println!("  t {:.0} s: own mould {} (green), enemy {}", g.time(), g.world.counts_by_side().0, g.mould);
         }
-        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
+        println!("  t {:.0} s: mould {}, soldiers {}, bank {:.0}, harvested {:.0}, rendered {:.0}, shots {}, killed {}, took {:.0}%, crystals left {:.3}{}{}", g.time(), g.mould, g.alive(), g.bank, g.harvested, g.rendered, g.shots, g.killed, g.take_share() * 100.0, left, g.end.map_or(String::new(), |e| format!(", ended: {}", e.band())), squad.map_or(String::new(), |(x, y)| format!("; squad at {x:.1},{y:.1}")));
         // What the slime has eaten, and the surges it built (11-15,
         // food-driven surges).
         println!("  surge: the slime ate {:.0} food ({:.1}/s); meter {:.1} of {:.0}, {} surges", g.slime_ate, g.slime_ate / g.time().max(1e-3), g.surge_meter, g.rules.surge_food, g.surges);

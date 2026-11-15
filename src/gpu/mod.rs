@@ -58,6 +58,8 @@ pub const CLAIM_BIRTH: u32 = 403;
 pub const DRAW_WITHER: u32 = 404;
 /// Dense slime condensing's split (big.rs `DRAW_CONDENSE`).
 pub const DRAW_CONDENSE: u32 = 405;
+/// A raid's draw (big.rs `DRAW_RAID`).
+pub const DRAW_RAID: u32 = 406;
 
 /// The life cycle's (big.rs `DRAW_FRUIT` and on).
 pub const DRAW_FRUIT: u32 = 114;
@@ -66,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (244 words).
-pub const PARAMS_BYTES: usize = 976;
+/// Bytes in `Params` (252 words).
+pub const PARAMS_BYTES: usize = 1008;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -101,6 +103,30 @@ pub const SURGE_AT: usize = 944;
 /// the view each flung walker's flight a tick, and above it the share of
 /// the kills that spray (of 65,536).
 pub const SPRAY_AT: usize = 960;
+/// The raid row (`BigParams::raid_at`, 2026-11-15, the defenses thread;
+/// Params grew from 976 to 1008, after the spray row): the raid's first
+/// step, its target (a fine cell, x | y << 16), its reach squared in whole
+/// fine cells, the stream of its draw; then its share, its lean's and
+/// run's steps (low and high half), its haste and a spare word.
+pub const RAID_AT: usize = 976;
+
+/// The raid row's words (`RAID_AT`) from the settings: the reach squared
+/// in whole fine cells, as the CPU's `raid_of` counts it.
+fn raid_row(s: &Settings, scale: f32, field: bool) -> [u32; 8] {
+    let sm = crate::mould::big::SURGE_MAX;
+    let r = (s.raid_r.max(0.0) * scale).min(60_000.0);
+    let on = s.raid_at > 0 && s.raid_r > 0.0 && s.raid_share > 0.0;
+    [
+        if on { s.raid_at } else { 0 },
+        s.raid_to,
+        (r * r).floor() as u32,
+        stream(s.seed, DRAW_RAID),
+        s.raid_share.to_bits(),
+        s.raid_lean.min(sm) | s.raid_len.min(sm) << 16,
+        s.raid_haste.max(crate::mould::big::PANIC_CREEP_MIN).to_bits(),
+        field as u32,
+    ]
+}
 /// Where the strike's row sits in `Params` (`Engine::strike` writes it
 /// alone), before the soil row (2026-11-12).
 pub const STRIKE_AT: usize = 800;
@@ -473,6 +499,16 @@ pub struct Settings {
     /// The step the game's last surge began on (`BigParams::surge_at`; 0
     /// the clock above): set by the game (`World::set_surge_at`), not a key.
     pub surge_at: u32,
+    /// A raid (`BigParams::raid_at` and the rest, 11-15): the game sets
+    /// the first step, target, reach and share (`World::set_raid`); the
+    /// lean, run and haste are keys.
+    pub raid_at: u32,
+    pub raid_to: u32,
+    pub raid_r: f32,
+    pub raid_share: f32,
+    pub raid_lean: u32,
+    pub raid_len: u32,
+    pub raid_haste: f32,
     /// The food scent's keep a step and a reached pile's share of it
     /// (`BigParams::scent_keep`, `fed_scent`; keys since 11-15, the whole-
     /// game review's W44, so a film can turn scent up).
@@ -656,6 +692,13 @@ impl Settings {
             surge_dash: t.surge_dash,
             surge_haste: t.surge_haste,
             surge_at: t.surge_at,
+            raid_at: t.raid_at,
+            raid_to: t.raid_to,
+            raid_r: t.raid_r,
+            raid_share: t.raid_share,
+            raid_lean: t.raid_lean,
+            raid_len: t.raid_len,
+            raid_haste: t.raid_haste,
             scent_keep: t.scent_keep,
             fed_scent: t.fed_scent,
             lone_step: t.lone_step,
@@ -921,6 +964,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "surge_lean" => s.surge_lean = int()?.min(crate::mould::big::SURGE_MAX),
         "surge_dash" => s.surge_dash = int()?.min(crate::mould::big::SURGE_MAX),
         "surge_haste" => s.surge_haste = f()?,
+        "raid_lean" => s.raid_lean = int()?.min(crate::mould::big::SURGE_MAX),
+        "raid_len" => s.raid_len = int()?.min(crate::mould::big::SURGE_MAX),
+        "raid_haste" => s.raid_haste = f()?,
         "scent_keep" => s.scent_keep = f()?.clamp(0.0, 1.0),
         "fed_scent" => s.fed_scent = f()?.max(0.0),
         "roam" => s.roam = int()?.min(crate::mould::big::RIPE),
@@ -1083,6 +1129,13 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         surge_dash: s.surge_dash,
         surge_haste: s.surge_haste,
         surge_at: s.surge_at,
+        raid_at: s.raid_at,
+        raid_to: s.raid_to,
+        raid_r: s.raid_r,
+        raid_share: s.raid_share,
+        raid_lean: s.raid_lean,
+        raid_len: s.raid_len,
+        raid_haste: s.raid_haste,
         scent_keep: s.scent_keep,
         fed_scent: s.fed_scent,
         lone_step: s.lone_step,
@@ -1837,6 +1890,9 @@ impl Engine {
         self.queue.write_buffer(&self.news, 0, &u32_bytes(&news_words(d, self.cells as usize)));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&gas_words(d)));
         self.queue.write_buffer(&self.news, self.dense_at, &u32_bytes(&dense_words(d, self.cells as usize)));
+        // The raid's way round walls goes with it (`raid_row` reads
+        // whether the mirror holds one).
+        self.dish.raid_field = d.raid_field.clone();
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
             self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
@@ -2047,6 +2103,8 @@ impl Engine {
         b.extend(f32_bytes(&[s.surge_haste]));
         assert_eq!(b.len(), SPRAY_AT, "Params rows before the spray row moved");
         b.extend(u32_bytes(&self.spray_row()));
+        assert_eq!(b.len(), RAID_AT, "Params rows before the raid row moved");
+        b.extend(u32_bytes(&raid_row(s, self.dish.p.scale as f32, !self.dish.raid_field.is_empty())));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2953,11 +3011,26 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut w = vec![0u32; DENSE_HEAD];
     w.extend((0..d.walkers.len()).map(|k| d.dense.get(k).copied().unwrap_or(0)));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
+    // A raid's walking distance after the dense cells (`BigDish::
+    // raid_field`, 11-15; engine.wgsl's `raid_dist`), zeros with none.
+    // Blocks (`RAID_BLOCK`), fewer than the cells the region holds.
+    w.extend(d.raid_field.iter().take(cells));
+    w.resize(DENSE_HEAD + d.walkers.len() + 2 * cells, 0);
     w
 }
 
 /// Each slot's condensing word as the GPU holds it (`BigDish::dense`).
 impl Engine {
+    /// Writes the mirror dish's raid walking distance (`BigDish::
+    /// raid_field`) to `news` after the dense cells; zeros with none.
+    pub fn write_raid_field(&self) {
+        let cells = self.cells as usize;
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + cells) as u64;
+        let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
+        w.resize(cells, 0);
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
+    }
+
     pub fn dense_of(&self) -> Vec<u32> {
         let b = read_back(&self.device, &self.queue, &self.news);
         let at = self.dense_at as usize + 4 * DENSE_HEAD;

@@ -265,6 +265,11 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "surge_lean" => p.surge_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
         "surge_dash" => p.surge_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
         "surge_haste" => p.surge_haste = f()?,
+        // A raid's pace (`BigParams::raid_lean`, both engines since 11-15;
+        // the game sets each raid's target, reach and share).
+        "raid_lean" => p.raid_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
+        "raid_len" => p.raid_len = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
+        "raid_haste" => p.raid_haste = f()?,
         // The food scent (W44 of the whole-game review, 11-15).
         "scent_keep" => p.scent_keep = f()?.clamp(0.0, 1.0),
         "fed_scent" => p.fed_scent = f()?.max(0.0),

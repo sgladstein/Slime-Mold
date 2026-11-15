@@ -235,6 +235,8 @@ impl<W: World> Game<W> {
         }
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+        let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();
+        self.render_pay(&hits);
         // The plants' fire's kills, every frame on both worlds (bug check
         // 11-15: they were counted only on a Scorch trail's frames, so a
         // CPU game without one never counted them, and the GPU's went to
@@ -347,6 +349,7 @@ impl<W: World> Game<W> {
             self.count_stuck();
             self.check_broken();
             self.keep_panic_reach();
+            self.time_raids();
         }
         self.campaign_rules(now - t);
         self.check_end();
@@ -375,6 +378,7 @@ impl<W: World> Game<W> {
         let ate = (self.charge_was - now - took).max(0.0);
         self.charge_was = now;
         self.slime_ate += (ate / r.charge.max(1e-6) as f64) as f32;
+        self.raids.meter += (ate / r.charge.max(1e-6) as f64) as f32;
         let every = self.world.surge_every();
         if r.surge_food <= 0.0 || every == 0 {
             return;

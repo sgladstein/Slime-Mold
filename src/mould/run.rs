@@ -202,12 +202,29 @@ const SURGE_FOOD_SHARE: [f32; 8] = [1.33, 1.33, 1.0, 1.0, 0.83, 0.67, 0.67, 0.5]
 const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
+/// **Breakaway from planet 2** (the whole-game review's W4 and D2; the
+/// owner agreed 2026-11-15 21:41Z: "5-7) agreed", D2 being RP's option, on
+/// from planet 2): dense slime condenses (`condense`, steps a crowded or
+/// feeding walker takes to condense; 300 is 10 game seconds) and
+/// condensed or thickened slime breaks away for a fresh crystal far off
+/// (`roam`, steps between its chances). Both are needed: on planet 2 (run
+/// seeds 1 and 2, squad hand, to 3:00) `roam` alone over shape C's
+/// thickening moved almost nothing (19,093 walkers at 2:00 against 19,103
+/// off), most likely because a thickened walker sits inside the body
+/// with every cell round it full; condensing absorbs half the ripe, so
+/// the pieces have room to leave
+/// (`Reports/breakaway-run-2026-11-15/README.md`). Planet 1 keeps the
+/// plain body, so the first planet teaches the slime before it spreads.
+const CONDENSE: [u32; 8] = [0, 300, 300, 300, 300, 300, 300, 300];
+const ROAM: [u32; 8] = [0, 300, 300, 300, 300, 300, 300, 300];
 
 /// **The slime gets fiercer deeper** (2026-11-15, the slime-enemy thread;
 /// the run thread agreed the curve): engine keys over shape C's on a run's
 /// planet, before the tier's and the menu's own (`run_shape`). The slime
 /// surges more often and lunges longer, and thickens sooner, so it presses
-/// harder and gets tougher faster from what it holds. Planet 1's slime
+/// harder and gets tougher faster from what it holds; from planet 2 it
+/// condenses and sends pieces off to fresh crystals (`CONDENSE`, `ROAM`,
+/// 11-15 D2). Planet 1's slime
 /// needs a third more food for a surge than the sandbox's and waits up to
 /// 80 s; the core world's half as much, waiting at most 30 s and lunging
 /// 1.8 s. Why: the owner, 11-15 08:30Z, wants "more interesting
@@ -217,7 +234,13 @@ const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
 /// gun's range plus `Rules::panic_margin`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
-    vec![("surge", LONGEST_WAIT[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))]
+    let mut k = vec![("surge", LONGEST_WAIT[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))];
+    // Breakaway (`CONDENSE`, `ROAM`) only where it is on, so planet 1
+    // keeps whatever shape C and the menu set.
+    if CONDENSE[i] > 0 {
+        k.extend([("condense", CONDENSE[i].to_string()), ("roam", ROAM[i].to_string())]);
+    }
+    k
 }
 
 fn depth_index(depth: u32) -> usize {
@@ -1102,6 +1125,13 @@ mod tests {
         let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
         assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);
         assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash") && get(PLANETS, "thicken") < get(1, "thicken"));
+        // Breakaway from planet 2 on (D2): condensing and roaming together,
+        // as roaming alone barely leaves a full body; none on planet 1.
+        let has = |d: u32, k: &str| enemy_keys(d).iter().any(|(n, _)| *n == k);
+        assert!(!has(1, "condense") && !has(1, "roam"));
+        for d in 2..=PLANETS {
+            assert!(get(d, "condense") > 0.0 && get(d, "roam") > 0.0, "planet {d}");
+        }
     }
 
     #[test]

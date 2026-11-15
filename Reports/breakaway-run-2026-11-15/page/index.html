@@ -1,0 +1,83 @@
+<title>Slime Breakaway</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column; the two time-lapses side by side (one column on a phone), counts under each */
+:root{
+  --bg:#f3f2ec; --panel:#e8e6dc; --fg:#1d211c; --muted:#5b6157;
+  --accent:#b0702a; --soft:#f1e3cf; --line:#cfccbf;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --panel:#221f18; --fg:#ebe7dd; --muted:#a39d8e;
+  --accent:#e0a35a; --soft:#33291b; --line:#3a3428; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.08rem;font-weight:600}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure video{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{display:flex;flex-direction:column;gap:2px;font-size:.92rem;color:var(--muted)}
+.name{font:600 1.05rem/1.2 var(--display);color:var(--fg)}
+.counts{font:13px/1.45 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 12px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted)}
+.ask{background:var(--soft);border-radius:8px;padding:16px 18px;max-width:760px;display:flex;flex-direction:column;gap:8px}
+footer{font-size:.85rem;color:var(--muted);max-width:760px}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · the run · planet 2 onward · 2026-11-15</span>
+  <h1>The slime now sends pieces off from planet 2</h1>
+  <p class="lede">You agreed to turn breakaway on in the run from planet 2. Crowded slime now condenses into bronze, twice as tough, and condensed pieces leave for fresh crystals far from the body, where they land and feed. Planet 1 keeps the plain slime, so the first planet still teaches it.</p>
+</header>
+
+<section>
+  <h2>Planet 2, the same game with and without</h2>
+  <p class="prose">Run seed 2, planet 2 (the Sprawler), the squad holding where it lands and firing. The whole map, a frame every half second for the first 2:30, played at 7.5 times the game's pace. Under each clip: soldiers left at 0:30, 1:00, 1:30, 2:00 and 2:30, then the slime's mass at 2:30 (a bronze walker counts twice, as the goal bar counts it).</p>
+  <div class="grid">
+    <figure><video src="img/off.mp4" poster="img/off.jpg" autoplay muted loop playsinline controls aria-label="Planet 2 without breakaway"></video><figcaption><span class="name">Before (what planet 2 played until now)</span><span class="counts">soldiers 8 · 8 · 8 · 8 · 6 · mass 16,172</span></figcaption></figure>
+    <figure><video src="img/on.mp4" poster="img/on.jpg" autoplay muted loop playsinline controls aria-label="Planet 2 with condensing and breakaway"></video><figcaption><span class="name">Now (condense and breakaway on)</span><span class="counts">soldiers 8 · 7 · 0 · 0 · 0 · mass 20,008</span></figcaption></figure>
+  </div>
+  <p class="prose">What to watch: the home body goes bronze and lumpy in the first 20 seconds, and from about 0:40 thick knots build up on the crystals at the far side of the map, where before there was only a thin net. Pieces travel as a file of specks along the walls, not as a blob.</p>
+</section>
+
+<section>
+  <h2>Across the run</h2>
+  <p class="prose">Smoke runs with the same hand, both ways. Nothing crashed or got stuck, and the slime was as heavy or heavier with it on every planet.</p>
+  <div class="wrap"><table>
+    <tr><th>Planet (slime)</th><th>Seeds</th><th>Squad gone or left</th><th>Slime mass, before → now</th></tr>
+    <tr><td>2 (Sprawler)</td><td>1, 2</td><td>gone by 1:30 on both (before: 2:00, and 1 left at 3:00)</td><td>+40% and +23% at 3:00</td></tr>
+    <tr><td>4 (Swarmer)</td><td>1, 2, 3</td><td>seed 1: all 8 lived (before: all dead by 1:00); seeds 2, 3: 6 left at 1:30 (before 7 and 8)</td><td>+13% at 3:00; +20% and +37% at 1:30</td></tr>
+    <tr><td>5 (Sporer)</td><td>1</td><td>gone by 2:30 both ways</td><td>+3% at 3:00</td></tr>
+    <tr><td>6 (Sleeper)</td><td>1</td><td>6 left at 3:00 both ways</td><td>+1% at 3:00</td></tr>
+  </table></div>
+  <p class="prose">One surprise: on one Swarmer seed the squad lived where before it was swarmed in a minute. The condensed body has fewer, tougher walkers, so its rush to the wound was smaller. On the other two seeds the squad did a little worse. It's a note for your playtest, not a reason to hold planet 4 back.</p>
+  <p class="prose">Breakaway alone, without condensing, did nothing on planet 2: the thick slime sits inside a full body with nowhere to step. That's why both are on.</p>
+</section>
+
+<div class="ask">
+  <h3>In your playtest</h3>
+  <p>Planet 2 should feel like the slime reaches for the far side of the map sooner. Tell me if the travelling specks read badly or the bronze is too much. The start menu's Options page still has Condense and Breakaway, so you can turn either off for a game.</p>
+</div>
+
+<footer>Filmed on the cloud's software renderer at the game's own steps. Numbers, scripts and raw output: <code>Reports/breakaway-run-2026-11-15/</code> in the repo.</footer>
+</main>
