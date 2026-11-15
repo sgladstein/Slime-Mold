@@ -159,6 +159,11 @@ impl SquadInput {
         SquadInput { follow: true, ..SquadInput::default() }
     }
 
+    /// A WASD key held: the squad is being steered.
+    pub(super) fn steering(&self) -> bool {
+        self.keys.iter().any(|&k| k)
+    }
+
     /// Between two steps (`App::step`, before `Game::begin_step`): the
     /// controlled squad's volley point follows the cursor while the button
     /// is held, and a line or wedge turns to it once it has swung
@@ -661,7 +666,7 @@ impl App {
                 if g.active != Some(q) && !g.leads(q) {
                     note.push("on its own".into());
                 }
-                note.push(if sq.fire.is_some() {
+                let state = if sq.fire.is_some() {
                     "firing".to_string()
                 } else if sq.heal {
                     "healing".to_string()
@@ -673,7 +678,8 @@ impl App {
                     "moving".to_string()
                 } else {
                     "holding".to_string()
-                });
+                };
+                note.push(state.clone());
                 if sq.queued > 0 {
                     note.push(format!("{} queued", sq.queued));
                 }
@@ -682,7 +688,7 @@ impl App {
                 }
                 let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
                 let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));
-                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked, auto: !g.leads(q) }
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked, auto: !g.leads(q), state }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());
