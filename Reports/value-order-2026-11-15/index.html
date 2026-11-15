@@ -1,0 +1,52 @@
+<title>Planet Value Order</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column; before beside after, then the closer zoom notes. */
+:root {
+  --bg: #eef1f2; --panel: #ffffff; --fg: #1c2327; --muted: #58656c; --rule: #d1d8dc; --accent: #168a9e;
+  --display: "Space Grotesk", "Segoe UI", sans-serif; --body: "Inter", "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #111619; --panel: #182025; --fg: #e2e9ec; --muted: #97a6ad; --rule: #2a353b; --accent: #4fc6dc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; } h2 { font-size: 1.25rem; }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.pair { display: grid; grid-template-columns: 1fr; gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; border-radius: 4px; display: block; }
+figcaption { font-size: 0.85rem; color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.85em; }
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.85rem} th,td{padding:4px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap} th:first-child,td:first-child{text-align:left} .tw{overflow-x:auto} .pair{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+</style>
+<div class="wrap">
+<div class="lede"><span class="tag">Larder World · planets 1-7 · seeds 1-2 · llvmpipe · 2026-11-15</span>
+<h1>Value order on the planets</h1>
+<p>The planet review asked for one grey order everywhere: ground 20-45, rock 50-60, soft rock 60-72, thin slime 80 and up, crystals 110 and up, and thick slime 140 and up. Rock and soft rock were the brightest ground at 98-123 and sat above thin slime. Now rock is at 41-56, and soft rock is at 39-67, darkening with damage. Crystals reach 110 on 11 of 14 maps. Shallow water is 22 above deep. Hedges are lumpy and grained, the rock bevel is crisp, the backdrop is darker than cave rock, and the far view and minimap use the shaded materials.</p></div>
+<section><h2>The reviewer's table, before / after</h2><p class="muted">The reviewer's measure.py, run on the same views (identity view at zoom 12 and whole map, 1 s and 60 s, 1280x800). Each cell is grey luma, before / after.</p>
+<div class="tw"><table><tr><th>Planet, seed</th><th>film p10</th><th>slime p50</th><th>thick p90</th><th>rock</th><th>soft rock</th><th>crystal</th><th>brightest ground p90</th></tr><tr><td>1 meadow, 1</td><td>71 / 69</td><td>97 / 92</td><td>149 / 149</td><td>98 / 56</td><td>123 / 66</td><td>109 / 131</td><td>81 / 74</td></tr><tr><td>1 meadow, 2</td><td>68 / 74</td><td>97 / 101</td><td>134 / 137</td><td>- / -</td><td>123 / 39</td><td>126 / 101</td><td>51 / 56</td></tr><tr><td>2 barrens, 1</td><td>86 / 92</td><td>127 / 137</td><td>182 / 194</td><td>98 / 56</td><td>123 / 59</td><td>121 / 114</td><td>59 / 60</td></tr><tr><td>2 barrens, 2</td><td>85 / 84</td><td>127 / 124</td><td>181 / 175</td><td>98 / 56</td><td>- / -</td><td>113 / 114</td><td>60 / 60</td></tr><tr><td>3 fen, 1</td><td>66 / 72</td><td>114 / 114</td><td>160 / 161</td><td>98 / 51</td><td>122 / 58</td><td>123 / 120</td><td>51 / 56</td></tr><tr><td>3 fen, 2</td><td>66 / 81</td><td>108 / 113</td><td>172 / 169</td><td>98 / 56</td><td>123 / 67</td><td>111 / 119</td><td>59 / 56</td></tr><tr><td>4 valley, 1</td><td>65 / 69</td><td>107 / 110</td><td>180 / 183</td><td>98 / 56</td><td>123 / 65</td><td>122 / 113</td><td>57 / 99</td></tr><tr><td>4 valley, 2</td><td>74 / 76</td><td>151 / 153</td><td>190 / 193</td><td>98 / 56</td><td>- / -</td><td>102 / 128</td><td>57 / 59</td></tr><tr><td>5 jungle, 1</td><td>49 / 57</td><td>114 / 115</td><td>190 / 191</td><td>98 / 41</td><td>123 / 51</td><td>116 / 112</td><td>87 / 64</td></tr><tr><td>5 jungle, 2</td><td>51 / 55</td><td>114 / 114</td><td>190 / 191</td><td>98 / 49</td><td>123 / 44</td><td>106 / 116</td><td>123 / 68</td></tr><tr><td>6 highlands, 1</td><td>63 / 66</td><td>111 / 114</td><td>193 / 192</td><td>98 / 56</td><td>107 / 59</td><td>106 / 120</td><td>51 / 51</td></tr><tr><td>6 highlands, 2</td><td>64 / 67</td><td>112 / 114</td><td>194 / 194</td><td>98 / 56</td><td>123 / 66</td><td>96 / 118</td><td>49 / 49</td></tr><tr><td>7 caves, 1</td><td>56 / 66</td><td>120 / 117</td><td>196 / 195</td><td>98 / 56</td><td>98 / 56</td><td>93 / 109</td><td>61 / 56</td></tr><tr><td>7 caves, 2</td><td>51 / 63</td><td>100 / 102</td><td>193 / 192</td><td>98 / 56</td><td>98 / 56</td><td>94 / 105</td><td>56 / 56</td></tr></table></div>
+<p class="muted">The review's film p10 counts the veins' cast shadow on the ground beside them. That is why it stays below 80 on most maps. It now beats rock and soft rock on every map; highlands 2 is the narrowest, 67 against 66. Crystals are still under 110 on meadow 2 (101), caves 1 (109) and caves 2 (105). Valley 1's 99 ground value comes from the edge pixels of a small clay patch.</p></section>
+<section><h2>Thin slime over slime-coloured pixels only</h2><p class="muted">Film p10/p25, counting only pixels that are slime-coloured at 60 s (R-B over 45). 9 of 14 maps are at 80 or above, up from 4.</p>
+<div class="tw"><table><tr><th>Planet-seed</th><th>before → after</th></tr><tr><td>1-1</td><td>82/92 → 81/91</td></tr><tr><td>1-2</td><td>82/91 → 82/92</td></tr><tr><td>2-1</td><td>97/115 → 99/116</td></tr><tr><td>2-2</td><td>90/107 → 93/109</td></tr><tr><td>3-1</td><td>79/101 → 86/102</td></tr><tr><td>3-2</td><td>83/100 → 85/100</td></tr><tr><td>4-1</td><td>76/95 → 78/95</td></tr><tr><td>4-2</td><td>108/134 → 107/133</td></tr><tr><td>5-1</td><td>71/100 → 79/101</td></tr><tr><td>5-2</td><td>68/91 → 73/95</td></tr><tr><td>6-1</td><td>70/86 → 74/92</td></tr><tr><td>6-2</td><td>76/107 → 80/108</td></tr><tr><td>7-1</td><td>74/102 → 81/102</td></tr><tr><td>7-2</td><td>68/88 → 75/90</td></tr></table></div></section>
+<section><h2>Grey sheet, zoom 12</h2><p class="muted">Identity views at 60 s, in grey. Each map is shown before and after, side by side.</p><figure><img src="grey-near.png" alt="Grey sheet of identity views"></figure></section>
+<section><h2>Grey sheet, whole map</h2><figure><img src="grey-all.png" alt="Grey sheet of whole-map views"></figure></section>
+<section><h2>Hedges and rock, meadow 1, zoom 12</h2><p class="muted">Hedges lose the tube shading and get a lumpy edge and grain. Rock drops into the rock band, and the bevel is at most 5 px.</p><div class="pair">
+<figure><img src="hedge-z12-before.gif" alt="Hedges and rock, meadow 1, zoom 12 before"><figcaption>Before (main 66dd92fe)</figcaption></figure>
+<figure><img src="hedge-z12-after.gif" alt="Hedges and rock, meadow 1, zoom 12 after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Shallow and deep water, valley 1, zoom 12</h2><p class="muted">Shallow water is 38 and deep water 15-16 (shallow was 22).</p><div class="pair">
+<figure><img src="water-z12-before.gif" alt="Shallow and deep water, valley 1, zoom 12 before"><figcaption>Before (main 66dd92fe)</figcaption></figure>
+<figure><img src="water-z12-after.gif" alt="Shallow and deep water, valley 1, zoom 12 after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Cave rock, caves 1, zoom 12</h2><p class="muted">Rock is 56, down from 98, a step above the 42-51 ground.</p><div class="pair">
+<figure><img src="caves-z12-before.gif" alt="Cave rock, caves 1, zoom 12 before"><figcaption>Before (main 66dd92fe)</figcaption></figure>
+<figure><img src="caves-z12-after.gif" alt="Cave rock, caves 1, zoom 12 after"><figcaption>After</figcaption></figure></div></section>
+<section><h2>Far view and minimap</h2><p class="muted">Planet 8 at zoom 0.86, before on top and after below. Below zoom 1, each cell is now drawn with the shaded view's materials (soil, water depth, plants, rock, crystals) instead of the old flat palette. The minimap uses the same path.</p><figure><img src="far-view.png" alt="Far view before and after"></figure></section>
+<section><h2>Next</h2><p>Each biome gets its own ground micro-look at zoom 12 (review item 3). This needs the biome passed to the view.</p></section>
+</div>

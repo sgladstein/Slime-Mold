@@ -145,10 +145,42 @@ fn boxed(x: f32, y: f32, size: f32, k: u32) -> vec3<f32> {
     let d = size / f32(k);
     for (var j = 0u; j < k; j++) {
         for (var i = 0u; i < k; i++) {
-            sum += cell(x + (f32(i) + 0.5) * d, y + (f32(j) + 0.5) * d);
+            let sx = x + (f32(i) + 0.5) * d; let sy = y + (f32(j) + 0.5) * d;
+            if (P.shade == 1u) { sum += far_cell(sx, sy); } else { sum += cell(sx, sy); }
         }
     }
     return sum / f32(k * k);
+}
+
+// The far view's colour of the cell at (x, y), with the look on: the
+// shaded view's own materials a cell at a time, under flat light, for the
+// whole map below zoom 1 and the minimap at every zoom. Before 11-15 both
+// drew the engine's raw colour (navy ground, brown rock, crystals brighter
+// than the slime), a different picture from the game's (the planet review,
+// item 1).
+fn far_cell(x: f32, y: f32) -> vec3<f32> {
+    if (x < 0.0 || y < 0.0 || x >= f32(P.ww) || y >= f32(P.wh)) { return BACK; }
+    let ix = i32(x); let iy = i32(y);
+    let i = cidx(ix, iy);
+    let g = ground[i];
+    let kind = g & 15u;
+    let th = byte(look[i], 0u);
+    var m = cell_mat(ix, iy, th, 0.0, 0.0);
+    var c = m.albedo;
+    // Deep water's darkness, drawn at the pixel in the shaded view.
+    if (kind == WET && ((g >> 4u) & 7u) == SOIL_DEEP) { c = mix(c, DEEP_RGB, 0.7 * m.vis); }
+    // The plants over the ground, by their cover, as `plant_layer` lays them.
+    let pd = plant_d(i);
+    if (pd > 0.0) { c = mix(c, plant_rgb(plant_k(i)), plant_cover(pd) * m.vis); }
+    // Hard terrain and crystals are drawn over the material in the shaded
+    // view; here their own colours.
+    if (kind == ROCK || kind == WALL || kind == RUBBLE) { c = ter_cell(ter_pack(ix, iy)).xyz; }
+    if (kind == CRYSTAL && P.n_gems > 0u) {
+        let v = byte(g, 1u);
+        c = mix(c, mix(vec3<f32>(50.0, 50.0, 48.0), vec3<f32>(38.0, 142.0, 165.0) + vec3<f32>(10.0, 70.0, 75.0) * 0.6, v), 1.0 - 0.8 * (1.0 - m.vis));
+    }
+    if (P.mask == 1u) { c *= 0.3 + 0.7 * clamp(vis[i], 0.0, 1.0); }
+    return c;
 }
 
 fn in_minimap(x: u32, y: u32) -> bool {
@@ -594,7 +626,10 @@ const BARREN_RGB: vec3<f32> = vec3<f32>(55.0, 55.0, 53.0);
 // hollow in a grey thumbnail (art lead 11-14 18:56Z: wet was the ground's
 // value at (10,24,34), and Fen read as one flat field); its lit shore and
 // gloss say it is wet (`cell_mat_c`, `soil_detail`).
-const WET_RGB: vec3<f32> = vec3<f32>(5.0, 14.0, 22.0);
+// Shallow water is a clear step lighter than deep (at least 20 in grey;
+// the planet review 11-15: fords were 6-7 off deep water and could not be
+// seen at zoom 1). It was (5, 14, 22).
+const WET_RGB: vec3<f32> = vec3<f32>(14.0, 33.0, 41.0);
 // Deep water (soil 4 with the wet bit, #285): darker still at its middle;
 // a bridge (soil 5) is a plank deck. The owner (11-14 18:01Z) on the
 // first river: "just a blue curved line on the map. It doesn't look
@@ -1032,8 +1067,25 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     // the bronze orange, the panic's colour.
     let shade_th = 0.95 + 0.2 * smoothstep(0.3, 1.0, th);
     let body_c = mix(vivid * shade_th, DENSE_RGB * shade_th, dense * (1.0 - cut));
-    let gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
-    let film = 1.0 - exp(-14.0 * th);
+    var gel = soil * (0.55 + 0.7 * vivid / 255.0) + vivid * 0.06;
+    // The film's inside lifted toward 95 in grey with its own light (art
+    // lead 11-15: thin film from 80, above rock and soft rock), gated by
+    // the thickness, which carries the walkers' count (`prep`), so the
+    // faint tail past the last walkers keeps the ground's value and the
+    // edge stays as sharp as its walkers. Lifted everywhere it widened
+    // the edge from 0.96 to 1.74 cells (dead-ends 11-15).
+    let gel_l = dot(gel, vec3<f32>(0.299, 0.587, 0.114));
+    gel += vivid * max(95.0 - gel_l, 0.0) / max(lum, 1.0) * smoothstep(FILM_LIFT_A, FILM_LIFT_B, th);
+    // Tried and reverted 11-15: lifting the gel to 100 grey with its own
+    // light (rule 2, film from 80). It barely moved the review's film p10,
+    // whose low end is the veins' shaded far flank (the shade floor in
+    // `shaded` fixed that), and it widened the slime's edge from 0.96 to
+    // 1.74 cells (the_slime_edge_is_as_sharp_as_its_walkers), because the
+    // faint tail past the walkers lit up.
+    // The gel comes in faster (was 1 - exp(-14 th)): a frontier film a
+    // few hundredths thick was a third gel, 57 in grey over ground at 40,
+    // under rock (the review 11-15: film 10th percentile 49-86).
+    let film = 1.0 - exp(-40.0 * th);
     // Opaque from a third of full thickness (was 0.08 to 0.55). The fork's
     // start crystal stands on a disc of clay; the body over it was only
     // about half opaque, so the clay showed through as a flat orange-red
@@ -1860,7 +1912,13 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let sy = film_h(x, y + so) - film_h(x, y - so);
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
     let spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
-    var c = m.albedo * max(shade, 0.15) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
+    // The thin film's shaded flank keeps most of its light (rule 2: the
+    // film from 80; the planet review 11-15 measured its 10th percentile
+    // at 65-80 on slime-coloured pixels, the far flank of the frontier's
+    // veins, which fell to 0.4 of the light). Thick veins keep their full
+    // relief.
+    let thin_floor = 0.15 + 0.7 * smoothstep(0.005, 0.04, th_here) * (1.0 - smoothstep(0.25, 0.6, th_here));
+    var c = m.albedo * max(shade, thin_floor) + vec3<f32>(255.0, 250.0, 236.0) * spec + m.glow;
     // The fire's body, at this pixel (`flame_body` of the B-spline heat):
     // worked out in `prep` per fine cell it stair-stepped at the owner's
     // zoom 24 (11-14 20:21Z). The heat comes with the plants' own reads.
@@ -1972,7 +2030,9 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // (the only cyan in the world is charge).
             let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v);
             let worn = 0.6 + 0.3 * depth;
-            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(30.0, 120.0, 140.0), v);
+            // Charged faces from about 110 in grey (rule 2: above rock, soft
+            // rock and the thin film; the review 11-15 measured 93-126).
+            var alb = mix(vec3<f32>(66.0, 66.0, 64.0) * worn, vec3<f32>(38.0, 142.0, 165.0), v);
             let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
@@ -1990,7 +2050,18 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // harvest glow shows) takes a cyan cast.
             let th = film_th(x, y);
             let film = GEM_FILM * (1.0 - exp(-40.0 * th));
-            let rock = alb * max(gs, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
+            // The faces' light compressed toward the middle while charged
+            // (a shaded face of a live crystal stays above 110 in grey;
+            // the spent stone keeps the full relief of its steps).
+            var rock = alb * max(mix(gs, 1.0 + 0.6 * (gs - 1.0), v), 0.15) + vec3<f32>(255.0, 248.0, 230.0) * gspec * 0.7;
+            // And a floor: a face holding charge never reads under 112 in
+            // grey with its glow (art lead 11-15: crystals are the
+            // objective; the compression alone left meadow 2 at 101 and
+            // caves at 105-109, shaded faces and part-charged cells). The
+            // floor fades in with the charge, so spent stone stays dark.
+            let rl = dot(rock + glow, vec3<f32>(0.299, 0.587, 0.114));
+            let want = 112.0 * smoothstep(0.15, 0.45, v);
+            rock *= max(1.0, (want - (rl - dot(rock, vec3<f32>(0.299, 0.587, 0.114)))) / max(dot(rock, vec3<f32>(0.299, 0.587, 0.114)), 1.0));
             // The film is the slime as shaded off the crystal (its own
             // bumps, gloss and glint), tilted by the face it lies on.
             let lum = dot(c, vec3<f32>(0.299, 0.587, 0.114));
@@ -2086,13 +2157,17 @@ fn ter_cell(p: u32) -> vec4<f32> {
     let kind = (p >> 16u) & 255u;
     let v = byte(p, 3u);
     let h = byte(p, 1u) * 4.0;
-    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(92.0, 94.0, 98.0), vec3<f32>(138.0, 136.0, 130.0), v), h); }
-    // Health is the wall's brightness as well as its height.
-    // Soft rock at full health is a warm mid-grey just above rock, below
-    // thin slime (rule 2; art lead 11-14 18:56Z: its pale beige 168 read
-    // as bright as thin slime and competed with it on Jungle).
-    if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(58.0, 50.0, 42.0), vec3<f32>(128.0, 118.0, 104.0), v), h); }
-    if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(92.0, 82.0, 70.0) * (0.7 + 0.3 * v), h); }
+    // The value order (rule 2; the planet review 11-15, its luma table):
+    // ground 20-45, rock 50-60, soft rock 60-72 at full health, then the
+    // slime's thin film from 80, crystals from 110, thick slime from 140.
+    // Rock was 98 and soft rock 107-123 in grey, above the thin film on
+    // all 14 planet-seeds and above the crystals on 12.
+    if (kind == ROCK) { return vec4<f32>(mix(vec3<f32>(50.0, 52.0, 56.0), vec3<f32>(66.0, 65.0, 62.0), v), h); }
+    // Health is the wall's brightness as well as its height: a warm grey
+    // just above rock at full health, darkening as it is worn. (Before:
+    // up to (128, 118, 104), and its pale beige 168 before 11-14 18:56Z.)
+    if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(34.0, 30.0, 26.0), vec3<f32>(74.0, 67.0, 58.0), v), h); }
+    if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(56.0, 50.0, 43.0) * (0.7 + 0.3 * v), h); }
     return vec4<f32>(0.0);
 }
 
@@ -2109,13 +2184,13 @@ fn bcd(t: f32) -> vec4<f32> {
     return vec4<f32>(-s * s, 3.0 * t * t - 4.0 * t, -3.0 * t * t + 2.0 * t + 1.0, t * t) * 0.5;
 }
 
-struct Ter { s: f32, grad: vec2<f32>, h: f32, albedo: vec3<f32> };
+struct Ter { s: f32, grad: vec2<f32>, h: f32, albedo: vec3<f32>, wall: f32, wal: vec3<f32> };
 
 // The terrain field at world point (x, y): occupancy, its gradient (per
 // cell), and the solid cells' mean height and colour.
 fn terrain(x: f32, y: f32) -> Ter {
     var t: Ter;
-    t.s = 0.0; t.grad = vec2<f32>(0.0); t.h = 0.0; t.albedo = vec3<f32>(0.0);
+    t.s = 0.0; t.grad = vec2<f32>(0.0); t.h = 0.0; t.albedo = vec3<f32>(0.0); t.wall = 0.0; t.wal = vec3<f32>(0.0);
     var hw = 0.0;
     let ux = x - 0.5; let uy = y - 0.5;
     let ix = i32(floor(ux)); let iy = i32(floor(uy));
@@ -2132,11 +2207,23 @@ fn terrain(x: f32, y: f32) -> Ter {
                 t.grad += o * vec2<f32>(dx[i] * wy[j], wx[i] * dy[j]);
                 // Height and colour from the solid cells themselves.
                 let c = ter_cell(p);
-                if (c.w > 0.0) { t.h += w * c.w; t.albedo += w * c.xyz; hw += w; }
+                if (c.w > 0.0) { t.h += w * c.w; t.albedo += w * c.xyz; hw += w; if (((p >> 16u) & 255u) == WALL) { t.wall += w; t.wal += w * c.xyz; } }
             }
         }
     }
-    if (hw > 0.0) { t.h /= hw; t.albedo /= hw; } else { t.h = 0.0; }
+    if (hw > 0.0) {
+        // Where soft rock meets rock, each keeps its own colour up to a
+        // crisp joint (the wall share's half, over a few pixels): the
+        // weighted mean blurred the seam over 25 px (the review 11-15).
+        let rk = t.albedo - t.wal;
+        let wl = t.wall;
+        t.h /= hw; t.wall = wl / hw;
+        if (wl > 0.0 && hw - wl > 0.0) {
+            let js = smoothstep(0.5 - 1.5 / P.zoom, 0.5 + 1.5 / P.zoom, t.wall);
+            t.albedo = mix(rk / (hw - wl), t.wal / wl, js);
+            t.wall = js;
+        } else { t.albedo /= hw; }
+    } else { t.h = 0.0; }
     return t;
 }
 
@@ -2144,16 +2231,23 @@ fn terrain(x: f32, y: f32) -> Ter {
 // field, the signed distance to its edge in cells (inside positive) and
 // the pixel's coverage. `near` is false where no hard terrain is within
 // reach of this cell (`look::FAR`), at the cost of one read.
-struct TerAt { t: Ter, d: f32, cov: f32, near: bool };
+struct TerAt { t: Ter, d: f32, cov: f32, near: bool, p: vec2<f32> };
 fn terrain_at(x: f32, y: f32) -> TerAt {
     var o: TerAt;
-    o.d = 0.0; o.cov = 0.0;
+    o.d = 0.0; o.cov = 0.0; o.p = vec2<f32>(x, y);
     o.near = (ground[cidx(i32(floor(x)), i32(floor(y)))] & 128u) == 0u;
     if (!o.near) { return o; }
     o.t = terrain(x, y);
     let gl = max(length(o.t.grad), 1e-4);
     if (o.t.s > 0.0) {
         o.d = (o.t.s - TER_ISO) / gl;
+        // Soft rock (the hedges) is grown, not cut: its edge is pushed in
+        // and out by a lumpy noise about a cell across, so it reads as a
+        // broken, bushy line, not a tube (the planet review 11-15, item 10).
+        if (o.t.wall > 0.0) {
+            let q = vec2<f32>(0.8 * x - 0.6 * y, 0.6 * x + 0.8 * y);
+            o.d += o.t.wall * 0.45 * (vnoise(q * 1.1 + 31.0) + 0.5 * vnoise(vec2<f32>(x, y) * 2.7 + 7.0) - 0.75);
+        }
         o.cov = clamp(0.5 + o.d * P.zoom, 0.0, 1.0);
     }
     return o;
@@ -2166,17 +2260,34 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
     let l = normalize(LIGHT);
     let gl = max(length(t.grad), 1e-4);
     let inward = t.grad / gl;
-    let k = 1.0 - smoothstep(0.0, TER_BEVEL, d);
+    // At most 5 pixels wide, so at zoom 12-24 the shaded side is a crisp
+    // band, not a cell of blur (the planet review 11-15).
+    let k = 1.0 - smoothstep(0.0, min(TER_BEVEL, 5.0 / P.zoom), d);
     // Raised: the bevel tilts enough that the side toward the light is lit
     // and the far side shaded (11-14, art lead: rock read as a flat
     // cutout at barren's value; the tilt was 0.35 + 0.15 h), and a thin
     // rim along the lit edge catches the key light.
-    let n = normalize(vec3<f32>(-inward * k * (0.8 + 0.2 * t.h), 1.0));
+    // Soft rock takes no bevel (its tilt rounded it into a tube): its
+    // relief is the grain below.
+    let n = normalize(vec3<f32>(-inward * k * (0.8 + 0.2 * t.h) * (1.0 - 0.85 * t.wall), 1.0));
     let shade = 1.0 + 1.25 * (dot(n, l) - l.z);
     let half_v = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
     let spec = pow(max(dot(n, half_v), 0.0), 20.0) * 0.08;
     let lit_edge = max(dot(-inward, normalize(l.xy)), 0.0) * (1.0 - smoothstep(0.0, 2.0, d * P.zoom));
-    return t.albedo * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec + vec3<f32>(60.0, 58.0, 52.0) * lit_edge;
+    // The hedge's grain: clumps a cell and a half across, finer leaves
+    // in them, darker where the cells are worn (their health is already
+    // the albedo's value), and a dark fringe where the lumpy edge ends.
+    var alb = t.albedo;
+    if (t.wall > 0.0) {
+        let p = ta.p;
+        // (On turned grids: on the cells' axes value noise reads as
+        // squares at zoom 24.)
+        let q1 = vec2<f32>(0.8 * p.x - 0.6 * p.y, 0.6 * p.x + 0.8 * p.y);
+        let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
+        let gr = vnoise(q1 / 1.5 + 3.0) * 0.6 + vnoise(q2 * 2.3 + 11.0) * 0.4;
+        alb *= mix(1.0, (0.72 + 0.56 * gr) * (0.8 + 0.2 * smoothstep(0.0, 0.6, d)), t.wall);
+    }
+    return alb * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * (1.0 - t.wall) + vec3<f32>(60.0, 58.0, 52.0) * lit_edge * (1.0 - 0.7 * t.wall);
 }
 
 // The ground's colour `c` at world point (x, y) with the hard terrain over
@@ -2199,7 +2310,12 @@ fn terrain_over(c0: vec3<f32>, x: f32, y: f32) -> vec3<f32> {
         let q = terrain(x + ld.x * 1.2, y + ld.y * 1.2);
         if (q.s > 0.0) {
             let reach = clamp(q.h * TER_SHADOW, 0.0, 1.0);
-            c *= 1.0 - 0.45 * reach * smoothstep(0.05, 0.6, q.s);
+            // Its edge is the offset terrain's own edge, antialiased over
+            // two pixels (the planet review 11-15: the shaded side was a
+            // soft band 20-25 px wide at zoom 24; it faded over the field's
+            // 0.05-0.6, a cell or so).
+            let qd = (q.s - TER_ISO) / max(length(q.grad), 1e-4);
+            c *= 1.0 - 0.45 * reach * clamp(0.5 + 0.5 * qd * P.zoom, 0.0, 1.0);
         }
     }
     if (cov <= 0.0) { return c; }
@@ -2388,6 +2504,27 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
+// Off the map in the shaded view: darker than any ground or rock.
+const FILM_LIFT_A: f32 = 0.01;
+const FILM_LIFT_B: f32 = 0.05;
+const OFF_MAP_RGB: vec3<f32> = vec3<f32>(12.0, 13.0, 16.0);
+
+// A measuring aid (off in the game): with it on, each shaded pixel is drawn
+// as its class instead (red: 10 soil, 20 rock, 30 soft rock, 40 rubble,
+// 50 crystal, 70 water, 80 off the map; green: the slime film's thickness
+// x 255; blue: soft rock's health x 255), so a frame from a build with it
+// registers every pixel of the same frame from the game's build. Used for
+// the value-order tables (Reports/value-order-2026-11-15).
+const DEBUG_ID: bool = false;
+fn debug_id(x: f32, y: f32) -> vec3<f32> {
+    if (x < 0.0 || y < 0.0 || x >= f32(P.ww) || y >= f32(P.wh)) { return vec3<f32>(80.0, 0.0, 0.0); }
+    let g = ground[cidx(i32(floor(x)), i32(floor(y)))];
+    let k = g & 15u;
+    var cls = 10.0;
+    if (k == ROCK) { cls = 20.0; } else if (k == WALL) { cls = 30.0; } else if (k == RUBBLE) { cls = 40.0; }
+    else if (k == CRYSTAL) { cls = 50.0; } else if (k == WET) { cls = 70.0; }
+    return vec3<f32>(cls, clamp(film_th(x, y), 0.0, 1.0) * 255.0, byte(g, 1u) * 255.0);
+}
 
 @compute @workgroup_size(16, 16)
 fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -2438,6 +2575,12 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 c = shaded(fx, fy, 0.75 / f32(P.fine));
                 c = terrain_over(c, fx, fy);
             }
+            // Off the map: its own dark value, under any rock (the planet
+            // review 11-15: cave rock was the backdrop's grey, so the map's
+            // edge vanished). Off-world cells still stand as rock, so the
+            // map is rimmed by rock that fades into the dark over a cell.
+            let outside = max(max(-fx, fx - f32(P.ww)), max(-fy, fy - f32(P.wh)));
+            if (outside > 0.0) { c = mix(c, OFF_MAP_RGB, smoothstep(0.0, 1.5, outside)); }
             // Each calm walker a point of light (owner's playtest, 11-14
             // 04:50Z: "single individual walkers should be brighter"). It
             // was 0.048 of white added a walker, so a lone explorer on bare
@@ -2464,6 +2607,7 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
             // bolting piece read red on the first film).
             c = mix(c, vec3<f32>(255.0, 178.0, 40.0), min(f32((n >> 10u) & 1023u) * (0.4 / 15.0), 0.75));
             c = mix(c, vec3<f32>(235.0, 52.0, 40.0), min(f32(n >> 20u) * (0.5 / 15.0), 0.85));
+            if (DEBUG_ID) { c = debug_id(fx, fy); }
         } else if (fx >= 0.0 && fy >= 0.0 && fx < f32(P.ww) && fy < f32(P.wh)) {
             if (P.zoom >= 1.0) {
                 c = cell(fx, fy);
