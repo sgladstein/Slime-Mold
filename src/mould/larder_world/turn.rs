@@ -42,7 +42,7 @@ impl<W: World> Game<W> {
         let mut from = Vec::new();
         let mut shots = Vec::new();
         // Who fired each shot, and the cast it carries (`Bullet::cast`).
-        let mut shooters: Vec<(Option<usize>, u8)> = Vec::new();
+        let mut shooters: Vec<Firer> = Vec::new();
         // How far each soldier's shot was aimed (`Bullet::aim`).
         let mut aims: Vec<f32> = Vec::new();
         // The squad mode's walk (`Rules::steer`): every soldier at once,
@@ -184,7 +184,7 @@ impl<W: World> Game<W> {
                                     let (sn, cs) = a.sin_cos();
                                     let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
                                     shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r, over: false });
-                                    shooters.push((Some(k), cast));
+                                    shooters.push((Some(k), cast, None));
                                     aims.push(d);
                                 }
                             }
@@ -243,8 +243,9 @@ impl<W: World> Game<W> {
         // Turrets, lures and pumps: units that do not move (`buildings`).
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
-        self.building_units(&mut units, &mut shots, &mut who, &mut from);
-        shooters.resize(shots.len(), (None, 0));
+        shooters.resize(shots.len(), (None, 0, None));
+        self.building_units(&mut units, &mut shots, &mut shooters, &mut who, &mut from);
+        shooters.resize(shots.len(), (None, 0, None));
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, &aims, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
@@ -271,7 +272,7 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;
         self.shots += fired;
-        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, fired, cast, r: i.r }).collect();
+        self.last_shots = f.shots.iter().zip(&out.shots).zip(&by).map(|((i, o), &(by, fired, cast, turret))| Shot { from: i.from, to: i.to, hit: o.hit, killed: o.killed, by, turret, fired, cast, r: i.r }).collect();
         self.flown.clear();
         if r.bullet_speed > 0.0 {
             self.flown.extend_from_slice(&self.bullets);

@@ -78,7 +78,7 @@ pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -189,6 +189,8 @@ pub struct Shot {
     pub killed: u32,
     /// The soldier that fired it (None: a turret).
     pub by: Option<usize>,
+    /// The turret that fired it (`Game::buildings` index), if one did.
+    pub turret: Option<usize>,
     /// Fired this frame (a bullet's first leg, or an instant ray): the
     /// muzzle flash and the gunshot's sound; later legs are flight.
     pub fired: bool,
@@ -213,9 +215,17 @@ pub struct Take {
     pub took: f32,
 }
 
-/// A leg's shooter (None: a turret), whether it was fired this frame, and
-/// the cast it carries (`Bullet::cast`).
-type LegBy = (Option<usize>, bool, u8);
+/// A leg's shooter (None: a turret), whether it was fired this frame, the
+/// cast it carries (`Bullet::cast`) and the turret that fired it
+/// (`Bullet::turret`).
+type LegBy = (Option<usize>, bool, u8, Option<usize>);
+
+/// Who fires a shot this frame: the soldier (None: not a soldier), the cast
+/// it carries, and the turret (`Game::buildings` index) when a turret
+/// fired it (the turrets thread, 2026-11-16: the independent review's
+/// shooter id, so a turret's cast kills, its Pull and its Render credit
+/// find the turret that fired).
+pub(super) type Firer = (Option<usize>, u8, Option<usize>);
 
 /// A shot in flight (`Rules::bullet_speed`): where it is, its heading, the
 /// fine cells of its range left, its strike radius, who fired it and the
@@ -227,6 +237,9 @@ pub struct Bullet {
     pub left: f32,
     pub r: f32,
     pub by: Option<usize>,
+    /// The turret that fired it (`Game::buildings` index): its cast, Pull
+    /// and kills go to that turret (`Shot::turret`).
+    pub turret: Option<usize>,
     pub fresh: bool,
     /// Slime hits it flies on through (each one strikes as a shot does).
     pub pierce: u8,
@@ -403,6 +416,12 @@ pub struct Game<W: World> {
     /// not add past `squad::SHOTS_MAX` (dropped, newest first, as fired
     /// shots are).
     pub bullet_mods: BulletMods,
+    /// The cards every turret fires (`Cmd::Load(TURRET_DECK, ..)`; the
+    /// turrets thread, 2026-11-16): None, plain strikes as before. One deck
+    /// for every turret, as one gun is a squad's (the proposal's option A:
+    /// no clicking round twenty turrets), and a turret shot carrying a cast
+    /// is told from a soldier's by `by` None (`turret_mods`).
+    pub turret_deck: Option<Deck>,
     pub bullets_dropped: u32,
     /// Carried casts let out (`Bullet::carry`), each one release, however
     /// many bullets its set fires.
@@ -585,6 +604,7 @@ impl<W: World> Game<W> {
             bullets: Vec::new(),
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
+            turret_deck: None,
             bullets_dropped: 0,
             releases: 0,
             mould,
@@ -667,8 +687,28 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's.
+    /// What every turret's bullets carry (`turret_deck`): nothing without
+    /// a deck, so plain turrets fly as before.
+    pub fn turret_mods(&self) -> BulletMods {
+        self.turret_deck.map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
+    }
+
+    /// What the bullets of shooter `by` carry: its squad's (`mods`), or
+    /// the turrets' for None.
+    pub fn mods_by(&self, by: Option<usize>) -> BulletMods {
+        match by {
+            Some(k) => self.soldiers.get(k).map_or_else(BulletMods::default, |s| self.mods(s.squad as usize)),
+            None => self.turret_mods(),
+        }
+    }
+
+    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's;
+    /// `TURRET_DECK` loads every turret (None: plain strikes).
     pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
+        if q == TURRET_DECK as usize {
+            self.turret_deck = deck;
+            return true;
+        }
         match self.squads.get_mut(q) {
             Some(s) => {
                 s.deck = deck;

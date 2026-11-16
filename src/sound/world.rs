@@ -898,7 +898,7 @@ mod tests {
         assert!(g.rules.bullet_speed > 0.0);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shot = Shot { from: (10.0, 10.0), to: (90.0, 10.0), hit: Some((80.0, 10.0)), killed: 0, by: Some(0), fired: true, cast: 0, r: 2.0 };
+        let shot = Shot { from: (10.0, 10.0), to: (90.0, 10.0), hit: Some((80.0, 10.0)), killed: 0, by: Some(0), turret: None, fired: true, cast: 0, r: 2.0 };
         let zip = |cmds: Vec<SoundCmd>| cmds.into_iter().find_map(|c| match c {
             SoundCmd::Grain { kind: GrainKind::Zip, gain, delay, .. } => Some((gain, delay)),
             _ => None,
@@ -938,7 +938,7 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shot = |killed| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed, by: None, fired: true, cast: 0, r: 2.0 };
+        let shot = |killed| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed, by: None, turret: None, fired: true, cast: 0, r: 2.0 };
         let impact = |cmds: Vec<SoundCmd>| {
             cmds.into_iter().find_map(|c| match c {
                 SoundCmd::Impact { weight, gain, .. } => Some((weight, gain)),
@@ -962,7 +962,7 @@ mod tests {
         let g = small(1);
         let mut l = WorldListener::new(&g);
         let ear = whole(&g);
-        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k, by: None, fired: true, cast: 0, r: 2.0 }).collect();
+        let shots: Vec<Shot> = (0..20).map(|k| Shot { from: (10.0, 10.0), to: (20.0, 10.0), hit: Some((18.0, 10.0)), killed: k, by: None, turret: None, fired: true, cast: 0, r: 2.0 }).collect();
         l.shots(&shots);
         let cmds = l.hear(&g, ear, 1.0 / 60.0, false);
         let cracks = cmds.iter().filter(|c| matches!(c, SoundCmd::Grain { kind: GrainKind::Crack, .. })).count();

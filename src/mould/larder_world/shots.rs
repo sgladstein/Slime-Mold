@@ -26,19 +26,20 @@ impl<W: World> Game<W> {
     /// legs and, for each, who fired it, whether it was fired now and the
     /// cast it carries (`by` gives who and the cast of each fired shot,
     /// `aims` how far each was aimed: `Bullet::aim`, infinite if missing).
-    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[(Option<usize>, u8)], aims: &[f32], dt: f32) -> (Vec<ShotIn>, Vec<LegBy>) {
+    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[Firer], aims: &[f32], dt: f32) -> (Vec<ShotIn>, Vec<LegBy>) {
         let r = self.rules;
         if r.bullet_speed <= 0.0 {
-            return (fired, by.iter().map(|&(b, c)| (b, true, c)).collect());
+            return (fired, by.iter().map(|&(b, c, t)| (b, true, c, t)).collect());
         }
-        for (q, (s, &(b, cast))) in fired.iter().zip(by).enumerate() {
+        for (q, (s, &(b, cast, turret))) in fired.iter().zip(by).enumerate() {
             if self.bullets.len() >= squad::SHOTS_MAX {
                 self.bullets_dropped += 1;
                 continue;
             }
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
-            let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
+            // A turret's (`by` None) carries the turrets' deck (`turret_mods`).
+            let m = self.mods_by(b);
             let ammo = if cast > 0 { m.ammo.get(cast as usize - 1).copied() } else { None };
             let speed = ammo.map_or(1.0, |a| a.speed());
             // A needle flies on through its set's hits on top of the
@@ -46,7 +47,7 @@ impl<W: World> Game<W> {
             let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
             // The cast it carries (`Card::Trigger`), if its cast is a carrier.
             let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY), over: s.over });
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, turret, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY), over: s.over });
         }
         if r.seek_turn > 0.0 && self.bullets.iter().any(|b| b.seek > 0) {
             self.steer();
@@ -71,7 +72,7 @@ impl<W: World> Game<W> {
                 }
             }
             legs.push(ShotIn { from: b.at, to, r: b.r, over: b.over });
-            who.push((b.by, b.fresh, b.cast));
+            who.push((b.by, b.fresh, b.cast, b.turret));
         }
         (legs, who)
     }
@@ -110,7 +111,7 @@ impl<W: World> Game<W> {
                 })
                 .collect()
         } else {
-            by.iter().map(|&(k, _, _)| k.map_or(0, |k| n(self.mods(self.soldiers[k].squad as usize).seek, true))).collect()
+            by.iter().map(|&(k, _, _, _)| n(self.mods_by(k).seek, true)).collect()
         };
         if catch.iter().all(|&c| c == 0) {
             Vec::new()
@@ -151,7 +152,7 @@ impl<W: World> Game<W> {
                 // A trigger lets its cast out at the first hit; the bullet
                 // flies on empty if it pierces.
                 if b.carry > 0 && (!b.expire || b.pierce == 0) {
-                    out_casts.push(Release { at: h, dir: b.dir, by: b.by, cast: b.carry, wall: false });
+                    out_casts.push(Release { at: h, dir: b.dir, by: b.by, turret: b.turret, cast: b.carry, wall: false });
                     b.carry = 0;
                 }
                 // On a wall a leg ends with no hit; only slime gets here.
@@ -173,7 +174,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: r.seek_after * sc, aim: f32::INFINITY, over: b.over });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, turret: b.turret, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: r.seek_after * sc, aim: f32::INFINITY, over: b.over });
                     }
                 }
                 return false;
@@ -191,7 +192,7 @@ impl<W: World> Game<W> {
                 }
             }
             if !on && b.carry > 0 && b.expire {
-                out_casts.push(Release { at: l.to, dir: b.dir, by: b.by, cast: b.carry, wall: !self.world.clear(l.to.0, l.to.1) });
+                out_casts.push(Release { at: l.to, dir: b.dir, by: b.by, turret: b.turret, cast: b.carry, wall: !self.world.clear(l.to.0, l.to.1) });
             }
             on
         });
@@ -217,9 +218,16 @@ impl<W: World> Game<W> {
     /// A carried cast with casts beside it (`Card::Multicast`) lets them
     /// all out, fanned as the gun fires them.
     pub(super) fn release(&mut self, o: Release) {
-        let Some(k) = o.by else { return };
-        let q = self.soldiers[k].squad as usize;
-        let m = self.mods(q);
+        // A turret's cast lets out as a turret fires it: the turrets'
+        // deck, a turret's strike and reach, and over walls as its shells
+        // fly (`BuildRules::turret_over`).
+        let q = o.by.map(|k| self.soldiers[k].squad as usize);
+        let m = self.mods_by(o.by);
+        let b = self.rules.build;
+        let (strike, range, over) = match q {
+            Some(q) => (self.strike_of(q), self.gun_range(q), false),
+            None => ((self.rules.strike * self.s()).min(squad::R_MAX), b.turret_range * (1.0 + self.rules.range_card * m.reach as f32), b.turret_over),
+        };
         let (mut dir, mut at) = (o.dir, o.at);
         if o.wall {
             // One cell back is where it flew from, open; which of the two
@@ -245,8 +253,8 @@ impl<W: World> Game<W> {
             let i = cast as usize - 1;
             let ammo = m.ammo[i];
             let shape = ammo.set.shape();
-            let r = (self.strike_of(q) * ammo.reach()).min(squad::R_MAX) * shape.r;
-            let reach = self.gun_range(q) * self.s() * ammo.range();
+            let r = (strike * ammo.reach()).min(squad::R_MAX) * shape.r;
+            let reach = range * self.s() * ammo.range();
             let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
             let pellets = shape.pellets.max(1);
             for p in 0..pellets {
@@ -258,7 +266,7 @@ impl<W: World> Game<W> {
                 let (sn, cs) = a.sin_cos();
                 let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
                 let pierce = m.pierce.saturating_add(shape.pierce);
-                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: self.rules.seek_after * self.s(), aim: f32::INFINITY, over: false });
+                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, turret: o.turret, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: self.rules.seek_after * self.s(), aim: f32::INFINITY, over });
             }
         }
     }
@@ -409,6 +417,7 @@ pub(super) struct Release {
     at: (f32, f32),
     dir: (f32, f32),
     by: Option<usize>,
+    turret: Option<usize>,
     cast: u8,
     /// It stopped at a wall, not at the end of its range.
     wall: bool,

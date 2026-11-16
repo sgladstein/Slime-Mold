@@ -492,6 +492,10 @@ struct Args {
     /// film's page can say how a hit's status scattered or held the
     /// slime there without the picture.
     watch: Option<(f32, f32, f32)>,
+    /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
+    /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
+    /// `Game::turret_deck`), a preset or a card list as `load=`.
+    tload_at: Option<(f32, String)>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, free, pick, fire, and
@@ -2181,6 +2185,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };
                 args.watch = Some((*x, *y, *r));
+            }
+            "tload" => {
+                let (t, name) = v.split_once(',').ok_or("tload=T,NAME")?;
+                let cards = match LOADOUTS.iter().find(|l| l.0 == name) {
+                    Some(l) => l.1,
+                    None if rounds::parse(name).is_some() => name,
+                    None => return Err(format!("tload=: a card list or one of {}", LOADOUTS.map(|l| l.0).join(", ")).into()),
+                };
+                args.tload_at = Some((t.parse::<f32>()?, cards.to_string()));
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
