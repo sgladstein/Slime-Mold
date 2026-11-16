@@ -5,6 +5,18 @@ use super::*;
 
 /// A wall's raise time counts once per this many dish cells of length.
 pub const WALL_RAISE_LEN: f32 = 10.0;
+/// Walkers more on one side of a wall than the other that make the other
+/// its home side (`Game::wall_home`).
+pub const WALL_SLIME: u32 = 5;
+/// How far each side of a wall `wall_home` looks for slime and soldiers, dish
+/// cells at least (half the wall's length if longer).
+pub const WALL_LOOK: f32 = 8.0;
+/// How far a wall rises while a soldier stands in its footprint
+/// (`build_turn`): its last sliver waits for them to step out.
+pub const WALL_WAIT: f32 = 0.995;
+/// Game seconds a wall's last sliver waits for its footprint to clear
+/// (`build_turn`; the wall's `Building::ready` holds when it began).
+pub const WALL_WAIT_SECS: f32 = 4.0;
 
 impl<W: World> Game<W> {
     /// Where soldier `k` stands to raise building `b` (fine cells): beside
@@ -60,12 +72,36 @@ impl<W: World> Game<W> {
                 }
             }
             Some(_) => {
-                if self.at_site(k, b) {
+                // A wall's defenders stand with its builders but don't
+                // raise it (`cover_one`).
+                if self.at_site(k, b) && !s.cover {
                     let secs = self.raise_secs(b);
                     // A working squad's builders make up for its defenders
                     // (`Game::work_boost`).
                     let boost = self.work_boost(k);
-                    self.raise(b, if secs > 0.0 { dt / secs * boost } else { 1.0 });
+                    let mut amount = if secs > 0.0 { dt / secs * boost } else { 1.0 };
+                    // A wall doesn't close on a soldier still in its
+                    // footprint: it waits at its last sliver while they
+                    // step out to its home side (`goal_raw`), so nobody is
+                    // shut in it and popped out on the slime's side.
+                    // At most `WALL_WAIT_SECS`, though: a soldier that
+                    // can't step out (held by another order) is not worth a
+                    // wall that never stands; it walks out of the risen
+                    // wall as before (`walk`). Its first cut waited for
+                    // good, and on the Fork a guard whose post was past the
+                    // line held the wall at its last sliver.
+                    let bd = self.buildings[b];
+                    if bd.built + amount >= 1.0 && self.wall_occupied(b) {
+                        let now = self.world.ticks();
+                        if bd.ready == 0 {
+                            self.buildings[b].ready = now.max(1);
+                        }
+                        let waited = now.saturating_sub(self.buildings[b].ready) as f32 / self.rules.tps as f32;
+                        if waited < WALL_WAIT_SECS {
+                            amount = (WALL_WAIT - bd.built).max(0.0);
+                        }
+                    }
+                    self.raise(b, amount);
                 }
             }
         }
@@ -98,6 +134,76 @@ impl<W: World> Game<W> {
         let (_, far) = self.build_band(b, p);
         let elbow = self.rules.elbow.max(0.0) * self.rules.touch * self.s();
         (p.0 - s.x).hypot(p.1 - s.y) <= far + elbow
+    }
+
+    /// A side for wall `at`-`to` placed now (`Building::home`): a unit
+    /// vector square to its line. The side with less slime by it, when the
+    /// two differ by `WALL_SLIME` walkers or more (a wall goes up against
+    /// the slime: the owner's "trapped with the slime"); else the larder's
+    /// side; else the side most soldiers near it stand on.
+    pub(super) fn wall_home(&self, at: (f32, f32), to: (f32, f32)) -> (f32, f32) {
+        let sc = self.s();
+        let (dx, dy) = (to.0 - at.0, to.1 - at.1);
+        let l = dx.hypot(dy);
+        if l < 1e-3 {
+            return (0.0, 0.0);
+        }
+        let n = (-dy / l, dx / l);
+        let mid = ((at.0 + to.0) / 2.0, (at.1 + to.1) / 2.0);
+        let r = (l / 2.0).max(WALL_LOOK * sc);
+        let probe = |sg: f32| self.world.walkers_in((mid.0 + sg * n.0 * r, mid.1 + sg * n.1 * r), r);
+        let (plus, minus) = (probe(1.0), probe(-1.0));
+        if plus.abs_diff(minus) >= WALL_SLIME {
+            return if plus < minus { n } else { (-n.0, -n.1) };
+        }
+        // No slime to tell: the larder's side (where the squad came from),
+        // or with the larder on the line itself, the side most soldiers
+        // near it stand on. A majority vote first split ties badly: a squad
+        // straddling the line by the mould went with its larger half.
+        let side = |p: (f32, f32)| (p.0 - mid.0) * n.0 + (p.1 - mid.1) * n.1;
+        let mut sg = side(self.larder);
+        if sg.abs() < r {
+            let near = r + self.rules.range * sc;
+            let votes: i32 = self
+                .soldiers
+                .iter()
+                .filter(|s| s.alive && (s.x - mid.0).hypot(s.y - mid.1) <= near)
+                .map(|s| side((s.x, s.y)))
+                .filter(|d| d.abs() > 1e-3)
+                .map(|d| if d > 0.0 { 1 } else { -1 })
+                .sum();
+            if votes != 0 {
+                sg = votes as f32;
+            }
+        }
+        if sg < 0.0 {
+            (-n.0, -n.1)
+        } else {
+            n
+        }
+    }
+
+    /// How far `p` stands on wall `b`'s home side of its line, fine cells
+    /// (negative past it); None for anything but a wall with a home side.
+    pub(super) fn wall_side(&self, b: usize, p: (f32, f32)) -> Option<f32> {
+        let bd = self.buildings.get(b)?;
+        let Kind::Wall { .. } = bd.kind else { return None };
+        if bd.home == (0.0, 0.0) {
+            return None;
+        }
+        Some((p.0 - bd.at.0) * bd.home.0 + (p.1 - bd.at.1) * bd.home.1)
+    }
+
+    /// Whether a live soldier stands in wall ghost `b`'s footprint (its
+    /// width and half a dish cell), so its cells would shut them in.
+    pub(super) fn wall_occupied(&self, b: usize) -> bool {
+        let bd = self.buildings[b];
+        let Kind::Wall { to } = bd.kind else { return false };
+        let r = (self.rules.wall_width / 2.0 + 0.5) * self.s();
+        self.soldiers.iter().any(|s| {
+            let q = nearest_on(bd.at, to, (s.x, s.y));
+            s.alive && (q.0 - s.x).hypot(q.1 - s.y) < r
+        })
     }
 
     /// Ghost `b`'s builders: (raising it now, ordered to it in all). The

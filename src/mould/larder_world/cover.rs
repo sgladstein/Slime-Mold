@@ -175,7 +175,12 @@ impl<W: World> Game<W> {
     fn work_at(&self, q: usize) -> Option<(f32, f32)> {
         match self.squads[q].work? {
             Order::Clear(x, y) => Some(self.crystal_at((x, y)).map_or((x, y), |c| c.1)),
-            Order::Build(b) => self.buildings.get(b).map(|b| b.at),
+            // A wall's middle, not its first end (the guards' posts were
+            // round its end before, 2026-11-16).
+            Order::Build(b) => self.buildings.get(b).map(|b| match b.kind {
+                Kind::Wall { to } => ((b.at.0 + to.0) / 2.0, (b.at.1 + to.1) / 2.0),
+                _ => b.at,
+            }),
             _ => None,
         }
     }
@@ -303,10 +308,29 @@ impl<W: World> Game<W> {
                 Order::Clear(..) => self.crystal_at(at).map_or(0.0, |c| self.world.crystal_r(c.0)) + RIM * sc,
                 _ => 2.0 * sc,
             };
+            // A wall's defenders stand with its builders on its home side
+            // (`Building::home`, the Order::Build arm of `goal_raw`) and
+            // only fight: a post on the slime's bearing from the wall stood
+            // past its line, and the risen wall left that guard with the
+            // slime (owner's playtest, 2026-11-16 01:45Z). A post behind
+            // the line was tried first, but a move's goal is the post plus
+            // the soldier's place in its formation (`place_at`), which put
+            // some back over the line.
+            let wall = match work {
+                Order::Build(b) => self.buildings.get(b).is_some_and(|bd| matches!(bd.kind, Kind::Wall { .. }) && bd.home != (0.0, 0.0)),
+                _ => false,
+            };
             for (i, &k) in on.iter().enumerate() {
                 let a = base + (i as f32 - (g as f32 - 1.0) / 2.0) * 0.45;
                 // At the work's edge on its bearing (see the module notes:
                 // posts out in the slime's film cost soldiers for nothing).
+                if wall {
+                    let s = &mut self.soldiers[k];
+                    s.cover = true;
+                    s.order = work;
+                    s.homing = false;
+                    continue;
+                }
                 let p = (at.0 + a.cos() * rim, at.1 + a.sin() * rim);
                 let p = if self.standable(p.0, p.1) && self.solid_at(p).is_none() {
                     p

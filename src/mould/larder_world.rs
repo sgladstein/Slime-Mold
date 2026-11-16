@@ -683,3 +683,5 @@ impl<W: World> Game<W> {
 mod tests;
 #[cfg(test)]
 mod narrow_tests;
+#[cfg(test)]
+mod wall_side_tests;
