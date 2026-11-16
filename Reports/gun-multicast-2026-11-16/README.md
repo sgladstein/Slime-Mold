@@ -107,8 +107,26 @@ The plan's deciding measure for step B, 10 s from the same start:
   bursts went in 69 batches, so 69 read-backs; one at a time they were 207
   (a bomb's kill and its throw, a gas). Bomb + gas in turn: 114 bursts in 53
   batches. The batch test: 6 bursts, 1 read-back against 5.
-- **On the GPU** each burst is the passes it was, plus one 12-byte copy. Not
-  yet timed on the GTX 1070.
+- **On the GPU** each burst is the passes it was, plus one 12-byte copy.
+- **GTX 1070** (2026-11-16 09:00Z, PC runner; main 03a31db3 against the
+  branch at 94f65edf, interleaved, three runs each, Edge closed, GPU idle
+  0%; `bench=40 hand=hold@150,265 bank=8000`, 600 game steps; raw output in
+  `raw/1070/`):
+
+  | 40 s bench | Read-backs a step | Waits a step | Frame p50 | Frame p95 | Step p95 |
+  |---|---|---|---|---|---|
+  | main, bomb + gas | 1.84, 1.84, 1.84 | 0.00 (0.01 ms) | 4.94-4.99 | 5.38, 5.39, 5.43 | 0.82 |
+  | branch, bomb + gas | 1.28, 1.28, 1.28 | 0.00 (0.01 ms) | 4.93-4.98 | 5.39, 5.42, 5.44 | 0.84 |
+  | branch, multicast + bomb + gas | 1.31, 1.31, 1.31 | 0.00 (0.01 ms) | 4.96-5.01 | 5.54, 5.54, 5.52 | 0.85-0.87 |
+
+  Batching cuts the read-backs by 30% a step (1.84 to 1.28), but on the
+  1070 they were not stalls: the time spent waiting was 0.01 ms a step
+  before and after, and frame p95 did not move (5.38-5.43 against
+  5.39-5.44 ms). Multicast's twice the bursts cost 0.1 ms of frame p95
+  (5.52-5.54) and step p50 0.07 to 0.14 ms. The frame is the GPU tail
+  (p50 4.2 ms), the view. The runner noted the bench line does not echo
+  `rounds=`; the two branch lines' read-backs differ, so each ran its own
+  round.
 - **Multicast** adds bullets, under the same `squad::SHOTS_MAX` cap, and
   each finds its own slime: no new pass.
 
@@ -127,3 +145,4 @@ The plan's deciding measure for step B, 10 s from the same start:
 - `raw/film.sh`: one clip's frames (`START`, `CENTRE` from the environment).
 - `raw/make_clips.py`: frames to H.264 MP4 and the counts as JSON.
 - `raw/counts.json`: the counts above.
+- `raw/1070/`: the GTX 1070 bench output, builds and the runner's log.
