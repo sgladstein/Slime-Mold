@@ -184,6 +184,9 @@ pub struct Shop {
     /// The gun range's armory, not a run's shop: its buttons go back to
     /// the range or leave it, and Esc goes back to the range.
     pub range: bool,
+    /// The gun slots show the turrets' deck (`run::Pick::EditTurrets`):
+    /// the bench is named for them, not the carried gun.
+    pub turrets: bool,
 }
 
 /// The Options page's last tab, the key list (also F1 or ?).
@@ -1479,7 +1482,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false }
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -1528,7 +1531,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
