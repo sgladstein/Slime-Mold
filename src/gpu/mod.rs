@@ -1428,6 +1428,11 @@ pub struct Engine {
     /// A lump is on (`Settings::lumps`): `lumpclear` and `lumpsum` start
     /// each tick.
     pub lumps_on: bool,
+    /// A planted bug for the twin (`mouldgpu`'s
+    /// `the_dense_passes_start_clean_when_they_come_back`), false in play:
+    /// the next frame that counts the dense cells leaves out their clear
+    /// (`dclear`), so it counts on top of whatever the last count left.
+    pub plant_no_clear: bool,
     pub dense_at: u64,
     /// Plants (`plant_words`): their words sit in `news` from `plant_at`
     /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
@@ -1750,6 +1755,7 @@ impl Engine {
             dense_walkers: false,
             ripens: false,
             lumps_on: false,
+            plant_no_clear: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             plants: !d.plant.is_empty(),
@@ -2310,8 +2316,16 @@ impl Engine {
             // and the lumps' members' bite. Only where some can be (11-16:
             // specks alone make none, and on the core world these passes and
             // the mass cost 0.36 ms a step).
+            // Skipped, the cells keep the last count: `dclear` always runs
+            // before `dcount`, so the first frame they come back on (a lump
+            // formed, condensing switched on) starts from clear cells, and
+            // the units read the cells only under the same gates
+            // (`dense_on`, `P.lump_on`; 11-16, the tech lead's review).
             if self.dense_walkers || self.lumps_on {
-                out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
+                if !std::mem::take(&mut self.plant_no_clear) {
+                    out.push((DCLEAR, self.cells.div_ceil(256), s));
+                }
+                out.push((DCOUNT, self.n.div_ceil(256), s));
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
@@ -2394,7 +2408,10 @@ impl Engine {
             tick.push((LIFE, n));
             // The mass, which only condensing's births read (`ripens`):
             // every living walker adds to one word, so with thickening or
-            // specks alone it was work for nothing (11-16).
+            // specks alone it was work for nothing (11-16). `massclear`
+            // always runs first and `breed` reads the mass only under the
+            // same gate (`ripens()`), so a step after condensing comes back
+            // on reads this step's mass, not a stale one.
             if self.ripens {
                 tick.extend([(MASSCLEAR, 1), (MASSCOUNT, n)]);
             }
