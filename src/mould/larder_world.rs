@@ -242,9 +242,6 @@ pub struct Bullet {
     /// flown (fine cells): it turns once that is `Rules::seek_after`.
     pub seek: u8,
     pub flown: f32,
-    /// It flies over the slime this frame (`Rules::seek_over`): its leg is
-    /// not traced, so it strikes nothing until it reaches its mark.
-    pub over: bool,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -308,6 +305,12 @@ pub struct Game<W: World> {
     /// measure, 2026-11-16).
     pub hits: u32,
     pub hit_cells: u32,
+    /// Soldier bullets that ended with no slime struck on their last leg,
+    /// at the end of their range or at a wall or rock (the owner's 11-16
+    /// 14:24Z question: "how often do soldiers you're not controlling miss
+    /// their target"). A piercing bullet that hit before counts too.
+    pub missed_range: u32,
+    pub missed_wall: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -460,9 +463,6 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
-    /// With bullets flying over the slime (`Bullet::over`): every bullet's
-    /// leg, and whether it went to the world (`f.shots` holds only those).
-    legs: Option<(Vec<ShotIn>, Vec<bool>)>,
     /// Each of `f.shots`: who fired it, whether it was fired this frame
     /// and the cast it carries; with bullets, leg q is `bullets[q]`'s.
     by: Vec<LegBy>,
@@ -527,6 +527,8 @@ impl<W: World> Game<W> {
             seek_turns: 0,
             hits: 0,
             hit_cells: 0,
+            missed_range: 0,
+            missed_wall: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,

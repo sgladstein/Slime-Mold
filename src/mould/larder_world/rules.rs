@@ -125,27 +125,21 @@ pub struct Rules {
     /// How a seeking bullet turns (`rounds::Card::Seek`, `Game::steer`,
     /// 2026-11-16): straight for `seek_after` dish cells (spores that homed
     /// from launch flew back to their own crystal, `Reports/dead-ends.md`),
-    /// then each frame toward the cheapest square of the mould grid ahead
-    /// within `seek_r` dish cells and `seek_cone` radians of its heading,
-    /// holding `seek_min` walkers, in sight, and more than `seek_gap` dish
-    /// cells from last frame's hits and this frame's other seekers' picks;
-    /// at most `seek_turn` radians a frame a card. A split piece or a let-
-    /// out cast starts in the slime, so it seeks at once.
+    /// then each frame toward a mini-boss ahead, else the cheapest square
+    /// of the mould grid ahead within `seek_r` dish cells and `seek_cone`
+    /// radians of its heading, holding `seek_min` walkers, in sight, and
+    /// more than `seek_gap` dish cells from last frame's hits and this
+    /// frame's other seekers' picks; at most `seek_turn` radians a frame a
+    /// card. A split piece or a let-out cast starts in the slime, so it
+    /// seeks at once. `seek_min` 1, not 2: the misses it rescues are mostly
+    /// at lone walkers (with 2, squads guarding against thin slime missed
+    /// as often as with no card).
     pub seek_after: f32,
     pub seek_r: f32,
     pub seek_cone: f32,
     pub seek_min: u32,
     pub seek_gap: f32,
     pub seek_turn: f32,
-    /// **Seekers fly over the slime to a mark** (the owner's question,
-    /// 2026-11-16 ~10:00Z, recommended; on this branch only): a seeker with
-    /// a mark ahead (a live mini-boss, else a crystal with `seek_fed`
-    /// walkers on it, its densest square) is not traced while the mark is
-    /// beyond its leg, so it strikes nothing on the way and lands there.
-    /// Without it, seeking only bent bullets onto slime about where they
-    /// were going (`Reports/gun-seek-2026-11-16/`).
-    pub seek_over: bool,
-    pub seek_fed: u32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -567,14 +561,6 @@ impl Rules {
                 self.boss.cut_least = v.max(0.0) as u32;
                 return true;
             }
-            "seek_over" => {
-                self.seek_over = v > 0.0;
-                return true;
-            }
-            "seek_fed" => {
-                self.seek_fed = v.max(0.0) as u32;
-                return true;
-            }
             "seek_min" => {
                 self.seek_min = v.max(0.0) as u32;
                 return true;
@@ -633,8 +619,8 @@ impl Rules {
             "seek_after" => &mut self.seek_after,
             "seek_r" => &mut self.seek_r,
             "seek_cone" => &mut self.seek_cone,
-            "seek_gap" => &mut self.seek_gap,
             "seek_turn" => &mut self.seek_turn,
+            "seek_gap" => &mut self.seek_gap,
             "pump_smell" => &mut self.build.pump_smell,
             "lure_smell" => &mut self.build.lure_smell,
             "lure_r" => &mut self.build.lure_r,
@@ -689,11 +675,9 @@ impl Default for Rules {
             seek_after: 3.0,
             seek_r: 12.0,
             seek_cone: 1.0,
-            seek_min: 2,
+            seek_min: 1,
             seek_gap: 2.0,
             seek_turn: 0.45,
-            seek_over: true,
-            seek_fed: 20,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,

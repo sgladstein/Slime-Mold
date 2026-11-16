@@ -15,6 +15,7 @@ sources:
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-system-review-2026-11-16/README.md
   - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-playtest-fixes-2026-11-14.md
@@ -51,6 +52,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-16 14:24 | Gun cards, homing (step C): no seeking the slime that feeds on a crystal (the rest surges straight back), and no card that homes on mini-bosses alone (too narrow); homing must be a clear benefit and must not pass the walkers coming at the squad for denser slime; Seek rebuilt as nearest-live-slime homing and measured on misses (not a clear benefit; the owner decides next) | "I don't see an advantage of homing seeking slime feeding on a crystal because the rest of the slime will just immediately surge back to the crystal. You're not going to cut it off. Mini boss could be useful but then it's such a specific card. ... I could see a downside to that if it just avoids all the individual walkers in front and then your soldiers get attacked ... Homie needs to be a clear benefit. I mean, how often do soldiers you're not controlling miss their target" | [guns](world/guns.md), [seek](../Reports/gun-seek-2026-11-16/README.md) |
 | 2026-11-16 05:23 | Mini-bosses are much stronger than ordinary slime and vary a lot from one to the next: each draws a grade as it forms that sets the blows each member takes (4 to 15), how hard it bites, its size and pace | "They should be significantly stronger than normal slime too and vary quite a bit in strength from boss to boss" | [run](world/run.md), [report](../Reports/mini-boss-2026-11-16/README.md) |
 | 2026-11-16 05:11 | Gun cards: the slug's shove (step A) gets modifiers, among them one that herds slime onto a chosen area such as a kill zone; built next after the trigger card | "The slug looks fun" (05:10); "There should be ways to modify the pushback. I could image a gun that lets you corral and push the slime onto areas. Into a kill zone" | [guns](world/guns.md), [shove cards](../Reports/gun-shove-2026-11-16/README.md) |
 | 2026-11-16 05:06, card | The soldier cap goes from 40 to a flat 200 (`Rules::max_squad`), the measured realistic maximum, to test; scaling the cap with planet size may come later, for release; no brake on a growing army with it (D7 stands: play first) | card ("Flat 200, the realistic max"); "Maybe scale later in when releasing but I want to test the max" | [squad mode](world/squad-mode.md), [report](../Reports/soldier-cap-2026-11-16/README.md) |

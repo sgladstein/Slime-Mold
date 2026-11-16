@@ -9,7 +9,8 @@ FILMS_DIR holds one folder a clip made by films.sh (`larder-world look=DIR
 frames (`*-near.png`, by their game time) become an H.264 MP4 at 30 frames
 a second; its first and last count lines (the game's shots and kills; the
 rounds line's seeker turns, soldier hits and the dish cells they fell in;
-a mini-boss's members) are printed as JSON for the page. A folder whose
+a mini-boss's members; from the second version, the bullets that struck
+no slime) are printed as JSON for the page. A folder whose
 name ends in `-10s` has no frames: only its counts, over 10 s.
 """
 import json
@@ -43,6 +44,12 @@ def counts(log):
     if len(rounds) >= 2:
         r0, r1 = rounds[0], rounds[-1]
         out.update(seek_turns=int(r1[1]) - int(r0[1]), hits=int(r1[2]) - int(r0[2]), hit_cells=int(r1[3]) - int(r0[3]))
+    # Bullets that struck no slime (out of range, or into a wall), from the
+    # second version's rounds line on.
+    miss = re.findall(r"(\d+) ran out of range and (\d+) hit a wall", log)
+    if len(miss) >= 2:
+        (a0, w0), (a1, w1) = miss[0], miss[-1]
+        out.update(missed_range=int(a1) - int(a0), missed_wall=int(w1) - int(w0))
     if boss:
         out.update(boss_members=[int(boss[0][2]), int(boss[-1][2])], boss_end=boss[-1][1], boss_to=float(boss[-1][0]))
     return out

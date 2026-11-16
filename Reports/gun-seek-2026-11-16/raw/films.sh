@@ -1,5 +1,6 @@
 #!/bin/bash
-# films.sh OUTDIR: every clip and 10 s count run on the seek page. Run from
+# films.sh OUTDIR: the first try's clips and 10 s count runs on the seek page
+# (version 1; they ran with seek_min 2, so add set=seek_min=2 now). Run from
 # the repo root after `cargo build --release --bin larder-world`.
 F=${1:?OUTDIR}; mkdir -p "$F"
 B=./target/release/larder-world
@@ -30,8 +31,8 @@ for L in boss-plain=plain boss-seek=seek+plain boss-buck=buckshot boss-seek-buck
 done
 wait
 echo FILMS DONE
-# The fly-over prototype (`Rules::seek_over`, on): the mini-boss scene's
-# hunt from 34 s, and its 10 s counts.
+# The fly-over prototype (`Rules::seek_over`, on; only at commit af0f76a8,
+# removed since): the mini-boss scene's hunt from 34 s, and its 10 s counts.
 for L in over-boss-buck=buckshot over-boss-seek-buck=seek-buck; do
   N=${L%%=*}; C=${L#*=}
   START=34 $R $B "$F" "$N" plain load=29,"$C" boss=29,185,250 &

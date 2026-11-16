@@ -11,6 +11,7 @@ sources:
   - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
   - Reports/gun-system-review-2026-11-16/README.md
@@ -24,6 +25,7 @@ code:
   - Burst::push
   - Engine::snap
   - Game::release
+  - Game::steer
   - Gun::roll
   - Rounds::flush
   - Run::range
@@ -103,6 +105,18 @@ over 10 s, each burst counted exactly as alone. On the 1070 the
 reads were not stalls: frame p95 held at 5.4 ms, multicast +0.1 ms
 ([multicast](../../Reports/gun-multicast-2026-11-16/README.md)).
 
+**Seek** (2026-11-16, step C; built, not merged, the owner's call): every
+bullet, after its first 3 cells, turns each frame toward the nearest live
+slime ahead, a mini-boss first (`Game::steer`). Squads on their own strike
+nothing with about one shot in ten on a thick front and one in five against
+thin slime (the owner's 14:24Z question); in paired 10 s windows seek left
+misses where they were (19.7% against 18.5%) and added about 6% kills on
+thin slime. The game steers by walkers counted a second ago; a bullet stops
+on trail. Dropped on the way: turning only a bullet with no walker on its
+line, and flying over the slime to a mini-boss or crystal feeders (the
+owner: feeders surge straight back; a mini-boss card too narrow;
+[seek](../../Reports/gun-seek-2026-11-16/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -141,8 +155,11 @@ card text) and 08:30 (the guns a draw of the game).
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
   useful"). Step A (set shapes, blast and bomb apart, germ sold), the
   trigger and expire cards, the owner's shove cards (heave, corral, pull),
-  multicast and the GPU read-back batching are built. Next, step C: seekers
-  and aim cards.
+  multicast and the GPU read-back batching are built. Step C: seek is
+  built and measured but not a clear benefit, so the owner decides whether
+  it stays; aim cards wait (squads on their own hold the defend stance, so
+  an aim card changes only which nearby slime they pick). Then step D:
+  bullet families, mind first.
 - Pull drags slime onto its own squad; it needs to stop short of the gun, or
   go. Corral finds turrets only, not a marked spot or other buildings.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
@@ -150,4 +167,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md).

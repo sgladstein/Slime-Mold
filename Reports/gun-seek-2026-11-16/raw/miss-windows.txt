@@ -1,0 +1,295 @@
+# Paired 10 s windows (raw/miss-windows.sh), llvmpipe, 2026-11-16, the card as built (with the wall check).
+# Each window: one game with no cards to T, then plain or seek+plain; counts from T+1/30 to the window's end.
+# thin = every scene but hold (the Fork's thick front). Windows with no shots (p1g2-10, p1s1-10, p3g4-10, p3g4-25) count as neither.
+
+window         plain miss/shots kill sold    seek miss/shots kill sold turns(wall)
+greedy-5          8/49   k49     s9              9/43   k54     s9   63 (2 wall; plain 3)
+greedy-11        20/80   k73     s9             20/71   k73     s9   84 (7 wall; plain 4)
+hold-10          29/57   k86     s8             31/62   k59     s8   128 (8 wall; plain 4)
+hold-30           0/70   k471    s7              0/70   k461    s7   100 (0 wall; plain 0)
+p1g2-10           0/0    k0      s8              0/0    k0      s8   0 (0 wall; plain 0)
+p1g2-25           7/32   k25     s8              7/24   k18     s8   47 (0 wall; plain 0)
+p1g2-40           2/16   k16     s8              5/28   k25     s8   48 (2 wall; plain 0)
+p1g3-10           7/34   k42     s8              4/18   k22     s8   25 (1 wall; plain 0)
+p1g3-25          10/33   k23     s8              4/28   k31     s8   50 (0 wall; plain 0)
+p1g3-40           9/39   k46     s8             14/49   k52     s8   70 (7 wall; plain 0)
+p1s1-10           0/0    k0      s8              0/0    k0      s8   0 (0 wall; plain 0)
+p1s1-25           5/20   k29     s8              1/21   k34     s8   20 (0 wall; plain 0)
+p1s1-40           1/33   k91     s8              0/32   k101    s8   43 (0 wall; plain 0)
+p2s1-10           4/25   k16     s8              7/32   k24     s8   53 (0 wall; plain 0)
+p2s1-25           5/32   k46     s8              5/41   k53     s8   73 (0 wall; plain 0)
+p2s1-40           7/41   k71     s8              5/41   k71     s8   49 (0 wall; plain 0)
+p3g4-10           0/0    k0      s8              0/0    k0      s8   0 (0 wall; plain 0)
+p3g4-25           0/0    k0      s8              0/0    k0      s8   0 (0 wall; plain 0)
+p3g4-40           3/12   k11     s8              0/10   k15     s8   17 (0 wall; plain 0)
+thin {'plain': '88/446=19.7% killed 538', 'seek': '81/438=18.5% killed 573'}
+thick {'plain': '29/127=22.8% killed 557', 'seek': '31/132=23.5% killed 520'}
+thin windows: miss rate lower with seek 6, higher 7, same 0; sign p=1.000
+thin windows: kills higher with seek 9, lower 2, same 2; sign p=0.065
+
+== greedy-11-plain
+  t 11 s: mould 24728, soldiers 9, bank 0, harvested 0, rendered 0, shots 20, killed 33, took 99%, crystals left 0.982
+  t 21 s: mould 24847, soldiers 9, bank 0, harvested 0, rendered 0, shots 100, killed 106, took 98%, crystals left 0.910, ended: larder overrun
+rounds t   11 s
+0 seeker turns, 17 soldier hits in 15 cells, 1 ran out of range and 1 hit a wall with no slime struck
+rounds t   21 s
+0 seeker turns, 77 soldier hits in 74 cells, 17 ran out of range and 5 hit a wall with no slime struck
+== greedy-11-seek
+  t 11 s: mould 24728, soldiers 9, bank 0, harvested 0, rendered 0, shots 20, killed 33, took 99%, crystals left 0.982
+  t 21 s: mould 24849, soldiers 9, bank 0, harvested 0, rendered 0, shots 91, killed 106, took 98%, crystals left 0.910, ended: larder overrun
+rounds t   11 s
+0 seeker turns, 17 soldier hits in 15 cells, 1 ran out of range and 1 hit a wall with no slime struck
+rounds t   21 s
+84 seeker turns, 66 soldier hits in 62 cells, 14 ran out of range and 8 hit a wall with no slime struck
+== greedy-5-plain
+  t 5 s: mould 24987, soldiers 9, bank 0, harvested 0, rendered 0, shots 6, killed 21, took 0%, crystals left 1.000
+  t 15 s: mould 24736, soldiers 9, bank 0, harvested 0, rendered 0, shots 55, killed 70, took 99%, crystals left 0.947
+rounds t    5 s
+0 seeker turns, 6 soldier hits in 6 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   15 s
+0 seeker turns, 47 soldier hits in 44 cells, 5 ran out of range and 3 hit a wall with no slime struck
+== greedy-5-seek
+  t 5 s: mould 24987, soldiers 9, bank 0, harvested 0, rendered 0, shots 6, killed 21, took 0%, crystals left 1.000
+  t 15 s: mould 24732, soldiers 9, bank 0, harvested 0, rendered 0, shots 49, killed 75, took 99%, crystals left 0.947
+rounds t    5 s
+0 seeker turns, 6 soldier hits in 6 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   15 s
+63 seeker turns, 40 soldier hits in 38 cells, 7 ran out of range and 2 hit a wall with no slime struck
+== hold-10-plain
+  t 10 s: mould 24518, soldiers 8, bank 6310, harvested 0, rendered 0, shots 59, killed 280, took 0%, crystals left 0.999
+  t 20 s: mould 24648, soldiers 8, bank 6113, harvested 0, rendered 0, shots 116, killed 366, took 0%, crystals left 0.998
+rounds t   10 s
+0 seeker turns, 49 soldier hits in 48 cells, 9 ran out of range and 1 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 74 soldier hits in 73 cells, 34 ran out of range and 5 hit a wall with no slime struck
+== hold-10-seek
+  t 10 s: mould 24518, soldiers 8, bank 6310, harvested 0, rendered 0, shots 59, killed 280, took 0%, crystals left 0.999
+  t 20 s: mould 24649, soldiers 8, bank 6113, harvested 0, rendered 0, shots 121, killed 339, took 0%, crystals left 0.998
+rounds t   10 s
+0 seeker turns, 49 soldier hits in 48 cells, 9 ran out of range and 1 hit a wall with no slime struck
+rounds t   20 s
+128 seeker turns, 77 soldier hits in 76 cells, 32 ran out of range and 9 hit a wall with no slime struck
+== hold-30-plain
+  t 30 s: mould 24387, soldiers 7, bank 5894, harvested 0, rendered 0, shots 192, killed 1137, took 0%, crystals left 0.997
+  t 40 s: mould 24928, soldiers 7, bank 5674, harvested 0, rendered 0, shots 262, killed 1608, took 0%, crystals left 0.995
+rounds t   30 s
+0 seeker turns, 152 soldier hits in 151 cells, 34 ran out of range and 5 hit a wall with no slime struck
+rounds t   40 s
+0 seeker turns, 222 soldier hits in 221 cells, 34 ran out of range and 5 hit a wall with no slime struck
+== hold-30-seek
+  t 30 s: mould 24387, soldiers 7, bank 5894, harvested 0, rendered 0, shots 192, killed 1137, took 0%, crystals left 0.997
+  t 40 s: mould 24962, soldiers 7, bank 5674, harvested 0, rendered 0, shots 262, killed 1598, took 0%, crystals left 0.995
+rounds t   30 s
+0 seeker turns, 152 soldier hits in 151 cells, 34 ran out of range and 5 hit a wall with no slime struck
+rounds t   40 s
+100 seeker turns, 222 soldier hits in 221 cells, 34 ran out of range and 5 hit a wall with no slime struck
+== p1g2-10-plain
+  t 10 s: mould 24971, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 24925, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p1g2-10-seek
+  t 10 s: mould 24971, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 24925, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p1g2-25-plain
+  t 25 s: mould 24909, soldiers 8, bank 400, harvested 0, rendered 0, shots 5, killed 4, took 0%, crystals left 0.996
+  t 35 s: mould 24858, soldiers 8, bank 400, harvested 0, rendered 0, shots 37, killed 29, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 5 soldier hits in 5 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 30 soldier hits in 29 cells, 7 ran out of range and 0 hit a wall with no slime struck
+== p1g2-25-seek
+  t 25 s: mould 24909, soldiers 8, bank 400, harvested 0, rendered 0, shots 5, killed 4, took 0%, crystals left 0.996
+  t 35 s: mould 24867, soldiers 8, bank 400, harvested 0, rendered 0, shots 29, killed 22, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 5 soldier hits in 5 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+47 seeker turns, 21 soldier hits in 21 cells, 7 ran out of range and 0 hit a wall with no slime struck
+== p1g2-40-plain
+  t 40 s: mould 24842, soldiers 8, bank 400, harvested 0, rendered 0, shots 48, killed 38, took 0%, crystals left 0.994
+  t 50 s: mould 24815, soldiers 8, bank 400, harvested 0, rendered 0, shots 64, killed 54, took 0%, crystals left 0.993
+rounds t   40 s
+0 seeker turns, 39 soldier hits in 37 cells, 9 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+0 seeker turns, 53 soldier hits in 51 cells, 11 ran out of range and 0 hit a wall with no slime struck
+== p1g2-40-seek
+  t 40 s: mould 24842, soldiers 8, bank 400, harvested 0, rendered 0, shots 48, killed 38, took 0%, crystals left 0.994
+  t 50 s: mould 24810, soldiers 8, bank 400, harvested 0, rendered 0, shots 76, killed 63, took 0%, crystals left 0.993
+rounds t   40 s
+0 seeker turns, 39 soldier hits in 37 cells, 9 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+48 seeker turns, 62 soldier hits in 60 cells, 12 ran out of range and 2 hit a wall with no slime struck
+== p1g3-10-plain
+  t 10 s: mould 24942, soldiers 8, bank 400, harvested 0, rendered 0, shots 10, killed 6, took 0%, crystals left 0.999
+  t 20 s: mould 25002, soldiers 8, bank 400, harvested 0, rendered 0, shots 44, killed 48, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 6 soldier hits in 5 cells, 2 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 34 soldier hits in 31 cells, 9 ran out of range and 0 hit a wall with no slime struck
+== p1g3-10-seek
+  t 10 s: mould 24942, soldiers 8, bank 400, harvested 0, rendered 0, shots 10, killed 6, took 0%, crystals left 0.999
+  t 20 s: mould 25019, soldiers 8, bank 400, harvested 0, rendered 0, shots 28, killed 28, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 6 soldier hits in 5 cells, 2 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+25 seeker turns, 22 soldier hits in 21 cells, 5 ran out of range and 1 hit a wall with no slime struck
+== p1g3-25-plain
+  t 25 s: mould 25119, soldiers 8, bank 400, harvested 0, rendered 0, shots 56, killed 61, took 0%, crystals left 0.996
+  t 35 s: mould 25408, soldiers 8, bank 400, harvested 0, rendered 0, shots 89, killed 84, took 0%, crystals left 0.994
+rounds t   25 s
+0 seeker turns, 43 soldier hits in 40 cells, 13 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 66 soldier hits in 61 cells, 23 ran out of range and 0 hit a wall with no slime struck
+== p1g3-25-seek
+  t 25 s: mould 25119, soldiers 8, bank 400, harvested 0, rendered 0, shots 56, killed 61, took 0%, crystals left 0.996
+  t 35 s: mould 25405, soldiers 8, bank 400, harvested 0, rendered 0, shots 84, killed 92, took 0%, crystals left 0.994
+rounds t   25 s
+0 seeker turns, 43 soldier hits in 40 cells, 13 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+50 seeker turns, 67 soldier hits in 64 cells, 17 ran out of range and 0 hit a wall with no slime struck
+== p1g3-40-plain
+  t 40 s: mould 25593, soldiers 8, bank 400, harvested 0, rendered 0, shots 106, killed 101, took 0%, crystals left 0.993
+  t 50 s: mould 25946, soldiers 8, bank 399, harvested 0, rendered 0, shots 145, killed 147, took 0%, crystals left 0.991
+rounds t   40 s
+0 seeker turns, 76 soldier hits in 71 cells, 30 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+0 seeker turns, 106 soldier hits in 100 cells, 39 ran out of range and 0 hit a wall with no slime struck
+== p1g3-40-seek
+  t 40 s: mould 25593, soldiers 8, bank 400, harvested 0, rendered 0, shots 106, killed 101, took 0%, crystals left 0.993
+  t 50 s: mould 25934, soldiers 8, bank 399, harvested 0, rendered 0, shots 155, killed 153, took 0%, crystals left 0.991
+rounds t   40 s
+0 seeker turns, 76 soldier hits in 71 cells, 30 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+70 seeker turns, 111 soldier hits in 105 cells, 37 ran out of range and 7 hit a wall with no slime struck
+== p1s1-10-plain
+  t 10 s: mould 24970, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 25098, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.998
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p1s1-10-seek
+  t 10 s: mould 24970, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 25098, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.998
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p1s1-25-plain
+  t 25 s: mould 25287, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+  t 35 s: mould 25812, soldiers 8, bank 400, harvested 0, rendered 0, shots 20, killed 29, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 15 soldier hits in 15 cells, 5 ran out of range and 0 hit a wall with no slime struck
+== p1s1-25-seek
+  t 25 s: mould 25287, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+  t 35 s: mould 25799, soldiers 8, bank 400, harvested 0, rendered 0, shots 21, killed 34, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+20 seeker turns, 20 soldier hits in 19 cells, 1 ran out of range and 0 hit a wall with no slime struck
+== p1s1-40-plain
+  t 40 s: mould 26097, soldiers 8, bank 400, harvested 0, rendered 0, shots 31, killed 51, took 0%, crystals left 0.994
+  t 50 s: mould 26696, soldiers 8, bank 399, harvested 0, rendered 0, shots 64, killed 142, took 0%, crystals left 0.992
+rounds t   40 s
+0 seeker turns, 26 soldier hits in 26 cells, 5 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+0 seeker turns, 58 soldier hits in 57 cells, 6 ran out of range and 0 hit a wall with no slime struck
+== p1s1-40-seek
+  t 40 s: mould 26097, soldiers 8, bank 400, harvested 0, rendered 0, shots 31, killed 51, took 0%, crystals left 0.994
+  t 50 s: mould 26675, soldiers 8, bank 399, harvested 0, rendered 0, shots 63, killed 152, took 0%, crystals left 0.992
+rounds t   40 s
+0 seeker turns, 26 soldier hits in 26 cells, 5 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+43 seeker turns, 58 soldier hits in 58 cells, 5 ran out of range and 0 hit a wall with no slime struck
+== p2s1-10-plain
+  t 10 s: mould 25120, soldiers 8, bank 400, harvested 0, rendered 0, shots 2, killed 1, took 0%, crystals left 0.999
+  t 20 s: mould 25335, soldiers 8, bank 400, harvested 0, rendered 0, shots 27, killed 17, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 2 soldier hits in 2 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 23 soldier hits in 21 cells, 4 ran out of range and 0 hit a wall with no slime struck
+== p2s1-10-seek
+  t 10 s: mould 25120, soldiers 8, bank 400, harvested 0, rendered 0, shots 2, killed 1, took 0%, crystals left 0.999
+  t 20 s: mould 25330, soldiers 8, bank 400, harvested 0, rendered 0, shots 34, killed 25, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 2 soldier hits in 2 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+53 seeker turns, 27 soldier hits in 25 cells, 7 ran out of range and 0 hit a wall with no slime struck
+== p2s1-25-plain
+  t 25 s: mould 25427, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 43, took 0%, crystals left 0.997
+  t 35 s: mould 24724, soldiers 8, bank 400, harvested 0, rendered 0, shots 79, killed 89, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 38 soldier hits in 35 cells, 6 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 68 soldier hits in 64 cells, 11 ran out of range and 0 hit a wall with no slime struck
+== p2s1-25-seek
+  t 25 s: mould 25427, soldiers 8, bank 400, harvested 0, rendered 0, shots 47, killed 43, took 0%, crystals left 0.997
+  t 35 s: mould 24718, soldiers 8, bank 400, harvested 0, rendered 0, shots 88, killed 96, took 0%, crystals left 0.995
+rounds t   25 s
+0 seeker turns, 38 soldier hits in 35 cells, 6 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+73 seeker turns, 75 soldier hits in 72 cells, 11 ran out of range and 0 hit a wall with no slime struck
+== p2s1-40-plain
+  t 40 s: mould 24600, soldiers 8, bank 400, harvested 0, rendered 0, shots 98, killed 120, took 0%, crystals left 0.994
+  t 50 s: mould 24958, soldiers 8, bank 399, harvested 0, rendered 0, shots 139, killed 191, took 0%, crystals left 0.992
+rounds t   40 s
+0 seeker turns, 84 soldier hits in 80 cells, 13 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+0 seeker turns, 118 soldier hits in 113 cells, 20 ran out of range and 0 hit a wall with no slime struck
+== p2s1-40-seek
+  t 40 s: mould 24600, soldiers 8, bank 400, harvested 0, rendered 0, shots 98, killed 120, took 0%, crystals left 0.994
+  t 50 s: mould 24956, soldiers 8, bank 399, harvested 0, rendered 0, shots 139, killed 191, took 0%, crystals left 0.992
+rounds t   40 s
+0 seeker turns, 84 soldier hits in 80 cells, 13 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+49 seeker turns, 121 soldier hits in 117 cells, 18 ran out of range and 0 hit a wall with no slime struck
+== p3g4-10-plain
+  t 10 s: mould 25026, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 25100, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p3g4-10-seek
+  t 10 s: mould 25026, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999
+  t 20 s: mould 25100, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.997
+rounds t   10 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   20 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p3g4-25-plain
+  t 25 s: mould 25174, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.996
+  t 35 s: mould 25442, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.994
+rounds t   25 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p3g4-25-seek
+  t 25 s: mould 25174, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.996
+  t 35 s: mould 25442, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.994
+rounds t   25 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   35 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+== p3g4-40-plain
+  t 40 s: mould 25624, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.993
+  t 50 s: mould 26156, soldiers 8, bank 400, harvested 0, rendered 0, shots 12, killed 11, took 0%, crystals left 0.991
+rounds t   40 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+0 seeker turns, 9 soldier hits in 7 cells, 3 ran out of range and 0 hit a wall with no slime struck
+== p3g4-40-seek
+  t 40 s: mould 25624, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.993
+  t 50 s: mould 26152, soldiers 8, bank 400, harvested 0, rendered 0, shots 10, killed 15, took 0%, crystals left 0.991
+rounds t   40 s
+0 seeker turns, 0 soldier hits in 0 cells, 0 ran out of range and 0 hit a wall with no slime struck
+rounds t   50 s
+17 seeker turns, 10 soldier hits in 9 cells, 0 ran out of range and 0 hit a wall with no slime struck

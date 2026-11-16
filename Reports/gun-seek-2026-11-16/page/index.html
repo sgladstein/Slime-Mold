@@ -57,15 +57,103 @@ footer{font-size:.85rem;color:var(--muted)}
 </style>
 <main>
 <header style="display:flex;flex-direction:column;gap:10px">
-  <span class="eyebrow">Larder World · guns · step C · 2026-11-16</span>
+  <span class="eyebrow">Larder World · guns · step C · version 3 · 2026-11-16</span>
   <h1>Seeking bullets</h1>
-  <p class="lede">A new card, <b>Seek</b>, makes every bullet turn toward slime once it has flown 3 cells: toward a mini-boss first, else toward slime ahead that no other bullet has hit or picked. Built and working, but in these tests it changed almost nothing. A prototype where seekers fly over the slime to their mark does change things, further down. The question at the bottom is how you want homing to work. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game to 29 s with plain bullets, then each clip's cards for 3 s.</p>
+  <p class="lede">You asked how often soldiers you are not controlling miss. A miss here is a bullet that ends its range, or hits a wall, having struck no slime. Squads on their own miss with about <b>one shot in ten</b> on a thick front and <b>one shot in five</b> against thin slime. I rebuilt Seek to go after those misses: every bullet, after its first 3 cells, bends toward the nearest live slime ahead (a mini-boss first), so it never passes the walkers coming at the squad. Measured fairly, it <b>does not cut misses</b> and adds about 6% kills on thin slime. That is not the clear benefit you asked for; the choice is at the bottom.</p>
 </header>
 
 <div class="bar">
   <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
-  <span class="hint">Every clip loops. Slow motion shows the pellets bending after their first few cells.</span>
+  <span class="hint">Every clip loops. Slow motion shows the bullets bending.</span>
 </div>
+
+<section>
+  <h2>How often squads on their own miss</h2>
+  <p>60 s a scene, one game each, no cards. The Fork's greedy game ends at 21 s when its larder is overrun.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Scene</th><th>Missed of shots</th><th>Share</th></tr></thead>
+    <tbody>
+      <tr><td>The Fork, holding at the larder (thick front)</td><td class="num">39 of 368</td><td class="num">11%</td></tr>
+      <tr><td>The Fork, greedy, at the larder</td><td class="num">22 of 100</td><td class="num">22%</td></tr>
+      <tr><td>Planet 1 seed 2, guarding</td><td class="num">19 of 89</td><td class="num">21%</td></tr>
+      <tr><td>Planet 1 seed 3, guarding</td><td class="num">46 of 183</td><td class="num">25%</td></tr>
+      <tr><td>Planet 3 seed 4, guarding</td><td class="num">14 of 42</td><td class="num">33%</td></tr>
+      <tr><td>Planet 1 seed 1, squad at work</td><td class="num">6 of 92</td><td class="num">7%</td></tr>
+      <tr><td>Planet 2 seed 1, squad at work</td><td class="num">27 of 179</td><td class="num">15%</td></tr>
+      <tr><td><b>Thin slime, all but the first row</b></td><td class="num"><b>134 of 685</b></td><td class="num"><b>20%</b></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Seek, measured fairly</h2>
+  <p>Each window plays one game with no cards up to a moment, then splits: plain bullets or Seek for 10 s. Both sides start from the same fight. 13 windows against thin slime, at 10, 25 and 40 s on five planet scenes and 5 and 11 s at the Fork's larder.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>13 thin-slime windows</th><th>No card</th><th>Seek</th></tr></thead>
+    <tbody>
+      <tr><td>Missed of shots</td><td class="num">88 of 446 (19.7%)</td><td class="num">81 of 438 (18.5%)</td></tr>
+      <tr><td>Windows with the lower miss rate</td><td class="num">7</td><td class="num">6</td></tr>
+      <tr><td>Slime killed</td><td class="num">538</td><td class="num">573 (+6.5%)</td></tr>
+      <tr><td>Windows with more kills</td><td class="num">2</td><td class="num">9 (2 even)</td></tr>
+      <tr><td>Soldiers lost</td><td class="num">0</td><td class="num">0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">Misses: no difference (sign test p = 1.0). Kills: a few percent more, not significant (p = 0.065). On the Fork's thick front, 29 of 127 missed against 31 of 132. An earlier run with whole separate games looked like Seek nearly halved misses; with both sides starting from the same fight, that did not hold.</p>
+</section>
+
+<section>
+  <h2>A guard squad, planet 1</h2>
+  <p>Eight soldiers guarding a spot; thin slime comes at them from the east. One game to 40 s, then 4 s of each.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="guard-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">16 shots   12 hits   4 missed
+killed 21
+over 10 s: 39 shots, 9 missed, killed 46</div></figure>
+    <figure><span class="tag a">seek + plain</span><video src="guard-seek.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">16 shots   15 hits   1 missed   24 turns
+killed 22
+over 10 s: 49 shots, 14 missed (7 into walls), killed 52</div></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The Fork's larder</h2>
+  <p>The greedy squad harvesting at the larder while thin slime reaches it. One game to 12 s, then 4 s of each.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="fork-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">35 shots   26 hits   5 missed
+killed 35
+to 21 s: 71 shots, 19 missed, killed 65</div></figure>
+    <figure><span class="tag a">seek + plain</span><video src="fork-seek.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">35 shots   28 hits   8 missed   32 turns
+killed 53
+to 21 s: 70 shots, 22 missed, killed 71</div></figure>
+  </div>
+  <p class="hint">The short clips swing both ways. Seekers also bent into walls; a turn that would point into a wall before its mark is now skipped, which these 10 s counts on the guard squad predate.</p>
+</section>
+
+<section class="short">
+  <h2>Why homing can't fix the misses</h2>
+  <ul>
+    <li><b>The game steers by a walker count, a second old.</b> A bullet stops only on slime trail thick enough to show. Against thin slime, misses are bullets that cross walkers whose trail is too faint to stop them, or walkers that have already moved. A seeker steered by that count chases the same walkers.</li>
+    <li><b>The ceiling is low.</b> Only one shot in five misses against thin slime, one in ten on a front. Even a homing card that saved every miss would add at most a fifth more hits where the slime is thin.</li>
+    <li><b>"Bend only bullets with nothing on their line"</b>, which I told you I'd build, failed for the same reason: the count can't say what a bullet will strike. Every seeker going for the nearest slime keeps your condition (it never skips the walkers in front) without guessing.</li>
+  </ul>
+</section>
+
+<section class="short">
+  <h2>Your call</h2>
+  <ul>
+    <li><b>Drop homing and go on to step D</b>, bullet families, Mind first (recommended). The miss counter and these findings stay.</li>
+    <li><b>Keep Seek as a small card.</b> Bullets visibly bend; about 6% more kills on thin slime for 2 of a gun's 10 budget.</li>
+    <li><b>Build homing into the shot trace.</b> Both engines would bend a seeking bullet cell by cell toward the thickest trail it passes, using the live slime instead of a second-old count. A few hours of work, and still under that ceiling.</li>
+  </ul>
+</section>
+
+<section>
+  <h2 style="font-size:1.2rem;color:var(--muted)">Earlier tries, as first shown</h2>
+  <p class="hint">Version 1 of this page: the first Seek on a thick front, with a 2-walker minimum, and the fly-over prototype you turned down at 14:24Z.</p>
+</section>
 
 <section>
   <h2>Buckshot</h2>
@@ -153,17 +241,8 @@ mini-boss 62 → 52 members   6 soldiers</div></figure>
   <p class="hint">Here, finally, seeking does something: buckshot pellets reach the mini-boss instead of spending themselves on the slime in front, and the hits bunch onto it (40 cells against 75). The cost is the slime in between, which is left alone. With plain bullets the two came out about even on the mini-boss. In the first version the seekers flew over from the muzzle, and that squad lost 4 of 7 soldiers in 8 s because it stopped shooting the slime on itself. Crystal feeders seldom became marks in these scenes, because a squad on its own only fires at slime near it.</p>
 </section>
 
-<section class="short">
-  <h2>What could make homing matter</h2>
-  <ul>
-    <li><b>Seekers fly over the slime to their mark</b> (the prototype above). A seeking bullet passes over slime until it reaches what it hunts and hits there. That is the one version that reaches something a plain shot cannot. It bends your rule, for this card only.</li>
-    <li><b>Keep seek small, as built.</b> Bullets visibly bend, the effect stays within noise, and the balance pass sets its price.</li>
-    <li><b>Drop homing</b> and go on to step D, the bullet families.</li>
-  </ul>
-  <p class="hint">Aim cards (what a squad shoots on its own) hit the same wall. Squads on their own hold a defend stance and only shoot slime near them, so an aim card would only change which nearby slime they pick. It matters only for squads on attack orders.</p>
-</section>
 
-<footer>Source, clips and counts: <code>Reports/gun-seek-2026-11-16/</code> in the repo. Clips by <code>raw/films.sh</code> and <code>raw/make_clips.py</code>.</footer>
+<footer>Source, clips and counts: <code>Reports/gun-seek-2026-11-16/</code> in the repo. Version 3's clips by <code>raw/miss-films.sh</code>, its windows by <code>raw/miss-windows.sh</code>; the first try's by <code>raw/films.sh</code>; MP4s by <code>raw/make_clips.py</code>.</footer>
 </main>
 <script>
 (function(){
