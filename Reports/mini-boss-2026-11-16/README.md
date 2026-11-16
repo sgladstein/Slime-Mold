@@ -307,3 +307,48 @@ timed on the GTX 1070.
 **Next**: Mortar and Pinwheel (they need engine work: a lob, a turn
 bias), each kind's look (the look thread reads `lump_looks`), and the
 origin at each planet's start crystal (the run-progression thread).
+
+### The leech rings its pump (after #391)
+
+The look thread, filming the leech (11:56Z): sat on the pump, its 116
+members lay under the crystal, the rig and the pump box, and almost none
+of it showed; only a cyan haze round the box gave it away. It suggested a
+ring round the rig, which reads as something strangling the pump and can
+be seen and shot.
+
+- **`big::Lump::ring`** (fine cells, 0 none; both engines): a member
+  nearer the lump's aim than `ring` runs straight out from it; one past
+  the band (squared distance over `ring`² + the leash's `leash_k` x
+  members, the area the leash's disc would hold) runs back toward it; and
+  its pull is away from the members' own centre instead of to the aim, so
+  where they bunch they spread round. The run reads directions only (no
+  square root or division), the GPU's spare lump word holds it.
+- **`BossRules::ring`** 1.5 (`set=boss_ring=`): a leech sat on a pump
+  rings it at 1.5 x the crystal's radius, just outside the rig (drawn to
+  1.3).
+
+Planet 3 (`raw/round3-leech-ring.txt`, the leech at 2:30, 116 members):
+
+| Leech | From the pump (10% / median / 90%) | Members in each eighth round it | Most in three eighths |
+|---|---|---|---|
+| Ring off (before) | 1.8 / 4.4 / 7.5 | 8, 9, 9, 19, 24, 28, 10, 9 | 71 |
+| Ring, pulled in to the pump | 13.9 / 15.5 / 20.2 | 12, 11, 3, 1, 11, 20, 25, 33 | 78 |
+| Ring, pulled round (half each way, pull 120) | 13.6 / 15.3 / 20.5 | 10, 4, 4, 2, 4, 4, 37, 51 | 98 |
+| **Ring, pulled from its own centre (kept)** | 14.2 / 15.4 / 17.6 | 8, 18, 4, 4, 20, 10, 23, 29 | 62 |
+
+Off, it sat inside the crystal (radius about 10 here). Pulled in to the
+pump, the ring lay in one arc on the side facing the body it came from.
+Pulled round the ring, its members ran into the rock that crosses the
+ring's north-east and piled up on both sides of it; a harder pull piled
+more. Pulled from their own centre, members lie in every eighth; the
+south-west, where the body's stream leaves the pump, stays thin. What it
+took is unchanged (282.7 food by 2:50).
+
+Race world test: the leech on crystal 14 (radius 6.0) rings at 9.0; its
+members' 10th percentile from the pump is 8.0 and the median 9.6, outside
+the rig (7.8), and they lie in all eight eighths. GPU twin (one tick, a
+ring of 35 and of 56 round the most crowded walker): members inside, in
+and past the band, every member on the same cell on both engines.
+
+Cost: one more comparison for a ring member's run and its pull; no new
+pass.

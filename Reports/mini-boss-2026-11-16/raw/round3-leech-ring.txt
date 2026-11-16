@@ -1,0 +1,104 @@
+# Leech ring variants (2026-11-16), run 1 planet 3, boss=85,310,85 set=boss_kind=4 pump=362,256,86 set=pump_hp=5000.
+# Each block: the leech's boss lines 1:55-2:30 (ring: members' distance from the pump at 10% / median / 90%, and members in each eighth round it, from the east).
+
+## ring off (boss_ring=0, a disc pulled in to the pump; main before this change)
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+    ring: from the pump 2.8 / 8.3 / 12.9 (10% / median / 90%); by eighths [1, 0, 0, 4, 24, 52, 28, 7]
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.08, stolen 25.7; nearest soldier 72.6, 8 alive
+    ring: from the pump 2.2 / 5.3 / 9.2 (10% / median / 90%); by eighths [0, 3, 2, 14, 31, 36, 21, 9]
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.11, stolen 51.4; nearest soldier 71.4, 8 alive
+    ring: from the pump 1.7 / 4.8 / 8.1 (10% / median / 90%); by eighths [6, 6, 5, 17, 27, 33, 14, 8]
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 77.1; nearest soldier 71.3, 8 alive
+    ring: from the pump 1.8 / 4.1 / 7.6 (10% / median / 90%); by eighths [8, 8, 12, 17, 20, 30, 13, 8]
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 102.8; nearest soldier 71.3, 8 alive
+    ring: from the pump 1.8 / 4.7 / 7.3 (10% / median / 90%); by eighths [9, 5, 10, 19, 24, 23, 16, 10]
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 128.5; nearest soldier 71.3, 8 alive
+    ring: from the pump 1.8 / 4.3 / 7.3 (10% / median / 90%); by eighths [11, 7, 11, 15, 29, 25, 11, 7]
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.14, stolen 154.2; nearest soldier 71.3, 8 alive
+    ring: from the pump 1.8 / 4.3 / 7.7 (10% / median / 90%); by eighths [5, 9, 12, 18, 24, 25, 14, 9]
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 179.9; nearest soldier 71.3, 8 alive
+    ring: from the pump 1.8 / 4.4 / 7.5 (10% / median / 90%); by eighths [8, 9, 9, 19, 24, 28, 10, 9]
+
+## ring 1.5, pull in to the pump (rejected: one arc on the body's side)
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+    ring: from the pump 2.8 / 8.3 / 12.9 (10% / median / 90%); by eighths [1, 0, 0, 4, 24, 52, 28, 7]
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 1 hurt), at 362,248, spread 3.44, stolen 25.7; nearest soldier 69.4, 8 alive
+    ring: from the pump 14.0 / 15.6 / 19.2 (10% / median / 90%); by eighths [5, 7, 7, 4, 19, 23, 33, 18]
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 1 hurt), at 364,248, spread 3.48, stolen 51.4; nearest soldier 66.2, 8 alive
+    ring: from the pump 14.2 / 15.7 / 19.7 (10% / median / 90%); by eighths [8, 10, 2, 2, 16, 22, 25, 31]
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 1 hurt), at 364,250, spread 3.43, stolen 77.1; nearest soldier 66.0, 8 alive
+    ring: from the pump 13.9 / 15.3 / 19.3 (10% / median / 90%); by eighths [5, 4, 7, 5, 16, 14, 26, 39]
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 1 hurt), at 366,250, spread 3.31, stolen 102.8; nearest soldier 64.1, 8 alive
+    ring: from the pump 14.2 / 15.7 / 17.9 (10% / median / 90%); by eighths [13, 13, 1, 1, 11, 16, 30, 31]
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 1 hurt), at 366,250, spread 3.32, stolen 128.5; nearest soldier 64.1, 8 alive
+    ring: from the pump 13.7 / 15.7 / 17.8 (10% / median / 90%); by eighths [13, 7, 5, 4, 7, 15, 27, 38]
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 2 hurt), at 366,250, spread 3.12, stolen 154.2; nearest soldier 64.1, 8 alive
+    ring: from the pump 13.9 / 15.3 / 17.4 (10% / median / 90%); by eighths [15, 8, 4, 1, 9, 15, 28, 36]
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 2 hurt), at 366,250, spread 3.46, stolen 179.9; nearest soldier 65.1, 8 alive
+    ring: from the pump 13.9 / 15.5 / 20.2 (10% / median / 90%); by eighths [12, 11, 3, 1, 11, 20, 25, 33]
+
+## ring 1.5, pull across the way round, half each way (rejected: piles by a rock)
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+    ring: from the pump 2.8 / 8.3 / 12.9 (10% / median / 90%); by eighths [1, 0, 0, 4, 24, 52, 28, 7]
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,246, spread 3.15, stolen 25.7; nearest soldier 71.5, 8 alive
+    ring: from the pump 14.1 / 15.7 / 17.9 (10% / median / 90%); by eighths [2, 5, 1, 3, 27, 28, 30, 20]
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 362,248, spread 3.59, stolen 51.4; nearest soldier 69.2, 8 alive
+    ring: from the pump 14.1 / 15.6 / 19.2 (10% / median / 90%); by eighths [8, 11, 4, 2, 21, 21, 27, 22]
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 362,248, spread 3.57, stolen 77.1; nearest soldier 68.2, 8 alive
+    ring: from the pump 13.9 / 15.3 / 19.5 (10% / median / 90%); by eighths [14, 5, 1, 5, 20, 22, 24, 25]
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 362,250, spread 3.61, stolen 102.8; nearest soldier 68.0, 8 alive
+    ring: from the pump 14.0 / 15.3 / 17.6 (10% / median / 90%); by eighths [10, 10, 4, 4, 23, 14, 30, 21]
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,248, spread 3.29, stolen 128.5; nearest soldier 67.4, 8 alive
+    ring: from the pump 13.7 / 15.3 / 18.4 (10% / median / 90%); by eighths [10, 3, 5, 5, 17, 11, 38, 27]
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,248, spread 3.35, stolen 154.2; nearest soldier 67.4, 8 alive
+    ring: from the pump 14.1 / 15.3 / 18.3 (10% / median / 90%); by eighths [7, 2, 5, 4, 17, 19, 31, 31]
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,248, spread 3.38, stolen 179.9; nearest soldier 66.5, 8 alive
+    ring: from the pump 13.5 / 15.7 / 19.5 (10% / median / 90%); by eighths [10, 4, 3, 2, 22, 13, 31, 31]
+  boss t 155 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 362,248, spread 3.28, stolen 205.6; nearest soldier 68.4, 8 alive
+    ring: from the pump 13.8 / 15.4 / 17.4 (10% / median / 90%); by eighths [7, 3, 0, 9, 20, 11, 36, 30]
+
+## ring 1.5, pull across, half each way, boss_pull=120 (rejected)
+  boss t 110 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 362,246, spread 3.05, stolen 25.7; nearest soldier 69.8, 8 alive
+    ring: from the pump 14.1 / 15.5 / 18.3 (10% / median / 90%); by eighths [3, 2, 1, 2, 26, 22, 40, 20]
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 364,246, spread 3.27, stolen 51.4; nearest soldier 67.7, 8 alive
+    ring: from the pump 13.8 / 15.6 / 20.7 (10% / median / 90%); by eighths [9, 0, 4, 3, 18, 23, 34, 25]
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 366,248, spread 3.09, stolen 77.1; nearest soldier 64.5, 8 alive
+    ring: from the pump 14.1 / 15.5 / 20.2 (10% / median / 90%); by eighths [11, 3, 4, 3, 13, 11, 38, 33]
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 366,248, spread 3.05, stolen 102.8; nearest soldier 64.3, 8 alive
+    ring: from the pump 13.9 / 15.5 / 18.7 (10% / median / 90%); by eighths [9, 9, 2, 3, 10, 10, 39, 34]
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 368,248, spread 3.04, stolen 128.5; nearest soldier 63.3, 8 alive
+    ring: from the pump 13.8 / 15.5 / 19.8 (10% / median / 90%); by eighths [9, 3, 7, 4, 10, 6, 36, 41]
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 368,250, spread 3.06, stolen 154.2; nearest soldier 63.1, 8 alive
+    ring: from the pump 13.9 / 15.5 / 18.7 (10% / median / 90%); by eighths [11, 6, 6, 5, 5, 7, 42, 34]
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 368,250, spread 2.95, stolen 179.9; nearest soldier 63.1, 8 alive
+    ring: from the pump 14.0 / 15.4 / 18.9 (10% / median / 90%); by eighths [15, 6, 4, 4, 8, 4, 37, 38]
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 368,248, spread 2.78, stolen 205.6; nearest soldier 62.6, 8 alive
+    ring: from the pump 13.7 / 15.4 / 21.4 (10% / median / 90%); by eighths [8, 1, 3, 2, 11, 5, 37, 49]
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1575), 116 members (first 116, 0 hurt), at 370,248, spread 2.57, stolen 231.3; nearest soldier 61.4, 8 alive
+    ring: from the pump 13.6 / 15.3 / 20.5 (10% / median / 90%); by eighths [10, 4, 4, 2, 4, 4, 37, 51]
+
+## ring 1.5, pull away from the members' centre (kept)
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+    ring: from the pump 2.8 / 8.3 / 12.9 (10% / median / 90%); by eighths [1, 0, 0, 4, 24, 52, 28, 7]
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 362,250, spread 3.69, stolen 25.7; nearest soldier 68.0, 8 alive
+    ring: from the pump 14.0 / 15.6 / 18.4 (10% / median / 90%); by eighths [7, 10, 6, 5, 17, 19, 31, 21]
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,250, spread 3.52, stolen 51.4; nearest soldier 67.0, 8 alive
+    ring: from the pump 14.0 / 15.4 / 17.8 (10% / median / 90%); by eighths [9, 16, 4, 1, 13, 19, 31, 23]
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,250, spread 3.69, stolen 77.1; nearest soldier 66.8, 8 alive
+    ring: from the pump 13.6 / 15.4 / 18.6 (10% / median / 90%); by eighths [13, 17, 3, 1, 19, 17, 21, 25]
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,252, spread 3.77, stolen 102.8; nearest soldier 66.7, 8 alive
+    ring: from the pump 14.1 / 15.6 / 18.7 (10% / median / 90%); by eighths [14, 14, 3, 4, 21, 18, 12, 30]
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,252, spread 3.71, stolen 128.5; nearest soldier 66.7, 8 alive
+    ring: from the pump 14.0 / 15.4 / 17.7 (10% / median / 90%); by eighths [7, 18, 4, 4, 19, 15, 22, 27]
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,252, spread 3.78, stolen 154.2; nearest soldier 65.7, 8 alive
+    ring: from the pump 14.0 / 15.6 / 18.6 (10% / median / 90%); by eighths [8, 19, 4, 3, 18, 10, 24, 30]
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 364,252, spread 3.74, stolen 179.9; nearest soldier 66.7, 8 alive
+    ring: from the pump 14.2 / 15.4 / 17.6 (10% / median / 90%); by eighths [8, 18, 4, 4, 20, 10, 23, 29]

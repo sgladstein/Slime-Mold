@@ -112,7 +112,7 @@ pub const RAID_AT: usize = 976;
 /// The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
 /// Params grew from 1008 to 1152, after the raid row): whether any lump is
 /// on and three spare words, then each lump's aim, pull, leash
-/// (`Lump::leash_k`), haste, armour and bite, and two spare words.
+/// (`Lump::leash_k`), haste, armour, bite and ring, and a spare word.
 pub const LUMP_AT: usize = 1008;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -2147,7 +2147,7 @@ impl Engine {
         self.lumps_on = s.lumps.iter().any(crate::mould::big::Lump::on);
         b.extend(u32_bytes(&[self.lumps_on as u32, 0, 0, 0]));
         for l in &s.lumps {
-            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, 0, 0]));
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
         }
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;

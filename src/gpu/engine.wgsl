@@ -11,9 +11,9 @@ struct Set {
 // A lump's steering (`BigParams::lumps`, big.rs `Lump`): the fine cell it
 // heads for (x | y << 16), its pull, its leash as `Lump::leash_k` (0 none)
 // and its members' haste (0 is 1).
-// `armour` and `bite` the mini-bosses' strength (`big::Lump`); `_a`, `_b`
-// pad the row to 32 bytes.
-struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, _a: u32, _b: u32 };
+// `armour` and `bite` the mini-bosses' strength (`big::Lump`); `ring` its
+// band round `aim` (`Lump::ring`, 0 none); `_b` pads the row to 32 bytes.
+struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, _b: u32 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -777,8 +777,20 @@ fn lump_centre(b: u32) -> vec3<f32> {
 fn lump_leash(b: u32, k: u32) -> vec3<f32> {
     let lk = P.lumps[b].lk;
     let c = lump_centre(b);
-    if (lk <= 0.0 || c.z <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    if (c.z <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let wk = walkers[k];
+    // A ring (`Lump::ring`): out from the aim inside it, back past its band.
+    let ring = P.lumps[b].ring;
+    if (ring > 0.0) {
+        let aim = P.lumps[b].aim;
+        let ax = f32(aim & 0xFFFFu) + 0.5; let ay = f32(aim >> 16u) + 0.5;
+        let rx = wk.x - ax; let ry = wk.y - ay;
+        let d2 = rx * rx + ry * ry; let r2 = ring * ring;
+        if (d2 < r2) { return vec3<f32>(wk.x + rx, wk.y + ry, 1.0); }
+        if (lk > 0.0 && d2 > r2 + lk * c.z) { return vec3<f32>(ax, ay, 1.0); }
+        return vec3<f32>(-1.0, -1.0, 0.0);
+    }
+    if (lk <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let dx = wk.x - c.x; let dy = wk.y - c.y;
     if (dx * dx + dy * dy > lk * c.z) { return vec3<f32>(c.x, c.y, 1.0); }
     return vec3<f32>(-1.0, -1.0, 0.0);
@@ -984,8 +996,12 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         // A lump's pull (`Lump::pull`), on top of what it smells.
         if (lb != 0u && P.lumps[lb - 1u].pull != 0.0) {
             let l = P.lumps[lb - 1u];
-            let dx = f32(l.aim & 0xFFFFu) + 0.5 - wk.x;
-            let dy = f32(l.aim >> 16u) + 0.5 - wk.y;
+            var dx = f32(l.aim & 0xFFFFu) + 0.5 - wk.x;
+            var dy = f32(l.aim >> 16u) + 0.5 - wk.y;
+            // A ring's pulls away from its members' centre (the CPU's), so
+            // where they bunch they spread round it.
+            let lc = lump_centre(lb - 1u);
+            if (l.ring > 0.0 && lc.z > 0.0) { dx = wk.x - lc.x; dy = wk.y - lc.y; }
             let r = max(sqrt(dx * dx + dy * dy), 1.0e-3);
             f += l.pull * (cos(h) * dx + sin(h) * dy) / r;
             fl += l.pull * (cos(h - sa) * dx + sin(h - sa) * dy) / r;
