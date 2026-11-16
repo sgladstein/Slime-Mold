@@ -1466,12 +1466,18 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
                     (i, format!(" {w}"))
                 }
             };
-            (icon, CardKind::Payload, format!("{}.{words}", ammo_numbers(&a)))
+            // Its set's shape (`bullets::Shape`, 2026-11-16) after the numbers.
+            let shape = match a.set {
+                rounds::Set::Standard => String::new(),
+                _ => format!(" {}", rounds::Card::Ammo(a).about()),
+            };
+            (icon, CardKind::Payload, format!("{}.{shape}{words}", ammo_numbers(&a)))
         }
-        C::Blast => (Icon::Blast, CardKind::Payload, format!("Kills slime within {:.0} cells and leaves a crater.", k.blast_r)),
+        C::Blast => (Icon::Blast, CardKind::Payload, format!("Kills slime within {:.0} cells; its crater holds {:.0} s.", k.blast_r, k.crater_secs)),
         C::Gas => (Icon::Gas, CardKind::Payload, format!("Puts slime within {:.0} cells to sleep.", k.gas_r)),
         C::Germ => (Icon::Germ, CardKind::Payload, format!("Infects slime within {:.0} cells; the sickness spreads.", k.germ_r)),
-        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Kills slime within {:.0} cells and throws the rest {:.0} cells out.", r.bomb_r, r.bomb_r * r.bomb_ring)),
+        // Blast and bomb apart (2026-11-16): the bomb throws, the blast holds.
+        C::Bomb => (Icon::Bomb, CardKind::Payload, format!("Throws slime {:.0} cells out; kills little.", r.bomb_r * r.bomb_ring)),
         C::Wide => (Icon::Wide, CardKind::Modifier, format!("Its hit is {:.1}x wider.", r.wide)),
         C::Scatter => (Icon::Scatter, CardKind::Modifier, format!("Its hit becomes {} smaller ones.", r.scatter_n)),
         C::Quiet => (Icon::Quiet, CardKind::Modifier, "It doesn't alarm the slime.".into()),
@@ -1631,15 +1637,18 @@ pub(super) struct CardLook {
 }
 
 /// Each payload in its own colour, as each Noita spell is (blast hot
-/// orange, gas violet, germ acid green; none, a plain shot,
+/// orange, gas violet, germ acid green, bomb ice blue; none, a plain shot,
 /// pale gold).
 pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
     let (glow, core, light): ([u8; 3], [u8; 3], [f32; 3]) = match payload {
         Some(rounds::Card::Blast) => ([255, 120, 40], [255, 236, 190], [255.0, 160.0, 80.0]),
         Some(rounds::Card::Gas) => ([165, 110, 255], [236, 222, 255], [180.0, 140.0, 255.0]),
         Some(rounds::Card::Germ) => ([110, 255, 70], [226, 255, 196], [140.0, 255.0, 110.0]),
-        // A bomb burns redder and hotter than a blast (#225).
-        Some(rounds::Card::Bomb) => ([255, 90, 30], [255, 228, 170], [255.0, 130.0, 60.0]),
+        // A bomb throws and a blast burns (2026-11-16, the gun-system
+        // review's step A): ice blue, so the two read apart. It burned
+        // redder than the blast's orange (#225), and the two were hard to
+        // tell apart at a front.
+        Some(rounds::Card::Bomb) => ([90, 200, 255], [222, 246, 255], [130.0, 210.0, 255.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }

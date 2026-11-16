@@ -38,8 +38,12 @@ impl<W: World> Game<W> {
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
             let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
-            let speed = if cast > 0 { m.ammo.get(cast as usize - 1).map_or(1.0, |a| a.speed()) } else { 1.0 };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce: m.pierce, split: m.split, cast, speed });
+            let ammo = if cast > 0 { m.ammo.get(cast as usize - 1).copied() } else { None };
+            let speed = ammo.map_or(1.0, |a| a.speed());
+            // A needle flies on through its set's hits on top of the
+            // Pierce cards' (`bullets::Shape::pierce`).
+            let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());

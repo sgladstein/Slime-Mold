@@ -138,7 +138,64 @@ impl Set {
             Set::Buckshot => Lean { damage: 0.8, speed: 0.9, range: 0.6, spread: 2.5 },
         }
     }
+
+    /// What its bullets do that the other sets' don't (`Shape`).
+    pub fn shape(self) -> Shape {
+        let one = Shape { pierce: 0, pellets: 1, fan: 0.0, r: 1.0, shove: 0.0, shove_secs: 0.0 };
+        match self {
+            Set::Standard => one,
+            Set::Slug => Shape { shove: SLUG_SHOVE, shove_secs: SLUG_SHOVE_SECS, ..one },
+            Set::Needle => Shape { pierce: NEEDLE_PIERCE, ..one },
+            Set::Buckshot => Shape { pellets: BUCK_PELLETS, fan: BUCK_FAN, r: BUCK_R, ..one },
+        }
+    }
 }
+
+/// **A set's shape** (2026-11-16, step A of the gun-system review,
+/// `Reports/gun-system-review-2026-11-16/README.md`): what a set's bullets
+/// do to the slime beyond their numbers, so a set reads by its hits and not
+/// by a stat. The owner (02:34Z): "within those all the cards in each
+/// category are relatively similar. Just changing in some of the base
+/// stats". Until then a set only leaned its rolls (`Set::lean`): at a front
+/// that was a hole 1.26x (slug), 0.77x (needle) or 0.89x (buckshot) as wide
+/// as a standard one, and speed, range and spread hardly showed with the
+/// slime already in reach. Every shell takes its set's shape: a needle
+/// blast blasts at each of its hits, a buckshot gas is four small clouds.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Shape {
+    /// Slime hits it flies on through after its first, each striking and
+    /// casting, as `Card::Pierce`'s do (and on top of them): a needle's
+    /// line of holes into the body.
+    pub pierce: u8,
+    /// Bullets each of its gun's shots fires, fanned evenly `fan` radians
+    /// either side of the aim, each with `r` of the bullet's strike and
+    /// burst radius: buckshot's spray of small holes along the front.
+    pub pellets: u8,
+    pub fan: f32,
+    pub r: f32,
+    /// A shove (0: none): where it hits slime, the living walkers out to
+    /// `shove` strike radii are thrown away from the gun for up to
+    /// `shove_secs` (`squad::Burst::fling` with no kill), so a slug pushes
+    /// the front back as well as holing it. The knock-back the 11-15 splash
+    /// tried as a hit's look (`Reports/dead-ends.md`: kills fell 22% as the
+    /// thrown walkers left the next shots' discs) is here the slug's trade.
+    pub shove: f32,
+    pub shove_secs: f32,
+}
+
+/// The needle's extra slime hits: three holes in a line.
+pub const NEEDLE_PIERCE: u8 = 2;
+/// Buckshot's pellets a shot, their fan either side (radians: about 2.6
+/// cells either side at 10 cells, so the holes stand apart) and each
+/// pellet's share of the radius (area 0.25 each, a standard hit in all).
+pub const BUCK_PELLETS: u8 = 4;
+pub const BUCK_FAN: f32 = 0.25;
+pub const BUCK_R: f32 = 0.5;
+/// The slug's shove: out to 3 strike radii, the walkers nearest the hole
+/// thrown for 0.25 s (about 5 dish cells at the race world's 30 fine steps
+/// a second and `fling_speed` 1.5).
+pub const SLUG_SHOVE: f32 = 3.0;
+pub const SLUG_SHOVE_SECS: f32 = 0.25;
 
 /// One bullet card: its payload, set and rolled numbers, all whole so a
 /// card stays `Copy + Eq + Hash` and its text form exact.

@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
@@ -10,6 +10,8 @@ sources:
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-shapes-2026-11-16/README.md
+  - Reports/gun-system-review-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
@@ -18,8 +20,10 @@ code:
   - Ammo::roll
   - Gun::roll
   - Run::range
+  - Set::shape
   - Squad::gun
   - muzzle_flash
+  - shells_at
   - spray_one
 ---
 
@@ -41,6 +45,17 @@ number. Deeper planets roll bigger budgets and better stats; the run's shop
 sells guns and cards, and the gun range (`Run::range`, start menu) is a free
 armory to try any of them against slime ([the run](run.md)). The H loadouts
 are test presets, not the game's way to arm. Nothing here is balanced.
+
+**Each bullet set has a shape** (2026-11-16, step A of the gun-system review;
+`Set::shape`): a slug's hit shoves the slime around it away from the gun (a
+fling with no kill), a needle flies on through two more slime hits, buckshot
+fires four pellets in a fan at half the radius; standard is as it was. A
+payload takes its set's shape (a needle blast blasts three times in a line, a
+buckshot gas is four small clouds). **Blast and bomb are apart**: the blast
+kills a 6-cell disc and its crater holds 20 s; the bomb kills 2.5 cells, throws
+the slime out to 10 cells away from the gun and holds no ground, in ice blue.
+The germ bullet is sold from planet 4 (`shells_at`). Films, counts and why
+([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)).
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
@@ -68,9 +83,21 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Open
 
+- **The gun-system review** (owner 11-16 02:34Z: "five different categories
+  of bullets and two of them are just two different sized explosions"): the
+  run's bullets hold three real effects and the four sets only lean numbers;
+  the trigger card was planned 11-14 and never built. The plan
+  ([report](../../Reports/gun-system-review-2026-11-16/README.md)): bullet
+  families by what they change in the simulation (cut, route, mind, body,
+  force, element) plus readers; rule cards, trigger first; seekers that follow
+  the simulation; aim cards for auto squads if they help; one device slot per
+  squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
+  last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
+  useful"). Step A (set shapes, blast and bomb apart, germ sold) is built;
+  the trigger card is next.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md).
