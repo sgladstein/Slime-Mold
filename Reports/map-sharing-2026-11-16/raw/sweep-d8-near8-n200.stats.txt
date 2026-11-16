@@ -1,0 +1,3 @@
+  maps started 74 (finished 73); map_for calls 55569 (123.5/step), unserved 20563 (37.0%)
+  distinct goal cells asked per step: mean 43.3 max 67; distinct maps used per step mean 7.2 max 12; goal cells over the run 3527
+  asked queue mean 6.4 max 19; maps in cache end 34 max 34; stale queue max 0
