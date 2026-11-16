@@ -341,6 +341,9 @@ pub(super) fn shop_of(r: &Run) -> Shop {
 /// works on, or the bag.
 fn range_shelf(row: &run::Row) -> &'static str {
     match (row.pick, &row.face) {
+        // The shove cards their own shelf (2026-11-16): with them on the
+        // next bullet's, that tab took two pages at 200% on 1080 lines.
+        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Cards that shove",
         (Pick::Offer(_), Face::Card(c)) => match c.kind() {
             rounds::Kind::Payload => "Bullets",
             rounds::Kind::Flight => "Cards for every bullet",

@@ -1413,9 +1413,9 @@ fn the_menus_real_lists_fit_one_screen() {
                 m.shop = Some(shop);
                 m.show(Page::Shop);
                 let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
-                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets and
-                // the two shelves of modifiers.)
-                for tab in 0..if name == "shop" { 5 } else { 4 } {
+                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets,
+                // the two shelves of modifiers and the shove cards'.)
+                for tab in 0..5 {
                     draw(&mut m);
                     let most = if name == "armory" && tab == 0 { 2 } else { 1 };
                     assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());

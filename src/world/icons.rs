@@ -71,6 +71,10 @@ pub enum Icon {
     // 2026-11-16): a bullet with another inside it.
     Carry,
     CarryStop,
+    // The shove cards (`rounds::Card::Heave`, `Corral`, `Pull`, 2026-11-16).
+    Heave,
+    Corral,
+    Pull,
 }
 
 impl Icon {
@@ -145,6 +149,12 @@ impl Icon {
             Icon::Carry => &["M2 8 L10 8 C13.5 8 15.5 10 16 12 C15.5 14 13.5 16 10 16 L2 16 Z", "FO8 12 2", "M18.5 9 L21.5 6", "M19 12 L22.5 12", "M18.5 15 L21.5 18"],
             // The same, stopped at a wall: it lets it out where it stops.
             Icon::CarryStop => &["M2 8 L10 8 C13.5 8 15.5 10 16 12 C15.5 14 13.5 16 10 16 L2 16 Z", "FO8 12 2", "M20 4 L20 20", "M22.5 4 L22.5 20"],
+            // A shove: a push line and two heads, the second further on.
+            Icon::Heave => &["M2 12 L14 12", "M10 7 L15 12 L10 17", "M16 7 L21 12 L16 17"],
+            // Slime driven in from both sides onto a target.
+            Icon::Corral => &["O12 12 3.5", "FO12 12 1.2", "M1.5 12 L6.5 12", "M4.5 9.5 L7 12 L4.5 14.5", "M22.5 12 L17.5 12", "M19.5 9.5 L17 12 L19.5 14.5", "M12 1.5 L12 6.5", "M12 22.5 L12 17.5"],
+            // A hook drawing slime back toward the gun.
+            Icon::Pull => &["M21 12 L5 12", "M9 7.5 L4.5 12 L9 16.5", "M21 7 C17 7 15.5 9 15.5 12 C15.5 15 17 17 21 17"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
     }
@@ -254,7 +264,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

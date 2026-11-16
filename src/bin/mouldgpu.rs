@@ -2963,8 +2963,10 @@ mod tests {
         let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
         let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         const STEPS: u16 = 12;
-        // (walkers off over the flight, worst tick)
-        let play = |name: &str, s: &Settings, gpu_speed: f32| -> usize {
+        // (walkers off over the flight, worst tick). With `push` (the
+        // shove cards' push, 2026-11-16) every flung walker flies the one
+        // heading for every step.
+        let play = |name: &str, s: &Settings, gpu_speed: f32, push: Option<f32>| -> usize {
             let s = Settings { fling_speed: 1.5, ..s.clone() };
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -2989,9 +2991,9 @@ mod tests {
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
             let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
             e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
-            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
+            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv, push);
             let g = Settings { fling_speed: gpu_speed, ..s.clone() };
-            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
+            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv, push);
             let n = cpu.walkers.len();
             let (life, timer) = e.life_of();
             let marks = e.flung_of();
@@ -3005,7 +3007,13 @@ mod tests {
             eprintln!("{name}: killed {killed}, flung {n_gpu} on the GPU and {n_cpu} on the CPU, timers {timers:?}; {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
             assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
             assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
-            assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
+            match push {
+                None => assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}"),
+                Some(a) => {
+                    assert!(timers.len() == 1 && timers.contains(&STEPS), "{name}: a push flies every one the whole way: {timers:?}");
+                    assert!((0..n).filter(|&j| cpu.flung[j]).all(|j| cpu.walkers[j].2 == a && gpu_w[j].2 == a), "{name}: a push flies every one along its heading");
+                }
+            }
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
                 let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
@@ -3037,10 +3045,11 @@ mod tests {
             ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
         ];
         for (name, s) in &dishes {
-            play(name, s, 1.5);
+            play(name, s, 1.5, None);
         }
+        play("a push, a wall across it", &dishes[3].1, 1.5, Some(1.3));
         // Planted: the GPU's flung fly at 2, not 1.5.
-        let off = play("planted, fling speed 2", &dishes[0].1, 2.0);
+        let off = play("planted, fling speed 2", &dishes[0].1, 2.0, None);
         eprintln!("planted, fling speed 2: worst tick {off} walkers off");
         assert!(off > 50, "the twin catches a fling speed off");
     }

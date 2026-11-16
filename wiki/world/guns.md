@@ -11,6 +11,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/gun-shapes-2026-11-16/README.md
+  - Reports/gun-shove-2026-11-16/README.md
   - Reports/gun-system-review-2026-11-16/README.md
   - Reports/gun-triggers-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
@@ -19,6 +20,7 @@ sources:
   - Reports/spray-share-ab-2026-11-15/README.md
 code:
   - Ammo::roll
+  - Burst::push
   - Game::release
   - Gun::roll
   - Run::range
@@ -72,6 +74,18 @@ bomb carrying a gas burst 13.6 times a second against 7.5 for the two in turn;
 a buckshot trigger with a blast is strong
 ([trigger cards](../../Reports/gun-triggers-2026-11-16/README.md)).
 
+**Shove cards** (2026-11-16, the owner's 05:11Z ask: "corral and push the
+slime onto areas. Into a kill zone"): `Heave` makes a bullet's hit shove the
+slime round it on along its line, farther with each heave; `Corral` sends the
+shove to the nearest turret in reach; `Pull` drags it toward the gun. They
+steer a slug's own shove too. The shove is a push (`Burst::push`): every
+walker in the ring flies one heading, on both engines. With one turret beside
+the squad, corral's turret killed 241 in 3 s against 157 with plain bullets;
+with three turrets over 10 s, 1,234 against 617, and no soldier lost. Heave
+keeps the slime off the squad but kills little; pull dragged the slime onto
+the squad and lost all eight in 10 s
+([shove cards](../../Reports/gun-shove-2026-11-16/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -108,13 +122,14 @@ card text) and 08:30 (the guns a draw of the game).
   the simulation; aim cards for auto squads if they help; one device slot per
   squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
-  useful"). Step A (set shapes, blast and bomb apart, germ sold) and the
-  trigger and expire cards are built. Next, the owner's shove cards (11-16
-  05:11Z: herd slime into a kill zone), then multicast and the GPU read-back
-  batching.
+  useful"). Step A (set shapes, blast and bomb apart, germ sold), the
+  trigger and expire cards and the owner's shove cards (heave, corral, pull)
+  are built. Next, multicast and the GPU read-back batching.
+- Pull drags slime onto its own squad; it needs to stop short of the gun, or
+  go. Corral finds turrets only, not a marked spot or other buildings.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md).
