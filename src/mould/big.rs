@@ -2810,6 +2810,31 @@ impl BigDish {
         n
     }
 
+    /// Lump `b` takes in the ordinary walkers within `at` (as `form_lump`)
+    /// that are in no lump; its members stay as they are, hits and all, and
+    /// none is let go (2026-11-16: a wanderer rooted on a crystal takes in
+    /// the slime there; re-forming would heal its hits and drop the members
+    /// outside the new circle). The walkers that joined.
+    pub fn grow_lump(&mut self, b: usize, at: (u32, u32)) -> usize {
+        assert!(b < LUMPS, "lump {b} of {LUMPS}");
+        if self.dense.len() != self.walkers.len() {
+            self.dense = vec![0; self.walkers.len()];
+        }
+        let mine = (b as u32 + 1) << LUMP_SHIFT;
+        let (c, r2) = at;
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let w = self.dense[k];
+            let (x, y, _) = self.walkers[k];
+            let (dx, dy) = (x.floor() as i64 - (c & 0xFFFF) as i64, y.floor() as i64 - (c >> 16) as i64);
+            if w & LUMP_BITS == 0 && self.active(k) && dx * dx + dy * dy <= r2 as i64 {
+                self.dense[k] = (w & !(KEPT | ROAM | (63 << ROAM_SHIFT))) | mine;
+                n += 1;
+            }
+        }
+        n
+    }
+
     /// Where lump `b`'s member at (`x`, `y`) runs: back to the lump's
     /// centre past its leash (`Lump::leash`), else nowhere.
     fn lump_leash(&self, b: usize, x: f32, y: f32) -> Option<(f32, f32, bool)> {
@@ -4211,7 +4236,12 @@ impl BigDish {
                 continue;
             }
             self.energy[k] = 0.0;
-            if unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
+            // A held body's member (`Lump`) does not starve: a mini-boss
+            // lives on what it carries until it breaks or is spent
+            // (2026-11-16: a sapper pressed on a wall away from food fell
+            // from 196 members to 47 in 6 s, 48 s after it formed, and
+            // broke with no shot fired). The GPU's `life` is the same.
+            if self.lump_of(k).is_none() && unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
                 // A condensed walker starving breaks instead (`condense`).
                 if self.is_dense(k) {
                     self.dense[k] &= KEPT;
@@ -6214,6 +6244,30 @@ mod tests {
         d.form_lump(0, None);
         assert!(d.lump_of(q).is_none() && d.dense[q] >> HURT_SHIFT == 0);
         assert!(d.hit(q) && !d.lives(q));
+    }
+
+    /// A mini-boss's members do not starve (2026-11-16, the sapper film):
+    /// with every walker at zero energy and a high upkeep, the ordinary ones
+    /// die and the members all live.
+    #[test]
+    fn a_mini_boss_member_does_not_starve() {
+        let mut p = BigParams { upkeep: 1.0, starve: 0.5, capacity: 1200, ..small(1, 1) };
+        p.lumps[0] = Lump { armour: 3, ..Lump::default() };
+        let mut d = BigDish::new(p);
+        d.tick();
+        let living: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
+        let (x, y, _) = d.walkers[living[0]];
+        let c = (x.floor() as u32) | (y.floor() as u32) << 16;
+        assert!(d.form_lump(0, Some((c, 25))) >= 2);
+        let members: Vec<usize> = living.iter().copied().filter(|&k| d.lump_of(k) == Some(0)).collect();
+        let others: Vec<usize> = living.iter().copied().filter(|&k| d.lump_of(k).is_none()).collect();
+        d.energy.iter_mut().for_each(|e| *e = 0.0);
+        for _ in 0..20 {
+            d.tick();
+        }
+        let gone = others.iter().filter(|&&k| !d.lives(k)).count();
+        assert!(gone * 2 > others.len(), "the ordinary starve: {gone} of {}", others.len());
+        assert!(members.iter().all(|&k| d.lives(k)), "every member lives");
     }
 
     /// The body surges (`surge_every`, 2026-11-15): off changes nothing; on,

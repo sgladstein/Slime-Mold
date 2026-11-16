@@ -3149,6 +3149,15 @@ impl Engine {
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
     }
 
+    /// Lump `b` takes in the ordinary walkers within `at` in no lump, its
+    /// members kept (the CPU's `grow_lump`): `lumpform` with bit 8 of the
+    /// lump word set.
+    pub fn grow_lump(&self, shared: &Shared, b: usize, at: (u32, u32)) {
+        assert!(b < crate::mould::big::LUMPS, "lump {b}");
+        self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[(b as u32 + 1) | 1 << 8, at.0, at.1]));
+        self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
     /// Each lump's (x, y, members) sums as the last tick began (header
     /// words 4-15; the CPU's `lump_sums`), read back.
     pub fn lump_sums(&self) -> [(u32, u32, u32); crate::mould::big::LUMPS] {

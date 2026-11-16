@@ -1723,7 +1723,9 @@ impl App {
                     _ => self.args.boss_look.unwrap_or(HUNTER_LOOK),
                 };
                 if let Some(l) = lumps.get_mut(b.lump) {
-                    *l = (b.centre.0, b.centre.1, look, (code >> 4) as f32 / 15.0);
+                    // The grade is bits 4-7 (the word is a u16 since the
+                    // fade went in above it, bits 8-15).
+                    *l = (b.centre.0, b.centre.1, look, ((code >> 4) & 15) as f32 / 15.0);
                 }
             }
             v.set_lumps(&lumps);
@@ -2058,6 +2060,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if k == "turret2" {
                     renders.push(turrets.len() - 1);
                 }
+            }
+            "wall" => {
+                // `wall=X,Y,X2,Y2[,T]` (2026-11-16, the sapper films): a
+                // wall standing whole from (X, Y) to (X2, Y2), world units
+                // as `centre=`, from the start or from game second T.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let (x, y, to, t) = match w.as_slice() {
+                    [x, y, x2, y2] => (*x, *y, (*x2, *y2), 0.0),
+                    [x, y, x2, y2, t] => (*x, *y, (*x2, *y2), *t),
+                    _ => return Err("wall=X,Y,X2,Y2[,T]".into()),
+                };
+                turrets.push((Kind::Wall { to }, (x, y), t));
             }
             "boss" => {
                 // `boss=T,X,Y` (2026-11-16, the mini-boss films): at game

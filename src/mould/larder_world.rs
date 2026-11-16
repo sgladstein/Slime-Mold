@@ -74,7 +74,7 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
-pub use bosses::{parts, Boss, BossCause, BossEnd, BossPhase, BossRules, Bosses, Part, PART_BIN};
+pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::Who;
 
