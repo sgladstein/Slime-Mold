@@ -2628,17 +2628,43 @@ impl Engine {
     /// that is over `sleep_death`. Switches the life states on. Runs on
     /// its own, between ticks; returns the walkers gassed (a read-back).
     pub fn gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, steps: u16) -> u32 {
+        let before = self.gas_word(2);
+        self.gas_pass(shared, s, x, y, r, steps);
+        self.gas_word(2).wrapping_sub(before)
+    }
+
+    /// `gas` with no read-back: its count is on the `news` gas word 2
+    /// (`snap` copies it), for a batch of bursts read back at once
+    /// (`GpuWorld::bursts`, 2026-11-16).
+    pub fn gas_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, steps: u16) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
-        let before = self.gas_word(2);
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
         self.run(shared, &[(GAS, self.n.div_ceil(256))]);
         if steps > 0 {
             self.gas_until = self.gas_until.max(self.done + steps as u64);
         }
-        self.gas_word(2).wrapping_sub(before)
+    }
+
+    /// The engine's three burst counters as they will stand once the GPU
+    /// reaches this point (the walkers struck, gassed and flung: `wstat`
+    /// word 3 and the `news` gas words 2 and 3), copied on the GPU into
+    /// slot `slot` of `dst` (16 bytes a slot) with no wait: a batch of
+    /// bursts snaps after each and reads `dst` back once (`read_snaps`).
+    pub fn snap(&self, dst: &wgpu::Buffer, slot: u64) {
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("snap") });
+        enc.copy_buffer_to_buffer(&self.wstat, 12, dst, 16 * slot, 4);
+        enc.copy_buffer_to_buffer(&self.news, self.gas_at + 8, dst, 16 * slot + 4, 8);
+        self.queue.submit([enc.finish()]);
+    }
+
+    /// The first `n` slots `snap` wrote: (struck, gassed, flung) each, in
+    /// one read-back.
+    pub fn read_snaps(&self, dst: &wgpu::Buffer, n: usize) -> Vec<[u32; 3]> {
+        let b = read_back_range(&self.device, &self.queue, dst, 0, 16 * n as u64);
+        b.chunks_exact(16).map(|c| [0, 1, 2].map(|i| u32::from_le_bytes(c[4 * i..4 * i + 4].try_into().unwrap()))).collect()
     }
 
     /// **The gas cloud**, as the CPU's `BigDish::lay_gas` (dish cells, as
@@ -2784,6 +2810,15 @@ impl Engine {
     /// holds the heading and `kir` 1.
     #[allow(clippy::too_many_arguments)]
     pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) -> u32 {
+        let before = self.gas_word(3);
+        self.fling_pass(shared, s, x, y, r, rr, steps, inv, push);
+        self.gas_word(3).wrapping_sub(before)
+    }
+
+    /// `fling` with no read-back: its count is on the `news` gas word 3
+    /// (`snap` copies it), as `gas_pass`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn fling_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         // So `measure` reads the marks back.
@@ -2794,9 +2829,7 @@ impl Engine {
         // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
         let (head, pushed) = push.map_or((0.0, 0.0), |a| (a, 1.0));
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, head, steps as f32, pushed]));
-        let before = self.gas_word(3);
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
-        self.gas_word(3).wrapping_sub(before)
     }
 
     /// The alarm field now (zeros without one).

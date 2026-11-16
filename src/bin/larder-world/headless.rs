@@ -440,7 +440,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let rd = &app.rounds;
         // Squads with their own cards (`load=`) count here too.
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames

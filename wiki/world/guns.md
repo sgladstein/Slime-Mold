@@ -8,6 +8,7 @@ sources:
   - Reports/gun-budget-2026-11-14.md
   - Reports/gun-feel-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
+  - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/gun-shapes-2026-11-16/README.md
@@ -21,11 +22,14 @@ sources:
 code:
   - Ammo::roll
   - Burst::push
+  - Engine::snap
   - Game::release
   - Gun::roll
+  - Rounds::flush
   - Run::range
   - Set::shape
   - Squad::gun
+  - World::bursts
   - muzzle_flash
   - shells_at
   - spray_one
@@ -86,6 +90,18 @@ keeps the slime off the squad but kills little; pull dragged the slime onto
 the squad and lost all eight in 10 s
 ([shove cards](../../Reports/gun-shove-2026-11-16/README.md)).
 
+**Multicast** (2026-11-16, step B): the shot that fires its cast also fires
+the next cast beside it, each its own bullets, a little apart; a second
+multicast adds a third (`rounds::volley`). The casts beside it leave the
+gun's turn, as a trigger's do. With a bomb and a gas it cast 14.0 bursts a
+second against 7.5 in turn, like the trigger's 13.6, but the gas goes off
+beside the bomb, which throws the slime out of the cloud: 5,086 slept
+against the trigger's 9,637. Breadth against depth. With it a step's
+bursts run as one batch and the GPU's counts come back in one read
+(`World::bursts`, `Rounds::flush`, `Engine::snap`): 207 bursts in 69 reads
+over 10 s, each burst counted exactly as alone
+([multicast](../../Reports/gun-multicast-2026-11-16/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -123,8 +139,9 @@ card text) and 08:30 (the guns a draw of the game).
   squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
   useful"). Step A (set shapes, blast and bomb apart, germ sold), the
-  trigger and expire cards and the owner's shove cards (heave, corral, pull)
-  are built. Next, multicast and the GPU read-back batching.
+  trigger and expire cards, the owner's shove cards (heave, corral, pull),
+  multicast and the GPU read-back batching are built. Next, step C: seekers
+  and aim cards.
 - Pull drags slime onto its own squad; it needs to stop short of the gun, or
   go. Corral finds turrets only, not a marked spot or other buildings.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
@@ -132,4 +149,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md).
