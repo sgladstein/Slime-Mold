@@ -564,6 +564,9 @@ impl Rules {
             "cap" => &mut self.cap,
             "start_bank" => &mut self.start_bank,
             "soldier_cost" => &mut self.soldier_cost,
+            // Walls (the walls thread, 11-16): thickness films and tries.
+            "wall_width" => &mut self.wall_width,
+            "wall_cost" => &mut self.wall_cost,
             _ => return false,
         };
         *f = v;

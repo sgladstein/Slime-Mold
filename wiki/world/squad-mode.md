@@ -9,6 +9,7 @@ sources:
   - Reports/command-card-2026-11-15/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/guards-2026-11-15/README.md
+  - Reports/map-sharing-2026-11-16/README.md
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/soldier-cap-2026-11-16/README.md
   - Reports/squad-mode-2026-11-14/README.md
@@ -17,6 +18,7 @@ code:
   - Game::guard_zone
   - Game::heal
   - Game::rank_squad
+  - MAP_NEAR
   - Rules::funnel
   - Rules::guard
   - Rules::max_squad
@@ -42,7 +44,7 @@ soldier costs the CPU about 0.01 ms a step on planet 1 and 0.03 ms on a 6x
 planet, and the GPU next to nothing; on the 1070 at 200 soldiers a step's
 frame p95 is 9.1 ms on planet 1 and 14.9 ms on planet 8
 ([report](../../Reports/soldier-cap-2026-11-16/README.md)); balance at 200
-is still to come.
+is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells that has a straight walk from the map's goal, about a squad of 25's formation: at 4, 200 soldiers in 8 squads on a 6x planet overflowed the map cache and 47% of map lookups went unserved, at 12 19% ([report](../../Reports/map-sharing-2026-11-16/README.md)).
 
 ## How it plays
 
