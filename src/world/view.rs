@@ -1760,7 +1760,7 @@ mod tests {
         view.set_dense(Some((&news, &state)), n as u32, 0);
         view.set_lumps(&[(14.0, 16.0, LumpLook::Violet, 0.5), (34.0, 16.0, LumpLook::Ember, 0.5)]);
         let mut cam = Camera::new((w, h), screen);
-        let mut shot = |cam: &Camera| {
+        let shot = |cam: &Camera| {
             let mut enc = dev.create_command_encoder(&Default::default());
             view.record(&mut enc, cam, None);
             q.submit([enc.finish()]);
