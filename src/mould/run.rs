@@ -665,6 +665,10 @@ impl Run {
         // What this planet's tier does to you (`does_to_you`); not in the
         // gun range, which plays no planet.
         if !self.range {
+            // Mini-bosses (2026-11-16, `larder_world/bosses.rs`): their
+            // chance rises with the planet (owner, 04:58Z: "Chance increases
+            // with progression into the run"); a tier's own rules after.
+            r.boss = crate::mould::larder_world::BossRules::for_depth(self.depth);
             for &(k, v) in does_to_you(self.level().tier).rules {
                 assert!(r.set(k, v), "does_to_you: no rule {k}");
             }

@@ -34,7 +34,7 @@
 //! With `look=DIR`: each arm's first seed as PNG frames every `every`
 //! game seconds (walkers bright, trail amber, the crystal cyan), for a clip.
 //!
-//! `walk=VX,VY` moves the aim point (`BigParams::aim`) that many dish cells
+//! `walk=VX,VY` moves the aim point (lump 0's `aim`) that many dish cells
 //! a game second from the crystal, as a squad walking past (drawn as a
 //! white ring), and `went` then still counts eastward travel; `circle=R,P`
 //! walks it round the crystal instead, R dish cells out, once every P
@@ -43,7 +43,7 @@
 use std::collections::VecDeque;
 use std::sync::mpsc;
 
-use slime_mould::mould::big::{BigDish, BigParams};
+use slime_mould::mould::big::{BigDish, BigParams, DENSE, LUMP_SHIFT};
 use slime_mould::mould::larder_world::race_params;
 use slime_mould::mould::map::{Crystal, Map};
 use slime_mould::mould::tiers::set_key;
@@ -73,8 +73,10 @@ fn key(p: &mut BigParams, k: &str, v: &str) {
         "crowd" => p.crowd = f() as u8,
         "deposit" => p.deposit = f(),
         "hunger_reach" => p.hunger_reach = f(),
-        "aim_weight" => p.aim_weight = f(),
-        "leash" => p.leash = f(),
+        // The probe's one lump (`BigParams::lumps`, lump 0: every walker).
+        "aim_weight" => p.lumps[0].pull = f(),
+        "leash" => p.lumps[0].leash = f(),
+        "haste" => p.lumps[0].haste = f(),
         _ => set_key(p, k, v).unwrap_or_else(|e| panic!("{e}")),
     }
 }
@@ -109,12 +111,26 @@ fn world(seed: u64, n: usize, dist: f32, arm: &Arm) -> (BigDish, (f32, f32), f32
     m.items.crystals.push(Crystal { x: tx * 4.0, y: ty * 4.0, r: tr * 4.0, charge: 512.0 });
     let mut p = BigParams { upkeep: 0.0, terrain_rock: 0.0, terrain_wet: 0.0, start_shape: false, piles: 1, ..race_params(seed, SCALE, n) };
     let s = SCALE as f32;
-    p.aim = (tx * s, ty * s);
+    p.lumps[0].aim = cell_of((tx * s, ty * s));
     for (k, v) in &arm.keys {
         key(&mut p, k, v);
     }
-    let d = BigDish::with_map(p, &m);
+    let mut d = BigDish::with_map(p, &m);
+    // Every walker is condensed and in lump 0 (`big::LUMP_SHIFT`), so the
+    // whole dish is the body.
+    d.dense = vec![DENSE | 1 << LUMP_SHIFT; d.walkers.len()];
     (d, (tx * s, ty * s), tr * s)
+}
+
+/// A fine cell as the lumps' aim holds it, x | y << 16.
+fn cell_of((x, y): (f32, f32)) -> u32 {
+    (x.max(0.0).floor() as u32).min(0xFFFF) | (y.max(0.0).floor() as u32).min(0xFFFF) << 16
+}
+
+/// The lump's aim, the middle of its cell (fine cells).
+fn aim_of(d: &BigDish) -> (f32, f32) {
+    let a = d.p.lumps[0].aim;
+    ((a & 0xFFFF) as f32 + 0.5, (a >> 16) as f32 + 0.5)
 }
 
 /// The measures over the walkers now (fine cells).
@@ -199,7 +215,7 @@ fn sample(d: &BigDish, start_x: f32, gap: usize) -> Sample {
 
 /// Walkers bright on dark ground, trail amber, the crystal cyan, up 3x.
 fn picture(d: &BigDish, target: (f32, f32), tr: f32) -> image::RgbImage {
-    let aim = d.p.aim;
+    let aim = aim_of(d);
     let up = 3u32;
     let (w, h) = (d.w as u32, d.h as u32);
     let mut img = image::RgbImage::new(w * up, h * up);
@@ -222,7 +238,7 @@ fn picture(d: &BigDish, target: (f32, f32), tr: f32) -> image::RgbImage {
                 c = [40.0, 150.0, 170.0];
             }
             let ra = (x as f32 - aim.0).hypot(y as f32 - aim.1);
-            if aim != target && (3.0..4.5).contains(&ra) {
+            if (aim.0 - target.0).hypot(aim.1 - target.1) > 1.0 && (3.0..4.5).contains(&ra) {
                 c = [235.0, 240.0, 245.0];
             }
             if count[i] > 0 {
@@ -309,11 +325,11 @@ fn main() {
                     if circle.0 > 0.0 {
                         let a = tk as f32 / TPS as f32 / circle.1 * std::f32::consts::TAU + std::f32::consts::PI;
                         let r = circle.0 * SCALE as f32;
-                        d.p.aim = (target.0 + r * a.cos(), target.1 + r * a.sin());
+                        d.p.lumps[0].aim = cell_of((target.0 + r * a.cos(), target.1 + r * a.sin()));
                     } else if walk != (0.0, 0.0) {
                         let t = tk as f32 / TPS as f32;
                         let sc = SCALE as f32;
-                        d.p.aim = (target.0 + walk.0 * t * sc, target.1 + walk.1 * t * sc);
+                        d.p.lumps[0].aim = cell_of((target.0 + walk.0 * t * sc, target.1 + walk.1 * t * sc));
                     }
                     d.tick();
                     if let Some(dir) = film {

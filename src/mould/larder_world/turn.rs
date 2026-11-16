@@ -350,6 +350,7 @@ impl<W: World> Game<W> {
             self.check_broken();
             self.keep_panic_reach();
             self.time_raids();
+            self.time_bosses();
         }
         self.campaign_rules(now - t);
         self.check_end();

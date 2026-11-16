@@ -3196,3 +3196,128 @@ fn a_rendering_turret_pays_for_kills_in_its_range() {
     assert_eq!(g.bank, before + paid);
     assert_eq!(g.income(), income + paid);
 }
+
+/// **Mini-bosses** (2026-11-16, `bosses.rs`): the chance rises through a
+/// run (owner 04:58Z, "Chance increases with progression into the run").
+#[test]
+fn mini_boss_chances_rise_with_the_planet() {
+    let (a, b) = (BossRules::for_depth(1), BossRules::for_depth(8));
+    assert!(a.every > b.every && a.cut < b.cut && a.first > b.first, "{a:?} {b:?}");
+    assert_eq!((a.most, BossRules::for_depth(4).most), (1, 2));
+    assert_eq!(Rules::default().boss.every, 0.0, "off outside a run");
+    assert_eq!(Rules::default().boss.cut, 0.0);
+    for d in 1..8 {
+        let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
+        assert!(q.every <= p.every && q.cut >= p.cut, "planet {d}");
+    }
+}
+
+/// The slime's parts (`bosses::parts`): a piece joined to no crystal with
+/// food is cut off; a gap of one coarse square still joins (corners too).
+#[test]
+fn slime_parts_find_a_cut_off_piece() {
+    let (gw, gh, bin) = (40, 20, 2);
+    let mut g = vec![0u32; gw * gh];
+    // A fed piece at squares 2-5, 2-5 by a crystal; a cut piece at 30-35,
+    // 10-15, its two halves a coarse square apart (squares 30-31, 34-35:
+    // coarse 15 and 17... joined through 16 only if it holds walkers) and
+    // a corner-joined bit.
+    for y in 2..6 {
+        for x in 2..6 {
+            g[y * gw + x] = 3;
+        }
+    }
+    for y in 10..16 {
+        for x in 30..36 {
+            g[y * gw + x] = 5;
+        }
+    }
+    g[16 * gw + 36] = 7; // corner to the cut piece's square (35, 15)
+    let food = [((4.0 * bin as f32, 4.0 * bin as f32), 3.0)];
+    let p = parts(&g, gw, gh, bin, &food);
+    assert_eq!(p.len(), 2, "{p:?}");
+    let fed = p.iter().find(|p| p.fed).expect("a fed part");
+    let cut = p.iter().find(|p| !p.fed).expect("a cut part");
+    assert_eq!(fed.walkers, 16 * 3);
+    assert_eq!(cut.walkers, 36 * 5 + 7);
+    // Its centre in fine cells, in the cut piece's squares (30-36 x bin).
+    assert!(cut.centre.0 > 30.0 * bin as f32 && cut.centre.0 < 37.0 * bin as f32 && cut.centre.1 > 10.0 * bin as f32 && cut.centre.1 < 17.0 * bin as f32, "{cut:?}");
+    // No food: both cut off.
+    assert!(parts(&g, gw, gh, bin, &[]).iter().all(|p| !p.fed));
+}
+
+/// Squads shoot a mini-boss first (owner 04:58Z, question 6): one in reach
+/// and in sight takes the shot over the slime the engine's aim found; one
+/// out of reach leaves the aim alone; hold fire still holds.
+#[test]
+fn squads_shoot_a_mini_boss_first() {
+    let mut g = small(1);
+    let sc = g.s();
+    let s0 = g.soldiers[0];
+    let slime = (s0.x + 3.0 * sc, s0.y);
+    let set = |g: &mut Game<BigDish>| {
+        let s = &mut g.soldiers[0];
+        s.aim = Some(slime);
+        s.dense = 50;
+        s.touching = 2;
+        s.order = Order::Hold;
+    };
+    set(&mut g);
+    assert_eq!(g.target(0), Some(slime), "defend shoots the slime on it");
+    let reach = g.gun_range(s0.squad as usize) * sc;
+    // In open ground by the larder, in reach.
+    let near = (s0.x, s0.y + 0.5 * reach);
+    assert!(g.clear_line((s0.x, s0.y), near), "open ground by the larder");
+    let boss = Boss { lump: 0, born: 0, at: near, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: near, grade: 0.5 };
+    g.bosses.live.push(boss);
+    set(&mut g);
+    assert_eq!(g.target(0), Some(near), "the mini-boss first");
+    // Far out of reach: the engine's aim again.
+    g.bosses.live[0].centre = (s0.x, s0.y + 3.0 * reach);
+    set(&mut g);
+    assert_eq!(g.target(0), Some(slime), "out of reach: the slime on it");
+    // Its body's edge in reach: shot at along the line, at the gun's reach.
+    let r = (300.0f32 / std::f32::consts::PI).sqrt();
+    g.bosses.live[0].centre = (s0.x, s0.y + reach + 0.5 * r);
+    set(&mut g);
+    if g.clear_line((s0.x, s0.y), g.bosses.live[0].centre) {
+        let p = g.target(0).expect("an edge in reach is shot at");
+        assert!((p.0 - s0.x).abs() < 1e-3 && (p.1 - (s0.y + reach)).abs() < 1e-2, "{p:?}");
+    }
+    g.bosses.live[0].centre = near;
+    g.soldiers[0].stance = Stance::HoldFire;
+    set(&mut g);
+    assert_eq!(g.target(0), None, "not on hold fire");
+}
+
+/// A mini-boss forms by its rules at a crowded knot of the CPU dish,
+/// clenches, then hunts the nearest soldier; staged ones count their
+/// members a second on, and one that loses its body breaks.
+#[test]
+fn a_mini_boss_forms_at_a_crowd_and_hunts() {
+    let mut g = small(2);
+    g.rules.boss = BossRules { every: 5.0, every_sd: 0.0, first: 2.0, first_sd: 0.0, min: 1.0, crowd: 0.0, least: 10, gather: 2.0, ..BossRules::default() };
+    let tps = g.rules.tps as usize;
+    let mut formed = None;
+    for _ in 0..10 * tps {
+        g.step();
+        if let Some(b) = g.bosses.live.first() {
+            formed.get_or_insert(*b);
+        }
+        if g.bosses.live.first().is_some_and(|b| matches!(b.phase, BossPhase::Hunt(_))) {
+            break;
+        }
+    }
+    let b0 = formed.expect("a mini-boss formed");
+    assert_eq!(b0.cause, BossCause::Crowd);
+    let b = g.bosses.live.first().copied().or(g.bosses.ended.last().map(|e| e.0)).unwrap();
+    assert!(b.first >= 10, "it held walkers: {b:?}, ended {:?}", g.bosses.ended);
+    assert!(matches!(b.phase, BossPhase::Hunt(_)), "it hunts after gathering: {b:?}");
+    // Its members are marked in the dish and the world reads its centre.
+    let l = b.lump;
+    let marked = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count();
+    assert!(marked as u32 >= b.members / 2 && marked > 0, "{marked} marked, {} members", b.members);
+    assert!(g.world.lumps()[l].is_some());
+    // The view's word for it: the hunter, hunting.
+    assert_eq!(g.lump_looks()[l] & 15, 1 | 8);
+}

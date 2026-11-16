@@ -505,6 +505,11 @@ pub struct Rules {
     /// **Raids** (2026-11-15, the defenses thread; `raids.rs`): the slime
     /// spends what it eats on waves at the player's richest holding.
     pub raid: super::RaidRules,
+    /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
+    /// slime at a crowded knot or a big part cut off from food clenches
+    /// into a lump that hunts the nearest soldier. Off here (`boss_every`
+    /// and `boss_cut` 0); a run sets `BossRules::for_depth`.
+    pub boss: super::BossRules,
 }
 
 /// `Rules::surge_food`'s default: food the slime eats to build a surge.
@@ -521,6 +526,22 @@ impl Rules {
             self.raid.last_stand = v > 0.0;
             return true;
         }
+        // Mini-bosses' whole numbers (`BossRules`).
+        match name {
+            "boss_least" => {
+                self.boss.least = v.max(0.0) as u32;
+                return true;
+            }
+            "boss_cut_least" => {
+                self.boss.cut_least = v.max(0.0) as u32;
+                return true;
+            }
+            "boss_most" => {
+                self.boss.most = (v.max(0.0) as usize).min(crate::mould::big::LUMPS);
+                return true;
+            }
+            _ => {}
+        }
         let f = match name {
             "raid_first" => &mut self.raid.first,
             "raid_first_sd" => &mut self.raid.first_sd,
@@ -533,6 +554,21 @@ impl Rules {
             "raid_size_max" => &mut self.raid.size_max,
             "raid_share" => &mut self.raid.share,
             "raid_lure_r" => &mut self.raid.lure_r,
+            "boss_every" => &mut self.boss.every,
+            "boss_every_sd" => &mut self.boss.every_sd,
+            "boss_first" => &mut self.boss.first,
+            "boss_first_sd" => &mut self.boss.first_sd,
+            "boss_min" => &mut self.boss.min,
+            "boss_reach" => &mut self.boss.reach,
+            "boss_crowd" => &mut self.boss.crowd,
+            "boss_cut" => &mut self.boss.cut,
+            "boss_gather" => &mut self.boss.gather,
+            "boss_clench" => &mut self.boss.clench,
+            "boss_pull" => &mut self.boss.pull,
+            "boss_leash" => &mut self.boss.leash,
+            "boss_haste" => &mut self.boss.haste,
+            "boss_quorum" => &mut self.boss.quorum,
+            "boss_life" => &mut self.boss.life,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "pump_smell" => &mut self.build.pump_smell,
             "lure_smell" => &mut self.build.lure_smell,
@@ -638,6 +674,7 @@ impl Default for Rules {
             surge_food: SURGE_FOOD,
             surge_min: 10.0,
             raid: super::RaidRules::default(),
+            boss: super::BossRules::default(),
         }
     }
 }

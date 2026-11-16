@@ -80,7 +80,9 @@
 //! if the squad is short) down there at game second T (the cut's) and
 //! keeps them there. `boom=T,X,Y` sets the squad's round off at (X, Y)
 //! at game second T, free, as a staged scene (the explosion films); repeat
-//! it for more.
+//! it for more. `boss=T,X,Y` forms a mini-boss round (X, Y) at game second
+//! T (`bosses.rs`; its rules from `set=boss_..`), and the round prints each
+//! mini-boss once a game second.
 //! `hand=volley` fires the squad into the thick body from 22 to 34 s,
 //! then holds fire and steps back (`volley`); `hand=edge` stands in the
 //! same place on free fire instead. `hand=hold` buys four more soldiers
@@ -1774,6 +1776,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut select = true;
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
+    let mut bosses: Vec<(f32, f32, f32)> = Vec::new();
     let mut turrets: Vec<(Kind, (f32, f32))> = Vec::new();
     let mut renders: Vec<usize> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
@@ -1966,6 +1969,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     renders.push(turrets.len() - 1);
                 }
             }
+            "boss" => {
+                // `boss=T,X,Y` (2026-11-16, the mini-boss films): at game
+                // second T a mini-boss forms round (X, Y), world units as
+                // `centre=` (`Game::form_boss`), whatever its rules' chances.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [t, x, y] = w.as_slice() else { return Err("boss=T,X,Y".into()) };
+                bosses.push((*t, *x, *y));
+            }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
                 // T the squad's round goes off at (X, Y), world units as
@@ -2024,7 +2035,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &turrets, &renders, page, hover, select, &drags, scroll)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &bosses, &turrets, &renders, page, hover, select, &drags, scroll)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

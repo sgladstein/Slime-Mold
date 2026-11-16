@@ -3643,7 +3643,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 22] = [
+        let dishes: [(&str, Settings, Build); 24] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3726,8 +3726,22 @@ mod tests {
             // condense 0 the GPU sent no `roam` while the CPU still marked
             // breakaways.
             ("thicken roam: thick walkers break away, run and land", Settings { thicken: 2.0, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Lumps (held bodies, 2026-11-16, the mini-boss thread): the
+            // breakaway dish, and two lumps formed round living walkers
+            // after the breakaways are set (below; some breakaways, some
+            // condensed walkers and some with stale news join, so none
+            // breaks away or withers, and members ripen, condense and break
+            // keeping their lump): lump 0 pulled to a far cell on a leash
+            // tight enough that some members run back, at 1.5x pace, and
+            // passing into cells one walker holds (`LUMP_CROWD`); lump 1 on
+            // a leash alone; lump 3 on with no members.
+            ("lump: walkers travel held", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // And with no bronze (the owner, 04:58Z: "Remove the bronze"):
+            // lumps of ordinary walkers, where cut-off walkers panic and
+            // wither, which members do not.
+            ("lump plain: ordinary walkers travel held", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
-        for (name, s, build) in dishes {
+        for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             // Withering: the news is made in the warm-up, but with a lag no
@@ -3822,6 +3836,35 @@ mod tests {
                     }
                 }
             }
+            // The lumps (`BigParams::lumps`): round the first living walker
+            // past the dish's tenth, and round the first 30 fine cells from it.
+            let lumped = name.starts_with("lump");
+            let (mut leashed, mut members) = (0, Vec::new());
+            if lumped {
+                use slime_mould::mould::big::Lump;
+                let living: Vec<(f32, f32)> = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).map(|k| (cpu.walkers[k].0, cpu.walkers[k].1)).collect();
+                let a = living[living.len() / 10];
+                let b = *living.iter().find(|p| (p.0 - a.0).hypot(p.1 - a.1) > 30.0).expect("walkers apart");
+                let cell = |p: (f32, f32)| p.0 as u32 | (p.1 as u32) << 16;
+                let far = cell(((cpu.w - 2) as f32, (cpu.h / 2) as f32));
+                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5 };
+                s.lumps[1] = Lump { aim: 0, pull: 0.0, leash: 0.8, haste: 0.0 };
+                s.lumps[3] = Lump { aim: far, pull: 0.0, leash: 0.0, haste: 2.0 };
+                cpu.p.lumps = s.lumps;
+                let n0 = cpu.form_lump(0, Some((cell(a), 20 * 20)));
+                let n1 = cpu.form_lump(1, Some((cell(b), 8 * 8)));
+                cpu.sum_lumps();
+                for k in 0..cpu.walkers.len() {
+                    if let (true, Some(l)) = (cpu.lives(k), cpu.lump_of(k)) {
+                        let (cx, cy, m) = cpu.lump_centre(l).unwrap();
+                        let (x, y, _) = cpu.walkers[k];
+                        leashed += ((x - cx).powi(2) + (y - cy).powi(2) > s.lumps[l].leash_k() * m as f32) as usize;
+                        members.push(k);
+                    }
+                }
+                eprintln!("{name}: lumps of {n0} and {n1} walkers, {leashed} past their leash");
+                assert!(n0 > 3 && n1 > 3 && leashed > 0 && leashed + 4 < members.len(), "{name}: two lumps, some members past the leash and some within it");
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3882,6 +3925,36 @@ mod tests {
                 let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
                 assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
+            }
+            // The lumps: the same sums as the tick began, and forming and
+            // releasing on the GPU as on the CPU (a lump 2 round lump 0's
+            // centre takes its members; lump 1 released).
+            if lumped {
+                assert!(e.lumps_on, "{name}: the lump passes run");
+                let gs = e.lump_sums();
+                eprintln!("{name}: lump sums {:?} on the CPU, {gs:?} on the GPU", cpu.lump_sums);
+                assert_eq!(gs, cpu.lump_sums, "{name}: lump sums");
+                assert!(gs[0].2 > 0 && gs[1].2 > 0 && gs[2].2 == 0 && gs[3].2 == 0, "{name}: lumps 0 and 1 hold members");
+                // Few walkers are members, so the dish's 0.1% bound would
+                // pass a wrong pull or leash: every member must agree.
+                let gw = walkers_of(&e);
+                let near = |a: (f32, f32, f32), b: (f32, f32, f32)| (a.0 - b.0).abs() <= 1e-3 && (a.1 - b.1).abs() <= 1e-3 && (a.2 - b.2).abs() <= 1e-3;
+                let members_off = members.iter().filter(|&&k| cpu.lives(k) && !near(gw[k], cpu.walkers[k])).count();
+                let still = members.iter().filter(|&&k| cpu.walkers[k] == start[k]).count();
+                eprintln!("{name}: {} members, {members_off} off, {still} held still", members.len());
+                assert!(members_off <= tol(0, 2), "{name}: {members_off} lump members off");
+                let (cx, cy, _) = cpu.lump_centre(0).unwrap();
+                let c = (cx as u32, cy as u32);
+                let at = Some((c.0 | c.1 << 16, 20 * 20));
+                e.form_lump(&shared, 2, at);
+                let n2 = cpu.form_lump(2, at);
+                e.form_lump(&shared, 1, None);
+                cpu.form_lump(1, None);
+                let gd = e.dense_of();
+                let off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let ones = (0..n).filter(|&k| cpu.lives(k) && cpu.lump_of(k) == Some(1)).count();
+                eprintln!("{name}: lump 2 formed of {n2}, lump 1 released ({ones} left); {off} words off");
+                assert!(n2 > 3 && ones == 0 && off == 0, "{name}: forming and releasing match");
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
