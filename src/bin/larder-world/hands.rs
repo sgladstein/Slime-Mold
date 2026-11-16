@@ -192,6 +192,18 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         }
         return;
     }
+    // `pen` (2026-11-16, the walls thread's clips; run it with
+    // `mode=squads`, `set=wall_width=W` for the thickness): ten soldiers
+    // walk `PEN_AT` of the way from the landing toward the core; at
+    // `PEN_T` a closed ring of wall `PEN_R` cells round their middle stands
+    // whole, and they hold inside it. The slime surges at them and can only
+    // eat in (owner, 2026-11-16 06:06Z: "slime should not be able to go
+    // over walls but they should be able to slowly eat through"). Prints,
+    // each game second, the ring's fine cells still wall, walkers inside,
+    // soldiers alive.
+    if hand == "pen" {
+        return pen_hand(g);
+    }
     // `wallq` (2026-11-16, the wall-sides thread's clips; run it with
     // `mode=squads`): eight soldiers walk 16 cells from where they land,
     // away from the core; at 8 s a 30-cell wall goes up square to that way
@@ -683,4 +695,68 @@ pub(super) fn guard_hand(g: &mut Game<GpuWorld>) {
         println!("  guard t {t:.1} s: squad {} guards crystal {i} at {:.0},{:.0} ({:.0} cells off)", q + 1, c.0, c.1, d(c) / sc);
         g.apply(Cmd::SquadOrder(q as u8, if plain { Order::Move(c.0, c.1) } else { Order::Guard(c.0, c.1) }));
     }
+}
+
+const PEN_AT: f32 = 0.3;
+const PEN_T: f32 = 12.0;
+const PEN_R: f32 = 12.0;
+const PEN_SIDES: usize = 16;
+
+fn pen_hand(g: &mut Game<GpuWorld>) {
+    let t = g.time();
+    while t < 1.0 && g.soldiers.len() < 10 && g.bank >= g.rules.soldier_cost {
+        g.apply(Cmd::Buy);
+    }
+    let sc = g.world.scale();
+    let (c, l) = (g.core, g.larder);
+    let d = (c.0 - l.0).hypot(c.1 - l.1).max(1.0);
+    let u = ((c.0 - l.0) / d, (c.1 - l.1) / d);
+    let spot = (l.0 + u.0 * d * PEN_AT, l.1 + u.1 * d * PEN_AT);
+    let spot = g.nearest_standable(spot, 20.0 * sc).unwrap_or(spot);
+    if t > 1.5 && t < 2.5 {
+        g.apply(Cmd::SquadOrder(0, Order::Move(spot.0, spot.1)));
+    }
+    let r = PEN_R * sc;
+    let half = g.rules.wall_width * sc / 2.0;
+    if t > PEN_T && !g.buildings.iter().any(|b| matches!(b.kind, Kind::Wall { .. })) {
+        g.bank = g.bank.max(1e6);
+        g.rules.build.anywhere = true;
+        let m = g.middle(0).unwrap_or(spot);
+        let rr = r + half;
+        for q in 0..PEN_SIDES {
+            let (a0, a1) = (q as f32 / PEN_SIDES as f32 * std::f32::consts::TAU, (q + 1) as f32 / PEN_SIDES as f32 * std::f32::consts::TAU);
+            let (a, b) = ((m.0 + rr * a0.cos(), m.1 + rr * a0.sin()), (m.0 + rr * a1.cos(), m.1 + rr * a1.sin()));
+            if g.apply(Cmd::Wall(a, b)) {
+                let w = g.buildings.len() - 1;
+                g.raise(w, 1.0);
+            } else {
+                println!("  pen: wall {q} refused: {:?}", g.build_blocked(Kind::Wall { to: b }, a));
+            }
+        }
+        g.apply(Cmd::SquadOrder(0, Order::Move(m.0, m.1)));
+        PEN.with(|p| p.set(Some(m)));
+    }
+    let Some(m) = PEN.with(|p| p.get()) else { return };
+    let (w, h) = g.world.size();
+    let open = g.world.open_cells();
+    let ring = |i: usize| {
+        let (x, y) = ((i % w) as f32 + 0.5 - m.0, (i / w) as f32 + 0.5 - m.1);
+        let rad = x.hypot(y);
+        rad > r - sc && rad < r + 2.0 * half + 2.0 * sc
+    };
+    let wall = (0..w * h).filter(|&i| ring(i) && !open[i]).count();
+    let bin = 4;
+    let inside = g.world.mould_grid(bin).map_or(0, |gr| {
+        let gw = w.div_ceil(bin);
+        gr.iter().enumerate().filter(|&(i, _)| {
+            let (x, y) = (((i % gw) * bin) as f32 + 2.0 - m.0, ((i / gw) * bin) as f32 + 2.0 - m.1);
+            x.hypot(y) < r - sc
+        }).map(|(_, &n)| n as usize).sum()
+    });
+    let _ = h;
+    println!("  pen t {t:.0}: wall cells {wall}, walkers inside {inside}, soldiers {}", g.alive());
+}
+
+thread_local! {
+    static PEN: std::cell::Cell<Option<(f32, f32)>> = const { std::cell::Cell::new(None) };
 }
