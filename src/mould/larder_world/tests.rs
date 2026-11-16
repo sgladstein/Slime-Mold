@@ -3196,3 +3196,53 @@ fn a_rendering_turret_pays_for_kills_in_its_range() {
     assert_eq!(g.bank, before + paid);
     assert_eq!(g.income(), income + paid);
 }
+
+/// For 200 soldiers in 8 squads of 25, each soldier's place in its squad's
+/// formation (`place_at`) at one of 8 places across a 6x map, each asking
+/// for its place's walking map every step with `near` dish cells
+/// (`map_for`) for 600 steps: the places ever served, and the goal-steps
+/// lost after a place's first map.
+fn squad_goals_served(near: f32) -> (usize, usize) {
+    let (w, h) = (2512, 1568);
+    let m = bar_map(w, h, false);
+    let rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: 200, start_bank: 1e9, ..Rules::default() };
+    let mut g = Game::new(BigDish::with_map(race_params(1, 2, 300), &m), rules, 1);
+    while g.buy() {}
+    let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
+    assert_eq!(live.len(), 200, "200 soldiers bought");
+    for (i, &k) in live.iter().enumerate() {
+        g.apply(Cmd::Join(k, (i * 8 / live.len()) as u8));
+    }
+    let (fw, fh) = g.world.size();
+    let dests: Vec<(f32, f32)> = (0..8).map(|q| (fw as f32 * (0.15 + 0.7 * (q % 4) as f32 / 3.0), fh as f32 * if q < 4 { 0.25 } else { 0.75 })).collect();
+    // Each soldier's place in its squad's formation at its squad's place.
+    let goals: Vec<(f32, f32)> = live.iter().map(|&k| g.place_at(k, dests[g.soldiers[k].squad as usize])).collect();
+    assert_eq!(goals.len(), 200, "every soldier has a place to go");
+    let near = near * g.s();
+    let (mut first, mut lost) = (vec![false; goals.len()], 0usize);
+    for _ in 0..600 {
+        g.pump_maps();
+        for (k, &p) in goals.iter().enumerate() {
+            match g.map_for(cell(fw, fh, p), p, near) {
+                Some(_) => first[k] = true,
+                None if first[k] => lost += 1,
+                None => {}
+            }
+        }
+    }
+    (first.iter().filter(|&&f| f).count(), lost)
+}
+
+/// **A squad's 25 formation places share their walking maps at 6x**
+/// (`MAP_NEAR`, 2026-11-16, soldier cap 200). A formation of 25 spans 25
+/// fine cells from its middle. At 4 dish cells (8 fine) only 89 of the 200
+/// places got a map in 600 steps and 9,002 goal-steps were lost after a
+/// first map, the cache (34 maps at 6x) thrashing; at 8, 13,405 lost; at
+/// 12 and 16, none.
+#[test]
+fn squads_of_25_share_walking_maps_at_6x() {
+    let (served, lost) = squad_goals_served(super::paths::MAP_NEAR);
+    assert_eq!(served, 200, "every place served in 600 steps");
+    assert_eq!(lost, 0, "goal-steps unserved after a place's first map");
+}
+

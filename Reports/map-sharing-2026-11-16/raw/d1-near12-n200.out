@@ -1,0 +1,2 @@
+soldiercap: fight false, planet depth 1 seed 1, 30 game s, 8 squads, UNITS_MAX 256, SHOTS_MAX 1024
+  n  200: world 400x248, 450 steps, 200 alive at end, 8 squads live, 1468 shots, 50 bullets in flight at most, 0 dropped | soldiers' turn ms/step mean 0.894 p95 1.483 max 6.00 | frame (CPU world) mean 17.16
