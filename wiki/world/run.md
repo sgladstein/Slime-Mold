@@ -9,6 +9,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/menu-fixes-2026-11-15/README.md
+  - Reports/mini-boss-2026-11-16/README.md
   - Reports/pump-economy-2026-11-15/README.md
   - Reports/roguelike-run-2026-11-14/README.md
   - Reports/run-progression-2026-11-15/README.md
@@ -165,6 +166,7 @@ armory over the paused round and Back re-arms every squad
 ## Open
 
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
+- Mini-boss slimes (owner 2026-11-16 03:41Z): stronger sub-units that form out of concentrated slime, and whether to have a full boss; round 1 options and six questions to the owner, nothing built ([round 1](../../Reports/mini-boss-2026-11-16/README.md)).
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).
