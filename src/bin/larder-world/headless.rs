@@ -382,7 +382,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // Each mini-boss that forms by its rules' chances.
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
-                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2})", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top);
+                    let r = &g.rules.boss;
+                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
                 }
             }
             // Each mini-boss once a game second, and each one that ends
@@ -396,9 +397,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 for b in &g.bosses.live {
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - b.centre.0).hypot(s.y - b.centre.1)).fold(f32::INFINITY, f32::min);
                     let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1).map(|k| (ws[4 * k] - b.centre.0).hypot(ws[4 * k + 1] - b.centre.1)).collect();
+                    let hurt = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1 && dw[k] >> slime_mould::mould::big::HURT_SHIFT > 0).count();
                     let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
                     let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
-                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1);
+                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1, g.alive());
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
                     println!("  boss t {:.0} s: lump {} ended {e:?} ({} members of {})", g.time(), b.lump, b.members, b.first);

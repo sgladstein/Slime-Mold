@@ -925,9 +925,13 @@ impl World for GpuWorld {
 
     /// From the last frame's readout (`RO_LUMPS`), so no read-back.
     fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+        // The sums are summed only while a lump is on (`lumps_on`), so with
+        // none on the last ones stay in the readout: none then, as the
+        // CPU's `lump_of` (review of the mini-boss PR).
+        let on = self.s.lumps.iter().any(crate::mould::big::Lump::on);
         std::array::from_fn(|b| {
             let (sx, sy, n) = self.lumps[b];
-            (n > 0).then(|| ((sx / n) as f32 + 0.5, (sy / n) as f32 + 0.5, n))
+            (on && n > 0).then(|| ((sx / n) as f32 + 0.5, (sy / n) as f32 + 0.5, n))
         })
     }
 
@@ -1142,6 +1146,15 @@ mod tests {
         }
         fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
             self.g.mould_grid(bin)
+        }
+        fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+            self.g.form_lump(b, at)
+        }
+        fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+            self.g.set_lump(b, l)
+        }
+        fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+            self.g.lumps()
         }
     }
 

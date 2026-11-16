@@ -93,6 +93,13 @@ pub const ROAM_FRESH: f32 = 0.8;
 pub const LUMPS: usize = 4;
 pub const LUMP_SHIFT: u32 = 25;
 pub const LUMP_BITS: u32 = 7 << LUMP_SHIFT;
+/// A member's hits taken (`Lump::armour`), 4 bits above its lump; cleared
+/// as it joins or leaves.
+pub const HURT_SHIFT: u32 = 28;
+pub const HURT_BITS: u32 = 0xF << HURT_SHIFT;
+/// What a member keeps through condensing, breaking and ripening: its lump
+/// and its hits.
+pub const KEPT: u32 = LUMP_BITS | HURT_BITS;
 /// A lump's member steps into a cell holding this many more walkers than
 /// the crowd limit lets others (its moves only; a birth keeps the limit),
 /// so a lump formed in the thick of the body can pass through it. Without
@@ -126,17 +133,36 @@ pub struct Lump {
     pub leash: f32,
     /// Its members' step times this (0 is 1).
     pub haste: f32,
+    /// **Its strength** (owner 05:23Z: "significantly stronger than normal
+    /// slime ... vary quite a bit in strength from boss to boss"): a blow
+    /// that would kill a member (a shot, a blast, fire) only hurts it until
+    /// it has taken `armour` (0 and 1 are one blow, at most 15), and each
+    /// member touches a soldier as `1 + bite` walkers.
+    pub armour: u32,
+    pub bite: u32,
 }
 
 impl Lump {
     /// The leash as both engines test it: a member at squared distance d2
     /// from the centre runs back when d2 > `leash_k()` x members.
     pub fn leash_k(&self) -> f32 {
-        self.leash * self.leash / std::f32::consts::PI
+        // 0 for none: a leash of -1 squared was 1/pi, so the GPU (which
+        // tests this) leashed where the CPU (which tests `leash > 0`) did
+        // not (review of the mini-boss PR).
+        if self.leash > 0.0 {
+            self.leash * self.leash / std::f32::consts::PI
+        } else {
+            0.0
+        }
+    }
+
+    /// `armour` as both engines hold it.
+    pub fn armour(&self) -> u32 {
+        self.armour.min(15)
     }
 
     pub fn on(&self) -> bool {
-        self.pull != 0.0 || self.leash > 0.0 || self.haste > 0.0
+        self.pull != 0.0 || self.leash > 0.0 || self.haste > 0.0 || self.armour > 1 || self.bite > 0
     }
 }
 /// A breakaway lands within this many dish cells of its crystal's centre.
@@ -2173,9 +2199,17 @@ impl BigDish {
             if self.fire[i] < kill {
                 continue;
             }
+            // A lump's armoured member is only hurt (`armoured`), which
+            // takes no mass, so it is not counted (review of the mini-boss
+            // PR: counted, a grade-1 boss's 15 blows a member paid 15 kills'
+            // render food each); a condensed walker's break is (a walker's
+            // mass).
+            if self.armoured(k) {
+                continue;
+            }
             self.fire_killed += 1;
             if self.is_dense(k) {
-                self.dense[k] &= LUMP_BITS;
+                self.dense[k] &= KEPT;
                 continue;
             }
             if self.life.is_empty() {
@@ -2281,11 +2315,28 @@ impl BigDish {
     /// walker breaks back into an ordinary one (`BigParams::condense`: it
     /// has two lives), any other dies as `kill` kills it. True if it died.
     pub fn hit(&mut self, k: usize) -> bool {
+        if self.armoured(k) {
+            return false;
+        }
         if self.is_dense(k) {
-            self.dense[k] &= LUMP_BITS;
+            self.dense[k] &= KEPT;
             return false;
         }
         self.kill(k);
+        true
+    }
+
+    /// A blow that would kill walker `k` only hurts it while it is a
+    /// member of a lump with `Lump::armour` above the hits it has taken + 1
+    /// (counted in `HURT_BITS`); true if it took the blow so.
+    pub fn armoured(&mut self, k: usize) -> bool {
+        let Some(b) = self.lump_of(k) else { return false };
+        let w = self.dense[k];
+        let hurt = w >> HURT_SHIFT;
+        if hurt + 1 >= self.p.lumps[b].armour() {
+            return false;
+        }
+        self.dense[k] = (w & !HURT_BITS) | (hurt + 1) << HURT_SHIFT;
         true
     }
 
@@ -2692,7 +2743,8 @@ impl BigDish {
     /// Forms lump `b` (`BigParams::lumps`): every ordinary walker within
     /// `r` fine cells of fine cell `at` (whole cells, as a raid's reach
     /// counts them) joins it, leaving any breakaway or other lump; its old
-    /// members elsewhere leave. `None` releases the lump. The GPU's
+    /// members elsewhere leave, and every slot of it leaves on a release
+    /// (`None`), a spore in flight too. The GPU's
     /// `lumpform` pass the same (`Engine::form_lump`). Returns the members.
     /// Any walker, not only condensed ones: the owner, 2026-11-16 04:58Z,
     /// "Remove the bronze, keep the specks".
@@ -2705,19 +2757,21 @@ impl BigDish {
         let mut n = 0;
         for k in 0..self.walkers.len() {
             let w = self.dense[k];
-            if !self.active(k) {
-                continue;
-            }
-            let near = at.is_some_and(|(c, r2)| {
-                let (x, y, _) = self.walkers[k];
-                let (dx, dy) = (x.floor() as i64 - (c & 0xFFFF) as i64, y.floor() as i64 - (c >> 16) as i64);
-                dx * dx + dy * dy <= r2 as i64
-            });
+            // Only an ordinary walker joins; any slot leaves (a member in
+            // flight from a blast, a spore then, kept its lump and, landing,
+            // joined whatever boss next held that lump: review of the
+            // mini-boss PR).
+            let near = self.active(k)
+                && at.is_some_and(|(c, r2)| {
+                    let (x, y, _) = self.walkers[k];
+                    let (dx, dy) = (x.floor() as i64 - (c & 0xFFFF) as i64, y.floor() as i64 - (c >> 16) as i64);
+                    dx * dx + dy * dy <= r2 as i64
+                });
             if near {
-                self.dense[k] = (w & !(LUMP_BITS | ROAM | (63 << ROAM_SHIFT))) | mine;
+                self.dense[k] = (w & !(KEPT | ROAM | (63 << ROAM_SHIFT))) | mine;
                 n += 1;
             } else if w & LUMP_BITS == mine {
-                self.dense[k] = w & !LUMP_BITS;
+                self.dense[k] = w & !KEPT;
             }
         }
         n
@@ -4001,11 +4055,15 @@ impl BigDish {
                 }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
-                let ripe = (!self.took.is_empty() && self.took[k] > 0.0) || self.occ_round(i, r) >= p.condense_crowd;
+                // A lump's member does not ripen (review of the mini-boss
+                // PR: packed past the crowd limit, members ripened and half
+                // were absorbed, so a boss lost about half its walkers to
+                // condensing with no shot fired and broke at its quorum).
+                let ripe = self.lump_of(k).is_none() && ((!self.took.is_empty() && self.took[k] > 0.0) || self.occ_round(i, r) >= p.condense_crowd);
                 let was = self.dense[k] & RIPE;
                 // A lump's member stays one (`LUMP_BITS`) as it ripens,
                 // condenses or breaks (the GPU's `ripen` and `life`).
-                self.dense[k] = (self.dense[k] & LUMP_BITS) | if ripe { (was + 1).min(RIPE) } else { was.saturating_sub(1) };
+                self.dense[k] = (self.dense[k] & KEPT) | if ripe { (was + 1).min(RIPE) } else { was.saturating_sub(1) };
             }
         }
         for k in 0..n {
@@ -4021,7 +4079,7 @@ impl BigDish {
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
                     if self.is_dense(k) {
-                        self.dense[k] &= LUMP_BITS;
+                        self.dense[k] &= KEPT;
                         self.energy[k] *= 0.5;
                     } else {
                         self.occ[i] -= 1;
@@ -4035,7 +4093,7 @@ impl BigDish {
             // Ripe long enough, it condenses: half the ripe are absorbed,
             // half hold the mass (`condense`).
             if condense && self.dense[k] & DENSE == 0 && self.dense[k] & RIPE >= p.condense.min(RIPE) {
-                let lump = self.dense[k] & LUMP_BITS;
+                let lump = self.dense[k] & KEPT;
                 if unit(keyed(seed, t, DRAW_CONDENSE, k as u32)) < 0.5 {
                     let (x, y, _) = self.walkers[k];
                     let i = self.cell(x, y).expect("walker inside the dish");
@@ -4076,7 +4134,7 @@ impl BigDish {
                 // Fed past what a birth needs and still undivided, it
                 // thickens (`thicken`).
                 if thicken && self.dense[k] & DENSE == 0 && e >= p.thicken * p.birth_energy {
-                    self.dense[k] = DENSE | (self.dense[k] & LUMP_BITS);
+                    self.dense[k] = DENSE | (self.dense[k] & KEPT);
                     self.energy[k] = e - p.birth_cost;
                     self.thickened += 1;
                 }
@@ -4086,7 +4144,7 @@ impl BigDish {
             if unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
                 // A condensed walker starving breaks instead (`condense`).
                 if self.is_dense(k) {
-                    self.dense[k] &= LUMP_BITS;
+                    self.dense[k] &= KEPT;
                     continue;
                 }
                 let (x, y, _) = self.walkers[k];
@@ -4393,12 +4451,16 @@ impl BigDish {
             if !self.lives(k) || rr <= 0.0 || (wx - cx).hypot(wy - cy) > rr || matches!(self.life[k], LIFE_SPORE | LIFE_DEAD) {
                 continue;
             }
+            // A lump's armoured member is hurt instead (`armoured`), not
+            // counted: it lost no mass. A condensed walker breaks into an
+            // ordinary one (`BigParams::condense`), counted as a kill: the
+            // blast took a walker's worth.
+            if self.armoured(k) {
+                continue;
+            }
             killed += 1;
-            // A condensed walker breaks into an ordinary one instead
-            // (`BigParams::condense`), counted as a kill: the blast took a
-            // walker's worth.
             if self.is_dense(k) {
-                self.dense[k] &= LUMP_BITS;
+                self.dense[k] &= KEPT;
                 continue;
             }
             let i = self.cell(wx, wy).expect("walker inside the dish");
@@ -5959,6 +6021,47 @@ mod tests {
         assert!(kept == living.len() && broke == kept, "withering breaks every condensed walker first: {kept} of {} live, {broke} broken", living.len());
         w.tick();
         assert!(living.iter().all(|&k| !w.lives(k)), "and then kills them");
+    }
+
+    /// A mini-boss's member (`Lump::armour`, 2026-11-16) takes `armour`
+    /// blows: a shot or a blast hurts it until the last, which kills it; it
+    /// keeps its hits as it condenses and breaks, a fresh member starts
+    /// unhurt, and a walker that leaves its lump loses them. Its bite counts
+    /// on its cell (`squad::bite_cells`).
+    #[test]
+    fn a_mini_boss_member_takes_its_armour_in_blows() {
+        let mut p = BigParams { upkeep: 0.01, capacity: 1200, condense: 30, ..small(1, 1) };
+        p.lumps[0] = Lump { armour: 3, bite: 2, ..Lump::default() };
+        let mut d = BigDish::new(p);
+        d.tick();
+        let k = (0..d.walkers.len()).find(|&k| d.lives(k)).unwrap();
+        let (x, y, _) = d.walkers[k];
+        let c = (x.floor() as u32) | (y.floor() as u32) << 16;
+        assert!(d.form_lump(0, Some((c, 0))) >= 1 && d.lump_of(k) == Some(0));
+        assert!(!d.hit(k) && d.lives(k) && d.dense[k] >> HURT_SHIFT == 1, "the first blow hurts");
+        // Condensed and broken, it keeps its hit.
+        d.dense[k] |= DENSE;
+        assert!(!d.hit(k) && d.lives(k) && d.dense[k] >> HURT_SHIFT == 2, "the second hurts: {:#x}", d.dense[k]);
+        assert!(d.is_dense(k), "armour before condensing");
+        assert!(!d.hit(k) && d.lives(k) && !d.is_dense(k) && d.dense[k] >> HURT_SHIFT == 2, "then the condensed life breaks");
+        assert!(d.hit(k) && !d.lives(k), "the last kills it");
+        // A blast hurts a member and counts no kill (it lost no mass): the
+        // count is the walkers that died.
+        let q = (0..d.walkers.len()).find(|&q| d.lives(q)).unwrap();
+        let (x, y, _) = d.walkers[q];
+        let c = (x.floor() as u32) | (y.floor() as u32) << 16;
+        d.form_lump(0, Some((c, 0)));
+        let bites: u32 = crate::mould::squad::bite_cells(&d).iter().sum();
+        assert_eq!(bites, 2 * (0..d.walkers.len()).filter(|&m| d.lives(m) && d.lump_of(m) == Some(0)).count() as u32, "each member bites 2");
+        let living = |d: &BigDish| (0..d.walkers.len()).filter(|&m| d.lives(m)).count();
+        let (before, dense) = (living(&d), (0..d.walkers.len()).filter(|&m| d.lives(m) && d.is_dense(m)).count());
+        let killed = d.strike(x, y, 0.4, 0.0, 0.0);
+        assert!(d.lives(q) && d.dense[q] >> HURT_SHIFT == 1, "a blast hurts it");
+        assert!(dense == 0 && killed == before - living(&d), "{killed} counted, {} died", before - living(&d));
+        // Released, it is ordinary and unhurt; one blow kills it.
+        d.form_lump(0, None);
+        assert!(d.lump_of(q).is_none() && d.dense[q] >> HURT_SHIFT == 0);
+        assert!(d.hit(q) && !d.lives(q));
     }
 
     /// The body surges (`surge_every`, 2026-11-15): off changes nothing; on,

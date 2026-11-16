@@ -765,6 +765,15 @@ impl World for Later {
     fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
         self.d.mould_grid(bin)
     }
+    fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+        World::form_lump(&mut self.d, b, at)
+    }
+    fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+        World::set_lump(&mut self.d, b, l)
+    }
+    fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+        World::lumps(&self.d)
+    }
 }
 
 /// **Each rule that reads the walkers on a unit, at mass 1 and 0.2**
@@ -3208,8 +3217,14 @@ fn mini_boss_chances_rise_with_the_planet() {
     assert_eq!(Rules::default().boss.cut, 0.0);
     for d in 1..8 {
         let (p, q) = (BossRules::for_depth(d), BossRules::for_depth(d + 1));
-        assert!(q.every <= p.every && q.cut >= p.cut, "planet {d}");
+        assert!(q.every <= p.every && q.cut >= p.cut && q.grade_lo >= p.grade_lo && q.grade_hi >= p.grade_hi, "planet {d}");
     }
+    // Strength by grade (owner 05:23Z): much stronger than ordinary
+    // slime's one blow, and a wide spread.
+    let r = BossRules::default();
+    assert_eq!((r.armour_at(0.0), r.armour_at(1.0)), (4, 15));
+    assert_eq!((r.bite_at(0.0), r.bite_at(1.0)), (1, 4));
+    assert!(r.reach_at(6.0, 1.0) > 1.5 * r.reach_at(6.0, 0.0) - 1.0 && r.haste_at(1.0) > r.haste_at(0.0));
 }
 
 /// The slime's parts (`bosses::parts`): a piece joined to no crystal with
@@ -3248,46 +3263,198 @@ fn slime_parts_find_a_cut_off_piece() {
 
 /// Squads shoot a mini-boss first (owner 04:58Z, question 6): one in reach
 /// and in sight takes the shot over the slime the engine's aim found; one
-/// out of reach leaves the aim alone; hold fire still holds.
+/// out of reach leaves the aim alone; hold fire still holds. A soldier
+/// with slime on it shoots that unless the mini-boss is within its defend
+/// reach, and the reach is the next bullet's (review of the mini-boss PR).
 #[test]
 fn squads_shoot_a_mini_boss_first() {
     let mut g = small(1);
     let sc = g.s();
     let s0 = g.soldiers[0];
     let slime = (s0.x + 3.0 * sc, s0.y);
-    let set = |g: &mut Game<BigDish>| {
+    let set = |g: &mut Game<BigDish>, touching: u32| {
         let s = &mut g.soldiers[0];
         s.aim = Some(slime);
         s.dense = 50;
-        s.touching = 2;
+        s.touching = touching;
         s.order = Order::Hold;
     };
-    set(&mut g);
+    set(&mut g, 2);
     assert_eq!(g.target(0), Some(slime), "defend shoots the slime on it");
-    let reach = g.gun_range(s0.squad as usize) * sc;
+    let q = s0.squad as usize;
+    let reach = g.gun_range(q) * sc;
+    assert_eq!(g.shot_reach(0), g.gun_range(q), "a standard bullet flies the gun's reach");
+    let r = (300.0f32 / std::f32::consts::PI).sqrt();
+    let at = |d: f32| (s0.x, s0.y + d);
     // In open ground by the larder, in reach.
-    let near = (s0.x, s0.y + 0.5 * reach);
-    assert!(g.clear_line((s0.x, s0.y), near), "open ground by the larder");
-    let boss = Boss { lump: 0, born: 0, at: near, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: near, grade: 0.5 };
+    assert!(g.clear_line((s0.x, s0.y), at(reach + r)), "open ground by the larder");
+    // Its body's edge within the defend reach: the mini-boss first, slime
+    // on the soldier or not.
+    let close = at(r + 0.5 * g.rules.defend * sc);
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5 };
     g.bosses.live.push(boss);
-    set(&mut g);
-    assert_eq!(g.target(0), Some(near), "the mini-boss first");
+    for touching in [0, 2] {
+        set(&mut g, touching);
+        assert_eq!(g.target(0), Some(close), "the mini-boss first, {touching} on it");
+    }
+    // Further, in reach: the boss's line when nothing is on the soldier,
+    // the slime on it when something is.
+    g.bosses.live[0].centre = at(0.9 * reach);
+    set(&mut g, 0);
+    assert_eq!(g.boss_aim(0), Some((at(0.9 * reach), r)), "in reach, nothing on it");
+    set(&mut g, 2);
+    assert_eq!(g.boss_aim(0), None, "slime on it, the boss further than its defend reach");
+    assert_eq!(g.target(0), Some(slime), "so it shoots the slime on it");
     // Far out of reach: the engine's aim again.
-    g.bosses.live[0].centre = (s0.x, s0.y + 3.0 * reach);
-    set(&mut g);
+    g.bosses.live[0].centre = at(3.0 * reach);
+    set(&mut g, 2);
     assert_eq!(g.target(0), Some(slime), "out of reach: the slime on it");
     // Its body's edge in reach: shot at along the line, at the gun's reach.
-    let r = (300.0f32 / std::f32::consts::PI).sqrt();
-    g.bosses.live[0].centre = (s0.x, s0.y + reach + 0.5 * r);
-    set(&mut g);
-    if g.clear_line((s0.x, s0.y), g.bosses.live[0].centre) {
-        let p = g.target(0).expect("an edge in reach is shot at");
-        assert!((p.0 - s0.x).abs() < 1e-3 && (p.1 - (s0.y + reach)).abs() < 1e-2, "{p:?}");
-    }
-    g.bosses.live[0].centre = near;
+    g.bosses.live[0].centre = at(reach + 0.5 * r);
+    set(&mut g, 0);
+    let (p, _) = g.boss_aim(0).expect("an edge in reach is shot at");
+    assert!((p.0 - s0.x).abs() < 1e-3 && (p.1 - (s0.y + reach)).abs() < 1e-2, "{p:?}");
+    // A short bullet (half range) next: that edge is out of its reach.
+    g.bullet_mods.casts = 1;
+    g.bullet_mods.ammo[0].range = 50;
+    assert!(g.squads.get(q).is_none_or(|s| s.deck.is_none()), "the army's cards");
+    assert!((g.shot_reach(0) - 0.5 * g.gun_range(q)).abs() < 1e-4);
+    assert_eq!(g.boss_aim(0), None, "out of the bullet's reach");
+    g.bosses.live[0].centre = at(0.5 * reach);
+    let (p, _) = g.boss_aim(0).expect("in the bullet's reach");
+    assert!((p.1 - (s0.y + 0.5 * reach)).abs() < 1e-2, "{p:?}");
+    g.bullet_mods.casts = 0;
+    g.bosses.live[0].centre = close;
     g.soldiers[0].stance = Stance::HoldFire;
-    set(&mut g);
+    set(&mut g, 2);
     assert_eq!(g.target(0), None, "not on hold fire");
+}
+
+/// **How a mini-boss ends** (review of the mini-boss PR): one with too few
+/// at its knot fizzles, one under its quorum breaks, one that hunted its
+/// `life` is spent; each lets every member go (no walker carries its lump
+/// or its hits), its lump's rules go back to none, and the world reads no
+/// centre for it.
+#[test]
+fn a_mini_boss_ends_and_lets_its_walkers_go() {
+    let tps = small(0).rules.tps as usize;
+    let cases = [
+        (BossEnd::Fizzled, BossRules { least: 1_000_000, ..BossRules::default() }),
+        (BossEnd::Broken, BossRules { least: 1, quorum: 2.0, ..BossRules::default() }),
+        (BossEnd::Spent, BossRules { least: 1, gather: 1.0, life: 1.0, ..BossRules::default() }),
+    ];
+    for (end, rules) in cases {
+        let mut g = small(2);
+        g.rules.boss = rules;
+        // Round the thickest of the slime.
+        let w = &g.world;
+        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+        let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+        let at = (x / living.len() as f32, y / living.len() as f32);
+        assert!(g.form_boss(at, 6.0, BossCause::Staged));
+        let l = g.bosses.live[0].lump;
+        let joined = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).count();
+        assert!(joined > 10, "{end:?}: {joined} joined");
+        // A member hurt, to see its hits go.
+        let hurt = (0..g.world.walkers.len()).find(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(l)).unwrap();
+        assert!(!g.world.hit(hurt) && g.world.dense[hurt] >> crate::mould::big::HURT_SHIFT == 1);
+        for _ in 0..6 * tps {
+            g.step();
+            if !g.bosses.ended.is_empty() {
+                break;
+            }
+        }
+        let (b, how, _) = g.bosses.ended.first().copied().unwrap_or_else(|| panic!("{end:?}: it ended: {:?}", g.bosses.live));
+        assert_eq!(how, end, "{b:?}");
+        assert!(g.bosses.live.is_empty());
+        // The lumps' sums are the last step's start: one more.
+        g.step();
+        let w = &g.world;
+        assert!((0..w.walkers.len()).all(|k| w.dense.get(k).is_none_or(|&d| d & (crate::mould::big::LUMP_BITS | crate::mould::big::HURT_BITS) == 0)), "{end:?}: no slot keeps the lump or its hits");
+        assert_eq!(w.p.lumps[l], crate::mould::big::Lump::default(), "{end:?}: its rules back to none");
+        assert!(World::lumps(w)[l].is_none(), "{end:?}: no centre read");
+    }
+}
+
+/// **A big part cut off becomes one** (`BossRules::cut`), through the
+/// game's second: not in the landing's grace (`first`), then at once with
+/// chance 1, and not again where one just ended for `rest` seconds (review
+/// of the mini-boss PR: its own remnant re-formed the next second with its
+/// hits healed). Every crystal emptied, so all the slime is cut off.
+#[test]
+fn a_cut_off_part_becomes_a_mini_boss_after_the_grace() {
+    let mut g = small(2);
+    g.rules.boss = BossRules { cut: 1.0, cut_least: 50, first: 3.0, least: 1, quorum: 0.0, gather: 1.0, life: 1.0, rest: 4.0, ..BossRules::default() };
+    let tps = g.rules.tps as u64;
+    g.world.charge.iter_mut().for_each(|c| *c = 0.0);
+    g.world.pile_charge.iter_mut().for_each(|c| *c = 0.0);
+    assert!(g.slime_parts().iter().any(|p| !p.fed && p.walkers >= 50), "{:?}", g.slime_parts());
+    let mut born = Vec::new();
+    for _ in 0..12 * tps {
+        g.step();
+        for b in &g.bosses.live {
+            if !born.iter().any(|&(t, _): &(u64, (f32, f32))| t == b.born) {
+                born.push((b.born, b.at));
+            }
+        }
+    }
+    eprintln!("born {born:?}; ended {:?}", g.bosses.ended.iter().map(|e| (e.0.born, e.1, e.2)).collect::<Vec<_>>());
+    assert!(g.bosses.ended.iter().all(|e| e.0.cause == BossCause::Cut) && !born.is_empty());
+    let (t0, _) = born[0];
+    assert!(t0 >= 3 * tps && t0 <= 4 * tps + 1, "not in the grace, then at once: {t0}");
+    // None where one ended within its rest.
+    for &(t, at) in &born {
+        for e in g.bosses.ended.iter().filter(|e| e.2 <= t && t < e.2 + 4 * tps) {
+            let d = (at.0 - e.0.centre.0).hypot(at.1 - e.0.centre.1);
+            assert!(d > 6.0 * g.s(), "born at {t} {d:.1} cells from one ended at {}", e.2);
+        }
+    }
+    assert!(born.len() >= 2, "one again after the rest: {born:?}");
+}
+
+/// The same seed gives the same mini-bosses: formed, hunted and ended
+/// alike on two CPU games (their own draws, `Bosses::rng`).
+#[test]
+fn mini_bosses_replay_from_the_seed() {
+    let run = || {
+        let mut g = small(4);
+        g.rules.boss = BossRules { every: 4.0, every_sd: 1.0, first: 2.0, first_sd: 0.5, min: 1.0, crowd: 0.0, least: 10, gather: 1.0, life: 3.0, cut: 0.5, cut_least: 100, ..BossRules::default() };
+        for k in 0..g.soldiers.len() {
+            g.apply(Cmd::Order(k, Order::Attack));
+        }
+        for _ in 0..15 * g.rules.tps {
+            g.step();
+        }
+        (format!("{:?} {:?}", g.bosses.live, g.bosses.ended), World::hash(&g.world))
+    };
+    let (a, b) = (run(), run());
+    assert!(a.0.contains("Boss {"), "some formed: {}", a.0);
+    assert_eq!(a, b);
+}
+
+/// **Planet 8's mini-bosses, the smoke** (CLAUDE.md's checks): idle hands
+/// on the run's last planet's rules see none in the first `min` seconds
+/// (and no cut-off one before `first`), and the game does not end in under
+/// a minute. The race world's 1,000 walkers never fill a knot to 0.8 or
+/// cut off 400, so any knot and a cut-off part of 100 do here.
+#[test]
+fn planet_eight_bosses_leave_the_first_minute_playable() {
+    let mut g = small(5);
+    g.rules.boss = BossRules { crowd: 0.0, cut_least: 100, ..BossRules::for_depth(8) };
+    let r = g.rules.boss;
+    let tps = g.rules.tps as u64;
+    let mut first = None;
+    for _ in 0..60 * tps {
+        g.step();
+        if let Some(b) = g.bosses.live.first().or(g.bosses.ended.first().map(|e| &e.0)) {
+            first.get_or_insert((b.born, b.cause));
+        }
+        assert!(g.end.is_none(), "the game ended at {} s", g.world.ticks() / tps);
+    }
+    eprintln!("planet 8, idle: first mini-boss {first:?}, {} in all", g.bosses.ended.len() + g.bosses.live.len());
+    let (t, cause) = first.expect("one formed in the minute");
+    assert!(t >= (r.min * tps as f32) as u64, "none in the first {} s: {t}", r.min);
+    assert!(cause != BossCause::Cut || t >= (r.first * tps as f32) as u64, "no cut-off one in the grace: {t}");
 }
 
 /// A mini-boss forms by its rules at a crowded knot of the CPU dish,

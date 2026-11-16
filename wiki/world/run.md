@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/flinch-2026-11-15/README.md
@@ -18,6 +18,8 @@ sources:
   - Reports/surge-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
 code:
+  - BossRules::for_depth
+  - Game::boss_aim
   - LADDER
   - PLANETS
   - Playlog
@@ -90,6 +92,8 @@ put in without a slot lands before the first bullet (`Run::put_in`)
 locked on the command card, except pumps, the main income since 2026-11-15: they are never locked, never drain their crystal (owner, 2026-11-15 17:14Z), and the shop sells Pump power (`pump+`, a quarter more draw a level) in place of their unlock ([report](../../Reports/pump-economy-2026-11-15/README.md)). Dev mode adds rows to jump planets, add points
 and redraw cards. Each planet is the level generator's `levelgen::level(seed, depth)` for the run's seed ([planets](planets.md)). Not yet played by the
 owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/README.md)).
+
+**Mini-bosses** (2026-11-16; the owner's answers 04:58Z and 05:23Z in [decisions](../decisions-game.md)): a piece of the slime clenches into one body and hunts the nearest soldier (`larder_world/bosses.rs`, the engine's `big::Lump`). It forms only where the slime crowds or where a big part is cut off from food, more often and stronger deeper (`BossRules::for_depth`: a crowding chance every 150 s on planet 1 to 45 s on planet 8, at most one at once on planets 1-3). Each draws a grade that sets its size, the hits each member takes (4 to 15) and its touch (2 to 5 walkers), and squads shoot it first in reach (`Game::boss_aim`). On planet 3 one held 418 of its 426 walkers across the map; the weakest broke in 3 s, the strongest killed all eight soldiers ([report](../../Reports/mini-boss-2026-11-16/README.md), round 2). The break-away's specks are separate.
 
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
@@ -166,7 +170,7 @@ armory over the paused round and Back re-arms every squad
 ## Open
 
 - The whole-game review (11-15, [report](../../Reports/whole-game-review-2026-11-15/README.md)): the slime sitting at home was the bare race slime, fixed by shape C (#336); re-filmed on main, planet 3's slime wears two of four pumps to 0 by 3:00. Still open: the drain-and-buy rush reaches 40 soldiers by 2:00 on planet 1 against the live slime; what the enemy does to you planet by planet is now a test (above), awaiting play.
-- Mini-boss slimes (owner 2026-11-16 03:41Z): stronger sub-units that form out of concentrated slime, and whether to have a full boss; round 1 options and six questions to the owner, nothing built ([round 1](../../Reports/mini-boss-2026-11-16/README.md)).
+- Mini-boss slimes: the hunter is built and on in the run (Now); the other kinds (Wanderer, Leech, Sapper, Mortar, Pinwheel), the mini-boss look (its own thread) and the origin at each planet's start crystal (owner 04:58Z) are to come ([report](../../Reports/mini-boss-2026-11-16/README.md), round 2).
 - A mortar or artillery building; rescue planets; saving a run.
 - Prices, rewards and the goal by depth wait for the owner's playtest.
 - A breather planet around planet 6 (the planet review, 11-15): the owner judges the pace in play first (02:17Z, via the levelgen thread).

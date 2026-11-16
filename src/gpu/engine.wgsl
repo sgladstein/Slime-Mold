@@ -11,7 +11,9 @@ struct Set {
 // A lump's steering (`BigParams::lumps`, big.rs `Lump`): the fine cell it
 // heads for (x | y << 16), its pull, its leash as `Lump::leash_k` (0 none)
 // and its members' haste (0 is 1).
-struct Lump { aim: u32, pull: f32, lk: f32, haste: f32 };
+// `armour` and `bite` the mini-bosses' strength (`big::Lump`); `_a`, `_b`
+// pad the row to 32 bytes.
+struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, _a: u32, _b: u32 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -193,7 +195,7 @@ struct Params {
     raid_at: u32, raid_to: u32, raid_r2: u32, s_raid: u32,
     raid_share: f32, raid_ld: u32, raid_haste: f32, raid_field: u32,
     // The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
-    // Params grew from 1008 to 1088): whether any lump is on, three spare
+    // Params grew from 1008 to 1152): whether any lump is on, three spare
     // words, then each lump's row.
     lump_on: u32, _l1: u32, _l2: u32, _l3: u32,
     lumps: array<Lump, 4>,
@@ -378,6 +380,9 @@ fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k)
 // in bits 25-27 of its word (0 none, or no lump on).
 const LUMP_SHIFT: u32 = 25u;
 const LUMP_BITS: u32 = 0xE000000u;
+// A member's hits taken (`big::HURT_BITS`), cleared as it joins or leaves.
+const HURT_SHIFT: u32 = 28u;
+const HURT_BITS: u32 = 0xF0000000u;
 fn lump_of(k: u32) -> u32 {
     if (P.lump_on == 0u) { return 0u; }
     return (dense_word(k) & LUMP_BITS) >> LUMP_SHIFT;
@@ -393,9 +398,24 @@ fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
 fn set_dense(k: u32, v: u32) { atomicStore(&news[dense_base() + DENSE_HEAD + k], v); }
-// Sets walker k's word to v, keeping its lump (`LUMP_BITS`): a member stays
-// one as it ripens, condenses or breaks (the CPU's the same).
-fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & 0xE000000u) | v); }
+// Sets walker k's word to v, keeping its lump and hits (`big::KEPT`): a
+// member stays one as it ripens, condenses or breaks (the CPU's the same).
+fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | HURT_BITS)) | v); }
+// A blow that would kill walker k only hurts it while it is a member of a
+// lump whose `armour` is above its hits + 1 (`BigDish::armoured`); true if
+// it took the blow so. One thread a walker writes its word.
+fn armoured(k: u32) -> bool {
+    let lb = lump_of(k);
+    if (lb == 0u) { return false; }
+    let wd = dense_word(k);
+    let hurt = wd >> HURT_SHIFT;
+    if (hurt + 1u >= min(P.lumps[lb - 1u].armour, 15u)) { return false; }
+    set_dense(k, (wd & ~HURT_BITS) | ((hurt + 1u) << HURT_SHIFT));
+    return true;
+}
+// Each cell's lump members' bite (`squad::bite_cells`), after the raid's
+// field in the dense block.
+fn bite_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + i]); }
 fn is_dense(k: u32) -> bool { return condenses() && (dense_word(k) & DENSE_BIT) != 0u; }
 fn dense_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
@@ -2323,8 +2343,10 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     let c = cell(wk.x, wk.y);
     for (var q = 0u; q < P.nshots; q++) {
         if (struck(c, q)) {
-            // A condensed walker breaks into an ordinary one instead
-            // (`BigDish::hit`), counted as a kill.
+            // A lump's armoured member is hurt (`armoured`), not counted (it
+            // lost no mass), and a condensed walker breaks into an ordinary
+            // one (`BigDish::hit`), counted as a kill.
+            if (armoured(k)) { return; }
             if (is_dense(k)) {
                 set_dense_kept(k, 0u);
                 atomicAdd(&kills[q], 1u);
@@ -2549,8 +2571,10 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         let y = cy + dy;
         if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
         touching += enemy_occ(u32(y * w + x));
-        // A condensed walker touches as two (`condense`; `dcount`).
+        // A condensed walker touches as two (`condense`; `dcount`), a lump's
+        // member as 1 + its bite.
         if (condenses()) { touching += dense_cell(u32(y * w + x)); }
+        if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
     }
     let b = 4;
     let nbw = (w + b - 1) / b;
@@ -2720,6 +2744,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
             touching += atomicLoad(&occ[u32(y * w + x)]);
             if (condenses()) { touching += dense_cell(u32(y * w + x)); }
+            if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
         }
     }
     let b = 4;
@@ -3070,7 +3095,9 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     // not, a spore too, as the CPU's `infect` takes every living slot.
     if (P.kir > 0.0 && P.sick_steps > 0u && d <= P.kir) { sick[k] = P.sick_steps + P.immune; }
     if (st == L_SPORE || P.kr <= 0.0 || d > P.kr) { return; }
-    // A condensed walker breaks instead (`BigDish::strike`), a kill's worth.
+    // A lump's armoured member is hurt, not counted, and a condensed
+    // walker breaks instead (`BigDish::strike`), a kill's worth.
+    if (armoured(k)) { return; }
     atomicAdd(&wstat[3], 1u);
     if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
@@ -3380,6 +3407,8 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         ripe = n >= (P.ccrowd & 0xFFFFu);
     }
+    // A lump's member does not ripen (the CPU's the same).
+    if (lump_of(k) != 0u) { ripe = false; }
     let was = wd & RIPE_BITS;
     if (ripe) { set_dense_kept(k, min(was + 1u, RIPE_BITS)); } else if (was > 0u) { set_dense_kept(k, was - 1u); }
 }
@@ -3403,19 +3432,29 @@ fn masscount(@builtin(global_invocation_id) gid: vec3<u32>) {
 // `squad::dense_cells`): `dclear` a thread a cell, then `dcount` a thread
 // a slot, every living condensed walker that holds a cell (not a spore
 // or the dead), before `units`.
+// With a lump on they also count each cell's members' bite (`bite_cell`,
+// the CPU's `squad::bite_cells`).
 @compute @workgroup_size(256)
 fn dclear(@builtin(global_invocation_id) gid: vec3<u32>) {
-    if (gid.x < P.w * P.h) { atomicStore(&news[dense_base() + DENSE_HEAD + P.n + gid.x], 0u); }
+    if (gid.x < P.w * P.h) {
+        atomicStore(&news[dense_base() + DENSE_HEAD + P.n + gid.x], 0u);
+        if (P.lump_on != 0u) { atomicStore(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + gid.x], 0u); }
+    }
 }
 
 @compute @workgroup_size(256)
 fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n || !lives(k) || !is_dense(k)) { return; }
+    if (k >= P.n || !lives(k)) { return; }
+    let dense = is_dense(k);
+    let lb = lump_of(k);
+    if (!dense && lb == 0u) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
     let wk = walkers[k];
-    atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + cell(wk.x, wk.y)], 1u);
+    let c = cell(wk.x, wk.y);
+    if (dense) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + c], 1u); }
+    if (lb != 0u && P.lumps[lb - 1u].bite > 0u) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], P.lumps[lb - 1u].bite); }
 }
 
 // **Lumps** (held bodies, `BigParams::lumps`, 2026-11-16, the mini-boss
@@ -3450,7 +3489,9 @@ fn lumpsum(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
-    if (k >= P.n || !ordinary(k)) { return; }
+    // Only an ordinary walker joins; any slot leaves (a spore in flight
+    // too, the CPU's the same).
+    if (k >= P.n) { return; }
     let wd = dense_word(k);
     let mine = atomicLoad(&news[dense_base() + 1u]) << LUMP_SHIFT;
     let c = atomicLoad(&news[dense_base() + 2u]);
@@ -3458,10 +3499,10 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    if (c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2) {
-        set_dense(k, (wd & ~(LUMP_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+    if (ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2) {
+        set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
-        set_dense(k, wd & ~LUMP_BITS);
+        set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));
     }
 }
 
@@ -3480,7 +3521,9 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
 const PLANT_HEAD: u32 = 64u;
 // (Word 49 on: up to three lights for `ignite`, four words each; words
 // 32-44 held them, three words each, until 11-14.)
-fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h; }
+// After the dense cells, the raid's field and the bite cells
+// (`gpu::dense_words`).
+fn plant_base() -> u32 { return dense_base() + DENSE_HEAD + P.n + 3u * P.w * P.h; }
 fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
 fn pblk(b: u32, i: u32) -> u32 { return plant_base() + PLANT_HEAD + b * P.w * P.h + i; }
@@ -3617,6 +3660,7 @@ fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
     if (c == NONE || pget(PB_FA, c) < pf(9u)) { return; }
+    if (armoured(k)) { return; }
     atomicAdd(&wstat[3], 1u);
     if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     atomicSub(&occ[c], 1u);

@@ -68,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (272 words).
-pub const PARAMS_BYTES: usize = 1088;
+/// Bytes in `Params` (288 words).
+pub const PARAMS_BYTES: usize = 1152;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -110,9 +110,9 @@ pub const SPRAY_AT: usize = 960;
 /// run's steps (low and high half), its haste and a spare word.
 pub const RAID_AT: usize = 976;
 /// The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
-/// Params grew from 1008 to 1088, after the raid row): whether any lump is
+/// Params grew from 1008 to 1152, after the raid row): whether any lump is
 /// on and three spare words, then each lump's aim, pull, leash
-/// (`Lump::leash_k`) and haste.
+/// (`Lump::leash_k`), haste, armour and bite, and two spare words.
 pub const LUMP_AT: usize = 1008;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -2127,7 +2127,7 @@ impl Engine {
         self.lumps_on = s.lumps.iter().any(crate::mould::big::Lump::on);
         b.extend(u32_bytes(&[self.lumps_on as u32, 0, 0, 0]));
         for l in &s.lumps {
-            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits()]));
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, 0, 0]));
         }
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
@@ -2292,8 +2292,9 @@ impl Engine {
             if self.garden {
                 out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
-            // The condensed walkers a cell, which touch as two (`condense`).
-            if self.condenses {
+            // The condensed walkers a cell, which touch as two (`condense`),
+            // and the lumps' members' bite.
+            if self.condenses || self.lumps_on {
                 out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
@@ -3045,6 +3046,8 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // Blocks (`RAID_BLOCK`), fewer than the cells the region holds.
     w.extend(d.raid_field.iter().take(cells));
     w.resize(DENSE_HEAD + d.walkers.len() + 2 * cells, 0);
+    // Each cell's lump members' bite (`squad::bite_cells`; `dcount`).
+    w.resize(DENSE_HEAD + d.walkers.len() + 3 * cells, 0);
     w
 }
 
@@ -3061,8 +3064,9 @@ impl Engine {
     }
 
     /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the
-    /// condensed walkers within reach squared `r2` (whole fine cells) of
-    /// fine cell `at` (x | y << 16) join it; None releases it. On its own,
+    /// ordinary walkers within reach squared `r2` (whole fine cells) of
+    /// fine cell `at` (x | y << 16) join it; None releases it, every slot
+    /// (a spore in flight too). On its own,
     /// between ticks.
     pub fn form_lump(&self, shared: &Shared, b: usize, at: Option<(u32, u32)>) {
         assert!(b < crate::mould::big::LUMPS, "lump {b}");
