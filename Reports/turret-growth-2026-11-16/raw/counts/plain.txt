@@ -1,0 +1,30 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-029s-all.png
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-029s-near.png
+  CPU: ground field 2.71 ms (once a game second), model and HUD 0.075 ms a frame
+  t 29 s: mould 24324, soldiers 7, bank 5917, harvested 0, rendered 0, shots 185, killed 1111, took 0%, crystals left 0.997; squad at 149.5,262.6
+  surge: the slime ate 88 food (3.0/s); meter 88.1 of 150, 0 surges
+  squad: touching 0.1 mean, 1 most; health 78 mean
+  turret t 29.00 s: standing at 172,240
+  turret t 29.00 s: standing at 180,240
+  turret t 29.00 s: standing at 188,242
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-032s-all.png
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-032s-near.png
+  CPU: ground field 2.45 ms (once a game second), model and HUD 0.081 ms a frame
+  t 32 s: mould 24301, soldiers 7, bank 5852, harvested 0, rendered 0, shots 224, killed 1413, took 0%, crystals left 0.997; squad at 149.5,262.6
+  surge: the slime ate 102 food (3.2/s); meter 101.8 of 150, 0 surges
+  squad: touching 0.0 mean, 0 most; health 76 mean
+    turret at (172, 240): hp 300 / 300, built 1.0, standing
+    turret at (180, 240): hp 300 / 300, built 1.0, standing
+    turret at (188, 242): hp 300 / 300, built 1.0, standing
+    pumped 0 food
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-039s-all.png
+/tmp/claude-0/-home-user/9aea5aef-04a1-51c6-bf09-c8b00ff0c3e4/scratchpad/counts/plain/fork-hold@150,265-039s-near.png
+  CPU: ground field 2.33 ms (once a game second), model and HUD 0.079 ms a frame
+  t 39 s: mould 24669, soldiers 7, bank 5696, harvested 0, rendered 0, shots 312, killed 1772, took 0%, crystals left 0.995; squad at 149.5,262.6
+  surge: the slime ate 138 food (3.5/s); meter 138.1 of 150, 0 surges
+  squad: touching 0.0 mean, 0 most; health 72 mean
+    turret at (172, 240): hp 299 / 300, built 1.0, standing
+    turret at (180, 240): hp 299 / 300, built 1.0, standing
+    turret at (188, 242): hp 299 / 300, built 1.0, standing
+    pumped 0 food

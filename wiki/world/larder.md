@@ -36,6 +36,7 @@ sources:
   - Reports/species-gpu-2026-11-11.md
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/surge-2026-11-15/README.md
+  - Reports/turret-growth-2026-11-16/README.md
   - Reports/units-read-2026-11-14/README.md
   - Reports/wall-sides-2026-11-16/README.md
   - Reports/walls-2026-11-16/README.md
@@ -320,6 +321,18 @@ walls: a worker thread builds the raid's walking distance on 2x2 blocks
 (`big::raid_field_for`, 6 ms on planet 8, 0.22 ms on the frame) and the
 raid goes a game second after it is decided
 ([raids](../../Reports/raids-2026-11-15/README.md)).
+
+**Turrets grow both ways** (owner's card, 2026-11-16 21:36Z: "Both: tree
+bodies, card barrels"; the tree lives in the run shop only, 21:41Z "I lean
+shop"): a tech tree will unlock turret bodies, each a different way to
+deliver a shot (mortar over walls, sprayer, fan are proposed), and gun cards
+fill each body's barrel. Built so far: every turret fires one shared turret
+deck (`Game::turret_deck`, `Cmd::Load(TURRET_DECK, ..)`, no menu yet), each
+shot carrying the deck's next cast as a soldier's does, with its Range and
+Rate cards on every turret. In the shove page's kill box over 10 s, sleep gas
+on the turrets doubled the game's kills and corral raised the turrets' own
+kills from 231 to 427, while a bomb deck flung the slime away from the guns
+and lowered kills ([report](../../Reports/turret-growth-2026-11-16/README.md)).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

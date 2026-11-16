@@ -474,6 +474,10 @@ struct Args {
     /// after it. NAME may be a card list instead (`multicast+plain+blast`,
     /// 2026-11-16), for combos over a preset's budget.
     load_at: Option<(f32, String)>,
+    /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
+    /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
+    /// `Game::turret_deck`), a preset or a card list as `load=`.
+    tload_at: Option<(f32, String)>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, free, pick, fire, and
@@ -2150,6 +2154,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     None => return Err(format!("load=: a card list or one of {}", LOADOUTS.map(|l| l.0).join(", ")).into()),
                 };
                 args.load_at = Some((t.parse::<f32>()?, cards.to_string()));
+            }
+            "tload" => {
+                let (t, name) = v.split_once(',').ok_or("tload=T,NAME")?;
+                let cards = match LOADOUTS.iter().find(|l| l.0 == name) {
+                    Some(l) => l.1,
+                    None if rounds::parse(name).is_some() => name,
+                    None => return Err(format!("tload=: a card list or one of {}", LOADOUTS.map(|l| l.0).join(", ")).into()),
+                };
+                args.tload_at = Some((t.parse::<f32>()?, cards.to_string()));
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second

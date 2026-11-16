@@ -37,7 +37,8 @@ impl<W: World> Game<W> {
             }
             let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
             let d = dx.hypot(dy).max(1e-3);
-            let m = b.map_or(BulletMods::default(), |k| self.mods(self.soldiers[k].squad as usize));
+            // A turret's (`by` None) carries the turrets' deck (`turret_mods`).
+            let m = self.mods_by(b);
             let ammo = if cast > 0 { m.ammo.get(cast as usize - 1).copied() } else { None };
             let speed = ammo.map_or(1.0, |a| a.speed());
             // A needle flies on through its set's hits on top of the
@@ -160,9 +161,16 @@ impl<W: World> Game<W> {
     /// A carried cast with casts beside it (`Card::Multicast`) lets them
     /// all out, fanned as the gun fires them.
     pub(super) fn release(&mut self, o: Release) {
-        let Some(k) = o.by else { return };
-        let q = self.soldiers[k].squad as usize;
-        let m = self.mods(q);
+        // A turret's cast lets out as a turret fires it: the turrets'
+        // deck, a turret's strike and reach, and over walls as its shells
+        // fly (`BuildRules::turret_over`).
+        let q = o.by.map(|k| self.soldiers[k].squad as usize);
+        let m = self.mods_by(o.by);
+        let b = self.rules.build;
+        let (strike, range, over) = match q {
+            Some(q) => (self.strike_of(q), self.gun_range(q), false),
+            None => ((self.rules.strike * self.s()).min(squad::R_MAX), b.turret_range * (1.0 + self.rules.range_card * m.reach as f32), b.turret_over),
+        };
         let (mut dir, mut at) = (o.dir, o.at);
         if o.wall {
             // One cell back is where it flew from, open; which of the two
@@ -188,8 +196,8 @@ impl<W: World> Game<W> {
             let i = cast as usize - 1;
             let ammo = m.ammo[i];
             let shape = ammo.set.shape();
-            let r = (self.strike_of(q) * ammo.reach()).min(squad::R_MAX) * shape.r;
-            let reach = self.gun_range(q) * self.s() * ammo.range();
+            let r = (strike * ammo.reach()).min(squad::R_MAX) * shape.r;
+            let reach = range * self.s() * ammo.range();
             let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
             let pellets = shape.pellets.max(1);
             for p in 0..pellets {
@@ -201,7 +209,7 @@ impl<W: World> Game<W> {
                 let (sn, cs) = a.sin_cos();
                 let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
                 let pierce = m.pierce.saturating_add(shape.pierce);
-                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], over: false });
+                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], over });
             }
         }
     }
