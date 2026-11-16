@@ -66,7 +66,8 @@
 //! holds the near view on one place (world units, as the t lines' `squad
 //! at`), so a run of frames plays as a clip from a still camera.
 //! `scroll=N` with `menu=PAGE` scrolls the page N wheel notches a frame.
-//! `hover=X,Y` puts the cursor there (screen pixels), so the picture shows
+//! `hover=X,Y[,X2,Y2]` puts the cursor there (screen pixels; with four, it
+//! sweeps from the one to the other over the frames), so the picture shows
 //! that tooltip (a loadout card's, 2026-11-14); `select=0` selects nobody.
 //! `drag=FROM>TO[/FROM>TO..]` with `menu=shop..` films bullet cards dragged
 //! in the shop, one drag to an equal share of the frames: FROM a gun slot
@@ -171,7 +172,7 @@ use slime_mould::sound::{self, SoundCmd};
 use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
-use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target};
+use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target, Throw};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -343,7 +344,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 35] = [
+const LOADOUTS: [(&str, &str); 43] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -394,6 +395,18 @@ const LOADOUTS: [(&str, &str); 35] = [
     ("buckshot", "ammo/plain/buckshot/1/100/100/100/100/1"),
     ("needle-blast", "ammo/blast/needle/1/100/100/100/100/3"),
     ("buck-gas", "ammo/gas/buckshot/1/100/100/100/100/3"),
+    // Carriers (2026-11-16, step B): a bullet that carries the next cast
+    // and lets it out where it hits (trigger) or where it stops (expire).
+    ("plain-blast", "plain+blast"),
+    ("trigger-blast", "trigger+plain+blast"),
+    ("buck-trigger", "trigger+ammo/plain/buckshot/1/100/100/100/100/1+blast"),
+    ("needle-deep", "expire+ammo/plain/needle/1/100/100/100/100/1+blast"),
+    ("relay", "expire+plain+expire+plain+gas"),
+    ("chain", "trigger+ammo/plain/buckshot/1/100/100/100/100/1+trigger+plain+blast"),
+    // The plan's step-B film: a bomb that carries a gas against the two
+    // fired in turn.
+    ("bomb-gas", "bomb+gas"),
+    ("trigger-bomb-gas", "trigger+bomb+gas"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -1785,6 +1798,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bank = None;
     let mut centre = None;
     let mut hover = None;
+    let mut hover_to = None;
     let mut scroll = 0i32;
     let mut drags: Vec<(String, String)> = Vec::new();
     let mut select = true;
@@ -1937,8 +1951,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "hover" => {
                 // `hover=X,Y`: the no-window pictures' cursor, screen
                 // pixels (a tooltip in the picture: the loadout's cards).
-                let (x, y) = v.split_once(',').ok_or("hover=X,Y")?;
-                hover = Some((x.parse()?, y.parse()?));
+                // `hover=X,Y,X2,Y2` sweeps it over the frames (a throw's
+                // aim leaving its reach, `hand=throw`).
+                let n: Vec<f32> = v.split(',').map(|x| x.parse::<f32>()).collect::<Result<_, _>>()?;
+                match n[..] {
+                    [x, y] => hover = Some((x, y)),
+                    [x, y, x2, y2] => (hover, hover_to) = (Some((x, y)), Some((x2, y2))),
+                    _ => return Err("hover=X,Y[,X2,Y2]".into()),
+                }
             }
             // `bank=N`: the no-window round starts with N food in the bank
             // (films of rounds, whose casts are paid from it).
@@ -2054,7 +2074,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if let Some(dir) = look {
         let page = menu_flag.as_deref().and_then(|v| Some((page_named(v)?, v)));
-        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &bosses, &turrets, &renders, page, hover, select, &drags, scroll)?);
+        return Ok(headless(args, &dir, &hand, &at, screen, wav.as_deref(), holes, centre, cut, bank, &booms, &bosses, &turrets, &renders, page, hover, hover_to, select, &drags, scroll)?);
     }
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

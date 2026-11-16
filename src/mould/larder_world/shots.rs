@@ -43,7 +43,9 @@ impl<W: World> Game<W> {
             // A needle flies on through its set's hits on top of the
             // Pierce cards' (`bullets::Shape::pierce`).
             let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed });
+            // The cast it carries (`Card::Trigger`), if its cast is a carrier.
+            let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
@@ -77,6 +79,10 @@ impl<W: World> Game<W> {
     /// order their parents stood, and past `squad::SHOTS_MAX` the rest are
     /// dropped (counted), so the cap and the order are the same on every
     /// world and every run.
+    ///
+    /// A carrier (`Bullet::carry`) lets its cast out at its first slime hit,
+    /// or with `expire` where it stops; the released bullets join after the
+    /// pieces (`Game::release`).
     pub(super) fn landed(&mut self, legs: &[ShotIn], out: &[squad::ShotOut]) {
         let r = self.rules;
         if r.bullet_speed <= 0.0 {
@@ -84,6 +90,9 @@ impl<W: World> Game<W> {
         }
         let sc = self.s();
         let mut pieces = Vec::new();
+        // Where, which way, by whom and what each carrier lets out, and
+        // whether it stopped at a wall.
+        let mut out_casts: Vec<Release> = Vec::new();
         let mut k = 0;
         self.bullets.retain_mut(|b| {
             let q = k;
@@ -91,6 +100,12 @@ impl<W: World> Game<W> {
             let (Some(l), Some(o)) = (legs.get(q), out.get(q)) else { return false };
             b.fresh = false;
             if let Some(h) = o.hit {
+                // A trigger lets its cast out at the first hit; the bullet
+                // flies on empty if it pierces.
+                if b.carry > 0 && (!b.expire || b.pierce == 0) {
+                    out_casts.push(Release { at: h, dir: b.dir, by: b.by, cast: b.carry, wall: false });
+                    b.carry = 0;
+                }
                 // On a wall a leg ends with no hit; only slime gets here.
                 if b.pierce > 0 {
                     b.pierce -= 1;
@@ -108,7 +123,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false });
                     }
                 }
                 return false;
@@ -116,7 +131,11 @@ impl<W: World> Game<W> {
             let len = (l.to.0 - l.from.0).hypot(l.to.1 - l.from.1);
             b.at = l.to;
             b.left -= len;
-            b.left > 1e-3
+            let on = b.left > 1e-3;
+            if !on && b.carry > 0 && b.expire {
+                out_casts.push(Release { at: l.to, dir: b.dir, by: b.by, cast: b.carry, wall: !self.world.clear(l.to.0, l.to.1) });
+            }
+            on
         });
         for p in pieces {
             if self.bullets.len() >= squad::SHOTS_MAX {
@@ -125,5 +144,62 @@ impl<W: World> Game<W> {
                 self.bullets.push(p);
             }
         }
+        for o in out_casts {
+            self.release(o);
+        }
     }
+
+    /// Lets a carried cast out (`Bullet::carry`) as its own bullets: as its
+    /// soldier's gun would fire that cast (its set's pellets and fan, its
+    /// strike, range and speed, the squad's flight cards), from `at` along
+    /// the carrier's heading, with no aim spread. Off a wall it heads back
+    /// out, turned as a ball off the wall's face (the side its last step
+    /// back is open on). Past `squad::SHOTS_MAX` the rest are dropped.
+    pub(super) fn release(&mut self, o: Release) {
+        let Some(k) = o.by else { return };
+        let q = self.soldiers[k].squad as usize;
+        let m = self.mods(q);
+        let i = o.cast as usize - 1;
+        let ammo = m.ammo[i];
+        let shape = ammo.set.shape();
+        let r = (self.strike_of(q) * ammo.reach()).min(squad::R_MAX) * shape.r;
+        let reach = self.gun_range(q) * self.s() * ammo.range();
+        let (mut dir, mut at) = (o.dir, o.at);
+        if o.wall {
+            // One cell back is where it flew from, open; which of the two
+            // steps back into the wall is shut says which face it hit.
+            let back = (at.0 - dir.0, at.1 - dir.1);
+            let x = !self.world.clear(back.0 + dir.0, back.1);
+            let y = !self.world.clear(back.0, back.1 + dir.1);
+            dir = match (x, y) {
+                (true, false) => (-dir.0, dir.1),
+                (false, true) => (dir.0, -dir.1),
+                _ => (-dir.0, -dir.1),
+            };
+            at = back;
+        }
+        self.releases += 1;
+        let pellets = shape.pellets.max(1);
+        for p in 0..pellets {
+            if self.bullets.len() >= squad::SHOTS_MAX {
+                self.bullets_dropped += 1;
+                continue;
+            }
+            let a = if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+            let (sn, cs) = a.sin_cos();
+            let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
+            let pierce = m.pierce.saturating_add(shape.pierce);
+            self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast: o.cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i] });
+        }
+    }
+}
+
+/// A carried cast to let out (`Game::release`).
+pub(super) struct Release {
+    at: (f32, f32),
+    dir: (f32, f32),
+    by: Option<usize>,
+    cast: u8,
+    /// It stopped at a wall, not at the end of its range.
+    wall: bool,
 }

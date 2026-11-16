@@ -229,6 +229,15 @@ pub struct Bullet {
     /// Its speed, times `Rules::bullet_speed` (its bullet card's,
     /// `bullets::Ammo::speed`; 1 for a turret's).
     pub speed: f32,
+    /// The cast it carries to let out (`rounds::Card::Trigger`, 2026-11-16;
+    /// `BulletMods::child`): 0 none, else that cast's id. It is let out as
+    /// that cast's own bullets would be fired, from where this one hits
+    /// slime (`Game::landed`).
+    pub carry: u8,
+    /// It lets its carried cast out where it stops instead of at its first
+    /// hit (`rounds::Card::Expire`): spent on slime, at a wall (thrown back
+    /// off it) or at the end of its range.
+    pub expire: bool,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -244,12 +253,21 @@ pub struct BulletMods {
     /// Copies of the `Rate` card: each fires every soldier's gun
     /// `Rules::rate_card` more times as often (`Game::shot_gap`).
     pub rate: u8,
-    /// Casts in the round (its bullets, `rounds::casts`): each shot
-    /// carries the next of them in turn (`Soldier::next`).
+    /// Casts the gun fires in its own turn (`rounds::cycle`): each shot
+    /// carries the next of them (`Soldier::next`), the cast id in `cycle`.
     pub casts: u8,
-    /// Each cast's bullet (`bullets::Ammo`), the first `casts` of them:
-    /// the shot's damage (its strike), speed, range and spread.
+    /// The cast ids (1 + the index in `rounds::casts`) of the gun's turn,
+    /// the first `casts` of them. A carried cast (`Card::Trigger`) is not
+    /// among them: its carrier's bullet lets it out.
+    pub cycle: [u8; super::rounds::MAX_SLOTS],
+    /// Each cast's bullet (`bullets::Ammo`), by its index in
+    /// `rounds::casts`: the shot's damage (its strike), speed, range and
+    /// spread.
     pub ammo: [super::bullets::Ammo; super::rounds::MAX_SLOTS],
+    /// Each cast's carried cast id (0 none, `rounds::Cast::child`), and
+    /// whether it lets it out where it stops without a hit too.
+    pub child: [u8; super::rounds::MAX_SLOTS],
+    pub expire: [bool; super::rounds::MAX_SLOTS],
 }
 
 pub struct Game<W: World> {
@@ -333,6 +351,9 @@ pub struct Game<W: World> {
     /// shots are).
     pub bullet_mods: BulletMods,
     pub bullets_dropped: u32,
+    /// Carried casts let out (`Bullet::carry`), each one release, however
+    /// many bullets its set fires.
+    pub releases: u32,
     /// Walkers alive at the last count (once a game second).
     pub mould: usize,
     /// The most walkers the mould has had at a count (`Rules::broken`).
@@ -499,6 +520,7 @@ impl<W: World> Game<W> {
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             bullets_dropped: 0,
+            releases: 0,
             mould,
             peak: mould,
             broken: None,

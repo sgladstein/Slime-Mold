@@ -169,6 +169,43 @@ fn the_window_uses_the_tools() {
     assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 3, "three held tools spent");
 }
 
+/// Aiming a tool (owner 2026-11-16: a better visual "for aiming and
+/// range" when throwing an explosive): the ghost carries a throw from the
+/// soldier that would throw, with the kit's reach and the blast's crater
+/// and alarm rings; in reach it can go, past it the ghost is red and says
+/// how far out, and a building's ghost carries no throw.
+#[test]
+fn a_tool_is_aimed_with_its_thrower_and_reach() {
+    let Some((device, queue)) = gpu() else { return };
+    let mut app = offscreen(Args { map: Some("fork".into()), seed: 1, scale: 1, walkers: 1250, ..Default::default() }, (320, 200), &device, &queue).unwrap();
+    for _ in 0..10 {
+        app.step(1.0 / 15.0);
+    }
+    let g = app.game.as_mut().unwrap();
+    g.bank = 10_000.0;
+    let sc = g.world.scale();
+    let reach = app.kit.rules.reach * sc;
+    let (k, _) = app.kit.thrower(g, g.larder).expect("a soldier holds a tool");
+    let s = g.soldiers[k];
+    // Open ground a few cells from the thrower, in reach.
+    let near = (0..16).map(|i| i as f32 / 16.0 * std::f32::consts::TAU).map(|a| (s.x + 6.0 * sc * a.cos(), s.y + 6.0 * sc * a.sin())).find(|p| g.world.open(p.0, p.1)).expect("open ground by the squad");
+    let m = app.model(None, Some((T_BLAST, near, None)));
+    let w = m.throw.as_ref().expect("a blast's ghost is a throw");
+    assert!(m.ghost_ok, "in reach it can go: {:?}", m.ghost_note);
+    assert_eq!(w.reach, reach);
+    assert!((w.from.0 - near.0).hypot(w.from.1 - near.1) <= reach, "thrown from a soldier in reach");
+    assert_eq!(w.rings.len(), 2, "the crater and the alarm");
+    let far = (s.x + 3.0 * reach, s.y);
+    let m = app.model(None, Some((T_BLAST, far, None)));
+    assert!(m.throw.is_some() && !m.ghost_ok, "past the reach the ghost is red");
+    assert!(m.ghost_note.as_deref().is_some_and(|n| n.contains("out of reach")), "and says so: {:?}", m.ghost_note);
+    // A cord lands at its middle.
+    let m = app.model(None, Some((T_CORD, (s.x + 4.0 * sc, s.y), Some((s.x - 4.0 * sc, s.y)))));
+    assert_eq!(m.throw.as_ref().and_then(|w| w.at), Some((s.x, s.y)));
+    let m = app.model(None, Some((TURRET, near, None)));
+    assert!(m.throw.is_none(), "a building is not thrown");
+}
+
 /// A campaign mission plays its own map and rules, shows its goal as the
 /// objective, and ends on its own screen when the squad is lost (a rush
 /// into the Flats' mould dies by 0:31 on seed 1).
@@ -356,6 +393,9 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     // bullet, never lit as a cast and never idle.
     let tail = cards("blast+quiet", Some(0));
     assert_eq!((tail[0].next, tail[1].idle, tail[1].next), (true, true, false));
+    // A carried cast lights with its carrier: one shot fires both.
+    assert_eq!(lit(&cards("trigger+plain+blast+gas", Some(0))), [true, true, true, false]);
+    assert_eq!(lit(&cards("trigger+plain+blast+gas", Some(2))), [false, false, false, true]);
     let lance = cards("pierce+split+blast", Some(0));
     assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
     // A payload this world cannot cast says so.

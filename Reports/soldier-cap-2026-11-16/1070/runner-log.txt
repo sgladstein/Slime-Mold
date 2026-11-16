@@ -1,0 +1,23 @@
+start 05:35:47Z free KB 3000948 gpu 0,0,0,0,0 % C free GB 31
+build main head=e305994516a624583a9a00bce7e13056482f4813
+build main exit=0 05:37:51Z
+build cap head=ceaf1536b98fd818768fc898b271c7e36fb0aeb0
+build cap exit=0 05:39:39Z
+warmup start 05:39:39Z card 139 MHz, 405 MHz, 26, 6.61 W
+warmup exit=0 05:39:52Z card 1987 MHz, 4006 MHz, 32, 42.39 W
+main-p1-n40.txt start 05:39:57Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 31, 42.39 W free KB 3382968
+main-p1-n40.txt exit=0 05:40:17Z
+main-p8-n40.txt start 05:40:22Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 36, 43.46 W free KB 3403176
+main-p8-n40.txt exit=0 05:40:51Z
+cap-p1-n40.txt start 05:40:56Z gpu 0,0,0,0,0 % card 1974 MHz, 4006 MHz, 41, 44.18 W free KB 3395868
+cap-p1-n40.txt exit=0 05:41:21Z
+cap-p1-n100.txt start 05:41:26Z gpu 0,0,0,0,0 % card 835 MHz, 810 MHz, 43, 8.64 W free KB 3407512
+cap-p1-n100.txt exit=0 05:41:48Z
+cap-p1-n200.txt start 05:41:53Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 48, 44.75 W free KB 3410840
+cap-p1-n200.txt exit=0 05:42:18Z
+cap-p8-n40.txt start 05:42:23Z gpu 0,0,0,0,0 % card 797 MHz, 810 MHz, 50, 9.22 W free KB 3410280
+cap-p8-n40.txt exit=0 05:42:52Z
+cap-p8-n100.txt start 05:42:57Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 55, 46.56 W free KB 3404664
+cap-p8-n100.txt exit=0 05:43:29Z
+cap-p8-n200.txt start 05:43:34Z gpu 0,0,0,0,0 % card 1012 MHz, 3802 MHz, 56, 30.63 W free KB 3373192
+cap-p8-n200.txt exit=0 05:44:09Z

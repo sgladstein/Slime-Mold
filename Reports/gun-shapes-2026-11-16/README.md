@@ -90,7 +90,11 @@ game's over the clip (8 soldiers, 24 shots each clip).
 
 **The blind clips' key** (kept off the page): clip 1 needle, clip 2
 standard, clip 3 buckshot, clip 4 slug. The deciding measure set in the plan:
-can the owner name the set from the clip with the labels off.
+can the owner name the set from the clip with the labels off. **The owner
+named all four** (11-16 05:09Z: "1. Needle. 2. Standard. 3. Buckshot. 4.
+Slug"), so the shapes stay as they are; then, 05:10Z: "The slug looks fun",
+and 05:11Z asked for ways to modify the shove, to herd slime into a kill zone
+(the next step after the [trigger card](../gun-triggers-2026-11-16/README.md)).
 
 Whole games with one loadout from the start (`rounds=NAME`, at 33 s, one
 seed), for the trade each shape makes:
@@ -132,7 +136,6 @@ and threw 3,296.
   pass over the walkers and one read-back of the count (`Engine::fling`), as a
   bomb's throw is, up to about 8 a second for a squad of 8 slugs. Not timed on
   the GTX 1070; the read-back batching planned for step B covers it.
-- The owner's blind read of the four set clips.
 
 ## Files
 

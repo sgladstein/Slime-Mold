@@ -1,0 +1,234 @@
+{
+ "bomb-gas": {
+  "mould_at_end": 24478,
+  "shots": 24,
+  "killed": 176,
+  "health_at_end": 84,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 0,
+   "gas": 8,
+   "germ": 0,
+   "bomb": 13
+  },
+  "round_killed": 13,
+  "thrown": 2859,
+  "let_out": 0,
+  "gassed": 2443,
+  "frames": 90,
+  "kb": 1541
+ },
+ "bomb-gas-10s": {
+  "mould_at_end": 24766,
+  "shots": 80,
+  "killed": 548,
+  "health_at_end": 84,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 0,
+   "gas": 36,
+   "germ": 0,
+   "bomb": 39
+  },
+  "round_killed": 25,
+  "thrown": 5764,
+  "let_out": 0,
+  "gassed": 7267
+ },
+ "buck-trigger": {
+  "mould_at_end": 22732,
+  "shots": 96,
+  "killed": 1943,
+  "health_at_end": 81,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 42,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 1155,
+  "thrown": 0,
+  "let_out": 56,
+  "gassed": 0,
+  "frames": 90,
+  "kb": 1762
+ },
+ "chain": {
+  "mould_at_end": 22421,
+  "shots": 96,
+  "killed": 2287,
+  "health_at_end": 80,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 35,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 1208,
+  "thrown": 0,
+  "let_out": 96,
+  "gassed": 0,
+  "frames": 90,
+  "kb": 1690
+ },
+ "needle-deep": {
+  "mould_at_end": 22853,
+  "shots": 24,
+  "killed": 1841,
+  "health_at_end": 68,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 9,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 570,
+  "thrown": 0,
+  "let_out": 18,
+  "gassed": 0,
+  "frames": 90,
+  "kb": 1697
+ },
+ "plain-blast": {
+  "mould_at_end": 23557,
+  "shots": 24,
+  "killed": 1093,
+  "health_at_end": 74,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 8,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 645,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0,
+  "frames": 90,
+  "kb": 1559
+ },
+ "plain-blast-10s": {
+  "mould_at_end": 23365,
+  "shots": 80,
+  "killed": 1941,
+  "health_at_end": 70,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 31,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 1141,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0
+ },
+ "relay": {
+  "mould_at_end": 23466,
+  "shots": 24,
+  "killed": 1238,
+  "health_at_end": 83,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 0,
+   "gas": 20,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 0,
+  "let_out": 42,
+  "gassed": 8215,
+  "frames": 90,
+  "kb": 1209
+ },
+ "trigger-blast": {
+  "mould_at_end": 22819,
+  "shots": 24,
+  "killed": 1845,
+  "health_at_end": 78,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 17,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 1015,
+  "thrown": 0,
+  "let_out": 21,
+  "gassed": 0,
+  "frames": 90,
+  "kb": 1594
+ },
+ "trigger-blast-10s": {
+  "mould_at_end": 23336,
+  "shots": 80,
+  "killed": 2037,
+  "health_at_end": 76,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 24,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 1091,
+  "thrown": 0,
+  "let_out": 41,
+  "gassed": 0
+ },
+ "trigger-bomb-gas": {
+  "mould_at_end": 24555,
+  "shots": 24,
+  "killed": 123,
+  "health_at_end": 84,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 0,
+   "gas": 19,
+   "germ": 0,
+   "bomb": 19
+  },
+  "round_killed": 14,
+  "thrown": 3374,
+  "let_out": 19,
+  "gassed": 4258,
+  "frames": 90,
+  "kb": 1606
+ },
+ "trigger-bomb-gas-10s": {
+  "mould_at_end": 24959,
+  "shots": 79,
+  "killed": 399,
+  "health_at_end": 84,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 0,
+   "gas": 66,
+   "germ": 0,
+   "bomb": 70
+  },
+  "round_killed": 41,
+  "thrown": 9099,
+  "let_out": 70,
+  "gassed": 9635
+ }
+}
