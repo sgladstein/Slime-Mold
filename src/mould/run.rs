@@ -436,9 +436,14 @@ pub const AMMO_OFFER: usize = 2;
 /// from the start, the bomb and the germ from planet 4 (their old cards'
 /// rarity). The germ was never sold until 2026-11-16 ("the GPU world casts
 /// none yet"), though the GPU world has cast it since 11-14
-/// (`GpuWorld::has_germ`; the gun-system review's step A).
+/// (`GpuWorld::has_germ`; the gun-system review's step A). The Mind
+/// bullets (blind, sour, spin; step D, 2026-11-16) from planet 2, their
+/// cards' rarity.
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
+    if depth >= power_from(2) {
+        v.extend([Shell::Blind, Shell::Sour, Shell::Spin]);
+    }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ]);
     }
@@ -862,8 +867,13 @@ impl Run {
         if self.range {
             let z = mix(mix(self.seed ^ 0x7A46_E000) ^ u64::from(self.depth)) ^ self.rerolls;
             self.offers.clear();
+            // The Mind bullets (2026-11-16) in the standard set only: one
+            // of each in every set put the armory's bullets on four pages
+            // at 200% on 1080 lines, and what they do is the status, not
+            // the set's shape.
             for (i, &shell) in Shell::ALL.iter().enumerate() {
-                for (j, &set) in Set::ALL.iter().enumerate() {
+                let sets: &[Set] = if shell.mind() { &[Set::Standard] } else { &Set::ALL };
+                for (j, &set) in sets.iter().enumerate() {
                     let a = if set == Set::Standard { Ammo::standard(shell) } else { Ammo::roll_of(shell, set, mix(z ^ (16 * i + j) as u64), self.depth) };
                     self.offers.push(Card::Ammo(a));
                 }

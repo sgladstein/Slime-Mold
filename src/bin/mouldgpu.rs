@@ -2857,6 +2857,70 @@ mod tests {
         assert!(words > 50, "the twin catches a gas a step too long");
     }
 
+    /// **Mind statuses on the engine** (`Engine::mind_pass`, the gun cards'
+    /// Mind family, 2026-11-16; the CPU's `BigDish::mind`): from the same
+    /// state each status stamped on both, a disc of 10 dish cells for 30
+    /// steps. Every slot's word exact; one tick from the same state (the
+    /// one-tick twin's way) leaves no walker off; 40 ticks more with no
+    /// re-inject, the statuses run out on both and the words still agree
+    /// (no births here, so nothing rewrites them). Planted: a GPU status a
+    /// step longer, and a spin with no curl on the GPU, must each fail it.
+    #[test]
+    fn mind_statuses_match_the_cpu() {
+        use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        const STEPS: u16 = 30;
+        const CURL: f32 = 0.6;
+        // (stamped, words off, walkers off after a tick)
+        let play = |kind: u32, gpu_steps: u16, gpu_curl: f32| -> (usize, usize, usize) {
+            let s = Settings { spin_curl: CURL, ..small(0) };
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for &(wx, wy, _) in &cpu.walkers {
+                (x, y, m) = (x + wx, y + wy, m + 1.0);
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            cpu.p.spin_curl = CURL;
+            let g = Settings { spin_curl: gpu_curl, ..s.clone() };
+            let n = cpu.mind(x * k, y * k, 10.0 * k, kind, STEPS);
+            e.mind_pass(&shared, &g, x, y, 10.0, kind, gpu_steps);
+            assert!(e.minds, "the Mind row is on after a stamp");
+            let words_off = e.mind_words().iter().zip(&cpu.mind).filter(|(a, b)| a != b).count();
+            if words_off > 0 {
+                return (n, words_off, 0);
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
+            if gpu_curl == CURL && gpu_steps == STEPS {
+                run(&mut e, &shared, &g, 40, Hand::default());
+                for _ in 0..40 {
+                    cpu.tick();
+                }
+                let held = (0..cpu.walkers.len()).filter(|&j| cpu.mind_of(j) != 0).count();
+                let after = e.mind_words().iter().zip(&cpu.mind).filter(|(a, b)| a != b).count();
+                assert_eq!((held, after), (0, 0), "kind {kind}: the statuses ran out and the words agree");
+            }
+            (n, words_off, off)
+        };
+        for kind in [MIND_BLIND, MIND_SOUR, MIND_SPIN] {
+            let (n, words, off) = play(kind, STEPS, CURL);
+            eprintln!("kind {kind}: {n} walkers stamped, {words} words and {off} walkers off after a tick");
+            assert!(n > 50 && words == 0 && off == 0, "kind {kind}: {n} stamped, {words} words, {off} walkers off");
+        }
+        let (_, words, _) = play(MIND_BLIND, STEPS + 1, CURL);
+        eprintln!("planted, a step longer: {words} words off");
+        assert!(words > 50, "the twin catches a status a step too long");
+        let (_, _, off) = play(MIND_SPIN, STEPS, 0.0);
+        eprintln!("planted, no curl on the GPU: {off} walkers off after a tick");
+        assert!(off > 50, "the twin catches a spin that doesn't curl");
+    }
+
     /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
     /// rounds thread, after Noita's mists): from the same state a cloud
     /// laid on both, then 40 ticks each with no re-inject. The cloud field
@@ -4420,6 +4484,7 @@ mod tests {
         // And the same raid steered down its walking distance round the
         // wall (`BigDish::raid_paths`, the field in `news`; lean 4 marks it).
         let raid_walls = Settings { raid_lean: 4, raid_r: 1_000.0, ..raid.clone() };
+        let minds = Settings { spin_curl: 0.6, ..scared.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4462,6 +4527,13 @@ mod tests {
             // strikes nothing, a seeker the first live walker on or beside
             // its line.
             ("plain, seeking shots strike walkers through faint trail", base, 0, 0.0, 0, 1.0),
+            // And the Mind statuses (the gun cards' Mind family,
+            // 2026-11-16, the slime-enemy thread's ask): a fifth of the
+            // walkers blind, a fifth sour, a fifth spinning, a fifth with a
+            // status that ran out a step ago, with panic on, so the stale
+            // half reads its sour or blind senses as it charges or runs and
+            // the calm half as it walks.
+            ("plain, blind, sour and spinning walkers while a cut-off part charges", minds, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4526,6 +4598,20 @@ mod tests {
                 for k in (1..cpu.walkers.len()).step_by(4) {
                     cpu.news[k] = cpu.steps + 1 - 5;
                 }
+            }
+            let minded = s.spin_curl != 0.0;
+            if minded {
+                use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_T};
+                let now = cpu.steps as u32;
+                cpu.mind = (0..cpu.walkers.len())
+                    .map(|k| match k % 5 {
+                        0 => MIND_BLIND << 29 | ((now + 30) & MIND_T),
+                        1 => MIND_SOUR << 29 | ((now + 30) & MIND_T),
+                        2 => MIND_SPIN << 29 | ((now + 30) & MIND_T),
+                        3 => MIND_BLIND << 29 | (now & MIND_T),
+                        _ => 0,
+                    })
+                    .collect();
             }
             let (w, h) = (cpu.w, cpu.h);
             let k = SCALE as f32;
@@ -4730,6 +4816,17 @@ mod tests {
             eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
             assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+            // Mind: the words agree after the frame (the shots' dead keep
+            // theirs, children clear), and the statuses held.
+            if minded {
+                assert!(e.minds, "{name}: sense reads the Mind words");
+                let gw = e.mind_words();
+                let words_off = (0..cpu.walkers.len()).filter(|&k| gw[k] != cpu.mind[k]).count();
+                let living = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).count();
+                let held = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.mind_of(k) != 0).count();
+                eprintln!("squad, {name}: {held} of {living} living walkers with a status after the frame, {words_off} words off");
+                assert!(held * 3 > living && words_off == 0, "{name}: statuses hold (three fifths had one; children are born without) and the words agree");
+            }
             // The spray: the same kills as without it; after the tick some
             // droplets still fly (flung and doomed, the same slots on both)
             // and the rest died where they landed.

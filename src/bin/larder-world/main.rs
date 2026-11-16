@@ -486,6 +486,12 @@ struct Args {
     /// after it. NAME may be a card list instead (`multicast+plain+blast`,
     /// 2026-11-16), for combos over a preset's budget.
     load_at: Option<(f32, String)>,
+    /// `watch=X,Y,R` (look= only, 2026-11-16, the Mind films): each game
+    /// second, the walkers within R world cells of (X, Y) and in the ring
+    /// R to 2R round it (the look's walker count, as `cut=`'s), so a
+    /// film's page can say how a hit's status scattered or held the
+    /// slime there without the picture.
+    watch: Option<(f32, f32, f32)>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, free, pick, fire, and
@@ -2170,6 +2176,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     None => return Err(format!("load=: a card list or one of {}", LOADOUTS.map(|l| l.0).join(", ")).into()),
                 };
                 args.load_at = Some((t.parse::<f32>()?, cards.to_string()));
+            }
+            "watch" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };
+                args.watch = Some((*x, *y, *r));
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second

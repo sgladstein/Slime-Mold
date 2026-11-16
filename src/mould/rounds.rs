@@ -1325,6 +1325,29 @@ mod tests {
         assert!(Card::ALL.iter().all(|c| (c.cost() >= 1 || *c == Card::Thrift) && (1..=3).contains(&c.tier())));
     }
 
+    /// The Mind bullets (2026-11-16, step D): each is a payload that casts
+    /// one status burst at its hit (no kill, no alarm), wide by `Wide` as
+    /// the gas, and counts in the Mind slot; the burst rules carry its
+    /// length and the spin's curl in radians.
+    #[test]
+    fn a_mind_bullet_casts_its_status_and_kills_nothing() {
+        let r = RoundRules::default();
+        for (name, kind) in [("blind", big::MIND_BLIND), ("sour", big::MIND_SOUR), ("spin", big::MIND_SPIN)] {
+            let c = Card::from_name(name).unwrap();
+            assert_eq!((c.kind(), c.word(), slot(c)), (Kind::Payload, name.to_string(), Some(4)));
+            let cast = casts(&parse(&format!("wide+{name}")).unwrap())[0];
+            let b = bursts(&cast, (40.0, 20.0), &r, 2.0, 120.0);
+            assert_eq!(b.len(), 1);
+            assert_eq!((b[0].mind as u32, b[0].kill, b[0].alarm, b[0].at), (kind, false, 0.0, (20.0, 10.0)));
+            assert!((b[0].r - r.mind_r * r.wide).abs() < 1e-4, "{name}: {} wide", b[0].r);
+        }
+        let k = r.burst_rules(120.0);
+        assert_eq!(k.mind_steps, (r.mind_secs * 120.0) as u16);
+        assert!((k.spin_curl - r.spin_curl.to_radians()).abs() < 1e-6);
+        let mut tuned = r;
+        assert!(tuned.set("spin_curl", 50.0) && tuned.spin_curl == 50.0 && !tuned.set("no_such", 1.0));
+    }
+
     #[test]
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
         let r = RoundRules::default();

@@ -5654,6 +5654,73 @@ mod tests {
         BigParams { scale, substeps, walkers: 600 * scale * scale, seed: 3, ..BigParams::today() }
     }
 
+    /// **Mind statuses** (the gun cards' Mind family, 2026-11-16): from one
+    /// warmed dish, every walker stamped. A blind walker keeps its heading
+    /// (it turns only off a wall), where plain ones turn; a spinning one's
+    /// heading is the plain one's plus the curl; sour walkers leave their
+    /// trail, standing on less of it than plain ones 20 steps on; and a
+    /// status runs out after its steps, with nothing allocated before the
+    /// first.
+    #[test]
+    fn mind_statuses_blind_sour_and_spin_the_walkers() {
+        let mut base = BigDish::new(small(1, 1));
+        for _ in 0..60 {
+            base.tick();
+        }
+        assert!(base.mind.is_empty(), "nothing allocated before a status");
+        let n = base.walkers.len();
+        let stamped = |kind: u32, steps: u16| {
+            let mut d = base.clone();
+            d.p.spin_curl = 0.5;
+            let (w, h) = (d.w as f32, d.h as f32);
+            assert_eq!(d.mind(w / 2.0, h / 2.0, w + h, kind, steps), n, "every walker stamped");
+            d
+        };
+        let mut plain = base.clone();
+        plain.tick();
+        // Among the walkers that moved (a blocked walker takes a fresh
+        // heading, Jones's rule, whatever its status).
+        let moved = |d: &BigDish, k: usize| (d.walkers[k].0, d.walkers[k].1) != (base.walkers[k].0, base.walkers[k].1);
+        let share = |d: &BigDish, f: &dyn Fn(usize) -> bool| {
+            let m: Vec<usize> = (0..n).filter(|&k| moved(d, k)).collect();
+            m.iter().filter(|&&k| f(k)).count() as f32 / m.len().max(1) as f32
+        };
+        let mut blind = stamped(MIND_BLIND, 100);
+        blind.tick();
+        let kept = |d: &BigDish| share(d, &|k| d.walkers[k].2 == base.walkers[k].2);
+        eprintln!("headings kept a step by walkers that moved: blind {:.2}, plain {:.2}", kept(&blind), kept(&plain));
+        assert!(kept(&blind) > 0.9 && kept(&plain) < 0.8, "a blind walker walks straight");
+        let mut spin = stamped(MIND_SPIN, 100);
+        spin.tick();
+        // Of those that moved on both dishes, every one curled.
+        let both: Vec<usize> = (0..n).filter(|&k| moved(&spin, k) && moved(&plain, k)).collect();
+        let curled = both.iter().filter(|&&k| spin.walkers[k].2 == plain.walkers[k].2 + 0.5).count();
+        eprintln!("spun walkers curled by 0.5 on the plain turn: {curled} of {}", both.len());
+        assert!(both.len() > 50 && curled == both.len(), "a spinning walker curls");
+        // Sour: a step on, the trail where a walker's front sensor now
+        // points (on the field as it was) is what plain walkers turn toward
+        // and sour ones turn from.
+        let mut sour = stamped(MIND_SOUR, 100);
+        sour.tick();
+        let so = base.p.sensor_offset;
+        let ahead = |d: &BigDish| {
+            let m: Vec<usize> = (0..n).filter(|&k| moved(d, k)).collect();
+            let at = |k: usize| {
+                let (x, y, h) = d.walkers[k];
+                base.cell(x + h.cos() * so, y + h.sin() * so).map_or(0.0, |i| base.trail[i])
+            };
+            m.iter().map(|&k| at(k)).sum::<f32>() / m.len().max(1) as f32
+        };
+        eprintln!("trail ahead a step on: sour {:.3}, plain {:.3}", ahead(&sour), ahead(&plain));
+        assert!(ahead(&sour) < 0.8 * ahead(&plain), "sour walkers turn from the trail");
+        let mut short = stamped(MIND_BLIND, 5);
+        for t in 0..6 {
+            let on = (0..n).filter(|&k| short.mind_of(k) != 0).count();
+            assert_eq!(on, if t < 5 { n } else { 0 }, "step {t}: the status lasts 5 steps");
+            short.tick();
+        }
+    }
+
     /// The scar (habituation): struck again and again at one spot, a mould
     /// that reads its scar below 0 keeps away from it after the alarm has
     /// faded, one that reads it above 0 crowds it, against the same alarm

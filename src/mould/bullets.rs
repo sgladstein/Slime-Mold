@@ -84,6 +84,11 @@ impl Shell {
         }
     }
 
+    /// One of the Mind bullets (Blind, Sour, Spin).
+    pub fn mind(self) -> bool {
+        matches!(self, Shell::Blind | Shell::Sour | Shell::Spin)
+    }
+
     pub fn of(c: Card) -> Option<Shell> {
         Shell::ALL.into_iter().find(|s| s.card() == c)
     }
