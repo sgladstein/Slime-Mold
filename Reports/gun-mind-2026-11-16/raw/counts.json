@@ -75,7 +75,7 @@
   "mind_casts": 0,
   "clip": "quiz-1.mp4",
   "frames": 167,
-  "kb": 1303
+  "kb": 1117
  },
  "spin": {
   "boom_killed": 0,
@@ -153,7 +153,7 @@
   "mind_casts": 11,
   "clip": "quiz-2.mp4",
   "frames": 167,
-  "kb": 1429
+  "kb": 1201
  },
  "sour": {
   "boom_killed": 0,
@@ -231,7 +231,7 @@
   "mind_casts": 4,
   "clip": "quiz-3.mp4",
   "frames": 167,
-  "kb": 2088
+  "kb": 1780
  },
  "blind": {
   "boom_killed": 0,
@@ -309,6 +309,6 @@
   "mind_casts": 5,
   "clip": "quiz-4.mp4",
   "frames": 167,
-  "kb": 1865
+  "kb": 1625
  }
 }

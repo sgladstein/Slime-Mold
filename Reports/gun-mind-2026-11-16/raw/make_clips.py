@@ -55,8 +55,10 @@ for name in QUIZ:
     with tempfile.TemporaryDirectory() as t:
         for i, f in enumerate(frames):
             os.symlink(os.path.join(d, f), os.path.join(t, f"f{i:03d}.png"))
+        # The HUD cropped off (rows 40 to 496 of 600): its gun-card strip
+        # shows the loaded bullet's icon, which would give the key away.
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", "15", "-i", os.path.join(t, "f%03d.png"),
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "22", "-preset", "slow", "-movflags", "+faststart", mp4], check=True)
+                        "-vf", "crop=960:456:0:40", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "22", "-preset", "slow", "-movflags", "+faststart", mp4], check=True)
     entry.update(clip=os.path.basename(mp4), frames=len(frames), kb=os.path.getsize(mp4) // 1024)
     out[name] = entry
 print(json.dumps(out, indent=1))

@@ -8,6 +8,7 @@ sources:
   - Reports/gun-budget-2026-11-14.md
   - Reports/gun-feel-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
+  - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
@@ -22,17 +23,21 @@ sources:
   - Reports/spray-share-ab-2026-11-15/README.md
 code:
   - Ammo::roll
+  - BigDish::mind
   - Burst::push
+  - Engine::mind_pass
   - Engine::snap
   - Game::catches
   - Game::release
   - Game::steer
   - Gun::roll
+  - RoundRules::burst_rules
   - Rounds::flush
   - Run::range
   - Set::shape
   - Squad::gun
   - World::bursts
+  - mind_reads
   - muzzle_flash
   - shells_at
   - spray_one
@@ -129,6 +134,21 @@ that is far past its target), turning only a bullet with no walker on its
 line, and flying over the slime to a mini-boss or crystal feeders
 ([seek](../../Reports/gun-seek-2026-11-16/README.md)).
 
+**Mind bullets** (2026-11-16, step D, the first bullet family): Blind,
+Sour and Spin kill nothing; every walker within `mind_r` (8 dish cells) of
+the hit takes a status for `mind_secs` (6 s), one word a walker on both
+engines (`BigDish::mind`, `Engine::mind_pass`). A blind walker's readings
+are 0 and it takes only the plain rule, so it walks straight on and turns
+only off a wall; a sour one's are flipped (`mind_reads`), so it turns from
+trail and food; a spinning one curls `spin_curl` (35 degrees) a step after
+its turn. Scared, raiding and lump walkers take them too. They cost 2, are
+sold from planet 2, take their set's shape, and have their own tab in the
+armory. On a thin vein, 10 s each, every status cut the walkers within 8
+cells from 19 to 11-12 while it lasted, and sour halved the ring round it
+too. The owner has the four clips as a blind quiz. Spin as a harder turn
+and Lace (sensing reach x 0.15 or 2.5) showed nothing and were dropped
+([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -170,8 +190,9 @@ card text) and 08:30 (the guns a draw of the game).
   multicast and the GPU read-back batching are built. Step C: seek is
   homing in the shot trace (hits up from 80% to 89% on thin slime, kills
   +3%); aim cards wait (squads on their own hold the defend stance, so an
-  aim card changes only which nearby slime they pick). Then step D: bullet
-  families, mind first.
+  aim card changes only which nearby slime they pick). Step D's first
+  family, Mind (blind, sour, spin), is built and its blind quiz is with the
+  owner; next readers and marks, then route, element, force; cut last.
 - Pull stops short but adds no kills where squads on their own fight (the
   slime they shoot is already near). Corral finds turrets only, not a
   marked spot or other buildings.
@@ -180,4 +201,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md).
