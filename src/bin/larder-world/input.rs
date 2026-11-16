@@ -261,6 +261,7 @@ impl App {
         let Some(g) = self.game.as_mut() else { return };
         let Some(bd) = g.buildings.get(b).copied().filter(|bd| bd.alive) else { return };
         let what = match bd.kind {
+            Kind::Wall { .. } if bd.door => "door",
             Kind::Wall { .. } => "wall",
             k => k.name(),
         };
@@ -280,8 +281,13 @@ impl App {
                 }
             }
             UPGRADE => {
+                // A door cut into a wall thickens with its wall.
+                let b = if matches!(bd.kind, Kind::Wall { .. }) { g.wall_of(b) } else { b };
                 if g.apply(Cmd::Upgrade(b)) {
-                    if bd.kind == Kind::Turret {
+                    if matches!(bd.kind, Kind::Wall { .. }) {
+                        let cells = g.rules.wall_width * f32::from(g.buildings[b].level);
+                        self.hud.alert(&format!("Wall thickened to {cells:.0} cells"), Some(bd.at), theme::GOOD);
+                    } else if bd.kind == Kind::Turret {
                         let f = g.rules.build.render_food;
                         self.hud.alert(&format!("Turret renders: slime killed in its range pays {f:.2} food a walker"), Some(bd.at), theme::GOOD);
                     } else {
@@ -524,6 +530,18 @@ impl App {
                     self.use_tool(tool);
                 }
                 HudEvent::Line { id: T_CORD, from, to } => self.use_tool(Tool::Cord(from, to)),
+                HudEvent::Line { id: DOOR, from, to } => {
+                    if let Some(g) = self.game.as_mut() {
+                        let (a, b, host) = g.door_line(from, to);
+                        let price = g.wall_price(a, b);
+                        if !g.apply(Cmd::Door(from, to)) {
+                            let why = if g.bank < price { format!("A door that long costs {price:.0} food") } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) { format!("Can't build a door there: {why}") } else { "Can't build a door there".to_string() };
+                            self.hud.alert(&why, None, theme::WARN);
+                        } else if host.is_none() || !g.buildings.last().is_some_and(|d| d.up()) {
+                            self.builders(&sel);
+                        }
+                    }
+                }
                 HudEvent::Line { id: WALL, from, to } => {
                     if let Some(g) = self.game.as_mut() {
                         let price = g.wall_price(from, to);

@@ -79,6 +79,11 @@ pub trait World {
     fn clear(&self, x: f32, y: f32) -> bool {
         self.open(x, y)
     }
+    /// Cell `i` (row by row) is a built wall's, standing or worn to rubble
+    /// (`BigDish::wall`), not rock: what a door's footprint marks
+    /// (`Game::mark_doors`). No default, so a world that wraps another
+    /// can't forget to pass it on and leave its doors shut.
+    fn wall_cell(&self, i: usize) -> bool;
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
     /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
@@ -252,6 +257,10 @@ impl World for BigDish {
 
     fn clear(&self, x: f32, y: f32) -> bool {
         self.cell_at(x, y).is_some_and(|i| self.agar[i])
+    }
+
+    fn wall_cell(&self, i: usize) -> bool {
+        self.wall.get(i).copied().unwrap_or(false)
     }
 
     fn stop_births(&mut self) {

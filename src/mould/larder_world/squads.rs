@@ -664,7 +664,7 @@ impl<W: World> Game<W> {
             }
             // A dest in rock or a wall (a right click on one) is the nearest
             // ground, or the anchor would wait at the rock's edge for good.
-            if let Some(d) = self.squads[q].dest.filter(|&d| !self.world.open(d.0, d.1)) {
+            if let Some(d) = self.squads[q].dest.filter(|&d| !self.ground(d.0, d.1)) {
                 self.squads[q].dest = Some(self.nearest_standable(d, GOAL_SEARCH * sc).unwrap_or(mid));
             }
             let sq = self.squads[q];
@@ -672,7 +672,7 @@ impl<W: World> Game<W> {
             let at = if self.solid_at(at).is_some() { self.rim(at, mid) } else { at };
             // An anchor off the ground (an old save, rock grown round it)
             // comes back to the nearest ground, or to the middle.
-            let at = if self.world.open(at.0, at.1) { at } else { self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid) };
+            let at = if self.ground(at.0, at.1) { at } else { self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid) };
             // Waits for the squad once it is the lead ahead of its middle,
             // but never to come back toward it: a squad pressed against
             // rock and steered away goes (before the bug sweep, 2026-11-14,

@@ -200,9 +200,10 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // eat in (owner, 2026-11-16 06:06Z: "slime should not be able to go
     // over walls but they should be able to slowly eat through"). Prints,
     // each game second, the ring's fine cells still wall, walkers inside,
-    // soldiers alive.
-    if hand == "pen" {
-        return pen_hand(g);
+    // soldiers alive. `door`: the same ring, with a door cut in it that
+    // the squad sorties through, then thickened (`pen_hand`).
+    if hand == "pen" || hand == "door" {
+        return pen_hand(g, hand == "door");
     }
     // `wallq` (2026-11-16, the wall-sides thread's clips; run it with
     // `mode=squads`): eight soldiers walk 16 cells from where they land,
@@ -701,8 +702,18 @@ const PEN_AT: f32 = 0.3;
 const PEN_T: f32 = 12.0;
 const PEN_R: f32 = 12.0;
 const PEN_SIDES: usize = 16;
+const DOOR_T: f32 = 15.0;
+const OUT_T: f32 = 18.0;
+const IN_T: f32 = 34.0;
+const THICK_T: f32 = 42.0;
 
-fn pen_hand(g: &mut Game<GpuWorld>) {
+/// The walls thread's film (2026-11-16): ten soldiers walk out and a ring
+/// of 16 walls stands round them at `PEN_T`. With `door` (`hand=door`),
+/// every segment's home side is the inside, a door is cut in the segment
+/// facing the core (`DOOR_T`), the squad goes out through it (`OUT_T`) and
+/// back (`IN_T`), and the door's segment and two either side are
+/// thickened twice (`THICK_T`, to three bands).
+fn pen_hand(g: &mut Game<GpuWorld>, door: bool) {
     let t = g.time();
     while t < 1.0 && g.soldiers.len() < 10 && g.bank >= g.rules.soldier_cost {
         g.apply(Cmd::Buy);
@@ -733,16 +744,91 @@ fn pen_hand(g: &mut Game<GpuWorld>) {
                 println!("  pen: wall {q} refused: {:?}", g.build_blocked(Kind::Wall { to: b }, a));
             }
         }
+        if door {
+            for b in g.buildings.iter_mut() {
+                if let Kind::Wall { to } = b.kind {
+                    let mid = ((b.at.0 + to.0) / 2.0, (b.at.1 + to.1) / 2.0);
+                    let (dx, dy) = (m.0 - mid.0, m.1 - mid.1);
+                    let l = dx.hypot(dy).max(1e-3);
+                    b.home = (dx / l, dy / l);
+                }
+            }
+        }
         g.apply(Cmd::SquadOrder(0, Order::Move(m.0, m.1)));
         PEN.with(|p| p.set(Some(m)));
     }
     let Some(m) = PEN.with(|p| p.get()) else { return };
+    let rr = r + half;
+    // The segments by how squarely they face the core, nearest first.
+    let facing = |g: &Game<GpuWorld>| {
+        let mut v: Vec<(usize, f32)> = (0..g.buildings.len())
+            .filter_map(|b| match g.buildings[b].kind {
+                Kind::Wall { to } if !g.buildings[b].door => {
+                    let at = g.buildings[b].at;
+                    let mid = ((at.0 + to.0) / 2.0 - m.0, (at.1 + to.1) / 2.0 - m.1);
+                    Some((b, -(mid.0 * u.0 + mid.1 * u.1) / mid.0.hypot(mid.1).max(1e-3)))
+                }
+                _ => None,
+            })
+            .collect();
+        v.sort_by(|a, b| a.1.total_cmp(&b.1));
+        v.into_iter().map(|(b, _)| b).collect::<Vec<usize>>()
+    };
+    // Where a sortie through segment `b` goes: 10 cells out from its middle.
+    let sortie = |g: &Game<GpuWorld>, b: usize| {
+        let Kind::Wall { to } = g.buildings[b].kind else { unreachable!() };
+        let at = g.buildings[b].at;
+        let (mid, n) = (((at.0 + to.0) / 2.0, (at.1 + to.1) / 2.0), g.buildings[b].home);
+        (mid.0 - n.0 * 10.0 * sc, mid.1 - n.1 * 10.0 * sc)
+    };
+    // The door goes in the segment most squarely facing the core with
+    // ground on both sides (on planet 1 seed 7 the ring stands half in a
+    // lake, and a door onto deep water leads nowhere).
+    if door && t > DOOR_T && !g.buildings.iter().any(|b| b.door) {
+        let pick = facing(g).into_iter().find(|&b| {
+            let o = sortie(g, b);
+            let n = g.buildings[b].home;
+            let Kind::Wall { to } = g.buildings[b].kind else { return false };
+            let at = g.buildings[b].at;
+            let mid = ((at.0 + to.0) / 2.0, (at.1 + to.1) / 2.0);
+            let (near_out, near_in) = ((mid.0 - n.0 * 4.0 * sc, mid.1 - n.1 * 4.0 * sc), (mid.0 + n.0 * 4.0 * sc, mid.1 + n.1 * 4.0 * sc));
+            g.standable(o.0, o.1) && g.standable(near_out.0, near_out.1) && g.standable(near_in.0, near_in.1)
+        });
+        if let Some(b) = pick {
+            let Kind::Wall { to } = g.buildings[b].kind else { unreachable!() };
+            let at = g.buildings[b].at;
+            let p = |f: f32| (at.0 + (to.0 - at.0) * f, at.1 + (to.1 - at.1) * f);
+            let ok = g.apply(Cmd::Door(p(0.15), p(0.85)));
+            println!("  door t {t:.1}: door cut in wall {b}: {ok}");
+            DOOR_IN.with(|d| d.set(Some(b)));
+        }
+    }
+    if door && (OUT_T..OUT_T + 1.0).contains(&t) {
+        if let Some(b) = DOOR_IN.with(|d| d.get()) {
+            let o = sortie(g, b);
+            g.apply(Cmd::SquadOrder(0, Order::Move(o.0, o.1)));
+        }
+    }
+    if door && (IN_T..IN_T + 1.0).contains(&t) {
+        g.apply(Cmd::SquadOrder(0, Order::Move(m.0, m.1)));
+    }
+    if door && t > THICK_T && g.buildings.iter().all(|b| b.level < 3) {
+        // The door's wall and the four beside it, each side.
+        let Some(d) = DOOR_IN.with(|d| d.get()) else { return };
+        let near: Vec<usize> = (0..PEN_SIDES).filter(|&q| (q as i32 - d as i32).rem_euclid(PEN_SIDES as i32) <= 2 || (d as i32 - q as i32).rem_euclid(PEN_SIDES as i32) <= 2).collect();
+        for b in near {
+            let ok = g.apply(Cmd::Upgrade(b)) && g.apply(Cmd::Upgrade(b));
+            println!("  door t {t:.1}: wall {b} thickened to level {}: {ok}", g.buildings[b].level);
+        }
+    }
     let (w, h) = g.world.size();
     let open = g.world.open_cells();
     let ring = |i: usize| {
         let (x, y) = ((i % w) as f32 + 0.5 - m.0, (i / w) as f32 + 0.5 - m.1);
         let rad = x.hypot(y);
-        rad > r - sc && rad < r + 2.0 * half + 2.0 * sc
+        // With `door` the thickened bands too, inside the ring.
+        let inner = if door { r - sc - 2.0 * g.rules.wall_width * sc } else { r - sc };
+        rad > inner && rad < r + 2.0 * half + 2.0 * sc
     };
     let wall = (0..w * h).filter(|&i| ring(i) && !open[i]).count();
     let bin = 4;
@@ -754,9 +840,11 @@ fn pen_hand(g: &mut Game<GpuWorld>) {
         }).map(|(_, &n)| n as usize).sum()
     });
     let _ = h;
-    println!("  pen t {t:.0}: wall cells {wall}, walkers inside {inside}, soldiers {}", g.alive());
+    let out = g.soldiers.iter().filter(|s| s.alive && (s.x - m.0).hypot(s.y - m.1) > rr + half).count();
+    println!("  pen t {t:.0}: wall cells {wall}, walkers inside {inside}, soldiers {}, outside {out}", g.alive());
 }
 
 thread_local! {
     static PEN: std::cell::Cell<Option<(f32, f32)>> = const { std::cell::Cell::new(None) };
+    static DOOR_IN: std::cell::Cell<Option<usize>> = const { std::cell::Cell::new(None) };
 }

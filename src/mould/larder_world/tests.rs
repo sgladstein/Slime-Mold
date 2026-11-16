@@ -787,6 +787,9 @@ impl World for Later {
     fn open(&self, x: f32, y: f32) -> bool {
         World::open(&self.d, x, y)
     }
+    fn wall_cell(&self, i: usize) -> bool {
+        World::wall_cell(&self.d, i)
+    }
     fn stop_births(&mut self) {
         World::stop_births(&mut self.d)
     }
@@ -1115,7 +1118,7 @@ fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
     let mut g = small(1);
     hold(&mut g);
     let at = (g.soldiers[0].x, g.soldiers[0].y);
-    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0) });
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false });
     assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
     // Worn down, it no longer is.
     g.buildings[0].alive = false;

@@ -220,7 +220,7 @@ impl<W: World> Game<W> {
     fn want(&mut self, k: usize) -> Option<(f32, f32)> {
         let s = self.soldiers[k];
         let sc = self.s();
-        if self.solid_at((s.x, s.y)).is_some() || !self.world.open(s.x, s.y) {
+        if self.solid_at((s.x, s.y)).is_some() || !self.ground(s.x, s.y) {
             return None;
         }
         let max = self.rules.speed * sc * self.wade(k);

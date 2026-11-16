@@ -34,11 +34,21 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
 <main>
 <header style="display:grid;gap:8px">
   <h1>Walls, doors and thickness</h1>
-  <p class="lede">Larder World, squad mode, planet 1 (seed 7), the default slime. The owner asked how soldiers should get through their own walls, whether walls should come thicker, and that slime never go over a wall but slowly eat through it with the real simulation. What the game does today, filmed, then the choices.</p>
+  <p class="lede">Larder World, squad mode, planet 1 (seed 7), the default slime. The owner asked how soldiers should get through their own walls, whether walls should come thicker, and that slime never go over a wall but slowly eat through it with the real simulation. You picked doors and Thicken; both are built and filmed first below, then what the game did before, and the choices as they were put.</p>
 </header>
 
 <section>
-  <h2>What the game does today</h2>
+  <h2>Built: doors and Thicken</h2>
+  <video src="door.mp4" poster="door-046.png" controls muted loop playsinline preload="metadata"></video>
+  <p class="cap">Ten soldiers in a ring of wall 2 cells thick. At 0:16 a door is cut in the ring (the timber grate); at 0:18 the squad is ordered out and walks through it (6 of 9 outside by 0:20, all 9 by 0:22), at 0:34 back in (all in by 0:38). At 0:43 the door's stretch of ring and two segments each side are thickened twice, 2 to 6 cells, on the inside; the door thickens with its wall. The slime then surrounds the ring and eats at it: by 2:49, 192 of its 1000 wall cells, and no walker inside. Frames every 2 game seconds, shown 8 times faster; counts from the simulation above each frame.</p>
+  <ul>
+    <li><b>Door</b> (build page, G): draw it like a wall. Along a standing wall it snaps on, takes the wall's thickness and is cut at once; across a gap builders raise it. It costs as a wall that long. Soldiers walk through it; to the slime it is wall, bitten at a wall's pace, and shots stop at it.</li>
+    <li><b>Thicken</b> (click a wall, U on its card): one more band of the wall's width on your side, at once, for the wall's first price: 2, 4, 6, then 8 cells. Soldiers standing where it grows step back first. A door in the wall thickens with it.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>What the game did before (06:30Z)</h2>
   <ul>
     <li><b>Slime cannot cross a standing wall.</b> A wall cell is not ground to the slime's walkers, and a walker's longest step (2 fine cells in a lunge) is shorter than the thinnest wall (4 fine cells). In every run below no walker got inside the ring until the ring was eaten through.</li>
     <li><b>It already eats walls in the real simulation.</b> Each time a walker bumps a wall cell it takes 1 from that cell's 400 health; at 0 the cell turns to rubble, which is ground. There is no timer; more slime pressing means faster eating.</li>
@@ -69,7 +79,7 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
   <h2>Choice 1: how soldiers get through their own walls</h2>
   <div class="opts">
     <div class="opt">
-      <span class="tag">Recommended</span>
+      <span class="tag">Picked, built</span>
       <h3>A. Doors</h3>
       <svg viewBox="0 0 200 120" role="img" aria-label="A wall with a door: soldiers walk through it, slime is stopped">
         <rect x="0" y="0" width="200" height="120" style="fill:var(--card)"/>
@@ -114,7 +124,7 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
   <h2>Choice 2: thicker walls</h2>
   <div class="opts">
     <div class="opt">
-      <span class="tag">Recommended</span>
+      <span class="tag">Picked, built</span>
       <h3>Upgrade a standing wall</h3>
       <p>Click a wall, then Thicken on its card (like pump upgrades): 2 to 4 to 6 to 8 cells, each level adding cells on your side and costing the wall's first price. You thicken where the slime is chewing, while it chews.</p>
     </div>
