@@ -1,0 +1,86 @@
+  boss t 85.00 s: a leech formed round 310,85, grade 0.38
+  boss t 86 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.07, stolen 0.0; nearest soldier 216.4, 8 alive
+  boss t 87 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.02, stolen 0.0; nearest soldier 217.2, 8 alive
+  boss t 88 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.06, stolen 0.0; nearest soldier 218.0, 8 alive
+  boss t 89 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.02, stolen 0.0; nearest soldier 218.3, 8 alive
+  boss t 90 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,76, spread 1.04, stolen 0.0; nearest soldier 219.1, 8 alive
+  boss t 91 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 308,76, spread 1.09, stolen 0.0; nearest soldier 220.0, 8 alive
+  boss t 92 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 312,80, spread 1.38, stolen 0.0; nearest soldier 215.0, 8 alive
+  boss t 93 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 314,86, spread 1.41, stolen 0.0; nearest soldier 208.0, 8 alive
+  boss t 94 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,98, spread 1.33, stolen 0.0; nearest soldier 197.3, 8 alive
+  boss t 95 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,110, spread 1.24, stolen 0.0; nearest soldier 187.7, 8 alive
+  boss t 96 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,122, spread 1.14, stolen 0.0; nearest soldier 178.3, 8 alive
+  boss t 97 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 318,130, spread 1.22, stolen 0.0; nearest soldier 171.0, 8 alive
+  boss t 98 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 322,134, spread 1.20, stolen 0.0; nearest soldier 164.6, 8 alive
+  boss t 99 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 328,140, spread 1.25, stolen 0.0; nearest soldier 157.5, 8 alive
+  boss t 100 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 334,148, spread 1.39, stolen 0.0; nearest soldier 147.5, 8 alive
+  boss t 101 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 340,158, spread 1.33, stolen 0.0; nearest soldier 135.4, 8 alive
+  boss t 102 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 346,170, spread 1.26, stolen 0.0; nearest soldier 122.5, 8 alive
+  boss t 103 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 346,178, spread 1.29, stolen 0.0; nearest soldier 116.9, 8 alive
+  boss t 104 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 344,190, spread 1.26, stolen 0.0; nearest soldier 109.9, 8 alive
+  boss t 105 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 348,202, spread 1.29, stolen 0.0; nearest soldier 100.5, 8 alive
+  boss t 106 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 350,212, spread 1.28, stolen 0.0; nearest soldier 93.6, 8 alive
+  boss t 107 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 352,222, spread 1.13, stolen 0.0; nearest soldier 86.8, 8 alive
+  boss t 108 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 352,226, spread 1.22, stolen 0.0; nearest soldier 84.7, 8 alive
+  boss t 109 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,230, spread 1.24, stolen 0.0; nearest soldier 82.2, 8 alive
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  boss t 112 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 356,240, spread 1.29, stolen 0.0; nearest soldier 76.9, 8 alive
+  boss t 113 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 356,244, spread 1.29, stolen 0.0; nearest soldier 76.1, 8 alive
+  boss t 114 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 358,246, spread 1.27, stolen 0.0; nearest soldier 73.7, 8 alive
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+  boss t 116 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.16, stolen 5.1; nearest soldier 73.1, 8 alive
+  boss t 117 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.17, stolen 10.3; nearest soldier 72.9, 8 alive
+  boss t 118 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.13, stolen 15.4; nearest soldier 71.8, 8 alive
+  boss t 119 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.11, stolen 20.6; nearest soldier 72.7, 8 alive
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.08, stolen 25.7; nearest soldier 72.6, 8 alive
+  boss t 121 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.11, stolen 30.8; nearest soldier 71.6, 8 alive
+  boss t 122 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.00, stolen 36.0; nearest soldier 71.4, 8 alive
+  boss t 123 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.02, stolen 41.1; nearest soldier 71.4, 8 alive
+  boss t 124 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.09, stolen 46.3; nearest soldier 71.4, 8 alive
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.11, stolen 51.4; nearest soldier 71.4, 8 alive
+  boss t 126 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.07, stolen 56.5; nearest soldier 71.4, 8 alive
+  boss t 127 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.07, stolen 61.7; nearest soldier 71.4, 8 alive
+  boss t 128 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.01, stolen 66.8; nearest soldier 71.3, 8 alive
+  boss t 129 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 72.0; nearest soldier 71.3, 8 alive
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 77.1; nearest soldier 71.3, 8 alive
+  boss t 131 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 82.2; nearest soldier 71.3, 8 alive
+  boss t 132 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 87.4; nearest soldier 71.3, 8 alive
+  boss t 133 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 92.5; nearest soldier 71.3, 8 alive
+  boss t 134 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.09, stolen 97.7; nearest soldier 71.3, 8 alive
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 102.8; nearest soldier 71.3, 8 alive
+  boss t 136 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 107.9; nearest soldier 71.3, 8 alive
+  boss t 137 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 113.1; nearest soldier 71.3, 8 alive
+  boss t 138 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 118.2; nearest soldier 71.3, 8 alive
+  boss t 139 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 123.4; nearest soldier 71.3, 8 alive
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 128.5; nearest soldier 71.3, 8 alive
+  boss t 141 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.02, stolen 133.6; nearest soldier 71.3, 8 alive
+  boss t 142 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 138.8; nearest soldier 71.3, 8 alive
+  boss t 143 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.09, stolen 143.9; nearest soldier 71.3, 8 alive
+  boss t 144 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 149.1; nearest soldier 71.3, 8 alive
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.14, stolen 154.2; nearest soldier 71.3, 8 alive
+  boss t 146 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 159.3; nearest soldier 71.3, 8 alive
+  boss t 147 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 164.5; nearest soldier 71.3, 8 alive
+  boss t 148 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 169.6; nearest soldier 71.3, 8 alive
+  boss t 149 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 174.8; nearest soldier 71.3, 8 alive
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 179.9; nearest soldier 71.3, 8 alive
+  boss t 151 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 185.0; nearest soldier 71.3, 8 alive
+  boss t 152 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 190.2; nearest soldier 71.3, 8 alive
+  boss t 153 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 195.3; nearest soldier 71.3, 8 alive
+  boss t 154 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.02, stolen 200.5; nearest soldier 71.3, 8 alive
+  boss t 155 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 205.6; nearest soldier 71.3, 8 alive
+  boss t 156 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 210.7; nearest soldier 71.3, 8 alive
+  boss t 157 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 215.9; nearest soldier 71.3, 8 alive
+  boss t 158 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 221.0; nearest soldier 71.3, 8 alive
+  boss t 159 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 226.2; nearest soldier 71.3, 8 alive
+  boss t 160 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 231.3; nearest soldier 71.3, 8 alive
+  boss t 161 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 236.4; nearest soldier 71.3, 8 alive
+  boss t 162 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 241.6; nearest soldier 71.3, 8 alive
+  boss t 163 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.04, stolen 246.7; nearest soldier 70.3, 8 alive
+  boss t 164 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.09, stolen 251.9; nearest soldier 70.3, 8 alive
+  boss t 165 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.12, stolen 257.0; nearest soldier 70.3, 8 alive
+  boss t 166 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.06, stolen 262.1; nearest soldier 70.3, 8 alive
+  boss t 167 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.07, stolen 267.3; nearest soldier 70.3, 8 alive
+  boss t 168 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.08, stolen 272.4; nearest soldier 70.3, 8 alive
+  boss t 169 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.11, stolen 277.6; nearest soldier 70.3, 8 alive
+  boss t 170 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.07, stolen 282.7; nearest soldier 70.3, 8 alive

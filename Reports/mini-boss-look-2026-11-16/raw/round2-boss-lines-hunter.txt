@@ -1,0 +1,31 @@
+  boss t 85.00 s: a hunter formed round 310,85, grade 0.38
+  boss t 86 s: lump 0 hunter Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.07, stolen 0.0; nearest soldier 216.4, 8 alive
+  boss t 87 s: lump 0 hunter Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.02, stolen 0.0; nearest soldier 217.2, 8 alive
+  boss t 88 s: lump 0 hunter Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.06, stolen 0.0; nearest soldier 218.0, 8 alive
+  boss t 89 s: lump 0 hunter Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 217.5, 8 alive
+  boss t 90 s: lump 0 hunter Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 218.3, 8 alive
+  boss t 91 s: lump 0 hunter Hunt(Some(6)), 116 members (first 116, 0 hurt), at 308,76, spread 1.12, stolen 0.0; nearest soldier 219.1, 8 alive
+  boss t 92 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 328,84, spread 1.53, stolen 0.0; nearest soldier 202.1, 8 alive
+  boss t 93 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 334,84, spread 1.18, stolen 0.0; nearest soldier 199.0, 8 alive
+  boss t 94 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 338,86, spread 1.29, stolen 0.0; nearest soldier 195.6, 8 alive
+  boss t 95 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 344,88, spread 1.25, stolen 0.0; nearest soldier 191.4, 8 alive
+  boss t 96 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 348,90, spread 1.21, stolen 0.0; nearest soldier 187.8, 8 alive
+  boss t 97 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 356,98, spread 1.56, stolen 0.0; nearest soldier 177.0, 8 alive
+  boss t 98 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 360,100, spread 1.31, stolen 0.0; nearest soldier 173.4, 8 alive
+  boss t 99 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 364,104, spread 1.16, stolen 0.0; nearest soldier 167.6, 8 alive
+  boss t 100 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 368,106, spread 1.11, stolen 0.0; nearest soldier 163.7, 8 alive
+  boss t 101 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 372,112, spread 1.27, stolen 0.0; nearest soldier 157.5, 8 alive
+  boss t 102 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 378,132, spread 1.57, stolen 0.0; nearest soldier 135.9, 8 alive
+  boss t 103 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 384,146, spread 1.17, stolen 0.0; nearest soldier 121.1, 8 alive
+  boss t 104 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 390,158, spread 1.24, stolen 0.0; nearest soldier 107.7, 8 alive
+  boss t 105 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 396,166, spread 1.25, stolen 0.0; nearest soldier 97.5, 8 alive
+  boss t 106 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 400,176, spread 1.31, stolen 0.0; nearest soldier 87.6, 8 alive
+  boss t 107 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 410,200, spread 1.51, stolen 0.0; nearest soldier 61.2, 8 alive
+  boss t 108 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 416,214, spread 1.18, stolen 0.0; nearest soldier 45.1, 8 alive
+  boss t 109 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 0 hurt), at 422,226, spread 1.14, stolen 0.0; nearest soldier 32.1, 8 alive
+  boss t 110 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 63 hurt), at 428,240, spread 1.10, stolen 0.0; nearest soldier 17.8, 8 alive
+  boss t 111 s: lump 0 hunter Hunt(Some(3)), 116 members (first 116, 103 hurt), at 432,252, spread 1.08, stolen 0.0; nearest soldier 4.8, 8 alive
+  boss t 112 s: lump 0 hunter Hunt(Some(4)), 62 members (first 116, 116 hurt), at 434,254, spread 1.58, stolen 0.0; nearest soldier 6.0, 6 alive
+  boss t 113.0 s: Crowd hunter formed on lump 1 at 117,105 (crowd top 1.00); grade 0.63: 11 blows a member, touches as 4, pace x1.25
+  boss t 113 s: lump 1 hunter Gather, 0 members (first 0, 0 hurt), at 117,105, spread 1.08, stolen 0.0; nearest soldier 349.7, 5 alive
+  boss t 113 s: lump 0 hunter ended Broken (7 members of 116; stole 0.0, 0.0 given back so far)

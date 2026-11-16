@@ -102,9 +102,9 @@
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
 //! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
-//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how the
-//! hunter mini-boss's body is drawn (`LumpLook`: plain, ember, violet,
-//! ink; for the look's A/B) and `follow=boss` keeps the near view
+//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how every
+//! mini-boss's body is drawn whatever its kind (`LumpLook`: plain, ember,
+//! violet, ink, bone; for the look's A/B) and `follow=boss` keeps the near view
 //! on the first live mini-boss; `scent=1` opens with the
 //! scent view on (F2 in play: the food scent and the trail the mould smells);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
@@ -176,7 +176,7 @@ use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target, Throw};
-use slime_mould::world::view::LumpLook;
+use slime_mould::world::view::{LumpBody, LumpLook};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -185,9 +185,28 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
-/// The hunter mini-boss's look (`View::set_lumps`; `boss_look=` overrides
-/// it for the look's A/B).
-const HUNTER_LOOK: LumpLook = LumpLook::Violet;
+/// Each mini-boss kind's look (`View::set_lumps`, the `lump_looks` code's
+/// bits 0-2; `boss_look=` overrides every kind for the look's A/B): told
+/// apart by value as well as hue, so they read for colour-blind players and
+/// on every planet. The hunter violet (the hue nothing else on screen
+/// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
+/// sapper ember (an acid red at your walls), the leech ink (dark tar on the
+/// pump rig, its core turning the charge's cyan as it drinks).
+fn kind_look(kind: u16) -> LumpLook {
+    match kind {
+        1 => LumpLook::Violet,
+        2 => LumpLook::Bone,
+        3 => LumpLook::Ember,
+        4 => LumpLook::Ink,
+        _ => LumpLook::Plain,
+    }
+}
+
+/// A leech's take (bank food) at which its core is half the charge's cyan
+/// (`LumpBody::fill`, `take / (take + LEECH_HALF)`): a leech took about
+/// 280 in its first minute on planet 3 (mini-boss round 3), so a full one
+/// reads as two-thirds cyan, never all of it (that is a crystal's).
+const LEECH_HALF: f32 = 150.0;
 mod args;
 mod input;
 mod draw;
@@ -473,8 +492,8 @@ struct Args {
     /// and on the slime (`View::set_alarm_look`; S defaults to G), for
     /// films and A/Bs.
     alarm_look: Option<(f32, f32)>,
-    /// `boss_look=NAME`: the hunter mini-boss's look (`LumpLook`), for the
-    /// look's A/B.
+    /// `boss_look=NAME`: every mini-boss's look (`LumpLook`) whatever its
+    /// kind, for the look's A/B (else `kind_look`).
     boss_look: Option<LumpLook>,
     /// `follow=boss`: the near view follows the first live mini-boss
     /// (its centre; the squad or `centre=` when there is none), for films
@@ -1712,20 +1731,25 @@ impl App {
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
-            // The mini-bosses' bodies (2026-11-16): each live one's lump,
-            // centre, look by its kind and strength by its grade.
+            // The mini-bosses' bodies (2026-11-16): each live or fading
+            // one's lump, centre, look by its kind, strength by its grade,
+            // look left by its fade and a leech's fill by its take.
             let looks = g.lump_looks();
-            let mut lumps = [(0.0, 0.0, LumpLook::Plain, 0.0); slime_mould::world::view::MAX_LUMPS];
-            for b in &g.bosses.live {
+            let mut lumps = [LumpBody::default(); slime_mould::world::view::MAX_LUMPS];
+            for b in g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)) {
                 let code = looks.get(b.lump).copied().unwrap_or(0);
-                let look = match code & 7 {
-                    0 => LumpLook::Plain,
-                    _ => self.args.boss_look.unwrap_or(HUNTER_LOOK),
+                let look = match (code & 7, self.args.boss_look) {
+                    (0, _) => LumpLook::Plain,
+                    (_, Some(l)) => l,
+                    (k, None) => kind_look(k),
                 };
+                // Bit 8 fading, bits 9-15 how far through (0-127).
+                let remain = if code & 1 << 8 != 0 { 1.0 - ((code >> 9) & 127) as f32 / 127.0 } else { 1.0 };
+                let take = if b.kind == slime_mould::mould::larder_world::BossKind::Leech { b.stolen.max(0.0) } else { 0.0 };
                 if let Some(l) = lumps.get_mut(b.lump) {
                     // The grade is bits 4-7 (the word is a u16 since the
                     // fade went in above it, bits 8-15).
-                    *l = (b.centre.0, b.centre.1, look, ((code >> 4) & 15) as f32 / 15.0);
+                    *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF) };
                 }
             }
             v.set_lumps(&lumps);
@@ -1905,7 +1929,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "crater" => args.crater = Some(v.parse()?),
             "scent" => args.scent = v != "0",
             "follow" => args.follow_boss = v == "boss",
-            "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet or ink"))?),
+            "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet, ink or bone"))?),
             "alarm_look" => {
                 let (g, s) = v.split_once(',').unwrap_or((v, v));
                 args.alarm_look = Some((g.parse()?, s.parse()?));

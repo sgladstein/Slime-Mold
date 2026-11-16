@@ -1,0 +1,76 @@
+  boss t 85.00 s: a wanderer formed round 310,85, grade 0.38
+  boss t 86 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.07, stolen 0.0; nearest soldier 216.4, 8 alive
+  boss t 87 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.02, stolen 0.0; nearest soldier 217.2, 8 alive
+  boss t 88 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.06, stolen 0.0; nearest soldier 218.0, 8 alive
+  boss t 89 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 217.5, 8 alive
+  boss t 90 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 218.3, 8 alive
+  boss t 91 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 308,76, spread 1.12, stolen 0.0; nearest soldier 219.1, 8 alive
+  boss t 92 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 316,76, spread 1.24, stolen 0.0; nearest soldier 216.1, 8 alive
+  boss t 93 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 322,76, spread 1.22, stolen 0.0; nearest soldier 211.5, 8 alive
+  boss t 94 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 328,78, spread 1.19, stolen 0.0; nearest soldier 207.5, 8 alive
+  boss t 95 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 332,80, spread 1.26, stolen 0.0; nearest soldier 204.3, 8 alive
+  boss t 96 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 334,80, spread 1.26, stolen 0.0; nearest soldier 201.9, 8 alive
+  boss t 97 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 338,82, spread 1.25, stolen 0.0; nearest soldier 199.6, 8 alive
+  boss t 98 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 340,82, spread 1.15, stolen 0.0; nearest soldier 197.2, 8 alive
+  boss t 99 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 342,84, spread 1.14, stolen 0.0; nearest soldier 195.4, 8 alive
+  boss t 100 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 344,84, spread 1.24, stolen 0.0; nearest soldier 194.0, 8 alive
+  boss t 101 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 346,86, spread 1.28, stolen 0.0; nearest soldier 190.9, 8 alive
+  boss t 102 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 350,88, spread 1.30, stolen 0.0; nearest soldier 187.7, 8 alive
+  boss t 103 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 352,90, spread 1.21, stolen 0.0; nearest soldier 184.6, 8 alive
+  boss t 104 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 356,94, spread 1.26, stolen 0.0; nearest soldier 180.5, 8 alive
+  boss t 105 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 360,96, spread 1.15, stolen 0.0; nearest soldier 176.1, 8 alive
+  boss t 106 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 364,100, spread 1.15, stolen 0.0; nearest soldier 170.8, 8 alive
+  boss t 107 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 368,104, spread 1.18, stolen 0.0; nearest soldier 165.5, 8 alive
+  boss t 108 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 374,108, spread 1.25, stolen 0.0; nearest soldier 159.4, 8 alive
+  boss t 109 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 380,114, spread 1.14, stolen 0.0; nearest soldier 151.6, 8 alive
+  boss t 110 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 386,120, spread 1.10, stolen 0.0; nearest soldier 144.4, 8 alive
+  boss t 111 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 388,122, spread 0.99, stolen 0.0; nearest soldier 142.2, 8 alive
+  boss t 112 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,122, spread 1.00, stolen 0.0; nearest soldier 140.6, 8 alive
+  boss t 113 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.98, stolen 0.0; nearest soldier 139.4, 8 alive
+  boss t 114 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.96, stolen 0.0; nearest soldier 139.4, 8 alive
+  boss t 115 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.92, stolen 0.0; nearest soldier 138.4, 8 alive
+  boss t 116 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,126, spread 0.90, stolen 0.0; nearest soldier 137.5, 8 alive
+  boss t 117 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.89, stolen 0.0; nearest soldier 137.1, 8 alive
+  boss t 118 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.86, stolen 0.0; nearest soldier 137.1, 8 alive
+  boss t 119 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.92, stolen 0.0; nearest soldier 137.1, 8 alive
+  boss t 120 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.88, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 121 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.88, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 122 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 123 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 124 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 125 s: lump 0 wanderer Go((324.0, 210.0)), 116 members (first 116, 0 hurt), at 392,126, spread 0.94, stolen 0.0; nearest soldier 136.8, 8 alive
+  boss t 126 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 382,130, spread 1.13, stolen 0.0; nearest soldier 137.0, 8 alive
+  boss t 127 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 372,136, spread 1.18, stolen 0.0; nearest soldier 135.4, 8 alive
+  boss t 128 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 366,140, spread 1.28, stolen 0.0; nearest soldier 134.5, 8 alive
+  boss t 129 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 360,146, spread 1.36, stolen 0.0; nearest soldier 133.4, 8 alive
+  boss t 130 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 354,150, spread 1.32, stolen 0.0; nearest soldier 132.7, 8 alive
+  boss t 131 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 344,158, spread 1.20, stolen 0.0; nearest soldier 132.8, 8 alive
+  boss t 132 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 340,164, spread 1.09, stolen 0.0; nearest soldier 131.0, 8 alive
+  boss t 133 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 336,170, spread 1.14, stolen 0.0; nearest soldier 129.7, 8 alive
+  boss t 134 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 332,178, spread 1.09, stolen 0.0; nearest soldier 126.8, 8 alive
+  boss t 135 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 330,188, spread 1.16, stolen 0.0; nearest soldier 123.8, 8 alive
+  boss t 136 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 326,196, spread 1.09, stolen 0.0; nearest soldier 122.0, 8 alive
+  boss t 137 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 324,200, spread 0.90, stolen 0.0; nearest soldier 121.3, 8 alive
+  boss t 138 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 324,204, spread 0.86, stolen 0.0; nearest soldier 120.3, 8 alive
+  boss t 139 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,206, spread 0.82, stolen 0.0; nearest soldier 120.3, 8 alive
+  boss t 140 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,208, spread 0.81, stolen 0.0; nearest soldier 119.9, 8 alive
+  boss t 141 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,208, spread 0.78, stolen 0.0; nearest soldier 119.5, 8 alive
+  boss t 142 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 119.1, 8 alive
+  boss t 143 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 119.1, 8 alive
+  boss t 144 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 119.1, 8 alive
+  boss t 145 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 146 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 147 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 148 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 149 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 150 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 151 s: lump 0 wanderer Go((272.5, 275.5)), 233 members (first 116, 0 hurt), at 322,210, spread 0.95, stolen 0.0; nearest soldier 118.7, 8 alive
+  boss t 152 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 320,216, spread 1.10, stolen 0.0; nearest soldier 119.0, 8 alive
+  boss t 153 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 316,222, spread 1.12, stolen 0.0; nearest soldier 120.6, 8 alive
+  boss t 154 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 312,228, spread 1.04, stolen 0.0; nearest soldier 122.8, 8 alive
+  boss t 155 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 308,232, spread 1.08, stolen 0.0; nearest soldier 125.6, 8 alive
+  boss t 156 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 304,234, spread 1.17, stolen 0.0; nearest soldier 127.8, 8 alive
+  boss t 157 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 302,238, spread 1.20, stolen 0.0; nearest soldier 130.0, 8 alive
+  boss t 158 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 298,242, spread 1.18, stolen 0.0; nearest soldier 133.3, 8 alive
+  boss t 159 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 294,248, spread 1.12, stolen 0.0; nearest soldier 136.6, 8 alive
+  boss t 160 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 290,250, spread 1.13, stolen 0.0; nearest soldier 139.3, 8 alive
