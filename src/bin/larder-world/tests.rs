@@ -1432,7 +1432,7 @@ fn a_building_selected_shows_its_card_and_acts() {
 #[test]
 fn blasts_shake_and_hold_only_when_asked() {
     use slime_mould::mould::rounds::{Card, Pop};
-    let pop = |tick: u64| Pop { burst: Default::default(), payload: Card::Bomb, tick, killed: 6, flung: 80 };
+    let pop = |tick: u64| Pop { burst: Default::default(), throw: None, payload: Card::Bomb, tick, killed: 6, flung: 80 };
     let (mut felt, mut trauma, mut stop, mut cool) = (0u64, 0.0f32, 0.0f32, 0.0f32);
     feel(&[pop(10)], &mut felt, &mut trauma, &mut stop, &mut cool, (0.0, 0.0));
     assert_eq!((trauma, stop, felt), (0.0, 0.0, 10), "off by default, but felt");

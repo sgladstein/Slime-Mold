@@ -3087,8 +3087,9 @@ mod tests {
             }
             gpu.world.e.inject(&pre);
             for p in &rc.pops[n0..] {
-                let o = gpu.world.burst(&p.burst, &k);
-                assert_eq!(o.flung as usize, p.flung, "frame {frames}: walkers flung");
+                // A bomb's throw is a burst of its own since 2026-11-16.
+                let flung: u32 = std::iter::once(&p.burst).chain(&p.throw).map(|b| gpu.world.burst(b, &k).flung).sum();
+                assert_eq!(flung as usize, p.flung, "frame {frames}: walkers flung");
             }
             let (life, timer) = gpu.world.e.life_of();
             let d = &cpu.world;

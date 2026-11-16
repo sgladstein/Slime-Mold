@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-14
+updated: 2026-11-16
 sources:
   - Reports/burning-trails-2026-11-14.md
   - Reports/card-text-2026-11-15.md
@@ -10,6 +10,7 @@ sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-shapes-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/no-recharge-2026-11-14.md
@@ -170,6 +171,10 @@ throws 678 against a blast's 334 killed. Every round, blast too, ends the
 rush, idle and farm smoke hands sooner than plain shots on one seed; with
 bombs the rush is wiped at 21 s, a tuning note
 ([report](../../Reports/explosions-2026-11-14/README.md), films page linked there).
+Since 2026-11-16 the bomb throws and the blast holds: the bomb kills 2.5 cells,
+throws the ring out to 10 cells for 0.7 s, away from the gun, and keeps its
+crater 1 s; at C's middle it kills 57 and throws 959 where a blast kills 360
+([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)).
 
 ## Owner's word
 

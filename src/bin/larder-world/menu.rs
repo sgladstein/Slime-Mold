@@ -64,9 +64,10 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
     let c_default = |k: &str| c.iter().find(|(n, _)| *n == k).map(|(_, v)| v.to_string()).unwrap_or_else(|| "0".into());
     let map_now = base.map.clone().unwrap_or_else(|| "noise".into());
     let maps: Vec<&str> = MAPS.iter().copied().chain(["noise"]).collect();
-    // The GPU world casts no germ yet (H skips those loadouts too); gas
-    // came with #211 (`GpuWorld::has_gas`).
-    let loadouts: Vec<&str> = LOADOUTS.iter().filter(|l| !l.1.contains("germ")).map(|l| l.0).collect();
+    // Every loadout: the GPU world has cast the germ since 11-14
+    // (`GpuWorld::has_germ`), and gas since #211. Until 2026-11-16 the
+    // germ's were left out ("the GPU world casts no germ yet").
+    let loadouts: Vec<&str> = LOADOUTS.iter().map(|l| l.0).collect();
     let bullet = Rules::default().bullet_speed;
     let num = |v: f32| format!("{v}");
     let mut o = vec![

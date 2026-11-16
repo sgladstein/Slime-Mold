@@ -341,7 +341,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 30] = [
+const LOADOUTS: [(&str, &str); 35] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -383,6 +383,15 @@ const LOADOUTS: [(&str, &str); 30] = [
     // too"): every soldier sees and shoots half as far again a card.
     ("long", "range+blast"),
     ("sniper", "range+range+pierce"),
+    // Bullet sets' shapes (2026-11-16, the gun-system review's step A):
+    // standard numbers, so only the shape differs from `plain`. A slug
+    // shoves, a needle lances through three hits, buckshot fans four
+    // pellets; and a payload takes its set's shape.
+    ("slug", "ammo/plain/slug/1/100/100/100/100/1"),
+    ("needle", "ammo/plain/needle/1/100/100/100/100/1"),
+    ("buckshot", "ammo/plain/buckshot/1/100/100/100/100/1"),
+    ("needle-blast", "ammo/blast/needle/1/100/100/100/100/3"),
+    ("buck-gas", "ammo/gas/buckshot/1/100/100/100/100/3"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -395,6 +404,11 @@ const RULE_KEY: &str = "set:";
 struct Args {
     /// `mode=squads`: the squad mode (`squadmode`, `Rules::squads`).
     squads: bool,
+    /// `load=T,NAME` (look= only, 2026-11-16, the bullet-shape films):
+    /// at game second T every squad loads the loadout NAME (`Cmd::Load`),
+    /// so films of several loadouts play one game up to T and differ only
+    /// after it.
+    load_at: Option<(f32, usize)>,
     /// `card=A/B/..` (look= only, the command card's films, 2026-11-15):
     /// what the player does before frame N's picture, one step a frame
     /// (`headless::card_step`): main, build, tools, free, pick, fire, and
@@ -1965,6 +1979,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if k == "turret2" {
                     renders.push(turrets.len() - 1);
                 }
+            }
+            "load" => {
+                let (t, name) = v.split_once(',').ok_or("load=T,NAME")?;
+                let i = LOADOUTS.iter().position(|l| l.0 == name).ok_or_else(|| format!("load=: one of {}", LOADOUTS.map(|l| l.0).join(", ")))?;
+                args.load_at = Some((t.parse::<f32>()?, i));
             }
             "boom" => {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second

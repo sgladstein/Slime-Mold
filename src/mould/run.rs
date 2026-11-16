@@ -427,12 +427,14 @@ pub const OFFER: usize = 3;
 pub const AMMO_OFFER: usize = 2;
 
 /// The shells a shop's bullet may carry at `depth`: plain, blast and gas
-/// from the start, the bomb from planet 4 (its old card's rarity), never
-/// the germ (the GPU world casts none yet).
+/// from the start, the bomb and the germ from planet 4 (their old cards'
+/// rarity). The germ was never sold until 2026-11-16 ("the GPU world casts
+/// none yet"), though the GPU world has cast it since 11-14
+/// (`GpuWorld::has_germ`; the gun-system review's step A).
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
     if depth >= power_from(3) {
-        v.push(Shell::Bomb);
+        v.extend([Shell::Bomb, Shell::Germ]);
     }
     v
 }
@@ -453,10 +455,10 @@ pub fn card_price(c: Card) -> u32 {
 }
 
 /// A gun card's power, 1-3: the gun thread's `Card::tier` (common,
-/// uncommon, rare), which depth first offers it and its price. None:
-/// never sold (the germ: the GPU world casts none yet).
+/// uncommon, rare), which depth first offers it and its price. None was
+/// never sold: the germ, until 2026-11-16 (`shells_at`).
 pub fn card_power(c: Card) -> Option<u8> {
-    (c != Card::Germ).then(|| c.tier())
+    Some(c.tier())
 }
 
 /// The first depth whose shop offers a card of this power.
@@ -1397,11 +1399,21 @@ mod tests {
                 r.restock();
                 let ammo: Vec<Ammo> = r.offers.iter().filter_map(|c| if let Card::Ammo(a) = c { Some(*a) } else { None }).collect();
                 assert_eq!(ammo.len(), AMMO_OFFER);
-                assert!(ammo.iter().all(|a| a.shell != Shell::Germ && (d >= 4 || a.shell != Shell::Bomb)), "{ammo:?}");
+                assert!(ammo.iter().all(|a| d >= 4 || !matches!(a.shell, Shell::Bomb | Shell::Germ)), "{ammo:?}");
                 assert!(r.offers.iter().all(|c| matches!(c, Card::Ammo(_)) || c.kind() != Kind::Payload), "the fixed payload cards are no longer sold");
                 assert_eq!(r.offers.len(), AMMO_OFFER + OFFER);
             }
         }
+        // The germ is sold from planet 4, as the bomb is (2026-11-16).
+        let germs = (0..60u64)
+            .filter(|&seed| {
+                let mut r = Run::new(seed);
+                r.depth = 5;
+                r.restock();
+                r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == Shell::Germ))
+            })
+            .count();
+        assert!(germs > 0, "no germ bullet in 60 planet-5 shops");
         // A better roll of the same bullet costs more points.
         let a = Ammo::roll_of(Shell::Blast, Set::Needle, 1, 3);
         let better = (0..200u64).map(|k| Ammo::roll_of(Shell::Blast, Set::Needle, k, 3)).find(|b| b.grade() > a.grade() * 1.2);
