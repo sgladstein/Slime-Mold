@@ -2779,7 +2779,11 @@ impl Engine {
     /// (`squad::Burst::fling_ring`). Switches the life states on. Runs on
     /// its own, between ticks; returns the walkers flung (a read-back).
     #[allow(clippy::too_many_arguments)]
-    pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32) -> u32 {
+    /// With `push` (a heading, radians) every walker in the ring flies
+    /// along it for the whole `steps` (`BigDish::fling`): the row's `kcr`
+    /// holds the heading and `kir` 1.
+    #[allow(clippy::too_many_arguments)]
+    pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) -> u32 {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         // So `measure` reads the marks back.
@@ -2788,7 +2792,8 @@ impl Engine {
         }
         self.write_params(s, Hand::default(), 0);
         // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
-        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, 0.0, steps as f32, 0.0]));
+        let (head, pushed) = push.map_or((0.0, 0.0), |a| (a, 1.0));
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, head, steps as f32, pushed]));
         let before = self.gas_word(3);
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
         self.gas_word(3).wrapping_sub(before)

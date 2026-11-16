@@ -3219,7 +3219,8 @@ fn calm(@builtin(global_invocation_id) gid: vec3<u32>) {
 // max(1, floor(`kcs` x ((`kar`^2 - d^2) x `kalarm`))), where this pass's
 // strike row holds the reciprocal 1 / (`kar`^2 - `kr`^2) in `kalarm` (the
 // host's f32, so both engines multiply the same numbers). Counted in the
-// gas header's word 3.
+// gas header's word 3. A push (`kir` 1, 2026-11-16; `squad::Burst::push`):
+// every one flies along the heading `kcr` for the whole `kcs` steps.
 @compute @workgroup_size(256)
 fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -3233,10 +3234,15 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     let d2 = dx * dx + dy * dy;
     if (d2 <= P.kr * P.kr || d2 > P.kar * P.kar) { return; }
     let steps = u32(P.kcs);
-    let tm = clamp(u32(floor(P.kcs * ((P.kar * P.kar - d2) * P.kalarm))), 1u, max(steps, 1u));
+    var tm = clamp(u32(floor(P.kcs * ((P.kar * P.kar - d2) * P.kalarm))), 1u, max(steps, 1u));
+    var head = atan2(dy, dx);
+    if (P.kir > 0.5) {
+        tm = max(steps, 1u);
+        head = P.kcr;
+    }
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     spec[k] = (w & 0x1FFu) | (L_SPORE << 9u) | FLUNG | (tm << 16u);
-    walkers[k] = vec4<f32>(wk.x, wk.y, atan2(dy, dx), 1.0);
+    walkers[k] = vec4<f32>(wk.x, wk.y, head, 1.0);
     atomicAdd(&news[gas_base() + 3u], 1u);
 }
 

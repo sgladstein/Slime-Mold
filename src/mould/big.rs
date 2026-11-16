@@ -4874,7 +4874,11 @@ impl BigDish {
     /// nearest the kill fly furthest. It lands where its timer runs out
     /// (`life_step`) and lives on there. Squared distances, as the engine's
     /// `fling` pass. Allocates the life states. Returns walkers flung.
-    pub fn fling(&mut self, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32) -> usize {
+    ///
+    /// With `push` (a heading, radians; `squad::Burst::push`, 2026-11-16)
+    /// every one flies along it for the whole `steps`: a push, not a burst.
+    #[allow(clippy::too_many_arguments)]
+    pub fn fling(&mut self, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) -> usize {
         self.enable_life();
         if self.flung.is_empty() {
             self.flung = vec![false; self.walkers.len()];
@@ -4891,9 +4895,11 @@ impl BigDish {
             let i = self.cell(wx, wy).expect("walker inside the dish");
             self.occ[i] -= 1;
             self.life[k] = LIFE_SPORE;
-            self.life_t[k] = fling_timer(steps, rr2 - d2, inv);
+            (self.life_t[k], self.walkers[k].2) = match push {
+                Some(a) => (steps.max(1), a),
+                None => (fling_timer(steps, rr2 - d2, inv), dy.atan2(dx)),
+            };
             self.flung[k] = true;
-            self.walkers[k].2 = dy.atan2(dx);
             n += 1;
         }
         n

@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at;
@@ -23,17 +23,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // `turret=X,Y` and the other kinds: standing from the start (the
     // building films).
     if let Some(g) = app.game.as_mut() {
-        for (i, &(kind, at)) in turrets.iter().enumerate() {
-            let n = g.buildings.len();
-            g.bank += g.build_price(kind, at);
-            if !g.build(kind, at) {
-                return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
-            }
-            let b = &mut g.buildings[n];
-            (b.built, b.hp) = (1.0, b.max_hp);
-            if renders.contains(&i) {
-                b.level = 2;
-            }
+        for (i, &(kind, at, _)) in turrets.iter().enumerate().filter(|(_, b)| b.2 <= 0.0) {
+            stand(g, kind, at, renders.contains(&i))?;
         }
     }
     // `menu=PAGE`: the start menu's page drawn over the round, as the
@@ -194,6 +185,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    // `turret=X,Y,T`: the buildings still to stand, at their seconds.
+    let mut late: Vec<usize> = (0..turrets.len()).filter(|&i| turrets[i].2 > 0.0).collect();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
     for (fi, &t) in at.iter().enumerate() {
         if fi > 0 && scroll != 0 {
@@ -337,6 +330,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
                 println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS[li].0);
             }
+            // `turret=X,Y,T`: standing whole once T has come.
+            if let Some(g) = app.game.as_mut() {
+                let now = g.time();
+                for i in late.iter().copied().filter(|&i| now >= turrets[i].2).collect::<Vec<_>>() {
+                    let (kind, at, _) = turrets[i];
+                    stand(g, kind, at, renders.contains(&i))?;
+                    println!("  {} t {now:.2} s: standing at {},{}", kind.name(), at.0, at.1);
+                    late.retain(|&j| j != i);
+                }
+            }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, &(bt, bx, by)) in booms.iter().enumerate() {
                 let g = app.game.as_mut().unwrap();
@@ -437,7 +440,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let rd = &app.rounds;
         // Squads with their own cards (`load=`) count here too.
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
@@ -771,5 +774,21 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         _ => return Err(format!("card=: no step {step} (main, build, tools, free, pick, fire, upgrade, demolish, switch, cancel)")),
     }
     println!("  card: {step}");
+    Ok(())
+}
+
+/// A building of `kind` standing whole at `at` (fine cells), paid for and
+/// not raised: the `turret=` film keys. `render`: a level-2 turret.
+fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Result<(), String> {
+    let n = g.buildings.len();
+    g.bank += g.build_price(kind, at);
+    if !g.build(kind, at) {
+        return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
+    }
+    let b = &mut g.buildings[n];
+    (b.built, b.hp) = (1.0, b.max_hp);
+    if render {
+        b.level = 2;
+    }
     Ok(())
 }
