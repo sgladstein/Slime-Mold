@@ -194,6 +194,13 @@ no CPU/GPU parity bug in the dense word, params or passes):
   is on (its sums stopped, the last ones stayed), a negative leash is none
   on both engines, and the checked GPU world and the tests' delayed world
   pass the lump calls on.
+- Run again on the fixed code, merged with main, same seed and command
+  ([`raw/round2-fixed-grade0.txt`](raw/round2-fixed-grade0.txt),
+  [`raw/round2-fixed-grade1.txt`](raw/round2-fixed-grade1.txt)): grade 0
+  formed from 221, under fire at 2:12, broke at 2:16 with 59 left, all
+  eight soldiers standing; grade 1 formed from 722, killed all eight by
+  2:21 and lost 7 members (23 before). The page carries these beside the
+  old clips.
 - New tests: how a boss ends (fizzled, broken, spent: no slot keeps its
   bits), a cut-off part through the game's second (grace, then at once,
   then the rest), the same seed gives the same bosses, planet 8's first
