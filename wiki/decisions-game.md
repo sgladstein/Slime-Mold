@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - CLAUDE.md
   - HANDOFF.md
@@ -15,6 +15,7 @@ sources:
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-system-review-2026-11-16/README.md
   - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-playtest-fixes-2026-11-14.md
   - Reports/larder-shot-sink-2026-11-12.md
@@ -48,6 +49,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-16 03:37 | Gun cards (the gun-system review's round-one questions): combos both inside one gun (rule cards such as the trigger and multicast) and across squads (states one card leaves on the slime that other squads' cards read); explosives, mines and grenades become one device slot per squad on a cooldown (the device's own; guns keep no recharge); rare rolls and relics may change a rule for the run; a card that sets what auto squads aim at is explored and kept only if it helps in play; next, a written proposal, then build | "1) It is an interesting idea. If it is actually beneficial in game, then yes. I don't totally see the bigger picture of this yet but i am willing to explore. ... 3) Both. 4) a device slot per squad. Cooldown. 5) Yes. 6) A full written proposal on how to explore all of this. Then decide if you need to dig deeper on an area before building do it otherwise start implementing/prototyping." | [guns](world/guns.md), [report](../Reports/gun-system-review-2026-11-16/README.md) |
 | 2026-11-16 01:48 | Raids stay on whether or not the kill box wins yet, and they stop being regular: each raid draws the time till the next raid and its size from a normal distribution (replacing every 400 food eaten) | "slime should send out raiders regardless if it doesn't make a kill box a winning strategy yet. It shouldn't be so consistent as every 400 food. Both the time between raids and the size of the raid should be picked randomly (each raid) from a normal distribution" | [Larder](world/larder.md), [report](../Reports/raids-2026-11-15/README.md) |
 | 2026-11-15 21:41 | Camera shake and hit-stop (the whole-game review's D6): see them on video first; built off by default (`shake=K`, `hitstop=K`) and filmed | "3. Let me see the video." | [guns](world/guns.md), [gun feel](../Reports/gun-feel-2026-11-15/README.md) |
 | 2026-11-15 21:41 | The whole-game review's decisions. D3: each slime tier gets one thing it does to you as the run deepens (the Drifter eats your drained crystal, the Sprawler cuts supply, the Trunk cords to pumps, the Swarmer's alarm brings the body), built as a test. D5: no payload card in the run's starting gun. D7: the 40-soldier rush gets no brake yet; the owner plays the shape C slime first. D4: the campaign and RTS control are frozen (they keep working, no new features). D10: the outpost leaves the run shop; the lure and siren stay out until they visibly draw the slime. D2: breakaway (roam) on in the run from planet 2. D6 (camera shake, hit-stop) waits on a video | "1. Agreed. We can test it out. 2. No. 3. Let me see the video. 4. Play first. No changes yet. 5-7) agreed" | [run](world/run.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |
