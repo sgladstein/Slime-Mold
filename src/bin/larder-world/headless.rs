@@ -435,8 +435,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         }
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
-        if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed);
+        // Squads with their own cards (`load=`) count here too.
+        if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) {
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames

@@ -342,7 +342,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 35] = [
+const LOADOUTS: [(&str, &str); 43] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -393,6 +393,18 @@ const LOADOUTS: [(&str, &str); 35] = [
     ("buckshot", "ammo/plain/buckshot/1/100/100/100/100/1"),
     ("needle-blast", "ammo/blast/needle/1/100/100/100/100/3"),
     ("buck-gas", "ammo/gas/buckshot/1/100/100/100/100/3"),
+    // Carriers (2026-11-16, step B): a bullet that carries the next cast
+    // and lets it out where it hits (trigger) or where it stops (expire).
+    ("plain-blast", "plain+blast"),
+    ("trigger-blast", "trigger+plain+blast"),
+    ("buck-trigger", "trigger+ammo/plain/buckshot/1/100/100/100/100/1+blast"),
+    ("needle-deep", "expire+ammo/plain/needle/1/100/100/100/100/1+blast"),
+    ("relay", "expire+plain+expire+plain+gas"),
+    ("chain", "trigger+ammo/plain/buckshot/1/100/100/100/100/1+trigger+plain+blast"),
+    // The plan's step-B film: a bomb that carries a gas against the two
+    // fired in turn.
+    ("bomb-gas", "bomb+gas"),
+    ("trigger-bomb-gas", "trigger+bomb+gas"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).

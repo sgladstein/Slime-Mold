@@ -393,6 +393,9 @@ fn the_loadout_panel_lights_the_next_cast_and_dims_dead_cards() {
     // bullet, never lit as a cast and never idle.
     let tail = cards("blast+quiet", Some(0));
     assert_eq!((tail[0].next, tail[1].idle, tail[1].next), (true, true, false));
+    // A carried cast lights with its carrier: one shot fires both.
+    assert_eq!(lit(&cards("trigger+plain+blast+gas", Some(0))), [true, true, true, false]);
+    assert_eq!(lit(&cards("trigger+plain+blast+gas", Some(2))), [false, false, false, true]);
     let lance = cards("pierce+split+blast", Some(0));
     assert_eq!(lance.iter().map(|c| (c.next, c.idle)).collect::<Vec<_>>(), [(false, false), (false, false), (true, false)]);
     // A payload this world cannot cast says so.

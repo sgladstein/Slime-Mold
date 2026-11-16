@@ -124,10 +124,12 @@ impl<W: World> Game<W> {
                         // 18:05Z); a scattergun's fan all carry it.
                         let m = self.mods(q);
                         let n = m.casts;
+                        // The gun's own turn (`BulletMods::cycle`): a cast
+                        // another carries is let out by its carrier.
                         let cast = if n > 0 {
                             let c = s.next % n;
                             self.soldiers[k].next = (c + 1) % n;
-                            c + 1
+                            m.cycle[c as usize]
                         } else {
                             0
                         };
