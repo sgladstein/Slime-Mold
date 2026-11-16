@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - CLAUDE.md
   - HANDOFF.md
@@ -15,11 +15,13 @@ sources:
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-system-review-2026-11-16/README.md
   - Reports/larder-crater-2s-2026-11-14.md
   - Reports/larder-playtest-fixes-2026-11-14.md
   - Reports/larder-shot-sink-2026-11-12.md
   - Reports/larder-wading-2026-11-13.md
   - Reports/larder-world-roadmap-2026-11-11.md
+  - Reports/mini-boss-2026-11-16/README.md
   - Reports/mould-real-world-2026-11-09.md
   - Reports/mould-review-thread-handoff-2026-11-10.md
   - Reports/mould-sound-2026-11-10.md
@@ -31,6 +33,7 @@ sources:
   - Reports/rts-design-2026-11-10.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/shot-damage-2026-11-12.md
+  - Reports/soldier-cap-2026-11-16/README.md
   - Reports/ui-review-2026-11-15/README.md
   - Reports/ui-scale-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -48,6 +51,11 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-16 05:23 | Mini-bosses are much stronger than ordinary slime and vary a lot from one to the next: each draws a grade as it forms that sets the blows each member takes (4 to 15), how hard it bites, its size and pace | "They should be significantly stronger than normal slime too and vary quite a bit in strength from boss to boss" | [run](world/run.md), [report](../Reports/mini-boss-2026-11-16/README.md) |
+| 2026-11-16 05:11 | Gun cards: the slug's shove (step A) gets modifiers, among them one that herds slime onto a chosen area such as a kill zone; built next after the trigger card | "The slug looks fun" (05:10); "There should be ways to modify the pushback. I could image a gun that lets you corral and push the slime onto areas. Into a kill zone" | [guns](world/guns.md), [report](../Reports/gun-triggers-2026-11-16/README.md) |
+| 2026-11-16 05:06, card | The soldier cap goes from 40 to a flat 200 (`Rules::max_squad`), the measured realistic maximum, to test; scaling the cap with planet size may come later, for release; no brake on a growing army with it (D7 stands: play first) | card ("Flat 200, the realistic max"); "Maybe scale later in when releasing but I want to test the max" | [squad mode](world/squad-mode.md), [report](../Reports/soldier-cap-2026-11-16/README.md) |
+| 2026-11-16 04:58 | Mini-bosses, round 1's six questions: prototype every kind on the page; not condensed bronze slime (the break-away specks stay, separate, more often early); a mix of hunters and kinds that stay put; a chance on a visible cause, rising through the run, forming only where the slime crowds or a big part is cut off; a full boss held, but every planet may get an origin at the slime's start crystal you must kill to win; squads shoot mini-bosses first | "1) all of them. 2)I vote opposite. Remove the bronze, keep the specks (specks and mini-boss are separate but both happen. Specks more often early game). 3) mix. 4) both. Chance increases with progression into the run. But they also shouldn't just come out in a random spot. It should spawn where there is crowding or a big part gets cut off. 5) I am ok, holding off but I wasn't referring to a boss planet. I was thinking every planet there is a more boss like entity at the slime start crystal that you need to kill to win. The origin of the slime of the planet. 6) yes" | [run](world/run.md), [report](../Reports/mini-boss-2026-11-16/README.md) |
+| 2026-11-16 03:37 | Gun cards (the gun-system review's round-one questions): combos both inside one gun (rule cards such as the trigger and multicast) and across squads (states one card leaves on the slime that other squads' cards read); explosives, mines and grenades become one device slot per squad on a cooldown (the device's own; guns keep no recharge); rare rolls and relics may change a rule for the run; a card that sets what auto squads aim at is explored and kept only if it helps in play; next, a written proposal, then build | "1) It is an interesting idea. If it is actually beneficial in game, then yes. I don't totally see the bigger picture of this yet but i am willing to explore. ... 3) Both. 4) a device slot per squad. Cooldown. 5) Yes. 6) A full written proposal on how to explore all of this. Then decide if you need to dig deeper on an area before building do it otherwise start implementing/prototyping." | [guns](world/guns.md), [report](../Reports/gun-system-review-2026-11-16/README.md) |
 | 2026-11-16 01:48 | Raids stay on whether or not the kill box wins yet, and they stop being regular: each raid draws the time till the next raid and its size from a normal distribution (replacing every 400 food eaten) | "slime should send out raiders regardless if it doesn't make a kill box a winning strategy yet. It shouldn't be so consistent as every 400 food. Both the time between raids and the size of the raid should be picked randomly (each raid) from a normal distribution" | [Larder](world/larder.md), [report](../Reports/raids-2026-11-15/README.md) |
 | 2026-11-15 21:41 | Camera shake and hit-stop (the whole-game review's D6): see them on video first; built off by default (`shake=K`, `hitstop=K`) and filmed | "3. Let me see the video." | [guns](world/guns.md), [gun feel](../Reports/gun-feel-2026-11-15/README.md) |
 | 2026-11-15 21:41 | The whole-game review's decisions. D3: each slime tier gets one thing it does to you as the run deepens (the Drifter eats your drained crystal, the Sprawler cuts supply, the Trunk cords to pumps, the Swarmer's alarm brings the body), built as a test. D5: no payload card in the run's starting gun. D7: the 40-soldier rush gets no brake yet; the owner plays the shape C slime first. D4: the campaign and RTS control are frozen (they keep working, no new features). D10: the outpost leaves the run shop; the lure and siren stay out until they visibly draw the slime. D2: breakaway (roam) on in the run from planet 2. D6 (camera shake, hit-stop) waits on a video | "1. Agreed. We can test it out. 2. No. 3. Let me see the video. 4. Play first. No changes yet. 5-7) agreed" | [run](world/run.md), [whole-game review](../Reports/whole-game-review-2026-11-15/README.md) |

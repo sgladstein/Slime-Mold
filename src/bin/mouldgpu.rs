@@ -2984,6 +2984,22 @@ mod tests {
             if s.crystal > 0.0 {
                 cpu.build_wall(x - 8.0, y + 7.0, x + 8.0, y + 7.0, 1.0);
             }
+            // A mini-boss (`Lump::armour`, 2026-11-16, the review of the
+            // mini-boss PR): the walkers within 8 dish cells, every third
+            // at its last blow (hurt twice of 3), so the blast kills those,
+            // hurts the rest (no kill counted), and flings members out.
+            let lumped = s.lumps[0].on();
+            let hurt_shift = slime_mould::mould::big::HURT_SHIFT;
+            if lumped {
+                cpu.p.lumps = s.lumps;
+                let c = (x * k) as u32 | ((y * k) as u32) << 16;
+                let m = cpu.form_lump(0, Some((c, (8.0 * k * 8.0 * k) as u32)));
+                assert!(m > 50, "{name}: {m} members");
+                let members: Vec<usize> = (0..cpu.walkers.len()).filter(|&j| cpu.lives(j) && cpu.lump_of(j) == Some(0)).collect();
+                for &j in members.iter().step_by(3) {
+                    cpu.dense[j] |= 2 << hurt_shift;
+                }
+            }
             e.inject(&cpu);
             let (r, rr) = (4.0f32, 10.0f32);
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
@@ -3006,8 +3022,28 @@ mod tests {
             assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
             assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
             assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
+            let kept = slime_mould::mould::big::KEPT;
+            if lumped {
+                let gd = e.dense_of();
+                let words_off = (0..n).filter(|&j| gd[j] & kept != cpu.dense[j] & kept).count();
+                let hurt = (0..n).filter(|&j| cpu.lives(j) && cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();
+                let flying = (0..n).filter(|&j| cpu.flung[j] && cpu.lump_of(j) == Some(0)).count();
+                let struck = e.struck();
+                eprintln!("{name}: {killed} killed on the CPU, {struck} on the GPU; {hurt} members hurt, {flying} flung; {words_off} lump words off");
+                assert!(killed > 0 && killed as u32 == struck && hurt > 0 && flying > 0 && words_off == 0, "{name}: {killed} and {struck} killed, {hurt} hurt, {flying} flung, {words_off} words off");
+            }
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
+                // Let go mid-flight: every slot leaves, the flung too.
+                if lumped && t == 2 {
+                    let flying = (0..n).filter(|&j| cpu.flung[j] && cpu.lump_of(j) == Some(0)).count();
+                    e.form_lump(&shared, 0, None);
+                    cpu.form_lump(0, None);
+                    let gd = e.dense_of();
+                    let (left, left_gpu) = ((0..n).filter(|&j| cpu.dense[j] & kept != 0).count(), (0..n).filter(|&j| gd[j] & kept != 0).count());
+                    eprintln!("{name}: let go with {flying} members in flight; {left} slots keep the lump on the CPU, {left_gpu} on the GPU");
+                    assert!(flying > 0 && left == 0 && left_gpu == 0, "{name}: {flying} in flight, {left} and {left_gpu} slots keep it");
+                }
                 let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
                 let (life, _) = e.life_of();
                 let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
@@ -3030,8 +3066,14 @@ mod tests {
             }
             worst
         };
+        let boss = {
+            let mut s = small(0);
+            s.lumps[0] = slime_mould::mould::big::Lump { armour: 3, ..Default::default() };
+            s
+        };
         let dishes = [
             ("plain (the fling turns the states on)", small(0)),
+            ("a mini-boss: members hurt, die, fly and are let go", boss),
             ("no crowd limit", small(3)),
             ("dormancy and alarm", with(small(0), sleep)),
             ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
@@ -3087,8 +3129,9 @@ mod tests {
             }
             gpu.world.e.inject(&pre);
             for p in &rc.pops[n0..] {
-                let o = gpu.world.burst(&p.burst, &k);
-                assert_eq!(o.flung as usize, p.flung, "frame {frames}: walkers flung");
+                // A bomb's throw is a burst of its own since 2026-11-16.
+                let flung: u32 = std::iter::once(&p.burst).chain(&p.throw).map(|b| gpu.world.burst(b, &k).flung).sum();
+                assert_eq!(flung as usize, p.flung, "frame {frames}: walkers flung");
             }
             let (life, timer) = gpu.world.e.life_of();
             let d = &cpu.world;
@@ -3847,9 +3890,9 @@ mod tests {
                 let b = *living.iter().find(|p| (p.0 - a.0).hypot(p.1 - a.1) > 30.0).expect("walkers apart");
                 let cell = |p: (f32, f32)| p.0 as u32 | (p.1 as u32) << 16;
                 let far = cell(((cpu.w - 2) as f32, (cpu.h / 2) as f32));
-                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5 };
-                s.lumps[1] = Lump { aim: 0, pull: 0.0, leash: 0.8, haste: 0.0 };
-                s.lumps[3] = Lump { aim: far, pull: 0.0, leash: 0.0, haste: 2.0 };
+                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2 };
+                s.lumps[1] = Lump { leash: 0.8, ..Lump::default() };
+                s.lumps[3] = Lump { aim: far, haste: 2.0, ..Lump::default() };
                 cpu.p.lumps = s.lumps;
                 let n0 = cpu.form_lump(0, Some((cell(a), 20 * 20)));
                 let n1 = cpu.form_lump(1, Some((cell(b), 8 * 8)));
@@ -4073,13 +4116,59 @@ mod tests {
         assert_eq!(cpu_out.units.len(), n, "the CPU reads every unit");
         let past: Vec<_> = cpu_out.units[64..].iter().collect();
         eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
-        assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
+        assert_eq!(gpu_out, cpu_out, "every unit's outputs, those past 64 too");
         // A unit aims only at slime it sees (`squad::sees`, 2026-11-13): the
         // six of the spiral that the clamp puts in the world's rock border
         // see nothing, so every unit past 64 on agar aims.
         let on_agar = |u: &UnitIn| cpu.agar[u.y as usize * w + u.x as usize];
         assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().zip(&f.units[64..]).all(|(u, i)| u.target.is_some() || !on_agar(i)), "units past 64 touch, aim and harvest");
         assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
+    }
+
+    /// **Every shot of a full frame** (soldier-cap thread, 2026-11-16, the
+    /// technical lead's ask after #377 raised `SHOTS_MAX` 256 -> 1024): a
+    /// frame of `SHOTS_MAX` shots, each from 6 cells off one of the
+    /// mould's thickest cells toward it, on both engines. Every shot's hit
+    /// and kills match the CPU's, and shots past the old 256 hit and kill,
+    /// so a shader array or buffer still sized for 256 (which would drop
+    /// them or read them from the units) fails here.
+    #[test]
+    fn the_squad_frame_holds_every_shot_on_the_gpu() {
+        use slime_mould::mould::squad::{self, Frame, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..60 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let n = squad::SHOTS_MAX;
+        let mut thick: Vec<usize> = (0..w * h).filter(|&i| cpu.agar[i]).collect();
+        thick.sort_by(|&a, &b| cpu.trail[b].total_cmp(&cpu.trail[a]));
+        thick.truncate(n);
+        let shots: Vec<ShotIn> = (0..n)
+            .map(|i| {
+                let c = thick[i % thick.len()];
+                let to = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let a = i as f32 * 2.4;
+                let from = ((to.0 + 6.0 * a.cos()).clamp(0.5, w as f32 - 0.5), (to.1 + 6.0 * a.sin()).clamp(0.5, h as f32 - 0.5));
+                ShotIn { from, to, r: 1.0 }
+            })
+            .collect();
+        let f = Frame { units: Vec::new(), shots, slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        let cpu_out = squad::frame(&mut cpu, &f, 1);
+        let gpu_out = e.squad_out();
+        assert_eq!(cpu_out.shots.len(), n, "the CPU reads every shot");
+        let past = &cpu_out.shots[256..];
+        let (hit, killed) = (past.iter().filter(|o| o.hit.is_some()).count(), past.iter().filter(|o| o.killed > 0).count());
+        eprintln!("shot cap: {n} shots; past 256, {hit} hit, {killed} killed");
+        assert_eq!(gpu_out, cpu_out, "every shot's hit and kills, those past 256 too");
+        assert!(hit >= 100 && killed >= 10, "shots past 256 hit ({hit}) and kill ({killed})");
     }
 
     /// **Solid crystals on both engines** (`Rules::crystal_solid`, the
@@ -4186,6 +4275,12 @@ mod tests {
         // nonzero and lean and dash differ, so a word read from the wrong
         // offset changes which walkers move how far.
         let surge = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, panic_r: 10.0, ..base.clone() };
+        // And a mini-boss (`Lump::armour`, `Lump::bite`, 2026-11-16, the
+        // mini-boss thread): the walkers round the thickest mould are lump
+        // 0's members (below), some already hurt, so a blow hurts some and
+        // kills others, and a unit's touch counts each as three.
+        let mut boss = base.clone();
+        boss.lumps[0] = slime_mould::mould::big::Lump { armour: 4, bite: 2, ..Default::default() };
         let surge_scared = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, ..scared.clone() };
         // And the game's surge (`surge_at`, food-driven surges, 11-15): set
         // after the warm-up so the frame's first step is the lunge's first
@@ -4231,6 +4326,8 @@ mod tests {
             ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
             ("plain, a raid on a crystal while a cut-off part charges", raid, 0, 0.0, 0, 1.0),
             ("plain, a raid round walls (its walking distance)", raid_walls, 0, 0.0, 0, 1.0),
+            ("plain, a mini-boss's members take four blows and bite as three", boss.clone(), 0, 0.0, 0, 1.0),
+            ("a mini-boss, the spray", boss, 0, 0.0, 3, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4301,6 +4398,20 @@ mod tests {
             let slime = squad::slime_trail(s.knee);
             let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
             let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+            // The mini-boss: every walker within 30 fine cells of the
+            // thickest mould, a third with 3 hits taken (the next kills it),
+            // a third with 2, the rest none.
+            let members: Vec<usize> = if s.lumps[0].on() {
+                cpu.form_lump(0, Some((slime_mould::mould::larder_world::raid_cell(t, (w, h)), 30 * 30)));
+                let m: Vec<usize> = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && cpu.lump_of(q) == Some(0)).collect();
+                for (i, &q) in m.iter().enumerate() {
+                    cpu.dense[q] |= ((3 - (i % 3) as u32) % 3) << slime_mould::mould::big::HURT_SHIFT;
+                }
+                m
+            } else {
+                Vec::new()
+            };
+            let hurt_before: Vec<u32> = cpu.dense.iter().map(|&d| d >> slime_mould::mould::big::HURT_SHIFT).collect();
             let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
             let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
             // Two units on one small patch of crystal 3, asking more than it
@@ -4490,6 +4601,19 @@ mod tests {
                 }
                 assert!(cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d), "a droplet is flung");
                 assert_eq!(flung_off, 0, "{name}: the same droplets fly");
+            }
+            // The mini-boss: the same members hurt and died on both, and the
+            // touch counted their bite.
+            if !members.is_empty() {
+                let gd = e.dense_of();
+                let off = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && gd[q] != cpu.dense[q]).count();
+                let hurt = members.iter().filter(|&&q| cpu.lives(q) && cpu.dense[q] >> slime_mould::mould::big::HURT_SHIFT > hurt_before[q]).count();
+                let died = members.iter().filter(|&&q| !cpu.lives(q)).count();
+                let bites: u32 = squad::bite_cells(&cpu).iter().sum();
+                eprintln!("squad mini-boss, {name}: {} members, {hurt} hurt, {died} died; bite {bites} on the cells; {off} words off", members.len());
+                assert!(hurt > 0 && died > 0, "{name}: blows hurt some members and kill others");
+                assert!(bites > 0, "{name}: members bite");
+                assert_eq!(off, 0, "{name}: the members' words");
             }
             // Condensing: the same walkers broke, and the touch counted them.
             if s.condense > 0 {

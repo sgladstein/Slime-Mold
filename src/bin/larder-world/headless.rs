@@ -12,9 +12,10 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], bosses: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], bosses: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
+    let mut load_at = args.load_at;
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -327,6 +328,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 g.world.e.unblock(&cells);
                 println!("  cut t {:.1} s: the ring opens ({} cells back on the agar)", g.time(), cells.len());
             }
+            // `load=T,NAME`: every squad loads NAME once T has come.
+            if let Some((lt, li)) = load_at.filter(|&(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= lt)) {
+                load_at = None;
+                let g = app.game.as_mut().unwrap();
+                let deck = rounds::Deck::new(&rounds::parse(LOADOUTS[li].1).unwrap_or_default());
+                for q in 0..g.squads.len() {
+                    g.apply(Cmd::Load(q as u8, Some(deck)));
+                }
+                println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS[li].0);
+            }
             // `boom=T,X,Y`: the round set off there once T has come.
             for (j, &(bt, bx, by)) in booms.iter().enumerate() {
                 let g = app.game.as_mut().unwrap();
@@ -371,7 +382,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // Each mini-boss that forms by its rules' chances.
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
-                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2})", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top);
+                    let r = &g.rules.boss;
+                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
                 }
             }
             // Each mini-boss once a game second, and each one that ends
@@ -385,9 +397,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 for b in &g.bosses.live {
                     let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - b.centre.0).hypot(s.y - b.centre.1)).fold(f32::INFINITY, f32::min);
                     let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1).map(|k| (ws[4 * k] - b.centre.0).hypot(ws[4 * k + 1] - b.centre.1)).collect();
+                    let hurt = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1 && dw[k] >> slime_mould::mould::big::HURT_SHIFT > 0).count();
                     let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
                     let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
-                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1);
+                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1, g.alive());
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
                     println!("  boss t {:.0} s: lump {} ended {e:?} ({} members of {})", g.time(), b.lump, b.members, b.first);
@@ -465,8 +478,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         }
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
-        if !rd.round.is_empty() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed);
+        // Squads with their own cards (`load=`) count here too.
+        if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) {
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
@@ -514,6 +528,24 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             app.prepare();
             let _ = app.hud.key(KeyCode::KeyT, true, false, &mut app.camera);
             app.controls.cursor = hover;
+        }
+        // `hand=throw` with `hover=`: a blast being aimed under the cursor
+        // (the Tools page, then B), so the picture shows the throw's
+        // ghost: reach, arc, area (2026-11-16, the throw-aim thread).
+        // `hover=X,Y,X2,Y2` sweeps the cursor from the one to the other over
+        // the frames, so a clip shows the aim leaving the reach.
+        // `hand=throwgas` aims the sleep gas instead (S), for its colour.
+        if hand.starts_with("throw") && hover.is_some() && app.hud.targeting().is_none() {
+            app.tools_page = true;
+            app.prepare();
+            let key = if hand == "throwgas" { KeyCode::KeyS } else { KeyCode::KeyB };
+            let _ = app.hud.key(key, true, false, &mut app.camera);
+        }
+        if let (Some(a), Some(b)) = (hover, hover_to) {
+            let f = if at.len() > 1 { fi as f32 / (at.len() - 1) as f32 } else { 0.0 };
+            let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+            app.hud.moved(Some(p));
+            app.controls.cursor = Some(p);
         }
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in

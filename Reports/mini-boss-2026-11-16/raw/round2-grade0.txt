@@ -1,0 +1,81 @@
+  boss t 91.0 s: Crowd formed on lump 0 at 307,65 (crowd top 1.00); grade 0.00: 4 blows a member, touches as 2, pace x1.00
+  boss t 91 s: lump 0 Gather, 0 members (first 0, 0 hurt), at 307,65, spread 1.01; nearest soldier 229.6, 8 alive
+  boss t 92 s: lump 0 Gather, 219 members (first 219, 0 hurt), at 308,62, spread 1.13; nearest soldier 231.4, 8 alive
+  boss t 93 s: lump 0 Gather, 219 members (first 219, 0 hurt), at 308,60, spread 1.07; nearest soldier 232.6, 8 alive
+  boss t 94 s: lump 0 Gather, 219 members (first 219, 0 hurt), at 308,60, spread 1.08; nearest soldier 233.4, 8 alive
+  boss t 95 s: lump 0 Gather, 218 members (first 219, 0 hurt), at 308,58, spread 1.09; nearest soldier 234.2, 8 alive
+  boss t 96 s: lump 0 Gather, 218 members (first 219, 0 hurt), at 308,58, spread 1.09; nearest soldier 235.1, 8 alive
+  boss t 97 s: lump 0 Hunt(Some(3)), 218 members (first 219, 0 hurt), at 308,56, spread 1.06; nearest soldier 236.5, 8 alive
+  boss t 98 s: lump 0 Hunt(Some(3)), 218 members (first 219, 0 hurt), at 310,58, spread 1.30; nearest soldier 233.2, 8 alive
+  boss t 99 s: lump 0 Hunt(Some(3)), 218 members (first 219, 0 hurt), at 314,62, spread 1.23; nearest soldier 228.5, 8 alive
+  boss t 100 s: lump 0 Hunt(Some(3)), 218 members (first 219, 0 hurt), at 318,64, spread 1.10; nearest soldier 224.4, 8 alive
+  boss t 101 s: lump 0 Hunt(Some(3)), 218 members (first 219, 0 hurt), at 320,66, spread 1.18; nearest soldier 221.1, 8 alive
+  boss t 102 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 324,70, spread 1.25; nearest soldier 215.6, 8 alive
+  boss t 103 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 328,74, spread 1.17; nearest soldier 211.0, 8 alive
+  boss t 104 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 332,76, spread 1.13; nearest soldier 206.9, 8 alive
+  boss t 105 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 334,80, spread 1.11; nearest soldier 202.8, 8 alive
+  boss t 106 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 338,80, spread 1.17; nearest soldier 200.4, 8 alive
+  boss t 107 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 340,82, spread 1.19; nearest soldier 197.7, 8 alive
+  boss t 108 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 342,84, spread 1.15; nearest soldier 195.9, 8 alive
+  boss t 109 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 344,86, spread 1.16; nearest soldier 193.2, 8 alive
+  boss t 110 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 346,86, spread 1.17; nearest soldier 191.3, 8 alive
+  boss t 111 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 348,90, spread 1.25; nearest soldier 187.8, 8 alive
+  boss t 112 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 350,92, spread 1.28; nearest soldier 184.6, 8 alive
+  boss t 113 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 354,94, spread 1.28; nearest soldier 180.5, 8 alive
+  boss t 114 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 358,98, spread 1.25; nearest soldier 175.2, 8 alive
+  boss t 115 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 362,104, spread 1.19; nearest soldier 168.9, 8 alive
+  boss t 116 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 366,106, spread 1.18; nearest soldier 164.5, 8 alive
+  boss t 117 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 368,110, spread 1.20; nearest soldier 160.9, 8 alive
+  boss t 118 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 370,112, spread 1.22; nearest soldier 157.0, 8 alive
+  boss t 119 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 372,118, spread 1.33; nearest soldier 151.6, 8 alive
+  boss t 120 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 376,122, spread 1.31; nearest soldier 145.8, 8 alive
+  boss t 121 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 378,128, spread 1.37; nearest soldier 140.4, 8 alive
+  boss t 122 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 380,136, spread 1.46; nearest soldier 131.9, 8 alive
+  boss t 123 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 386,146, spread 1.33; nearest soldier 120.7, 8 alive
+  boss t 124 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 390,156, spread 1.26; nearest soldier 109.9, 8 alive
+  boss t 125 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 394,164, spread 1.28; nearest soldier 99.7, 8 alive
+  boss t 126 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 398,172, spread 1.25; nearest soldier 91.7, 8 alive
+  t 126 s: mould 18953, soldiers 8, bank 400, harvested 0, rendered 0, shots 378, killed 1425, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 127 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 402,182, spread 1.20; nearest soldier 81.3, 8 alive
+  t 127 s: mould 18972, soldiers 8, bank 400, harvested 0, rendered 0, shots 382, killed 1426, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 128 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 406,192, spread 1.24; nearest soldier 70.1, 8 alive
+  t 128 s: mould 18973, soldiers 8, bank 400, harvested 0, rendered 0, shots 382, killed 1426, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 129 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 410,200, spread 1.13; nearest soldier 60.3, 8 alive
+  t 129 s: mould 18982, soldiers 8, bank 400, harvested 0, rendered 0, shots 382, killed 1426, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 130 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 414,210, spread 1.19; nearest soldier 49.5, 8 alive
+  t 130 s: mould 19016, soldiers 8, bank 400, harvested 0, rendered 0, shots 385, killed 1430, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 131 s: lump 0 Hunt(Some(3)), 217 members (first 219, 0 hurt), at 418,220, spread 1.20; nearest soldier 38.8, 8 alive
+  t 131 s: mould 19031, soldiers 8, bank 400, harvested 0, rendered 0, shots 386, killed 1430, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 132 s: lump 0 Hunt(Some(3)), 217 members (first 219, 109 hurt), at 422,230, spread 1.31; nearest soldier 29.4, 8 alive
+  t 132 s: mould 19061, soldiers 8, bank 400, harvested 0, rendered 0, shots 391, killed 1653, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 133 s: lump 0 Hunt(Some(3)), 217 members (first 219, 113 hurt), at 426,240, spread 1.15; nearest soldier 17.4, 8 alive
+  t 133 s: mould 19073, soldiers 8, bank 400, harvested 0, rendered 0, shots 392, killed 1679, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 134 s: lump 0 Hunt(Some(3)), 143 members (first 219, 159 hurt), at 428,242, spread 1.48; nearest soldier 15.5, 8 alive
+  t 134 s: mould 19009, soldiers 8, bank 400, harvested 0, rendered 0, shots 407, killed 2031, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 135 s: lump 0 ended Broken (60 members of 219)
+  t 135 s: mould 18943, soldiers 8, bank 400, harvested 0, rendered 0, shots 420, killed 2454, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 136 s: mould 18852, soldiers 8, bank 400, harvested 0, rendered 0, shots 432, killed 2566, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 137 s: mould 18784, soldiers 8, bank 400, harvested 0, rendered 0, shots 446, killed 2714, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 138 s: mould 18736, soldiers 8, bank 400, harvested 0, rendered 0, shots 458, killed 2778, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 139 s: mould 18693, soldiers 8, bank 400, harvested 0, rendered 0, shots 465, killed 2854, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 140 s: mould 18618, soldiers 8, bank 400, harvested 0, rendered 0, shots 479, killed 2986, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 141 s: mould 18562, soldiers 8, bank 400, harvested 0, rendered 0, shots 488, killed 3060, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 142 s: mould 18494, soldiers 8, bank 400, harvested 0, rendered 0, shots 498, killed 3154, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 143 s: mould 18441, soldiers 8, bank 400, harvested 0, rendered 0, shots 509, killed 3232, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 144 s: mould 18405, soldiers 8, bank 400, harvested 0, rendered 0, shots 522, killed 3323, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 145 s: mould 18323, soldiers 8, bank 400, harvested 0, rendered 0, shots 532, killed 3430, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 146 s: mould 18276, soldiers 7, bank 400, harvested 0, rendered 0, shots 543, killed 3543, took 0%, crystals left 0.956; squad at 437.3,261.6
+  t 147 s: mould 18220, soldiers 7, bank 400, harvested 0, rendered 0, shots 552, killed 3609, took 0%, crystals left 0.956; squad at 437.3,261.6
+  t 148 s: mould 18186, soldiers 7, bank 400, harvested 0, rendered 0, shots 562, killed 3671, took 0%, crystals left 0.955; squad at 437.3,261.6
+  t 149 s: mould 18177, soldiers 7, bank 400, harvested 0, rendered 0, shots 567, killed 3700, took 0%, crystals left 0.955; squad at 437.3,261.6
+  t 150 s: mould 18186, soldiers 7, bank 400, harvested 0, rendered 0, shots 569, killed 3712, took 0%, crystals left 0.955; squad at 437.3,261.6
+  t 151 s: mould 18210, soldiers 7, bank 400, harvested 0, rendered 0, shots 571, killed 3719, took 0%, crystals left 0.955; squad at 437.3,261.6
+  t 152 s: mould 18225, soldiers 7, bank 400, harvested 0, rendered 0, shots 576, killed 3731, took 0%, crystals left 0.954; squad at 437.3,261.6
+  t 153 s: mould 18243, soldiers 7, bank 400, harvested 0, rendered 0, shots 578, killed 3733, took 0%, crystals left 0.954; squad at 437.3,261.6
+  t 154 s: mould 18255, soldiers 7, bank 400, harvested 0, rendered 0, shots 580, killed 3743, took 0%, crystals left 0.954; squad at 437.3,261.6
+  t 155 s: mould 18281, soldiers 7, bank 400, harvested 0, rendered 0, shots 581, killed 3746, took 0%, crystals left 0.953; squad at 437.3,261.6
+  t 156 s: mould 18303, soldiers 7, bank 400, harvested 0, rendered 0, shots 583, killed 3755, took 0%, crystals left 0.953; squad at 437.3,261.6
+  t 157 s: mould 18326, soldiers 7, bank 400, harvested 0, rendered 0, shots 585, killed 3759, took 0%, crystals left 0.953; squad at 437.3,261.6
+  t 158 s: mould 18336, soldiers 7, bank 400, harvested 0, rendered 0, shots 593, killed 3766, took 0%, crystals left 0.952; squad at 437.3,261.6
+  t 159 s: mould 18349, soldiers 7, bank 400, harvested 0, rendered 0, shots 595, killed 3769, took 0%, crystals left 0.952; squad at 437.3,261.6
+  t 160 s: mould 18377, soldiers 7, bank 400, harvested 0, rendered 0, shots 597, killed 3771, took 0%, crystals left 0.952; squad at 437.3,261.6

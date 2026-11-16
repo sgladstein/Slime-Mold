@@ -43,8 +43,18 @@
 use super::big::{spray_picked, spray_share_q, spray_timer, BigDish, LIFE_DEAD, LIFE_SPORE};
 
 /// Most units, shots and shot cells in one frame (the GPU's buffer sizes).
-pub const UNITS_MAX: usize = 96;
-pub const SHOTS_MAX: usize = 256;
+/// Units 256 since 2026-11-16 (the soldier-cap thread; 96 before, 64
+/// before 11-12): soldiers, the home and up to `BuildRules::max` (40)
+/// buildings share them, so at 96 a soldier past about 55 dropped out of
+/// the frame silently (no bite, harvest or aim). 256 leaves room for 200
+/// soldiers with every building. `engine.wgsl`'s `Squad` arrays must match
+/// (`the_shader_holds_the_frame`).
+pub const UNITS_MAX: usize = 256;
+/// Shots (bullet legs) a frame, so bullets in flight (`Game::bullets`).
+/// 1024 since 2026-11-16, with the 200-soldier cap: 200 riflemen fighting
+/// peaked at 129 in flight (`examples/soldiercap.rs`, planet 1), and
+/// buckshot's four pellets a shot would pass 256, the newest dropped.
+pub const SHOTS_MAX: usize = 1024;
 pub const PATH_MAX: usize = 16_384;
 /// The side of the blocks a unit aims at, in cells.
 pub const BIN: usize = 4;
@@ -545,6 +555,12 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
         // Whole walkers: a blast kills every living one in its disc, and the kills are counted whole.
         // A condensed one breaks instead (`BigDish::hit`), a kill's worth.
         if let Some(q) = (0..shots.len()).find(|&q| inside(c, q)) {
+            // A lump's armoured member is hurt (`BigDish::armoured`, a
+            // mini-boss, 2026-11-16), not counted: it lost no mass (counted,
+            // a grade-1 boss's 15 blows a member paid 15 kills' render food).
+            if d.armoured(k) {
+                continue;
+            }
             killed[q] += 1;
             // A condensed walker breaks (`BigDish::hit`); any other, with the
             // spray, flies out of the hit as a droplet (`BigDish::spray_one`)
@@ -656,14 +672,16 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
     let (w, h) = (d.w, d.h);
     let occ = d.occupancy();
     let dense = dense_cells(d);
+    let bite = bite_cells(d);
     let (nbw, nbh) = (w.div_ceil(BIN) as i64, h.div_ceil(BIN) as i64);
     units[..units.len().min(UNITS_MAX)]
         .iter()
         .map(|u| {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
             // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
-            // A condensed walker (`BigParams::condense`) touches as two.
-            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32)).sum();
+            // A condensed walker (`BigParams::condense`) touches as two, a
+            // lump's member as 1 + its bite (`Lump::bite`).
+            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32) + bite.get(i).map_or(0, |&n| n)).sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
             let (by0, by1) = ((cy - r).max(0) / BIN as i64, ((cy + r) / BIN as i64).min(nbh - 1));
@@ -704,6 +722,27 @@ pub fn dense_cells(d: &BigDish) -> Vec<u16> {
         if d.lives(k) && d.is_dense(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
             let (x, y, _) = d.walkers[k];
             n[y as usize * d.w + x as usize] += 1;
+        }
+    }
+    n
+}
+
+/// Each cell's lump members' bite (`Lump::bite`, the mini-bosses'
+/// strength, 2026-11-16; the GPU's `dcount` into the bite cells), empty
+/// with no lump on: dormant ones count, as in `occ`; spores and the dead
+/// hold no cell.
+pub fn bite_cells(d: &BigDish) -> Vec<u32> {
+    if d.dense.is_empty() || !d.p.lumps.iter().any(|l| l.on()) {
+        return Vec::new();
+    }
+    let mut n = vec![0u32; d.w * d.h];
+    for k in 0..d.walkers.len() {
+        if !d.lives(k) || (!d.life.is_empty() && matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
+            continue;
+        }
+        if let Some(b) = d.lump_of(k) {
+            let (x, y, _) = d.walkers[k];
+            n[y as usize * d.w + x as usize] += d.p.lumps[b].bite;
         }
     }
     n
@@ -832,6 +871,21 @@ pub fn unpack(w: usize, words: &[u32], kills: &[u32], nunits: usize, nshots: usi
 mod tests {
     use super::*;
     use crate::mould::big::BigParams;
+
+    /// The shader's `Squad` arrays hold `UNITS_MAX` units and `SHOTS_MAX`
+    /// shots (soldier-cap thread, 11-16): the buffer's layout here
+    /// (`U_OUT`, `S_IN`) and the shader's must agree, or the GPU reads the
+    /// shots from the middle of the units.
+    #[test]
+    fn the_shader_holds_the_frame() {
+        let want = format!("struct Squad {{ units: array<SqUnit, {UNITS_MAX}>, uout: array<SqUnitOut, {UNITS_MAX}>, shots: array<SqShot, {SHOTS_MAX}>, sout: array<SqShotOut, {SHOTS_MAX}>,");
+        assert!(crate::gpu::SHADER.contains(&want), "engine.wgsl's Squad is not {want}");
+        // The sleep gas's slots in `news` follow the units too.
+        let head = crate::gpu::GAS_HEAD;
+        for want in [format!("const GAS_CALM: u32 = {}u;", head + 4 * UNITS_MAX), format!("const GAS_SLOTS: u32 = {}u;", crate::gpu::GAS_SLOTS)] {
+            assert!(crate::gpu::SHADER.contains(&want), "engine.wgsl lacks {want}");
+        }
+    }
 
     #[test]
     fn discs_are_whole_cells_in_the_gpus_order() {

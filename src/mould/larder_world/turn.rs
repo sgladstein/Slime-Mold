@@ -124,10 +124,12 @@ impl<W: World> Game<W> {
                         // 18:05Z); a scattergun's fan all carry it.
                         let m = self.mods(q);
                         let n = m.casts;
+                        // The gun's own turn (`BulletMods::cycle`): a cast
+                        // another carries is let out by its carrier.
                         let cast = if n > 0 {
                             let c = s.next % n;
                             self.soldiers[k].next = (c + 1) % n;
-                            c + 1
+                            m.cycle[c as usize]
                         } else {
                             0
                         };
@@ -136,9 +138,13 @@ impl<W: World> Game<W> {
                         // engines' `squad::R_MAX`), its range and spread
                         // times the gun's; its speed rides on the bullet.
                         let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
-                        let hit_r = (strike * ammo.reach()).min(squad::R_MAX);
+                        // Its set's shape (`bullets::Shape`, 2026-11-16):
+                        // buckshot fires a fan of small pellets.
+                        let shape = ammo.set.shape();
+                        let hit_r = (strike * ammo.reach()).min(squad::R_MAX) * shape.r;
                         let reach = reach * ammo.range();
                         let spread = gun.spread * ammo.spread();
+                        let pellets = shape.pellets.max(1);
                         for _ in 0..gun.shots.max(1) {
                             let (mut ux, mut uy) = (dx / d, dy / d);
                             if spread > 0.0 {
@@ -146,8 +152,13 @@ impl<W: World> Game<W> {
                                 let (sn, cs) = a.sin_cos();
                                 (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
                             }
-                            shots.push(ShotIn { from: (s.x, s.y), to: (s.x + ux * reach, s.y + uy * reach), r: hit_r });
-                            shooters.push((Some(k), cast));
+                            for p in 0..pellets {
+                                let a = if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+                                let (sn, cs) = a.sin_cos();
+                                let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                                shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r });
+                                shooters.push((Some(k), cast));
+                            }
                         }
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
                         let gap = self.shot_gap(q);

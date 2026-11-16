@@ -106,7 +106,7 @@ pub trait World {
     /// `raid_ground`), empty to steer straight.
     fn set_raid(&mut self, _at: u32, _to: (f32, f32), _r: f32, _share: f32, _field: Vec<u32>) {}
     /// **Lumps** (held bodies, `BigParams::lumps`, the mini-boss thread
-    /// 2026-11-16): forms lump `b` of the condensed walkers within `r` dish
+    /// 2026-11-16): forms lump `b` of the ordinary walkers within `r` dish
     /// cells of `at` (fine cells), or releases it (None). A world with no
     /// lumps ignores it.
     fn form_lump(&mut self, _b: usize, _at: Option<((f32, f32), f32)>) {}

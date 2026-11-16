@@ -57,9 +57,14 @@ pub struct BossRules {
     /// at least this full (walkers over fine cells).
     pub crowd: f32,
     /// A part cut off from every crystal with food, of at least `cut_least`
-    /// walkers, becomes one with this chance each game second (0 off).
+    /// walkers, becomes one with this chance each game second (0 off),
+    /// from `first` seconds after the landing (the opening's blob is often
+    /// cut off), and never within `rest` seconds of one ending where it
+    /// was (its own remnant, an unfed part, re-formed at once with its
+    /// hits healed: review of the mini-boss PR).
     pub cut: f32,
     pub cut_least: u32,
+    pub rest: f32,
     /// Fewest members it must hold a second after forming, else it falls
     /// apart at once (the chance came to nothing).
     pub least: u32,
@@ -77,6 +82,23 @@ pub struct BossRules {
     /// `life` seconds of hunting.
     pub quorum: f32,
     pub life: f32,
+    /// **Strength** (owner 05:23Z: "They should be significantly stronger
+    /// than normal slime too and vary quite a bit in strength from boss to
+    /// boss"): each one's grade is drawn evenly from `grade_lo` to
+    /// `grade_hi` (0 to 1) as it forms, and sets, from the low end to the
+    /// high: the blows each member takes to kill (`armour_lo` to
+    /// `armour_hi`; ordinary slime takes 1, condensed 2), the walkers it
+    /// touches a soldier as beyond itself (`bite_lo` to `bite_hi`), its
+    /// size (`reach` x 1 -/+ `size`/2) and its pace (`haste` x 1 to
+    /// 1 + `faster`).
+    pub grade_lo: f32,
+    pub grade_hi: f32,
+    pub armour_lo: f32,
+    pub armour_hi: f32,
+    pub bite_lo: f32,
+    pub bite_hi: f32,
+    pub size: f32,
+    pub faster: f32,
 }
 
 impl BossRules {
@@ -93,8 +115,33 @@ impl BossRules {
             first: 90.0 + (40.0 - 90.0) * t,
             cut: 0.02 + (0.1 - 0.02) * t,
             most: if depth >= 4 { 2 } else { 1 },
+            // Weaker on the first planets, all of them stronger by the
+            // last, and a wide spread on each.
+            grade_lo: 0.4 * t,
+            grade_hi: 0.6 + 0.4 * t,
             ..BossRules::default()
         }
+    }
+
+    /// The blows a member of a grade `g` mini-boss takes (`Lump::armour`).
+    pub fn armour_at(&self, g: f32) -> u32 {
+        (self.armour_lo + (self.armour_hi - self.armour_lo) * g).round().clamp(1.0, 15.0) as u32
+    }
+
+    /// The walkers a member touches as beyond itself (`Lump::bite`).
+    pub fn bite_at(&self, g: f32) -> u32 {
+        (self.bite_lo + (self.bite_hi - self.bite_lo) * g).round().max(0.0) as u32
+    }
+
+    /// Its reach (dish cells) as it forms.
+    pub fn reach_at(&self, reach: f32, g: f32) -> f32 {
+        reach * (1.0 + self.size * (g - 0.5))
+    }
+
+    /// Its members' pace (`Lump::haste`) as it hunts, never under the
+    /// slime's own (1; a `Lump`'s 0 is off, its own pace too).
+    pub fn haste_at(&self, g: f32) -> f32 {
+        self.haste.max(1.0) * (1.0 + self.faster * g)
     }
 }
 
@@ -110,6 +157,7 @@ impl Default for BossRules {
             crowd: 0.8,
             cut: 0.0,
             cut_least: 400,
+            rest: 30.0,
             least: 40,
             most: 2,
             gather: 6.0,
@@ -121,6 +169,21 @@ impl Default for BossRules {
             haste: 1.0,
             quorum: 0.3,
             life: 90.0,
+            grade_lo: 0.0,
+            grade_hi: 1.0,
+            // 4 to 15 blows a member against ordinary slime's 1, and
+            // touching as 2 to 5 walkers. Packed as it is, each shot that
+            // lands blows about 30 members at once (planet 3, seed 1, 8
+            // soldiers on free fire, every gun on the mini-boss first): at 5
+            // blows a member one of 344 lasted 5 s under fire, about as long
+            // as an unarmoured one of 418 had lasted before the squad aimed
+            // at mini-bosses first.
+            armour_lo: 4.0,
+            armour_hi: 15.0,
+            bite_lo: 1.0,
+            bite_hi: 4.0,
+            size: 0.6,
+            faster: 0.4,
         }
     }
 }
@@ -260,15 +323,16 @@ impl<W: World> Game<W> {
                 continue;
             }
             let cell = |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, self.world.size());
+            let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
             let lump = if now < b.born + secs(r.gather) {
                 b.phase = BossPhase::Gather;
-                Lump { aim: cell(centre), pull: 0.0, leash: r.clench, haste: 0.0 }
+                Lump { aim: cell(centre), leash: r.clench, ..strong }
             } else {
                 let prey = self.nearest_soldier(centre);
                 b.phase = BossPhase::Hunt(prey);
                 match prey {
-                    Some(s) => Lump { aim: cell((self.soldiers[s].x, self.soldiers[s].y)), pull: r.pull, leash: r.leash, haste: r.haste },
-                    None => Lump { aim: cell(centre), pull: 0.0, leash: r.leash, haste: 0.0 },
+                    Some(s) => Lump { aim: cell((self.soldiers[s].x, self.soldiers[s].y)), pull: r.pull, leash: r.leash, haste: r.haste_at(b.grade), ..strong },
+                    None => Lump { aim: cell(centre), leash: r.leash, ..strong },
                 }
             };
             self.world.set_lump(b.lump, lump);
@@ -278,11 +342,17 @@ impl<W: World> Game<W> {
         if (r.every <= 0.0 && r.cut <= 0.0) || self.bosses.live.len() >= r.most.min(LUMPS) {
             return;
         }
-        // A big part cut off from food: each second's chance.
-        if r.cut > 0.0 {
+        // A big part cut off from food: each second's chance, once the
+        // landing's grace is over, away from the live ones and from where
+        // one ended lately.
+        if r.cut > 0.0 && now >= secs(r.first) {
             let parts = self.slime_parts();
+            let near = r.reach * self.world.scale();
+            let rest = secs(r.rest);
             for p in parts.iter().filter(|p| !p.fed && p.walkers >= r.cut_least) {
-                if self.bosses.live.len() >= r.most.min(LUMPS) || self.bosses.live.iter().any(|b| (b.centre.0 - p.centre.0).hypot(b.centre.1 - p.centre.1) < p.r + r.reach * self.world.scale()) {
+                let by = |c: (f32, f32)| (c.0 - p.centre.0).hypot(c.1 - p.centre.1) < p.r + near;
+                let lately = self.bosses.ended.iter().rev().take_while(|e| now < e.2 + rest).any(|e| by(e.0.centre));
+                if self.bosses.live.len() >= r.most.min(LUMPS) || lately || self.bosses.live.iter().any(|b| by(b.centre)) {
                     continue;
                 }
                 if self.bosses.rng.f32() < r.cut {
@@ -314,15 +384,19 @@ impl<W: World> Game<W> {
     }
 
     /// Forms a mini-boss round `at` (fine cells), of the walkers within
-    /// `reach` dish cells, on the first free lump; false with none free.
+    /// `reach` dish cells (by its grade, `BossRules::reach_at`), on the
+    /// first free lump, its grade drawn (`BossRules::grade_lo`); false with
+    /// none free.
     pub fn form_boss(&mut self, at: (f32, f32), reach: f32, cause: BossCause) -> bool {
         let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().all(|b| b.lump != l)) else { return false };
         let r = self.rules.boss;
-        self.world.form_lump(lump, Some((at, reach)));
+        let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
+        let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
+        self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
-        self.world.set_lump(lump, Lump { aim: cell, pull: 0.0, leash: r.clench, haste: 0.0 });
+        self.world.set_lump(lump, Lump { aim: cell, leash: r.clench, armour: r.armour_at(grade), bite: r.bite_at(grade), ..Lump::default() });
         let now = self.world.ticks();
-        self.bosses.live.push(Boss { lump, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade: 0.0 });
+        self.bosses.live.push(Boss { lump, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade });
         true
     }
 
@@ -399,14 +473,20 @@ impl<W: World> Game<W> {
 
     /// **The mini-boss soldier `k` shoots first** (owner 04:58Z, round 1's
     /// question 6, "yes"): of the live mini-bosses whose body (a packed
-    /// disc of its members, a walker a fine cell) comes within its gun's
-    /// reach and that it can see, the nearest; the point it aims at (the
-    /// centre, or the body's near edge's line at the gun's reach) and the
-    /// body's radius (fine cells). One function on top of the default aim
-    /// so the gun thread's aim cards can put their own rule over it.
+    /// disc of its members, a walker a fine cell) comes within its next
+    /// shot's reach (`Game::shot_reach`) and that it can see, the nearest;
+    /// the point it aims at (the centre, or the body's near edge's line at
+    /// that reach) and the body's radius (fine cells). A soldier with slime
+    /// on it (`touching`) shoots that instead unless the mini-boss's body
+    /// is within its defend reach (`Rules::defend`), so being eaten is
+    /// never ignored for a body further off (review of the mini-boss PR).
+    /// One function on top of the default aim so the gun thread's aim
+    /// cards can put their own rule over it.
     pub fn boss_aim(&self, k: usize) -> Option<((f32, f32), f32)> {
         let s = self.soldiers[k];
-        let reach = self.gun_range(s.squad as usize) * self.world.scale();
+        let sc = self.world.scale();
+        let reach = self.shot_reach(k) * sc;
+        let mine = if s.touching > 0 { self.rules.defend * sc } else { f32::INFINITY };
         self.bosses
             .live
             .iter()
@@ -416,12 +496,25 @@ impl<W: World> Game<W> {
                 let (dx, dy) = (b.centre.0 - s.x, b.centre.1 - s.y);
                 (b.centre, r, dx.hypot(dy), (dx, dy))
             })
-            .filter(|&(c, r, d, _)| d - r <= reach && self.clear_line((s.x, s.y), c))
+            .filter(|&(c, r, d, _)| d - r <= reach.min(mine) && self.clear_line((s.x, s.y), c))
             .min_by(|a, b| a.2.total_cmp(&b.2))
             .map(|(c, r, d, (dx, dy))| {
                 let t = (reach / d.max(0.1)).min(1.0);
                 (if t < 1.0 { (s.x + dx * t, s.y + dy * t) } else { c }, r)
             })
+    }
+
+    /// How far soldier `k`'s next shot flies, dish cells: its gun's reach
+    /// times the range of the bullet it fires next (`Soldier::next` of its
+    /// squad's casts, as `begin_step` fires them). A buckshot's 0.6 fell
+    /// short of a mini-boss its gun's reach took in, so every shot hit
+    /// empty ground (review of the mini-boss PR).
+    pub fn shot_reach(&self, k: usize) -> f32 {
+        let s = self.soldiers[k];
+        let q = s.squad as usize;
+        let m = self.mods(q);
+        let ammo = if m.casts > 0 { m.ammo[(s.next % m.casts) as usize] } else { Default::default() };
+        self.gun_range(q) * ammo.range()
     }
 
     /// **What the view reads of each lump** (for the look thread,

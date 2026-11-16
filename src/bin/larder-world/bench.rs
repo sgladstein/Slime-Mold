@@ -168,6 +168,14 @@ pub(super) fn bench(args: Args, b: &Bench, device: &wgpu::Device, queue: &wgpu::
     let later = rows.get(fps.round() as usize..).unwrap_or(&[]);
     let most = |i: usize| later.iter().map(|r| r.0[i]).fold(0.0f64, f64::max);
     println!("  after the first game second ({} frames), ms: frame max {:.2}; step max {:.2}; prepare max {:.2}", later.len(), most(0), most(1), most(2));
+    // The three longest frames with their game time (soldier-cap thread,
+    // 11-16, the technical lead: a 58 ms frame at 200 soldiers on planet 8
+    // sat in record and the GPU tail; one at the same game time in two
+    // runs is the game, at random times the PC).
+    let mut worst: Vec<usize> = (0..rows.len()).collect();
+    worst.sort_by(|&a, &b| rows[b].0[0].total_cmp(&rows[a].0[0]));
+    let worst: Vec<String> = worst.iter().take(3).map(|&i| { let r = rows[i].0; format!("{:.2} s: {:.2} (step {:.2}, prepare {:.2}, record {:.2}, tail {:.2}{})", i as f64 / fps as f64, r[0], r[1], r[2], r[3], r[4], if rows[i].1 { ", stepped" } else { "" }) }).collect();
+    println!("  longest frames, at game time: {}", worst.join("; "));
     // The ground refresh inside prepare (`refresh_ground`): its own time,
     // and how much of it was the read-back waiting for the GPU's queue
     // (steps in shares still running wait there too).

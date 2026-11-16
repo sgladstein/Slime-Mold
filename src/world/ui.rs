@@ -221,6 +221,111 @@ pub fn health_colour(f: f32) -> Rgba {
     }
 }
 
+/// A line `px` screen pixels wide between two world points (marks' lines
+/// are one pixel: parallel ones, `zoom` pixels a world cell apart), on a
+/// dark edge either side when `ink` so it reads on bright slime as on bare
+/// ground, crisp at any zoom (owner 11-14: play is zoomed in).
+fn stroke(world: &mut Marks, a: (f32, f32), b: (f32, f32), px: u32, zoom: f32, col: Rgba, ink: bool) {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let len = dx.hypot(dy);
+    if len <= 0.0 {
+        return;
+    }
+    let (nx, ny) = (-dy / len / zoom.max(0.01), dx / len / zoom.max(0.01));
+    let half = (px as f32 - 1.0) / 2.0;
+    let mut at = |o: f32, c: Rgba| world.line((a.0 + nx * o, a.1 + ny * o), (b.0 + nx * o, b.1 + ny * o), 0.0, c);
+    if ink {
+        let edge = [14, 13, 10, (col[3] as f32 * 0.6) as u8];
+        at(-half - 1.0, edge);
+        at(half + 1.0, edge);
+    }
+    for i in 0..px {
+        at(i as f32 - half, col);
+    }
+}
+
+/// A dashed ring of short strokes (a big `Ring` mark walks its whole box:
+/// 0.7 ms at 480 pixels, the turret's reach ring), `dashes` dashes round.
+fn dashed_ring(world: &mut Marks, c: (f32, f32), r: f32, dashes: u32, px: u32, zoom: f32, col: Rgba) {
+    let n = 2 * dashes.max(3);
+    for i in (0..n).step_by(2) {
+        let (a0, a1) = (i as f32 / n as f32 * std::f32::consts::TAU, (i + 1) as f32 / n as f32 * std::f32::consts::TAU);
+        stroke(world, (c.0 + r * a0.cos(), c.1 + r * a0.sin()), (c.0 + r * a1.cos(), c.1 + r * a1.sin()), px, zoom, col, false);
+    }
+}
+
+/// A throw's reach ring and arc while it can go: the cream of the order
+/// lines and selection rings, which reads on the gold slime.
+pub const THROW_LINE: Rgba = [250, 242, 220, 255];
+
+/// How high a throw's arc bows over its ground line: a share of its length.
+pub const ARC_RISE: f32 = 0.28;
+/// Dashes along a throw's arc.
+const ARC_DASHES: u32 = 14;
+
+/// The arc's point `f` of the way from `a` to `b` (0-1): along the ground
+/// line, lifted toward the screen's top by a parabola `ARC_RISE` of the
+/// length high in the middle, so a top-down throw reads as lobbed.
+pub fn arc_point(a: (f32, f32), b: (f32, f32), f: f32) -> (f32, f32) {
+    let len = (b.0 - a.0).hypot(b.1 - a.1);
+    let lift = 4.0 * f * (1.0 - f) * ARC_RISE * len;
+    (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f - lift)
+}
+
+/// A throw's aim (`Throw`): the thrower's reach as a dashed ring, a ring on
+/// the thrower, its arc to `land` (dashed, brightening toward the landing)
+/// over a faint ground line, and the rings past the area. Out of reach
+/// (`ghost_ok` false, `col` red): the arc stops at the reach's edge with a
+/// mark where the throw would fall short, and dots on to the cursor.
+fn throw_aim(w: &Throw, land: (f32, f32), col: Rgba, area: Rgba, zoom: f32, world: &mut Marks) {
+    // The arc first, then the rings: marks past `MAX_MARKS` are dropped,
+    // and a busy frame dropped the arc when it came last. About 250 marks
+    // in all (the ring's 2-pixel dashes cost 2 lines each, inked 4).
+    let from = w.from;
+    let (dx, dy) = (land.0 - from.0, land.1 - from.1);
+    let d = dx.hypot(dy);
+    let short = d > w.reach;
+    world.ring(from, w.from_r + 1.5 / zoom.max(0.01), [14, 13, 10, 170]);
+    world.ring(from, w.from_r, col);
+    if d > 0.0 {
+        // The ground line: where the throw passes, dashed every 4 pixels.
+        world.line(from, land, 4.0, alpha([14, 13, 10, 255], 0.35));
+        let reach_f = if short { w.reach / d } else { 1.0 };
+        let n = 2 * ARC_DASHES;
+        for i in (0..n).step_by(2) {
+            let (f0, f1) = (i as f32 / n as f32, (i + 1) as f32 / n as f32);
+            if f0 >= reach_f {
+                // Past the reach: a dot every other dash, faint.
+                if (i / 2) % 2 == 0 {
+                    world.ring_thin(arc_point(from, land, f0), 1.5, 1.5, alpha(col, 0.5));
+                }
+                continue;
+            }
+            let a = 0.45 + 0.55 * f1;
+            stroke(world, arc_point(from, land, f0), arc_point(from, land, f1.min(reach_f)), 3, zoom, alpha(col, a), true);
+        }
+        if short {
+            // Where it would fall: a cross at the reach's edge on the ground.
+            let p = (from.0 + dx / d * w.reach, from.1 + dy / d * w.reach);
+            let k = 5.0 / zoom.max(0.01);
+            stroke(world, (p.0 - k, p.1 - k), (p.0 + k, p.1 + k), 2, zoom, col, true);
+            stroke(world, (p.0 - k, p.1 + k), (p.0 + k, p.1 - k), 2, zoom, col, true);
+        }
+    }
+    if !short {
+        // The landing: a small ring at the arc's end.
+        world.ring_thin(land, 5.0, 1.0, [14, 13, 10, 200]);
+        world.ring_thin(land, 4.0, 2.0, col);
+    }
+    // The reach: 2-pixel dashes about every 2 cells of the ring, 30-60.
+    let dashes = ((std::f32::consts::TAU * w.reach / 4.0) as u32).clamp(30, 60);
+    dashed_ring(world, from, w.reach, dashes, 2, zoom, alpha(col, if short { 0.9 } else { 0.75 }));
+    for &(r, a) in &w.rings {
+        let n = ((std::f32::consts::TAU * r / 2.0) as u32).clamp(12, 32);
+        dashed_ring(world, land, r, n, 1, zoom, [area[0], area[1], area[2], a]);
+    }
+}
+
 fn alpha(c: Rgba, a: f32) -> Rgba {
     [c[0], c[1], c[2], (c[3] as f32 * a.clamp(0.0, 1.0)) as u8]
 }
@@ -511,6 +616,31 @@ pub struct Model {
     /// The player is steering (WASD in the squad mode): the screen moves
     /// under a still cursor, so the hover card stays away (`HoverCard`).
     pub aiming: bool,
+    /// The ghost is a throw (a toolkit tool; a squad's device later): drawn
+    /// with its thrower, reach and arc as well as where it lands.
+    pub throw: Option<Throw>,
+}
+
+/// A throw being aimed (`Model::throw`; owner 2026-11-16: "when throwing
+/// an explosive, we should improve the visual for aiming and range"). Any
+/// point or line command can carry one, so a squad's device slot (the gun
+/// thread's step E) aims with the same ghost as the Tools page.
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct Throw {
+    /// Who throws: the soldier nearest the landing point that may.
+    pub from: (f32, f32),
+    /// The thrower's drawn radius, world cells (a ring round it).
+    pub from_r: f32,
+    /// How far it throws, world cells (a dashed ring round `from`).
+    pub reach: f32,
+    /// The tool's colour, for the area and the arc while it can go.
+    pub tint: Rgba,
+    /// Where it lands when that is not the cursor (a det cord's middle).
+    pub at: Option<(f32, f32)>,
+    /// Dashed rings round the landing point, world cells, with their
+    /// alpha: what the throw reaches past its area (a blast's crater and
+    /// the alarm it wakes the mould with).
+    pub rings: Vec<(f32, u8)>,
 }
 
 /// One building as the view sees it (`Model::buildings`).
@@ -1352,7 +1482,10 @@ impl Hud {
 
     fn tip_small(&mut self, text: &str, at: (f32, f32), c: &mut Canvas, s: f32) {
         let w = c.atlas.measure(Weight::Medium, 13.5 * s, text) + 18.0 * s;
-        let r = Rect::new(at.0, at.1, w, 27.0 * s);
+        // To the cursor's left where it would run off the screen's right
+        // edge (an out-of-reach throw's note was cut off there, 11-16).
+        let x = if at.0 + w > c.screen.0 as f32 - 8.0 * s { (at.0 - 36.0 * s - w).max(8.0 * s) } else { at.0 };
+        let r = Rect::new(x, at.1, w, 27.0 * s);
         c.shadow(r, 6.0 * s, 10.0 * s, 2.0 * s, SHADOW);
         c.panel(r, 6.0 * s, [36, 42, 50, 245], [28, 33, 40, 245], 1.0, EDGE);
         c.text(Weight::Medium, 13.5 * s, (r.x + 9.0 * s, r.y + 18.5 * s), Align::Left, text, TEXT);
@@ -2086,8 +2219,13 @@ impl Hud {
     fn ghost(&mut self, m: &Model, cam: &Camera, c: &mut Canvas, world: &mut Marks, s: f32) {
         let (Some(t), Some(p)) = (self.targeting, self.hover) else { return };
         let Some(at) = self.aim(p, cam) else { return };
-        let col = if m.ghost_ok { [96, 230, 150, 255] } else { [245, 96, 96, 255] };
+        let col = match (&m.throw, m.ghost_ok) {
+            (_, false) => [245, 96, 96, 255],
+            (Some(w), true) => w.tint,
+            (None, true) => [96, 230, 150, 255],
+        };
         let fill = alpha(col, 0.28);
+
         let snap = m.ghost_snap.filter(|_| matches!(t.target, Target::Point { .. }));
         if let Some((c, radius)) = snap {
             // A ring only: the crystal stays in sight under it.
@@ -2098,6 +2236,10 @@ impl Hud {
             Target::Point { .. } if snap.is_some() => {}
             Target::Point { radius } => {
                 world.disc(at, radius, fill, false);
+                if m.throw.is_some() {
+                    // A dark edge outside, so the area holds on the slime.
+                    world.ring(at, radius + 1.5 / cam.zoom.max(0.01), [14, 13, 10, 170]);
+                }
                 world.ring(at, radius, col);
             }
             Target::Area { half } => {
@@ -2115,6 +2257,14 @@ impl Hud {
                 }
             }
             Target::Instant => {}
+        }
+        if let Some(w) = &m.throw {
+            // Over the area, which would hide the arc's end. The reach and
+            // the arc in the order lines' cream (the tools' fire colours
+            // sat on the gold slime and the arc was lost in it), red when
+            // it can't go; the area in the tool's colour.
+            let line = if m.ghost_ok { THROW_LINE } else { col };
+            throw_aim(w, w.at.unwrap_or(at), line, col, cam.zoom, world);
         }
         // A chip by the cursor: what is being placed and how.
         let name = self.commands.get(t.index).map(|k| k.name.clone()).unwrap_or_default();
@@ -2927,6 +3077,16 @@ mod tests {
         assert!(took);
         let [HudEvent::Point { id: POINT, at }] = ev.as_slice() else { panic!("{ev:?}") };
         assert!((at.0 - 1024.0).abs() < 8.0 && (at.1 - 640.0).abs() < 8.0, "{at:?}");
+    }
+
+    #[test]
+    fn a_throws_arc_bows_up_the_screen_and_ends_on_its_points() {
+        let (a, b) = ((10.0, 50.0), (50.0, 50.0));
+        assert_eq!(arc_point(a, b, 0.0), a);
+        assert_eq!(arc_point(a, b, 1.0), b);
+        let top = arc_point(a, b, 0.5);
+        assert_eq!(top.0, 30.0);
+        assert!((top.1 - (50.0 - ARC_RISE * 40.0)).abs() < 1e-4, "the middle is ARC_RISE of the length up the screen: {top:?}");
     }
 
     #[test]

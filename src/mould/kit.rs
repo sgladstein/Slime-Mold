@@ -268,6 +268,20 @@ impl Kit {
             })
     }
 
+    /// Who would throw at `p`, for the aiming ghost: the nearest living
+    /// soldier that may use a tool (with the carry rule, one holding one),
+    /// in reach or not, and whether it is in reach. `user` is the same
+    /// soldier when it is in reach, so the ghost's thrower is the one whose
+    /// held tool `use_tool` spends.
+    pub fn thrower<W: World>(&self, g: &Game<W>, p: (f32, f32)) -> Option<(usize, bool)> {
+        let r = self.rules.reach * g.world.scale();
+        let d = |k: usize| (g.soldiers[k].x - p.0).hypot(g.soldiers[k].y - p.1);
+        (0..g.soldiers.len())
+            .filter(|&k| g.soldiers[k].alive && (self.rules.carry_max == 0 || self.held(k) > 0))
+            .min_by(|&a, &b| d(a).total_cmp(&d(b)))
+            .map(|k| (k, d(k) <= r))
+    }
+
     /// Tools soldier `k` holds.
     pub fn held(&self, k: usize) -> u32 {
         self.held.get(k).copied().unwrap_or(0)

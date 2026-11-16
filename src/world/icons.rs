@@ -67,6 +67,10 @@ pub enum Icon {
     Slug,
     Needle,
     Buckshot,
+    // The carrier cards (`rounds::Card::Trigger`, `Card::Expire`,
+    // 2026-11-16): a bullet with another inside it.
+    Carry,
+    CarryStop,
 }
 
 impl Icon {
@@ -137,6 +141,10 @@ impl Icon {
             Icon::Needle => &["M5 12 L22 12", "M17 10.5 L22 12 L17 13.5", "M2 9 L6 12 L2 15"],
             // A spray of pellets.
             Icon::Buckshot => &["FO6.5 12 2", "FO12 7 2", "FO12.5 17 2", "FO18 10.5 2", "FO18.5 15.5 1.6"],
+            // A bullet with a payload inside, letting it out of its nose.
+            Icon::Carry => &["M2 8 L10 8 C13.5 8 15.5 10 16 12 C15.5 14 13.5 16 10 16 L2 16 Z", "FO8 12 2", "M18.5 9 L21.5 6", "M19 12 L22.5 12", "M18.5 15 L21.5 18"],
+            // The same, stopped at a wall: it lets it out where it stops.
+            Icon::CarryStop => &["M2 8 L10 8 C13.5 8 15.5 10 16 12 C15.5 14 13.5 16 10 16 L2 16 Z", "FO8 12 2", "M20 4 L20 20", "M22.5 4 L22.5 20"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
     }
@@ -246,7 +254,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");
