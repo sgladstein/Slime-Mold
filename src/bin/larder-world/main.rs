@@ -1188,11 +1188,19 @@ impl App {
         // ones put in at its armory; H does not cycle either.
         let armed = a.run.as_ref().or(a.range.as_ref());
         let gun = match armed {
-            Some(r) => r.gun(),
+            Some(r) => r.squad_cards(),
             None => rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(),
         };
         let budget = armed.map_or(RoundRules::default().budget, Run::budget);
         self.rounds = Rounds::new(gun, RoundRules { budget, ..RoundRules::default() });
+        // A run's turrets fire its turret deck (`Run::turret_cards`, the
+        // turrets thread): none without turrets or cards for them.
+        if let Some(r) = armed {
+            let t = r.turret_cards();
+            if !t.is_empty() {
+                game.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, Some(rounds::Deck::new(&t))));
+            }
+        }
         if let Some(v) = &a.ammo {
             let cards = match v.parse::<u32>() {
                 Ok(n) => {
@@ -2033,7 +2041,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop@TAB@NAME: that tab, that row picked)".into());
+                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop-turrets: its gun slots on the turrets' deck; shop@TAB@NAME: that tab, that row picked)".into());
                 }
                 menu_flag = Some(v.to_string());
             }

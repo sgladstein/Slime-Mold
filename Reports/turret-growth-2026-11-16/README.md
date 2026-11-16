@@ -153,3 +153,31 @@ The review's shooter id, with the gun-card thread's OK (it owns
 Tests: `turrets_fire_the_turret_deck` now also has every kill of a blasting
 turret counted as the turret's (687 of 687) and its render paying 171.8 food
 against 76.8 for a plain one in 10 s; `a_pull_heads_for_the_gun_that_fired`.
+
+## Step 2b: the turrets' cards come out of the squad's bag (2026-11-16)
+
+The review's other point: a free turret deck was a pure buff to staying
+home. Now the run shop has one bag for both.
+
+- With turrets owned, the shop's bottom bar has **Edit the turrets' cards**
+  (`Pick::EditTurrets`). The gun slots then show the turrets' rack, titled
+  "Every turret": 2 slots and a budget of 4, plus a slot and 2 budget for
+  each level of Turret power (`Run::turret_rack`). Click again, buy or pick
+  a gun, and the slots go back to the squad's gun.
+- A card on the turrets has left the bag, so the squad doesn't fire it. The
+  two decks keep their order across the switch (`Run::aside`).
+- At landing the squad loads `Run::squad_cards` and the game's turrets
+  load `Run::turret_cards` (`Cmd::Load(TURRET_DECK, ..)`, so it replays).
+  With no turrets, or nothing on them, nothing changes.
+- Headless: `larder-world run=1 menu=shop-turrets` opens a run three
+  planets in with the slots on the turrets and the first bag card that fits
+  on them.
+
+Tests: `the_turrets_take_cards_from_the_squads_bag` (run.rs) and the
+landing check added to `a_run_plays_a_planet_then_the_shop_then_the_next`
+(the game's turret deck is the gas put on it; the squad still fires blast
+and wide).
+
+Not yet measured: whether giving cards to the turrets is a fair trade
+against the squad's gun. That's the paired raid-on-base census the review
+suggested, and it waits for the balance pass ("build first, balance later").

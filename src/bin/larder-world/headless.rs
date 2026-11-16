@@ -78,6 +78,15 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 for p in [r.shop().iter().find(|x| x.name == "Armour").map(|x| x.pick), r.shop().iter().find(|x| x.name == "Turrets").map(|x| x.pick)].into_iter().flatten() {
                     r.pick(p);
                 }
+                // `menu=shop-turrets` (the turrets thread, 2026-11-16): the
+                // gun slots switched to the turrets' deck, with the first
+                // bag card that fits put on it.
+                if flag == "shop-turrets" {
+                    r.pick(slime_mould::mould::run::Pick::EditTurrets);
+                    if let Some(i) = (0..r.cards.len()).find(|&i| !r.cards[i].1 && r.fits(r.cards[i].0)) {
+                        r.pick(slime_mould::mould::run::Pick::Card(i));
+                    }
+                }
             }
             m.shop = Some(shop_of(&r));
             m.run_live = true;

@@ -335,7 +335,10 @@ kills from 231 to 427, while a bomb deck flung the slime away from the guns
 and lowered kills ([report](../../Reports/turret-growth-2026-11-16/README.md)).
 Each turret shot records the turret that fired it (`Bullet::turret`), so a
 turret cast's kills count as the turret's, Render pays on cast kills, and
-Pull drags slime toward the turret (step 2a).
+Pull drags slime toward the turret (step 2a). In a run the turrets' cards
+come out of the squad's bag: the shop's **Edit the turrets' cards** button
+switches the gun slots to a turret rack of 2 slots and budget 4 (more with
+Turret power), and a card there is one the squad doesn't fire (step 2b).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,
