@@ -1,0 +1,29 @@
+window         plain hits/shots kill sold      aim2 hits/shots kill sold      aim4 hits/shots kill sold  aim2turn hits/shots kill sold
+greedy-5             41/49   k49     s9             41/41   k61     s9             39/39   k60     s9             41/43   k59     s9  
+greedy-11            60/80   k73     s9             59/74   k81     s9             68/82   k74     s9             48/54   k64     s9  
+hold-10              28/57   k86     s8             35/57   k81     s8             35/53   k53     s8             37/59   k61     s8  
+hold-30              70/70   k471    s7             70/70   k471    s7             70/70   k471    s7             70/70   k461    s7  
+p1g2-25              25/32   k25     s8             22/25   k27     s8             22/25   k25     s8             20/27   k17     s8  
+p1g2-40              14/16   k16     s8             16/16   k16     s8             15/15   k16     s8             22/32   k26     s8  
+p1g3-10              27/34   k42     s8             25/31   k35     s8             19/21   k30     s8             13/18   k19     s8  
+p1g3-25              23/33   k23     s8             33/41   k24     s8             28/30   k22     s8             30/33   k31     s8  
+p1g3-40              30/39   k46     s8             42/49   k44     s8             42/46   k53     s8             35/40   k41     s8  
+p1s1-25              15/20   k29     s8             18/20   k30     s8             16/16   k32     s8             20/21   k33     s8  
+p1s1-40              32/33   k91     s8             32/32   k82     s8             30/30   k73     s8             27/27   k94     s8  
+p2s1-10              21/25   k16     s8             24/24   k17     s8             25/26   k23     s8             22/23   k23     s8  
+p2s1-25              27/32   k46     s8             30/33   k53     s8             29/32   k51     s8             34/36   k58     s8  
+p2s1-40              34/41   k71     s8             37/40   k72     s8             37/37   k65     s8             37/37   k66     s8  
+p3g4-40               9/12   k11     s8              6/6    k12     s8              6/6    k12     s8              6/6    k12     s8  
+
+thin  plain      hits 358/446 = 80.3%, killed 538
+thin  aim2       hits 385/432 = 89.1%, killed 554
+thin  aim4       hits 376/405 = 92.8%, killed 536
+thin  aim2turn   hits 355/397 = 89.4%, killed 543
+thick plain      hits 98/127 = 77.2%, killed 557
+thick aim2       hits 105/127 = 82.7%, killed 552
+thick aim4       hits 105/123 = 85.4%, killed 524
+thick aim2turn   hits 107/129 = 82.9%, killed 522
+
+thin windows, aim2 against plain: hit rate higher 13, lower 0 (sign p=0.000); kills higher 9, lower 3 (sign p=0.146)
+thin windows, aim4 against plain: hit rate higher 13, lower 0 (sign p=0.000); kills higher 7, lower 4 (sign p=0.549)
+thin windows, aim2turn against plain: hit rate higher 10, lower 3 (sign p=0.092); kills higher 8, lower 5 (sign p=0.581)

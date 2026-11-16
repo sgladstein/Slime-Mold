@@ -1,0 +1,24 @@
+window         plain hits/shots kill sold    catch2 hits/shots kill sold    catch4 hits/shots kill sold catch2turn hits/shots kill sold catch4turn hits/shots kill sold
+greedy-5             41/49   k49     s9             38/38   k58     s9             39/39   k65     s9             41/41   k64     s9             41/41   k68     s9  
+greedy-11            60/80   k73     s9             61/72   k73     s9             62/65   k70     s9             54/63   k73     s9             61/67   k67     s9  
+hold-10              28/57   k86     s8             33/57   k50     s8             34/48   k57     s8             37/58   k45     s8             34/53   k56     s8  
+hold-30              70/70   k471    s7             70/70   k327    s7             70/70   k296    s7             70/70   k291    s7             70/70   k273    s7  
+p1g2-25              25/32   k25     s8             20/22   k19     s8             19/21   k18     s8             18/18   k19     s8             15/15   k12     s8  
+p1g2-40 missing
+p1g3-10 missing
+
+thin  plain      hits 126/161 = 78.3%, killed 147
+thin  catch2     hits 119/132 = 90.2%, killed 150
+thin  catch4     hits 120/125 = 96.0%, killed 153
+thin  catch2turn hits 113/122 = 92.6%, killed 156
+thin  catch4turn hits 117/123 = 95.1%, killed 147
+thick plain      hits 98/127 = 77.2%, killed 557
+thick catch2     hits 103/127 = 81.1%, killed 377
+thick catch4     hits 104/118 = 88.1%, killed 353
+thick catch2turn hits 107/128 = 83.6%, killed 336
+thick catch4turn hits 104/123 = 84.6%, killed 329
+
+thin windows, catch2 against plain: hit rate higher 3, lower 0 (sign p=0.250); kills higher 1, lower 1 (sign p=1.000)
+thin windows, catch4 against plain: hit rate higher 3, lower 0 (sign p=0.250); kills higher 1, lower 2 (sign p=1.000)
+thin windows, catch2turn against plain: hit rate higher 3, lower 0 (sign p=0.250); kills higher 1, lower 1 (sign p=1.000)
+thin windows, catch4turn against plain: hit rate higher 3, lower 0 (sign p=0.250); kills higher 1, lower 2 (sign p=1.000)

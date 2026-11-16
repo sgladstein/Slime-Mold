@@ -318,31 +318,28 @@ impl Garden {
     /// `squad::shots` for the garden: a shot stops at the first cell whose
     /// enemy trail looks like slime, so it flies over the player's mould,
     /// and strikes the enemy's walkers and trail only.
-    fn shots(&mut self, shots: &[ShotIn], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
+    fn shots(&mut self, shots: &[ShotIn], catch: &[u16], slime: f32, crater: u16, sink: f32) -> Vec<ShotOut> {
         let (w, h) = (self.dish.w, self.dish.h);
         let shots = &shots[..shots.len().min(SHOTS_MAX)];
         let mut used = 0;
-        // Enemy walkers a cell, for the walker-in-a-crater stop.
-        let occ = if self.dish.scorch.is_empty() { Vec::new() } else { self.enemy_occ() };
+        // Enemy walkers a cell, for the walker-in-a-crater stop and a
+        // seeker's catch.
+        let occ = if self.dish.scorch.is_empty() && catch.iter().all(|&c| c == 0) { Vec::new() } else { self.enemy_occ() };
         let hits: Vec<u32> = shots
             .iter()
-            .map(|s| {
+            .enumerate()
+            .map(|(q, s)| {
                 let cells = path(w, h, s.from, s.to);
                 let cells = &cells[..cells.len().min(PATH_MAX - used)];
                 used += cells.len();
                 // As `squad::shots`: an enemy walker standing in a crater
                 // stops the shot though the crater holds no trail.
                 let stops = |i: usize| self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0);
-                for (j, &i) in cells.iter().enumerate() {
-                    if !self.dish.agar[i as usize] {
-                        return NONE;
-                    }
-                    if stops(i as usize) {
-                        // The sink (`squad::sink`), on the enemy's slime.
-                        return squad::sink(w, cells, j, squad::sink_r2(sink, r2(s.r.min(R_MAX))), &self.dish.agar, stops);
-                    }
-                }
-                NONE
+                // The sink (`squad::sink`) and a seeking shot's catch
+                // (`squad::caught`), on the enemy's slime.
+                let walker = |i: usize| !occ.is_empty() && occ[i] > 0;
+                let c = catch.get(q).copied().unwrap_or(0);
+                squad::trace(w, h, cells, (c & squad::CATCH) as u32, c & squad::SEEKS != 0, squad::sink_r2(sink, r2(s.r.min(R_MAX))), &self.dish.agar, stops, walker)
             })
             .collect();
         let r2s: Vec<u32> = shots.iter().map(|s| r2(s.r.min(R_MAX))).collect();
@@ -534,11 +531,15 @@ impl World for Garden {
         self.dish.p.substeps as u32
     }
 
+    fn walker_step(&self) -> f32 {
+        self.dish.p.step
+    }
+
     /// `squad::frame` with the species test: shots and reads see the
     /// enemy only; smell, ticks and harvest as the squad's. Counts what
     /// each side ate.
     fn frame(&mut self, f: &Frame, ticks: u32) -> FrameOut {
-        let shots = self.shots(&f.shots, f.slime, f.crater, f.sink);
+        let shots = self.shots(&f.shots, &f.catch, f.slime, f.crater, f.sink);
         squad::smell(&mut self.dish, &f.units);
         let mut was = Vec::new();
         for _ in 0..ticks {
@@ -811,10 +812,10 @@ pub(crate) mod tests {
         let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
         let shot = [ShotIn { from: to, to, r: 2.0 }];
         let mut plain = g.clone();
-        let out = plain.shots(&shot, slime, 0, 0.0);
+        let out = plain.shots(&shot, &[], slime, 0, 0.0);
         assert!(out[0].hit.is_some(), "{out:?}");
         assert!(plain.dish.scorch.is_empty(), "crater 0 lays none");
-        g.shots(&shot, slime, 40, 0.0);
+        g.shots(&shot, &[], slime, 40, 0.0);
         assert_eq!(g.dish.scorch[at], 40, "the crater on the strike");
     }
 

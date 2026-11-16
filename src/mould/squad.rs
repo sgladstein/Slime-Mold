@@ -153,12 +153,23 @@ pub struct Frame {
     /// of how many): each killed walker flies by its slot's own draw
     /// (`big::spray_picked`), the rest die where they stand. 1: all.
     pub spray_share: f32,
+    /// **Seeking shots** (`rounds::Card::Seek`, step C of the gun-system
+    /// review; the owner's pick 2026-11-16 19:38Z, homing in the shot
+    /// trace): each shot's seek, by its index (missing or 0: a plain
+    /// shot). With `SEEKS` set a seeking shot stops at a live walker on its
+    /// line as well as at slime's look, sunk as any hit, so it strikes the
+    /// walkers a plain shot flies through when their trail is too faint;
+    /// the low bits (`CATCH`) are its catch in whole fine cells: a line that
+    /// misses looks out that far either side and strikes the first cell
+    /// that stops a shot or holds a walker (`caught`, `trace`). The game
+    /// sets the catch on a bullet's last leg only (`Game::catches`).
+    pub catch: Vec<u16>,
 }
 
 /// No units, no shots, no spray; a spray turned on throws every kill.
 impl Default for Frame {
     fn default() -> Self {
-        Frame { units: Vec::new(), shots: Vec::new(), slime: 0.0, crater: 0, sink: 0.0, spray: 0, spray_speed: 0.0, spray_share: 1.0 }
+        Frame { units: Vec::new(), shots: Vec::new(), slime: 0.0, crater: 0, sink: 0.0, spray: 0, spray_speed: 0.0, spray_share: 1.0, catch: Vec::new() }
     }
 }
 
@@ -461,6 +472,102 @@ pub fn spray_heading(x: f32, y: f32, (hx, hy): (f32, f32), (fx, fy): (f32, f32))
     vy.atan2(vx)
 }
 
+/// A seeking shot's flag in `Frame::catch`: it stops at live walkers too.
+pub const SEEKS: u16 = 1 << 15;
+/// A seeking shot's catch width in `Frame::catch` (fine cells).
+pub const CATCH: u16 = SEEKS - 1;
+
+/// The axis a seeking shot looks out along (`Frame::catch`), from its
+/// line's first and last cells: across the line's longer leg, (0, 1) for a
+/// line more along x, else (1, 0). Whole cells, so the GPU's `shots` pass
+/// picks the same.
+pub fn catch_side(w: usize, cells: &[u32]) -> (i64, i64) {
+    let (Some(&a), Some(&b)) = (cells.first(), cells.last()) else { return (0, 1) };
+    let (a, b) = (a as usize, b as usize);
+    let (dx, dy) = ((b % w) as i64 - (a % w) as i64, (b / w) as i64 - (a / w) as i64);
+    if dx.abs() >= dy.abs() {
+        (0, 1)
+    } else {
+        (1, 0)
+    }
+}
+
+/// **A seeking shot's catch** at cell `i` of its line (`Frame::catch`):
+/// out to `reach` cells along `side` both ways, nearest first and the
+/// plus side before the minus at each distance, the first cell that
+/// `stops` a shot; a side ends at the dish's edge or the first cell off the
+/// agar (a wall or rock between hides the slime). The GPU's `caught` is the
+/// same walk.
+pub fn caught(w: usize, h: usize, i: u32, side: (i64, i64), reach: u32, agar: &[bool], stops: impl Fn(usize) -> bool) -> Option<u32> {
+    let (x, y) = ((i as usize % w) as i64, (i as usize / w) as i64);
+    let mut open = [true, true];
+    for o in 1..=reach as i64 {
+        for (k, sgn) in [1i64, -1].into_iter().enumerate() {
+            if !open[k] {
+                continue;
+            }
+            let (cx, cy) = (x + sgn * o * side.0, y + sgn * o * side.1);
+            if cx < 0 || cy < 0 || cx >= w as i64 || cy >= h as i64 {
+                open[k] = false;
+                continue;
+            }
+            let c = cy as usize * w + cx as usize;
+            if !agar[c] {
+                open[k] = false;
+            } else if stops(c) {
+                return Some(c as u32);
+            }
+        }
+        if !open[0] && !open[1] {
+            break;
+        }
+    }
+    None
+}
+
+/// Where a shot along `cells` strikes, or `NONE`: the first cell off the
+/// agar ends it with no hit; the first that `stops` it (or, for a shot
+/// that `walks`, holds a live `walker`) is the hit, sunk (`sink`,
+/// `sink_r2`). With a catch (`Frame::catch`, `reach`) a shot whose line
+/// misses strikes, up to where it ended, the first cell beside the line
+/// that stops a shot or holds a walker (`caught`), not sunk. `squad::shots`
+/// and the garden's (`OwnWorld`) both trace with it.
+///
+/// Tried first and reverted (2026-11-16): catching at each cell before the
+/// line's next, so a seeker took slime beside its line ahead of slime on
+/// it. Hits rose from 78% to 91-95% of shots but the hit was the thin
+/// fringe, not sunk into the body: on the Fork's thick front kills fell
+/// from 471 to 266 in 10 s (`Reports/gun-seek-2026-11-16`). Catching only
+/// what the line misses leaves every plain hit as it was. The game's
+/// catch on a bullet's last leg only, with or without walkers, rescued
+/// almost no misses (thin slime, 15 windows: hits 80.3% of shots against
+/// 80.5%): a soldier's bullet flies to its full range, so a miss is one
+/// that passed through the walkers it was aimed at mid-flight, their trail
+/// too faint to stop it, and its last leg is far past them. Hence `walks`.
+#[allow(clippy::too_many_arguments)]
+pub fn trace(w: usize, h: usize, cells: &[u32], reach: u32, walks: bool, sink_r2: u32, agar: &[bool], stops: impl Fn(usize) -> bool, walker: impl Fn(usize) -> bool) -> u32 {
+    let mut end = cells.len();
+    for (j, &i) in cells.iter().enumerate() {
+        if !agar[i as usize] {
+            end = j;
+            break;
+        }
+        if stops(i as usize) || (walks && walker(i as usize)) {
+            return self::sink(w, cells, j, sink_r2, agar, &stops);
+        }
+    }
+    if reach > 0 {
+        let side = catch_side(w, cells);
+        let seeks = |i: usize| stops(i) || walker(i);
+        for &i in &cells[..end] {
+            if let Some(c) = caught(w, h, i, side, reach, agar, seeks) {
+                return c;
+            }
+        }
+    }
+    NONE
+}
+
 /// **The sink** (`Frame::sink`): where a shot that first met slime at
 /// `cells[j]` centres its blast. From there it looks on along its line, cell
 /// by cell, while the cells are on the agar and within `reach2` (squared,
@@ -495,7 +602,12 @@ pub fn sink(w: usize, cells: &[u32], j: usize, reach2: u32, agar: &[bool], stops
 
 /// Step 1: the shots (see the module's comment). Returns each shot's hit
 /// and kills.
-pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f32, (spray, spray_speed, share): (u16, f32, f32)) -> Vec<ShotOut> {
+pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f32, spray: (u16, f32, f32)) -> Vec<ShotOut> {
+    shots_seeking(d, shots, &[], slime, crater, sink, spray)
+}
+
+/// `shots` with each shot's catch (`Frame::catch`).
+pub fn shots_seeking(d: &mut BigDish, shots: &[ShotIn], catch: &[u16], slime: f32, crater: u16, sink: f32, (spray, spray_speed, share): (u16, f32, f32)) -> Vec<ShotOut> {
     let (w, h) = (d.w, d.h);
     let shots = &shots[..shots.len().min(SHOTS_MAX)];
     let mut used = 0;
@@ -516,15 +628,10 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
             // (1 of 16 without craters), and the GPU shots pass reads the
             // same. Presence (any living walker, at any mass); elsewhere the trail, not a count.
             let stops = |i: usize| d.trail[i] >= slime || (!d.scorch.is_empty() && d.scorch[i] > 0 && d.occupancy()[i] > 0);
-            for (j, &i) in cells.iter().enumerate() {
-                if !d.agar[i as usize] {
-                    return NONE;
-                }
-                if stops(i as usize) {
-                    return self::sink(w, cells, j, sink_r2(sink, r2(s.r.min(R_MAX))), &d.agar, stops);
-                }
-            }
-            NONE
+            let c = catch.get(q).copied().unwrap_or(0);
+            // A seeker stops at live walkers too (`trace`).
+            let walker = |i: usize| d.occupancy()[i] > 0;
+            trace(w, h, cells, (c & CATCH) as u32, c & SEEKS != 0, sink_r2(sink, r2(s.r.min(R_MAX))), &d.agar, stops, walker)
         })
         .collect();
     let r2s: Vec<u32> = shots.iter().map(|s| r2(s.r.min(R_MAX))).collect();
@@ -791,7 +898,7 @@ pub fn frame(d: &mut BigDish, f: &Frame, ticks: u32) -> FrameOut {
     // The units a panicking walker may charge (`BigParams::panic`): the
     // cells the GPU's squad buffer holds (`pack`).
     d.threats = f.units.iter().take(UNITS_MAX).map(|u| cell_of(d.w, d.h, u.x, u.y)).collect();
-    let shots = shots(d, &f.shots, f.slime, f.crater, f.sink, (f.spray, f.spray_speed, f.spray_share));
+    let shots = shots_seeking(d, &f.shots, &f.catch, f.slime, f.crater, f.sink, (f.spray, f.spray_speed, f.spray_share));
     smell(d, &f.units);
     for _ in 0..ticks {
         d.tick();
@@ -844,8 +951,12 @@ pub fn pack(w: usize, h: usize, f: &Frame) -> (Vec<u32>, u32, u32) {
     for (q, s) in shots.iter().enumerate() {
         let p = path(w, h, s.from, s.to);
         let p = &p[..p.len().min(PATH_MAX - cells.len())];
-        // The fourth word is the alarm's squared radius (`SHOT_ALARM_R`).
-        b[S_IN + 4 * q..S_IN + 4 * q + 4].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX)), r2(SHOT_ALARM_R * s.r.min(R_MAX))]);
+        // The fourth word is the alarm's squared radius (`SHOT_ALARM_R`, at
+        // most 196) in its low 16 bits and the shot's seek (`Frame::catch`:
+        // `SEEKS`, `CATCH`) in its high 16, so the shader's `SqShot` keeps
+        // its four words.
+        let catch = f.catch.get(q).copied().unwrap_or(0) as u32;
+        b[S_IN + 4 * q..S_IN + 4 * q + 4].copy_from_slice(&[cells.len() as u32, p.len() as u32, r2(s.r.min(R_MAX)), r2(SHOT_ALARM_R * s.r.min(R_MAX)) | catch << 16]);
         cells.extend_from_slice(p);
     }
     for q in 0..SHOTS_MAX {
@@ -913,6 +1024,54 @@ mod tests {
         assert_eq!(p, vec![0, 1, 2, 3]);
         let q = path(10, 10, (8.5, 5.5), (14.0, 5.5));
         assert_eq!(q, vec![58, 59]);
+    }
+
+    /// A seeking shot (`Frame::catch`, owner 2026-11-16 19:38Z) strikes
+    /// slime beside its line that a plain shot flies past; it takes the
+    /// first along the line, nearest and plus side first; a wall between
+    /// hides the slime; a line that hits keeps its hit; nothing past the
+    /// wall the line ends at counts; and a seeker stops at a walker whose
+    /// trail is too faint to stop a plain shot.
+    #[test]
+    fn a_seeking_shot_strikes_slime_beside_its_line() {
+        let (w, h) = (10, 10);
+        let line: Vec<u32> = (40..48).collect(); // row 4, x 0..7
+        let mut agar = vec![true; w * h];
+        let mut slime = vec![false; w * h];
+        slime[3 * w + 5] = true; // one row up from x 5
+        slime[7 * w + 2] = true; // three rows down from x 2
+        let at = |slime: &Vec<bool>, agar: &Vec<bool>, reach| trace(w, h, &line, reach, true, 0, agar, |i| slime[i], |_| false);
+        assert_eq!(catch_side(w, &line), (0, 1));
+        assert_eq!(at(&slime, &agar, 0), NONE, "a plain shot flies past");
+        assert_eq!(at(&slime, &agar, 1), 35, "one cell out it reaches only the near slime");
+        assert_eq!(at(&slime, &agar, 3), 72, "three out it meets the far slime first along the line");
+        agar[5 * w + 2] = false; // a wall cell between the line and (2, 7)
+        assert_eq!(at(&slime, &agar, 3), 35, "the wall hides (2, 7)");
+        slime[46] = true; // slime on the line, past x 5
+        assert_eq!(at(&slime, &agar, 3), 46, "a line that hits keeps its own hit");
+        slime[46] = false;
+        agar[44] = false; // the line ends at a wall at x 4
+        assert_eq!(at(&slime, &agar, 3), NONE, "nothing beside the line before the wall");
+        agar[44] = true;
+        // Both sides at one distance: the plus side (down) first.
+        let mut two = vec![false; w * h];
+        two[3 * w + 1] = true;
+        two[5 * w + 1] = true;
+        assert_eq!(trace(w, h, &line, 1, true, 0, &vec![true; w * h], |i| two[i], |_| false), 51);
+        // A lone walker whose trail is too faint to stop a shot: a plain
+        // shot flies through it, a seeker strikes it on its line, and one
+        // beside the line within its catch.
+        let none = vec![false; w * h];
+        let mut lone = vec![false; w * h];
+        lone[66] = true; // two rows down from x 6
+        let walk = |lone: &Vec<bool>, reach, walks| trace(w, h, &line, reach, walks, 0, &vec![true; w * h], |i| none[i], |i| lone[i]);
+        assert_eq!((walk(&lone, 0, true), walk(&lone, 1, true), walk(&lone, 2, true)), (NONE, NONE, 66));
+        lone[47] = true; // on the line at x 7
+        assert_eq!((walk(&lone, 0, false), walk(&lone, 0, true), walk(&lone, 2, true)), (NONE, 47, 47), "on its line first");
+        // Behind slime on its line, a walker on the line before it.
+        let mut far = vec![false; w * h];
+        far[46] = true;
+        assert_eq!(trace(w, h, &line, 0, true, 0, &vec![true; w * h], |i| far[i], |i| i == 43), 43);
     }
 
     #[test]

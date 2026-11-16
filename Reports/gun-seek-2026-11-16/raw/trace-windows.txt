@@ -1,0 +1,33 @@
+window         plain hits/shots kill sold    catch2 hits/shots kill sold    catch4 hits/shots kill sold catch2turn hits/shots kill sold
+greedy-5             41/49   k49     s9             40/41   k56     s9             40/40   k61     s9             41/41   k58     s9  
+greedy-11            60/80   k73     s9             62/71   k72     s9             66/70   k71     s9             53/62   k69     s9  
+hold-10              28/57   k86     s8             42/63   k45     s8             47/58   k59     s8             46/66   k43     s8  
+hold-30              70/70   k471    s7             70/70   k266    s7             70/70   k250    s7             70/70   k269    s7  
+p1g2-10               0/0    k0      s8              0/0    k0      s8              0/0    k0      s8              0/0    k0      s8  
+p1g2-25              25/32   k25     s8             16/16   k17     s8             12/13   k14     s8             21/21   k21     s8  
+p1g2-40              14/16   k16     s8             18/19   k16     s8             15/15   k15     s8             16/16   k15     s8  
+p1g3-10              27/34   k42     s8             17/22   k25     s8             22/28   k25     s8             23/25   k24     s8  
+p1g3-25              23/33   k23     s8             23/24   k24     s8             23/24   k24     s8             24/24   k24     s8  
+p1g3-40              30/39   k46     s8             37/40   k49     s8             33/35   k49     s8             40/40   k49     s8  
+p1s1-10               0/0    k0      s8              0/0    k0      s8              0/0    k0      s8              0/0    k0      s8  
+p1s1-25              15/20   k29     s8             18/19   k25     s8             19/20   k27     s8             19/19   k23     s8  
+p1s1-40              32/33   k91     s8             29/29   k96     s8             26/26   k74     s8             29/29   k96     s8  
+p2s1-10              21/25   k16     s8             28/31   k17     s8             27/29   k20     s8             21/21   k18     s8  
+p2s1-25              27/32   k46     s8             22/24   k38     s8             24/26   k34     s8             37/39   k56     s8  
+p2s1-40              34/41   k71     s8             31/31   k59     s8             34/34   k62     s8             43/43   k72     s8  
+p3g4-10               0/0    k0      s8              0/0    k0      s8              0/0    k0      s8              0/0    k0      s8  
+p3g4-25               0/0    k0      s8              0/0    k0      s8              0/0    k0      s8              0/0    k0      s8  
+p3g4-40               9/12   k11     s8              8/8    k10     s8              8/8    k10     s8              8/8    k10     s8  
+
+thin  plain      hits 358/446 = 80.3%, killed 538
+thin  catch2     hits 349/375 = 93.1%, killed 504
+thin  catch4     hits 349/368 = 94.8%, killed 486
+thin  catch2turn hits 375/388 = 96.6%, killed 535
+thick plain      hits 98/127 = 77.2%, killed 557
+thick catch2     hits 112/133 = 84.2%, killed 311
+thick catch4     hits 117/128 = 91.4%, killed 309
+thick catch2turn hits 116/136 = 85.3%, killed 312
+
+thin windows, catch2 against plain: hit rate higher 12, lower 1 (sign p=0.003); kills higher 5, lower 7 (sign p=0.774)
+thin windows, catch4 against plain: hit rate higher 12, lower 1 (sign p=0.003); kills higher 4, lower 9 (sign p=0.267)
+thin windows, catch2turn against plain: hit rate higher 13, lower 0 (sign p=0.000); kills higher 7, lower 6 (sign p=1.000)

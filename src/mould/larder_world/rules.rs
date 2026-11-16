@@ -134,11 +134,21 @@ pub struct Rules {
     /// seeks at once. `seek_min` 1, not 2: the misses it rescues are mostly
     /// at lone walkers (with 2, squads guarding against thin slime missed
     /// as often as with no card).
+    ///
+    /// **Off by default** (`seek_turn` 0, 2026-11-16): the owner picked
+    /// homing in the shot trace (19:38Z), and its catch (`seek_catch` dish
+    /// cells a card either side of the line where the bullet reaches its
+    /// aim point and on its last leg, `Game::catches`) hit 89.1% of shots
+    /// on thin slime against 80.3% with no card (13 of 13 paired windows),
+    /// killing 554 against 538; adding this turn at 0.45 left hits at 89.4%
+    /// and kills at 543 (`Reports/gun-seek-2026-11-16`). `set=seek_turn=0.45`
+    /// turns it back on.
     pub seek_after: f32,
     pub seek_r: f32,
     pub seek_cone: f32,
     pub seek_min: u32,
     pub seek_gap: f32,
+    pub seek_catch: f32,
     pub seek_turn: f32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
@@ -621,6 +631,7 @@ impl Rules {
             "seek_cone" => &mut self.seek_cone,
             "seek_turn" => &mut self.seek_turn,
             "seek_gap" => &mut self.seek_gap,
+            "seek_catch" => &mut self.seek_catch,
             "pump_smell" => &mut self.build.pump_smell,
             "lure_smell" => &mut self.build.lure_smell,
             "lure_r" => &mut self.build.lure_r,
@@ -677,7 +688,8 @@ impl Default for Rules {
             seek_cone: 1.0,
             seek_min: 1,
             seek_gap: 2.0,
-            seek_turn: 0.45,
+            seek_catch: 2.0,
+            seek_turn: 0.0,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,

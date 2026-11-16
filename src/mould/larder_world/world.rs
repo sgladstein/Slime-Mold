@@ -128,6 +128,12 @@ pub trait World {
     /// Fine steps a tick (`BigParams::substeps`), for rules timed in
     /// fine-step fields (`Rules::crater`).
     fn fine_steps(&self) -> u32;
+    /// A walker's step in fine cells a fine step (`BigParams::step`): a
+    /// flung or pushed walker flies `fling_speed` of them a fine step, so a
+    /// push that must stop short (`Card::Pull`) sets its length by it.
+    fn walker_step(&self) -> f32 {
+        1.0
+    }
     fn hash(&self) -> u64;
     /// Walkers on each `bin` x `bin` square of fine cells, row by row (the
     /// tube a player sees on screen, coarsened), for the player AI's eyes
@@ -314,6 +320,10 @@ impl World for BigDish {
 
     fn fine_steps(&self) -> u32 {
         self.p.substeps as u32
+    }
+
+    fn walker_step(&self) -> f32 {
+        self.p.step
     }
 
     fn hash(&self) -> u64 {

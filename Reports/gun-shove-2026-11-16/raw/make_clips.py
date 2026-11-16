@@ -9,7 +9,9 @@ FILMS_DIR holds one folder a clip made by film.sh (`larder-world look=DIR
 frames (`*-near.png`, by their game time) become an H.264 MP4 at 30 frames
 a second; its first and last count lines (the game's shots and kills; the
 rounds' casts by payload, kills, walkers thrown and gassed, carried casts
-let out, shoves, turret kills) are printed as JSON for the page. A folder whose name ends in
+let out, shoves, turret kills; and, from pull-films.sh on, the same since
+the first count line and the pulls too near to pull) are printed as JSON
+for the page. A folder whose name ends in
 `-10s` has no frames: only its counts, over 10 s.
 """
 import json
@@ -55,6 +57,14 @@ def counts(log):
             gassed=int(r1[6]),
             shoves=int(r1[7]),
             turret_killed=int(r1[8]),
+        )
+        # From the first count line (Pull stopping short, pull-films.sh:
+        # the march clips load at 12 s and film from 17 s).
+        r0 = rounds[0]
+        short = [int(x) for x in re.findall(r"(\d+) pulls too near to pull", log)]
+        out.update(
+            since_first=dict(from_t=int(r0[0]), thrown=int(r1[4]) - int(r0[4]), shoves=int(r1[7]) - int(r0[7]), turret_killed=int(r1[8]) - int(r0[8]),
+                             too_near=short[-1] - short[0] if short else None),
         )
     return out
 

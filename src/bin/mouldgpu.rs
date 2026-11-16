@@ -4364,7 +4364,7 @@ mod tests {
             ("plain, a cut-off part charges the squad", scared, 0, 0.0, 0, 1.0),
             ("plain, condensed walkers take two shots and touch as two", dense.clone(), 0, 0.0, 0, 1.0),
             ("plain, sinking shots spray the slime they kill", base.clone(), 20, 1.0, 3, 1.0),
-            ("plain, a third of the kills spray", base, 0, 0.0, 3, 0.33),
+            ("plain, a third of the kills spray", base.clone(), 0, 0.0, 3, 0.33),
             ("spores and dormancy, the spray", life, 0, 0.0, 3, 1.0),
             ("condensed walkers break, the rest spray", dense, 0, 0.0, 3, 1.0),
             ("plain, the body surges at the squad", surge, 0, 0.0, 0, 1.0),
@@ -4374,6 +4374,17 @@ mod tests {
             ("plain, a raid round walls (its walking distance)", raid_walls, 0, 0.0, 0, 1.0),
             ("plain, a mini-boss's members take four blows and bite as three", boss.clone(), 0, 0.0, 0, 1.0),
             ("a mini-boss, the spray", boss, 0, 0.0, 3, 1.0),
+            // And seeking shots (`Frame::catch`, the gun-system review's
+            // step C, 2026-11-16): every shot stops at live walkers on its
+            // line too, and one whose line misses strikes the first slime or
+            // walker 3 cells either side, plain and with craters and the
+            // sink (a shot caught beside is not sunk).
+            ("plain, seeking shots catch slime beside their line", base.clone(), 0, 0.0, 0, 1.0),
+            ("plain, seeking shots with craters and the sink", base.clone(), 20, 1.0, 0, 1.0),
+            // And through trail too faint to stop any shot: a plain shot
+            // strikes nothing, a seeker the first live walker on or beside
+            // its line.
+            ("plain, seeking shots strike walkers through faint trail", base, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4575,7 +4586,11 @@ mod tests {
             if s.raid_at > 0 {
                 eprintln!("squad, {name}: {raiding} walkers raid, {charging} stale ones charge");
             }
-            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7, spray_share: share };
+            let seeking = name.contains("seeking");
+            let catch = if seeking { vec![squad::SEEKS | 3; shots.len()] } else { Vec::new() };
+            // No trail stops a shot: only a seeker's walkers do.
+            let slime = if name.contains("faint") { 1.0e9 } else { slime };
+            let f = Frame { units, shots, slime, crater, sink, spray, spray_speed: 0.7, spray_share: share, catch };
             // Two ticks with the spray (a fine step each here), so the
             // droplets that fly 2 steps land and those that fly 3 still fly.
             let ticks = if spray > 0 { 2 } else { 1 };
@@ -4587,10 +4602,14 @@ mod tests {
             let pre = (spray > 0).then(|| cpu.clone());
             // Where the shots would land without the sink, to check it moves
             // some of them.
-            let edge = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, 0.0, (f.spray, f.spray_speed, f.spray_share));
+            let edge = squad::shots_seeking(&mut cpu.clone(), &f.shots, &f.catch, slime, crater, 0.0, (f.spray, f.spray_speed, f.spray_share));
+            // And where they would land without the catch.
+            let straight = squad::shots(&mut cpu.clone(), &f.shots, slime, crater, sink, (f.spray, f.spray_speed, f.spray_share));
             let cpu_out = squad::frame(&mut cpu, &f, ticks);
             let sunk = edge.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
             assert_eq!(sunk > 0, sink > 0.0, "{name}: {sunk} hits sunk by the sink");
+            let caught = straight.iter().zip(&cpu_out.shots).filter(|(a, b)| a.hit != b.hit).count();
+            assert_eq!(caught > 0, seeking, "{name}: {caught} hits caught beside the line");
             let gpu_out = e.squad_out();
             let kills: u32 = cpu_out.shots.iter().map(|q| q.killed).sum();
             assert_eq!(cpu_out.shots[again].hit, cpu_out.shots[0].hit, "the repeated shot hits where the first did");
@@ -4604,7 +4623,9 @@ mod tests {
                 cpu_out.units.iter().map(|u| u.touching).collect::<Vec<_>>()
             );
             assert_eq!(gpu_out, cpu_out, "the squad's outputs");
-            assert!(kills > 0 && walled > 0, "shots kill, and a wall stops one");
+            // A seeking shot can catch the slime beside its line before the
+            // wall.
+            assert!(kills > 0 && (walled > 0 || seeking), "shots kill, and a wall stops one");
             assert!(cpu_out.units[0].touching > 0 && cpu_out.units[0].target.is_some() && cpu_out.units[0].dense > 0, "the unit in the mould is touched and aims at walkers it counts");
             assert!(took[1] == 3000.0 && took[2] > 0.0 && took[2] < 3000.0 && took[3..].iter().any(|&t| t > 0.0), "units harvest; the second on a patch gets what the first left");
             assert!(took[wide] == 60.0 && took[wide + 1] > 0.0 && took[wide + 1] < 1.0e6 && cpu_out.units[wide].target.is_some(), "the wide discs harvest, stopping when full or taking all they reach");

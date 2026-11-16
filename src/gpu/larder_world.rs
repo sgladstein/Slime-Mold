@@ -989,6 +989,10 @@ impl World for GpuWorld {
         self.sub
     }
 
+    fn walker_step(&self) -> f32 {
+        self.s.step
+    }
+
     /// As of the last whole game second (`GRID_EVERY`): once asked for,
     /// the GPU sums the square into the readout once a game second; a
     /// first ask, or a new square, is read back once. The CPU world's grid
@@ -1184,6 +1188,9 @@ mod tests {
         }
         fn fine_steps(&self) -> u32 {
             self.g.fine_steps()
+        }
+        fn walker_step(&self) -> f32 {
+            self.g.walker_step()
         }
         fn hash(&self) -> u64 {
             self.g.hash()

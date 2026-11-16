@@ -1,0 +1,29 @@
+window         plain hits/shots kill sold      walk hits/shots kill sold  walkturn hits/shots kill sold walkturn2 hits/shots kill sold
+greedy-5             41/49   k49     s9             41/49   k49     s9             34/43   k54     s9             34/43   k54     s9  
+greedy-11            60/80   k73     s9             60/80   k73     s9             51/71   k73     s9             51/71   k73     s9  
+hold-10              28/57   k86     s8             28/57   k86     s8             31/62   k59     s8             36/53   k98     s8  
+hold-30              70/70   k471    s7             70/70   k471    s7             70/70   k461    s7             70/70   k461    s7  
+p1g2-25              25/32   k25     s8             25/32   k25     s8             17/24   k18     s8             17/24   k18     s8  
+p1g2-40              14/16   k16     s8             14/16   k16     s8             23/28   k25     s8             22/28   k23     s8  
+p1g3-10              27/34   k42     s8             27/34   k42     s8             14/18   k22     s8             14/18   k22     s8  
+p1g3-25              23/33   k23     s8             23/33   k23     s8             23/30   k25     s8             23/30   k25     s8  
+p1g3-40              30/39   k46     s8             30/39   k46     s8             35/49   k52     s8             35/49   k52     s8  
+p1s1-25              15/20   k29     s8             15/20   k29     s8             20/21   k34     s8             20/21   k34     s8  
+p1s1-40              32/33   k91     s8             32/33   k91     s8             32/32   k101    s8             32/32   k101    s8  
+p2s1-10              21/25   k16     s8             21/25   k16     s8             25/32   k24     s8             26/32   k24     s8  
+p2s1-25              27/32   k46     s8             27/32   k46     s8             36/41   k53     s8             31/33   k48     s8  
+p2s1-40              34/41   k71     s8             34/41   k71     s8             36/41   k71     s8             38/41   k75     s8  
+p3g4-40               9/12   k11     s8              9/12   k11     s8             10/10   k15     s8             10/10   k15     s8  
+
+thin  plain      hits 358/446 = 80.3%, killed 538
+thin  walk       hits 358/446 = 80.3%, killed 538
+thin  walkturn   hits 356/440 = 80.9%, killed 567
+thin  walkturn2  hits 353/432 = 81.7%, killed 564
+thick plain      hits 98/127 = 77.2%, killed 557
+thick walk       hits 98/127 = 77.2%, killed 557
+thick walkturn   hits 101/132 = 76.5%, killed 520
+thick walkturn2  hits 106/123 = 86.2%, killed 559
+
+thin windows, walk against plain: hit rate higher 0, lower 0 (sign p=1.000); kills higher 0, lower 0 (sign p=1.000)
+thin windows, walkturn against plain: hit rate higher 6, lower 7 (sign p=1.000); kills higher 9, lower 2 (sign p=0.065)
+thin windows, walkturn2 against plain: hit rate higher 6, lower 7 (sign p=1.000); kills higher 10, lower 2 (sign p=0.039)

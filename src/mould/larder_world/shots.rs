@@ -24,13 +24,14 @@ impl<W: World> Game<W> {
     /// ended early at the first wall or rock (`World::open`, checked a fine
     /// cell at a time, so a bullet never jumps a thin wall). Returns the
     /// legs and, for each, who fired it, whether it was fired now and the
-    /// cast it carries (`by` gives who and the cast of each fired shot).
-    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[(Option<usize>, u8)], dt: f32) -> (Vec<ShotIn>, Vec<LegBy>) {
+    /// cast it carries (`by` gives who and the cast of each fired shot,
+    /// `aims` how far each was aimed: `Bullet::aim`, infinite if missing).
+    pub(super) fn fly(&mut self, fired: Vec<ShotIn>, by: &[(Option<usize>, u8)], aims: &[f32], dt: f32) -> (Vec<ShotIn>, Vec<LegBy>) {
         let r = self.rules;
         if r.bullet_speed <= 0.0 {
             return (fired, by.iter().map(|&(b, c)| (b, true, c)).collect());
         }
-        for (s, &(b, cast)) in fired.iter().zip(by) {
+        for (q, (s, &(b, cast))) in fired.iter().zip(by).enumerate() {
             if self.bullets.len() >= squad::SHOTS_MAX {
                 self.bullets_dropped += 1;
                 continue;
@@ -45,9 +46,9 @@ impl<W: World> Game<W> {
             let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
             // The cast it carries (`Card::Trigger`), if its cast is a carrier.
             let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0 });
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY) });
         }
-        if self.bullets.iter().any(|b| b.seek > 0) {
+        if r.seek_turn > 0.0 && self.bullets.iter().any(|b| b.seek > 0) {
             self.steer();
         }
         let leg = r.bullet_speed * self.s() * dt;
@@ -72,6 +73,49 @@ impl<W: World> Game<W> {
             who.push((b.by, b.fresh, b.cast));
         }
         (legs, who)
+    }
+
+    /// Each leg's seek (`squad::Frame::catch`): `squad::SEEKS` for a
+    /// bullet with a seek card (`Bullet::seek`, or with `Rules::bullet_speed`
+    /// 0 the shooter's squad's), so it stops at live walkers; and its catch,
+    /// the cards times `Rules::seek_catch` dish cells, on the legs that pass
+    /// within that of its aim point (`Bullet::aim`) and on its last (the one
+    /// that ends its range or meets a wall; `fly` has cut `Bullet::left` at
+    /// the wall). Empty with no seeker, so a frame without one packs as
+    /// before.
+    ///
+    /// Every leg caught at first (2026-11-16): a bullet flies about 1.5
+    /// dish cells a frame, so a leg short of the slime "missed" on every
+    /// frame of its flight, and seekers struck the thin fringe beside
+    /// their line on the way instead of the slime they were aimed at. On
+    /// the Fork's thick front every shot hit either way and kills fell from
+    /// 471 to 327 in 10 s (`Reports/gun-seek-2026-11-16`).
+    pub(super) fn catches(&self, by: &[LegBy], dt: f32) -> Vec<u16> {
+        let r = self.rules;
+        let per = r.seek_catch * self.s();
+        let n = |seek: u8, last: bool| match seek {
+            0 => 0,
+            _ if !last => squad::SEEKS,
+            _ => squad::SEEKS | (seek as f32 * per).round().clamp(0.0, squad::CATCH as f32) as u16,
+        };
+        let catch: Vec<u16> = if r.bullet_speed > 0.0 {
+            let leg = r.bullet_speed * self.s() * dt;
+            self.bullets
+                .iter()
+                .map(|b| {
+                    let (len, near) = ((leg * b.speed).min(b.left), b.seek as f32 * per);
+                    let at_aim = b.flown + len >= b.aim - near && b.flown <= b.aim + near;
+                    n(b.seek, at_aim || leg * b.speed >= b.left - 1e-3)
+                })
+                .collect()
+        } else {
+            by.iter().map(|&(k, _, _)| k.map_or(0, |k| n(self.mods(self.soldiers[k].squad as usize).seek, true))).collect()
+        };
+        if catch.iter().all(|&c| c == 0) {
+            Vec::new()
+        } else {
+            catch
+        }
     }
 
     /// After a frame with bullets: a bullet that hit is spent, and the rest
@@ -128,7 +172,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: r.seek_after * sc });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: r.seek_after * sc, aim: f32::INFINITY });
                     }
                 }
                 return false;
@@ -213,7 +257,7 @@ impl<W: World> Game<W> {
                 let (sn, cs) = a.sin_cos();
                 let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
                 let pierce = m.pierce.saturating_add(shape.pierce);
-                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: self.rules.seek_after * self.s() });
+                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: self.rules.seek_after * self.s(), aim: f32::INFINITY });
             }
         }
     }

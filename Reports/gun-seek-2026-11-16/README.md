@@ -6,14 +6,129 @@ after the [trigger cards](../gun-triggers-2026-11-16/README.md) and
 [multicast](../gun-multicast-2026-11-16/README.md).
 
 Page: [Seeking Bullets](https://claude.ai/artifact/JxxzYTtiug3oNrhfwX3b7J) (source in `page/`;
-version 3 leads with misses, the first try and the fly-over prototype below).
+version 4 leads with homing in the shot trace, the owner's pick; versions
+3, 2 and the fly-over prototype below).
 
-Status: **Seek rebuilt (version 3), not merged.** In paired windows it adds
-about 6% kills against thin slime and does not cut misses; that is not the
-clear benefit the owner asked for, so the owner is asked whether to drop
-it, keep it small, or build homing into the shot trace (last section).
+Status: **Seek as homing in the shot trace (version 8), for merge.** A
+seeking bullet that reaches the point its soldier aimed at with nothing on
+its line strikes the slime or walker beside it there. On thin slime it hits
+**89.1% of shots against 80.3%** with no card (higher in 13 of 13 paired
+windows, sign test p < 0.001; misses 88 to 47) and kills 554 against 538
+(9 windows more, 3 fewer; p = 0.15, not significant). On the Fork's thick
+front it changes nothing (557 against 552 killed). The earlier grid
+steering is off by default (`seek_turn` 0).
 
-## The owner's answer (14:24Z)
+## Homing in the shot trace (the owner's pick, 19:38Z)
+
+The owner chose "Build homing into the shot trace" ("Both engines bend a
+seeking bullet cell by cell toward the thickest slime it passes, using live
+slime") and asked to see hit % beside slime killed ("I would check % hits
+alongside slime killed", 19:38Z).
+
+### What was built
+
+- **The engines** (`squad::trace`, the GPU `shots` pass; exact twins):
+  each shot carries a seek word (`Frame::catch`: `squad::SEEKS`, and its
+  catch width in fine cells, `squad::CATCH`; packed in the high 16 bits of
+  the shader's `SqShot.ar2`). A seeking shot stops at a live walker on its
+  line as well as at slime's look (sunk as any hit), and one whose line
+  misses looks out its catch either side, across the line's longer axis,
+  nearest first, a side ending at a wall, and strikes the first cell that
+  stops a shot or holds a walker (`squad::caught`), not sunk. A line that
+  hits keeps its own hit.
+- **The game** (`Game::catches`): a bullet with a seek card gets `SEEKS` on
+  every leg; its catch (`Rules::seek_catch` 2 dish cells a card) only on
+  the legs that pass within the catch of its aim point and on its last.
+  `Bullet::aim` is how far its soldier aimed: a soldier's bullet flies on
+  to its full range, so its aim point is where its target was.
+- `Rules::seek_turn` 0: version 3's grid steering (`Game::steer`) stays as a
+  key (`set=seek_turn=0.45`) but is off; on top of the catch it added
+  nothing (below).
+- Tests: `squad::tests::a_seeking_shot_strikes_slime_beside_its_line`,
+  `larder_world::tests::a_seekers_catch_rides_its_aim_and_last_leg`, and
+  three seeking cases in the `mouldgpu` twin (`the_squad_matches_the_cpu_for_one_frame`:
+  catch, craters and the sink, and trail too faint to stop any shot, where
+  16 of 19 seekers struck walkers); GPU equals CPU in all.
+- Cost: no seeker, no work (the catch list is empty and packs as before).
+  A seeker's leg near its aim point checks up to 2 x catch cells beside each
+  line cell, on the GPU's shots pass (one thread a shot); `Game::catches` is
+  one pass over the bullets. 1070 timing: booked with the PR.
+
+### Paired windows (the deciding measure)
+
+`raw/aim-windows.sh`, `raw/aim-windows.txt`, `raw/trace_table.py`: one game
+with no cards to T, then each variant for 10 s; 13 thin-slime windows (five
+planet scenes at 10, 25 and 40 s with shots, the Fork's greedy game at 5
+and 11 s) and the Fork's thick front at 10 and 30 s. Plain shots here match
+version 3's run exactly (538 killed, 446 shots), so the build leaves plain
+shots as they were.
+
+| Thin slime, 13 windows | Hits of shots | Misses | Killed |
+|---|---|---|---|
+| No card | 358 of 446 (80.3%) | 88 | 538 |
+| **Seek, catch 2 (as built)** | **385 of 432 (89.1%)** | **47** | **554** |
+| Seek, catch 4 | 376 of 405 (92.8%) | 29 | 536 |
+| Seek, catch 2 and the grid steering | 355 of 397 (89.4%) | 42 | 543 |
+
+| Paired against no card (13 thin windows) | Hit rate higher / lower | Kills higher / lower |
+|---|---|---|
+| catch 2 | 13 / 0 (p < 0.001) | 9 / 3 (p = 0.15) |
+| catch 4 | 13 / 0 (p < 0.001) | 7 / 4 (p = 0.55) |
+| catch 2 and steering | 10 / 3 (p = 0.09) | 8 / 5 (p = 0.58) |
+
+The hit-rate rise for catch 2 and catch 4 (p = 0.0002 each) survives a
+Bonferroni correction over this run's six comparisons and over all 24 of
+the full paired runs for versions 4-8 (0.05 / 24 = 0.002); no kill
+difference does. The thick front (two windows): hits 98 of 127 (77.2%)
+against 105 of 127 (82.7%), killed 557 against 552.
+
+A rescued miss strikes a lone walker or the edge of a thin patch, so hits
+rise far more than kills. Seekers also fired fewer shots (432 against 446):
+the soldiers' aims follow the slime, and the fights part after T.
+
+### Films
+
+Version 3's scenes and scripts (`raw/trace-films.sh`, `raw/trace-counts.json`,
+clips `page/trace-*.mp4`): one game with no cards to T, then 4 s of plain or
+seek+plain, near view at zoom 6, llvmpipe; and the same pair over 10 s.
+Shots still in flight at the end count as neither hit nor miss.
+
+| From T | Shots | Hits | Missed | Killed |
+|---|---|---|---|---|
+| Guard squad, planet 1 seed 3, 40-44 s, plain | 16 | 12 | 4 | 21 |
+| same, seek | 17 | 14 | 3 | 19 |
+| same, 40-50 s, plain | 39 | 30 | 9 | 46 |
+| same, 40-50 s, seek | 49 | 42 | 7 | 44 |
+| The Fork's greedy squad, 12-16 s, plain | 35 | 26 | 5 | 35 |
+| same, seek | 35 | 28 | 7 | 43 |
+| same, 12-21 s, plain | 71 | 53 | 19 | 65 |
+| same, 12-21 s, seek | 72 | 55 | 14 | 69 |
+
+### On the way (versions 4-7, each a paired run)
+
+| Version | Thin: hits, killed | Thick: killed | Why it was changed |
+|---|---|---|---|
+| No card | 80.3%, 538 | 557 | |
+| 4: catch beside the line at every cell, before the line's own hit | 93.1%, 504 (catch 2) | 311 | Struck the thin fringe beside the line instead of sinking into the body (hold-30: 471 to 266) |
+| 5a: catch only when a leg's line misses | (stopped at 26 of 110 runs) | 377 | A bullet flies 1.5 dish cells a frame, so every leg short of the slime "missed": the same fringe |
+| 5b: catch on the bullet's last leg only | 80.0% (6 windows) | 557 | Kept every plain hit, rescued nothing |
+| 6: last leg, walkers too | 80.5%, 548 | 560 | A soldier's bullet flies to its full range: its last leg is far past its target |
+| 7: stop at live walkers on the line | identical to no card | 557 | Missed bullets pass beside their target, not through its walkers |
+| 7 with the grid steering | 80.9%, 567 | 520 | Kills +5% (9 / 2, p = 0.065), hits unchanged |
+| **8: catch at the aim point** | **89.1%, 554** | **552** | Built |
+
+Raw: `raw/trace-windows.sh` and `.txt` (4), `raw/line-windows-every-leg.txt`
+(5a), `raw/line-windows-last-leg.txt` (5b), `raw/line-windows.sh` and
+`raw/line-windows-last-leg-walkers.txt` (6), `raw/walk-windows.sh` and
+`.txt` (7). Versions 4-7 ran with the code at each step, which is not kept
+in a commit; `squad::trace`'s and `Game::catches`'s comments record each.
+
+## Version 3: homing by the mould grid (as reported before)
+
+Version 3's report as it stood. Its last section, "Asked of the owner",
+was answered at 19:38Z: homing in the shot trace (above).
+
+### The owner's answer (14:24Z)
 
 To the first try's question: seeking the slime that feeds on a crystal is
 pointless ("the rest of the slime will just immediately surge back to the
@@ -22,7 +137,7 @@ specific card"; homing on the densest slime risks bullets that "avoid all
 the individual walkers in front"; "Homie needs to be a clear benefit. I
 mean, how often do soldiers you're not controlling miss their target".
 
-## How often squads on their own miss
+### How often squads on their own miss
 
 A miss here is a soldier's bullet that ends its range, or hits a wall or
 rock, having struck no slime (`Game::missed_range`, `Game::missed_wall`,
@@ -53,7 +168,7 @@ scenes, sign test p = 0.03), but each row is two whole games that part at
 0.5 s, so the two columns are different fights. The paired windows below
 did not reproduce it.
 
-## Paired windows (the deciding measure)
+### Paired windows (the deciding measure)
 
 One game with no cards to T, then plain or seek+plain for 10 s, so both
 start from the same fight (`raw/miss-windows.sh`, `raw/miss-windows.txt`,
@@ -72,7 +187,10 @@ The Fork's thick front (windows at 10 and 30 s): 29 of 127 missed against
 31 of 132, 557 killed against 520. Seek gives a few percent more kills
 against thin slime (not significant) and leaves misses where they were.
 
-## Why homing cannot fix the misses
+### Why homing cannot fix the misses
+
+(Version 3's reasoning. The trace can: version 8 strikes where the bullet
+reaches its target, from the live slime, and halves the misses.)
 
 - The game steers by the mould grid: walkers counted per dish cell, a
   game second old on the GPU (`GRID_EVERY`). A bullet stops on trail at
@@ -88,7 +206,7 @@ against thin slime (not significant) and leaves misses where they were.
   now skipped (`Game::turn_to`), but some still end on walls after their
   mark turns out empty (7 of 71 in one window against 4).
 
-## What was built
+### What was built
 
 - **`Card::Seek`** (kind "Always", cost 2, tier 2; `Game::steer`, before
   each frame's legs): every bullet of the squad, once it has flown
@@ -121,7 +239,7 @@ against thin slime (not significant) and leaves misses where they were.
   CPU, three scenes: 49, 84 and 58 µs a frame on average, 4-12 bullets),
   nothing without them.
 
-## Films
+### Films
 
 Paired clips from one game (`raw/miss-films.sh`, `raw/miss-counts.json`):
 no cards to T, then 4 s of plain or seek+plain at 30 frames a second,
@@ -141,7 +259,7 @@ the near view at zoom 6, llvmpipe; and the same pair counted over 10 s.
 The 40-50 s seek count ran before the wall check; the 4 s clips show the
 bend; the counts swing both ways.
 
-## Tried and dropped
+### Tried and dropped
 
 - **Turning only a bullet with no walker on its line** (what the owner was
   told at 14:24Z: "bend only when nothing is left on its line"). The grid
@@ -161,7 +279,7 @@ bend; the counts swing both ways.
 - **The first try** (seek_min 2, on the thick front) and **the fly-over
   prototype**: below, as they were.
 
-## Asked of the owner
+### Asked of the owner
 
 Homing does not clear the owner's bar. Options: drop homing and go on to
 step D, keeping the miss counters (recommended: the most any homing can
@@ -269,7 +387,10 @@ homing and go on to step D.
 
 ## Files
 
-- `page/index.html` and its clips: the Artifact page's source.
+- `page/index.html` and its clips: the Artifact page's source (version 8's
+  clips `trace-*.mp4`).
+- `raw/aim-windows.sh`, `raw/aim-windows.txt`, `raw/trace_table.py`: version 8's paired windows; versions 4-7's runs are listed in their section.
+- `raw/trace-films.sh`, `raw/trace-counts.json`: version 8's paired clips and 10 s counts.
 - `raw/miss-census.txt`, `raw/census_table.py`: the one-game-a-scene miss runs, every variant's last count lines.
 - `raw/miss-windows.sh`, `raw/miss-windows.txt`, `raw/windows_table.py`: the paired windows.
 - `raw/miss-films.sh`: version 3's paired clips and 10 s counts.

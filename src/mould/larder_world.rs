@@ -242,6 +242,11 @@ pub struct Bullet {
     /// flown (fine cells): it turns once that is `Rules::seek_after`.
     pub seek: u8,
     pub flown: f32,
+    /// How far from its muzzle it reaches the point its soldier aimed at
+    /// (fine cells; infinite for a turret's, a split piece or a let-out
+    /// cast): a seeker's catch looks beside its line there
+    /// (`Game::catches`), as a soldier's bullet flies on to its full range.
+    pub aim: f32,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight

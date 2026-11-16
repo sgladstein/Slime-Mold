@@ -1,0 +1,24 @@
+window         plain hits/shots kill sold    catch2 hits/shots kill sold    catch4 hits/shots kill sold catch2turn hits/shots kill sold catch4turn hits/shots kill sold
+greedy-5             41/49   k49     s9             40/50   k57     s9             40/50   k57     s9             34/43   k54     s9             28/31   k33     s9  
+greedy-11            60/80   k73     s9             61/77   k74     s9             61/82   k78     s9             51/71   k73     s9             59/80   k77     s9  
+hold-10              28/57   k86     s8             35/58   k89     s8             36/55   k58     s8             36/53   k98     s8             35/54   k62     s8  
+hold-30              70/70   k471    s7             70/70   k471    s7             70/70   k471    s7             70/70   k461    s7             70/70   k461    s7  
+p1g2-25              25/32   k25     s8             25/32   k25     s8             25/32   k25     s8             17/24   k18     s8             17/24   k18     s8  
+p1g2-40              14/16   k16     s8             14/16   k16     s8             15/16   k17     s8             22/28   k23     s8             22/28   k23     s8  
+p1g3-10              27/34   k42     s8             27/34   k42     s8             28/34   k43     s8             14/18   k22     s8             14/18   k22     s8  
+
+thin  plain      hits 167/211 = 79.1%, killed 205
+thin  catch2     hits 167/209 = 79.9%, killed 214
+thin  catch4     hits 169/214 = 79.0%, killed 220
+thin  catch2turn hits 138/184 = 75.0%, killed 190
+thin  catch4turn hits 140/181 = 77.3%, killed 173
+thick plain      hits 98/127 = 77.2%, killed 557
+thick catch2     hits 105/128 = 82.0%, killed 560
+thick catch4     hits 106/125 = 84.8%, killed 529
+thick catch2turn hits 106/123 = 86.2%, killed 559
+thick catch4turn hits 105/124 = 84.7%, killed 523
+
+thin windows, catch2 against plain: hit rate higher 1, lower 1 (sign p=1.000); kills higher 2, lower 0 (sign p=0.500)
+thin windows, catch4 against plain: hit rate higher 2, lower 2 (sign p=1.000); kills higher 4, lower 0 (sign p=0.125)
+thin windows, catch2turn against plain: hit rate higher 0, lower 5 (sign p=0.062); kills higher 2, lower 2 (sign p=1.000)
+thin windows, catch4turn against plain: hit rate higher 1, lower 4 (sign p=0.375); kills higher 2, lower 3 (sign p=1.000)

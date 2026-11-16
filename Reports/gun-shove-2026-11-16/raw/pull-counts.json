@@ -1,0 +1,234 @@
+{
+ "close-plain": {
+  "mould_at_end": 24388,
+  "soldiers_at_end": 7,
+  "shots": 27,
+  "killed": 199,
+  "health_at_end": 76,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 0,
+  "turret_killed": 78,
+  "since_first": {
+   "from_t": 29,
+   "thrown": 0,
+   "shoves": 0,
+   "turret_killed": 78,
+   "too_near": 0
+  },
+  "frames": 91,
+  "kb": 1127
+ },
+ "close-plain-10s": {
+  "mould_at_end": 24705,
+  "soldiers_at_end": 7,
+  "shots": 89,
+  "killed": 606,
+  "health_at_end": 72,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 0,
+  "turret_killed": 139,
+  "since_first": {
+   "from_t": 29,
+   "thrown": 0,
+   "shoves": 0,
+   "turret_killed": 139,
+   "too_near": 0
+  }
+ },
+ "close-pull": {
+  "mould_at_end": 24342,
+  "soldiers_at_end": 7,
+  "shots": 27,
+  "killed": 247,
+  "health_at_end": 76,
+  "loaded_at": 29.0,
+  "to": 32,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 369,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 1,
+  "turret_killed": 75,
+  "since_first": {
+   "from_t": 29,
+   "thrown": 369,
+   "shoves": 1,
+   "turret_killed": 75,
+   "too_near": 19
+  },
+  "frames": 91,
+  "kb": 1143
+ },
+ "close-pull-10s": {
+  "mould_at_end": 24772,
+  "soldiers_at_end": 7,
+  "shots": 89,
+  "killed": 559,
+  "health_at_end": 73,
+  "loaded_at": 29.0,
+  "to": 39,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 717,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 2,
+  "turret_killed": 122,
+  "since_first": {
+   "from_t": 29,
+   "thrown": 717,
+   "shoves": 2,
+   "turret_killed": 122,
+   "too_near": 67
+  }
+ },
+ "march-plain": {
+  "mould_at_end": 24497,
+  "soldiers_at_end": 8,
+  "shots": 29,
+  "killed": 101,
+  "health_at_end": 99,
+  "loaded_at": 12.0,
+  "to": 20,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 0,
+  "turret_killed": 164,
+  "since_first": {
+   "from_t": 17,
+   "thrown": 0,
+   "shoves": 0,
+   "turret_killed": 59,
+   "too_near": 0
+  },
+  "frames": 91,
+  "kb": 659
+ },
+ "march-plain-10s": {
+  "mould_at_end": 24510,
+  "soldiers_at_end": 8,
+  "shots": 91,
+  "killed": 286,
+  "health_at_end": 97,
+  "loaded_at": 12.0,
+  "to": 22,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 0,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 0,
+  "turret_killed": 166,
+  "since_first": {
+   "from_t": 12,
+   "thrown": 0,
+   "shoves": 0,
+   "turret_killed": 166,
+   "too_near": 0
+  }
+ },
+ "march-pull": {
+  "mould_at_end": 24495,
+  "soldiers_at_end": 8,
+  "shots": 29,
+  "killed": 72,
+  "health_at_end": 99,
+  "loaded_at": 12.0,
+  "to": 20,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 209,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 18,
+  "turret_killed": 152,
+  "since_first": {
+   "from_t": 17,
+   "thrown": 108,
+   "shoves": 12,
+   "turret_killed": 47,
+   "too_near": 7
+  },
+  "frames": 91,
+  "kb": 671
+ },
+ "march-pull-10s": {
+  "mould_at_end": 24524,
+  "soldiers_at_end": 8,
+  "shots": 96,
+  "killed": 282,
+  "health_at_end": 98,
+  "loaded_at": 12.0,
+  "to": 22,
+  "casts": {
+   "blast": 0,
+   "gas": 0,
+   "germ": 0,
+   "bomb": 0
+  },
+  "round_killed": 0,
+  "thrown": 209,
+  "let_out": 0,
+  "gassed": 0,
+  "shoves": 18,
+  "turret_killed": 163,
+  "since_first": {
+   "from_t": 12,
+   "thrown": 209,
+   "shoves": 18,
+   "turret_killed": 163,
+   "too_near": 37
+  }
+ }
+}

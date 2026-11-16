@@ -57,15 +57,67 @@ footer{font-size:.85rem;color:var(--muted)}
 </style>
 <main>
 <header style="display:flex;flex-direction:column;gap:10px">
-  <span class="eyebrow">Larder World · guns · step C · version 3 · 2026-11-16</span>
+  <span class="eyebrow">Larder World · guns · step C · version 4 · 2026-11-16</span>
   <h1>Seeking bullets</h1>
-  <p class="lede">You asked how often soldiers you are not controlling miss. A miss here is a bullet that ends its range, or hits a wall, having struck no slime. Squads on their own miss with about <b>one shot in ten</b> on a thick front and <b>one shot in five</b> against thin slime. I rebuilt Seek to go after those misses: every bullet, after its first 3 cells, bends toward the nearest live slime ahead (a mini-boss first), so it never passes the walkers coming at the squad. Measured fairly, it <b>does not cut misses</b> and adds about 6% kills on thin slime. That is not the clear benefit you asked for; the choice is at the bottom.</p>
+  <p class="lede">You picked homing in the shot trace and asked for hit % beside slime killed. Built in both engines from the live slime: a seeking bullet that reaches the point its soldier aimed at with nothing on its line strikes the slime beside it there. On thin slime, seekers hit <b>89% of shots against 80%</b> with plain bullets (higher in 13 of 13 paired fights; misses 88 down to 47) and kill <b>554 against 538</b>. On a thick front nothing changes. The rescued hits land on thin edges, so kills rise far less than hits.</p>
 </header>
 
 <div class="bar">
   <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
   <span class="hint">Every clip loops. Slow motion shows the bullets bending.</span>
 </div>
+
+<section>
+  <h2>Hits and kills, measured fairly</h2>
+  <p>Each fight plays one game with no cards up to a moment, then splits: plain bullets or Seek for 10 s. Both sides start from the same fight. 13 fights against thin slime (five planet scenes at 10, 25 and 40 s, the Fork's larder at 5 and 11 s) and 2 on the Fork's thick front.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Thin slime, 13 fights</th><th>Hits of shots</th><th>Missed</th><th>Slime killed</th></tr></thead>
+    <tbody>
+      <tr><td>No card</td><td class="num">358 of 446 (80.3%)</td><td class="num">88</td><td class="num">538</td></tr>
+      <tr><td><b>Seek (as built)</b></td><td class="num"><b>385 of 432 (89.1%)</b></td><td class="num"><b>47</b></td><td class="num"><b>554</b></td></tr>
+      <tr><td>Seek, twice as wide a catch</td><td class="num">376 of 405 (92.8%)</td><td class="num">29</td><td class="num">536</td></tr>
+      <tr><td>Seek with the old steering on top</td><td class="num">355 of 397 (89.4%)</td><td class="num">42</td><td class="num">543</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">Seek against no card: hit rate higher in 13 fights, lower in none (sign test p &lt; 0.001; holds after correcting for every comparison I ran today). Kills higher in 9, lower in 3 (p = 0.15, not significant). Thick front: hits 77.2% against 82.7%, killed 557 against 552. The old steering (bending each frame toward a second-old walker count) is now off: on top of the catch it added nothing.</p>
+</section>
+
+<section>
+  <h2>A guard squad, planet 1</h2>
+  <p>Eight soldiers guarding a spot; thin slime comes at them from the east. One game to 40 s, then 4 s of each. Under each: the 4 s clip, then the same fight over 10 s.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="trace-guard-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">16 shots   12 hits   4 missed   killed 21
+10 s: 39 shots  30 hits (77%)  9 missed  killed 46</div></figure>
+    <figure><span class="tag a">seek + plain</span><video src="trace-guard-seek.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">17 shots   14 hits   3 missed   killed 19
+10 s: 49 shots  42 hits (86%)  7 missed  killed 44</div></figure>
+  </div>
+</section>
+
+<section>
+  <h2>The Fork's larder</h2>
+  <p>The greedy squad harvesting at the larder while thin slime reaches it. One game to 12 s, then 4 s of each; the game ends at 21 s.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="trace-fork-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">35 shots   26 hits   5 missed   killed 35
+to 21 s: 71 shots  53 hits  19 missed  killed 65</div></figure>
+    <figure><span class="tag a">seek + plain</span><video src="trace-fork-seek.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">35 shots   28 hits   7 missed   killed 43
+to 21 s: 72 shots  55 hits  14 missed  killed 69</div></figure>
+  </div>
+  <p class="hint">Single fights swing both ways; the table above is the measure. Shots still in flight when a clip ends count as neither hit nor miss.</p>
+</section>
+
+<section class="short">
+  <h2>How it works, and what didn't</h2>
+  <ul>
+    <li><b>A soldier's bullet flies on to its full range.</b> A miss is a bullet that passed beside the walkers it was aimed at, their trail too faint to stop it, and flew on.</li>
+    <li><b>Where it reaches its target</b>, a seeker whose line holds nothing looks 2 cells either side (a card) and strikes the first slime or walker there. Both engines do it from the slime as it is that frame, so the GPU matches the CPU exactly.</li>
+    <li><b>Catching beside the line everywhere</b> (my first build) hit 93% of shots but struck the thin fringe instead of the body: on the thick front kills fell from 471 to 266.</li>
+    <li><b>Catching only at the end of the range</b>, or stopping on walkers on the line, changed nothing: the end of the range is far past the target, and misses pass beside their walkers, not through them.</li>
+  </ul>
+</section>
 
 <section>
   <h2>How often squads on their own miss</h2>
@@ -86,7 +138,12 @@ footer{font-size:.85rem;color:var(--muted)}
 </section>
 
 <section>
-  <h2>Seek, measured fairly</h2>
+  <h2 style="font-size:1.2rem;color:var(--muted)">Version 3, as shown before (grid homing)</h2>
+</section>
+
+
+<section>
+  <h2>Version 3, measured fairly</h2>
   <p>Each window plays one game with no cards up to a moment, then splits: plain bullets or Seek for 10 s. Both sides start from the same fight. 13 windows against thin slime, at 10, 25 and 40 s on five planet scenes and 5 and 11 s at the Fork's larder.</p>
   <div class="tbl"><table>
     <thead><tr><th>13 thin-slime windows</th><th>No card</th><th>Seek</th></tr></thead>
@@ -102,7 +159,7 @@ footer{font-size:.85rem;color:var(--muted)}
 </section>
 
 <section>
-  <h2>A guard squad, planet 1</h2>
+  <h2>Version 3: a guard squad, planet 1</h2>
   <p>Eight soldiers guarding a spot; thin slime comes at them from the east. One game to 40 s, then 4 s of each.</p>
   <div class="pair">
     <figure><span class="tag b">plain</span><video src="guard-plain.mp4" autoplay muted loop playsinline></video>
@@ -117,7 +174,7 @@ over 10 s: 49 shots, 14 missed (7 into walls), killed 52</div></figure>
 </section>
 
 <section>
-  <h2>The Fork's larder</h2>
+  <h2>Version 3: the Fork's larder</h2>
   <p>The greedy squad harvesting at the larder while thin slime reaches it. One game to 12 s, then 4 s of each.</p>
   <div class="pair">
     <figure><span class="tag b">plain</span><video src="fork-plain.mp4" autoplay muted loop playsinline></video>
@@ -133,7 +190,7 @@ to 21 s: 70 shots, 22 missed, killed 71</div></figure>
 </section>
 
 <section class="short">
-  <h2>Why homing can't fix the misses</h2>
+  <h2>Why grid homing couldn't fix the misses</h2>
   <ul>
     <li><b>The game steers by a walker count, a second old.</b> A bullet stops only on slime trail thick enough to show. Against thin slime, misses are bullets that cross walkers whose trail is too faint to stop them, or walkers that have already moved. A seeker steered by that count chases the same walkers.</li>
     <li><b>The ceiling is low.</b> Only one shot in five misses against thin slime, one in ten on a front. Even a homing card that saved every miss would add at most a fifth more hits where the slime is thin.</li>
@@ -142,7 +199,7 @@ to 21 s: 70 shots, 22 missed, killed 71</div></figure>
 </section>
 
 <section class="short">
-  <h2>Your call</h2>
+  <h2>Your call then (you chose homing in the shot trace)</h2>
   <ul>
     <li><b>Drop homing and go on to step D</b>, bullet families, Mind first (recommended). The miss counter and these findings stay.</li>
     <li><b>Keep Seek as a small card.</b> Bullets visibly bend; about 6% more kills on thin slime for 2 of a gun's 10 budget.</li>

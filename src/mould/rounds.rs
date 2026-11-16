@@ -485,6 +485,12 @@ pub struct RoundRules {
     pub shove_secs: f32,
     pub heave: f32,
     pub corral_reach: f32,
+    /// **Pull stops short** (owner 2026-11-16 19:40Z, on the card "Stop it
+    /// short of the squad"): a pull's slime lands no nearer than this many
+    /// dish cells to the shooter; a hit already that near pulls nothing.
+    /// Dragged right onto the squad, pull+plain lost all 8 soldiers in
+    /// 10 s (`Reports/gun-shove-2026-11-16/`).
+    pub pull_short: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -519,6 +525,7 @@ impl Default for RoundRules {
             shove_secs: 0.25,
             heave: 1.5,
             corral_reach: 40.0,
+            pull_short: 6.0,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -832,6 +839,9 @@ pub struct Rounds {
     pub shoved: usize,
     /// Of `shoves`, those that pushed one way (`Card::Corral`, `Pull`).
     pub pushes: u32,
+    /// Pulls that hit within `RoundRules::pull_short` of the shooter (and a
+    /// reach) and so pulled nothing.
+    pub short: u32,
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
     pub pops: Vec<Pop>,
@@ -1142,6 +1152,22 @@ impl Rounds {
                 g.buildings.iter().filter(|b| b.up() && b.kind == super::larder_world::Kind::Turret).map(|b| b.at).filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far).min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
             }
             _ => None,
+        };
+        // A pull flies its slime only as far as `pull_short` dish cells
+        // from the shooter, its nearest walker (a reach from the hit)
+        // included; with no room, none.
+        let steps = match (c.herd, toward) {
+            (Some(Card::Pull), Some(t)) => {
+                let room = (t.0 - hit.0).hypot(t.1 - hit.1) - reach - rr.pull_short * s;
+                let per = (g.world.walker_step() * rr.fling_speed).max(1e-3);
+                let most = (room / per).floor();
+                if most < 1.0 {
+                    self.short += 1;
+                    return;
+                }
+                steps.min(most.min(u16::MAX as f32) as u16)
+            }
+            _ => steps,
         };
         let heading = match toward.filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) > 1e-3) {
             Some(t) => Some((t.1 - hit.1).atan2(t.0 - hit.0)),
