@@ -1624,4 +1624,76 @@ mod tests {
         assert!(lum(hole) > lum(bare) + 25.0, "the crater's walkers {hole:?} against bare ground {bare:?}");
         assert!(hole[0] > hole[2] + 30.0 && hole[1] > hole[2], "the crater's walkers are mould-coloured: {hole:?}");
     }
+
+    /// Rubble is ground, so slime on it is drawn (the walls thread,
+    /// 2026-11-16): a wall cell eaten to rubble is open ground in the
+    /// simulation, and the slime walks over it. Drawn as a low wall over the
+    /// slime, a ring three-quarters eaten still looked whole and the slime
+    /// seemed to climb over it. A gold body over x 4..40 with a band of
+    /// rubble under it at x 18..24: the band is mould-coloured, as bright
+    /// as the body beside it, and bare rubble past the body is ground dark.
+    #[test]
+    fn slime_on_rubble_is_drawn_and_rubble_is_ground() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let rubble = |x: usize| (18..24).contains(&x);
+        let mut px = Vec::new();
+        let (mut look, mut walk, mut ground) = (vec![0u32; w * h], Vec::new(), vec![0u32; w * h]);
+        for y in 0..h {
+            for x in 0..w {
+                let body = (4..40).contains(&x) && (4..20).contains(&y);
+                px.extend(if body { [200u8, 150, 70, 255] } else { [12, 22, 26, 255] });
+                if rubble(x) {
+                    ground[y * w + x] = crate::world::look::code(crate::world::look::Ground::Rubble, 0.0);
+                }
+                if body {
+                    look[y * w + x] = 255 | (4 << 8);
+                    for k in 0..4 {
+                        walk.extend([x as f32 + 0.2 + 0.2 * k as f32, y as f32 + 0.3 + 0.13 * k as f32, 0.0, 0.0]);
+                    }
+                }
+            }
+        }
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&look));
+        let ground_b = buf("ground", &crate::gpu::u32_bytes(&ground));
+        let walk_b = buf("walkers", &walk.iter().flat_map(|v| v.to_le_bytes()).collect::<Vec<u8>>());
+        let screen = (288, 192);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, (walk.len() / 4) as u32);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(6.0, (0.0, 0.0));
+        cam.centre_on((24.0, 16.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        let mean = |cx: f32, cy: f32| {
+            let (x0, y0) = cam.to_screen((cx - 1.0, cy - 1.0));
+            let (x1, y1) = cam.to_screen((cx + 1.0, cy + 1.0));
+            let mut s = [0.0f32; 3];
+            let mut n = 0.0;
+            for y in y0 as u32..y1 as u32 {
+                for x in x0 as u32..x1 as u32 {
+                    let p = pic.get_pixel(x, y).0;
+                    for c in 0..3 {
+                        s[c] += p[c] as f32;
+                    }
+                    n += 1.0;
+                }
+            }
+            s.map(|v| v / n)
+        };
+        let lum = |c: [f32; 3]| 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+        let (on, body, bare_rubble, bare) = (mean(21.0, 12.0), mean(11.0, 12.0), mean(21.0, 27.0), mean(11.0, 27.0));
+        assert!(on[0] > on[2] + 30.0 && on[1] > on[2], "slime on rubble is mould-coloured: {on:?}");
+        assert!(lum(on) > lum(body) - 20.0, "as bright as the body beside it: {on:?} against {body:?}");
+        assert!((lum(bare_rubble) - lum(bare)).abs() < 25.0, "bare rubble is ground dark: {bare_rubble:?} against {bare:?}");
+    }
 }

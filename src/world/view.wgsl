@@ -182,7 +182,7 @@ fn far_cell(x: f32, y: f32) -> vec3<f32> {
     if (pd > 0.0) { c = mix(c, plant_rgb(plant_k(i)), plant_cover(pd) * m.vis); }
     // Hard terrain and crystals are drawn over the material in the shaded
     // view; here their own colours.
-    if (kind == ROCK || kind == WALL || kind == RUBBLE) { c = ter_cell(ter_pack(ix, iy)).xyz; }
+    if (kind == ROCK || kind == WALL) { c = ter_cell(ter_pack(ix, iy)).xyz; }
     if (kind == CRYSTAL && P.n_gems > 0u) {
         let v = byte(g, 1u);
         c = mix(c, mix(vec3<f32>(50.0, 50.0, 48.0), vec3<f32>(38.0, 142.0, 165.0) + vec3<f32>(10.0, 70.0, 75.0) * 0.6, v), 1.0 - 0.8 * (1.0 - m.vis));
@@ -210,6 +210,17 @@ const WET: u32 = 1u;
 const ROCK: u32 = 2u;
 const WALL: u32 = 3u;
 const RUBBLE: u32 = 4u;
+// Rubble (a wall cell the slime ate to 0) is ground in the simulation, so
+// it is drawn as ground (`cell_mat_c`, `ground_cell`): gravel, a fine cell
+// a stone, each lighter or darker, in the worn wall's warm grey, with the
+// slime drawn over it as over any ground. Until 2026-11-16 it was hard
+// terrain, a low wall with the wall's own outline drawn over the slime: a
+// ring three-quarters eaten still looked whole while slime crossed it, so
+// the slime seemed to climb over walls (Reports/walls-2026-11-16).
+const RUBBLE_RGB: vec3<f32> = vec3<f32>(52.0, 47.0, 41.0);
+fn rubble_rgb(ix: i32, iy: i32) -> vec3<f32> {
+    return RUBBLE_RGB * (0.75 + 0.5 * hash2(vec2<f32>(f32(ix), f32(iy))));
+}
 const CRYSTAL: u32 = 5u;
 const LIGHT: vec3<f32> = vec3<f32>(-0.42, -0.58, 0.70);
 
@@ -743,13 +754,13 @@ fn cell_height(ix: i32, iy: i32, th: f32) -> vec2<f32> {
     // as a calm surface, not as sand grains (2026-11-14).
     var h = 5.0 * (1.0 - exp(-2.6 * th)) / (1.0 - exp(-2.6));
     // Hard terrain is drawn by `terrain_over`; its cells shade as soil.
-    if (kind == ROCK || kind == WALL || kind == RUBBLE) { h = 0.0; }
+    if (kind == ROCK || kind == WALL) { h = 0.0; }
     else if (kind == WET) { h = max(h - 0.3, 0.0); }
     else if (kind == CRYSTAL && P.n_gems == 0u) { h = max(h, (0.6 + 9.0 * byte(g, 2u)) * v); }
     let hm = h;
     // Plants stand by their density and kind; the shading makes their
     // texture from the field's own variation.
-    if (kind != ROCK && kind != WALL && kind != RUBBLE) {
+    if (kind != ROCK && kind != WALL) {
         // Through the same 3 x 3 Gaussian (1 2 1) as their colour
         // (as `plant_look` smoothed it then). Read cell by cell, a row of reeds along a bank,
         // its density varying cell to cell, stood as a string of beads,
@@ -1066,6 +1077,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
     var base = plain_soil(byte(g, 3u));
     let sk = (g >> 4u) & 7u;
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
+    if (kind == RUBBLE) { base = rubble_rgb(ix, iy); }
     // Burnt ground and the plants are laid per pixel in `shaded`
     // (`plant_px`), under the slime by `vis`.
     let soil = base + tint * 0.6;
@@ -1155,9 +1167,9 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         m.albedo = mix(water, m.albedo, over);
         m.vis = min(m.vis, 1.0 - over);
         m.gloss = max(m.gloss, 0.75);
-    } else if (kind == ROCK || kind == WALL || kind == RUBBLE) {
-        // Under hard terrain, the soil: `terrain_over` lays the rock, wall
-        // or rubble over it with an edge of its own, so the cells next to
+    } else if (kind == ROCK || kind == WALL) {
+        // Under hard terrain, the soil: `terrain_over` lays the rock or
+        // wall over it with an edge of its own, so the cells next to
         // it blend toward soil, not toward a grey cell (`ter_cell` has
         // their colours).
         m.gloss = 0.05;
@@ -1691,6 +1703,7 @@ fn ground_cell(ix: i32, iy: i32) -> GroundB {
     o.elev = byte(g, 3u);
     var base = plain_soil(o.elev);
     if (sk == 1u) { base = SAND_RGB; } else if (sk == 2u) { base = CLAY_RGB; } else if (sk == 3u) { base = BARREN_RGB; }
+    if (kind == RUBBLE) { base = rubble_rgb(ix, iy); }
     if (kind == WET) { base = WET_RGB; }
     o.col = base;
     return o;
@@ -2385,7 +2398,6 @@ fn ter_pack(ix: i32, iy: i32) -> u32 {
     var val = v;
     if (kind == ROCK) { h = 3.0; val = byte(g, 3u); }
     else if (kind == WALL) { h = 0.6 + 2.6 * v; }
-    else if (kind == RUBBLE) { h = 0.2 + 0.6 * v; }
     else { return 0u; }
     return 255u | (u32(h / 4.0 * 255.0 + 0.5) << 8u) | (kind << 16u) | (u32(val * 255.0 + 0.5) << 24u);
 }
@@ -2431,7 +2443,6 @@ fn ter_cell(p: u32) -> vec4<f32> {
     // just above rock at full health, darkening as it is worn. (Before:
     // up to (128, 118, 104), and its pale beige 168 before 11-14 18:56Z.)
     if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(34.0, 30.0, 26.0), vec3<f32>(74.0, 67.0, 58.0), v), h); }
-    if (kind == RUBBLE) { return vec4<f32>(vec3<f32>(56.0, 50.0, 43.0) * (0.7 + 0.3 * v), h); }
     return vec4<f32>(0.0);
 }
 
