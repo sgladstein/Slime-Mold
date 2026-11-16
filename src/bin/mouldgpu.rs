@@ -4001,13 +4001,59 @@ mod tests {
         assert_eq!(cpu_out.units.len(), n, "the CPU reads every unit");
         let past: Vec<_> = cpu_out.units[64..].iter().collect();
         eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
-        assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
+        assert_eq!(gpu_out, cpu_out, "every unit's outputs, those past 64 too");
         // A unit aims only at slime it sees (`squad::sees`, 2026-11-13): the
         // six of the spiral that the clamp puts in the world's rock border
         // see nothing, so every unit past 64 on agar aims.
         let on_agar = |u: &UnitIn| cpu.agar[u.y as usize * w + u.x as usize];
         assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().zip(&f.units[64..]).all(|(u, i)| u.target.is_some() || !on_agar(i)), "units past 64 touch, aim and harvest");
         assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
+    }
+
+    /// **Every shot of a full frame** (soldier-cap thread, 2026-11-16, the
+    /// technical lead's ask after #377 raised `SHOTS_MAX` 256 -> 1024): a
+    /// frame of `SHOTS_MAX` shots, each from 6 cells off one of the
+    /// mould's thickest cells toward it, on both engines. Every shot's hit
+    /// and kills match the CPU's, and shots past the old 256 hit and kill,
+    /// so a shader array or buffer still sized for 256 (which would drop
+    /// them or read them from the units) fails here.
+    #[test]
+    fn the_squad_frame_holds_every_shot_on_the_gpu() {
+        use slime_mould::mould::squad::{self, Frame, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..60 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let n = squad::SHOTS_MAX;
+        let mut thick: Vec<usize> = (0..w * h).filter(|&i| cpu.agar[i]).collect();
+        thick.sort_by(|&a, &b| cpu.trail[b].total_cmp(&cpu.trail[a]));
+        thick.truncate(n);
+        let shots: Vec<ShotIn> = (0..n)
+            .map(|i| {
+                let c = thick[i % thick.len()];
+                let to = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let a = i as f32 * 2.4;
+                let from = ((to.0 + 6.0 * a.cos()).clamp(0.5, w as f32 - 0.5), (to.1 + 6.0 * a.sin()).clamp(0.5, h as f32 - 0.5));
+                ShotIn { from, to, r: 1.0 }
+            })
+            .collect();
+        let f = Frame { units: Vec::new(), shots, slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        let cpu_out = squad::frame(&mut cpu, &f, 1);
+        let gpu_out = e.squad_out();
+        assert_eq!(cpu_out.shots.len(), n, "the CPU reads every shot");
+        let past = &cpu_out.shots[256..];
+        let (hit, killed) = (past.iter().filter(|o| o.hit.is_some()).count(), past.iter().filter(|o| o.killed > 0).count());
+        eprintln!("shot cap: {n} shots; past 256, {hit} hit, {killed} killed");
+        assert_eq!(gpu_out, cpu_out, "every shot's hit and kills, those past 256 too");
+        assert!(hit >= 100 && killed >= 10, "shots past 256 hit ({hit}) and kill ({killed})");
     }
 
     /// **Solid crystals on both engines** (`Rules::crystal_solid`, the
