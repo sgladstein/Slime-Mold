@@ -43,6 +43,8 @@ impl<W: World> Game<W> {
         let mut shots = Vec::new();
         // Who fired each shot, and the cast it carries (`Bullet::cast`).
         let mut shooters: Vec<(Option<usize>, u8)> = Vec::new();
+        // How far each soldier's shot was aimed (`Bullet::aim`).
+        let mut aims: Vec<f32> = Vec::new();
         // The squad mode's walk (`Rules::steer`): every soldier at once,
         // velocity, elbow room and queuing together (`steer`).
         let steer = r.squads && r.steer;
@@ -183,6 +185,7 @@ impl<W: World> Game<W> {
                                     let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
                                     shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r, over: false });
                                     shooters.push((Some(k), cast));
+                                    aims.push(d);
                                 }
                             }
                         }
@@ -244,7 +247,7 @@ impl<W: World> Game<W> {
         self.building_units(&mut units, &mut shots, &mut shooters, &mut who, &mut from);
         shooters.resize(shots.len(), (None, 0));
         let fired = shots.len() as u32;
-        let (shots, by) = self.fly(shots, &shooters, dt);
+        let (shots, by) = self.fly(shots, &shooters, &aims, dt);
         let crater = (r.crater * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         // The spray: its longest flight in fine steps, and the first speed
         // that takes the fastest droplet that flies longest `spray_reach`
@@ -252,7 +255,8 @@ impl<W: World> Game<W> {
         // 0.4 + 0.6 x t / steps over its steps, `big::spray_pace`).
         let spray = (r.spray_secs * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         let spray_speed = r.spray_reach * self.world.scale() / (0.7 * spray as f32 + 0.3);
-        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share };
+        let catch = self.catches(&by, dt);
+        let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share, catch };
         let out = self.world.frame_start(&f, r.frame_ticks);
         self.flight = Some(Flight { t, f, by, fired, who, from, out });
     }
@@ -274,6 +278,16 @@ impl<W: World> Game<W> {
             self.flown.extend_from_slice(&self.bullets);
         }
         self.landed(&f.shots, &out.shots);
+        {
+            // The soldiers' hits this frame and the dish cells they fell
+            // in, each once (`hit_cells`).
+            let bin = self.s().max(1.0);
+            let mut cells: Vec<(i32, i32)> = out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_some()).filter_map(|(o, _)| o.hit).map(|h| ((h.0 / bin) as i32, (h.1 / bin) as i32)).collect();
+            self.hits += cells.len() as u32;
+            cells.sort_unstable();
+            cells.dedup();
+            self.hit_cells += cells.len() as u32;
+        }
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         self.turret_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_none()).map(|(o, _)| o.killed).sum::<u32>();
         let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();

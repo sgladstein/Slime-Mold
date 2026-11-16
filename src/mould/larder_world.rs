@@ -250,6 +250,15 @@ pub struct Bullet {
     /// hit (`rounds::Card::Expire`): spent on slime, at a wall (thrown back
     /// off it) or at the end of its range.
     pub expire: bool,
+    /// Seek cards it flies with (`BulletMods::seek`), and how far it has
+    /// flown (fine cells): it turns once that is `Rules::seek_after`.
+    pub seek: u8,
+    pub flown: f32,
+    /// How far from its muzzle it reaches the point its soldier aimed at
+    /// (fine cells; infinite for a turret's, a split piece or a let-out
+    /// cast): a seeker's catch looks beside its line there
+    /// (`Game::catches`), as a soldier's bullet flies on to its full range.
+    pub aim: f32,
     /// It flies over walls (`ShotIn::over`): a turret's (owner,
     /// 2026-11-16 19:50Z: "turrets can fire over walls ... but regular
     /// guns shots do not"). Rock still ends it.
@@ -287,6 +296,9 @@ pub struct BulletMods {
     /// Each cast's cast id fired beside it in the same shot (0 none,
     /// `rounds::Cast::with`, `Card::Multicast`).
     pub with: [u8; super::rounds::MAX_SLOTS],
+    /// Copies of the `Seek` card: every bullet turns toward slime no
+    /// bullet has hit yet, `Rules::seek_turn` a frame a copy (`Game::steer`).
+    pub seek: u8,
 }
 
 pub struct Game<W: World> {
@@ -307,6 +319,19 @@ pub struct Game<W: World> {
     pub turret_killed: u32,
     /// Casts fired beside another in the same shot (`Card::Multicast`).
     pub multicast: u32,
+    /// Frames a seeking bullet turned (`Card::Seek`, `Game::steer`).
+    pub seek_turns: u32,
+    /// Soldier bullets' slime hits, and the dish cells they hit counted
+    /// once a frame: how widely a shot's hits spread (the seek film's
+    /// measure, 2026-11-16).
+    pub hits: u32,
+    pub hit_cells: u32,
+    /// Soldier bullets that ended with no slime struck on their last leg,
+    /// at the end of their range or at a wall or rock (the owner's 11-16
+    /// 14:24Z question: "how often do soldiers you're not controlling miss
+    /// their target"). A piercing bullet that hit before counts too.
+    pub missed_range: u32,
+    pub missed_wall: u32,
     pub walls: u32,
     /// The doors' cells (`doors`), row by row over the world's cells:
     /// ground to soldiers though the world holds them as wall. Empty while
@@ -535,6 +560,11 @@ impl<W: World> Game<W> {
             fire_killed: 0,
             turret_killed: 0,
             multicast: 0,
+            seek_turns: 0,
+            hits: 0,
+            hit_cells: 0,
+            missed_range: 0,
+            missed_wall: 0,
             walls: 0,
             doors: Vec::new(),
             buildings: Vec::new(),

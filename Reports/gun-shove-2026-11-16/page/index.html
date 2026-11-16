@@ -57,7 +57,7 @@ footer{font-size:.85rem;color:var(--muted)}
 </style>
 <main>
 <header style="display:flex;flex-direction:column;gap:10px">
-  <span class="eyebrow">Larder World · guns · shove cards · 2026-11-16</span>
+  <span class="eyebrow">Larder World · guns · shove cards · version 2 · 2026-11-16</span>
   <h1>Shove cards</h1>
   <p class="lede">You asked for ways to change the slug's pushback, and for a gun that can corral the slime into a kill zone. Three new cards make a bullet's hit shove the slime somewhere: <b>Heave</b> straight on, <b>Corral</b> toward your nearest turret, <b>Pull</b> back toward the gun. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game up to 29 s with plain bullets. At 29 s a turret stands up and to the right of the squad, off its line of fire, and every squad loads the clip's cards, so the clips differ only in those cards over the next 3 s.</p>
 </header>
@@ -79,6 +79,44 @@ footer{font-size:.85rem;color:var(--muted)}
 </div>
 
 <section>
+  <h2>Pull now stops short of the squad</h2>
+  <p>Your pick: Pull drags the slime toward the gun but drops it at least 6 cells out in front. With no room left, the pull does nothing and the bullet hits as a plain one. Same game each pair, plain bullets against pull + heave + plain; a turret stands up and to the right.</p>
+  <h3>On the march, shooting slime at range</h3>
+  <p>The squad walks to its hold from 12 s; 3 s from 17 s. The pulled slime lands in the open in front of the squad.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="march-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">killed 101, the turret 59
+8 soldiers, health 99
+12-22 s: killed 286, 8 soldiers</div></figure>
+    <figure><span class="tag a">pull + heave + plain</span><video src="march-pull.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">12 pulls, 7 too near   thrown 108
+killed 72, the turret 47
+8 soldiers, health 99
+12-22 s: 18 pulls, 37 too near, killed 282, 8 soldiers</div></figure>
+  </div>
+  <h3>The old scene: slime at the squad's feet</h3>
+  <p>One game to 29 s, then 3 s. The slime is already within 6 cells, so most pulls have no room.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="close-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">killed 199, the turret 78
+7 soldiers, health 76
+29-39 s: killed 606, 7 soldiers, health 72</div></figure>
+    <figure><span class="tag a">pull + heave + plain</span><video src="close-pull.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">1 pull, 19 too near   thrown 369
+killed 247, the turret 75
+7 soldiers, health 76
+29-39 s: 2 pulls, 67 too near, killed 559, 7 soldiers
+(the old pull: all 8 soldiers lost by 39 s)</div></figure>
+  </div>
+  <p class="hint">Pull is safe now and you can see it, but it adds no kills here: squads on their own fire at slime close to them, which has no room to be pulled. Kills in these runs are lower than in the clips below, which ran on this morning's build; compare within a pair.</p>
+</section>
+
+<section class="short">
+  <h2 style="font-size:1.2rem">The first version, as shown this morning</h2>
+  <p>Everything below is as first shown, with Pull dragging the slime all the way onto the squad.</p>
+</section>
+
+<section>
   <h2>Three ways to shove</h2>
   <p>The same squad, the same turret and the same slime, with a plain bullet that has two shove cards on it. Watch where the thrown slime goes and how much the turret (top right) gets to shoot.</p>
   <div class="tri">
@@ -96,7 +134,7 @@ killed 314, the turret 241
       <div class="counts">24 shoves   thrown 3,517
 killed 247, the turret 79
 7 soldiers, health 66</div>
-      <figcaption>Dragged onto the squad. One soldier falls in 3 s.</figcaption></figure>
+      <figcaption>Dragged onto the squad (before it stopped short). One soldier falls in 3 s.</figcaption></figure>
   </div>
 </section>
 
