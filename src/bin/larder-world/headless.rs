@@ -508,7 +508,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             app.age_notes(into * step_s);
         }
         let g = app.game.as_ref().unwrap();
-        let centre = fixed.map(|f| (f.0, f.1)).or(squad).unwrap_or(g.larder);
+        let boss = g.bosses.live.first().filter(|_| app.args.follow_boss).map(|b| b.centre);
+        let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.members(q),
             None if select => (0..g.soldiers.len()).collect(),

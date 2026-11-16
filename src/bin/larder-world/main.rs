@@ -102,7 +102,10 @@
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
 //! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
-//! on the slime (`View::set_alarm_look`; 0 none); `scent=1` opens with the
+//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how the
+//! hunter mini-boss's body is drawn (`LumpLook`: plain, ember, violet,
+//! ink; for the look's A/B) and `follow=boss` keeps the near view
+//! on the first live mini-boss; `scent=1` opens with the
 //! scent view on (F2 in play: the food scent and the trail the mould smells);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
 //! spread (`Rules::spread`); `core_pull=P` how strongly soldiers near the
@@ -173,6 +176,7 @@ use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target, Throw};
+use slime_mould::world::view::LumpLook;
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -180,6 +184,10 @@ use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
+
+/// The hunter mini-boss's look (`View::set_lumps`; `boss_look=` overrides
+/// it for the look's A/B).
+const HUNTER_LOOK: LumpLook = LumpLook::Violet;
 mod args;
 mod input;
 mod draw;
@@ -457,6 +465,13 @@ struct Args {
     /// and on the slime (`View::set_alarm_look`; S defaults to G), for
     /// films and A/Bs.
     alarm_look: Option<(f32, f32)>,
+    /// `boss_look=NAME`: the hunter mini-boss's look (`LumpLook`), for the
+    /// look's A/B.
+    boss_look: Option<LumpLook>,
+    /// `follow=boss`: the near view follows the first live mini-boss
+    /// (its centre; the squad or `centre=` when there is none), for films
+    /// of the look.
+    follow_boss: bool,
     /// `scent=1`: open with the scent view on (F2 toggles it), for films.
     scent: bool,
     /// `aim=STRIKE,EVERY,SPREAD`: a shot's strike radius, game seconds
@@ -1170,7 +1185,10 @@ impl App {
             // Condensed and thickened walkers (11-14 `condense`, 11-15
             // `thicken`): the body's copper and
             // their double count, from the same buffer.
-            let dense = e.grows && (ws.condense > 0 || ws.thicken > 0.0);
+            // Since the mini-bosses (2026-11-16) always where the world
+            // grows: a lump's members are marked in the same words (bits
+            // 25-27), which the engine keeps with condensing off too.
+            let dense = e.grows;
             v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
             // Plants, their fire and the char (11-14), from the same buffer.
             v.set_plants(e.plants.then_some((&e.news, &e.state)), (e.plant_at / 4) as u32 + slime_mould::gpu::PLANT_HEAD as u32, e.dish.flora_of.unwrap_or(0) as u32);
@@ -1686,6 +1704,21 @@ impl App {
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
+            // The mini-bosses' bodies (2026-11-16): each live one's lump,
+            // centre, look by its kind and strength by its grade.
+            let looks = g.lump_looks();
+            let mut lumps = [(0.0, 0.0, LumpLook::Plain, 0.0); slime_mould::world::view::MAX_LUMPS];
+            for b in &g.bosses.live {
+                let code = looks.get(b.lump).copied().unwrap_or(0);
+                let look = match code & 7 {
+                    0 => LumpLook::Plain,
+                    _ => self.args.boss_look.unwrap_or(HUNTER_LOOK),
+                };
+                if let Some(l) = lumps.get_mut(b.lump) {
+                    *l = (b.centre.0, b.centre.1, look, (code >> 4) as f32 / 15.0);
+                }
+            }
+            v.set_lumps(&lumps);
         }
         self.marks();
         // Always, zoomed out too, so the bottom bar never rearranges with the
@@ -1861,6 +1894,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "crater" => args.crater = Some(v.parse()?),
             "scent" => args.scent = v != "0",
+            "follow" => args.follow_boss = v == "boss",
+            "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet or ink"))?),
             "alarm_look" => {
                 let (g, s) = v.split_once(',').unwrap_or((v, v));
                 args.alarm_look = Some((g.parse()?, s.parse()?));
