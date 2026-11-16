@@ -188,6 +188,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // printed against their count at the cut.
     let mut cut_inside: Option<(Vec<usize>, u32)> = None;
     let mut cut_sec = u64::MAX;
+    let mut watch_sec = u64::MAX;
     // With HOLD (`cut=T,X,Y,R,HOLD`), the ring's agar cells go back on the
     // agar HOLD game seconds after the cut, so a piece that has gone stale
     // inside can leave (does a cut-off part panic?).
@@ -454,6 +455,27 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  cut t {sec} s: {n} walkers inside ({:.2} of the cut's)", n as f32 / *n0 as f32);
                 }
             }
+            // `watch=X,Y,R`: the walkers in the disc and the ring round it,
+            // each game second (as the cut's).
+            if let Some((wx, wy, wr)) = app.args.watch {
+                let g = app.game.as_ref().unwrap();
+                let sec = g.time().floor() as u64;
+                if sec != watch_sec {
+                    watch_sec = sec;
+                    let w = g.world.e.dish.w;
+                    let lk = read_back(&device, &queue, &g.world.e.look);
+                    let (mut disc, mut ring) = (0u32, 0u32);
+                    for (i, c) in lk.chunks_exact(4).enumerate() {
+                        let d = ((i % w) as f32 + 0.5 - wx).hypot((i / w) as f32 + 0.5 - wy);
+                        if d <= wr {
+                            disc += c[1] as u32;
+                        } else if d <= 2.0 * wr {
+                            ring += c[1] as u32;
+                        }
+                    }
+                    println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}", 2.0 * wr);
+                }
+            }
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
             // "maybe part of the issue is the slime/walkers move to fast").
             // The drawn body (the view's `body`: trail x living walkers in
@@ -518,7 +540,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match.
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4]);
         }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames

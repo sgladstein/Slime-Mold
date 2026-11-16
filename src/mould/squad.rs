@@ -260,6 +260,11 @@ pub struct Burst {
     /// any `bait` is added, so the mould there loses the way to its food
     /// until the scent spreads back.
     pub smother: bool,
+    /// **A Mind status** (the gun cards' Mind family, 2026-11-16): the
+    /// walkers within `r` take status `mind` (`big::MIND_BLIND` to
+    /// `MIND_SPIN`) for `BurstRules::mind_steps` fine steps
+    /// (`BigDish::mind`). 0: none.
+    pub mind: u8,
 }
 
 impl Burst {
@@ -294,6 +299,10 @@ pub struct BurstRules {
     /// A flung walker's speed x `step` (`BigParams::fling_speed`), set
     /// with the first fling.
     pub fling_speed: f32,
+    /// A Mind status's fine steps and a spinning walker's curl
+    /// (`BigParams::spin_curl`, radians), set with each Mind burst.
+    pub mind_steps: u16,
+    pub spin_curl: f32,
 }
 
 /// What a burst did.
@@ -363,6 +372,11 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
             d.enable_contagion();
         }
         d.infect(b.at.0, b.at.1, b.r);
+    }
+    // A Mind status last (2026-11-16), on the engine too.
+    if b.mind > 0 {
+        d.p.spin_curl = k.spin_curl;
+        d.mind(b.at.0 * s, b.at.1 * s, b.r * s, b.mind as u32, k.mind_steps);
     }
     out
 }

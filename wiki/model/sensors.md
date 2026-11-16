@@ -2,8 +2,9 @@
 title: Sensor angle and reach
 kind: mechanism
 status: current
-updated: 2026-11-12
+updated: 2026-11-16
 sources:
+  - Reports/gun-mind-2026-11-16/README.md
   - Reports/mould-probe-2026-11-07.md
   - Reports/mould-review-2026-11-10.md
   - Reports/mould-wild-one-2026-11-10.md
@@ -11,12 +12,14 @@ sources:
   - Reports/slime-questions-2026-11-12/README.md
   - handoff/project-memory/mould-depth-2026-11-09.md
 code:
+  - BigDish::mind
   - Dish::sensor_angle_now
   - Params::explore_angle
   - Params::rotate_angle
   - Params::sensor_angle
   - Params::sensor_offset
   - Params::settle_seconds
+  - mind_reads
 ---
 
 # Sensor angle and reach
@@ -56,6 +59,17 @@ branch more), but the mould then senses food and oats from less far, so the
 oat trails that solve each dish stop reaching. The thin look belongs in the
 drawing ([the simulation look](../looks/simulation-look.md)).
 
+**Mind statuses** (big dish, both engines, 2026-11-16; the gun cards' Mind
+bullets): a walker can carry a status for some steps (`BigDish::mind`, one
+word a walker with its end step) that changes its three readings after
+everything else has made them (`mind_reads`; a wall stays a wall). Blind
+reads 0 and takes only the plain rule, so it walks straight on; sour reads
+them backwards; spin turns `spin_curl` more after its turn each step. Since
+the change comes last it works on every walker: a sour explorer flips twice
+and so follows the trail, and a sour raider, speck or surging walker reads
+its goal backwards and runs from the pump, crystal or squad it was heading
+for ([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
+
 
 ## Owner's word
 
@@ -83,4 +97,5 @@ drawing ([the simulation look](../looks/simulation-look.md)).
 - [mould-review-2026-11-10.md](../../Reports/mould-review-2026-11-10.md), *Summary*, *What playing showed*, *Looks*.
 - [mould-wild-one-2026-11-10.md](../../Reports/mould-wild-one-2026-11-10.md), *Finer tubes*.
 - [mould-probe-2026-11-07.md](../../Reports/mould-probe-2026-11-07.md), *What was built*.
+- [gun-mind-2026-11-16](../../Reports/gun-mind-2026-11-16/README.md), *What was built*.
 - Sensor-angle page archive: [`Reports/mould-game-2026-11-08/pages/9-sensor-angle/`](../../Reports/mould-game-2026-11-08/pages/9-sensor-angle/index.html).

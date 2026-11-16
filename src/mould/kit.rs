@@ -390,8 +390,11 @@ impl Kit {
             sick_catch: r.sick_catch,
             sick_deposit: r.sick_deposit,
             sick_keep: r.sick_keep,
-            // The toolkit throws nothing (the rounds' `Bomb` does).
+            // The toolkit throws nothing (the rounds' `Bomb` does), nor
+            // has a Mind bullet (the rounds' `Blind` and on do).
             fling_speed: 0.0,
+            mind_steps: 0,
+            spin_curl: 0.0,
         }
     }
 

@@ -81,6 +81,11 @@ pub enum Icon {
     // Seek (`rounds::Card::Seek`, 2026-11-16): a bullet's path that runs
     // straight, then bends onto a blob.
     Seek,
+    // The Mind bullets (`rounds::Card::Blind` and on, 2026-11-16): how
+    // the slime senses.
+    Blind,
+    Sour,
+    Spin,
 }
 
 impl Icon {
@@ -163,6 +168,12 @@ impl Icon {
             Icon::Pull => &["M21 12 L5 12", "M9 7.5 L4.5 12 L9 16.5", "M21 7 C17 7 15.5 9 15.5 12 C15.5 15 17 17 21 17"],
             // Two bullets fanning out of one muzzle.
             Icon::Seek => &["M2 18 L9 18", "M9 18 C13 18 15 15 16 11", "M13.5 12 L16 11 L17.2 13.6", "M15 5 C17 3 21 4 21 7 C21 10 18 10 17 9 C15 8 14 7 15 5 Z"],
+            // An eye struck through: it senses nothing.
+            Icon::Blind => &["M2 12 C5 7.5 8.5 5.5 12 5.5 C15.5 5.5 19 7.5 22 12 C19 16.5 15.5 18.5 12 18.5 C8.5 18.5 5 16.5 2 12 Z", "O12 12 2.8", "M4 20.5 L20 3.5"],
+            // A U-turn: it turns from its own trail.
+            Icon::Sour => &["M17 21 L17 10 C17 6.5 14.8 4 12 4 C9.2 4 7 6.5 7 10 L7 15", "M3.8 11.8 L7 15 L10.2 11.8"],
+            // A circling arrow round a knot: it turns in tight rings.
+            Icon::Spin => &["M12 4 C16.4 4 20 7.6 20 12 C20 16.4 16.4 20 12 20 C7.6 20 4 16.4 4 12 C4 9.6 5 7.5 6.7 6", "M6.6 2.6 L6.7 6 L10 6.7", "FO12 12 2.2"],
             Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }

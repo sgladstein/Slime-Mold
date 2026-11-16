@@ -199,6 +199,11 @@ struct Params {
     // words, then each lump's row.
     lump_on: u32, _l1: u32, _l2: u32, _l3: u32,
     lumps: array<Lump, 4>,
+    // The Mind row (the gun cards' Mind family, 2026-11-16; Params grew
+    // from 1152 to 1168, after the lump rows; mod.rs's `MIND_AT`): whether
+    // any walker has had a Mind status (`Engine::minds`), a spinning
+    // walker's curl a step (radians), and two spare words.
+    mind_on: u32, spin_curl: f32, _m1: u32, _m2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -408,7 +413,8 @@ fn dense_on() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0)
 fn ripens() -> bool { return growth() && P.condense > 0u; }
 // `thicken` in tenths of `birth_at`, in `ccrowd`'s top byte (bits 24-31).
 fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
-fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
+// After the gas's words, a slot's Mind word each (`mind_of`, 2026-11-16).
+fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + 2u * P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
 fn set_dense(k: u32, v: u32) { atomicStore(&news[dense_base() + DENSE_HEAD + k], v); }
 // Sets walker k's word to v, keeping its lump and hits (`big::KEPT`): a
@@ -433,6 +439,23 @@ fn is_dense(k: u32) -> bool { return condenses() && (dense_word(k) & DENSE_BIT) 
 fn dense_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
 fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
+
+// **Mind statuses** (the gun cards' Mind family, 2026-11-16; the CPU's
+// `big::MIND_BLIND` and on): a slot's word after the gas's, its kind in the
+// top three bits and the step it runs out at in the low 29 (`MIND_T`).
+// None is read until a walker has had one (`mind_on`; the Rust flag
+// `Engine::minds` writes it, so the two cannot disagree).
+const MIND_BLIND: u32 = 1u;
+const MIND_SOUR: u32 = 2u;
+const MIND_SPIN: u32 = 3u;
+const MIND_T: u32 = 0x1FFFFFFFu;
+fn mind_at() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
+fn mind_of(k: u32, t: u32) -> u32 {
+    if (P.mind_on == 0u) { return 0u; }
+    let w = atomicLoad(&news[mind_at() + k]);
+    if ((t & MIND_T) < (w & MIND_T)) { return w >> 29u; }
+    return 0u;
+}
 
 fn crater_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[i])); }
 fn crater_set(i: u32, v: f32) { atomicStore(&crater[i], bitcast<u32>(v)); }
@@ -964,6 +987,10 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         sick[k] = c;
         if (c > P.immune) { st *= P.sick_speed; so *= P.sick_reach; ra *= P.sick_turn; }
     }
+    // A Mind status (`mind_of`): it changes the readings and the turn
+    // below, whatever made them, so it reaches panicking, surging and
+    // raiding walkers too.
+    let mk = mind_of(k, t);
     let gw = graze_of(sp);
     // Hunger (`hunger_scent`, the CPU's `hunger`): 1 - energy / `hunger_at`,
     // floored at 0, from the energy as the tick began.
@@ -1013,11 +1040,21 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             fr += l.pull * (cos(h + sa) * dx + sin(h + sa) * dy) / r;
         }
     }
-    if (!scared && P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
+    // Blind reads 0 and Sour the negative, after whatever made the
+    // readings (the CPU's `big::mind_reads`: x 0 and x -1); a wall stays a
+    // wall. A blind walker turns by the plain rule alone, off walls.
+    if (mk == MIND_BLIND || mk == MIND_SOUR) {
+        let m = select(-1.0, 0.0, mk == MIND_BLIND);
+        if (f > -1.0e5) { f *= m; }
+        if (fl > -1.0e5) { fl *= m; }
+        if (fr > -1.0e5) { fr *= m; }
+    }
+    let blind = mk == MIND_BLIND;
+    if (!scared && !blind && P.wander > 0.0 && unit(keyed(P.s_wander, t, k | 0x80000000u)) < P.wander) {
         h = unit(keyed(P.s_wander, t, k | 0x40000000u)) * TAU;
-    } else if (!scared && P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
+    } else if (!scared && !blind && P.sfloor > 0.0 && max(max(f, fl), fr) < P.sfloor) {
         if ((keyed(P.s_wander, t, k) & 1u) == 0u) { h += ra; } else { h -= ra; }
-    } else if (!scared && chance() > 0.0) {
+    } else if (!scared && !blind && chance() > 0.0) {
         // The chance turn: a side by a draw, then toward it with chance
         // g^e / (f^e + g^e), readings floored at 0 (the CPU's `chance_exp`).
         let left = (keyed(P.s_chance, t, k) & 1u) == 0u;
@@ -1036,6 +1073,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (fr < fl) {
         h -= ra;
     }
+    // A spinning walker curls after its turn, every step (the CPU's).
+    if (mk == MIND_SPIN) { h += P.spin_curl; }
     if (P.lone > 0.0 && !scared) {
         // `occ` is as the step began here: `walk` moves walkers after.
         let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(P.lone_r);
@@ -1421,8 +1460,10 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     walkers[b] = vec4<f32>(at, unit(keyed(P.s_birth, t, k | 0x80000000u)) * TAU, 0.0);
     if (explore() > 0u) { age[b] = 0u; }
     if (P.sick_steps > 0u) { sick[b] = 0u; }
-    // A child is not gassed (the CPU zeroes the slot's `gassed`).
+    // A child is not gassed (the CPU zeroes the slot's `gassed`), nor has
+    // a Mind status (its `mind`).
     atomicStore(&news[gas_base() + GAS_SLOTS + b], 0u);
+    atomicStore(&news[mind_at() + b], 0u);
     // The child is its parent's species and kind, and an ordinary walker
     // with its timer at 0.
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
@@ -3862,4 +3903,22 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn unit_heat(x: u32, y: u32) -> f32 {
     if (!world(PLANTS)) { return 0.0; }
     return pget(PB_FA, y * P.w + x);
+}
+
+// **A Mind status stamped** (`Engine::mind_pass`, the CPU's
+// `BigDish::mind`, the gun cards' Mind family, 2026-11-16): every living
+// ordinary or dormant walker within the strike row's `kr` of (`kx`, `ky`),
+// squared as on the CPU, takes kind `kir` for `kcs` fine steps from the
+// step in gas word 0, in place of any it had.
+@compute @workgroup_size(256)
+fn mindlay(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let st = (spec[k] >> 9u) & 3u;
+    if (st != L_WALKER && st != L_DORMANT) { return; }
+    let wk = walkers[k];
+    let dx = wk.x - P.kx;
+    let dy = wk.y - P.ky;
+    if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    atomicStore(&news[mind_at() + k], (u32(P.kir) << 29u) | ((gas_word(0u) + u32(P.kcs)) & MIND_T));
 }

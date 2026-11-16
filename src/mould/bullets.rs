@@ -61,10 +61,14 @@ pub enum Shell {
     Bomb,
     Gas,
     Germ,
+    /// The Mind bullets (2026-11-16, `Card::Blind` and on).
+    Blind,
+    Sour,
+    Spin,
 }
 
 impl Shell {
-    pub const ALL: [Shell; 5] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ];
+    pub const ALL: [Shell; 8] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin];
 
     /// The fixed card that is this payload's standard bullet.
     pub fn card(self) -> Card {
@@ -74,7 +78,15 @@ impl Shell {
             Shell::Bomb => Card::Bomb,
             Shell::Gas => Card::Gas,
             Shell::Germ => Card::Germ,
+            Shell::Blind => Card::Blind,
+            Shell::Sour => Card::Sour,
+            Shell::Spin => Card::Spin,
         }
+    }
+
+    /// One of the Mind bullets (Blind, Sour, Spin).
+    pub fn mind(self) -> bool {
+        matches!(self, Shell::Blind | Shell::Sour | Shell::Spin)
     }
 
     pub fn of(c: Card) -> Option<Shell> {

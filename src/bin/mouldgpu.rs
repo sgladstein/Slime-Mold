@@ -2857,6 +2857,79 @@ mod tests {
         assert!(words > 50, "the twin catches a gas a step too long");
     }
 
+    /// **Mind statuses on the engine** (`Engine::mind_pass`, the gun cards'
+    /// Mind family, 2026-11-16; the CPU's `BigDish::mind`): from the same
+    /// state each status stamped on both, a disc of 10 dish cells for 30
+    /// steps. Every slot's word exact; one tick from the same state (the
+    /// one-tick twin's way) leaves no walker off; 40 ticks more with no
+    /// re-inject, the statuses run out on both and the words still agree
+    /// (no births here, so nothing rewrites them), the Mind row goes off
+    /// and a tick with it off still matches. Planted: a GPU status a
+    /// step longer, and a spin with no curl on the GPU, must each fail it.
+    #[test]
+    fn mind_statuses_match_the_cpu() {
+        use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        const STEPS: u16 = 30;
+        const CURL: f32 = 0.6;
+        // (stamped, words off, walkers off after a tick)
+        let play = |kind: u32, gpu_steps: u16, gpu_curl: f32| -> (usize, usize, usize) {
+            let s = Settings { spin_curl: CURL, ..small(0) };
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..20 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for &(wx, wy, _) in &cpu.walkers {
+                (x, y, m) = (x + wx, y + wy, m + 1.0);
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            cpu.p.spin_curl = CURL;
+            let g = Settings { spin_curl: gpu_curl, ..s.clone() };
+            let n = cpu.mind(x * k, y * k, 10.0 * k, kind, STEPS);
+            e.mind_pass(&shared, &g, x, y, 10.0, kind, gpu_steps);
+            assert!(e.minds, "the Mind row is on after a stamp");
+            let words_off = e.mind_words().iter().zip(&cpu.mind).filter(|(a, b)| a != b).count();
+            if words_off > 0 {
+                return (n, words_off, 0);
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
+            if gpu_curl == CURL && gpu_steps == STEPS {
+                run(&mut e, &shared, &g, 40, Hand::default());
+                for _ in 0..40 {
+                    cpu.tick();
+                }
+                let held = (0..cpu.walkers.len()).filter(|&j| cpu.mind_of(j) != 0).count();
+                let after = e.mind_words().iter().zip(&cpu.mind).filter(|(a, b)| a != b).count();
+                assert_eq!((held, after), (0, 0), "kind {kind}: the statuses ran out and the words agree");
+                // Once the last has run out the Mind row is off (`minds_on`,
+                // the slime-enemy thread's note on #403), and a tick from the
+                // same state still leaves no walker off.
+                assert!(e.minds && !e.minds_on(), "kind {kind}: sense stops reading the words after {} (done {})", e.mind_until, e.done);
+                e.inject(&cpu);
+                assert!(!e.minds_on(), "kind {kind}: a dish whose statuses ran out loads with the row off");
+                let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
+                assert_eq!(off, 0, "kind {kind}: the tick with the row off");
+            }
+            (n, words_off, off)
+        };
+        for kind in [MIND_BLIND, MIND_SOUR, MIND_SPIN] {
+            let (n, words, off) = play(kind, STEPS, CURL);
+            eprintln!("kind {kind}: {n} walkers stamped, {words} words and {off} walkers off after a tick");
+            assert!(n > 50 && words == 0 && off == 0, "kind {kind}: {n} stamped, {words} words, {off} walkers off");
+        }
+        let (_, words, _) = play(MIND_BLIND, STEPS + 1, CURL);
+        eprintln!("planted, a step longer: {words} words off");
+        assert!(words > 50, "the twin catches a status a step too long");
+        let (_, _, off) = play(MIND_SPIN, STEPS, 0.0);
+        eprintln!("planted, no curl on the GPU: {off} walkers off after a tick");
+        assert!(off > 50, "the twin catches a spin that doesn't curl");
+    }
+
     /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
     /// rounds thread, after Noita's mists): from the same state a cloud
     /// laid on both, then 40 ticks each with no re-inject. The cloud field
@@ -3709,7 +3782,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 25] = [
+        let dishes: [(&str, Settings, Build); 26] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3813,6 +3886,11 @@ mod tests {
             // land in the tick, a sixteenth about to give up) and the rest
             // take their chances on their slots' steps, a fifth a step.
             ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Mind statuses (the gun cards' Mind family, 2026-11-16): on the
+            // panic dish, so panicking walkers take them too, every fifth
+            // walker blind, sour, spinning, run out a step ago, or none
+            // (below), with births in the tick (children start with none).
+            ("mind: blind, sour and spinning walkers", Settings { spin_curl: 0.6, panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3987,6 +4065,26 @@ mod tests {
                 eprintln!("{name}: lumps of {n0} and {n1} walkers, {leashed} past their leash");
                 assert!(n0 > 3 && n1 > 3 && leashed > 0 && leashed + 4 < members.len(), "{name}: two lumps, some members past the leash and some within it");
             }
+            let minded = name.starts_with("mind");
+            if minded {
+                use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_T};
+                let now = cpu.steps as u32;
+                cpu.mind = (0..cpu.walkers.len())
+                    .map(|k| match k % 5 {
+                        0 => MIND_BLIND << 29 | ((now + 30) & MIND_T),
+                        1 => MIND_SOUR << 29 | ((now + 30) & MIND_T),
+                        2 => MIND_SPIN << 29 | ((now + 30) & MIND_T),
+                        3 => MIND_BLIND << 29 | (now & MIND_T),
+                        _ => 0,
+                    })
+                    .collect();
+                // Every walker fed to breed (as the soil dish's).
+                for k in 0..cpu.walkers.len() {
+                    if cpu.lives(k) {
+                        cpu.energy[k] = 2.0;
+                    }
+                }
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3999,6 +4097,17 @@ mod tests {
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
             let starved = cpu.starved;
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            // Mind: every slot's word agrees (children cleared), and the
+            // statuses held through the tick on the walkers that had them.
+            if minded {
+                assert!(e.minds, "{name}: sense reads the Mind words");
+                let gw = e.mind_words();
+                let words_off = (0..n).filter(|&k| gw[k] != cpu.mind[k]).count();
+                let held = (0..n).filter(|&k| cpu.lives(k) && cpu.mind_of(k) != 0).count();
+                let born = cpu.births - births;
+                eprintln!("{name}: {held} walkers with a status after the tick, {born} born, {words_off} words off");
+                assert!(held > n / 10 && born > 0 && words_off == 0, "{name}: statuses hold, children are born and the words agree");
+            }
             // Withering: the same slots die, and every living walker carries
             // the same news (whole numbers, so exactly).
             if news {
@@ -4384,6 +4493,7 @@ mod tests {
         // And the same raid steered down its walking distance round the
         // wall (`BigDish::raid_paths`, the field in `news`; lean 4 marks it).
         let raid_walls = Settings { raid_lean: 4, raid_r: 1_000.0, ..raid.clone() };
+        let minds = Settings { spin_curl: 0.6, ..scared.clone() };
         // And the sink (`Frame::sink`, 2026-11-12): the blast sinks along
         // the line to the last slime within the sink's reach, at one strike
         // radius and at 1.5 (a reach that is not the strike's own r2).
@@ -4426,6 +4536,13 @@ mod tests {
             // strikes nothing, a seeker the first live walker on or beside
             // its line.
             ("plain, seeking shots strike walkers through faint trail", base, 0, 0.0, 0, 1.0),
+            // And the Mind statuses (the gun cards' Mind family,
+            // 2026-11-16, the slime-enemy thread's ask): a fifth of the
+            // walkers blind, a fifth sour, a fifth spinning, a fifth with a
+            // status that ran out a step ago, with panic on, so the stale
+            // half reads its sour or blind senses as it charges or runs and
+            // the calm half as it walks.
+            ("plain, blind, sour and spinning walkers while a cut-off part charges", minds, 0, 0.0, 0, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4490,6 +4607,20 @@ mod tests {
                 for k in (1..cpu.walkers.len()).step_by(4) {
                     cpu.news[k] = cpu.steps + 1 - 5;
                 }
+            }
+            let minded = s.spin_curl != 0.0;
+            if minded {
+                use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_T};
+                let now = cpu.steps as u32;
+                cpu.mind = (0..cpu.walkers.len())
+                    .map(|k| match k % 5 {
+                        0 => MIND_BLIND << 29 | ((now + 30) & MIND_T),
+                        1 => MIND_SOUR << 29 | ((now + 30) & MIND_T),
+                        2 => MIND_SPIN << 29 | ((now + 30) & MIND_T),
+                        3 => MIND_BLIND << 29 | (now & MIND_T),
+                        _ => 0,
+                    })
+                    .collect();
             }
             let (w, h) = (cpu.w, cpu.h);
             let k = SCALE as f32;
@@ -4694,6 +4825,17 @@ mod tests {
             eprintln!("squad world, {name}: {lives_off} slots differ in life, {off} walkers off; trail L1 {lt:.1e}, scent L1 {ls:.1e}, charge L1 {lc:.1e}, alarm L1 {la:.1e} (in all {alarm_sum:.0}); {agar_off} agar and {ground_off} ground off");
             assert_eq!(lives_off, 0, "the same walkers die");
             assert!(off * 1000 <= cpu.walkers.len(), "{off} walkers off");
+            // Mind: the words agree after the frame (the shots' dead keep
+            // theirs, children clear), and the statuses held.
+            if minded {
+                assert!(e.minds, "{name}: sense reads the Mind words");
+                let gw = e.mind_words();
+                let words_off = (0..cpu.walkers.len()).filter(|&k| gw[k] != cpu.mind[k]).count();
+                let living = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).count();
+                let held = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.mind_of(k) != 0).count();
+                eprintln!("squad, {name}: {held} of {living} living walkers with a status after the frame, {words_off} words off");
+                assert!(held * 3 > living && words_off == 0, "{name}: statuses hold (three fifths had one; children are born without) and the words agree");
+            }
             // The spray: the same kills as without it; after the tick some
             // droplets still fly (flung and doomed, the same slots on both)
             // and the rest died where they landed.
