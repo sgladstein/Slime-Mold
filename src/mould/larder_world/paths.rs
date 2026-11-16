@@ -34,8 +34,15 @@ pub(super) const MAP_POPS: usize = 1 << 17;
 
 /// How far from a soldier's goal another goal's walking map serves it,
 /// dish cells, when that goal is in a straight walk of its own: a squad's
-/// formation slots share one map instead of building one a slot.
-pub(super) const MAP_NEAR: f32 = 4.0;
+/// formation slots share one map instead of building one a slot. About a
+/// formation of 25's reach from its middle (12.5 dish cells). At 4, a
+/// squad of 25 needed a map for each part of its formation: on a 6x core
+/// world 8 squads of 25 asked for 45 goal cells a step, more maps than
+/// the cache holds at 6x (34), and 47% of map lookups went unserved, the
+/// soldier waiting; at 12, 19%, mostly the few seconds after all 8 squads
+/// were sent at once (soldier cap 200, 2026-11-16; `examples/soldiercap`,
+/// `depth=8 n=200 secs=30`).
+pub(super) const MAP_NEAR: f32 = 12.0;
 
 /// How far from a steered squad's moving goal another goal's walking map
 /// serves it, dish cells (`guide`).

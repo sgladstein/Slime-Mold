@@ -352,7 +352,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 43] = [
+const LOADOUTS: [(&str, &str); 47] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -415,6 +415,13 @@ const LOADOUTS: [(&str, &str); 43] = [
     // fired in turn.
     ("bomb-gas", "bomb+gas"),
     ("trigger-bomb-gas", "trigger+bomb+gas"),
+    // The shove cards (owner 2026-11-16 05:11Z: "corral and push the slime
+    // onto areas. Into a kill zone"): a heaved shove straight on, one
+    // toward the nearest turret, one drawn back to the gun.
+    ("heave", "heave+heave+plain"),
+    ("corral", "corral+heave+plain"),
+    ("pull", "pull+heave+plain"),
+    ("corral-slug", "corral+ammo/plain/slug/1/100/100/100/100/1"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -1838,7 +1845,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cut = None;
     let mut booms: Vec<(f32, f32, f32)> = Vec::new();
     let mut bosses: Vec<(f32, f32, f32)> = Vec::new();
-    let mut turrets: Vec<(Kind, (f32, f32))> = Vec::new();
+    let mut turrets: Vec<(Kind, (f32, f32), f32)> = Vec::new();
     let mut renders: Vec<usize> = Vec::new();
     // Whether the command line picks the mould (`shape=`, `walkers=`); if
     // not, and no mission does, it is shape C (`DEFAULT_SHAPE`).
@@ -2029,11 +2036,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // `turret=X,Y` (11-14, the turret films; the other kinds for
                 // the building looks): one standing whole at (X, Y) from the
                 // start, world units as `centre=` (paid for, not raised);
-                // repeat for more.
+                // repeat for more. `turret=X,Y,T` (2026-11-16, the shove
+                // card films): standing from game second T instead, so the
+                // game before it is the same as without.
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
-                let [x, y] = w.as_slice() else { return Err(format!("{k}=X,Y").into()) };
+                let (x, y, t) = match w.as_slice() {
+                    [x, y] => (*x, *y, 0.0),
+                    [x, y, t] => (*x, *y, *t),
+                    _ => return Err(format!("{k}=X,Y[,T]").into()),
+                };
                 let kind = match k { "turret" | "turret2" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
-                turrets.push((kind, (*x, *y)));
+                turrets.push((kind, (x, y), t));
                 if k == "turret2" {
                     renders.push(turrets.len() - 1);
                 }
