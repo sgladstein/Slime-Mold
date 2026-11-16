@@ -397,6 +397,9 @@ fn lump_of(k: u32) -> u32 {
 // specks"); only condensing ripens toward condensing, absorbs and stops
 // births at the slots (`ripens`).
 fn condenses() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0 || P.roam > 0u); }
+// Condensed or thick walkers can exist (the per-cell counts `dclear` and
+// `dcount` run; mod.rs's `dense_walkers`): not with specks alone.
+fn dense_on() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0); }
 fn ripens() -> bool { return growth() && P.condense > 0u; }
 // `thicken` in tenths of `birth_at`, in `ccrowd`'s top byte (bits 24-31).
 fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
@@ -2579,7 +2582,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         touching += enemy_occ(u32(y * w + x));
         // A condensed walker touches as two (`condense`; `dcount`), a lump's
         // member as 1 + its bite.
-        if (condenses()) { touching += dense_cell(u32(y * w + x)); }
+        if (dense_on()) { touching += dense_cell(u32(y * w + x)); }
         if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
     }
     let b = 4;
@@ -2749,7 +2752,7 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
             let y = cy + dy;
             if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
             touching += atomicLoad(&occ[u32(y * w + x)]);
-            if (condenses()) { touching += dense_cell(u32(y * w + x)); }
+            if (dense_on()) { touching += dense_cell(u32(y * w + x)); }
             if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
         }
     }

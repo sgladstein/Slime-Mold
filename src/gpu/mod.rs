@@ -1417,10 +1417,22 @@ pub struct Engine {
     pub reach: u32,
     /// Dense slime condenses (`Settings::condense` with growth on): its
     /// words sit in `news` from `dense_at` (bytes; `dense_words`).
+    /// `condenses` runs `ripen` (condensing, thickening or breakaway);
+    /// `dense_walkers` the per-cell count of condensed or thick walkers
+    /// (`dclear`, `dcount`), which only condensing and thickening make;
+    /// `ripens` the mass (`massclear`, `masscount`), which only
+    /// condensing's births read.
     pub condenses: bool,
+    pub dense_walkers: bool,
+    pub ripens: bool,
     /// A lump is on (`Settings::lumps`): `lumpclear` and `lumpsum` start
     /// each tick.
     pub lumps_on: bool,
+    /// A planted bug for the twin (`mouldgpu`'s
+    /// `the_dense_passes_start_clean_when_they_come_back`), false in play:
+    /// the next frame that counts the dense cells leaves out their clear
+    /// (`dclear`), so it counts on top of whatever the last count left.
+    pub plant_no_clear: bool,
     pub dense_at: u64,
     /// Plants (`plant_words`): their words sit in `news` from `plant_at`
     /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
@@ -1740,7 +1752,10 @@ impl Engine {
             withers: false,
             reach: 1,
             condenses: false,
+            dense_walkers: false,
+            ripens: false,
             lumps_on: false,
+            plant_no_clear: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             plants: !d.plant.is_empty(),
@@ -1919,6 +1934,8 @@ impl Engine {
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0 || d.p.roam > 0);
+        self.dense_walkers = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
+        self.ripens = self.grows && d.p.condense > 0;
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -2110,6 +2127,8 @@ impl Engine {
         // breakaways the GPU never made). The dense passes run for it.
         let roam = if self.grows { s.roam.min(crate::mould::big::RIPE) } else { 0 };
         self.condenses = condense > 0 || thick > 0 || roam > 0;
+        self.dense_walkers = condense > 0 || thick > 0;
+        self.ripens = condense > 0;
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));
@@ -2294,9 +2313,19 @@ impl Engine {
                 out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
             // The condensed walkers a cell, which touch as two (`condense`),
-            // and the lumps' members' bite.
-            if self.condenses || self.lumps_on {
-                out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
+            // and the lumps' members' bite. Only where some can be (11-16:
+            // specks alone make none, and on the core world these passes and
+            // the mass cost 0.36 ms a step).
+            // Skipped, the cells keep the last count: `dclear` always runs
+            // before `dcount`, so the first frame they come back on (a lump
+            // formed, condensing switched on) starts from clear cells, and
+            // the units read the cells only under the same gates
+            // (`dense_on`, `P.lump_on`; 11-16, the tech lead's review).
+            if self.dense_walkers || self.lumps_on {
+                if !std::mem::take(&mut self.plant_no_clear) {
+                    out.push((DCLEAR, self.cells.div_ceil(256), s));
+                }
+                out.push((DCOUNT, self.n.div_ceil(256), s));
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
@@ -2377,7 +2406,13 @@ impl Engine {
                 tick.push((RIPEN, n));
             }
             tick.push((LIFE, n));
-            if self.condenses {
+            // The mass, which only condensing's births read (`ripens`):
+            // every living walker adds to one word, so with thickening or
+            // specks alone it was work for nothing (11-16). `massclear`
+            // always runs first and `breed` reads the mass only under the
+            // same gate (`ripens()`), so a step after condensing comes back
+            // on reads this step's mass, not a stale one.
+            if self.ripens {
                 tick.extend([(MASSCLEAR, 1), (MASSCOUNT, n)]);
             }
             // A garden's birth caps count each side first (`capcount`).
@@ -2658,17 +2693,43 @@ impl Engine {
     /// that is over `sleep_death`. Switches the life states on. Runs on
     /// its own, between ticks; returns the walkers gassed (a read-back).
     pub fn gas(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, steps: u16) -> u32 {
+        let before = self.gas_word(2);
+        self.gas_pass(shared, s, x, y, r, steps);
+        self.gas_word(2).wrapping_sub(before)
+    }
+
+    /// `gas` with no read-back: its count is on the `news` gas word 2
+    /// (`snap` copies it), for a batch of bursts read back at once
+    /// (`GpuWorld::bursts`, 2026-11-16).
+    pub fn gas_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, steps: u16) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, 0.0]));
-        let before = self.gas_word(2);
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
         self.run(shared, &[(GAS, self.n.div_ceil(256))]);
         if steps > 0 {
             self.gas_until = self.gas_until.max(self.done + steps as u64);
         }
-        self.gas_word(2).wrapping_sub(before)
+    }
+
+    /// The engine's three burst counters as they will stand once the GPU
+    /// reaches this point (the walkers struck, gassed and flung: `wstat`
+    /// word 3 and the `news` gas words 2 and 3), copied on the GPU into
+    /// slot `slot` of `dst` (16 bytes a slot) with no wait: a batch of
+    /// bursts snaps after each and reads `dst` back once (`read_snaps`).
+    pub fn snap(&self, dst: &wgpu::Buffer, slot: u64) {
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("snap") });
+        enc.copy_buffer_to_buffer(&self.wstat, 12, dst, 16 * slot, 4);
+        enc.copy_buffer_to_buffer(&self.news, self.gas_at + 8, dst, 16 * slot + 4, 8);
+        self.queue.submit([enc.finish()]);
+    }
+
+    /// The first `n` slots `snap` wrote: (struck, gassed, flung) each, in
+    /// one read-back.
+    pub fn read_snaps(&self, dst: &wgpu::Buffer, n: usize) -> Vec<[u32; 3]> {
+        let b = read_back_range(&self.device, &self.queue, dst, 0, 16 * n as u64);
+        b.chunks_exact(16).map(|c| [0, 1, 2].map(|i| u32::from_le_bytes(c[4 * i..4 * i + 4].try_into().unwrap()))).collect()
     }
 
     /// **The gas cloud**, as the CPU's `BigDish::lay_gas` (dish cells, as
@@ -2814,6 +2875,15 @@ impl Engine {
     /// holds the heading and `kir` 1.
     #[allow(clippy::too_many_arguments)]
     pub fn fling(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) -> u32 {
+        let before = self.gas_word(3);
+        self.fling_pass(shared, s, x, y, r, rr, steps, inv, push);
+        self.gas_word(3).wrapping_sub(before)
+    }
+
+    /// `fling` with no read-back: its count is on the `news` gas word 3
+    /// (`snap` copies it), as `gas_pass`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn fling_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, rr: f32, steps: u16, inv: f32, push: Option<f32>) {
         let k = self.dish.p.scale as f32;
         self.cycles = true;
         // So `measure` reads the marks back.
@@ -2824,9 +2894,7 @@ impl Engine {
         // The strike row as the `fling` pass reads it: `kalarm` holds `inv`.
         let (head, pushed) = push.map_or((0.0, 0.0), |a| (a, 1.0));
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, inv, rr * k, head, steps as f32, pushed]));
-        let before = self.gas_word(3);
         self.run(shared, &[(FLING, self.n.div_ceil(256))]);
-        self.gas_word(3).wrapping_sub(before)
     }
 
     /// The alarm field now (zeros without one).

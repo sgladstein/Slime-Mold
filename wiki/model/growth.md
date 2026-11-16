@@ -122,7 +122,15 @@ with none (27,428 against 25,716; planet 1 of run 1, 10%, 26,239 against
 23,900), one seed each.
 On planet 1's sheet the specks cross open ground as a visible stream; in
 planet 2's mesh they blend into the slime's own exploring streams
-([specks](../../Reports/specks-2026-11-16/README.md)).
+([specks](../../Reports/specks-2026-11-16/README.md)). On the GTX 1070,
+against no dense passes at all (`roam=0`), the step costs 0.05 ms more on
+planet 1, 0.07 on planet 2 and, on the core world, 0.56 until the mass
+and the condensed walkers a cell ran only with condensing
+(`Engine::ripens`) or with condensing, thickening
+(`Engine::dense_walkers`) or a lump (`lumps_on`; #388), 0.30-0.33 since,
+`ripen` 0.21 of it. A twin switches those passes back on mid-game and
+checks they start clean. A condensed walker touches as two only while
+condensing or thickening is on, on both engines.
 
 **Thickening** (11-15, `BigParams::thicken`, both engines; on in shape C
 at 2 until 11-16, **off since**: the owner, 04:58Z, "Remove the bronze";

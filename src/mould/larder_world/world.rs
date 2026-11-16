@@ -157,6 +157,14 @@ pub trait World {
     /// where `has_gas` and `has_germ` say so (a world without them leaves
     /// those parts out, and the toolkit doesn't sell them there).
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut;
+    /// Several bursts in their order, each as `burst`, with their counts
+    /// (2026-11-16, the gun-card plan's read-back batching): the GPU world
+    /// waits on one read-back for the whole batch where `burst` waited on
+    /// up to three a burst (the kill, the fling and the gas counts), so a
+    /// volley of payloads stalls the frame once.
+    fn bursts(&mut self, list: &[(squad::Burst, squad::BurstRules)]) -> Vec<squad::BurstOut> {
+        list.iter().map(|(b, k)| self.burst(b, k)).collect()
+    }
     /// Walkers fire killed since the last call that no `burst` counted:
     /// the plants' fire on every world, and on a GPU world the
     /// `Burst::burn` bursts too (counted here in one read-back; a CPU world

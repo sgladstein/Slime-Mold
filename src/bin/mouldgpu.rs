@@ -4743,6 +4743,120 @@ mod tests {
         }
     }
 
+    /// **The skipped dense passes come back clean** (the tech lead's review
+    /// of #388, 2026-11-16): with specks alone the GPU skips `dclear` and
+    /// `dcount` (`Engine::dense_walkers`, `lumps_on`) and the mass
+    /// (`Engine::ripens`), so their cells keep the last count while off. A
+    /// dish with specks plays 15 squad frames, a tick each, the GPU on its
+    /// own from one injection (an injection clears the cells, which would
+    /// hide a stale count), while the slime's rules change as the game's
+    /// do: a mini-boss's lump forms round the thickest mould, is let go
+    /// (its rules back to none), and forms again; then condensing comes on
+    /// fast (2 steps ripe), goes off with walkers still condensed, and
+    /// comes back. Every frame: the passes run exactly while something
+    /// needs them, and every unit's touch (the dense and bite cells' only
+    /// reader) and the walkers match the CPU's. A planted bug must fail
+    /// it: the frame the lump comes back (and, again, the frame condensing
+    /// comes back) without its `dclear` (`Engine::plant_no_clear`).
+    #[test]
+    fn the_dense_passes_start_clean_when_they_come_back() {
+        use slime_mould::mould::big::Lump;
+        use slime_mould::mould::squad::{self, Frame, UnitIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        // Specks every 30 steps at the run's share: `condenses` on (ripen
+        // runs), the dense passes and the mass off.
+        let base = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, wall_hp: 1000.0, roam: 30, roam_share: 0.05, ..small(0) };
+        let boss = Lump { armour: 4, bite: 2, ..Lump::default() };
+        const LUMP_ON: [usize; 2] = [1, 5];
+        const LUMP_OFF: [usize; 2] = [3, 7];
+        const CONDENSE_ON: [usize; 2] = [8, 12];
+        const CONDENSE_OFF: usize = 10;
+        // (frame, units' touch off in all, walkers off) for each frame.
+        let play = |planted: Option<usize>| -> Vec<(usize, u32, usize)> {
+            let mut s = base.clone();
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..60 {
+                cpu.tick();
+            }
+            let (w, h) = (cpu.w, cpu.h);
+            let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
+            let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+            let at = slime_mould::mould::larder_world::raid_cell(t, (w, h));
+            let k = SCALE as f32;
+            let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
+            let unit = |at: (f32, f32), touch: f32| UnitIn { x: at.0, y: at.1, touch, sight: 30.0, take_r: 4.0, take: 0.0, smell_r: 2.0, smell: 0.5 };
+            // A wide touch on the lump, a narrow one in it, and units on
+            // the crystals, where the slime crowds and condenses.
+            let mut units = vec![unit(t, 12.0), unit(t, 3.0), unit((t.0 + 9.0, t.1), 6.0)];
+            units.extend((0..8).map(|p| unit(pile(p), 6.0)));
+            let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, spray: 0, spray_speed: 0.7, spray_share: 1.0 };
+            e.inject(&cpu);
+            let mut seen = Vec::new();
+            for frame in 0..15 {
+                if LUMP_ON.contains(&frame) {
+                    s.lumps[0] = boss;
+                    cpu.p.lumps = s.lumps;
+                    let r2 = 30 * 30;
+                    let n = cpu.form_lump(0, Some((at, r2)));
+                    e.form_lump(&shared, 0, Some((at, r2)));
+                    assert!(n > 50, "frame {frame}: a lump of {n}");
+                }
+                if LUMP_OFF.contains(&frame) {
+                    cpu.form_lump(0, None);
+                    e.form_lump(&shared, 0, None);
+                    s.lumps[0] = Lump::default();
+                    cpu.p.lumps = s.lumps;
+                }
+                if CONDENSE_ON.contains(&frame) || frame == CONDENSE_OFF {
+                    s.condense = if frame == CONDENSE_OFF { 0 } else { 2 };
+                    s.condense_crowd = 4;
+                    (cpu.p.condense, cpu.p.condense_crowd) = (s.condense, s.condense_crowd);
+                }
+                let lump = (LUMP_ON[0]..LUMP_OFF[0]).contains(&frame) || (LUMP_ON[1]..LUMP_OFF[1]).contains(&frame);
+                let condense = (CONDENSE_ON[0]..CONDENSE_OFF).contains(&frame) || frame >= CONDENSE_ON[1];
+                e.plant_no_clear = planted == Some(frame);
+                e.set_squad(&f);
+                run(&mut e, &shared, &s, 1, Hand::default());
+                let cpu_out = squad::frame(&mut cpu, &f, 1);
+                let gpu_out = e.squad_out();
+                assert_eq!((e.lumps_on, e.dense_walkers, e.ripens, e.condenses), (lump, condense, condense, true), "frame {frame}: the passes that run");
+                let touch_off: u32 = cpu_out.units.iter().zip(&gpu_out.units).map(|(a, b)| a.touching.abs_diff(b.touching)).sum();
+                let gpu = walkers_of(&e);
+                let off = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q)).filter(|&q| {
+                    let (g, c) = (gpu[q], cpu.walkers[q]);
+                    (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3
+                }).count();
+                let bite: u32 = squad::bite_cells(&cpu).iter().sum();
+                let dense: u32 = squad::dense_cells(&cpu).iter().map(|&n| n as u32).sum();
+                let held = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && cpu.is_dense(q)).count();
+                eprintln!(
+                    "dense passes{}, frame {frame}: lump {lump}, condense {condense}; bite {bite} and {dense} condensed on the cells ({held} condensed slots); touch {:?}, {touch_off} off; {off} walkers off",
+                    planted.map_or(String::new(), |p| format!(" (planted at {p})")),
+                    cpu_out.units.iter().map(|u| u.touching).collect::<Vec<_>>()
+                );
+                assert_eq!(bite > 0, lump, "frame {frame}: the lump's members bite while it is on");
+                if frame + 1 == CONDENSE_OFF || frame == CONDENSE_ON[1] {
+                    assert!(dense > 0, "frame {frame}: condensed walkers hold cells");
+                }
+                if frame >= CONDENSE_OFF && frame < CONDENSE_ON[1] {
+                    assert!(held > 0 && dense == 0, "frame {frame}: condensed walkers left, which touch as one with condensing off");
+                }
+                seen.push((frame, touch_off, off));
+                if planted.is_none() {
+                    assert!(touch_off == 0 && off * 1000 <= cpu.walkers.len(), "frame {frame}: {touch_off} touch off, {off} walkers off");
+                }
+            }
+            seen
+        };
+        play(None);
+        for p in [LUMP_ON[1], CONDENSE_ON[1]] {
+            let seen = play(Some(p));
+            assert!(seen[p].1 > 20, "the twin catches the frame {p} without its clear: {:?}", seen[p]);
+        }
+    }
+
     /// The alarm field alone (the Swarmer's, 2026-11-12): no spores, no
     /// dormancy and no strike, so no life states, and nothing else that
     /// needs the outside pipelines. The field must still spread and the

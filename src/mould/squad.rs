@@ -718,9 +718,13 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
 
 /// The condensed walkers holding each cell (`BigParams::condense`; the
 /// GPU's `dcount` pass), empty while none can be: dormant ones count, as
-/// in `occ`; spores and the dead hold no cell.
+/// in `occ`; spores and the dead hold no cell. Only while condensing or
+/// thickening is on, as the GPU counts them (`Engine::dense_walkers`,
+/// 11-16): a walker condensed before condensing was switched off touches
+/// as one, where the CPU had counted it twice and the GPU, which skips
+/// the count then, once.
 pub fn dense_cells(d: &BigDish) -> Vec<u16> {
-    if d.dense.is_empty() {
+    if d.dense.is_empty() || (d.p.condense == 0 && d.p.thicken <= 0.0) {
         return Vec::new();
     }
     let mut n = vec![0u16; d.w * d.h];
@@ -989,6 +993,9 @@ mod tests {
         let u = at(thick);
         let plain = read(&d, &[u])[0].0;
         assert!(plain > 2, "walkers touch the unit: {plain}");
+        // Condensing on: only then does a condensed walker touch as two
+        // (`dense_cells`, 11-16, as the GPU counts them).
+        d.p.condense = 30;
         d.dense = vec![0; d.walkers.len()];
         let near: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0.floor() + 0.5 - tx).hypot(d.walkers[k].1.floor() + 0.5 - ty) <= 3.0).collect();
         for &k in &near {
