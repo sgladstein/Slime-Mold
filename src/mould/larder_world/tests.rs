@@ -3111,10 +3111,11 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
         }
         (g, top)
     };
-    let fast = RaidRules { food: 1.0e-3, first: 2.0, min: 5.0, every: 0.0, ..RaidRules::default() };
+    let fast = RaidRules { first: 2.0, first_sd: 0.0, min: 1.0, every: 5.0, every_sd: 0.0, size_sd: 0.0, ..RaidRules::default() };
     let (g, top) = play(fast, false, 14.0);
     eprintln!("raids: {:?}", g.raids.sent);
-    assert!(g.raids.sent.len() >= 2, "a raid every 5 s once the meter fills: {}", g.raids.sent.len());
+    assert!(g.raids.sent.len() >= 2, "a raid every 5 s: {}", g.raids.sent.len());
+    assert!(g.raids.sent.iter().all(|d| d.size == fast.size), "no spread, the mean size");
     let d = g.raids.sent[0];
     assert_eq!(d.aim, RaidAim::Building(top), "the pump drawing most");
     assert!(d.reach > 0.0 && d.held > 0 && d.share == fast.share && !d.last_stand);
@@ -3129,11 +3130,11 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert_eq!(g.raids.sent[0].aim, RaidAim::Lure { lure, from: Some(top) });
     assert_eq!(g.raids.sent[0].to, g.buildings[lure].at);
     // Off: none, and the world holds no raid.
-    let (g, _) = play(RaidRules { food: 0.0, ..fast }, false, 14.0);
+    let (g, _) = play(RaidRules { every: 0.0, ..fast }, false, 14.0);
     assert!(g.raids.sent.is_empty() && g.world.p.raid_at == 0);
     // The last stand: once, the whole slime, at the soldiers.
     let mut g = small(1);
-    g.rules.raid = RaidRules { last_stand: true, food: 0.0, ..RaidRules::default() };
+    g.rules.raid = RaidRules { last_stand: true, every: 0.0, ..RaidRules::default() };
     g.step();
     g.peak = g.mould * 10;
     g.time_raids();
@@ -3143,6 +3144,30 @@ fn the_slime_raids_the_richest_pump_and_a_lure_takes_it() {
     assert!(d.last_stand && d.share == 1.0 && matches!(d.aim, RaidAim::Soldiers(_)) && d.reach >= 1.0e3, "{d:?}");
     // Off by default.
     assert!(!RaidRules::default().last_stand);
+    // Random (owner 2026-11-16 01:48Z): each raid draws its gap and its
+    // size from a normal distribution, within the floor and the bounds.
+    let spread = RaidRules { first: 2.0, first_sd: 1.0, min: 2.0, every: 4.0, every_sd: 2.0, size: 0.15, size_sd: 0.06, ..RaidRules::default() };
+    let (g, _) = play(spread, false, 30.0);
+    let r = &g.raids.sent;
+    assert!(r.len() >= 4, "{} raids in 30 s", r.len());
+    let gaps: Vec<u64> = r.windows(2).map(|w| w[1].tick - w[0].tick).collect();
+    eprintln!("gaps {gaps:?}, sizes {:?}", r.iter().map(|d| d.size).collect::<Vec<_>>());
+    assert!(gaps.iter().any(|&a| a != gaps[0]), "the gaps vary: {gaps:?}");
+    assert!(gaps.iter().all(|&a| a >= 2 * g.rules.tps as u64), "never under the floor: {gaps:?}");
+    assert!(r.iter().any(|d| d.size != r[0].size), "the sizes vary");
+    assert!(r.iter().all(|d| (spread.size_min..=spread.size_max).contains(&d.size)));
+}
+
+/// The raids' normal draw has the mean and spread asked for.
+#[test]
+fn the_raids_draw_from_a_normal_distribution() {
+    let mut r = Raids::new(7);
+    let xs: Vec<f32> = (0..20_000).map(|_| r.normal(60.0, 20.0)).collect();
+    let m = xs.iter().sum::<f32>() / xs.len() as f32;
+    let sd = (xs.iter().map(|x| (x - m) * (x - m)).sum::<f32>() / xs.len() as f32).sqrt();
+    assert!((m - 60.0).abs() < 0.6 && (sd - 20.0).abs() < 0.6, "mean {m}, sd {sd}");
+    let within = xs.iter().filter(|&&x| (x - 60.0).abs() < 20.0).count() as f32 / xs.len() as f32;
+    assert!((within - 0.683).abs() < 0.02, "{within} within one sd");
 }
 
 /// The kill box pays (`BuildRules::render_food`, 2026-11-15): only a turret

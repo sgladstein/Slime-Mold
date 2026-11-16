@@ -524,7 +524,7 @@ impl<W: World> Game<W> {
             surge_last: 0,
             surge_timed: false,
             charge_was: 0.0,
-            raids: Raids::default(),
+            raids: Raids::new(seed),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();

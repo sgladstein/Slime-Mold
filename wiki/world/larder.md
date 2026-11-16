@@ -296,9 +296,12 @@ level's walkers (`run::surge_food`). On the GTX 1070 the surges' frame
 cost does not show, clock or food-driven, and the squad twins pass.
 Since 11-15 the slime also **raids** (owner, 20:56Z: a big defense
 "just ends with the mold clustering around its own crystals"; 21:15Z:
-"Raids is the number 1 option"): every 400 food it eats from its
-crystals (no sooner than 1:00, 40-150 s apart) it sends 15% of its mass
-at the player's best pump, else a building, else the soldiers, from
+"Raids is the number 1 option") at random times: since 11-16 each
+raid draws its wait from a normal distribution (mean 60 s, spread 20 s,
+never under 20 s; the first round 1:15) and its size the same way (mean
+15% of the slime's mass, spread 6%, within 4-40%), at the player's best
+pump (owner 01:48Z: raids "regardless", not "so consistent as every 400
+food", the rule until then), else a building, else the soldiers, from
 beyond the surge's reach (`Rules::raid`, `raids.rs`; `BigParams::raid_*`
 on both engines, the squad twin exact). A lure that is on within 40 cells
 of the target takes the raid, so a lure ringed by turrets is a kill box,
