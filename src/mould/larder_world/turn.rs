@@ -43,15 +43,29 @@ impl<W: World> Game<W> {
         let mut shots = Vec::new();
         // Who fired each shot, and the cast it carries (`Bullet::cast`).
         let mut shooters: Vec<(Option<usize>, u8)> = Vec::new();
-        // Elbow room first (`Rules::elbow`), so this frame's walk, touch
-        // and shots all see the spread squad.
-        self.elbow_room(dt);
+        // The squad mode's walk (`Rules::steer`): every soldier at once,
+        // velocity, elbow room and queuing together (`steer`).
+        let steer = r.squads && r.steer;
+        if steer {
+            self.steer_all(dt);
+        } else {
+            for s in self.soldiers.iter_mut() {
+                s.was = (s.x, s.y);
+                (s.vx, s.vy) = (0.0, 0.0);
+            }
+            // Elbow room first (`Rules::elbow`), so this frame's walk, touch
+            // and shots all see the spread squad.
+            self.elbow_room(dt);
+        }
         for k in 0..self.soldiers.len() {
             if !self.soldiers[k].alive {
                 continue;
             }
-            let was = (self.soldiers[k].x, self.soldiers[k].y);
-            self.walk(k, dt);
+            // Where its walk began (with `steer` everyone has walked already).
+            let was = self.soldiers[k].was;
+            if !steer {
+                self.walk(k, dt);
+            }
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
             // (Not while its squad is still being sent somewhere: its move

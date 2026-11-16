@@ -1,0 +1,167 @@
+<title>Squad Movement Rework</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; each clip full width with its counts beside the caption; tables scroll inside their own box. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --fg: #1d2420;
+  --muted: #5b665f;
+  --line: #d6dbd5;
+  --accent: #9a6b1f;
+  --good: #2f7a4a;
+  --bad: #a3412f;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --text: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161a18; --panel: #1f2421; --fg: #e4e8e3; --muted: #9aa59d; --line: #333b36;
+    --accent: #d9a24a; --good: #6cc48b; --bad: #e98b77; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161a18; --panel: #1f2421; --fg: #e4e8e3; --muted: #9aa59d; --line: #333b36;
+  --accent: #d9a24a; --good: #6cc48b; --bad: #e98b77; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--text); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+main { max-width: 1040px; margin: 0 auto; display: grid; gap: 36px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.3rem; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+header { display: grid; gap: 10px; }
+section { display: grid; gap: 14px; }
+.clip { display: grid; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; }
+.clip video { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 3px; background: #000; }
+.sides { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.cap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; align-items: start; }
+.cap h3 { margin: 0; font-family: var(--display); font-size: 1.05rem; }
+.cap p { color: var(--muted); font-size: 0.92rem; }
+.counts { display: grid; grid-template-columns: auto auto auto; gap: 2px 14px; font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.counts .h { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.counts .new { color: var(--good); font-weight: 600; }
+.wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+td.n { font-family: var(--mono); }
+tr:last-child td { border-bottom: 0; }
+.up { color: var(--good); }
+.down { color: var(--bad); }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 72ch; }
+code { font-family: var(--mono); font-size: 0.86em; }
+.note { color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 640px) {
+  .cap { grid-template-columns: 1fr; }
+  h1 { font-size: 1.6rem; }
+}
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Larder World · squad mode · 2026-11-16</div>
+    <h1>Squad Movement Rework</h1>
+    <p>Squads were clunky because every soldier dashed at full speed to its place and stopped dead, the squad's anchor stopped dead whenever it got ahead, figures were drawn only 15 times a second, and each soldier waited on its own walking map. Now each soldier has a velocity: it walks in step with its squad, slows into its place, queues or steps aside instead of shoving, and is drawn smoothly between game steps.</p>
+    <p class="note">Each clip: <strong>main on the left</strong>, <strong>this change on the right</strong>, the same game, 60 frames a second. Judder is how far a drawn soldier's step differs from its last one, in screen pixels a frame (0 is a perfectly even walk); hitches are frames where a walking soldier froze or jumped.</p>
+  </header>
+
+  <section>
+    <div class="clip">
+      <div class="sides"><span>main</span><span>this change</span></div>
+      <video src="clips/wasd40.mp4" poster="clips/wasd40.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="cap">
+        <div>
+          <h3>WASD with 40 soldiers, planet 1, zoom 8</h3>
+          <p>East 3 s, north 2.5 s, west 2.5 s, let go. On main every figure shakes as it walks and the squad runs past where it stops; now it walks in step and stops where it is.</p>
+        </div>
+        <div class="counts">
+          <span class="h"></span><span class="h">main</span><span class="h">now</span>
+          <span>judder px</span><span>3.55</span><span class="new">0.10</span>
+          <span>hitches</span><span>3.4%</span><span class="new">0.0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="clip">
+      <div class="sides"><span>main</span><span>this change</span></div>
+      <video src="clips/far100.mp4" poster="clips/far100.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="cap">
+        <div>
+          <h3>100 soldiers to a far crystal, planet 1, zoom 5</h3>
+          <p>A right click on the furthest crystal within 120 cells. On main the blob walks in 45-degree legs and members stop and go; now it flows round the rock and packs round the crystal.</p>
+        </div>
+        <div class="counts">
+          <span class="h"></span><span class="h">main</span><span class="h">now</span>
+          <span>judder px</span><span>2.25</span><span class="new">0.11</span>
+          <span>hitches</span><span>1.2%</span><span class="new">0.0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="clip">
+      <div class="sides"><span>main</span><span>this change</span></div>
+      <video src="clips/far200.mp4" poster="clips/far200.jpg" controls muted loop playsinline preload="metadata"></video>
+      <div class="cap">
+        <div>
+          <h3>200 soldiers through the caves, planet 8, zoom 4</h3>
+          <p>The same order with the new 200-soldier cap. Big squads in caves are still the slowest case (see what is open), but they no longer shove into one point.</p>
+        </div>
+        <div class="counts">
+          <span class="h"></span><span class="h">main</span><span class="h">now</span>
+          <span>judder px</span><span>1.18</span><span class="new">0.08</span>
+          <span>hitches</span><span>3.1%</span><span class="new">0.0%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Measured on 39 moves</h2>
+    <p>Old walk against new, same code otherwise, means over seeds. Jerk is the mean change of a member's step from the last (0 smooth, 1 a stop or a snap); turn is its heading change a step; still is the share of steps a member stood while its squad moved; back is cells walked back after stopping; cost is the movement's CPU time a game step.</p>
+    <div class="wrap">
+      <table>
+        <thead><tr><th>move</th><th>soldiers</th><th>jerk</th><th>turn °</th><th>still</th><th>back</th><th>arrive s</th><th>cost ms</th></tr></thead>
+        <tbody>
+          <tr><td>WASD, let go</td><td class="n">200</td><td class="n">0.18 → <span class="up">0.06</span></td><td class="n">8.8 → <span class="up">3.2</span></td><td class="n">0.05 → 0.03</td><td class="n">0.10 → <span class="up">0.00</span></td><td class="n">–</td><td class="n">5.51 → <span class="up">0.84</span></td></tr>
+          <tr><td>sent 50 cells</td><td class="n">200</td><td class="n">0.20 → <span class="up">0.04</span></td><td class="n">9.9 → <span class="up">1.5</span></td><td class="n">0.23 → <span class="up">0.03</span></td><td class="n">0.89 → <span class="up">0.01</span></td><td class="n">9.7 → 8.7</td><td class="n">4.89 → <span class="up">0.87</span></td></tr>
+          <tr><td>sent in a line</td><td class="n">40</td><td class="n">0.07 → <span class="up">0.03</span></td><td class="n">3.4 → <span class="up">1.5</span></td><td class="n">0.01 → 0.01</td><td class="n">0.00 → <span class="down">0.11</span></td><td class="n">6.7 → 7.2</td><td class="n">0.24 → 0.11</td></tr>
+          <tr><td>sent in a ring</td><td class="n">100</td><td class="n">0.38 → <span class="up">0.02</span></td><td class="n">12.9 → <span class="up">0.6</span></td><td class="n">0.46 → <span class="up">0.10</span></td><td class="n">0 → 0</td><td class="n">never → <span class="up">10.5</span></td><td class="n">1.35 → 0.57</td></tr>
+          <tr><td>8-cell bridge</td><td class="n">40</td><td class="n">0.24 → <span class="up">0.08</span></td><td class="n">14.7 → <span class="up">3.8</span></td><td class="n">0.15 → 0.07</td><td class="n">0.03 → 0.04</td><td class="n">17.4 → <span class="up">14.4</span></td><td class="n">0.23 → 0.17</td></tr>
+          <tr><td>6-cell door, 30 long</td><td class="n">100</td><td class="n">0.37 → <span class="up">0.12</span></td><td class="n">21.9 → <span class="up">6.4</span></td><td class="n">0.17 → 0.12</td><td class="n">0 → 0.01</td><td class="n">never → <span class="up">18.9</span></td><td class="n">1.22 → 0.92</td></tr>
+          <tr><td>two squads crossing a bridge</td><td class="n">40 each</td><td class="n">0.19 → <span class="up">0.08</span></td><td class="n">12.9 → <span class="up">4.2</span></td><td class="n">0.23 → <span class="up">0.04</span></td><td class="n">0.04 → 0.02</td><td class="n">19.4 → <span class="up">13.5</span></td><td class="n">0.17 → 0.13</td></tr>
+          <tr><td>planet 1, far crystal, 6 seeds</td><td class="n">200</td><td class="n">0.45 → <span class="up">0.16</span></td><td class="n">34.6 → <span class="up">9.7</span></td><td class="n">0.31 → 0.20</td><td class="n">7.89 → <span class="up">1.13</span></td><td class="n">never → <span class="up">17.1</span></td><td class="n">4.72 → 2.64</td></tr>
+          <tr><td>planet 8 caves, 6 seeds</td><td class="n">40</td><td class="n">0.25 → <span class="up">0.10</span></td><td class="n">14.7 → <span class="up">5.1</span></td><td class="n">0.14 → 0.14</td><td class="n">9.11 → <span class="up">0.81</span></td><td class="n">18.3 → 16.8</td><td class="n">0.34 → 0.32</td></tr>
+          <tr><td>planet 8 caves, 6 seeds</td><td class="n">200</td><td class="n">0.43 → <span class="up">0.19</span></td><td class="n">39.8 → <span class="up">13.1</span></td><td class="n">0.41 → 0.34</td><td class="n">6.79 → <span class="up">0.73</span></td><td class="n">never → never</td><td class="n">5.84 → 4.69</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">"never" means not within the move's time (15 to 26 s). On planets 1 and 8 (seeds 1-6, 40 and 200 soldiers, 24 pairs), the new walk had less jerk in 23 of 24, less turning in 24 of 24, fewer walking-map waits in 24 of 24 and a lower mean cost in 21 of 24 (sign test p &lt; 0.001 for each). Arrival time, pace and stand-still share did not change reliably. CPU cost on this cloud machine; the 1070 has not timed it.</p>
+  </section>
+
+  <section>
+    <h2>Worse, and still open</h2>
+    <ul>
+      <li><strong>A line settles a little after arriving</strong>: 1.1 s with 40 and 4.1 s with 200, where the old line stood at once. It now forms as it walks, and its last members step into place at the end.</li>
+      <li><strong>Planet 1 with 200</strong> now arrives on every seed (17.1 s, it never did), but takes 22.8 s to stand still afterwards against 14.8.</li>
+      <li><strong>Big squads in caves</strong> are still the slowest case: planet 8 with 200 does not arrive within 26 s before or after, and a member stands still a third of the time while the squad moves.</li>
+      <li><strong>A ring or wedge of 200</strong> is one soldier deep, 160 cells across: it walks as a packed knot and spreads out once there. Rings in bands and a capped wedge are cheap to try.</li>
+      <li><strong>The worst steps</strong> with 200 on planet 8 rose (p95 7.66 → 8.40 ms) while the mean fell; which part costs it is not measured yet.</li>
+      <li><strong>Next big step</strong> (the independent review's first pick): hand out formation places fitted to the open ground, so a squad pours through a corridor and re-forms past it without the special cases.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Try it</h2>
+    <p>Once the change is merged, double-click <code>play.cmd</code>: it pulls main and builds the game. The old walk is still there for comparison with <code>set=steer=0</code>.</p>
+    <p class="note">Report: <code>Reports/squad-movement-2026-11-16/README.md</code> in the repository (research, design, what was rejected, the full table). Films from <code>raw/films.sh</code> on software Vulkan; numbers from <code>raw/measure.sh</code>.</p>
+  </section>
+</main>

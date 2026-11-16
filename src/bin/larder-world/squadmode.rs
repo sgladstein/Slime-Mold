@@ -135,7 +135,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
 #[derive(Default)]
 pub(super) struct SquadInput {
     /// W, A, S, D held.
-    keys: [bool; 4],
+    pub(super) keys: [bool; 4],
     steer: (f32, f32),
     /// The left button held (firing), and the point last sent.
     firing: bool,
@@ -144,7 +144,7 @@ pub(super) struct SquadInput {
     /// The camera follows the controlled squad.
     pub(super) follow: bool,
     /// Where the camera was put last frame, to tell a pan by the player.
-    put: Option<(f32, f32)>,
+    pub(super) put: Option<(f32, f32)>,
     /// The cursor's world point this frame: the aim, sent between steps
     /// (`aim`), and where the controlled squad's guns point.
     pub(super) want: Option<(f32, f32)>,
@@ -412,7 +412,7 @@ impl App {
     }
 
     /// The steering from the keys held, sent when it changes.
-    fn send_steer(&mut self) {
+    pub(super) fn send_steer(&mut self) {
         let (Some(sq), Some(q)) = (self.sq.as_ref(), self.active()) else { return };
         let k = sq.keys;
         let d = ((k[3] as i32 - k[1] as i32) as f32, (k[2] as i32 - k[0] as i32) as f32);
@@ -574,6 +574,7 @@ impl App {
             return;
         }
         let at = self.cursor_world();
+        let between = self.between();
         let Some(g) = self.game.as_mut() else { return };
         // The screen edge does not pan: the cursor is the aim.
         self.controls.edge = false;
@@ -608,7 +609,10 @@ impl App {
         // screen's middle, the camera settled about 100 cells below the
         // squad at zoom 4, off the screen once zoomed in; bug sweep,
         // 2026-11-14.)
-        if let (true, Some(m)) = (sq.follow, g.middle(q)) {
+        // The middle as drawn (`Game::drawn_middle`), between steps: the
+        // middle at the steps moved 15 times a second, and the camera eased
+        // after it in jerks.
+        if let (true, Some(m)) = (sq.follow, g.drawn_middle(q, between)) {
             let c = self.camera.focus();
             if sq.put.is_some_and(|p| (p.0 - c.0).hypot(p.1 - c.1) > 0.5) {
                 sq.follow = false;

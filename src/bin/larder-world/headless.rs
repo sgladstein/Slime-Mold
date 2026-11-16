@@ -687,6 +687,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
             looks[k].cast = s.cast;
             looks[k].shots = looks[k].shots.wrapping_add(1);
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+            looks[k].turn_to = looks[k].facing;
         }
     }
     // A harvester taking from a crystal turns to face it and its hands
@@ -698,6 +699,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
             looks[k].take = TAKE;
             if looks[k].flash <= 0.0 {
                 looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
+                looks[k].turn_to = looks[k].facing;
             }
         }
     }

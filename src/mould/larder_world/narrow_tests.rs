@@ -178,27 +178,42 @@ fn spread(g: &Game<BigDish>) -> f32 {
 /// squad went through as one knot (10 others within a gap of one soldier
 /// at worst, seeds 1 and 2: 10 and 9); funnelling, it queues (6 and 6), is
 /// all through within 16 s and stands as a blob again past the door.
+///
+/// With the squad movement rework's walk (`Rules::steer`, 2026-11-16) a
+/// squad queues without the column too (worst knot 6 off, 7 on, seed 1),
+/// since soldiers brake behind slower ones instead of shoving, but it
+/// stalls in the door: the column is what gets it through first. The old
+/// walk's comparison (fewer knots with the column) is kept for it.
 #[test]
 fn a_big_squad_funnels_through_a_door_and_forms_up_after() {
-    for seed in 1..=2 {
-        let mut worst = [0usize; 2];
-        let mut after = [0.0f32; 2];
-        for (i, funnel) in [false, true].into_iter().enumerate() {
-            let (_, m, goal) = gaps().into_iter().find(|g| g.0 == "door6long").unwrap();
-            let mut g = gap_game(&m, seed, 24);
-            g.rules.funnel = funnel;
-            let sc = g.s();
-            let tr = cross(&mut g, (goal.0 * sc, goal.1 * sc), 20.0);
-            worst[i] = crowd(&tr, g.gap() * sc);
-            after[i] = spread(&g);
-            if funnel {
-                let over = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 152.0 * sc)).map(|t| t.0);
-                assert!(over.is_some_and(|t| t < 16.0), "seed {seed}: through at {over:?}");
-                assert!(!g.columns[0].on && g.squads[0].dest.is_none(), "seed {seed}: arrived and out of the column");
+    for steer in [false, true] {
+        for seed in 1..=2 {
+            let mut worst = [0usize; 2];
+            let mut after = [0.0f32; 2];
+            let mut over = [None; 2];
+            for (i, funnel) in [false, true].into_iter().enumerate() {
+                let (_, m, goal) = gaps().into_iter().find(|g| g.0 == "door6long").unwrap();
+                let mut g = gap_game(&m, seed, 24);
+                g.rules.funnel = funnel;
+                g.rules.steer = steer;
+                let sc = g.s();
+                let tr = cross(&mut g, (goal.0 * sc, goal.1 * sc), 20.0);
+                worst[i] = crowd(&tr, g.gap() * sc);
+                after[i] = spread(&g);
+                over[i] = tr.iter().find(|(_, p)| p.iter().all(|q| q.0 > 152.0 * sc)).map(|t| t.0);
+                if funnel {
+                    assert!(over[i].is_some_and(|t| t < 16.0), "steer {steer} seed {seed}: through at {:?}", over[i]);
+                    assert!(!g.columns[0].on && g.squads[0].dest.is_none(), "steer {steer} seed {seed}: arrived and out of the column");
+                }
             }
+            assert!(worst[1] <= 7, "steer {steer} seed {seed}: worst knot {worst:?} (off, on)");
+            if steer {
+                assert!(over[0].is_none_or(|t| over[1].is_some_and(|u| u < t)), "seed {seed}: through at {over:?} (off, on)");
+            } else {
+                assert!(worst[1] < worst[0], "seed {seed}: worst knot {worst:?} (off, on)");
+            }
+            assert!(after[1] < after[0] + 1.0, "steer {steer} seed {seed}: stands {after:?} cells wide after (off, on)");
         }
-        assert!(worst[1] <= 7 && worst[1] < worst[0], "seed {seed}: worst knot {worst:?} (off, on)");
-        assert!(after[1] < after[0] + 1.0, "seed {seed}: stands {after:?} cells wide after (off, on)");
     }
 }
 
