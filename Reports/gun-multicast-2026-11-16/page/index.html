@@ -1,0 +1,164 @@
+<title>Multicast Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; clips in 2-up grids (one column on a phone), each with its game counts under it in mono; a small table for the 10 s counts */
+:root{
+  --bg:#eef0ee; --panel:#e0e4e1; --fg:#161a19; --muted:#56605c; --line:#c5cbc7;
+  --flash:#b86a00; --slime:#c98a12; --crystal:#137f95; --before:#6b7470;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16.5px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0;letter-spacing:.01em}
+h1{font-size:2.5rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--flash)}
+.lede{color:var(--muted);font-size:1.04rem;max-width:68ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+li{min-width:0}
+code{font:.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--flash);color:#1a1200;border-color:var(--flash)}
+button:focus-visible{outline:2px solid var(--crystal);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair.one{grid-template-columns:1fr}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:720px){.pair,.quad,.tri{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+video{width:100%;max-width:100%;aspect-ratio:16/10;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+.tag{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.tag.b{color:var(--before)} .tag.a{color:var(--flash)} .tag.q{color:var(--crystal)}
+figcaption{font-size:.92rem;color:var(--muted)}
+.counts{font:12.5px/1.55 var(--mono);color:var(--fg);background:var(--panel);padding:7px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.short{background:var(--panel);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.9rem}
+footer{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){video{animation:none}}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · guns · step B · 2026-11-16</span>
+  <h1>Multicast</h1>
+  <p class="lede">A new card makes one shot fire two cards at once. <b>Multicast</b> fires the card after it beside its own, in the same shot; a second multicast adds a third. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game up to 29 s with plain bullets, the same start as the trigger clips. At 29 s every squad loads the clip's cards, so the clips differ only in those cards over the next 3 s.</p>
+</header>
+
+<section class="short">
+  <h2>How it works</h2>
+  <ul>
+    <li><b>Multicast</b> (cost 3, rare): each shot of its card's bullet also fires the next card, each as its own bullets, a little apart. That card leaves the gun's turn, so every shot fires both.</li>
+    <li><b>Two multicasts</b> fire three cards in one shot.</li>
+    <li><b>With a trigger:</b> <code>multicast + trigger + plain + blast + gas</code> fires a plain bullet carrying a blast, with a gas beside it.</li>
+    <li><b>What you see:</b> two or three bullets leave the barrel together, and the gun-card strip lights every card the next shot fires.</li>
+  </ul>
+</section>
+
+<div class="bar">
+  <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
+  <span class="hint">Every clip loops. Slow motion shows the two bullets leaving each barrel together.</span>
+</div>
+
+<section>
+  <h2>A blast in every shot</h2>
+  <p>On the left the gun takes turns: a plain shot, then a blast. On the right every shot fires both, side by side.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain + blast</span><video src="plain-blast.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">24 bullets   8 blasts   killed 1,093
+squad health 74 at 32 s</div></figure>
+    <figure><span class="tag a">multicast + plain + blast</span><video src="multi-blast.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">48 bullets   20 blasts   killed 1,720
+squad health 81 at 32 s</div></figure>
+  </div>
+  <p class="hint">Over 10 s from the same start: in turn, 31 blasts, 1,941 killed, health 70; multicast, 38 blasts from 77 fired, 2,018 killed, health 80. The extra blasts clear the near slime, and the rest fly on past it.</p>
+</section>
+
+<section>
+  <h2>The plan's test: a bomb and a gas</h2>
+  <p>A bomb and a gas taking turns, against both in every shot. Compare the trigger, which made the bomb carry the gas.</p>
+  <div class="pair">
+    <figure><span class="tag b">bomb + gas</span><video src="bomb-gas.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">24 bullets   13 bombs, 8 gas
+thrown 2,859   put to sleep 2,443</div></figure>
+    <figure><span class="tag a">multicast + bomb + gas</span><video src="multi-bomb-gas.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">48 bullets   21 bombs, 21 gas
+thrown 3,338   put to sleep 2,183</div></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>10 s, 29 to 39 s</th><th>Bursts a second</th><th>Thrown</th><th>Put to sleep</th><th>Killed</th></tr></thead>
+    <tbody>
+      <tr><td>bomb + gas</td><td class="num">7.5</td><td class="num">5,764</td><td class="num">7,267</td><td class="num">548</td></tr>
+      <tr><td>trigger + bomb + gas</td><td class="num">13.6</td><td class="num">9,099</td><td class="num">9,637</td><td class="num">399</td></tr>
+      <tr><td>multicast + bomb + gas</td><td class="num">14.0</td><td class="num">8,337</td><td class="num">5,086</td><td class="num">475</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">Both cards fire about twice the payloads. They read differently: the trigger lets the gas out into the slime the bomb just threw, so more sleeps; the multicast's gas goes off beside the bomb, which throws the slime out of the cloud, so fewer sleep than with the two in turn. Depth against breadth.</p>
+</section>
+
+<section>
+  <h2>Combos</h2>
+  <div class="pair">
+    <figure><span class="tag a">Triple: multicast + multicast + plain + blast + gas</span><video src="triple.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">72 bullets   13 blasts, 14 gas
+killed 1,644   put to sleep 3,514</div>
+      <figcaption>Three bullets a shot: a plain, a blast and a gas.</figcaption></figure>
+    <figure><span class="tag a">Multicast + trigger + plain + blast + gas</span><video src="multi-trigger.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">48 bullets   13 let out: 12 blasts; 11 gas
+killed 1,755   put to sleep 3,006</div>
+      <figcaption>A plain bullet carrying a blast, with a gas beside it.</figcaption></figure>
+  </div>
+</section>
+
+<section class="short">
+  <h2>Frame cost</h2>
+  <ul>
+    <li><b>Bursts are now read back in batches.</b> Before, the game waited on the GPU after every bomb's kill, every throw and every gas. Now it runs a step's bursts together and reads them back once. In the 10 s multicast + bomb + gas run, that was 69 waits instead of 207. Each burst still counts exactly what it did on its own, which the tests check.</li>
+    <li><b>Multicast adds bullets</b> under the same cap as every other bullet, and no new GPU pass.</li>
+    <li><b>On the GTX 1070</b> (three runs each, main against this change, bomb + gas): read-backs fell from 1.84 a step to 1.28, but they were never stalls there, with 0.01 ms a step spent waiting before and after. The frame's 95th percentile held at 5.4 ms. Multicast's doubled bursts cost 0.1 ms (5.52 to 5.54 ms).</li>
+  </ul>
+</section>
+
+<section class="short">
+  <h2>Not settled</h2>
+  <ul>
+    <li><b>Price:</b> cost 3 and rare, (the trigger costs 2). That is a guess for now; the balance pass will set it. At that price the two five-card combos cost 13 and 12, more than a default gun's 10, so they need a bigger rolled gun.</li>
+    <li><b>Copy and always,</b> the plan's last rule cards, are not built.</li>
+    <li><b>Next:</b> step C, seeking bullets and aim cards, built on the mini-boss thread's default aim.</li>
+  </ul>
+</section>
+
+<footer>Source, clips and counts: <code>Reports/gun-multicast-2026-11-16/</code> in the repo. Clips by <code>raw/film.sh</code> and <code>raw/make_clips.py</code>.</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('slow');
+  function set(on){
+    b.setAttribute('aria-pressed',on?'true':'false');
+    document.querySelectorAll('video').forEach(function(v){v.playbackRate=on?0.25:1;});
+    try{localStorage.setItem('multicast-slow',on?'1':'0');}catch(e){}
+  }
+  var on=false;
+  try{on=localStorage.getItem('multicast-slow')==='1';}catch(e){}
+  document.querySelectorAll('video').forEach(function(v){v.addEventListener('loadedmetadata',function(){v.playbackRate=on?0.25:1;});});
+  set(on);
+  b.addEventListener('click',function(){on=!on;set(on);});
+})();
+</script>

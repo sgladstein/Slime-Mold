@@ -1,0 +1,60 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 59.1 s (the slime has eaten 259 food)
+  raid 1 at t 72.0 s: Soldiers(0) at 439,262, reach 168 cells holding 12812 walkers, share 0.60, size 15% of the slime
+  boss t 91.0 s: Crowd formed on lump 0 at 307,65 (crowd top 1.00); grade 0.00: 4 blows a member, touches as 2, pace x1.00
+  boss t 91 s: lump 0 Gather, 0 members (first 0, 0 hurt), at 307,65, spread 1.01; nearest soldier 229.6, 8 alive
+  boss t 92 s: lump 0 Gather, 221 members (first 221, 0 hurt), at 308,62, spread 1.11; nearest soldier 231.4, 8 alive
+  boss t 93 s: lump 0 Gather, 221 members (first 221, 0 hurt), at 308,60, spread 1.07; nearest soldier 233.1, 8 alive
+  boss t 94 s: lump 0 Gather, 221 members (first 221, 0 hurt), at 308,60, spread 1.09; nearest soldier 233.9, 8 alive
+  boss t 95 s: lump 0 Gather, 221 members (first 221, 0 hurt), at 308,58, spread 1.11; nearest soldier 235.6, 8 alive
+  boss t 96 s: lump 0 Gather, 221 members (first 221, 0 hurt), at 308,56, spread 1.11; nearest soldier 236.5, 8 alive
+  boss t 97 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 308,56, spread 1.09; nearest soldier 237.3, 8 alive
+  boss t 98 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 310,58, spread 1.28; nearest soldier 234.5, 8 alive
+  boss t 99 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 312,60, spread 1.23; nearest soldier 231.3, 8 alive
+  boss t 100 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 316,62, spread 1.13; nearest soldier 227.1, 8 alive
+  boss t 101 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 318,64, spread 1.18; nearest soldier 224.4, 8 alive
+  boss t 102 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 320,68, spread 1.23; nearest soldier 220.2, 8 alive
+  boss t 103 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 324,70, spread 1.22; nearest soldier 215.6, 8 alive
+  boss t 104 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 328,74, spread 1.24; nearest soldier 211.5, 8 alive
+  boss t 105 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 332,76, spread 1.13; nearest soldier 206.9, 8 alive
+  boss t 106 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 334,78, spread 1.08; nearest soldier 203.7, 8 alive
+  boss t 107 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 338,80, spread 1.15; nearest soldier 200.4, 8 alive
+  boss t 108 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 340,82, spread 1.18; nearest soldier 197.7, 8 alive
+  boss t 109 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 342,84, spread 1.19; nearest soldier 194.5, 8 alive
+  boss t 110 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 346,86, spread 1.18; nearest soldier 191.3, 8 alive
+  boss t 111 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 348,88, spread 1.26; nearest soldier 188.6, 8 alive
+  boss t 112 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 350,90, spread 1.26; nearest soldier 185.9, 8 alive
+  boss t 113 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 352,94, spread 1.27; nearest soldier 181.9, 8 alive
+  boss t 114 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 356,96, spread 1.26; nearest soldier 177.9, 8 alive
+  surge 2 starts at t 114.7 s (the slime has eaten 519 food)
+  boss t 115 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 360,100, spread 1.24; nearest soldier 172.5, 8 alive
+  boss t 116 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 364,104, spread 1.18; nearest soldier 167.2, 8 alive
+  boss t 117 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 366,108, spread 1.13; nearest soldier 162.3, 8 alive
+  boss t 118 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 368,112, spread 1.16; nearest soldier 157.8, 8 alive
+  boss t 119 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 372,116, spread 1.24; nearest soldier 153.8, 8 alive
+  boss t 120 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 374,120, spread 1.31; nearest soldier 149.3, 8 alive
+  boss t 121 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 374,124, spread 1.29; nearest soldier 145.3, 8 alive
+  boss t 122 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 378,130, spread 1.37; nearest soldier 137.7, 8 alive
+  boss t 123 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 380,140, spread 1.36; nearest soldier 128.3, 8 alive
+  boss t 124 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 386,150, spread 1.29; nearest soldier 117.1, 8 alive
+  boss t 125 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 390,158, spread 1.16; nearest soldier 106.8, 8 alive
+  boss t 126 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 394,166, spread 1.25; nearest soldier 97.9, 8 alive
+  boss t 127 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 398,176, spread 1.24; nearest soldier 87.1, 8 alive
+  boss t 128 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 404,186, spread 1.20; nearest soldier 76.8, 8 alive
+  boss t 129 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 408,196, spread 1.17; nearest soldier 66.1, 8 alive
+  boss t 130 s: lump 0 Hunt(Some(3)), 221 members (first 221, 0 hurt), at 412,204, spread 1.23; nearest soldier 56.2, 8 alive
+  raid 2 at t 131.0 s: Soldiers(0) at 439,262, reach 190 cells holding 11569 walkers, share 0.60, size 19% of the slime
+  boss t 131 s: lump 0 Hunt(Some(3)), 221 members (first 221, 96 hurt), at 416,214, spread 1.40; nearest soldier 46.0, 8 alive
+  boss t 132 s: lump 0 Hunt(Some(3)), 221 members (first 221, 121 hurt), at 422,226, spread 1.26; nearest soldier 32.1, 8 alive
+  boss t 133 s: lump 0 Hunt(Some(3)), 221 members (first 221, 151 hurt), at 426,238, spread 1.14; nearest soldier 19.1, 8 alive
+  boss t 134 s: lump 0 Hunt(Some(3)), 153 members (first 221, 162 hurt), at 426,242, spread 1.52; nearest soldier 15.7, 8 alive
+  boss t 135 s: lump 0 Hunt(Some(3)), 120 members (first 221, 204 hurt), at 426,242, spread 1.65; nearest soldier 15.7, 8 alive
+  boss t 136 s: lump 0 ended Broken (59 members of 221)
+/tmp/mb/r3g0/planet-3-1-hold-150s-all.png
+/tmp/mb/r3g0/planet-3-1-hold-150s-near.png
+  CPU: ground field 4.02 ms (once a game second), model and HUD 0.168 ms a frame
+  t 150 s: mould 18293, soldiers 7, bank 400, harvested 0, rendered 0, shots 549, killed 2948, took 0%, crystals left 0.955; squad at 437.3,261.6
+  surge: the slime ate 698 food (4.7/s); meter 179.4 of 259, 2 surges
+  dense: 16518 condensed or thick walkers, mass 34811 (readout 34811)
+  squad: touching 0.0 mean, 0 most; health 50 mean
+EXIT 0
