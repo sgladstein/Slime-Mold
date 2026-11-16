@@ -474,7 +474,9 @@ impl<W: World> Game<W> {
         if b.render_food <= 0.0 {
             return 0.0;
         }
-        let reach = b.turret_range * self.s();
+        // The turrets' reach with their deck's Range cards (`turret_mods`),
+        // as they aim and fire (independent review, 2026-11-16).
+        let reach = b.turret_range * self.s() * (1.0 + self.rules.range_card * self.turret_mods().reach as f32);
         let renders: Vec<(f32, f32)> = self.buildings.iter().filter(|t| t.up() && t.kind == Kind::Turret && t.level >= 2).map(|t| t.at).collect();
         if renders.is_empty() {
             return 0.0;
@@ -662,6 +664,8 @@ impl<W: World> Game<W> {
         let sc = self.s();
         let t = self.world.ticks();
         let strike = (r.strike * sc).min(crate::mould::squad::R_MAX);
+        // The turrets' cards, read once a step (`Game::turret_deck`).
+        let tm = self.turret_mods();
         for k in 0..self.buildings.len() {
             let bd = self.buildings[k];
             self.buildings[k].working = false;
@@ -685,7 +689,7 @@ impl<W: World> Game<W> {
                     // shot carries the next cast in the deck's turn, as a
                     // soldier's does (`Building::next`). No deck, plain
                     // strikes as before.
-                    let m = self.turret_mods();
+                    let m = tm;
                     let reach = b.turret_range * sc * (1.0 + r.range_card * m.reach as f32);
                     u.sight = reach;
                     // A turret sees and fires over walls (`UnitIn::over`,
@@ -727,6 +731,8 @@ impl<W: World> Game<W> {
                                     // Its bullet card (`bullets::Ammo`), as a
                                     // soldier's: damage widens the strike, its
                                     // set's pellets fan, range stretches the reach.
+                                    // Its spread is not read: a turret aims true,
+                                    // as it did before it took cards.
                                     let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
                                     let shape = ammo.set.shape();
                                     let hit_r = (strike * ammo.reach()).min(crate::mould::squad::R_MAX) * shape.r;
@@ -740,7 +746,7 @@ impl<W: World> Game<W> {
                                     }
                                 }
                                 let every = b.turret_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
-                                self.buildings[k].ready = t + self.secs(every);
+                                self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
                                 self.spent += r.price;

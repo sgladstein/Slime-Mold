@@ -97,3 +97,37 @@ Frame cost: no new pass; turret shots and casts use the soldiers' paths
 ## Review
 
 An independent agent reviews the design and the code from [review-brief.md](review-brief.md) (owner 21:37Z: "once you finish all this, use an independent agent to review").
+
+The review (2026-11-16 ~21:55Z), in short:
+
+- **Design.** The turret deck is free today: there's no budget, no slots and
+  no shared bag, so the trade that keeps turtling honest doesn't exist yet.
+  Each Range card doubles every turret's reach (`range_card` 1.0), and each
+  Rate card doubles their rate. The shared bag, the slots and an armory
+  entry must come before any body. The mortar has lost its reason to exist,
+  since every turret fires over walls since #398. Bodies should come from
+  what the model offers: targeting rules (thinnest link, leading edge,
+  nearest the core), a contact mine on the `Thick` trigger's count, a scent
+  or repellent writer, or a turret grown from the player's own mould.
+  Bloons-style branch caps would push players to specialise. The slime
+  needs a counter to carded turrets.
+- **Tests.** One seed and a 10 s window with no pressure on the base: kills
+  there are churn, and the slime grew in every row. The next measure is
+  base defence under a raid, at equal card budgets, on paired seeds (about
+  10 seeds x 6 arms), with slime mass near the base at 90 s as the deciding
+  measure.
+- **Code.** Cast kills by turrets are credited to soldiers (`turret_killed`
+  counts frame shots only). Render ignored Range cards and pays only on
+  frame shots. A Pull on a turret shot pushes away from the turret. `by`
+  None as "a turret" is debt that step 2 must pay with a shooter id. Ammo
+  spread wasn't read on turrets, and the fire interval had no 1-tick floor.
+  `turret_mods` was rebuilt per turret. Range cards widen the aim search
+  as reach squared, which hasn't been timed. The review checked that plain
+  turrets are unchanged in this scene (plain and plaindeck counts match).
+
+Done in this PR after the review: Render's reach follows the deck's Range
+cards; the fire interval has a floor of 1 tick; the turret mods are read
+once a step; turret aim ignoring ammo spread is now documented. Left for
+step 2: the shared bag, slots and an armory entry; a shooter id in place of
+`by` None, which also fixes cast-kill credit, Render on casts and Pull
+toward the firing turret; and timing Range cards on the 1070.
