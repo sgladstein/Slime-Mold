@@ -78,7 +78,7 @@ pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -403,6 +403,12 @@ pub struct Game<W: World> {
     /// not add past `squad::SHOTS_MAX` (dropped, newest first, as fired
     /// shots are).
     pub bullet_mods: BulletMods,
+    /// The cards every turret fires (`Cmd::Load(TURRET_DECK, ..)`; the
+    /// turrets thread, 2026-11-16): None, plain strikes as before. One deck
+    /// for every turret, as one gun is a squad's (the proposal's option A:
+    /// no clicking round twenty turrets), and a turret shot carrying a cast
+    /// is told from a soldier's by `by` None (`turret_mods`).
+    pub turret_deck: Option<Deck>,
     pub bullets_dropped: u32,
     /// Carried casts let out (`Bullet::carry`), each one release, however
     /// many bullets its set fires.
@@ -585,6 +591,7 @@ impl<W: World> Game<W> {
             bullets: Vec::new(),
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
+            turret_deck: None,
             bullets_dropped: 0,
             releases: 0,
             mould,
@@ -667,8 +674,28 @@ impl<W: World> Game<W> {
         }
     }
 
-    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's.
+    /// What every turret's bullets carry (`turret_deck`): nothing without
+    /// a deck, so plain turrets fly as before.
+    pub fn turret_mods(&self) -> BulletMods {
+        self.turret_deck.map_or_else(BulletMods::default, |d| super::rounds::flight(&d.cards()))
+    }
+
+    /// What the bullets of shooter `by` carry: its squad's (`mods`), or
+    /// the turrets' for None.
+    pub fn mods_by(&self, by: Option<usize>) -> BulletMods {
+        match by {
+            Some(k) => self.soldiers.get(k).map_or_else(BulletMods::default, |s| self.mods(s.squad as usize)),
+            None => self.turret_mods(),
+        }
+    }
+
+    /// Squad `q` takes its own cards (`Cmd::Load`), None the army's;
+    /// `TURRET_DECK` loads every turret (None: plain strikes).
     pub fn load(&mut self, q: usize, deck: Option<Deck>) -> bool {
+        if q == TURRET_DECK as usize {
+            self.turret_deck = deck;
+            return true;
+        }
         match self.squads.get_mut(q) {
             Some(s) => {
                 s.deck = deck;

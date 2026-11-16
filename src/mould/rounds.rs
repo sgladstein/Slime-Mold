@@ -318,10 +318,10 @@ impl Card {
 /// A bullet's leg this step: from, to (its hit or the leg's end).
 type Leg = ((f32, f32), (f32, f32));
 
-/// A soldier's bullet that hit slime this step and carries a cast: the
-/// soldier, the hit (fine cells), the cast (`Bullet::cast`), the bullet's
+/// A bullet that hit slime this step and carries a cast: the soldier
+/// (None: a turret, 2026-11-16), the hit (fine cells), the cast (`Bullet::cast`), the bullet's
 /// heading (a unit vector) and its strike radius (fine cells).
-type Hit = (usize, (f32, f32), u8, (f32, f32), f32);
+type Hit = (Option<usize>, (f32, f32), u8, (f32, f32), f32);
 
 /// A squad's own cards (`Squad::deck`; owner 11-14 16:46Z, "The squad owns
 /// the gun"): up to `MAX_SLOTS`, held as a value so a squad, a split half
@@ -583,6 +583,12 @@ pub const VOLLEY_FAN: f32 = 0.08;
 /// A `Multicast` makes its cast fire the next one not yet taken beside it
 /// (`Cast::with`), each copy one more; links of both kinds count toward
 /// the same depth.
+/// The turrets' casts (`Game::turret_deck`), left to right; none without
+/// a deck, so plain turrets cast nothing.
+pub fn turret_casts<W: World>(g: &Game<W>) -> Vec<Cast> {
+    g.turret_deck.map(|d| casts(&d.cards())).unwrap_or_default()
+}
+
 pub fn casts(round: &[Card]) -> Vec<Cast> {
     let mut out: Vec<Cast> = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger, mut carry) = (0, false, false, None, None);
@@ -914,6 +920,7 @@ impl Rounds {
     }
 
     /// Squad `q`'s casts, left to right (`casts` of `cards_of`).
+    /// The turrets' are `turret_casts`.
     pub fn casts_of<W: World>(&self, g: &Game<W>, q: usize) -> Vec<Cast> {
         match g.squads.get(q).and_then(|s| s.deck) {
             Some(d) => casts(&d.cards()),
@@ -966,16 +973,27 @@ impl Rounds {
             .filter_map(|s| {
                 let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
                 let d = dx.hypot(dy).max(1e-3);
-                s.hit.zip(s.by).map(|(h, k)| (k, h, s.cast, (dx / d, dy / d), s.r))
+                s.hit.map(|h| (s.by, h, s.cast, (dx / d, dy / d), s.r))
             })
             .collect();
-        for (k, hit, cast, dir, hit_r) in hits {
+        // A turret's shot (`by` None) casts from the turrets' deck
+        // (`Game::turret_deck`, 2026-11-16), in the slot past the squads'.
+        by_squad.push(None);
+        for (by, hit, cast, dir, hit_r) in hits {
             // A bullet flies on when its soldier falls: it still casts.
-            let Some(q) = g.soldiers.get(k).map(|s| s.squad as usize) else { continue };
+            let (q, k) = match by {
+                Some(k) => match g.soldiers.get(k) {
+                    Some(s) => (s.squad as usize, k),
+                    None => continue,
+                },
+                // No soldier: a Pull on a turret's shot finds no gun to
+                // drag toward and shoves on along its line (`shove`).
+                None => (g.squads.len(), usize::MAX),
+            };
             if q >= by_squad.len() {
                 continue;
             }
-            let cs = by_squad[q].get_or_insert_with(|| self.casts_of(g, q));
+            let cs = by_squad[q].get_or_insert_with(|| if by.is_none() { turret_casts(g) } else { self.casts_of(g, q) });
             let Some(&c) = cs.get(cast as usize - 1) else { continue };
             // A slug shoves where it hits, whatever it carries, and so does
             // any bullet with a shove card.
@@ -1073,15 +1091,18 @@ impl Rounds {
     fn lay_trails<W: World>(&mut self, g: &mut Game<W>) {
         // Each leg lays its squad's trails (`cards_of`).
         let gas = g.world.has_gas();
-        let mut of: Vec<Option<[u8; 4]>> = vec![None; g.squads.len()];
+        // The turrets' trails (`Game::turret_deck`) in the slot past the
+        // squads'; with no deck they lay none, as before.
+        let tq = g.squads.len();
+        let mut of: Vec<Option<[u8; 4]>> = vec![None; tq + 1];
         let mut any = [0u8; 4];
         let legs: Vec<(Leg, [u8; 4])> = g
             .last_shots
             .iter()
-            .filter_map(|s| s.by.map(|k| (s, g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
+            .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
             .map(|(s, q)| {
                 let n = *of[q].get_or_insert_with(|| {
-                    let mut n = trails(&self.cards_of(g, q));
+                    let mut n = trails(&if q == tq { g.turret_deck.map(|d| d.cards()).unwrap_or_default() } else { self.cards_of(g, q) });
                     if !gas {
                         n[2] = 0;
                     }

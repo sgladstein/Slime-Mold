@@ -16,6 +16,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at.clone();
+    let mut tload_at = args.tload_at.clone();
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -330,6 +331,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
                 println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
             }
+            // `tload=T,NAME`: every turret loads NAME once T has come.
+            if let Some((lt, cards)) = tload_at.take_if(|(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= *lt)) {
+                let g = app.game.as_mut().unwrap();
+                let deck = rounds::Deck::new(&rounds::parse(&cards).unwrap_or_default());
+                g.apply(Cmd::Load(slime_mould::mould::larder_world::TURRET_DECK, Some(deck)));
+                println!("  tload t {:.2} s: the turrets load {} (asked for {lt} s)", g.time(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
+            }
             // `turret=X,Y,T`: standing whole once T has come.
             if let Some(g) = app.game.as_mut() {
                 let now = g.time();
@@ -498,9 +506,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         }
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
-        // Squads with their own cards (`load=`) count here too. A new count
+        // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match.
-        if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) {
+        if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
             println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull", g.time(), rd.cast.iter().sum::<u32>(), rd.cast, rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short);
         }
         // The view on the fight: the squad's middle, or the larder; or,

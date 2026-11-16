@@ -243,7 +243,8 @@ impl<W: World> Game<W> {
         // Turrets, lures and pumps: units that do not move (`buildings`).
         // A turret's hits lay the crater too, through the same frame (the
         // buildings thread's call, 11-12 07:46Z: one rule for every shot).
-        self.building_units(&mut units, &mut shots, &mut who, &mut from);
+        shooters.resize(shots.len(), (None, 0));
+        self.building_units(&mut units, &mut shots, &mut shooters, &mut who, &mut from);
         shooters.resize(shots.len(), (None, 0));
         let fired = shots.len() as u32;
         let (shots, by) = self.fly(shots, &shooters, &aims, dt);
