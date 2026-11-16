@@ -257,6 +257,16 @@ impl<W: World> Game<W> {
             self.flown.extend_from_slice(&self.bullets);
         }
         self.landed(&f.shots, &out.shots);
+        {
+            // The soldiers' hits this frame and the dish cells they fell
+            // in, each once (`hit_cells`).
+            let bin = self.s().max(1.0);
+            let mut cells: Vec<(i32, i32)> = out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_some()).filter_map(|(o, _)| o.hit).map(|h| ((h.0 / bin) as i32, (h.1 / bin) as i32)).collect();
+            self.hits += cells.len() as u32;
+            cells.sort_unstable();
+            cells.dedup();
+            self.hit_cells += cells.len() as u32;
+        }
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
         self.turret_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_none()).map(|(o, _)| o.killed).sum::<u32>();
         let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();

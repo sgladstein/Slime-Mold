@@ -238,6 +238,10 @@ pub struct Bullet {
     /// hit (`rounds::Card::Expire`): spent on slime, at a wall (thrown back
     /// off it) or at the end of its range.
     pub expire: bool,
+    /// Seek cards it flies with (`BulletMods::seek`), and how far it has
+    /// flown (fine cells): it turns once that is `Rules::seek_after`.
+    pub seek: u8,
+    pub flown: f32,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -271,6 +275,9 @@ pub struct BulletMods {
     /// Each cast's cast id fired beside it in the same shot (0 none,
     /// `rounds::Cast::with`, `Card::Multicast`).
     pub with: [u8; super::rounds::MAX_SLOTS],
+    /// Copies of the `Seek` card: every bullet turns toward slime no
+    /// bullet has hit yet, `Rules::seek_turn` a frame a copy (`Game::steer`).
+    pub seek: u8,
 }
 
 pub struct Game<W: World> {
@@ -291,6 +298,13 @@ pub struct Game<W: World> {
     pub turret_killed: u32,
     /// Casts fired beside another in the same shot (`Card::Multicast`).
     pub multicast: u32,
+    /// Frames a seeking bullet turned (`Card::Seek`, `Game::steer`).
+    pub seek_turns: u32,
+    /// Soldier bullets' slime hits, and the dish cells they hit counted
+    /// once a frame: how widely a shot's hits spread (the seek film's
+    /// measure, 2026-11-16).
+    pub hits: u32,
+    pub hit_cells: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -504,6 +518,9 @@ impl<W: World> Game<W> {
             fire_killed: 0,
             turret_killed: 0,
             multicast: 0,
+            seek_turns: 0,
+            hits: 0,
+            hit_cells: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,

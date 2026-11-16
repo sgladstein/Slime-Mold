@@ -137,6 +137,14 @@ pub enum Card {
     /// cast it is in fires the next cast too, side by side in the same
     /// shot (`Cast::with`); a second multicast in that cast adds a third.
     Multicast,
+    /// **Seek** (2026-11-16, step C of the gun-system review, the owner's
+    /// 02:34Z "homing"): every bullet, once it has flown straight
+    /// `Rules::seek_after`, turns toward slime ahead that no bullet has hit
+    /// or picked this frame (`Game::steer`): pellets, split pieces and let-
+    /// out casts each find their own patch, and a bullet past a wall's end
+    /// turns into the slime behind it. Plain homing would land where the
+    /// bullet was going anyway (the plan), so a seeker skips what is taken.
+    Seek,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -149,14 +157,14 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 25] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast];
+    pub const ALL: [Card; 26] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
     }
@@ -188,6 +196,7 @@ impl Card {
             Card::Trigger => "trigger",
             Card::Expire => "expire",
             Card::Multicast => "multicast",
+            Card::Seek => "seek",
             Card::Heave => "heave",
             Card::Corral => "corral",
             Card::Pull => "pull",
@@ -258,6 +267,7 @@ impl Card {
             Card::Trigger => "Carries the next bullet and lets it out where it hits.",
             Card::Expire => "Carries the next bullet and lets it out where it stops.",
             Card::Multicast => "Fires the next bullet with it, in the same shot.",
+            Card::Seek => "Bullets turn toward slime no bullet has hit yet.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -275,7 +285,7 @@ impl Card {
             Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist | Card::Multicast => 3,
-            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral => 2,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Seek => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -287,7 +297,7 @@ impl Card {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
             _ => 1,
         }
     }
@@ -580,7 +590,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Corral | Card::Pull => herd = Some(c),
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
@@ -652,7 +662,7 @@ pub fn flight(round: &[Card]) -> BulletMods {
     let cards = || round.iter().take(MAX_SLOTS);
     let n = |k: Card| cards().filter(|&&c| c == k).count() as u8;
     let all = casts(round);
-    let mut m = BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), ..BulletMods::default() };
+    let mut m = BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), seek: n(Card::Seek), ..BulletMods::default() };
     for (i, c) in all.iter().enumerate() {
         m.ammo[i] = c.ammo;
         m.child[i] = c.child.map_or(0, |j| j + 1);

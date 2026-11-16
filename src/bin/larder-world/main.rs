@@ -352,7 +352,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 49] = [
+const LOADOUTS: [(&str, &str); 52] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -429,6 +429,12 @@ const LOADOUTS: [(&str, &str); 49] = [
     // presets: `load=` takes them as card lists.
     ("multi-blast", "multicast+plain+blast"),
     ("multi-bomb-gas", "multicast+bomb+gas"),
+    // Seek (2026-11-16, step C): every bullet turns onto slime no bullet
+    // has hit yet; with buckshot each pellet finds its own, with split each
+    // piece.
+    ("seek", "seek+plain"),
+    ("seek-buck", "seek+ammo/plain/buckshot/1/100/100/100/100/1"),
+    ("seek-split", "seek+split+blast"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).

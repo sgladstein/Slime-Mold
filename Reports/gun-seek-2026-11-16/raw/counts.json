@@ -1,0 +1,180 @@
+{
+ "boss-buck-10s": {
+  "mould_at_end": 25171,
+  "soldiers_at_end": 6,
+  "shots": 276,
+  "killed": 136,
+  "health_at_end": 70,
+  "boss_members": [
+   62,
+   60
+  ],
+  "boss_end": "Hunt",
+  "boss_to": 39.0
+ },
+ "boss-plain": {
+  "mould_at_end": 24500,
+  "soldiers_at_end": 7,
+  "shots": 21,
+  "killed": 68,
+  "health_at_end": 76,
+  "seek_turns": 0,
+  "hits": 21,
+  "hit_cells": 21,
+  "boss_members": [
+   62,
+   62
+  ],
+  "boss_end": "Gather",
+  "boss_to": 32.0,
+  "frames": 90,
+  "kb": 1125
+ },
+ "boss-plain-10s": {
+  "mould_at_end": 25064,
+  "soldiers_at_end": 6,
+  "shots": 68,
+  "killed": 259,
+  "health_at_end": 70,
+  "boss_members": [
+   62,
+   25
+  ],
+  "boss_end": "Hunt",
+  "boss_to": 37.0
+ },
+ "boss-seek": {
+  "mould_at_end": 24496,
+  "soldiers_at_end": 7,
+  "shots": 21,
+  "killed": 71,
+  "health_at_end": 77,
+  "seek_turns": 35,
+  "hits": 20,
+  "hit_cells": 20,
+  "boss_members": [
+   62,
+   62
+  ],
+  "boss_end": "Gather",
+  "boss_to": 32.0,
+  "frames": 90,
+  "kb": 1121
+ },
+ "boss-seek-10s": {
+  "mould_at_end": 25031,
+  "soldiers_at_end": 6,
+  "shots": 68,
+  "killed": 300,
+  "health_at_end": 66,
+  "boss_members": [
+   62,
+   40
+  ],
+  "boss_end": "Hunt",
+  "boss_to": 37.0
+ },
+ "boss-seek-buck-10s": {
+  "mould_at_end": 25234,
+  "soldiers_at_end": 6,
+  "shots": 272,
+  "killed": 75,
+  "health_at_end": 71,
+  "boss_members": [
+   62,
+   62
+  ],
+  "boss_end": "Hunt",
+  "boss_to": 39.0
+ },
+ "buckshot": {
+  "mould_at_end": 24502,
+  "soldiers_at_end": 7,
+  "shots": 84,
+  "killed": 58,
+  "health_at_end": 75,
+  "seek_turns": 0,
+  "hits": 81,
+  "hit_cells": 58,
+  "frames": 90,
+  "kb": 1102
+ },
+ "buckshot-10s": {
+  "mould_at_end": 25082,
+  "soldiers_at_end": 7,
+  "shots": 280,
+  "killed": 228,
+  "health_at_end": 70
+ },
+ "plain-10s": {
+  "mould_at_end": 24859,
+  "soldiers_at_end": 7,
+  "shots": 70,
+  "killed": 472,
+  "health_at_end": 74
+ },
+ "seek-10s": {
+  "mould_at_end": 24901,
+  "soldiers_at_end": 7,
+  "shots": 70,
+  "killed": 434,
+  "health_at_end": 73
+ },
+ "seek-buck": {
+  "mould_at_end": 24499,
+  "soldiers_at_end": 7,
+  "shots": 84,
+  "killed": 63,
+  "health_at_end": 75,
+  "seek_turns": 62,
+  "hits": 84,
+  "hit_cells": 57,
+  "frames": 90,
+  "kb": 1130
+ },
+ "seek-buck-10s": {
+  "mould_at_end": 25093,
+  "soldiers_at_end": 7,
+  "shots": 280,
+  "killed": 214,
+  "health_at_end": 71
+ },
+ "seek-split": {
+  "mould_at_end": 23203,
+  "soldiers_at_end": 7,
+  "shots": 21,
+  "killed": 1366,
+  "health_at_end": 77,
+  "seek_turns": 134,
+  "hits": 50,
+  "hit_cells": 50,
+  "frames": 90,
+  "kb": 1537
+ },
+ "seek-split-10s": {
+  "mould_at_end": 23523,
+  "soldiers_at_end": 7,
+  "shots": 70,
+  "killed": 1756,
+  "health_at_end": 76
+ },
+ "split": {
+  "mould_at_end": 23068,
+  "soldiers_at_end": 7,
+  "shots": 21,
+  "killed": 1497,
+  "health_at_end": 77,
+  "seek_turns": 0,
+  "hits": 49,
+  "hit_cells": 49,
+  "frames": 90,
+  "kb": 1610
+ },
+ "split-10s": {
+  "mould_at_end": 23571,
+  "soldiers_at_end": 7,
+  "shots": 70,
+  "killed": 1744,
+  "health_at_end": 75
+ }
+}

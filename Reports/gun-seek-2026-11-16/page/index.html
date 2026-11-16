@@ -1,0 +1,159 @@
+<title>Seeking Bullets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; clips in 2-up grids (one column on a phone), each with its game counts under it in mono; a small table for the 10 s counts */
+:root{
+  --bg:#eef0ee; --panel:#e0e4e1; --fg:#161a19; --muted:#56605c; --line:#c5cbc7;
+  --flash:#b86a00; --slime:#c98a12; --crystal:#137f95; --before:#6b7470;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16.5px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0;letter-spacing:.01em}
+h1{font-size:2.5rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--flash)}
+.lede{color:var(--muted);font-size:1.04rem;max-width:68ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+li{min-width:0}
+code{font:.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--flash);color:#1a1200;border-color:var(--flash)}
+button:focus-visible{outline:2px solid var(--crystal);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair.one{grid-template-columns:1fr}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:720px){.pair,.quad,.tri{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+video{width:100%;max-width:100%;aspect-ratio:16/10;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+.tag{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.tag.b{color:var(--before)} .tag.a{color:var(--flash)} .tag.q{color:var(--crystal)}
+figcaption{font-size:.92rem;color:var(--muted)}
+.counts{font:12.5px/1.55 var(--mono);color:var(--fg);background:var(--panel);padding:7px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.short{background:var(--panel);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.9rem}
+footer{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){video{animation:none}}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · guns · step C · 2026-11-16</span>
+  <h1>Seeking bullets</h1>
+  <p class="lede">A new card, <b>Seek</b>, makes every bullet turn toward slime once it has flown 3 cells: toward a mini-boss first, else toward slime ahead that no other bullet has hit or picked. Built and working, but in these tests it changed almost nothing. The question at the bottom is how you want homing to work. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game to 29 s with plain bullets, then each clip's cards for 3 s.</p>
+</header>
+
+<div class="bar">
+  <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
+  <span class="hint">Every clip loops. Slow motion shows the pellets bending after their first few cells.</span>
+</div>
+
+<section>
+  <h2>Buckshot</h2>
+  <p>Four pellets a shot. With seek, each pellet bends toward slime the others have not taken.</p>
+  <div class="pair">
+    <figure><span class="tag b">buckshot</span><video src="buckshot.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">84 pellets   81 hits in 58 cells
+killed 58</div></figure>
+    <figure><span class="tag a">seek + buckshot</span><video src="seek-buck.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">84 pellets   84 hits in 57 cells   62 turns
+killed 63</div></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Split blast</h2>
+  <p>A blast whose bullet splits in three where it lands. With seek, the pieces bend toward slime no other piece hit.</p>
+  <div class="pair">
+    <figure><span class="tag b">split + blast</span><video src="split.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 bullets   49 hits in 49 cells
+killed 1,497</div></figure>
+    <figure><span class="tag a">seek + split + blast</span><video src="seek-split.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 bullets   50 hits in 50 cells   134 turns
+killed 1,366</div></figure>
+  </div>
+</section>
+
+<section>
+  <h2>A mini-boss</h2>
+  <p>A mini-boss forms at 29 s just east of the squad and comes for it. Seekers bend toward it first.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain</span><video src="boss-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 bullets   killed 68
+mini-boss 62 members at 32 s</div></figure>
+    <figure><span class="tag a">seek + plain</span><video src="boss-seek.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 bullets   35 turns   killed 71
+mini-boss 62 members at 32 s</div></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Over 10 seconds</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>10 s, 29 to 39 s</th><th>Without seek</th><th>With seek</th></tr></thead>
+    <tbody>
+      <tr><td>plain: slime killed</td><td class="num">472</td><td class="num">434</td></tr>
+      <tr><td>buckshot: slime killed</td><td class="num">228</td><td class="num">214</td></tr>
+      <tr><td>split + blast: slime killed</td><td class="num">1,744</td><td class="num">1,756</td></tr>
+      <tr><td>mini-boss, plain: its members left of 62</td><td class="num">25</td><td class="num">40</td></tr>
+      <tr><td>mini-boss, buckshot: its members left of 62</td><td class="num">60</td><td class="num">62</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">One game each, so a difference of a few percent is noise. Nothing here says seek helps, and the mini-boss rows lean the other way.</p>
+</section>
+
+<section class="short">
+  <h2>Why it changes so little</h2>
+  <ul>
+    <li><b>A shot stops at the first slime it meets</b> (your rule from 11-11). The front is a solid wall of slime, so a bullet that bends still hits the slime in front of it, a cell or two from where it would have.</li>
+    <li><b>Soldiers already aim at the thickest slime in sight,</b> and their hits were already spread: in the plain game to 39 s, 215 hits fell in 214 different cells. There is no crowding for seek to fix.</li>
+    <li><b>Bending toward a mini-boss</b> does not help when the slime round it is in the way. The plan warned that plain homing "lands where the bullet was going anyway", and this measured it.</li>
+  </ul>
+</section>
+
+<section class="short">
+  <h2>What could make homing matter</h2>
+  <ul>
+    <li><b>Seekers fly over the slime to their mark.</b> A seeking bullet would pass over slime until it reaches what it hunts (a mini-boss, the slime feeding on a crystal, a thin vein) and hit there. That is the one version that reaches something a plain shot cannot. It would bend your rule, for this card only.</li>
+    <li><b>Keep seek small, as built.</b> Bullets visibly bend, the effect stays within noise, and the balance pass sets its price.</li>
+    <li><b>Drop homing</b> and go on to step D, the bullet families.</li>
+  </ul>
+  <p class="hint">Aim cards (what a squad shoots on its own) hit the same wall. Squads on their own hold a defend stance and only shoot slime near them, so an aim card would only change which nearby slime they pick. It matters only for squads on attack orders.</p>
+</section>
+
+<footer>Source, clips and counts: <code>Reports/gun-seek-2026-11-16/</code> in the repo. Clips by <code>raw/films.sh</code> and <code>raw/make_clips.py</code>.</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('slow');
+  function set(on){
+    b.setAttribute('aria-pressed',on?'true':'false');
+    document.querySelectorAll('video').forEach(function(v){v.playbackRate=on?0.25:1;});
+    try{localStorage.setItem('seek-slow',on?'1':'0');}catch(e){}
+  }
+  var on=false;
+  try{on=localStorage.getItem('seek-slow')==='1';}catch(e){}
+  document.querySelectorAll('video').forEach(function(v){v.addEventListener('loadedmetadata',function(){v.playbackRate=on?0.25:1;});});
+  set(on);
+  b.addEventListener('click',function(){on=!on;set(on);});
+})();
+</script>
