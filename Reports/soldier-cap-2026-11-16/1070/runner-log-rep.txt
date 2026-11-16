@@ -1,0 +1,11 @@
+start 06:00:46Z free KB 3484644 gpu 0,0,0,0,0 % (same exes as 05:37-05:39Z: lw-cap-cap = ceaf153, lw-cap-main = e305994)
+warmup start 06:00:46Z card 139 MHz, 405 MHz, 29, 9.31 W
+warmup exit=0 06:00:54Z card 1987 MHz, 4006 MHz, 34, 42.58 W
+rep-cap-p8-n200-1.txt start 06:00:59Z gpu 0,0,0,0,0 % card 987 MHz, 3802 MHz, 32, 28.64 W free KB 3487400
+rep-cap-p8-n200-1.txt exit=0 06:01:33Z
+rep-main-p8-n40-1.txt start 06:01:39Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 39, 43.94 W free KB 3481516
+rep-main-p8-n40-1.txt exit=0 06:02:07Z
+rep-cap-p8-n200-2.txt start 06:02:12Z gpu 0,0,0,0,0 % card 835 MHz, 810 MHz, 42, 8.30 W free KB 3486504
+rep-cap-p8-n200-2.txt exit=0 06:02:47Z
+rep-main-p8-n40-2.txt start 06:02:52Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 48, 44.52 W free KB 3490184
+rep-main-p8-n40-2.txt exit=0 06:03:21Z

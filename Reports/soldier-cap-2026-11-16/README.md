@@ -100,6 +100,29 @@ ms). Planet 8 at 200 holds 60 fps at the median, but a step's frame p95 is
 58 ms at 200, in the record and GPU tail, not the CPU step: record max 29
 ms, tail max 32 ms at 200), not seen at 40; once each, unexplained.
 
+### The long frame, repeated (11-16 06:07Z)
+
+The technical lead asked whether the 58 ms frame repeats. Six more runs on
+planet 8, PC to itself (raw: `1070/rep-*.txt`, `runner-log-rep*.txt`):
+ceaf153 at 200 and main at 40, twice each, then 313ce4f, which prints the
+three longest frames with their game time, at 200 and 40, once plain and
+once with `viewpasses=30`, alternating.
+
+| Run | Every frame p50 / p95 / max | GPU tail max | After 1 s: CPU step max |
+|---|---|---|---|
+| cap 200, 1 / 2 | 6.04 / 13.50 / 24.1; 6.05 / 13.52 / 24.2 | 12.6; 12.3 | 13.6; 13.6 |
+| main 40, 1 / 2 | 5.84 / 7.09 / 14.4; 5.89 / 7.15 / 14.5 | 6.0; 6.1 | 7.9; 7.8 |
+| 313ce4f 200, plain / viewpasses | 6.09 / 13.49 / 20.5; 6.13 / 13.56 / 32.0 | 10.5; 30.5 | 13.8; 13.7 |
+| 313ce4f 40, plain / viewpasses | 5.88 / 7.17 / 18.9; 5.93 / 7.21 / 18.7 | 10.5; 10.4 | 7.9; 8.0 |
+
+**The 58 ms frame did not come back:** a one-off on the PC. The longest
+frames are the first game second's (pipelines and buffers first touched)
+and, in one run, three frames at 40.7 s whose GPU tail was 21-31 ms, seen
+once in six runs. What holds in every run: at 200 soldiers the worst CPU
+step is about 14 ms (8 ms at 40), so the frames that carry it run 19-20 ms,
+a dropped frame on planet 8 when the step is at its worst. The p95 at 200
+(13.5 ms) repeats to 0.1 ms.
+
 ## Measured: the CPU step by part (planet 8)
 
 `perf record` of `soldiercap depth=8` at 40 and 200 soldiers (cloud CPU,
