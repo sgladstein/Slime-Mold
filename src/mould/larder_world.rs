@@ -61,6 +61,7 @@ mod score;
 mod shapes;
 mod squads;
 mod funnel;
+mod steer;
 mod cover;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -163,6 +164,15 @@ pub struct Soldier {
     /// (`BulletMods::casts`): each shot fires the next card in turn and the
     /// gun never stops to recharge (owner 18:05Z).
     pub next: u8,
+    /// Its velocity, fine cells a game second (`steer`: a soldier speeds
+    /// up and slows down instead of starting and stopping dead).
+    pub vx: f32,
+    pub vy: f32,
+    /// Where it stood when this step's walk began, fine cells: the window
+    /// draws it between there and `x`, `y` (`Game::drawn_between`), so it
+    /// glides at the screen's frame rate instead of jumping 15 times a
+    /// second.
+    pub was: (f32, f32),
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -399,6 +409,11 @@ pub struct Game<W: World> {
     /// changed since ranks its members by index until it is matched again.
     pub(super) ranks: Vec<u16>,
     pub(super) ranked: [u16; SQUADS_MAX],
+    /// The walking map `Game::guide` went by last, if any (`Squad::map`).
+    guided: Option<usize>,
+    /// Walks and anchor steps that waited on a walking map being built,
+    /// in all (`move_tests` counts them; the pathing thread's measure).
+    pub map_waits: u64,
     /// Each squad's column through narrow places (`funnel`).
     pub(super) columns: Vec<funnel::Column>,
     /// Crystals guarded at the last count (`Rules::larder` off), and what
@@ -540,6 +555,8 @@ impl<W: World> Game<W> {
             active: None,
             ranks: Vec::new(),
             ranked: [0; SQUADS_MAX],
+            guided: None,
+            map_waits: 0,
             columns: vec![funnel::Column::default(); SQUADS_MAX],
             guarded: Vec::new(),
             healed: 0.0,
@@ -669,6 +686,9 @@ impl<W: World> Game<W> {
             cover: false,
             rest: 0.0,
             next: 0,
+            vx: 0.0,
+            vy: 0.0,
+            was: (x, y),
         });
     }
 
@@ -711,3 +731,5 @@ mod tests;
 mod narrow_tests;
 #[cfg(test)]
 mod wall_side_tests;
+#[cfg(test)]
+mod move_tests;

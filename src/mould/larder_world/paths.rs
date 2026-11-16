@@ -281,7 +281,17 @@ impl<W: World> Game<W> {
     /// The crystal (charge left) whose disc holds `p`, if crystals are
     /// solid (`Rules::crystal_solid`): its centre and radius.
     pub(super) fn solid_at(&self, p: (f32, f32)) -> Option<((f32, f32), f32)> {
-        self.solid.iter().copied().find(|&(c, r)| (c.0 - p.0).hypot(c.1 - p.1) < r)
+        // A box first: every standable check (every cell of every
+        // straight-walk line) asks this of every crystal, and with `hypot`
+        // alone it was most of a 200-soldier step's walking (squad
+        // movement rework, 2026-11-16). Then `hypot`, not a squared test,
+        // which can differ at a rim's edge in f32: walking maps
+        // (`standable_cells`) test the same way, and old replays stay
+        // exact (review, 2026-11-16).
+        self.solid.iter().copied().find(|&(c, r)| {
+            let (dx, dy) = (c.0 - p.0, c.1 - p.1);
+            dx.abs() < r && dy.abs() < r && dx.hypot(dy) < r
+        })
     }
 
     /// How near `p` a soldier must stand to work at it, fine cells: `near`
@@ -606,8 +616,28 @@ impl<W: World> Game<W> {
     /// Whether a soldier can walk straight from `a` to `b`: every cell on
     /// the line standable (`standable`; `clear_line` is the line of fire).
     pub(super) fn walk_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
+        // The cells of `squad::path`, in its order, walked without building
+        // the list and stopping at the first that fails: every soldier asks
+        // a few of these a step (squad movement rework, 2026-11-16).
         let (w, h) = self.world.size();
-        squad::path(w, h, a, b).into_iter().all(|i| self.standable((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+        let n = (dx.hypot(dy) * 2.0).ceil().max(1.0) as usize;
+        let mut last = usize::MAX;
+        for k in 0..=n {
+            let t = k as f32 / n as f32;
+            let (x, y) = (a.0 + dx * t, a.1 + dy * t);
+            if x < 0.0 || y < 0.0 || x >= w as f32 || y >= h as f32 {
+                break;
+            }
+            let i = y as usize * w + x as usize;
+            if i != last {
+                last = i;
+                if !self.standable((i % w) as f32 + 0.5, (i / w) as f32 + 0.5) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 
     /// Whether every cell on the line from `a` to `b` is clear to fire
@@ -652,6 +682,7 @@ impl<W: World> Game<W> {
             let gi = cell(w, h, g);
             let Some(key) = self.map_for(gi, g, MAP_NEAR * self.s()) else {
                 // Its map is being built (`pump_maps`): wait for it.
+                self.map_waits += 1;
                 return;
             };
             let map = &self.paths.maps[&key].0;
@@ -690,7 +721,7 @@ impl<W: World> Game<W> {
 
     /// The share of full speed soldier `k` walks at: thick slime holds a
     /// soldier back (`Rules::wade`).
-    pub(super) fn wade(&self, k: usize) -> f32 {
+    pub fn wade(&self, k: usize) -> f32 {
         if self.rules.wade > 0.0 {
             // Whole walkers: every one on a soldier holds its legs at any mass (owner, 11-13 15:55Z).
             let x = self.soldiers[k].touching as f32 / self.rules.wade;

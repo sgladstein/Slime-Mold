@@ -205,8 +205,15 @@ impl<W: World> Game<W> {
             self.columns[q].on = true;
             front
         } else if !tight && was {
-            // Done once every member has a straight walk to the anchor.
-            if m.iter().all(|&k| self.walk_line((self.soldiers[k].x, self.soldiers[k].y), a)) {
+            // Done once every member has a straight walk to the anchor,
+            // and (`Rules::steer`) is within the formation's width of it:
+            // out of a straight door every member saw the anchor as soon as
+            // it left, and the tail, still in the door, stood at its
+            // distance from the anchor (`stand_off`) with the rest queued
+            // behind (squad movement rework, 2026-11-16; 24 soldiers, a
+            // 6-cell door 30 long).
+            let near = |k: usize| !self.rules.steer || (self.soldiers[k].x - a.0).hypot(self.soldiers[k].y - a.1) <= need;
+            if m.iter().all(|&k| near(k) && self.walk_line((self.soldiers[k].x, self.soldiers[k].y), a)) {
                 self.columns[q].on = false;
             }
             a

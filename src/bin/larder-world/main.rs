@@ -329,6 +329,11 @@ const KICK: f32 = 0.14;
 /// How far a soldier walks (dish cells) before its figure turns to the way
 /// it is going (`App::step`).
 const TURN: f32 = 0.3;
+/// How fast a soldier's figure turns, radians a second: half a turn in a
+/// third of a second. It snapped at once before (squad movement rework,
+/// 2026-11-16), so a squad's figures flicked round 15 times a second as
+/// they jostled or the cursor moved.
+const TURN_RATE: f32 = 3.0 * std::f32::consts::PI;
 /// How long a take's pulse lasts at a harvester's hands, seconds: a step
 /// is 1/15 s, so a soldier taking every step glows steadily and one that
 /// stops fades in about a third of a second.
@@ -559,6 +564,9 @@ struct Tracer {
 #[derive(Clone, Copy)]
 struct Look {
     facing: f32,
+    /// The way its figure turns toward, a little each frame (`TURN_RATE`;
+    /// a shot or a take still turns it at once).
+    turn_to: f32,
     flash: f32,
     /// Seconds left of the pulse at its hands from its last take from a
     /// crystal (`Game::last_takes`, `TAKE` long).
@@ -586,7 +594,7 @@ struct Look {
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
     }
 }
 
@@ -1335,6 +1343,12 @@ impl App {
         }
         self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
+            // Turning toward where it walks or aims, at `TURN_RATE`; held
+            // while its muzzle flashes, which points along the shot.
+            if l.flash <= 0.0 {
+                let d = (l.turn_to - l.facing + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+                l.facing += d.clamp(-TURN_RATE * dt, TURN_RATE * dt);
+            }
             l.flash = (l.flash - dt).max(0.0);
             l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
@@ -1478,15 +1492,20 @@ impl App {
             let sq = g.squads.get(s.squad as usize).filter(|_| g.rules.squads);
             let aim = sq.and_then(|sq| sq.fire).or_else(|| cursor.filter(|_| g.active == Some(s.squad as usize) && g.rules.squads));
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
+            // With `Rules::steer` a soldier's velocity says where it walks:
+            // it turns once it walks at a third of its speed in the slime it
+            // wades (`Game::wade`; of full speed, one wading never turned).
+            let walking = g.rules.squads && g.rules.steer && s.vx.hypot(s.vy) > g.rules.speed * g.world.scale() * g.wade(k) / 3.0;
             if let Some(p) = aim.filter(|_| s.alive) {
-                if l.flash <= 0.0 && (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
-                    l.facing = (p.1 - s.y).atan2(p.0 - s.x);
+                if (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
+                    l.turn_to = (p.1 - s.y).atan2(p.0 - s.x);
                 }
                 l.at = (s.x, s.y);
-            } else if dx.hypot(dy) > turn {
-                if l.flash <= 0.0 {
-                    l.facing = dy.atan2(dx);
-                }
+            } else if walking {
+                l.turn_to = s.vy.atan2(s.vx);
+                l.at = (s.x, s.y);
+            } else if dx.hypot(dy) > turn && !(g.rules.squads && g.rules.steer) {
+                l.turn_to = dy.atan2(dx);
                 l.at = (s.x, s.y);
             }
             if l.alive && !s.alive {
@@ -1679,7 +1698,22 @@ impl App {
     }
 
     /// The frame's ground, marks, HUD and canvas, ready to record.
+    /// Everything drawn this frame, with each soldier drawn between where
+    /// its last step's walk began and ended, by how far the frame is
+    /// through to the next step (`between`, `Game::drawn_between`): the
+    /// game steps 15 times a second, and drawn at its steps a squad jumped
+    /// every fourth frame at 60 while the camera glided, so every soldier
+    /// shook on the screen (squad movement rework, 2026-11-16).
     fn prepare(&mut self) {
+        let a = self.between();
+        let own = self.game.as_mut().map(|g| g.drawn_between(a));
+        self.prepare_now();
+        if let (Some(g), Some(own)) = (self.game.as_mut(), own) {
+            g.put_back(&own);
+        }
+    }
+
+    fn prepare_now(&mut self) {
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
@@ -2094,6 +2128,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod film;
 
 /// The alert for raid `d`: what the slime goes for.
 fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime_mould::mould::larder_world::Raid) -> String {

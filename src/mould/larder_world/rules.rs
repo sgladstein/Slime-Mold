@@ -397,6 +397,13 @@ pub struct Rules {
     /// `funnel`, owner 2026-11-15). Off, the formation's places that fall
     /// in rock all go to the anchor, as before.
     pub funnel: bool,
+    /// Soldiers in the squad mode walk with a velocity (on; `steer`,
+    /// squad movement rework 2026-11-16, owner: "It is still clunky
+    /// overall"): they speed up and slow down, walk in step with their
+    /// squad, follow the squad's way past rock and keep their elbow room
+    /// by steering (`Game::steer_all`). Off is the walk before it: full
+    /// speed straight at the place each step, shoved apart after.
+    pub steer: bool,
     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
     /// rid of the whole larder system"), a crystal is *drained* or
     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
@@ -537,6 +544,17 @@ impl Rules {
             self.max_squad = (v.max(1.0) as usize).min(room);
             return true;
         }
+        // The squad movement rework's walk (`steer`, 2026-11-16) and the
+        // narrow places' columns (`funnel`, 11-15): `set=steer=0` films
+        // the walk before it.
+        if name == "steer" {
+            self.steer = v > 0.0;
+            return true;
+        }
+        if name == "funnel" {
+            self.funnel = v > 0.0;
+            return true;
+        }
         let f = match name {
             "raid_first" => &mut self.raid.first,
             "raid_first_sd" => &mut self.raid.first_sd,
@@ -640,6 +658,7 @@ impl Default for Rules {
             lead: super::LeadRules::default(),
             squads: false,
             funnel: true,
+            steer: true,
             larder: true,
             guard: 120.0,
             guard_walkers: 8,
