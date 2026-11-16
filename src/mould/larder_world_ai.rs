@@ -805,7 +805,12 @@ mod tests {
     /// `buy_to`; with `spend` it also puts its turrets up.
     #[test]
     fn a_rich_hand_spends_its_bank() {
-        let rules = Rules { start_bank: 30_000.0, ..Rules::default() };
+        // At the old cap of 40 (soldier-cap thread, 11-16): a rich bank
+        // buys to the cap first, and at 200 30,000 food buys 75 soldiers
+        // and leaves nothing for turrets. The brain's split between
+        // soldiers and buildings under the 200 cap is a tuning note
+        // (`Reports/soldier-cap-2026-11-16/README.md`).
+        let rules = Rules { start_bank: 30_000.0, max_squad: 40, ..Rules::default() };
         let boom = round("boom", 1, 5.0, rules);
         assert_eq!(boom.alive(), Style::BOOM.buy_to, "boom with 30,000 banked has {} soldiers after 5 s", boom.alive());
         let rich = round("boom:spend=2+turrets=3", 1, 60.0, rules);

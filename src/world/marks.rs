@@ -14,8 +14,13 @@
 /// Words a mark: x, y, ox, oy, hw, hh, shape, colour, colour2, fill, flags, extra.
 pub const MARK_WORDS: usize = 12;
 /// The most marks a frame (the Larder thread's budget: two teams of 40,
-/// buildings, bait, shot lines and range rings, about 1,000).
-pub const MAX_MARKS: usize = 2048;
+/// buildings, bait, shot lines and range rings, about 1,000). 4096 since
+/// 2026-11-16, for the 200-soldier cap (`Rules::max_squad`): a body, a
+/// health bar, a selection ring and a muzzle flash each, the dead (drawn
+/// first, and never removed in a level) and every bullet's tracer could
+/// pass 2,048, and past the cap the newest marks, the living, are dropped.
+/// The marks pass costs by marks drawn, not by the buffer.
+pub const MAX_MARKS: usize = 4096;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u32)]
