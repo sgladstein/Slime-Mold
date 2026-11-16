@@ -55,8 +55,10 @@ towers; Creeper World's turrets win ground (the third option, not built).
   makes it render; every walker any shot kills within its range pays 0.25
   food (`Game::render_pay`, `Game::rendered`, counted in `income`).
 
-Keys: `set=raid_food=0 set=raid_every=0` (off), `raid_size`, `raid_share`,
-`raid_lure_r`, `raid_first`, `raid_min`, `last_stand`, `last_stand_at`;
+Keys (since 11-16): `set=raid_every=0` (off), `raid_every`, `raid_every_sd`,
+`raid_first`, `raid_first_sd`, `raid_min`, `raid_size`, `raid_size_sd`,
+`raid_size_min`, `raid_size_max`, `raid_share`, `raid_lure_r`,
+`last_stand`, `last_stand_at`;
 `turret2=X,Y` in the look mode places a rendering turret.
 
 ## Looks (the game window on llvmpipe; Fork, seed 1, squad mode, idle squad)
@@ -110,6 +112,30 @@ The last-stand film above is with routing: the arms' slime goes round the
 arm tips and over the top to the squad; the stem's body comes up its
 corridor into the turrets at its mouth (3 of 4 soldiers died by 2:30).
 
+## Random raids (2026-11-16)
+
+The owner, 01:48Z: "slime should send out raiders regardless if it doesn't
+make a kill box a winning strategy yet. It shouldn't be so consistent as
+every 400 food. Both the time between raids and the size of the raid
+should be picked randomly (each raid) from a normal distribution". The
+food meter is gone. Each raid now draws the wait till the next one
+(`RaidRules::every` 60 s mean, `every_sd` 20 s, never under `min` 20 s;
+the first `first` 75 s, `first_sd` 15 s) and its own size (`size` 15% of
+the slime's mass, `size_sd` 6%, kept within 4-40%) by Box-Muller from the
+raids' own random stream (`Raids::new(seed)`, apart from `Game::rng`, so
+no other draw moves). The numbers are a first guess, to retune in play.
+
+Fork turtle to 5:00 (the 4:00 turtle's buildings and lure, idle squad;
+`raw/random-seed1.txt`, `raw/random-seed2.txt`):
+
+| seed | raids at | gaps (s) | walkers sent |
+|---|---|---|---|
+| 1 | 1:19, 2:06, 2:32, 3:17, 4:16 | 47, 26, 45, 59 | 7,408, 3,757, 4,942, 6,324, 11,237 |
+| 2 | 1:30, 2:40, 3:32, 4:22 | 70, 52, 50 | 8,006, 6,832, 4,200, 7,864 |
+
+On seed 2 the lure took raids 2-4 (all four soldiers alive at 5:00); on
+seed 1 the squad was dead by 5:00 and 13,300 walkers killed.
+
 ## Tests
 
 - `big::a_raid_runs_for_its_target_from_beyond_panic_reach`: off and zero
@@ -126,7 +152,7 @@ corridor into the turrets at its mouth (3 of 4 soldiers died by 2:30).
 ## Commands
 
 ```
-larder-world look=DIR map=fork mode=squads hand=idle seed=1 screen=960x600 at=45,75,90,105,120,150,180,240 pump=256,85 pump=235,125 pump=280,120 turret=240,148 turret=256,152 turret=272,148 turret=222,105 turret=292,100 lure=256,175 [set=raid_food=0 set=raid_every=0]
+larder-world look=DIR map=fork mode=squads hand=idle seed=1 screen=960x600 at=45,75,90,105,120,150,180,240 pump=256,85 pump=235,125 pump=280,120 turret=240,148 turret=256,152 turret=272,148 turret=222,105 turret=292,100 lure=256,175 [set=raid_every=0]
 larder-world look=DIR map=fork mode=squads hand=idle seed=1 screen=960x600 at=70,..,102 pump=... turret2=240,62 turret2=272,62 turret2=256,45 turret2=222,105 turret2=292,100 lure=256,62
 larder-world look=DIR ... (turtle) set=last_stand=1 set=last_stand_at=0.8
 ```

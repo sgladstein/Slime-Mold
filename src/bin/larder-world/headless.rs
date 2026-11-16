@@ -350,7 +350,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             // Each raid the game sends (11-15).
             if let Some(g) = app.game.as_ref().filter(|g| g.raids.sent.len() != raids) {
                 let d = g.raids.sent.last().unwrap();
-                println!("  raid {} at t {:.1} s: {:?} at {:.0},{:.0}, reach {:.0} cells holding {} walkers, share {:.2}{}", g.raids.sent.len(), g.time(), d.aim, d.to.0, d.to.1, d.reach, d.held, d.share, if d.last_stand { " (last stand)" } else { "" });
+                println!("  raid {} at t {:.1} s: {:?} at {:.0},{:.0}, reach {:.0} cells holding {} walkers, share {:.2}, size {:.0}% of the slime{}", g.raids.sent.len(), g.time(), d.aim, d.to.0, d.to.1, d.reach, d.held, d.share, d.size * 100.0, if d.last_stand { " (last stand)" } else { "" });
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();

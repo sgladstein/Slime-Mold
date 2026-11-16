@@ -378,7 +378,6 @@ impl<W: World> Game<W> {
         let ate = (self.charge_was - now - took).max(0.0);
         self.charge_was = now;
         self.slime_ate += (ate / r.charge.max(1e-6) as f64) as f32;
-        self.raids.meter += (ate / r.charge.max(1e-6) as f64) as f32;
         let every = self.world.surge_every();
         if r.surge_food <= 0.0 || every == 0 {
             return;

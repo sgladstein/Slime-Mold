@@ -515,18 +515,22 @@ impl Rules {
     /// whole-game review's W44: no reviewer could film a pump's scent on,
     /// as the window took no rule keys). False if there is no such rule.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
-        // Raids (`RaidRules`, 11-15): `raid_food=0` turns them off,
+        // Raids (`RaidRules`, 11-15): `raid_every=0` turns them off,
         // `last_stand=1` on.
         if name == "last_stand" {
             self.raid.last_stand = v > 0.0;
             return true;
         }
         let f = match name {
-            "raid_food" => &mut self.raid.food,
             "raid_first" => &mut self.raid.first,
+            "raid_first_sd" => &mut self.raid.first_sd,
             "raid_min" => &mut self.raid.min,
             "raid_every" => &mut self.raid.every,
+            "raid_every_sd" => &mut self.raid.every_sd,
             "raid_size" => &mut self.raid.size,
+            "raid_size_sd" => &mut self.raid.size_sd,
+            "raid_size_min" => &mut self.raid.size_min,
+            "raid_size_max" => &mut self.raid.size_max,
             "raid_share" => &mut self.raid.share,
             "raid_lure_r" => &mut self.raid.lure_r,
             "last_stand_at" => &mut self.raid.last_stand_at,
