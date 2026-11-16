@@ -529,7 +529,7 @@ impl Rules {
             return true;
         }
         // `max_squad=N` (soldier-cap thread, 11-16): the most soldiers
-        // alive, so the 1070 bench can time big armies (`hand=rush` buys
+        // alive, so the 1070 bench can time big armies (`hand=greedy` buys
         // to it). Past `squad::UNITS_MAX` less the home and every building
         // a soldier would drop out of the frame, so it is held under that.
         if name == "max_squad" {

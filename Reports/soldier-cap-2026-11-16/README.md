@@ -75,7 +75,13 @@ pairs) would want a grid or a cache.
   frame's upload and read-back are now the bigger buffers' size every step
   (about 48 KB up and 28 KB back, from about 14 and 8). Booked: `bench` at
   40, 100 and 200 soldiers (`set=max_squad=N`, a new rule key, with
-  `hand=rush` buying to it).
+  `hand=greedy` buying to it), planets 1 and 8:
+  `larder-world bench=60 hand=greedy map=planet:1:1 mode=squads
+  set=start_bank=1000000 set=max_squad=N passes=30`. Smoke on the cloud's
+  software Vulkan: 200 soldiers bought by 6 s, 266 shots, the step's p95
+  5.9 ms (llvmpipe; its frame is the software GPU's, not a timing).
+  The GPU twin of the full frame (`the_squad_frame_holds_its_cap_on_the_gpu`,
+  now 256 units) matches the CPU exactly on llvmpipe.
 - **Balance.** The slime, the shop and the AI were tuned at 40. The player
   AI (`larder_world_ai`) buys to the cap whenever its bank holds `spend`
   soldiers' worth, so at 200 a rich bank goes on soldiers before turrets
