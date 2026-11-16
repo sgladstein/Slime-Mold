@@ -1,0 +1,893 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.102 ms a frame
+  t 1 s: mould 13119, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 341.4,70.7
+  surge: the slime ate 2 food (2.2/s); meter 2.2 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.546 ms a frame
+  t 2 s: mould 13119, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 327.7,74.4
+  surge: the slime ate 4 food (2.2/s); meter 4.4 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.089 ms a frame
+  t 3 s: mould 13119, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 313.8,79.9
+  surge: the slime ate 7 food (2.2/s); meter 6.6 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.76 ms (once a game second), model and HUD 0.110 ms a frame
+  t 4 s: mould 13120, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 300.0,85.4
+  surge: the slime ate 9 food (2.2/s); meter 8.9 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.20 ms (once a game second), model and HUD 0.380 ms a frame
+  t 5 s: mould 13121, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 1.000; squad at 286.1,91.1
+  surge: the slime ate 11 food (2.2/s); meter 11.1 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.115 ms a frame
+  t 6 s: mould 13119, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 272.0,96.6
+  surge: the slime ate 13 food (2.2/s); meter 13.4 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.340 ms a frame
+  t 7 s: mould 13102, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 257.7,102.2
+  surge: the slime ate 16 food (2.2/s); meter 15.7 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.196 ms a frame
+  t 8 s: mould 13094, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 243.0,107.6
+  surge: the slime ate 18 food (2.3/s); meter 18.0 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.107 ms a frame
+  t 9 s: mould 13087, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 228.5,113.1
+  surge: the slime ate 20 food (2.3/s); meter 20.4 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.43 ms (once a game second), model and HUD 0.101 ms a frame
+  t 10 s: mould 13078, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 214.5,118.5
+  surge: the slime ate 23 food (2.3/s); meter 22.7 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.622 ms a frame
+  t 11 s: mould 13072, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 200.5,123.9
+  surge: the slime ate 25 food (2.3/s); meter 25.1 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.51 ms (once a game second), model and HUD 0.141 ms a frame
+  t 12 s: mould 13065, soldiers 8, bank 400, harvested 0, rendered 0, shots 3, killed 11, took 0%, crystals left 0.999; squad at 186.5,129.2
+  surge: the slime ate 28 food (2.3/s); meter 27.6 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 100 mean
+  CPU: ground field 2.70 ms (once a game second), model and HUD 0.094 ms a frame
+  t 13 s: mould 13006, soldiers 8, bank 400, harvested 0, rendered 0, shots 14, killed 88, took 0%, crystals left 0.999; squad at 174.5,134.5
+  surge: the slime ate 30 food (2.3/s); meter 30.0 of 103, 0 surges
+  squad: touching 0.5 mean, 2 most; health 99 mean
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.127 ms a frame
+  t 14 s: mould 12930, soldiers 8, bank 400, harvested 0, rendered 0, shots 24, killed 184, took 0%, crystals left 0.999; squad at 160.8,139.7
+  surge: the slime ate 32 food (2.3/s); meter 32.5 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 98 mean
+  CPU: ground field 1.50 ms (once a game second), model and HUD 0.096 ms a frame
+  t 15 s: mould 12838, soldiers 8, bank 400, harvested 0, rendered 0, shots 32, killed 263, took 0%, crystals left 0.998; squad at 147.9,143.8
+  surge: the slime ate 35 food (2.3/s); meter 35.0 of 103, 0 surges
+  squad: touching 0.2 mean, 1 most; health 98 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.092 ms a frame
+  t 16 s: mould 12557, soldiers 8, bank 400, harvested 0, rendered 0, shots 42, killed 698, took 0%, crystals left 0.998; squad at 137.6,149.6
+  surge: the slime ate 37 food (2.3/s); meter 37.5 of 103, 0 surges
+  squad: touching 0.5 mean, 2 most; health 97 mean
+  CPU: ground field 6.05 ms (once a game second), model and HUD 0.262 ms a frame
+  t 17 s: mould 12257, soldiers 8, bank 400, harvested 0, rendered 0, shots 52, killed 840, took 0%, crystals left 0.998; squad at 126.6,153.2
+  surge: the slime ate 40 food (2.4/s); meter 40.0 of 103, 0 surges
+  squad: touching 3.1 mean, 9 most; health 93 mean
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.208 ms a frame
+  t 18 s: mould 12026, soldiers 8, bank 400, harvested 0, rendered 0, shots 68, killed 1066, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 43 food (2.4/s); meter 42.6 of 103, 0 surges
+  squad: touching 2.2 mean, 10 most; health 90 mean
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.089 ms a frame
+  t 19 s: mould 11893, soldiers 8, bank 400, harvested 0, rendered 0, shots 84, killed 1294, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 45 food (2.4/s); meter 45.3 of 103, 0 surges
+  squad: touching 1.4 mean, 5 most; health 88 mean
+  CPU: ground field 5.64 ms (once a game second), model and HUD 0.594 ms a frame
+  t 20 s: mould 11728, soldiers 8, bank 400, harvested 0, rendered 0, shots 100, killed 1431, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 86 mean
+  CPU: ground field 0.94 ms (once a game second), model and HUD 0.076 ms a frame
+  t 21 s: mould 11387, soldiers 8, bank 400, harvested 0, rendered 0, shots 116, killed 1840, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 51 food (2.4/s); meter 50.8 of 103, 0 surges
+  squad: touching 0.2 mean, 1 most; health 85 mean
+  CPU: ground field 1.17 ms (once a game second), model and HUD 0.264 ms a frame
+  t 22 s: mould 11108, soldiers 8, bank 400, harvested 0, rendered 0, shots 132, killed 2091, took 0%, crystals left 0.998; squad at 125.5,152.7
+  surge: the slime ate 54 food (2.4/s); meter 53.6 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 84 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.092 ms a frame
+  t 23 s: mould 10806, soldiers 8, bank 400, harvested 0, rendered 0, shots 148, killed 2430, took 0%, crystals left 0.997; squad at 125.5,152.7
+  surge: the slime ate 57 food (2.5/s); meter 56.6 of 103, 0 surges
+  squad: touching 0.2 mean, 2 most; health 83 mean
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.088 ms a frame
+  t 24 s: mould 10649, soldiers 8, bank 400, harvested 0, rendered 0, shots 164, killed 2844, took 0%, crystals left 0.997; squad at 125.5,152.7
+  surge: the slime ate 60 food (2.5/s); meter 59.5 of 103, 0 surges
+  squad: touching 0.0 mean, 0 most; health 83 mean
+  CPU: ground field 1.90 ms (once a game second), model and HUD 0.167 ms a frame
+  t 25 s: mould 10482, soldiers 8, bank 400, harvested 0, rendered 0, shots 172, killed 3019, took 0%, crystals left 0.997; squad at 125.5,152.7
+  surge: the slime ate 63 food (2.5/s); meter 62.5 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 82 mean
+  CPU: ground field 2.27 ms (once a game second), model and HUD 1.155 ms a frame
+  t 26 s: mould 10284, soldiers 8, bank 400, harvested 0, rendered 0, shots 188, killed 3309, took 0%, crystals left 0.997; squad at 125.5,152.7
+  surge: the slime ate 66 food (2.5/s); meter 65.7 of 103, 0 surges
+  squad: touching 0.5 mean, 2 most; health 82 mean
+  CPU: ground field 1.07 ms (once a game second), model and HUD 1.202 ms a frame
+  t 27 s: mould 10003, soldiers 8, bank 400, harvested 0, rendered 0, shots 204, killed 3582, took 0%, crystals left 0.997; squad at 125.5,152.7
+  surge: the slime ate 69 food (2.6/s); meter 69.0 of 103, 0 surges
+  squad: touching 0.8 mean, 2 most; health 81 mean
+  CPU: ground field 4.84 ms (once a game second), model and HUD 0.563 ms a frame
+  t 28 s: mould 9987, soldiers 8, bank 400, harvested 0, rendered 0, shots 214, killed 3675, took 0%, crystals left 0.997; squad at 133.1,143.0
+  surge: the slime ate 72 food (2.6/s); meter 72.4 of 103, 0 surges
+  squad: touching 2.0 mean, 6 most; health 79 mean
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.101 ms a frame
+  t 29 s: mould 9934, soldiers 8, bank 400, harvested 0, rendered 0, shots 222, killed 3822, took 0%, crystals left 0.997; squad at 143.1,136.2
+  surge: the slime ate 76 food (2.6/s); meter 76.1 of 103, 0 surges
+  squad: touching 0.2 mean, 2 most; health 78 mean
+  CPU: ground field 1.36 ms (once a game second), model and HUD 0.429 ms a frame
+  t 30 s: mould 9880, soldiers 8, bank 400, harvested 0, rendered 0, shots 227, killed 3891, took 0%, crystals left 0.996; squad at 141.2,120.6
+  surge: the slime ate 80 food (2.7/s); meter 79.9 of 103, 0 surges
+  squad: touching 0.8 mean, 3 most; health 77 mean
+  CPU: ground field 1.83 ms (once a game second), model and HUD 0.248 ms a frame
+  t 31 s: mould 9909, soldiers 8, bank 400, harvested 0, rendered 0, shots 234, killed 3917, took 0%, crystals left 0.996; squad at 140.3,105.6
+  surge: the slime ate 84 food (2.7/s); meter 83.9 of 103, 0 surges
+  squad: touching 0.2 mean, 1 most; health 77 mean
+  CPU: ground field 7.48 ms (once a game second), model and HUD 0.226 ms a frame
+  t 32 s: mould 9960, soldiers 8, bank 400, harvested 0, rendered 0, shots 238, killed 3931, took 0%, crystals left 0.996; squad at 139.3,90.5
+  surge: the slime ate 88 food (2.7/s); meter 88.0 of 103, 0 surges
+  squad: touching 0.2 mean, 1 most; health 76 mean
+  CPU: ground field 1.40 ms (once a game second), model and HUD 0.140 ms a frame
+  t 33 s: mould 10024, soldiers 8, bank 400, harvested 0, rendered 0, shots 241, killed 3938, took 0%, crystals left 0.996; squad at 138.2,75.4
+  surge: the slime ate 92 food (2.8/s); meter 92.2 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 76 mean
+  CPU: ground field 2.09 ms (once a game second), model and HUD 0.168 ms a frame
+  t 34 s: mould 10098, soldiers 8, bank 400, harvested 0, rendered 0, shots 245, killed 3952, took 0%, crystals left 0.996; squad at 137.0,60.1
+  surge: the slime ate 97 food (2.8/s); meter 96.6 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 76 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.444 ms a frame
+  t 35 s: mould 10157, soldiers 8, bank 402, harvested 0, rendered 0, shots 254, killed 3976, took 0%, crystals left 0.995; squad at 135.6,44.3
+  surge: the slime ate 101 food (2.9/s); meter 101.0 of 103, 0 surges
+  squad: touching 0.1 mean, 1 most; health 75 mean
+  surge 1 starts at t 35.4 s (the slime has eaten 103 food)
+  CPU: ground field 1.94 ms (once a game second), model and HUD 0.078 ms a frame
+  t 36 s: mould 10252, soldiers 8, bank 403, harvested 0, rendered 0, shots 258, killed 3989, took 0%, crystals left 0.995; squad at 134.2,37.6
+  surge: the slime ate 106 food (2.9/s); meter 2.7 of 103, 1 surges
+  squad: touching 0.5 mean, 2 most; health 75 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.093 ms a frame
+  t 37 s: mould 10409, soldiers 8, bank 405, harvested 0, rendered 0, shots 261, killed 4008, took 0%, crystals left 0.995; squad at 134.2,37.6
+  surge: the slime ate 110 food (3.0/s); meter 7.2 of 103, 1 surges
+  squad: touching 2.1 mean, 14 most; health 73 mean
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.462 ms a frame
+  t 38 s: mould 10542, soldiers 8, bank 407, harvested 0, rendered 0, shots 272, killed 4213, took 0%, crystals left 0.995; squad at 134.2,37.6
+  surge: the slime ate 115 food (3.0/s); meter 11.7 of 103, 1 surges
+  squad: touching 5.2 mean, 15 most; health 65 mean
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.437 ms a frame
+  t 39 s: mould 10452, soldiers 8, bank 408, harvested 0, rendered 0, shots 277, killed 4328, took 0%, crystals left 0.995; squad at 134.2,37.6
+  surge: the slime ate 119 food (3.1/s); meter 16.3 of 103, 1 surges
+  squad: touching 0.2 mean, 1 most; health 63 mean
+  CPU: ground field 2.76 ms (once a game second), model and HUD 0.212 ms a frame
+  t 40 s: mould 10507, soldiers 8, bank 410, harvested 0, rendered 0, shots 282, killed 4339, took 0%, crystals left 0.994; squad at 126.9,154.1
+  surge: the slime ate 124 food (3.1/s); meter 21.0 of 103, 1 surges
+  squad: touching 0.1 mean, 1 most; health 63 mean
+  CPU: ground field 1.41 ms (once a game second), model and HUD 0.338 ms a frame
+  t 41 s: mould 10445, soldiers 8, bank 412, harvested 0, rendered 0, shots 293, killed 4633, took 0%, crystals left 0.994; squad at 126.9,154.1
+  surge: the slime ate 129 food (3.1/s); meter 25.9 of 103, 1 surges
+  squad: touching 0.5 mean, 2 most; health 62 mean
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.094 ms a frame
+  t 42 s: mould 10309, soldiers 8, bank 413, harvested 0, rendered 0, shots 304, killed 4701, took 0%, crystals left 0.994; squad at 126.9,154.1
+  surge: the slime ate 134 food (3.2/s); meter 30.9 of 103, 1 surges
+  squad: touching 0.0 mean, 0 most; health 62 mean
+  CPU: ground field 1.19 ms (once a game second), model and HUD 0.095 ms a frame
+  t 43 s: mould 10314, soldiers 8, bank 415, harvested 0, rendered 0, shots 316, killed 4829, took 0%, crystals left 0.994; squad at 126.9,154.1
+  surge: the slime ate 139 food (3.2/s); meter 35.9 of 103, 1 surges
+  squad: touching 0.1 mean, 1 most; health 61 mean
+  CPU: ground field 1.05 ms (once a game second), model and HUD 0.100 ms a frame
+  t 44 s: mould 10273, soldiers 8, bank 417, harvested 0, rendered 0, shots 327, killed 5004, took 0%, crystals left 0.994; squad at 126.9,154.1
+  surge: the slime ate 144 food (3.3/s); meter 40.8 of 103, 1 surges
+  squad: touching 0.4 mean, 1 most; health 61 mean
+  CPU: ground field 3.37 ms (once a game second), model and HUD 0.253 ms a frame
+  t 45 s: mould 10221, soldiers 8, bank 419, harvested 0, rendered 0, shots 339, killed 5175, took 0%, crystals left 0.993; squad at 126.9,154.1
+  surge: the slime ate 149 food (3.3/s); meter 45.7 of 103, 1 surges
+  squad: touching 0.5 mean, 2 most; health 60 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.108 ms a frame
+  t 46 s: mould 10181, soldiers 8, bank 420, harvested 0, rendered 0, shots 349, killed 5373, took 0%, crystals left 0.993; squad at 126.9,154.1
+  surge: the slime ate 153 food (3.3/s); meter 50.6 of 103, 1 surges
+  squad: touching 0.2 mean, 1 most; health 60 mean
+  CPU: ground field 1.52 ms (once a game second), model and HUD 0.216 ms a frame
+  t 47 s: mould 10166, soldiers 8, bank 422, harvested 0, rendered 0, shots 361, killed 5542, took 0%, crystals left 0.993; squad at 126.9,154.1
+  surge: the slime ate 158 food (3.4/s); meter 55.4 of 103, 1 surges
+  squad: touching 0.1 mean, 1 most; health 59 mean
+  CPU: ground field 0.96 ms (once a game second), model and HUD 0.075 ms a frame
+  t 48 s: mould 10100, soldiers 8, bank 424, harvested 0, rendered 0, shots 368, killed 5804, took 0%, crystals left 0.993; squad at 126.9,154.1
+  surge: the slime ate 163 food (3.4/s); meter 60.1 of 103, 1 surges
+  squad: touching 0.2 mean, 1 most; health 58 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.101 ms a frame
+  t 49 s: mould 10118, soldiers 8, bank 425, harvested 0, rendered 0, shots 379, killed 5935, took 0%, crystals left 0.992; squad at 126.9,154.1
+  surge: the slime ate 168 food (3.4/s); meter 64.9 of 103, 1 surges
+  squad: touching 0.5 mean, 2 most; health 58 mean
+  CPU: ground field 1.60 ms (once a game second), model and HUD 0.474 ms a frame
+  t 50 s: mould 10000, soldiers 8, bank 427, harvested 0, rendered 0, shots 389, killed 6112, took 0%, crystals left 0.992; squad at 126.9,154.1
+  surge: the slime ate 173 food (3.5/s); meter 69.7 of 103, 1 surges
+  squad: touching 0.2 mean, 1 most; health 57 mean
+  CPU: ground field 0.97 ms (once a game second), model and HUD 0.076 ms a frame
+  t 51 s: mould 10008, soldiers 8, bank 429, harvested 0, rendered 0, shots 400, killed 6206, took 0%, crystals left 0.992; squad at 126.9,154.1
+  surge: the slime ate 177 food (3.5/s); meter 74.6 of 103, 1 surges
+  squad: touching 0.0 mean, 0 most; health 57 mean
+  CPU: ground field 1.72 ms (once a game second), model and HUD 0.111 ms a frame
+  t 52 s: mould 10026, soldiers 8, bank 430, harvested 0, rendered 0, shots 409, killed 6426, took 0%, crystals left 0.992; squad at 126.9,154.1
+  surge: the slime ate 182 food (3.5/s); meter 79.3 of 103, 1 surges
+  squad: touching 0.0 mean, 0 most; health 57 mean
+  CPU: ground field 1.89 ms (once a game second), model and HUD 0.176 ms a frame
+  t 53 s: mould 10027, soldiers 8, bank 432, harvested 0, rendered 0, shots 420, killed 6472, took 0%, crystals left 0.992; squad at 126.9,154.1
+  surge: the slime ate 187 food (3.5/s); meter 83.9 of 103, 1 surges
+  squad: touching 0.0 mean, 0 most; health 57 mean
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.324 ms a frame
+  t 54 s: mould 10028, soldiers 8, bank 434, harvested 0, rendered 0, shots 432, killed 6681, took 0%, crystals left 0.991; squad at 126.9,154.1
+  surge: the slime ate 191 food (3.5/s); meter 88.7 of 103, 1 surges
+  squad: touching 0.1 mean, 1 most; health 56 mean
+  CPU: ground field 18.14 ms (once a game second), model and HUD 0.256 ms a frame
+  t 55 s: mould 9978, soldiers 8, bank 435, harvested 0, rendered 0, shots 440, killed 6825, took 0%, crystals left 0.991; squad at 126.9,154.1
+  surge: the slime ate 196 food (3.6/s); meter 93.2 of 103, 1 surges
+  squad: touching 0.2 mean, 1 most; health 56 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.325 ms a frame
+  t 56 s: mould 9984, soldiers 8, bank 437, harvested 0, rendered 0, shots 448, killed 6898, took 0%, crystals left 0.991; squad at 126.9,154.1
+  surge: the slime ate 201 food (3.6/s); meter 97.9 of 103, 1 surges
+  squad: touching 0.1 mean, 1 most; health 56 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.551 ms a frame
+  t 57 s: mould 9979, soldiers 8, bank 439, harvested 0, rendered 0, shots 458, killed 7008, took 0%, crystals left 0.991; squad at 126.9,154.1
+  surge: the slime ate 205 food (3.6/s); meter 102.6 of 103, 1 surges
+  squad: touching 0.5 mean, 1 most; health 55 mean
+  surge 2 starts at t 57.1 s (the slime has eaten 206 food)
+  CPU: ground field 1.70 ms (once a game second), model and HUD 0.201 ms a frame
+  t 58 s: mould 10074, soldiers 8, bank 440, harvested 0, rendered 0, shots 470, killed 7212, took 0%, crystals left 0.991; squad at 126.9,154.1
+  surge: the slime ate 210 food (3.6/s); meter 4.3 of 103, 2 surges
+  squad: touching 1.8 mean, 4 most; health 54 mean
+  raid 1 at t 59.0 s: Soldiers(0) at 134,35, reach 43 cells holding 1440 walkers, share 0.60, size 9% of the slime
+  CPU: ground field 2.32 ms (once a game second), model and HUD 0.095 ms a frame
+  t 59 s: mould 10361, soldiers 8, bank 442, harvested 0, rendered 0, shots 482, killed 7374, took 0%, crystals left 0.990; squad at 126.9,154.1
+  surge: the slime ate 215 food (3.6/s); meter 8.8 of 103, 2 surges
+  squad: touching 3.2 mean, 12 most; health 51 mean
+  CPU: ground field 1.87 ms (once a game second), model and HUD 0.359 ms a frame
+  t 60 s: mould 10472, soldiers 8, bank 444, harvested 0, rendered 0, shots 493, killed 7597, took 0%, crystals left 0.990; squad at 126.9,154.1
+  surge: the slime ate 219 food (3.7/s); meter 13.4 of 103, 2 surges
+  squad: touching 2.9 mean, 9 most; health 45 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.094 ms a frame
+  t 61 s: mould 10387, soldiers 8, bank 446, harvested 0, rendered 0, shots 505, killed 7722, took 0%, crystals left 0.990; squad at 126.9,154.1
+  surge: the slime ate 224 food (3.7/s); meter 18.3 of 103, 2 surges
+  squad: touching 1.9 mean, 8 most; health 43 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 1.785 ms a frame
+  t 62 s: mould 10376, soldiers 8, bank 447, harvested 0, rendered 0, shots 517, killed 7838, took 0%, crystals left 0.990; squad at 126.9,154.1
+  surge: the slime ate 229 food (3.7/s); meter 23.3 of 103, 2 surges
+  squad: touching 3.8 mean, 14 most; health 39 mean
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.306 ms a frame
+  t 63 s: mould 10369, soldiers 8, bank 447, harvested 0, rendered 0, shots 529, killed 8092, took 0%, crystals left 0.990; squad at 126.9,154.1
+  surge: the slime ate 234 food (3.7/s); meter 28.2 of 103, 2 surges
+  squad: touching 3.1 mean, 13 most; health 34 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.091 ms a frame
+  t 64 s: mould 10273, soldiers 8, bank 447, harvested 0, rendered 0, shots 537, killed 8236, took 0%, crystals left 0.989; squad at 126.9,154.1
+  surge: the slime ate 239 food (3.7/s); meter 33.0 of 103, 2 surges
+  squad: touching 3.8 mean, 12 most; health 28 mean
+  CPU: ground field 2.05 ms (once a game second), model and HUD 0.198 ms a frame
+  t 65 s: mould 10165, soldiers 7, bank 447, harvested 0, rendered 0, shots 549, killed 8467, took 0%, crystals left 0.989; squad at 126.9,154.1
+  surge: the slime ate 243 food (3.7/s); meter 37.7 of 103, 2 surges
+  squad: touching 3.4 mean, 15 most; health 26 mean
+  CPU: ground field 3.11 ms (once a game second), model and HUD 0.098 ms a frame
+  t 66 s: mould 10108, soldiers 5, bank 447, harvested 0, rendered 0, shots 559, killed 8695, took 0%, crystals left 0.989; squad at 126.9,154.1
+  surge: the slime ate 248 food (3.8/s); meter 42.3 of 103, 2 surges
+  squad: touching 2.8 mean, 14 most; health 33 mean
+  CPU: ground field 1.34 ms (once a game second), model and HUD 0.096 ms a frame
+  t 67 s: mould 10115, soldiers 5, bank 447, harvested 0, rendered 0, shots 568, killed 8754, took 0%, crystals left 0.989; squad at 126.9,154.1
+  surge: the slime ate 253 food (3.8/s); meter 47.0 of 103, 2 surges
+  squad: touching 3.6 mean, 18 most; health 25 mean
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.092 ms a frame
+  t 68 s: mould 10135, soldiers 4, bank 447, harvested 0, rendered 0, shots 576, killed 8867, took 0%, crystals left 0.988; squad at 126.9,154.1
+  surge: the slime ate 257 food (3.8/s); meter 51.7 of 103, 2 surges
+  squad: touching 0.2 mean, 1 most; health 28 mean
+  CPU: ground field 4.17 ms (once a game second), model and HUD 0.313 ms a frame
+  t 69 s: mould 10122, soldiers 4, bank 447, harvested 0, rendered 0, shots 584, killed 8996, took 0%, crystals left 0.988; squad at 126.9,154.1
+  surge: the slime ate 262 food (3.8/s); meter 56.2 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.65 ms (once a game second), model and HUD 0.109 ms a frame
+  t 70 s: mould 10210, soldiers 4, bank 447, harvested 0, rendered 0, shots 592, killed 9063, took 0%, crystals left 0.988; squad at 126.9,154.1
+  surge: the slime ate 267 food (3.8/s); meter 60.9 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.24 ms (once a game second), model and HUD 0.139 ms a frame
+  t 71 s: mould 10234, soldiers 4, bank 447, harvested 0, rendered 0, shots 600, killed 9173, took 0%, crystals left 0.988; squad at 126.9,154.1
+  surge: the slime ate 271 food (3.8/s); meter 65.4 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.089 ms a frame
+  t 72 s: mould 10235, soldiers 4, bank 447, harvested 0, rendered 0, shots 604, killed 9328, took 0%, crystals left 0.988; squad at 126.9,154.1
+  surge: the slime ate 276 food (3.8/s); meter 69.9 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.114 ms a frame
+  t 73 s: mould 10245, soldiers 4, bank 447, harvested 0, rendered 0, shots 612, killed 9433, took 0%, crystals left 0.987; squad at 126.9,154.1
+  surge: the slime ate 280 food (3.8/s); meter 74.3 of 103, 2 surges
+  squad: touching 0.2 mean, 1 most; health 28 mean
+  CPU: ground field 16.06 ms (once a game second), model and HUD 0.131 ms a frame
+  t 74 s: mould 10316, soldiers 4, bank 447, harvested 0, rendered 0, shots 620, killed 9450, took 0%, crystals left 0.987; squad at 126.9,154.1
+  surge: the slime ate 285 food (3.8/s); meter 78.8 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.29 ms (once a game second), model and HUD 1.273 ms a frame
+  t 75 s: mould 10355, soldiers 4, bank 447, harvested 0, rendered 0, shots 628, killed 9541, took 0%, crystals left 0.987; squad at 126.9,154.1
+  surge: the slime ate 289 food (3.9/s); meter 83.4 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 13.24 ms (once a game second), model and HUD 0.092 ms a frame
+  t 76 s: mould 10436, soldiers 4, bank 447, harvested 0, rendered 0, shots 636, killed 9578, took 0%, crystals left 0.987; squad at 126.9,154.1
+  surge: the slime ate 294 food (3.9/s); meter 88.0 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.644 ms a frame
+  t 77 s: mould 10486, soldiers 4, bank 447, harvested 0, rendered 0, shots 644, killed 9657, took 0%, crystals left 0.987; squad at 126.9,154.1
+  surge: the slime ate 298 food (3.9/s); meter 92.6 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.376 ms a frame
+  t 78 s: mould 10489, soldiers 4, bank 447, harvested 0, rendered 0, shots 652, killed 9770, took 0%, crystals left 0.986; squad at 126.9,154.1
+  surge: the slime ate 303 food (3.9/s); meter 97.2 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.080 ms a frame
+  t 79 s: mould 10533, soldiers 4, bank 447, harvested 0, rendered 0, shots 660, killed 9870, took 0%, crystals left 0.986; squad at 126.9,154.1
+  surge: the slime ate 308 food (3.9/s); meter 101.8 of 103, 2 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  surge 3 starts at t 79.2 s (the slime has eaten 308 food)
+  CPU: ground field 2.17 ms (once a game second), model and HUD 0.136 ms a frame
+  t 80 s: mould 10627, soldiers 4, bank 447, harvested 0, rendered 0, shots 664, killed 9951, took 0%, crystals left 0.986; squad at 126.9,154.1
+  surge: the slime ate 312 food (3.9/s); meter 3.7 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  CPU: ground field 4.92 ms (once a game second), model and HUD 0.604 ms a frame
+  t 81 s: mould 10772, soldiers 4, bank 447, harvested 0, rendered 0, shots 672, killed 10038, took 0%, crystals left 0.986; squad at 126.9,154.1
+  surge: the slime ate 317 food (3.9/s); meter 8.3 of 103, 3 surges
+  squad: touching 0.2 mean, 1 most; health 27 mean
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.149 ms a frame
+  t 82 s: mould 10856, soldiers 4, bank 447, harvested 0, rendered 0, shots 680, killed 10177, took 0%, crystals left 0.986; squad at 126.9,154.1
+  surge: the slime ate 321 food (3.9/s); meter 13.0 of 103, 3 surges
+  squad: touching 0.8 mean, 3 most; health 25 mean
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.126 ms a frame
+  t 83 s: mould 10841, soldiers 4, bank 447, harvested 0, rendered 0, shots 688, killed 10297, took 0%, crystals left 0.985; squad at 126.9,154.1
+  surge: the slime ate 326 food (3.9/s); meter 17.9 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 25 mean
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.097 ms a frame
+  t 84 s: mould 10759, soldiers 4, bank 447, harvested 0, rendered 0, shots 696, killed 10407, took 0%, crystals left 0.985; squad at 126.9,154.1
+  surge: the slime ate 331 food (3.9/s); meter 23.0 of 103, 3 surges
+  squad: touching 0.8 mean, 2 most; health 24 mean
+  CPU: ground field 2.00 ms (once a game second), model and HUD 0.166 ms a frame
+  t 85 s: mould 10673, soldiers 4, bank 447, harvested 0, rendered 0, shots 704, killed 10431, took 0%, crystals left 0.985; squad at 126.9,154.1
+  surge: the slime ate 337 food (4.0/s); meter 28.2 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 10.46 ms (once a game second), model and HUD 0.454 ms a frame
+  t 86 s: mould 10582, soldiers 4, bank 447, harvested 0, rendered 0, shots 712, killed 10487, took 0%, crystals left 0.985; squad at 126.9,154.1
+  surge: the slime ate 342 food (4.0/s); meter 33.3 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 1.18 ms (once a game second), model and HUD 0.461 ms a frame
+  t 87 s: mould 10488, soldiers 4, bank 447, harvested 0, rendered 0, shots 720, killed 10675, took 0%, crystals left 0.984; squad at 126.9,154.1
+  surge: the slime ate 347 food (4.0/s); meter 38.3 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.097 ms a frame
+  t 88 s: mould 10332, soldiers 4, bank 447, harvested 0, rendered 0, shots 724, killed 10732, took 0%, crystals left 0.984; squad at 126.9,154.1
+  surge: the slime ate 352 food (4.0/s); meter 43.1 of 103, 3 surges
+  squad: touching 0.2 mean, 1 most; health 24 mean
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.087 ms a frame
+  t 89 s: mould 10313, soldiers 4, bank 447, harvested 0, rendered 0, shots 732, killed 10805, took 0%, crystals left 0.984; squad at 126.9,154.1
+  surge: the slime ate 356 food (4.0/s); meter 47.9 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 9.65 ms (once a game second), model and HUD 0.382 ms a frame
+  t 90 s: mould 10240, soldiers 4, bank 447, harvested 0, rendered 0, shots 740, killed 10822, took 0%, crystals left 0.984; squad at 126.9,154.1
+  surge: the slime ate 361 food (4.0/s); meter 52.8 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.090 ms a frame
+  t 91 s: mould 10186, soldiers 4, bank 447, harvested 0, rendered 0, shots 748, killed 10911, took 0%, crystals left 0.984; squad at 126.9,154.1
+  surge: the slime ate 366 food (4.0/s); meter 57.6 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 24 mean
+  CPU: ground field 1.50 ms (once a game second), model and HUD 0.147 ms a frame
+  t 92 s: mould 10158, soldiers 4, bank 447, harvested 0, rendered 0, shots 756, killed 10970, took 0%, crystals left 0.983; squad at 126.9,154.1
+  surge: the slime ate 371 food (4.0/s); meter 62.4 of 103, 3 surges
+  squad: touching 0.2 mean, 1 most; health 24 mean
+  CPU: ground field 5.97 ms (once a game second), model and HUD 0.244 ms a frame
+  t 93 s: mould 10157, soldiers 4, bank 447, harvested 0, rendered 0, shots 764, killed 11143, took 0%, crystals left 0.983; squad at 126.9,154.1
+  surge: the slime ate 375 food (4.0/s); meter 67.1 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.109 ms a frame
+  t 94 s: mould 10071, soldiers 4, bank 447, harvested 0, rendered 0, shots 772, killed 11222, took 0%, crystals left 0.983; squad at 126.9,154.1
+  surge: the slime ate 380 food (4.0/s); meter 71.7 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  raid 2 at t 95.0 s: Soldiers(1) at 122,157, reach 36 cells holding 1644 walkers, share 0.60, size 10% of the slime
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.361 ms a frame
+  t 95 s: mould 10082, soldiers 4, bank 447, harvested 0, rendered 0, shots 780, killed 11270, took 0%, crystals left 0.983; squad at 126.9,154.1
+  surge: the slime ate 385 food (4.1/s); meter 76.4 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.104 ms a frame
+  t 96 s: mould 10109, soldiers 4, bank 447, harvested 0, rendered 0, shots 784, killed 11399, took 0%, crystals left 0.983; squad at 126.9,154.1
+  surge: the slime ate 389 food (4.1/s); meter 81.1 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  CPU: ground field 8.71 ms (once a game second), model and HUD 0.921 ms a frame
+  t 97 s: mould 10113, soldiers 4, bank 447, harvested 0, rendered 0, shots 792, killed 11443, took 0%, crystals left 0.982; squad at 126.9,154.1
+  surge: the slime ate 394 food (4.1/s); meter 85.7 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  CPU: ground field 2.43 ms (once a game second), model and HUD 0.129 ms a frame
+  t 98 s: mould 10138, soldiers 4, bank 447, harvested 0, rendered 0, shots 800, killed 11567, took 0%, crystals left 0.982; squad at 126.9,154.1
+  surge: the slime ate 399 food (4.1/s); meter 90.3 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 23 mean
+  CPU: ground field 3.57 ms (once a game second), model and HUD 0.405 ms a frame
+  t 99 s: mould 10134, soldiers 4, bank 447, harvested 0, rendered 0, shots 808, killed 11688, took 0%, crystals left 0.982; squad at 126.9,154.1
+  surge: the slime ate 403 food (4.1/s); meter 94.9 of 103, 3 surges
+  squad: touching 0.2 mean, 1 most; health 23 mean
+  CPU: ground field 8.52 ms (once a game second), model and HUD 0.370 ms a frame
+  t 100 s: mould 10099, soldiers 3, bank 447, harvested 0, rendered 0, shots 815, killed 11807, took 0%, crystals left 0.982; squad at 126.7,152.6
+  surge: the slime ate 408 food (4.1/s); meter 99.6 of 103, 3 surges
+  squad: touching 0.0 mean, 0 most; health 29 mean
+  surge 4 starts at t 100.7 s (the slime has eaten 411 food)
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.129 ms a frame
+  t 101 s: mould 10096, soldiers 2, bank 447, harvested 0, rendered 0, shots 820, killed 11913, took 0%, crystals left 0.981; squad at 125.4,152.1
+  surge: the slime ate 413 food (4.1/s); meter 1.6 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 42 mean
+  CPU: ground field 2.29 ms (once a game second), model and HUD 0.144 ms a frame
+  t 102 s: mould 10196, soldiers 2, bank 447, harvested 0, rendered 0, shots 824, killed 11967, took 0%, crystals left 0.981; squad at 124.8,154.9
+  surge: the slime ate 418 food (4.1/s); meter 6.5 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 39 mean
+  CPU: ground field 1.29 ms (once a game second), model and HUD 0.093 ms a frame
+  t 103 s: mould 10341, soldiers 2, bank 447, harvested 0, rendered 0, shots 828, killed 12079, took 0%, crystals left 0.981; squad at 124.8,154.9
+  surge: the slime ate 423 food (4.1/s); meter 11.3 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 33 mean
+  CPU: ground field 2.09 ms (once a game second), model and HUD 0.238 ms a frame
+  t 104 s: mould 10364, soldiers 2, bank 447, harvested 0, rendered 0, shots 830, killed 12138, took 0%, crystals left 0.981; squad at 124.8,154.9
+  surge: the slime ate 427 food (4.1/s); meter 16.2 of 103, 4 surges
+  squad: touching 2.5 mean, 5 most; health 27 mean
+  CPU: ground field 1.00 ms (once a game second), model and HUD 0.080 ms a frame
+  t 105 s: mould 10439, soldiers 2, bank 447, harvested 0, rendered 0, shots 834, killed 12187, took 0%, crystals left 0.981; squad at 124.8,154.9
+  surge: the slime ate 432 food (4.1/s); meter 21.3 of 103, 4 surges
+  squad: touching 3.5 mean, 7 most; health 24 mean
+  CPU: ground field 3.44 ms (once a game second), model and HUD 0.179 ms a frame
+  t 106 s: mould 10482, soldiers 1, bank 447, harvested 0, rendered 0, shots 836, killed 12245, took 0%, crystals left 0.980; squad at 126.8,153.2
+  surge: the slime ate 438 food (4.1/s); meter 26.4 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 48 mean
+  CPU: ground field 6.30 ms (once a game second), model and HUD 0.320 ms a frame
+  t 107 s: mould 10527, soldiers 1, bank 447, harvested 0, rendered 0, shots 838, killed 12302, took 0%, crystals left 0.980; squad at 126.8,153.2
+  surge: the slime ate 443 food (4.1/s); meter 31.7 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 48 mean
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.136 ms a frame
+  t 108 s: mould 10558, soldiers 1, bank 447, harvested 0, rendered 0, shots 840, killed 12359, took 0%, crystals left 0.980; squad at 126.8,153.2
+  surge: the slime ate 448 food (4.1/s); meter 37.0 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 47 mean
+  CPU: ground field 1.93 ms (once a game second), model and HUD 0.132 ms a frame
+  t 109 s: mould 10596, soldiers 1, bank 447, harvested 0, rendered 0, shots 842, killed 12419, took 0%, crystals left 0.980; squad at 126.8,153.2
+  surge: the slime ate 454 food (4.2/s); meter 42.3 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 47 mean
+  CPU: ground field 2.22 ms (once a game second), model and HUD 1.122 ms a frame
+  t 110 s: mould 10629, soldiers 1, bank 447, harvested 0, rendered 0, shots 844, killed 12477, took 0%, crystals left 0.979; squad at 126.8,153.2
+  surge: the slime ate 459 food (4.2/s); meter 47.7 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 47 mean
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.128 ms a frame
+  t 111 s: mould 10658, soldiers 1, bank 447, harvested 0, rendered 0, shots 846, killed 12519, took 0%, crystals left 0.979; squad at 126.8,153.2
+  surge: the slime ate 464 food (4.2/s); meter 53.1 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 47 mean
+  CPU: ground field 12.65 ms (once a game second), model and HUD 0.101 ms a frame
+  t 112 s: mould 10697, soldiers 1, bank 447, harvested 0, rendered 0, shots 847, killed 12546, took 0%, crystals left 0.979; squad at 126.8,153.2
+  surge: the slime ate 470 food (4.2/s); meter 58.5 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 47 mean
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.145 ms a frame
+  t 113 s: mould 10743, soldiers 1, bank 447, harvested 0, rendered 0, shots 849, killed 12574, took 0%, crystals left 0.979; squad at 126.8,153.2
+  surge: the slime ate 475 food (4.2/s); meter 63.9 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 3.21 ms (once a game second), model and HUD 0.096 ms a frame
+  t 114 s: mould 10812, soldiers 1, bank 447, harvested 0, rendered 0, shots 851, killed 12604, took 0%, crystals left 0.978; squad at 126.8,153.2
+  surge: the slime ate 481 food (4.2/s); meter 69.3 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 5.54 ms (once a game second), model and HUD 0.258 ms a frame
+  t 115 s: mould 10818, soldiers 1, bank 447, harvested 0, rendered 0, shots 853, killed 12652, took 0%, crystals left 0.978; squad at 126.8,153.2
+  surge: the slime ate 486 food (4.2/s); meter 74.8 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 1.86 ms (once a game second), model and HUD 0.392 ms a frame
+  t 116 s: mould 10878, soldiers 1, bank 447, harvested 0, rendered 0, shots 855, killed 12679, took 0%, crystals left 0.978; squad at 126.8,153.2
+  surge: the slime ate 491 food (4.2/s); meter 80.2 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 2.24 ms (once a game second), model and HUD 1.123 ms a frame
+  t 117 s: mould 10955, soldiers 1, bank 447, harvested 0, rendered 0, shots 857, killed 12691, took 0%, crystals left 0.978; squad at 126.8,153.2
+  surge: the slime ate 497 food (4.2/s); meter 85.6 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 1.33 ms (once a game second), model and HUD 0.090 ms a frame
+  t 118 s: mould 11020, soldiers 1, bank 447, harvested 0, rendered 0, shots 859, killed 12708, took 0%, crystals left 0.977; squad at 126.8,153.2
+  surge: the slime ate 502 food (4.3/s); meter 91.0 of 103, 4 surges
+  squad: touching 1.0 mean, 1 most; health 46 mean
+  CPU: ground field 8.09 ms (once a game second), model and HUD 0.200 ms a frame
+  t 119 s: mould 11113, soldiers 1, bank 447, harvested 0, rendered 0, shots 861, killed 12714, took 0%, crystals left 0.977; squad at 126.8,153.2
+  surge: the slime ate 508 food (4.3/s); meter 96.4 of 103, 4 surges
+  squad: touching 0.0 mean, 0 most; health 46 mean
+  CPU: ground field 1.49 ms (once a game second), model and HUD 0.147 ms a frame
+  t 120 s: mould 11171, soldiers 1, bank 447, harvested 0, rendered 0, shots 862, killed 12767, took 0%, crystals left 0.977; squad at 126.8,153.2
+  surge: the slime ate 513 food (4.3/s); meter 101.8 of 103, 4 surges
+  squad: touching 2.0 mean, 2 most; health 45 mean
+  surge 5 starts at t 120.2 s (the slime has eaten 514 food)
+  CPU: ground field 2.14 ms (once a game second), model and HUD 0.146 ms a frame
+  t 121 s: mould 11312, soldiers 1, bank 447, harvested 0, rendered 0, shots 864, killed 12770, took 0%, crystals left 0.977; squad at 126.8,153.2
+  surge: the slime ate 518 food (4.3/s); meter 4.3 of 103, 5 surges
+  squad: touching 2.0 mean, 2 most; health 43 mean
+  CPU: ground field 1.31 ms (once a game second), model and HUD 0.093 ms a frame
+  t 122 s: mould 11498, soldiers 1, bank 447, harvested 0, rendered 0, shots 866, killed 12792, took 0%, crystals left 0.977; squad at 126.8,153.2
+  surge: the slime ate 524 food (4.3/s); meter 9.7 of 103, 5 surges
+  squad: touching 6.0 mean, 6 most; health 40 mean
+  CPU: ground field 1.79 ms (once a game second), model and HUD 0.547 ms a frame
+  t 123 s: mould 11642, soldiers 1, bank 447, harvested 0, rendered 0, shots 868, killed 12927, took 0%, crystals left 0.976; squad at 126.8,153.2
+  surge: the slime ate 529 food (4.3/s); meter 15.1 of 103, 5 surges
+  squad: touching 1.0 mean, 1 most; health 30 mean
+  CPU: ground field 10.08 ms (once a game second), model and HUD 0.142 ms a frame
+  t 124 s: mould 11664, soldiers 1, bank 447, harvested 0, rendered 0, shots 870, killed 12946, took 0%, crystals left 0.976; squad at 126.8,153.2
+  surge: the slime ate 535 food (4.3/s); meter 20.5 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 30 mean
+  CPU: ground field 1.50 ms (once a game second), model and HUD 0.138 ms a frame
+  t 125 s: mould 11695, soldiers 1, bank 447, harvested 0, rendered 0, shots 872, killed 12969, took 0%, crystals left 0.976; squad at 126.8,153.2
+  surge: the slime ate 540 food (4.3/s); meter 25.9 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 30 mean
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.075 ms a frame
+  t 126 s: mould 11689, soldiers 1, bank 447, harvested 0, rendered 0, shots 874, killed 13062, took 0%, crystals left 0.976; squad at 126.8,153.2
+  surge: the slime ate 545 food (4.3/s); meter 31.3 of 103, 5 surges
+  squad: touching 1.0 mean, 1 most; health 29 mean
+  CPU: ground field 2.08 ms (once a game second), model and HUD 0.537 ms a frame
+  t 127 s: mould 11708, soldiers 1, bank 447, harvested 0, rendered 0, shots 876, killed 13119, took 0%, crystals left 0.975; squad at 126.8,153.2
+  surge: the slime ate 551 food (4.3/s); meter 36.7 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 2.20 ms (once a game second), model and HUD 0.135 ms a frame
+  t 128 s: mould 11775, soldiers 1, bank 447, harvested 0, rendered 0, shots 877, killed 13137, took 0%, crystals left 0.975; squad at 126.8,153.2
+  surge: the slime ate 556 food (4.3/s); meter 42.1 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 9.79 ms (once a game second), model and HUD 0.108 ms a frame
+  t 129 s: mould 11848, soldiers 1, bank 447, harvested 0, rendered 0, shots 879, killed 13156, took 0%, crystals left 0.975; squad at 126.8,153.2
+  surge: the slime ate 562 food (4.4/s); meter 47.5 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 2.19 ms (once a game second), model and HUD 0.740 ms a frame
+  t 130 s: mould 11920, soldiers 1, bank 447, harvested 0, rendered 0, shots 881, killed 13203, took 0%, crystals left 0.975; squad at 126.8,153.2
+  surge: the slime ate 567 food (4.4/s); meter 52.9 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 28 mean
+  CPU: ground field 1.61 ms (once a game second), model and HUD 0.111 ms a frame
+  t 131 s: mould 11982, soldiers 1, bank 447, harvested 0, rendered 0, shots 883, killed 13231, took 0%, crystals left 0.974; squad at 126.8,153.2
+  surge: the slime ate 572 food (4.4/s); meter 58.3 of 103, 5 surges
+  squad: touching 1.0 mean, 1 most; health 28 mean
+  CPU: ground field 1.68 ms (once a game second), model and HUD 0.515 ms a frame
+  t 132 s: mould 12043, soldiers 1, bank 447, harvested 0, rendered 0, shots 885, killed 13238, took 0%, crystals left 0.974; squad at 126.8,153.2
+  surge: the slime ate 578 food (4.4/s); meter 63.8 of 103, 5 surges
+  squad: touching 1.0 mean, 1 most; health 27 mean
+  CPU: ground field 8.75 ms (once a game second), model and HUD 0.112 ms a frame
+  t 133 s: mould 12132, soldiers 1, bank 447, harvested 0, rendered 0, shots 887, killed 13262, took 0%, crystals left 0.974; squad at 126.8,153.2
+  surge: the slime ate 583 food (4.4/s); meter 69.2 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.125 ms a frame
+  t 134 s: mould 12195, soldiers 1, bank 447, harvested 0, rendered 0, shots 889, killed 13281, took 0%, crystals left 0.974; squad at 126.8,153.2
+  surge: the slime ate 589 food (4.4/s); meter 74.6 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  CPU: ground field 2.92 ms (once a game second), model and HUD 0.180 ms a frame
+  t 135 s: mould 12250, soldiers 1, bank 447, harvested 0, rendered 0, shots 891, killed 13333, took 0%, crystals left 0.973; squad at 126.8,153.2
+  surge: the slime ate 594 food (4.4/s); meter 80.0 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 27 mean
+  CPU: ground field 1.73 ms (once a game second), model and HUD 0.129 ms a frame
+  t 136 s: mould 12334, soldiers 1, bank 447, harvested 0, rendered 0, shots 892, killed 13349, took 0%, crystals left 0.973; squad at 126.8,153.2
+  surge: the slime ate 599 food (4.4/s); meter 85.4 of 103, 5 surges
+  squad: touching 1.0 mean, 1 most; health 26 mean
+  CPU: ground field 10.40 ms (once a game second), model and HUD 0.139 ms a frame
+  t 137 s: mould 12431, soldiers 1, bank 447, harvested 0, rendered 0, shots 894, killed 13351, took 0%, crystals left 0.973; squad at 126.8,153.2
+  surge: the slime ate 605 food (4.4/s); meter 90.8 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 25 mean
+  CPU: ground field 2.57 ms (once a game second), model and HUD 0.352 ms a frame
+  t 138 s: mould 12506, soldiers 1, bank 447, harvested 0, rendered 0, shots 896, killed 13452, took 0%, crystals left 0.973; squad at 126.8,153.2
+  surge: the slime ate 610 food (4.4/s); meter 96.2 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 25 mean
+  CPU: ground field 1.18 ms (once a game second), model and HUD 0.139 ms a frame
+  t 139 s: mould 12548, soldiers 1, bank 447, harvested 0, rendered 0, shots 898, killed 13471, took 0%, crystals left 0.972; squad at 126.8,153.2
+  surge: the slime ate 616 food (4.4/s); meter 101.6 of 103, 5 surges
+  squad: touching 0.0 mean, 0 most; health 25 mean
+  surge 6 starts at t 139.2 s (the slime has eaten 617 food)
+  CPU: ground field 2.07 ms (once a game second), model and HUD 0.753 ms a frame
+  t 140 s: mould 12664, soldiers 1, bank 447, harvested 0, rendered 0, shots 900, killed 13496, took 0%, crystals left 0.972; squad at 126.8,153.2
+  surge: the slime ate 621 food (4.4/s); meter 4.3 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 25 mean
+  CPU: ground field 10.50 ms (once a game second), model and HUD 0.140 ms a frame
+  t 141 s: mould 12839, soldiers 1, bank 447, harvested 0, rendered 0, shots 902, killed 13561, took 0%, crystals left 0.972; squad at 126.8,153.2
+  surge: the slime ate 626 food (4.4/s); meter 9.7 of 103, 6 surges
+  squad: touching 9.0 mean, 9 most; health 23 mean
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.134 ms a frame
+  t 142 s: mould 13025, soldiers 1, bank 447, harvested 0, rendered 0, shots 904, killed 13693, took 0%, crystals left 0.972; squad at 126.8,153.2
+  surge: the slime ate 632 food (4.4/s); meter 15.1 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 7 mean
+  CPU: ground field 6.22 ms (once a game second), model and HUD 0.149 ms a frame
+  t 143 s: mould 13023, soldiers 1, bank 447, harvested 0, rendered 0, shots 906, killed 13696, took 0%, crystals left 0.971; squad at 126.8,153.2
+  surge: the slime ate 637 food (4.5/s); meter 20.5 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 6 mean
+  CPU: ground field 18.36 ms (once a game second), model and HUD 0.665 ms a frame
+  t 144 s: mould 13076, soldiers 1, bank 447, harvested 0, rendered 0, shots 907, killed 13726, took 0%, crystals left 0.971; squad at 126.8,153.2
+  surge: the slime ate 643 food (4.5/s); meter 25.9 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 6 mean
+  CPU: ground field 1.94 ms (once a game second), model and HUD 0.465 ms a frame
+  t 145 s: mould 13085, soldiers 1, bank 447, harvested 0, rendered 0, shots 909, killed 13819, took 0%, crystals left 0.971; squad at 126.8,153.2
+  surge: the slime ate 648 food (4.5/s); meter 31.3 of 103, 6 surges
+  squad: touching 2.0 mean, 2 most; health 6 mean
+  CPU: ground field 1.27 ms (once a game second), model and HUD 1.095 ms a frame
+  t 146 s: mould 13082, soldiers 1, bank 447, harvested 0, rendered 0, shots 911, killed 13847, took 0%, crystals left 0.971; squad at 126.8,153.2
+  surge: the slime ate 653 food (4.5/s); meter 36.7 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 5 mean
+  CPU: ground field 1.98 ms (once a game second), model and HUD 0.143 ms a frame
+  t 147 s: mould 13151, soldiers 1, bank 447, harvested 0, rendered 0, shots 913, killed 13863, took 0%, crystals left 0.970; squad at 126.8,153.2
+  surge: the slime ate 659 food (4.5/s); meter 42.1 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 4 mean
+  CPU: ground field 1.54 ms (once a game second), model and HUD 0.108 ms a frame
+  t 148 s: mould 13217, soldiers 1, bank 447, harvested 0, rendered 0, shots 915, killed 13872, took 0%, crystals left 0.970; squad at 126.8,153.2
+  surge: the slime ate 664 food (4.5/s); meter 47.5 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 4 mean
+  CPU: ground field 2.28 ms (once a game second), model and HUD 0.136 ms a frame
+  t 149 s: mould 13276, soldiers 1, bank 447, harvested 0, rendered 0, shots 917, killed 13887, took 0%, crystals left 0.970; squad at 126.8,153.2
+  surge: the slime ate 670 food (4.5/s); meter 53.0 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 4 mean
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.090 ms a frame
+  t 150 s: mould 13346, soldiers 1, bank 447, harvested 0, rendered 0, shots 919, killed 13936, took 0%, crystals left 0.970; squad at 126.8,153.2
+  surge: the slime ate 675 food (4.5/s); meter 58.4 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 4 mean
+  CPU: ground field 1.85 ms (once a game second), model and HUD 0.131 ms a frame
+  t 151 s: mould 13385, soldiers 1, bank 447, harvested 0, rendered 0, shots 921, killed 13958, took 0%, crystals left 0.969; squad at 126.8,153.2
+  surge: the slime ate 681 food (4.5/s); meter 63.8 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 3 mean
+  CPU: ground field 1.84 ms (once a game second), model and HUD 0.484 ms a frame
+  t 152 s: mould 13460, soldiers 1, bank 447, harvested 0, rendered 0, shots 922, killed 13973, took 0%, crystals left 0.969; squad at 126.8,153.2
+  surge: the slime ate 686 food (4.5/s); meter 69.2 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 3 mean
+  CPU: ground field 2.08 ms (once a game second), model and HUD 0.130 ms a frame
+  t 153 s: mould 13527, soldiers 1, bank 447, harvested 0, rendered 0, shots 924, killed 14093, took 0%, crystals left 0.969; squad at 126.8,153.2
+  surge: the slime ate 691 food (4.5/s); meter 74.6 of 103, 6 surges
+  squad: touching 1.0 mean, 1 most; health 3 mean
+  CPU: ground field 4.90 ms (once a game second), model and HUD 0.444 ms a frame
+  t 154 s: mould 13546, soldiers 1, bank 447, harvested 0, rendered 0, shots 926, killed 14110, took 0%, crystals left 0.969; squad at 126.8,153.2
+  surge: the slime ate 697 food (4.5/s); meter 80.0 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 3 mean
+  CPU: ground field 1.75 ms (once a game second), model and HUD 0.139 ms a frame
+  t 155 s: mould 13575, soldiers 1, bank 447, harvested 0, rendered 0, shots 928, killed 14157, took 0%, crystals left 0.969; squad at 126.8,153.2
+  surge: the slime ate 702 food (4.5/s); meter 85.4 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 3 mean
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.106 ms a frame
+  t 156 s: mould 13603, soldiers 1, bank 447, harvested 0, rendered 0, shots 930, killed 14301, took 0%, crystals left 0.968; squad at 126.8,153.2
+  surge: the slime ate 708 food (4.5/s); meter 90.8 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 1 mean
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.092 ms a frame
+  t 157 s: mould 13670, soldiers 1, bank 447, harvested 0, rendered 0, shots 932, killed 14302, took 0%, crystals left 0.968; squad at 126.8,153.2
+  surge: the slime ate 713 food (4.5/s); meter 96.1 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 1 mean
+  CPU: ground field 1.32 ms (once a game second), model and HUD 0.102 ms a frame
+  t 158 s: mould 13735, soldiers 1, bank 447, harvested 0, rendered 0, shots 934, killed 14330, took 0%, crystals left 0.968; squad at 126.8,153.2
+  surge: the slime ate 718 food (4.5/s); meter 101.5 of 103, 6 surges
+  squad: touching 0.0 mean, 0 most; health 1 mean
+  surge 7 starts at t 158.3 s (the slime has eaten 720 food)
+  CPU: ground field 2.07 ms (once a game second), model and HUD 0.133 ms a frame
+  t 159 s: mould 13838, soldiers 1, bank 447, harvested 0, rendered 0, shots 936, killed 14421, took 0%, crystals left 0.968; squad at 126.8,153.2
+  surge: the slime ate 724 food (4.6/s); meter 3.9 of 103, 7 surges
+  squad: touching 0.0 mean, 0 most; health 1 mean
+  CPU: ground field 2.77 ms (once a game second), model and HUD 0.361 ms a frame
+  t 160 s: mould 14018, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.967
+  surge: the slime ate 729 food (4.6/s); meter 9.3 of 103, 7 surges
+  CPU: ground field 1.77 ms (once a game second), model and HUD 0.138 ms a frame
+  t 161 s: mould 14097, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.967
+  surge: the slime ate 734 food (4.6/s); meter 14.7 of 103, 7 surges
+  CPU: ground field 1.44 ms (once a game second), model and HUD 0.137 ms a frame
+  t 162 s: mould 14163, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.967
+  surge: the slime ate 740 food (4.6/s); meter 20.1 of 103, 7 surges
+  CPU: ground field 10.14 ms (once a game second), model and HUD 0.168 ms a frame
+  t 163 s: mould 14231, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.967
+  surge: the slime ate 745 food (4.6/s); meter 25.5 of 103, 7 surges
+  CPU: ground field 2.08 ms (once a game second), model and HUD 0.547 ms a frame
+  t 164 s: mould 14284, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.966
+  surge: the slime ate 751 food (4.6/s); meter 30.9 of 103, 7 surges
+  CPU: ground field 2.16 ms (once a game second), model and HUD 0.333 ms a frame
+  t 165 s: mould 14349, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.966
+  surge: the slime ate 756 food (4.6/s); meter 36.3 of 103, 7 surges
+  CPU: ground field 2.27 ms (once a game second), model and HUD 0.349 ms a frame
+  t 166 s: mould 14405, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.966
+  surge: the slime ate 761 food (4.6/s); meter 41.8 of 103, 7 surges
+  CPU: ground field 8.06 ms (once a game second), model and HUD 0.129 ms a frame
+  t 167 s: mould 14476, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.966
+  surge: the slime ate 767 food (4.6/s); meter 47.2 of 103, 7 surges
+  CPU: ground field 1.43 ms (once a game second), model and HUD 0.109 ms a frame
+  t 168 s: mould 14548, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.965
+  surge: the slime ate 772 food (4.6/s); meter 52.6 of 103, 7 surges
+  CPU: ground field 6.03 ms (once a game second), model and HUD 0.356 ms a frame
+  t 169 s: mould 14614, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.965
+  surge: the slime ate 778 food (4.6/s); meter 58.0 of 103, 7 surges
+  CPU: ground field 1.50 ms (once a game second), model and HUD 0.159 ms a frame
+  t 170 s: mould 14683, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.965
+  surge: the slime ate 783 food (4.6/s); meter 63.4 of 103, 7 surges
+  CPU: ground field 14.32 ms (once a game second), model and HUD 0.625 ms a frame
+  t 171 s: mould 14750, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.965
+  surge: the slime ate 789 food (4.6/s); meter 68.8 of 103, 7 surges
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.753 ms a frame
+  t 172 s: mould 14814, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.964
+  surge: the slime ate 794 food (4.6/s); meter 74.2 of 103, 7 surges
+  CPU: ground field 2.12 ms (once a game second), model and HUD 0.546 ms a frame
+  t 173 s: mould 14878, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.964
+  surge: the slime ate 799 food (4.6/s); meter 79.6 of 103, 7 surges
+  CPU: ground field 14.10 ms (once a game second), model and HUD 0.540 ms a frame
+  t 174 s: mould 14957, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.964
+  surge: the slime ate 805 food (4.6/s); meter 85.0 of 103, 7 surges
+  CPU: ground field 2.25 ms (once a game second), model and HUD 0.129 ms a frame
+  t 175 s: mould 15018, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.964
+  surge: the slime ate 810 food (4.6/s); meter 90.4 of 103, 7 surges
+  CPU: ground field 2.31 ms (once a game second), model and HUD 0.124 ms a frame
+  t 176 s: mould 15099, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.963
+  surge: the slime ate 816 food (4.6/s); meter 95.8 of 103, 7 surges
+  CPU: ground field 2.06 ms (once a game second), model and HUD 0.083 ms a frame
+  t 177 s: mould 15169, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.963
+  surge: the slime ate 821 food (4.6/s); meter 101.2 of 103, 7 surges
+  surge 8 starts at t 177.3 s (the slime has eaten 822 food)
+  CPU: ground field 10.38 ms (once a game second), model and HUD 0.536 ms a frame
+  t 178 s: mould 15231, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.963
+  surge: the slime ate 826 food (4.6/s); meter 4.0 of 103, 8 surges
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.125 ms a frame
+  t 179 s: mould 15308, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.963
+  surge: the slime ate 832 food (4.6/s); meter 9.4 of 103, 8 surges
+  CPU: ground field 2.21 ms (once a game second), model and HUD 0.124 ms a frame
+  t 180 s: mould 15372, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.962
+  surge: the slime ate 837 food (4.7/s); meter 14.8 of 103, 8 surges
+  CPU: ground field 2.31 ms (once a game second), model and HUD 0.385 ms a frame
+  t 181 s: mould 15446, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.962
+  surge: the slime ate 843 food (4.7/s); meter 20.2 of 103, 8 surges
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.346 ms a frame
+  t 182 s: mould 15504, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.962
+  surge: the slime ate 848 food (4.7/s); meter 25.6 of 103, 8 surges
+  CPU: ground field 1.37 ms (once a game second), model and HUD 0.086 ms a frame
+  t 183 s: mould 15589, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.962
+  surge: the slime ate 853 food (4.7/s); meter 31.0 of 103, 8 surges
+  CPU: ground field 7.38 ms (once a game second), model and HUD 0.128 ms a frame
+  t 184 s: mould 15661, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.962
+  surge: the slime ate 859 food (4.7/s); meter 36.4 of 103, 8 surges
+  CPU: ground field 2.08 ms (once a game second), model and HUD 0.142 ms a frame
+  t 185 s: mould 15735, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.961
+  surge: the slime ate 864 food (4.7/s); meter 41.8 of 103, 8 surges
+  CPU: ground field 6.38 ms (once a game second), model and HUD 0.221 ms a frame
+  t 186 s: mould 15799, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.961
+  surge: the slime ate 870 food (4.7/s); meter 47.2 of 103, 8 surges
+  CPU: ground field 1.11 ms (once a game second), model and HUD 0.087 ms a frame
+  t 187 s: mould 15877, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.961
+  surge: the slime ate 875 food (4.7/s); meter 52.6 of 103, 8 surges
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.124 ms a frame
+  t 188 s: mould 15953, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.961
+  surge: the slime ate 880 food (4.7/s); meter 58.0 of 103, 8 surges
+  CPU: ground field 1.28 ms (once a game second), model and HUD 0.301 ms a frame
+  t 189 s: mould 16015, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.960
+  surge: the slime ate 886 food (4.7/s); meter 63.4 of 103, 8 surges
+  CPU: ground field 7.75 ms (once a game second), model and HUD 0.192 ms a frame
+  t 190 s: mould 16084, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.960
+  surge: the slime ate 891 food (4.7/s); meter 68.8 of 103, 8 surges
+  CPU: ground field 1.91 ms (once a game second), model and HUD 0.549 ms a frame
+  t 191 s: mould 16165, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.960
+  surge: the slime ate 897 food (4.7/s); meter 74.2 of 103, 8 surges
+  CPU: ground field 2.60 ms (once a game second), model and HUD 0.165 ms a frame
+  t 192 s: mould 16222, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.960
+  surge: the slime ate 902 food (4.7/s); meter 79.6 of 103, 8 surges
+  CPU: ground field 13.32 ms (once a game second), model and HUD 0.089 ms a frame
+  t 193 s: mould 16302, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.959
+  surge: the slime ate 907 food (4.7/s); meter 85.0 of 103, 8 surges
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.083 ms a frame
+  t 194 s: mould 16375, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.959
+  surge: the slime ate 913 food (4.7/s); meter 90.4 of 103, 8 surges
+  CPU: ground field 6.33 ms (once a game second), model and HUD 0.117 ms a frame
+  t 195 s: mould 16440, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.959
+  surge: the slime ate 918 food (4.7/s); meter 95.8 of 103, 8 surges
+  CPU: ground field 6.12 ms (once a game second), model and HUD 0.323 ms a frame
+  t 196 s: mould 16512, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.959
+  surge: the slime ate 924 food (4.7/s); meter 101.2 of 103, 8 surges
+  surge 9 starts at t 196.3 s (the slime has eaten 925 food)
+  CPU: ground field 1.60 ms (once a game second), model and HUD 0.309 ms a frame
+  t 197 s: mould 16586, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.958
+  surge: the slime ate 929 food (4.7/s); meter 4.0 of 103, 9 surges
+  CPU: ground field 2.13 ms (once a game second), model and HUD 0.558 ms a frame
+  t 198 s: mould 16656, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.958
+  surge: the slime ate 934 food (4.7/s); meter 9.4 of 103, 9 surges
+  CPU: ground field 2.21 ms (once a game second), model and HUD 1.289 ms a frame
+  t 199 s: mould 16719, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.958
+  surge: the slime ate 940 food (4.7/s); meter 14.8 of 103, 9 surges
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.298 ms a frame
+  t 200 s: mould 16791, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.958
+  surge: the slime ate 945 food (4.7/s); meter 20.2 of 103, 9 surges
+  CPU: ground field 1.35 ms (once a game second), model and HUD 0.088 ms a frame
+  t 201 s: mould 16857, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.957
+  surge: the slime ate 951 food (4.7/s); meter 25.6 of 103, 9 surges
+  CPU: ground field 2.24 ms (once a game second), model and HUD 0.128 ms a frame
+  t 202 s: mould 16923, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.957
+  surge: the slime ate 956 food (4.7/s); meter 31.0 of 103, 9 surges
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.089 ms a frame
+  t 203 s: mould 16997, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.957
+  surge: the slime ate 961 food (4.7/s); meter 36.4 of 103, 9 surges
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.098 ms a frame
+  t 204 s: mould 17062, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.957
+  surge: the slime ate 967 food (4.7/s); meter 41.8 of 103, 9 surges
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.094 ms a frame
+  t 205 s: mould 17132, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.956
+  surge: the slime ate 972 food (4.7/s); meter 47.2 of 103, 9 surges
+  CPU: ground field 2.40 ms (once a game second), model and HUD 0.128 ms a frame
+  t 206 s: mould 17201, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.956
+  surge: the slime ate 978 food (4.7/s); meter 52.6 of 103, 9 surges
+  CPU: ground field 3.18 ms (once a game second), model and HUD 0.129 ms a frame
+  t 207 s: mould 17272, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.956
+  surge: the slime ate 983 food (4.7/s); meter 58.0 of 103, 9 surges
+  CPU: ground field 1.42 ms (once a game second), model and HUD 0.087 ms a frame
+  t 208 s: mould 17344, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.956
+  surge: the slime ate 988 food (4.8/s); meter 63.4 of 103, 9 surges
+  CPU: ground field 2.30 ms (once a game second), model and HUD 0.139 ms a frame
+  t 209 s: mould 17408, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.955
+  surge: the slime ate 994 food (4.8/s); meter 68.8 of 103, 9 surges
+  CPU: ground field 1.24 ms (once a game second), model and HUD 0.494 ms a frame
+  t 210 s: mould 17482, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.955
+  surge: the slime ate 999 food (4.8/s); meter 74.2 of 103, 9 surges
+  CPU: ground field 1.39 ms (once a game second), model and HUD 0.117 ms a frame
+  t 211 s: mould 17553, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.955
+  surge: the slime ate 1005 food (4.8/s); meter 79.6 of 103, 9 surges
+  CPU: ground field 2.24 ms (once a game second), model and HUD 0.134 ms a frame
+  t 212 s: mould 17624, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.955
+  surge: the slime ate 1010 food (4.8/s); meter 85.0 of 103, 9 surges
+  CPU: ground field 2.22 ms (once a game second), model and HUD 0.132 ms a frame
+  t 213 s: mould 17692, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.954
+  surge: the slime ate 1015 food (4.8/s); meter 90.4 of 103, 9 surges
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.490 ms a frame
+  t 214 s: mould 17759, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.954
+  surge: the slime ate 1021 food (4.8/s); meter 95.8 of 103, 9 surges
+  CPU: ground field 1.22 ms (once a game second), model and HUD 0.114 ms a frame
+  t 215 s: mould 17825, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.954
+  surge: the slime ate 1026 food (4.8/s); meter 101.2 of 103, 9 surges
+  surge 10 starts at t 215.3 s (the slime has eaten 1028 food)
+  CPU: ground field 2.11 ms (once a game second), model and HUD 0.135 ms a frame
+  t 216 s: mould 17896, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.954
+  surge: the slime ate 1032 food (4.8/s); meter 4.0 of 103, 10 surges
+  CPU: ground field 1.78 ms (once a game second), model and HUD 0.341 ms a frame
+  t 217 s: mould 17961, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.954
+  surge: the slime ate 1037 food (4.8/s); meter 9.4 of 103, 10 surges
+  CPU: ground field 0.99 ms (once a game second), model and HUD 0.155 ms a frame
+  t 218 s: mould 18030, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.953
+  surge: the slime ate 1043 food (4.8/s); meter 14.8 of 103, 10 surges
+  CPU: ground field 2.04 ms (once a game second), model and HUD 0.139 ms a frame
+  t 219 s: mould 18097, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.953
+  surge: the slime ate 1048 food (4.8/s); meter 20.2 of 103, 10 surges
+  CPU: ground field 1.21 ms (once a game second), model and HUD 0.293 ms a frame
+  t 220 s: mould 18163, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.953
+  surge: the slime ate 1053 food (4.8/s); meter 25.6 of 103, 10 surges
+  CPU: ground field 1.27 ms (once a game second), model and HUD 0.094 ms a frame
+  t 221 s: mould 18245, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.953
+  surge: the slime ate 1059 food (4.8/s); meter 31.0 of 103, 10 surges
+  CPU: ground field 1.66 ms (once a game second), model and HUD 0.107 ms a frame
+  t 222 s: mould 18310, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.952
+  surge: the slime ate 1064 food (4.8/s); meter 36.4 of 103, 10 surges
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.126 ms a frame
+  t 223 s: mould 18373, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.952
+  surge: the slime ate 1070 food (4.8/s); meter 41.8 of 103, 10 surges
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.161 ms a frame
+  t 224 s: mould 18439, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.952
+  surge: the slime ate 1075 food (4.8/s); meter 47.2 of 103, 10 surges
+  CPU: ground field 1.57 ms (once a game second), model and HUD 0.107 ms a frame
+  t 225 s: mould 18515, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.952
+  surge: the slime ate 1080 food (4.8/s); meter 52.6 of 103, 10 surges
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.105 ms a frame
+  t 226 s: mould 18582, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.951
+  surge: the slime ate 1086 food (4.8/s); meter 58.0 of 103, 10 surges
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.088 ms a frame
+  t 227 s: mould 18641, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.951
+  surge: the slime ate 1091 food (4.8/s); meter 63.4 of 103, 10 surges
+  CPU: ground field 1.04 ms (once a game second), model and HUD 0.111 ms a frame
+  t 228 s: mould 18709, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.951
+  surge: the slime ate 1097 food (4.8/s); meter 68.8 of 103, 10 surges
+  CPU: ground field 2.12 ms (once a game second), model and HUD 0.126 ms a frame
+  t 229 s: mould 18790, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.951
+  surge: the slime ate 1102 food (4.8/s); meter 74.3 of 103, 10 surges
+  CPU: ground field 1.69 ms (once a game second), model and HUD 0.104 ms a frame
+  t 230 s: mould 18849, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.950
+  surge: the slime ate 1107 food (4.8/s); meter 79.7 of 103, 10 surges
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.128 ms a frame
+  t 231 s: mould 18915, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.950
+  surge: the slime ate 1113 food (4.8/s); meter 85.1 of 103, 10 surges
+  CPU: ground field 8.07 ms (once a game second), model and HUD 0.108 ms a frame
+  t 232 s: mould 18982, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.950
+  surge: the slime ate 1118 food (4.8/s); meter 90.5 of 103, 10 surges
+  CPU: ground field 1.26 ms (once a game second), model and HUD 0.089 ms a frame
+  t 233 s: mould 19046, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.950
+  surge: the slime ate 1124 food (4.8/s); meter 95.9 of 103, 10 surges
+  CPU: ground field 1.74 ms (once a game second), model and HUD 0.895 ms a frame
+  t 234 s: mould 19115, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.949
+  surge: the slime ate 1129 food (4.8/s); meter 101.3 of 103, 10 surges
+  surge 11 starts at t 234.3 s (the slime has eaten 1130 food)
+  CPU: ground field 3.53 ms (once a game second), model and HUD 0.160 ms a frame
+  t 235 s: mould 19204, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.949
+  surge: the slime ate 1134 food (4.8/s); meter 4.0 of 103, 11 surges
+  CPU: ground field 1.00 ms (once a game second), model and HUD 0.073 ms a frame
+  t 236 s: mould 19270, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.949
+  surge: the slime ate 1140 food (4.8/s); meter 9.4 of 103, 11 surges
+  CPU: ground field 1.23 ms (once a game second), model and HUD 0.092 ms a frame
+  t 237 s: mould 19344, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.949
+  surge: the slime ate 1145 food (4.8/s); meter 14.8 of 103, 11 surges
+  CPU: ground field 7.94 ms (once a game second), model and HUD 0.383 ms a frame
+  t 238 s: mould 19411, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.948
+  surge: the slime ate 1151 food (4.8/s); meter 20.2 of 103, 11 surges
+  CPU: ground field 1.54 ms (once a game second), model and HUD 0.479 ms a frame
+  t 239 s: mould 19474, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.948
+  surge: the slime ate 1156 food (4.8/s); meter 25.6 of 103, 11 surges
+  CPU: ground field 2.05 ms (once a game second), model and HUD 0.203 ms a frame
+  t 240 s: mould 19553, soldiers 0, bank 447, harvested 0, rendered 0, shots 937, killed 14430, took 0%, crystals left 0.948
+  surge: the slime ate 1162 food (4.8/s); meter 31.1 of 103, 11 surges

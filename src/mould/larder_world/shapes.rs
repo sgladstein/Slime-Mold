@@ -64,7 +64,9 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // bite and upkeep, drawn bronze. Holding every crystal, C's mass is
     // 90,739 at 7:00 and still rising (50,000 without); held to its 4
     // nearest crystals, 30,338 (Reports/thicken-2026-11-15/README.md).
-    // `thicken=0` turns it off.
+    // `thicken=0` turns it off. **Off since 2026-11-16**: the owner,
+    // 04:58Z, "Remove the bronze, keep the specks"; the thickened bronze
+    // is gone from C (and the run), `thicken=K` still sets it for a film.
     // The body surges (`BigParams::surge_every` 900, 2026-11-15). The
     // owner, 11-15 08:30Z: some slimes "just hang at their home crystal
     // ... So their is no rush ... no need to defend", and the enemy needs
@@ -94,7 +96,7 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // on 3 of 5, so no steady change in who wins; the old flee (keep
     // 0.98) failed the census gate in 2026-11-12's rules
     // (`Reports/flinch-2026-11-15/README.md`).
-    const C: [(&str, &str); 8] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("thicken", "2"), ("surge", "1800"), ("flinch", "0.9")];
+    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("surge", "1800"), ("flinch", "0.9")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),

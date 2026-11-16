@@ -478,9 +478,9 @@ pub struct Settings {
     pub condense: u32,
     pub condense_crowd: u32,
     pub condense_r: u8,
-    /// Condensed slime breaks away (`BigParams::roam`, `roam_far`,
-    /// `roam_share`; 11-14): steps between chances to leave, 0 off; needs
-    /// `condense` or `thicken`.
+    /// Slime breaks away (`BigParams::roam`, `roam_far`, `roam_share`;
+    /// 11-14): steps between chances to leave, 0 off; condensed slime with
+    /// `condense`, ordinary slime without it (the specks, 11-16).
     pub roam: u32,
     pub roam_far: f32,
     pub roam_share: f32,
@@ -1900,7 +1900,7 @@ impl Engine {
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
-        self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
+        self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0 || d.p.roam > 0);
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -2080,17 +2080,18 @@ impl Engine {
         assert!(r <= 0xFF, "condense_r fits ccrowd's bits 16-23");
         b.extend(f32_bytes(&[s.fling_deposit]));
         b.extend(u32_bytes(&[condense, s.condense_crowd.min(0xFFFF) | (r << 16) | (thick << 24), stream(seed, DRAW_CONDENSE)]));
-        self.condenses = condense > 0 || thick > 0;
         // The breakaway row (11-14, the condense thread; Params grew from
         // 912 to 928 for it): steps between chances to leave (0 off), how
         // far the crystal must be and how near a landing is, in whole fine
         // cells as the CPU's `roam_pick` counts them, and the share sent.
         assert_eq!(b.len(), ROAM_AT, "Params rows before the breakaway row moved");
         let sc = self.dish.p.scale as f32;
-        // Condensed or thickened slime may break away (11-15: the CPU's
-        // `roam_of`; until then only condensed, and with thickening alone the
-        // CPU marked breakaways the GPU never made).
-        let roam = if condense > 0 || thick > 0 { s.roam.min(crate::mould::big::RIPE) } else { 0 };
+        // Any slime may break away (11-16: ordinary walkers with `condense`
+        // 0, the CPU's `roam_of`; 11-15 condensed or thickened; until then
+        // only condensed, and with thickening alone the CPU marked
+        // breakaways the GPU never made). The dense passes run for it.
+        let roam = if self.grows { s.roam.min(crate::mould::big::RIPE) } else { 0 };
+        self.condenses = condense > 0 || thick > 0 || roam > 0;
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));

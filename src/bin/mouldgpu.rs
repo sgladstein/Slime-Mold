@@ -3644,7 +3644,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 22] = [
+        let dishes: [(&str, Settings, Build); 23] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3727,6 +3727,13 @@ mod tests {
             // condense 0 the GPU sent no `roam` while the CPU still marked
             // breakaways.
             ("thicken roam: thick walkers break away, run and land", Settings { thicken: 2.0, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Ordinary slime breaks away (`roam` alone, 11-16, the owner's
+            // "Remove the bronze, keep the specks"): ripe on crystal or with 4
+            // walkers round it; of the ordinary walkers (below) a quarter
+            // are on their way (an eighth to the crystal they stand on, to
+            // land in the tick, a sixteenth about to give up) and the rest
+            // take their chances on their slots' steps, a fifth a step.
+            ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3823,6 +3830,28 @@ mod tests {
                     }
                 }
             }
+            // Ordinary breakaways (`roam` with no condensing or thickening).
+            let specks = s.roam > 0 && s.condense == 0 && s.thicken <= 0.0;
+            if specks {
+                use slime_mould::mould::big::{ROAM, ROAM_SHIFT};
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the ripening words");
+                let piles = cpu.piles.len().min(64) as u32;
+                for k in 0..cpu.walkers.len() {
+                    if !cpu.lives(k) || cpu.roam_of(k).is_some() {
+                        continue;
+                    }
+                    // A quarter on their way, some to the crystal they stand
+                    // on (they land) and some about to give up (`SPECK_TRIP`);
+                    // the rest take their chances on their slots' steps.
+                    if k % 4 == 0 {
+                        let (x, y, _) = cpu.walkers[k];
+                        let p = cpu.pile_of[y as usize * cpu.w + x as usize] as u32;
+                        let j = if k % 8 == 0 && p > 0 && p <= piles { p - 1 } else { k as u32 % piles };
+                        let trip = if k % 16 == 4 { slime_mould::mould::big::SPECK_TRIP - 1 } else { 7 };
+                        cpu.dense[k] = ROAM | (j << ROAM_SHIFT) | trip;
+                    }
+                }
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3877,10 +3906,18 @@ mod tests {
                 assert!(cpu.thickened > thickened && cpu.absorbed == absorbed, "{name}: walkers thicken and none is absorbed in the tick");
                 assert_eq!(dense_off, 0, "{name}: dense words");
             }
+            if specks {
+                assert!(e.condenses, "{name}: the ripening passes run");
+                let gd = e.dense_of();
+                let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let dense = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+                eprintln!("{name}: {dense} dense (none: no bronze); mass {} of {n}; {dense_off} words off", cpu.mass());
+                assert_eq!((dense, dense_off), (0, 0), "{name}: no walker condenses, and the words agree");
+            }
             if s.roam > 0 {
                 let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
                 let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
-                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
+                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && (cpu.is_dense(k) || specks) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
                 assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
             }
