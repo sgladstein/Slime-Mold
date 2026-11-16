@@ -1417,7 +1417,14 @@ pub struct Engine {
     pub reach: u32,
     /// Dense slime condenses (`Settings::condense` with growth on): its
     /// words sit in `news` from `dense_at` (bytes; `dense_words`).
+    /// `condenses` runs `ripen` (condensing, thickening or breakaway);
+    /// `dense_walkers` the per-cell count of condensed or thick walkers
+    /// (`dclear`, `dcount`), which only condensing and thickening make;
+    /// `ripens` the mass (`massclear`, `masscount`), which only
+    /// condensing's births read.
     pub condenses: bool,
+    pub dense_walkers: bool,
+    pub ripens: bool,
     /// A lump is on (`Settings::lumps`): `lumpclear` and `lumpsum` start
     /// each tick.
     pub lumps_on: bool,
@@ -1740,6 +1747,8 @@ impl Engine {
             withers: false,
             reach: 1,
             condenses: false,
+            dense_walkers: false,
+            ripens: false,
             lumps_on: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
@@ -1919,6 +1928,8 @@ impl Engine {
         self.gas_until = gas_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0 || d.p.roam > 0);
+        self.dense_walkers = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
+        self.ripens = self.grows && d.p.condense > 0;
         self.done = d.steps;
         self.dish = d.clone();
         self.dropped.clear();
@@ -2110,6 +2121,8 @@ impl Engine {
         // breakaways the GPU never made). The dense passes run for it.
         let roam = if self.grows { s.roam.min(crate::mould::big::RIPE) } else { 0 };
         self.condenses = condense > 0 || thick > 0 || roam > 0;
+        self.dense_walkers = condense > 0 || thick > 0;
+        self.ripens = condense > 0;
         let far = (s.roam_far.max(0.0) * sc).floor() as u32;
         let land = (crate::mould::big::ROAM_LAND * sc).floor() as u32;
         b.extend(u32_bytes(&[roam, far, land]));
@@ -2294,8 +2307,10 @@ impl Engine {
                 out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
             // The condensed walkers a cell, which touch as two (`condense`),
-            // and the lumps' members' bite.
-            if self.condenses || self.lumps_on {
+            // and the lumps' members' bite. Only where some can be (11-16:
+            // specks alone make none, and on the core world these passes and
+            // the mass cost 0.36 ms a step).
+            if self.dense_walkers || self.lumps_on {
                 out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
@@ -2377,7 +2392,10 @@ impl Engine {
                 tick.push((RIPEN, n));
             }
             tick.push((LIFE, n));
-            if self.condenses {
+            // The mass, which only condensing's births read (`ripens`):
+            // every living walker adds to one word, so with thickening or
+            // specks alone it was work for nothing (11-16).
+            if self.ripens {
                 tick.extend([(MASSCLEAR, 1), (MASSCOUNT, n)]);
             }
             // A garden's birth caps count each side first (`capcount`).

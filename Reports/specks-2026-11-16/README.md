@@ -100,20 +100,35 @@ The same two games to 5:00, with the run's specks and with `roam=0`:
 
 ## Frame cost
 
-Not timed on the GTX 1070 yet. From the D2 timing
-(`Reports/breakaway-run-2026-11-15/README.md`, *Frame cost*): the dense
-passes already ran on every planet, for shape C's thickening, and still
-do (`Engine::condenses` is on with `roam` alone). Condensing made the
-`ripen` pass count every walker's crowd each step, 0.405 ms on the core
-world at 94,367 walkers against 0.090 ms with thickening alone. Specks
-count a walker's crowd only on its chance step, a 300th of the walkers a
-step, so `ripen` should cost about what thickening alone did. Without
-condensing's absorbing, the body keeps more walkers to sense, breed and
-draw. So the game should cost what the table's arm without condensing
-cost: no change on planet 1, planet 2's step 0.95 ms against main's 0.98,
-and the core world's step 6.28 ms against main's 6.18 (0.1 ms dearer, for
-a third more walkers), the frame unchanged within the runs' spread. A
-1070 timing goes through the PC runner after the merge.
+**On the GTX 1070** (the PC runner, 2026-11-16 08:30Z, main 78ec5faa with
+#381; raw files on branch `claude/project-thread-26drse` at 23089ae0,
+`runner-out/roam-78ec5faa/`). `bench=45 run=1:P mode=squads hand=squads
+screen=1920x1080 passes=60 viewpasses=60`, A the run as it plays (specks)
+and B with `roam=0`, interleaved A B A B; Edge closed and the GPU idle
+before each run. B runs no dense passes at all, so A against B is the
+whole cost of the dense state with specks alone (main before #381 ran
+them too, for thickening). Times in ms, two runs each:
+
+| Planet | Walkers | Frame p50 / p95, A | Frame p50 / p95, B | GPU step, A | GPU step, B | `ripen` |
+|---|---|---|---|---|---|---|
+| 1 | 12,860 | 7.11 / 7.91, 7.15 / 7.94 | 7.09 / 7.80, 7.17 / 7.88 | 0.742, 0.747 | 0.689, 0.695 | 0.028 (3.7%) |
+| 2 | 22,662 | 7.37 / 8.04, 7.43 / 8.11 | 7.30 / 7.94, 7.36 / 7.98 | 0.959, 0.964 | 0.893, 0.897 | 0.034 (3.5%) |
+| 8 | 364,924 | 11.68 / 14.49, 11.68 / 15.27 | 11.38 / 14.01, 11.38 / 14.12 | 6.869, 6.870 | 6.312, 6.311 | 0.198 (2.9%) |
+
+- Planets 1 and 2: the step costs 0.05 and 0.07 ms more, the frame's p50
+  0.0 to 0.07 ms more.
+- The core world: the step costs 0.56 ms more and the frame's p50 0.30 ms;
+  `ripen` is 0.2 ms of it. Most of the rest was two passes that did
+  nothing with specks alone: `masscount` adds every living walker to one
+  word for condensing's birth stop, 364,924 atomic adds a step on one
+  address, and `dclear`/`dcount` clear and count condensed walkers a
+  cell over the whole map. A follow-up runs the mass only with condensing
+  (`Engine::ripens`) and the cell counts only with condensing,
+  thickening (`Engine::dense_walkers`, engine.wgsl's `dense_on`) or a
+  mini-boss lump on (`lumps_on`, whose members' bite the same passes
+  count); the GPU twins pass and the core world is to be timed again.
+- Every core-world run had a frame of about 570 ms, A and B alike: the
+  head start's growth before the clock, as in #370's timing.
 
 ## Tests
 
@@ -150,7 +165,6 @@ crystals the slime holds.
   them: the view could draw a walker on its way from its state (the
   dense word's breakaway bit), which would be the simulation and not a
   painted effect. Not built; it touches the slime look's lines.
-- The 1070 timing.
 - The mini-boss thread (lumps in the dense word's bits 25-27) rebases
   over this or this over it, whichever merges second; specks write a
   walker's word only when it leaves, lands or gives up.
