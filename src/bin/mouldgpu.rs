@@ -2963,8 +2963,10 @@ mod tests {
         let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
         let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         const STEPS: u16 = 12;
-        // (walkers off over the flight, worst tick)
-        let play = |name: &str, s: &Settings, gpu_speed: f32| -> usize {
+        // (walkers off over the flight, worst tick). With `push` (the
+        // shove cards' push, 2026-11-16) every flung walker flies the one
+        // heading for every step.
+        let play = |name: &str, s: &Settings, gpu_speed: f32, push: Option<f32>| -> usize {
             let s = Settings { fling_speed: 1.5, ..s.clone() };
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -3005,9 +3007,9 @@ mod tests {
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
             let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
             e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
-            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
+            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv, push);
             let g = Settings { fling_speed: gpu_speed, ..s.clone() };
-            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
+            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv, push);
             let n = cpu.walkers.len();
             let (life, timer) = e.life_of();
             let marks = e.flung_of();
@@ -3021,7 +3023,13 @@ mod tests {
             eprintln!("{name}: killed {killed}, flung {n_gpu} on the GPU and {n_cpu} on the CPU, timers {timers:?}; {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
             assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
             assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
-            assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
+            match push {
+                None => assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}"),
+                Some(a) => {
+                    assert!(timers.len() == 1 && timers.contains(&STEPS), "{name}: a push flies every one the whole way: {timers:?}");
+                    assert!((0..n).filter(|&j| cpu.flung[j]).all(|j| cpu.walkers[j].2 == a && gpu_w[j].2 == a), "{name}: a push flies every one along its heading");
+                }
+            }
             let kept = slime_mould::mould::big::KEPT;
             if lumped {
                 let gd = e.dense_of();
@@ -3079,10 +3087,11 @@ mod tests {
             ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
         ];
         for (name, s) in &dishes {
-            play(name, s, 1.5);
+            play(name, s, 1.5, None);
         }
+        play("a push, a wall across it", &dishes[3].1, 1.5, Some(1.3));
         // Planted: the GPU's flung fly at 2, not 1.5.
-        let off = play("planted, fling speed 2", &dishes[0].1, 2.0);
+        let off = play("planted, fling speed 2", &dishes[0].1, 2.0, None);
         eprintln!("planted, fling speed 2: worst tick {off} walkers off");
         assert!(off > 50, "the twin catches a fling speed off");
     }
@@ -3686,7 +3695,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 24] = [
+        let dishes: [(&str, Settings, Build); 25] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3773,8 +3782,8 @@ mod tests {
             // breakaway dish, and two lumps formed round living walkers
             // after the breakaways are set (below; some breakaways, some
             // condensed walkers and some with stale news join, so none
-            // breaks away or withers, and members ripen, condense and break
-            // keeping their lump): lump 0 pulled to a far cell on a leash
+            // breaks away or withers, and members do not ripen; condensed
+            // ones break keeping their lump): lump 0 pulled to a far cell on a leash
             // tight enough that some members run back, at 1.5x pace, and
             // passing into cells one walker holds (`LUMP_CROWD`); lump 1 on
             // a leash alone; lump 3 on with no members.
@@ -3783,6 +3792,13 @@ mod tests {
             // lumps of ordinary walkers, where cut-off walkers panic and
             // wither, which members do not.
             ("lump plain: ordinary walkers travel held", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Ordinary slime breaks away (`roam` alone, 11-16, the owner's
+            // "Remove the bronze, keep the specks"): ripe on crystal or with 4
+            // walkers round it; of the ordinary walkers (below) a quarter
+            // are on their way (an eighth to the crystal they stand on, to
+            // land in the tick, a sixteenth about to give up) and the rest
+            // take their chances on their slots' steps, a fifth a step.
+            ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3879,6 +3895,28 @@ mod tests {
                     }
                 }
             }
+            // Ordinary breakaways (`roam` with no condensing or thickening).
+            let specks = s.roam > 0 && s.condense == 0 && s.thicken <= 0.0;
+            if specks {
+                use slime_mould::mould::big::{ROAM, ROAM_SHIFT};
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the ripening words");
+                let piles = cpu.piles.len().min(64) as u32;
+                for k in 0..cpu.walkers.len() {
+                    if !cpu.lives(k) || cpu.roam_of(k).is_some() {
+                        continue;
+                    }
+                    // A quarter on their way, some to the crystal they stand
+                    // on (they land) and some about to give up (`SPECK_TRIP`);
+                    // the rest take their chances on their slots' steps.
+                    if k % 4 == 0 {
+                        let (x, y, _) = cpu.walkers[k];
+                        let p = cpu.pile_of[y as usize * cpu.w + x as usize] as u32;
+                        let j = if k % 8 == 0 && p > 0 && p <= piles { p - 1 } else { k as u32 % piles };
+                        let trip = if k % 16 == 4 { slime_mould::mould::big::SPECK_TRIP - 1 } else { 7 };
+                        cpu.dense[k] = ROAM | (j << ROAM_SHIFT) | trip;
+                    }
+                }
+            }
             // The lumps (`BigParams::lumps`): round the first living walker
             // past the dish's tenth, and round the first 30 fine cells from it.
             let lumped = name.starts_with("lump");
@@ -3962,10 +4000,18 @@ mod tests {
                 assert!(cpu.thickened > thickened && cpu.absorbed == absorbed, "{name}: walkers thicken and none is absorbed in the tick");
                 assert_eq!(dense_off, 0, "{name}: dense words");
             }
+            if specks {
+                assert!(e.condenses, "{name}: the ripening passes run");
+                let gd = e.dense_of();
+                let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let dense = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+                eprintln!("{name}: {dense} dense (none: no bronze); mass {} of {n}; {dense_off} words off", cpu.mass());
+                assert_eq!((dense, dense_off), (0, 0), "{name}: no walker condenses, and the words agree");
+            }
             if s.roam > 0 {
                 let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
                 let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
-                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
+                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && (cpu.is_dense(k) || specks) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
                 assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
             }

@@ -283,6 +283,9 @@ pub struct Game<W: World> {
     pub killed: u32,
     /// Walkers the plants' fire killed (`World::burned`; in `killed` too).
     pub fire_killed: u32,
+    /// Walkers the turrets' shots killed (shots with no soldier, `Shot::by`
+    /// None): the shove cards' kill zone measure (2026-11-16).
+    pub turret_killed: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -494,6 +497,7 @@ impl<W: World> Game<W> {
             shots: 0,
             killed: 0,
             fire_killed: 0,
+            turret_killed: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,

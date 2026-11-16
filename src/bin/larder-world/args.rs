@@ -23,8 +23,9 @@ pub(super) fn run_walkers(factor: f32) -> usize {
 /// slots grown by the level's walker factor, so the slime has room to
 /// grow on every planet (C holds 25,000 walkers in 50,000 slots on today's
 /// map; at 50,000 the core world's 14.4 times the walkers had no room).
-/// Then the planet's own (`run::enemy_keys`, 11-15: the slime surges more
-/// often and harder and thickens sooner deeper); the tier's keys and the
+/// Then the planet's own (`run::enemy_keys`: the slime surges more often
+/// and harder deeper, 11-15, and sends specks off to far crystals most
+/// often early, 11-16); the tier's keys and the
 /// menu's moved options go on after, so they win.
 pub(super) fn run_shape(s: &mut slime_mould::gpu::Settings, factor: f32, depth: u32) -> Result<(), String> {
     let (_, keys) = shape_keys(DEFAULT_SHAPE).expect("the default shape is on the shapes page");

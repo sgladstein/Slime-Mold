@@ -1,0 +1,53 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  CPU: ground field 1.46 ms (once a game second), model and HUD 0.077 ms a frame
+  t 10 s: mould 13078, soldiers 8, bank 400, harvested 0, rendered 0, shots 0, killed 0, took 0%, crystals left 0.999; squad at 214.5,118.5
+  surge: the slime ate 23 food (2.3/s); meter 22.7 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 13078 (readout 13078); 1 breaking away
+  squad: touching 0.0 mean, 0 most; health 100 mean
+  CPU: ground field 1.45 ms (once a game second), model and HUD 0.349 ms a frame
+  t 20 s: mould 11649, soldiers 8, bank 400, harvested 0, rendered 0, shots 94, killed 1494, took 0%, crystals left 0.998; squad at 125.8,152.7
+  surge: the slime ate 48 food (2.4/s); meter 48.0 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 11649 (readout 11649); 4585 breaking away
+  squad: touching 0.6 mean, 2 most; health 84 mean
+  CPU: ground field 0.98 ms (once a game second), model and HUD 0.061 ms a frame
+  t 30 s: mould 10378, soldiers 8, bank 400, harvested 0, rendered 0, shots 222, killed 3317, took 0%, crystals left 0.996; squad at 140.9,117.5
+  surge: the slime ate 80 food (2.7/s); meter 80.4 of 103, 0 surges
+  dense: 0 condensed or thick walkers, mass 10378 (readout 10378); 6208 breaking away
+  squad: touching 1.4 mean, 5 most; health 71 mean
+  surge 1 starts at t 35.3 s (the slime has eaten 103 food)
+  CPU: ground field 1.03 ms (once a game second), model and HUD 0.155 ms a frame
+  t 40 s: mould 10918, soldiers 5, bank 408, harvested 0, rendered 0, shots 291, killed 3948, took 0%, crystals left 0.994; squad at 126.6,153.0
+  surge: the slime ate 124 food (3.1/s); meter 21.7 of 103, 1 surges
+  dense: 0 condensed or thick walkers, mass 10918 (readout 10918); 7224 breaking away
+  squad: touching 1.4 mean, 3 most; health 68 mean
+  CPU: ground field 2.15 ms (once a game second), model and HUD 0.082 ms a frame
+  t 50 s: mould 11480, soldiers 4, bank 424, harvested 0, rendered 0, shots 337, killed 4177, took 0%, crystals left 0.992; squad at 134.6,38.0
+  surge: the slime ate 175 food (3.5/s); meter 72.1 of 103, 1 surges
+  dense: 0 condensed or thick walkers, mass 11480 (readout 11480); 7992 breaking away
+  squad: touching 0.5 mean, 2 most; health 75 mean
+  surge 2 starts at t 56.0 s (the slime has eaten 205 food)
+  raid 1 at t 59.0 s: Soldiers(0) at 135,36, reach 43 cells holding 1723 walkers, share 0.60, size 9% of the slime
+  CPU: ground field 1.02 ms (once a game second), model and HUD 0.072 ms a frame
+  t 60 s: mould 12201, soldiers 4, bank 437, harvested 0, rendered 0, shots 374, killed 4474, took 0%, crystals left 0.990; squad at 134.5,37.9
+  surge: the slime ate 226 food (3.8/s); meter 20.3 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 12201 (readout 12201); 8865 breaking away
+  squad: touching 1.0 mean, 1 most; health 44 mean
+  CPU: ground field 12.59 ms (once a game second), model and HUD 0.115 ms a frame
+  t 75 s: mould 13036, soldiers 0, bank 440, harvested 0, rendered 0, shots 395, killed 5023, took 0%, crystals left 0.986
+  surge: the slime ate 303 food (4.0/s); meter 97.1 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 13036 (readout 13036); 9915 breaking away
+  surge 3 starts at t 76.1 s (the slime has eaten 308 food)
+  CPU: ground field 3.42 ms (once a game second), model and HUD 0.100 ms a frame
+  t 90 s: mould 13734, soldiers 0, bank 440, harvested 0, rendered 0, shots 395, killed 5023, took 0%, crystals left 0.983
+  surge: the slime ate 380 food (4.2/s); meter 72.2 of 103, 3 surges
+  dense: 0 condensed or thick walkers, mass 13734 (readout 13734); 10610 breaking away
+  surge 4 starts at t 95.9 s (the slime has eaten 411 food)
+  CPU: ground field 1.25 ms (once a game second), model and HUD 0.085 ms a frame
+  t 105 s: mould 14450, soldiers 0, bank 440, harvested 0, rendered 0, shots 395, killed 5023, took 0%, crystals left 0.979
+  surge: the slime ate 458 food (4.4/s); meter 47.3 of 103, 4 surges
+  dense: 0 condensed or thick walkers, mass 14450 (readout 14450); 11384 breaking away
+  surge 5 starts at t 115.5 s (the slime has eaten 514 food)
+  CPU: ground field 2.25 ms (once a game second), model and HUD 0.103 ms a frame
+  t 120 s: mould 15481, soldiers 0, bank 440, harvested 0, rendered 0, shots 395, killed 5023, took 0%, crystals left 0.976
+  surge: the slime ate 538 food (4.5/s); meter 24.0 of 103, 5 surges
+  dense: 0 condensed or thick walkers, mass 15481 (readout 15481); 12338 breaking away

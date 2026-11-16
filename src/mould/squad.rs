@@ -204,6 +204,12 @@ pub struct Burst {
     /// on where it lands (`BigDish::fling`). 0: none.
     pub fling: f32,
     pub fling_steps: u16,
+    /// **A push** (the shove cards, owner 2026-11-16 05:11Z: "a gun that
+    /// lets you corral and push the slime onto areas"): with a heading
+    /// (radians), the fling throws every walker in its ring along that one
+    /// heading, each for the whole `fling_steps`, instead of straight out
+    /// from the centre: the slime there moves as a block (`BigDish::fling`).
+    pub push: Option<f32>,
     /// **Gas cloud only** (the rounds' `Mist` trail, 2026-11-14): this much
     /// cloud laid on the agar within `r` (`BigDish::lay_gas`), with no gas
     /// on the walkers there now: the cloud alone puts to sleep whoever
@@ -295,7 +301,7 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     }
     if let Some((r, rr, inv)) = b.fling_ring(s) {
         d.p.fling_speed = k.fling_speed;
-        out.flung = d.fling(b.at.0 * s, b.at.1 * s, r, rr, b.fling_steps, inv) as u32;
+        out.flung = d.fling(b.at.0 * s, b.at.1 * s, r, rr, b.fling_steps, inv, b.push) as u32;
     }
     if b.gas > 0 {
         d.enable_alarm(k.alarm_keep);

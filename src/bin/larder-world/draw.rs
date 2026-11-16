@@ -1570,6 +1570,11 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The carriers (2026-11-16, step B of the gun-system review).
         C::Trigger => (Icon::Carry, CardKind::Trigger, "It carries the one after it, let out where it hits.".into()),
         C::Expire => (Icon::CarryStop, CardKind::Trigger, "It carries the one after it, let out where it stops.".into()),
+        // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
+        // slime onto areas. Into a kill zone").
+        C::Heave => (Icon::Heave, CardKind::Modifier, format!("Its hit shoves slime back, {:.1}x farther a card.", r.heave)),
+        C::Corral => (Icon::Corral, CardKind::Modifier, "Its hit shoves slime toward your nearest turret.".into()),
+        C::Pull => (Icon::Pull, CardKind::Modifier, "Its hit drags slime toward the gun.".into()),
     }
 }
 

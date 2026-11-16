@@ -1,0 +1,61 @@
+--- a/src/mould/larder_world/paths.rs	2026-11-16 06:30:52.398902300 +0000
++++ b/src/mould/larder_world/paths.rs	2026-11-16 06:30:52.413351428 +0000
+@@ -43,6 +43,7 @@
+ /// were sent at once (soldier cap 200, 2026-11-16; `examples/soldiercap`,
+ /// `depth=8 n=200 secs=30`).
+ pub(super) const MAP_NEAR: f32 = 12.0;
++pub(super) fn map_near() -> f32 { std::env::var("MAPNEAR").ok().and_then(|v| v.parse().ok()).unwrap_or(MAP_NEAR) }
+ 
+ /// How far from a steered squad's moving goal another goal's walking map
+ /// serves it, dish cells (`guide`).
+@@ -327,6 +328,14 @@
+     /// from which `g` is a straight walk. None while it is being built:
+     /// the goal is asked for (`pump_maps` builds it) and the caller waits.
+     pub(super) fn map_for(&mut self, gi: usize, g: (f32, f32), near: f32) -> Option<usize> {
++        let r = self.map_for_x(gi, g, near);
++        if std::env::var_os("MAPDBG").is_some() {
++            eprintln!("MF {} {} {} {}", self.paths.step, gi, near, r.map_or(-1i64, |k| k as i64));
++        }
++        r
++    }
++
++    fn map_for_x(&mut self, gi: usize, g: (f32, f32), near: f32) -> Option<usize> {
+         let (w, _) = self.world.size();
+         let step = self.paths.step;
+         let mid = |k: usize| ((k % w) as f32 + 0.5, (k / w) as f32 + 0.5);
+@@ -383,6 +392,15 @@
+     /// the maps go stale: each is rebuilt in turn and walked meanwhile, so
+     /// no soldier stands waiting for a map it had.
+     pub(super) fn pump_maps(&mut self) {
++        let t0 = std::time::Instant::now();
++        let before = self.paths.building.as_ref().map(|b| b.goal);
++        self.pump_maps_x();
++        if std::env::var_os("MAPDBG").is_some() {
++            eprintln!("PM {} {:.3} {} {} {} {} {}", self.paths.step, t0.elapsed().as_secs_f64() * 1e3, before.map_or(-1i64, |k| k as i64), self.paths.building.as_ref().map_or(-1i64, |b| b.goal as i64), self.paths.asked.len(), self.paths.maps.len(), self.paths.stale.len());
++        }
++    }
++
++    fn pump_maps_x(&mut self) {
+         self.paths.step += 1;
+         let step = self.paths.step;
+         let now = self.world.ticks();
+@@ -650,7 +668,7 @@
+         } else {
+             let (w, h) = self.world.size();
+             let gi = cell(w, h, g);
+-            let Some(key) = self.map_for(gi, g, MAP_NEAR * self.s()) else {
++            let Some(key) = self.map_for(gi, g, map_near() * self.s()) else {
+                 // Its map is being built (`pump_maps`): wait for it.
+                 return;
+             };
+--- a/src/mould/larder_world/squads.rs	2026-11-16 06:30:52.398937531 +0000
++++ b/src/mould/larder_world/squads.rs	2026-11-16 06:30:52.413515125 +0000
+@@ -454,7 +454,7 @@
+         // took 26 s to get round a bar at 1x against 13 s with whole maps,
+         // and stood still 798 of 900 steps at 6x (technical review,
+         // 2026-11-15; 13.6 and 16.4 s at 10 dish cells).
+-        let near = if sent { MAP_NEAR * self.s() } else { STEER_NEAR * self.s() };
++        let near = if sent { super::paths::map_near() * self.s() } else { STEER_NEAR * self.s() };
+         let Some(key) = self.map_for(gi, to, near) else {
+             // Its map is being built (`pump_maps`): the anchor waits.
+             return from;

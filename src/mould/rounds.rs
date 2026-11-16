@@ -117,6 +117,21 @@ pub enum Card {
     /// where its bullet stops without a hit too (a wall, the end of its
     /// range).
     Expire,
+    /// **The shove cards** (owner 2026-11-16 05:10Z: "The slug looks fun";
+    /// 05:11Z: "There should be ways to modify the pushback. I could image
+    /// a gun that lets you corral and push the slime onto areas. Into a
+    /// kill zone"). Each gives the next bullet a shove if its set has none
+    /// (`RoundRules::shove`; the slug's is its own, `bullets::Shape`).
+    /// `Heave`: the shove reaches and throws `RoundRules::heave` times as
+    /// far, a card.
+    Heave,
+    /// The shove pushes the slime toward the nearest turret within
+    /// `RoundRules::corral_reach`, as a block (`squad::Burst::push`); with
+    /// no turret there it shoves away from the gun as usual.
+    Corral,
+    /// The shove drags the slime toward the gun, as a block: into the
+    /// squad's crossfire, and nearer its soldiers.
+    Pull,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -129,12 +144,12 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 21] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire];
+    pub const ALL: [Card; 24] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
-            Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
+            Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
             Card::Thrift => Kind::Modifier,
@@ -167,6 +182,9 @@ impl Card {
             Card::Smother => "smother",
             Card::Trigger => "trigger",
             Card::Expire => "expire",
+            Card::Heave => "heave",
+            Card::Corral => "corral",
+            Card::Pull => "pull",
         }
     }
 
@@ -233,6 +251,9 @@ impl Card {
             Card::Smother => "Bullets wipe the scent slime follows to food.",
             Card::Trigger => "Carries the next bullet and lets it out where it hits.",
             Card::Expire => "Carries the next bullet and lets it out where it stops.",
+            Card::Heave => "Its hit shoves the slime, farther with each heave.",
+            Card::Corral => "Its hit shoves the slime toward your nearest turret.",
+            Card::Pull => "Its hit drags the slime toward the gun.",
         }
     }
 
@@ -247,9 +268,9 @@ impl Card {
             Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
-            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire => 2,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral => 2,
             Card::Thrift => 0,
-            Card::Quiet | Card::Delay | Card::Thick => 1,
+            Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
     }
 
@@ -259,7 +280,7 @@ impl Card {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull => 2,
             _ => 1,
         }
     }
@@ -438,6 +459,15 @@ pub struct RoundRules {
     /// and alarm different. It just makes a virtual wall for the slime?").
     /// Off, scorch is the crater wall alone, as #244 built it.
     pub trail_burn: bool,
+    /// **The shove cards** (`Card::Heave`, `Corral`, `Pull`, 2026-11-16): a
+    /// bullet whose set has no shove of its own shoves `shove` strike radii
+    /// past its hit for `shove_secs` (the slug's own is 3 radii, 0.25 s);
+    /// each `Heave` reaches and throws `heave` times as far; a corral
+    /// pushes toward a turret within `corral_reach` dish cells of the hit.
+    pub shove: f32,
+    pub shove_secs: f32,
+    pub heave: f32,
+    pub corral_reach: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -468,6 +498,10 @@ impl Default for RoundRules {
             trail_bait: 40.0,
             trail_cloud: 0.4,
             trail_burn: true,
+            shove: 2.0,
+            shove_secs: 0.25,
+            heave: 1.5,
+            corral_reach: 40.0,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -494,6 +528,11 @@ pub struct Cast {
     /// Its bullet lets the child out where it stops without a hit too
     /// (`Card::Expire`).
     pub expire: bool,
+    /// `Heave` cards on it, and the way its shove pushes (`Card::Corral`
+    /// or `Card::Pull`; None: away from the gun). Any of them gives the
+    /// bullet a shove (`Rounds::shove`).
+    pub heave: u8,
+    pub herd: Option<Card>,
 }
 
 /// Most carriers in a chain: a carried cast may carry one more, and a
@@ -509,6 +548,7 @@ pub const CARRY_DEPTH: usize = 2;
 pub fn casts(round: &[Card]) -> Vec<Cast> {
     let mut out: Vec<Cast> = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger, mut carry) = (0, false, false, None, None);
+    let (mut heave, mut herd) = (0, None);
     for &c in round.iter().take(MAX_SLOTS) {
         match c {
             Card::Wide => wide += 1,
@@ -516,16 +556,19 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Quiet => quiet = true,
             Card::Delay | Card::Thick => trigger = Some(c),
             Card::Trigger | Card::Expire => carry = Some(c == Card::Expire || carry == Some(true)),
+            Card::Heave => heave += 1,
+            Card::Corral | Card::Pull => herd = Some(c),
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let ammo = c.ammo().unwrap_or_default();
-                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true) });
+                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd });
                 // Marks a carrier for now: linked below.
                 if carry.is_some() {
                     out.last_mut().unwrap().child = Some(u8::MAX);
                 }
                 (wide, scatter, quiet, trigger, carry) = (0, false, false, None, None);
+                (heave, herd) = (0, None);
             }
         }
     }
@@ -620,7 +663,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, cloud: 0.0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0 };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
         Card::Bomb => {
@@ -728,6 +771,8 @@ pub struct Rounds {
     /// (in `flung` too).
     pub shoves: u32,
     pub shoved: usize,
+    /// Of `shoves`, those that pushed one way (`Card::Corral`, `Pull`).
+    pub pushes: u32,
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
     pub pops: Vec<Pop>,
@@ -847,10 +892,11 @@ impl Rounds {
             }
             let cs = by_squad[q].get_or_insert_with(|| self.casts_of(g, q));
             let Some(&c) = cs.get(cast as usize - 1) else { continue };
-            // A slug shoves where it hits, whatever it carries.
+            // A slug shoves where it hits, whatever it carries, and so does
+            // any bullet with a shove card.
             let shape = c.ammo.set.shape();
-            if shape.shove > 0.0 {
-                self.shove(g, hit, dir, hit_r, shape);
+            if shape.shove > 0.0 || c.heave > 0 || c.herd.is_some() {
+                self.shove(g, hit, dir, hit_r, shape, &c, k);
             }
             // A plain bullet's strike was all it had (`Game::step`).
             let Some(sl) = slot(c.payload) else { continue };
@@ -963,14 +1009,56 @@ impl Rounds {
     /// ring lies round and past the hole and throws every walker in it away
     /// from the gun, those at the hole furthest. Centred on the hit, the
     /// ring's near half threw slime at the shooter.
-    fn shove<W: World>(&mut self, g: &mut Game<W>, hit: (f32, f32), dir: (f32, f32), r: f32, shape: super::bullets::Shape) {
+    ///
+    /// **The shove cards** (2026-11-16): a set with no shove shoves
+    /// `RoundRules::shove` radii; each `Heave` multiplies the reach and the
+    /// throw by `RoundRules::heave`. A card's shove is a push
+    /// (`squad::Burst::push`): every walker in the disc of that reach round
+    /// the hit flies one heading: straight on along the bullet's line, or
+    /// with `Corral` toward the nearest turret within `corral_reach` of the
+    /// hit (none: straight on), with `Pull` toward the shooter `k`. A slug
+    /// with no `Corral` or `Pull` keeps its own throw out from behind the
+    /// hit (step A), farther with each `Heave`.
+    #[allow(clippy::too_many_arguments)]
+    fn shove<W: World>(&mut self, g: &mut Game<W>, hit: (f32, f32), dir: (f32, f32), r: f32, shape: super::bullets::Shape, c: &Cast, k: usize) {
         let s = g.world.scale();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
-        let k = BurstRules { fling_speed: self.rules.fling_speed, ..burst_rules(&self.rules.kit, fine) };
-        let at = ((hit.0 - dir.0 * r) / s, (hit.1 - dir.1 * r) / s);
-        let steps = (shape.shove_secs * fine).round().clamp(1.0, u16::MAX as f32) as u16;
-        let b = Burst { at, r: r / s, fling: (1.0 + shape.shove) * r / s, fling_steps: steps, ..Burst::default() };
-        let out = g.world.burst(&b, &k);
+        let kr = BurstRules { fling_speed: self.rules.fling_speed, ..burst_rules(&self.rules.kit, fine) };
+        let rr = &self.rules;
+        let (shove, secs) = if shape.shove > 0.0 { (shape.shove, shape.shove_secs) } else { (rr.shove, rr.shove_secs) };
+        let h = rr.heave.powi(c.heave as i32);
+        let steps = (secs * h * fine).round().clamp(1.0, u16::MAX as f32) as u16;
+        let reach = (1.0 + shove * h) * r;
+        let toward = match c.herd {
+            Some(Card::Pull) => g.soldiers.get(k).map(|s| (s.x, s.y)),
+            Some(Card::Corral) => {
+                let far = rr.corral_reach * s;
+                g.buildings.iter().filter(|b| b.up() && b.kind == super::larder_world::Kind::Turret).map(|b| b.at).filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far).min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
+            }
+            _ => None,
+        };
+        let heading = match toward.filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) > 1e-3) {
+            Some(t) => Some((t.1 - hit.1).atan2(t.0 - hit.0)),
+            // A shove a card gave pushes straight on along the bullet's
+            // line. The slug's own throws out from behind the hit (step A),
+            // which a standard bullet's shove can't copy: thrown out from
+            // behind, 61 of 89 went away from the gun (seed 2), the rest
+            // sideways or back at the squad.
+            None if shape.shove <= 0.0 => Some(dir.1.atan2(dir.0)),
+            None => None,
+        };
+        let b = match heading {
+            // A push: the disc round the hit, one heading.
+            Some(a) => Burst { at: (hit.0 / s, hit.1 / s), r: 1e-3, fling: reach / s, fling_steps: steps, push: Some(a), ..Burst::default() },
+            None => {
+                let at = ((hit.0 - dir.0 * r) / s, (hit.1 - dir.1 * r) / s);
+                Burst { at, r: r / s, fling: reach / s, fling_steps: steps, ..Burst::default() }
+            }
+        };
+        if b.push.is_some() {
+            self.pushes += 1;
+        }
+        let out = g.world.burst(&b, &kr);
         self.shoves += 1;
         self.shoved += out.flung as usize;
         self.flung += out.flung as usize;
@@ -1538,9 +1626,6 @@ mod tests {
         }
     }
 
-    /// Blast and bomb apart (2026-11-16): at one spot the blast kills more
-    /// and throws none, the bomb kills little and throws more than it kills,
-    /// and the blast's crater outlasts the bomb's many times over.
     /// **Carriers** (2026-11-16, step B): a `Trigger` or `Expire` makes its
     /// cast carry the next one, which leaves the gun's own turn; a chain
     /// stops at `CARRY_DEPTH`, and a carrier with nothing after it carries
@@ -1628,6 +1713,117 @@ mod tests {
         assert!(out[0].0 > out[1].0, "a trigger blasts on every landing shot: {out:?}");
     }
 
+    /// **The shove cards** (owner 2026-11-16 05:11Z: "a gun that lets you
+    /// corral and push the slime onto areas. Into a kill zone"): a heave
+    /// gives a standard bullet a shove straight on along its line, and two
+    /// throw it farther; a corral pushes the slime it hits toward the
+    /// nearest turret, a pull toward the gun; each a block on one heading. Each
+    /// on the first lone hit that throws 40 walkers or more, measured once
+    /// the throw is over.
+    #[test]
+    fn shove_cards_push_the_slime_where_they_say() {
+        use crate::mould::larder_world::Kind as Building;
+        let mut thrown_far = Vec::new();
+        for round in ["heave+plain", "heave+heave+plain", "corral+plain", "pull+plain"] {
+            let mut g = attacking(2);
+            g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
+            let sc = g.world.scale();
+            // A turret beside the first soldier to hit slime, 12 cells off
+            // its line, for the corral to push toward.
+            let mut turret = None;
+            // The squad attacks, so its hits soon lie past the default
+            // reach of a turret it passed: here the corral reaches 100.
+            let mut rd = Rounds::new(Vec::new(), RoundRules { corral_reach: 100.0, ..RoundRules::default() });
+            let mut checked = false;
+            for _ in 0..20 * 30 {
+                g.step();
+                let hits: Vec<_> = g.last_shots.iter().filter(|s| s.by.is_some() && s.hit.is_some()).cloned().collect();
+                if turret.is_none() {
+                    let Some(s) = hits.first() else {
+                        rd.after_step(&mut g);
+                        continue;
+                    };
+                    let d = (s.to.0 - s.from.0).hypot(s.to.1 - s.from.1);
+                    let side = (-(s.to.1 - s.from.1) / d, (s.to.0 - s.from.0) / d);
+                    let spot = (0..48)
+                        .map(|i| {
+                            let (off, f) = ((12.0 + (i / 2) as f32) * sc, if i % 2 == 0 { 1.0 } else { -1.0 });
+                            (s.from.0 + side.0 * off * f, s.from.1 + side.1 * off * f)
+                        })
+                        .find(|&q| g.build_blocked(Building::Turret, q).is_none())
+                        .expect("room for a turret");
+                    assert!(g.build(Building::Turret, spot));
+                    let t = g.buildings.len() - 1;
+                    g.buildings[t].built = 1.0;
+                    turret = Some(g.buildings[t].at);
+                    rd.after_step(&mut g);
+                    continue;
+                }
+                let turret = turret.unwrap();
+                let (before, was) = (g.world.walkers.clone(), g.world.flung.clone());
+                let pushes = rd.pushes;
+                rd.after_step(&mut g);
+                if hits.len() != 1 {
+                    continue;
+                }
+                let thrown: Vec<usize> = (0..before.len()).filter(|&j| g.world.flung.get(j) == Some(&true) && was.get(j) != Some(&true)).collect();
+                if thrown.len() < 40 {
+                    continue;
+                }
+                let s = &hits[0];
+                let h = s.hit.unwrap();
+                let d = (s.to.0 - s.from.0).hypot(s.to.1 - s.from.1);
+                let way = match round {
+                    "corral+plain" => {
+                        let n = (turret.0 - h.0).hypot(turret.1 - h.1);
+                        ((turret.0 - h.0) / n, (turret.1 - h.1) / n)
+                    }
+                    "pull+plain" => (-(s.to.0 - s.from.0) / d, -(s.to.1 - s.from.1) / d),
+                    _ => ((s.to.0 - s.from.0) / d, (s.to.1 - s.from.1) / d),
+                };
+                // A corral's hit past `corral_reach` of the turret pushes
+                // straight on: wait for one in reach.
+                if round.starts_with("corral") && (turret.0 - h.0).hypot(turret.1 - h.1) / sc > rd.rules.corral_reach {
+                    continue;
+                }
+                let pushed = rd.pushes > pushes;
+                assert!(pushed, "{round}: a card's shove is a push");
+                let heaves = round.matches("heave").count() as i32;
+                let secs = rd.rules.shove_secs * rd.rules.heave.powi(heaves);
+                for _ in 0..(secs * g.rules.tps as f32) as usize + 4 {
+                    g.step();
+                }
+                let moved: Vec<(f32, f32)> = thrown.iter().map(|&j| (g.world.walkers[j].0 - before[j].0, g.world.walkers[j].1 - before[j].1)).collect();
+                let along = moved.iter().filter(|m| m.0 * way.0 + m.1 * way.1 > 0.0).count();
+                // A push flies every one on the heading: of those that moved
+                // a cell or more, 7 in 10 lie within 0.5 rad of it (a wall
+                // turns some, and each walks a little once landed; a throw
+                // out from a centre spreads them over half a circle).
+                let free: Vec<&(f32, f32)> = moved.iter().filter(|m| m.0.hypot(m.1) >= 1.0).collect();
+                let lined = free.iter().filter(|m| (m.0 * way.0 + m.1 * way.1) / m.0.hypot(m.1) >= 0.5f32.cos()).count();
+                let mean = moved.iter().map(|m| m.0.hypot(m.1)).sum::<f32>() / moved.len() as f32 / sc;
+                eprintln!("{round}: {} thrown, {along} the way it says, {lined} of {} free ones on its line, mean throw {mean:.1} cells", thrown.len(), free.len());
+                assert!(along * 10 >= thrown.len() * 8, "{round}: {along} of {} thrown the way it says", thrown.len());
+                if pushed {
+                    assert!(lined * 10 >= free.len() * 7 && !free.is_empty(), "{round}: {lined} of {} on the push's line", free.len());
+                }
+                if round.starts_with("heave") {
+                    thrown_far.push(mean);
+                }
+                checked = true;
+                break;
+            }
+            assert!(checked, "{round}: no lone hit that threw");
+        }
+        assert!(thrown_far[1] > thrown_far[0], "two heaves throw farther than one: {thrown_far:?}");
+        for c in [Card::Heave, Card::Corral, Card::Pull] {
+            assert_eq!((c.kind(), Card::from_word(c.name())), (Kind::Modifier, Some(c)));
+        }
+    }
+
+    /// Blast and bomb apart (2026-11-16): at one spot the blast kills more
+    /// and throws none, the bomb kills little and throws more than it kills,
+    /// and the blast's crater outlasts the bomb's many times over.
     #[test]
     fn a_blast_holds_and_a_bomb_throws() {
         let r = RoundRules::default();

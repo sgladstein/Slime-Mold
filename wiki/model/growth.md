@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
@@ -13,6 +13,7 @@ sources:
   - Reports/mould-shape-2026-11-11.md
   - Reports/one-body-2026-11-12.md
   - Reports/slime-enemy-review-2026-11-12.md
+  - Reports/specks-2026-11-16/README.md
   - Reports/thicken-2026-11-15/README.md
 code:
   - BigDish::alive
@@ -41,6 +42,7 @@ code:
   - CLAIM_BIRTH
   - DRAW_BIRTH
   - DRAW_STARVE
+  - SPECK_TRIP
 ---
 
 # Growth and starving on the big dish
@@ -74,7 +76,8 @@ main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 ([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
 **Condensing** (11-14, `BigParams::condense`, off by default; the
-`condense=` key and the start menu's Condense option): a walker is ripe on
+`condense=` key, and the start menu's Condense option until 11-16, when the
+owner took the bronze out of play: "Remove the bronze, keep the specks"): a walker is ripe on
 a step when it took crystal or the 5 x 5 square round it holds at least
 `condense_crowd` (20) walkers; after `condense` steps ripe (300 on the
 menu, 10 s) half the ripe walkers are absorbed and half condense
@@ -88,19 +91,42 @@ its crystals in bronze lobes instead of covering the map; at a crowd of 16
 the tubes between crystals broke into beads
 ([condense](../../Reports/condense-2026-11-14/README.md)). The settled
 bronze keeps its veins under the sheen (luma 99; keep it at or under the
-bolt red's 105). **Breakaway** (`BigParams::roam`, off by default, needs
-condensing or, since 11-15, thickening; owner 11-14 15:06Z): every `roam` steps a condensed piece may
+bolt red's 105). **Breakaway** (`BigParams::roam`, off by default; owner
+11-14 15:06Z): every `roam` steps a condensed piece may
 leave together for the nearest untouched crystal at least `roam_far` cells
-away, running like a panicking walker, and lands and feeds there. **On in the
-run from planet 2** with `condense` (both 300; the whole-game review's D2,
-owner 11-15 21:41Z): breakaway alone over shape C's thickening moved
-nothing on planet 2 (19,093 walkers at 2:00 against 19,103), while both
-made the slime a fifth to two fifths heavier at 3:00, at no frame cost on
-the GTX 1070 (the core world's step 0.1 ms cheaper, with fewer walkers)
+away, running like a panicking walker, and lands and feeds there. From
+11-15 it ran in the run from planet 2 with `condense` (both 300; the
+whole-game review's D2, owner 11-15 21:41Z): breakaway alone over shape C's
+thickening moved nothing on planet 2 (19,093 walkers at 2:00 against
+19,103), while both made the slime a fifth to two fifths heavier at 3:00,
+at no frame cost on the GTX 1070
 ([breakaway in the run](../../Reports/breakaway-run-2026-11-15/README.md)).
+**Since 11-16 ordinary slime breaks away: the specks** (`roam` with
+`condense` 0, both engines, twin dish "specks"; the owner, 04:58Z, "Remove
+the bronze, keep the specks ... Specks more often early game"): an ordinary
+walker gets a chance every `roam`
+steps (each slot at its own phase, so the body never leaves at once),
+leaves at `roam_share` if it then stands ripe as condensing reckons it,
+runs as a breakaway runs and stays ordinary; it
+lands, or gives up where it stands after `SPECK_TRIP` (600 steps, 20 s).
+Only the walkers whose chance it is count their crowd, a `roam`th a step
+(a first build kept every walker's ripeness, as condensing does, a 5 x 5
+count each a step). `roam_share`'s default is 0.05 since then (0.5
+before), so the start menu's Breakaway, which sets `roam` alone, sends a
+twentieth. The run sends specks on every planet
+(`run::enemy_keys`: `roam` 300, `roam_share` 0.05 on planets 1-2 down to
+0.02 on the core world): on planet 2 of run 2 about 1,000 walkers are on
+their way at once over the first two minutes (6%; 12,300 of 17,406 at the
+first try's 0.5 with no give-up), and at 5:00 the slime is 7% heavier than
+with none (27,428 against 25,716; planet 1 of run 1, 10%, 26,239 against
+23,900), one seed each.
+On planet 1's sheet the specks cross open ground as a visible stream; in
+planet 2's mesh they blend into the slime's own exploring streams
+([specks](../../Reports/specks-2026-11-16/README.md)).
 
-**Thickening** (11-15, `BigParams::thicken`, both engines; **on in shape
-C at 2**): a walker that banks `thicken` times a birth's energy without
+**Thickening** (11-15, `BigParams::thicken`, both engines; on in shape C
+at 2 until 11-16, **off since**: the owner, 04:58Z, "Remove the bronze";
+`thicken=K` still sets it): a walker that banks `thicken` times a birth's energy without
 dividing (no free slot or cell) turns condensed in place, paying a
 birth's cost; nothing is absorbed and births go on, so mass grows past
 the slots, up to twice. Before it, C filled its 50,000 slots at 3:00 on the
@@ -108,13 +134,12 @@ CPU race world eating three times its upkeep and got no stronger; with it,
 mass 90,739 and 90,226 at 7:00 (seeds 1-2) holding every crystal and
 30,338 and 32,577 held to 4
 ([thicken](../../Reports/thicken-2026-11-15/README.md)). Thick slime
-breaks away too, so the menu's Breakaway works in shape C without
-Condense; thick walkers thicken one by one, so they leave as a trickle,
-not a piece (the condense thread's read of #338 found the GPU sent no
-`roam` with condense 0 while the CPU marked breakaways; twin dish
+breaks away too, thick walkers one by one, as a trickle (twin dish
 "thicken roam"). The owner's word,
 11-15 08:34Z: the slime should "keep getting stronger by holding onto its
-crystals and getting more of them".
+crystals and getting more of them"; with thickening out of play, C stops
+growing at its slots again, and the mini-boss thread's bosses are the
+strength that grows instead ([dead end](../../Reports/dead-ends.md)).
 
 ## Owner's word
 
@@ -128,8 +153,16 @@ crystals and getting more of them".
   twice as strong and healthy. This makes it more difficult and stops the
   slime from just filling the map." 08:34Z, on its look: "especially during
   the transformation process. It has to look cool" (condensing, above).
+- 2026-11-16 04:58Z (on the mini-boss questions): "Remove the bronze, keep
+  the specks (specks and mini-boss are separate but both happen. Specks
+  more often early game)" (breakaway from ordinary slime, above).
 
 ## Tried and rejected
+
+- Thickening and condensing in play (shape C's `thicken` 2, the run's
+  `condense` 300 from planet 2), 11-15 to 11-16: out by the owner's word
+  above; the keys stay for films
+  ([`dead-ends.md`](../../Reports/dead-ends.md)).
 
 - Pairing slots by cycling single bits: a small mould bred about one step
   in five ([`dead-ends.md`](../../Reports/dead-ends.md)).

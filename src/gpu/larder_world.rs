@@ -711,7 +711,7 @@ impl World for GpuWorld {
         if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
             self.s.fling_speed = k.fling_speed;
             let sc = self.e.dish.p.scale as f32;
-            out.flung = self.e.fling(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv);
+            out.flung = self.e.fling(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv, b.push);
         }
         if b.gas > 0 {
             self.s.gas_death = k.gas_death;
