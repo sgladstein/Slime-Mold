@@ -1786,7 +1786,10 @@ impl App {
                 if let Some(l) = lumps.get_mut(b.lump) {
                     // The grade is bits 4-7 (the word is a u16 since the
                     // fade went in above it, bits 8-15).
-                    *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF) };
+                    // Bit 3: out on its errand (not gathering), so its
+                    // members' own density carries its look.
+                    let held = if code & 8 != 0 { 1.0 } else { 0.0 };
+                    *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF), held };
                 }
             }
             v.set_lumps(&lumps);
