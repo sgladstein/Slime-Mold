@@ -303,7 +303,7 @@ impl StartMenu {
         let lw = pane.x - 16.0 * s - x;
 
         // The bench: the carried gun's slots and the bag, pinned.
-        let gun_name = shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str());
+        let gun_name = if shop.turrets { "Every turret" } else { shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on).map_or("Your gun", |r| r.name.as_str()) };
         let gy = top + 30.0 * s;
         let nw = c.text(Weight::SemiBold, 16.5 * s, (x, gy), Align::Left, gun_name, TEXT);
         let on = self.gun_cards();
@@ -312,7 +312,7 @@ impl StartMenu {
         let ch = CARD_H * s;
         let (sx, sroom) = (x + LABEL * s, lw - LABEL * s);
         let row_y = top + 42.0 * s;
-        c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, "Gun", MUTED);
+        c.text(Weight::SemiBold, 13.5 * s, (x, row_y + ch / 2.0 + 5.0 * s), Align::Left, if shop.turrets { "Turrets" } else { "Gun" }, MUTED);
         let n = (shop.slots as usize).max(on.len()).max(1);
         let cw = ((sroom - (n - 1) as f32 * g) / n as f32).min(CARD_W * s);
         let slots: Vec<(Rect, Option<usize>)> = (0..n).map(|k| (Rect::new(sx + k as f32 * (cw + g), row_y, cw, ch), on.get(k).copied())).collect();

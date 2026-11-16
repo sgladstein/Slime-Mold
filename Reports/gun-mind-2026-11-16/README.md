@@ -37,7 +37,16 @@ first form.
   turn rule every step: rings that stop advancing.
 - Every walker takes them, scared, raiding, surging and lump walkers too:
   the readings change after whatever made them (the slime-enemy thread's
-  note, 22:04Z).
+  note, 22:04Z). So a sour explorer flips twice and follows the trail, and
+  a sour raider, speck or surging walker reads its goal backwards and runs
+  from the pump, crystal or squad it was heading for (their review of
+  #403, 23:38Z).
+- **Off when it has run out** (`Engine::minds_on`, `mind_until`; the same
+  review): the GPU reads the words only until the last status ends, as
+  `gas_until` does for the gas, so a planet with one Mind hit early does not
+  pay a read a walker a step for the rest of it. Each word carries its own
+  end, so the row going off changes nothing: `mind_statuses_match_the_cpu`
+  ticks once more with it off, from the same state, and no walker is off.
 - **The cards** (`Card::Blind`, `Sour`, `Spin`; `Shell::Blind` and on): payloads, cost
   2, tier 2, the Mind cards' rose (`card_look`), icons an eye struck
   through, a U-turn, a ring round a dot. A burst carries `Burst::mind`;
@@ -121,9 +130,9 @@ clip 3 sour, clip 4 blind (drawn with `random.shuffle`).
 
 - Until the first Mind hit, nothing: the GPU's sense pass tests one flag in
   `Params`, and the CPU's Mind list is empty.
-- After it, each walker reads one more word a step (the CPU: one branch a
-  walker), and each Mind hit is one pass over the walkers (`mindlay`, as the
-  gas's stamp). The `news` buffer is one word a walker slot longer (the
+- While a status lasts, each walker reads one more word a step (the CPU:
+  one branch a walker), and each Mind hit is one pass over the walkers
+  (`mindlay`, as the gas's stamp). Once the last runs out the reads stop. The `news` buffer is one word a walker slot longer (the
   dense words moved up by n). Births clear the child's word.
 - **1070 timing: booked** (the PC was offline at 23:30Z), `larder-world
   bench=40` plain on main and the branch, and blind, sour and spin on the

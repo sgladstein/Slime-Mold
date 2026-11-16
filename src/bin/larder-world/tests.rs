@@ -941,8 +941,23 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let on: Vec<&str> = shop.rows.iter().filter(|r| r.on && r.area == slime_mould::world::start::ShopArea::Cards).map(|r| r.name.as_str()).collect();
     assert_eq!(on, ["Blast", "Wide"]);
     assert!(app.in_menu(), "a move is no pick of a round");
+    // The turrets' deck (the turrets thread, 2026-11-16): with turrets
+    // owned the gun slots switch to the turrets', a bag card goes on, and
+    // the landed game's turrets carry it while the squad keeps its gun.
+    {
+        use slime_mould::mould::run::Pick;
+        let r = app.run.as_mut().unwrap();
+        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
+        r.cards.push((rounds::Card::Gas, false));
+        assert!(r.pick(Pick::EditTurrets));
+        let gas = r.cards.iter().position(|c| c.0 == rounds::Card::Gas).unwrap();
+        assert!(r.pick(Pick::Card(gas)));
+        assert_eq!(r.squad_cards(), [rounds::Card::Blast, rounds::Card::Wide]);
+    }
     app.menu_event(StartEvent::NextLevel).unwrap();
     assert!(!app.in_menu());
+    assert_eq!(app.game.as_ref().unwrap().turret_deck.map(|d| d.cards()), Some(vec![rounds::Card::Gas]));
+    assert_eq!(app.rounds.round, [rounds::Card::Blast, rounds::Card::Wide]);
     assert_eq!(app.args.run.as_ref().map(|r| r.depth), Some(2));
     assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
     assert_eq!(app.name, "planet:2:1");

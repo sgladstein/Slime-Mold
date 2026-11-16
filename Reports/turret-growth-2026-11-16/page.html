@@ -43,6 +43,7 @@ video{width:100%;max-width:100%;display:block;border-radius:4px;background:#000;
 .clip figcaption span{color:var(--muted)}
 ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
 @media (max-width:640px){.two{grid-template-columns:1fr}}
+.shots{display:grid;gap:16px;grid-template-columns:1fr}@media(min-width:900px){.shots{grid-template-columns:1fr 1fr}}.shots img{width:100%;height:auto;border-radius:8px;display:block}.shots figcaption{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:.9em}
 </style>
 <main>
 <header style="display:flex;flex-direction:column;gap:10px">
@@ -140,7 +141,7 @@ ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
 
 <section>
 <h2>First step, built: turrets fire cards</h2>
-<p>Every turret now fires one shared turret deck, the way a squad fires its gun's cards: each shot carries the deck's next cast, Range and Rate cards stretch the turrets' reach and rate, and multicast, trigger and shove cards work as they do on a gun. With no deck, turrets fire plain strikes exactly as before. There is no menu for it yet; the clips load the deck by a film key.</p>
+<p>Every turret now fires one shared turret deck, the way a squad fires its gun's cards: each shot carries the deck's next cast, Range and Rate cards stretch the turrets' reach and rate, and multicast, trigger and shove cards work as they do on a gun. With no deck, turrets fire plain strikes exactly as before. The clips load the deck by a film key; the run shop now has the menu for it (next section).</p>
 <p>Same game on the Fork up to 29 s: the squad holds at its spot firing plain rounds, three turrets stand up and to the right, and from 29 s the turrets load the cards named. Clips are 3 s (29 to 32 s); counts are over 10 s (29 to 39 s), one game each, so read them as a look, not a balance result.</p>
 <div class="clips">
 <figure class="clip"><video src="page/plain.mp4" controls muted loop playsinline preload="metadata"></video>
@@ -161,5 +162,15 @@ ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
 <li><b>Corral</b> throws the slime onto the turrets' own feet, where they kill nearly twice as much as plain.</li>
 <li><b>Bomb</b> works against a kill box: it flings the slime away from the guns. That is a trade, and the reason a turret deck is worth choosing.</li>
 </ul>
+</section>
+<section>
+<h2>Step 2, built: the turrets' cards come out of your bag</h2>
+<p>A free turret deck only made staying home stronger, so now the turrets and the squad share one bag. Once you own turrets, the run shop's bottom bar has <b>Edit the turrets' cards</b>. It switches the gun slots to a rack called "Every turret": 2 slots and a budget of 4, plus a slot and 2 budget for each level of Turret power. A card you put there is one your squad doesn't fire. Click the button again, or pick a gun, and the slots show the squad's gun. Both decks keep their order.</p>
+<p>Turret shots now also know which turret fired them. Card kills count as the turrets', Render pays on card kills, and Pull drags slime toward the turret.</p>
+<div class="shots">
+<figure><img src="page/shop-turrets.png" alt="Run shop with the gun slots on the turrets: Every turret, budget 3 of 4, 1 of 2 slots, Buckshot germ in slot 1"><figcaption><b>Turrets' rack</b><span>"Every turret": Buckshot germ in slot 1 of 2, budget 3 of 4. The button now reads "Edit the squad's gun".</span></figcaption></figure>
+<figure><img src="page/shop-gun.png" alt="Run shop with the squad's gun and the Edit the turrets' cards button"><figcaption><b>Squad's gun</b><span>The same shop on the squad's gun, with the "Edit the turrets' cards" button on the bottom bar.</span></figcaption></figure>
+</div>
+<p>Run 1, three planets in, 1600&times;900 (<code>larder-world run=1 menu=shop-turrets</code> and <code>menu=shop-mid</code>). To try it, double-click <code>play.cmd</code> once the change is merged, start a Run, and buy a turret.</p>
 </section>
 </main>

@@ -1419,9 +1419,14 @@ pub struct Engine {
     pub gas_at: u64,
     pub gas_until: u64,
     /// Whether any walker has had a Mind status (`mind_pass`, or a dish
-    /// loaded with one): the Mind row's first word, so `sense` reads the
-    /// words (after the gas's in `news`, `gas_words`) only then.
+    /// loaded with one), and the last step any lasts to: the Mind row's
+    /// first word (`minds_on`), so `sense` reads the words (after the
+    /// gas's in `news`, `gas_words`) only while one may last. Each word
+    /// carries its own end, so a run-out status reads as none either way
+    /// (the slime-enemy thread's note on #403: without the end, every
+    /// walker read its word every step for the rest of the planet).
     pub minds: bool,
+    pub mind_until: u64,
     /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
     /// and `gasp` runs every tick), the step `calm` must look until, and a
     /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
@@ -1763,6 +1768,7 @@ impl Engine {
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
             minds: !d.mind.is_empty(),
+            mind_until: mind_until(&d),
             clouded: false,
             cloud_until: 0,
             cloud_top: 0.0,
@@ -1951,6 +1957,7 @@ impl Engine {
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
         self.minds = !d.mind.is_empty();
+        self.mind_until = mind_until(d);
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0 || d.p.roam > 0);
         self.dense_walkers = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
@@ -2169,7 +2176,7 @@ impl Engine {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
-        b.extend(u32_bytes(&[self.minds as u32, s.spin_curl.to_bits(), 0, 0]));
+        b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2742,10 +2749,19 @@ impl Engine {
     pub fn mind_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, kind: u32, steps: u16) {
         let k = self.dish.p.scale as f32;
         self.minds = true;
+        self.mind_until = self.mind_until.max(self.done + steps as u64);
         self.write_params(s, Hand::default(), 0);
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, kind as f32]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
         self.run(shared, &[(MINDLAY, self.n.div_ceil(256))]);
+    }
+
+    /// Whether `sense` reads the Mind words this tick: once any walker has
+    /// had a status, until the last one runs out (`mind_until`; the
+    /// frame's params are written before its ticks, so a step at or past
+    /// the end has none left).
+    pub fn minds_on(&self) -> bool {
+        self.minds && self.done <= self.mind_until
     }
 
     /// Each slot's Mind word (the CPU's `BigDish::mind`), read back.
@@ -3140,6 +3156,16 @@ pub fn gas_words(d: &BigDish) -> Vec<u32> {
         }
     }
     w
+}
+
+/// The last step any of a dish's Mind statuses lasts to (its words hold
+/// the low 29 bits of their end step, `MIND_T`), 0 when none lasts.
+fn mind_until(d: &BigDish) -> u64 {
+    use crate::mould::big::{mind_kind, MIND_T};
+    let now = d.steps as u32 & MIND_T;
+    // None lasting: 0 (`minds_on` then reads at most at step 0, harmless).
+    let left = d.mind.iter().filter(|&&w| mind_kind(w, d.steps) != 0).map(|&w| (w & MIND_T).wrapping_sub(now) & MIND_T).max();
+    left.map_or(0, |l| d.steps + l as u64)
 }
 
 /// The last step any of a dish's gas lasts to.

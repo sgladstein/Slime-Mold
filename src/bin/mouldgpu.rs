@@ -2863,7 +2863,8 @@ mod tests {
     /// steps. Every slot's word exact; one tick from the same state (the
     /// one-tick twin's way) leaves no walker off; 40 ticks more with no
     /// re-inject, the statuses run out on both and the words still agree
-    /// (no births here, so nothing rewrites them). Planted: a GPU status a
+    /// (no births here, so nothing rewrites them), the Mind row goes off
+    /// and a tick with it off still matches. Planted: a GPU status a
     /// step longer, and a spin with no curl on the GPU, must each fail it.
     #[test]
     fn mind_statuses_match_the_cpu() {
@@ -2905,6 +2906,14 @@ mod tests {
                 let held = (0..cpu.walkers.len()).filter(|&j| cpu.mind_of(j) != 0).count();
                 let after = e.mind_words().iter().zip(&cpu.mind).filter(|(a, b)| a != b).count();
                 assert_eq!((held, after), (0, 0), "kind {kind}: the statuses ran out and the words agree");
+                // Once the last has run out the Mind row is off (`minds_on`,
+                // the slime-enemy thread's note on #403), and a tick from the
+                // same state still leaves no walker off.
+                assert!(e.minds && !e.minds_on(), "kind {kind}: sense stops reading the words after {} (done {})", e.mind_until, e.done);
+                e.inject(&cpu);
+                assert!(!e.minds_on(), "kind {kind}: a dish whose statuses ran out loads with the row off");
+                let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
+                assert_eq!(off, 0, "kind {kind}: the tick with the row off");
             }
             (n, words_off, off)
         };

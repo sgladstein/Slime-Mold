@@ -255,7 +255,9 @@ pub(super) fn shop_of(r: &Run) -> Shop {
     let mut rules = Rules::default();
     r.rules(&mut rules);
     let rr = RoundRules { budget: r.budget(), ..RoundRules::default() };
-    let gun = r.armed();
+    // The slots and budget of what the gun slots show: the squad's gun,
+    // or the turrets' rack (`Run::rack`).
+    let gun = if r.editing_turrets { r.rack() } else { r.armed() };
     let rows = r
         .shop()
         .into_iter()
@@ -264,6 +266,9 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // The range: its own rows on the left, the shelf by what a
                 // card works on, then the bag.
                 Group::Dev if r.range => (String::new(), ShopArea::Upgrades),
+                // The gun slots' switch to the turrets' deck: a bottom-bar
+                // button (`Pick::EditTurrets`).
+                _ if row.pick == Pick::EditTurrets => (String::new(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -330,6 +335,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         slots: gun.slots,
         budget: (slime_mould::mould::rounds::cost(&r.gun()), gun.budget),
         range: r.range,
+        turrets: r.editing_turrets,
     }
 }
 
@@ -412,7 +418,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
         "campaign" | "missions" => Page::Missions,
         "options" | "options-planet" | "options-mould" => Page::Options,
         "keys" => Page::Keys,
-        "shop" | "shop-mid" | "shop-build" | "shop-tools" => Page::Shop,
+        "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
         _ => return None,
     })
 }
@@ -725,7 +731,7 @@ impl App {
         }
         self.paused = false;
         let Some(r) = self.range.clone() else { return };
-        self.rounds = Rounds::new(r.gun(), RoundRules { budget: r.budget(), ..RoundRules::default() });
+        self.rounds = Rounds::new(r.squad_cards(), RoundRules { budget: r.budget(), ..RoundRules::default() });
         if let Some(g) = self.game.as_mut() {
             let gun = r.carried();
             for q in 0..g.squads.len() {
@@ -733,7 +739,7 @@ impl App {
                 g.apply(Cmd::Load(q as u8, None));
             }
         }
-        let cards: Vec<String> = r.gun().iter().map(|c| c.title()).collect();
+        let cards: Vec<String> = r.squad_cards().iter().map(|c| c.title()).collect();
         let what = if cards.is_empty() { format!("{}, no cards: plain shots", draw::capital(&r.carried().title())) } else { format!("{}: {}", draw::capital(&r.carried().title()), cards.join(", ")) };
         self.hud.alert(&what, None, theme::ACCENT);
         self.args.range = Some(r);

@@ -543,6 +543,10 @@ pub enum Pick {
     EmptyGun,
     /// The gun range: the bag emptied (the gun keeps its cards).
     EmptyBag,
+    /// The shop's gun slots switch between the squad's gun and the
+    /// turrets' deck (the turrets thread, 2026-11-16): the same bag feeds
+    /// both, so a card on the turrets is one the squad doesn't fire.
+    EditTurrets,
 }
 
 /// One run.
@@ -576,6 +580,13 @@ pub struct Run {
     beaten: bool,
     /// The gun range (`Run::range`): a free armory, not a run.
     pub range: bool,
+    /// The shop's gun slots show the turrets' deck, not the squad's gun
+    /// (`Pick::EditTurrets`): `cards`' `on` cards are then the turrets',
+    /// and the squad's wait in `aside`, in order (and the other way round).
+    pub editing_turrets: bool,
+    /// The deck not being edited: the turrets' while the squad's gun is,
+    /// the squad's while the turrets' is.
+    aside: Vec<Card>,
 }
 
 /// The depth the gun range rolls its guns and bullets for at first.
@@ -602,7 +613,7 @@ impl Run {
                 owned[i] = 1;
             }
         }
-        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false }
+        Run { seed, depth: 1, points: 0, owned, cards: Vec::new(), offers: Vec::new(), guns: vec![first_gun()], carry: 0, gun_offers: Vec::new(), stars: Vec::new(), over: false, dev: false, rerolls: 0, beaten: false, range: false, editing_turrets: false, aside: Vec::new() }
     }
 
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
@@ -735,9 +746,64 @@ impl Run {
         self.carried().budget
     }
 
+    /// The turrets' deck as a gun to fit cards in (the turrets thread,
+    /// 2026-11-16, after the independent review: a free turret deck was a
+    /// pure buff to staying home): 2 slots and a budget of 4, one more slot
+    /// and 2 more budget a level of "Turret power".
+    pub fn turret_rack(&self) -> Gun {
+        let l = u32::from(self.level_of("turret+"));
+        Gun { slots: (2 + l).min(rounds::MAX_SLOTS as u32), budget: 4 + 2 * l, ..first_gun() }
+    }
+
+    /// What the shop's gun slots fit cards against: the carried gun, or
+    /// the turrets' rack while editing them.
+    pub fn rack(&self) -> Gun {
+        if self.editing_turrets {
+            self.turret_rack()
+        } else {
+            self.carried()
+        }
+    }
+
+    /// The squad's gun cards, in firing order, whichever is being edited.
+    pub fn squad_cards(&self) -> Vec<Card> {
+        if self.editing_turrets {
+            self.aside.clone()
+        } else {
+            self.gun()
+        }
+    }
+
+    /// The turrets' deck (`Game::turret_deck`), in firing order: empty
+    /// without turrets.
+    pub fn turret_cards(&self) -> Vec<Card> {
+        if !self.has("turret") {
+            return Vec::new();
+        }
+        if self.editing_turrets {
+            self.gun()
+        } else {
+            self.aside.clone()
+        }
+    }
+
+    /// The shop's gun slots show the turrets' deck (`on`) or the squad's
+    /// gun: the edited deck's cards change places with `aside`. True if it
+    /// changed.
+    pub fn edit_turrets(&mut self, on: bool) -> bool {
+        if on == self.editing_turrets || (on && !self.has("turret")) {
+            return false;
+        }
+        let (out, bag): (Vec<_>, Vec<_>) = self.cards.drain(..).partition(|c| c.1);
+        let back = std::mem::replace(&mut self.aside, out.into_iter().map(|c| c.0).collect());
+        self.cards = back.into_iter().map(|c| (c, true)).chain(bag).collect();
+        self.editing_turrets = on;
+        true
+    }
+
     /// The gun as it sits fits its budget and slots.
     fn fits_now(&self) -> bool {
-        rounds::fit_gun(self.gun(), &self.carried()).is_ok()
+        rounds::fit_gun(self.gun(), &self.rack()).is_ok()
     }
 
     /// Card `c` would fit in the gun beside what it holds, at its end. The
@@ -747,7 +813,7 @@ impl Run {
     pub fn fits(&self, c: Card) -> bool {
         let mut g = self.gun();
         g.push(c);
-        rounds::fit_gun(g, &self.carried()).is_ok()
+        rounds::fit_gun(g, &self.rack()).is_ok()
     }
 
     /// The cards in the gun fit it: the last card in the gun that is no
@@ -755,7 +821,7 @@ impl Run {
     /// something to fire. (Before the gun had an order of its own, 11-14,
     /// the last bought came out.)
     fn refit(&mut self) {
-        while rounds::fit_gun(self.gun(), &self.carried()).is_err() {
+        while rounds::fit_gun(self.gun(), &self.rack()).is_err() {
             let last = |bullet: bool| self.cards.iter().rposition(|c| c.1 && (c.0.kind() == Kind::Payload) == bullet);
             match last(false).or_else(|| last(true)) {
                 Some(i) => self.cards[i].1 = false,
@@ -993,6 +1059,15 @@ impl Run {
                 pick: Pick::Card(i),
             });
         }
+        if self.has("turret") {
+            // The gun slots' switch (`Pick::EditTurrets`), on the bottom bar.
+            let (name, about) = if self.editing_turrets {
+                ("Edit the squad's gun", "The slots show the turrets' cards; click to show the squad's gun.")
+            } else {
+                ("Edit the turrets' cards", "Every turret fires these cards, from the same bag as the gun's.")
+            };
+            rows.push(Row { group: Group::Dev, face: Face::Dev, on: self.editing_turrets, name: name.into(), about: about.into(), price: String::new(), state: String::new(), ready: true, pick: Pick::EditTurrets });
+        }
         if self.range {
             let row = |name: &str, about: String, pick| Row { group: Group::Dev, face: Face::Dev, on: false, name: name.into(), about, price: String::new(), state: String::new(), ready: true, pick };
             rows.push(row("New rolls", "Roll the shelf's bullets and the rack's guns again.".into(), Pick::DevReroll));
@@ -1026,6 +1101,8 @@ impl Run {
             Pick::Offer(i) => self.buy(i).is_some(),
             Pick::Gun(i) => {
                 let Some(&g) = self.gun_offers.get(i) else { return false };
+                // A new gun is fitted to the squad's cards.
+                self.edit_turrets(false);
                 // The range swaps a rack gun for the owned one of its kind,
                 // which goes on the rack (four of each, either way back).
                 if let Some(k) = self.range.then(|| self.guns.iter().position(|o| o.kind == g.kind)).flatten() {
@@ -1049,6 +1126,7 @@ impl Run {
                 if i >= self.guns.len() || i == self.carry {
                     return false;
                 }
+                self.edit_turrets(false);
                 self.carry = i;
                 self.refit();
                 true
@@ -1098,6 +1176,7 @@ impl Run {
                 }
             }
             Pick::Move(i, slot) => self.move_to(i, slot),
+            Pick::EditTurrets => self.edit_turrets(!self.editing_turrets),
         }
     }
 
@@ -1552,5 +1631,39 @@ mod tests {
         let a = r.armed();
         assert!((a.range - (g.range + 3.0)).abs() < 1e-4, "{} then {}", g.range, a.range);
         assert!((a.rate - g.rate / 0.85).abs() < 1e-4, "{} then {}", g.rate, a.rate);
+    }
+
+    /// **The turrets' deck comes out of the same bag** (the turrets
+    /// thread, 2026-11-16, after the independent review): with turrets
+    /// owned, the shop's gun slots switch to the turrets' rack (2 slots,
+    /// budget 4), a card put there leaves the bag and the squad's gun, both
+    /// decks survive the switch either way, and without turrets there is no
+    /// switch and no turret deck.
+    #[test]
+    fn the_turrets_take_cards_from_the_squads_bag() {
+        let mut r = Run::new(1);
+        r.cards = vec![(Card::Wide, true), (Card::Blast, false), (Card::Gas, false), (Card::Bomb, false)];
+        assert!(!r.pick(Pick::EditTurrets), "no turrets, no switch");
+        assert!(!r.shop().iter().any(|w| w.pick == Pick::EditTurrets));
+        assert!(r.turret_cards().is_empty());
+        r.owned[ITEMS.iter().position(|i| i.key == "turret").unwrap()] = 1;
+        assert!(r.shop().iter().any(|w| w.pick == Pick::EditTurrets));
+        assert!(r.pick(Pick::EditTurrets) && r.editing_turrets);
+        assert_eq!((r.rack().slots, r.rack().budget), (2, 4));
+        assert!(r.gun().is_empty(), "the slots now show the empty turret deck");
+        assert_eq!(r.squad_cards(), vec![Card::Wide], "the squad keeps its gun");
+        // Gas into the turrets: out of the bag.
+        let gas = r.cards.iter().position(|c| c.0 == Card::Gas).unwrap();
+        assert!(r.pick(Pick::Card(gas)));
+        assert_eq!(r.turret_cards(), vec![Card::Gas]);
+        assert_eq!(r.cards.iter().filter(|c| !c.1).count(), 2, "the bag gave it up");
+        // Back to the gun: each deck where it was, the bag shared.
+        assert!(r.pick(Pick::EditTurrets) && !r.editing_turrets);
+        assert_eq!((r.squad_cards(), r.turret_cards()), (vec![Card::Wide], vec![Card::Gas]));
+        assert_eq!(r.gun(), vec![Card::Wide]);
+        assert!(r.cards.iter().all(|c| c.0 != Card::Gas), "gas is on the turrets, not in the bag");
+        // Turret power grows the rack: a slot and 2 budget a level.
+        r.owned[ITEMS.iter().position(|i| i.key == "turret+").unwrap()] = 2;
+        assert_eq!((r.turret_rack().slots, r.turret_rack().budget), (4, 8));
     }
 }
