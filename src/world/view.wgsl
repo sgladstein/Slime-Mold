@@ -59,9 +59,13 @@ struct V {
     scent_view: u32,
     // The mini-bosses' bodies (`View::set_lumps`, 2026-11-16): how many
     // lumps have a look, and each lump's centre in cells (x, y), its look
-    // (`LumpLook`, 0 plain) and its strength 0-1.
+    // (`LumpLook`, 0 plain) and its strength 0-1; then each lump's look
+    // left as it fades (1 whole, 0 gone: `LumpBody::remain`) and what it
+    // has drunk (0-1, a leech's take: `LumpBody::fill`).
     n_lumps: u32,
     lumps: array<vec4<f32>, 4>,
+    lump_fade: vec4<f32>,
+    lump_fill: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1410,7 +1414,7 @@ fn look_trail(x: f32, y: f32) -> f32 {
 // members a cell the sharp window holds about one member, so the ratio is
 // shot noise: about 30% of the body crossed the threshold by chance and
 // re-rolled every frame, and the body boiled. The wide count is steady.
-struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32 };
+struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32, fill: f32 };
 
 // Each look's skin (the body's albedo), core light (emissive, where its
 // members are thickest) and hit colour (a member's dot as it takes hits).
@@ -1420,12 +1424,18 @@ struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover:
 // holds up for red-green colour blindness. Ember (crimson over orange) is
 // kept for the A/B: its dots sat near the panic's amber and its red near
 // the bolt's (review, 11-16). Ink is near-black over a pale lilac core, for
-// kinds told apart by value rather than hue.
+// kinds told apart by value rather than hue. Bone is a pale grey-lilac grub
+// over a faint warm core: the palest thing on the slime, so it is told
+// apart by value too; on so pale a skin a cold-white hit would not show,
+// so its hits go rose, like a bruise. The game gives each kind its look
+// (Larder World's `kind_look`): hunter violet, wanderer bone, sapper ember,
+// leech ink.
 fn lump_skin(k: u32) -> vec3<f32> {
     switch k {
         case 1u: { return vec3<f32>(96.0, 14.0, 26.0); }
         case 2u: { return vec3<f32>(120.0, 56.0, 190.0); }
         case 3u: { return vec3<f32>(26.0, 20.0, 34.0); }
+        case 4u: { return vec3<f32>(140.0, 134.0, 152.0); }
         default: { return MOULD_HUE; }
     }
 }
@@ -1434,6 +1444,7 @@ fn lump_core(k: u32) -> vec3<f32> {
         case 1u: { return vec3<f32>(255.0, 120.0, 60.0); }
         case 2u: { return vec3<f32>(220.0, 150.0, 255.0); }
         case 3u: { return vec3<f32>(200.0, 180.0, 255.0); }
+        case 4u: { return vec3<f32>(120.0, 90.0, 74.0); }
         default: { return vec3<f32>(0.0); }
     }
 }
@@ -1441,20 +1452,38 @@ fn lump_core(k: u32) -> vec3<f32> {
 fn lump_hit(k: u32) -> vec3<f32> {
     switch k {
         case 1u: { return vec3<f32>(255.0, 250.0, 235.0); }
+        case 4u: { return vec3<f32>(235.0, 64.0, 118.0); }
         default: { return vec3<f32>(225.0, 245.0, 255.0); }
     }
 }
+// A lump's core colour as it has drunk (`fill`, a leech's take from the
+// pump it sits on): toward the crystals' charge cyan, the colour of what
+// it took (the only cyan in the world is charge).
+fn lump_glow(k: u32, fill: f32) -> vec3<f32> {
+    return mix(lump_core(k), CHARGE, clamp(fill, 0.0, 1.0));
+}
 const LUMP_GLOSS: f32 = 0.9;
 const LUMP_RISE: f32 = 1.1;
-const LUMP_CORE: f32 = 0.9;
+// How bright the core light burns at full (0.9 in round 1). Since the
+// mini-boss engine's tighter clench (11-16, round 3) a body that sits (a
+// sapper at its wall, a wanderer rooted) packs past `LUMP_HOT` all over,
+// and at 0.7 its core light swamped its skin: the ember sapper read salmon,
+// the bone wanderer clipped white. Now the skin is the read and the light
+// a glow under it; the members' own dots carry the bright points.
+const LUMP_CORE: f32 = 0.4;
+// A leech's glow by its fill, over `LUMP_CORE`'s (1.5 x 0.4: at 2.5 a
+// leech two-thirds full washed its pump pale cyan and its ink was lost).
+const LUMP_DRINK: f32 = 1.5;
 // Members a cell at which a lump's own cover is 1 - 1/e (its dome). A
 // held hunter of 420 is about 25 x 35 cells, 0.5-0.6 members a cell: far
 // thinner than the sheet it left (`BODY_N`), so its cover is counted on
 // its own scale; at 0.5 a cell the cover was 0.98 at 2 members a cell, so
 // a denser body read the same.
 const LUMP_N: f32 = 0.35;
-// Members a cell (wide) where the core light starts and is full.
-const LUMP_HOT: vec2<f32> = vec2<f32>(0.55, 1.3);
+// Members a cell (wide) where the core light starts and is full ((0.55,
+// 1.3) in round 1, for a loose 0.5-a-cell body; raised with the clench,
+// so a held body glows where it packs and a lunge's clench lights it).
+const LUMP_HOT: vec2<f32> = vec2<f32>(0.65, 1.5);
 // A member's energy at which its dot burns full, and how much of its core
 // colour the dot lays over the body at full energy.
 const LUMP_FULL: f32 = 1.5;
@@ -1468,9 +1497,10 @@ const LUMP_SPECK: f32 = 0.75;
 // not on a line between their centres).
 fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     var l: Lump;
-    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0;
+    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0; l.fill = 0.0;
     if (P.n_lumps == 0u || wide <= 1e-3) { return l; }
     var best = 1e30;
+    var bk = 0u;
     for (var k = 0u; k < 4u; k++) {
         let q = P.lumps[k];
         if (q.z < 0.5) { continue; }
@@ -1478,14 +1508,25 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
         // Gaussian's tail past the members' last cells).
         let far = select(0.0, 1e20, flags != 0u && (flags & (1u << k)) == 0u);
         let d = dot(q.xy - vec2<f32>(x, y), q.xy - vec2<f32>(x, y)) + far;
-        if (d < best) { best = d; l.look = u32(q.z + 0.5); l.strength = q.w; }
+        if (d < best) { best = d; l.look = u32(q.z + 0.5); l.strength = q.w; bk = k; }
     }
     if (l.look == 0u) { return l; }
+    // How much of its look is left (a broken or spent lump fading, its
+    // members still marked): the light goes out first (by the square), the
+    // body sinks and its colour drains back to the slime's with it, so it
+    // comes apart into the sheet rather than popping back to gold.
+    let rem = clamp(P.lump_fade[bk], 0.0, 1.0);
+    l.fill = P.lump_fill[bk];
     // By the body's wide Gaussian: by the sharp one the skin's edge
     // changed within a fine cell and drew as stairs at zoom 24.
-    l.share = smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0));
+    l.share = smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0)) * rem;
     l.cover = 1.0 - exp(-wide / LUMP_N);
-    l.core = l.share * smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength);
+    // A leech's drink lights the whole of it (`LUMP_DRINK`), wherever its
+    // members are, not only where they pack: on its pump it sits under the
+    // rig and on the crystal, and only a glow round them showed it there.
+    // So a full one reads as worth breaking (its take goes back to the
+    // bank).
+    l.core = l.share * (smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength) + LUMP_DRINK * l.fill) * rem;
     l.rise = LUMP_RISE * l.share * l.cover * l.cover * (0.7 + 0.3 * l.strength);
     return l;
 }
@@ -1503,7 +1544,7 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
     let skin = lump_skin(l.look) * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
     m.albedo = mix(m.albedo, skin, s);
     m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);
-    m.glow = m.glow * (1.0 - s) + lump_core(l.look) * LUMP_CORE * l.core;
+    m.glow = m.glow * (1.0 - s) + lump_glow(l.look, l.fill) * LUMP_CORE * l.core;
     return m;
 }
 
@@ -2985,7 +3026,8 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // turning to its lump's hit colour by the hits it has taken. In a thick
     // body a calm speck's light is all but off, so members would not show
     // as ordinary specks. The word for `atomicMax`: hits on top (a hit
-    // member's dot wins its pixel), then energy, the layer, the look.
+    // member's dot wins its pixel), then energy, the layer, the lump (bits
+    // 4-5, for its fade and fill), the look.
     if (member) {
         let lk = min(u32(P.lumps[lump_k - 1u].z + 0.5), 15u);
         let hits = min(dw >> 28u, 15u);
@@ -2993,7 +3035,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         // a fed member burns bright, one run down far from food dims.
         var e8 = 8u;
         if (P.lives != 0u) { e8 = u32(round(8.0 * clamp(alive[k] / LUMP_FULL, 0.0, 1.0))); }
-        let v = (hits << 14u) | (e8 << 10u) | (3u << 8u) | lk;
+        let v = (hits << 14u) | (e8 << 10u) | (3u << 8u) | ((lump_k - 1u) << 4u) | lk;
         let r = max(P.zoom / 8.0, 0.6);
         let lo = vec2<i32>(floor(s - vec2<f32>(r + 1.0)));
         let hi = vec2<i32>(ceil(s + vec2<f32>(r + 1.0)));
@@ -3140,14 +3182,16 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
                 c = mix(c, dc, 0.95);
             }
-            // A mini-boss's member (`draw_specks`): its lump's core colour,
-            // white-hot by the hits it has taken.
+            // A mini-boss's member (`draw_specks`): its lump's core colour
+            // (cyan as a leech drinks), white-hot by the hits it has taken,
+            // going out with its lump's look as it fades.
             if (((drop >> 8u) & 3u) == 3u) {
                 let lk = drop & 15u;
+                let li = (drop >> 4u) & 3u;
                 let hit = min(f32((drop >> 14u) & 15u) / 2.0, 1.0);
                 let e = f32((drop >> 10u) & 15u) / 8.0;
-                let mc = mix(lump_core(lk), lump_hit(lk), hit);
-                c = mix(c, mc, mix(LUMP_SPECK * (0.3 + 0.7 * e), 0.95, hit));
+                let mc = mix(lump_glow(lk, P.lump_fill[li]), lump_hit(lk), hit);
+                c = mix(c, mc, mix(LUMP_SPECK * (0.3 + 0.7 * e), 0.95, hit) * clamp(P.lump_fade[li], 0.0, 1.0));
             }
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a

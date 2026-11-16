@@ -508,7 +508,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             app.age_notes(into * step_s);
         }
         let g = app.game.as_ref().unwrap();
-        let boss = g.bosses.live.first().filter(|_| app.args.follow_boss).map(|b| b.centre);
+        // The oldest, live or still fading, so a film stays on a broken
+        // one while its look drains rather than jumping to a newer one.
+        let boss = g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)).min_by_key(|b| b.born).filter(|_| app.args.follow_boss).map(|b| b.centre);
         let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.members(q),

@@ -1,0 +1,104 @@
+  boss t 85.00 s: a sapper formed round 310,85, grade 0.38
+  boss t 86 s: lump 0 sapper Gather, 196 members (first 196, 0 hurt), at 308,84, spread 1.01, stolen 0.0; nearest soldier 213.1, 8 alive
+  boss t 87 s: lump 0 sapper Gather, 196 members (first 196, 0 hurt), at 308,84, spread 0.96, stolen 0.0; nearest soldier 213.9, 8 alive
+  boss t 88 s: lump 0 sapper Gather, 196 members (first 196, 0 hurt), at 308,82, spread 0.99, stolen 0.0; nearest soldier 214.8, 8 alive
+  boss t 89 s: lump 0 sapper Gather, 196 members (first 196, 0 hurt), at 308,82, spread 1.02, stolen 0.0; nearest soldier 215.6, 8 alive
+  boss t 90 s: lump 0 sapper Gather, 196 members (first 196, 0 hurt), at 308,82, spread 1.04, stolen 0.0; nearest soldier 215.6, 8 alive
+  boss t 91 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 310,82, spread 1.00, stolen 0.0; nearest soldier 214.4, 8 alive
+  boss t 92 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 310,86, spread 1.28, stolen 0.0; nearest soldier 211.2, 8 alive
+  boss t 93 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 310,94, spread 1.15, stolen 0.0; nearest soldier 204.7, 8 alive
+  boss t 94 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 308,102, spread 1.22, stolen 0.0; nearest soldier 198.9, 8 alive
+  boss t 95 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 308,108, spread 1.19, stolen 0.0; nearest soldier 193.5, 8 alive
+  boss t 96 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 308,114, spread 1.24, stolen 0.0; nearest soldier 189.5, 8 alive
+  boss t 97 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 306,120, spread 1.31, stolen 0.0; nearest soldier 186.4, 8 alive
+  boss t 98 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 306,126, spread 1.27, stolen 0.0; nearest soldier 182.0, 8 alive
+  boss t 99 s: lump 0 sapper Go((309.5, 150.0)), 196 members (first 196, 0 hurt), at 306,132, spread 1.35, stolen 0.0; nearest soldier 178.4, 8 alive
+  boss t 100 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 306,138, spread 1.29, stolen 0.0; nearest soldier 172.8, 8 alive
+  boss t 101 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,142, spread 1.07, stolen 0.0; nearest soldier 170.0, 8 alive
+  boss t 102 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.06, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 103 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.05, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 104 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 306,144, spread 1.04, stolen 0.0; nearest soldier 169.3, 8 alive
+  boss t 105 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.97, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 106 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.96, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 107 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.98, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 108 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.00, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 109 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.99, stolen 0.0; nearest soldier 168.6, 8 alive
+  boss t 110 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.00, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 111 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.04, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 112 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.05, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 113 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.01, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 114 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.95, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 115 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.99, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 116 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.05, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 117 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.05, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 118 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.02, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 119 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.03, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 120 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.06, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 121 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.05, stolen 0.0; nearest soldier 167.2, 8 alive
+  boss t 122 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.07, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 123 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.01, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 124 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.01, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 125 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.04, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 126 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.02, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 127 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.97, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 128 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.01, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 129 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.99, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 130 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.00, stolen 0.0; nearest soldier 167.2, 8 alive
+  boss t 131 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.01, stolen 0.0; nearest soldier 167.2, 8 alive
+  boss t 132 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 0.99, stolen 0.0; nearest soldier 167.2, 8 alive
+  boss t 133 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,144, spread 1.04, stolen 0.0; nearest soldier 167.9, 8 alive
+  boss t 134 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.95, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 135 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.96, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 136 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.96, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 137 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.94, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 138 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.92, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 139 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.96, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 140 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.97, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 141 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.07, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 142 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.96, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 143 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.97, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 144 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.94, stolen 0.0; nearest soldier 166.5, 8 alive
+  boss t 145 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.99, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 146 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.97, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 147 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.92, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 148 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.93, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 149 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.96, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 150 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.95, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 151 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.98, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 152 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.99, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 153 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.98, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 154 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.00, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 155 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.98, stolen 0.0; nearest soldier 166.6, 8 alive
+  boss t 156 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.97, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 157 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.98, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 158 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.00, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 159 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.01, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 160 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 1.01, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 161 s: lump 0 sapper Sit((309.5, 150.0), 1500), 196 members (first 196, 0 hurt), at 308,146, spread 0.98, stolen 0.0; nearest soldier 167.3, 8 alive
+  boss t 162 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,146, spread 0.95, stolen 0.0; nearest soldier 166.6, 8 alive
+  boss t 163 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,146, spread 1.05, stolen 0.0; nearest soldier 166.6, 8 alive
+  boss t 164 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,148, spread 1.08, stolen 0.0; nearest soldier 165.9, 8 alive
+  boss t 165 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,148, spread 1.13, stolen 0.0; nearest soldier 165.9, 8 alive
+  boss t 166 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,148, spread 1.14, stolen 0.0; nearest soldier 164.5, 8 alive
+  boss t 167 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,150, spread 1.18, stolen 0.0; nearest soldier 163.8, 8 alive
+  boss t 168 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,150, spread 1.22, stolen 0.0; nearest soldier 163.2, 8 alive
+  boss t 169 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,152, spread 1.33, stolen 0.0; nearest soldier 162.5, 8 alive
+  boss t 170 s: lump 0 sapper Go((309.5, 160.89865)), 196 members (first 196, 0 hurt), at 308,152, spread 1.30, stolen 0.0; nearest soldier 161.9, 8 alive
+  boss t 171 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 308,154, spread 1.24, stolen 0.0; nearest soldier 161.2, 8 alive
+  boss t 172 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 318,156, spread 1.83, stolen 0.0; nearest soldier 152.5, 8 alive
+  boss t 173 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 322,158, spread 1.71, stolen 0.0; nearest soldier 148.8, 8 alive
+  boss t 174 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 324,160, spread 1.85, stolen 0.0; nearest soldier 146.0, 8 alive
+  boss t 175 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 324,160, spread 1.84, stolen 0.0; nearest soldier 145.3, 8 alive
+  boss t 176 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 326,160, spread 1.80, stolen 0.0; nearest soldier 144.5, 8 alive
+  boss t 177 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 328,160, spread 2.02, stolen 0.0; nearest soldier 141.7, 8 alive
+  boss t 178 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 330,160, spread 1.93, stolen 0.0; nearest soldier 140.9, 8 alive
+  boss t 179 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 330,160, spread 1.92, stolen 0.0; nearest soldier 140.9, 8 alive
+  boss t 180 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 330,160, spread 1.98, stolen 0.0; nearest soldier 140.2, 8 alive
+  boss t 181 s: lump 0 sapper Hunt(Some(6)), 196 members (first 196, 0 hurt), at 332,162, spread 1.97, stolen 0.0; nearest soldier 138.8, 8 alive
+  boss t 182.0 s: Crowd sapper formed on lump 1 at 77,103 (crowd top 1.00); grade 0.63: 11 blows a member, touches as 4, pace x1.25
+  boss t 182 s: lump 1 sapper Gather, 0 members (first 0, 0 hurt), at 77,103, spread 1.00, stolen 0.0; nearest soldier 386.6, 8 alive
+  boss t 182 s: lump 0 sapper ended Spent (196 members of 196; stole 0.0, 0.0 given back so far)
+  boss t 183 s: lump 1 sapper Gather, 517 members (first 517, 0 hurt), at 78,102, spread 0.89, stolen 0.0; nearest soldier 386.8, 8 alive
+  boss t 184 s: lump 1 sapper Gather, 517 members (first 517, 0 hurt), at 78,102, spread 0.86, stolen 0.0; nearest soldier 386.8, 8 alive
+  boss t 185 s: lump 1 sapper Gather, 517 members (first 517, 0 hurt), at 78,102, spread 0.86, stolen 0.0; nearest soldier 386.8, 8 alive
+  boss t 186 s: lump 1 sapper Gather, 517 members (first 517, 0 hurt), at 78,100, spread 0.86, stolen 0.0; nearest soldier 387.2, 8 alive

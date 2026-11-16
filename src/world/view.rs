@@ -27,8 +27,8 @@ pub const SHADER: &str = include_str!("view.wgsl");
 pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (44 words, then the four lumps' vec4s since the
-/// mini-bosses, 2026-11-16).
-const PARAMS_BYTES: usize = 240;
+/// mini-bosses, 2026-11-16, and their fade and fill vec4s).
+const PARAMS_BYTES: usize = 272;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -73,6 +73,8 @@ pub enum LumpLook {
     Violet = 2,
     /// Near-black skin over a pale lilac core.
     Ink = 3,
+    /// Pale bone-grey skin over a faint warm core; hits show rose.
+    Bone = 4,
 }
 
 impl LumpLook {
@@ -83,8 +85,35 @@ impl LumpLook {
             "ember" | "1" => Self::Ember,
             "violet" | "2" => Self::Violet,
             "ink" | "3" => Self::Ink,
+            "bone" | "4" => Self::Bone,
             _ => return None,
         })
+    }
+}
+
+/// One mini-boss's body as the frame draws it (`View::set_lumps`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct LumpBody {
+    /// Its centre in world cells (where two lumps' members meet, a cell
+    /// takes the nearer centre's look).
+    pub at: (f32, f32),
+    pub look: LumpLook,
+    /// 0-1: a stronger one stands taller and its core burns brighter.
+    pub strength: f32,
+    /// How much of its look is left, 1 whole to 0 gone: a broken or spent
+    /// lump's look drains out over its fade (the game's `lump_looks` bits
+    /// 8-15) while its members are still marked, so it does not pop back
+    /// to slime.
+    pub remain: f32,
+    /// 0-1, what it has drunk (a leech's take from the pump it sits on):
+    /// its core light turns to the crystals' charge cyan and burns
+    /// brighter by it.
+    pub fill: f32,
+}
+
+impl Default for LumpBody {
+    fn default() -> Self {
+        LumpBody { at: (0.0, 0.0), look: LumpLook::Plain, strength: 0.0, remain: 1.0, fill: 0.0 }
     }
 }
 
@@ -212,8 +241,11 @@ pub struct View {
     dense_at: u32,
     /// The mini-bosses' bodies (`set_lumps`, 2026-11-16): each lump's
     /// centre in cells, its look (`LumpLook`, 0 drawn as ordinary slime)
-    /// and its strength 0-1, up to `MAX_LUMPS`.
+    /// and its strength 0-1, up to `MAX_LUMPS`; then each one's look left
+    /// (`LumpBody::remain`) and its fill.
     lumps: [[f32; 4]; MAX_LUMPS],
+    lump_fade: [f32; MAX_LUMPS],
+    lump_fill: [f32; MAX_LUMPS],
     /// The plants' first cell block in `news` (words; 0 off,
     /// `set_plants`).
     plant_at: u32,
@@ -354,6 +386,8 @@ impl View {
             news_on: false,
             dense_at: 0,
             lumps: [[0.0; 4]; MAX_LUMPS],
+            lump_fade: [1.0; MAX_LUMPS],
+            lump_fill: [0.0; MAX_LUMPS],
             plant_at: 0,
             flora: 0,
             ripe_at: 0,
@@ -648,20 +682,21 @@ impl View {
     }
 
     /// The mini-bosses' bodies this frame (`mould::big` lumps; 2026-11-16):
-    /// for each lump its centre in world cells, its look (`LumpLook`) and
-    /// its strength 0-1 (a stronger one stands taller and its core burns
-    /// brighter), in lump order (lump `k` is the walkers whose dense word
-    /// holds `k + 1` in bits 25-27). A lump's members are counted on their
-    /// own a fine cell (`draw_specks`), and where they are the share of the
-    /// mould round a cell, the body takes the nearest lump's look: it
-    /// stands up, glosses and lights from inside where its members pack
-    /// (`prep`), so the look is the members themselves. Needs `set_dense`
-    /// (the walkers' dense words). An empty slice draws every lump as
-    /// ordinary slime.
-    pub fn set_lumps(&mut self, lumps: &[(f32, f32, LumpLook, f32)]) {
+    /// each lump's `LumpBody` (centre, look, strength, look left, fill), in
+    /// lump order (lump `k` is the walkers whose dense word holds `k + 1`
+    /// in bits 25-27). A lump's members are counted on their own a fine
+    /// cell (`draw_specks`), and where they are the share of the mould
+    /// round a cell, the body takes the nearest lump's look: it stands up,
+    /// glosses and lights from inside where its members pack (`prep`), so
+    /// the look is the members themselves. Needs `set_dense` (the walkers'
+    /// dense words). An empty slice draws every lump as ordinary slime.
+    pub fn set_lumps(&mut self, lumps: &[LumpBody]) {
         self.lumps = [[0.0; 4]; MAX_LUMPS];
-        for (k, &(x, y, look, strength)) in lumps.iter().take(MAX_LUMPS).enumerate() {
-            self.lumps[k] = [x, y, look as u32 as f32, strength.clamp(0.0, 1.0)];
+        (self.lump_fade, self.lump_fill) = ([1.0; MAX_LUMPS], [0.0; MAX_LUMPS]);
+        for (k, l) in lumps.iter().take(MAX_LUMPS).enumerate() {
+            self.lumps[k] = [l.at.0, l.at.1, l.look as u32 as f32, l.strength.clamp(0.0, 1.0)];
+            self.lump_fade[k] = l.remain.clamp(0.0, 1.0);
+            self.lump_fill[k] = l.fill.clamp(0.0, 1.0);
         }
     }
 
@@ -873,6 +908,9 @@ impl View {
             for v in l {
                 b.extend(v.to_le_bytes());
             }
+        }
+        for v in self.lump_fade.into_iter().chain(self.lump_fill) {
+            b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);
         if live == 2 {
@@ -1673,17 +1711,21 @@ mod tests {
         let mut cam = Camera::new((w, h), screen);
         cam.zoom_to(6.0, (0.0, 0.0));
         cam.centre_on((32.0, 16.0));
-        let mut shot = |lumps: &[(f32, f32, LumpLook, f32)]| {
+        let mut shot = |lumps: &[LumpBody]| {
             view.set_lumps(lumps);
             let mut enc = dev.create_command_encoder(&Default::default());
             view.record(&mut enc, &cam, None);
             q.submit([enc.finish()]);
             view.picture()
         };
+        let lump = |look: LumpLook, remain: f32, fill: f32| LumpBody { at: (14.0, 16.0), look, strength: 1.0, remain, fill };
         let none = shot(&[]);
-        let plain = shot(&[(14.0, 16.0, LumpLook::Plain, 1.0)]);
+        let plain = shot(&[lump(LumpLook::Plain, 1.0, 0.0)]);
         assert!(none.as_raw() == plain.as_raw(), "a Plain lump changed the picture");
-        let violet = shot(&[(14.0, 16.0, LumpLook::Violet, 1.0)]);
+        let violet = shot(&[lump(LumpLook::Violet, 1.0, 0.0)]);
+        let half = shot(&[lump(LumpLook::Violet, 0.5, 0.0)]);
+        let gone = shot(&[lump(LumpLook::Violet, 0.0, 0.0)]);
+        let (ink, drunk, bone) = (shot(&[lump(LumpLook::Ink, 1.0, 0.0)]), shot(&[lump(LumpLook::Ink, 1.0, 1.0)]), shot(&[lump(LumpLook::Bone, 1.0, 0.0)]));
         let mean = |pic: &image::RgbaImage, cx: f32, cy: f32| {
             let (x0, y0) = cam.to_screen((cx - 3.0, cy - 3.0));
             let (x1, y1) = cam.to_screen((cx + 3.0, cy + 3.0));
@@ -1706,6 +1748,21 @@ mod tests {
         assert!(before[1] > before[2] + 15.0, "without a look the lump's body is gold too: {before:?}");
         // Only the lump's side moved.
         assert_eq!(mean(&none, 50.0, 16.0), gold, "the ordinary body changed with the lump's look");
+        // A fading lump's look drains out: half way it lies between, gone
+        // it is the slime's own gold again (its members still marked).
+        let (h, g) = (mean(&half, 14.0, 16.0), mean(&gone, 14.0, 16.0));
+        let violetness = |c: [f32; 3]| c[2] - c[1];
+        assert!(violetness(h) < violetness(boss) - 10.0 && violetness(h) > violetness(before) + 10.0, "half faded is between: {h:?} {boss:?} {before:?}");
+        assert!((0..3).all(|c| (g[c] - before[c]).abs() < 8.0), "a faded lump is the slime's gold: {g:?} {before:?}");
+        // At 4 members a cell the core light is full and lights the whole
+        // body (in play a held body is about 0.5 a cell): ink's core is
+        // lilac, a leech's drink turns it to the charge's cyan, and bone's
+        // is the faint one, so bone stays an unsaturated pale grey.
+        let (i, d, b) = (mean(&ink, 14.0, 16.0), mean(&drunk, 14.0, 16.0), mean(&bone, 14.0, 16.0));
+        assert!(i[2] > i[1] + 30.0 && i[0] > i[1], "ink lights lilac: {i:?}");
+        assert!(d[1] > d[0] + 20.0 && d[1] > i[1] + 20.0, "a full leech glows cyan: {d:?} against {i:?}");
+        let spread = |c: [f32; 3]| c.iter().cloned().fold(f32::MIN, f32::max) - c.iter().cloned().fold(f32::MAX, f32::min);
+        assert!(spread(b) < 25.0 && b[2] > before[2] + 60.0, "bone is a pale grey, not gold: {b:?}");
     }
 
     /// Two lumps side by side each take their own look, condensed members
@@ -1758,7 +1815,7 @@ mod tests {
         view.set_look(&look_b, &ground, &walk_b, n as u32);
         view.set_news(Some((&news, &state)), 10, 5);
         view.set_dense(Some((&news, &state)), n as u32, 0);
-        view.set_lumps(&[(14.0, 16.0, LumpLook::Violet, 0.5), (34.0, 16.0, LumpLook::Ember, 0.5)]);
+        view.set_lumps(&[LumpBody { at: (14.0, 16.0), look: LumpLook::Violet, strength: 0.5, ..LumpBody::default() }, LumpBody { at: (34.0, 16.0), look: LumpLook::Ember, strength: 0.5, ..LumpBody::default() }]);
         let mut cam = Camera::new((w, h), screen);
         let shot = |cam: &Camera| {
             let mut enc = dev.create_command_encoder(&Default::default());
