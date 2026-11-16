@@ -1,0 +1,20 @@
+larder-world machine at the start: RAM 3.2 GB free of 8.0; GPU memory 864 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: planet:8:1 seed 1, 1256 x 784 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 thicken=2 surge=1800 flinch=0.9 set:start_bank=1000000 set:max_squad=40; hand greedy, 60 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 303.5 MB for 1256 x 784 cells (308 bytes a cell), the biggest 55.7 MB
+  3600 frames, 900 game steps; 0.07 read-backs a step, 0.00 waits a step (0.01 ms a step waiting); steps finished once in 899, when the next was due 0
+  every frame (3600 of them), ms: frame p50 5.93 p95 7.21 max 18.67; step  p50 0.10 p95 1.82 max 8.87; prepare  p50 0.16 p95 0.19 max 2.21; record  p50 0.10 p95 0.12 max 1.37; GPU tail  p50 4.91 p95 6.02 max 10.35
+  frames with a step (900 of them), ms: frame p50 6.60 p95 7.91 max 18.67; step  p50 1.31 p95 2.69 max 8.87; prepare  p50 0.16 p95 0.19 max 0.71; record  p50 0.11 p95 0.12 max 0.30; GPU tail  p50 5.12 p95 5.24 max 9.50
+  after the first game second (3540 frames), ms: frame max 13.32; step max 7.96; prepare max 1.84
+  longest frames, at game time: 0.12 s: 18.67 (step 8.87, prepare 0.25, record 0.14, tail 9.40, stepped); 0.18 s: 16.75 (step 6.93, prepare 0.19, record 0.13, tail 9.50, stepped); 0.38 s: 13.66 (step 8.09, prepare 0.20, record 0.15, tail 5.22, stepped)
+  ground refresh: 59 of them, ms: mean 1.16 max 1.36, of which the read-back at most 0.31; 35182 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 60 s: mould 25679, soldiers 40, buildings 0, harvested 6409, shots 262, killed 144
+  view, every pass timed alone (median of 30 frames): 3.982 ms in all
+    base       3.772 ms   94.7%  (30 frames)
+    marks      0.005 ms    0.1%  (30 frames)
+    compose    0.081 ms    2.0%  (30 frames)
+    specks     0.010 ms    0.3%  (30 frames)
+    prep       0.109 ms    2.7%  (30 frames)
+    drain      0.005 ms    0.1%  (30 frames)
+  machine at the end: RAM 3.1 GB free of 8.0; GPU memory 1132 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
