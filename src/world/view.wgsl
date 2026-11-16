@@ -56,7 +56,12 @@ struct V {
     // world and washes over it the two fields a walker's sensor adds up
     // (the engine's `sense_at`): the food scent (the look's byte 3) in
     // blue with its contour lines, and the mould's trail (byte 0) in pink.
-    scent_view: u32, pad1: u32,
+    scent_view: u32,
+    // The mini-bosses' bodies (`View::set_lumps`, 2026-11-16): how many
+    // lumps have a look, and each lump's centre in cells (x, y), its look
+    // (`LumpLook`, 0 plain) and its strength 0-1.
+    n_lumps: u32,
+    lumps: array<vec4<f32>, 4>,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -684,6 +689,21 @@ const DENSE_BIT: u32 = 0x10000u;
 const ABSORB_BIT: u32 = 0x20000u;
 const ABSORB_STEPS: f32 = 15.0;
 const ABSORB_RGB: vec3<f32> = vec3<f32>(255.0, 232.0, 190.0);
+// The fine grid's second half, a word a fine cell (`draw_specks`, read by
+// `prep`): the condensed weights in bits 0-12 (15 a condensed walker, so
+// 546 of them a fine cell; the engine's crowd cap keeps a cell to 255), a
+// mini-boss's members in bits 13-21 (one each, 511), a flag a lump in bits
+// 22-25 (set with `atomicOr`: which lumps have members there), fresh
+// absorptions from bit 26 (63). Before the mini-bosses (2026-11-16) the
+// absorptions sat at bit 16.
+const FG_DENSE: u32 = 0x1FFFu;
+const FG_LUMP: u32 = 13u;
+const FG_LUMP_MASK: u32 = 0x1FFu;
+const FG_FLAGS: u32 = 22u;
+const FG_ABSORB: u32 = 26u;
+// A mini-boss's member: its lump + 1 in its dense word's bits 25-27 (the
+// engine's `lump_of`), the hits it has taken in bits 28-31.
+const LUMP_SHIFT: u32 = 25u;
 // The engine's colour for bare agar; what it adds above this (scent,
 // species, germ, grass tints) is laid over the soil.
 const AGAR_RGB: vec3<f32> = vec3<f32>(12.0, 22.0, 26.0);
@@ -1216,7 +1236,7 @@ var<workgroup> crowd2: array<u32, 576>;
 // 24 rows of the workgroup's 16 columns): the sharp count, the cut-off
 // count, the condensed count and the fresh absorptions under the sharp
 // Gaussian, and the count under the body's.
-var<workgroup> rows5: array<array<f32, 5>, 384>;
+var<workgroup> rows5: array<array<f32, 6>, 384>;
 
 // The slime below the cell (2026-11-14, the owner's playtest, 01:49Z: "The
 // slime looks very blurry/out of focus"). Before, the body was one value a
@@ -1356,6 +1376,125 @@ fn look_trail(x: f32, y: f32) -> f32 {
     return t / ws;
 }
 
+// ---- Mini-boss bodies (2026-11-16) ----
+//
+// A mini-boss is a lump of the slime's own walkers held together and
+// steered as one (`mould::big` lumps). Its look is those walkers: `prep`
+// counts them on their own (`lcb`), and where they are a share of the
+// mould round a cell, the body carries the lump's material over the
+// ordinary slime's, by that share, so there is no drawn outline: a lump
+// forming among the sheet shows as its members' colour spreading through
+// it, and a held body is a solid patch of it. The members' own density
+// (under the body's wide Gaussian) is its shape: it stands up as a glossy
+// dome where they are thick, with a darker, wetter membrane where their
+// cover falls off, and it lights from inside where they are thickest, so a
+// body that clenches or bunches as it lunges shows that as it happens.
+// Every member is also its own dot (`draw_specks`), so the body's churn is
+// its walkers moving. The owner (11-16): from the simulation, not drawn on
+// top; not bronze; varied per kind; stronger ones read so.
+//
+// Tried and dropped (11-16, independent review): the core lit where the
+// members' sharp count stood above their wide one (their clumps). At 0.5
+// members a cell the sharp window holds about one member, so the ratio is
+// shot noise: about 30% of the body crossed the threshold by chance and
+// re-rolled every frame, and the body boiled. The wide count is steady.
+struct Lump { share: f32, look: u32, strength: f32, core: f32, rise: f32, cover: f32 };
+
+// Each look's skin (the body's albedo), core light (emissive, where its
+// members are thickest) and hit colour (a member's dot as it takes hits).
+// Violet is the hunter's: the one hue the screen did not use (the slime
+// gold, bronze, the panic's amber and red, crystal cyan, the soldiers'
+// blue, olive ground), the complement of the gold it forms inside, and it
+// holds up for red-green colour blindness. Ember (crimson over orange) is
+// kept for the A/B: its dots sat near the panic's amber and its red near
+// the bolt's (review, 11-16). Ink is near-black over a pale lilac core, for
+// kinds told apart by value rather than hue.
+fn lump_skin(k: u32) -> vec3<f32> {
+    switch k {
+        case 1u: { return vec3<f32>(96.0, 14.0, 26.0); }
+        case 2u: { return vec3<f32>(120.0, 56.0, 190.0); }
+        case 3u: { return vec3<f32>(26.0, 20.0, 34.0); }
+        default: { return MOULD_HUE; }
+    }
+}
+fn lump_core(k: u32) -> vec3<f32> {
+    switch k {
+        case 1u: { return vec3<f32>(255.0, 120.0, 60.0); }
+        case 2u: { return vec3<f32>(220.0, 150.0, 255.0); }
+        case 3u: { return vec3<f32>(200.0, 180.0, 255.0); }
+        default: { return vec3<f32>(0.0); }
+    }
+}
+// A hit member: cold white, away from the shot spray's warm white-hot.
+fn lump_hit(k: u32) -> vec3<f32> {
+    switch k {
+        case 1u: { return vec3<f32>(255.0, 250.0, 235.0); }
+        default: { return vec3<f32>(225.0, 245.0, 255.0); }
+    }
+}
+const LUMP_GLOSS: f32 = 0.9;
+const LUMP_RISE: f32 = 1.1;
+const LUMP_CORE: f32 = 0.9;
+// Members a cell at which a lump's own cover is 1 - 1/e (its dome). A
+// held hunter of 420 is about 25 x 35 cells, 0.5-0.6 members a cell: far
+// thinner than the sheet it left (`BODY_N`), so its cover is counted on
+// its own scale; at 0.5 a cell the cover was 0.98 at 2 members a cell, so
+// a denser body read the same.
+const LUMP_N: f32 = 0.35;
+// Members a cell (wide) where the core light starts and is full.
+const LUMP_HOT: vec2<f32> = vec2<f32>(0.55, 1.3);
+// A member's energy at which its dot burns full, and how much of its core
+// colour the dot lays over the body at full energy.
+const LUMP_FULL: f32 = 1.5;
+const LUMP_SPECK: f32 = 0.75;
+
+// The lump at world point (x, y): `share` its members over all walkers
+// (both under the body's wide Gaussian), `wide` its members a cell, and
+// `flags` the lumps with members in the 5 x 5 fine cells round (bits 0-3,
+// `FG_FLAGS`): the look is that lump's, or of the nearest flagged centre
+// where two meet (so two lumps side by side meet where their members do,
+// not on a line between their centres).
+fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
+    var l: Lump;
+    l.share = 0.0; l.look = 0u; l.strength = 0.0; l.core = 0.0; l.rise = 0.0; l.cover = 0.0;
+    if (P.n_lumps == 0u || wide <= 1e-3) { return l; }
+    var best = 1e30;
+    for (var k = 0u; k < 4u; k++) {
+        let q = P.lumps[k];
+        if (q.z < 0.5) { continue; }
+        // Unflagged lumps only when no lump is flagged here (the wide
+        // Gaussian's tail past the members' last cells).
+        let far = select(0.0, 1e20, flags != 0u && (flags & (1u << k)) == 0u);
+        let d = dot(q.xy - vec2<f32>(x, y), q.xy - vec2<f32>(x, y)) + far;
+        if (d < best) { best = d; l.look = u32(q.z + 0.5); l.strength = q.w; }
+    }
+    if (l.look == 0u) { return l; }
+    // By the body's wide Gaussian: by the sharp one the skin's edge
+    // changed within a fine cell and drew as stairs at zoom 24.
+    l.share = smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0));
+    l.cover = 1.0 - exp(-wide / LUMP_N);
+    l.core = l.share * smoothstep(LUMP_HOT.x, LUMP_HOT.y, wide) * (0.6 + 0.4 * l.strength);
+    l.rise = LUMP_RISE * l.share * l.cover * l.cover * (0.7 + 0.3 * l.strength);
+    return l;
+}
+
+// The material over a cell where a lump is (`lump_here`): its skin by its
+// share, its gloss, and its core's light.
+fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
+    if (l.look == 0u || l.share <= 0.0) { return m0; }
+    var m = m0;
+    let s = l.share * smoothstep(0.02, 0.2, th);
+    // Darker where its members thin out, so its edge is theirs: a dark,
+    // wet membrane where their cover falls off (`rim`, its slope's middle),
+    // lighter inside where they are thick.
+    let rim = 4.0 * l.cover * (1.0 - l.cover);
+    let skin = lump_skin(l.look) * (0.55 + 0.55 * smoothstep(0.3, 0.9, l.cover)) * (1.0 - 0.45 * rim);
+    m.albedo = mix(m.albedo, skin, s);
+    m.gloss = mix(m.gloss, min(LUMP_GLOSS + 0.1 * rim, 1.0), s);
+    m.glow = m.glow * (1.0 - s) + lump_core(l.look) * LUMP_CORE * l.core;
+    return m;
+}
+
 // How far beyond the map's edge `prep` works the ground out, in cells.
 const OFF_MAP: f32 = 8.0;
 
@@ -1421,16 +1560,18 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     for (var k = li; k < 384u; k += 256u) {
         let r = k / 16u;
         let c0 = k % 16u;
-        var a = array<f32, 5>(0.0, 0.0, 0.0, 0.0, 0.0);
+        var a = array<f32, 6>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         for (var dx = 0u; dx < 9u; dx++) {
             let t = crowd[r * 24u + c0 + dx];
             let c = f32(t & 0xFFFFu) / 15.0;
             let t2 = crowd2[r * 24u + c0 + dx];
             a[0] += g1[dx] * c;
             a[1] += g1[dx] * f32(t >> 16u) / 15.0;
-            a[2] += g1[dx] * f32(t2 & 0xFFFFu) / 15.0;
-            a[3] += g1[dx] * f32(t2 >> 16u);
+            a[2] += g1[dx] * f32(t2 & FG_DENSE) / 15.0;
+            a[3] += g1[dx] * f32(t2 >> FG_ABSORB);
             a[4] += g2[dx] * c;
+            // A mini-boss's members, under the body's Gaussian (`lump_here`).
+            a[5] += g2[dx] * f32((t2 >> FG_LUMP) & FG_LUMP_MASK);
         }
         rows5[k] = a;
     }
@@ -1442,6 +1583,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     var nb = 0.0;
     var dn = 0.0;
     var ab = 0.0;
+    var lcb = 0.0;
     for (var dy = 0u; dy < 9u; dy++) {
         let a = rows5[(lid.y + dy) * 16u + lid.x];
         n += g1[dy] * a[0];
@@ -1449,6 +1591,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         dn += g1[dy] * a[2];
         ab += g1[dy] * a[3];
         nb += g2[dy] * a[4];
+        lcb += g2[dy] * a[5];
     }
     let ws = s1 * s1;
     let wb = s2 * s2;
@@ -1497,7 +1640,24 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     // raw thickness `th0`, veins and all, raised by up to 0.6, so the broad
     // sheen runs over it as over dense wet metal; only its colour takes the
     // plateau. The first cut fed the plateau to the height too.
-    let th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
+    var th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share) * smoothstep(0.3, 0.6, wide);
+    // A mini-boss's body (2026-11-16): its members' share of the walkers
+    // round the cell (a member counts once in `n` and once in `lc`), and the
+    // nearest lump's look. Where its members are, it stands up from the
+    // sheet as a raised, rounder body (by their share and how tightly they
+    // pack, `near`), so it casts its own shadow and catches the sheen.
+    // Which lumps have members in the 5 x 5 fine cells round (the tile's
+    // flags, `FG_FLAGS`), read only where members are.
+    var flags = 0u;
+    if (lcb > 1e-3) {
+        for (var fy = 2u; fy < 7u; fy++) {
+            for (var fx = 2u; fx < 7u; fx++) {
+                flags |= (crowd2[(lid.y + fy) * 24u + lid.x + fx] >> FG_FLAGS) & 15u;
+            }
+        }
+    }
+    let lump = lump_here(wx, wy, lcb / max(nb, 1e-3), lcb / wb * kf * kf, flags);
+    th_h = th_h + lump.rise;
     // The hard terrain a whole cell (`tcell`), from the fine cell at the
     // cell's corner.
     if (gid.x % P.fine == 0u && gid.y % P.fine == 0u) {
@@ -1517,6 +1677,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         var m1 = cell_mat(ix, iy, tm, cut_share, dense_share);
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
+        m1 = lump_mat(m1, lump, tm);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1542,6 +1703,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         mt.albedo += wq * mq.albedo; mt.glow += wq * mq.glow; mt.gloss += wq * mq.gloss; mt.vis += wq * mq.vis;
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
+    mt = lump_mat(mt, lump, tm);
     hcell[i] = h.x;
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
@@ -2628,7 +2790,7 @@ fn draw_absorbed(k: u32, dw: u32) {
         let kf = f32(P.fine);
         let gx = i32(floor((w.x - f32(P.ox)) * kf));
         let gy = i32(floor((w.y - f32(P.oy)) * kf));
-        if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << 16u); }
+        if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << FG_ABSORB); }
     }
     // The streak in screen pixels, tail to head, brightest at the head.
     let a = (tail - vec2<f32>(P.cx, P.cy)) * P.zoom;
@@ -2684,7 +2846,15 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     var bolt = 0u;
     var cnt = 15u;
     var cut = 0.0;
-    if (P.news_on == 1u) {
+    // A mini-boss's member (2026-11-16): its lump + 1 in its word's bits
+    // 25-27, when the game gives that lump a look. The engine spares members
+    // withering and panic, so their news is not drawn (no ash, no amber or
+    // red speck on a hunter crossing open ground); nor their condensing,
+    // nor their ripeness (the engine keeps writing both): a member is the
+    // lump's material and counts once, in `prep`'s body and its own count.
+    let lump_k = (dw >> LUMP_SHIFT) & 7u;
+    let member = P.n_lumps > 0u && lump_k != 0u && lump_k <= 4u && P.lumps[min(lump_k, 4u) - 1u].z >= 0.5;
+    if (P.news_on == 1u && !member) {
         let heard = news[k];
         let now = state[0] + 1u;
         let age = f32(now - min(heard, now));
@@ -2709,10 +2879,15 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     // flares (`fresh`; 2 s at first read as noise, art director 11-14).
     var fresh = 0u;
     var dcnt = 0u;
-    if (P.dense_at > 0u) {
+    // A member is counted on its own (`FG_LUMP`, `prep`'s `lcb`), and its
+    // lump's flag set in the cell (`FG_FLAGS`), so `prep` takes the look
+    // of the lump that is there, not of the nearest centre.
+    if (member) {
+        dcnt = 1u << FG_LUMP;
+    } else if (P.dense_at > 0u) {
         if ((dw & DENSE_BIT) != 0u) {
             cnt += 15u;
-            dcnt = 15u;
+            dcnt += 15u;
             let age = f32(dw & 0xFFFFu);
             fresh = u32(round(4.0 * max(1.0 - age / 12.0, 0.0)));
         } else if (P.ripe_at > 0u) {
@@ -2731,6 +2906,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gx >= 0 && gy >= 0 && gx < i32(P.rw) && gy < i32(P.rh)) {
         atomicAdd(&fgrid[u32(gy) * P.rw + u32(gx)], cnt);
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
+        if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
     }
     let s = vec2<f32>((w.x - P.cx) * P.zoom, (w.y - P.cy) * P.zoom);
     let px = i32(floor(s.x)); let py = i32(floor(s.y));
@@ -2788,6 +2964,32 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (d <= r) { v = (2u << 8u) | u32(f32(heat) * (1.0 - 0.5 * t)); }
                 else if (d <= r + rim) { v = 1u << 8u; }
                 if (v != 0u) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
+            }
+        }
+        return;
+    }
+    // A mini-boss's member (2026-11-16) is drawn as itself, at every zoom:
+    // a round dot in its lump's core colour (`base`, the specks' third
+    // screen as layer 3, over the droplets), bright by its energy and
+    // turning to its lump's hit colour by the hits it has taken. In a thick
+    // body a calm speck's light is all but off, so members would not show
+    // as ordinary specks. The word for `atomicMax`: hits on top (a hit
+    // member's dot wins its pixel), then energy, the layer, the look.
+    if (member) {
+        let lk = min(u32(P.lumps[lump_k - 1u].z + 0.5), 15u);
+        let hits = min(dw >> 28u, 15u);
+        // Its energy (`alive`, with lives on) in eighths of `LUMP_FULL`:
+        // a fed member burns bright, one run down far from food dims.
+        var e8 = 8u;
+        if (P.lives != 0u) { e8 = u32(round(8.0 * clamp(alive[k] / LUMP_FULL, 0.0, 1.0))); }
+        let v = (hits << 14u) | (e8 << 10u) | (3u << 8u) | lk;
+        let r = max(P.zoom / 8.0, 0.6);
+        let lo = vec2<i32>(floor(s - vec2<f32>(r + 1.0)));
+        let hi = vec2<i32>(ceil(s + vec2<f32>(r + 1.0)));
+        for (var qy = max(lo.y, 0); qy <= min(hi.y, i32(P.sh) - 1); qy++) {
+            for (var qx = max(lo.x, 0); qx <= min(hi.x, i32(P.sw) - 1); qx++) {
+                let p = vec2<f32>(f32(qx) + 0.5, f32(qy) + 0.5);
+                if (distance(p, s) <= max(r, 0.71)) { atomicMax(&specks[2u * P.shalf + u32(qy) * P.stride + u32(qx)], v); }
             }
         }
         return;
@@ -2926,6 +3128,15 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 var dc = DROP_GOLD;
                 if (hh > 0.0) { dc = mix(DROP_COOL, DROP_HOT, hh * hh * (3.0 - 2.0 * hh)); }
                 c = mix(c, dc, 0.95);
+            }
+            // A mini-boss's member (`draw_specks`): its lump's core colour,
+            // white-hot by the hits it has taken.
+            if (((drop >> 8u) & 3u) == 3u) {
+                let lk = drop & 15u;
+                let hit = min(f32((drop >> 14u) & 15u) / 2.0, 1.0);
+                let e = f32((drop >> 10u) & 15u) / 8.0;
+                let mc = mix(lump_core(lk), lump_hit(lk), hit);
+                c = mix(c, mc, mix(LUMP_SPECK * (0.3 + 0.7 * e), 0.95, hit));
             }
             // Cut-off walkers' specks take their phase's colour outright
             // (added light was lost on the bright body: no pixel of a
