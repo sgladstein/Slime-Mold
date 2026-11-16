@@ -631,6 +631,7 @@ impl Rules {
             "boss_fresh" => &mut self.boss.fresh,
             "boss_root" => &mut self.boss.root,
             "boss_grow" => &mut self.boss.grow,
+            "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,

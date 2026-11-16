@@ -3832,6 +3832,20 @@ fn a_leech_takes_a_pumps_pay_and_gives_it_back_when_broken() {
     assert!(g.bank <= bank, "the bank gets nothing from the pump");
     assert!(g.buildings[pump].alive && g.buildings[pump].hp >= hp, "the rig stands under it");
     assert_eq!(g.bosses.stolen, took);
+    // It rings the pump (`BossRules::ring`, look thread 11:56Z), outside
+    // the rig (`pump_rig_r`, 1.3 x the crystal's radius) and round it.
+    let (lump, cr) = (g.bosses.live[0].lump, g.world.crystal_r(14));
+    let mut eighths = [0; 8];
+    let mut d: Vec<f32> = Vec::new();
+    for k in (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(lump)) {
+        let (dx, dy) = (g.world.walkers[k].0 - at.0, g.world.walkers[k].1 - at.1);
+        d.push(dx.hypot(dy));
+        eighths[((dy.atan2(dx) / std::f32::consts::TAU + 1.0) * 8.0) as usize % 8] += 1;
+    }
+    d.sort_by(f32::total_cmp);
+    let (tenth, median) = (d[d.len() / 10], d[d.len() / 2]);
+    eprintln!("ring {:.1} (crystal {cr:.1}): members from the pump {tenth:.1} (10%), {median:.1} (median); by eighths {eighths:?}", cr * g.rules.boss.ring);
+    assert!(tenth > 1.3 * cr && eighths.iter().filter(|&&n| n > 0).count() >= 6, "a ring outside the rig, round it");
     // Broken (most of its members gone): its take goes back.
     let bank = g.bank;
     g.bosses.live[0].first = 100 * g.bosses.live[0].members.max(1);

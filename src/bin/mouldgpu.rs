@@ -3799,8 +3799,8 @@ mod tests {
             // breaks away or withers, and members do not ripen; condensed
             // ones break keeping their lump): lump 0 pulled to a far cell on a leash
             // tight enough that some members run back, at 1.5x pace, and
-            // passing into cells one walker holds (`LUMP_CROWD`); lump 1 on
-            // a leash alone; lump 3 on with no members.
+            // passing into cells the crowd limit closes (`LUMP_CROWD`); lump
+            // 1 on a leash alone; lump 3 a ring (`Lump::ring`).
             ("lump: walkers travel held", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // And with no bronze (the owner, 04:58Z: "Remove the bronze"):
             // lumps of ordinary walkers, where cut-off walkers panic and
@@ -3942,18 +3942,45 @@ mod tests {
                 let b = *living.iter().find(|p| (p.0 - a.0).hypot(p.1 - a.1) > 30.0).expect("walkers apart");
                 let cell = |p: (f32, f32)| p.0 as u32 | (p.1 as u32) << 16;
                 let far = cell(((cpu.w - 2) as f32, (cpu.h / 2) as f32));
-                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2 };
+                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2, ring: 0.0 };
                 s.lumps[1] = Lump { leash: 0.8, ..Lump::default() };
-                s.lumps[3] = Lump { aim: far, haste: 2.0, ..Lump::default() };
+                // Lump 3 rings (`Lump::ring`, a leech round its pump) the
+                // most crowded of every 50th walker apart from both, aimed
+                // at its own cell, so some members lie inside the ring, some
+                // in its band and some past it.
+                let crowd = |c: &(f32, f32)| living.iter().filter(|p| (p.0 - c.0).hypot(p.1 - c.1) <= 10.0).count();
+                let c = *living.iter().step_by(50).filter(|p| (p.0 - a.0).hypot(p.1 - a.1) > 50.0 && (p.0 - b.0).hypot(p.1 - b.1) > 30.0).max_by_key(|p| crowd(p)).expect("a third walker apart");
+                s.lumps[3] = Lump { aim: cell(c), pull: 20.0, leash: 1.5, haste: 2.0, ring: 3.0, ..Lump::default() };
                 cpu.p.lumps = s.lumps;
                 let n0 = cpu.form_lump(0, Some((cell(a), 20 * 20)));
                 let n1 = cpu.form_lump(1, Some((cell(b), 8 * 8)));
+                let n3 = cpu.form_lump(3, Some((cell(c), 10 * 10)));
                 cpu.sum_lumps();
+                // The ring's members: inside it (they run out), past its
+                // band (they run back) and in it (calm), as the CPU tests.
+                let (mut inside, mut outside, mut banded) = (0, 0, 0);
+                if let Some((_, _, m)) = cpu.lump_centre(3) {
+                    let l = s.lumps[3];
+                    let (ax, ay) = ((l.aim & 0xFFFF) as f32 + 0.5, (l.aim >> 16) as f32 + 0.5);
+                    for k in (0..cpu.walkers.len()).filter(|&k| cpu.lives(k) && cpu.lump_of(k) == Some(3)) {
+                        let (x, y, _) = cpu.walkers[k];
+                        let d2 = (x - ax) * (x - ax) + (y - ay) * (y - ay);
+                        if d2 < l.ring * l.ring {
+                            inside += 1;
+                        } else if d2 > l.ring * l.ring + l.leash_k() * m as f32 {
+                            outside += 1;
+                        } else {
+                            banded += 1;
+                        }
+                    }
+                }
+                eprintln!("{name}: a ring of {n3}: {inside} inside it, {banded} in its band, {outside} past it");
+                assert!(inside > 0 && banded > 0 && outside > 0, "{name}: ring members inside ({inside}), in ({banded}) and past ({outside}) the band");
                 for k in 0..cpu.walkers.len() {
                     if let (true, Some(l)) = (cpu.lives(k), cpu.lump_of(k)) {
                         let (cx, cy, m) = cpu.lump_centre(l).unwrap();
                         let (x, y, _) = cpu.walkers[k];
-                        leashed += ((x - cx).powi(2) + (y - cy).powi(2) > s.lumps[l].leash_k() * m as f32) as usize;
+                        leashed += (s.lumps[l].ring <= 0.0 && (x - cx).powi(2) + (y - cy).powi(2) > s.lumps[l].leash_k() * m as f32) as usize;
                         members.push(k);
                     }
                 }
@@ -4037,7 +4064,7 @@ mod tests {
                 let gs = e.lump_sums();
                 eprintln!("{name}: lump sums {:?} on the CPU, {gs:?} on the GPU", cpu.lump_sums);
                 assert_eq!(gs, cpu.lump_sums, "{name}: lump sums");
-                assert!(gs[0].2 > 0 && gs[1].2 > 0 && gs[2].2 == 0 && gs[3].2 == 0, "{name}: lumps 0 and 1 hold members");
+                assert!(gs[0].2 > 0 && gs[1].2 > 0 && gs[2].2 == 0 && gs[3].2 > 0, "{name}: lumps 0, 1 and 3 hold members");
                 // Few walkers are members, so the dish's 0.1% bound would
                 // pass a wrong pull or leash: every member must agree.
                 let gw = walkers_of(&e);

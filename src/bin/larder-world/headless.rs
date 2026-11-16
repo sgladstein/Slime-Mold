@@ -404,6 +404,23 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
                     let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
                     println!("  boss t {:.0} s: lump {} {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}, stolen {:.1}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.kind.name(), b.phase, b.members, b.first, b.centre.0, b.centre.1, b.stolen, g.alive());
+                    // A ring (`big::Lump::ring`, a leech round its pump):
+                    // its members' distance from what it sits on, and how
+                    // many lie in each eighth round it (from the east, the
+                    // way the angle turns).
+                    if let (slime_mould::mould::larder_world::BossPhase::Sit(p, _), true) = (b.phase, b.kind == slime_mould::mould::larder_world::BossKind::Leech) {
+                        let mut eighths = [0u32; 8];
+                        let mut d: Vec<f32> = Vec::new();
+                        for k in (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1) {
+                            let (dx, dy) = (ws[4 * k] - p.0, ws[4 * k + 1] - p.1);
+                            d.push(dx.hypot(dy));
+                            eighths[((dy.atan2(dx) / std::f32::consts::TAU + 1.0) * 8.0) as usize % 8] += 1;
+                        }
+                        d.sort_by(f32::total_cmp);
+                        let q = |f: f32| d.get(((d.len() as f32 - 1.0) * f) as usize).copied().unwrap_or(0.0);
+                        let cr = g.buildings.iter().find(|w| w.alive && (w.at.0 - p.0).hypot(w.at.1 - p.1) < 1.0).and_then(|w| w.crystal).map_or(0.0, |c| g.world.crystal_r(c));
+                        println!("    ring: crystal radius {cr:.1}, rig {:.1}, ring {:.1}; from the pump {:.1} / {:.1} / {:.1} (10% / median / 90%); by eighths {eighths:?}", 1.3 * cr, g.rules.boss.ring * cr, q(0.1), q(0.5), q(0.9));
+                    }
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
                     println!("  boss t {:.0} s: lump {} {} ended {e:?} ({} members of {}; stole {:.1}, {:.1} given back so far)", g.time(), b.lump, b.kind.name(), b.members, b.first, b.stolen, g.bosses.returned);

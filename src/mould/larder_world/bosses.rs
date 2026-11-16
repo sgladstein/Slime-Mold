@@ -131,6 +131,13 @@ pub struct BossRules {
     pub fresh: f32,
     pub root: f32,
     pub grow: f32,
+    /// The leech holds its members in a ring round the pump it sits on,
+    /// `ring` x the crystal's radius from its middle (`big::Lump::ring`; 0
+    /// sits on it as a disc). 1.5 is just outside the rig, which is drawn
+    /// to 1.3 (`pump_rig_r`). Look thread, 11:56Z: sat on the pump, its
+    /// members lay under the crystal, the rig and the box, and almost none
+    /// of it showed.
+    pub ring: f32,
 }
 
 impl BossRules {
@@ -239,6 +246,7 @@ impl Default for BossRules {
             fresh: 0.5,
             root: 15.0,
             grow: 2.0,
+            ring: 1.5,
         }
     }
 }
@@ -460,7 +468,12 @@ impl<W: World> Game<W> {
                 // sapper pressing into the wall).
                 match (b.phase, b.kind) {
                     (BossPhase::Sit(..), BossKind::Sapper) => go(p),
-                    (BossPhase::Sit(..), _) => Lump { aim: cell(p), pull: 0.5 * r.pull, leash: clench, ..strong },
+                    (BossPhase::Sit(..), kind) => {
+                        // A leech rings its pump (`ring`): the pull still
+                        // presses it in, onto the ring's inner edge.
+                        let ring = if kind == BossKind::Leech { self.leech_ring(p) } else { 0.0 };
+                        Lump { aim: cell(p), pull: 0.5 * r.pull, leash: clench, ring, ..strong }
+                    }
                     _ => go(p),
                 }
             } else {
@@ -722,6 +735,17 @@ impl<W: World> Game<W> {
     }
 
     /// The live leech sitting on building `k` (a pump), if any.
+    /// The ring (fine cells) a leech sat at `p` holds round its pump: the
+    /// pump's crystal's radius x `BossRules::ring`; 0 with none.
+    fn leech_ring(&self, p: (f32, f32)) -> f32 {
+        let r = self.rules.boss.ring;
+        let pump = self.buildings.iter().find(|w| w.alive && w.kind == Kind::Pump && (w.at.0 - p.0).hypot(w.at.1 - p.1) < 1.0);
+        match pump.and_then(|w| w.crystal) {
+            Some(c) if r > 0.0 => self.world.crystal_r(c) * r,
+            _ => 0.0,
+        }
+    }
+
     pub fn leech_on(&self, k: usize) -> Option<usize> {
         let at = self.buildings.get(k)?.at;
         self.bosses.live.iter().position(|b| b.kind == BossKind::Leech && matches!(b.phase, BossPhase::Sit(p, _) if (p.0 - at.0).hypot(p.1 - at.1) < 1.0))
