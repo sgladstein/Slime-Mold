@@ -94,7 +94,10 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   window draws soldiers between game steps and turns figures smoothly.
   The anchor eases into its goal and waits softly. Numbers, films and what
   is still open (big squads in caves; places fitted to the ground):
-  [report](../../Reports/squad-movement-2026-11-16/README.md).
+  [report](../../Reports/squad-movement-2026-11-16/README.md),
+  [page](https://claude.ai/artifact/MWtDtnMANViS1NytZLwaNB). Jerk lower on
+  23 of 24 planet runs, turning on 24 of 24; 200 sent on open ground
+  4.9 -> 0.9 ms a step.
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
   narrower than their formation (`Rules::funnel`, on); with the new walk a
   column ends once its tail is near the anchor

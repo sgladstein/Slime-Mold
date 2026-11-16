@@ -5,7 +5,63 @@ World: "It is still clunky overall", start over rather than patch (after
 the narrow-gap funnel of 11-15, #326). Squads must scale to 200 soldiers
 (the soldier-cap thread, #380). Thread: *Make squad movement feel smooth*.
 
-NUMBERS_AND_PAGE
+## Result
+
+**Before** is the old walk (`MOVE_STEER=0`, same code otherwise), **after**
+this change; each row the mean over its seeds, CPU world at the window's
+scale 2. Full table: [raw/summary.md](raw/summary.md) (from `raw/before.txt` and
+`raw/after.txt`, made by `raw/measure.sh` and `raw/summary.py`). Films:
+the page below. Measures are defined under *What was clunky*.
+
+| move | soldiers | jerk | turn ° | still | back cells | settle s | arrive s | waits | cost ms mean / p95 |
+|---|---|---|---|---|---|---|---|---|---|
+| WASD east, north, west, let go | 200 | 0.18 → 0.06 | 8.8 → 3.2 | 0.05 → 0.03 | 0.10 → 0.00 | 4.8 → 0.1 | | 0 → 0 | 5.51 → 0.84 / 6.67 → 1.35 |
+| sent 50 cells | 200 | 0.20 → 0.04 | 9.9 → 1.5 | 0.23 → 0.03 | 0.89 → 0.01 | 5.1 → 0.9 | 9.7 → 8.7 | 0 → 0 | 4.89 → 0.87 / 6.37 → 1.39 |
+| sent in a line | 40 | 0.07 → 0.03 | 3.4 → 1.5 | 0.01 → 0.01 | 0.00 → 0.11 | 0.0 → 1.1 | 6.7 → 7.2 | 0 → 0 | 0.24 → 0.11 |
+| sent in a line | 200 | 0.28 → 0.15 | 12.2 → 8.9 | 0.02 → 0.06 | 0.00 → 0.18 | 0.8 → 4.1 | 6.8 → 7.6 | 0 → 0 | 4.38 → 1.37 |
+| sent in a wedge | 40 | 0.06 → 0.08 | 6.5 → 3.5 | 0.52 → 0.08 | 0 → 0 | 0 → 0 | never → 8.6 | 0 → 0 | 0.37 → 0.23 |
+| sent in a ring | 100 | 0.38 → 0.02 | 12.9 → 0.6 | 0.46 → 0.10 | 0 → 0 | 0.0 → 0.1 | never → 10.5 | 0 → 0 | 1.35 → 0.57 |
+| over the 8-cell bridge | 40 | 0.24 → 0.08 | 14.7 → 3.8 | 0.15 → 0.07 | 0.03 → 0.04 | 1.8 → 1.2 | 17.4 → 14.4 | 27 → 6 | 0.23 → 0.17 |
+| over the 8-cell bridge | 200 | 0.36 → 0.12 | 21.4 → 6.2 | 0.21 → 0.17 | 0.04 → 0.01 | 1.6 → 1.9 | 20.2 → 19.9 | 307 → 6 | 4.75 → 3.42 / 6.14 → 6.54 |
+| through a 6-cell door 30 long | 40 | 0.27 → 0.08 | 16.8 → 4.2 | 0.12 → 0.08 | 0.03 → 0.01 | 1.8 → 1.9 | 20.1 → 16.3 | 38 → 6 | 0.24 → 0.19 |
+| through a 6-cell door 30 long | 100 | 0.37 → 0.12 | 21.9 → 6.4 | 0.17 → 0.12 | 0 → 0.01 | 0 → 2.2 | never → 18.9 | 118 → 6 | 1.22 → 0.92 |
+| two squads crossing on the bridge | 40 each | 0.19 → 0.08 | 12.9 → 4.2 | 0.23 → 0.04 | 0.04 → 0.02 | 1.8 → 3.5 | 19.4 → 13.5 | 14 → 6 | 0.17 → 0.13 |
+| two squads crossing on the bridge | 100 each | 0.22 → 0.11 | 15.8 → 6.2 | 0.30 → 0.14 | 0.04 → 0.01 | 3.6 → 1.9 | 24.0 → 17.1 | 18 → 6 | 0.81 → 0.54 |
+| planet 1, to a far crystal, 6 seeds | 40 | 0.26 → 0.09 | 14.4 → 4.1 | 0.08 → 0.06 | 4.42 → 0.24 | 25.1 → 10.3 | 14.7 → 13.6 | 19 → 2 | 0.25 → 0.16 |
+| planet 1, to a far crystal, 6 seeds | 200 | 0.45 → 0.16 | 34.6 → 9.7 | 0.31 → 0.20 | 7.89 → 1.13 | 14.8 → 22.8 | never → 17.1 | 83 → 5 | 4.72 → 2.64 / 6.29 → 6.46 |
+| planet 8 (caves), 6 seeds | 40 | 0.25 → 0.10 | 14.7 → 5.1 | 0.14 → 0.14 | 9.11 → 0.81 | 21.6 → 9.1 | 18.3 → 16.8 | 222 → 18 | 0.34 → 0.32 |
+| planet 8 (caves), 6 seeds | 200 | 0.43 → 0.19 | 39.8 → 13.1 | 0.41 → 0.34 | 6.79 → 0.73 | 8.9 → 12.2 | never → never | 1417 → 24 | 5.84 → 4.69 / 7.66 → 8.40 |
+
+"never" is not within the move's time (15-26 s); an arrive mean with a
+"never" in it is over the seeds that arrived. The deciding measures, named
+before the runs, were jerk and turn on the planets: paired over planets 1
+and 8, seeds 1-6, 40 and 200 soldiers (24 pairs), after against before:
+
+| measure | better | worse | sign test p |
+|---|---|---|---|
+| jerk | 23 | 1 | < 0.0001 |
+| turn | 24 | 0 | < 0.0001 |
+| walking-map waits | 24 | 0 | < 0.0001 |
+| cost, mean | 21 | 3 | 0.0003 |
+| back | 18 | 5 | 0.011 |
+| still | 14 | 9 | 0.40 |
+| pace | 15 | 9 | 0.31 |
+| settle | 13 | 10 | 0.68 |
+| arrive | 14 | 9 | 0.40 |
+
+Jerk, turn, waits and cost survive a Bonferroni correction over the nine
+(p < 0.0056); back does not. Worse than before: a line settles in 1.1 s
+(40) and 4.1 s (200) where it stood at once (it forms as it walks now, and
+its last members step into place); planet 1 with 200 settles in 22.8 s
+against 14.8 (but every seed now arrives); a big ring or wedge spreads out
+once there (Open 3). The mean cost fell everywhere but the step's p95 rose
+with 200 on the big gaps and planet 8 (bridge 6.14 -> 6.54 ms, planet 8
+7.66 -> 8.40); not looked into yet (Open 5).
+
+The frame cost is the movement's part of a step (walking maps, the walk,
+elbow room), CPU, this cloud machine; the 1070 has not timed it.
+
+**Page:** https://claude.ai/artifact/MWtDtnMANViS1NytZLwaNB (films before and after; source `page/`).
 
 ## What was clunky
 
@@ -144,8 +200,9 @@ brings the old walk back for films and measures).
 
 Columns through narrow gaps (`Rules::funnel`, 11-15) stay on: with the new
 walk a squad queues at a door without them too, but stalls there (40
-soldiers through the 6-cell door never arrive in 22 s without the column,
-18.7 s with it; table below). A column now ends only once the squad's tail
+soldiers through the 6-cell door never arrived in 22 s without the column
+and in 18.7 s with it, on this branch before its last fixes; with them,
+16.3 s, table above). A column now ends only once the squad's tail
 is within the formation's width of the anchor: ended as soon as every
 member could see the anchor, the tail of 24 stood in a 30-cell door.
 
@@ -189,7 +246,7 @@ member could see the anchor, the tail of 24 stood in a 30-cell door.
 
 ## Open
 
-Ranked, from the independent review (brief: `review-brief.md`) and the
+Ranked, from the independent review (brief: [review-brief.md](review-brief.md)) and the
 numbers above.
 
 1. **Places fitted to the ground** (the review's first pick). Formation
@@ -216,6 +273,8 @@ numbers above.
    a step ahead of where its figure is drawn (a few pixels at close zoom).
 5. **Cost**: `Game::place` counts the squad on every call, about five a
    soldier a step; a count kept a step would take most of what is left.
+   The p95 step with 200 rose on planet 8 (7.66 -> 8.40 ms) and the big
+   gaps while the mean fell; which part costs it is not measured.
 6. **Not measured yet**: wading in thick slime, an attack-move into slime,
    several squads at one crystal, linked squads.
 7. **A wall through a standing squad** (`wall_side_tests::measure_wall_sides`,

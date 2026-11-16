@@ -16,7 +16,7 @@ film() { # dir name, then env
     python3 Reports/squad-movement-2026-11-16/raw/judder.py $OUT/$name-$side
   done
   ffmpeg -y -loglevel error -framerate 60 -i $OUT/$name-before/f%04d.png -framerate 60 -i $OUT/$name-after/f%04d.png \
-    -filter_complex "[0:v][1:v]hstack=inputs=2" -c:v libx264 -pix_fmt yuv420p -crf 26 -preset slow -movflags +faststart $OUT/$name.mp4
+    -filter_complex "[0:v][1:v]hstack=inputs=2" -c:v libx264 -pix_fmt yuv420p -crf 30 -preset slow -movflags +faststart $OUT/$name.mp4
 }
 mkdir -p $OUT
 # WASD with 40 soldiers on planet 1: east 3 s, north 2.5 s, west 2.5 s, let go.
