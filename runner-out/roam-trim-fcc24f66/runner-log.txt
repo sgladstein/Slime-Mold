@@ -1,0 +1,14 @@
+start 09:11:28Z free KB 3443860 gpu 0,0,0,0,0 % C free GB 25
+build b head=fcc24f660d4f8176b6f910f8b90c1aab512575d6
+build b exit=0 09:13:26Z
+warmup start 09:13:26Z card 139 MHz, 405 MHz, 31, 6.41 W
+warmup exit=0 09:13:39Z card 1987 MHz, 4006 MHz, 36, 42.92 W
+run 1 (b:bench=45 run=1:8 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60) start 09:13:44Z gpu 0,0,0,0,0 % card 1987 MHz, 4006 MHz, 35, 42.63 W free KB 3439572
+run 1 exit=0 09:14:41Z
+run 2 (b:bench=45 run=1:8 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60 roam=0) start 09:14:46Z gpu 0,0,0,0,0 % card 835 MHz, 810 MHz, 44, 8.64 W free KB 3439164
+run 2 exit=0 09:15:43Z
+run 3 (b:bench=45 run=1:8 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60) start 09:15:48Z gpu 0,0,0,0,0 % card 999 MHz, 3802 MHz, 52, 30.05 W free KB 3439580
+run 3 exit=0 09:16:46Z
+run 4 (b:bench=45 run=1:8 mode=squads hand=squads screen=1920x1080 passes=60 viewpasses=60 roam=0) start 09:16:51Z gpu 0,0,0,0,0 % card 797 MHz, 810 MHz, 58, 9.80 W free KB 3433228
+run 4 exit=0 09:17:48Z
+ALL DONE 09:17:48Z
