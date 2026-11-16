@@ -181,7 +181,7 @@ impl<W: World> Game<W> {
                                     let a = side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
                                     let (sn, cs) = a.sin_cos();
                                     let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
-                                    shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r });
+                                    shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r, over: false });
                                     shooters.push((Some(k), cast));
                                 }
                             }
@@ -207,6 +207,7 @@ impl<W: World> Game<W> {
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
                 smell: self.world.food_deposit() * r.smell * s.smell * if pulls { pull.max(1.0) } else { 1.0 } * r.frame_ticks as f32,
+                over: false,
             });
             who.push(Who::Soldier(k));
             from.push(at_crystal);
@@ -231,6 +232,7 @@ impl<W: World> Game<W> {
             take: 0.0,
             smell_r: 3.0 * sc,
             smell: self.world.food_deposit() * r.hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32,
+            over: false,
         });
         who.push(Who::Larder);
         from.push(None);

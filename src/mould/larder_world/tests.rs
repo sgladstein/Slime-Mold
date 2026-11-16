@@ -48,7 +48,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     // Past `SHOTS_MAX` in flight the newest are dropped, so a frame
     // never hands the engines more legs than they take.
     let from = g.soldiers[0];
-    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
+    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0, over: false }).collect();
     let by = vec![(Some(0), 0); many.len()];
     let (legs, who) = g.fly(many, &by, 1.0 / 15.0);
     assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
@@ -59,7 +59,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     let (w, h) = g.world.size();
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
     let start = (wall.0 - 3.0, wall.1);
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(None, 0)], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0, over: false }], &[(None, 0)], 1.0);
     assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
     g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
     assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
@@ -70,9 +70,9 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let mut g = small(1);
     let sc = g.s();
     let r = g.rules;
-    let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
+    let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0, over: false };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false, over: false };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -123,8 +123,8 @@ fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
     // Open ground with room ahead, and a wall with open ground before it.
     let open = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| (0..12).all(|j| g.world.clear(x + j as f32, y))).expect("open ground");
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.clear(x, y) && (1..=3).all(|j| g.world.clear(x - j as f32, y)) && g.world.clear(x - 1.0, y + 1.0) && g.world.clear(x - 1.0, y - 1.0) && !g.world.clear(x, y + 1.0) && !g.world.clear(x, y - 1.0) && x > 4.0).expect("a wall face with open ground west of it");
-    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false };
-    let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0 };
+    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false, over: false };
+    let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0, over: false };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
     let miss = squad::ShotOut { hit: None, killed: 0 };
     let h0 = (open.0 + 2.0, open.1);
@@ -155,7 +155,7 @@ fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
     // A wall: it heads back out the way it came, from a cell back.
     let start = (wall.0 - 3.0, wall.1);
     g.bullets.clear();
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(Some(0), 1)], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0, over: false }], &[(Some(0), 1)], 1.0);
     assert_eq!((g.bullets[0].carry, g.bullets[0].expire), (2, true), "the fired bullet takes its cast's carry");
     g.landed(&legs, &[miss]);
     assert_eq!((g.releases, g.bullets.len()), (3, 1));
@@ -169,9 +169,9 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false, over: false };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
-    let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
+    let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0, over: false }).collect();
     // Every second one hits; the others fly on and keep their places.
     let outs: Vec<squad::ShotOut> = (0..legs.len()).map(|i| squad::ShotOut { hit: (i % 2 == 0).then_some(legs[i].to), killed: 0 }).collect();
     g.landed(&legs, &outs);
@@ -2593,6 +2593,7 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
                 from: west,
                 to: east,
                 r: 1.0,
+                over: false,
             }],
             &[(Some(0), 0)],
             10.0,

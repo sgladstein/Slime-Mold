@@ -540,6 +540,11 @@ impl Rules {
             self.raid.last_stand = v > 0.0;
             return true;
         }
+        // `turret_over=0`: turrets stop at walls as soldiers' guns do.
+        if name == "turret_over" {
+            self.build.turret_over = v > 0.0;
+            return true;
+        }
         // Mini-bosses' whole numbers (`BossRules`).
         match name {
             "boss_least" => {

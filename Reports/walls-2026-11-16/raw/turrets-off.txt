@@ -1,0 +1,377 @@
+  fort t 13: shots 20, turret kills 0, soldier kills 17
+  pen t 13: wall cells 646, walkers inside 5, soldiers 9, outside 0
+  fort t 14.0: turret at (147.5, 130.5): true
+  fort t 14.0: turret at (141.5, 140.5): true
+  fort t 14.0: turret at (142.5, 119.5): true
+  fort t 14: shots 29, turret kills 0, soldier kills 25
+  pen t 14: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 15: shots 29, turret kills 0, soldier kills 25
+  pen t 15: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 16: shots 29, turret kills 0, soldier kills 25
+  pen t 16: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 17: shots 29, turret kills 0, soldier kills 25
+  pen t 17: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 18: shots 29, turret kills 0, soldier kills 25
+  pen t 18: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 19: shots 29, turret kills 0, soldier kills 25
+  pen t 19: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 20: shots 29, turret kills 0, soldier kills 25
+  pen t 20: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 21: shots 29, turret kills 0, soldier kills 25
+  pen t 21: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 22: shots 29, turret kills 0, soldier kills 25
+  pen t 22: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 23: shots 29, turret kills 0, soldier kills 25
+  pen t 23: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 24: shots 29, turret kills 0, soldier kills 25
+  pen t 24: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 25: shots 29, turret kills 0, soldier kills 25
+  pen t 25: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 26: shots 29, turret kills 0, soldier kills 25
+  pen t 26: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 27: shots 29, turret kills 0, soldier kills 25
+  pen t 27: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 28: shots 29, turret kills 0, soldier kills 25
+  pen t 28: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 29: shots 29, turret kills 0, soldier kills 25
+  pen t 29: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 30: shots 29, turret kills 0, soldier kills 25
+  pen t 30: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 31: shots 29, turret kills 0, soldier kills 25
+  pen t 31: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 32: shots 29, turret kills 0, soldier kills 25
+  pen t 32: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 33: shots 29, turret kills 0, soldier kills 25
+  pen t 33: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 34: shots 29, turret kills 0, soldier kills 25
+  pen t 34: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 35: shots 29, turret kills 0, soldier kills 25
+  pen t 35: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 36: shots 29, turret kills 0, soldier kills 25
+  pen t 36: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 37: shots 29, turret kills 0, soldier kills 25
+  pen t 37: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 38: shots 29, turret kills 0, soldier kills 25
+  pen t 38: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 39: shots 29, turret kills 0, soldier kills 25
+  pen t 39: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 40: shots 29, turret kills 0, soldier kills 25
+  pen t 40: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 41: shots 29, turret kills 0, soldier kills 25
+  pen t 41: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 42: shots 29, turret kills 0, soldier kills 25
+  pen t 42: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 43: shots 29, turret kills 0, soldier kills 25
+  pen t 43: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 44: shots 29, turret kills 0, soldier kills 25
+  pen t 44: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 45: shots 29, turret kills 0, soldier kills 25
+  pen t 45: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 46: shots 29, turret kills 0, soldier kills 25
+  pen t 46: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 47: shots 29, turret kills 0, soldier kills 25
+  pen t 47: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 48: shots 29, turret kills 0, soldier kills 25
+  pen t 48: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 49: shots 29, turret kills 0, soldier kills 25
+  pen t 49: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 50: shots 29, turret kills 0, soldier kills 25
+  pen t 50: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 51: shots 29, turret kills 0, soldier kills 25
+  pen t 51: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 52: shots 29, turret kills 0, soldier kills 25
+  pen t 52: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 53: shots 29, turret kills 0, soldier kills 25
+  pen t 53: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 54: shots 29, turret kills 0, soldier kills 25
+  pen t 54: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 55: shots 29, turret kills 0, soldier kills 25
+  pen t 55: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 56: shots 29, turret kills 0, soldier kills 25
+  pen t 56: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 57: shots 29, turret kills 0, soldier kills 25
+  pen t 57: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 58: shots 29, turret kills 0, soldier kills 25
+  pen t 58: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 59: shots 29, turret kills 0, soldier kills 25
+  pen t 59: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 60: shots 29, turret kills 0, soldier kills 25
+  pen t 60: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 61: shots 29, turret kills 0, soldier kills 25
+  pen t 61: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 62: shots 29, turret kills 0, soldier kills 25
+  pen t 62: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 63: shots 29, turret kills 0, soldier kills 25
+  pen t 63: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 64: shots 29, turret kills 0, soldier kills 25
+  pen t 64: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 65: shots 29, turret kills 0, soldier kills 25
+  pen t 65: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 66: shots 29, turret kills 0, soldier kills 25
+  pen t 66: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 67: shots 29, turret kills 0, soldier kills 25
+  pen t 67: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 68: shots 29, turret kills 0, soldier kills 25
+  pen t 68: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 69: shots 29, turret kills 0, soldier kills 25
+  pen t 69: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 70: shots 29, turret kills 0, soldier kills 25
+  pen t 70: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 71: shots 29, turret kills 0, soldier kills 25
+  pen t 71: wall cells 646, walkers inside 0, soldiers 9, outside 0
+  fort t 72: shots 29, turret kills 0, soldier kills 25
+  pen t 72: wall cells 645, walkers inside 0, soldiers 9, outside 0
+  fort t 73: shots 29, turret kills 0, soldier kills 25
+  pen t 73: wall cells 645, walkers inside 0, soldiers 9, outside 0
+  fort t 74: shots 29, turret kills 0, soldier kills 25
+  pen t 74: wall cells 644, walkers inside 0, soldiers 9, outside 0
+  fort t 75: shots 29, turret kills 0, soldier kills 25
+  pen t 75: wall cells 642, walkers inside 0, soldiers 9, outside 0
+  fort t 76: shots 29, turret kills 0, soldier kills 25
+  pen t 76: wall cells 641, walkers inside 0, soldiers 9, outside 0
+  fort t 77: shots 29, turret kills 0, soldier kills 25
+  pen t 77: wall cells 640, walkers inside 0, soldiers 9, outside 0
+  fort t 78: shots 29, turret kills 0, soldier kills 25
+  pen t 78: wall cells 638, walkers inside 0, soldiers 9, outside 0
+  fort t 79: shots 29, turret kills 0, soldier kills 25
+  pen t 79: wall cells 637, walkers inside 0, soldiers 9, outside 0
+  fort t 80: shots 29, turret kills 0, soldier kills 25
+  pen t 80: wall cells 635, walkers inside 0, soldiers 9, outside 0
+  fort t 81: shots 29, turret kills 0, soldier kills 25
+  pen t 81: wall cells 634, walkers inside 0, soldiers 9, outside 0
+  fort t 82: shots 29, turret kills 0, soldier kills 25
+  pen t 82: wall cells 634, walkers inside 0, soldiers 9, outside 0
+  fort t 83: shots 29, turret kills 0, soldier kills 25
+  pen t 83: wall cells 634, walkers inside 0, soldiers 9, outside 0
+  fort t 84: shots 29, turret kills 0, soldier kills 25
+  pen t 84: wall cells 634, walkers inside 0, soldiers 9, outside 0
+  fort t 85: shots 29, turret kills 0, soldier kills 25
+  pen t 85: wall cells 631, walkers inside 0, soldiers 9, outside 0
+  fort t 86: shots 29, turret kills 0, soldier kills 25
+  pen t 86: wall cells 626, walkers inside 0, soldiers 9, outside 0
+  fort t 87: shots 29, turret kills 0, soldier kills 25
+  pen t 87: wall cells 624, walkers inside 0, soldiers 9, outside 0
+  fort t 88: shots 29, turret kills 0, soldier kills 25
+  pen t 88: wall cells 619, walkers inside 0, soldiers 9, outside 0
+  fort t 89: shots 29, turret kills 0, soldier kills 25
+  pen t 89: wall cells 617, walkers inside 0, soldiers 9, outside 0
+  fort t 90: shots 29, turret kills 0, soldier kills 25
+  pen t 90: wall cells 615, walkers inside 0, soldiers 9, outside 0
+  fort t 91: shots 29, turret kills 0, soldier kills 25
+  pen t 91: wall cells 614, walkers inside 0, soldiers 9, outside 0
+  fort t 92: shots 29, turret kills 0, soldier kills 25
+  pen t 92: wall cells 610, walkers inside 0, soldiers 9, outside 0
+  fort t 93: shots 29, turret kills 0, soldier kills 25
+  pen t 93: wall cells 610, walkers inside 0, soldiers 9, outside 0
+  fort t 94: shots 29, turret kills 0, soldier kills 25
+  pen t 94: wall cells 606, walkers inside 0, soldiers 9, outside 0
+  fort t 95: shots 29, turret kills 0, soldier kills 25
+  pen t 95: wall cells 604, walkers inside 0, soldiers 9, outside 0
+  fort t 96: shots 29, turret kills 0, soldier kills 25
+  pen t 96: wall cells 597, walkers inside 0, soldiers 9, outside 0
+  fort t 97: shots 29, turret kills 0, soldier kills 25
+  pen t 97: wall cells 596, walkers inside 0, soldiers 9, outside 0
+  fort t 98: shots 29, turret kills 0, soldier kills 25
+  pen t 98: wall cells 593, walkers inside 0, soldiers 9, outside 0
+  fort t 99: shots 29, turret kills 0, soldier kills 25
+  pen t 99: wall cells 592, walkers inside 0, soldiers 9, outside 0
+  fort t 100: shots 29, turret kills 0, soldier kills 25
+  pen t 100: wall cells 590, walkers inside 0, soldiers 9, outside 0
+  fort t 101: shots 29, turret kills 0, soldier kills 25
+  pen t 101: wall cells 590, walkers inside 0, soldiers 9, outside 0
+  fort t 102: shots 29, turret kills 0, soldier kills 25
+  pen t 102: wall cells 589, walkers inside 0, soldiers 9, outside 0
+  fort t 103: shots 29, turret kills 0, soldier kills 25
+  pen t 103: wall cells 586, walkers inside 0, soldiers 9, outside 0
+  fort t 104: shots 29, turret kills 0, soldier kills 25
+  pen t 104: wall cells 584, walkers inside 0, soldiers 9, outside 0
+  fort t 105: shots 29, turret kills 0, soldier kills 25
+  pen t 105: wall cells 580, walkers inside 0, soldiers 9, outside 0
+  fort t 106: shots 29, turret kills 0, soldier kills 25
+  pen t 106: wall cells 578, walkers inside 0, soldiers 9, outside 0
+  fort t 107: shots 29, turret kills 0, soldier kills 25
+  pen t 107: wall cells 574, walkers inside 0, soldiers 9, outside 0
+  fort t 108: shots 29, turret kills 0, soldier kills 25
+  pen t 108: wall cells 573, walkers inside 0, soldiers 9, outside 0
+  fort t 109: shots 29, turret kills 0, soldier kills 25
+  pen t 109: wall cells 571, walkers inside 0, soldiers 9, outside 0
+  fort t 110: shots 29, turret kills 0, soldier kills 25
+  pen t 110: wall cells 569, walkers inside 0, soldiers 9, outside 0
+  fort t 111: shots 29, turret kills 0, soldier kills 25
+  pen t 111: wall cells 568, walkers inside 0, soldiers 9, outside 0
+  fort t 112: shots 29, turret kills 0, soldier kills 25
+  pen t 112: wall cells 565, walkers inside 0, soldiers 9, outside 0
+  fort t 113: shots 29, turret kills 0, soldier kills 25
+  pen t 113: wall cells 562, walkers inside 0, soldiers 9, outside 0
+  fort t 114: shots 29, turret kills 0, soldier kills 25
+  pen t 114: wall cells 561, walkers inside 0, soldiers 9, outside 0
+  fort t 115: shots 29, turret kills 0, soldier kills 25
+  pen t 115: wall cells 559, walkers inside 0, soldiers 9, outside 0
+  fort t 116: shots 29, turret kills 0, soldier kills 25
+  pen t 116: wall cells 557, walkers inside 0, soldiers 9, outside 0
+  fort t 117: shots 29, turret kills 0, soldier kills 25
+  pen t 117: wall cells 555, walkers inside 0, soldiers 9, outside 0
+  fort t 118: shots 29, turret kills 0, soldier kills 25
+  pen t 118: wall cells 553, walkers inside 0, soldiers 9, outside 0
+  fort t 119: shots 29, turret kills 0, soldier kills 25
+  pen t 119: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 120: shots 29, turret kills 0, soldier kills 25
+  pen t 120: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 121: shots 29, turret kills 0, soldier kills 25
+  pen t 121: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 122: shots 29, turret kills 0, soldier kills 25
+  pen t 122: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 123: shots 29, turret kills 0, soldier kills 25
+  pen t 123: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 124: shots 29, turret kills 0, soldier kills 25
+  pen t 124: wall cells 552, walkers inside 0, soldiers 9, outside 0
+  fort t 125: shots 29, turret kills 0, soldier kills 25
+  pen t 125: wall cells 549, walkers inside 0, soldiers 9, outside 0
+  fort t 126: shots 29, turret kills 0, soldier kills 25
+  pen t 126: wall cells 548, walkers inside 0, soldiers 9, outside 0
+  fort t 127: shots 29, turret kills 0, soldier kills 25
+  pen t 127: wall cells 545, walkers inside 0, soldiers 9, outside 0
+  fort t 128: shots 29, turret kills 0, soldier kills 25
+  pen t 128: wall cells 543, walkers inside 0, soldiers 9, outside 0
+  fort t 129: shots 29, turret kills 0, soldier kills 25
+  pen t 129: wall cells 541, walkers inside 0, soldiers 9, outside 0
+  fort t 130: shots 29, turret kills 0, soldier kills 25
+  pen t 130: wall cells 538, walkers inside 0, soldiers 9, outside 0
+  fort t 131: shots 29, turret kills 0, soldier kills 25
+  pen t 131: wall cells 534, walkers inside 0, soldiers 9, outside 0
+  fort t 132: shots 29, turret kills 0, soldier kills 25
+  pen t 132: wall cells 530, walkers inside 0, soldiers 9, outside 0
+  fort t 133: shots 29, turret kills 0, soldier kills 25
+  pen t 133: wall cells 523, walkers inside 0, soldiers 9, outside 0
+  fort t 134: shots 29, turret kills 0, soldier kills 25
+  pen t 134: wall cells 517, walkers inside 0, soldiers 9, outside 0
+  fort t 135: shots 29, turret kills 0, soldier kills 25
+  pen t 135: wall cells 512, walkers inside 0, soldiers 9, outside 0
+  fort t 136: shots 29, turret kills 0, soldier kills 25
+  pen t 136: wall cells 509, walkers inside 0, soldiers 9, outside 0
+  fort t 137: shots 29, turret kills 0, soldier kills 25
+  pen t 137: wall cells 502, walkers inside 0, soldiers 9, outside 0
+  fort t 138: shots 29, turret kills 0, soldier kills 25
+  pen t 138: wall cells 495, walkers inside 0, soldiers 9, outside 0
+  fort t 139: shots 29, turret kills 0, soldier kills 25
+  pen t 139: wall cells 489, walkers inside 0, soldiers 9, outside 0
+  fort t 140: shots 29, turret kills 0, soldier kills 25
+  pen t 140: wall cells 485, walkers inside 0, soldiers 9, outside 0
+  fort t 141: shots 29, turret kills 0, soldier kills 25
+  pen t 141: wall cells 475, walkers inside 0, soldiers 9, outside 0
+  fort t 142: shots 29, turret kills 0, soldier kills 25
+  pen t 142: wall cells 470, walkers inside 0, soldiers 9, outside 0
+  fort t 143: shots 29, turret kills 0, soldier kills 25
+  pen t 143: wall cells 464, walkers inside 0, soldiers 9, outside 0
+  fort t 144: shots 29, turret kills 0, soldier kills 25
+  pen t 144: wall cells 463, walkers inside 0, soldiers 9, outside 0
+  fort t 145: shots 29, turret kills 0, soldier kills 25
+  pen t 145: wall cells 461, walkers inside 0, soldiers 9, outside 0
+  fort t 146: shots 29, turret kills 0, soldier kills 25
+  pen t 146: wall cells 457, walkers inside 0, soldiers 9, outside 0
+  fort t 147: shots 29, turret kills 0, soldier kills 25
+  pen t 147: wall cells 455, walkers inside 0, soldiers 9, outside 0
+  fort t 148: shots 29, turret kills 0, soldier kills 25
+  pen t 148: wall cells 454, walkers inside 0, soldiers 9, outside 0
+  fort t 149: shots 29, turret kills 0, soldier kills 25
+  pen t 149: wall cells 453, walkers inside 0, soldiers 9, outside 0
+  fort t 150: shots 29, turret kills 0, soldier kills 25
+  pen t 150: wall cells 449, walkers inside 0, soldiers 9, outside 0
+  fort t 151: shots 29, turret kills 0, soldier kills 25
+  pen t 151: wall cells 448, walkers inside 0, soldiers 9, outside 0
+  fort t 152: shots 29, turret kills 0, soldier kills 25
+  pen t 152: wall cells 444, walkers inside 0, soldiers 9, outside 0
+  fort t 153: shots 29, turret kills 0, soldier kills 25
+  pen t 153: wall cells 441, walkers inside 0, soldiers 9, outside 0
+  fort t 154: shots 29, turret kills 0, soldier kills 25
+  pen t 154: wall cells 435, walkers inside 0, soldiers 9, outside 0
+  fort t 155: shots 31, turret kills 23, soldier kills 25
+  pen t 155: wall cells 430, walkers inside 0, soldiers 9, outside 0
+  fort t 156: shots 33, turret kills 46, soldier kills 25
+  pen t 156: wall cells 427, walkers inside 0, soldiers 9, outside 0
+  fort t 157: shots 37, turret kills 73, soldier kills 25
+  pen t 157: wall cells 424, walkers inside 0, soldiers 9, outside 0
+  fort t 158: shots 37, turret kills 73, soldier kills 25
+  pen t 158: wall cells 414, walkers inside 0, soldiers 9, outside 0
+  fort t 159: shots 39, turret kills 89, soldier kills 25
+  pen t 159: wall cells 405, walkers inside 1, soldiers 9, outside 0
+  fort t 160: shots 41, turret kills 110, soldier kills 25
+  pen t 160: wall cells 399, walkers inside 0, soldiers 9, outside 0
+  fort t 161: shots 43, turret kills 134, soldier kills 25
+  pen t 161: wall cells 393, walkers inside 0, soldiers 9, outside 0
+  fort t 162: shots 47, turret kills 149, soldier kills 25
+  pen t 162: wall cells 389, walkers inside 1, soldiers 9, outside 0
+  fort t 163: shots 49, turret kills 169, soldier kills 25
+  pen t 163: wall cells 377, walkers inside 2, soldiers 9, outside 0
+  fort t 164: shots 51, turret kills 171, soldier kills 25
+  pen t 164: wall cells 367, walkers inside 0, soldiers 9, outside 0
+  fort t 165: shots 53, turret kills 196, soldier kills 25
+  pen t 165: wall cells 364, walkers inside 0, soldiers 9, outside 0
+  fort t 166: shots 57, turret kills 224, soldier kills 25
+  pen t 166: wall cells 361, walkers inside 0, soldiers 9, outside 0
+  fort t 167: shots 59, turret kills 235, soldier kills 25
+  pen t 167: wall cells 357, walkers inside 0, soldiers 9, outside 0
+  fort t 168: shots 61, turret kills 257, soldier kills 25
+  pen t 168: wall cells 356, walkers inside 0, soldiers 9, outside 0
+  fort t 169: shots 63, turret kills 281, soldier kills 25
+  pen t 169: wall cells 352, walkers inside 2, soldiers 9, outside 0
+  fort t 170: shots 65, turret kills 292, soldier kills 25
+  pen t 170: wall cells 350, walkers inside 0, soldiers 9, outside 0
+  fort t 171: shots 70, turret kills 342, soldier kills 25
+  pen t 171: wall cells 346, walkers inside 1, soldiers 9, outside 0
+  fort t 172: shots 73, turret kills 370, soldier kills 25
+  pen t 172: wall cells 345, walkers inside 0, soldiers 9, outside 0
+  fort t 173: shots 76, turret kills 385, soldier kills 25
+  pen t 173: wall cells 341, walkers inside 1, soldiers 9, outside 0
+  fort t 174: shots 81, turret kills 397, soldier kills 25
+  pen t 174: wall cells 339, walkers inside 1, soldiers 9, outside 0
+  fort t 175: shots 85, turret kills 423, soldier kills 25
+  pen t 175: wall cells 339, walkers inside 1, soldiers 9, outside 0
+  fort t 176: shots 87, turret kills 457, soldier kills 25
+  pen t 176: wall cells 336, walkers inside 0, soldiers 9, outside 0
+  fort t 177: shots 92, turret kills 478, soldier kills 25
+  pen t 177: wall cells 336, walkers inside 1, soldiers 9, outside 0
+  fort t 178: shots 97, turret kills 517, soldier kills 25
+  pen t 178: wall cells 336, walkers inside 1, soldiers 9, outside 0
+  fort t 179: shots 102, turret kills 538, soldier kills 25
+  pen t 179: wall cells 336, walkers inside 1, soldiers 9, outside 0
+  fort t 180: shots 107, turret kills 564, soldier kills 25
+  pen t 180: wall cells 335, walkers inside 0, soldiers 9, outside 0
+  fort t 181: shots 110, turret kills 591, soldier kills 25
+  pen t 181: wall cells 334, walkers inside 0, soldiers 9, outside 0
+  fort t 182: shots 115, turret kills 615, soldier kills 25
+  pen t 182: wall cells 330, walkers inside 3, soldiers 9, outside 0
+  fort t 183: shots 118, turret kills 634, soldier kills 25
+  pen t 183: wall cells 328, walkers inside 0, soldiers 9, outside 0
+  fort t 184: shots 124, turret kills 647, soldier kills 25
+  pen t 184: wall cells 328, walkers inside 2, soldiers 9, outside 0
+  fort t 185: shots 128, turret kills 658, soldier kills 25
+  pen t 185: wall cells 326, walkers inside 2, soldiers 9, outside 0
+  fort t 186: shots 132, turret kills 676, soldier kills 25
+  pen t 186: wall cells 325, walkers inside 1, soldiers 9, outside 0
+  fort t 187: shots 134, turret kills 687, soldier kills 25
+  pen t 187: wall cells 324, walkers inside 2, soldiers 9, outside 0
+  fort t 188: shots 138, turret kills 714, soldier kills 25
+  pen t 188: wall cells 324, walkers inside 1, soldiers 9, outside 0
+  fort t 189: shots 141, turret kills 725, soldier kills 25
+  pen t 189: wall cells 323, walkers inside 4, soldiers 9, outside 0
+  fort t 190: shots 143, turret kills 730, soldier kills 25
+  pen t 190: wall cells 323, walkers inside 4, soldiers 9, outside 0
+  fort t 191: shots 146, turret kills 766, soldier kills 25
+  pen t 191: wall cells 321, walkers inside 2, soldiers 9, outside 0
+  fort t 192: shots 149, turret kills 790, soldier kills 25
+  pen t 192: wall cells 321, walkers inside 6, soldiers 9, outside 0
+  fort t 193: shots 151, turret kills 795, soldier kills 25
+  pen t 193: wall cells 320, walkers inside 5, soldiers 9, outside 0
+  fort t 194: shots 154, turret kills 816, soldier kills 25
+  pen t 194: wall cells 318, walkers inside 10, soldiers 9, outside 0
+  fort t 195: shots 157, turret kills 834, soldier kills 27
+  pen t 195: wall cells 318, walkers inside 11, soldiers 9, outside 0
+  fort t 196: shots 160, turret kills 846, soldier kills 27
+  pen t 196: wall cells 317, walkers inside 10, soldiers 9, outside 0
+  fort t 197: shots 162, turret kills 852, soldier kills 27
+  pen t 197: wall cells 316, walkers inside 15, soldiers 9, outside 0
+  fort t 198: shots 168, turret kills 891, soldier kills 45
+  pen t 198: wall cells 313, walkers inside 4, soldiers 9, outside 0
+  fort t 199: shots 172, turret kills 1011, soldier kills 45
+  pen t 199: wall cells 313, walkers inside 4, soldiers 9, outside 0

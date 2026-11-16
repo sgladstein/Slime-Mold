@@ -79,7 +79,7 @@ pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
-use buildings::Who;
+use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
@@ -250,6 +250,10 @@ pub struct Bullet {
     /// hit (`rounds::Card::Expire`): spent on slime, at a wall (thrown back
     /// off it) or at the end of its range.
     pub expire: bool,
+    /// It flies over walls (`ShotIn::over`): a turret's (owner,
+    /// 2026-11-16 19:50Z: "turrets can fire over walls ... but regular
+    /// guns shots do not"). Rock still ends it.
+    pub over: bool,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight

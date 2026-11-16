@@ -45,7 +45,7 @@ impl<W: World> Game<W> {
             let pierce = m.pierce.saturating_add(ammo.map_or(0, |a| a.set.shape().pierce));
             // The cast it carries (`Card::Trigger`), if its cast is a carrier.
             let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
-            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire });
+            self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, fresh: true, pierce, split: m.split, cast, speed, carry, expire, over: s.over });
         }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
@@ -57,7 +57,8 @@ impl<W: World> Game<W> {
             for j in 1..=n {
                 let t = (j as f32).min(len);
                 let p = (b.at.0 + b.dir.0 * t, b.at.1 + b.dir.1 * t);
-                if !self.world.clear(p.0, p.1) {
+                // A turret's bullet flies on over a wall (`Bullet::over`).
+                if !self.world.clear(p.0, p.1) && !(b.over && wall_at(&self.world, p)) {
                     to = p;
                     // Nothing left past the wall: the leg ends on it and
                     // the bullet with it (`landed`).
@@ -65,7 +66,7 @@ impl<W: World> Game<W> {
                     break;
                 }
             }
-            legs.push(ShotIn { from: b.at, to, r: b.r });
+            legs.push(ShotIn { from: b.at, to, r: b.r, over: b.over });
             who.push((b.by, b.fresh, b.cast));
         }
         (legs, who)
@@ -123,7 +124,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, over: b.over });
                     }
                 }
                 return false;
@@ -200,7 +201,7 @@ impl<W: World> Game<W> {
                 let (sn, cs) = a.sin_cos();
                 let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
                 let pierce = m.pierce.saturating_add(shape.pierce);
-                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i] });
+                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], over: false });
             }
         }
     }

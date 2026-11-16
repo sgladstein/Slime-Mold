@@ -335,6 +335,9 @@ impl Garden {
                 let stops = |i: usize| self.enemy_trail(i) >= slime || (!occ.is_empty() && self.dish.scorch[i] > 0 && occ[i] > 0);
                 for (j, &i) in cells.iter().enumerate() {
                     if !self.dish.agar[i as usize] {
+                        if s.over && squad::over_wall(&self.dish.wall, &self.dish.agar, i as usize) {
+                            continue;
+                        }
                         return NONE;
                     }
                     if stops(i as usize) {
@@ -447,7 +450,7 @@ impl Garden {
                                 n += occ[y * w + x] as u32;
                             }
                         }
-                        if n > best.0 && squad::sees(w, &d.agar, (cx, cy), squad::block_cell(w, h, bx, by)) {
+                        if n > best.0 && squad::sees_over(w, &d.agar, if u.over { &d.wall } else { &[] }, (cx, cy), squad::block_cell(w, h, bx, by)) {
                             best = (n, Some((by * nbw + bx) as usize));
                         }
                     }
@@ -813,7 +816,7 @@ pub(crate) mod tests {
         let slime = squad::slime_trail(6.0);
         let at = (0..w * g.dish.h).find(|&i| g.enemy_trail(i) >= slime && g.dish.species_trail[OWN as usize][i] < 0.1).expect("enemy slime");
         let to = ((at % w) as f32 + 0.5, (at / w) as f32 + 0.5);
-        let shot = [ShotIn { from: to, to, r: 2.0 }];
+        let shot = [ShotIn { from: to, to, r: 2.0, over: false }];
         let mut plain = g.clone();
         let out = plain.shots(&shot, slime, 0, 0.0);
         assert!(out[0].hit.is_some(), "{out:?}");
