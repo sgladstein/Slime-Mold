@@ -562,6 +562,29 @@ impl<W: World> Game<W> {
                         if self.standable(q.0, q.1) && self.solid_at(q).is_none() {
                             return Some(q);
                         }
+                        // Rock there: the nearest open home-side spot along
+                        // the wall, a cell at a time either way (walls
+                        // thread, 2026-11-16: with the new walk, seed 8 of
+                        // `measure_wall_sides` left 3 builders past a wall
+                        // through the squad, their home-side spot rock, so
+                        // they raised it from the slime's side).
+                        if let Kind::Wall { to } = self.buildings[b].kind {
+                            let at = self.buildings[b].at;
+                            let l = (to.0 - at.0).hypot(to.1 - at.1).max(1e-3);
+                            let u = ((to.0 - at.0) / l, (to.1 - at.1) / l);
+                            let here = (p.0 - at.0) * u.0 + (p.1 - at.1) * u.1;
+                            for i in 1..=(l / sc).ceil() as i32 {
+                                for t in [here - i as f32 * sc, here + i as f32 * sc] {
+                                    if !(0.0..=l).contains(&t) {
+                                        continue;
+                                    }
+                                    let q = (at.0 + u.0 * t + n.0 * out, at.1 + u.1 * t + n.1 * out);
+                                    if self.standable(q.0, q.1) && self.solid_at(q).is_none() {
+                                        return Some(q);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 if d > far {

@@ -83,3 +83,14 @@ Asked on the page and in the thread (11-16 ~06:35Z), recommendations first:
 
 Separate question noted on the page: soldiers can't shoot over their own
 walls (nor can turrets behind them).
+
+## Builders whose home-side spot is rock (11-16, after #392)
+
+The squad movement thread's new walk (#392) found `measure_wall_sides`
+seed 8 (wall through the squad) leaving 3 builders past the wall: the
+home-side spot beside each one's nearest point on the line was rock, so
+`goal_raw`'s Build arm let them raise it from where they stood, on the
+slime's side. Now they take the nearest open home-side spot along the
+wall, a cell at a time either way. Seeds 1-8, main fe41620 against this
+change: wall in front 0 and 0; wall through the squad 3 (all seed 8) and 0
+(`raw/wall-sides-before.txt`, `raw/wall-sides-after.txt`).
