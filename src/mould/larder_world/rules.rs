@@ -122,6 +122,34 @@ pub struct Rules {
     pub split_range: f32,
     pub split_r: f32,
     pub pierce_gap: f32,
+    /// How a seeking bullet turns (`rounds::Card::Seek`, `Game::steer`,
+    /// 2026-11-16): straight for `seek_after` dish cells (spores that homed
+    /// from launch flew back to their own crystal, `Reports/dead-ends.md`),
+    /// then each frame toward a mini-boss ahead, else the cheapest square
+    /// of the mould grid ahead within `seek_r` dish cells and `seek_cone`
+    /// radians of its heading, holding `seek_min` walkers, in sight, and
+    /// more than `seek_gap` dish cells from last frame's hits and this
+    /// frame's other seekers' picks; at most `seek_turn` radians a frame a
+    /// card. A split piece or a let-out cast starts in the slime, so it
+    /// seeks at once. `seek_min` 1, not 2: the misses it rescues are mostly
+    /// at lone walkers (with 2, squads guarding against thin slime missed
+    /// as often as with no card).
+    ///
+    /// **Off by default** (`seek_turn` 0, 2026-11-16): the owner picked
+    /// homing in the shot trace (19:38Z), and its catch (`seek_catch` dish
+    /// cells a card either side of the line where the bullet reaches its
+    /// aim point and on its last leg, `Game::catches`) hit 89.1% of shots
+    /// on thin slime against 80.3% with no card (13 of 13 paired windows),
+    /// killing 554 against 538; adding this turn at 0.45 left hits at 89.4%
+    /// and kills at 543 (`Reports/gun-seek-2026-11-16`). `set=seek_turn=0.45`
+    /// turns it back on.
+    pub seek_after: f32,
+    pub seek_r: f32,
+    pub seek_cone: f32,
+    pub seek_min: u32,
+    pub seek_gap: f32,
+    pub seek_catch: f32,
+    pub seek_turn: f32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -555,6 +583,10 @@ impl Rules {
                 self.boss.cut_least = v.max(0.0) as u32;
                 return true;
             }
+            "seek_min" => {
+                self.seek_min = v.max(0.0) as u32;
+                return true;
+            }
             "boss_most" => {
                 self.boss.most = (v.max(0.0) as usize).min(crate::mould::big::LUMPS);
                 return true;
@@ -633,6 +665,12 @@ impl Rules {
             "boss_grow" => &mut self.boss.grow,
             "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
+            "seek_after" => &mut self.seek_after,
+            "seek_r" => &mut self.seek_r,
+            "seek_cone" => &mut self.seek_cone,
+            "seek_turn" => &mut self.seek_turn,
+            "seek_gap" => &mut self.seek_gap,
+            "seek_catch" => &mut self.seek_catch,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
             "lure_smell" => &mut self.build.lure_smell,
@@ -685,6 +723,13 @@ impl Default for Rules {
             split_range: 6.0,
             split_r: 0.7,
             pierce_gap: 2.0,
+            seek_after: 3.0,
+            seek_r: 12.0,
+            seek_cone: 1.0,
+            seek_min: 1,
+            seek_gap: 2.0,
+            seek_catch: 2.0,
+            seek_turn: 0.0,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,

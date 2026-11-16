@@ -295,7 +295,8 @@ struct WallBuild { ax: f32, ay: f32, bx: f32, by: f32, r: f32, hp: f32, x0: u32,
 struct SqUnit { x: u32, y: u32, touch2: u32, sight2: u32, take2: u32, take: f32, smell2: u32, smell: f32 };
 // `heat`: fire's heat on the unit's cell (11-14, `squad::UnitOut::heat`).
 struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32, heat: f32, _s0: u32, _s1: u32, _s2: u32 };
-// A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
+// A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`) in its low 16 bits
+// and a seeking shot's catch (`squad::Frame::catch`) in its high 16.
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
 // The flag in a unit's `sight2` and a shot's `count` (`squad::OVER`): it
@@ -2297,9 +2298,55 @@ fn stops(i: u32) -> bool {
     return enemy_trail(i) >= P.slime || ((P.scorched & 1u) != 0u && crater_at(i) > 0.0 && enemy_occ(i) > 0u);
 }
 
+// What a seeking shot's catch strikes (`squad::trace`): a cell that stops
+// a shot or holds a live walker.
+fn seeks(i: u32) -> bool {
+    return stops(i) || enemy_occ(i) > 0u;
+}
+
+// A seeking shot's catch at cell i of its line (`squad::caught`): out to
+// `reach` cells along (sx, sy) both ways, nearest first, the plus side
+// before the minus, the first cell that `seeks`; a side ends at the dish's
+// edge or the first cell off the agar.
+fn caught(i: u32, sx: i32, sy: i32, reach: u32) -> u32 {
+    let x = i32(i % P.w);
+    let y = i32(i / P.w);
+    var open_p = true;
+    var open_m = true;
+    for (var o = 1; o <= i32(reach); o++) {
+        if (open_p) {
+            let cx = x + o * sx;
+            let cy = y + o * sy;
+            if (cx >= i32(P.w) || cy >= i32(P.h)) {
+                open_p = false;
+            } else {
+                let c = u32(cy) * P.w + u32(cx);
+                if (agar[c] == 0u) { open_p = false; } else if (seeks(c)) { return c; }
+            }
+        }
+        if (open_m) {
+            let cx = x - o * sx;
+            let cy = y - o * sy;
+            if (cx < 0 || cy < 0) {
+                open_m = false;
+            } else {
+                let c = u32(cy) * P.w + u32(cx);
+                if (agar[c] == 0u) { open_m = false; } else if (seeks(c)) { return c; }
+            }
+        }
+        if (!open_p && !open_m) { break; }
+    }
+    return NONE;
+}
+
 // Each shot walks its cells and stops at the first off the agar (a wall or
 // rock: no hit) or the first that looks like slime (the hit), or a walker
-// in a crater (2026-11-12). The owner, 2026-11-11 16:48Z: "Gun fire should
+// in a crater (2026-11-12). A seeking shot (its catch in `ar2`'s high 16
+// bits, `squad::pack`; the gun-system review's step C, 2026-11-16) stops
+// at a live walker on its line too, and with a catch, if its line misses,
+// strikes the first cell beside it that stops a shot or holds a walker
+// (`caught`), not sunk (`squad::trace`; catching beside before the line's
+// own hit struck the thin fringe and killed fewer). The owner, 2026-11-11 16:48Z: "Gun fire should
 // hit the first slime in its path". With the sink (`shot_sink`, 2026-11-12)
 // the blast then sinks in: on along the line while the cells are agar and
 // within the sink's reach of the first hit, to the last that stops a shot
@@ -2309,10 +2356,23 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let q = gid.x;
     if (q >= P.nshots) { return; }
     let s = SQ.shots[q];
-    var hit = NONE;
-    var m = 0u;
+    // Its seek (`squad::SEEKS`, `squad::CATCH`): it stops at live walkers
+    // too, and its catch.
+    let seek = s.ar2 >> 16u;
+    let walks = (seek & 0x8000u) != 0u;
+    let reach = seek & 0x7FFFu;
     let over = (s.count & OVER) != 0u;
     let count = s.count & ~OVER;
+    // Across the line's longer leg (`squad::catch_side`).
+    var sx = 0;
+    var sy = 1;
+    if (reach > 0u && count > 0u) {
+        let a = SQ.path[s.start];
+        let b = SQ.path[s.start + count - 1u];
+        if (abs(i32(b % P.w) - i32(a % P.w)) < abs(i32(b / P.w) - i32(a / P.w))) { sx = 1; sy = 0; }
+    }
+    var hit = NONE;
+    var m = 0u;
     for (; m < count; m++) {
         let i = SQ.path[s.start + m];
         if (agar[i] == 0u) {
@@ -2320,7 +2380,15 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (over && over_wall(i)) { continue; }
             break;
         }
-        if (stops(i)) { hit = i; break; }
+        if (stops(i) || (walks && enemy_occ(i) > 0u)) { hit = i; break; }
+    }
+    // A line that misses: a seeking shot with a catch looks beside it, up
+    // to where it ended, for slime or a walker, and strikes the first.
+    if (hit == NONE && reach > 0u) {
+        for (var n = 0u; n < m; n++) {
+            let c = caught(SQ.path[s.start + n], sx, sy, reach);
+            if (c != NONE) { SQ.sout[q].hit = c; return; }
+        }
     }
     if (hit != NONE && P.shot_sink > 0.0) {
         let reach2 = u32(floor(P.shot_sink * f32(s.r2)));
@@ -2490,7 +2558,7 @@ fn shout(@builtin(local_invocation_index) li: u32) {
     for (var q = 0u; q < P.nshots; q++) {
         let hit = SQ.sout[q].hit;
         if (hit == NONE) { continue; }
-        let ar2 = SQ.shots[q].ar2;
+        let ar2 = SQ.shots[q].ar2 & 0xFFFFu;
         let r = isqrt(ar2);
         let hx = i32(hit % P.w);
         let hy = i32(hit / P.w);

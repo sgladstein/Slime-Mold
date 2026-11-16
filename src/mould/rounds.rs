@@ -137,6 +137,16 @@ pub enum Card {
     /// cast it is in fires the next cast too, side by side in the same
     /// shot (`Cast::with`); a second multicast in that cast adds a third.
     Multicast,
+    /// **Seek** (2026-11-16, step C of the gun-system review, the owner's
+    /// 02:34Z "homing"; homing in the shot trace, the owner's 19:38Z pick):
+    /// a bullet that would pass beside slime strikes it. On the leg that
+    /// passes its aim point, or its last, the shot trace catches live slime
+    /// or walkers within `Rules::seek_catch` cells a card of its line
+    /// (`Game::catches`, `squad::trace`), in both engines. The first tries
+    /// turned the bullet toward slime ahead no bullet had picked
+    /// (`Game::steer`, now off: `Rules::seek_turn` 0): it read slime a
+    /// second old and missed as often (Reports/gun-seek-2026-11-16/).
+    Seek,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -149,14 +159,14 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 25] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast];
+    pub const ALL: [Card; 26] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
     }
@@ -188,6 +198,7 @@ impl Card {
             Card::Trigger => "trigger",
             Card::Expire => "expire",
             Card::Multicast => "multicast",
+            Card::Seek => "seek",
             Card::Heave => "heave",
             Card::Corral => "corral",
             Card::Pull => "pull",
@@ -258,6 +269,7 @@ impl Card {
             Card::Trigger => "Carries the next bullet and lets it out where it hits.",
             Card::Expire => "Carries the next bullet and lets it out where it stops.",
             Card::Multicast => "Fires the next bullet with it, in the same shot.",
+            Card::Seek => "Bullets that just miss strike slime beside them.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -275,7 +287,7 @@ impl Card {
             Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist | Card::Multicast => 3,
-            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral => 2,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Seek => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -287,7 +299,7 @@ impl Card {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
             _ => 1,
         }
     }
@@ -475,6 +487,12 @@ pub struct RoundRules {
     pub shove_secs: f32,
     pub heave: f32,
     pub corral_reach: f32,
+    /// **Pull stops short** (owner 2026-11-16 19:40Z, on the card "Stop it
+    /// short of the squad"): a pull's slime lands no nearer than this many
+    /// dish cells to the shooter; a hit already that near pulls nothing.
+    /// Dragged right onto the squad, pull+plain lost all 8 soldiers in
+    /// 10 s (`Reports/gun-shove-2026-11-16/`).
+    pub pull_short: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -509,6 +527,7 @@ impl Default for RoundRules {
             shove_secs: 0.25,
             heave: 1.5,
             corral_reach: 40.0,
+            pull_short: 6.0,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -580,7 +599,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Corral | Card::Pull => herd = Some(c),
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
@@ -652,7 +671,7 @@ pub fn flight(round: &[Card]) -> BulletMods {
     let cards = || round.iter().take(MAX_SLOTS);
     let n = |k: Card| cards().filter(|&&c| c == k).count() as u8;
     let all = casts(round);
-    let mut m = BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), ..BulletMods::default() };
+    let mut m = BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), seek: n(Card::Seek), ..BulletMods::default() };
     for (i, c) in all.iter().enumerate() {
         m.ammo[i] = c.ammo;
         m.child[i] = c.child.map_or(0, |j| j + 1);
@@ -822,6 +841,9 @@ pub struct Rounds {
     pub shoved: usize,
     /// Of `shoves`, those that pushed one way (`Card::Corral`, `Pull`).
     pub pushes: u32,
+    /// Pulls that hit within `RoundRules::pull_short` of the shooter (and a
+    /// reach) and so pulled nothing.
+    pub short: u32,
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
     pub pops: Vec<Pop>,
@@ -1132,6 +1154,22 @@ impl Rounds {
                 g.buildings.iter().filter(|b| b.up() && b.kind == super::larder_world::Kind::Turret).map(|b| b.at).filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far).min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
             }
             _ => None,
+        };
+        // A pull flies its slime only as far as `pull_short` dish cells
+        // from the shooter, its nearest walker (a reach from the hit)
+        // included; with no room, none.
+        let steps = match (c.herd, toward) {
+            (Some(Card::Pull), Some(t)) => {
+                let room = (t.0 - hit.0).hypot(t.1 - hit.1) - reach - rr.pull_short * s;
+                let per = (g.world.walker_step() * rr.fling_speed).max(1e-3);
+                let most = (room / per).floor();
+                if most < 1.0 {
+                    self.short += 1;
+                    return;
+                }
+                steps.min(most.min(u16::MAX as f32) as u16)
+            }
+            _ => steps,
         };
         let heading = match toward.filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) > 1e-3) {
             Some(t) => Some((t.1 - hit.1).atan2(t.0 - hit.0)),

@@ -1,0 +1,138 @@
+# Misses with and without seek, 60 s (the Fork's greedy game ends at 21 s), llvmpipe, 2026-11-16.
+# Each run: larder-world look=DIR at=60 screen=640x400 ARGS; the last game line and rounds line.
+# Variants (ARGS after the scene):
+#   base     load=0.5,plain                    no card
+#   all      load=0.5,seek+plain                every seeker homes, no hit gap (intermediate build, seek_line=9999)
+#   line     load=0.5,seek+plain                turns only with no walker on its line, no hit gap (intermediate build)
+#   gapall   load=0.5,seek+plain                every seeker homes, skipping last frame's hits and other picks: THE CARD AS MERGED
+#            (run on the intermediate build with set=seek_line=9999, which turned its line test off; the merged build has no such key)
+#   gapline  load=0.5,seek+plain                the line test, skipping squares near last frame's hits (intermediate build)
+#   gapt9    load=0.5,seek+plain set=seek_turn=0.9   as gapall, turning twice as fast (also with set=seek_line=9999)
+# Scenes: hold = hand=hold@150,265 bank=8000 (the Fork); greedy = hand=greedy (the Fork);
+#   pPgS = map=planet:P:S hand=guardwork; pPsS = map=planet:P:S hand=squadwork.
+# Scenes with no shots in 60 s (p1g5, p3g6, p2s3, p3g2) are left out.
+
+scene                      base                    all                   line                 gapall                gapline                  gapt9
+hold        39/368 k2713 s5 t60    39/366 k2710 s5 t60    42/437 k2831 s7 t60    43/400 k2739 s5 t60    44/438 k2865 s8 t60    39/361 k2746 s5 t60
+greedy       22/100 k106 s9 t21      12/92 k125 s9 t21      22/97 k136 s9 t21       7/93 k133 s9 t21      18/97 k117 s9 t21      19/97 k129 s9 t21
+p1g2           19/89 k77 s8 t60       12/83 k88 s8 t60       22/88 k81 s8 t60        8/76 k79 s8 t60       15/80 k70 s8 t60       16/82 k77 s8 t60
+p3g4           14/42 k33 s8 t60        9/40 k40 s8 t60        2/29 k37 s8 t60        5/36 k41 s8 t60        6/34 k34 s8 t60        4/33 k37 s8 t60
+p1s1           6/92 k222 s8 t60      6/104 k212 s8 t60       4/92 k200 s8 t60       3/95 k208 s8 t60      7/105 k221 s8 t60       1/93 k192 s8 t60
+p1g3         46/183 k186 s8 t60                      -                      -     31/174 k186 s8 t60     27/158 k169 s8 t60     23/176 k216 s8 t60
+p2s1         27/179 k233 s8 t60                      -                      -     21/182 k250 s8 t60     14/161 k204 s8 t60     13/182 k250 s8 t60
+total       173/1053=16.4% k857      78/685=11.4% k465      92/743=12.4% k454    118/1056=11.2% k897    131/1073=12.2% k815    115/1024=11.2% k901
+
+== greedy-all
+  t 21 s: mould 24837, soldiers 9, bank 0, harvested 0, rendered 0, shots 92, killed 125, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.5,60.3
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 138 seeker turns, 78 soldier hits in 75 cells, 7 ran out of range and 5 hit a wall with no slime struck
+== greedy-base
+  t 21 s: mould 24847, soldiers 9, bank 0, harvested 0, rendered 0, shots 100, killed 106, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.7,60.3
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 77 soldier hits in 74 cells, 17 ran out of range and 5 hit a wall with no slime struck
+== greedy-gapall
+  t 21 s: mould 24842, soldiers 9, bank 0, harvested 0, rendered 0, shots 93, killed 133, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.6,60.4
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 113 seeker turns, 84 soldier hits in 80 cells, 2 ran out of range and 5 hit a wall with no slime struck
+== greedy-gapline
+  t 21 s: mould 24842, soldiers 9, bank 0, harvested 0, rendered 0, shots 97, killed 117, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.7,60.2
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 66 seeker turns, 77 soldier hits in 76 cells, 11 ran out of range and 7 hit a wall with no slime struck
+== greedy-gapt9
+  t 21 s: mould 24837, soldiers 9, bank 0, harvested 0, rendered 0, shots 97, killed 129, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.5,60.4
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 111 seeker turns, 75 soldier hits in 73 cells, 15 ran out of range and 4 hit a wall with no slime struck
+== greedy-line
+  t 21 s: mould 24840, soldiers 9, bank 0, harvested 0, rendered 0, shots 97, killed 136, took 98%, crystals left 0.910, ended: larder overrun; squad at 386.7,60.3
+  rounds t   21 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 69 seeker turns, 75 soldier hits in 73 cells, 14 ran out of range and 8 hit a wall with no slime struck
+== hold-all
+  t 60 s: mould 26834, soldiers 5, bank 5237, harvested 0, rendered 0, shots 366, killed 2710, took 0%, crystals left 0.991; squad at 146.3,261.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 631 seeker turns, 322 soldier hits in 317 cells, 31 ran out of range and 8 hit a wall with no slime struck
+== hold-base
+  t 60 s: mould 26843, soldiers 5, bank 5225, harvested 0, rendered 0, shots 368, killed 2713, took 0%, crystals left 0.991; squad at 146.3,261.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 328 soldier hits in 327 cells, 34 ran out of range and 5 hit a wall with no slime struck
+== hold-gapall
+  t 60 s: mould 26962, soldiers 5, bank 5236, harvested 0, rendered 0, shots 400, killed 2739, took 0%, crystals left 0.991; squad at 146.3,261.4
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 539 seeker turns, 357 soldier hits in 356 cells, 36 ran out of range and 7 hit a wall with no slime struck
+== hold-gapline
+  t 60 s: mould 26761, soldiers 8, bank 5227, harvested 0, rendered 0, shots 438, killed 2865, took 0%, crystals left 0.991; squad at 149.1,264.3
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 60 seeker turns, 394 soldier hits in 388 cells, 39 ran out of range and 5 hit a wall with no slime struck
+== hold-gapt9
+  t 60 s: mould 27000, soldiers 5, bank 5247, harvested 0, rendered 0, shots 361, killed 2746, took 0%, crystals left 0.990; squad at 146.3,261.4
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 563 seeker turns, 319 soldier hits in 318 cells, 38 ran out of range and 1 hit a wall with no slime struck
+== hold-line
+  t 60 s: mould 26723, soldiers 7, bank 5222, harvested 0, rendered 0, shots 437, killed 2831, took 0%, crystals left 0.991; squad at 149.8,266.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 47 seeker turns, 395 soldier hits in 391 cells, 38 ran out of range and 4 hit a wall with no slime struck
+== p1g2-all
+  t 60 s: mould 24776, soldiers 8, bank 399, harvested 0, rendered 0, shots 83, killed 88, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 175 seeker turns, 70 soldier hits in 69 cells, 12 ran out of range and 0 hit a wall with no slime struck
+== p1g2-base
+  t 60 s: mould 24786, soldiers 8, bank 400, harvested 0, rendered 0, shots 89, killed 77, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 70 soldier hits in 67 cells, 19 ran out of range and 0 hit a wall with no slime struck
+== p1g2-gapall
+  t 60 s: mould 24783, soldiers 8, bank 400, harvested 0, rendered 0, shots 76, killed 79, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 116 seeker turns, 68 soldier hits in 65 cells, 8 ran out of range and 0 hit a wall with no slime struck
+== p1g2-gapline
+  t 60 s: mould 24793, soldiers 8, bank 400, harvested 0, rendered 0, shots 80, killed 70, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 39 seeker turns, 64 soldier hits in 64 cells, 15 ran out of range and 0 hit a wall with no slime struck
+== p1g2-gapt9
+  t 60 s: mould 24784, soldiers 8, bank 400, harvested 0, rendered 0, shots 82, killed 77, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 114 seeker turns, 66 soldier hits in 64 cells, 15 ran out of range and 1 hit a wall with no slime struck
+== p1g2-line
+  t 60 s: mould 24788, soldiers 8, bank 399, harvested 0, rendered 0, shots 88, killed 81, took 0%, crystals left 0.991; squad at 316.0,203.5
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 72 seeker turns, 65 soldier hits in 62 cells, 22 ran out of range and 0 hit a wall with no slime struck
+== p1g3-base
+  t 60 s: mould 26339, soldiers 8, bank 399, harvested 0, rendered 0, shots 183, killed 186, took 0%, crystals left 0.989; squad at 71.8,44.7
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 137 soldier hits in 129 cells, 46 ran out of range and 0 hit a wall with no slime struck
+== p1g3-gapall
+  t 60 s: mould 26337, soldiers 8, bank 399, harvested 0, rendered 0, shots 174, killed 186, took 0%, crystals left 0.989; squad at 71.8,44.7
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 241 seeker turns, 143 soldier hits in 136 cells, 27 ran out of range and 4 hit a wall with no slime struck
+== p1g3-gapline
+  t 60 s: mould 26193, soldiers 8, bank 399, harvested 0, rendered 0, shots 158, killed 169, took 0%, crystals left 0.989; squad at 71.8,44.7
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 89 seeker turns, 131 soldier hits in 126 cells, 20 ran out of range and 7 hit a wall with no slime struck
+== p1g3-gapt9
+  t 60 s: mould 26318, soldiers 8, bank 399, harvested 0, rendered 0, shots 176, killed 216, took 0%, crystals left 0.989; squad at 71.8,44.7
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 213 seeker turns, 152 soldier hits in 148 cells, 20 ran out of range and 3 hit a wall with no slime struck
+== p1s1-all
+  t 60 s: mould 27342, soldiers 8, bank 398, harvested 0, rendered 0, shots 104, killed 212, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 219 seeker turns, 98 soldier hits in 96 cells, 6 ran out of range and 0 hit a wall with no slime struck
+== p1s1-base
+  t 60 s: mould 27307, soldiers 8, bank 398, harvested 0, rendered 0, shots 92, killed 222, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 85 soldier hits in 84 cells, 6 ran out of range and 0 hit a wall with no slime struck
+== p1s1-gapall
+  t 60 s: mould 27337, soldiers 8, bank 398, harvested 0, rendered 0, shots 95, killed 208, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 123 seeker turns, 92 soldier hits in 90 cells, 3 ran out of range and 0 hit a wall with no slime struck
+== p1s1-gapline
+  t 60 s: mould 27333, soldiers 8, bank 398, harvested 0, rendered 0, shots 105, killed 221, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 29 seeker turns, 98 soldier hits in 97 cells, 7 ran out of range and 0 hit a wall with no slime struck
+== p1s1-gapt9
+  t 60 s: mould 27351, soldiers 8, bank 398, harvested 0, rendered 0, shots 93, killed 192, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 112 seeker turns, 92 soldier hits in 92 cells, 1 ran out of range and 0 hit a wall with no slime struck
+== p1s1-line
+  t 60 s: mould 27334, soldiers 8, bank 398, harvested 0, rendered 0, shots 92, killed 200, took 0%, crystals left 0.990; squad at 341.4,69.6
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 15 seeker turns, 88 soldier hits in 88 cells, 4 ran out of range and 0 hit a wall with no slime struck
+== p2s1-base
+  t 60 s: mould 25466, soldiers 8, bank 399, harvested 0, rendered 0, shots 179, killed 233, took 0%, crystals left 0.990; squad at 54.6,76.8
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 152 soldier hits in 143 cells, 27 ran out of range and 0 hit a wall with no slime struck
+== p2s1-gapall
+  t 60 s: mould 25312, soldiers 8, bank 399, harvested 0, rendered 0, shots 182, killed 250, took 0%, crystals left 0.991; squad at 54.6,76.8
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 294 seeker turns, 160 soldier hits in 159 cells, 21 ran out of range and 0 hit a wall with no slime struck
+== p2s1-gapline
+  t 60 s: mould 25492, soldiers 8, bank 399, harvested 0, rendered 0, shots 161, killed 204, took 0%, crystals left 0.990; squad at 54.6,76.8
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 84 seeker turns, 147 soldier hits in 141 cells, 14 ran out of range and 0 hit a wall with no slime struck
+== p2s1-gapt9
+  t 60 s: mould 25433, soldiers 8, bank 399, harvested 0, rendered 0, shots 182, killed 250, took 0%, crystals left 0.990; squad at 54.6,76.8
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 268 seeker turns, 167 soldier hits in 165 cells, 13 ran out of range and 0 hit a wall with no slime struck
+== p3g4-all
+  t 60 s: mould 26763, soldiers 8, bank 400, harvested 0, rendered 0, shots 40, killed 40, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 91 seeker turns, 30 soldier hits in 27 cells, 9 ran out of range and 0 hit a wall with no slime struck
+== p3g4-base
+  t 60 s: mould 26776, soldiers 8, bank 400, harvested 0, rendered 0, shots 42, killed 33, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 28 soldier hits in 26 cells, 14 ran out of range and 0 hit a wall with no slime struck
+== p3g4-gapall
+  t 60 s: mould 26768, soldiers 8, bank 400, harvested 0, rendered 0, shots 36, killed 41, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 68 seeker turns, 31 soldier hits in 29 cells, 5 ran out of range and 0 hit a wall with no slime struck
+== p3g4-gapline
+  t 60 s: mould 26777, soldiers 8, bank 400, harvested 0, rendered 0, shots 34, killed 34, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 30 seeker turns, 28 soldier hits in 27 cells, 6 ran out of range and 0 hit a wall with no slime struck
+== p3g4-gapt9
+  t 60 s: mould 26769, soldiers 8, bank 400, harvested 0, rendered 0, shots 33, killed 37, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 60 seeker turns, 27 soldier hits in 25 cells, 4 ran out of range and 0 hit a wall with no slime struck
+== p3g4-line
+  t 60 s: mould 26777, soldiers 8, bank 400, harvested 0, rendered 0, shots 29, killed 37, took 0%, crystals left 0.988; squad at 63.2,153.0
+  rounds t   60 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 26 seeker turns, 27 soldier hits in 26 cells, 2 ran out of range and 0 hit a wall with no slime struck

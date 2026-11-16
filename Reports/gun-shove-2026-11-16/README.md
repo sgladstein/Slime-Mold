@@ -7,7 +7,49 @@ the rest of step B of the [gun-system review](../gun-system-review-2026-11-16/RE
 (multicast, the read-back batching), after the
 [trigger cards](../gun-triggers-2026-11-16/README.md).
 
-Page: [Shove Cards](https://claude.ai/artifact/2xhG8dfegCSryLGDPexpdE) (source in `page/`).
+Page: [Shove Cards](https://claude.ai/artifact/2xhG8dfegCSryLGDPexpdE) (source in `page/`;
+its second version opens with Pull stopping short).
+
+## Pull stops short (the owner's pick, 19:40Z)
+
+Asked whether to keep Pull, change it or drop it (it dragged the slime
+onto its own squad: all eight soldiers lost in 10 s), the owner chose "Stop
+it short of the squad": the slime lands a few cells out in front, pulled
+off cover or crystals into the squad's fire.
+
+- **Built** (`Rounds::shove`): a pull's push flies at most as far as leaves
+  its nearest walker `RoundRules::pull_short` (6 dish cells) from the
+  shooter: the room is the distance from the hit to the soldier, less the
+  push's reach and the 6 cells, and the flight is cut to the whole fine
+  steps that cover it (`World::walker_step` times `fling_speed`). With no
+  room, the pull does nothing (`Rounds::short`, printed last on the
+  headless rounds line as "pulls too near to pull").
+- **The old scene** (the Fork, holding at the larder, one turret, from
+  29 s): the slime is already at the squad's feet, so most pulls have no
+  room (67 of 69 over 10 s). The squad keeps 7 of 8 soldiers, as with plain
+  bullets, where the old pull lost all eight.
+- **At range** (the same game from 12 s, while the squad walks to its hold
+  and shoots slime 10-24 cells off): 18 pulls in 10 s, 37 too near; the
+  pulled slime lands in the open in front of the squad. Kills about even
+  with plain (282 against 286, the turret's included); all 8 soldiers.
+
+| Pull, `raw/pull-films.sh` | Shoves | Too near | Thrown | Killed (turret's) | Soldiers | Health |
+|---|---|---|---|---|---|---|
+| Old scene, 29-32 s, plain | | | 0 | 199 (78) | 7 of 8 | 76 |
+| Old scene, 29-32 s, pull + heave + plain | 1 | 19 | 369 | 247 (75) | 7 of 8 | 76 |
+| Old scene, 29-39 s, plain | | | 0 | 606 (139) | 7 of 8 | 72 |
+| Old scene, 29-39 s, pull + heave + plain | 2 | 67 | 717 | 559 (122) | 7 of 8 | 73 |
+| The old pull, 29-39 s (below) | | | 11,186 | 572 (172) | 0 of 8 | |
+| On the march, 17-20 s, plain | | | 0 | 101 (59) | 8 | 99 |
+| On the march, 17-20 s, pull + heave + plain | 12 | 7 | 108 | 72 (47) | 8 | 99 |
+| On the march, 12-22 s, plain | | | 0 | 286 (166) | 8 | 97 |
+| On the march, 12-22 s, pull + heave + plain | 18 | 37 | 209 | 282 (163) | 8 | 98 |
+
+The game's kills here (the plain rows) are lower than the tables below,
+which ran on the build of 11-16 morning; compare rows within one table.
+Clips: `page/close-*.mp4`, `page/march-*.mp4` (`raw/pull-counts.json`).
+Pull is now safe and visible, and it adds no kills in these scenes: the
+squads on their own fire at slime near them, which has no room to pull.
 
 ## What changed
 
@@ -103,7 +145,8 @@ up into the three turrets and heaps at their feet.
 - **Pull is a trap as built.** It drags the slime onto the squad: one soldier
   down in 3 s, all eight in 10 s. It would need to stop short of the gun (the
   flight is one length for the whole push; the engine knows the step length,
-  the rounds do not yet) or it goes; the owner's call.
+  the rounds do not yet) or it goes; the owner's call. (Since changed: it
+  stops short, above.)
 
 ## Not settled
 
@@ -124,3 +167,4 @@ up into the three turrets and heaps at their feet.
   environment).
 - `raw/make_clips.py`: frames to H.264 MP4 and the counts as JSON.
 - `raw/counts.json`: the counts above.
+- `raw/pull-films.sh`, `raw/pull-counts.json`: Pull stopping short.
