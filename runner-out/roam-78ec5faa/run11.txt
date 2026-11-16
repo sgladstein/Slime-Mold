@@ -1,0 +1,57 @@
+larder-world machine at the start: RAM 3.3 GB free of 8.0; GPU memory 864 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+head start: the slime grew 87 s alone in 13.0 s
+larder-world bench: planet:8:1 seed 10903078890919904583, 1256 x 784 cells, 682490 slots, one walker a cell, scale 2 walkers 364924; hand squads, 45 game s at 60 frames a second, screen 1920x1080
+  GPU buffers: 411.7 MB for 1256 x 784 cells (418 bytes a cell), the biggest 63.3 MB
+  2700 frames, 675 game steps; 0.61 read-backs a step, 1.94 waits a step (17.79 ms a step waiting); steps finished once in 674, when the next was due 0
+  every frame (2700 of them), ms: frame p50 11.68 p95 15.27 max 585.29; step  p50 0.11 p95 3.81 max 573.87; prepare  p50 0.18 p95 0.21 max 29.87; record  p50 0.10 p95 0.12 max 1.39; GPU tail  p50 10.31 p95 11.94 max 32.47
+  frames with a step (675 of them), ms: frame p50 12.33 p95 17.44 max 49.78; step  p50 0.87 p95 5.99 max 7.44; prepare  p50 0.18 p95 0.21 max 29.87; record  p50 0.11 p95 0.12 max 0.34; GPU tail  p50 11.13 p95 11.28 max 29.39
+  after the first game second (2640 frames), ms: frame max 256.47; step max 247.43; prepare max 29.87
+  longest frames, at game time: 0.00 s: 585.29 (step 573.87, prepare 2.47, record 0.19, tail 8.75); 1.03 s: 256.47 (step 247.43, prepare 0.69, record 0.14, tail 8.21); 20.03 s: 107.41 (step 98.05, prepare 0.79, record 0.18, tail 8.39)
+  ground refresh: 44 of them, ms: mean 1.80 max 3.98, of which the read-back at most 0.27; 35182 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 45 s: mould 138270, soldiers 8, buildings 0, harvested 0, shots 341, killed 1660
+  GPU a step, every pass timed alone (median of 60 steps): 6.870 ms in all
+    shots        1 a step    0.012 ms a step    0.012 ms a run    0.2%, on 57 of 60 steps
+    strike       1 a step    0.061 ms a step    0.061 ms a run    0.9%, on 57 of 60 steps
+    cut          1 a step    0.002 ms a step    0.002 ms a run    0.0%, on 57 of 60 steps
+    shout        1 a step    0.003 ms a step    0.003 ms a run    0.0%, on 57 of 60 steps
+    smell        1 a step    0.010 ms a step    0.010 ms a run    0.1%
+    sense        2 a step    1.189 ms a step    0.595 ms a run   17.3%
+    walk         2 a step    0.262 ms a step    0.131 ms a run    3.8%
+    walls        2 a step    0.045 ms a step    0.023 ms a run    0.7%
+    fate         2 a step    0.118 ms a step    0.059 ms a run    1.7%
+    fly          2 a step    0.075 ms a step    0.037 ms a run    1.1%
+    alight       2 a step    0.037 ms a step    0.019 ms a run    0.5%
+    eat          2 a step    0.012 ms a step    0.006 ms a run    0.2%
+    pilesum      4 a step    0.024 ms a step    0.006 ms a run    0.3%
+    flow         2 a step    0.006 ms a step    0.003 ms a run    0.1%
+    ngather      2 a step    0.179 ms a step    0.089 ms a run    2.6%
+    nspread      2 a step    0.139 ms a step    0.069 ms a run    2.0%
+    nab          2 a step    0.142 ms a step    0.071 ms a run    2.1%
+    nhear        2 a step    0.159 ms a step    0.080 ms a run    2.3%
+    esum         2 a step    0.166 ms a step    0.083 ms a run    2.4%
+    egain        2 a step    0.813 ms a step    0.406 ms a run   11.8%
+    ripen        2 a step    0.199 ms a step    0.099 ms a run    2.9%
+    life         2 a step    0.400 ms a step    0.200 ms a run    5.8%
+    massclear    2 a step    0.004 ms a step    0.002 ms a run    0.1%
+    masscount    2 a step    0.170 ms a step    0.085 ms a run    2.5%
+    breed        2 a step    0.133 ms a step    0.070 ms a run    1.9%
+    born         2 a step    0.038 ms a step    0.019 ms a run    0.5%
+    trail        2 a step    1.066 ms a step    0.533 ms a run   15.5%
+    scent        2 a step    0.814 ms a step    0.407 ms a run   11.8%
+    plant        1 a step    0.192 ms a step    0.192 ms a run    2.8%
+    pcopy        1 a step    0.074 ms a step    0.074 ms a run    1.1%
+    dclear       1 a step    0.018 ms a step    0.018 ms a run    0.3%
+    dcount       1 a step    0.031 ms a step    0.031 ms a run    0.5%
+    units        1 a step    0.054 ms a step    0.054 ms a run    0.8%
+    harvest      1 a step    0.008 ms a step    0.008 ms a run    0.1%
+    draw         1 a step    0.216 ms a step    0.216 ms a run    3.1%
+  view, every pass timed alone (median of 60 frames): 8.159 ms in all
+    base       7.650 ms   93.8%  (60 frames)
+    marks      0.067 ms    0.8%  (60 frames)
+    compose    0.171 ms    2.1%  (60 frames)
+    specks     0.069 ms    0.8%  (60 frames)
+    prep       0.196 ms    2.4%  (60 frames)
+    drain      0.005 ms    0.1%  (60 frames)
+  machine at the end: RAM 3.1 GB free of 8.0; GPU memory 1132 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
