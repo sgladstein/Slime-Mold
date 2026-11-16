@@ -14,10 +14,10 @@
 //! attacks on the factory, They Are Billions' noise draws the horde,
 //! tower defense's enemy must pass the towers.
 //!
-//! A raid is the slime spending what it ate: the game keeps a meter of the
-//! food the slime eats from its crystals (`Game::time_surges`'s count),
-//! and when it holds `RaidRules::food` the slime sends a share of its body
-//! at the player's richest holding: the pump drawing the most, else any
+//! A raid comes at random times (the gap drawn from a normal distribution
+//! each raid, `RaidRules::every`; until 11-16 it came every 400 food the
+//! slime ate, too regular for the owner), and the slime sends a share of
+//! its body, drawn the same way, at the player's richest holding: the pump drawing the most, else any
 //! standing building, else the thickest knot of soldiers. A lure that is on
 //! within `RaidRules::lure_r` of that target takes the raid instead, so a
 //! lure in front of the pumps with turrets round it is a kill box the raid
@@ -31,26 +31,36 @@
 //! under `last_stand_at` of its peak, every walker it has rushes the
 //! thickest knot of soldiers.
 
-use super::{Game, Kind, World};
+use super::{Game, Kind, Rng, World};
 
-/// The raids' numbers. Food in the bank's units, times in game seconds,
-/// distances in dish cells.
+/// The raids' numbers. Times in game seconds, distances in dish cells.
+///
+/// Owner 2026-11-16 01:48Z: "slime should send out raiders regardless if it
+/// doesn't make a kill box a winning strategy yet. It shouldn't be so
+/// consistent as every 400 food. Both the time between raids and the size
+/// of the raid should be picked randomly (each raid) from a normal
+/// distribution". Until then a raid came every 400 food the slime ate
+/// (40-150 s apart): on the Fork turtle every 42 s like a clock.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RaidRules {
-    /// Food the slime eats from its crystals to build one raid; 0 is off.
-    /// 400: on the Fork, shape C eats about 2-11 food a second over its
-    /// first three minutes (Reports/surge-2026-11-15/README.md), so a
-    /// raid every half minute to two minutes, sooner the more it holds.
-    pub food: f32,
-    /// No raid before this many seconds from the landing...
-    pub first: f32,
-    /// ...nor within this many of the last one.
-    pub min: f32,
-    /// A raid comes after this many seconds even if the meter is not full
-    /// (0: only the meter).
+    /// The time till the next raid is drawn from a normal distribution
+    /// with this mean and `every_sd` (0: raids off), never under `min`.
+    /// 60 s: the food rule's gaps were 42 s on the Fork turtle and up to
+    /// 150 s on a lean slime; a minute keeps about four in the first five
+    /// minutes.
     pub every: f32,
-    /// The raid's size, a share of the slime's mass.
+    pub every_sd: f32,
+    /// The first raid's time from the landing, drawn the same way.
+    pub first: f32,
+    pub first_sd: f32,
+    pub min: f32,
+    /// The raid's size, a share of the slime's mass: drawn from a normal
+    /// distribution with this mean and `size_sd` each raid, kept within
+    /// `size_min`..`size_max`.
     pub size: f32,
+    pub size_sd: f32,
+    pub size_min: f32,
+    pub size_max: f32,
     /// The share of the walkers in the raid's reach that go: below 1 the
     /// body round the target thins rather than leaving it bare.
     pub share: f32,
@@ -64,7 +74,21 @@ pub struct RaidRules {
 
 impl Default for RaidRules {
     fn default() -> Self {
-        RaidRules { food: 400.0, first: 60.0, min: 40.0, every: 150.0, size: 0.15, share: 0.6, lure_r: 40.0, last_stand: false, last_stand_at: 0.25 }
+        RaidRules {
+            every: 60.0,
+            every_sd: 20.0,
+            first: 75.0,
+            first_sd: 15.0,
+            min: 20.0,
+            size: 0.15,
+            size_sd: 0.06,
+            size_min: 0.04,
+            size_max: 0.4,
+            share: 0.6,
+            lure_r: 40.0,
+            last_stand: false,
+            last_stand_at: 0.25,
+        }
     }
 }
 
@@ -89,6 +113,9 @@ pub struct Raid {
     /// Its target, fine cells, and reach, dish cells.
     pub to: (f32, f32),
     pub reach: f32,
+    /// Its size as drawn (a share of the slime's mass; infinite for the
+    /// last stand).
+    pub size: f32,
     /// The walkers the reach held as it began (the mould grid's count),
     /// and the share of them sent.
     pub held: u32,
@@ -97,17 +124,40 @@ pub struct Raid {
 }
 
 /// The game's raid state.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Raids {
-    /// Food eaten since the last raid.
-    pub meter: f32,
     /// Every raid sent, oldest first.
     pub sent: Vec<Raid>,
+    /// The tick the next raid is due (drawn at the first second, then at
+    /// each raid).
+    pub next: Option<u64>,
+    /// The raids' own draws, apart from `Game::rng` so raids don't move
+    /// any other draw in the game.
+    rng: Rng,
     pub(super) last_stand_done: bool,
     /// A raid decided and waiting a game second for its way round walls,
     /// which a worker thread builds (`big::raid_field_for`: 7-8 ms on
     /// planet 8, too long for one step by the levelgen thread's hitch rule).
     pending: Option<(Raid, Way)>,
+}
+
+impl Raids {
+    pub fn new(seed: u64) -> Raids {
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None }
+    }
+
+    /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
+    pub(super) fn normal(&mut self, m: f32, sd: f32) -> f32 {
+        let u = self.rng.f32().max(1e-7);
+        let v = self.rng.f32();
+        m + sd * (-2.0 * u.ln()).sqrt() * (std::f32::consts::TAU * v).cos()
+    }
+}
+
+impl Default for Raids {
+    fn default() -> Self {
+        Raids::new(0)
+    }
 }
 
 /// A raid's way round walls being built.
@@ -143,8 +193,8 @@ impl Way {
 }
 
 impl<W: World> Game<W> {
-    /// Once a game second: start a raid when the meter is full (or the
-    /// longest wait has passed), or the last stand.
+    /// Once a game second: start a raid when its drawn time comes, or the
+    /// last stand.
     pub(super) fn time_raids(&mut self) {
         // A raid decided a game second ago goes now, with its way round
         // walls: always a second later, so the game is the same however
@@ -168,21 +218,25 @@ impl<W: World> Game<W> {
                 return;
             }
         }
-        if r.food <= 0.0 || now < secs(r.first) {
+        if r.every <= 0.0 {
             return;
         }
-        let last = self.raids.sent.last().map(|d| d.tick).unwrap_or(0);
-        let since = now - last.min(now);
-        if since < secs(r.min) {
-            return;
-        }
-        let full = self.raids.meter >= r.food;
-        let late = r.every > 0.0 && since >= secs(r.every);
-        if !(full || late) {
+        let gap = |raids: &mut Raids, m: f32, sd: f32| secs(raids.normal(m, sd).max(r.min));
+        let next = match self.raids.next {
+            Some(t) => t,
+            None => {
+                let t = gap(&mut self.raids, r.first, r.first_sd);
+                self.raids.next = Some(t);
+                t
+            }
+        };
+        if now < next {
             return;
         }
         let Some((aim, to)) = self.raid_aim() else { return };
-        self.send_raid(aim, to, r.size, r.share, false);
+        let size = self.raids.normal(r.size, r.size_sd).clamp(r.size_min, r.size_max);
+        self.raids.next = Some(now + gap(&mut self.raids, r.every, r.every_sd));
+        self.send_raid(aim, to, size, r.share, false);
     }
 
     /// What the next raid goes for, and where (fine cells): the pump
@@ -240,8 +294,7 @@ impl<W: World> Game<W> {
     fn send_raid(&mut self, aim: RaidAim, to: (f32, f32), size: f32, share: f32, last_stand: bool) {
         let (reach, held) = if size.is_finite() { self.raid_reach(to, size * self.world.mass() as f32 / share.max(1e-3)) } else { (1.0e4, self.world.mass() as u32) };
         let way = Way::start(self.world.raid_ground(), super::raid_cell(to, self.world.size()));
-        self.raids.meter = 0.0;
-        self.raids.pending = Some((Raid { tick: self.world.ticks(), aim, to, reach, held, share, last_stand }, way));
+        self.raids.pending = Some((Raid { tick: self.world.ticks(), aim, to, reach, size, held, share, last_stand }, way));
     }
 
     /// The smallest reach round `to` (dish cells) whose squares of the

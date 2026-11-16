@@ -1,0 +1,52 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 43.4 s (the slime has eaten 150 food)
+  CPU: ground field 2.38 ms (once a game second), model and HUD 0.121 ms a frame
+  t 60 s: mould 26048, soldiers 4, bank 4764, harvested 1458, rendered 0, shots 771, killed 3578, took 0%, crystals left 0.991; squad at 256.0,112.5
+  surge: the slime ate 265 food (4.4/s); meter 115.3 of 150, 1 surges
+  dense: 2155 condensed or thick walkers, mass 28203 (readout 28203)
+  squad: touching 0.5 mean, 1 most; health 81 mean
+    pump at (256, 85): hp 138 / 200, built 1.0, standing, working
+    pump at (235, 125): hp 171 / 200, built 1.0, standing, working
+    pump at (280, 120): hp 120 / 200, built 1.0, standing, working
+    turret at (240, 148): hp 270 / 300, built 1.0, standing, working
+    turret at (256, 152): hp 248 / 300, built 1.0, standing
+    turret at (272, 148): hp 260 / 300, built 1.0, standing
+    turret at (222, 105): hp 298 / 300, built 1.0, standing
+    turret at (292, 100): hp 299 / 300, built 1.0, standing
+    lure at (256, 175): hp 0 / 150, built 1.0, worn down
+    pumped 1458 food
+  surge 2 starts at t 64.2 s (the slime has eaten 300 food)
+  raid 1 at t 79.0 s: Building(0) at 256,85, reach 89 cells holding 12346 walkers, share 0.60
+  surge 3 starts at t 80.4 s (the slime has eaten 450 food)
+  surge 4 starts at t 95.8 s (the slime has eaten 601 food)
+  surge 5 starts at t 111.3 s (the slime has eaten 751 food)
+  raid 2 at t 126.0 s: Building(2) at 280,120, reach 68 cells holding 6262 walkers, share 0.60
+  surge 6 starts at t 126.7 s (the slime has eaten 901 food)
+  surge 7 starts at t 142.1 s (the slime has eaten 1051 food)
+  raid 3 at t 152.0 s: Building(2) at 280,120, reach 71 cells holding 8236 walkers, share 0.60
+  surge 8 starts at t 157.6 s (the slime has eaten 1202 food)
+  surge 9 starts at t 173.0 s (the slime has eaten 1352 food)
+  surge 10 starts at t 188.5 s (the slime has eaten 1502 food)
+  raid 4 at t 197.0 s: Building(1) at 235,125, reach 76 cells holding 10540 walkers, share 0.60
+  surge 11 starts at t 203.9 s (the slime has eaten 1653 food)
+  surge 12 starts at t 219.3 s (the slime has eaten 1803 food)
+  surge 13 starts at t 234.8 s (the slime has eaten 1953 food)
+  surge 14 starts at t 250.3 s (the slime has eaten 2103 food)
+  raid 5 at t 256.0 s: Building(1) at 235,125, reach 86 cells holding 18729 walkers, share 0.60
+  surge 15 starts at t 265.7 s (the slime has eaten 2254 food)
+  surge 16 starts at t 281.0 s (the slime has eaten 2404 food)
+  surge 17 starts at t 296.5 s (the slime has eaten 2554 food)
+  CPU: ground field 3.58 ms (once a game second), model and HUD 0.136 ms a frame
+  t 300 s: mould 45997, soldiers 0, bank 11394, harvested 3747, rendered 0, shots 3612, killed 13300, took 0%, crystals left 0.915
+  surge: the slime ate 2588 food (8.6/s); meter 34.3 of 150, 17 surges
+  dense: 12874 condensed or thick walkers, mass 58871 (readout 58871)
+    pump at (256, 85): hp 0 / 200, built 1.0, worn down
+    pump at (235, 125): hp 0 / 200, built 1.0, worn down
+    pump at (280, 120): hp 0 / 200, built 1.0, worn down
+    turret at (240, 148): hp 261 / 300, built 1.0, standing
+    turret at (256, 152): hp 246 / 300, built 1.0, standing
+    turret at (272, 148): hp 251 / 300, built 1.0, standing
+    turret at (222, 105): hp 219 / 300, built 1.0, standing
+    turret at (292, 100): hp 207 / 300, built 1.0, standing
+    lure at (256, 175): hp 0 / 150, built 1.0, worn down
+    pumped 3747 food
