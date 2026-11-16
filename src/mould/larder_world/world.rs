@@ -110,6 +110,9 @@ pub trait World {
     /// cells of `at` (fine cells), or releases it (None). A world with no
     /// lumps ignores it.
     fn form_lump(&mut self, _b: usize, _at: Option<((f32, f32), f32)>) {}
+    /// Lump `b` takes in the slime round (`c`, `r`) in no lump, its own
+    /// members kept as they are (`big::BigDish::grow_lump`).
+    fn grow_lump(&mut self, _b: usize, _at: ((f32, f32), f32)) {}
     /// Lump `b`'s steering (`big::Lump`) from the next step.
     fn set_lump(&mut self, _b: usize, _l: crate::mould::big::Lump) {}
     /// Each lump's centre (fine cells) and members as the last step began
@@ -290,6 +293,11 @@ impl World for BigDish {
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
         let sc = self.p.scale as f32;
         BigDish::form_lump(self, b, at.map(|(c, r)| lump_reach(c, r * sc, (self.w, self.h))));
+    }
+
+    fn grow_lump(&mut self, b: usize, (c, r): ((f32, f32), f32)) {
+        let sc = self.p.scale as f32;
+        BigDish::grow_lump(self, b, lump_reach(c, r * sc, (self.w, self.h)));
     }
 
     fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {

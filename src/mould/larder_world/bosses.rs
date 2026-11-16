@@ -35,7 +35,7 @@
 //! `Rules::default()` so the censuses and replays keep their games; a film
 //! turns it on with `set=boss_every=40` or stages one with `boss=T,X,Y`.
 
-use super::{Game, Rng, World};
+use super::{Game, Kind, Rng, World};
 use crate::mould::big::{Lump, LUMPS};
 
 /// The mini-bosses' numbers. Times in game seconds, distances in dish
@@ -99,6 +99,38 @@ pub struct BossRules {
     pub bite_hi: f32,
     pub size: f32,
     pub faster: f32,
+    /// **The body** (the look thread's ask, 11-16 06:31Z: a sparse even
+    /// cloud does not read as a predator; the look must come from the
+    /// simulation, owner 05:28Z there). Its leash and clench tighten with
+    /// the grade (x 1 - `tight` x grade), and a hunter **lunges**: every
+    /// `lunge_every` seconds of the hunt (0 off) its pull and pace go up
+    /// `lunge_pull` and `lunge_haste` times for `lunge` seconds, so the
+    /// body bunches and surges for real (no painted pulse).
+    pub tight: f32,
+    pub lunge_every: f32,
+    pub lunge: f32,
+    pub lunge_pull: f32,
+    pub lunge_haste: f32,
+    /// Seconds a broken or spent one's members stay marked, unsteered and
+    /// unarmoured, before they are let go (its lump not reused till
+    /// then), so the view drains its colour as it scatters
+    /// (`Game::lump_looks`); a fizzled one goes at once.
+    pub fade: f32,
+    /// **The kinds** (owner 04:58Z: "all of them"; a mix of hunters and
+    /// kinds with an errand): each one's kind is drawn as it forms, by
+    /// these weights (hunter, wanderer, sapper, leech), among the kinds it
+    /// has a target for (a sapper needs something built, a leech a pump, a
+    /// wanderer a fresh crystal far off); a cut-off part makes only the
+    /// runners (hunter, wanderer). `kind` 1-4 forces one (0 draws).
+    pub kinds: [f32; 4],
+    pub kind: f32,
+    /// The wanderer: a fresh crystal (at least `fresh` of its charge left)
+    /// at least `far` dish cells off; it roots there `root` seconds, eats,
+    /// takes in the slime there (its reach x `grow`), and sets off again.
+    pub far: f32,
+    pub fresh: f32,
+    pub root: f32,
+    pub grow: f32,
 }
 
 impl BossRules {
@@ -136,6 +168,17 @@ impl BossRules {
     /// Its reach (dish cells) as it forms.
     pub fn reach_at(&self, reach: f32, g: f32) -> f32 {
         reach * (1.0 + self.size * (g - 0.5))
+    }
+
+    /// Its leash (`leash` or `clench`) at grade `g`: tighter, stronger.
+    pub fn leash_at(&self, leash: f32, g: f32) -> f32 {
+        leash * (1.0 - self.tight * g).max(0.1)
+    }
+
+    /// Whether `t` ticks into its hunt, at `tps`, falls in a lunge.
+    pub fn lunging(&self, t: u64, tps: f32) -> bool {
+        let (every, long) = ((self.lunge_every * tps).round() as u64, (self.lunge * tps).round() as u64);
+        every > 0 && long > 0 && t % every < long
     }
 
     /// Its members' pace (`Lump::haste`) as it hunts, never under the
@@ -184,6 +227,18 @@ impl Default for BossRules {
             bite_hi: 4.0,
             size: 0.6,
             faster: 0.4,
+            tight: 0.25,
+            lunge_every: 5.0,
+            lunge: 1.0,
+            lunge_pull: 2.0,
+            lunge_haste: 2.0,
+            fade: 1.5,
+            kinds: [1.0, 1.0, 1.0, 1.0],
+            kind: 0.0,
+            far: 40.0,
+            fresh: 0.5,
+            root: 15.0,
+            grow: 2.0,
         }
     }
 }
@@ -195,6 +250,42 @@ pub enum BossPhase {
     Gather,
     /// Going for soldier `k` (None: no soldier left, it holds).
     Hunt(Option<usize>),
+    /// On its errand, going for a point (fine cells): a wanderer's
+    /// crystal, a sapper's wall or building, a leech's pump.
+    Go((f32, f32)),
+    /// There: a wanderer rooted on its crystal (since the tick), a sapper
+    /// pressing into the wall, a leech on the pump.
+    Sit((f32, f32), u64),
+}
+
+/// **What a mini-boss is** (`BossRules::kinds`), the view's kind number
+/// (`Game::lump_looks` bits 0-2).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BossKind {
+    /// Comes for the squads: hunts the nearest soldier, lunging.
+    Hunter = 1,
+    /// Today's break-away as one body: goes for a far fresh crystal, roots
+    /// there and eats, takes in the slime there, and goes on bigger.
+    Wanderer = 2,
+    /// Goes for what you build: presses into the wall nearest it (or, with
+    /// none, the nearest building) and eats through it.
+    Sapper = 3,
+    /// Goes for a pump and sits on it: the pump's income is its own while
+    /// it sits; breaking it pays the stolen food back.
+    Leech = 4,
+}
+
+impl BossKind {
+    pub const ALL: [BossKind; 4] = [BossKind::Hunter, BossKind::Wanderer, BossKind::Sapper, BossKind::Leech];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            BossKind::Hunter => "hunter",
+            BossKind::Wanderer => "wanderer",
+            BossKind::Sapper => "sapper",
+            BossKind::Leech => "leech",
+        }
+    }
 }
 
 /// One mini-boss.
@@ -214,6 +305,11 @@ pub struct Boss {
     pub centre: (f32, f32),
     /// How strong it is, 0 to 1, drawn when it forms (`BossRules::grade`).
     pub grade: f32,
+    pub kind: BossKind,
+    /// A leech's take from the pump it sits on (bank food), paid back if
+    /// it is broken; a wanderer's crystals rooted on (a bit each, up to 64).
+    pub stolen: f32,
+    pub visited: u64,
 }
 
 /// What made a mini-boss.
@@ -257,6 +353,12 @@ pub struct Bosses {
     pub live: Vec<Boss>,
     /// Every one that ended, with how and the tick.
     pub ended: Vec<(Boss, BossEnd, u64)>,
+    /// The broken and spent still fading (`BossRules::fade`): each one and
+    /// the tick it is let go.
+    pub fading: Vec<(Boss, u64)>,
+    /// Food leeches took from the pumps, and what broken ones paid back.
+    pub stolen: f32,
+    pub returned: f32,
     /// The tick of the next chance (drawn at the first second, then at
     /// each chance).
     pub next: Option<u64>,
@@ -269,7 +371,7 @@ pub struct Bosses {
 
 impl Bosses {
     pub fn new(seed: u64) -> Bosses {
-        Bosses { live: Vec::new(), ended: Vec::new(), next: None, crowd_top: 0.0, rng: Rng::new(seed ^ 0xb055_5eed) }
+        Bosses { live: Vec::new(), ended: Vec::new(), fading: Vec::new(), stolen: 0.0, returned: 0.0, next: None, crowd_top: 0.0, rng: Rng::new(seed ^ 0xb055_5eed) }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -295,6 +397,15 @@ impl<W: World> Game<W> {
         let tps = self.rules.tps as f32;
         let secs = move |s: f32| (s.max(0.0) * tps).round() as u64;
         let lumps = self.world.lumps();
+        // The faded are let go.
+        let world = &mut self.world;
+        self.bosses.fading.retain(|&(b, until)| {
+            let keep = now < until;
+            if !keep {
+                world.form_lump(b.lump, None);
+            }
+            keep
+        });
         let mut k = 0;
         while k < self.bosses.live.len() {
             let mut b = self.bosses.live[k];
@@ -316,23 +427,52 @@ impl<W: World> Game<W> {
                 None
             };
             if let Some(e) = end {
-                self.world.form_lump(b.lump, None);
+                // Unsteered and unarmoured at once; a broken or spent one's
+                // members stay marked while it fades. A broken leech's
+                // take drains back to the bank.
                 self.world.set_lump(b.lump, Lump::default());
+                if e == BossEnd::Broken && b.stolen > 0.0 {
+                    self.bank += b.stolen;
+                    self.bosses.returned += b.stolen;
+                }
+                if e == BossEnd::Fizzled || r.fade <= 0.0 {
+                    self.world.form_lump(b.lump, None);
+                } else {
+                    self.bosses.fading.push((b, now + secs(r.fade).max(1)));
+                }
                 self.bosses.ended.push((b, e, now));
                 self.bosses.live.remove(k);
                 continue;
             }
+            let hunt = b.born + secs(r.gather);
+            let errand = if now < hunt || b.kind == BossKind::Hunter { None } else { self.errand(&mut b, now) };
             let cell = |p: (f32, f32)| crate::mould::larder_world::raid_cell(p, self.world.size());
             let strong = Lump { armour: r.armour_at(b.grade), bite: r.bite_at(b.grade), ..Lump::default() };
-            let lump = if now < b.born + secs(r.gather) {
+            let leash = r.leash_at(r.leash, b.grade);
+            let clench = r.leash_at(r.clench, b.grade);
+            let go = |p: (f32, f32)| Lump { aim: cell(p), pull: r.pull, leash, haste: r.haste_at(b.grade), ..strong };
+            let lump = if now < hunt {
                 b.phase = BossPhase::Gather;
-                Lump { aim: cell(centre), leash: r.clench, ..strong }
+                Lump { aim: cell(centre), leash: clench, ..strong }
+            } else if let Some(p) = errand {
+                // On its errand: going there, or sitting on it (a wanderer
+                // rooted and eating, a leech holding on, both clenched; a
+                // sapper pressing into the wall).
+                match (b.phase, b.kind) {
+                    (BossPhase::Sit(..), BossKind::Sapper) => go(p),
+                    (BossPhase::Sit(..), _) => Lump { aim: cell(p), pull: 0.5 * r.pull, leash: clench, ..strong },
+                    _ => go(p),
+                }
             } else {
                 let prey = self.nearest_soldier(centre);
                 b.phase = BossPhase::Hunt(prey);
                 match prey {
-                    Some(s) => Lump { aim: cell((self.soldiers[s].x, self.soldiers[s].y)), pull: r.pull, leash: r.leash, haste: r.haste_at(b.grade), ..strong },
-                    None => Lump { aim: cell(centre), leash: r.leash, ..strong },
+                    Some(s) => {
+                        // The lunge: harder and faster for a moment.
+                        let (pull, haste) = if r.lunging(now - hunt, tps) { (r.lunge_pull.max(0.0), r.lunge_haste.max(1.0)) } else { (1.0, 1.0) };
+                        Lump { aim: cell((self.soldiers[s].x, self.soldiers[s].y)), pull: r.pull * pull, leash, haste: r.haste_at(b.grade) * haste, ..strong }
+                    }
+                    None => Lump { aim: cell(centre), leash, ..strong },
                 }
             };
             self.world.set_lump(b.lump, lump);
@@ -388,16 +528,203 @@ impl<W: World> Game<W> {
     /// first free lump, its grade drawn (`BossRules::grade_lo`); false with
     /// none free.
     pub fn form_boss(&mut self, at: (f32, f32), reach: f32, cause: BossCause) -> bool {
-        let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().all(|b| b.lump != l)) else { return false };
+        let Some(lump) = (0..LUMPS).find(|&l| self.bosses.live.iter().chain(self.bosses.fading.iter().map(|f| &f.0)).all(|b| b.lump != l)) else { return false };
         let r = self.rules.boss;
         let (lo, hi) = (r.grade_lo.clamp(0.0, 1.0), r.grade_hi.clamp(0.0, 1.0));
         let grade = lo + (hi - lo).max(0.0) * self.bosses.rng.f32();
         self.world.form_lump(lump, Some((at, r.reach_at(reach, grade))));
         let cell = crate::mould::larder_world::raid_cell(at, self.world.size());
-        self.world.set_lump(lump, Lump { aim: cell, leash: r.clench, armour: r.armour_at(grade), bite: r.bite_at(grade), ..Lump::default() });
+        self.world.set_lump(lump, Lump { aim: cell, leash: r.leash_at(r.clench, grade), armour: r.armour_at(grade), bite: r.bite_at(grade), ..Lump::default() });
         let now = self.world.ticks();
-        self.bosses.live.push(Boss { lump, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade });
+        let mut b = Boss { lump, born: now, at, cause, phase: BossPhase::Gather, first: 0, members: 0, centre: at, grade, kind: BossKind::Hunter, stolen: 0.0, visited: 0 };
+        b.kind = self.pick_kind(&b);
+        self.bosses.live.push(b);
         true
+    }
+
+    /// Its kind (`BossRules::kinds`): forced by `kind`, else drawn by the
+    /// weights among the kinds with a target from where it formed (a
+    /// cut-off part: the runners only).
+    fn pick_kind(&mut self, b: &Boss) -> BossKind {
+        let r = self.rules.boss;
+        let forced = r.kind.round() as usize;
+        if (1..=4).contains(&forced) {
+            return BossKind::ALL[forced - 1];
+        }
+        let w: Vec<f32> = BossKind::ALL
+            .iter()
+            .enumerate()
+            .map(|(i, &kind)| {
+                let runner = matches!(kind, BossKind::Hunter | BossKind::Wanderer);
+                let able = kind == BossKind::Hunter || self.boss_goal(&Boss { kind, ..*b }).is_some();
+                if (b.cause != BossCause::Cut || runner) && able { r.kinds[i].max(0.0) } else { 0.0 }
+            })
+            .collect();
+        let sum: f32 = w.iter().sum();
+        if sum <= 0.0 {
+            return BossKind::Hunter;
+        }
+        let mut x = self.bosses.rng.f32() * sum;
+        for (i, &wi) in w.iter().enumerate() {
+            if x < wi {
+                return BossKind::ALL[i];
+            }
+            x -= wi;
+        }
+        BossKind::Hunter
+    }
+
+    /// Where boss `b`'s errand takes it (fine cells): a wanderer's next
+    /// fresh crystal far off and not rooted on before, a sapper's nearest
+    /// point of a standing wall (else the nearest building), a leech's
+    /// nearest working pump. None for a hunter, or with nothing to go for.
+    pub fn boss_goal(&self, b: &Boss) -> Option<(f32, f32)> {
+        let d = |p: (f32, f32)| (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
+        let near = |ps: Vec<(f32, f32)>| ps.into_iter().min_by(|a, c| d(*a).total_cmp(&d(*c)));
+        match b.kind {
+            BossKind::Hunter => None,
+            BossKind::Wanderer => {
+                let r = self.rules.boss;
+                let far = r.far * self.world.scale();
+                let cs = self.world.crystals();
+                near(cs.iter().enumerate().filter(|&(j, _)| j >= 64 || b.visited & 1 << j == 0).filter(|&(j, c)| c.1 >= r.fresh * self.start_charge.get(j).copied().unwrap_or(0.0) && c.1 > 0.0 && d(c.0) >= far).map(|(_, c)| c.0).collect())
+            }
+            BossKind::Sapper => {
+                let walls: Vec<(f32, f32)> = self.buildings.iter().filter(|w| w.alive).filter_map(|w| if let Kind::Wall { to } = w.kind { Some(nearest_on(w.at, to, b.centre)) } else { None }).collect();
+                near(walls).or_else(|| near(self.buildings.iter().filter(|w| w.alive).map(|w| w.at).collect()))
+            }
+            BossKind::Leech => near(self.buildings.iter().filter(|w| w.alive && w.kind == Kind::Pump && w.up()).map(|w| w.at).collect()),
+        }
+    }
+
+    /// Boss `b`'s errand this second: its goal, and its phase on the way
+    /// (`Go`) or there (`Sit`); a wanderer that has sat out its `root`
+    /// takes in the slime round it and sets off for the next. None: it has
+    /// nothing to go for and hunts instead.
+    fn errand(&mut self, b: &mut Boss, now: u64) -> Option<(f32, f32)> {
+        let r = self.rules.boss;
+        let sc = self.world.scale();
+        let body = (b.members as f32 / std::f32::consts::PI).sqrt();
+        if let (BossPhase::Sit(p, since), BossKind::Wanderer) = (b.phase, b.kind) {
+            if now < since + (r.root.max(0.0) * self.rules.tps as f32).round() as u64 {
+                return Some(p);
+            }
+            // Rooted long enough: it takes in the slime there and goes on.
+            if let Some(j) = self.world.crystals().iter().position(|c| c.0 == p) {
+                if j < 64 {
+                    b.visited |= 1 << j;
+                }
+            }
+            let reach = (body * r.grow / sc).clamp(1.0, 2.0 * r.reach);
+            self.world.grow_lump(b.lump, (b.centre, reach));
+        }
+        // A sapper that has worn a hole through the wall where it sat goes
+        // through it to the far side (`visited` 1), then hunts (2). The
+        // first film's sapper sat on at its hole for 25 s after the slime
+        // poured through; one that left when the wall's middle cell at its
+        // spot broke slid along the wall, 45 s before the hole; one that
+        // hunted from the hole slid along the wall too (the aim pulls
+        // straight, the lump does not find paths).
+        if b.kind == BossKind::Sapper {
+            match (b.visited, b.phase) {
+                (1, BossPhase::Go(p)) => {
+                    if (p.0 - b.centre.0).hypot(p.1 - b.centre.1) > body.max(2.0 * sc) {
+                        return Some(p);
+                    }
+                    b.visited = 2;
+                    return None;
+                }
+                (1.., _) => return None,
+                (_, BossPhase::Sit(q, _)) => {
+                    if let Some(p) = self.hole_through(q, b.centre, body) {
+                        b.visited = 1;
+                        b.phase = BossPhase::Go(p);
+                        return Some(p);
+                    }
+                }
+                _ => {}
+            }
+        }
+        // A goal it has holds while it stands (a wanderer's far crystal
+        // would fall under `far` as it closes in; a sapper's nearest point
+        // would slide along the wall to its end and round it, as the first
+        // test run showed).
+        let p = match b.phase {
+            BossPhase::Go(q) | BossPhase::Sit(q, _) if self.goal_holds(b, q) => q,
+            _ => self.boss_goal(b)?,
+        };
+        let reach = match b.kind {
+            BossKind::Wanderer => self.world.crystals().iter().position(|c| c.0 == p).map_or(0.0, |j| self.world.crystal_r(j)),
+            _ => 2.0 * sc,
+        };
+        let off = (p.0 - b.centre.0).hypot(p.1 - b.centre.1);
+        // Once sitting it stays sat unless pushed well off (twice as far).
+        b.phase = match b.phase {
+            BossPhase::Sit(q, since) if q == p && off <= 2.0 * (body + reach) => BossPhase::Sit(q, since),
+            _ if off <= body + reach => BossPhase::Sit(p, now),
+            _ => BossPhase::Go(p),
+        };
+        Some(p)
+    }
+
+    /// Where a body at `from` of radius `body` goes through a hole in the
+    /// standing wall through `q`: that far past the wall's far side, along
+    /// its normal. None while the wall there is not holed: open ground all
+    /// the way across it, from a half cell before it to a half cell past.
+    fn hole_through(&self, q: (f32, f32), from: (f32, f32), body: f32) -> Option<(f32, f32)> {
+        let near = |w: &super::Building| match w.kind {
+            Kind::Wall { to } => {
+                let n = nearest_on(w.at, to, q);
+                ((n.0 - q.0).hypot(n.1 - q.1) < 0.5).then_some((w.at, to))
+            }
+            _ => None,
+        };
+        let (a, to) = self.buildings.iter().filter(|w| w.alive).find_map(near)?;
+        let l = (to.0 - a.0).hypot(to.1 - a.1);
+        if l <= 0.0 {
+            return None;
+        }
+        // The normal, pointing away from the body.
+        let n = (-(to.1 - a.1) / l, (to.0 - a.0) / l);
+        let n = if (q.0 - from.0) * n.0 + (q.1 - from.1) * n.1 < 0.0 { (-n.0, -n.1) } else { n };
+        let s = self.world.scale();
+        let half = (0.5 * self.rules.wall_width + 0.5) * s;
+        let steps = (4.0 * half / s).ceil().max(1.0) as i32;
+        let open = (0..=steps).all(|i| {
+            let o = -half + 2.0 * half * i as f32 / steps as f32;
+            self.world.open(q.0 + n.0 * o, q.1 + n.1 * o)
+        });
+        open.then_some((q.0 + n.0 * (half + body), q.1 + n.1 * (half + body)))
+    }
+
+    /// Whether `q` is on a standing wall's line.
+    fn on_wall(&self, q: (f32, f32)) -> bool {
+        self.buildings.iter().filter(|w| w.alive).any(|w| match w.kind {
+            Kind::Wall { to } => {
+                let n = nearest_on(w.at, to, q);
+                (n.0 - q.0).hypot(n.1 - q.1) < 0.5
+            }
+            _ => false,
+        })
+    }
+
+    /// Whether goal `q` still stands for boss `b`: a wanderer's fresh
+    /// crystal not yet rooted on, a point on a standing wall or a standing
+    /// building for a sapper, a working pump for a leech.
+    fn goal_holds(&self, b: &Boss, q: (f32, f32)) -> bool {
+        let r = self.rules.boss;
+        match b.kind {
+            BossKind::Hunter => false,
+            BossKind::Wanderer => self.world.crystals().iter().enumerate().any(|(j, c)| c.0 == q && (j >= 64 || b.visited & 1 << j == 0) && c.1 > 0.0 && c.1 >= r.fresh * self.start_charge.get(j).copied().unwrap_or(0.0)),
+            BossKind::Sapper => self.on_wall(q) || self.buildings.iter().any(|w| w.alive && !matches!(w.kind, Kind::Wall { .. }) && w.at == q),
+            BossKind::Leech => self.buildings.iter().any(|w| w.alive && w.kind == Kind::Pump && w.up() && w.at == q),
+        }
+    }
+
+    /// The live leech sitting on building `k` (a pump), if any.
+    pub fn leech_on(&self, k: usize) -> Option<usize> {
+        let at = self.buildings.get(k)?.at;
+        self.bosses.live.iter().position(|b| b.kind == BossKind::Leech && matches!(b.phase, BossPhase::Sit(p, _) if (p.0 - at.0).hypot(p.1 - at.1) < 1.0))
     }
 
     /// The mould grid at a dish cell a square (`World::mould_grid`) with
@@ -519,13 +846,22 @@ impl<W: World> Game<W> {
 
     /// **What the view reads of each lump** (for the look thread,
     /// 2026-11-16): 0 for a lump with no mini-boss; else bits 0-2 its kind
-    /// (1 the hunter), bit 3 set while it hunts (clear while it gathers),
-    /// bits 4-7 its strength grade 0-15 (`Boss::grade`).
-    pub fn lump_looks(&self) -> [u8; LUMPS] {
-        let mut out = [0u8; LUMPS];
+    /// (`BossKind`: 1 hunter, 2 wanderer, 3 sapper, 4 leech), bit 3 set once
+    /// it leaves (hunting or on its errand; clear while it gathers),
+    /// bits 4-7 its strength grade 0-15 (`Boss::grade`), bit 8 set while it
+    /// fades after breaking up (`BossRules::fade`) and bits 9-15 how far
+    /// through the fade, 0 to 127 (from the game's ticks, so it moves a
+    /// frame at a time).
+    pub fn lump_looks(&self) -> [u16; LUMPS] {
+        let mut out = [0u16; LUMPS];
+        let word = |b: &Boss| b.kind as u16 | (!matches!(b.phase, BossPhase::Gather) as u16) << 3 | ((b.grade.clamp(0.0, 1.0) * 15.0).round() as u16) << 4;
         for b in &self.bosses.live {
-            let hunt = matches!(b.phase, BossPhase::Hunt(_)) as u8;
-            out[b.lump] = 1 | hunt << 3 | ((b.grade.clamp(0.0, 1.0) * 15.0).round() as u8) << 4;
+            out[b.lump] = word(b);
+        }
+        let (now, fade) = (self.world.ticks(), (self.rules.boss.fade.max(0.0) * self.rules.tps as f32).max(1.0));
+        for (b, until) in &self.bosses.fading {
+            let gone = (fade - until.saturating_sub(now) as f32).clamp(0.0, fade) / fade;
+            out[b.lump] = word(b) | 1 << 8 | ((gone * 127.0).round() as u16) << 9;
         }
         out
     }
@@ -604,4 +940,12 @@ pub fn parts(g: &[u32], gw: usize, gh: usize, bin: usize, food: &[((f32, f32), f
         out.push(Part { walkers: n as u32, centre, r: (n as f32 / std::f32::consts::PI).sqrt(), squares, fed: on_food });
     }
     out
+}
+
+/// The point of segment `a`-`b` nearest `p` (all fine cells).
+fn nearest_on(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> (f32, f32) {
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let l2 = dx * dx + dy * dy;
+    let t = if l2 > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l2).clamp(0.0, 1.0) } else { 0.0 };
+    (a.0 + dx * t, a.1 + dy * t)
 }

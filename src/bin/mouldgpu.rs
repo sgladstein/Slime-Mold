@@ -3042,6 +3042,20 @@ mod tests {
             }
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
+                // Grow (`grow_lump`, a wanderer rooting): the walkers in no
+                // lump within 12 dish cells join, members keep their hits.
+                if lumped && t == 1 {
+                    let c = (x * k) as u32 | ((y * k) as u32) << 16;
+                    let r2 = (12.0 * k * 12.0 * k) as u32;
+                    let hurt_before = (0..n).filter(|&j| cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();
+                    let joined = cpu.grow_lump(0, (c, r2));
+                    e.grow_lump(&shared, 0, (c, r2));
+                    let gd = e.dense_of();
+                    let words_off = (0..n).filter(|&j| gd[j] & kept != cpu.dense[j] & kept).count();
+                    let hurt_after = (0..n).filter(|&j| cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();
+                    eprintln!("{name}: grew by {joined}; {hurt_before} hurt before, {hurt_after} after; {words_off} lump words off");
+                    assert!(joined > 0 && hurt_after == hurt_before && words_off == 0, "{name}: grew {joined}, hurt {hurt_before} -> {hurt_after}, {words_off} words off");
+                }
                 // Let go mid-flight: every slot leaves, the flung too.
                 if lumped && t == 2 {
                     let flying = (0..n).filter(|&j| cpu.flung[j] && cpu.lump_of(j) == Some(0)).count();
@@ -4444,14 +4458,20 @@ mod tests {
             let slime = squad::slime_trail(s.knee);
             let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
             let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
-            // The mini-boss: every walker within 30 fine cells of the
-            // thickest mould, a third with 3 hits taken (the next kills it),
-            // a third with 2, the rest none.
+            // The mini-boss: every walker within 1,000 fine cells of the
+            // thickest mould (the whole mould), a third with 3 hits taken
+            // (the next kills it), a third with 2, the rest none. (Within 30
+            // cells until 2026-11-16: the frame's shots stop at the body's
+            // edge, so they hurt 1 member and killed none, and the deaths
+            // the case counted were members starving, which they no longer
+            // do; 60 cells hurt 1 too.)
             let members: Vec<usize> = if s.lumps[0].on() {
-                cpu.form_lump(0, Some((slime_mould::mould::larder_world::raid_cell(t, (w, h)), 30 * 30)));
+                cpu.form_lump(0, Some((slime_mould::mould::larder_world::raid_cell(t, (w, h)), 1000 * 1000)));
                 let m: Vec<usize> = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && cpu.lump_of(q) == Some(0)).collect();
                 for (i, &q) in m.iter().enumerate() {
-                    cpu.dense[q] |= ((3 - (i % 3) as u32) % 3) << slime_mould::mould::big::HURT_SHIFT;
+                    // 3, 2, 0 (until 2026-11-16 `(3 - i % 3) % 3`, which
+                    // gave 0, 2, 1: no member was a blow from death).
+                    cpu.dense[q] |= [3u32, 2, 0][i % 3] << slime_mould::mould::big::HURT_SHIFT;
                 }
                 m
             } else {

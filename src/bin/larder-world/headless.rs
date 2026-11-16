@@ -359,7 +359,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     bossed.push(j);
                     let reach = g.rules.boss.reach;
                     if g.form_boss((bx, by), reach, slime_mould::mould::larder_world::BossCause::Staged) {
-                        println!("  boss t {:.2} s: formed round {bx},{by}", g.time());
+                        let b = g.bosses.live.last().unwrap();
+                        println!("  boss t {:.2} s: a {} formed round {bx},{by}, grade {:.2}", g.time(), b.kind.name(), b.grade);
                     }
                 }
             }
@@ -386,7 +387,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
                     let r = &g.rules.boss;
-                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
+                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
                 }
             }
             // Each mini-boss once a game second, and each one that ends
@@ -403,10 +404,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let hurt = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1 && dw[k] >> slime_mould::mould::big::HURT_SHIFT > 0).count();
                     let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
                     let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
-                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1, g.alive());
+                    println!("  boss t {:.0} s: lump {} {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}, stolen {:.1}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.kind.name(), b.phase, b.members, b.first, b.centre.0, b.centre.1, b.stolen, g.alive());
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
-                    println!("  boss t {:.0} s: lump {} ended {e:?} ({} members of {})", g.time(), b.lump, b.members, b.first);
+                    println!("  boss t {:.0} s: lump {} {} ended {e:?} ({} members of {}; stole {:.1}, {:.1} given back so far)", g.time(), b.lump, b.kind.name(), b.members, b.first, b.stolen, g.bosses.returned);
                 }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
@@ -828,8 +829,12 @@ fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Re
     if !g.build(kind, at) {
         return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
     }
+    // Raised whole, so a wall lays its cells in the world (setting `built`
+    // by hand left a standing wall with no cells: the sapper film's first
+    // run pressed on open ground).
+    g.raise(n, 1.0);
     let b = &mut g.buildings[n];
-    (b.built, b.hp) = (1.0, b.max_hp);
+    b.hp = b.max_hp;
     if render {
         b.level = 2;
     }

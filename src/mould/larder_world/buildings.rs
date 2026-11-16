@@ -731,9 +731,18 @@ impl<W: World> Game<W> {
                 let bd = &mut self.buildings[k];
                 bd.working = true;
                 bd.drew = food;
-                self.bank += food;
-                self.harvested += food;
-                self.pumped += food;
+                if let Some(i) = self.leech_on(k) {
+                    // A leech mini-boss on the rig (2026-11-16): the pump
+                    // still drains the crystal, but its pay goes into the
+                    // leech, and back to the bank only if it is broken
+                    // (`Game::time_bosses`).
+                    self.bosses.live[i].stolen += food;
+                    self.bosses.stolen += food;
+                } else {
+                    self.bank += food;
+                    self.harvested += food;
+                    self.pumped += food;
+                }
                 // The crystal's working spot still lights under the rig
                 // (`Game::last_takes`), with the charge the food stands for.
                 self.last_takes.push(super::Take { by: None, crystal: c, at: self.buildings[k].at, took: food * r.charge });
@@ -745,8 +754,11 @@ impl<W: World> Game<W> {
             self.bank -= take;
             self.stolen += take;
         }
+        // A leech keeps the rig it feeds on standing: it wants the pay,
+        // so a pump under one is the player's to win back, not lost.
+        let leeched = kind == Kind::Pump && self.leech_on(k).is_some();
         let bd = &mut self.buildings[k];
-        if u.touching > 0 {
+        if u.touching > 0 && !leeched {
             // By mass (`BuildRules::drain` 1 x mass, #174): a building outlasts a thick body for a while; walls go "slowly" (owner, 11-11 15:24Z).
             bd.hp -= r.build.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {

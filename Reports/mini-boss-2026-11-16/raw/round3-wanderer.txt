@@ -1,0 +1,278 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 58.7 s (the slime has eaten 259 food)
+  raid 1 at t 72.0 s: Soldiers(0) at 439,262, reach 145 cells holding 11232 walkers, share 0.60, size 15% of the slime
+  t 85 s: mould 39332, soldiers 8, bank 400, harvested 0, rendered 0, shots 211, killed 725, took 0%, crystals left 0.976; squad at 436.3,261.7
+  boss t 85.00 s: a wanderer formed round 310,85, grade 0.38
+  t 86 s: mould 39332, soldiers 8, bank 400, harvested 0, rendered 0, shots 214, killed 748, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 86 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.07, stolen 0.0; nearest soldier 216.4, 8 alive
+  t 86 s: mould 36658, soldiers 8, bank 400, harvested 0, rendered 0, shots 217, killed 778, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 87 s: mould 36658, soldiers 8, bank 400, harvested 0, rendered 0, shots 221, killed 819, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 87 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.02, stolen 0.0; nearest soldier 217.2, 8 alive
+  t 87 s: mould 34543, soldiers 8, bank 400, harvested 0, rendered 0, shots 227, killed 858, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 88 s: mould 34543, soldiers 8, bank 400, harvested 0, rendered 0, shots 232, killed 887, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 88 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.06, stolen 0.0; nearest soldier 218.0, 8 alive
+  t 88 s: mould 32779, soldiers 8, bank 400, harvested 0, rendered 0, shots 235, killed 926, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 89 s: mould 32779, soldiers 8, bank 400, harvested 0, rendered 0, shots 239, killed 959, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 89 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 217.5, 8 alive
+  t 89 s: mould 31349, soldiers 8, bank 400, harvested 0, rendered 0, shots 244, killed 986, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 90 s: mould 31349, soldiers 8, bank 400, harvested 0, rendered 0, shots 249, killed 1023, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 90 s: lump 0 wanderer Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.08, stolen 0.0; nearest soldier 218.3, 8 alive
+  t 90 s: mould 30293, soldiers 8, bank 400, harvested 0, rendered 0, shots 249, killed 1023, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 91 s: mould 30293, soldiers 8, bank 400, harvested 0, rendered 0, shots 250, killed 1026, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 91 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 308,76, spread 1.12, stolen 0.0; nearest soldier 219.1, 8 alive
+  t 91 s: mould 29509, soldiers 8, bank 400, harvested 0, rendered 0, shots 250, killed 1026, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 92 s: mould 29509, soldiers 8, bank 400, harvested 0, rendered 0, shots 255, killed 1040, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 92 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 316,76, spread 1.24, stolen 0.0; nearest soldier 216.1, 8 alive
+  t 92 s: mould 28855, soldiers 8, bank 400, harvested 0, rendered 0, shots 257, killed 1051, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 93 s: mould 28855, soldiers 8, bank 400, harvested 0, rendered 0, shots 258, killed 1052, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 93 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 322,76, spread 1.22, stolen 0.0; nearest soldier 211.5, 8 alive
+  t 93 s: mould 28337, soldiers 8, bank 400, harvested 0, rendered 0, shots 259, killed 1053, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 94 s: mould 28337, soldiers 8, bank 400, harvested 0, rendered 0, shots 260, killed 1053, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 94 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 328,78, spread 1.19, stolen 0.0; nearest soldier 207.5, 8 alive
+  t 94 s: mould 27985, soldiers 8, bank 400, harvested 0, rendered 0, shots 262, killed 1060, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 95 s: mould 27985, soldiers 8, bank 400, harvested 0, rendered 0, shots 265, killed 1072, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 95 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 332,80, spread 1.26, stolen 0.0; nearest soldier 204.3, 8 alive
+  t 95 s: mould 27668, soldiers 8, bank 400, harvested 0, rendered 0, shots 265, killed 1072, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 96 s: mould 27668, soldiers 8, bank 400, harvested 0, rendered 0, shots 265, killed 1072, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 96 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 334,80, spread 1.26, stolen 0.0; nearest soldier 201.9, 8 alive
+  t 96 s: mould 27493, soldiers 8, bank 400, harvested 0, rendered 0, shots 268, killed 1082, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 97 s: mould 27493, soldiers 8, bank 400, harvested 0, rendered 0, shots 269, killed 1084, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 97 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 338,82, spread 1.25, stolen 0.0; nearest soldier 199.6, 8 alive
+  t 97 s: mould 27334, soldiers 8, bank 400, harvested 0, rendered 0, shots 269, killed 1084, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 98 s: mould 27334, soldiers 8, bank 400, harvested 0, rendered 0, shots 269, killed 1084, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 98 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 340,82, spread 1.15, stolen 0.0; nearest soldier 197.2, 8 alive
+  t 98 s: mould 27190, soldiers 8, bank 400, harvested 0, rendered 0, shots 270, killed 1084, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 99 s: mould 27190, soldiers 8, bank 400, harvested 0, rendered 0, shots 272, killed 1094, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 99 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 342,84, spread 1.14, stolen 0.0; nearest soldier 195.4, 8 alive
+  t 99 s: mould 27081, soldiers 8, bank 400, harvested 0, rendered 0, shots 273, killed 1095, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 100 s: mould 27081, soldiers 8, bank 400, harvested 0, rendered 0, shots 275, killed 1098, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 100 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 344,84, spread 1.24, stolen 0.0; nearest soldier 194.0, 8 alive
+  t 100 s: mould 27001, soldiers 8, bank 400, harvested 0, rendered 0, shots 275, killed 1098, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 101 s: mould 27001, soldiers 8, bank 400, harvested 0, rendered 0, shots 276, killed 1105, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 101 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 346,86, spread 1.28, stolen 0.0; nearest soldier 190.9, 8 alive
+  t 101 s: mould 26916, soldiers 8, bank 400, harvested 0, rendered 0, shots 278, killed 1114, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 102 s: mould 26916, soldiers 8, bank 400, harvested 0, rendered 0, shots 278, killed 1120, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 102 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 350,88, spread 1.30, stolen 0.0; nearest soldier 187.7, 8 alive
+  t 102 s: mould 26831, soldiers 8, bank 400, harvested 0, rendered 0, shots 279, killed 1125, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 103 s: mould 26831, soldiers 8, bank 400, harvested 0, rendered 0, shots 282, killed 1131, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 103 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 352,90, spread 1.21, stolen 0.0; nearest soldier 184.6, 8 alive
+  t 103 s: mould 26746, soldiers 8, bank 400, harvested 0, rendered 0, shots 284, killed 1133, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 104 s: mould 26746, soldiers 8, bank 400, harvested 0, rendered 0, shots 284, killed 1133, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 104 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 356,94, spread 1.26, stolen 0.0; nearest soldier 180.5, 8 alive
+  t 104 s: mould 26710, soldiers 8, bank 400, harvested 0, rendered 0, shots 284, killed 1133, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 105 s: mould 26710, soldiers 8, bank 400, harvested 0, rendered 0, shots 285, killed 1138, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 105 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 360,96, spread 1.15, stolen 0.0; nearest soldier 176.1, 8 alive
+  t 105 s: mould 26678, soldiers 8, bank 400, harvested 0, rendered 0, shots 289, killed 1147, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 106 s: mould 26678, soldiers 8, bank 400, harvested 0, rendered 0, shots 294, killed 1155, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 106 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 364,100, spread 1.15, stolen 0.0; nearest soldier 170.8, 8 alive
+  t 106 s: mould 26652, soldiers 8, bank 400, harvested 0, rendered 0, shots 296, killed 1164, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 107 s: mould 26652, soldiers 8, bank 400, harvested 0, rendered 0, shots 296, killed 1164, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 107 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 368,104, spread 1.18, stolen 0.0; nearest soldier 165.5, 8 alive
+  t 107 s: mould 26627, soldiers 8, bank 400, harvested 0, rendered 0, shots 298, killed 1165, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 108 s: mould 26627, soldiers 8, bank 400, harvested 0, rendered 0, shots 301, killed 1183, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 108 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 374,108, spread 1.25, stolen 0.0; nearest soldier 159.4, 8 alive
+  t 108 s: mould 26599, soldiers 8, bank 400, harvested 0, rendered 0, shots 302, killed 1184, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 109 s: mould 26599, soldiers 8, bank 400, harvested 0, rendered 0, shots 302, killed 1184, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 109 s: lump 0 wanderer Go((393.5, 126.0)), 116 members (first 116, 0 hurt), at 380,114, spread 1.14, stolen 0.0; nearest soldier 151.6, 8 alive
+  t 109 s: mould 26581, soldiers 8, bank 400, harvested 0, rendered 0, shots 303, killed 1184, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 110 s: mould 26581, soldiers 8, bank 400, harvested 0, rendered 0, shots 309, killed 1199, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 110 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 386,120, spread 1.10, stolen 0.0; nearest soldier 144.4, 8 alive
+  t 110 s: mould 26550, soldiers 8, bank 400, harvested 0, rendered 0, shots 309, killed 1199, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 111 s: mould 26550, soldiers 8, bank 400, harvested 0, rendered 0, shots 309, killed 1199, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 111 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 388,122, spread 0.99, stolen 0.0; nearest soldier 142.2, 8 alive
+  t 111 s: mould 26525, soldiers 8, bank 400, harvested 0, rendered 0, shots 311, killed 1212, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 112 s: mould 26525, soldiers 8, bank 400, harvested 0, rendered 0, shots 313, killed 1216, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 112 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,122, spread 1.00, stolen 0.0; nearest soldier 140.6, 8 alive
+  t 112 s: mould 26494, soldiers 8, bank 400, harvested 0, rendered 0, shots 313, killed 1216, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 113 s: mould 26494, soldiers 8, bank 400, harvested 0, rendered 0, shots 313, killed 1216, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 113 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.98, stolen 0.0; nearest soldier 139.4, 8 alive
+  t 113 s: mould 26484, soldiers 8, bank 400, harvested 0, rendered 0, shots 315, killed 1228, took 0%, crystals left 0.967; squad at 436.3,261.7
+  t 114 s: mould 26484, soldiers 8, bank 400, harvested 0, rendered 0, shots 317, killed 1239, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 114 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.96, stolen 0.0; nearest soldier 139.4, 8 alive
+  t 114 s: mould 26440, soldiers 8, bank 400, harvested 0, rendered 0, shots 318, killed 1240, took 0%, crystals left 0.967; squad at 436.3,261.7
+  t 115 s: mould 26440, soldiers 8, bank 400, harvested 0, rendered 0, shots 318, killed 1240, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 115 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,124, spread 0.92, stolen 0.0; nearest soldier 138.4, 8 alive
+  t 115 s: mould 26421, soldiers 8, bank 400, harvested 0, rendered 0, shots 319, killed 1245, took 0%, crystals left 0.967; squad at 436.3,261.7
+  t 116 s: mould 26421, soldiers 8, bank 400, harvested 0, rendered 0, shots 321, killed 1253, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 116 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 390,126, spread 0.90, stolen 0.0; nearest soldier 137.5, 8 alive
+  t 116 s: mould 26400, soldiers 8, bank 400, harvested 0, rendered 0, shots 324, killed 1258, took 0%, crystals left 0.966; squad at 436.3,261.7
+  surge 2 starts at t 116.1 s (the slime has eaten 519 food)
+  t 117 s: mould 26400, soldiers 8, bank 400, harvested 0, rendered 0, shots 325, killed 1260, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 117 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.89, stolen 0.0; nearest soldier 137.1, 8 alive
+  t 117 s: mould 26374, soldiers 8, bank 400, harvested 0, rendered 0, shots 328, killed 1268, took 0%, crystals left 0.966; squad at 436.3,261.7
+  t 118 s: mould 26374, soldiers 8, bank 400, harvested 0, rendered 0, shots 331, killed 1289, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 118 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.86, stolen 0.0; nearest soldier 137.1, 8 alive
+  t 118 s: mould 26302, soldiers 8, bank 400, harvested 0, rendered 0, shots 336, killed 1345, took 0%, crystals left 0.966; squad at 436.3,261.7
+  t 119 s: mould 26302, soldiers 8, bank 400, harvested 0, rendered 0, shots 341, killed 1383, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 119 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.92, stolen 0.0; nearest soldier 137.1, 8 alive
+  t 119 s: mould 26171, soldiers 8, bank 400, harvested 0, rendered 0, shots 345, killed 1433, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 120 s: mould 26171, soldiers 8, bank 400, harvested 0, rendered 0, shots 345, killed 1433, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 120 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.88, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 120 s: mould 26154, soldiers 8, bank 400, harvested 0, rendered 0, shots 345, killed 1433, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 121 s: mould 26154, soldiers 8, bank 400, harvested 0, rendered 0, shots 347, killed 1445, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 121 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.88, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 121 s: mould 26141, soldiers 8, bank 400, harvested 0, rendered 0, shots 348, killed 1454, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 122 s: mould 26141, soldiers 8, bank 400, harvested 0, rendered 0, shots 352, killed 1466, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 122 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 122 s: mould 26122, soldiers 8, bank 400, harvested 0, rendered 0, shots 354, killed 1467, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 123 s: mould 26122, soldiers 8, bank 400, harvested 0, rendered 0, shots 355, killed 1469, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 123 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 123 s: mould 26110, soldiers 8, bank 400, harvested 0, rendered 0, shots 355, killed 1469, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 124 s: mould 26110, soldiers 8, bank 400, harvested 0, rendered 0, shots 355, killed 1469, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 124 s: lump 0 wanderer Sit((393.5, 126.0), 1650), 116 members (first 116, 0 hurt), at 392,126, spread 0.87, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 124 s: mould 26124, soldiers 8, bank 400, harvested 0, rendered 0, shots 356, killed 1469, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 125 s: mould 26124, soldiers 8, bank 400, harvested 0, rendered 0, shots 359, killed 1487, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 125 s: lump 0 wanderer Go((324.0, 210.0)), 116 members (first 116, 0 hurt), at 392,126, spread 0.94, stolen 0.0; nearest soldier 136.8, 8 alive
+  t 125 s: mould 26117, soldiers 8, bank 400, harvested 0, rendered 0, shots 360, killed 1488, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 126 s: mould 26117, soldiers 8, bank 400, harvested 0, rendered 0, shots 364, killed 1496, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 126 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 382,130, spread 1.13, stolen 0.0; nearest soldier 137.0, 8 alive
+  t 126 s: mould 26110, soldiers 8, bank 400, harvested 0, rendered 0, shots 366, killed 1503, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 127 s: mould 26110, soldiers 8, bank 400, harvested 0, rendered 0, shots 367, killed 1504, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 127 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 372,136, spread 1.18, stolen 0.0; nearest soldier 135.4, 8 alive
+  t 127 s: mould 26118, soldiers 8, bank 400, harvested 0, rendered 0, shots 367, killed 1504, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 128 s: mould 26118, soldiers 8, bank 400, harvested 0, rendered 0, shots 369, killed 1505, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 128 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 366,140, spread 1.28, stolen 0.0; nearest soldier 134.5, 8 alive
+  t 128 s: mould 26122, soldiers 8, bank 400, harvested 0, rendered 0, shots 369, killed 1505, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 129 s: mould 26122, soldiers 8, bank 400, harvested 0, rendered 0, shots 369, killed 1505, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 129 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 360,146, spread 1.36, stolen 0.0; nearest soldier 133.4, 8 alive
+  t 129 s: mould 26140, soldiers 8, bank 400, harvested 0, rendered 0, shots 369, killed 1505, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 130 s: mould 26140, soldiers 8, bank 400, harvested 0, rendered 0, shots 372, killed 1512, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 130 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 354,150, spread 1.32, stolen 0.0; nearest soldier 132.7, 8 alive
+  t 130 s: mould 26142, soldiers 8, bank 400, harvested 0, rendered 0, shots 376, killed 1519, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 131 s: mould 26142, soldiers 8, bank 400, harvested 0, rendered 0, shots 376, killed 1519, took 0%, crystals left 0.962; squad at 436.3,261.7
+  raid 2 at t 131.0 s: Soldiers(0) at 439,262, reach 140 cells holding 8370 walkers, share 0.60, size 19% of the slime
+  boss t 131 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 344,158, spread 1.20, stolen 0.0; nearest soldier 132.8, 8 alive
+  t 131 s: mould 26159, soldiers 8, bank 400, harvested 0, rendered 0, shots 377, killed 1521, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 132 s: mould 26159, soldiers 8, bank 400, harvested 0, rendered 0, shots 377, killed 1521, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 132 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 340,164, spread 1.09, stolen 0.0; nearest soldier 131.0, 8 alive
+  t 132 s: mould 26181, soldiers 8, bank 400, harvested 0, rendered 0, shots 377, killed 1521, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 133 s: mould 26181, soldiers 8, bank 400, harvested 0, rendered 0, shots 381, killed 1525, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 133 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 336,170, spread 1.14, stolen 0.0; nearest soldier 129.7, 8 alive
+  t 133 s: mould 26183, soldiers 8, bank 400, harvested 0, rendered 0, shots 383, killed 1543, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 134 s: mould 26183, soldiers 8, bank 400, harvested 0, rendered 0, shots 387, killed 1558, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 134 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 332,178, spread 1.09, stolen 0.0; nearest soldier 126.8, 8 alive
+  t 134 s: mould 26172, soldiers 8, bank 400, harvested 0, rendered 0, shots 390, killed 1586, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 135 s: mould 26172, soldiers 8, bank 400, harvested 0, rendered 0, shots 393, killed 1617, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 135 s: lump 0 wanderer Go((324.0, 210.0)), 233 members (first 116, 0 hurt), at 330,188, spread 1.16, stolen 0.0; nearest soldier 123.8, 8 alive
+  t 135 s: mould 26166, soldiers 8, bank 400, harvested 0, rendered 0, shots 395, killed 1618, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 136 s: mould 26166, soldiers 8, bank 400, harvested 0, rendered 0, shots 399, killed 1642, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 136 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 326,196, spread 1.09, stolen 0.0; nearest soldier 122.0, 8 alive
+  t 136 s: mould 26183, soldiers 8, bank 400, harvested 0, rendered 0, shots 403, killed 1654, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 137 s: mould 26183, soldiers 8, bank 400, harvested 0, rendered 0, shots 411, killed 1715, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 137 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 324,200, spread 0.90, stolen 0.0; nearest soldier 121.3, 8 alive
+  t 137 s: mould 26153, soldiers 8, bank 400, harvested 0, rendered 0, shots 414, killed 1777, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 138 s: mould 26153, soldiers 8, bank 400, harvested 0, rendered 0, shots 417, killed 1824, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 138 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 324,204, spread 0.86, stolen 0.0; nearest soldier 120.3, 8 alive
+  t 138 s: mould 26084, soldiers 8, bank 400, harvested 0, rendered 0, shots 421, killed 1870, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 139 s: mould 26084, soldiers 8, bank 400, harvested 0, rendered 0, shots 427, killed 1934, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 139 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,206, spread 0.82, stolen 0.0; nearest soldier 120.3, 8 alive
+  t 139 s: mould 26029, soldiers 8, bank 400, harvested 0, rendered 0, shots 431, killed 2014, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 140 s: mould 26029, soldiers 8, bank 400, harvested 0, rendered 0, shots 437, killed 2074, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 140 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,208, spread 0.81, stolen 0.0; nearest soldier 119.9, 8 alive
+  t 140 s: mould 25938, soldiers 8, bank 400, harvested 0, rendered 0, shots 443, killed 2173, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 141 s: mould 25938, soldiers 8, bank 400, harvested 0, rendered 0, shots 449, killed 2262, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 141 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,208, spread 0.78, stolen 0.0; nearest soldier 119.5, 8 alive
+  t 141 s: mould 25818, soldiers 8, bank 400, harvested 0, rendered 0, shots 453, killed 2305, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 142 s: mould 25818, soldiers 8, bank 400, harvested 0, rendered 0, shots 457, killed 2375, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 142 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 119.1, 8 alive
+  t 142 s: mould 25770, soldiers 8, bank 400, harvested 0, rendered 0, shots 461, killed 2411, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 143 s: mould 25770, soldiers 8, bank 400, harvested 0, rendered 0, shots 466, killed 2466, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 143 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 119.1, 8 alive
+  t 143 s: mould 25733, soldiers 8, bank 400, harvested 0, rendered 0, shots 471, killed 2526, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 144 s: mould 25733, soldiers 8, bank 400, harvested 0, rendered 0, shots 476, killed 2564, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 144 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 119.1, 8 alive
+  t 144 s: mould 25702, soldiers 8, bank 400, harvested 0, rendered 0, shots 481, killed 2615, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 145 s: mould 25702, soldiers 8, bank 400, harvested 0, rendered 0, shots 486, killed 2664, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 145 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 145 s: mould 25664, soldiers 8, bank 400, harvested 0, rendered 0, shots 490, killed 2708, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 146 s: mould 25664, soldiers 8, bank 400, harvested 0, rendered 0, shots 496, killed 2759, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 146 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 146 s: mould 25660, soldiers 8, bank 400, harvested 0, rendered 0, shots 501, killed 2798, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 147 s: mould 25660, soldiers 8, bank 400, harvested 0, rendered 0, shots 506, killed 2835, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 147 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 147 s: mould 25657, soldiers 8, bank 400, harvested 0, rendered 0, shots 510, killed 2878, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 148 s: mould 25657, soldiers 8, bank 400, harvested 0, rendered 0, shots 515, killed 2933, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 148 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.76, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 148 s: mould 25666, soldiers 8, bank 400, harvested 0, rendered 0, shots 520, killed 2977, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 149 s: mould 25666, soldiers 8, bank 400, harvested 0, rendered 0, shots 523, killed 2981, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 149 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 149 s: mould 25722, soldiers 8, bank 400, harvested 0, rendered 0, shots 525, killed 2992, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 150 s: mould 25722, soldiers 8, bank 400, harvested 0, rendered 0, shots 525, killed 2992, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 150 s: lump 0 wanderer Sit((324.0, 210.0), 2040), 233 members (first 116, 0 hurt), at 322,210, spread 0.77, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 150 s: mould 25808, soldiers 8, bank 400, harvested 0, rendered 0, shots 526, killed 2993, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 151 s: mould 25808, soldiers 8, bank 400, harvested 0, rendered 0, shots 526, killed 2993, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 151 s: lump 0 wanderer Go((272.5, 275.5)), 233 members (first 116, 0 hurt), at 322,210, spread 0.95, stolen 0.0; nearest soldier 118.7, 8 alive
+  t 151 s: mould 25896, soldiers 8, bank 400, harvested 0, rendered 0, shots 528, killed 3014, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 152 s: mould 25896, soldiers 8, bank 400, harvested 0, rendered 0, shots 531, killed 3023, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 152 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 320,216, spread 1.10, stolen 0.0; nearest soldier 119.0, 8 alive
+  t 152 s: mould 25973, soldiers 8, bank 400, harvested 0, rendered 0, shots 533, killed 3028, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 153 s: mould 25973, soldiers 8, bank 400, harvested 0, rendered 0, shots 534, killed 3029, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 153 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 316,222, spread 1.12, stolen 0.0; nearest soldier 120.6, 8 alive
+  t 153 s: mould 26009, soldiers 8, bank 400, harvested 0, rendered 0, shots 534, killed 3029, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 154 s: mould 26009, soldiers 8, bank 400, harvested 0, rendered 0, shots 536, killed 3034, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 154 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 312,228, spread 1.04, stolen 0.0; nearest soldier 122.8, 8 alive
+  t 154 s: mould 26073, soldiers 8, bank 400, harvested 0, rendered 0, shots 536, killed 3038, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 155 s: mould 26073, soldiers 8, bank 400, harvested 0, rendered 0, shots 539, killed 3065, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 155 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 308,232, spread 1.08, stolen 0.0; nearest soldier 125.6, 8 alive
+  t 155 s: mould 26108, soldiers 8, bank 400, harvested 0, rendered 0, shots 540, killed 3073, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 156 s: mould 26108, soldiers 8, bank 400, harvested 0, rendered 0, shots 540, killed 3073, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 156 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 304,234, spread 1.17, stolen 0.0; nearest soldier 127.8, 8 alive
+  t 156 s: mould 26172, soldiers 8, bank 400, harvested 0, rendered 0, shots 542, killed 3082, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 157 s: mould 26172, soldiers 8, bank 400, harvested 0, rendered 0, shots 546, killed 3086, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 157 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 302,238, spread 1.20, stolen 0.0; nearest soldier 130.0, 8 alive
+  t 157 s: mould 26230, soldiers 8, bank 400, harvested 0, rendered 0, shots 547, killed 3087, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 158 s: mould 26230, soldiers 8, bank 400, harvested 0, rendered 0, shots 548, killed 3087, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 158 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 298,242, spread 1.18, stolen 0.0; nearest soldier 133.3, 8 alive
+  t 158 s: mould 26312, soldiers 8, bank 400, harvested 0, rendered 0, shots 548, killed 3089, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 159 s: mould 26312, soldiers 8, bank 400, harvested 0, rendered 0, shots 552, killed 3106, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 159 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 294,248, spread 1.12, stolen 0.0; nearest soldier 136.6, 8 alive
+  t 159 s: mould 26365, soldiers 8, bank 400, harvested 0, rendered 0, shots 553, killed 3108, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 160 s: mould 26365, soldiers 8, bank 400, harvested 0, rendered 0, shots 554, killed 3109, took 0%, crystals left 0.952; squad at 436.3,261.7
+  boss t 160 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 290,250, spread 1.13, stolen 0.0; nearest soldier 139.3, 8 alive
+  t 160 s: mould 26426, soldiers 8, bank 400, harvested 0, rendered 0, shots 554, killed 3109, took 0%, crystals left 0.952; squad at 436.3,261.7
+  t 161 s: mould 26426, soldiers 8, bank 400, harvested 0, rendered 0, shots 554, killed 3109, took 0%, crystals left 0.952; squad at 436.3,261.7
+  boss t 161 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 286,254, spread 1.11, stolen 0.0; nearest soldier 143.0, 8 alive
+  t 161 s: mould 26473, soldiers 8, bank 400, harvested 0, rendered 0, shots 558, killed 3129, took 0%, crystals left 0.952; squad at 436.3,261.7
+  t 162 s: mould 26473, soldiers 8, bank 400, harvested 0, rendered 0, shots 560, killed 3146, took 0%, crystals left 0.952; squad at 436.3,261.7
+  boss t 162 s: lump 0 wanderer Go((272.5, 275.5)), 415 members (first 116, 0 hurt), at 284,258, spread 1.12, stolen 0.0; nearest soldier 145.8, 8 alive
+  t 162 s: mould 26508, soldiers 8, bank 400, harvested 0, rendered 0, shots 561, killed 3146, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 163 s: mould 26508, soldiers 8, bank 400, harvested 0, rendered 0, shots 564, killed 3158, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 163 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 280,260, spread 1.06, stolen 0.0; nearest soldier 148.8, 8 alive
+  t 163 s: mould 26548, soldiers 8, bank 400, harvested 0, rendered 0, shots 567, killed 3164, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 164 s: mould 26548, soldiers 8, bank 400, harvested 0, rendered 0, shots 569, killed 3173, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 164 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 278,262, spread 0.94, stolen 0.0; nearest soldier 150.8, 8 alive
+  t 164 s: mould 26593, soldiers 8, bank 400, harvested 0, rendered 0, shots 570, killed 3174, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 165 s: mould 26593, soldiers 8, bank 400, harvested 0, rendered 0, shots 570, killed 3174, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 165 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 278,262, spread 0.89, stolen 0.0; nearest soldier 151.8, 8 alive
+  t 165 s: mould 26648, soldiers 8, bank 400, harvested 0, rendered 0, shots 570, killed 3174, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 166 s: mould 26648, soldiers 8, bank 400, harvested 0, rendered 0, shots 575, killed 3191, took 0%, crystals left 0.950; squad at 436.3,261.7
+  boss t 166 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 276,264, spread 0.85, stolen 0.0; nearest soldier 152.8, 8 alive
+  t 166 s: mould 26703, soldiers 8, bank 400, harvested 0, rendered 0, shots 576, killed 3196, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 167 s: mould 26703, soldiers 8, bank 400, harvested 0, rendered 0, shots 576, killed 3196, took 0%, crystals left 0.950; squad at 436.3,261.7
+  surge 3 starts at t 167.0 s (the slime has eaten 778 food)
+  boss t 167 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 276,266, spread 0.84, stolen 0.0; nearest soldier 153.8, 8 alive
+  t 167 s: mould 26770, soldiers 8, bank 400, harvested 0, rendered 0, shots 576, killed 3196, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 168 s: mould 26770, soldiers 8, bank 400, harvested 0, rendered 0, shots 577, killed 3196, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 168 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 274,266, spread 0.83, stolen 0.0; nearest soldier 154.8, 8 alive
+  t 168 s: mould 26831, soldiers 8, bank 400, harvested 0, rendered 0, shots 579, killed 3215, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 169 s: mould 26831, soldiers 8, bank 400, harvested 0, rendered 0, shots 581, killed 3224, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 169 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 274,268, spread 0.81, stolen 0.0; nearest soldier 154.8, 8 alive
+  t 169 s: mould 26891, soldiers 8, bank 400, harvested 0, rendered 0, shots 586, killed 3270, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 170 s: mould 26891, soldiers 8, bank 400, harvested 0, rendered 0, shots 591, killed 3351, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 170 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 274,268, spread 0.79, stolen 0.0; nearest soldier 155.9, 8 alive
+  t 170 s: mould 26860, soldiers 8, bank 400, harvested 0, rendered 0, shots 593, killed 3368, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 171 s: mould 26860, soldiers 8, bank 400, harvested 0, rendered 0, shots 593, killed 3368, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 171 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 274,268, spread 0.79, stolen 0.0; nearest soldier 155.9, 8 alive
+  t 171 s: mould 26955, soldiers 8, bank 400, harvested 0, rendered 0, shots 593, killed 3368, took 0%, crystals left 0.948; squad at 436.3,261.7
+  t 172 s: mould 26955, soldiers 8, bank 400, harvested 0, rendered 0, shots 597, killed 3372, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 172 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 274,268, spread 0.79, stolen 0.0; nearest soldier 155.9, 8 alive
+  t 172 s: mould 27043, soldiers 8, bank 400, harvested 0, rendered 0, shots 598, killed 3381, took 0%, crystals left 0.948; squad at 436.3,261.7
+  t 173 s: mould 27043, soldiers 8, bank 400, harvested 0, rendered 0, shots 600, killed 3384, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 173 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 272,270, spread 0.80, stolen 0.0; nearest soldier 156.9, 8 alive
+  t 173 s: mould 27134, soldiers 8, bank 400, harvested 0, rendered 0, shots 601, killed 3385, took 0%, crystals left 0.947; squad at 436.3,261.7
+  t 174 s: mould 27134, soldiers 8, bank 400, harvested 0, rendered 0, shots 601, killed 3385, took 0%, crystals left 0.947; squad at 436.3,261.7
+  boss t 174 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 272,270, spread 0.79, stolen 0.0; nearest soldier 156.9, 8 alive
+  t 174 s: mould 27235, soldiers 8, bank 400, harvested 0, rendered 0, shots 602, killed 3390, took 0%, crystals left 0.947; squad at 436.3,261.7
+  t 175 s: mould 27235, soldiers 8, bank 400, harvested 0, rendered 0, shots 604, killed 3394, took 0%, crystals left 0.947; squad at 436.3,261.7
+  boss t 175 s: lump 0 wanderer Sit((272.5, 275.5), 2445), 415 members (first 116, 0 hurt), at 272,270, spread 0.80, stolen 0.0; nearest soldier 156.9, 8 alive
+  t 175 s: mould 27340, soldiers 8, bank 400, harvested 0, rendered 0, shots 604, killed 3394, took 0%, crystals left 0.947; squad at 436.3,261.7

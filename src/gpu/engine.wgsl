@@ -1197,7 +1197,8 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         return;
     }
-    if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
+    // A held body's member does not starve (the CPU's `live_and_die`).
+    if (lump_of(k) == 0u && unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         // A condensed walker starving breaks instead (`condense`).
         if (heavy) { set_dense_kept(k, 0u); energy[k] = 0.0; return; }
         atomicSub(&occ[i], 1u);
@@ -3542,13 +3543,23 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     // too, the CPU's the same).
     if (k >= P.n) { return; }
     let wd = dense_word(k);
-    let mine = atomicLoad(&news[dense_base() + 1u]) << LUMP_SHIFT;
+    // Bit 8 of the lump word: grow (the CPU's `grow_lump`), only walkers
+    // in no lump join and every member stays as it is.
+    let word = atomicLoad(&news[dense_base() + 1u]);
+    let mine = (word & 7u) << LUMP_SHIFT;
     let c = atomicLoad(&news[dense_base() + 2u]);
     let r2 = atomicLoad(&news[dense_base() + 3u]);
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    if (ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2) {
+    let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
+    if ((word & 256u) != 0u) {
+        if (within && (wd & LUMP_BITS) == 0u) {
+            set_dense(k, (wd & ~(HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+        }
+        return;
+    }
+    if (within) {
         set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
         set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));

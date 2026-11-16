@@ -917,6 +917,14 @@ impl World for GpuWorld {
         self.e.form_lump(&self.shared, b, at);
     }
 
+    /// Runs `lumpform`'s grow at once, as `form_lump`.
+    fn grow_lump(&mut self, b: usize, (c, r): ((f32, f32), f32)) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h));
+        self.e.grow_lump(&self.shared, b, at);
+    }
+
     /// Written with the next step's params, and kept on the mirror dish.
     fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
         self.s.lumps[b] = l;
@@ -1149,6 +1157,9 @@ mod tests {
         }
         fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
             self.g.form_lump(b, at)
+        }
+        fn grow_lump(&mut self, b: usize, at: ((f32, f32), f32)) {
+            self.g.grow_lump(b, at)
         }
         fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
             self.g.set_lump(b, l)

@@ -2016,6 +2016,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     renders.push(turrets.len() - 1);
                 }
             }
+            "wall" => {
+                // `wall=X,Y,X2,Y2[,T]` (2026-11-16, the sapper films): a
+                // wall standing whole from (X, Y) to (X2, Y2), world units
+                // as `centre=`, from the start or from game second T.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let (x, y, to, t) = match w.as_slice() {
+                    [x, y, x2, y2] => (*x, *y, (*x2, *y2), 0.0),
+                    [x, y, x2, y2, t] => (*x, *y, (*x2, *y2), *t),
+                    _ => return Err("wall=X,Y,X2,Y2[,T]".into()),
+                };
+                turrets.push((Kind::Wall { to }, (x, y), t));
+            }
             "boss" => {
                 // `boss=T,X,Y` (2026-11-16, the mini-boss films): at game
                 // second T a mini-boss forms round (X, Y), world units as
