@@ -456,9 +456,9 @@ const LOADOUTS: [(&str, &str); 52] = [
     // presets: `load=` takes them as card lists.
     ("multi-blast", "multicast+plain+blast"),
     ("multi-bomb-gas", "multicast+bomb+gas"),
-    // Seek (2026-11-16, step C): every bullet turns onto slime no bullet
-    // has hit yet; with buckshot each pellet finds its own, with split each
-    // piece.
+    // Seek (2026-11-16, step C): a bullet that would pass beside slime
+    // near its aim point strikes it; with buckshot each pellet, with split
+    // each piece.
     ("seek", "seek+plain"),
     ("seek-buck", "seek+ammo/plain/buckshot/1/100/100/100/100/1"),
     ("seek-split", "seek+split+blast"),

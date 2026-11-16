@@ -138,12 +138,14 @@ pub enum Card {
     /// shot (`Cast::with`); a second multicast in that cast adds a third.
     Multicast,
     /// **Seek** (2026-11-16, step C of the gun-system review, the owner's
-    /// 02:34Z "homing"): every bullet, once it has flown straight
-    /// `Rules::seek_after`, turns toward slime ahead that no bullet has hit
-    /// or picked this frame (`Game::steer`): pellets, split pieces and let-
-    /// out casts each find their own patch, and a bullet past a wall's end
-    /// turns into the slime behind it. Plain homing would land where the
-    /// bullet was going anyway (the plan), so a seeker skips what is taken.
+    /// 02:34Z "homing"; homing in the shot trace, the owner's 19:38Z pick):
+    /// a bullet that would pass beside slime strikes it. On the leg that
+    /// passes its aim point, or its last, the shot trace catches live slime
+    /// or walkers within `Rules::seek_catch` cells a card of its line
+    /// (`Game::catches`, `squad::trace`), in both engines. The first tries
+    /// turned the bullet toward slime ahead no bullet had picked
+    /// (`Game::steer`, now off: `Rules::seek_turn` 0): it read slime a
+    /// second old and missed as often (Reports/gun-seek-2026-11-16/).
     Seek,
 }
 
@@ -267,7 +269,7 @@ impl Card {
             Card::Trigger => "Carries the next bullet and lets it out where it hits.",
             Card::Expire => "Carries the next bullet and lets it out where it stops.",
             Card::Multicast => "Fires the next bullet with it, in the same shot.",
-            Card::Seek => "Bullets turn toward slime no bullet has hit yet.",
+            Card::Seek => "Bullets that just miss strike slime beside them.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
