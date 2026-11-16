@@ -467,9 +467,9 @@ fn crowd_for(k: u32, sp: u32) -> u32 {
     return c;
 }
 // A move's crowd limit (the CPU's `move_crowd`): a lump's member steps
-// into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16), so a lump
-// formed in the thick of the body can pass through it.
-const LUMP_CROWD: u32 = 1u;
+// into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16; 3 since the
+// leech ring), so a lump formed in the thick of the body can pass through it.
+const LUMP_CROWD: u32 = 3u;
 fn move_crowd(k: u32, sp: u32) -> u32 {
     let c = crowd_for(k, sp);
     if (c > 0u && lump_of(k) != 0u) { return c + LUMP_CROWD; }

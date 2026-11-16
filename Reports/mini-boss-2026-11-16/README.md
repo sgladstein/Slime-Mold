@@ -350,5 +350,18 @@ the rig (7.8), and they lie in all eight eighths. GPU twin (one tick, a
 ring of 35 and of 56 round the most crowded walker): members inside, in
 and past the band, every member on the same cell on both engines.
 
+**Through the thick body** (`big::LUMP_CROWD` 1 to 3, both engines). On
+main after the squad movement rework (#392), the same staged leech formed
+with 123 members and stopped at the west edge of the thick body round the
+pump, 28 cells from it, from 1:55 to past 2:30: every cell between was
+full, and a member could step only one walker past the crowd limit. Twice
+the pull and pace while it stalled (no cell nearer in 3 s) did not free
+it (rejected, `dead-ends.md`); twice the pull from the start went another
+way and got there. With members stepping three past the limit it went
+straight through the body and sat on the pump at 1:50, ringing it (at
+2:30, 14.1 / 15.5 / 17.3 cells from the pump; eighths 19, 19, 2, 8, 20,
+15, 20, 20). This holds for every kind: a mini-boss shoulders through its
+own slime more easily.
+
 Cost: one more comparison for a ring member's run and its pull; no new
 pass.

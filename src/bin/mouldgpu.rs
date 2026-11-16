@@ -3799,8 +3799,8 @@ mod tests {
             // breaks away or withers, and members do not ripen; condensed
             // ones break keeping their lump): lump 0 pulled to a far cell on a leash
             // tight enough that some members run back, at 1.5x pace, and
-            // passing into cells one walker holds (`LUMP_CROWD`); lump 1 on
-            // a leash alone; lump 3 on with no members.
+            // passing into cells the crowd limit closes (`LUMP_CROWD`); lump
+            // 1 on a leash alone; lump 3 a ring (`Lump::ring`).
             ("lump: walkers travel held", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // And with no bronze (the owner, 04:58Z: "Remove the bronze"):
             // lumps of ordinary walkers, where cut-off walkers panic and

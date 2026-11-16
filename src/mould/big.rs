@@ -106,8 +106,12 @@ pub const KEPT: u32 = LUMP_BITS | HURT_BITS;
 /// it, the first game film (2026-11-16, planet 3, seed 1) held a lump of
 /// 340 condensed walkers in the middle of its body for 50 s: it moved 2
 /// dish cells, every cell round it full, and its leash held its front back
-/// for a rear that could not move.
-pub const LUMP_CROWD: u8 = 1;
+/// for a rear that could not move. 1 until 2026-11-16 (the leech ring):
+/// at 1, a leech of 123 on planet 3 (after #392) stopped at the edge of
+/// the thick body 28 cells from its pump and stayed there from 1:55 to
+/// 2:30, and twice the pull and pace while it stalled did not free it; at
+/// 3 it went straight through and sat on the pump at 1:50.
+pub const LUMP_CROWD: u8 = 3;
 
 /// One lump's steering (`BigParams::lumps`), set by the game each second.
 /// All 0 is off: its members steer as any condensed walker.
