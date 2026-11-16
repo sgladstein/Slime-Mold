@@ -2986,6 +2986,22 @@ mod tests {
             if s.crystal > 0.0 {
                 cpu.build_wall(x - 8.0, y + 7.0, x + 8.0, y + 7.0, 1.0);
             }
+            // A mini-boss (`Lump::armour`, 2026-11-16, the review of the
+            // mini-boss PR): the walkers within 8 dish cells, every third
+            // at its last blow (hurt twice of 3), so the blast kills those,
+            // hurts the rest (no kill counted), and flings members out.
+            let lumped = s.lumps[0].on();
+            let hurt_shift = slime_mould::mould::big::HURT_SHIFT;
+            if lumped {
+                cpu.p.lumps = s.lumps;
+                let c = (x * k) as u32 | ((y * k) as u32) << 16;
+                let m = cpu.form_lump(0, Some((c, (8.0 * k * 8.0 * k) as u32)));
+                assert!(m > 50, "{name}: {m} members");
+                let members: Vec<usize> = (0..cpu.walkers.len()).filter(|&j| cpu.lives(j) && cpu.lump_of(j) == Some(0)).collect();
+                for &j in members.iter().step_by(3) {
+                    cpu.dense[j] |= 2 << hurt_shift;
+                }
+            }
             e.inject(&cpu);
             let (r, rr) = (4.0f32, 10.0f32);
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
@@ -3014,8 +3030,28 @@ mod tests {
                     assert!((0..n).filter(|&j| cpu.flung[j]).all(|j| cpu.walkers[j].2 == a && gpu_w[j].2 == a), "{name}: a push flies every one along its heading");
                 }
             }
+            let kept = slime_mould::mould::big::KEPT;
+            if lumped {
+                let gd = e.dense_of();
+                let words_off = (0..n).filter(|&j| gd[j] & kept != cpu.dense[j] & kept).count();
+                let hurt = (0..n).filter(|&j| cpu.lives(j) && cpu.lump_of(j) == Some(0) && cpu.dense[j] >> hurt_shift > 0).count();
+                let flying = (0..n).filter(|&j| cpu.flung[j] && cpu.lump_of(j) == Some(0)).count();
+                let struck = e.struck();
+                eprintln!("{name}: {killed} killed on the CPU, {struck} on the GPU; {hurt} members hurt, {flying} flung; {words_off} lump words off");
+                assert!(killed > 0 && killed as u32 == struck && hurt > 0 && flying > 0 && words_off == 0, "{name}: {killed} and {struck} killed, {hurt} hurt, {flying} flung, {words_off} words off");
+            }
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
+                // Let go mid-flight: every slot leaves, the flung too.
+                if lumped && t == 2 {
+                    let flying = (0..n).filter(|&j| cpu.flung[j] && cpu.lump_of(j) == Some(0)).count();
+                    e.form_lump(&shared, 0, None);
+                    cpu.form_lump(0, None);
+                    let gd = e.dense_of();
+                    let (left, left_gpu) = ((0..n).filter(|&j| cpu.dense[j] & kept != 0).count(), (0..n).filter(|&j| gd[j] & kept != 0).count());
+                    eprintln!("{name}: let go with {flying} members in flight; {left} slots keep the lump on the CPU, {left_gpu} on the GPU");
+                    assert!(flying > 0 && left == 0 && left_gpu == 0, "{name}: {flying} in flight, {left} and {left_gpu} slots keep it");
+                }
                 let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
                 let (life, _) = e.life_of();
                 let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
@@ -3038,8 +3074,14 @@ mod tests {
             }
             worst
         };
+        let boss = {
+            let mut s = small(0);
+            s.lumps[0] = slime_mould::mould::big::Lump { armour: 3, ..Default::default() };
+            s
+        };
         let dishes = [
             ("plain (the fling turns the states on)", small(0)),
+            ("a mini-boss: members hurt, die, fly and are let go", boss),
             ("no crowd limit", small(3)),
             ("dormancy and alarm", with(small(0), sleep)),
             ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
@@ -3653,7 +3695,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 23] = [
+        let dishes: [(&str, Settings, Build); 25] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3736,6 +3778,20 @@ mod tests {
             // condense 0 the GPU sent no `roam` while the CPU still marked
             // breakaways.
             ("thicken roam: thick walkers break away, run and land", Settings { thicken: 2.0, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Lumps (held bodies, 2026-11-16, the mini-boss thread): the
+            // breakaway dish, and two lumps formed round living walkers
+            // after the breakaways are set (below; some breakaways, some
+            // condensed walkers and some with stale news join, so none
+            // breaks away or withers, and members do not ripen; condensed
+            // ones break keeping their lump): lump 0 pulled to a far cell on a leash
+            // tight enough that some members run back, at 1.5x pace, and
+            // passing into cells one walker holds (`LUMP_CROWD`); lump 1 on
+            // a leash alone; lump 3 on with no members.
+            ("lump: walkers travel held", Settings { condense: 3, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // And with no bronze (the owner, 04:58Z: "Remove the bronze"):
+            // lumps of ordinary walkers, where cut-off walkers panic and
+            // wither, which members do not.
+            ("lump plain: ordinary walkers travel held", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
             // Ordinary slime breaks away (`roam` alone, 11-16, the owner's
             // "Remove the bronze, keep the specks"): ripe on crystal or with 4
             // walkers round it; of the ordinary walkers (below) a quarter
@@ -3744,7 +3800,7 @@ mod tests {
             // take their chances on their slots' steps, a fifth a step.
             ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
-        for (name, s, build) in dishes {
+        for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             // Withering: the news is made in the warm-up, but with a lag no
@@ -3861,6 +3917,35 @@ mod tests {
                     }
                 }
             }
+            // The lumps (`BigParams::lumps`): round the first living walker
+            // past the dish's tenth, and round the first 30 fine cells from it.
+            let lumped = name.starts_with("lump");
+            let (mut leashed, mut members) = (0, Vec::new());
+            if lumped {
+                use slime_mould::mould::big::Lump;
+                let living: Vec<(f32, f32)> = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).map(|k| (cpu.walkers[k].0, cpu.walkers[k].1)).collect();
+                let a = living[living.len() / 10];
+                let b = *living.iter().find(|p| (p.0 - a.0).hypot(p.1 - a.1) > 30.0).expect("walkers apart");
+                let cell = |p: (f32, f32)| p.0 as u32 | (p.1 as u32) << 16;
+                let far = cell(((cpu.w - 2) as f32, (cpu.h / 2) as f32));
+                s.lumps[0] = Lump { aim: far, pull: 30.0, leash: 2.5, haste: 1.5, armour: 4, bite: 2 };
+                s.lumps[1] = Lump { leash: 0.8, ..Lump::default() };
+                s.lumps[3] = Lump { aim: far, haste: 2.0, ..Lump::default() };
+                cpu.p.lumps = s.lumps;
+                let n0 = cpu.form_lump(0, Some((cell(a), 20 * 20)));
+                let n1 = cpu.form_lump(1, Some((cell(b), 8 * 8)));
+                cpu.sum_lumps();
+                for k in 0..cpu.walkers.len() {
+                    if let (true, Some(l)) = (cpu.lives(k), cpu.lump_of(k)) {
+                        let (cx, cy, m) = cpu.lump_centre(l).unwrap();
+                        let (x, y, _) = cpu.walkers[k];
+                        leashed += ((x - cx).powi(2) + (y - cy).powi(2) > s.lumps[l].leash_k() * m as f32) as usize;
+                        members.push(k);
+                    }
+                }
+                eprintln!("{name}: lumps of {n0} and {n1} walkers, {leashed} past their leash");
+                assert!(n0 > 3 && n1 > 3 && leashed > 0 && leashed + 4 < members.len(), "{name}: two lumps, some members past the leash and some within it");
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3929,6 +4014,36 @@ mod tests {
                 let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && (cpu.is_dense(k) || specks) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
                 assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
+            }
+            // The lumps: the same sums as the tick began, and forming and
+            // releasing on the GPU as on the CPU (a lump 2 round lump 0's
+            // centre takes its members; lump 1 released).
+            if lumped {
+                assert!(e.lumps_on, "{name}: the lump passes run");
+                let gs = e.lump_sums();
+                eprintln!("{name}: lump sums {:?} on the CPU, {gs:?} on the GPU", cpu.lump_sums);
+                assert_eq!(gs, cpu.lump_sums, "{name}: lump sums");
+                assert!(gs[0].2 > 0 && gs[1].2 > 0 && gs[2].2 == 0 && gs[3].2 == 0, "{name}: lumps 0 and 1 hold members");
+                // Few walkers are members, so the dish's 0.1% bound would
+                // pass a wrong pull or leash: every member must agree.
+                let gw = walkers_of(&e);
+                let near = |a: (f32, f32, f32), b: (f32, f32, f32)| (a.0 - b.0).abs() <= 1e-3 && (a.1 - b.1).abs() <= 1e-3 && (a.2 - b.2).abs() <= 1e-3;
+                let members_off = members.iter().filter(|&&k| cpu.lives(k) && !near(gw[k], cpu.walkers[k])).count();
+                let still = members.iter().filter(|&&k| cpu.walkers[k] == start[k]).count();
+                eprintln!("{name}: {} members, {members_off} off, {still} held still", members.len());
+                assert!(members_off <= tol(0, 2), "{name}: {members_off} lump members off");
+                let (cx, cy, _) = cpu.lump_centre(0).unwrap();
+                let c = (cx as u32, cy as u32);
+                let at = Some((c.0 | c.1 << 16, 20 * 20));
+                e.form_lump(&shared, 2, at);
+                let n2 = cpu.form_lump(2, at);
+                e.form_lump(&shared, 1, None);
+                cpu.form_lump(1, None);
+                let gd = e.dense_of();
+                let off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let ones = (0..n).filter(|&k| cpu.lives(k) && cpu.lump_of(k) == Some(1)).count();
+                eprintln!("{name}: lump 2 formed of {n2}, lump 1 released ({ones} left); {off} words off");
+                assert!(n2 > 3 && ones == 0 && off == 0, "{name}: forming and releasing match");
             }
             let (broken, bitten, eaten, births) = (cpu.broken - broken, cpu.wall_hits - bitten, cpu.eaten - eaten, cpu.births - births);
             let fresh: Vec<bool> = (0..n).map(|k| cpu.lives(k) && !was[k]).collect();
@@ -4206,6 +4321,12 @@ mod tests {
         // nonzero and lean and dash differ, so a word read from the wrong
         // offset changes which walkers move how far.
         let surge = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, panic_r: 10.0, ..base.clone() };
+        // And a mini-boss (`Lump::armour`, `Lump::bite`, 2026-11-16, the
+        // mini-boss thread): the walkers round the thickest mould are lump
+        // 0's members (below), some already hurt, so a blow hurts some and
+        // kills others, and a unit's touch counts each as three.
+        let mut boss = base.clone();
+        boss.lumps[0] = slime_mould::mould::big::Lump { armour: 4, bite: 2, ..Default::default() };
         let surge_scared = Settings { surge_every: 1, surge_lean: 3, surge_dash: 5, surge_haste: 2.5, ..scared.clone() };
         // And the game's surge (`surge_at`, food-driven surges, 11-15): set
         // after the warm-up so the frame's first step is the lunge's first
@@ -4251,6 +4372,8 @@ mod tests {
             ("plain, the game times the surge", timed, 0, 0.0, 0, 1.0),
             ("plain, a raid on a crystal while a cut-off part charges", raid, 0, 0.0, 0, 1.0),
             ("plain, a raid round walls (its walking distance)", raid_walls, 0, 0.0, 0, 1.0),
+            ("plain, a mini-boss's members take four blows and bite as three", boss.clone(), 0, 0.0, 0, 1.0),
+            ("a mini-boss, the spray", boss, 0, 0.0, 3, 1.0),
         ];
         for (name, mut s, crater, sink, spray, share) in cases {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4321,6 +4444,20 @@ mod tests {
             let slime = squad::slime_trail(s.knee);
             let thick = (0..w * h).max_by(|&a, &b| cpu.trail[a].total_cmp(&cpu.trail[b])).unwrap();
             let t = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
+            // The mini-boss: every walker within 30 fine cells of the
+            // thickest mould, a third with 3 hits taken (the next kills it),
+            // a third with 2, the rest none.
+            let members: Vec<usize> = if s.lumps[0].on() {
+                cpu.form_lump(0, Some((slime_mould::mould::larder_world::raid_cell(t, (w, h)), 30 * 30)));
+                let m: Vec<usize> = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && cpu.lump_of(q) == Some(0)).collect();
+                for (i, &q) in m.iter().enumerate() {
+                    cpu.dense[q] |= ((3 - (i % 3) as u32) % 3) << slime_mould::mould::big::HURT_SHIFT;
+                }
+                m
+            } else {
+                Vec::new()
+            };
+            let hurt_before: Vec<u32> = cpu.dense.iter().map(|&d| d >> slime_mould::mould::big::HURT_SHIFT).collect();
             let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
             let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
             // Two units on one small patch of crystal 3, asking more than it
@@ -4510,6 +4647,19 @@ mod tests {
                 }
                 assert!(cpu.flung.iter().zip(&cpu.doomed).all(|(&f, &d)| f || !d), "a droplet is flung");
                 assert_eq!(flung_off, 0, "{name}: the same droplets fly");
+            }
+            // The mini-boss: the same members hurt and died on both, and the
+            // touch counted their bite.
+            if !members.is_empty() {
+                let gd = e.dense_of();
+                let off = (0..cpu.walkers.len()).filter(|&q| cpu.lives(q) && gd[q] != cpu.dense[q]).count();
+                let hurt = members.iter().filter(|&&q| cpu.lives(q) && cpu.dense[q] >> slime_mould::mould::big::HURT_SHIFT > hurt_before[q]).count();
+                let died = members.iter().filter(|&&q| !cpu.lives(q)).count();
+                let bites: u32 = squad::bite_cells(&cpu).iter().sum();
+                eprintln!("squad mini-boss, {name}: {} members, {hurt} hurt, {died} died; bite {bites} on the cells; {off} words off", members.len());
+                assert!(hurt > 0 && died > 0, "{name}: blows hurt some members and kill others");
+                assert!(bites > 0, "{name}: members bite");
+                assert_eq!(off, 0, "{name}: the members' words");
             }
             // Condensing: the same walkers broke, and the touch counted them.
             if s.condense > 0 {

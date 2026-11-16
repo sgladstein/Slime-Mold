@@ -105,7 +105,9 @@ const RO_UNITS: u64 = 0;
 const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * squad::U_OUT_W * 4) as u64;
 const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
 const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
-const RO_WSTAT: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+// Each lump's sums (`dense_base` header words 4-15, `Engine::lump_sums`).
+const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+const RO_WSTAT: u64 = RO_LUMPS + 48;
 const RO_GRID: u64 = RO_WSTAT + WSTAT_BYTES as u64;
 
 /// Game ticks between the mould grid's sums once a grid is asked for
@@ -146,6 +148,8 @@ struct Read {
     /// The engine's kill counter at the frame's end (`Engine::struck`,
     /// `wstat[3]`), which the plants' `firekill` pass adds to.
     struck: u32,
+    /// Each lump's sums as the frame's last tick began (`Engine::lump_sums`).
+    lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
 }
 
 /// The engine as a Larder world.
@@ -164,6 +168,8 @@ pub struct GpuWorld {
     own: usize,
     /// The enemy's condensed walkers at the last readout (`World::mass`).
     dense: usize,
+    /// Each lump's sums at the last readout (`World::lumps`).
+    lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
     broken: u32,
     /// The mirror's wall cells and a gather of their words, so `keep`
@@ -353,7 +359,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -366,7 +372,8 @@ impl GpuWorld {
         enc.copy_buffer_to_buffer(&e.sq, (squad::U_OUT * 4) as u64, b, RO_UNITS, RO_SHOTS - RO_UNITS);
         enc.copy_buffer_to_buffer(&e.sq, (squad::S_OUT * 4) as u64, b, RO_SHOTS, RO_KILLS - RO_SHOTS);
         enc.copy_buffer_to_buffer(&e.kills, 0, b, RO_KILLS, RO_PILES - RO_KILLS);
-        enc.copy_buffer_to_buffer(&e.piles, 0, b, RO_PILES, RO_WSTAT - RO_PILES);
+        enc.copy_buffer_to_buffer(&e.piles, 0, b, RO_PILES, RO_LUMPS - RO_PILES);
+        enc.copy_buffer_to_buffer(&e.news, e.dense_at + 16, b, RO_LUMPS, RO_WSTAT - RO_LUMPS);
         let (gw, gh) = e.grid_size();
         enc.copy_buffer_to_buffer(&e.wstat, 0, b, RO_WSTAT, (WSTAT_BYTES + 4 * gw * gh) as u64);
     }
@@ -475,12 +482,14 @@ impl GpuWorld {
         sq[squad::S_OUT..squad::PATH].copy_from_slice(&words[at(RO_SHOTS)..at(RO_KILLS)]);
         let (nunits, nshots, _) = self.e.squad;
         let out = squad::unpack(self.e.dish.w, &sq, &words[at(RO_KILLS)..at(RO_PILES)], nunits as usize, nshots as usize);
-        let piles = &words[at(RO_PILES)..at(RO_WSTAT)];
+        let piles = &words[at(RO_PILES)..at(RO_LUMPS)];
+        let ls = &words[at(RO_LUMPS)..at(RO_WSTAT)];
+        let lumps = std::array::from_fn(|b| (ls[3 * b], ls[3 * b + 1], ls[3 * b + 2]));
         let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3] }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -491,6 +500,7 @@ impl GpuWorld {
         self.living = r.living as usize;
         self.own = r.own as usize;
         self.dense = r.dense as usize;
+        self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
         // inject) starts the count again.
@@ -939,6 +949,33 @@ impl World for GpuWorld {
         self.e.write_raid_field();
     }
 
+    /// Runs `lumpform` at once, after the running step's shares (the CPU's
+    /// `form_lump`; the mirror's dense words are not kept).
+    fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = at.map(|(c, r)| crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h)));
+        self.e.form_lump(&self.shared, b, at);
+    }
+
+    /// Written with the next step's params, and kept on the mirror dish.
+    fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+        self.s.lumps[b] = l;
+        self.e.dish.p.lumps[b] = l;
+    }
+
+    /// From the last frame's readout (`RO_LUMPS`), so no read-back.
+    fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+        // The sums are summed only while a lump is on (`lumps_on`), so with
+        // none on the last ones stay in the readout: none then, as the
+        // CPU's `lump_of` (review of the mini-boss PR).
+        let on = self.s.lumps.iter().any(crate::mould::big::Lump::on);
+        std::array::from_fn(|b| {
+            let (sx, sy, n) = self.lumps[b];
+            (on && n > 0).then(|| ((sx / n) as f32 + 0.5, (sy / n) as f32 + 0.5, n))
+        })
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
@@ -1153,6 +1190,15 @@ mod tests {
         }
         fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
             self.g.mould_grid(bin)
+        }
+        fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+            self.g.form_lump(b, at)
+        }
+        fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+            self.g.set_lump(b, l)
+        }
+        fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+            self.g.lumps()
         }
     }
 

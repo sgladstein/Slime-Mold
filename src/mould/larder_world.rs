@@ -51,6 +51,7 @@
 mod buildings;
 mod world;
 mod raids;
+mod bosses;
 mod rules;
 mod paths;
 mod cmd;
@@ -73,6 +74,7 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
+pub use bosses::{parts, Boss, BossCause, BossEnd, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::Who;
 
@@ -427,6 +429,8 @@ pub struct Game<W: World> {
     charge_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
+    /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
+    pub bosses: Bosses,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -557,6 +561,7 @@ impl<W: World> Game<W> {
             surge_timed: false,
             charge_was: 0.0,
             raids: Raids::new(seed),
+            bosses: Bosses::new(seed),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();

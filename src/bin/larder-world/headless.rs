@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], bosses: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at.clone();
@@ -185,6 +185,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     // The soldiers `cutsquad=` set down, kept there.
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
+    let mut bossed: Vec<usize> = Vec::new();
     // `turret=X,Y,T`: the buildings still to stand, at their seconds.
     let mut late: Vec<usize> = (0..turrets.len()).filter(|&i| turrets[i].2 > 0.0).collect();
     let inside = |lk: &[u8], cells: &[usize]| -> u32 { cells.iter().map(|&i| lk[4 * i + 1] as u32).sum() };
@@ -349,8 +350,23 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
                 }
             }
+            // `boss=T,X,Y`: a mini-boss forms there once T has come, on
+            // the first free lump.
+            for (j, &(bt, bx, by)) in bosses.iter().enumerate() {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= bt && !bossed.contains(&j) {
+                    bossed.push(j);
+                    let reach = g.rules.boss.reach;
+                    if g.form_boss((bx, by), reach, slime_mould::mould::larder_world::BossCause::Staged) {
+                        println!("  boss t {:.2} s: formed round {bx},{by}", g.time());
+                    }
+                }
+            }
             let surges = app.game.as_ref().map_or(0, |g| g.surges);
             let raids = app.game.as_ref().map_or(0, |g| g.raids.sent.len());
+            let boss_sec = app.game.as_ref().map_or(0, |g| g.time().floor() as u64);
+            let bosses_ended = app.game.as_ref().map_or(0, |g| g.bosses.ended.len());
+            let bosses_born: Vec<u64> = app.game.as_ref().map_or(Vec::new(), |g| g.bosses.live.iter().map(|b| b.born).collect());
             app.step(if real { t - at[fi - 1] } else { step });
             // Whole steps here (the window leaves a step running while it
             // draws): the pictures, the holes and the tape read the game as
@@ -364,6 +380,33 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if let Some(g) = app.game.as_ref().filter(|g| g.raids.sent.len() != raids) {
                 let d = g.raids.sent.last().unwrap();
                 println!("  raid {} at t {:.1} s: {:?} at {:.0},{:.0}, reach {:.0} cells holding {} walkers, share {:.2}, size {:.0}% of the slime{}", g.raids.sent.len(), g.time(), d.aim, d.to.0, d.to.1, d.reach, d.held, d.share, d.size * 100.0, if d.last_stand { " (last stand)" } else { "" });
+            }
+            // Each mini-boss that forms by its rules' chances.
+            if let Some(g) = app.game.as_ref() {
+                for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
+                    let r = &g.rules.boss;
+                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
+                }
+            }
+            // Each mini-boss once a game second, and each one that ends
+            // (`bosses.rs`, 2026-11-16): its members, centre and how far its
+            // nearest soldier is (world units, as `centre=`).
+            if let Some(g) = app.game.as_ref().filter(|g| g.time().floor() as u64 != boss_sec) {
+                // How tight each one is: its members' mean distance from
+                // its centre over a packed disc's (a walker a fine cell, 1
+                // packed), from the walkers read back (a look's cost only).
+                let (ws, dw) = if g.bosses.live.is_empty() { (Vec::new(), Vec::new()) } else { (slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers)), g.world.e.dense_of()) };
+                for b in &g.bosses.live {
+                    let near = g.soldiers.iter().filter(|s| s.alive).map(|s| (s.x - b.centre.0).hypot(s.y - b.centre.1)).fold(f32::INFINITY, f32::min);
+                    let ds: Vec<f32> = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1).map(|k| (ws[4 * k] - b.centre.0).hypot(ws[4 * k + 1] - b.centre.1)).collect();
+                    let hurt = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1 && dw[k] >> slime_mould::mould::big::HURT_SHIFT > 0).count();
+                    let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
+                    let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
+                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1, g.alive());
+                }
+                for (b, e, _) in &g.bosses.ended[bosses_ended..] {
+                    println!("  boss t {:.0} s: lump {} ended {e:?} ({} members of {})", g.time(), b.lump, b.members, b.first);
+                }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
                 let g = app.game.as_ref().unwrap();
