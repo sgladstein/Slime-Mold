@@ -99,7 +99,8 @@ beside the bomb, which throws the slime out of the cloud: 5,086 slept
 against the trigger's 9,637. Breadth against depth. With it a step's
 bursts run as one batch and the GPU's counts come back in one read
 (`World::bursts`, `Rounds::flush`, `Engine::snap`): 207 bursts in 69 reads
-over 10 s, each burst counted exactly as alone
+over 10 s, each burst counted exactly as alone. On the 1070 the
+reads were not stalls: frame p95 held at 5.4 ms, multicast +0.1 ms
 ([multicast](../../Reports/gun-multicast-2026-11-16/README.md)).
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
