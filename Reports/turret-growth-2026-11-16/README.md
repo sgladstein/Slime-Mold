@@ -93,3 +93,7 @@ trade, which is the reason a turret deck is worth choosing.
 
 Frame cost: no new pass; turret shots and casts use the soldiers' paths
 (bursts batched per step since #387). Not timed on the 1070.
+
+## Review
+
+An independent agent reviews the design and the code from [review-brief.md](review-brief.md) (owner 21:37Z: "once you finish all this, use an independent agent to review").
