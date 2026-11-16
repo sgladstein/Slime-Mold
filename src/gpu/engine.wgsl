@@ -287,7 +287,7 @@ struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32, heat: f32, _s
 // A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
-struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: array<SqShot, 256>, sout: array<SqShotOut, 256>, path: array<u32> };
+struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: array<SqShot, 1024>, sout: array<SqShotOut, 1024>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
 // The look (2026-11-11, src/world/look in the view): shots that landed this
@@ -335,8 +335,10 @@ struct Squad { units: array<SqUnit, 96>, uout: array<SqUnitOut, 96>, shots: arra
 // laid and with a dish (`gas_words`); 6-7 are spare.
 const GAS_HEAD: u32 = 8u;
 const GAS_UNITS: u32 = 8u;
-const GAS_CALM: u32 = 392u;
-const GAS_SLOTS: u32 = 488u;
+// GAS_HEAD + 4 and + 5 times `squad::UNITS_MAX` (256 since 11-16; 392 and
+// 488 at 96), checked by `squad`'s `the_shader_holds_the_frame`.
+const GAS_CALM: u32 = 1032u;
+const GAS_SLOTS: u32 = 1288u;
 fn gas_base() -> u32 { return P.n + 3u * P.w * P.h; }
 fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
 // Dense slime condenses (`BigParams::condense`, 11-14, the condense

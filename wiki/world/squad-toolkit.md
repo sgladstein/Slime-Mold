@@ -22,6 +22,7 @@ sources:
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
+  - Reports/throw-aim-2026-11-16/README.md
   - Reports/trail-cards-2026-11-14.md
 code:
   - Ammo
@@ -54,11 +55,13 @@ code:
   - GunKind
   - Kit
   - Kit::restock
+  - Kit::thrower
   - KitRules
   - KitRules::carry_max
   - KitRules::gas_cloud
   - Soldier::load
   - Soldier::smell
+  - Throw
   - Tool
   - World::burst
   - World::calm
@@ -80,7 +83,10 @@ sick `sick_upkeep`: on race seed 5, 77 made sick and 449 of 2,123 left after
 20 s on both engines). A mine's trigger scales with `Game::density`. In
 the window (`larder-world`) E opens the tools page: blast, det cord and
 mine, germ and sleep gas work; every soldier at the larder takes one tool, a selected one up
-to five. The crater a blast, cord
+to five. Since 2026-11-16 aiming a tool shows who throws (`Kit::thrower`),
+its reach ring, a lobbed arc to the landing point and the area in the tool's
+colour, all red with the click refused out of reach (`Model::throw`, `Throw`;
+[report](../../Reports/throw-aim-2026-11-16/README.md)). The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
 `scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
 cone, were 0.1 and 30, which earlier `kitplans` tables used) is the one

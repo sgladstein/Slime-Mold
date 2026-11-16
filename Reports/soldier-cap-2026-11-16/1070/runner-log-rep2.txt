@@ -1,0 +1,13 @@
+start 06:03:45Z free KB 3473556 gpu 0,0,0,0,0 % 
+checkout exit=0 head=313ce4f92e82dc499f8651054753c180051028ac
+build exit=0 06:04:15Z
+warmup start 06:04:15Z card 139 MHz, 405 MHz, 46, 7.43 W
+warmup exit=0 06:04:27Z card 1961 MHz, 4006 MHz, 50, 45.10 W
+rep-n200-1.txt start 06:04:33Z gpu 0,0,0,0,0 % card 1961 MHz, 4006 MHz, 49, 44.76 W free KB 3422584
+rep-n200-1.txt exit=0 06:05:07Z
+rep-n40-1.txt start 06:05:12Z gpu 0,0,0,0,0 % card 999 MHz, 3802 MHz, 52, 30.05 W free KB 3419264
+rep-n40-1.txt exit=0 06:05:41Z
+rep-n200-2.txt start 06:05:46Z gpu 0,0,0,0,0 % card 1949 MHz, 4006 MHz, 57, 46.31 W free KB 3424472
+rep-n200-2.txt exit=0 06:06:21Z
+rep-n40-2.txt start 06:06:26Z gpu 0,0,0,0,0 % card 797 MHz, 810 MHz, 58, 9.71 W free KB 3426560
+rep-n40-2.txt exit=0 06:06:55Z

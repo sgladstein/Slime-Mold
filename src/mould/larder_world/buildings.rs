@@ -27,8 +27,9 @@
 //! already one tested path on the CPU and the GPU (W2a: one GPU frame
 //! equals `squad::frame` exactly), so the buildings play the same on both
 //! worlds without a new engine pass or binding. The cost is units: the
-//! frame takes at most `squad::UNITS_MAX` (64), so with 40 soldiers and the
-//! larder there is room for `BuildRules::max` (20) buildings.
+//! frame takes at most `squad::UNITS_MAX` (256 since 11-16), so with the
+//! soldiers (`Rules::max_squad`) and the larder there is room for
+//! `BuildRules::max` (40) buildings.
 //!
 //! **Raised over time** (owner's card, 2026-11-12 04:41Z: "Soldiers build
 //! over time"). A building is placed as a ghost with `built` 0 to 1 and

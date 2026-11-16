@@ -240,6 +240,13 @@ pub struct Rules {
     pub start_bank: f32,
     pub squad: usize,
     pub soldier_cost: f32,
+    /// The most soldiers alive at once. 200 since 2026-11-16 (owner, after
+    /// the soldier-cap thread's measures: "Flat 200, the realistic max",
+    /// "I want to test the max"); 40 before, the M2 design number. The
+    /// window's soldiers' turn costs about 0.01 ms a soldier a step on a
+    /// planet-1 map and 0.03 ms on a 6x planet (cloud CPU,
+    /// `examples/soldiercap.rs`; `Reports/soldier-cap-2026-11-16.md`).
+    /// Held under `squad::UNITS_MAX` less the home and every building.
     pub max_squad: usize,
     /// Food a dish cell of wall costs, and its width in dish cells.
     pub wall_cost: f32,
@@ -521,6 +528,15 @@ impl Rules {
             self.raid.last_stand = v > 0.0;
             return true;
         }
+        // `max_squad=N` (soldier-cap thread, 11-16): the most soldiers
+        // alive, so the 1070 bench can time big armies (`hand=greedy` buys
+        // to it). Past `squad::UNITS_MAX` less the home and every building
+        // a soldier would drop out of the frame, so it is held under that.
+        if name == "max_squad" {
+            let room = crate::mould::squad::UNITS_MAX - 1 - self.build.max;
+            self.max_squad = (v.max(1.0) as usize).min(room);
+            return true;
+        }
         let f = match name {
             "raid_first" => &mut self.raid.first,
             "raid_first_sd" => &mut self.raid.first_sd,
@@ -547,6 +563,7 @@ impl Rules {
             "drain" => &mut self.drain,
             "cap" => &mut self.cap,
             "start_bank" => &mut self.start_bank,
+            "soldier_cost" => &mut self.soldier_cost,
             _ => return false,
         };
         *f = v;
@@ -605,7 +622,7 @@ impl Default for Rules {
             start_bank: 2000.0,
             squad: 4,
             soldier_cost: 400.0,
-            max_squad: 40,
+            max_squad: 200,
             wall_cost: 20.0,
             wall_width: 2.0,
             hoard: 1.0,

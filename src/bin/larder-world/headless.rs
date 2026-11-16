@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32))], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at;
@@ -483,6 +483,24 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             app.prepare();
             let _ = app.hud.key(KeyCode::KeyT, true, false, &mut app.camera);
             app.controls.cursor = hover;
+        }
+        // `hand=throw` with `hover=`: a blast being aimed under the cursor
+        // (the Tools page, then B), so the picture shows the throw's
+        // ghost: reach, arc, area (2026-11-16, the throw-aim thread).
+        // `hover=X,Y,X2,Y2` sweeps the cursor from the one to the other over
+        // the frames, so a clip shows the aim leaving the reach.
+        // `hand=throwgas` aims the sleep gas instead (S), for its colour.
+        if hand.starts_with("throw") && hover.is_some() && app.hud.targeting().is_none() {
+            app.tools_page = true;
+            app.prepare();
+            let key = if hand == "throwgas" { KeyCode::KeyS } else { KeyCode::KeyB };
+            let _ = app.hud.key(key, true, false, &mut app.camera);
+        }
+        if let (Some(a), Some(b)) = (hover, hover_to) {
+            let f = if at.len() > 1 { fi as f32 / (at.len() - 1) as f32 } else { 0.0 };
+            let p = (a.0 + (b.0 - a.0) * f, a.1 + (b.1 - a.1) * f);
+            app.hud.moved(Some(p));
+            app.controls.cursor = Some(p);
         }
         // The HUD sets the camera's insets as it draws, and `fit` reads
         // them: without this the run's first "all" picture was zoomed in

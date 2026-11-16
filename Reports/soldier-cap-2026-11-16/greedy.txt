@@ -1,0 +1,41 @@
+# examples/soldiercap.rs greedy=1 n=200 secs=360 at aaab5ce + greedy mode, CPU big dish (race_params 25,000 walkers on the planet map, not the window's shape C)
+
+## greedy-p1-s1
+soldiercap: fight false, planet depth 1 seed 1, 360 game s, 8 squads, UNITS_MAX 256, SHOTS_MAX 1024
+    1:00  soldiers 20, bank 344, harvested 4743, slime 1630
+    2:00  soldiers 40, bank 472, harvested 12873, slime 1608
+    3:00  soldiers 45, bank 140, harvested 14542, slime 1836
+    4:00  soldiers 45, bank 140, harvested 14542, slime 1593
+    5:00  soldiers 45, bank 140, harvested 14542, slime 1555
+    6:00  soldiers 45, bank 140, harvested 14542, slime 1613
+  greedy, cap 200: first reached 10: 0:12, 20: 0:58, 40: 1:58, 80: -, 120: -, 150: -, 200: - | at the end (360 s) 45 alive, 0 lost
+
+## greedy-p1-s2
+soldiercap: fight false, planet depth 1 seed 2, 360 game s, 8 squads, UNITS_MAX 256, SHOTS_MAX 1024
+    1:00  soldiers 17, bank 374, harvested 3574, slime 1485
+    2:00  soldiers 28, bank 410, harvested 8008, slime 1645
+    3:00  soldiers 29, bank 296, harvested 8295, slime 1980
+    4:00  soldiers 29, bank 296, harvested 8295, slime 1619
+    5:00  soldiers 29, bank 296, harvested 8295, slime 1524
+    6:00  soldiers 29, bank 296, harvested 8295, slime 1420
+  greedy, cap 200: first reached 10: 0:09, 20: 1:11, 40: -, 80: -, 120: -, 150: -, 200: - | at the end (360 s) 29 alive, 0 lost
+
+## greedy-p3-s1
+soldiercap: fight false, planet depth 3 seed 1, 360 game s, 8 squads, UNITS_MAX 256, SHOTS_MAX 1024
+    1:00  soldiers 16, bank 266, harvested 3466, slime 1954
+    2:00  soldiers 27, bank 191, harvested 7790, slime 1605
+    3:00  soldiers 30, bank 353, harvested 9153, slime 1755
+    4:00  soldiers 30, bank 353, harvested 9153, slime 1578
+    5:00  soldiers 30, bank 353, harvested 9153, slime 1602
+    6:00  soldiers 29, bank 353, harvested 9153, slime 1601
+  greedy, cap 200: first reached 10: 0:20, 20: 1:13, 40: -, 80: -, 120: -, 150: -, 200: - | at the end (360 s) 29 alive, 2 lost
+
+## greedy-p3-s2
+soldiercap: fight false, planet depth 3 seed 2, 360 game s, 8 squads, UNITS_MAX 256, SHOTS_MAX 1024
+    1:00  soldiers 17, bank 328, harvested 3528, slime 2887
+    2:00  soldiers 27, bank 204, harvested 7403, slime 3182
+    3:00  soldiers 31, bank 17, harvested 8817, slime 2063
+    4:00  soldiers 31, bank 238, harvested 9037, slime 1914
+    5:00  soldiers 31, bank 238, harvested 9037, slime 1518
+    6:00  soldiers 31, bank 238, harvested 9037, slime 1427
+  greedy, cap 200: first reached 10: 0:20, 20: 1:08, 40: -, 80: -, 120: -, 150: -, 200: - | at the end (360 s) 31 alive, 0 lost
