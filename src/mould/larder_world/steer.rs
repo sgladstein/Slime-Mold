@@ -180,6 +180,27 @@ impl<W: World> Game<W> {
         (x / n, y / n)
     }
 
+    /// How far squad `q`'s members are, on average, from where they head
+    /// round an anchor at `at` (`aim_round`), fine cells: a squad can stand
+    /// with its middle in place and its members out of theirs (a line of
+    /// 40 formed from a blob as it walked and arrived with members 5 cells
+    /// off their places, 4 s to stand).
+    pub(super) fn steer_short(&self, q: usize, at: (f32, f32)) -> f32 {
+        let m = self.members(q);
+        let Some(mid) = self.middle(q) else { return 0.0 };
+        let stray = super::squads::STRAY * self.s();
+        let (mut d, mut n) = (0.0, 0.0);
+        for &k in &m {
+            let s = self.soldiers[k];
+            if (s.x - mid.0).hypot(s.y - mid.1) <= stray {
+                let a = self.aim_round(k, at);
+                d += (s.x - a.0).hypot(s.y - a.1);
+                n += 1.0;
+            }
+        }
+        if n > 0.0 { d / n } else { 0.0 }
+    }
+
     /// The walking map to where squad `q` goes as one, by the rule its
     /// anchor goes by (`Game::guide`): a sent squad's goal, or 40 cells
     /// ahead of a steered one's anchor (any map within `STEER_NEAR` of
@@ -377,10 +398,21 @@ impl<W: World> Game<W> {
         let reach = 1.25 * min;
         let stood = 0.1 * full;
         let mut want: Vec<Option<(f32, f32)>> = vec![Some((0.0, 0.0)); n];
+        // Where each soldier of a squad standing in formation walks to:
+        // its place, for the queuing below.
+        let mut place: Vec<Option<(f32, f32)>> = vec![None; n];
         for (k, w) in want.iter_mut().enumerate() {
             self.soldiers[k].was = (self.soldiers[k].x, self.soldiers[k].y);
             if self.soldiers[k].alive {
                 *w = self.want(k);
+                let s = self.soldiers[k];
+                if let Order::Move(x, y) | Order::Fight(x, y) = s.order {
+                    let still = self.squads.get(s.squad as usize).is_some_and(|sq| sq.anchor != Some((x, y)));
+                    if r.squads && !s.cover && still {
+                        let o = self.place(k);
+                        place[k] = Some((x + o.0 * sc, y + o.1 * sc));
+                    }
+                }
             }
         }
         // Elbow room and queuing, from where everyone stands before the
@@ -439,11 +471,34 @@ impl<W: World> Game<W> {
                     // one behind wants: members held at their distance from
                     // the anchor (`stand_off`) in a 6-cell door plugged it
                     // once its column ended, and those behind them waited
-                    // for good (24 soldiers, door 30 cells long).
+                    // for good (24 soldiers, door 30 cells long). So it
+                    // does for one on a job (building, guarding: not
+                    // walking to a formation place): a builder stood behind
+                    // a squad-mate on the wall's home side, in the wall's
+                    // footprint, until the wall shut it in (wall sides,
+                    // seed 3).
+                    // Walking to its place in a squad that stands, it
+                    // doesn't queue behind one its straight walk there
+                    // passes clear of: a line's places stand a gap apart,
+                    // inside a standing neighbour's queuing reach, and its
+                    // members crept the last cell into them, stopped by
+                    // their neighbours, for 3 s (a line of 40 arriving).
+                    let clear = |me: usize, o: (f32, f32)| {
+                        place[me].is_some_and(|t| {
+                            let a = self.soldiers[me];
+                            let (vx, vy) = (t.0 - a.x, t.1 - a.y);
+                            let l2 = (vx * vx + vy * vy).max(1e-6);
+                            let f = (((o.0 - a.x) * vx + (o.1 - a.y) * vy) / l2).clamp(0.0, 1.0);
+                            (a.x + vx * f - o.0).hypot(a.y + vy * f - o.1) >= 0.95 * min
+                        })
+                    };
                     for (me, other, toward) in [(i, j, (-u.0, -u.1)), (j, i, u)] {
                         let Some(wv) = want[me] else { continue };
                         let o = self.soldiers[other];
                         let still = o.vx.hypot(o.vy) < stood;
+                        if still && clear(me, (o.x, o.y)) {
+                            continue;
+                        }
                         let deep = (if still { (reach - d) / (reach - min) } else { (min - d) / (0.3 * min) }).clamp(0.0, 1.0);
                         let mine = wv.0 * toward.0 + wv.1 * toward.1;
                         let theirs = o.vx * toward.0 + o.vy * toward.1;
@@ -452,7 +507,7 @@ impl<W: World> Game<W> {
                             brake[me].0 -= toward.0 * rel * deep;
                             brake[me].1 -= toward.1 * rel * deep;
                             let same = o.squad == self.soldiers[me].squad;
-                            if still && same && self.squads.get(o.squad as usize).is_some_and(|sq| sq.anchor.is_some()) {
+                            if still && same && (place[me].is_none() || self.squads.get(o.squad as usize).is_some_and(|sq| sq.anchor.is_some())) {
                                 push[other].0 += toward.0 * rel * deep;
                                 push[other].1 += toward.1 * rel * deep;
                             }

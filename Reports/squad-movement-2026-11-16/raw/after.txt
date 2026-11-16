@@ -1,0 +1,101 @@
+     steer n= 12 seed=1 still=0.01 jerk=0.03 turn=  1.9 pace=0.77 spread=  5.7 back= 0.00 settle= 0.1s arrive=10.0s start=0.13s waits=0 move ms mean=0.043 p95=0.07 worst=0.15
+     steer n= 12 seed=2 still=0.01 jerk=0.03 turn=  1.9 pace=0.78 spread=  5.7 back= 0.00 settle= 0.1s arrive=10.0s start=0.13s waits=0 move ms mean=0.031 p95=0.06 worst=0.09
+     steer n= 40 seed=1 still=0.01 jerk=0.04 turn=  2.4 pace=0.77 spread= 10.4 back= 0.00 settle= 0.1s arrive=10.0s start=0.20s waits=0 move ms mean=0.121 p95=0.20 worst=0.37
+     steer n= 40 seed=2 still=0.01 jerk=0.04 turn=  2.3 pace=0.77 spread= 10.3 back= 0.00 settle= 0.1s arrive=10.0s start=0.27s waits=0 move ms mean=0.103 p95=0.16 worst=0.40
+     steer n=100 seed=1 still=0.06 jerk=0.07 turn=  3.5 pace=0.67 spread= 16.4 back= 0.00 settle= 0.1s arrive=10.0s start=0.60s waits=0 move ms mean=0.359 p95=0.54 worst=2.30
+     steer n=100 seed=2 still=0.05 jerk=0.07 turn=  3.5 pace=0.67 spread= 16.3 back= 0.00 settle= 0.1s arrive=10.0s start=0.40s waits=0 move ms mean=0.307 p95=0.57 worst=1.31
+     steer n=200 seed=1 still=0.05 jerk=0.09 turn=  4.8 pace=0.63 spread= 21.8 back= 0.00 settle= 0.1s arrive=10.0s start=2.40s waits=0 move ms mean=0.855 p95=1.63 worst=4.33
+     steer n=200 seed=2 still=0.05 jerk=0.09 turn=  4.9 pace=0.60 spread= 21.9 back= 0.00 settle= 0.1s arrive=10.0s start=2.60s waits=0 move ms mean=0.773 p95=1.46 worst=6.29
+      send n= 12 seed=1 still=0.00 jerk=0.02 turn=  0.5 pace=0.72 spread=  5.6 back= 0.00 settle= 0.0s arrive= 7.2s start=0.13s waits=0 move ms mean=0.038 p95=0.06 worst=0.16
+      send n= 12 seed=2 still=0.00 jerk=0.02 turn=  0.4 pace=0.72 spread=  5.7 back= 0.00 settle= 0.0s arrive= 7.2s start=0.13s waits=0 move ms mean=0.036 p95=0.06 worst=0.15
+      send n= 40 seed=1 still=0.01 jerk=0.03 turn=  1.1 pace=0.72 spread= 10.0 back= 0.00 settle= 0.6s arrive= 7.2s start=0.20s waits=0 move ms mean=0.118 p95=0.19 worst=0.31
+      send n= 40 seed=2 still=0.00 jerk=0.03 turn=  1.2 pace=0.72 spread=  9.9 back= 0.01 settle= 1.1s arrive= 7.2s start=0.20s waits=0 move ms mean=0.126 p95=0.22 worst=0.53
+      send n=100 seed=1 still=0.05 jerk=0.05 turn=  2.1 pace=0.62 spread= 16.1 back= 0.00 settle= 0.2s arrive= 8.4s start=0.40s waits=0 move ms mean=0.286 p95=0.49 worst=1.15
+      send n=100 seed=2 still=0.04 jerk=0.05 turn=  2.0 pace=0.63 spread= 16.0 back= 0.00 settle= 0.0s arrive= 8.2s start=0.40s waits=0 move ms mean=0.282 p95=0.48 worst=1.39
+      send n=200 seed=1 still=0.04 jerk=0.07 turn=  3.3 pace=0.59 spread= 21.0 back= 0.01 settle= 1.9s arrive= 8.7s start=2.33s waits=0 move ms mean=0.747 p95=1.14 worst=5.63
+      send n=200 seed=2 still=0.05 jerk=0.06 turn=  3.0 pace=0.58 spread= 20.7 back= 0.00 settle= 2.2s arrive= 8.8s start=2.40s waits=0 move ms mean=0.939 p95=1.37 worst=4.80
+      line n= 12 seed=1 still=0.00 jerk=0.02 turn=  0.7 pace=0.71 spread=  5.0 back= 0.00 settle= 0.0s arrive= 7.2s start=0.20s waits=0 move ms mean=0.024 p95=0.05 worst=0.09
+      line n= 12 seed=2 still=0.00 jerk=0.02 turn=  0.5 pace=0.71 spread=  5.0 back= 0.00 settle= 0.0s arrive= 7.2s start=0.20s waits=0 move ms mean=0.028 p95=0.05 worst=0.26
+      line n= 40 seed=1 still=0.03 jerk=0.10 turn=  5.4 pace=0.64 spread=  7.0 back= 0.48 settle= 5.4s arrive= 7.2s start=1.07s waits=0 move ms mean=0.120 p95=0.18 worst=0.35
+      line n= 40 seed=2 still=0.02 jerk=0.07 turn=  3.8 pace=0.65 spread=  6.9 back= 0.07 settle= 2.0s arrive= 7.2s start=1.07s waits=0 move ms mean=0.087 p95=0.13 worst=0.24
+      line n=100 seed=1 still=0.06 jerk=0.14 turn=  8.3 pace=0.52 spread= 10.4 back= 0.71 settle= 7.7s arrive= 7.2s start=2.27s waits=0 move ms mean=0.370 p95=0.57 worst=1.61
+      line n=100 seed=2 still=0.09 jerk=0.17 turn=  9.9 pace=0.50 spread= 10.4 back= 0.92 settle= 7.5s arrive= 7.3s start=2.60s waits=0 move ms mean=0.414 p95=0.79 worst=1.96
+      line n=200 seed=1 still=0.10 jerk=0.21 turn= 13.5 pace=0.35 spread= 14.5 back= 0.46 settle= 7.1s arrive= 7.8s start=4.47s waits=0 move ms mean=1.279 p95=2.35 worst=6.98
+      line n=200 seed=2 still=0.15 jerk=0.21 turn= 14.7 pace=0.34 spread= 14.8 back= 0.55 settle= 6.8s arrive= 8.1s start=4.93s waits=0 move ms mean=1.160 p95=1.93 worst=7.53
+     wedge n= 12 seed=1 still=0.01 jerk=0.05 turn=  2.3 pace=0.65 spread=  7.3 back= 0.00 settle= 0.0s arrive= 7.2s start=1.07s waits=0 move ms mean=0.036 p95=0.07 worst=0.11
+     wedge n= 12 seed=2 still=0.01 jerk=0.04 turn=  2.2 pace=0.64 spread=  7.3 back= 0.00 settle= 0.0s arrive= 7.2s start=0.87s waits=0 move ms mean=0.036 p95=0.08 worst=0.22
+     wedge n= 40 seed=1 still=0.14 jerk=0.07 turn=  4.0 pace=0.38 spread= 19.9 back= 0.00 settle= 0.0s arrive= 9.5s start=2.87s waits=0 move ms mean=0.156 p95=0.28 worst=0.44
+     wedge n= 40 seed=2 still=0.03 jerk=0.08 turn=  3.7 pace=0.44 spread= 19.2 back= 0.00 settle= 0.0s arrive= 8.3s start=3.00s waits=0 move ms mean=0.192 p95=0.36 worst=0.53
+     wedge n=100 seed=1 still=0.01 jerk=0.05 turn=  2.5 pace=0.68 spread=  9.5 back=12.44 settle= 9.1s arrive= 5.8s start=0.27s waits=10 move ms mean=0.892 p95=1.31 worst=2.00
+     wedge n=100 seed=2 still=0.02 jerk=0.08 turn=  3.8 pace=0.67 spread=  9.4 back=13.55 settle= 8.9s arrive= 5.9s start=0.20s waits=10 move ms mean=0.864 p95=1.30 worst=1.93
+     wedge n=200 seed=1 still=0.19 jerk=0.10 turn=  6.2 pace=0.54 spread= 13.2 back= 0.01 settle= 8.2s arrive= 6.5s start=0.33s waits=0 move ms mean=2.668 p95=6.16 worst=10.72
+     wedge n=200 seed=2 still=0.47 jerk=0.06 turn=  6.2 pace=0.37 spread= 18.1 back= 0.01 settle= 2.7s arrive=12.1s start=0.33s waits=2 move ms mean=4.308 p95=6.80 worst=9.69
+      ring n= 12 seed=1 still=0.00 jerk=0.01 turn=  0.3 pace=0.72 spread=  4.7 back= 0.00 settle= 0.0s arrive= 7.2s start=0.13s waits=0 move ms mean=0.024 p95=0.05 worst=0.12
+      ring n= 12 seed=2 still=0.00 jerk=0.01 turn=  0.3 pace=0.72 spread=  4.7 back= 0.00 settle= 0.0s arrive= 7.2s start=0.13s waits=0 move ms mean=0.031 p95=0.06 worst=0.08
+      ring n= 40 seed=1 still=0.03 jerk=0.04 turn=  0.8 pace=0.65 spread= 14.9 back= 0.00 settle= 0.0s arrive= 7.9s start=0.60s waits=0 move ms mean=0.140 p95=0.23 worst=0.38
+      ring n= 40 seed=2 still=0.03 jerk=0.04 turn=  0.8 pace=0.65 spread= 14.9 back= 0.00 settle= 0.0s arrive= 8.0s start=0.60s waits=0 move ms mean=0.131 p95=0.19 worst=0.42
+      ring n=100 seed=1 still=0.09 jerk=0.02 turn=  0.6 pace=0.53 spread= 29.9 back= 0.00 settle= 0.1s arrive=10.1s start=2.40s waits=0 move ms mean=0.546 p95=0.74 worst=1.50
+      ring n=100 seed=2 still=0.11 jerk=0.02 turn=  0.6 pace=0.49 spread= 30.1 back= 0.00 settle= 0.1s arrive=11.1s start=2.93s waits=0 move ms mean=0.469 p95=0.76 worst=2.29
+      ring n=200 seed=1 still=0.36 jerk=0.07 turn=  4.4 pace=0.40 spread= 28.1 back= 0.00 settle= 0.0s arrive=never start=0.33s waits=0 move ms mean=5.450 p95=7.70 worst=9.36
+      ring n=200 seed=2 still=0.36 jerk=0.07 turn=  4.5 pace=0.40 spread= 27.7 back= 0.00 settle= 0.0s arrive=never start=0.33s waits=0 move ms mean=5.282 p95=7.54 worst=9.83
+   reverse n= 12 seed=1 still=0.02 jerk=0.04 turn=  0.6 pace=0.74 spread=  5.6 back= 0.00 settle= 0.0s arrive= 6.4s start=0.13s waits=0 move ms mean=0.023 p95=0.04 worst=0.07
+   reverse n= 12 seed=2 still=0.02 jerk=0.04 turn=  0.6 pace=0.75 spread=  5.6 back= 0.00 settle= 0.0s arrive= 6.4s start=0.13s waits=0 move ms mean=0.027 p95=0.05 worst=0.11
+   reverse n= 40 seed=1 still=0.02 jerk=0.05 turn=  1.7 pace=0.72 spread= 10.1 back= 0.00 settle= 0.0s arrive= 6.4s start=0.20s waits=0 move ms mean=0.107 p95=0.17 worst=0.24
+   reverse n= 40 seed=2 still=0.02 jerk=0.05 turn=  1.7 pace=0.71 spread= 10.0 back= 0.00 settle= 0.0s arrive= 6.4s start=0.27s waits=0 move ms mean=0.109 p95=0.18 worst=0.31
+   reverse n=100 seed=1 still=0.12 jerk=0.11 turn=  4.6 pace=0.51 spread= 15.2 back= 0.00 settle= 0.0s arrive= 5.1s start=0.60s waits=0 move ms mean=0.260 p95=0.45 worst=1.43
+   reverse n=100 seed=2 still=0.11 jerk=0.11 turn=  4.7 pace=0.51 spread= 15.1 back= 0.00 settle= 0.1s arrive= 5.1s start=0.40s waits=0 move ms mean=0.330 p95=0.60 worst=1.64
+   reverse n=200 seed=1 still=0.10 jerk=0.16 turn=  8.2 pace=0.39 spread= 18.9 back= 0.03 settle= 0.4s arrive= 4.8s start=2.40s waits=0 move ms mean=0.737 p95=1.38 worst=5.65
+   reverse n=200 seed=2 still=0.11 jerk=0.16 turn=  8.6 pace=0.34 spread= 18.7 back= 0.12 settle= 1.4s arrive= 4.6s start=2.60s waits=0 move ms mean=0.800 p95=1.22 worst=4.94
+   bridge8 n= 12 seed=1 still=0.05 jerk=0.07 turn=  3.5 pace=0.65 spread=  4.7 back= 0.00 settle= 0.1s arrive=15.9s start=0.20s waits=6 move ms mean=0.037 p95=0.07 worst=0.12
+   bridge8 n= 12 seed=2 still=0.04 jerk=0.07 turn=  3.4 pace=0.65 spread=  4.7 back= 0.00 settle= 0.5s arrive=15.8s start=0.20s waits=6 move ms mean=0.042 p95=0.07 worst=0.40
+   bridge8 n= 40 seed=1 still=0.10 jerk=0.11 turn=  5.6 pace=0.60 spread=  8.6 back= 0.03 settle= 1.9s arrive=17.1s start=0.27s waits=6 move ms mean=0.146 p95=0.25 worst=0.40
+   bridge8 n= 40 seed=2 still=0.10 jerk=0.11 turn=  5.7 pace=0.59 spread=  8.6 back= 0.06 settle= 2.9s arrive=17.2s start=0.27s waits=6 move ms mean=0.176 p95=0.30 worst=0.43
+   bridge8 n=100 seed=1 still=0.22 jerk=0.13 turn=  6.8 pace=0.50 spread= 13.8 back= 0.07 settle= 2.0s arrive=19.9s start=4.27s waits=6 move ms mean=0.785 p95=1.62 worst=1.89
+   bridge8 n=100 seed=2 still=0.23 jerk=0.13 turn=  6.8 pace=0.50 spread= 13.8 back= 0.06 settle= 1.9s arrive=19.9s start=4.47s waits=6 move ms mean=0.850 p95=1.61 worst=1.97
+   bridge8 n=200 seed=1 still=0.21 jerk=0.16 turn=  9.2 pace=0.43 spread= 18.6 back= 0.00 settle= 0.0s arrive=never start=2.40s waits=6 move ms mean=3.285 p95=6.05 worst=7.92
+   bridge8 n=200 seed=2 still=0.21 jerk=0.16 turn=  9.4 pace=0.43 spread= 18.5 back= 0.00 settle= 0.0s arrive=never start=2.33s waits=6 move ms mean=4.102 p95=7.90 worst=10.70
+ door6long n= 12 seed=1 still=0.09 jerk=0.07 turn=  3.6 pace=0.61 spread=  4.7 back= 0.01 settle= 0.5s arrive=19.3s start=0.20s waits=6 move ms mean=0.051 p95=0.09 worst=0.34
+ door6long n= 12 seed=2 still=0.09 jerk=0.07 turn=  3.8 pace=0.62 spread=  4.6 back= 0.00 settle= 0.0s arrive=19.1s start=0.20s waits=6 move ms mean=0.041 p95=0.06 worst=0.20
+ door6long n= 40 seed=1 still=0.12 jerk=0.11 turn=  6.1 pace=0.62 spread=  9.4 back= 0.04 settle= 2.4s arrive=18.7s start=0.27s waits=6 move ms mean=0.166 p95=0.27 worst=0.38
+ door6long n= 40 seed=2 still=0.12 jerk=0.11 turn=  6.1 pace=0.62 spread=  9.1 back= 0.06 settle= 3.1s arrive=18.7s start=0.27s waits=6 move ms mean=0.194 p95=0.37 worst=0.59
+ door6long n=100 seed=1 still=0.19 jerk=0.16 turn=  9.2 pace=0.49 spread= 14.2 back= 0.00 settle= 0.0s arrive=never start=0.53s waits=6 move ms mean=0.835 p95=1.53 worst=1.95
+ door6long n=100 seed=2 still=0.19 jerk=0.15 turn=  8.7 pace=0.48 spread= 14.3 back= 0.00 settle= 0.0s arrive=never start=0.53s waits=6 move ms mean=0.963 p95=1.77 worst=2.30
+ door6long n=200 seed=1 still=0.21 jerk=0.17 turn=  9.6 pace=0.38 spread= 19.7 back= 0.00 settle= 0.0s arrive=never start=5.00s waits=6 move ms mean=2.921 p95=6.59 worst=9.10
+ door6long n=200 seed=2 still=0.23 jerk=0.17 turn=  9.7 pace=0.39 spread= 19.8 back= 0.00 settle= 0.0s arrive=never start=5.47s waits=6 move ms mean=3.384 p95=6.74 worst=7.99
+door8slant n= 12 seed=1 still=0.02 jerk=0.06 turn=  3.0 pace=0.72 spread=  4.9 back= 0.00 settle= 0.1s arrive=16.8s start=0.20s waits=6 move ms mean=0.040 p95=0.07 worst=0.20
+door8slant n= 12 seed=2 still=0.02 jerk=0.06 turn=  2.9 pace=0.72 spread=  4.9 back= 0.00 settle= 0.1s arrive=16.8s start=0.20s waits=6 move ms mean=0.037 p95=0.06 worst=0.10
+door8slant n= 40 seed=1 still=0.14 jerk=0.11 turn=  5.7 pace=0.60 spread=  8.9 back= 0.06 settle= 2.3s arrive=19.5s start=0.27s waits=6 move ms mean=0.180 p95=0.29 worst=2.31
+door8slant n= 40 seed=2 still=0.14 jerk=0.10 turn=  5.5 pace=0.60 spread=  8.9 back= 0.02 settle= 2.3s arrive=19.5s start=0.27s waits=6 move ms mean=0.187 p95=0.35 worst=0.45
+door8slant n=100 seed=1 still=0.33 jerk=0.16 turn= 10.3 pace=0.34 spread= 13.3 back= 0.00 settle= 0.0s arrive=never start=0.67s waits=6 move ms mean=0.966 p95=1.76 worst=2.20
+door8slant n=100 seed=2 still=0.19 jerk=0.13 turn=  7.2 pace=0.48 spread= 14.6 back= 0.00 settle= 0.0s arrive=never start=0.60s waits=6 move ms mean=1.097 p95=1.95 worst=2.46
+door8slant n=200 seed=1 still=0.16 jerk=0.15 turn=  8.6 pace=0.43 spread= 19.7 back= 0.00 settle= 0.0s arrive=never start=2.33s waits=6 move ms mean=3.241 p95=6.46 worst=8.35
+door8slant n=200 seed=2 still=0.30 jerk=0.16 turn=  9.5 pace=0.32 spread= 18.6 back= 0.00 settle= 0.0s arrive=never start=2.33s waits=6 move ms mean=2.664 p95=5.11 worst=6.28
+     cross n= 40 seed=1 still=0.11 jerk=0.12 turn=  6.6 pace=0.57 spread=  6.3 back= 0.07 settle= 1.7s arrive=18.3s start=0.20s waits=6 move ms mean=0.154 p95=0.27 worst=0.44
+     cross n= 40 seed=2 still=0.17 jerk=0.12 turn=  6.7 pace=0.55 spread=  8.0 back= 0.02 settle= 2.3s arrive=18.9s start=0.20s waits=6 move ms mean=0.131 p95=0.23 worst=0.32
+     cross n=100 seed=1 still=0.17 jerk=0.15 turn=  8.3 pace=0.44 spread=  9.6 back= 0.03 settle= 2.6s arrive=24.1s start=0.27s waits=6 move ms mean=0.548 p95=1.01 worst=1.49
+     cross n=100 seed=2 still=0.16 jerk=0.15 turn=  8.9 pace=0.46 spread=  9.3 back= 0.04 settle= 3.3s arrive=23.2s start=0.27s waits=6 move ms mean=0.447 p95=0.87 worst=4.01
+   planet1 n= 40 seed=1 still=0.06 jerk=0.07 turn=  3.5 pace=0.61 spread= 11.2 back= 0.02 settle= 0.7s arrive=16.7s start=0.20s waits=3 move ms mean=0.149 p95=0.23 worst=0.57
+   planet1 n= 40 seed=2 still=0.06 jerk=0.12 turn=  6.4 pace=0.65 spread=  8.5 back= 0.05 settle= 3.5s arrive=13.2s start=0.27s waits=3 move ms mean=0.187 p95=0.38 worst=0.83
+   planet1 n= 40 seed=3 still=0.05 jerk=0.05 turn=  2.1 pace=0.68 spread= 10.1 back= 0.42 settle=25.9s arrive=14.0s start=0.20s waits=1 move ms mean=0.182 p95=0.34 worst=0.60
+   planet1 n= 40 seed=4 still=0.20 jerk=0.16 turn= 10.2 pace=0.49 spread=  7.8 back= 0.36 settle=21.7s arrive=18.1s start=0.20s waits=3 move ms mean=0.225 p95=0.40 worst=0.80
+   planet1 n= 40 seed=5 still=0.07 jerk=0.12 turn=  6.3 pace=0.63 spread=  8.5 back= 0.09 settle= 2.2s arrive=11.9s start=0.27s waits=3 move ms mean=0.222 p95=0.33 worst=34.18
+   planet1 n= 40 seed=6 still=0.05 jerk=0.07 turn=  3.4 pace=0.70 spread=  8.5 back= 0.22 settle= 3.1s arrive=14.2s start=0.20s waits=2 move ms mean=0.168 p95=0.30 worst=0.95
+   planet1 n=200 seed=1 still=0.31 jerk=0.18 turn= 11.8 pace=0.42 spread= 16.4 back= 0.71 settle=19.1s arrive=20.8s start=5.07s waits=7 move ms mean=2.744 p95=6.24 worst=8.13
+   planet1 n=200 seed=2 still=0.24 jerk=0.17 turn= 11.2 pace=0.43 spread= 18.1 back= 2.29 settle=22.8s arrive=17.1s start=1.40s waits=4 move ms mean=2.584 p95=6.67 worst=8.00
+   planet1 n=200 seed=3 still=0.16 jerk=0.18 turn= 10.7 pace=0.54 spread= 13.7 back= 0.12 settle= 7.4s arrive=15.0s start=0.67s waits=4 move ms mean=2.535 p95=6.21 worst=8.01
+   planet1 n=200 seed=4 still=0.41 jerk=0.22 turn= 16.8 pace=0.27 spread= 14.7 back= 1.85 settle= 8.9s arrive=30.9s start=0.60s waits=4 move ms mean=4.241 p95=6.76 worst=10.54
+   planet1 n=200 seed=5 still=0.29 jerk=0.19 turn= 12.8 pace=0.36 spread= 15.3 back= 0.63 settle=12.1s arrive=17.2s start=3.60s waits=3 move ms mean=2.556 p95=6.14 worst=7.47
+   planet1 n=200 seed=6 still=0.27 jerk=0.16 turn= 10.1 pace=0.47 spread= 15.2 back= 1.21 settle=20.9s arrive=18.9s start=4.80s waits=12 move ms mean=2.748 p95=6.23 worst=9.90
+   planet8 n= 40 seed=1 still=0.26 jerk=0.12 turn=  7.1 pace=0.46 spread=  8.3 back= 0.01 settle= 1.3s arrive= 8.9s start=0.27s waits=3 move ms mean=0.242 p95=0.46 worst=1.28
+   planet8 n= 40 seed=2 still=0.17 jerk=0.13 turn=  7.1 pace=0.54 spread=  9.0 back= 0.42 settle=16.6s arrive=23.3s start=0.60s waits=21 move ms mean=0.326 p95=0.55 worst=1.21
+   planet8 n= 40 seed=3 still=0.25 jerk=0.13 turn=  8.2 pace=0.44 spread=  8.2 back= 1.82 settle=14.1s arrive=25.8s start=2.33s waits=21 move ms mean=0.332 p95=0.52 worst=2.23
+   planet8 n= 40 seed=4 still=0.04 jerk=0.03 turn=  1.5 pace=0.72 spread= 10.6 back= 0.11 settle= 1.2s arrive=14.9s start=0.20s waits=1 move ms mean=0.273 p95=0.42 worst=1.30
+   planet8 n= 40 seed=5 still=0.30 jerk=0.14 turn=  9.0 pace=0.42 spread=  8.1 back= 2.31 settle=13.3s arrive=26.5s start=0.53s waits=18 move ms mean=0.362 p95=0.58 worst=0.85
+   planet8 n= 40 seed=6 still=0.12 jerk=0.12 turn=  6.8 pace=0.52 spread=  8.7 back= 0.21 settle= 3.1s arrive=21.4s start=0.60s waits=21 move ms mean=0.312 p95=0.51 worst=0.65
+   planet8 n=200 seed=1 still=0.40 jerk=0.22 turn= 17.2 pace=0.28 spread= 12.5 back= 4.64 settle=29.5s arrive=10.4s start=0.73s waits=50 move ms mean=3.132 p95=8.00 worst=9.87
+   planet8 n=200 seed=2 still=0.47 jerk=0.19 turn= 12.2 pace=0.24 spread= 20.0 back= 0.00 settle= 0.0s arrive=never start=2.20s waits=21 move ms mean=2.687 p95=6.01 worst=11.37
+   planet8 n=200 seed=3 still=0.36 jerk=0.19 turn= 13.9 pace=0.37 spread= 15.8 back= 3.65 settle=15.4s arrive=24.5s start=0.73s waits=21 move ms mean=3.626 p95=6.28 worst=9.98
+   planet8 n=200 seed=4 still=0.18 jerk=0.12 turn=  7.3 pace=0.56 spread= 14.2 back= 0.48 settle=22.8s arrive=17.1s start=0.73s waits=11 move ms mean=3.351 p95=7.13 worst=13.53
+   planet8 n=200 seed=5 still=0.39 jerk=0.21 turn= 18.1 pace=0.26 spread= 13.8 back= 0.00 settle= 0.0s arrive=never start=0.73s waits=18 move ms mean=5.689 p95=8.32 worst=11.52
+   planet8 n=200 seed=6 still=0.26 jerk=0.21 turn= 14.1 pace=0.42 spread= 17.0 back= 1.04 settle=17.7s arrive=22.2s start=8.13s waits=21 move ms mean=4.722 p95=8.57 worst=13.16
+done after

@@ -13,8 +13,10 @@ sources:
   - Reports/narrow-squads-2026-11-15/README.md
   - Reports/soldier-cap-2026-11-16/README.md
   - Reports/squad-mode-2026-11-14/README.md
+  - Reports/squad-movement-2026-11-16/README.md
 code:
   - Game::demolish
+  - Game::drawn_between
   - Game::guard_zone
   - Game::heal
   - Game::rank_squad
@@ -23,6 +25,7 @@ code:
   - Rules::guard
   - Rules::max_squad
   - Rules::squads
+  - Rules::steer
   - squad::UNITS_MAX
 ---
 
@@ -83,9 +86,20 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   whole link). It stops, each member heals after 1 s still, paying food from the
   bank, and stops when all are whole or on any other order
   (`Game::heal`, `Cmd::Heal`). Nothing heals on its own.
+- **How soldiers walk** (rework 2026-11-16, `Rules::steer`, on; owner
+  05:17Z: "still clunky overall"). Each soldier has a velocity: in step
+  with its squad's anchor, closing on its place, slowing into it; elbow
+  room and queuing instead of shoving; places in rock kept as a distance
+  from the anchor; one walking map per squad; any angle down a map; the
+  window draws soldiers between game steps and turns figures smoothly.
+  The anchor eases into its goal and waits softly. Numbers, films and what
+  is still open (big squads in caves; places fitted to the ground):
+  [report](../../Reports/squad-movement-2026-11-16/README.md).
 - **Narrow gaps.** Squads funnel into columns through bridges and doors
-  narrower than their formation (`Rules::funnel`, on)
-  ([report](../../Reports/narrow-squads-2026-11-15/README.md)).
+  narrower than their formation (`Rules::funnel`, on); with the new walk a
+  column ends once its tail is near the anchor
+  ([report](../../Reports/narrow-squads-2026-11-15/README.md),
+  [rework](../../Reports/squad-movement-2026-11-16/README.md)).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,
   Shift queues, an unfinished one can be called off for the whole price
   ([report](../../Reports/build-flow-2026-11-14/README.md)).
@@ -101,6 +115,7 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 - 2026-11-15 07:41Z: "Healing should be a specific action".
 - 2026-11-15 19:38Z: "Card 2"; 19:51Z: "Remove burn line. Use options c for guard/defend. (b) Click a building to select it when no squad is selected."; 19:53Z: "Build option 1"; 21:37Z: "Demolishing a building giving half back is good. Canceling a partial build should give all of it back".
 - 2026-11-15 18:00Z, on guards while working: "It doesn't seem to work well. Either improve it or remove it." (Improved: posts at the work's edge.)
+- 2026-11-16 05:17Z, of squad movement and pathfinding: "It is still clunky overall" (start over rather than patch).
 - 2026-11-15 02:58Z: a way to deselect, move with WASD and see each squad run on its own (built as Esc and AUTO).
 
 ## Open
@@ -109,4 +124,4 @@ Income and crystals: [economy](economy.md). Guns: [guns](guns.md).
 
 ## Sources
 
-- [squad mode](../../Reports/squad-mode-2026-11-14/README.md), [bug sweep](../../Reports/bug-sweep-2026-11-14.md), [free camera](../../Reports/free-camera-2026-11-15/README.md), [narrow squads](../../Reports/narrow-squads-2026-11-15/README.md), [build flow](../../Reports/build-flow-2026-11-14/README.md).
+- [squad mode](../../Reports/squad-mode-2026-11-14/README.md), [squad movement rework](../../Reports/squad-movement-2026-11-16/README.md), [bug sweep](../../Reports/bug-sweep-2026-11-14.md), [free camera](../../Reports/free-camera-2026-11-15/README.md), [narrow squads](../../Reports/narrow-squads-2026-11-15/README.md), [build flow](../../Reports/build-flow-2026-11-14/README.md).

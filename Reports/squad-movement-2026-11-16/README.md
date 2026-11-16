@@ -110,10 +110,17 @@ brings the old walk back for films and measures).
    One coming at it, or another squad's soldier standing in its way, it
    turns aside round, on the side it meant to pass (head on, its right);
    one of its own squad standing in its way steps on while the squad walks
-   as one. It slides along rock and round a crystal's rim.
+   as one, or while the one behind is on a job (building, guarding): a
+   builder stood behind a squad-mate in a wall's footprint until the wall
+   shut it in (`wall_side_tests`, seed 3). Walking to its place in a squad that stands, it doesn't queue
+   behind one its straight walk there passes clear of (a line's places
+   stand a gap apart, inside that reach, and its members crept the last
+   cell in for 3 s). It slides along rock and round a crystal's rim.
 6. **The anchor.** It eases off as its squad falls behind (full pace up to
    half the lead, still at one and a half) instead of stopping dead at the
-   lead; members that have all but stopped (jammed) are not waited for. It
+   lead; members that have all but stopped (jammed) are not waited for. Its
+   lag is the members' middle's or their mean distance from where they
+   head, whichever is more (`Game::steer_short`). It
    slows into its goal over `EASE` (0.5 s) and a let-go WASD squad stops
    where its members can stop from their speed, so nobody runs past its
    place and walks back. It arrives when its members stand round the goal
@@ -121,7 +128,13 @@ brings the old walk back for films and measures).
    fighting where they stand left out). Members are matched to places only
    when the squad starts, gains or loses a member, changes formation,
    starts or stops a column, or a line or wedge turns 30 degrees, not every
-   step.
+   step; after the nearest-pair match, any two whose walks are shorter
+   swapped trade places (`UNCROSS`, up to 4 passes over every pair from a
+   table of walks, under a millisecond for 200), so no two walks cross.
+   Matched nearest pair first alone, the last few got the places across
+   the squad and walked through it: a line of 40 formed from a blob still
+   had members 5 cells off their places on arriving, queued behind the
+   rank in front.
 7. **Drawn between steps.** The window draws each soldier between where its
    last step began and ended (`Game::drawn_between`, `Soldier::was`) by how
    far the frame is to the next step, the camera follows the drawn middle,
@@ -142,6 +155,10 @@ member could see the anchor, the tail of 24 stood in a 30-cell door.
   with places in rock held at a stand-off: the members' middle lagged by
   more than the anchor waits for, and planet 1's 200 never arrived. Now
   from where the members head (`Game::steer_rest`).
+- **The anchor waiting on its members' middle alone**: two squads of 200
+  crossing each other never arrived in 26 s (both seeds): the middles kept
+  up while the members were strung out round each other. With their mean
+  distance from where they head as well: 22 and 24 s.
 - **A map per member toward its moving place**: 5,600 waits on planet 8
   with 200 soldiers. The squad's own map instead (about 60).
 - **Arriving only once the middle is within 2 cells of the goal**: a squad
@@ -189,11 +206,22 @@ numbers above.
 3. **Formation sizes.** The blob spaces soldiers about twice elbow room
    apart, so 200 make a blob about 70 cells across; `STRAY` (14) is less
    than its radius, so the squad's middle and pace see only its inner
-   members. A line of 200 is 8 wide and 25 deep. Deriving `STRAY` from the
-   formation's size and packing the blob closer are cheap to try.
+   members. A line of 200 is 8 wide and 25 deep. A ring or a wedge of 200
+   is one soldier a gap round or along, 160 cells across: on open ground
+   they walk as a packed knot (their places out of the anchor's sight) and
+   spread 80 cells once there (10 cells walked back each, 10 s). Rings in
+   several bands, a wedge with a cap, `STRAY` from the formation's size and
+   a closer blob are cheap to try.
 4. **Shots while walking** leave from where the game has the soldier, up to
    a step ahead of where its figure is drawn (a few pixels at close zoom).
 5. **Cost**: `Game::place` counts the squad on every call, about five a
    soldier a step; a count kept a step would take most of what is left.
 6. **Not measured yet**: wading in thick slime, an attack-move into slime,
    several squads at one crystal, linked squads.
+7. **A wall through a standing squad** (`wall_side_tests::measure_wall_sides`,
+   seeds 1-8): with the new walk 3 soldiers end past the wall on seed 8
+   (the old walk: none). They are builders that stood on the far side, where
+   the home-side spot by their nearest point of the wall is rock, so they
+   raise it from where they stand (`goal_raw`, the wall-sides rule). The CI
+   test (seeds 1-4) is clean. A home-side spot searched along the wall
+   would fix it; that code is the walls thread's.

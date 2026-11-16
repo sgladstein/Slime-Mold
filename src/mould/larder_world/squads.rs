@@ -79,6 +79,9 @@ pub enum Formation {
 
 /// Soldiers in a row of `Formation::Line`.
 pub const LINE_ROW: usize = 8;
+/// Passes of trading places that uncross members' walks (`rank_squad`),
+/// at most: each pass is every pair once (200 soldiers, 19,900 pairs).
+const UNCROSS: usize = 4;
 
 impl Formation {
     pub const ALL: [Formation; 4] = [Formation::Blob, Formation::Line, Formation::Wedge, Formation::Ring];
@@ -402,7 +405,12 @@ impl<W: World> Game<W> {
     /// free place nearest it: a formation that turns, grows or loses a
     /// member moves each soldier as little as it can, instead of handing
     /// out places by index. Ties go to the lower soldier and place, so it
-    /// is the same on every run.
+    /// is the same on every run. Then (`Rules::steer`) any two whose walks
+    /// would be shorter swapped trade places, so no two walks cross:
+    /// nearest pair first, the last few were left the places across the
+    /// squad and walked through it (a line of 40 formed from a blob had
+    /// members 5 cells off their places 7 s later, queued behind the rank
+    /// standing in front of them).
     pub(super) fn rank_squad(&mut self, q: usize, centre: (f32, f32)) {
         let m = self.members(q);
         let n = m.len();
@@ -446,6 +454,33 @@ impl<W: World> Game<W> {
             left -= 1;
             if left == 0 {
                 break;
+            }
+        }
+        if self.rules.steer {
+            // Member i's walk to place r is far[i * n + r].
+            let mut far = Vec::with_capacity(n * n);
+            for &k in &m {
+                let s = self.soldiers[k];
+                far.extend(places.iter().map(|p| (s.x - p.0).hypot(s.y - p.1)));
+            }
+            let mut at: Vec<usize> = m.iter().map(|&k| self.ranks[k] as usize).collect();
+            for _ in 0..UNCROSS {
+                let mut swapped = false;
+                for i in 0..n {
+                    for j in i + 1..n {
+                        let (ri, rj) = (at[i], at[j]);
+                        if far[i * n + rj] + far[j * n + ri] < far[i * n + ri] + far[j * n + rj] - 1e-3 * sc {
+                            at.swap(i, j);
+                            swapped = true;
+                        }
+                    }
+                }
+                if !swapped {
+                    break;
+                }
+            }
+            for (i, &k) in m.iter().enumerate() {
+                self.ranks[k] = at[i] as u16;
             }
         }
         self.ranked[q] = n as u16;
@@ -689,7 +724,13 @@ impl<W: World> Game<W> {
                 // walls stood in a column for good, its head waiting on
                 // members held up behind ones standing in their places
                 // (`a_squad_sent_past_a_dead_end_goes_round_it`, seed 4).
-                let behind = if self.columns[q].on { self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1)).fold(f32::MAX, f32::min) } else { gap(at) };
+                // Not funnelling, the middle's lag or the members' mean
+                // distance from where they head, whichever is more
+                // (`steer_short`): a squad's middle can keep up while its
+                // members are strung out round another squad, and without
+                // it two squads of 200 crossing never arrived (26 s, both
+                // seeds; with it 22 and 24 s).
+                let behind = if self.columns[q].on { self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1)).fold(f32::MAX, f32::min) } else { gap(at).max(self.steer_short(q, at)) };
                 let f = ((1.5 * LEAD * sc - behind) / (LEAD * sc)).clamp(0.0, 1.0);
                 let f = if self.squad_speed(q) < STOOD { f.max(0.5) } else { f };
                 if gap(a) >= gap(at) - 1e-3 { (at.0 + (a.0 - at.0) * f, at.1 + (a.1 - at.1) * f) } else { a }
@@ -740,6 +781,13 @@ impl<W: World> Game<W> {
             }
             if !self.rules.steer || started || self.columns[q].on || self.rerank(q) {
                 self.rank_squad(q, a);
+            }
+            // The match moves with the anchor: once there, the squad isn't
+            // matched again round its goal as if it came from where it
+            // set out (a line of 40 swapped places on arriving and walked
+            // back 0.28 cells each, 3.7 s to stand).
+            if self.rules.steer {
+                self.squads[q].rank_at = a;
             }
             let o = if sq.fight && !steering { Order::Fight(a.0, a.1) } else { Order::Move(a.0, a.1) };
             // Moving as one, nobody works or stands guard.
