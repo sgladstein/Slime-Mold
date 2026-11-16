@@ -1270,7 +1270,12 @@ impl App {
                 working: b.working,
             })
             .collect();
+        let throw = ghost.and_then(|(id, at, from)| self.throw_ghost(g, id, at, from));
         (m.ghost_ok, m.ghost_note) = match ghost {
+            _ if throw.is_some() => {
+                let (_, ok, note) = throw.as_ref().unwrap();
+                (*ok, Some(note.clone()))
+            }
             Some((HARVEST, at, _)) => match g.crystal_at(at) {
                 Some((i, _)) => (true, Some(format!("harvest {}", crystal_name(i).to_lowercase()))),
                 None => (false, Some("not on a crystal".into())),
@@ -1318,6 +1323,7 @@ impl App {
             }
             _ => (true, None),
         };
+        m.throw = throw.map(|t| t.0);
         m.ghost_snap = match ghost {
             Some((PUMP, at, _)) => g.pump_crystal(at).map(|c| (g.world.crystals()[c].0, pump_rig_r(g, c))),
             _ => None,
@@ -1450,6 +1456,61 @@ pub(super) fn payload_colour(c: rounds::Card) -> [u8; 4] {
 /// then each card had one to three sentences, a rolled bullet its numbers
 /// twice with a standard bullet's beside them, and the shop added how to
 /// click and drag to every card.
+impl App {
+    /// A toolkit tool's aim (`Model::throw`; owner 2026-11-16: a better
+    /// visual "for aiming and range" when throwing an explosive): its
+    /// thrower (`Kit::thrower`, the soldier whose held tool `use_tool`
+    /// spends), reach, colour and rings, whether it can go (so a click out
+    /// of reach is refused with the reason, as a building's red ghost is,
+    /// where it was taken and then alerted "Too far"), and the note by the
+    /// cursor. None for anything but the five tools, or with no soldier
+    /// able to throw at all.
+    pub(super) fn throw_ghost(&self, g: &Game<GpuWorld>, id: u32, at: (f32, f32), from: Option<(f32, f32)>) -> Option<(Throw, bool, String)> {
+        let kr = self.kit.rules;
+        let sc = g.world.scale();
+        // The tools' colours: fire for the blasts, amber for a mine that
+        // waits, sickly green for the germ, the gas's lavender.
+        let (tint, rings, price) = match id {
+            T_BLAST => ([255, 168, 72, 255], vec![(kr.crater_r * sc, 150), (2.0 * kr.blast_r * sc, 70)], kr.blast_price),
+            T_CORD => ([255, 168, 72, 255], Vec::new(), from.map_or(0.0, |f| kr.cord_price * (f.0 - at.0).hypot(f.1 - at.1))),
+            T_MINE => ([240, 204, 96, 255], vec![(kr.blast_r * sc, 150)], kr.mine_price),
+            T_GERM => ([176, 226, 96, 255], Vec::new(), kr.germ_price),
+            T_GAS => ([176, 156, 255, 255], Vec::new(), kr.gas_price),
+            _ => return None,
+        };
+        let land = match (id, from) {
+            (T_CORD, Some(f)) => ((f.0 + at.0) / 2.0, (f.1 + at.1) / 2.0),
+            _ => at,
+        };
+        let (k, near) = self.kit.thrower(g, land)?;
+        let s = g.soldiers[k];
+        let reach = kr.reach * sc;
+        let d = (s.x - land.0).hypot(s.y - land.1);
+        let (ok, note) = if !near {
+            (false, format!("{:.0} cells out of reach", ((d - reach) / sc).max(1.0)))
+        } else if let (T_CORD, Some(f)) = (id, from) {
+            let len = (f.0 - at.0).hypot(f.1 - at.1);
+            if len > kr.cord_max * sc {
+                (false, format!("a cord is at most {:.0} cells", kr.cord_max))
+            } else if g.bank < price {
+                (false, format!("{price:.0} food, {:.0} short", price - g.bank))
+            } else {
+                (true, format!("{price:.0} food, release to lay"))
+            }
+        } else if id == T_CORD {
+            (true, format!("{:.0} food a cell, drag to lay", kr.cord_price))
+        } else if !g.world.open(land.0, land.1) {
+            (false, "not on open ground".to_string())
+        } else if g.bank < price {
+            (false, format!("{price:.0} food, {:.0} short", price - g.bank))
+        } else {
+            (true, format!("{price:.0} food, click to throw"))
+        };
+        let at = (land != at).then_some(land);
+        Some((Throw { from: (s.x, s.y), from_r: 1.3 * soldier_r(g, self.camera.zoom), reach, tint, at, rings }, ok, note))
+    }
+}
+
 pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, CardKind, String) {
     let split_n = w.split_n;
     use rounds::Card as C;
