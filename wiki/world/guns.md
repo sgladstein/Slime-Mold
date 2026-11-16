@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-15
+updated: 2026-11-16
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
@@ -10,6 +10,7 @@ sources:
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-system-review-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
@@ -68,9 +69,20 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Open
 
+- **The gun-system review** (owner 11-16 02:34Z: "five different categories
+  of bullets and two of them are just two different sized explosions"): the
+  run's bullets hold three real effects and the four sets only lean numbers;
+  the trigger card was planned 11-14 and never built. The plan
+  ([report](../../Reports/gun-system-review-2026-11-16/README.md)): bullet
+  families by what they change in the simulation (cut, route, mind, body,
+  force, element) plus readers; rule cards, trigger first; seekers that follow
+  the simulation; aim cards for auto squads if they help; one device slot per
+  squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
+  last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
+  useful").
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md).
