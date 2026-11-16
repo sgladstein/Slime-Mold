@@ -1724,10 +1724,10 @@ fn headless(s: &Settings, scale: usize, look: &Look) {
                 let units: Vec<UnitIn> = (0..look.fire)
                     .map(|u| {
                         let (px, py) = piles[u % piles.len()];
-                        UnitIn { x: px * k + (u / piles.len()) as f32 * 3.0, y: py * k, touch: 3.0, sight: 30.0, take_r: 4.0, take: 0.5, smell_r: 2.0, smell: 0.5 }
+                        UnitIn { x: px * k + (u / piles.len()) as f32 * 3.0, y: py * k, touch: 3.0, sight: 30.0, take_r: 4.0, take: 0.5, smell_r: 2.0, smell: 0.5, over: false }
                     })
                     .collect();
-                let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0 })).collect() } else { Vec::new() };
+                let shots: Vec<ShotIn> = if e.grows { units.iter().zip(&aims).filter_map(|(u, a)| a.map(|to| ShotIn { from: (u.x, u.y), to, r: 3.0, over: false })).collect() } else { Vec::new() };
                 fired += shots.len() as u64;
                 e.set_squad(&Frame { units, shots, slime: slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() });
             }
@@ -4164,7 +4164,7 @@ mod tests {
                     let a = i as f32 * 2.4;
                     (t.0 + (6.0 + i as f32 * 0.3) * a.cos(), t.1 + (6.0 + i as f32 * 0.3) * a.sin())
                 };
-                UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5 }
+                UnitIn { x: at.0.clamp(0.0, w as f32 - 1.0), y: at.1.clamp(0.0, h as f32 - 1.0), touch: 3.0, sight: 30.0, take_r: 3.0, take: if i % 3 == 0 { 50.0 } else { 0.0 }, smell_r: 2.0, smell: 0.5, over: false }
             })
             .collect();
         let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
@@ -4214,7 +4214,7 @@ mod tests {
                 let to = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
                 let a = i as f32 * 2.4;
                 let from = ((to.0 + 6.0 * a.cos()).clamp(0.5, w as f32 - 0.5), (to.1 + 6.0 * a.sin()).clamp(0.5, h as f32 - 0.5));
-                ShotIn { from, to, r: 1.0 }
+                ShotIn { from, to, r: 1.0, over: false }
             })
             .collect();
         let f = Frame { units: Vec::new(), shots, slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
@@ -4479,7 +4479,7 @@ mod tests {
             };
             let hurt_before: Vec<u32> = cpu.dense.iter().map(|&d| d >> slime_mould::mould::big::HURT_SHIFT).collect();
             let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
-            let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5 };
+            let unit = |at: (f32, f32), take: f32| UnitIn { x: at.0, y: at.1, touch: 3.0, sight: 30.0, take_r: 4.0, take, smell_r: 2.0, smell: 0.5, over: false };
             // Two units on one small patch of crystal 3, asking more than it
             // holds, so the second gets what the first left.
             let patch = |take: f32| UnitIn { take_r: 1.5, ..unit(pile(3), take) };
@@ -4490,8 +4490,8 @@ mod tests {
             units.extend((0..6).map(|q| UnitIn { sight: 2.5 + q as f32, ..unit((t.0 + 3.0 * q as f32 - 7.0, t.1 + 2.0), 0.0) }));
             // Shots from each crystal toward the thickest mould, and two across
             // the wall at x = 140 (fine cells), one of them from beside it.
-            let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0 }).collect();
-            shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0 });
+            let mut shots: Vec<ShotIn> = (0..12).map(|p| ShotIn { from: pile(p), to: t, r: 3.0, over: false }).collect();
+            shots.push(ShotIn { from: (120.0, 160.0), to: (190.0, 160.0), r: 3.0, over: false });
             // A shot that meets the wall before any slime: from a clear cell
             // beside it, across it.
             let clear = (60..250)
@@ -4502,7 +4502,7 @@ mod tests {
                     stop.is_some_and(|n| p[..n].iter().all(|&i| cpu.trail[i as usize] < slime))
                 })
                 .expect("a clear way to the wall");
-            shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0 });
+            shots.push(ShotIn { from: clear, to: (clear.0 + 30.0, clear.1), r: 2.0, over: false });
             // A unit on the first wall cell that shot meets, so its smell disc
             // covers wall and agar (it must land only on the agar). One beside
             // the clear cell missed a planted bug: the wall was out of reach.
@@ -4526,10 +4526,10 @@ mod tests {
                 .find(|&(k, (x, y, _))| !cpu.lives(k) && cpu.trail[y as usize * w + x as usize] >= slime)
                 .expect("a slot that starved in the mould");
             let (sx, sy, _) = starved.1;
-            shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0 });
+            shots.push(ShotIn { from: (sx, sy), to: t, r: 3.0, over: false });
             // A radius that is not a whole number: its alarm's squared radius
             // (r2 of 5, 25) is not four times its strike's (r2 of 2.5, 6).
-            shots.push(ShotIn { from: pile(12), to: t, r: 2.5 });
+            shots.push(ShotIn { from: pile(12), to: t, r: 2.5, over: false });
             // Two shots from slime cells three apart, so each hits its own
             // cell and their strikes share cells, where cone craters give
             // different steps and the larger must stay (2026-11-12: the
@@ -4545,7 +4545,7 @@ mod tests {
                 .expect("two slime cells three apart, away from the thickest");
             shots.extend([0, 3].map(|dx| {
                 let from = ((near.0 + dx) as f32 + 0.5, near.1 as f32 + 0.5);
-                ShotIn { from, to: (from.0, from.1 + 10.0), r: 3.0 }
+                ShotIn { from, to: (from.0, from.1 + 10.0), r: 3.0, over: false }
             }));
             // With the life cycle, shots from slime beside spores in flight,
             // whose strikes cover them (they must be missed).
@@ -4559,7 +4559,7 @@ mod tests {
                     })
                     .take(8)
                     .collect();
-                shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0 }));
+                shots.extend(beside.into_iter().map(|from| ShotIn { from, to: t, r: 4.0, over: false }));
             }
             // The stale walkers that will charge a unit (within `panic_r`).
             let r2 = squad::r2(s.panic_r * k) as i64;
@@ -4786,7 +4786,7 @@ mod tests {
             let at = slime_mould::mould::larder_world::raid_cell(t, (w, h));
             let k = SCALE as f32;
             let pile = |p: usize| (cpu.piles[p].0 * k, cpu.piles[p].1 * k);
-            let unit = |at: (f32, f32), touch: f32| UnitIn { x: at.0, y: at.1, touch, sight: 30.0, take_r: 4.0, take: 0.0, smell_r: 2.0, smell: 0.5 };
+            let unit = |at: (f32, f32), touch: f32| UnitIn { x: at.0, y: at.1, touch, sight: 30.0, take_r: 4.0, take: 0.0, smell_r: 2.0, smell: 0.5, over: false };
             // A wide touch on the lump, a narrow one in it, and units on
             // the crystals, where the slime crowds and condenses.
             let mut units = vec![unit(t, 12.0), unit(t, 3.0), unit((t.0 + 9.0, t.1), 6.0)];

@@ -298,6 +298,10 @@ struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32, heat: f32, _s
 // A shot's `r2` is its strike's, `ar2` its alarm's (`squad::SHOT_ALARM_R`).
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
+// The flag in a unit's `sight2` and a shot's `count` (`squad::OVER`): it
+// sees or flies over built walls (a turret, owner 2026-11-16 19:50Z;
+// `over_wall`).
+const OVER: u32 = 0x80000000u;
 struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: array<SqShot, 1024>, sout: array<SqShotOut, 1024>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
@@ -2291,9 +2295,15 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let s = SQ.shots[q];
     var hit = NONE;
     var m = 0u;
-    for (; m < s.count; m++) {
+    let over = (s.count & OVER) != 0u;
+    let count = s.count & ~OVER;
+    for (; m < count; m++) {
         let i = SQ.path[s.start + m];
-        if (agar[i] == 0u) { break; }
+        if (agar[i] == 0u) {
+            // A turret's shell flies on over a wall (`squad::shots`).
+            if (over && over_wall(i)) { continue; }
+            break;
+        }
         if (stops(i)) { hit = i; break; }
     }
     if (hit != NONE && P.shot_sink > 0.0) {
@@ -2301,7 +2311,7 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
         let hx = i32(hit % P.w);
         let hy = i32(hit / P.w);
         var deep = hit;
-        for (var n = m + 1u; n < s.count; n++) {
+        for (var n = m + 1u; n < count; n++) {
             let c = SQ.path[s.start + n];
             let dx = i32(c % P.w) - hx;
             let dy = i32(c / P.w) - hy;
@@ -2536,16 +2546,25 @@ fn smell(@builtin(local_invocation_index) li: u32) {
 // (`squad::sees`, the same cells). A unit aims only at a block it sees
 // (2026-11-13): through a wall the game held the shot, so a squad beside a
 // wall with thicker slime behind it fired at nothing in front.
-fn sees(cx: i32, cy: i32, tx: i32, ty: i32) -> bool {
+// With `over` (a turret, `OVER`) it looks over built walls (`over_wall`;
+// `squad::sees_over`).
+fn sees(cx: i32, cy: i32, tx: i32, ty: i32, over: bool) -> bool {
     let dx = tx - cx;
     let dy = ty - cy;
     let n = max(max(abs(dx), abs(dy)), 1);
     for (var k = 1; k <= n; k++) {
         let x = cx + dx * k / n;
         let y = cy + dy * k / n;
-        if (agar[u32(y) * P.w + u32(x)] == 0u) { return false; }
+        let i = u32(y) * P.w + u32(x);
+        if (agar[i] == 0u && !(over && over_wall(i))) { return false; }
     }
     return true;
+}
+
+// A built wall standing (`squad::over_wall`): the `walls` pass clears
+// `WALL` when one breaks, and its rubble is agar.
+fn over_wall(i: u32) -> bool {
+    return agar[i] == 0u && (ground[i] & WALL) != 0u;
 }
 
 var<workgroup> rsum: array<u32, 256>;
@@ -2588,7 +2607,9 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
     let b = 4;
     let nbw = (w + b - 1) / b;
     let nbh = (h + b - 1) / b;
-    let rs = isqrt(un.sight2) + 2;
+    let over = (un.sight2 & OVER) != 0u;
+    let sight2 = un.sight2 & ~OVER;
+    let rs = isqrt(sight2) + 2;
     let by0 = max(cy - rs, 0) / b;
     let by1 = min((cy + rs) / b, nbh - 1);
     let bx0 = max(cx - rs, 0) / b;
@@ -2603,14 +2624,14 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
             let by = by0 + i32(j / bw);
             let mx = bx * b + b / 2 - cx;
             let my = by * b + b / 2 - cy;
-            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            if (u32(mx * mx + my * my) > sight2) { continue; }
             var n = 0u;
             for (var y = by * b; y < min((by + 1) * b, h); y++) {
                 for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
                     n += enemy_occ(u32(y * w + x));
                 }
             }
-            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1), over)) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     rsum[li] = touching;
@@ -2759,7 +2780,9 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     let b = 4;
     let nbw = (w + b - 1) / b;
     let nbh = (h + b - 1) / b;
-    let rs = isqrt(un.sight2) + 2;
+    let over = (un.sight2 & OVER) != 0u;
+    let sight2 = un.sight2 & ~OVER;
+    let rs = isqrt(sight2) + 2;
     let by0 = max(cy - rs, 0) / b;
     let by1 = min((cy + rs) / b, nbh - 1);
     let bx0 = max(cx - rs, 0) / b;
@@ -2770,14 +2793,14 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
         for (var bx = bx0; bx <= bx1; bx++) {
             let mx = bx * b + b / 2 - cx;
             let my = by * b + b / 2 - cy;
-            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            if (u32(mx * mx + my * my) > sight2) { continue; }
             var n = 0u;
             for (var y = by * b; y < min((by + 1) * b, h); y++) {
                 for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
                     n += atomicLoad(&occ[u32(y * w + x)]);
                 }
             }
-            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1), over)) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     SQ.uout[u].touching = touching;
