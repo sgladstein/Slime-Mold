@@ -43,8 +43,18 @@
 use super::big::{spray_picked, spray_share_q, spray_timer, BigDish, LIFE_DEAD, LIFE_SPORE};
 
 /// Most units, shots and shot cells in one frame (the GPU's buffer sizes).
-pub const UNITS_MAX: usize = 96;
-pub const SHOTS_MAX: usize = 256;
+/// Units 256 since 2026-11-16 (the soldier-cap thread; 96 before, 64
+/// before 11-12): soldiers, the home and up to `BuildRules::max` (40)
+/// buildings share them, so at 96 a soldier past about 55 dropped out of
+/// the frame silently (no bite, harvest or aim). 256 leaves room for 200
+/// soldiers with every building. `engine.wgsl`'s `Squad` arrays must match
+/// (`the_shader_holds_the_frame`).
+pub const UNITS_MAX: usize = 256;
+/// Shots (bullet legs) a frame, so bullets in flight (`Game::bullets`).
+/// 1024 since 2026-11-16, with the 200-soldier cap: 200 riflemen fighting
+/// peaked at 129 in flight (`examples/soldiercap.rs`, planet 1), and
+/// buckshot's four pellets a shot would pass 256, the newest dropped.
+pub const SHOTS_MAX: usize = 1024;
 pub const PATH_MAX: usize = 16_384;
 /// The side of the blocks a unit aims at, in cells.
 pub const BIN: usize = 4;
@@ -832,6 +842,21 @@ pub fn unpack(w: usize, words: &[u32], kills: &[u32], nunits: usize, nshots: usi
 mod tests {
     use super::*;
     use crate::mould::big::BigParams;
+
+    /// The shader's `Squad` arrays hold `UNITS_MAX` units and `SHOTS_MAX`
+    /// shots (soldier-cap thread, 11-16): the buffer's layout here
+    /// (`U_OUT`, `S_IN`) and the shader's must agree, or the GPU reads the
+    /// shots from the middle of the units.
+    #[test]
+    fn the_shader_holds_the_frame() {
+        let want = format!("struct Squad {{ units: array<SqUnit, {UNITS_MAX}>, uout: array<SqUnitOut, {UNITS_MAX}>, shots: array<SqShot, {SHOTS_MAX}>, sout: array<SqShotOut, {SHOTS_MAX}>,");
+        assert!(crate::gpu::SHADER.contains(&want), "engine.wgsl's Squad is not {want}");
+        // The sleep gas's slots in `news` follow the units too.
+        let head = crate::gpu::GAS_HEAD;
+        for want in [format!("const GAS_CALM: u32 = {}u;", head + 4 * UNITS_MAX), format!("const GAS_SLOTS: u32 = {}u;", crate::gpu::GAS_SLOTS)] {
+            assert!(crate::gpu::SHADER.contains(&want), "engine.wgsl lacks {want}");
+        }
+    }
 
     #[test]
     fn discs_are_whole_cells_in_the_gpus_order() {
