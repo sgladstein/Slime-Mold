@@ -202,8 +202,12 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // each game second, the ring's fine cells still wall, walkers inside,
     // soldiers alive. `door`: the same ring, with a door cut in it that
     // the squad sorties through, then thickened (`pen_hand`).
-    if hand == "pen" || hand == "door" {
-        return pen_hand(g, hand == "door");
+    // `turretring` (2026-11-16 19:50Z ruling: turrets fire over walls, soldiers'
+    // guns do not): the pen's ring with three turrets inside facing the
+    // core (`FORT_T`). Each second it also prints the shots so far and
+    // the walkers the turrets and the soldiers' guns have killed.
+    if hand == "pen" || hand == "door" || hand == "turretring" {
+        return pen_hand(g, hand == "door", hand == "turretring");
     }
     // `wallq` (2026-11-16, the wall-sides thread's clips; run it with
     // `mode=squads`): eight soldiers walk 16 cells from where they land,
@@ -706,6 +710,7 @@ const DOOR_T: f32 = 15.0;
 const OUT_T: f32 = 18.0;
 const IN_T: f32 = 34.0;
 const THICK_T: f32 = 42.0;
+const FORT_T: f32 = 13.0;
 
 /// The walls thread's film (2026-11-16): ten soldiers walk out and a ring
 /// of 16 walls stands round them at `PEN_T`. With `door` (`hand=door`),
@@ -713,7 +718,7 @@ const THICK_T: f32 = 42.0;
 /// facing the core (`DOOR_T`), the squad goes out through it (`OUT_T`) and
 /// back (`IN_T`), and the door's segment and two either side are
 /// thickened twice (`THICK_T`, to three bands).
-fn pen_hand(g: &mut Game<GpuWorld>, door: bool) {
+fn pen_hand(g: &mut Game<GpuWorld>, door: bool, fort: bool) {
     let t = g.time();
     while t < 1.0 && g.soldiers.len() < 10 && g.bank >= g.rules.soldier_cost {
         g.apply(Cmd::Buy);
@@ -820,6 +825,27 @@ fn pen_hand(g: &mut Game<GpuWorld>, door: bool) {
             let ok = g.apply(Cmd::Upgrade(b)) && g.apply(Cmd::Upgrade(b));
             println!("  door t {t:.1}: wall {b} thickened to level {}: {ok}", g.buildings[b].level);
         }
+    }
+    if fort && t > FORT_T && !g.buildings.iter().any(|b| b.kind == Kind::Turret) {
+        // Three turrets 6 cells in from the ring's middle, toward the
+        // core and 60 degrees either side.
+        let a0 = u.1.atan2(u.0);
+        for da in [0.0f32, 1.05, -1.05] {
+            let a = a0 + da;
+            let p = (m.0 + 6.0 * sc * a.cos(), m.1 + 6.0 * sc * a.sin());
+            let p = g.nearest_standable(p, 3.0 * sc).unwrap_or(p);
+            let ok = g.apply(Cmd::Build(Kind::Turret, p));
+            if let Some(k) = ok.then(|| g.buildings.len() - 1) {
+                g.raise(k, 1.0);
+            }
+            println!("  fort t {t:.1}: turret at {p:?}: {ok}");
+        }
+    }
+    if fort {
+        // The hand runs once a game second, so it reads the game's
+        // counters: kills by the turrets and by the soldiers' guns.
+        let soldiers = g.killed - g.turret_killed - g.fire_killed;
+        println!("  fort t {t:.0}: shots {}, turret kills {}, soldier kills {soldiers}", g.shots, g.turret_killed);
     }
     let (w, h) = g.world.size();
     let open = g.world.open_cells();

@@ -125,6 +125,47 @@ only when a wall stands or thickens, and the walking map ORs it in when a
 map is built. The shader reads one more ground word per pixel under hard
 terrain. Not timed on the 1070.
 
+## Turrets fire over walls, soldiers' guns do not (11-16 19:50Z)
+
+Owner, 19:50Z: "What about turrets can fire over walls, lobbed fire goes
+over walls, but regular guns shots do not?" Built as asked:
+
+- **Turrets** see and shoot over built walls (map walls too; rock and
+  water still block). `UnitIn::over` lets a unit's sight pass walls
+  (`squad::sees_over`), `ShotIn::over` and `Bullet::over` let its shell fly
+  on over them (`squad::over_wall`: a wall cell standing, not rubble), and
+  `Game::lob_line` replaces `clear_line` for a turret's check. The GPU
+  reads both as bit 31 (`squad::OVER`) of the unit's sight word and the
+  shot's cell count; its `over_wall` is a cell with `WALL` in its ground
+  word, which the `walls` pass clears on the break, so both engines skip
+  the same cells. `set=turret_over=0` (`BuildRules::turret_over`, default
+  on) is the old rule, for films.
+- **Soldiers' guns** are unchanged: every shell stops at walls and doors.
+- **Lobbed fire**: thrown tools already land anywhere in reach and on open
+  ground, line or no line (`Kit::use_tool`); now tested
+  (`a_thrown_tool_goes_over_a_wall`). Gun shells (bomb, gas, germ) fly as
+  bullets and stop at walls; a mortar-style card would be new work.
+
+**Film** (`hand=turretring`, planet 1 seed 7, the pen's ring plus three
+turrets 6 cells in toward the core at 0:14, 9 riflemen inside; on vs
+`set=turret_over=0`, one run each): by 3:00 the turrets killed 5,546
+walkers with the rule and 0 without until a breach (564 after it, from
+2:35); the ring kept 646 of 646 cells with the rule and 335 without. The
+riflemen killed 25 in both (before the ring). Raw `raw/turrets-on.txt`,
+`raw/turrets-off.txt`; clip `page/turrets.mp4` by `turret_clip.py`.
+Balance note, not a gate: a turret ring now holds against the default
+slime with no wall lost in 3 minutes (the turtle question,
+[defense payoff](../../wiki/world/larder.md)).
+
+**Tests**: `a_turret_fires_over_a_wall_on_both_engines` (GPU twin on a
+box of wall: the plain unit and shot stop, the `over` ones see and hit
+past it, GPU as CPU), `a_turret_fires_over_its_own_wall_and_a_rifle_does_not`
+(turret in a box: 18 of 19 shots hit outside, 39 killed; a rifleman in
+it fires none), `a_thrown_tool_goes_over_a_wall`.
+
+**Cost**: one more flag test per line cell walked for a turret's sight
+and shots (CPU and GPU), nothing for soldiers. Not timed on the 1070.
+
 ## Builders whose home-side spot is rock (11-16, after #392)
 
 The squad movement thread's new walk (#392) found `measure_wall_sides`

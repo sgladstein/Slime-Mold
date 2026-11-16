@@ -170,6 +170,11 @@ pub struct BuildRules {
     pub turret_hp: f32,
     pub turret_range: f32,
     pub turret_every: f32,
+    /// Turrets see and fire over walls (`UnitIn::over`; owner, 2026-11-16
+    /// 19:50Z: "turrets can fire over walls, lobbed fire goes over walls,
+    /// but regular guns shots do not"). `set=turret_over=0` turns it off
+    /// for films and tries.
+    pub turret_over: bool,
     pub lure_cost: f32,
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
@@ -285,6 +290,7 @@ impl Default for BuildRules {
             turret_hp: 300.0,
             turret_range: 15.0,
             turret_every: 0.5,
+            turret_over: true,
             lure_cost: 300.0,
             lure_hp: 150.0,
             lure_smell: 8.0,
@@ -672,13 +678,13 @@ impl<W: World> Game<W> {
                     // 2026-11-16 19:50Z: "turrets can fire over walls,
                     // lobbed fire goes over walls, but regular guns shots
                     // do not"). Its shell still stops at rock.
-                    u.over = true;
+                    u.over = b.turret_over;
                     if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
                         if let Some(aim) = bd.aim {
                             let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
                             let d = dx.hypot(dy).max(0.1);
                             let reach = b.turret_range * sc;
-                            if d <= reach + 4.0 && self.lob_line(bd.at, aim) {
+                            if d <= reach + 4.0 && if b.turret_over { self.lob_line(bd.at, aim) } else { self.clear_line(bd.at, aim) } {
                                 // From the barrel tip, not the turret's middle
                                 // (art director, 11-14: the drawn head's barrels
                                 // reach 1.7 touch radii), capped at half the way
@@ -687,7 +693,7 @@ impl<W: World> Game<W> {
                                 // which covers the barrel.
                                 let m = (TURRET_MUZZLE * b.touch * sc).min(0.5 * d);
                                 let from = (bd.at.0 + dx / d * m, bd.at.1 + dy / d * m);
-                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike, over: true });
+                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike, over: b.turret_over });
                                 self.buildings[k].ready = t + self.secs(b.turret_every);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
