@@ -138,6 +138,8 @@ fn main() {
     let (mut depth, mut seed, mut secs, mut nsq) = (1u32, 1u64, 60.0f32, 8usize);
     // `fight=1`: every squad fights at the slime's thickest blocks.
     let mut fight = false;
+    // `greedy=1`: the window's `greedy` hand from the normal bank.
+    let mut greedy = false;
     let mut ns = vec![40usize, 80, 120, 160, 240];
     for a in std::env::args().skip(1) {
         let (k, v) = a.split_once('=').expect("key=value");
@@ -147,6 +149,7 @@ fn main() {
             "secs" => secs = v.parse().unwrap(),
             "squads" => nsq = v.parse().unwrap(),
             "fight" => fight = v == "1",
+            "greedy" => greedy = v == "1",
             "n" => ns = v.split(',').map(|s| s.parse().unwrap()).collect(),
             _ => panic!("no key {k}"),
         }
@@ -157,9 +160,14 @@ fn main() {
         let d = BigDish::with_map(race_params(seed, 2, 25_000), &map);
         let (w, h) = d.size();
         let world = Timed { d, frame_s: 0.0 };
-        let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: n, start_bank: 1e9, ..Rules::default() };
+        let bank = if greedy { Rules::default().start_bank } else { 1e9 };
+        let mut rules = Rules { squads: true, larder: false, seek: false, overrun: 0.0, max_squad: n, start_bank: bank, ..Rules::default() };
         rules.mass = Rules::mass_for(25_000, 2);
         let mut g = Game::new(world, rules, seed);
+        if greedy {
+            greedy_run(&mut g, secs);
+            continue;
+        }
         while g.buy() {}
         let live: Vec<usize> = (0..g.soldiers.len()).filter(|&k| g.soldiers[k].alive).collect();
         for (i, &k) in live.iter().enumerate() {
@@ -222,4 +230,48 @@ fn main() {
             frames * 1e3 / k as f64
         );
     }
+}
+
+/// **How fast the greedy hand grows an army** (the game designer's ask on
+/// #377, 11-16: the cap of 40 was the snowball's only brake): the window's
+/// `greedy` hand (`hands.rs`), once a game second: buy whenever the bank
+/// can pay, and every soldier not on a crystal with charge left drains the
+/// biggest one. Prints the game time each army size is first reached, and
+/// the army and bank every minute.
+fn greedy_run(g: &mut Game<Timed>, secs: f32) {
+    let marks = [10usize, 20, 40, 80, 120, 150, 200];
+    let mut first: Vec<Option<f32>> = vec![None; marks.len()];
+    let tps = g.rules.tps as u64;
+    let mut minute = 0;
+    while g.end.is_none() && g.time() < secs {
+        if g.world.ticks().is_multiple_of(tps) {
+            while g.bank >= g.rules.soldier_cost && g.alive() < g.rules.max_squad {
+                if !g.apply(Cmd::Buy) {
+                    break;
+                }
+            }
+            let cs = g.world.crystals();
+            if let Some(c) = (1..cs.len()).filter(|&c| cs[c].1 > 0.0).max_by(|&a, &b| cs[a].1.total_cmp(&cs[b].1)).map(|c| cs[c].0) {
+                for k in 0..g.soldiers.len() {
+                    let on = matches!(g.soldiers[k].order, Order::Clear(x, y) if g.crystal_at((x, y)).is_some_and(|(i, _)| cs[i].1 > 0.0));
+                    if g.soldiers[k].alive && !on {
+                        g.apply(Cmd::Order(k, Order::Clear(c.0, c.1)));
+                    }
+                }
+            }
+        }
+        g.step();
+        let n = g.alive();
+        for (i, &m) in marks.iter().enumerate() {
+            if n >= m && first[i].is_none() {
+                first[i] = Some(g.time());
+            }
+        }
+        if g.time() >= 60.0 * (minute + 1) as f32 {
+            minute += 1;
+            println!("    {minute}:00  soldiers {n}, bank {:.0}, harvested {:.0}, slime {}", g.bank, g.harvested, g.world.living());
+        }
+    }
+    let at: Vec<String> = marks.iter().zip(&first).map(|(m, t)| format!("{m}: {}", t.map_or("-".into(), |t| format!("{}:{:02}", t as u32 / 60, t as u32 % 60)))).collect();
+    println!("  greedy, cap {}: first reached {} | at the end ({:.0} s) {} alive, {} lost", g.rules.max_squad, at.join(", "), g.time(), g.alive(), g.soldiers.iter().filter(|s| !s.alive).count());
 }

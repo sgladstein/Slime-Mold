@@ -2963,8 +2963,10 @@ mod tests {
         let crystals = Settings { piles: 23, rect: true, crystal: 512.0, ..small(0) };
         let hungry = |s: Settings| Settings { upkeep: 0.02, starve: 0.2, birth_energy: 0.6, capacity: 3 * s.walkers / 2, ..s };
         const STEPS: u16 = 12;
-        // (walkers off over the flight, worst tick)
-        let play = |name: &str, s: &Settings, gpu_speed: f32| -> usize {
+        // (walkers off over the flight, worst tick). With `push` (the
+        // shove cards' push, 2026-11-16) every flung walker flies the one
+        // heading for every step.
+        let play = |name: &str, s: &Settings, gpu_speed: f32, push: Option<f32>| -> usize {
             let s = Settings { fling_speed: 1.5, ..s.clone() };
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -2989,9 +2991,9 @@ mod tests {
             let inv = 1.0 / ((rr * k) * (rr * k) - (r * k) * (r * k));
             let killed = cpu.strike(x, y, r, 30.0, 2.0 * r);
             e.burst(&shared, &s, x, y, r, 30.0, 2.0 * r, 0.0, 0, 0.0);
-            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv);
+            let n_cpu = cpu.fling(x * k, y * k, r * k, rr * k, STEPS, inv, push);
             let g = Settings { fling_speed: gpu_speed, ..s.clone() };
-            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv);
+            let n_gpu = e.fling(&shared, &g, x, y, r, rr, STEPS, inv, push);
             let n = cpu.walkers.len();
             let (life, timer) = e.life_of();
             let marks = e.flung_of();
@@ -3005,7 +3007,13 @@ mod tests {
             eprintln!("{name}: killed {killed}, flung {n_gpu} on the GPU and {n_cpu} on the CPU, timers {timers:?}; {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
             assert!(n_cpu > 50 && n_gpu as usize == n_cpu, "{name}: flung {n_gpu} on the GPU, {n_cpu} on the CPU");
             assert!(life_off == 0 && timer_off == 0 && marks_off == 0 && occ_off == 0 && heading_off == 0, "{name}: {life_off} states, {timer_off} timers, {marks_off} marks, {occ_off} counts, {heading_off} headings off");
-            assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}");
+            match push {
+                None => assert!(timers.len() > 3 && timers.contains(&STEPS.saturating_sub(1).max(1)), "{name}: the nearest fly furthest: {timers:?}"),
+                Some(a) => {
+                    assert!(timers.len() == 1 && timers.contains(&STEPS), "{name}: a push flies every one the whole way: {timers:?}");
+                    assert!((0..n).filter(|&j| cpu.flung[j]).all(|j| cpu.walkers[j].2 == a && gpu_w[j].2 == a), "{name}: a push flies every one along its heading");
+                }
+            }
             let mut worst = 0;
             for t in 0..(STEPS as u32 + 4) {
                 let (_, off, lt, _) = twin(&mut e, &shared, &g, &mut cpu, 1);
@@ -3037,10 +3045,11 @@ mod tests {
             ("dormancy, growth on crystals, a wall", with(hungry(crystals), sleep)),
         ];
         for (name, s) in &dishes {
-            play(name, s, 1.5);
+            play(name, s, 1.5, None);
         }
+        play("a push, a wall across it", &dishes[3].1, 1.5, Some(1.3));
         // Planted: the GPU's flung fly at 2, not 1.5.
-        let off = play("planted, fling speed 2", &dishes[0].1, 2.0);
+        let off = play("planted, fling speed 2", &dishes[0].1, 2.0, None);
         eprintln!("planted, fling speed 2: worst tick {off} walkers off");
         assert!(off > 50, "the twin catches a fling speed off");
     }
@@ -3644,7 +3653,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 22] = [
+        let dishes: [(&str, Settings, Build); 23] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3727,6 +3736,13 @@ mod tests {
             // condense 0 the GPU sent no `roam` while the CPU still marked
             // breakaways.
             ("thicken roam: thick walkers break away, run and land", Settings { thicken: 2.0, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Ordinary slime breaks away (`roam` alone, 11-16, the owner's
+            // "Remove the bronze, keep the specks"): ripe on crystal or with 4
+            // walkers round it; of the ordinary walkers (below) a quarter
+            // are on their way (an eighth to the crystal they stand on, to
+            // land in the tick, a sixteenth about to give up) and the rest
+            // take their chances on their slots' steps, a fifth a step.
+            ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3823,6 +3839,28 @@ mod tests {
                     }
                 }
             }
+            // Ordinary breakaways (`roam` with no condensing or thickening).
+            let specks = s.roam > 0 && s.condense == 0 && s.thicken <= 0.0;
+            if specks {
+                use slime_mould::mould::big::{ROAM, ROAM_SHIFT};
+                assert_eq!(cpu.dense.len(), cpu.walkers.len(), "{name}: the warm-up made the ripening words");
+                let piles = cpu.piles.len().min(64) as u32;
+                for k in 0..cpu.walkers.len() {
+                    if !cpu.lives(k) || cpu.roam_of(k).is_some() {
+                        continue;
+                    }
+                    // A quarter on their way, some to the crystal they stand
+                    // on (they land) and some about to give up (`SPECK_TRIP`);
+                    // the rest take their chances on their slots' steps.
+                    if k % 4 == 0 {
+                        let (x, y, _) = cpu.walkers[k];
+                        let p = cpu.pile_of[y as usize * cpu.w + x as usize] as u32;
+                        let j = if k % 8 == 0 && p > 0 && p <= piles { p - 1 } else { k as u32 % piles };
+                        let trip = if k % 16 == 4 { slime_mould::mould::big::SPECK_TRIP - 1 } else { 7 };
+                        cpu.dense[k] = ROAM | (j << ROAM_SHIFT) | trip;
+                    }
+                }
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3877,10 +3915,18 @@ mod tests {
                 assert!(cpu.thickened > thickened && cpu.absorbed == absorbed, "{name}: walkers thicken and none is absorbed in the tick");
                 assert_eq!(dense_off, 0, "{name}: dense words");
             }
+            if specks {
+                assert!(e.condenses, "{name}: the ripening passes run");
+                let gd = e.dense_of();
+                let dense_off = (0..n).filter(|&k| cpu.lives(k) && gd[k] != cpu.dense[k]).count();
+                let dense = (0..n).filter(|&k| cpu.lives(k) && cpu.is_dense(k)).count();
+                eprintln!("{name}: {dense} dense (none: no bronze); mass {} of {n}; {dense_off} words off", cpu.mass());
+                assert_eq!((dense, dense_off), (0, 0), "{name}: no walker condenses, and the words agree");
+            }
             if s.roam > 0 {
                 let on_way = (0..n).filter(|&k| cpu.lives(k) && cpu.roam_of(k).is_some()).count();
                 let left_now = (0..n).filter(|&k| cpu.lives(k) && !roamed[k] && cpu.roam_of(k).is_some()).count();
-                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && cpu.is_dense(k) && cpu.roam_of(k).is_none()).count();
+                let landed = (0..n).filter(|&k| cpu.lives(k) && roamed[k] && (cpu.is_dense(k) || specks) && cpu.roam_of(k).is_none()).count();
                 eprintln!("{name}: {on_way} on the way, {left_now} left in the tick, {landed} landed");
                 assert!(on_way > 0 && left_now > 0 && landed > 0, "{name}: walkers break away, run and land in the tick");
             }
@@ -4001,13 +4047,59 @@ mod tests {
         assert_eq!(cpu_out.units.len(), n, "the CPU reads every unit");
         let past: Vec<_> = cpu_out.units[64..].iter().collect();
         eprintln!("squad cap: {n} units; past 64, {} touch, {} aim, {} took", past.iter().filter(|u| u.touching > 0).count(), past.iter().filter(|u| u.target.is_some()).count(), past.iter().filter(|u| u.took > 0.0).count());
-        assert_eq!(gpu_out, cpu_out, "every unit's outputs, the last 32 too");
+        assert_eq!(gpu_out, cpu_out, "every unit's outputs, those past 64 too");
         // A unit aims only at slime it sees (`squad::sees`, 2026-11-13): the
         // six of the spiral that the clamp puts in the world's rock border
         // see nothing, so every unit past 64 on agar aims.
         let on_agar = |u: &UnitIn| cpu.agar[u.y as usize * w + u.x as usize];
         assert!(cpu_out.units[n - 1].touching > 0 && past.iter().any(|u| u.took > 0.0) && past.iter().zip(&f.units[64..]).all(|(u, i)| u.target.is_some() || !on_agar(i)), "units past 64 touch, aim and harvest");
         assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
+    }
+
+    /// **Every shot of a full frame** (soldier-cap thread, 2026-11-16, the
+    /// technical lead's ask after #377 raised `SHOTS_MAX` 256 -> 1024): a
+    /// frame of `SHOTS_MAX` shots, each from 6 cells off one of the
+    /// mould's thickest cells toward it, on both engines. Every shot's hit
+    /// and kills match the CPU's, and shots past the old 256 hit and kill,
+    /// so a shader array or buffer still sized for 256 (which would drop
+    /// them or read them from the units) fails here.
+    #[test]
+    fn the_squad_frame_holds_every_shot_on_the_gpu() {
+        use slime_mould::mould::squad::{self, Frame, ShotIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..60 {
+            cpu.tick();
+        }
+        let (w, h) = (cpu.w, cpu.h);
+        let n = squad::SHOTS_MAX;
+        let mut thick: Vec<usize> = (0..w * h).filter(|&i| cpu.agar[i]).collect();
+        thick.sort_by(|&a, &b| cpu.trail[b].total_cmp(&cpu.trail[a]));
+        thick.truncate(n);
+        let shots: Vec<ShotIn> = (0..n)
+            .map(|i| {
+                let c = thick[i % thick.len()];
+                let to = ((c % w) as f32 + 0.5, (c / w) as f32 + 0.5);
+                let a = i as f32 * 2.4;
+                let from = ((to.0 + 6.0 * a.cos()).clamp(0.5, w as f32 - 0.5), (to.1 + 6.0 * a.sin()).clamp(0.5, h as f32 - 0.5));
+                ShotIn { from, to, r: 1.0 }
+            })
+            .collect();
+        let f = Frame { units: Vec::new(), shots, slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        let cpu_out = squad::frame(&mut cpu, &f, 1);
+        let gpu_out = e.squad_out();
+        assert_eq!(cpu_out.shots.len(), n, "the CPU reads every shot");
+        let past = &cpu_out.shots[256..];
+        let (hit, killed) = (past.iter().filter(|o| o.hit.is_some()).count(), past.iter().filter(|o| o.killed > 0).count());
+        eprintln!("shot cap: {n} shots; past 256, {hit} hit, {killed} killed");
+        assert_eq!(gpu_out, cpu_out, "every shot's hit and kills, those past 256 too");
+        assert!(hit >= 100 && killed >= 10, "shots past 256 hit ({hit}) and kill ({killed})");
     }
 
     /// **Solid crystals on both engines** (`Rules::crystal_solid`, the

@@ -124,10 +124,12 @@ impl<W: World> Game<W> {
                         // 18:05Z); a scattergun's fan all carry it.
                         let m = self.mods(q);
                         let n = m.casts;
+                        // The gun's own turn (`BulletMods::cycle`): a cast
+                        // another carries is let out by its carrier.
                         let cast = if n > 0 {
                             let c = s.next % n;
                             self.soldiers[k].next = (c + 1) % n;
-                            c + 1
+                            m.cycle[c as usize]
                         } else {
                             0
                         };
@@ -244,6 +246,7 @@ impl<W: World> Game<W> {
         }
         self.landed(&f.shots, &out.shots);
         self.killed += out.shots.iter().map(|o| o.killed).sum::<u32>();
+        self.turret_killed += out.shots.iter().zip(&by).filter(|(_, b)| b.0.is_none()).map(|(o, _)| o.killed).sum::<u32>();
         let hits: Vec<(Option<(f32, f32)>, u32)> = out.shots.iter().map(|o| (o.hit, o.killed)).collect();
         self.render_pay(&hits);
         // The plants' fire's kills, every frame on both worlds (bug check

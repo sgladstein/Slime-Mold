@@ -180,7 +180,8 @@ bombs the rush is wiped at 21 s, a tuning note
 Since 2026-11-16 the bomb throws and the blast holds: the bomb kills 2.5 cells,
 throws the ring out to 10 cells for 0.7 s, away from the gun, and keeps its
 crater 1 s; at C's middle it kills 57 and throws 959 where a blast kills 360
-([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)).
+([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)); the owner
+named all four sets in the blind film quiz (11-16 05:09Z).
 
 ## Owner's word
 

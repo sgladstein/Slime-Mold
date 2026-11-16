@@ -41,8 +41,10 @@ brings it back), so the campaign keeps the old mode (owner 08:09Z). Detail: [rep
 Up to 200 soldiers since 2026-11-16 (`Rules::max_squad`; 40 before; owner
 05:06Z picked "Flat 200, the realistic max": "I want to test the max"); a
 soldier costs the CPU about 0.01 ms a step on planet 1 and 0.03 ms on a 6x
-planet ([report](../../Reports/soldier-cap-2026-11-16/README.md)); the 1070
-timing and balance at 200 are still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells that has a straight walk from the map's goal, about a squad of 25's formation: at 4, 200 soldiers in 8 squads on a 6x planet overflowed the map cache and 47% of map lookups went unserved, at 12 19% ([report](../../Reports/map-sharing-2026-11-16/README.md)).
+planet, and the GPU next to nothing; on the 1070 at 200 soldiers a step's
+frame p95 is 9.1 ms on planet 1 and 14.9 ms on planet 8
+([report](../../Reports/soldier-cap-2026-11-16/README.md)); balance at 200
+is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells that has a straight walk from the map's goal, about a squad of 25's formation: at 4, 200 soldiers in 8 squads on a 6x planet overflowed the map cache and 47% of map lookups went unserved, at 12 19% ([report](../../Reports/map-sharing-2026-11-16/README.md)).
 
 ## How it plays
 

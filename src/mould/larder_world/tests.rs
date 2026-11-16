@@ -72,7 +72,7 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let r = g.rules;
     let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0 };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -102,13 +102,74 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     assert_eq!(g.bullets.len(), n - 1);
 }
 
+/// **A carrier lets its cast out** (2026-11-16, step B of the gun-system
+/// review; `rounds::Card::Trigger`): at its first slime hit, as that cast's
+/// own bullets fired from there along the carrier's heading (a buckshot
+/// cast is four pellets fanned round it), while the carrier pierces on
+/// empty. With `Expire` it keeps its cast through a hit it pierces and lets
+/// it out where it stops: flying on from the end of its range, or thrown
+/// back off a wall.
+#[test]
+fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
+    use super::super::rounds::{parse, Deck};
+    let mut g = small(1);
+    let sc = g.s();
+    let q = g.soldiers[0].squad as usize;
+    let load = |g: &mut Game<BigDish>, s: &str| g.apply(Cmd::Load(q as u8, Some(Deck::new(&parse(s).unwrap()))));
+    load(&mut g, "trigger+plain+ammo/plain/buckshot/1/100/100/100/100/1");
+    let m = g.mods(q);
+    assert_eq!((m.casts, m.cycle[0], m.child[0], m.child[1]), (1, 1, 2, 0), "the buckshot is carried, not fired in turn");
+    let (w, h) = g.world.size();
+    // Open ground with room ahead, and a wall with open ground before it.
+    let open = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| (0..12).all(|j| g.world.clear(x + j as f32, y))).expect("open ground");
+    let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.clear(x, y) && (1..=3).all(|j| g.world.clear(x - j as f32, y)) && g.world.clear(x - 1.0, y + 1.0) && g.world.clear(x - 1.0, y - 1.0) && !g.world.clear(x, y + 1.0) && !g.world.clear(x, y - 1.0) && x > 4.0).expect("a wall face with open ground west of it");
+    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false };
+    let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0 };
+    let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
+    let miss = squad::ShotOut { hit: None, killed: 0 };
+    let h0 = (open.0 + 2.0, open.1);
+    g.bullets = vec![carrier];
+    g.landed(&[leg(open, 4.0)], &[hit(h0)]);
+    assert_eq!((g.releases, g.bullets.len()), (1, 5));
+    assert_eq!((g.bullets[0].carry, g.bullets[0].pierce, g.bullets[0].cast), (0, 0, 1), "the carrier pierces on empty");
+    let ammo = m.ammo[1];
+    let shape = ammo.set.shape();
+    for p in &g.bullets[1..] {
+        assert_eq!((p.cast, p.carry, p.at, p.fresh), (2, 0, h0, false));
+        assert!(p.dir.1.atan2(p.dir.0).abs() <= shape.fan + 1e-4, "{p:?}");
+        assert!((p.left - g.gun_range(q) * sc * ammo.range()).abs() < 1e-3 && (p.r - (g.strike_of(q) * ammo.reach()).min(squad::R_MAX) * shape.r).abs() < 1e-4, "{p:?}");
+    }
+    assert!(g.bullets[1].dir.1 < 0.0 && g.bullets[4].dir.1 > 0.0, "fanned both ways");
+    // Expire: through the hit it pierces, still carrying.
+    load(&mut g, "expire+plain+plain");
+    let b = Bullet { carry: 2, expire: true, ..carrier };
+    g.bullets = vec![b];
+    g.landed(&[leg(open, 4.0)], &[hit(h0)]);
+    assert_eq!((g.releases, g.bullets.len(), g.bullets[0].carry), (1, 1, 2));
+    // Its range runs out on open ground: the cast flies on from there.
+    g.bullets = vec![Bullet { at: open, left: 3.0, ..b }];
+    g.landed(&[leg(open, 3.0)], &[miss]);
+    assert_eq!((g.releases, g.bullets.len()), (2, 1));
+    let p = g.bullets[0];
+    assert_eq!((p.cast, p.at, p.dir), (2, (open.0 + 3.0, open.1), (1.0, 0.0)));
+    // A wall: it heads back out the way it came, from a cell back.
+    let start = (wall.0 - 3.0, wall.1);
+    g.bullets.clear();
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(Some(0), 1)], 1.0);
+    assert_eq!((g.bullets[0].carry, g.bullets[0].expire), (2, true), "the fired bullet takes its cast's carry");
+    g.landed(&legs, &[miss]);
+    assert_eq!((g.releases, g.bullets.len()), (3, 1));
+    let p = g.bullets[0];
+    assert!(p.dir.0 < -0.99 && g.world.clear(p.at.0, p.at.1) && p.at.0 < legs[0].to.0, "thrown back off the wall: {p:?} leg {:?}", legs[0]);
+}
+
 #[test]
 fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // The flood: a full buffer of splitting bullets all hit at once.
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0 };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
     let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
     // Every second one hits; the others fly on and keep their places.

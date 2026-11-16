@@ -1,0 +1,12 @@
+larder-world machine at the start: RAM 3.3 GB free of 8.0; GPU memory 864 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe
+larder-world: NVIDIA GeForce GTX 1070 (Vulkan)
+larder-world bench: planet:8:1 seed 1, 1256 x 784 cells, 50000 slots, one walker a cell, scale 2 walkers 25000 upkeep=0.0002 capacity=50000 energy_flow=0.05 wither=0.01 panic=2 thicken=2 surge=1800 flinch=0.9 set:start_bank=1000000; hand greedy, 60 game s at 60 frames a second, screen 1280x800
+  GPU buffers: 303.3 MB for 1256 x 784 cells (308 bytes a cell), the biggest 55.7 MB
+  3600 frames, 900 game steps; 0.07 read-backs a step, 0.00 waits a step (0.01 ms a step waiting); steps finished once in 899, when the next was due 0
+  every frame (3600 of them), ms: frame p50 5.84 p95 7.09 max 14.36; step  p50 0.10 p95 1.83 max 9.03; prepare  p50 0.16 p95 0.19 max 2.26; record  p50 0.10 p95 0.12 max 1.37; GPU tail  p50 4.39 p95 5.90 max 6.04
+  frames with a step (900 of them), ms: frame p50 6.52 p95 7.83 max 14.36; step  p50 1.32 p95 2.68 max 9.03; prepare  p50 0.16 p95 0.19 max 0.68; record  p50 0.11 p95 0.12 max 0.33; GPU tail  p50 5.02 p95 5.13 max 5.19
+  after the first game second (3540 frames), ms: frame max 13.18; step max 7.88; prepare max 1.91
+  ground refresh: 59 of them, ms: mean 1.15 max 1.35, of which the read-back at most 0.34; 35182 live cells
+  GPU: no step timestamps, as each step ran in shares (spread=0 for them)
+  t 60 s: mould 25679, soldiers 40, buildings 0, harvested 6409, shots 262, killed 144
+  machine at the end: RAM 3.2 GB free of 8.0; GPU memory 1132 MB in use of 8192, 0% busy; on the GPU too: claude.exe, explorer.exe, Video.UI.exe, msedgewebview2.exe, SearchApp.exe, SystemSettings.exe, TextInputHost.exe, ShellExperienceHost.exe

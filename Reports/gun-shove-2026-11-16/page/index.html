@@ -1,0 +1,181 @@
+<title>Shove Cards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; clips in 2-up grids (one column on a phone), each with its game counts under it in mono; a small table for the 10 s counts */
+:root{
+  --bg:#eef0ee; --panel:#e0e4e1; --fg:#161a19; --muted:#56605c; --line:#c5cbc7;
+  --flash:#b86a00; --slime:#c98a12; --crystal:#137f95; --before:#6b7470;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101413; --panel:#1a201e; --fg:#e8ece9; --muted:#9aa5a0; --line:#2b3330;
+  --flash:#ffc35c; --slime:#f2b443; --crystal:#5fd0e3; --before:#8d9792; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16.5px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0;letter-spacing:.01em}
+h1{font-size:2.5rem;font-weight:700}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--flash)}
+.lede{color:var(--muted);font-size:1.04rem;max-width:68ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+li{min-width:0}
+code{font:.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 14px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--flash);color:#1a1200;border-color:var(--flash)}
+button:focus-visible{outline:2px solid var(--crystal);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair.one{grid-template-columns:1fr}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:720px){.pair,.quad,.tri{grid-template-columns:1fr}}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+video{width:100%;max-width:100%;aspect-ratio:16/10;border-radius:6px;border:1px solid var(--line);background:#000;display:block}
+.tag{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.tag.b{color:var(--before)} .tag.a{color:var(--flash)} .tag.q{color:var(--crystal)}
+figcaption{font-size:.92rem;color:var(--muted)}
+.counts{font:12.5px/1.55 var(--mono);color:var(--fg);background:var(--panel);padding:7px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.short{background:var(--panel);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:.9rem}
+footer{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){video{animation:none}}
+</style>
+<main>
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Larder World · guns · shove cards · 2026-11-16</span>
+  <h1>Shove cards</h1>
+  <p class="lede">You asked for ways to change the slug's pushback, and for a gun that can corral the slime into a kill zone. Three new cards make a bullet's hit shove the slime somewhere: <b>Heave</b> straight on, <b>Corral</b> toward your nearest turret, <b>Pull</b> back toward the gun. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game up to 29 s with plain bullets. At 29 s a turret stands up and to the right of the squad, off its line of fire, and every squad loads the clip's cards, so the clips differ only in those cards over the next 3 s.</p>
+</header>
+
+<section class="short">
+  <h2>How they work</h2>
+  <ul>
+    <li><b>Heave</b> (cost 2): the hit shoves the slime round it on along the bullet's line. Each heave throws it 1.5 times farther.</li>
+    <li><b>Corral</b> (cost 2): the shove heads for your nearest standing turret within 40 cells of the hit. With no turret in reach it goes straight on.</li>
+    <li><b>Pull</b> (cost 1): the shove heads back toward the soldier who fired.</li>
+    <li><b>On a slug:</b> the cards steer the slug's own shove, so a corral slug herds the slug's whole throw.</li>
+    <li><b>What you see is the slime itself:</b> every thrown walker is a real walker in flight that lands and lives on, drawn as a hot speck with a streak.</li>
+  </ul>
+</section>
+
+<div class="bar">
+  <button id="slow" type="button" aria-pressed="false">Slow motion ×¼</button>
+  <span class="hint">Every clip loops. Slow motion makes it easy to follow where each shove sends the slime.</span>
+</div>
+
+<section>
+  <h2>Three ways to shove</h2>
+  <p>The same squad, the same turret and the same slime, with a plain bullet that has two shove cards on it. Watch where the thrown slime goes and how much the turret (top right) gets to shoot.</p>
+  <div class="tri">
+    <figure><span class="tag a">Heave: heave + heave + plain</span><video src="heave.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 shoves   thrown 1,886
+killed 91, the turret 26
+8 soldiers, health 83</div>
+      <figcaption>Thrown away, past the turret. The squad gets room, but little dies.</figcaption></figure>
+    <figure><span class="tag a">Corral: corral + heave + plain</span><video src="corral.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">21 shoves   thrown 1,848
+killed 314, the turret 241
+8 soldiers, health 78</div>
+      <figcaption>Heaped round the turret, which shoots it down.</figcaption></figure>
+    <figure><span class="tag a">Pull: pull + heave + plain</span><video src="pull.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">24 shoves   thrown 3,517
+killed 247, the turret 79
+7 soldiers, health 66</div>
+      <figcaption>Dragged onto the squad. One soldier falls in 3 s.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>Against plain bullets and the slug</h2>
+  <p>Plain bullets kill the most with the squad's own guns, and lose a soldier. A slug shoves away from the gun; a corral slug sends that same throw to the turret.</p>
+  <div class="tri">
+    <figure><span class="tag b">plain</span><video src="plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">killed 658, the turret 157
+7 soldiers, health 73</div></figure>
+    <figure><span class="tag b">slug</span><video src="slug.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">thrown 2,324
+killed 293, the turret 184
+8 soldiers, health 81</div></figure>
+    <figure><span class="tag a">corral + slug</span><video src="corral-slug.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">22 shoves   thrown 2,508
+killed 410, the turret 287
+8 soldiers, health 80</div></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>10 s, 29 to 39 s</th><th>Thrown</th><th>Killed</th><th>By the turret</th><th>Soldiers at 39 s</th><th>Health</th></tr></thead>
+    <tbody>
+      <tr><td>plain</td><td class="num">0</td><td class="num">1,510</td><td class="num">422</td><td class="num">6 of 8</td><td class="num">76</td></tr>
+      <tr><td>heave + heave + plain</td><td class="num">9,612</td><td class="num">283</td><td class="num">78</td><td class="num">8</td><td class="num">83</td></tr>
+      <tr><td>corral + heave + plain</td><td class="num">5,088</td><td class="num">563</td><td class="num">434</td><td class="num">8</td><td class="num">77</td></tr>
+      <tr><td>pull + heave + plain</td><td class="num">11,186</td><td class="num">572</td><td class="num">172</td><td class="num">0 of 8</td><td class="num">none left</td></tr>
+      <tr><td>corral + slug</td><td class="num">5,896</td><td class="num">680</td><td class="num">482</td><td class="num">8</td><td class="num">78</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">Over 10 s one turret is the limit: it fires on its own clock and already had slime in range, so corral gives it about what plain bullets did (434 against 422). The next section adds turrets.</p>
+</section>
+
+<section>
+  <h2>A kill box</h2>
+  <p>Two more turrets beside the first, all standing from 29 s. Plain bullets on the left, corral on the right.</p>
+  <div class="pair">
+    <figure><span class="tag b">plain, three turrets</span><video src="box-plain.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">killed 722, the turrets 268
+7 soldiers, health 77 at 32 s</div></figure>
+    <figure><span class="tag a">corral + heave + plain, three turrets</span><video src="box-corral.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">22 shoves   thrown 2,254
+killed 510, the turrets 440
+8 soldiers, health 78 at 32 s</div></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Kill box, 10 s</th><th>Thrown</th><th>Killed</th><th>By the turrets</th><th>Soldiers at 39 s</th><th>Health</th></tr></thead>
+    <tbody>
+      <tr><td>plain</td><td class="num">0</td><td class="num">1,696</td><td class="num">617</td><td class="num">7 of 8</td><td class="num">71</td></tr>
+      <tr><td>corral + heave + plain</td><td class="num">4,914</td><td class="num">1,384</td><td class="num">1,234</td><td class="num">8</td><td class="num">76</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">With room in the turrets' fire, corral doubles what they kill and keeps every soldier. The squad's own guns kill less, because the slime is sent away from them.</p>
+</section>
+
+<section class="short">
+  <h2>Not settled</h2>
+  <ul>
+    <li><b>Pull is a trap as built.</b> It drags the slime onto the squad: all eight soldiers were dead in 10 s. It should stop short of the gun, or be dropped. Your call.</li>
+    <li><b>Corral only finds turrets.</b> It could aim at a spot you mark, a wall's face, or any building.</li>
+    <li><b>Every shove card costs the squad kills.</b> The shove trades kills for where the slime ends up. That is a job for the balance pass.</li>
+    <li><b>Frame cost on the GTX 1070 is not measured.</b> A shove is the same burst a slug's shove already was. It adds no new GPU pass and needs one read-back per shove, which the plan's batching step covers.</li>
+    <li><b>Next:</b> multicast and the read-back batching, then seekers and aim cards.</li>
+  </ul>
+</section>
+
+<footer>Source, clips and counts: <code>Reports/gun-shove-2026-11-16/</code> in the repo. Clips by <code>raw/film.sh</code> and <code>raw/make_clips.py</code>.</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('slow');
+  function set(on){
+    b.setAttribute('aria-pressed',on?'true':'false');
+    document.querySelectorAll('video').forEach(function(v){v.playbackRate=on?0.25:1;});
+    try{localStorage.setItem('shove-slow',on?'1':'0');}catch(e){}
+  }
+  var on=false;
+  try{on=localStorage.getItem('shove-slow')==='1';}catch(e){}
+  document.querySelectorAll('video').forEach(function(v){v.addEventListener('loadedmetadata',function(){v.playbackRate=on?0.25:1;});});
+  set(on);
+  b.addEventListener('click',function(){on=!on;set(on);});
+})();
+</script>
