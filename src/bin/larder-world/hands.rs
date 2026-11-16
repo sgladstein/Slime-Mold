@@ -192,6 +192,50 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
         }
         return;
     }
+    // `wallq` (2026-11-16, the wall-sides thread's clips; run it with
+    // `mode=squads`): eight soldiers walk 16 cells from where they land,
+    // away from the core; at 8 s a 30-cell wall goes up square to that way
+    // 1 cell from the squad's middle toward the core, so the squad
+    // straddles its line, and the squad is ordered to build it, defenders
+    // called out (`CoverRules::near` 0, as by slime). Shows which side each soldier
+    // ends on once it stands (owner, 2026-11-16 01:45Z: "some soliders
+    // always end up on the wrong side, trapped with the slime").
+    if hand == "wallq" {
+        while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+            g.apply(Cmd::Buy);
+        }
+        g.rules.cover.near = 0;
+        let sc = g.world.scale();
+        let (c, l) = (g.core, g.larder);
+        let d = (c.0 - l.0).hypot(c.1 - l.1).max(1.0);
+        let u = ((c.0 - l.0) / d, (c.1 - l.1) / d);
+        if g.time() > 1.5 && g.time() < 2.5 {
+            let to = (l.0 - u.0 * 16.0 * sc, l.1 - u.1 * 16.0 * sc);
+            let to = g.nearest_standable(to, 10.0 * sc).unwrap_or(to);
+            g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1)));
+        }
+        // Each game second once it is placed: how many stand on the core's
+        // side of its line (the clip's count).
+        if let Some(bd) = g.buildings.first().copied() {
+            if let Kind::Wall { to } = bd.kind {
+                let mid = ((bd.at.0 + to.0) / 2.0, (bd.at.1 + to.1) / 2.0);
+                let past = g.soldiers.iter().filter(|s| s.alive && (s.x - mid.0) * u.0 + (s.y - mid.1) * u.1 > 0.0).count();
+                println!("  wallq t {:.0}: built {:.0}%, {past} of {} past the wall", g.time(), bd.built * 100.0, g.alive());
+            }
+        }
+        if g.time() > 8.0 && g.buildings.is_empty() {
+            g.bank = g.bank.max(2000.0);
+            let Some(m) = g.middle(0) else { return };
+            let m = (m.0 + u.0 * sc, m.1 + u.1 * sc);
+            let p = (-u.1, u.0);
+            let (a, b) = ((m.0 - p.0 * 15.0 * sc, m.1 - p.1 * 15.0 * sc), (m.0 + p.0 * 15.0 * sc, m.1 + p.1 * 15.0 * sc));
+            if g.apply(Cmd::Wall(a, b)) {
+                let w = g.buildings.len() - 1;
+                g.apply(Cmd::SquadOrder(0, Order::Build(w)));
+            }
+        }
+        return;
+    }
     if hand == "volley" || hand == "edge" {
         volley(g, hand == "edge");
         return;

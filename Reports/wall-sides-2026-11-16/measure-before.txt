@@ -1,0 +1,27 @@
+   Compiling slime-mould v0.1.0 (/home/user/before)
+    Finished `release` profile [optimized] target(s) in 2m 03s
+     Running unittests src/lib.rs (/home/user/Slime-Mold/target/release/deps/slime_mould-16ab8d57e3bf5cb2)
+
+running 1 test
+ahead 4 seed 1: (past, shut) Some((1, 0))
+ahead 4 seed 2: (past, shut) Some((1, 0))
+ahead 4 seed 3: (past, shut) Some((1, 0))
+ahead 4 seed 4: (past, shut) Some((1, 0))
+ahead 4 seed 5: (past, shut) Some((2, 0))
+ahead 4 seed 6: (past, shut) Some((1, 0))
+ahead 4 seed 7: (past, shut) Some((1, 0))
+ahead 4 seed 8: (past, shut) Some((1, 0))
+ahead 4: past 9 shut 0 over 8 walls
+ahead 0 seed 1: (past, shut) Some((4, 0))
+ahead 0 seed 2: (past, shut) Some((8, 0))
+ahead 0 seed 3: (past, shut) Some((4, 0))
+ahead 0 seed 4: (past, shut) Some((6, 1))
+ahead 0 seed 5: (past, shut) Some((3, 1))
+ahead 0 seed 6: (past, shut) Some((3, 0))
+ahead 0 seed 7: (past, shut) Some((4, 0))
+ahead 0 seed 8: (past, shut) Some((3, 0))
+ahead 0: past 35 shut 2 over 8 walls
+test mould::larder_world::wall_side_tests::measure_wall_sides ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 532 filtered out; finished in 3.90s
+

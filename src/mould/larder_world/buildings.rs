@@ -97,7 +97,9 @@ pub struct Building {
     pub working: bool,
     /// The pump's crystal.
     pub crystal: Option<usize>,
-    /// Tick of a turret's next shot or a siren's next call.
+    /// Tick of a turret's next shot or a siren's next call; for a wall,
+    /// the tick its last sliver began to wait for its footprint to clear
+    /// (`Game::build_turn`), 0 before.
     pub(super) ready: u64,
     /// What it read last frame.
     pub touching: u32,
@@ -110,6 +112,12 @@ pub struct Building {
     /// A pump's level, 1 to `PUMP_LEVELS` (`Game::upgrade`); 1 for every
     /// other kind.
     pub level: u8,
+    /// A wall's home side, a unit vector square to its line (zero for
+    /// every other kind): its builders and its squad's defenders stand on
+    /// this side, so the risen wall leaves nobody with the slime (owner's
+    /// playtest, 2026-11-16 01:45Z). Chosen when it is placed
+    /// (`Game::wall_home`).
+    pub home: (f32, f32),
 }
 
 impl Building {
@@ -495,7 +503,8 @@ impl<W: World> Game<W> {
         };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1 });
+        let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);

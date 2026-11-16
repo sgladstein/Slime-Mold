@@ -1,0 +1,19 @@
+ahead 4 seed 1: (past, shut) Some((0, 0))
+ahead 4 seed 2: (past, shut) Some((0, 0))
+ahead 4 seed 3: (past, shut) Some((0, 0))
+ahead 4 seed 4: (past, shut) Some((0, 0))
+ahead 4 seed 5: (past, shut) Some((0, 0))
+ahead 4 seed 6: (past, shut) Some((0, 0))
+ahead 4 seed 7: (past, shut) Some((0, 0))
+ahead 4 seed 8: (past, shut) Some((0, 0))
+ahead 4: past 0 shut 0 over 8 walls
+ahead 0 seed 1: (past, shut) Some((0, 0))
+ahead 0 seed 2: (past, shut) Some((0, 0))
+ahead 0 seed 3: (past, shut) Some((0, 0))
+ahead 0 seed 4: (past, shut) Some((0, 0))
+ahead 0 seed 5: (past, shut) Some((0, 0))
+ahead 0 seed 6: (past, shut) Some((0, 0))
+ahead 0 seed 7: (past, shut) Some((0, 0))
+ahead 0 seed 8: (past, shut) Some((1, 0))
+ahead 0: past 1 shut 0 over 8 walls
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 532 filtered out; finished in 4.43s
