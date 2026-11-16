@@ -1,0 +1,175 @@
+<title>Mini-boss Hunter</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: round 1's identity (same tokens and faces); one reading column, clips with their counts beside them, a per-planet table, next steps last */
+:root{
+  --bg:#f2f1ec; --panel:#e6e4da; --card:#fbfaf6; --fg:#1b1f1a; --muted:#5a6056;
+  --accent:#a8662a; --soft:#f0e2cd; --line:#cfccbf; --cool:#2f7f86;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14130f; --panel:#201e17; --card:#1a1813; --fg:#ebe7dc; --muted:#a29c8d;
+  --accent:#e0a35a; --soft:#32281a; --line:#3a3428; --cool:#6cc4c9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14130f; --panel:#201e17; --card:#1a1813; --fg:#ebe7dc; --muted:#a29c8d;
+  --accent:#e0a35a; --soft:#32281a; --line:#3a3428; --cool:#6cc4c9; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.06rem;font-weight:600}
+p{margin:0}
+ul{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:6px}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.one{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.pair,.one{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+figure video{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{font-size:.92rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+figcaption b{font-family:var(--display);font-weight:600;color:var(--fg);font-size:1rem}
+.counts{font:13px/1.5 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.counts dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px}
+.counts dt{color:var(--muted)}
+.counts dd{margin:0}
+.wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:.94rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 16px 6px 0;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+th{font-weight:600;color:var(--muted)}
+.note{border-left:3px solid var(--cool);padding:2px 0 2px 12px;max-width:760px}
+.next{background:var(--soft);border-radius:8px;padding:18px 20px;max-width:820px;display:flex;flex-direction:column;gap:10px}
+footer{font-size:.88rem;color:var(--muted);max-width:820px;display:flex;flex-direction:column;gap:6px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+</style>
+
+<main>
+<header class="prose">
+  <span class="eyebrow">Larder World · the run · round 2, 2026-11-16</span>
+  <h1>The hunter, built</h1>
+  <p class="lede">Your answers to round 1, turned into the first mini-boss. It forms only where the slime crowds or where a big piece is cut off from food. It clenches, leaves as one body, hunts the nearest soldier, and takes many more hits than ordinary slime. How strong it is varies a lot from one mini-boss to the next. The look is being made in its own thread; in these clips it still renders like ordinary thick slime.</p>
+</header>
+
+<section>
+  <h2>One hunt, start to end</h2>
+  <div class="one">
+    <figure>
+      <video src="hunt-wide.mp4" autoplay muted loop playsinline controls aria-label="A mini-boss leaving the body and crossing to the squad"></video>
+      <figcaption>
+        <b>Planet 3, run 1: from 1:26 to 2:20 at 5x</b>
+        <span>Eight soldiers hold at the bottom of the frame. The mini-boss forms at the top left, inside the body, and comes down the slime's trail as one dark body. Halfway down it passes over a crystal's slime and comes out the other side.</span>
+      </figcaption>
+    </figure>
+    <div class="counts">
+      <dl>
+        <dt>Formed</dt><dd>1:31, by itself: a crowded knot (a square of 13 dish cells round it full)</dd>
+        <dt>Members</dt><dd>426 walkers</dd>
+        <dt>Clenched</dt><dd>6 s in place, to 0.95 of a packed disc's spread</dd>
+        <dt>Hunt</dt><dd>left at 1:37; about 190 world units to the squad in 43 s</dd>
+        <dt>Held</dt><dd>418 of 426 the whole way; spread 0.95 to 1.36 of a packed disc</dd>
+        <dt>End</dt><dd>reached the squad at 2:20, shot apart by 2:26</dd>
+      </dl>
+      <p style="margin-top:10px;color:var(--muted);font-family:var(--body);font-size:.9rem">This clip is from before armour and before squads aimed at mini-bosses first. Forming and travelling are unchanged; the fight is below.</p>
+    </div>
+  </div>
+  <div class="one">
+    <figure>
+      <video src="gather-close.mp4" autoplay muted loop playsinline controls aria-label="Where the mini-boss forms, close up"></video>
+      <figcaption>
+        <b>Where it forms, close up: 1:28 to 1:44 at 3x</b>
+        <span>The knot is in the middle of the frame. It clenches at 1:31 and leaves toward the bottom right at 1:37.</span>
+      </figcaption>
+    </figure>
+    <div class="prose note">
+      <p>Inside the body it cannot be told apart from the slime round it today. That is the first job for the look thread: each member already carries a mark saying which mini-boss it belongs to, and how many hits it has taken, so the look can come straight from the simulation.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Weak and strong, the same seed</h2>
+  <p class="prose">The same planet and the same moment, with the grade forced to its lowest and its highest. Each mini-boss draws its grade as it forms; the grade sets its size, the hits each member takes, how many walkers it touches a soldier as, and its pace.</p>
+  <div class="pair">
+    <figure>
+      <video src="grade0.mp4" autoplay muted loop playsinline controls aria-label="A grade 0 mini-boss reaching the squad"></video>
+      <figcaption>
+        <b>Grade 0, the weakest</b>
+        <div class="counts"><dl>
+          <dt>Members</dt><dd>219</dd>
+          <dt>Hits each</dt><dd>4 (ordinary slime 1)</dd>
+          <dt>Touches as</dt><dd>2 walkers</dd>
+          <dt>Under fire</dt><dd>2:12 to 2:15, 3 s</dd>
+          <dt>Soldiers lost</dt><dd>0 of 8</dd>
+        </dl></div>
+      </figcaption>
+    </figure>
+    <figure>
+      <video src="grade1.mp4" autoplay muted loop playsinline controls aria-label="A grade 1 mini-boss reaching the squad"></video>
+      <figcaption>
+        <b>Grade 1, the strongest</b>
+        <div class="counts"><dl>
+          <dt>Members</dt><dd>718</dd>
+          <dt>Hits each</dt><dd>15</dd>
+          <dt>Touches as</dt><dd>5 walkers</dd>
+          <dt>Under fire</dt><dd>2:12 to 2:22, still standing (695 of 718 left)</dd>
+          <dt>Soldiers lost</dt><dd>8 of 8, all within 10 s of contact</dd>
+        </dl></div>
+      </figcaption>
+    </figure>
+  </div>
+  <div class="prose">
+    <p>The strong one wraps round the squad in a crescent while the guns carve out its middle, and lives. The weak one breaks up in 3 s. Everything between can come up: on planet 3 the grade runs from 0.11 to 0.71, and it rises deeper into the run (table below).</p>
+    <p><b>Run again after the code review's fixes</b> (members no longer condense away, armour blows no longer count as kills, a soldier aims by its bullet's real reach), same seed, no clips: the weakest formed from 221, came under fire at 2:12 and broke at 2:16 with 59 left, every soldier still standing; the strongest formed from 722 and killed all eight by 2:21, losing 7 members.</p>
+    <p style="color:var(--muted);font-size:.95rem">Under focused fire a packed body is easy to hit: each shot that landed hurt about 45 members at once. That is why the hits each member takes start at 4 and go up to 15. The pace bonus (up to 1.4 times) only made the strong one about 8% faster across the map, because a packed body moves as fast as it has room to, not as fast as each walker steps.</p>
+  </div>
+</section>
+
+<section>
+  <h2>How often, planet by planet</h2>
+  <p class="prose">Rarer and weaker early, more often and stronger deeper, with a wide spread on every planet. A crowding chance comes at a drawn time and waits for a crowded knot; a cut-off piece of 400 walkers or more gets its chance every second. The break-away specks are separate and stay more common early.</p>
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Planet</th><th>Crowding chance, mean gap</th><th>First one, mean</th><th>Cut-off piece, a second</th><th>At once</th><th>Grade</th><th>Hits each</th><th>Touches as</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>150 s</td><td>90 s</td><td>2%</td><td>1</td><td>0 to 0.6</td><td>4 to 11</td><td>2 to 4</td></tr>
+        <tr><td>2</td><td>135 s</td><td>83 s</td><td>3%</td><td>1</td><td>0.06 to 0.66</td><td>5 to 11</td><td>2 to 4</td></tr>
+        <tr><td>3</td><td>120 s</td><td>76 s</td><td>4%</td><td>1</td><td>0.11 to 0.71</td><td>5 to 12</td><td>2 to 4</td></tr>
+        <tr><td>4</td><td>105 s</td><td>69 s</td><td>5%</td><td>2</td><td>0.17 to 0.77</td><td>6 to 12</td><td>3 to 4</td></tr>
+        <tr><td>5</td><td>90 s</td><td>61 s</td><td>7%</td><td>2</td><td>0.23 to 0.83</td><td>7 to 13</td><td>3 to 4</td></tr>
+        <tr><td>6</td><td>75 s</td><td>54 s</td><td>8%</td><td>2</td><td>0.29 to 0.89</td><td>7 to 14</td><td>3 to 5</td></tr>
+        <tr><td>7</td><td>60 s</td><td>47 s</td><td>9%</td><td>2</td><td>0.34 to 0.94</td><td>8 to 14</td><td>3 to 5</td></tr>
+        <tr><td>8</td><td>45 s</td><td>40 s</td><td>10%</td><td>2</td><td>0.4 to 1</td><td>8 to 15</td><td>3 to 5</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose">Squads now shoot a mini-boss first when one is in range and in sight, and go back to the nearest slime when none is. Nothing here is balanced yet; the numbers are a first guess to play against.</p>
+</section>
+
+<section>
+  <h2>Next</h2>
+  <div class="next">
+    <p>The other kinds from the round 1 page, built on the same held body, a mix of ones that come for you and ones that stay put:</p>
+    <ul>
+      <li><b>Wanderer</b>: a cut-off piece that leaves for a far fresh crystal as one body and roots there.</li>
+      <li><b>Leech</b>: sits on one of your pumps and takes its income until you kill it.</li>
+      <li><b>Sapper</b>: packs against a wall between it and your pumps and eats a gap.</li>
+      <li><b>Mortar</b>: stays on a crystal and lobs slime past your guns' range, so you have to push in.</li>
+      <li><b>Pinwheel</b>: its members circle, so it sweeps a squad with spiral arms.</li>
+    </ul>
+    <p>The ones that stay put will come from crowding on a crystal, and the ones that run from cut-off pieces, as the round 1 page planned.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Clips: <code>larder-world run=1:3 mode=squads hand=hold look=DIR centre=X,Y,ZOOM screen=960x600</code> on the CPU's Vulkan (llvmpipe), branch <code>claude/project-thread-g8thj2</code>; the strength clips add <code>set=boss_grade_lo=G set=boss_grade_hi=G</code>. The numbers are from the boss lines the look mode prints each game second. Record: <code>Reports/mini-boss-2026-11-16/README.md</code>, round 2.</p>
+</footer>
+</main>

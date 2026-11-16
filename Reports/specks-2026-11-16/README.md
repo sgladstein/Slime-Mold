@@ -123,9 +123,10 @@ them too, for thickening). Times in ms, two runs each:
   word for condensing's birth stop, 364,924 atomic adds a step on one
   address, and `dclear`/`dcount` clear and count condensed walkers a
   cell over the whole map. A follow-up runs the mass only with condensing
-  (`Engine::ripens`) and the cell counts only with condensing or
-  thickening (`Engine::dense_walkers`, engine.wgsl's `dense_on`); the GPU
-  twins pass and the core world is to be timed again.
+  (`Engine::ripens`) and the cell counts only with condensing,
+  thickening (`Engine::dense_walkers`, engine.wgsl's `dense_on`) or a
+  mini-boss lump on (`lumps_on`, whose members' bite the same passes
+  count); the GPU twins pass and the core world is to be timed again.
 - Every core-world run had a frame of about 570 ms, A and B alike: the
   head start's growth before the clock, as in #370's timing.
 

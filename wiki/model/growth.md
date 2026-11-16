@@ -126,8 +126,8 @@ planet 2's mesh they blend into the slime's own exploring streams
 against no dense passes at all (`roam=0`), the step costs 0.05 ms more on
 planet 1, 0.07 on planet 2 and 0.56 on the core world, `ripen` 0.2 of it;
 most of the rest was the mass and the condensed walkers a cell, which
-now run only with condensing (`Engine::ripens`) or with condensing or
-thickening (`Engine::dense_walkers`).
+now run only with condensing (`Engine::ripens`) or with condensing,
+thickening (`Engine::dense_walkers`) or a lump (`lumps_on`).
 
 **Thickening** (11-15, `BigParams::thicken`, both engines; on in shape C
 at 2 until 11-16, **off since**: the owner, 04:58Z, "Remove the bronze";

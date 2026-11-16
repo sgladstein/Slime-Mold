@@ -68,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (252 words).
-pub const PARAMS_BYTES: usize = 1008;
+/// Bytes in `Params` (288 words).
+pub const PARAMS_BYTES: usize = 1152;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -109,6 +109,11 @@ pub const SPRAY_AT: usize = 960;
 /// fine cells, the stream of its draw; then its share, its lean's and
 /// run's steps (low and high half), its haste and a spare word.
 pub const RAID_AT: usize = 976;
+/// The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
+/// Params grew from 1008 to 1152, after the raid row): whether any lump is
+/// on and three spare words, then each lump's aim, pull, leash
+/// (`Lump::leash_k`), haste, armour and bite, and two spare words.
+pub const LUMP_AT: usize = 1008;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -509,6 +514,9 @@ pub struct Settings {
     pub raid_lean: u32,
     pub raid_len: u32,
     pub raid_haste: f32,
+    /// The lumps (`BigParams::lumps`, held bodies, 2026-11-16): set by the
+    /// game (`World::set_lump`), not keys.
+    pub lumps: [crate::mould::big::Lump; crate::mould::big::LUMPS],
     /// The food scent's keep a step and a reached pile's share of it
     /// (`BigParams::scent_keep`, `fed_scent`; keys since 11-15, the whole-
     /// game review's W44, so a film can turn scent up).
@@ -699,6 +707,7 @@ impl Settings {
             raid_lean: t.raid_lean,
             raid_len: t.raid_len,
             raid_haste: t.raid_haste,
+            lumps: t.lumps,
             scent_keep: t.scent_keep,
             fed_scent: t.fed_scent,
             lone_step: t.lone_step,
@@ -1136,6 +1145,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         raid_lean: s.raid_lean,
         raid_len: s.raid_len,
         raid_haste: s.raid_haste,
+        lumps: s.lumps,
         scent_keep: s.scent_keep,
         fed_scent: s.fed_scent,
         lone_step: s.lone_step,
@@ -1290,9 +1300,13 @@ pub const FIRE: usize = 62;
 pub const PCOPY: usize = 63;
 pub const FIREKILL: usize = 64;
 pub const IGNITE: usize = 65;
+/// Lumps (held bodies, 2026-11-16; engine.wgsl's `lumpclear` and on).
+pub const LUMPCLEAR: usize = 66;
+pub const LUMPSUM: usize = 67;
+pub const LUMPFORM: usize = 68;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 66] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite",
+pub const PASSES: [&str; 69] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform",
 ];
 
 impl Shared {
@@ -1411,6 +1425,9 @@ pub struct Engine {
     pub condenses: bool,
     pub dense_walkers: bool,
     pub ripens: bool,
+    /// A lump is on (`Settings::lumps`): `lumpclear` and `lumpsum` start
+    /// each tick.
+    pub lumps_on: bool,
     pub dense_at: u64,
     /// Plants (`plant_words`): their words sit in `news` from `plant_at`
     /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
@@ -1732,6 +1749,7 @@ impl Engine {
             condenses: false,
             dense_walkers: false,
             ripens: false,
+            lumps_on: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             plants: !d.plant.is_empty(),
@@ -2119,6 +2137,12 @@ impl Engine {
         b.extend(u32_bytes(&self.spray_row()));
         assert_eq!(b.len(), RAID_AT, "Params rows before the raid row moved");
         b.extend(u32_bytes(&raid_row(s, self.dish.p.scale as f32, !self.dish.raid_field.is_empty())));
+        assert_eq!(b.len(), LUMP_AT, "Params rows before the lump rows moved");
+        self.lumps_on = s.lumps.iter().any(crate::mould::big::Lump::on);
+        b.extend(u32_bytes(&[self.lumps_on as u32, 0, 0, 0]));
+        for l in &s.lumps {
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, 0, 0]));
+        }
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2282,10 +2306,11 @@ impl Engine {
             if self.garden {
                 out.extend([(OWNCLEAR, self.cells.div_ceil(256), s), (OWNCOUNT, self.n.div_ceil(256), s)]);
             }
-            // The condensed walkers a cell, which touch as two (`condense`).
-            // Only where some can be (11-16: specks alone make none, and on
-            // the core world these passes and the mass cost 0.36 ms a step).
-            if self.dense_walkers {
+            // The condensed walkers a cell, which touch as two (`condense`),
+            // and the lumps' members' bite. Only where some can be (11-16:
+            // specks alone make none, and on the core world these passes and
+            // the mass cost 0.36 ms a step).
+            if self.dense_walkers || self.lumps_on {
                 out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
@@ -2307,7 +2332,12 @@ impl Engine {
     /// on, `land` only with the crowd limit.
     pub fn tick_passes(&self) -> Vec<(usize, u32)> {
         let (n, cells) = (self.n.div_ceil(256), self.cells.div_ceil(256));
-        let mut tick = vec![(SENSE, n), (WALK, n)];
+        let mut tick = Vec::new();
+        // Each lump's centre as the step begins (the CPU's `sum_lumps`).
+        if self.lumps_on {
+            tick.extend([(LUMPCLEAR, 1), (LUMPSUM, n)]);
+        }
+        tick.extend([(SENSE, n), (WALK, n)]);
         // A fed mould packs tighter (`fed_crowd`): a cell the move's winner
         // holds can still take a fed parent's child, so the move's claims
         // are cleared first, as the CPU clears them after its moves (a
@@ -3023,7 +3053,7 @@ fn gas_until(d: &BigDish) -> u64 {
 /// the sleep gas's; `engine.wgsl`'s `dense_base`): a header of
 /// `DENSE_HEAD` words, each slot's word (`BigDish::dense`, 0 while it has
 /// none), then a word a cell, clear.
-pub const DENSE_HEAD: usize = 4;
+pub const DENSE_HEAD: usize = 16;
 
 /// `Settings::thicken` as the GPU holds it: tenths, 0 to 255
 /// (`engine.wgsl`'s `thick_at`). A value with one decimal plays the same
@@ -3040,6 +3070,8 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // Blocks (`RAID_BLOCK`), fewer than the cells the region holds.
     w.extend(d.raid_field.iter().take(cells));
     w.resize(DENSE_HEAD + d.walkers.len() + 2 * cells, 0);
+    // Each cell's lump members' bite (`squad::bite_cells`; `dcount`).
+    w.resize(DENSE_HEAD + d.walkers.len() + 3 * cells, 0);
     w
 }
 
@@ -3053,6 +3085,27 @@ impl Engine {
         let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
         w.resize(cells, 0);
         self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
+    }
+
+    /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the
+    /// ordinary walkers within reach squared `r2` (whole fine cells) of
+    /// fine cell `at` (x | y << 16) join it; None releases it, every slot
+    /// (a spore in flight too). On its own,
+    /// between ticks.
+    pub fn form_lump(&self, shared: &Shared, b: usize, at: Option<(u32, u32)>) {
+        assert!(b < crate::mould::big::LUMPS, "lump {b}");
+        let (c, r2) = at.unwrap_or((u32::MAX, 0));
+        self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[b as u32 + 1, c, r2]));
+        self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// Each lump's (x, y, members) sums as the last tick began (header
+    /// words 4-15; the CPU's `lump_sums`), read back.
+    pub fn lump_sums(&self) -> [(u32, u32, u32); crate::mould::big::LUMPS] {
+        let b = read_back(&self.device, &self.queue, &self.news);
+        let at = self.dense_at as usize + 16;
+        let w: Vec<u32> = b[at..at + 48].chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+        std::array::from_fn(|i| (w[3 * i], w[3 * i + 1], w[3 * i + 2]))
     }
 
     pub fn dense_of(&self) -> Vec<u32> {

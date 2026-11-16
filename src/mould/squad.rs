@@ -561,6 +561,12 @@ pub fn shots(d: &mut BigDish, shots: &[ShotIn], slime: f32, crater: u16, sink: f
         // Whole walkers: a blast kills every living one in its disc, and the kills are counted whole.
         // A condensed one breaks instead (`BigDish::hit`), a kill's worth.
         if let Some(q) = (0..shots.len()).find(|&q| inside(c, q)) {
+            // A lump's armoured member is hurt (`BigDish::armoured`, a
+            // mini-boss, 2026-11-16), not counted: it lost no mass (counted,
+            // a grade-1 boss's 15 blows a member paid 15 kills' render food).
+            if d.armoured(k) {
+                continue;
+            }
             killed[q] += 1;
             // A condensed walker breaks (`BigDish::hit`); any other, with the
             // spray, flies out of the hit as a droplet (`BigDish::spray_one`)
@@ -672,14 +678,16 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
     let (w, h) = (d.w, d.h);
     let occ = d.occupancy();
     let dense = dense_cells(d);
+    let bite = bite_cells(d);
     let (nbw, nbh) = (w.div_ceil(BIN) as i64, h.div_ceil(BIN) as i64);
     units[..units.len().min(UNITS_MAX)]
         .iter()
         .map(|u| {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
             // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
-            // A condensed walker (`BigParams::condense`) touches as two.
-            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32)).sum();
+            // A condensed walker (`BigParams::condense`) touches as two, a
+            // lump's member as 1 + its bite (`Lump::bite`).
+            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32) + bite.get(i).map_or(0, |&n| n)).sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
             let (by0, by1) = ((cy - r).max(0) / BIN as i64, ((cy + r) / BIN as i64).min(nbh - 1));
@@ -720,6 +728,27 @@ pub fn dense_cells(d: &BigDish) -> Vec<u16> {
         if d.lives(k) && d.is_dense(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
             let (x, y, _) = d.walkers[k];
             n[y as usize * d.w + x as usize] += 1;
+        }
+    }
+    n
+}
+
+/// Each cell's lump members' bite (`Lump::bite`, the mini-bosses'
+/// strength, 2026-11-16; the GPU's `dcount` into the bite cells), empty
+/// with no lump on: dormant ones count, as in `occ`; spores and the dead
+/// hold no cell.
+pub fn bite_cells(d: &BigDish) -> Vec<u32> {
+    if d.dense.is_empty() || !d.p.lumps.iter().any(|l| l.on()) {
+        return Vec::new();
+    }
+    let mut n = vec![0u32; d.w * d.h];
+    for k in 0..d.walkers.len() {
+        if !d.lives(k) || (!d.life.is_empty() && matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
+            continue;
+        }
+        if let Some(b) = d.lump_of(k) {
+            let (x, y, _) = d.walkers[k];
+            n[y as usize * d.w + x as usize] += d.p.lumps[b].bite;
         }
     }
     n
