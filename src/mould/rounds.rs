@@ -132,6 +132,11 @@ pub enum Card {
     /// The shove drags the slime toward the gun, as a block: into the
     /// squad's crossfire, and nearer its soldiers.
     Pull,
+    /// **Multicast** (2026-11-16, step B of the gun-system review: "the
+    /// next two or three groups as one volley"): the shot that fires the
+    /// cast it is in fires the next cast too, side by side in the same
+    /// shot (`Cast::with`); a second multicast in that cast adds a third.
+    Multicast,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -144,13 +149,13 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 24] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull];
+    pub const ALL: [Card; 25] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
-            Card::Delay | Card::Thick | Card::Trigger | Card::Expire => Kind::Trigger,
+            Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
@@ -182,6 +187,7 @@ impl Card {
             Card::Smother => "smother",
             Card::Trigger => "trigger",
             Card::Expire => "expire",
+            Card::Multicast => "multicast",
             Card::Heave => "heave",
             Card::Corral => "corral",
             Card::Pull => "pull",
@@ -251,6 +257,7 @@ impl Card {
             Card::Smother => "Bullets wipe the scent slime follows to food.",
             Card::Trigger => "Carries the next bullet and lets it out where it hits.",
             Card::Expire => "Carries the next bullet and lets it out where it stops.",
+            Card::Multicast => "Fires the next bullet with it, in the same shot.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -267,7 +274,7 @@ impl Card {
             Card::Ammo(a) => a.cost as u32,
             Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
-            Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
+            Card::Blast | Card::Gas | Card::Scorch | Card::Mist | Card::Multicast => 3,
             Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
@@ -279,7 +286,7 @@ impl Card {
     pub fn tier(self) -> u8 {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
-            Card::Bomb | Card::Germ => 3,
+            Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull => 2,
             _ => 1,
         }
@@ -533,6 +540,10 @@ pub struct Cast {
     /// bullet a shove (`Rounds::shove`).
     pub heave: u8,
     pub herd: Option<Card>,
+    /// The cast fired beside it in the same shot (`Card::Multicast`): its
+    /// index in the round's casts. Like a carried cast it leaves the gun's
+    /// own turn (`cycle`); every shot of this cast fires it too.
+    pub with: Option<u8>,
 }
 
 /// Most carriers in a chain: a carried cast may carry one more, and a
@@ -540,15 +551,24 @@ pub struct Cast {
 /// in the plan: depth 2).
 pub const CARRY_DEPTH: usize = 2;
 
+/// The angle between the bullets a multicast shot fires side by side
+/// (`Card::Multicast`), radians: about a cell apart at 12 cells, so each
+/// finds its own slime and the eye sees two shots.
+pub const VOLLEY_FAN: f32 = 0.08;
+
 /// The round's casts, left to right. Modifiers and triggers apply to the
 /// next payload; a second trigger before it replaces the first.
 ///
 /// A `Trigger` or `Expire` makes its cast carry the next one (`Cast::child`),
 /// up to `CARRY_DEPTH` deep; a carrier with no cast after it carries none.
+/// A `Multicast` makes its cast fire the next one not yet taken beside it
+/// (`Cast::with`), each copy one more; links of both kinds count toward
+/// the same depth.
 pub fn casts(round: &[Card]) -> Vec<Cast> {
     let mut out: Vec<Cast> = Vec::new();
     let (mut wide, mut scatter, mut quiet, mut trigger, mut carry) = (0, false, false, None, None);
-    let (mut heave, mut herd) = (0, None);
+    let (mut heave, mut herd, mut multi) = (0, None, 0u8);
+    let mut multis: Vec<u8> = Vec::new();
     for &c in round.iter().take(MAX_SLOTS) {
         match c {
             Card::Wide => wide += 1,
@@ -558,41 +578,69 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Trigger | Card::Expire => carry = Some(c == Card::Expire || carry == Some(true)),
             Card::Heave => heave += 1,
             Card::Corral | Card::Pull => herd = Some(c),
+            Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let ammo = c.ammo().unwrap_or_default();
-                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd });
+                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
+                multis.push(multi);
                 // Marks a carrier for now: linked below.
                 if carry.is_some() {
                     out.last_mut().unwrap().child = Some(u8::MAX);
                 }
                 (wide, scatter, quiet, trigger, carry) = (0, false, false, None, None);
-                (heave, herd) = (0, None);
+                (heave, herd, multi) = (0, None, 0);
             }
         }
     }
-    // Each carrier takes the cast after it, unless that would make a chain
-    // deeper than `CARRY_DEPTH`.
+    // Each carrier takes the cast after it, and each multicast the next
+    // cast not yet taken (one more a copy, each fired beside the last),
+    // unless that would make a chain deeper than `CARRY_DEPTH`.
     let mut depth = vec![0usize; out.len()];
+    let mut taken = vec![false; out.len()];
     for i in 0..out.len() {
-        if out[i].child.is_none() {
-            continue;
+        if out[i].child.is_some() {
+            if i + 1 < out.len() && !taken[i + 1] && depth[i] < CARRY_DEPTH {
+                out[i].child = Some((i + 1) as u8);
+                depth[i + 1] = depth[i] + 1;
+                taken[i + 1] = true;
+            } else {
+                (out[i].child, out[i].expire) = (None, false);
+            }
         }
-        if i + 1 < out.len() && depth[i] < CARRY_DEPTH {
-            out[i].child = Some((i + 1) as u8);
-            depth[i + 1] = depth[i] + 1;
-        } else {
-            (out[i].child, out[i].expire) = (None, false);
+        let mut at = i;
+        for _ in 0..multis[i] {
+            let Some(j) = (i + 1..out.len()).find(|&j| !taken[j]) else { break };
+            if depth[at] >= CARRY_DEPTH {
+                break;
+            }
+            out[at].with = Some(j as u8);
+            depth[j] = depth[at] + 1;
+            taken[j] = true;
+            at = j;
         }
     }
     out
 }
 
+/// The casts one shot of cast `i` fires (indices in `casts`): `i` and the
+/// casts beside it (`Cast::with`), in order.
+pub fn volley(casts: &[Cast], i: usize) -> Vec<usize> {
+    let mut v = vec![i];
+    while let Some(j) = casts.get(*v.last().unwrap()).and_then(|c| c.with) {
+        if v.contains(&(j as usize)) {
+            break;
+        }
+        v.push(j as usize);
+    }
+    v
+}
+
 /// The casts a gun fires in its own turn, left to right, as cast ids (1 +
 /// the index in `casts`): every cast no other carries.
 pub fn cycle(casts: &[Cast]) -> Vec<u8> {
-    let carried: Vec<u8> = casts.iter().filter_map(|c| c.child).collect();
+    let carried: Vec<u8> = casts.iter().flat_map(|c| c.child.into_iter().chain(c.with)).collect();
     (0..casts.len() as u8).filter(|i| !carried.contains(i)).map(|i| i + 1).collect()
 }
 
@@ -609,6 +657,7 @@ pub fn flight(round: &[Card]) -> BulletMods {
         m.ammo[i] = c.ammo;
         m.child[i] = c.child.map_or(0, |j| j + 1);
         m.expire[i] = c.expire;
+        m.with[i] = c.with.map_or(0, |j| j + 1);
     }
     let turn = cycle(&all);
     m.casts = turn.len() as u8;
@@ -776,6 +825,20 @@ pub struct Rounds {
     /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
     pub gassed: usize,
     pub pops: Vec<Pop>,
+    /// This step's payload and shove bursts, run as one batch at its end
+    /// (`World::bursts`; `Rounds::flush`), with what each counts for.
+    queued: Vec<(Burst, BurstRules, Due)>,
+    /// Batches run (`flush`) and the bursts in them.
+    pub batches: u32,
+    pub batched: u32,
+}
+
+/// What a queued burst's counts go to: its pop (`Rounds::pops`), or a
+/// shove.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Due {
+    Pop(usize),
+    Shove,
 }
 
 /// A payload's place in `Rounds::cast`; plain bullets are not counted.
@@ -917,6 +980,7 @@ impl Rounds {
                 }
             }
         }
+        self.flush(g);
         if self.pending.is_empty() {
             return;
         }
@@ -936,6 +1000,37 @@ impl Rounds {
         for p in go {
             self.fire(g, &p.cast, p.at, Some(p.dir));
         }
+        self.flush(g);
+    }
+
+    /// Runs the step's queued bursts as one batch (`World::bursts`: on the
+    /// GPU one read-back for them all, 2026-11-16) and adds up what each
+    /// did, to its pop or the shoves. Bursts in a step never read each
+    /// other's counts, so batching moves no walker: the same bursts run in
+    /// the same order.
+    fn flush<W: World>(&mut self, g: &mut Game<W>) {
+        if self.queued.is_empty() {
+            return;
+        }
+        let q = std::mem::take(&mut self.queued);
+        let list: Vec<(Burst, BurstRules)> = q.iter().map(|&(b, k, _)| (b, k)).collect();
+        let outs = g.world.bursts(&list);
+        self.batches += 1;
+        self.batched += q.len() as u32;
+        for ((_, _, due), out) in q.iter().zip(outs) {
+            let (killed, flung) = (out.killed as usize, out.flung as usize);
+            self.killed += killed;
+            self.flung += flung;
+            self.gassed += out.gassed as usize;
+            g.killed += out.killed;
+            match *due {
+                Due::Pop(i) => {
+                    self.pops[i].killed += killed;
+                    self.pops[i].flung += flung;
+                }
+                Due::Shove => self.shoved += flung,
+            }
+        }
     }
 
     /// Every cast of the round at once at `at` (fine cells), free and with
@@ -948,6 +1043,7 @@ impl Rounds {
                 self.fire(g, &c, at, None);
             }
         }
+        self.flush(g);
     }
 
     /// Every soldier bullet's leg this step lays the round's trails
@@ -1058,10 +1154,8 @@ impl Rounds {
         if b.push.is_some() {
             self.pushes += 1;
         }
-        let out = g.world.burst(&b, &kr);
         self.shoves += 1;
-        self.shoved += out.flung as usize;
-        self.flung += out.flung as usize;
+        self.queued.push((b, kr, Due::Shove));
     }
 
     /// Casts `c` at `at` (fine cells), from a bullet heading `dir` (None:
@@ -1088,17 +1182,12 @@ impl Rounds {
                 }
                 None => (b, None),
             };
-            let (mut killed, mut flung) = (0, 0);
-            for p in std::iter::once(&burst).chain(&throw) {
-                let out = g.world.burst(p, &k);
-                killed += out.killed as usize;
-                flung += out.flung as usize;
-                self.gassed += out.gassed as usize;
+            // Counted when the step's batch runs (`flush`).
+            let i = self.pops.len();
+            for p in std::iter::once(burst).chain(throw) {
+                self.queued.push((p, k, Due::Pop(i)));
             }
-            self.killed += killed;
-            self.flung += flung;
-            g.killed += killed as u32;
-            self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed, flung });
+            self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed: 0, flung: 0 });
         }
     }
 }
@@ -1711,6 +1800,66 @@ mod tests {
             out.push((rd.cast[0], rd.killed));
         }
         assert!(out[0].0 > out[1].0, "a trigger blasts on every landing shot: {out:?}");
+    }
+
+    /// **Multicast links** (step B): a multicast's cast fires the next
+    /// cast not yet taken beside it, a second copy a third; the casts
+    /// beside it leave the gun's turn; a trigger in the same cast takes the
+    /// cast after it first; past `CARRY_DEPTH` copies do nothing.
+    #[test]
+    fn a_multicast_fires_the_next_cast_beside_its_own() {
+        let w = |r: &str| casts(&parse(r).unwrap()).iter().map(|c| c.with).collect::<Vec<_>>();
+        assert_eq!(w("multicast+plain+blast"), vec![Some(1), None]);
+        assert_eq!(cycle(&casts(&parse("multicast+plain+blast").unwrap())), vec![1]);
+        assert_eq!(w("multicast+multicast+plain+blast+gas"), vec![Some(1), Some(2), None]);
+        assert_eq!(volley(&casts(&parse("multicast+multicast+plain+blast+gas").unwrap()), 0), vec![0, 1, 2]);
+        assert_eq!(w("multicast+multicast+multicast+plain+blast+gas"), vec![Some(1), Some(2), None], "a third copy is past the depth");
+        // The trigger carries the blast; the multicast fires the gas beside.
+        let c = casts(&parse("multicast+trigger+plain+blast+gas").unwrap());
+        assert_eq!((c[0].child, c[0].with), (Some(1), Some(2)));
+        assert_eq!(cycle(&c), vec![1]);
+        // Nothing after it: a plain shot alone.
+        assert_eq!(w("multicast+plain"), vec![None]);
+        assert_eq!(cycle(&casts(&parse("plain+blast+multicast").unwrap())), vec![1, 2]);
+        let f = flight(&parse("plain+multicast+blast+gas").unwrap());
+        assert_eq!((f.casts, &f.cycle[..2], &f.with[..3]), (2, &[1, 2][..], &[0, 3, 0][..]));
+        assert_eq!((Card::Multicast.kind(), Card::from_word("multicast"), Card::Multicast.tier()), (Kind::Trigger, Some(Card::Multicast), 3));
+    }
+
+    /// **A multicast shot fires both** (step B): with `multicast+plain+blast`
+    /// every soldier shot fires a plain bullet and a blast side by side
+    /// (`Game::multicast` one a shot), so blasts come every shot instead of
+    /// every second one, and the step's bursts run as one batch.
+    #[test]
+    fn a_multicast_shot_fires_its_casts_side_by_side() {
+        let mut out = Vec::new();
+        for round in ["multicast+plain+blast", "plain+blast"] {
+            let mut g = attacking(2);
+            g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
+            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            let (mut fired, mut pairs) = ([0u32; 3], 0);
+            for _ in 0..15 * 30 {
+                g.step();
+                let mut by: Vec<(usize, u8)> = g.last_shots.iter().filter(|s| s.fired).filter_map(|s| s.by.map(|k| (k, s.cast))).collect();
+                for &(_, c) in &by {
+                    fired[c as usize] += 1;
+                }
+                by.sort();
+                pairs += by.windows(2).filter(|w| w[0].0 == w[1].0 && w[0].1 == 1 && w[1].1 == 2).count();
+                rd.after_step(&mut g);
+            }
+            eprintln!("{round}: fired {fired:?}, side by side {pairs}, multicast {}, blasts {}, killed {}, batches {} of {} bursts", g.multicast, rd.cast[0], rd.killed, rd.batches, rd.batched);
+            if round.starts_with("multicast") {
+                assert!(fired[1] > 20 && fired[1] == fired[2] && g.multicast == fired[1], "every shot fires both: {fired:?}, multicast {}", g.multicast);
+                assert_eq!(pairs as u32, fired[1], "each soldier's plain and blast go out in the same step");
+            } else {
+                assert_eq!(g.multicast, 0);
+                assert!(fired[1].abs_diff(fired[2]) <= 8, "in turn: {fired:?}");
+            }
+            assert!(rd.batched >= rd.batches, "bursts run in batches");
+            out.push((fired[2], rd.cast[0]));
+        }
+        assert!(out[0].0 > out[1].0 * 3 / 2, "a multicast fires a blast every shot: {out:?}");
     }
 
     /// **The shove cards** (owner 2026-11-16 05:11Z: "a gun that lets you

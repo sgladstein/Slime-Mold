@@ -447,14 +447,23 @@ impl<W: World> Game<W> {
                 return Some(p);
             }
         }
-        let aim = s.aim?;
-        // Only at mould that shows as slime, and that the soldier can see
-        // (no rock or wall on the line: a shot into rock is paid for and
-        // hits nothing).
-        if s.dense < self.rules.aim_min || !self.clear_line((s.x, s.y), aim) {
-            return None;
-        }
-        let near = |p: (f32, f32), r: f32| (p.0 - aim.0).hypot(p.1 - aim.1) <= r;
+        // A mini-boss in reach and in sight first (`Game::boss_aim`,
+        // 2026-11-16); its body's radius widens the stance's tests below.
+        let boss = self.boss_aim(k);
+        let (aim, body) = match boss {
+            Some(b) => b,
+            None => {
+                let aim = s.aim?;
+                // Only at mould that shows as slime, and that the soldier
+                // can see (no rock or wall on the line: a shot into rock is
+                // paid for and hits nothing).
+                if s.dense < self.rules.aim_min || !self.clear_line((s.x, s.y), aim) {
+                    return None;
+                }
+                (aim, 0.0)
+            }
+        };
+        let near = |p: (f32, f32), r: f32| (p.0 - aim.0).hypot(p.1 - aim.1) <= r + body;
         let stance = if self.rules.squads && Some(s.squad as usize) == self.active {
             // The controlled squad's guns are the player's (`squads`): on
             // its own it only defends itself.

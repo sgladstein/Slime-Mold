@@ -1,0 +1,5 @@
+Blind A/B key for the mini-boss look page (2026-11-16), kept off the page.
+A violet
+B ember
+C ink
+(random.seed(1116); shuffle of [violet, ember, ink])

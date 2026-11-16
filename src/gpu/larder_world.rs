@@ -105,7 +105,9 @@ const RO_UNITS: u64 = 0;
 const RO_SHOTS: u64 = RO_UNITS + (UNITS_MAX * squad::U_OUT_W * 4) as u64;
 const RO_KILLS: u64 = RO_SHOTS + (SHOTS_MAX * 16) as u64;
 const RO_PILES: u64 = RO_KILLS + (SHOTS_MAX * 4) as u64;
-const RO_WSTAT: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+// Each lump's sums (`dense_base` header words 4-15, `Engine::lump_sums`).
+const RO_LUMPS: u64 = RO_PILES + (MAX_PILES * 32) as u64;
+const RO_WSTAT: u64 = RO_LUMPS + 48;
 const RO_GRID: u64 = RO_WSTAT + WSTAT_BYTES as u64;
 
 /// Game ticks between the mould grid's sums once a grid is asked for
@@ -146,6 +148,8 @@ struct Read {
     /// The engine's kill counter at the frame's end (`Engine::struck`,
     /// `wstat[3]`), which the plants' `firekill` pass adds to.
     struck: u32,
+    /// Each lump's sums as the frame's last tick began (`Engine::lump_sums`).
+    lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
 }
 
 /// The engine as a Larder world.
@@ -164,6 +168,8 @@ pub struct GpuWorld {
     own: usize,
     /// The enemy's condensed walkers at the last readout (`World::mass`).
     dense: usize,
+    /// Each lump's sums at the last readout (`World::lumps`).
+    lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
     broken: u32,
     /// The mirror's wall cells and a gather of their words, so `keep`
@@ -219,6 +225,9 @@ pub struct GpuWorld {
     /// A burn has run since `struck` was read: its kills are on the
     /// counter but not yet in `fire_new`.
     burn_dirty: bool,
+    /// The bursts' counter snaps (`World::bursts`, `Engine::snap`), kept
+    /// from batch to batch and grown as a batch needs.
+    snaps: Option<wgpu::Buffer>,
 }
 
 /// The gardeners on the GPU world (`own_mould`'s `Garden`, 2026-11-12):
@@ -350,7 +359,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -363,7 +372,8 @@ impl GpuWorld {
         enc.copy_buffer_to_buffer(&e.sq, (squad::U_OUT * 4) as u64, b, RO_UNITS, RO_SHOTS - RO_UNITS);
         enc.copy_buffer_to_buffer(&e.sq, (squad::S_OUT * 4) as u64, b, RO_SHOTS, RO_KILLS - RO_SHOTS);
         enc.copy_buffer_to_buffer(&e.kills, 0, b, RO_KILLS, RO_PILES - RO_KILLS);
-        enc.copy_buffer_to_buffer(&e.piles, 0, b, RO_PILES, RO_WSTAT - RO_PILES);
+        enc.copy_buffer_to_buffer(&e.piles, 0, b, RO_PILES, RO_LUMPS - RO_PILES);
+        enc.copy_buffer_to_buffer(&e.news, e.dense_at + 16, b, RO_LUMPS, RO_WSTAT - RO_LUMPS);
         let (gw, gh) = e.grid_size();
         enc.copy_buffer_to_buffer(&e.wstat, 0, b, RO_WSTAT, (WSTAT_BYTES + 4 * gw * gh) as u64);
     }
@@ -472,12 +482,14 @@ impl GpuWorld {
         sq[squad::S_OUT..squad::PATH].copy_from_slice(&words[at(RO_SHOTS)..at(RO_KILLS)]);
         let (nunits, nshots, _) = self.e.squad;
         let out = squad::unpack(self.e.dish.w, &sq, &words[at(RO_KILLS)..at(RO_PILES)], nunits as usize, nshots as usize);
-        let piles = &words[at(RO_PILES)..at(RO_WSTAT)];
+        let piles = &words[at(RO_PILES)..at(RO_LUMPS)];
+        let ls = &words[at(RO_LUMPS)..at(RO_WSTAT)];
+        let lumps = std::array::from_fn(|b| (ls[3 * b], ls[3 * b + 1], ls[3 * b + 2]));
         let sums = (0..self.e.npiles as usize).map(|p| (f32::from_bits(piles[p * 8 + 4]), piles[p * 8 + 2])).collect();
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3] }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -488,6 +500,7 @@ impl GpuWorld {
         self.living = r.living as usize;
         self.own = r.own as usize;
         self.dense = r.dense as usize;
+        self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
         // inject) starts the count again.
@@ -535,6 +548,68 @@ impl GpuWorld {
         self.submit(enc);
         let mut r = self.take();
         self.keep(&mut r);
+    }
+
+    /// One burst's passes with no read-back (`World::bursts` counts
+    /// them): the kill, clear, alarm and crater, the fire, the fling, the
+    /// gas and its cloud, the scent and the germ, in the CPU's order.
+    fn burst_passes(&mut self, b: &squad::Burst, k: &squad::BurstRules) {
+        if (b.alarm > 0.0 || b.gas > 0) && self.s.alarm_keep <= 0.0 {
+            self.s.alarm_keep = k.alarm_keep;
+        }
+        if b.kill || b.burn || b.alarm > 0.0 || b.crater > 0 {
+            let r = if b.kill || b.burn { b.r } else { 0.0 };
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
+        }
+        // Fire in the plants, after the strike and crater as on the CPU
+        // (`squad::burst`): a share of a burn's disc, a smaller share of a
+        // blast's out to a dish cell past its crater.
+        let mut lights = Vec::new();
+        let p = &self.e.dish.p;
+        if b.burn {
+            lights.push((b.at.0, b.at.1, b.r, p.fire_light_burn));
+        }
+        if b.crater > 0 {
+            lights.push((b.at.0, b.at.1, b.crater_r + 1.0, p.fire_light_blast));
+        }
+        self.e.ignite(&self.shared, &lights);
+        // An explosion's fling (`Engine::fling`, 11-14), after the kill as
+        // on the CPU.
+        if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
+            self.s.fling_speed = k.fling_speed;
+            let sc = self.e.dish.p.scale as f32;
+            self.e.fling_pass(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv, b.push);
+        }
+        if b.gas > 0 {
+            self.s.gas_death = k.gas_death;
+            self.e.gas_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
+            // The cloud after the gas, as `squad::burst` lays it.
+            if k.gas_keep > 0.0 {
+                (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+                self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
+            }
+        }
+        if b.bait > 0.0 || b.smother {
+            self.e.lay_scent(&self.shared, &self.s, b.at.0, b.at.1, b.r, (if b.smother { 0.0 } else { 1.0 }, b.bait));
+        }
+        if b.cloud > 0.0 && k.gas_keep > 0.0 {
+            (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
+            self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.cloud);
+        }
+        // The germ last, as on the CPU: a burst of its own that kills,
+        // clears and lays nothing, only infects within `r`.
+        if b.germ {
+            if self.s.sick == 0 {
+                assert!(k.sick_steps > 0, "the germ needs sick_steps");
+                self.s.sick = k.sick_steps as u32;
+                self.s.immune = k.immune_steps as u32;
+                self.s.sick_upkeep = k.sick_upkeep;
+                self.s.catch_at = k.sick_catch;
+                self.s.germ = k.sick_deposit;
+                self.s.germ_keep = k.sick_keep;
+            }
+            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
+        }
     }
 }
 
@@ -655,85 +730,61 @@ impl World for GpuWorld {
     /// alarm field turns on with the first alarm or gas, as `BigDish::
     /// enable_alarm` does.
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
-        // A step in shares (`spread`) runs whole before the burst, so the
-        // burst lands between steps as on the CPU.
+        // A shock or a crater alone (the rounds' trails, a burst a bullet
+        // a frame) and a burn count nothing now: no read-back. A burn's
+        // kills wait for `burned`, once a frame.
+        if !b.kill && b.fling_ring(self.e.dish.p.scale as f32).is_none() && b.gas == 0 {
+            self.flush();
+            self.burst_passes(b, k);
+            self.burn_dirty |= b.burn;
+            return squad::BurstOut::default();
+        }
+        self.bursts(&[(*b, *k)]).remove(0)
+    }
+
+    /// The bursts' passes in order with a `snap` of the engine's counters
+    /// before the first and after each (no wait), then one read-back of
+    /// the snaps: each burst's kills, gassed and flung are what its own
+    /// passes moved. Until 2026-11-16 each killing burst read the kill
+    /// counter back, each fling and gas its count too (`Engine::struck`,
+    /// `fling`, `gas`): a volley of eight bombs was 16 stalls.
+    fn bursts(&mut self, list: &[(squad::Burst, squad::BurstRules)]) -> Vec<squad::BurstOut> {
+        if list.is_empty() {
+            return Vec::new();
+        }
+        // A step in shares (`spread`) runs whole before the bursts, so they
+        // land between steps as on the CPU.
         self.flush();
-        if (b.alarm > 0.0 || b.gas > 0) && self.s.alarm_keep <= 0.0 {
-            self.s.alarm_keep = k.alarm_keep;
+        let need = 16 * (list.len() as u64 + 1);
+        if self.snaps.as_ref().is_none_or(|b| b.size() < need) {
+            let size = need.next_power_of_two().max(256);
+            self.snaps = Some(self.e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("burst snaps"), size, usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false }));
         }
-        let mut out = squad::BurstOut::default();
-        if b.kill || b.burn || b.alarm > 0.0 || b.crater > 0 {
-            let r = if b.kill || b.burn { b.r } else { 0.0 };
-            if b.kill && self.burn_dirty {
-                // A burn's kills are fire's: off the counter before this
-                // kill's own.
-                let now = self.e.struck();
-                self.fire_new += now.wrapping_sub(self.struck);
-                self.struck = now;
-                self.burn_dirty = false;
-            }
-            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
-            // Only a kill moves the count: a shock or a crater alone (the
-            // rounds' trails, a burst a bullet a frame) skips the read-back,
-            // and a burn waits for `burned`, once a frame.
-            if b.kill {
-                let now = self.e.struck();
-                out.killed = now.wrapping_sub(self.struck);
-                self.struck = now;
-            } else if b.burn {
-                self.burn_dirty = true;
-            }
+        let snaps = self.snaps.take().unwrap();
+        self.e.snap(&snaps, 0);
+        for (i, (b, k)) in list.iter().enumerate() {
+            self.burst_passes(b, k);
+            self.e.snap(&snaps, i as u64 + 1);
         }
-        // Fire in the plants, after the strike and crater as on the CPU
-        // (`squad::burst`): a share of a burn's disc, a smaller share of a
-        // blast's out to a dish cell past its crater.
-        let mut lights = Vec::new();
-        let p = &self.e.dish.p;
-        if b.burn {
-            lights.push((b.at.0, b.at.1, b.r, p.fire_light_burn));
-        }
-        if b.crater > 0 {
-            lights.push((b.at.0, b.at.1, b.crater_r + 1.0, p.fire_light_blast));
-        }
-        self.e.ignite(&self.shared, &lights);
-        // An explosion's fling (`Engine::fling`, 11-14), after the kill as
-        // on the CPU.
-        if let Some((r, rr, inv)) = b.fling_ring(self.e.dish.p.scale as f32) {
-            self.s.fling_speed = k.fling_speed;
-            let sc = self.e.dish.p.scale as f32;
-            out.flung = self.e.fling(&self.shared, &self.s, b.at.0, b.at.1, r / sc, rr / sc, b.fling_steps, inv, b.push);
-        }
-        if b.gas > 0 {
-            self.s.gas_death = k.gas_death;
-            out.gassed = self.e.gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.gas);
-            // The cloud after the gas, as `squad::burst` lays it.
-            if k.gas_keep > 0.0 {
-                (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
-                self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, k.gas_dose);
-            }
-        }
-        if b.bait > 0.0 || b.smother {
-            self.e.lay_scent(&self.shared, &self.s, b.at.0, b.at.1, b.r, (if b.smother { 0.0 } else { 1.0 }, b.bait));
-        }
-        if b.cloud > 0.0 && k.gas_keep > 0.0 {
-            (self.s.gas_keep, self.s.gas_sleep, self.s.gas_linger) = (k.gas_keep, k.gas_sleep, k.gas_linger);
-            self.e.lay_gas(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.cloud);
-        }
-        // The germ last, as on the CPU: a burst of its own that kills,
-        // clears and lays nothing, only infects within `r`.
-        if b.germ {
-            if self.s.sick == 0 {
-                assert!(k.sick_steps > 0, "the germ needs sick_steps");
-                self.s.sick = k.sick_steps as u32;
-                self.s.immune = k.immune_steps as u32;
-                self.s.sick_upkeep = k.sick_upkeep;
-                self.s.catch_at = k.sick_catch;
-                self.s.germ = k.sick_deposit;
-                self.s.germ_keep = k.sick_keep;
-            }
-            self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, 0.0, 0.0, 0.0, 0.0, 0, b.r);
-        }
-        out
+        let w = self.e.read_snaps(&snaps, list.len() + 1);
+        self.snaps = Some(snaps);
+        // What moved the kill counter before the batch (a burn, a frame
+        // still counting) is fire's, and so is a burn's within it.
+        self.fire_new += w[0][0].wrapping_sub(self.struck);
+        let outs = list
+            .iter()
+            .zip(w.windows(2))
+            .map(|((b, _), d)| {
+                let [struck, gassed, flung] = [0, 1, 2].map(|i| d[1][i].wrapping_sub(d[0][i]));
+                if !b.kill {
+                    self.fire_new += struck;
+                }
+                squad::BurstOut { killed: if b.kill { struck } else { 0 }, flung, gassed }
+            })
+            .collect();
+        self.struck = w[list.len()][0];
+        self.burn_dirty = false;
+        outs
     }
 
     /// The gassed sleepers near each point (`Engine::calm`; the CPU's
@@ -898,6 +949,41 @@ impl World for GpuWorld {
         self.e.write_raid_field();
     }
 
+    /// Runs `lumpform` at once, after the running step's shares (the CPU's
+    /// `form_lump`; the mirror's dense words are not kept).
+    fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = at.map(|(c, r)| crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h)));
+        self.e.form_lump(&self.shared, b, at);
+    }
+
+    /// Runs `lumpform`'s grow at once, as `form_lump`.
+    fn grow_lump(&mut self, b: usize, (c, r): ((f32, f32), f32)) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h));
+        self.e.grow_lump(&self.shared, b, at);
+    }
+
+    /// Written with the next step's params, and kept on the mirror dish.
+    fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+        self.s.lumps[b] = l;
+        self.e.dish.p.lumps[b] = l;
+    }
+
+    /// From the last frame's readout (`RO_LUMPS`), so no read-back.
+    fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+        // The sums are summed only while a lump is on (`lumps_on`), so with
+        // none on the last ones stay in the readout: none then, as the
+        // CPU's `lump_of` (review of the mini-boss PR).
+        let on = self.s.lumps.iter().any(crate::mould::big::Lump::on);
+        std::array::from_fn(|b| {
+            let (sx, sy, n) = self.lumps[b];
+            (on && n > 0).then(|| ((sx / n) as f32 + 0.5, (sy / n) as f32 + 0.5, n))
+        })
+    }
+
     /// The mirror's ground, which the world's walls keep (`build_wall`).
     fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
         Some((self.e.dish.agar.clone(), self.e.dish.w, self.e.dish.h))
@@ -1044,6 +1130,9 @@ mod tests {
         fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
             self.g.burst(b, k)
         }
+        fn bursts(&mut self, list: &[(squad::Burst, squad::BurstRules)]) -> Vec<squad::BurstOut> {
+            self.g.bursts(list)
+        }
         fn has_germ(&self) -> bool {
             self.g.has_germ()
         }
@@ -1109,6 +1198,18 @@ mod tests {
         }
         fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
             self.g.mould_grid(bin)
+        }
+        fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
+            self.g.form_lump(b, at)
+        }
+        fn grow_lump(&mut self, b: usize, at: ((f32, f32), f32)) {
+            self.g.grow_lump(b, at)
+        }
+        fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
+            self.g.set_lump(b, l)
+        }
+        fn lumps(&self) -> [Option<(f32, f32, u32)>; crate::mould::big::LUMPS] {
+            self.g.lumps()
         }
     }
 
@@ -1292,6 +1393,63 @@ mod tests {
         }
         assert_eq!(fired, 1, "the mine (trigger {}) went off by {:.0} s", km.mine_trigger(&g2), g2.time());
         eprintln!("GPU kit: blast {} killed, mine {} killed at {:.1} s", kg.killed[0], km.killed[1], g2.time());
+    }
+
+    /// **A batch of bursts counts each as alone, with one read-back**
+    /// (2026-11-16, the gun-card plan's batching): a blast, a bomb's
+    /// throw, a push, a gas and a burn on the mould's home, run as one
+    /// `bursts` batch on one GPU world and one at a time (`burst`) on a
+    /// twin: the same counts, burst by burst, and the same fire's kills;
+    /// the batch reads back once where the singles read back once a
+    /// counting burst. Against the CPU race world within 1% (the float
+    /// distance at the rim, as the kit's blast).
+    #[test]
+    fn a_batch_of_bursts_counts_each_as_alone_with_one_read_back() {
+        use crate::mould::kit::KitRules;
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut batch = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let mut one = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let mut cpu = race_world(seed, scale, walkers);
+        let home = batch.crystals()[0].0;
+        let sc = batch.scale();
+        let at = (home.0 / sc, home.1 / sc);
+        let fine = 30.0 * batch.fine_steps() as f32;
+        let k = squad::BurstRules { fling_speed: 1.5, ..crate::mould::rounds::burst_rules(&KitRules::default(), fine) };
+        let off = |dx: f32, dy: f32| (at.0 + dx, at.1 + dy);
+        let list = [
+            squad::Burst { at: off(-8.0, 0.0), r: 4.0, kill: true, crater: 30, crater_r: 5.0, ..Default::default() },
+            squad::Burst { at: off(6.0, 4.0), r: 2.0, fling: 8.0, fling_steps: 20, ..Default::default() },
+            squad::Burst { at: off(0.0, -8.0), r: 1e-3, fling: 6.0, fling_steps: 15, push: Some(0.7), ..Default::default() },
+            squad::Burst { at: off(-4.0, 8.0), r: 4.0, gas: 60, ..Default::default() },
+            squad::Burst { at: off(10.0, -6.0), r: 3.0, burn: true, ..Default::default() },
+            squad::Burst { at: off(2.0, 2.0), r: 3.0, kill: true, ..Default::default() },
+        ];
+        let list: Vec<(squad::Burst, squad::BurstRules)> = list.iter().map(|&b| (b, k)).collect();
+        let r0 = crate::gpu::reads();
+        let outs = batch.bursts(&list);
+        let reads = crate::gpu::reads() - r0;
+        let r1 = crate::gpu::reads();
+        let singles: Vec<squad::BurstOut> = list.iter().map(|(b, k)| one.burst(b, k)).collect();
+        let single_reads = crate::gpu::reads() - r1;
+        let on_cpu: Vec<squad::BurstOut> = list.iter().map(|(b, k)| cpu.burst(b, k)).collect();
+        eprintln!("batch {outs:?} ({reads} read-backs), one at a time {singles:?} ({single_reads}), CPU {on_cpu:?}");
+        assert_eq!(outs, singles, "a batch counts each burst as it would alone");
+        assert_eq!(reads, 1, "one read-back for the batch");
+        assert!(single_reads >= 4, "one at a time reads back each counting burst: {single_reads}");
+        // A burn's kills come with `burned` on the GPU (the CPU's burst
+        // counts them itself).
+        let fire = batch.burned();
+        assert_eq!(fire, one.burned(), "the burn's kills are fire's either way");
+        assert!(fire.abs_diff(on_cpu[4].killed) * 100 <= on_cpu[4].killed + 1 && fire > 10, "the burn killed {fire} on the GPU, {} on the CPU", on_cpu[4].killed);
+        assert!(outs[0].killed > 20 && outs[1].flung > 20 && outs[2].flung > 10 && outs[3].gassed > 10, "each burst did something: {outs:?}");
+        for ((g, c), (b, _)) in outs.iter().zip(&on_cpu).zip(&list) {
+            let killed = if b.burn { 0 } else { c.killed };
+            for (a, b) in [(g.killed, killed), (g.flung, c.flung), (g.gassed, c.gassed)] {
+                assert!(a.abs_diff(b) * 100 <= b.max(1) + 1, "the GPU's {g:?} against the CPU's {c:?}");
+            }
+        }
     }
 
     /// **The germ runs on the GPU world** (2026-11-14, cloud plan C5): a

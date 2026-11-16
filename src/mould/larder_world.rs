@@ -51,6 +51,7 @@
 mod buildings;
 mod world;
 mod raids;
+mod bosses;
 mod rules;
 mod paths;
 mod cmd;
@@ -74,6 +75,7 @@ pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
+pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::Who;
 
@@ -276,6 +278,9 @@ pub struct BulletMods {
     /// whether it lets it out where it stops without a hit too.
     pub child: [u8; super::rounds::MAX_SLOTS],
     pub expire: [bool; super::rounds::MAX_SLOTS],
+    /// Each cast's cast id fired beside it in the same shot (0 none,
+    /// `rounds::Cast::with`, `Card::Multicast`).
+    pub with: [u8; super::rounds::MAX_SLOTS],
 }
 
 pub struct Game<W: World> {
@@ -294,6 +299,8 @@ pub struct Game<W: World> {
     /// Walkers the turrets' shots killed (shots with no soldier, `Shot::by`
     /// None): the shove cards' kill zone measure (2026-11-16).
     pub turret_killed: u32,
+    /// Casts fired beside another in the same shot (`Card::Multicast`).
+    pub multicast: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -437,6 +444,8 @@ pub struct Game<W: World> {
     charge_was: f64,
     /// Raids (`Rules::raid`, `raids.rs`): the meter and every raid sent.
     pub raids: Raids,
+    /// Mini-bosses (`Rules::boss`, `bosses.rs`): the live ones and the ended.
+    pub bosses: Bosses,
     /// Food the kill box has paid (`BuildRules::render_food`).
     pub rendered: f32,
     /// The step handed to the world and not yet finished (`begin_step`).
@@ -509,6 +518,7 @@ impl<W: World> Game<W> {
             killed: 0,
             fire_killed: 0,
             turret_killed: 0,
+            multicast: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,
@@ -568,6 +578,7 @@ impl<W: World> Game<W> {
             surge_timed: false,
             charge_was: 0.0,
             raids: Raids::new(seed),
+            bosses: Bosses::new(seed),
             rendered: 0.0,
         };
         g.crystal_full = g.world.crystals().iter().map(|c| c.1).collect();

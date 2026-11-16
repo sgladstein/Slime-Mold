@@ -147,31 +147,43 @@ impl<W: World> Game<W> {
                         } else {
                             0
                         };
-                        // The bullet it fires (`bullets::Ammo`): its damage
-                        // widens the strike (area as damage, up to the
-                        // engines' `squad::R_MAX`), its range and spread
-                        // times the gun's; its speed rides on the bullet.
-                        let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
-                        // Its set's shape (`bullets::Shape`, 2026-11-16):
-                        // buckshot fires a fan of small pellets.
-                        let shape = ammo.set.shape();
-                        let hit_r = (strike * ammo.reach()).min(squad::R_MAX) * shape.r;
-                        let reach = reach * ammo.range();
-                        let spread = gun.spread * ammo.spread();
-                        let pellets = shape.pellets.max(1);
-                        for _ in 0..gun.shots.max(1) {
-                            let (mut ux, mut uy) = (dx / d, dy / d);
-                            if spread > 0.0 {
-                                let a = ((self.rng.f32() * 2.0 - 1.0) * spread * sc / d).atan();
-                                let (sn, cs) = a.sin_cos();
-                                (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
-                            }
-                            for p in 0..pellets {
-                                let a = if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
-                                let (sn, cs) = a.sin_cos();
-                                let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
-                                shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r });
-                                shooters.push((Some(k), cast));
+                        // The casts beside it (`Card::Multicast`,
+                        // 2026-11-16): one shot fires them all, each its own
+                        // bullets, fanned `rounds::VOLLEY_FAN` apart.
+                        let mut volley = vec![cast];
+                        while let Some(&w) = volley.last().filter(|&&c| c > 0).map(|&c| &m.with[c as usize - 1]).filter(|&&w| w > 0 && !volley.contains(&w)) {
+                            volley.push(w);
+                        }
+                        self.multicast += volley.len() as u32 - 1;
+                        let nv = volley.len();
+                        for (v, &cast) in volley.iter().enumerate() {
+                            // The bullet it fires (`bullets::Ammo`): its damage
+                            // widens the strike (area as damage, up to the
+                            // engines' `squad::R_MAX`), its range and spread
+                            // times the gun's; its speed rides on the bullet.
+                            let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
+                            // Its set's shape (`bullets::Shape`, 2026-11-16):
+                            // buckshot fires a fan of small pellets.
+                            let shape = ammo.set.shape();
+                            let hit_r = (strike * ammo.reach()).min(squad::R_MAX) * shape.r;
+                            let reach = reach * ammo.range();
+                            let spread = gun.spread * ammo.spread();
+                            let pellets = shape.pellets.max(1);
+                            let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
+                            for _ in 0..gun.shots.max(1) {
+                                let (mut ux, mut uy) = (dx / d, dy / d);
+                                if spread > 0.0 {
+                                    let a = ((self.rng.f32() * 2.0 - 1.0) * spread * sc / d).atan();
+                                    let (sn, cs) = a.sin_cos();
+                                    (ux, uy) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                                }
+                                for p in 0..pellets {
+                                    let a = side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+                                    let (sn, cs) = a.sin_cos();
+                                    let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
+                                    shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r });
+                                    shooters.push((Some(k), cast));
+                                }
                             }
                         }
                         // A worker of a squad shoots less often (`CoverRules::work_fire`).
@@ -376,6 +388,7 @@ impl<W: World> Game<W> {
             self.check_broken();
             self.keep_panic_reach();
             self.time_raids();
+            self.time_bosses();
         }
         self.campaign_rules(now - t);
         self.check_end();

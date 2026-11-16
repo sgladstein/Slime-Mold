@@ -1,0 +1,264 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 58.7 s (the slime has eaten 259 food)
+  raid 1 at t 72.0 s: Soldiers(0) at 439,262, reach 145 cells holding 11232 walkers, share 0.60, size 15% of the slime
+  t 85 s: mould 39332, soldiers 8, bank 400, harvested 0, rendered 0, shots 211, killed 725, took 0%, crystals left 0.976; squad at 436.3,261.7
+  boss t 85.00 s: a leech formed round 310,85, grade 0.38
+  t 86 s: mould 39332, soldiers 8, bank 400, harvested 0, rendered 0, shots 214, killed 748, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 86 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.07, stolen 0.0; nearest soldier 216.4, 8 alive
+  t 86 s: mould 36658, soldiers 8, bank 400, harvested 0, rendered 0, shots 217, killed 778, took 0%, crystals left 0.975; squad at 436.3,261.7
+  pump t 86.00 s: standing at 362,256
+  t 87 s: mould 36658, soldiers 8, bank 403, harvested 3, rendered 0, shots 221, killed 819, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 87 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,80, spread 1.02, stolen 0.0; nearest soldier 217.2, 8 alive
+  t 87 s: mould 34543, soldiers 8, bank 405, harvested 5, rendered 0, shots 227, killed 857, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 88 s: mould 34543, soldiers 8, bank 408, harvested 8, rendered 0, shots 232, killed 904, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 88 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.06, stolen 0.0; nearest soldier 218.0, 8 alive
+  t 88 s: mould 32772, soldiers 8, bank 410, harvested 10, rendered 0, shots 235, killed 932, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 89 s: mould 32772, soldiers 8, bank 413, harvested 13, rendered 0, shots 240, killed 990, took 0%, crystals left 0.975; squad at 436.3,261.7
+  boss t 89 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,78, spread 1.02, stolen 0.0; nearest soldier 218.3, 8 alive
+  t 89 s: mould 31323, soldiers 8, bank 415, harvested 15, rendered 0, shots 242, killed 1008, took 0%, crystals left 0.975; squad at 436.3,261.7
+  t 90 s: mould 31323, soldiers 8, bank 418, harvested 18, rendered 0, shots 245, killed 1014, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 90 s: lump 0 leech Gather, 116 members (first 116, 0 hurt), at 308,76, spread 1.04, stolen 0.0; nearest soldier 219.1, 8 alive
+  t 90 s: mould 30309, soldiers 8, bank 421, harvested 21, rendered 0, shots 246, killed 1014, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 91 s: mould 30309, soldiers 8, bank 423, harvested 23, rendered 0, shots 247, killed 1025, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 91 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 308,76, spread 1.09, stolen 0.0; nearest soldier 220.0, 8 alive
+  t 91 s: mould 29506, soldiers 8, bank 426, harvested 26, rendered 0, shots 247, killed 1025, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 92 s: mould 29506, soldiers 8, bank 428, harvested 28, rendered 0, shots 247, killed 1025, took 0%, crystals left 0.974; squad at 436.3,261.7
+  boss t 92 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 312,80, spread 1.38, stolen 0.0; nearest soldier 215.0, 8 alive
+  t 92 s: mould 28878, soldiers 8, bank 431, harvested 31, rendered 0, shots 250, killed 1030, took 0%, crystals left 0.974; squad at 436.3,261.7
+  t 93 s: mould 28878, soldiers 8, bank 434, harvested 34, rendered 0, shots 252, killed 1031, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 93 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 314,86, spread 1.41, stolen 0.0; nearest soldier 208.0, 8 alive
+  t 93 s: mould 28362, soldiers 8, bank 436, harvested 36, rendered 0, shots 254, killed 1037, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 94 s: mould 28362, soldiers 8, bank 439, harvested 39, rendered 0, shots 254, killed 1037, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 94 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,98, spread 1.33, stolen 0.0; nearest soldier 197.3, 8 alive
+  t 94 s: mould 28012, soldiers 8, bank 441, harvested 41, rendered 0, shots 254, killed 1037, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 95 s: mould 28012, soldiers 8, bank 444, harvested 44, rendered 0, shots 255, killed 1039, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 95 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,110, spread 1.24, stolen 0.0; nearest soldier 187.7, 8 alive
+  t 95 s: mould 27733, soldiers 8, bank 446, harvested 46, rendered 0, shots 256, killed 1041, took 0%, crystals left 0.973; squad at 436.3,261.7
+  t 96 s: mould 27733, soldiers 8, bank 449, harvested 49, rendered 0, shots 257, killed 1042, took 0%, crystals left 0.973; squad at 436.3,261.7
+  boss t 96 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 316,122, spread 1.14, stolen 0.0; nearest soldier 178.3, 8 alive
+  t 96 s: mould 27548, soldiers 8, bank 451, harvested 51, rendered 0, shots 259, killed 1043, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 97 s: mould 27548, soldiers 8, bank 454, harvested 54, rendered 0, shots 262, killed 1051, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 97 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 318,130, spread 1.22, stolen 0.0; nearest soldier 171.0, 8 alive
+  t 97 s: mould 27378, soldiers 8, bank 457, harvested 57, rendered 0, shots 262, killed 1051, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 98 s: mould 27378, soldiers 8, bank 459, harvested 59, rendered 0, shots 262, killed 1051, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 98 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 322,134, spread 1.20, stolen 0.0; nearest soldier 164.6, 8 alive
+  t 98 s: mould 27251, soldiers 8, bank 462, harvested 62, rendered 0, shots 264, killed 1055, took 0%, crystals left 0.972; squad at 436.3,261.7
+  t 99 s: mould 27251, soldiers 8, bank 464, harvested 64, rendered 0, shots 265, killed 1057, took 0%, crystals left 0.972; squad at 436.3,261.7
+  boss t 99 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 328,140, spread 1.25, stolen 0.0; nearest soldier 157.5, 8 alive
+  t 99 s: mould 27167, soldiers 8, bank 467, harvested 67, rendered 0, shots 265, killed 1057, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 100 s: mould 27167, soldiers 8, bank 470, harvested 70, rendered 0, shots 265, killed 1057, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 100 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 334,148, spread 1.39, stolen 0.0; nearest soldier 147.5, 8 alive
+  t 100 s: mould 27106, soldiers 8, bank 472, harvested 72, rendered 0, shots 266, killed 1065, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 101 s: mould 27106, soldiers 8, bank 475, harvested 75, rendered 0, shots 268, killed 1066, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 101 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 340,158, spread 1.33, stolen 0.0; nearest soldier 135.4, 8 alive
+  t 101 s: mould 27025, soldiers 8, bank 477, harvested 77, rendered 0, shots 271, killed 1071, took 0%, crystals left 0.971; squad at 436.3,261.7
+  t 102 s: mould 27025, soldiers 8, bank 480, harvested 80, rendered 0, shots 272, killed 1081, took 0%, crystals left 0.971; squad at 436.3,261.7
+  boss t 102 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 346,170, spread 1.26, stolen 0.0; nearest soldier 122.5, 8 alive
+  t 102 s: mould 26968, soldiers 8, bank 482, harvested 82, rendered 0, shots 272, killed 1081, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 103 s: mould 26968, soldiers 8, bank 485, harvested 85, rendered 0, shots 273, killed 1082, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 103 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 346,178, spread 1.29, stolen 0.0; nearest soldier 116.9, 8 alive
+  t 103 s: mould 26920, soldiers 8, bank 487, harvested 87, rendered 0, shots 275, killed 1084, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 104 s: mould 26920, soldiers 8, bank 490, harvested 90, rendered 0, shots 275, killed 1087, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 104 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 344,190, spread 1.26, stolen 0.0; nearest soldier 109.9, 8 alive
+  t 104 s: mould 26889, soldiers 8, bank 493, harvested 93, rendered 0, shots 278, killed 1088, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 105 s: mould 26889, soldiers 8, bank 495, harvested 95, rendered 0, shots 279, killed 1094, took 0%, crystals left 0.970; squad at 436.3,261.7
+  boss t 105 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 348,202, spread 1.29, stolen 0.0; nearest soldier 100.5, 8 alive
+  t 105 s: mould 26863, soldiers 8, bank 498, harvested 98, rendered 0, shots 279, killed 1094, took 0%, crystals left 0.970; squad at 436.3,261.7
+  t 106 s: mould 26863, soldiers 8, bank 500, harvested 100, rendered 0, shots 281, killed 1097, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 106 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 350,212, spread 1.28, stolen 0.0; nearest soldier 93.6, 8 alive
+  t 106 s: mould 26849, soldiers 8, bank 503, harvested 103, rendered 0, shots 284, killed 1102, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 107 s: mould 26849, soldiers 8, bank 506, harvested 106, rendered 0, shots 285, killed 1106, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 107 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 352,222, spread 1.13, stolen 0.0; nearest soldier 86.8, 8 alive
+  t 107 s: mould 26814, soldiers 8, bank 508, harvested 108, rendered 0, shots 286, killed 1107, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 108 s: mould 26814, soldiers 8, bank 511, harvested 111, rendered 0, shots 287, killed 1109, took 0%, crystals left 0.969; squad at 436.3,261.7
+  boss t 108 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 352,226, spread 1.22, stolen 0.0; nearest soldier 84.7, 8 alive
+  t 108 s: mould 26802, soldiers 8, bank 513, harvested 113, rendered 0, shots 289, killed 1110, took 0%, crystals left 0.969; squad at 436.3,261.7
+  t 109 s: mould 26802, soldiers 8, bank 516, harvested 116, rendered 0, shots 290, killed 1113, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 109 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,230, spread 1.24, stolen 0.0; nearest soldier 82.2, 8 alive
+  t 109 s: mould 26781, soldiers 8, bank 518, harvested 118, rendered 0, shots 292, killed 1115, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 110 s: mould 26781, soldiers 8, bank 521, harvested 121, rendered 0, shots 292, killed 1115, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 110 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,234, spread 1.27, stolen 0.0; nearest soldier 80.7, 8 alive
+  t 110 s: mould 26763, soldiers 8, bank 523, harvested 123, rendered 0, shots 292, killed 1115, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 111 s: mould 26763, soldiers 8, bank 526, harvested 126, rendered 0, shots 295, killed 1120, took 0%, crystals left 0.968; squad at 436.3,261.7
+  boss t 111 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 354,238, spread 1.34, stolen 0.0; nearest soldier 78.8, 8 alive
+  t 111 s: mould 26753, soldiers 8, bank 529, harvested 128, rendered 0, shots 296, killed 1122, took 0%, crystals left 0.968; squad at 436.3,261.7
+  t 112 s: mould 26753, soldiers 8, bank 531, harvested 131, rendered 0, shots 296, killed 1122, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 112 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 356,240, spread 1.29, stolen 0.0; nearest soldier 76.9, 8 alive
+  t 112 s: mould 26731, soldiers 8, bank 534, harvested 134, rendered 0, shots 296, killed 1122, took 0%, crystals left 0.967; squad at 436.3,261.7
+  t 113 s: mould 26731, soldiers 8, bank 536, harvested 136, rendered 0, shots 298, killed 1134, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 113 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 356,244, spread 1.29, stolen 0.0; nearest soldier 76.1, 8 alive
+  t 113 s: mould 26708, soldiers 8, bank 539, harvested 139, rendered 0, shots 301, killed 1139, took 0%, crystals left 0.967; squad at 436.3,261.7
+  t 114 s: mould 26708, soldiers 8, bank 542, harvested 142, rendered 0, shots 303, killed 1141, took 0%, crystals left 0.967; squad at 436.3,261.7
+  boss t 114 s: lump 0 leech Go((360.5, 255.5)), 116 members (first 116, 0 hurt), at 358,246, spread 1.27, stolen 0.0; nearest soldier 73.7, 8 alive
+  t 114 s: mould 26705, soldiers 8, bank 544, harvested 144, rendered 0, shots 304, killed 1149, took 0%, crystals left 0.967; squad at 436.3,261.7
+  surge 2 starts at t 114.5 s (the slime has eaten 519 food)
+  t 115 s: mould 26705, soldiers 8, bank 547, harvested 147, rendered 0, shots 304, killed 1149, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 115 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.28, stolen 0.0; nearest soldier 72.1, 8 alive
+  t 115 s: mould 26696, soldiers 8, bank 549, harvested 149, rendered 0, shots 304, killed 1149, took 0%, crystals left 0.966; squad at 436.3,261.7
+  t 116 s: mould 26696, soldiers 8, bank 549, harvested 149, rendered 0, shots 308, killed 1157, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 116 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,248, spread 1.16, stolen 5.1; nearest soldier 73.1, 8 alive
+  t 116 s: mould 26676, soldiers 8, bank 549, harvested 149, rendered 0, shots 312, killed 1165, took 0%, crystals left 0.966; squad at 436.3,261.7
+  t 117 s: mould 26676, soldiers 8, bank 549, harvested 149, rendered 0, shots 316, killed 1169, took 0%, crystals left 0.966; squad at 436.3,261.7
+  boss t 117 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.17, stolen 10.3; nearest soldier 72.9, 8 alive
+  t 117 s: mould 26674, soldiers 8, bank 549, harvested 149, rendered 0, shots 318, killed 1176, took 0%, crystals left 0.966; squad at 436.3,261.7
+  t 118 s: mould 26674, soldiers 8, bank 549, harvested 149, rendered 0, shots 319, killed 1177, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 118 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.13, stolen 15.4; nearest soldier 71.8, 8 alive
+  t 118 s: mould 26646, soldiers 8, bank 549, harvested 149, rendered 0, shots 319, killed 1177, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 119 s: mould 26646, soldiers 8, bank 549, harvested 149, rendered 0, shots 319, killed 1177, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 119 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,250, spread 1.11, stolen 20.6; nearest soldier 72.7, 8 alive
+  t 119 s: mould 26650, soldiers 8, bank 549, harvested 149, rendered 0, shots 320, killed 1179, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 120 s: mould 26650, soldiers 8, bank 549, harvested 149, rendered 0, shots 320, killed 1179, took 0%, crystals left 0.965; squad at 436.3,261.7
+  boss t 120 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.08, stolen 25.7; nearest soldier 72.6, 8 alive
+  t 120 s: mould 26656, soldiers 8, bank 549, harvested 149, rendered 0, shots 321, killed 1180, took 0%, crystals left 0.965; squad at 436.3,261.7
+  t 121 s: mould 26656, soldiers 8, bank 549, harvested 149, rendered 0, shots 321, killed 1180, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 121 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.11, stolen 30.8; nearest soldier 71.6, 8 alive
+  t 121 s: mould 26655, soldiers 8, bank 549, harvested 149, rendered 0, shots 322, killed 1184, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 122 s: mould 26655, soldiers 8, bank 549, harvested 149, rendered 0, shots 324, killed 1186, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 122 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.00, stolen 36.0; nearest soldier 71.4, 8 alive
+  t 122 s: mould 26651, soldiers 8, bank 549, harvested 149, rendered 0, shots 324, killed 1186, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 123 s: mould 26651, soldiers 8, bank 549, harvested 149, rendered 0, shots 324, killed 1186, took 0%, crystals left 0.964; squad at 436.3,261.7
+  boss t 123 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.02, stolen 41.1; nearest soldier 71.4, 8 alive
+  t 123 s: mould 26639, soldiers 8, bank 549, harvested 149, rendered 0, shots 326, killed 1193, took 0%, crystals left 0.964; squad at 436.3,261.7
+  t 124 s: mould 26639, soldiers 8, bank 549, harvested 149, rendered 0, shots 327, killed 1194, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 124 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.09, stolen 46.3; nearest soldier 71.4, 8 alive
+  t 124 s: mould 26637, soldiers 8, bank 549, harvested 149, rendered 0, shots 327, killed 1194, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 125 s: mould 26637, soldiers 8, bank 549, harvested 149, rendered 0, shots 328, killed 1199, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 125 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.11, stolen 51.4; nearest soldier 71.4, 8 alive
+  t 125 s: mould 26631, soldiers 8, bank 549, harvested 149, rendered 0, shots 329, killed 1200, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 126 s: mould 26631, soldiers 8, bank 549, harvested 149, rendered 0, shots 329, killed 1200, took 0%, crystals left 0.963; squad at 436.3,261.7
+  boss t 126 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.07, stolen 56.5; nearest soldier 71.4, 8 alive
+  t 126 s: mould 26624, soldiers 8, bank 549, harvested 149, rendered 0, shots 330, killed 1200, took 0%, crystals left 0.963; squad at 436.3,261.7
+  t 127 s: mould 26624, soldiers 8, bank 549, harvested 149, rendered 0, shots 330, killed 1203, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 127 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,252, spread 1.07, stolen 61.7; nearest soldier 71.4, 8 alive
+  t 127 s: mould 26609, soldiers 8, bank 549, harvested 149, rendered 0, shots 333, killed 1209, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 128 s: mould 26609, soldiers 8, bank 549, harvested 149, rendered 0, shots 333, killed 1209, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 128 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.01, stolen 66.8; nearest soldier 71.3, 8 alive
+  t 128 s: mould 26605, soldiers 8, bank 549, harvested 149, rendered 0, shots 334, killed 1210, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 129 s: mould 26605, soldiers 8, bank 549, harvested 149, rendered 0, shots 334, killed 1210, took 0%, crystals left 0.962; squad at 436.3,261.7
+  boss t 129 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 72.0; nearest soldier 71.3, 8 alive
+  t 129 s: mould 26614, soldiers 8, bank 549, harvested 149, rendered 0, shots 335, killed 1212, took 0%, crystals left 0.962; squad at 436.3,261.7
+  t 130 s: mould 26614, soldiers 8, bank 549, harvested 149, rendered 0, shots 335, killed 1212, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 130 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 77.1; nearest soldier 71.3, 8 alive
+  t 130 s: mould 26624, soldiers 8, bank 549, harvested 149, rendered 0, shots 336, killed 1216, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 131 s: mould 26624, soldiers 8, bank 549, harvested 149, rendered 0, shots 337, killed 1217, took 0%, crystals left 0.961; squad at 436.3,261.7
+  raid 2 at t 131.0 s: Building(0) at 360,256, reach 116 cells holding 8525 walkers, share 0.60, size 19% of the slime
+  boss t 131 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 82.2; nearest soldier 71.3, 8 alive
+  t 131 s: mould 26633, soldiers 8, bank 549, harvested 149, rendered 0, shots 339, killed 1218, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 132 s: mould 26633, soldiers 8, bank 549, harvested 149, rendered 0, shots 341, killed 1224, took 0%, crystals left 0.961; squad at 436.3,261.7
+  boss t 132 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 87.4; nearest soldier 71.3, 8 alive
+  t 132 s: mould 26623, soldiers 8, bank 549, harvested 149, rendered 0, shots 341, killed 1229, took 0%, crystals left 0.961; squad at 436.3,261.7
+  t 133 s: mould 26623, soldiers 8, bank 549, harvested 149, rendered 0, shots 343, killed 1231, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 133 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 92.5; nearest soldier 71.3, 8 alive
+  t 133 s: mould 26644, soldiers 8, bank 549, harvested 149, rendered 0, shots 343, killed 1231, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 134 s: mould 26644, soldiers 8, bank 549, harvested 149, rendered 0, shots 343, killed 1231, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 134 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.09, stolen 97.7; nearest soldier 71.3, 8 alive
+  t 134 s: mould 26684, soldiers 8, bank 549, harvested 149, rendered 0, shots 343, killed 1231, took 0%, crystals left 0.960; squad at 436.3,261.7
+  t 135 s: mould 26684, soldiers 8, bank 549, harvested 149, rendered 0, shots 345, killed 1235, took 0%, crystals left 0.960; squad at 436.3,261.7
+  boss t 135 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 102.8; nearest soldier 71.3, 8 alive
+  t 135 s: mould 26737, soldiers 8, bank 549, harvested 149, rendered 0, shots 347, killed 1238, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 136 s: mould 26737, soldiers 8, bank 549, harvested 149, rendered 0, shots 347, killed 1238, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 136 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 107.9; nearest soldier 71.3, 8 alive
+  t 136 s: mould 26783, soldiers 8, bank 549, harvested 149, rendered 0, shots 347, killed 1238, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 137 s: mould 26783, soldiers 8, bank 549, harvested 149, rendered 0, shots 349, killed 1242, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 137 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 113.1; nearest soldier 71.3, 8 alive
+  t 137 s: mould 26848, soldiers 8, bank 549, harvested 149, rendered 0, shots 350, killed 1243, took 0%, crystals left 0.959; squad at 436.3,261.7
+  t 138 s: mould 26848, soldiers 8, bank 549, harvested 149, rendered 0, shots 350, killed 1243, took 0%, crystals left 0.959; squad at 436.3,261.7
+  boss t 138 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 118.2; nearest soldier 71.3, 8 alive
+  t 138 s: mould 26909, soldiers 8, bank 549, harvested 149, rendered 0, shots 350, killed 1243, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 139 s: mould 26909, soldiers 8, bank 549, harvested 149, rendered 0, shots 351, killed 1248, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 139 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.07, stolen 123.4; nearest soldier 71.3, 8 alive
+  t 139 s: mould 26960, soldiers 8, bank 549, harvested 149, rendered 0, shots 355, killed 1250, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 140 s: mould 26960, soldiers 8, bank 549, harvested 149, rendered 0, shots 355, killed 1252, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 140 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 128.5; nearest soldier 71.3, 8 alive
+  t 140 s: mould 27027, soldiers 8, bank 549, harvested 149, rendered 0, shots 356, killed 1253, took 0%, crystals left 0.958; squad at 436.3,261.7
+  t 141 s: mould 27027, soldiers 8, bank 549, harvested 149, rendered 0, shots 356, killed 1253, took 0%, crystals left 0.958; squad at 436.3,261.7
+  boss t 141 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.02, stolen 133.6; nearest soldier 71.3, 8 alive
+  t 141 s: mould 27079, soldiers 8, bank 549, harvested 149, rendered 0, shots 356, killed 1253, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 142 s: mould 27079, soldiers 8, bank 549, harvested 149, rendered 0, shots 358, killed 1256, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 142 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 138.8; nearest soldier 71.3, 8 alive
+  t 142 s: mould 27153, soldiers 8, bank 549, harvested 149, rendered 0, shots 361, killed 1261, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 143 s: mould 27153, soldiers 8, bank 549, harvested 149, rendered 0, shots 361, killed 1261, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 143 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.09, stolen 143.9; nearest soldier 71.3, 8 alive
+  t 143 s: mould 27227, soldiers 8, bank 549, harvested 149, rendered 0, shots 361, killed 1261, took 0%, crystals left 0.957; squad at 436.3,261.7
+  t 144 s: mould 27227, soldiers 8, bank 549, harvested 149, rendered 0, shots 361, killed 1261, took 0%, crystals left 0.957; squad at 436.3,261.7
+  boss t 144 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 149.1; nearest soldier 71.3, 8 alive
+  t 144 s: mould 27290, soldiers 8, bank 549, harvested 149, rendered 0, shots 363, killed 1264, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 145 s: mould 27290, soldiers 8, bank 549, harvested 149, rendered 0, shots 364, killed 1266, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 145 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.14, stolen 154.2; nearest soldier 71.3, 8 alive
+  t 145 s: mould 27366, soldiers 8, bank 549, harvested 149, rendered 0, shots 364, killed 1266, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 146 s: mould 27366, soldiers 8, bank 549, harvested 149, rendered 0, shots 366, killed 1269, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 146 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 159.3; nearest soldier 71.3, 8 alive
+  t 146 s: mould 27446, soldiers 8, bank 549, harvested 149, rendered 0, shots 366, killed 1269, took 0%, crystals left 0.956; squad at 436.3,261.7
+  t 147 s: mould 27446, soldiers 8, bank 549, harvested 149, rendered 0, shots 366, killed 1269, took 0%, crystals left 0.956; squad at 436.3,261.7
+  boss t 147 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 164.5; nearest soldier 71.3, 8 alive
+  t 147 s: mould 27506, soldiers 8, bank 549, harvested 149, rendered 0, shots 367, killed 1270, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 148 s: mould 27506, soldiers 8, bank 549, harvested 149, rendered 0, shots 367, killed 1270, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 148 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 169.6; nearest soldier 71.3, 8 alive
+  t 148 s: mould 27575, soldiers 8, bank 549, harvested 149, rendered 0, shots 368, killed 1271, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 149 s: mould 27575, soldiers 8, bank 549, harvested 149, rendered 0, shots 369, killed 1272, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 149 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 174.8; nearest soldier 71.3, 8 alive
+  t 149 s: mould 27649, soldiers 8, bank 549, harvested 149, rendered 0, shots 369, killed 1272, took 0%, crystals left 0.955; squad at 436.3,261.7
+  t 150 s: mould 27649, soldiers 8, bank 549, harvested 149, rendered 0, shots 371, killed 1276, took 0%, crystals left 0.955; squad at 436.3,261.7
+  boss t 150 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 179.9; nearest soldier 71.3, 8 alive
+  t 150 s: mould 27706, soldiers 8, bank 549, harvested 149, rendered 0, shots 371, killed 1276, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 151 s: mould 27706, soldiers 8, bank 549, harvested 149, rendered 0, shots 373, killed 1279, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 151 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 185.0; nearest soldier 71.3, 8 alive
+  t 151 s: mould 27773, soldiers 8, bank 549, harvested 149, rendered 0, shots 373, killed 1279, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 152 s: mould 27773, soldiers 8, bank 549, harvested 149, rendered 0, shots 374, killed 1282, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 152 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.03, stolen 190.2; nearest soldier 71.3, 8 alive
+  t 152 s: mould 27825, soldiers 8, bank 549, harvested 149, rendered 0, shots 375, killed 1283, took 0%, crystals left 0.954; squad at 436.3,261.7
+  t 153 s: mould 27825, soldiers 8, bank 549, harvested 149, rendered 0, shots 377, killed 1284, took 0%, crystals left 0.954; squad at 436.3,261.7
+  boss t 153 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 195.3; nearest soldier 71.3, 8 alive
+  t 153 s: mould 27871, soldiers 8, bank 549, harvested 149, rendered 0, shots 378, killed 1287, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 154 s: mould 27871, soldiers 8, bank 549, harvested 149, rendered 0, shots 379, killed 1288, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 154 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.02, stolen 200.5; nearest soldier 71.3, 8 alive
+  t 154 s: mould 27910, soldiers 8, bank 549, harvested 149, rendered 0, shots 380, killed 1289, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 155 s: mould 27910, soldiers 8, bank 549, harvested 149, rendered 0, shots 380, killed 1289, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 155 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 205.6; nearest soldier 71.3, 8 alive
+  t 155 s: mould 27951, soldiers 8, bank 549, harvested 149, rendered 0, shots 381, killed 1292, took 0%, crystals left 0.953; squad at 436.3,261.7
+  t 156 s: mould 27951, soldiers 8, bank 549, harvested 149, rendered 0, shots 381, killed 1292, took 0%, crystals left 0.953; squad at 436.3,261.7
+  boss t 156 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 210.7; nearest soldier 71.3, 8 alive
+  t 156 s: mould 27997, soldiers 8, bank 549, harvested 149, rendered 0, shots 384, killed 1298, took 0%, crystals left 0.952; squad at 436.3,261.7
+  t 157 s: mould 27997, soldiers 8, bank 549, harvested 149, rendered 0, shots 385, killed 1312, took 0%, crystals left 0.952; squad at 436.3,261.7
+  boss t 157 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 215.9; nearest soldier 71.3, 8 alive
+  t 157 s: mould 28022, soldiers 8, bank 549, harvested 149, rendered 0, shots 385, killed 1312, took 0%, crystals left 0.952; squad at 436.3,261.7
+  t 158 s: mould 28022, soldiers 8, bank 549, harvested 149, rendered 0, shots 385, killed 1312, took 0%, crystals left 0.952; squad at 436.3,261.7
+  boss t 158 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.10, stolen 221.0; nearest soldier 71.3, 8 alive
+  t 158 s: mould 28066, soldiers 8, bank 549, harvested 149, rendered 0, shots 387, killed 1322, took 0%, crystals left 0.952; squad at 436.3,261.7
+  t 159 s: mould 28066, soldiers 8, bank 549, harvested 149, rendered 0, shots 389, killed 1326, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 159 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.06, stolen 226.2; nearest soldier 71.3, 8 alive
+  t 159 s: mould 28106, soldiers 8, bank 549, harvested 149, rendered 0, shots 392, killed 1328, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 160 s: mould 28106, soldiers 8, bank 549, harvested 149, rendered 0, shots 395, killed 1337, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 160 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.05, stolen 231.3; nearest soldier 71.3, 8 alive
+  t 160 s: mould 28145, soldiers 8, bank 549, harvested 149, rendered 0, shots 396, killed 1343, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 161 s: mould 28145, soldiers 8, bank 549, harvested 149, rendered 0, shots 398, killed 1349, took 0%, crystals left 0.951; squad at 436.3,261.7
+  boss t 161 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.08, stolen 236.4; nearest soldier 71.3, 8 alive
+  t 161 s: mould 28180, soldiers 8, bank 549, harvested 149, rendered 0, shots 399, killed 1350, took 0%, crystals left 0.951; squad at 436.3,261.7
+  t 162 s: mould 28180, soldiers 8, bank 549, harvested 149, rendered 0, shots 399, killed 1350, took 0%, crystals left 0.950; squad at 436.3,261.7
+  boss t 162 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 358,254, spread 1.04, stolen 241.6; nearest soldier 71.3, 8 alive
+  t 162 s: mould 28203, soldiers 8, bank 549, harvested 149, rendered 0, shots 400, killed 1350, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 163 s: mould 28203, soldiers 8, bank 549, harvested 149, rendered 0, shots 403, killed 1358, took 0%, crystals left 0.950; squad at 436.3,261.7
+  boss t 163 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.04, stolen 246.7; nearest soldier 70.3, 8 alive
+  t 163 s: mould 28228, soldiers 8, bank 549, harvested 149, rendered 0, shots 404, killed 1362, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 164 s: mould 28228, soldiers 8, bank 549, harvested 149, rendered 0, shots 404, killed 1362, took 0%, crystals left 0.950; squad at 436.3,261.7
+  surge 3 starts at t 163.9 s (the slime has eaten 778 food)
+  boss t 164 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.09, stolen 251.9; nearest soldier 70.3, 8 alive
+  t 164 s: mould 28249, soldiers 8, bank 549, harvested 149, rendered 0, shots 404, killed 1362, took 0%, crystals left 0.950; squad at 436.3,261.7
+  t 165 s: mould 28249, soldiers 8, bank 549, harvested 149, rendered 0, shots 405, killed 1366, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 165 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.12, stolen 257.0; nearest soldier 70.3, 8 alive
+  t 165 s: mould 28275, soldiers 8, bank 549, harvested 149, rendered 0, shots 407, killed 1371, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 166 s: mould 28275, soldiers 8, bank 549, harvested 149, rendered 0, shots 408, killed 1381, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 166 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.06, stolen 262.1; nearest soldier 70.3, 8 alive
+  t 166 s: mould 28299, soldiers 8, bank 549, harvested 149, rendered 0, shots 413, killed 1395, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 167 s: mould 28299, soldiers 8, bank 549, harvested 149, rendered 0, shots 417, killed 1396, took 0%, crystals left 0.949; squad at 436.3,261.7
+  boss t 167 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.07, stolen 267.3; nearest soldier 70.3, 8 alive
+  t 167 s: mould 28329, soldiers 8, bank 549, harvested 149, rendered 0, shots 417, killed 1403, took 0%, crystals left 0.949; squad at 436.3,261.7
+  t 168 s: mould 28329, soldiers 8, bank 549, harvested 149, rendered 0, shots 417, killed 1403, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 168 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.08, stolen 272.4; nearest soldier 70.3, 8 alive
+  t 168 s: mould 28358, soldiers 8, bank 549, harvested 149, rendered 0, shots 417, killed 1403, took 0%, crystals left 0.948; squad at 436.3,261.7
+  t 169 s: mould 28358, soldiers 8, bank 549, harvested 149, rendered 0, shots 419, killed 1413, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 169 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.11, stolen 277.6; nearest soldier 70.3, 8 alive
+  t 169 s: mould 28394, soldiers 8, bank 549, harvested 149, rendered 0, shots 420, killed 1414, took 0%, crystals left 0.948; squad at 436.3,261.7
+  t 170 s: mould 28394, soldiers 8, bank 549, harvested 149, rendered 0, shots 421, killed 1415, took 0%, crystals left 0.948; squad at 436.3,261.7
+  boss t 170 s: lump 0 leech Sit((360.5, 255.5), 1725), 116 members (first 116, 0 hurt), at 360,254, spread 1.07, stolen 282.7; nearest soldier 70.3, 8 alive
+  t 170 s: mould 28427, soldiers 8, bank 549, harvested 149, rendered 0, shots 421, killed 1415, took 0%, crystals left 0.948; squad at 436.3,261.7

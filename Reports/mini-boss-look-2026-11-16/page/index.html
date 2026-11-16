@@ -1,0 +1,106 @@
+<title>Hunter Mini-boss Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: a dark field-monitor page (the game's own dark ground); three blind clips in a row of equal tiles, today's look as the reference strip under them, then what drives each part of the picture and the frame cost */
+:root{
+  --bg:#0f1210; --panel:#171b18; --tile:#1d221e; --fg:#e7ebe4; --muted:#9aa396;
+  --accent:#b98cff; --gold:#e3a94a; --line:#2c332d;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0;font-weight:700}
+h1{font-size:2.2rem;letter-spacing:.01em}
+h2{font-size:1.35rem;padding-top:14px;border-top:1px solid var(--line)}
+h3{font-size:1.02rem;font-weight:500}
+p{margin:0;max-width:72ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);font-size:1.04rem}
+.clips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.clips{grid-template-columns:1fr}}
+figure{margin:0;background:var(--tile);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+figure video{display:block;width:100%;max-width:100%;aspect-ratio:720/460;background:#000}
+figcaption{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.letter{font:700 2rem/1 var(--display);color:var(--fg)}
+.ref figure{max-width:640px}
+.ref .letter{font-size:1.1rem;color:var(--gold)}
+.counts{width:100%;border-collapse:collapse;font:13px/1.4 var(--mono);font-variant-numeric:tabular-nums}
+.counts th,.counts td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.counts th{color:var(--muted);font-weight:400}
+.scroll{overflow-x:auto}
+.ask{background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.ask strong{font-family:var(--display);font-size:1.15rem}
+code{font:13px var(--mono);color:var(--accent)}
+.note{color:var(--muted);font-size:.92rem}
+@media (prefers-reduced-motion: reduce){video{animation:none}}
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="eyebrow">Larder World · mini-boss look · 2026-11-16 · blind A/B</span>
+    <h1>Hunter Mini-boss Look</h1>
+    <p class="lede">The same hunter in the same run, drawn three ways. Everything you see on it comes from its own walkers: where they are, how thickly they pack, how much energy each has, and how many hits each has taken. Nothing is painted on top. Pick the letter you like best; the key stays off this page.</p>
+  </header>
+
+  <section class="ask">
+    <strong>Which letter: A, B or C?</strong>
+    <p>Or say what to change. The hunter's next engine pass (a real lunge and clench, and a fade when it breaks) will show through whichever skin you pick.</p>
+  </section>
+
+  <section>
+    <h2>The three looks</h2>
+    <p class="note">Planet 3 of run 1, squad holding, zoom 12, camera following the hunter, 90 to 145 game seconds at 2x speed. It forms inside the main body at 91 s, leaves at 97 s, crosses open ground and is shot apart by the squad at 140 to 143 s.</p>
+    <div class="clips">
+      <figure><video src="a.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="letter">A</span></figcaption></figure>
+      <figure><video src="b.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="letter">B</span></figcaption></figure>
+      <figure><video src="c.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="letter">C</span></figcaption></figure>
+    </div>
+    <div class="scroll">
+      <table class="counts">
+        <thead><tr><th>Game time</th><th>What the hunter is doing</th><th>Members</th><th>Spread</th></tr></thead>
+        <tbody>
+          <tr><td>91 to 92 s</td><td>Forms in a crowded knot of the main body</td><td>426</td><td>1.02</td></tr>
+          <tr><td>97 s</td><td>Starts to hunt and leaves the body</td><td>422</td><td>0.99</td></tr>
+          <tr><td>120 s</td><td>Crossing open ground</td><td>418</td><td>1.07</td></tr>
+          <tr><td>140 s</td><td>Reaches the squad, under fire</td><td>305</td><td>1.29</td></tr>
+          <tr><td>143 s</td><td>Broken, 118 members left of 426</td><td>118</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The same simulation in all three clips: the boss lines in the logs match second for second. Spread is the body's distance from its centre over a packed disc's, so 1 is as tight as it gets.</p>
+  </section>
+
+  <section class="ref">
+    <h2>Today, for comparison</h2>
+    <figure><video src="today.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="letter">Today</span><span class="note">The same hunter drawn as ordinary slime. Inside the main body it can't be seen at all.</span></figcaption></figure>
+  </section>
+
+  <section>
+    <h2>What drives each part of the picture</h2>
+    <ul>
+      <li><b>Its colour</b> spreads by the share of walkers in a spot that belong to the hunter. While it gathers inside the gold body you see its colour seep through the sheet; once it is out on its own it is solid.</li>
+      <li><b>Its height and gloss</b> come from how thickly its own members stand. It rises as a wet dome where they are thick, with a darker membrane where they thin out at the edge.</li>
+      <li><b>The light inside it</b> comes from where its members are thickest. A body that bunches up glows brighter there. In the clips it is fairly even, because today's hunter is an even cloud of about half a walker per cell. The lunge and clench coming in the mini-boss engine will make it bunch for real.</li>
+      <li><b>The dots</b> are its walkers, one each. A dot is brighter when that walker has more energy, so a hunter far from food dims as it runs down. A dot turns cold white as that walker takes hits, so you can see where your fire lands.</li>
+      <li><b>Strength:</b> a stronger hunter stands taller and its core burns brighter. Every hunter in these clips is the same grade for now. Grades arrive in the mini-boss thread's next change.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Checked</h2>
+    <ul>
+      <li>With no hunter on screen, the frame is byte for byte the same as before this change (Fork, 30 s, both pictures).</li>
+      <li>Two hunters side by side keep their own looks, with no line drawn between them.</li>
+      <li>A hunter's walkers never show the slime's panic colours, the amber and red specks of walkers cut off from food. The engine spares them panic, so the picture does too.</li>
+      <li>Condensed walkers that join a hunter take its colour, not bronze.</li>
+    </ul>
+    <p class="note">Frame cost on the GTX 1070 is still to be measured. On the cloud's software renderer, the cost is listed in the thread.</p>
+  </section>
+</main>
