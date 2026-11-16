@@ -15,7 +15,7 @@ use super::*;
 pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
-    let mut load_at = args.load_at;
+    let mut load_at = args.load_at.clone();
     let mut app = offscreen(args, screen, &device, &queue)?;
     if let (Some(b), Some(g)) = (bank, app.game.as_mut()) {
         g.bank = b;
@@ -321,14 +321,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 println!("  cut t {:.1} s: the ring opens ({} cells back on the agar)", g.time(), cells.len());
             }
             // `load=T,NAME`: every squad loads NAME once T has come.
-            if let Some((lt, li)) = load_at.filter(|&(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= lt)) {
-                load_at = None;
+            if let Some((lt, cards)) = load_at.take_if(|(lt, _)| app.game.as_ref().is_some_and(|g| g.time() >= *lt)) {
                 let g = app.game.as_mut().unwrap();
-                let deck = rounds::Deck::new(&rounds::parse(LOADOUTS[li].1).unwrap_or_default());
+                let deck = rounds::Deck::new(&rounds::parse(&cards).unwrap_or_default());
                 for q in 0..g.squads.len() {
                     g.apply(Cmd::Load(q as u8, Some(deck)));
                 }
-                println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS[li].0);
+                println!("  load t {:.2} s: {} squads load {} (asked for {lt} s)", g.time(), g.squads.len(), LOADOUTS.iter().find(|l| l.1 == cards).map_or(cards.as_str(), |l| l.0));
             }
             // `turret=X,Y,T`: standing whole once T has come.
             if let Some(g) = app.game.as_mut() {

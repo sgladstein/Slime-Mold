@@ -36,8 +36,13 @@ Page: [Multicast](https://claude.ai/artifact/RbbC4a8fjoKunEW4cRmuu1) (source in 
 - **Counts:** `Game::multicast` (casts fired beside another),
   `Rounds::batches` and `Rounds::batched`; the headless rounds line prints
   them.
-- **Test loadouts** (H): `multi-blast`, `multi-bomb-gas`, `triple`
-  (multicast+multicast+plain+blast+gas), `multi-trigger`.
+- **Test loadouts** (H): `multi-blast`, `multi-bomb-gas`. The films' two
+  five-card combos cost more than a default gun's budget of 10
+  (multicast+multicast+plain+blast+gas 13, multicast+trigger+plain+blast+gas
+  12), so they are not presets; they need a bigger rolled gun. `load=T,CARDS`
+  now takes a card list as well as a preset's name (the same counts either
+  way: `multi-blast` and `multicast+plain+blast` both 15 blasts and 844
+  killed to 32 s).
 
 ## Tests
 
@@ -57,7 +62,9 @@ Page: [Multicast](https://claude.ai/artifact/RbbC4a8fjoKunEW4cRmuu1) (source in 
 `hand=hold@150,265 bank=8000`, the Fork, squad mode, llvmpipe, near view
 `centre=176,266,12`, 960 x 600, 30 frames a second (`raw/film.sh`,
 `raw/make_clips.py`). Every clip is `rounds=plain load=29,NAME`: one game to
-29 s, then each loadout; the same start as the trigger cards' clips. Counts
+29 s, then each loadout; the same start as the trigger cards' clips. The
+films ran while `triple` and `multi-trigger` were presets; with the presets
+gone, `raw/films.sh` loads them as card lists (`load=29,multicast+multicast+plain+blast+gas`). Counts
 from 29 s (`raw/counts.json`); 24 soldier shots in each 3 s clip.
 
 | 3 s, 29-32 s | Bullets | Payloads cast | Killed | Thrown | Slept | Health at 32 s |
@@ -107,13 +114,16 @@ The plan's deciding measure for step B, 10 s from the same start:
 
 ## Not settled
 
-- **Balance:** cost 3, tier 3, as the plan's rule cards; nothing measured
-  for price (build first, balance later).
+- **Balance:** cost 3, tier 3 (the plan puts rule cards at tier 3; the
+  trigger costs 2); nothing measured for price (build first, balance
+  later). At cost 3 the five-card combos only fit a gun rolled with a
+  budget of 12 or more.
 - **Copy and always**, the plan's last rule cards, are not built.
 
 ## Files
 
 - `page/index.html` and its clips: the Artifact page's source.
+- `raw/films.sh`: every clip and 10 s run on the page.
 - `raw/film.sh`: one clip's frames (`START`, `CENTRE` from the environment).
 - `raw/make_clips.py`: frames to H.264 MP4 and the counts as JSON.
 - `raw/counts.json`: the counts above.
