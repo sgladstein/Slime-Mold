@@ -866,6 +866,22 @@ pub struct BigParams {
     /// counts everyone). Without it two touching walkers can step apart in
     /// the same step, each counting the other where it stood.
     pub tether_hold: f32,
+    /// **Aim** (mini-boss probe, 2026-11-16; 0 is off). Each sensor also
+    /// reads `aim_weight` x the cosine between its direction and the
+    /// direction to `aim` (fine cells), so a far target steers as strongly
+    /// as a near one. It is added to the trail and scent the sensors read,
+    /// where panic, breakaway and raids replace them with the target alone
+    /// (and leave the body as a stream of single walkers: the round-1
+    /// simulation review, `Reports/mini-boss-2026-11-16/reviews/`).
+    pub aim_weight: f32,
+    pub aim: (f32, f32),
+    /// **Leash** (mini-boss probe, 2026-11-16; 0 is off). A walker farther
+    /// than `leash` x the body's radius (sqrt(walkers / pi), one walker a
+    /// cell) from the body's centre, as the fine step began, runs back
+    /// toward the centre the way a panicking walker runs, so the front of a
+    /// moving body waits for the rest. Today the body is every living
+    /// walker (one population on the probe's dish).
+    pub leash: f32,
     /// Upkeep times this for a walker with no other walker on the eight
     /// cells round it (1 is off; growth only): a walker cut off from the
     /// body is not the organism, and it starves fast unless it eats.
@@ -1389,6 +1405,9 @@ impl BigParams {
             lone_floor: 0.25,
             tether: 0,
             tether_hold: 0.0,
+            aim_weight: 0.0,
+            aim: (0.0, 0.0),
+            leash: 0.0,
             lone_upkeep: 1.0,
             lone_r: 1,
             spore_rate: 0.0,
@@ -1609,6 +1628,9 @@ pub struct BigDish {
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
     pub threats: Vec<(i64, i64)>,
+    /// The body's centre and radius, fine cells, as the step began
+    /// (`BigParams::leash`).
+    pub centre: (f32, f32, f32),
     /// The cells holding walkers at the last `hear_food`, and the spread's
     /// scratch: only those cells are touched, so the pass costs walkers,
     /// not the dish's area (outside them both fields are 0).
@@ -1921,6 +1943,7 @@ impl BigDish {
             condensed: 0,
             thickened: 0,
             threats: Vec::new(),
+            centre: (0.0, 0.0, 0.0),
             heard_cells: Vec::new(),
             heard_was: Vec::new(),
             eaten: 0.0,
@@ -3201,6 +3224,13 @@ impl BigDish {
             if let (Some((_, _, unit)), true) = (scared, haste > 0.0) {
                 st *= if unit { self.panic_charge(k, haste) } else { haste };
             }
+            // A body's walker past its leash runs back toward its centre.
+            if scared.is_none() && p.leash > 0.0 {
+                let (cx, cy, r) = self.centre;
+                if (x - cx).hypot(y - cy) > p.leash * r {
+                    scared = Some((cx, cy, false));
+                }
+            }
             // A raid (`raid_at`): a raider runs for the raid's target, by
             // its sensors alone (it does not panic, above): down the raid's
             // walking distance (`raid_field`) where there is one, else
@@ -3269,6 +3299,14 @@ impl BigDish {
                             *v = -*v;
                         }
                     }
+                }
+                if p.aim_weight != 0.0 {
+                    let (dx, dy) = (p.aim.0 - x, p.aim.1 - y);
+                    let r = (dx * dx + dy * dy).sqrt().max(1.0e-3);
+                    let aim = |a: f32| p.aim_weight * (a.cos() * dx + a.sin() * dy) / r;
+                    f += aim(h);
+                    fl += aim(h - sa);
+                    fr += aim(h + sa);
                 }
                 if p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
                     h = unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x4000_0000)) * TAU;
@@ -4413,6 +4451,18 @@ impl BigDish {
     /// once (on today's grid) or each fine step (on the fine grid).
     pub fn tick(&mut self) {
         for _ in 0..self.p.substeps {
+            if self.p.leash > 0.0 {
+                let (mut sx, mut sy, mut n) = (0.0f64, 0.0f64, 0usize);
+                for k in 0..self.walkers.len() {
+                    if self.active(k) {
+                        sx += self.walkers[k].0 as f64;
+                        sy += self.walkers[k].1 as f64;
+                        n += 1;
+                    }
+                }
+                let n1 = n.max(1) as f64;
+                self.centre = ((sx / n1) as f32, (sy / n1) as f32, (n as f32 / std::f32::consts::PI).sqrt());
+            }
             self.move_walkers();
             if self.species_trail.is_empty() {
                 for pass in 0..self.p.trail_passes.max(1) {

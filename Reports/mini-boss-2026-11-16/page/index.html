@@ -85,6 +85,24 @@ a{color:var(--accent)}
 </section>
 
 <section>
+  <h2>First experiment: a held body</h2>
+  <p class="lede">The piece every option needs, tried on the CPU engine while you read: 600 walkers on an empty dish, sent to a crystal 70 cells away. Not yet in the game or on the GPU.</p>
+  <div class="today">
+    <figure>
+      <video src="held-vs-stream.mp4" autoplay muted loop playsinline controls aria-label="The same pull with and without a leash"></video>
+      <figcaption><span class="counts">Seed 1, 0 to 24 s at 2x. Mid-way (5 s), 6 seeds each: without the leash the walkers sit 3.8 to 4.0 times as spread as a packed disc, in a line 13 to 14 times as long as wide; with it 1.23 to 1.27 times, a teardrop 1.9 to 2.0 long to wide, on 6 of 6 seeds (sign test p 0.03). It covers the 70 cells in 22 to 23 s, about 3 cells a second, a third of a soldier's walk.</span></figcaption>
+    </figure>
+    <figure>
+      <video src="held-chase.mp4" autoplay muted loop playsinline controls aria-label="The held body chasing a moving target"></video>
+      <figcaption><span class="counts">The same body chasing a target (white ring) that circles the crystal 35 cells out once every 40 s, about 5.5 cells a second, 0 to 40 s at 2x. It turns and cuts across after it and stays one body.</span></figcaption>
+    </figure>
+  </div>
+  <div class="prose">
+    <p>Two small rules did it. A <b>steady pull</b> toward the target is added to the trail and scent each walker smells, where today's break-aways and raids replace what they smell with the target and stream. A <b>leash</b>: a walker that strays more than 1.3 times the body's radius from its centre runs back toward it, so the front waits for the back. The one-body rules tried before (only step next to others, slow down when alone) did not stop the stream with the pull on. The leash needs the body's centre, one sum a step over the body's own walkers, so its cost is the body's size, not the map's. Next: give it to a piece of the real slime in the game, on the GPU, and film the forming.</p>
+  </div>
+</section>
+
+<section>
   <h2>Where the three designers agree</h2>
   <div class="agree">
     <div><b>Keep the bronze, fix the break-away.</b> Condensed walkers stay as the material (armour, double bite) and the first stage of forming. The break-away's speck stream is what becomes the first mini-boss.</div>
@@ -257,6 +275,6 @@ a{color:var(--accent)}
 
 <footer>
   <p>Sources, in the repository under <code>Reports/mini-boss-2026-11-16/</code>: <code>brief.md</code> (the neutral brief), <code>notes/games.md</code> (how other games do elites and bosses, 82 cited sources), and <code>reviews/r1-encounters.md</code>, <code>r2-simulation.md</code>, <code>r3-looks-and-wildcards.md</code>.</p>
-  <p>Clip: <code>larder-world run=2:2 mode=squads hand=idle centre=372,236,6</code>, frames every 0.25 game seconds on llvmpipe at main 62b56f4.</p>
+  <p>Clips: <code>larder-world run=2:2 mode=squads hand=idle centre=372,236,6</code>, frames every 0.25 game seconds on llvmpipe at main 62b56f4; the held body from <code>examples/bodyprobe.rs</code> (<code>arm=held:aim_weight=30+leash=1.3+blocked_retry=4</code> against the same without <code>leash</code>, and <code>circle=35,40</code> for the chase).</p>
 </footer>
 </main>

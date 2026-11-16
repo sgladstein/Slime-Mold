@@ -36,6 +36,38 @@ Page: https://claude.ai/artifact/4hyVm1cPgWBYssTEnitdBV (source [`page/`](page/i
   `larder-world run=2:2 mode=squads hand=idle look=DIR centre=372,236,6
   at=70,70.25,..,85 screen=960x600` on llvmpipe at main 62b56f4.
 
+## First experiment: a held body (CPU)
+
+`examples/bodyprobe.rs`: a blank map, 600 walkers in a disc and one crystal
+70 dish cells east, no growth, the race world's scale 2 and 15 ticks a game
+second. Measures named first: the largest part's share, `compact` (rms
+distance from the centre over a packed disc's) and `aspect` (long over
+short axis), mid-way at 5 s and at 10 and 20 s, and the time to arrive.
+
+- The body rules alone (`tether` 2-5, `lone_step`, `blocked_keep` with
+  `blocked_deposit`, grazing) moved nothing: the crystal's scent does not
+  reach 70 cells (went 0-6 cells in 20 s, 4 seeds;
+  [`raw/body-r1-rules-alone.txt`](raw/body-r1-rules-alone.txt)).
+- New `BigParams::aim_weight` / `aim`: each sensor also reads the weight
+  times the cosine toward the aim point, added to trail and scent (panic,
+  breakaway and raids replace the reading with the target). It gets there,
+  as a stream: with `tether` 3-5, `lone_step` 3-6 or short sensors the line
+  stayed (aspect 8-17 at 20 s; [`raw/body-r2-aim.txt`](raw/body-r2-aim.txt)
+  and sweeps not kept). Why `tether` fails here: a walker touching few
+  others may step to a cell touching as few, so a line can always advance.
+- New `BigParams::leash`: a walker farther than `leash` x the body's radius
+  (sqrt(walkers / pi)) from the body's centre, as the fine step began, runs
+  back toward it. **Aim 30 + leash 1.3 (+ `blocked_retry` 4) against aim 30
+  alone, seeds 1-6, at 5 s: compact 1.23-1.27 against 3.78-3.98, aspect
+  1.9-2.0 against 13.1-14.3, 6 of 6 seeds, sign test p 0.031**; it covers 70
+  cells in 22-23 s (about 3.3 cells a second, against 10-11 s as a line)
+  ([`raw/body-r6-held-vs-stream.txt`](raw/body-r6-held-vs-stream.txt)).
+  300 walkers: compact 1.06 at 20 s; 1,500: 1.21, slower (47 cells in 20 s).
+  Chasing a target that circles 35 cells out at 5.5 cells a second, it turns
+  after it and stays one body (clip `page/held-chase.mp4`).
+- Cost: the leash's centre is one sum over the body's walkers a fine step;
+  the probe's tick was 2.3-3.0 ms either way on one CPU thread.
+
 ## Where the three designers agree
 
 - A held body first: a sub-population with its own trail and the
