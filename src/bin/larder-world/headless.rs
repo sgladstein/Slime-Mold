@@ -542,7 +542,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let words = e.dense_of();
             let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
             let thick = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::DENSE != 0).count();
-            println!("  dense: {thick} condensed or thick walkers, mass {} (readout {})", g.mould + thick, g.world.mass());
+            // Breakaways on their way (`roam`; specks of ordinary slime
+            // since 11-16).
+            let roaming = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::ROAM != 0).count();
+            println!("  dense: {thick} condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould + thick, g.world.mass());
         }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.

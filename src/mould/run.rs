@@ -193,38 +193,45 @@ pub const WIN_SHARE: f32 = 0.01;
 /// it eats to build one, as a share of the sandbox's (`SURGE_FOOD`, 150,
 /// times the level's walkers), the longest wait between them
 /// (`BigParams::surge_every`, steps, 30 a game second), its lunge
-/// (`surge_dash`, steps) and its thickening threshold (`thicken`, a
-/// birth's energy). The sandbox's shape C is 1 (150 food), 1800 (60 s), 30
-/// and 2. Until food-driven surges (later on 11-15) the surges came on a
+/// (`surge_dash`, steps). The sandbox's shape C is 1 (150 food), 1800
+/// (60 s) and 30. Until 11-16 the slime also thickened from 2 down to 1.3
+/// births' energy deeper (`thicken`, the bronze); the owner, 11-16 04:58Z:
+/// "Remove the bronze, keep the specks". Until food-driven surges (later on 11-15) the surges came on a
 /// fixed beat of half these waits (40 s on planet 1 to 15 s on planet 8);
 /// the food shares keep that curve's ratios to the sandbox's 30 s.
 const SURGE_FOOD_SHARE: [f32; 8] = [1.33, 1.33, 1.0, 1.0, 0.83, 0.67, 0.67, 0.5];
 const LONGEST_WAIT: [u32; 8] = [2400, 2400, 1800, 1800, 1500, 1200, 1200, 900];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
-const THICKEN: [f32; 8] = [2.0, 2.0, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3];
-/// **Breakaway from planet 2** (the whole-game review's W4 and D2; the
-/// owner agreed 2026-11-15 21:41Z: "5-7) agreed", D2 being RP's option, on
-/// from planet 2): dense slime condenses (`condense`, steps a crowded or
-/// feeding walker takes to condense; 300 is 10 game seconds) and
-/// condensed or thickened slime breaks away for a fresh crystal far off
-/// (`roam`, steps between its chances). Both are needed: on planet 2 (run
-/// seeds 1 and 2, squad hand, to 3:00) `roam` alone over shape C's
-/// thickening moved almost nothing (19,093 walkers at 2:00 against 19,103
-/// off), most likely because a thickened walker sits inside the body
-/// with every cell round it full; condensing absorbs half the ripe, so
-/// the pieces have room to leave
-/// (`Reports/breakaway-run-2026-11-15/README.md`). Planet 1 keeps the
-/// plain body, so the first planet teaches the slime before it spreads.
-const CONDENSE: [u32; 8] = [0, 300, 300, 300, 300, 300, 300, 300];
-const ROAM: [u32; 8] = [0, 300, 300, 300, 300, 300, 300, 300];
+/// **Specks: the slime sends pieces of itself off to fresh crystals,
+/// most often early in the run** (2026-11-16, the slime-enemy thread).
+/// The owner, 04:58Z, on the mini-boss questions: "Remove the bronze, keep
+/// the specks (specks and mini-boss are separate but both happen. Specks
+/// more often early game)". Breakaway (`roam`, steps between a walker's
+/// chances; `roam_share`, the share of chances taken) now takes ordinary
+/// walkers crowded or feeding at a crystal (`BigParams::roam`), so it
+/// needs no condensing. Until 11-16 (#370, the whole-game review's
+/// D2) planets 2-8 condensed (`condense` 300) and broke away bronze
+/// pieces; breakaway alone over thickening moved nothing there
+/// (`Reports/breakaway-run-2026-11-15/README.md`). Now every planet
+/// sends specks, the first planets most: mini-bosses take over deeper.
+/// A walker gets a chance every `ROAM` steps (300, 10 s, on every
+/// planet) and a twentieth of the chances leave on planets 1-2, down to
+/// a fiftieth on the core world. Measured on planet 2 of run 2 and planet
+/// 1 of run 1 (squad hand, `Reports/specks-2026-11-16/README.md`): at
+/// 0.05 about 1,000 walkers (6%) are on their way at once from 0:20, and
+/// the slime is 7% (planet 2) and 10% (planet 1) heavier at 5:00 than
+/// with none; at 0.1 about 1,900 on their way; at 0.5, the first try,
+/// 4,600-9,500 (and 12,300 of 17,406 before a speck gave up after
+/// `big::SPECK_TRIP`), most of the body.
+const ROAM: [u32; 8] = [300; 8];
+const ROAM_SHARE: [f32; 8] = [0.05, 0.05, 0.04, 0.04, 0.03, 0.03, 0.02, 0.02];
 
 /// **The slime gets fiercer deeper** (2026-11-15, the slime-enemy thread;
 /// the run thread agreed the curve): engine keys over shape C's on a run's
 /// planet, before the tier's and the menu's own (`run_shape`). The slime
-/// surges more often and lunges longer, and thickens sooner, so it presses
-/// harder and gets tougher faster from what it holds; from planet 2 it
-/// condenses and sends pieces off to fresh crystals (`CONDENSE`, `ROAM`,
-/// 11-15 D2). Planet 1's slime
+/// surges more often and lunges longer, so it presses harder; it sends
+/// specks off to fresh crystals, most often on the first planets (`ROAM`,
+/// `ROAM_SHARE`, 11-16). Planet 1's slime
 /// needs a third more food for a surge than the sandbox's and waits up to
 /// 80 s; the core world's half as much, waiting at most 30 s and lunging
 /// 1.8 s. Why: the owner, 11-15 08:30Z, wants "more interesting
@@ -234,13 +241,12 @@ const ROAM: [u32; 8] = [0, 300, 300, 300, 300, 300, 300, 300];
 /// gun's range plus `Rules::panic_margin`).
 pub fn enemy_keys(depth: u32) -> Vec<(&'static str, String)> {
     let i = depth_index(depth);
-    let mut k = vec![("surge", LONGEST_WAIT[i].to_string()), ("surge_dash", SURGE_DASH[i].to_string()), ("thicken", format!("{}", THICKEN[i]))];
-    // Breakaway (`CONDENSE`, `ROAM`) only where it is on, so planet 1
-    // keeps whatever shape C and the menu set.
-    if CONDENSE[i] > 0 {
-        k.extend([("condense", CONDENSE[i].to_string()), ("roam", ROAM[i].to_string())]);
-    }
-    k
+    vec![
+        ("surge", LONGEST_WAIT[i].to_string()),
+        ("surge_dash", SURGE_DASH[i].to_string()),
+        ("roam", ROAM[i].to_string()),
+        ("roam_share", format!("{}", ROAM_SHARE[i])),
+    ]
 }
 
 fn depth_index(depth: u32) -> usize {
@@ -1106,19 +1112,24 @@ mod tests {
     use super::*;
 
     /// Deeper, the slime surges no less often, lunges no shorter and
-    /// thickens no later; planet 1 is gentler than the sandbox's shape C
+    /// sends specks no more often; planet 1 is gentler than the sandbox's shape C
     /// and the core world fiercer, and every key is one the engine takes.
     #[test]
     fn the_slime_gets_fiercer_deeper() {
         let get = |d: u32, k: &str| enemy_keys(d).into_iter().find(|(n, _)| *n == k).map(|(_, v)| v.parse::<f32>().unwrap()).unwrap();
         for d in 1..=10 {
-            assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash") && get(d + 1, "thicken") <= get(d, "thicken"), "planet {d}");
+            assert!(get(d + 1, "surge") <= get(d, "surge") && get(d + 1, "surge_dash") >= get(d, "surge_dash"), "planet {d}");
+            // Specks no more often deeper (owner 11-16: "Specks more often
+            // early game"): chances no closer together, no larger share.
+            assert!(get(d + 1, "roam") >= get(d, "roam") && get(d + 1, "roam_share") <= get(d, "roam_share"), "planet {d}");
             assert_eq!(surge_secs(d), get(d, "surge") / 30.0);
             let mut p = crate::mould::big::BigParams::today();
             for (k, v) in enemy_keys(d) {
                 crate::mould::tiers::set_key(&mut p, k, &v).unwrap();
             }
-            assert!(p.surge_every > 0 && p.surge_dash > 0 && p.thicken > 0.0);
+            // No bronze (owner 11-16: "Remove the bronze"), specks on.
+            assert!(p.surge_every > 0 && p.surge_dash > 0 && p.roam > 0 && p.roam_share > 0.0);
+            assert!(p.condense == 0 && p.thicken == 0.0, "planet {d}: no condensing or thickening");
             assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
         }
         let c_food = crate::mould::larder_world::SURGE_FOOD;
@@ -1126,14 +1137,11 @@ mod tests {
         let (_, c) = crate::mould::larder_world::shape_keys("c").unwrap();
         let c_surge: f32 = c.iter().find(|(k, _)| *k == "surge").unwrap().1.parse().unwrap();
         assert!(get(1, "surge") > c_surge && get(PLANETS, "surge") < c_surge);
-        assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash") && get(PLANETS, "thicken") < get(1, "thicken"));
-        // Breakaway from planet 2 on (D2): condensing and roaming together,
-        // as roaming alone barely leaves a full body; none on planet 1.
-        let has = |d: u32, k: &str| enemy_keys(d).iter().any(|(n, _)| *n == k);
-        assert!(!has(1, "condense") && !has(1, "roam"));
-        for d in 2..=PLANETS {
-            assert!(get(d, "condense") > 0.0 && get(d, "roam") > 0.0, "planet {d}");
-        }
+        assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash"));
+        // Specks clearly more often on planet 1 than on the core world.
+        assert!(get(1, "roam_share") / get(1, "roam") > 2.0 * get(PLANETS, "roam_share") / get(PLANETS, "roam"));
+        // Shape C has no bronze either.
+        assert!(c.iter().all(|(k, _)| *k != "thicken" && *k != "condense"));
     }
 
     #[test]

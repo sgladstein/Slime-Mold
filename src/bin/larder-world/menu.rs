@@ -39,7 +39,7 @@ pub(super) fn missions() -> Vec<(String, Mission)> {
 
 /// The engine keys the options page sets, with shape C's values as their
 /// defaults (`shape_keys("c")`, the default mould).
-const ENGINE_OPTS: [&str; 8] = ["panic", "wither", "energy_flow", "condense", "roam", "thicken", "surge", "flinch"];
+const ENGINE_OPTS: [&str; 6] = ["panic", "wither", "energy_flow", "roam", "surge", "flinch"];
 
 /// The options that change the world itself: when one is turned, the dish
 /// behind the menu starts again on the new world (owner, 11-14 05:04Z:
@@ -82,18 +82,14 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         ("panic", "Panic", &["0", "1", "2", "4"][..], "A cut-off part charges the squad or bolts for food; 0 is off"),
         ("wither", "Wither", &["0", "0.005", "0.01", "0.02"][..], "How fast a part cut off from food thins; 0 is off"),
         ("energy_flow", "Shared food", &["0", "0.025", "0.05", "0.1"][..], "How much food the body shares from its crystals; 0 is off"),
-        // Dense slime condenses (11-14, `BigParams::condense`): off by
-        // default for the owner's playtest; the steps a crowded or feeding
-        // walker takes to condense (300 is 10 game seconds).
-        ("condense", "Condense", &["0", "150", "300", "600"][..], "Dense or long-fed slime absorbs half of itself; the rest is twice as tough (bronze); 0 is off"),
-        // Condensed slime breaks away (11-14, `BigParams::roam`): off by
-        // default; how often (steps) a condensed piece may leave for an
-        // untouched crystal. Needs Condense.
-        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Condensed or thick slime leaves for an untouched crystal far away; needs Condense or Thicken; 0 is off"),
-        // A fed slime that cannot divide thickens (11-15,
-        // `BigParams::thicken`): on in shape C at 2, a birth's energy
-        // twice over.
-        ("thicken", "Thicken", &["0", "1.5", "2", "3"][..], "Slime fed past what it can spread into thickens in place (bronze, twice as tough), so holding crystals makes it stronger; 0 is off"),
+        // Condense (11-14) and Thicken (11-15) left the menu on 11-16: the
+        // owner, 04:58Z, "Remove the bronze, keep the specks". Their keys
+        // (`condense=`, `thicken=`) still work for films and tests.
+        // Slime breaks away (11-14, `BigParams::roam`; from ordinary slime
+        // since 11-16): how often (steps) a ripe walker may leave for an
+        // untouched crystal far off. Off in the sandbox; the run sets it
+        // per planet (`run::enemy_keys`).
+        ("roam", "Breakaway", &["0", "150", "300", "600"][..], "Slime crowded or feeding at a crystal sends specks off to a fresh crystal farther away; steps between chances (300 is 10 s); 0 is off"),
         // The body surges (11-15, `BigParams::surge_every`): steps between
         // surges (30 a second); on in shape C at 900 (30 s).
         ("surge", "Surge", &["0", "900", "1800", "3600"][..], "When the slime has eaten enough from its crystals, the slime near your soldiers and buildings creeps toward them, then lunges; the longest wait between surges in steps (1800 is 60 s); 0 is off"),
@@ -131,7 +127,7 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         .map(|opt| {
             let tab = match opt.key.as_str() {
                 "map" | "planet" | "own" | "plants" => "Planet",
-                "panic" | "wither" | "energy_flow" | "condense" | "roam" | "thicken" | "surge" | "flinch" => "The mould",
+                "panic" | "wither" | "energy_flow" | "roam" | "surge" | "flinch" => "The mould",
                 _ => "Game",
             };
             opt.in_tab(tab)

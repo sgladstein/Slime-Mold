@@ -359,12 +359,17 @@ const ABSORB_STEPS: u32 = 15u;
 const ROAM_BIT: u32 = 0x40000u;
 const ROAM_SHIFT: u32 = 19u;
 const ROAM_FRESH: f32 = 0.8;
+// An ordinary breakaway gives up after this many steps on its way (the
+// CPU's `SPECK_TRIP`, 11-16).
+const SPECK_TRIP: u32 = 600u;
 fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
 // The dense state is on for condensing or thickening (`BigParams::thicken`,
 // 11-15, the slime-enemy thread: a fed walker that cannot divide turns
-// condensed in place); only condensing ripens, absorbs and stops births
-// at the slots (`ripens`).
-fn condenses() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0); }
+// condensed in place), or for breakaway alone (`roam`, 11-16: ordinary
+// walkers ripen and break away, the owner's "Remove the bronze, keep the
+// specks"); only condensing ripens toward condensing, absorbs and stops
+// births at the slots (`ripens`).
+fn condenses() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0 || P.roam > 0u); }
 fn ripens() -> bool { return growth() && P.condense > 0u; }
 // `thicken` in tenths of `birth_at`, in `ccrowd`'s top byte (bits 24-31).
 fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
@@ -3234,6 +3239,37 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 // ---- Dense slime condenses (`BigParams::condense`, 11-14, the condense thread) ----
+// The ripe test (the CPU's): cell `i` took crystal (`share`, as the news
+// hears it), or the square of radius `ccrowd >> 16` round it, its own cell
+// left out, holds at least `ccrowd & 0xFFFF` walkers (`occ_round`).
+fn ripe_at(i: u32) -> bool {
+    if (share[i] > 0.0) { return true; }
+    let r = i32(max((P.ccrowd >> 16u) & 0xFFu, 1u));
+    let cx = i32(i % P.w); let cy = i32(i / P.w);
+    var n = 0u;
+    for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
+        for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
+            if (x != cx || y != cy) { n += atomicLoad(&occ[u32(y) * P.w + u32(x)]); }
+        }
+    }
+    return n >= (P.ccrowd & 0xFFFFu);
+}
+// The crystal a breakaway on fine cell (`cx`, `cy`) leaves for (the CPU's
+// `roam_pick`): the nearest with `ROAM_FRESH` of its charge left at least
+// `roam_far` fine cells away, the first on a tie; 64 when there is none.
+fn roam_pick(cx: i32, cy: i32) -> u32 {
+    let far = i32(P.roam_far);
+    var best = -1;
+    var bj = 64u;
+    for (var p = 0u; p < min(P.npiles, 64u); p++) {
+        if (piles[p].left < ROAM_FRESH) { continue; }
+        let c = piles[p].centre;
+        let px = i32(c & 0xFFFFu); let py = i32(c >> 16u);
+        let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+        if (d2 >= far * far && (best < 0 || d2 < best)) { best = d2; bj = p; }
+    }
+    return bj;
+}
 // `ripen`, before `life`: each ordinary walker not yet condensed is ripe
 // this tick if its cell took crystal (`share`, as the news hears it) or
 // the square of radius `ccrowd >> 16` round its cell, its own cell left
@@ -3271,17 +3307,8 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let land = i32(P.roam_land);
                 if (dx * dx + dy * dy <= land * land || piles[j].left <= PANIC_LEFT) { nw = DENSE_BIT | age; }
             } else if (age % P.roam == 0u && age < RIPE_BITS && world(CRYSTALS)) {
-                let far = i32(P.roam_far);
-                var best = -1;
-                var bj = 0u;
-                for (var p = 0u; p < min(P.npiles, 64u); p++) {
-                    if (piles[p].left < ROAM_FRESH) { continue; }
-                    let c = piles[p].centre;
-                    let px = i32(c & 0xFFFFu); let py = i32(c >> 16u);
-                    let d2 = (px - cx) * (px - cx) + (py - cy) * (py - cy);
-                    if (d2 >= far * far && (best < 0 || d2 < best)) { best = d2; bj = p; }
-                }
-                if (best >= 0 && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
+                let bj = roam_pick(cx, cy);
+                if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
                     nw = DENSE_BIT | ROAM_BIT | (bj << ROAM_SHIFT) | age;
                 }
             }
@@ -3289,24 +3316,39 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         set_dense(k, nw);
         return;
     }
+    // Breakaway from ordinary slime (`roam` with `condense` 0, 11-16, the
+    // CPU's `specks`): an ordinary breakaway lands as a condensed one does,
+    // or gives up after `SPECK_TRIP` steps on its way (its low bits count
+    // them), and is ordinary slime again.
+    let specks = P.roam > 0u && !ripens();
+    let wk = walkers[k];
+    let cx = i32(floor(wk.x)); let cy = i32(floor(wk.y));
+    if (specks && (wd & ROAM_BIT) != 0u) {
+        let j = (wd >> ROAM_SHIFT) & 63u;
+        let trip = (wd & RIPE_BITS) + 1u;
+        let c = piles[j].centre;
+        let dx = i32(c & 0xFFFFu) - cx; let dy = i32(c >> 16u) - cy;
+        let land = i32(P.roam_land);
+        let done = dx * dx + dy * dy <= land * land || piles[j].left <= PANIC_LEFT || trip >= SPECK_TRIP;
+        set_dense(k, select((wd & ~RIPE_BITS) | trip, 0u, done));
+        return;
+    }
+    // Specks take their chance on their slot's step, one in `roam`, crowded
+    // or feeding then (the CPU's order and draw); no ripeness is kept.
+    if (specks) {
+        if ((S.t + k) % P.roam != 0u || !world(CRYSTALS) || !ripe_at(cell(wk.x, wk.y))) { return; }
+        let bj = roam_pick(cx, cy);
+        if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
+            set_dense(k, ROAM_BIT | (bj << ROAM_SHIFT));
+        }
+        return;
+    }
     // Thickening alone (`thicken`, `condense` 0) only ages its words.
     if (!ripens()) { return; }
-    let wk = walkers[k];
-    let i = cell(wk.x, wk.y);
-    var ripe = share[i] > 0.0;
-    if (!ripe) {
-        let r = i32(max((P.ccrowd >> 16u) & 0xFFu, 1u));
-        let cx = i32(i % P.w); let cy = i32(i / P.w);
-        var n = 0u;
-        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
-            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
-                if (x != cx || y != cy) { n += atomicLoad(&occ[u32(y) * P.w + u32(x)]); }
-            }
-        }
-        ripe = n >= (P.ccrowd & 0xFFFFu);
-    }
     let was = wd & RIPE_BITS;
-    if (ripe) { set_dense(k, min(was + 1u, RIPE_BITS)); } else if (was > 0u) { set_dense(k, was - 1u); }
+    var age = was;
+    if (ripe_at(cell(wk.x, wk.y))) { age = min(was + 1u, RIPE_BITS); } else if (was > 0u) { age = was - 1u; }
+    if (age != wd) { set_dense(k, age); }
 }
 
 // The mould's mass before the births (the CPU's `mass`): `massclear`
