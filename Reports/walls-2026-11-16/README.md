@@ -67,22 +67,63 @@ slightly slower); not timed on the 1070.
 Also: `Rules::set` takes `wall_width` and `wall_cost` (`set=wall_width=4`
 in the window), and the `pen` hand films a ring.
 
-## Open: the owner's two picks
+## The owner's two picks (11-16 14:24Z and 14:25Z)
 
-Asked on the page and in the thread (11-16 ~06:35Z), recommendations first:
+Asked on the page and in the thread at about 06:35Z, recommendations first;
+the owner took both recommendations on the cards: **doors** (not gates
+that open, not climbing over) and **Thicken on a standing wall** (not a
+width chosen when placing, not a run-shop unlock).
 
-1. Getting through: **doors** (a stretch of wall soldiers walk through and
-   the slime treats as wall, eaten at the same pace; touches only which
-   cells are standable), gates that open while soldiers pass (slime can
-   pour in; needs a wall-lifting step on both engines), or climbing over
-   any wall (changes path costs, which the levelgen and squad-movement
-   threads own and are reworking).
-2. Thickness: **Thicken upgrade on a standing wall** (2 to 4 to 6 to 8,
-   grows on the home side), a width chosen when placing (cost by cells), or
-   a run-shop unlock.
+Separate question noted on the page, still open: soldiers can't shoot over
+their own walls (nor can turrets behind them).
 
-Separate question noted on the page: soldiers can't shoot over their own
-walls (nor can turrets behind them).
+## Built: doors and Thicken (11-16)
+
+**Doors** (`Game::door`, `Cmd::Door`, `doors.rs`). A door is a wall
+building with `Building::door` set. Its cells are the world's wall cells,
+so the slime can't step on them and bites them at a wall's pace (same
+health, same bite), and shots stop at them (`World::clear`); to soldiers
+they are ground: `Game::doors` marks a standing door's wall cells, and
+`Game::ground` (open or door) replaces `World::open` in `standable`, the
+walking map (`standable_cells`), and the walk's, steer's and squad
+anchor's checks (agreed with the levelgen and squad-movement threads,
+11-16 08:14Z and 08:17Z). On the build page (G, the Door button) a door is
+drawn like a wall: drawn along a standing wall it snaps onto its line,
+takes its thickness and home side and is cut at once (its cells are
+already there; rubble in its stretch is rebuilt); across a gap it is a
+ghost builders raise. It costs as a wall that long. Drawn as a timber
+grate (`Ground::Door`, `view.wgsl`): hard terrain, lower than a wall, with
+bars a cell apart; a first slate blue read as water in the film's lake.
+
+**Thicken** (`Game::upgrade` on a wall, the wall's card, U). Each level
+writes one more band of the wall's width on its home side at once (2, 4,
+6, 8 cells at the default width, `WALL_LEVELS` 4), each at the wall's first
+price; soldiers standing in the new band step out to its far side first;
+doors cut into it thicken with it, and a door's own card thickens its
+wall. Thick walls are picked by their whole footprint
+(`nearest_building`).
+
+**Film** (`hand=door`, planet 1 seed 7, same ring as above): the ring
+stands at 0:12, a door is cut at 0:16 in the segment facing the core with
+ground both sides, the squad is ordered out at 0:18 (6 of 9 outside by
+0:20, all 9 by 0:22) and back at 0:34 (all in by 0:38), and the door's
+segment and two each side are thickened twice at 0:43 (the ring's cells
+646 to 1000). The slime surrounds the ring by 2:50; by 2:49 it has eaten
+192 of the 1000 cells, and no walker is inside. Raw: `raw/door.txt`; clip
+`page/door.mp4` by `door_clip.py`.
+
+**Tests**: `doors.rs` (a door is wall to the slime and shots and ground to
+soldiers; a soldier walks through a wall-to-wall wall only with a door;
+Thicken grows bands on the home side, at the first price, to the top
+level, and the door with it; a door has a wall's health), `view.rs`
+`a_door_draws_as_a_timber_grate`, and the window's sparse ground refresh
+now cuts doors (`the_sparse_ground_refresh_matches_a_whole_one`).
+
+**Cost**: nothing new runs every step but `Game::ground`'s check (an
+empty test with no doors, one read with them); the door mask is rebuilt
+only when a wall stands or thickens, and the walking map ORs it in when a
+map is built. The shader reads one more ground word per pixel under hard
+terrain. Not timed on the 1070.
 
 ## Builders whose home-side spot is rock (11-16, after #392)
 

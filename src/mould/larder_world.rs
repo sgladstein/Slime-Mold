@@ -64,6 +64,7 @@ mod squads;
 mod funnel;
 mod steer;
 mod cover;
+mod doors;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -74,6 +75,7 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
+pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
@@ -302,6 +304,10 @@ pub struct Game<W: World> {
     /// Casts fired beside another in the same shot (`Card::Multicast`).
     pub multicast: u32,
     pub walls: u32,
+    /// The doors' cells (`doors`), row by row over the world's cells:
+    /// ground to soldiers though the world holds them as wall. Empty while
+    /// there is no door.
+    pub doors: Vec<bool>,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
@@ -520,6 +526,7 @@ impl<W: World> Game<W> {
             turret_killed: 0,
             multicast: 0,
             walls: 0,
+            doors: Vec::new(),
             buildings: Vec::new(),
             pumped: 0.0,
             lost_buildings: 0,

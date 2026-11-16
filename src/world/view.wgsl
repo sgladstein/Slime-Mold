@@ -191,7 +191,7 @@ fn far_cell(x: f32, y: f32) -> vec3<f32> {
     if (pd > 0.0) { c = mix(c, plant_rgb(plant_k(i)), plant_cover(pd) * m.vis); }
     // Hard terrain and crystals are drawn over the material in the shaded
     // view; here their own colours.
-    if (kind == ROCK || kind == WALL) { c = ter_cell(ter_pack(ix, iy)).xyz; }
+    if (kind == ROCK || kind == WALL || kind == DOOR) { c = ter_cell(ter_pack(ix, iy)).xyz; }
     if (kind == CRYSTAL && P.n_gems > 0u) {
         let v = byte(g, 1u);
         c = mix(c, mix(vec3<f32>(50.0, 50.0, 48.0), vec3<f32>(38.0, 142.0, 165.0) + vec3<f32>(10.0, 70.0, 75.0) * 0.6, v), 1.0 - 0.8 * (1.0 - m.vis));
@@ -231,6 +231,14 @@ fn rubble_rgb(ix: i32, iy: i32) -> vec3<f32> {
     return RUBBLE_RGB * (0.75 + 0.5 * hash2(vec2<f32>(f32(ix), f32(iy))));
 }
 const CRYSTAL: u32 = 5u;
+// A door (`look::Ground::Door`): a wall's cells the soldiers walk through
+// and the slime still has to eat. Hard terrain like a wall, lower, a
+// timber brown that darkens with its health as a wall's does, with the
+// plain bevel of rock rather than the hedge's grain and a grate of bars a
+// cell apart (`terrain_top`), so it reads as a built gate in the wall
+// (walls thread, 2026-11-16). A slate blue first read as water in a ring
+// standing in a lake.
+const DOOR: u32 = 6u;
 const LIGHT: vec3<f32> = vec3<f32>(-0.42, -0.58, 0.70);
 
 fn cidx(ix: i32, iy: i32) -> u32 {
@@ -778,13 +786,13 @@ fn cell_height(ix: i32, iy: i32, th: f32) -> vec2<f32> {
     // as a calm surface, not as sand grains (2026-11-14).
     var h = 5.0 * (1.0 - exp(-2.6 * th)) / (1.0 - exp(-2.6));
     // Hard terrain is drawn by `terrain_over`; its cells shade as soil.
-    if (kind == ROCK || kind == WALL) { h = 0.0; }
+    if (kind == ROCK || kind == WALL || kind == DOOR) { h = 0.0; }
     else if (kind == WET) { h = max(h - 0.3, 0.0); }
     else if (kind == CRYSTAL && P.n_gems == 0u) { h = max(h, (0.6 + 9.0 * byte(g, 2u)) * v); }
     let hm = h;
     // Plants stand by their density and kind; the shading makes their
     // texture from the field's own variation.
-    if (kind != ROCK && kind != WALL) {
+    if (kind != ROCK && kind != WALL && kind != DOOR) {
         // Through the same 3 x 3 Gaussian (1 2 1) as their colour
         // (as `plant_look` smoothed it then). Read cell by cell, a row of reeds along a bank,
         // its density varying cell to cell, stood as a string of beads,
@@ -1191,7 +1199,7 @@ fn cell_mat_c(ix: i32, iy: i32, th: f32, cut: f32, dense: f32, c: vec3<f32>) -> 
         m.albedo = mix(water, m.albedo, over);
         m.vis = min(m.vis, 1.0 - over);
         m.gloss = max(m.gloss, 0.75);
-    } else if (kind == ROCK || kind == WALL) {
+    } else if (kind == ROCK || kind == WALL || kind == DOOR) {
         // Under hard terrain, the soil: `terrain_over` lays the rock or
         // wall over it with an edge of its own, so the cells next to
         // it blend toward soil, not toward a grey cell (`ter_cell` has
@@ -1347,7 +1355,7 @@ fn alarm_cell(ix: i32, iy: i32) -> f32 {
 fn alarm_open(ix: i32, iy: i32) -> f32 {
     if (ix <= 0 || iy <= 0 || ix + 1 >= i32(P.ww) || iy + 1 >= i32(P.wh)) { return 0.0; }
     let k = ground[cidx(ix, iy)] & 15u;
-    return select(1.0, 0.0, k == ROCK || k == WALL);
+    return select(1.0, 0.0, k == ROCK || k == WALL || k == DOOR);
 }
 
 // The alarm at (x, y), bilinear over the open cells round it: x the
@@ -2601,6 +2609,7 @@ fn ter_pack(ix: i32, iy: i32) -> u32 {
     var val = v;
     if (kind == ROCK) { h = 3.0; val = byte(g, 3u); }
     else if (kind == WALL) { h = 0.6 + 2.6 * v; }
+    else if (kind == DOOR) { h = 0.4 + 1.4 * v; }
     else { return 0u; }
     return 255u | (u32(h / 4.0 * 255.0 + 0.5) << 8u) | (kind << 16u) | (u32(val * 255.0 + 0.5) << 24u);
 }
@@ -2646,6 +2655,7 @@ fn ter_cell(p: u32) -> vec4<f32> {
     // just above rock at full health, darkening as it is worn. (Before:
     // up to (128, 118, 104), and its pale beige 168 before 11-14 18:56Z.)
     if (kind == WALL) { return vec4<f32>(mix(vec3<f32>(34.0, 30.0, 26.0), vec3<f32>(74.0, 67.0, 58.0), v), h); }
+    if (kind == DOOR) { return vec4<f32>(mix(vec3<f32>(36.0, 26.0, 16.0), vec3<f32>(88.0, 62.0, 36.0), v), h); }
     return vec4<f32>(0.0);
 }
 
@@ -2764,6 +2774,17 @@ fn terrain_top(ta: TerAt) -> vec3<f32> {
         let q2 = vec2<f32>(0.28 * p.x + 0.96 * p.y, -0.96 * p.x + 0.28 * p.y);
         let gr = vnoise(q1 / 1.5 + 3.0) * 0.6 + vnoise(q2 * 2.3 + 11.0) * 0.4;
         alb *= mix(1.0, (0.72 + 0.56 * gr) * (0.8 + 0.2 * smoothstep(0.0, 0.6, d)), t.wall);
+    }
+    // A door's grate: bars on the cells' middles both ways, dark between,
+    // a pixel of smoothing at any zoom. Read from the cell under the pixel
+    // (one read, covered pixels only), not held in `Ter`, which costs
+    // registers across `shaded` (view-cost-2026-11-15).
+    let pc = ta.p;
+    if ((ground[cidx(i32(floor(pc.x)), i32(floor(pc.y)))] & 15u) == DOOR) {
+        let aa = 0.7 / P.zoom;
+        let bx = 1.0 - smoothstep(0.13 - aa, 0.13 + aa, abs(fract(pc.x) - 0.5));
+        let by = 1.0 - smoothstep(0.13 - aa, 0.13 + aa, abs(fract(pc.y) - 0.5));
+        alb *= mix(0.55, 1.35, max(bx, by));
     }
     return alb * max(shade, 0.15) + vec3<f32>(255.0, 248.0, 230.0) * spec * (1.0 - t.wall) + vec3<f32>(60.0, 58.0, 52.0) * lit_edge * (1.0 - 0.7 * t.wall);
 }
@@ -3091,7 +3112,7 @@ fn debug_id(x: f32, y: f32) -> vec3<f32> {
     let g = ground[cidx(i32(floor(x)), i32(floor(y)))];
     let k = g & 15u;
     var cls = 10.0;
-    if (k == ROCK) { cls = 20.0; } else if (k == WALL) { cls = 30.0; } else if (k == RUBBLE) { cls = 40.0; }
+    if (k == ROCK) { cls = 20.0; } else if (k == WALL) { cls = 30.0; } else if (k == RUBBLE) { cls = 40.0; } else if (k == DOOR) { cls = 60.0; }
     else if (k == CRYSTAL) { cls = 50.0; } else if (k == WET) { cls = 70.0; }
     return vec3<f32>(cls, clamp(film_th(x, y), 0.0, 1.0) * 255.0, byte(g, 1u) * 255.0);
 }

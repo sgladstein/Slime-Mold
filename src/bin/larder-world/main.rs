@@ -164,7 +164,7 @@ fn gun_of(spec: &str, seed: u64, depth: u32) -> Result<Gun, String> {
     let kind = GunKind::parse(what).ok_or_else(|| format!("gun={spec}: rifle, carbine, long, scatter or roll"))?;
     Ok(if s.is_some() { Gun::roll_kind(kind, seed, depth) } else { kind.average_at(depth) })
 }
-use slime_mould::mould::larder_world::{GUARD_RIM, PUMP_LEVELS, TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{GUARD_RIM, PUMP_LEVELS, TURRET_MUZZLE, WALL_LEVELS, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::run::{Ground as RunGround, Run};
 use slime_mould::mould::map::Map;
@@ -299,6 +299,9 @@ commands! {
     DEMOLISH = 33,
     UPGRADE = 34,
     SWITCH = 35,
+    // The build page's door (walls thread, owner 2026-11-16 14:24Z): a
+    // two-click line, as WALL.
+    DOOR = 36,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool

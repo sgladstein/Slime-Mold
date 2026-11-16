@@ -37,6 +37,10 @@ pub enum Ground {
     Wall = 3,
     Rubble = 4,
     Crystal = 5,
+    /// A door's wall cell (the Larder world's `Game::doors`): a wall to the
+    /// slime and to shots, ground to soldiers. Its value is its health, as
+    /// a wall's. Hard terrain, drawn as a gate (walls thread, 11-16).
+    Door = 6,
 }
 
 /// One cell's code: `value` 0-1 (clamped).
@@ -119,7 +123,7 @@ pub fn mark_far(w: usize, codes: &mut [u32]) {
     }
     let h = codes.len() / w;
     let r = FAR_REACH;
-    let hard = |c: u32| matches!(c & 15, 2..=4);
+    let hard = |c: u32| matches!(c & 15, 2..=4 | 6);
     // Rows: how many hard cells within r along x (off the row counts).
     let mut rows = vec![0u32; w * h];
     for y in 0..h {
@@ -167,7 +171,7 @@ pub fn mark_far_box(w: usize, codes: &mut [u32], (x0, x1): (usize, usize), (y0, 
         if x < 0 || y < 0 || x >= w as isize || y >= h as isize {
             1
         } else {
-            matches!(codes[y as usize * w + x as usize] & 15, 2..=4) as u32
+            matches!(codes[y as usize * w + x as usize] & 15, 2..=4 | 6) as u32
         }
     };
     let stride = (bw + 1) as usize;

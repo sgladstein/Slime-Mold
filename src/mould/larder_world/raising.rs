@@ -199,6 +199,10 @@ impl<W: World> Game<W> {
     pub(super) fn wall_occupied(&self, b: usize) -> bool {
         let bd = self.buildings[b];
         let Kind::Wall { to } = bd.kind else { return false };
+        // A door's cells are ground to soldiers: one in it is not shut in.
+        if bd.door {
+            return false;
+        }
         let r = (self.rules.wall_width / 2.0 + 0.5) * self.s();
         self.soldiers.iter().any(|s| {
             let q = nearest_on(bd.at, to, (s.x, s.y));

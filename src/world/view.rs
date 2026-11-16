@@ -2008,4 +2008,71 @@ mod tests {
         assert!(lum(on) > lum(body) - 20.0, "as bright as the body beside it: {on:?} against {body:?}");
         assert!((lum(bare_rubble) - lum(bare)).abs() < 25.0, "bare rubble is ground dark: {bare_rubble:?} against {bare:?}");
     }
+
+    /// A door is drawn as a gate, not as wall or water (the walls thread,
+    /// 2026-11-16): hard terrain in timber brown with a grate of bars a
+    /// cell apart. A door band at x 10..16 and a wall band at x 30..36,
+    /// both whole, on bare ground: the door is warmer than the wall, and
+    /// its pixels swing between bar and gap where the wall's hedge grain
+    /// does less.
+    #[test]
+    fn a_door_draws_as_a_timber_grate() {
+        let Some((dev, q)) = test_gpu() else { return };
+        let (w, h) = (48usize, 32usize);
+        let px: Vec<u8> = (0..w * h).flat_map(|_| [12u8, 22, 26, 255]).collect();
+        let mut ground = vec![0u32; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                use crate::world::look::{code, Ground};
+                if (10..16).contains(&x) {
+                    ground[y * w + x] = code(Ground::Door, 1.0);
+                } else if (30..36).contains(&x) {
+                    ground[y * w + x] = code(Ground::Wall, 1.0);
+                }
+            }
+        }
+        let world = storage(&dev, "world", px.len() as u64);
+        q.write_buffer(&world, 0, &px);
+        let buf = |label: &str, bytes: &[u8]| {
+            let b = storage(&dev, label, bytes.len() as u64);
+            q.write_buffer(&b, 0, bytes);
+            b
+        };
+        let look_b = buf("look", &crate::gpu::u32_bytes(&vec![0u32; w * h]));
+        let ground_b = buf("ground", &crate::gpu::u32_bytes(&ground));
+        let walk_b = buf("walkers", &[0u8; 16]);
+        let screen = (384, 256);
+        let mut view = View::new(&dev, &q, &world, (w, h), screen);
+        view.set_look(&look_b, &ground_b, &walk_b, 0);
+        let mut cam = Camera::new((w, h), screen);
+        cam.zoom_to(12.0, (0.0, 0.0));
+        cam.centre_on((23.0, 16.0));
+        let mut enc = dev.create_command_encoder(&Default::default());
+        view.record(&mut enc, &cam, None);
+        q.submit([enc.finish()]);
+        let pic = view.picture();
+        // Over cells (x0..x1, 12..20), well inside the band: the mean and
+        // the spread of luminance.
+        let lum = |p: [u8; 4]| 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32;
+        let band = |x0: f32, x1: f32| {
+            let (a, b) = (cam.to_screen((x0, 12.0)), cam.to_screen((x1, 20.0)));
+            let mut s = [0.0f32; 3];
+            let (mut n, mut lo, mut hi) = (0.0, f32::MAX, 0.0f32);
+            for y in a.1 as u32..b.1 as u32 {
+                for x in a.0 as u32..b.0 as u32 {
+                    let p = pic.get_pixel(x, y).0;
+                    for c in 0..3 {
+                        s[c] += p[c] as f32;
+                    }
+                    (lo, hi) = (lo.min(lum(p)), hi.max(lum(p)));
+                    n += 1.0;
+                }
+            }
+            (s.map(|v| v / n), hi - lo)
+        };
+        let ((door, door_swing), (wall, _)) = (band(11.5, 14.5), band(31.5, 34.5));
+        assert!(door[0] > door[2] + 25.0, "the door is timber, not slate or water: {door:?}");
+        assert!(door[0] - door[2] > wall[0] - wall[2] + 10.0, "warmer than the wall: {door:?} against {wall:?}");
+        assert!(door_swing > 30.0, "its grate swings bar to gap: {door_swing}");
+    }
 }

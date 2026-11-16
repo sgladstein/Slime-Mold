@@ -119,6 +119,9 @@ pub struct Building {
     /// playtest, 2026-11-16 01:45Z). Chosen when it is placed
     /// (`Game::wall_home`).
     pub home: (f32, f32),
+    /// A wall that is a door (`Cmd::Door`, `doors`): its cells are wall to
+    /// the slime, which bites them as any wall's, and ground to soldiers.
+    pub door: bool,
 }
 
 impl Building {
@@ -431,6 +434,9 @@ impl<W: World> Game<W> {
         match bd.kind {
             Kind::Pump if bd.level < PUMP_LEVELS => Some(self.rules.build.pump_up_cost * f32::from(bd.level)),
             Kind::Turret if bd.level < TURRET_LEVELS => Some(self.rules.build.render_cost),
+            // Thicken (`doors`): each band at the wall's first price. A door
+            // cut into a wall thickens with it, so only its wall does.
+            Kind::Wall { to } if bd.level < super::WALL_LEVELS && bd.home != (0.0, 0.0) && !(bd.door && self.door_host(bd.at, to).is_some()) => Some(self.wall_price(bd.at, to)),
             _ => None,
         }
     }
@@ -474,7 +480,11 @@ impl<W: World> Game<W> {
             Some(p) if self.bank >= p => {
                 self.bank -= p;
                 self.spent += p;
-                self.buildings[b].level += 1;
+                if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
+                    self.thicken(b);
+                } else {
+                    self.buildings[b].level += 1;
+                }
                 true
             }
             _ => false,
@@ -505,7 +515,7 @@ impl<W: World> Game<W> {
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
         let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -530,10 +540,8 @@ impl<W: World> Game<W> {
         let built = (b.built + amount).min(1.0);
         self.buildings[k].built = built;
         self.buildings[k].hp = (b.hp + (1.0 - GHOST_HP) * b.max_hp * (built - b.built)).min(b.max_hp);
-        if built >= 1.0 {
-            if let Kind::Wall { to } = b.kind {
-                self.wall_cells(b.at, to);
-            }
+        if built >= 1.0 && matches!(b.kind, Kind::Wall { .. }) {
+            self.wall_bands(k);
         }
     }
 
@@ -581,9 +589,15 @@ impl<W: World> Game<W> {
 
     fn nearest_building(&self, p: (f32, f32), keep: impl Fn(&Building) -> bool) -> Option<usize> {
         let r = (self.rules.build.touch + 1.0) * self.s();
+        let ww = self.rules.wall_width * self.s();
         let d = |bd: &Building| {
             let q = match bd.kind {
-                Kind::Wall { to } => super::paths::nearest_on(bd.at, to, p),
+                // A thick wall (`doors`) from its line to its last band.
+                Kind::Wall { to } => {
+                    let o = ((p.0 - bd.at.0) * bd.home.0 + (p.1 - bd.at.1) * bd.home.1).clamp(0.0, f32::from(bd.level.max(1) - 1) * ww);
+                    let n = (bd.home.0 * o, bd.home.1 * o);
+                    super::paths::nearest_on((bd.at.0 + n.0, bd.at.1 + n.1), (to.0 + n.0, to.1 + n.1), p)
+                }
                 _ => bd.at,
             };
             (q.0 - p.0).hypot(q.1 - p.1)

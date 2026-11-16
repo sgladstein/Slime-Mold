@@ -305,7 +305,7 @@ impl<W: World> Game<W> {
     /// Ground a soldier may stand on: open, and not on a crystal with
     /// charge left (`Rules::crystal_solid`).
     pub fn standable(&self, x: f32, y: f32) -> bool {
-        self.world.open(x, y) && self.solid_at((x, y)).is_none()
+        self.ground(x, y) && self.solid_at((x, y)).is_none()
     }
 
     /// `standable` at every cell's middle, as a walking map reads it: open
@@ -317,6 +317,10 @@ impl<W: World> Game<W> {
     pub fn standable_cells(&self) -> Vec<bool> {
         let (w, h) = self.world.size();
         let mut ok = self.world.open_cells();
+        // A door's cells are walls in the world and ground to soldiers.
+        for (o, &d) in ok.iter_mut().zip(&self.doors) {
+            *o |= d;
+        }
         for &(c, r) in &self.solid {
             let span = |m: f32, n: usize| ((m - r - 1.0).floor().max(0.0) as usize, ((m + r + 1.0).ceil().max(0.0) as usize).min(n));
             let ((x0, x1), (y0, y1)) = (span(c.0, w), span(c.1, h));
@@ -692,7 +696,7 @@ impl<W: World> Game<W> {
         let caught = self.solid_at((s.x, s.y)).is_some();
         // Shut in a wall or rock (a wall that rose on it, an old save):
         // straight out to the nearest standable ground, over anything.
-        let shut = !caught && !self.world.open(s.x, s.y);
+        let shut = !caught && !self.ground(s.x, s.y);
         let out = if shut { self.nearest_standable((s.x, s.y), GOAL_SEARCH * self.s()) } else { None };
         let g = if let Some(o) = out {
             o
@@ -726,7 +730,7 @@ impl<W: World> Game<W> {
         let d = dx.hypot(dy).max(1e-6);
         let step = (self.rules.speed * self.s() * dt * self.wade(k)).min(d);
         let (nx, ny) = (s.x + dx / d * step, s.y + dy / d * step);
-        let ok = |x: f32, y: f32| if out.is_some() { true } else if caught { self.world.open(x, y) } else { self.standable(x, y) };
+        let ok = |x: f32, y: f32| if out.is_some() { true } else if caught { self.ground(x, y) } else { self.standable(x, y) };
         let to = if ok(nx, ny) {
             Some((nx, ny))
         } else if ok(nx, s.y) {

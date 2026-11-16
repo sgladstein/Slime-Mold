@@ -899,6 +899,10 @@ impl World for GpuWorld {
         World::clear(&self.e.dish, x, y)
     }
 
+    fn wall_cell(&self, i: usize) -> bool {
+        World::wall_cell(&self.e.dish, i)
+    }
+
     fn stop_births(&mut self) {
         // In a garden only the enemy's births stop (its cap goes to 0), as
         // the CPU's `Garden::stop_births`; the player's mould keeps growing.
@@ -1162,6 +1166,9 @@ mod tests {
         }
         fn clear(&self, x: f32, y: f32) -> bool {
             self.g.clear(x, y)
+        }
+        fn wall_cell(&self, i: usize) -> bool {
+            self.g.wall_cell(i)
         }
         fn stop_births(&mut self) {
             self.g.stop_births()
