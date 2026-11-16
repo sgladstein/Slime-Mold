@@ -89,6 +89,8 @@ fn a_seeker_turns_toward_slime_no_other_bullet_took() {
     g.last_shots.clear();
     // This CPU world is a fine cell a dish cell, one walker a cell at most.
     g.rules.seek_min = 1;
+    // The gap rule alone: no marks to fly over to.
+    g.rules.seek_over = false;
     let r = g.rules;
     let sc = g.s();
     let bin = (sc as usize).max(1);
@@ -103,15 +105,15 @@ fn a_seeker_turns_toward_slime_no_other_bullet_took() {
     let p = at_sq(i);
     let from = (1..=12).map(|k| (p.0 - (8.0 + k as f32) * sc, p.1)).find(|&f| f.0 > 0.0 && g.world.clear(f.0, f.1) && g.clear_line(f, p)).expect("open ground west of the mould");
     let off = 0.6f32;
-    let bullet = Bullet { at: from, dir: (off.cos(), off.sin()), left: 30.0 * sc, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: r.seek_after * sc };
+    let bullet = Bullet { at: from, dir: (off.cos(), off.sin()), left: 30.0 * sc, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: r.seek_after * sc, over: false };
     let angle = |d: (f32, f32)| d.1.atan2(d.0);
     // Flies straight with no card, or before `seek_after`.
     g.bullets = vec![Bullet { seek: 0, ..bullet }, Bullet { flown: 0.5 * r.seek_after * sc, ..bullet }];
-    g.steer();
+    g.steer(3.0);
     assert_eq!((g.bullets[0].dir, g.bullets[1].dir, g.seek_turns), (bullet.dir, bullet.dir, 0));
     // One seeker turns, by at most `seek_turn`, toward slime.
     g.bullets = vec![bullet];
-    g.steer();
+    g.steer(3.0);
     let turn = angle(g.bullets[0].dir) - off;
     assert!(g.seek_turns == 1 && turn.abs() > 1e-3 && turn.abs() <= r.seek_turn + 1e-4, "turned {turn}");
     // Two seekers with turn enough to face their picks take two squares
@@ -124,14 +126,14 @@ fn a_seeker_turns_toward_slime_no_other_bullet_took() {
         }).unwrap_or(from)
     };
     g.bullets = vec![Bullet { seek: 4, ..bullet }; 2];
-    g.steer();
+    g.steer(3.0);
     let (a, c) = (pick(&g, g.bullets[0].dir), pick(&g, g.bullets[1].dir));
     assert!(g.bullets[0].dir != g.bullets[1].dir && (a.0 - c.0).hypot(a.1 - c.1) > r.seek_gap * sc - b, "both took the same slime: {a:?} {c:?}");
     // A square hit last frame is not taken: the first seeker's pick, hit,
     // sends the next seeker elsewhere.
     g.last_shots = vec![Shot { from, to: a, hit: Some(a), killed: 1, by: None, fired: false, cast: 0, r: 1.0 }];
     g.bullets = vec![Bullet { seek: 4, ..bullet }];
-    g.steer();
+    g.steer(3.0);
     let d = pick(&g, g.bullets[0].dir);
     assert!((d.0 - a.0).hypot(d.1 - a.1) > r.seek_gap * sc - b, "took the square hit last frame: {d:?} {a:?}");
 }
@@ -143,7 +145,7 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let r = g.rules;
     let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0 };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, over: false };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -194,7 +196,7 @@ fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
     // Open ground with room ahead, and a wall with open ground before it.
     let open = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| (0..12).all(|j| g.world.clear(x + j as f32, y))).expect("open ground");
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.clear(x, y) && (1..=3).all(|j| g.world.clear(x - j as f32, y)) && g.world.clear(x - 1.0, y + 1.0) && g.world.clear(x - 1.0, y - 1.0) && !g.world.clear(x, y + 1.0) && !g.world.clear(x, y - 1.0) && x > 4.0).expect("a wall face with open ground west of it");
-    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false, seek: 0, flown: 0.0 };
+    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false, seek: 0, flown: 0.0, over: false };
     let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0 };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
     let miss = squad::ShotOut { hit: None, killed: 0 };
@@ -240,7 +242,7 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0 };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, over: false };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
     let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
     // Every second one hits; the others fly on and keep their places.

@@ -137,6 +137,15 @@ pub struct Rules {
     pub seek_min: u32,
     pub seek_gap: f32,
     pub seek_turn: f32,
+    /// **Seekers fly over the slime to a mark** (the owner's question,
+    /// 2026-11-16 ~10:00Z, recommended; on this branch only): a seeker with
+    /// a mark ahead (a live mini-boss, else a crystal with `seek_fed`
+    /// walkers on it, its densest square) is not traced while the mark is
+    /// beyond its leg, so it strikes nothing on the way and lands there.
+    /// Without it, seeking only bent bullets onto slime about where they
+    /// were going (`Reports/gun-seek-2026-11-16/`).
+    pub seek_over: bool,
+    pub seek_fed: u32,
     /// Food a shot costs. 0 since 2026-11-12: the owner's playtest (04:13Z)
     /// ran the bank dry with soldiers left, who could then neither fight
     /// nor harvest past the mould ("energy required for shooting isn't
@@ -558,6 +567,14 @@ impl Rules {
                 self.boss.cut_least = v.max(0.0) as u32;
                 return true;
             }
+            "seek_over" => {
+                self.seek_over = v > 0.0;
+                return true;
+            }
+            "seek_fed" => {
+                self.seek_fed = v.max(0.0) as u32;
+                return true;
+            }
             "seek_min" => {
                 self.seek_min = v.max(0.0) as u32;
                 return true;
@@ -675,6 +692,8 @@ impl Default for Rules {
             seek_min: 2,
             seek_gap: 2.0,
             seek_turn: 0.45,
+            seek_over: true,
+            seek_fed: 20,
             price: 0.0,
             hp: 100.0,
             drain: 2.0,

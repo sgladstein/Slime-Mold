@@ -8,7 +8,8 @@ after the [trigger cards](../gun-triggers-2026-11-16/README.md) and
 Page: [Seeking Bullets](https://claude.ai/artifact/JxxzYTtiug3oNrhfwX3b7J) (source in `page/`).
 
 Status: built on the branch, **not merged**; the owner is asked how homing
-should work (the page's last section).
+should work (the page's last section). A prototype of the recommended answer
+(seekers fly over the slime to a mark) is on the branch too.
 
 ## What was built
 
@@ -52,7 +53,8 @@ bullets, then each loadout; the mini-boss clips add `boss=29,185,250`.
 | mini-boss, plain: its members left of 62 | 25 | 40 |
 | mini-boss, buckshot: its members left of 62 | 60 | 62 |
 
-One game each: a few percent is noise. Nothing says seek helps; the
+These tables ran before the fly-over prototype; to reproduce them now, add
+`set=seek_over=0`. One game each: a few percent is noise. Nothing says seek helps; the
 mini-boss rows lean the other way.
 
 ## Why it changes little
@@ -68,6 +70,36 @@ mini-boss rows lean the other way.
 - Aim cards meet the same wall: squads on their own hold the defend stance
   and only shoot slime near them, so an aim card would change only which
   nearby slime they pick; it matters for squads on attack orders.
+
+## Prototype: seekers fly over the slime to a mark
+
+To try the recommended answer (on this branch, `Rules::seek_over`, on): a
+seeker past `seek_after` with a mark ahead within what it has left to fly
+and in sight (a live mini-boss's centre, else the densest square on a
+crystal holding `seek_fed` 20 walkers) is not traced (`Bullet::over`;
+`Flight::legs` keeps every leg, the world gets the others) until this
+frame's leg reaches the mark, so it strikes nothing on the way and lands
+there. No engine change.
+
+| Mini-boss, 10 s, 29-39 s | Members left of 62 | Killed | Soldiers left of 7 |
+|---|---|---|---|
+| plain | 25 | 259 | 6 |
+| seek + plain, flying over | 30 | 508 | 7 |
+| buckshot | 60 | 136 | 6 |
+| seek + buckshot, flying over | 45 | 78 | 5 |
+
+3 s clips from 34 s (the hunt's start): buckshot 91 hits in 75 cells, the
+mini-boss 62 to 61, 7 soldiers; seek + buckshot flying over 82 hits in 40
+cells, 62 to 52, 6 soldiers. The pellets reach the mini-boss instead of
+the slime in front; the slime between is left alone. With plain bullets
+the two came out about even on the mini-boss. In the hold scene with no
+mini-boss nothing changed (434 and 214 killed, as without it): crystal
+feeders seldom became marks, as a squad on its own fires only at slime
+near it.
+
+Rejected: flying over from the muzzle. That squad lost 4 of 7 soldiers in
+8 s (from 29 s) against none, because it stopped shooting the slime on
+itself; the first leg is now traced.
 
 ## Asked of the owner
 

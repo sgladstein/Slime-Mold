@@ -242,6 +242,9 @@ pub struct Bullet {
     /// flown (fine cells): it turns once that is `Rules::seek_after`.
     pub seek: u8,
     pub flown: f32,
+    /// It flies over the slime this frame (`Rules::seek_over`): its leg is
+    /// not traced, so it strikes nothing until it reaches its mark.
+    pub over: bool,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -457,6 +460,9 @@ pub struct Game<W: World> {
 struct Flight {
     t: u64,
     f: Frame,
+    /// With bullets flying over the slime (`Bullet::over`): every bullet's
+    /// leg, and whether it went to the world (`f.shots` holds only those).
+    legs: Option<(Vec<ShotIn>, Vec<bool>)>,
     /// Each of `f.shots`: who fired it, whether it was fired this frame
     /// and the cast it carries; with bullets, leg q is `bullets[q]`'s.
     by: Vec<LegBy>,

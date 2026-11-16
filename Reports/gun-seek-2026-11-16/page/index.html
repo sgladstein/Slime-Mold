@@ -59,7 +59,7 @@ footer{font-size:.85rem;color:var(--muted)}
 <header style="display:flex;flex-direction:column;gap:10px">
   <span class="eyebrow">Larder World · guns · step C · 2026-11-16</span>
   <h1>Seeking bullets</h1>
-  <p class="lede">A new card, <b>Seek</b>, makes every bullet turn toward slime once it has flown 3 cells: toward a mini-boss first, else toward slime ahead that no other bullet has hit or picked. Built and working, but in these tests it changed almost nothing. The question at the bottom is how you want homing to work. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game to 29 s with plain bullets, then each clip's cards for 3 s.</p>
+  <p class="lede">A new card, <b>Seek</b>, makes every bullet turn toward slime once it has flown 3 cells: toward a mini-boss first, else toward slime ahead that no other bullet has hit or picked. Built and working, but in these tests it changed almost nothing. A prototype where seekers fly over the slime to their mark does change things, further down. The question at the bottom is how you want homing to work. Every clip is the game window's own frames on software Vulkan (the Fork, eight soldiers holding at the larder, squad mode). All clips are one game to 29 s with plain bullets, then each clip's cards for 3 s.</p>
 </header>
 
 <div class="bar">
@@ -130,10 +130,33 @@ mini-boss 62 members at 32 s</div></figure>
   </ul>
 </section>
 
+<section>
+  <h2>Prototype: seekers fly over the slime to a mark</h2>
+  <p>Built on the branch to try the first answer below. Once a seeker has flown its first 3 cells (so slime on the squad is still shot), it picks a mark ahead: a mini-boss, else the slime feeding on a crystal. It then flies over the slime between and strikes only when it gets there. The clips start at 34 s, when the mini-boss starts its hunt.</p>
+  <div class="pair">
+    <figure><span class="tag b">buckshot</span><video src="over-boss-buck.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">84 pellets   91 hits in 75 cells
+mini-boss 62 → 61 members   7 soldiers</div></figure>
+    <figure><span class="tag a">seek + buckshot, flying over</span><video src="over-boss-seek-buck.mp4" autoplay muted loop playsinline></video>
+      <div class="counts">80 pellets   82 hits in 40 cells
+mini-boss 62 → 52 members   6 soldiers</div></figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Mini-boss, 10 s, 29 to 39 s</th><th>Members left of 62</th><th>Slime killed</th><th>Soldiers left of 7</th></tr></thead>
+    <tbody>
+      <tr><td>plain</td><td class="num">25</td><td class="num">259</td><td class="num">6</td></tr>
+      <tr><td>seek + plain, flying over</td><td class="num">30</td><td class="num">508</td><td class="num">7</td></tr>
+      <tr><td>buckshot</td><td class="num">60</td><td class="num">136</td><td class="num">6</td></tr>
+      <tr><td>seek + buckshot, flying over</td><td class="num">45</td><td class="num">78</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+  <p class="hint">Here, finally, seeking does something: buckshot pellets reach the mini-boss instead of spending themselves on the slime in front, and the hits bunch onto it (40 cells against 75). The cost is the slime in between, which is left alone. With plain bullets the two came out about even on the mini-boss. In the first version the seekers flew over from the muzzle, and that squad lost 4 of 7 soldiers in 8 s because it stopped shooting the slime on itself. Crystal feeders seldom became marks in these scenes, because a squad on its own only fires at slime near it.</p>
+</section>
+
 <section class="short">
   <h2>What could make homing matter</h2>
   <ul>
-    <li><b>Seekers fly over the slime to their mark.</b> A seeking bullet would pass over slime until it reaches what it hunts (a mini-boss, the slime feeding on a crystal, a thin vein) and hit there. That is the one version that reaches something a plain shot cannot. It would bend your rule, for this card only.</li>
+    <li><b>Seekers fly over the slime to their mark</b> (the prototype above). A seeking bullet passes over slime until it reaches what it hunts and hits there. That is the one version that reaches something a plain shot cannot. It bends your rule, for this card only.</li>
     <li><b>Keep seek small, as built.</b> Bullets visibly bend, the effect stays within noise, and the balance pass sets its price.</li>
     <li><b>Drop homing</b> and go on to step D, the bullet families.</li>
   </ul>

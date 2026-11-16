@@ -235,9 +235,17 @@ impl<W: World> Game<W> {
         // 0.4 + 0.6 x t / steps over its steps, `big::spray_pace`).
         let spray = (r.spray_secs * (r.tps * self.world.fine_steps()) as f32).round().clamp(0.0, u16::MAX as f32) as u16;
         let spray_speed = r.spray_reach * self.world.scale() / (0.7 * spray as f32 + 0.3);
+        // Bullets flying over the slime to a mark (`Bullet::over`) go to
+        // no engine this frame: the world gets the other legs only.
+        let (shots, legs) = if r.bullet_speed > 0.0 && self.bullets.iter().any(|b| b.over) {
+            let sent: Vec<bool> = self.bullets.iter().map(|b| !b.over).collect();
+            (shots.iter().zip(&sent).filter(|(_, &s)| s).map(|(l, _)| *l).collect(), Some((shots, sent)))
+        } else {
+            (shots, None)
+        };
         let f = Frame { units, shots, slime: squad::slime_trail(6.0), crater, sink: r.sink, spray, spray_speed, spray_share: r.spray_share };
         let out = self.world.frame_start(&f, r.frame_ticks);
-        self.flight = Some(Flight { t, f, by, fired, who, from, out });
+        self.flight = Some(Flight { t, f, legs, by, fired, who, from, out });
     }
 
     /// The second half of `step`: the frame's results, waited for if the
@@ -245,8 +253,15 @@ impl<W: World> Game<W> {
     /// (kills, harvest, touches, theft, the core, the end). Nothing when no
     /// step is running.
     pub fn finish_step(&mut self) {
-        let Some(Flight { t, f, by, fired, who, from, out }) = self.flight.take() else { return };
-        let out = out.unwrap_or_else(|| self.world.frame_finish());
+        let Some(Flight { t, mut f, legs, by, fired, who, from, out }) = self.flight.take() else { return };
+        let mut out = out.unwrap_or_else(|| self.world.frame_finish());
+        // Every bullet's leg again, those that flew over the slime with no
+        // hit (`Bullet::over`).
+        if let Some((all, sent)) = legs {
+            let mut traced = out.shots.into_iter();
+            out.shots = sent.iter().map(|&s| if s { traced.next().unwrap_or(squad::ShotOut { hit: None, killed: 0 }) } else { squad::ShotOut { hit: None, killed: 0 } }).collect();
+            f.shots = all;
+        }
         let r = self.rules;
         let sc = self.s();
         let dt = r.frame_ticks as f32 / r.tps as f32;

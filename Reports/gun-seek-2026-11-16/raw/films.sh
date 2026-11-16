@@ -30,3 +30,10 @@ for L in boss-plain=plain boss-seek=seek+plain boss-buck=buckshot boss-seek-buck
 done
 wait
 echo FILMS DONE
+# The fly-over prototype (`Rules::seek_over`, on): the mini-boss scene's
+# hunt from 34 s, and its 10 s counts.
+for L in over-boss-buck=buckshot over-boss-seek-buck=seek-buck; do
+  N=${L%%=*}; C=${L#*=}
+  START=34 $R $B "$F" "$N" plain load=29,"$C" boss=29,185,250 &
+done
+wait
