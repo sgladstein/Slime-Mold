@@ -729,6 +729,17 @@ impl App {
                 self.marks.streak(b.at, tail, core, glow, look.core);
             }
             let glow = [look.glow[0], look.glow[1], look.glow[2], if quiet { 90 } else { 235 }];
+            // A carrier (`Bullet::carry`, the Trigger card, 2026-11-16)
+            // shows what it carries: a short bead at its head in the carried
+            // cast's colour, so a plain bullet carrying a blast reads as one.
+            if b.carry > 0 {
+                if let Some(c) = b.by.and_then(|k| g.soldiers.get(k)).and_then(|s| self.rounds.cast_of(g, s.squad as usize, b.carry)).filter(castable) {
+                    let l = card_look(Some(c.payload));
+                    let bead = core * 0.7;
+                    let tail = (head.0 - b.dir.0 * 3.0 * bead, head.1 - b.dir.1 * 3.0 * bead);
+                    self.marks.streak(head, tail, bead, [l.glow[0], l.glow[1], l.glow[2], 255], l.core);
+                }
+            }
             if cast.is_some_and(|c| c.scatter) {
                 let side = (-b.dir.1 * 0.9 * sc, b.dir.0 * 0.9 * sc);
                 for f in [-1.0, 1.0] {
@@ -1495,6 +1506,9 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Rate => (Icon::Fast, CardKind::Flight, format!("Fires {:.0}x as often.", 1.0 + w.rate_card)),
         C::Thrift => (Icon::Upgrade, CardKind::Modifier, format!("The next card costs {} less budget.", rounds::THRIFT)),
         C::Smother => (Icon::Close, CardKind::Flight, "Bullets wipe the scent slime follows to food.".into()),
+        // The carriers (2026-11-16, step B of the gun-system review).
+        C::Trigger => (Icon::Carry, CardKind::Trigger, "It carries the one after it, let out where it hits.".into()),
+        C::Expire => (Icon::CarryStop, CardKind::Trigger, "It carries the one after it, let out where it stops.".into()),
     }
 }
 
@@ -1544,6 +1558,10 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
         }
     }
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
+    // The next cast and the casts it carries (`Card::Trigger`, 2026-11-16)
+    // light together: they go out in one shot.
+    let links = rounds::casts(round);
+    let lit: Vec<usize> = std::iter::successors(next, |&j| links.get(j).and_then(|c| c.child).map(usize::from)).take(rounds::CARRY_DEPTH + 1).collect();
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
         about = format!("{about} Budget {}.", c.cost());
@@ -1571,7 +1589,7 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
             kind,
             colour,
             about,
-            next: !flight && !idle && next == Some(runs[i]),
+            next: !flight && !idle && lit.contains(&runs[i]),
             idle,
         });
     }

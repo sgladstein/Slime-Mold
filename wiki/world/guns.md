@@ -12,12 +12,14 @@ sources:
   - Reports/gun-range-2026-11-15.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-system-review-2026-11-16/README.md
+  - Reports/gun-triggers-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
   - Reports/rolled-bullets-2026-11-14.md
   - Reports/spray-share-ab-2026-11-15/README.md
 code:
   - Ammo::roll
+  - Game::release
   - Gun::roll
   - Run::range
   - Set::shape
@@ -55,7 +57,20 @@ buckshot gas is four small clouds). **Blast and bomb are apart**: the blast
 kills a 6-cell disc and its crater holds 20 s; the bomb kills 2.5 cells, throws
 the slime out to 10 cells away from the gun and holds no ground, in ice blue.
 The germ bullet is sold from planet 4 (`shells_at`). Films, counts and why
-([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)).
+([bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md)); the owner
+named all four sets from unlabelled clips (11-16 05:09Z).
+
+**Trigger cards** (2026-11-16, step B): `Trigger` makes a bullet carry the
+cast after it and let it out where it hits slime; `Expire` where it stops
+(after its last hit, at the end of its range, or bounced back off a wall). The
+carried cast leaves the gun's own turn, so every shot fires both, and is let
+out as its own bullets (`Game::release`): a carried buckshot is four pellets.
+The carrier's hit clears a hole first, so the carried bullet goes off at the
+next slime on its line. A carried cast may carry one more. A carrier draws a
+bead of its cargo's colour; the card strip lights both as the next shot. A
+bomb carrying a gas burst 13.6 times a second against 7.5 for the two in turn;
+a buckshot trigger with a blast is strong
+([trigger cards](../../Reports/gun-triggers-2026-11-16/README.md)).
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
@@ -93,11 +108,13 @@ card text) and 08:30 (the guns a draw of the game).
   the simulation; aim cards for auto squads if they help; one device slot per
   squad on a cooldown; luck that changes rules. Steps A-F, each filmed; cut
   last (the owner, 03:44Z: slime sits on crystals all over, "this may not be
-  useful"). Step A (set shapes, blast and bomb apart, germ sold) is built;
-  the trigger card is next.
+  useful"). Step A (set shapes, blast and bomb apart, germ sold) and the
+  trigger and expire cards are built. Next, the owner's shove cards (11-16
+  05:11Z: herd slime into a kill zone), then multicast and the GPU read-back
+  batching.
 - Whether per-shot mana is layered on if fights lack tension (owner 11-14).
 - Balance of budgets, prices and rolls waits for the owner's playtest.
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md).

@@ -107,6 +107,16 @@ pub enum Card {
     Rate,
     Thrift,
     Smother,
+    /// **Trigger** (2026-11-16, step B of the gun-system review; the owner's
+    /// 11-14 15:06Z notes, "trigger next card on hit", and 11-16 02:34Z: "I
+    /// thought we were planning on building a trigger card"): the bullet of
+    /// the cast it is in carries the next cast and releases it where it
+    /// hits slime (`Cast::child`, `Game::landed`).
+    Trigger,
+    /// **On-expire** (2026-11-16, step B): as `Trigger`, and it releases
+    /// where its bullet stops without a hit too (a wall, the end of its
+    /// range).
+    Expire,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -119,13 +129,13 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 19] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother];
+    pub const ALL: [Card; 21] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet => Kind::Modifier,
-            Card::Delay | Card::Thick => Kind::Trigger,
+            Card::Delay | Card::Thick | Card::Trigger | Card::Expire => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
@@ -155,6 +165,8 @@ impl Card {
             Card::Rate => "rate",
             Card::Thrift => "thrift",
             Card::Smother => "smother",
+            Card::Trigger => "trigger",
+            Card::Expire => "expire",
         }
     }
 
@@ -219,6 +231,8 @@ impl Card {
             Card::Rate => "Fires twice as often.",
             Card::Thrift => "The next card costs less budget.",
             Card::Smother => "Bullets wipe the scent slime follows to food.",
+            Card::Trigger => "Carries the next bullet and lets it out where it hits.",
+            Card::Expire => "Carries the next bullet and lets it out where it stops.",
         }
     }
 
@@ -233,7 +247,7 @@ impl Card {
             Card::Plain => 1,
             Card::Bomb | Card::Germ => 4,
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist => 3,
-            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother => 2,
+            Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick => 1,
         }
@@ -245,7 +259,7 @@ impl Card {
         match self {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ => 3,
-            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother => 2,
+            Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire => 2,
             _ => 1,
         }
     }
@@ -473,29 +487,70 @@ pub struct Cast {
     pub scatter: bool,
     pub quiet: bool,
     pub trigger: Option<Card>,
+    /// The cast its bullet carries and lets out (`Card::Trigger`,
+    /// `Card::Expire`): its index in the round's casts. A carried cast is
+    /// fired only by its carrier, not in the gun's own turn (`cycle`).
+    pub child: Option<u8>,
+    /// Its bullet lets the child out where it stops without a hit too
+    /// (`Card::Expire`).
+    pub expire: bool,
 }
+
+/// Most carriers in a chain: a carried cast may carry one more, and a
+/// third carrier's cast is fired in turn instead (the technical lead's caps
+/// in the plan: depth 2).
+pub const CARRY_DEPTH: usize = 2;
 
 /// The round's casts, left to right. Modifiers and triggers apply to the
 /// next payload; a second trigger before it replaces the first.
+///
+/// A `Trigger` or `Expire` makes its cast carry the next one (`Cast::child`),
+/// up to `CARRY_DEPTH` deep; a carrier with no cast after it carries none.
 pub fn casts(round: &[Card]) -> Vec<Cast> {
-    let mut out = Vec::new();
-    let (mut wide, mut scatter, mut quiet, mut trigger) = (0, false, false, None);
+    let mut out: Vec<Cast> = Vec::new();
+    let (mut wide, mut scatter, mut quiet, mut trigger, mut carry) = (0, false, false, None, None);
     for &c in round.iter().take(MAX_SLOTS) {
         match c {
             Card::Wide => wide += 1,
             Card::Scatter => scatter = true,
             Card::Quiet => quiet = true,
             Card::Delay | Card::Thick => trigger = Some(c),
+            Card::Trigger | Card::Expire => carry = Some(c == Card::Expire || carry == Some(true)),
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ => {
                 let ammo = c.ammo().unwrap_or_default();
-                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger });
-                (wide, scatter, quiet, trigger) = (0, false, false, None);
+                out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true) });
+                // Marks a carrier for now: linked below.
+                if carry.is_some() {
+                    out.last_mut().unwrap().child = Some(u8::MAX);
+                }
+                (wide, scatter, quiet, trigger, carry) = (0, false, false, None, None);
             }
         }
     }
+    // Each carrier takes the cast after it, unless that would make a chain
+    // deeper than `CARRY_DEPTH`.
+    let mut depth = vec![0usize; out.len()];
+    for i in 0..out.len() {
+        if out[i].child.is_none() {
+            continue;
+        }
+        if i + 1 < out.len() && depth[i] < CARRY_DEPTH {
+            out[i].child = Some((i + 1) as u8);
+            depth[i + 1] = depth[i] + 1;
+        } else {
+            (out[i].child, out[i].expire) = (None, false);
+        }
+    }
     out
+}
+
+/// The casts a gun fires in its own turn, left to right, as cast ids (1 +
+/// the index in `casts`): every cast no other carries.
+pub fn cycle(casts: &[Cast]) -> Vec<u8> {
+    let carried: Vec<u8> = casts.iter().filter_map(|c| c.child).collect();
+    (0..casts.len() as u8).filter(|i| !carried.contains(i)).map(|i| i + 1).collect()
 }
 
 /// The round's flight cards as every soldier bullet carries them: each
@@ -505,13 +560,17 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
 pub fn flight(round: &[Card]) -> BulletMods {
     let cards = || round.iter().take(MAX_SLOTS);
     let n = |k: Card| cards().filter(|&&c| c == k).count() as u8;
-    let mut ammo = [Ammo::default(); MAX_SLOTS];
-    let mut casts = 0;
-    for (slot, a) in ammo.iter_mut().zip(cards().filter_map(|c| c.ammo())) {
-        *slot = a;
-        casts += 1;
+    let all = casts(round);
+    let mut m = BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), ..BulletMods::default() };
+    for (i, c) in all.iter().enumerate() {
+        m.ammo[i] = c.ammo;
+        m.child[i] = c.child.map_or(0, |j| j + 1);
+        m.expire[i] = c.expire;
     }
-    BulletMods { pierce: n(Card::Pierce), split: n(Card::Split), reach: n(Card::Range), rate: n(Card::Rate), casts, ammo }
+    let turn = cycle(&all);
+    m.casts = turn.len() as u8;
+    m.cycle[..turn.len()].copy_from_slice(&turn);
+    m
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
@@ -669,6 +728,8 @@ pub struct Rounds {
     /// (in `flung` too).
     pub shoves: u32,
     pub shoved: usize,
+    /// Walkers put to sleep by rounds' gas (`squad::BurstOut::gassed`).
+    pub gassed: usize,
     pub pops: Vec<Pop>,
 }
 
@@ -745,8 +806,9 @@ impl Rounds {
     /// next shot carries; None when its squad's cards have no payload.
     pub fn next<W: World>(&self, g: &Game<W>, k: usize) -> Option<usize> {
         let s = g.soldiers.get(k)?;
-        let n = g.mods(s.squad as usize).casts as usize;
-        (n > 0).then(|| s.next as usize % n)
+        let m = g.mods(s.squad as usize);
+        let n = m.casts as usize;
+        (n > 0).then(|| m.cycle[s.next as usize % n] as usize - 1)
     }
 
     /// Lodged casts: what, where (fine cells), and the tick each goes off
@@ -943,6 +1005,7 @@ impl Rounds {
                 let out = g.world.burst(p, &k);
                 killed += out.killed as usize;
                 flung += out.flung as usize;
+                self.gassed += out.gassed as usize;
             }
             self.killed += killed;
             self.flung += flung;
@@ -1478,6 +1541,93 @@ mod tests {
     /// Blast and bomb apart (2026-11-16): at one spot the blast kills more
     /// and throws none, the bomb kills little and throws more than it kills,
     /// and the blast's crater outlasts the bomb's many times over.
+    /// **Carriers** (2026-11-16, step B): a `Trigger` or `Expire` makes its
+    /// cast carry the next one, which leaves the gun's own turn; a chain
+    /// stops at `CARRY_DEPTH`, and a carrier with nothing after it carries
+    /// nothing.
+    #[test]
+    fn a_carrier_takes_the_next_cast_out_of_the_turn() {
+        let c = casts(&parse("trigger+plain+blast").unwrap());
+        assert_eq!((c[0].child, c[0].expire, c[1].child), (Some(1), false, None));
+        assert_eq!(cycle(&c), vec![1]);
+        let f = flight(&parse("trigger+plain+blast+gas").unwrap());
+        assert_eq!((f.casts, &f.cycle[..2], &f.child[..3]), (2, &[1, 3][..], &[2, 0, 0][..]));
+        assert_eq!(f.ammo[1], Ammo::standard(Shell::Blast), "ammo stays by cast index");
+        let c = casts(&parse("expire+plain+blast").unwrap());
+        assert!(c[0].expire && c[0].child == Some(1));
+        // A chain: the plain carries the gas, which carries the blast.
+        // (With six slots three carriers leave the third nothing to carry,
+        // so `CARRY_DEPTH` is a guard for longer guns.)
+        let c = casts(&parse("trigger+plain+expire+gas+blast").unwrap());
+        assert_eq!(c.iter().map(|c| (c.child, c.expire)).collect::<Vec<_>>(), vec![(Some(1), false), (Some(2), true), (None, false)]);
+        assert_eq!(cycle(&c), vec![1]);
+        let c = casts(&parse("trigger+plain+trigger+gas+trigger+blast").unwrap());
+        assert_eq!(c.iter().map(|c| c.child).collect::<Vec<_>>(), vec![Some(1), Some(2), None]);
+        // Nothing after it.
+        assert_eq!(casts(&parse("trigger+blast").unwrap())[0].child, None);
+        assert_eq!(cycle(&casts(&parse("plain+trigger").unwrap())), vec![1]);
+        for c in [Card::Trigger, Card::Expire] {
+            assert_eq!((c.kind(), Card::from_word(c.name())), (Kind::Trigger, Some(c)));
+        }
+    }
+
+    /// **A trigger's cast goes off where its bullet hit** (step B): with
+    /// `trigger+plain+blast` the gun fires only the plain bullet, and every
+    /// blast is let out where one of those hit slime, so each shot that
+    /// lands blasts (a blast in turn only every second shot). The plain
+    /// hit kills the slime there first, so the blast flies on through the
+    /// hole it made and goes off at the next slime along the plain bullet's
+    /// line: within 3 dish cells of the hit, or further straight on.
+    #[test]
+    fn a_trigger_blasts_where_its_bullet_hits() {
+        let mut out = Vec::new();
+        for round in ["trigger+plain+blast", "plain+blast"] {
+            let mut g = attacking(2);
+            g.apply(Cmd::Load(0, Some(Deck::new(&parse(round).unwrap()))));
+            let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+            // Each plain hit and the bullet's heading.
+            let mut hits: Vec<((f32, f32), (f32, f32))> = Vec::new();
+            let (mut near, mut far, mut off) = (0, 0, 0);
+            for _ in 0..15 * 30 {
+                g.step();
+                for s in g.last_shots.iter().filter(|s| s.by.is_some()) {
+                    if s.fired && round.starts_with("trigger") {
+                        assert_eq!(s.cast, 1, "the blast is never fired in turn");
+                    }
+                    if let (Some(h), 1) = (s.hit, s.cast) {
+                        let d = (s.to.0 - s.from.0).hypot(s.to.1 - s.from.1).max(1e-3);
+                        hits.push((h, ((s.to.0 - s.from.0) / d, (s.to.1 - s.from.1) / d)));
+                    }
+                }
+                let before = rd.pops.len();
+                rd.after_step(&mut g);
+                let sc = g.world.scale();
+                for p in rd.pops[before..].iter().filter(|p| p.payload == Card::Blast) {
+                    let at = (p.burst.at.0 * sc, p.burst.at.1 * sc);
+                    let ahead = |&(h, d): &((f32, f32), (f32, f32))| {
+                        let v = ((at.0 - h.0) / sc, (at.1 - h.1) / sc);
+                        let n = v.0.hypot(v.1);
+                        (n <= 3.0, n <= g.rules.range && (v.0 * d.0 + v.1 * d.1) >= n * 0.35f32.cos())
+                    };
+                    match hits.iter().map(ahead).fold((false, false), |a, b| (a.0 || b.0, a.1 || b.1)) {
+                        (true, _) => near += 1,
+                        (false, true) => far += 1,
+                        _ => off += 1,
+                    }
+                }
+            }
+            eprintln!("{round}: releases {}, blasts {}, killed {}, plain hits {}; blasts by a hit {near}, straight on from one {far}, neither {off}", g.releases, rd.cast[0], rd.killed, hits.len());
+            if round.starts_with("trigger") {
+                assert!(g.releases > 20 && rd.cast[0] > 20 && rd.cast[0] <= g.releases, "releases {} blasts {}", g.releases, rd.cast[0]);
+                assert_eq!(off, 0, "every blast goes off by a plain hit or on along its line");
+            } else {
+                assert_eq!(g.releases, 0);
+            }
+            out.push((rd.cast[0], rd.killed));
+        }
+        assert!(out[0].0 > out[1].0, "a trigger blasts on every landing shot: {out:?}");
+    }
+
     #[test]
     fn a_blast_holds_and_a_bomb_throws() {
         let r = RoundRules::default();
