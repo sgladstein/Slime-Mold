@@ -1,0 +1,268 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+clip/after/fork-wallq-008s-all.png
+clip/after/fork-wallq-008s-near.png
+  CPU: ground field 2.85 ms (once a game second), model and HUD 0.116 ms a frame
+  t 8 s: mould 24628, soldiers 8, bank 430, harvested 0, rendered 0, shots 33, killed 240, took 0%, crystals left 0.999; squad at 264.6,70.3
+  surge: the slime ate 18 food (2.3/s); meter 18.3 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24628 (readout 24628)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+clip/after/fork-wallq-08500ms-all.png
+clip/after/fork-wallq-08500ms-near.png
+  CPU: ground field 3.87 ms (once a game second), model and HUD 0.154 ms a frame
+  t 9 s: mould 24628, soldiers 8, bank 430, harvested 0, rendered 0, shots 34, killed 245, took 0%, crystals left 0.999; squad at 264.5,70.3
+  surge: the slime ate 20 food (2.3/s); meter 19.6 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24628 (readout 24591)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+clip/after/fork-wallq-009s-all.png
+clip/after/fork-wallq-009s-near.png
+  CPU: ground field 3.30 ms (once a game second), model and HUD 0.122 ms a frame
+  t 9 s: mould 24593, soldiers 8, bank 430, harvested 0, rendered 0, shots 34, killed 245, took 0%, crystals left 0.999; squad at 264.6,70.2
+  surge: the slime ate 21 food (2.3/s); meter 20.8 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24593 (readout 24593)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+clip/after/fork-wallq-09500ms-all.png
+clip/after/fork-wallq-09500ms-near.png
+  CPU: ground field 4.18 ms (once a game second), model and HUD 0.175 ms a frame
+  t 10 s: mould 24593, soldiers 8, bank 1400, harvested 0, rendered 0, shots 34, killed 245, took 0%, crystals left 0.999; squad at 264.8,65.9
+  surge: the slime ate 22 food (2.3/s); meter 22.2 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24593 (readout 24545)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 90 / 400, built 0.1, standing
+    pumped 0 food
+clip/after/fork-wallq-010s-all.png
+clip/after/fork-wallq-010s-near.png
+  CPU: ground field 2.52 ms (once a game second), model and HUD 0.107 ms a frame
+  t 10 s: mould 24546, soldiers 8, bank 1400, harvested 0, rendered 0, shots 36, killed 249, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 23 food (2.3/s); meter 23.5 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24546 (readout 24546)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 133 / 400, built 0.3, standing
+    pumped 0 food
+  wallq t 10: built 26%, 0 of 8 past the wall
+clip/after/fork-wallq-10500ms-all.png
+clip/after/fork-wallq-10500ms-near.png
+  CPU: ground field 3.68 ms (once a game second), model and HUD 0.170 ms a frame
+  t 11 s: mould 24546, soldiers 8, bank 1400, harvested 0, rendered 0, shots 36, killed 249, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 25 food (2.4/s); meter 24.9 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24546 (readout 24503)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 183 / 400, built 0.4, standing
+    pumped 0 food
+clip/after/fork-wallq-011s-all.png
+clip/after/fork-wallq-011s-near.png
+  CPU: ground field 3.12 ms (once a game second), model and HUD 0.161 ms a frame
+  t 11 s: mould 24506, soldiers 8, bank 1400, harvested 0, rendered 0, shots 36, killed 249, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 26 food (2.4/s); meter 26.1 of 150, 0 surges
+  dense: 0 condensed or thick walkers, mass 24506 (readout 24506)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 226 / 400, built 0.5, standing
+    pumped 0 food
+  wallq t 11: built 52%, 0 of 8 past the wall
+clip/after/fork-wallq-11500ms-all.png
+clip/after/fork-wallq-11500ms-near.png
+  CPU: ground field 4.08 ms (once a game second), model and HUD 0.176 ms a frame
+  t 12 s: mould 24506, soldiers 8, bank 1400, harvested 0, rendered 0, shots 36, killed 249, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 28 food (2.4/s); meter 27.6 of 150, 0 surges
+  dense: 26 condensed or thick walkers, mass 24532 (readout 24503)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 276 / 400, built 0.7, standing
+    pumped 0 food
+clip/after/fork-wallq-012s-all.png
+clip/after/fork-wallq-012s-near.png
+  CPU: ground field 3.95 ms (once a game second), model and HUD 0.176 ms a frame
+  t 12 s: mould 24483, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 29 food (2.4/s); meter 28.8 of 150, 0 surges
+  dense: 72 condensed or thick walkers, mass 24555 (readout 24555)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 319 / 400, built 0.8, standing
+    pumped 0 food
+  wallq t 12: built 77%, 0 of 8 past the wall
+clip/after/fork-wallq-12500ms-all.png
+clip/after/fork-wallq-12500ms-near.png
+  CPU: ground field 4.03 ms (once a game second), model and HUD 0.183 ms a frame
+  t 13 s: mould 24483, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.999; squad at 264.8,65.4
+  surge: the slime ate 30 food (2.4/s); meter 30.3 of 150, 0 surges
+  dense: 142 condensed or thick walkers, mass 24625 (readout 24619)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 369 / 400, built 0.9, standing
+    pumped 0 food
+clip/after/fork-wallq-013s-all.png
+clip/after/fork-wallq-013s-near.png
+  CPU: ground field 4.26 ms (once a game second), model and HUD 0.166 ms a frame
+  t 13 s: mould 24487, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.8,65.4
+  surge: the slime ate 56 food (4.3/s); meter 55.6 of 150, 0 surges
+  dense: 187 condensed or thick walkers, mass 24674 (readout 24674)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 13: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-13500ms-all.png
+clip/after/fork-wallq-13500ms-near.png
+  CPU: ground field 4.35 ms (once a game second), model and HUD 0.179 ms a frame
+  t 14 s: mould 24487, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 57 food (4.2/s); meter 57.0 of 150, 0 surges
+  dense: 234 condensed or thick walkers, mass 24721 (readout 24732)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-014s-all.png
+clip/after/fork-wallq-014s-near.png
+  CPU: ground field 2.54 ms (once a game second), model and HUD 0.096 ms a frame
+  t 14 s: mould 24513, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 58 food (4.2/s); meter 58.4 of 150, 0 surges
+  dense: 270 condensed or thick walkers, mass 24783 (readout 24783)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 14: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-14500ms-all.png
+clip/after/fork-wallq-14500ms-near.png
+  CPU: ground field 3.32 ms (once a game second), model and HUD 0.164 ms a frame
+  t 15 s: mould 24513, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 60 food (4.1/s); meter 59.9 of 150, 0 surges
+  dense: 311 condensed or thick walkers, mass 24824 (readout 24842)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-015s-all.png
+clip/after/fork-wallq-015s-near.png
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.096 ms a frame
+  t 15 s: mould 24539, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 61 food (4.1/s); meter 61.3 of 150, 0 surges
+  dense: 338 condensed or thick walkers, mass 24877 (readout 24877)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 15: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-15500ms-all.png
+clip/after/fork-wallq-15500ms-near.png
+  CPU: ground field 2.49 ms (once a game second), model and HUD 0.099 ms a frame
+  t 16 s: mould 24539, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 63 food (4.0/s); meter 62.9 of 150, 0 surges
+  dense: 373 condensed or thick walkers, mass 24912 (readout 24939)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-016s-all.png
+clip/after/fork-wallq-016s-near.png
+  CPU: ground field 2.96 ms (once a game second), model and HUD 0.121 ms a frame
+  t 16 s: mould 24581, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 64 food (4.0/s); meter 64.3 of 150, 0 surges
+  dense: 399 condensed or thick walkers, mass 24980 (readout 24980)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 16: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-16500ms-all.png
+clip/after/fork-wallq-16500ms-near.png
+  CPU: ground field 3.83 ms (once a game second), model and HUD 0.141 ms a frame
+  t 17 s: mould 24581, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 66 food (4.0/s); meter 66.0 of 150, 0 surges
+  dense: 424 condensed or thick walkers, mass 25005 (readout 25023)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-017s-all.png
+clip/after/fork-wallq-017s-near.png
+  CPU: ground field 3.25 ms (once a game second), model and HUD 0.131 ms a frame
+  t 17 s: mould 24615, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 67 food (4.0/s); meter 67.5 of 150, 0 surges
+  dense: 446 condensed or thick walkers, mass 25061 (readout 25061)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 17: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-17500ms-all.png
+clip/after/fork-wallq-17500ms-near.png
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.098 ms a frame
+  t 18 s: mould 24615, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 69 food (3.9/s); meter 69.2 of 150, 0 surges
+  dense: 472 condensed or thick walkers, mass 25087 (readout 25105)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-018s-all.png
+clip/after/fork-wallq-018s-near.png
+  CPU: ground field 4.08 ms (once a game second), model and HUD 0.148 ms a frame
+  t 18 s: mould 24656, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 71 food (3.9/s); meter 70.7 of 150, 0 surges
+  dense: 491 condensed or thick walkers, mass 25147 (readout 25147)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 18: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-18500ms-all.png
+clip/after/fork-wallq-18500ms-near.png
+  CPU: ground field 2.51 ms (once a game second), model and HUD 0.095 ms a frame
+  t 19 s: mould 24656, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 72 food (3.9/s); meter 72.5 of 150, 0 surges
+  dense: 511 condensed or thick walkers, mass 25167 (readout 25191)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-019s-all.png
+clip/after/fork-wallq-019s-near.png
+  CPU: ground field 5.03 ms (once a game second), model and HUD 0.154 ms a frame
+  t 19 s: mould 24707, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 74 food (3.9/s); meter 74.0 of 150, 0 surges
+  dense: 535 condensed or thick walkers, mass 25242 (readout 25242)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 19: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-19500ms-all.png
+clip/after/fork-wallq-19500ms-near.png
+  CPU: ground field 2.53 ms (once a game second), model and HUD 0.095 ms a frame
+  t 20 s: mould 24707, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.998; squad at 264.2,64.8
+  surge: the slime ate 76 food (3.9/s); meter 75.8 of 150, 0 surges
+  dense: 550 condensed or thick walkers, mass 25257 (readout 25286)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-020s-all.png
+clip/after/fork-wallq-020s-near.png
+  CPU: ground field 3.73 ms (once a game second), model and HUD 0.146 ms a frame
+  t 20 s: mould 24763, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.997; squad at 264.2,64.8
+  surge: the slime ate 77 food (3.9/s); meter 77.5 of 150, 0 surges
+  dense: 566 condensed or thick walkers, mass 25329 (readout 25329)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 20: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-20500ms-all.png
+clip/after/fork-wallq-20500ms-near.png
+  CPU: ground field 3.08 ms (once a game second), model and HUD 0.101 ms a frame
+  t 21 s: mould 24763, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.997; squad at 264.2,64.8
+  surge: the slime ate 79 food (3.9/s); meter 79.4 of 150, 0 surges
+  dense: 583 condensed or thick walkers, mass 25346 (readout 25369)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-021s-all.png
+clip/after/fork-wallq-021s-near.png
+  CPU: ground field 3.10 ms (once a game second), model and HUD 0.138 ms a frame
+  t 21 s: mould 24806, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.997; squad at 264.2,64.8
+  surge: the slime ate 81 food (3.9/s); meter 81.1 of 150, 0 surges
+  dense: 596 condensed or thick walkers, mass 25402 (readout 25402)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+  wallq t 21: built 100%, 0 of 8 past the wall
+clip/after/fork-wallq-21500ms-all.png
+clip/after/fork-wallq-21500ms-near.png
+  CPU: ground field 2.88 ms (once a game second), model and HUD 0.112 ms a frame
+  t 22 s: mould 24806, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.997; squad at 264.2,64.8
+  surge: the slime ate 83 food (3.9/s); meter 83.1 of 150, 0 surges
+  dense: 614 condensed or thick walkers, mass 25420 (readout 25466)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food
+clip/after/fork-wallq-022s-all.png
+clip/after/fork-wallq-022s-near.png
+  CPU: ground field 2.57 ms (once a game second), model and HUD 0.099 ms a frame
+  t 22 s: mould 24876, soldiers 8, bank 1400, harvested 0, rendered 0, shots 37, killed 257, took 0%, crystals left 0.997; squad at 264.2,64.8
+  surge: the slime ate 85 food (3.9/s); meter 84.8 of 150, 0 surges
+  dense: 627 condensed or thick walkers, mass 25503 (readout 25503)
+  squad: touching 0.0 mean, 0 most; health 98 mean
+    wall at (295, 72): hp 400 / 400, built 1.0, standing
+    pumped 0 food

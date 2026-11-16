@@ -527,6 +527,26 @@ impl<W: World> Game<W> {
                 let (near, far) = self.build_band(b, p);
                 let (dx, dy) = (s.x - p.0, s.y - p.1);
                 let d = dx.hypot(dy);
+                // A wall's builders stand on its home side (`Building::home`),
+                // whichever side they came from, so the risen wall leaves
+                // nobody with the slime (owner's playtest, 2026-11-16
+                // 01:45Z: "some soldiers always end up on the wrong side").
+                // Before, each stood on the side it reached the line from,
+                // and a squad straddling the line was split by its wall.
+                if let Some(sd) = self.wall_side(b, (s.x, s.y)) {
+                    if sd < near {
+                        let n = self.buildings[b].home;
+                        let out = near + 0.5 * sc;
+                        let q = (p.0 + n.0 * out, p.1 + n.1 * out);
+                        // Only on open ground: `goal_ground` moves a goal
+                        // in rock to the nearest standable cell, which can
+                        // be past the line (levelgen thread, 11-16); there
+                        // it raises from where it stands, as before.
+                        if self.standable(q.0, q.1) && self.solid_at(q).is_none() {
+                            return Some(q);
+                        }
+                    }
+                }
                 if d > far {
                     return Some(p);
                 }
