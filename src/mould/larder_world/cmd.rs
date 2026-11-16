@@ -73,6 +73,9 @@ pub enum Cmd {
     Load(u8, Option<Deck>),
     /// Squad `q` stops and heals (`Squad::heal`).
     Heal(u8),
+    /// A door between two points, fine cells (`Game::door`): a wall the
+    /// soldiers walk through, snapped onto a standing wall it lies along.
+    Door((f32, f32), (f32, f32)),
 }
 
 impl Cmd {
@@ -110,6 +113,7 @@ impl Cmd {
             Cmd::Arm(q, Some(g)) => format!("arm {q} {}", g.to_words()),
             Cmd::Load(q, None) => format!("load {q} army"),
             Cmd::Load(q, Some(d)) => format!("load {q} {}", super::super::rounds::name(&d.cards())),
+            Cmd::Door(a, b) => format!("door {} {} {} {}", a.0, a.1, b.0, b.1),
         }
     }
 
@@ -118,6 +122,7 @@ impl Cmd {
         let f = |i: usize| w.get(i).and_then(|v| v.parse::<f32>().ok());
         match *w.first()? {
             "wall" => return Some(Cmd::Wall((f(1)?, f(2)?), (f(3)?, f(4)?))),
+            "door" => return Some(Cmd::Door((f(1)?, f(2)?), (f(3)?, f(4)?))),
             "toggle" => return Some(Cmd::Toggle(w.get(1)?.parse().ok()?)),
             "unbuild" => return Some(Cmd::Unbuild(w.get(1)?.parse().ok()?)),
             "upgrade" => return Some(Cmd::Upgrade(w.get(1)?.parse().ok()?)),
@@ -222,6 +227,7 @@ impl<W: World> Game<W> {
             }
             Cmd::Buy => self.buy(),
             Cmd::Wall(a, b) => self.wall(a, b),
+            Cmd::Door(a, b) => self.door(a, b),
             Cmd::Build(kind, at) => self.build(kind, at),
             Cmd::Toggle(k) => self.toggle(k),
             Cmd::Unbuild(b) => self.unbuild(b).is_some(),
@@ -286,7 +292,10 @@ impl<W: World> Game<W> {
         self.build(Kind::Wall { to: b }, a)
     }
 
-    /// Write a wall's cells into the world (once it is whole).
+    /// Write a wall's cells into the world, one band, no building: tests
+    /// that need a bare wall. A building's cells go in by `wall_bands`
+    /// (`doors`), every band of its level, since thick walls (11-16).
+    #[cfg(test)]
     pub(super) fn wall_cells(&mut self, a: (f32, f32), b: (f32, f32)) {
         self.walls += 1;
         let s = self.s();

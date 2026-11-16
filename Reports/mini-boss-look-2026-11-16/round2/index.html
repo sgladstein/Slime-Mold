@@ -1,0 +1,149 @@
+<title>Mini-boss Kinds Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: the round-1 field monitor (the game's own dark ground); one tile a kind in a 2 x 2 grid, each clip with its look and its counts under it, then the fade strip and what changed */
+:root{
+  --bg:#0f1210; --panel:#171b18; --tile:#1d221e; --fg:#e7ebe4; --muted:#9aa396;
+  --accent:#b98cff; --line:#2c332d;
+  --violet:#9a66e0; --bone:#b9b4c2; --ember:#d0414f; --ink:#6e6680; --charge:#5ce0e8;
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0;font-weight:700}
+h1{font-size:2.2rem;letter-spacing:.01em}
+h2{font-size:1.35rem;padding-top:14px;border-top:1px solid var(--line)}
+h3{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:10px}
+p{margin:0;max-width:72ch}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);font-size:1.04rem}
+.kinds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:860px){.kinds{grid-template-columns:1fr}}
+figure{margin:0;background:var(--tile);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+figure video{display:block;width:100%;max-width:100%;aspect-ratio:960/600;background:#000}
+figcaption{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.swatch{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.counts{width:100%;border-collapse:collapse;font:13px/1.4 var(--mono);font-variant-numeric:tabular-nums}
+.counts th,.counts td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.counts th{color:var(--muted);font-weight:400}
+.scroll{overflow-x:auto}
+.ask{background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.ask strong{font-family:var(--display);font-size:1.15rem}
+.fade figure{max-width:720px}
+code{font:13px var(--mono);color:var(--accent)}
+.note{color:var(--muted);font-size:.92rem}
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="eyebrow">Larder World · mini-boss look, round 2 · 2026-11-16</span>
+    <h1>Mini-boss Kinds Look</h1>
+    <p class="lede">The four mini-boss kinds, each in its own look. It is the same boss in the same run each time, forced to one kind (planet 3 of run 1, formed at 1:25, squad holding). The colour, the dome, the glow and the dots all come from its own walkers. When one breaks up or runs out, its look drains back into the slime as its walkers let go.</p>
+  </header>
+
+  <section class="ask">
+    <strong>Would you swap any of these?</strong>
+    <p>Each kind's look is a first pick, chosen so the four differ in brightness as well as colour. The hunter's violet is still open in the round-1 A/B (A, B or C). If you pick B there, the hunter takes the crimson and the sapper gets another look.</p>
+  </section>
+
+  <section>
+    <h2>The four kinds</h2>
+    <p class="note">Zoom 12, camera on the boss. The hunter clip runs at 2x game speed, the others at 5x to 10x. Counts are from the game's boss lines, second by second.</p>
+    <div class="kinds">
+      <figure>
+        <video src="hunter.mp4" autoplay muted loop playsinline controls></video>
+        <figcaption>
+          <h3><span class="swatch" style="background:var(--violet)"></span>Hunter: violet</h3>
+          <p class="note">Comes for your squad. Every 5 s it lunges: its body flings out and snaps back, and you can see the walkers spread and pack.</p>
+          <div class="scroll"><table class="counts">
+            <thead><tr><th>Game time</th><th>What it does</th><th>Members</th><th>Spread</th></tr></thead>
+            <tbody>
+              <tr><td>1:31</td><td>Starts hunting</td><td>116</td><td>1.12</td></tr>
+              <tr><td>1:41 to 1:42</td><td>A lunge</td><td>116</td><td>1.27 → 1.57</td></tr>
+              <tr><td>1:43</td><td>Pulled back together</td><td>116</td><td>1.17</td></tr>
+              <tr><td>1:52</td><td>At the squad, every member hit</td><td>62</td><td>1.58</td></tr>
+              <tr><td>1:53</td><td>Broken (3 soldiers lost)</td><td>7</td><td></td></tr>
+            </tbody>
+          </table></div>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="wanderer.mp4" autoplay muted loop playsinline controls></video>
+        <figcaption>
+          <h3><span class="swatch" style="background:var(--bone)"></span>Wanderer: pale pewter</h3>
+          <p class="note">Goes for a far crystal, roots on it, takes in the slime there and moves on bigger. The new walkers it takes in turn its colour as they join.</p>
+          <div class="scroll"><table class="counts">
+            <thead><tr><th>Game time</th><th>What it does</th><th>Members</th></tr></thead>
+            <tbody>
+              <tr><td>1:55</td><td>Roots on its first crystal</td><td>116</td></tr>
+              <tr><td>2:05</td><td>Takes in the slime there and moves on</td><td>233</td></tr>
+              <tr><td>2:19</td><td>Roots on the second</td><td>233</td></tr>
+              <tr><td>2:31</td><td>Takes in more and moves on</td><td>415</td></tr>
+            </tbody>
+          </table></div>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="sapper.mp4" autoplay muted loop playsinline controls></video>
+        <figcaption>
+          <h3><span class="swatch" style="background:var(--ember)"></span>Sapper: crimson</h3>
+          <p class="note">Presses into your nearest wall and eats through it. A deep red that reads as acid at the wall.</p>
+          <div class="scroll"><table class="counts">
+            <thead><tr><th>Game time</th><th>What it does</th><th>Members</th></tr></thead>
+            <tbody>
+              <tr><td>1:40</td><td>Reaches the wall</td><td>196</td></tr>
+              <tr><td>1:40 to 2:39</td><td>Eats at the wall (the clip)</td><td>196</td></tr>
+              <tr><td>2:42</td><td>Through, heads for the far side</td><td>196</td></tr>
+            </tbody>
+          </table></div>
+        </figcaption>
+      </figure>
+      <figure>
+        <video src="leech.mp4" autoplay muted loop playsinline controls></video>
+        <figcaption>
+          <h3><span class="swatch" style="background:var(--ink)"></span>Leech: ink, glowing <span style="color:var(--charge)">cyan</span> as it drinks</h3>
+          <p class="note">Sits on a pump and takes its pay. Its glow turns the crystals' charge cyan as its take grows, so you can see how much you get back by breaking it. In this clip it sits under the pump and the crystal, so little of it shows. It now rings the pump instead: see the next clip.</p>
+          <div class="scroll"><table class="counts">
+            <thead><tr><th>Game time</th><th>Taken from the pump</th><th>Glow toward cyan</th></tr></thead>
+            <tbody>
+              <tr><td>1:55</td><td>0</td><td>0%</td></tr>
+              <tr><td>2:13</td><td>92.5</td><td>38%</td></tr>
+              <tr><td>2:31</td><td>185.0</td><td>55%</td></tr>
+              <tr><td>2:49</td><td>277.6</td><td>65%</td></tr>
+            </tbody>
+          </table></div>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="fade">
+    <h2>The leech rings its pump</h2>
+    <p>The leech now holds its walkers in a band round the rig, 14 to 18 cells from the pump, instead of under it. Spread that thin through the thick slime round a pump, it showed only as dark flecks in a gold collar. Now a boss out on its errand shows wherever its own walkers stand, however thick the slime around them, so the ring reads as dark segments round the rig, turning blue as it drinks. A boss still forming keeps the old look, its colour seeping through the slime.</p>
+    <figure><video src="leech-ring.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="note">1:40 to 2:50, a frame a second, played at 8x. It arrives at 1:55 with 36 food taken, and has 216 by 2:30 and 319 by 2:50. Its 123 walkers sit in all eight eighths round the pump.</span></figcaption></figure>
+  </section>
+
+  <section class="fade">
+    <h2>When one breaks up or runs out</h2>
+    <p>The sapper runs out at 3:02 with all 196 walkers. Its walkers are let go over 1.5 s, and its light goes out first, then its colour and its dome sink back into the slime as they spread. Before, it would have snapped back to gold in one frame.</p>
+    <figure><video src="fade.mp4" autoplay muted loop playsinline controls></video><figcaption><span class="note">2:58 to 3:03.5, a frame every 0.25 s, played at 1.5x.</span></figcaption></figure>
+  </section>
+
+  <section>
+    <h2>What changed since round 1</h2>
+    <ul>
+      <li><b>Each kind has its own look</b>: dark (leech), middle (hunter, sapper) and pale (wanderer), so they part by brightness as well as colour.</li>
+      <li><b>The fade</b> comes from the game's own break-up: the look drains while the walkers are still marked as the boss's.</li>
+      <li><b>The leech's glow</b> is its take: what it has drunk divided by (that + 150).</li>
+      <li><b>The glow is softer.</b> A boss that sits still packs its walkers tightly, and the old glow washed the crimson to salmon and the pale one to white. The skin is the colour you see now, and the walkers' own dots carry the bright points.</li>
+    </ul>
+    <p class="note">The walkers move exactly as in the mini-boss thread's round-3 films: the boss lines match second for second. Frame cost on the GTX 1070 is still to be measured.</p>
+  </section>
+</main>

@@ -102,9 +102,9 @@
 //! and `hand=every` through it for 60 game seconds. `crater=S` sets how
 //! long a hit's crater lasts (`Rules::crater`, 2 game seconds; 0 is off);
 //! `alarm_look=G[,S]` how strongly the alarm haze draws on bare ground and
-//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how the
-//! hunter mini-boss's body is drawn (`LumpLook`: plain, ember, violet,
-//! ink; for the look's A/B) and `follow=boss` keeps the near view
+//! on the slime (`View::set_alarm_look`; 0 none); `boss_look=NAME` how every
+//! mini-boss's body is drawn whatever its kind (`LumpLook`: plain, ember,
+//! violet, ink, bone; for the look's A/B) and `follow=boss` keeps the near view
 //! on the first live mini-boss; `scent=1` opens with the
 //! scent view on (F2 in play: the food scent and the trail the mould smells);
 //! `aim=STRIKE,EVERY,SPREAD` sets the shot's strike, fire rate and aim
@@ -164,7 +164,7 @@ fn gun_of(spec: &str, seed: u64, depth: u32) -> Result<Gun, String> {
     let kind = GunKind::parse(what).ok_or_else(|| format!("gun={spec}: rifle, carbine, long, scatter or roll"))?;
     Ok(if s.is_some() { Gun::roll_kind(kind, seed, depth) } else { kind.average_at(depth) })
 }
-use slime_mould::mould::larder_world::{GUARD_RIM, PUMP_LEVELS, TURRET_MUZZLE, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
+use slime_mould::mould::larder_world::{GUARD_RIM, PUMP_LEVELS, TURRET_MUZZLE, WALL_LEVELS, Building, Cmd, CoreKind, End, Game, Kind, Order, Rules, Stance, World};
 use slime_mould::mould::campaign::{Mission, Tracker, BIN};
 use slime_mould::mould::run::{Ground as RunGround, Run};
 use slime_mould::mould::map::Map;
@@ -176,7 +176,7 @@ use slime_mould::world::icons::Icon;
 use slime_mould::world::look::{self, Fields, Ground};
 use slime_mould::world::marks::{team_colour, SLASH, STANDING, TURRET_DRY, TURRET_IDLE, TURRET_TRACKING, WALKING};
 use slime_mould::world::ui::{theme, Card, CardKind, Command, Ghost, GunCard, Info, Loadout, MenuItem, Model, Resource, Site, Target, Throw};
-use slime_mould::world::view::LumpLook;
+use slime_mould::world::view::{LumpBody, LumpLook};
 use slime_mould::world::{Button, Camera, Canvas, CanvasPass, Controls, Hud, HudEvent, Marks, UiCommand, Unit, Light, View};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -185,9 +185,28 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
-/// The hunter mini-boss's look (`View::set_lumps`; `boss_look=` overrides
-/// it for the look's A/B).
-const HUNTER_LOOK: LumpLook = LumpLook::Violet;
+/// Each mini-boss kind's look (`View::set_lumps`, the `lump_looks` code's
+/// bits 0-2; `boss_look=` overrides every kind for the look's A/B): told
+/// apart by value as well as hue, so they read for colour-blind players and
+/// on every planet. The hunter violet (the hue nothing else on screen
+/// uses), the wanderer pale bone (a fat grub that grows as it grazes), the
+/// sapper ember (an acid red at your walls), the leech ink (dark tar on the
+/// pump rig, its core turning the charge's cyan as it drinks).
+fn kind_look(kind: u16) -> LumpLook {
+    match kind {
+        1 => LumpLook::Violet,
+        2 => LumpLook::Bone,
+        3 => LumpLook::Ember,
+        4 => LumpLook::Ink,
+        _ => LumpLook::Plain,
+    }
+}
+
+/// A leech's take (bank food) at which its core is half the charge's cyan
+/// (`LumpBody::fill`, `take / (take + LEECH_HALF)`): a leech took about
+/// 280 in its first minute on planet 3 (mini-boss round 3), so a full one
+/// reads as two-thirds cyan, never all of it (that is a crystal's).
+const LEECH_HALF: f32 = 150.0;
 mod args;
 mod input;
 mod draw;
@@ -280,6 +299,9 @@ commands! {
     DEMOLISH = 33,
     UPGRADE = 34,
     SWITCH = 35,
+    // The build page's door (walls thread, owner 2026-11-16 14:24Z): a
+    // two-click line, as WALL.
+    DOOR = 36,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -339,6 +361,11 @@ const KICK: f32 = 0.14;
 /// How far a soldier walks (dish cells) before its figure turns to the way
 /// it is going (`App::step`).
 const TURN: f32 = 0.3;
+/// How fast a soldier's figure turns, radians a second: half a turn in a
+/// third of a second. It snapped at once before (squad movement rework,
+/// 2026-11-16), so a squad's figures flicked round 15 times a second as
+/// they jostled or the cursor moved.
+const TURN_RATE: f32 = 3.0 * std::f32::consts::PI;
 /// How long a take's pulse lasts at a harvester's hands, seconds: a step
 /// is 1/15 s, so a soldier taking every step glows steadily and one that
 /// stops fades in about a third of a second.
@@ -479,8 +506,8 @@ struct Args {
     /// and on the slime (`View::set_alarm_look`; S defaults to G), for
     /// films and A/Bs.
     alarm_look: Option<(f32, f32)>,
-    /// `boss_look=NAME`: the hunter mini-boss's look (`LumpLook`), for the
-    /// look's A/B.
+    /// `boss_look=NAME`: every mini-boss's look (`LumpLook`) whatever its
+    /// kind, for the look's A/B (else `kind_look`).
     boss_look: Option<LumpLook>,
     /// `follow=boss`: the near view follows the first live mini-boss
     /// (its centre; the squad or `centre=` when there is none), for films
@@ -590,6 +617,9 @@ struct Tracer {
 #[derive(Clone, Copy)]
 struct Look {
     facing: f32,
+    /// The way its figure turns toward, a little each frame (`TURN_RATE`;
+    /// a shot or a take still turns it at once).
+    turn_to: f32,
     flash: f32,
     /// Seconds left of the pulse at its hands from its last take from a
     /// crystal (`Game::last_takes`, `TAKE` long).
@@ -617,7 +647,7 @@ struct Look {
 
 impl Look {
     fn new(s: &slime_mould::mould::larder_world::Soldier) -> Look {
-        Look { facing: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
+        Look { facing: -std::f32::consts::FRAC_PI_2, turn_to: -std::f32::consts::FRAC_PI_2, flash: 0.0, take: 0.0, at: (s.x, s.y), alive: s.alive, hp: s.hp, carry: s.carry, hurt: 0.0, flinch: 0.0, bite: 0.0, kick: 0.0, cast: 0, shots: 0 }
     }
 }
 
@@ -1369,6 +1399,12 @@ impl App {
         }
         self.tracers.retain(|t| t.age < TRACER + t.delay);
         for l in &mut self.looks {
+            // Turning toward where it walks or aims, at `TURN_RATE`; held
+            // while its muzzle flashes, which points along the shot.
+            if l.flash <= 0.0 {
+                let d = (l.turn_to - l.facing + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+                l.facing += d.clamp(-TURN_RATE * dt, TURN_RATE * dt);
+            }
             l.flash = (l.flash - dt).max(0.0);
             l.kick = (l.kick - dt).max(0.0);
             l.take = (l.take - dt).max(0.0);
@@ -1512,15 +1548,20 @@ impl App {
             let sq = g.squads.get(s.squad as usize).filter(|_| g.rules.squads);
             let aim = sq.and_then(|sq| sq.fire).or_else(|| cursor.filter(|_| g.active == Some(s.squad as usize) && g.rules.squads));
             let (dx, dy) = (s.x - l.at.0, s.y - l.at.1);
+            // With `Rules::steer` a soldier's velocity says where it walks:
+            // it turns once it walks at a third of its speed in the slime it
+            // wades (`Game::wade`; of full speed, one wading never turned).
+            let walking = g.rules.squads && g.rules.steer && s.vx.hypot(s.vy) > g.rules.speed * g.world.scale() * g.wade(k) / 3.0;
             if let Some(p) = aim.filter(|_| s.alive) {
-                if l.flash <= 0.0 && (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
-                    l.facing = (p.1 - s.y).atan2(p.0 - s.x);
+                if (p.0 - s.x).hypot(p.1 - s.y) > 1e-3 {
+                    l.turn_to = (p.1 - s.y).atan2(p.0 - s.x);
                 }
                 l.at = (s.x, s.y);
-            } else if dx.hypot(dy) > turn {
-                if l.flash <= 0.0 {
-                    l.facing = dy.atan2(dx);
-                }
+            } else if walking {
+                l.turn_to = s.vy.atan2(s.vx);
+                l.at = (s.x, s.y);
+            } else if dx.hypot(dy) > turn && !(g.rules.squads && g.rules.steer) {
+                l.turn_to = dy.atan2(dx);
                 l.at = (s.x, s.y);
             }
             if l.alive && !s.alive {
@@ -1713,23 +1754,48 @@ impl App {
     }
 
     /// The frame's ground, marks, HUD and canvas, ready to record.
+    /// Everything drawn this frame, with each soldier drawn between where
+    /// its last step's walk began and ended, by how far the frame is
+    /// through to the next step (`between`, `Game::drawn_between`): the
+    /// game steps 15 times a second, and drawn at its steps a squad jumped
+    /// every fourth frame at 60 while the camera glided, so every soldier
+    /// shook on the screen (squad movement rework, 2026-11-16).
     fn prepare(&mut self) {
+        let a = self.between();
+        let own = self.game.as_mut().map(|g| g.drawn_between(a));
+        self.prepare_now();
+        if let (Some(g), Some(own)) = (self.game.as_mut(), own) {
+            g.put_back(&own);
+        }
+    }
+
+    fn prepare_now(&mut self) {
         self.refresh_ground();
         if let (Some(g), Some(v)) = (self.game.as_ref(), self.view.as_mut()) {
             v.set_time(g.time());
             v.set_alarm_side((g.world.e.done % 2) as u32);
-            // The mini-bosses' bodies (2026-11-16): each live one's lump,
-            // centre, look by its kind and strength by its grade.
+            // The mini-bosses' bodies (2026-11-16): each live or fading
+            // one's lump, centre, look by its kind, strength by its grade,
+            // look left by its fade and a leech's fill by its take.
             let looks = g.lump_looks();
-            let mut lumps = [(0.0, 0.0, LumpLook::Plain, 0.0); slime_mould::world::view::MAX_LUMPS];
-            for b in &g.bosses.live {
+            let mut lumps = [LumpBody::default(); slime_mould::world::view::MAX_LUMPS];
+            for b in g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)) {
                 let code = looks.get(b.lump).copied().unwrap_or(0);
-                let look = match code & 7 {
-                    0 => LumpLook::Plain,
-                    _ => self.args.boss_look.unwrap_or(HUNTER_LOOK),
+                let look = match (code & 7, self.args.boss_look) {
+                    (0, _) => LumpLook::Plain,
+                    (_, Some(l)) => l,
+                    (k, None) => kind_look(k),
                 };
+                // Bit 8 fading, bits 9-15 how far through (0-127).
+                let remain = if code & 1 << 8 != 0 { 1.0 - ((code >> 9) & 127) as f32 / 127.0 } else { 1.0 };
+                let take = if b.kind == slime_mould::mould::larder_world::BossKind::Leech { b.stolen.max(0.0) } else { 0.0 };
                 if let Some(l) = lumps.get_mut(b.lump) {
-                    *l = (b.centre.0, b.centre.1, look, (code >> 4) as f32 / 15.0);
+                    // The grade is bits 4-7 (the word is a u16 since the
+                    // fade went in above it, bits 8-15).
+                    // Bit 3: out on its errand (not gathering), so its
+                    // members' own density carries its look.
+                    let held = if code & 8 != 0 { 1.0 } else { 0.0 };
+                    *l = LumpBody { at: b.centre, look, strength: ((code >> 4) & 15) as f32 / 15.0, remain, fill: take / (take + LEECH_HALF), held };
                 }
             }
             v.set_lumps(&lumps);
@@ -1909,7 +1975,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "crater" => args.crater = Some(v.parse()?),
             "scent" => args.scent = v != "0",
             "follow" => args.follow_boss = v == "boss",
-            "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet or ink"))?),
+            "boss_look" => args.boss_look = Some(LumpLook::parse(v).ok_or_else(|| format!("boss_look={v}: plain, ember, violet, ink or bone"))?),
             "alarm_look" => {
                 let (g, s) = v.split_once(',').unwrap_or((v, v));
                 args.alarm_look = Some((g.parse()?, s.parse()?));
@@ -2065,6 +2131,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     renders.push(turrets.len() - 1);
                 }
             }
+            "wall" => {
+                // `wall=X,Y,X2,Y2[,T]` (2026-11-16, the sapper films): a
+                // wall standing whole from (X, Y) to (X2, Y2), world units
+                // as `centre=`, from the start or from game second T.
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let (x, y, to, t) = match w.as_slice() {
+                    [x, y, x2, y2] => (*x, *y, (*x2, *y2), 0.0),
+                    [x, y, x2, y2, t] => (*x, *y, (*x2, *y2), *t),
+                    _ => return Err("wall=X,Y,X2,Y2[,T]".into()),
+                };
+                turrets.push((Kind::Wall { to }, (x, y), t));
+            }
             "boss" => {
                 // `boss=T,X,Y` (2026-11-16, the mini-boss films): at game
                 // second T a mini-boss forms round (X, Y), world units as
@@ -2158,6 +2236,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod film;
 
 /// The alert for raid `d`: what the slime goes for.
 fn raid_words<W: slime_mould::mould::larder_world::World>(g: &Game<W>, d: &slime_mould::mould::larder_world::Raid) -> String {

@@ -218,3 +218,150 @@ yet timed on the GTX 1070.
 Mortar, Pinwheel), the stay-put ones from crowding on a crystal and the
 runners from cut-off parts; the origin at each planet's start crystal is
 the run-progression thread's question.
+
+## Round 3 (2026-11-16): the kinds
+
+**What was built** (branch `claude/project-thread-g8thj2`, after #385):
+
+- **Kinds** (`BossKind`; the owner's "all of them" and "a mix", 04:58Z):
+  each mini-boss draws one as it forms, by weights (`BossRules::kinds`, 1
+  each), among the kinds with something to go for from where it formed; a
+  cut-off part draws only the runners (hunter, wanderer). `boss_kind=1..4`
+  forces one (the films).
+  - **Hunter**: hunts the nearest soldier, now with a **lunge**: every 5 s
+    it pulls twice as hard at twice the pace for 1 s.
+  - **Wanderer**: goes to the nearest fresh crystal (half its charge or
+    more) at least 40 dish cells off that it has not rooted on, sits on it
+    15 s, then takes in the slime round it (twice its radius) and sets off
+    for the next. It grows at each crystal and leaves slime behind.
+  - **Sapper**: goes for the nearest point of a standing wall (else the
+    nearest building), presses into it until the wall there is holed
+    right across, squeezes through to the far side, then hunts.
+  - **Leech**: goes to the nearest working pump and sits on it. While it
+    sits, the pump's pay goes into the leech instead of the bank, and the
+    rig is not worn by the slime on it; break the leech and its whole take
+    goes back to the bank (a spent one keeps it).
+- **A tighter body by grade** (`tight` 0.25: the leash shrinks by a
+  quarter at grade 1) and a **fade** when one breaks or is spent (1.5 s:
+  its members stay marked, unsteered and unarmoured, so the look can drain
+  its colour; then they go back to the slime).
+- **The view's word** (`Game::lump_looks`, for the look thread): a u16 a
+  lump, bits 0-2 the kind (1-4), bit 3 hunting or on an errand, bits 4-7
+  the grade, bit 8 fading, bits 9-15 how far through the fade.
+- **Members no longer starve** (both engines; `big::live_and_die`, the
+  GPU's `life`): the first sapper film's sapper, pressed on its wall away
+  from food, fell from 196 members to 47 in 6 s, 48 s after it formed, and
+  broke with no shot fired. A mini-boss now lives on what it carries until
+  it breaks or is spent.
+- **Taking in slime keeps the body as it is** (`big::BigDish::grow_lump`,
+  the GPU's `lumpform` with bit 8 of its lump word): only walkers in no
+  lump join and no member is let go or healed. Re-forming the lump at the
+  crystal would have healed every member's hits and dropped those outside
+  the new circle. GPU twin: 101 joined, 112 hurt before and after, 0 words
+  off.
+- Headless: `wall=X,Y,X2,Y2[,T]`, `set=pump_hp=N`, and staged buildings
+  are raised whole (`Game::raise`), so a staged wall lays its cells (set by
+  hand, the first sapper film's wall had none and the sapper pressed on
+  open ground).
+
+**The four kinds, the same mini-boss** (run 1, planet 3, eight soldiers
+holding at the larder on free fire, `hand=hold`; one staged at 1:25 round
+world 310,85 inside the top body, `boss=85,310,85`, forced to each kind;
+GPU on llvmpipe; `raw/round3-*.txt`):
+
+- **Hunter** (116 members, grade 0.38: 8 blows a member, touching as 3):
+  left at 1:31 and reached the squad at 1:51. Its 5 lunge seconds averaged
+  16.5 world units a second and its 16 other seconds 9.3. It killed 3 of 8
+  soldiers and broke at 1:53 with 7 of 116 left.
+- **Wanderer** (116): sat on the crystal at 393,126 from 1:50 and rooted
+  15 s, left with 233; sat on 324,210 at 2:16 and left with 415; sat on
+  272,275 at 2:43. It lost no member and never came within 118 world units
+  of the squad.
+- **Sapper** (196, a wall from 290,150 to 350,150 across its way):
+  pressed into the wall's nearest point from 1:40. At 2:42 the wall there
+  was open right across and it squeezed through; by 2:54 it was past the
+  wall and hunting, with the ordinary slime pouring through the hole
+  behind it. Its 90 s of life ran out at 3:02 (spent, all 196 members): a
+  sapper that takes a minute on a wall has little time left after it.
+- **Leech** (116, a pump on the crystal at 362,256 from 1:26, given 5,000
+  health so the ordinary slime would not wear it down before the leech
+  came: with the usual 200 it was gone in 12 s): the pump banked 149 food
+  by 1:57 (about 5 a second); the leech sat on it at 1:55 and took 282.7
+  food by 2:50 while the bank stayed at 549. The squad, 70 world units
+  off, never shot it. The give-back is in the tests: broken, the bank got
+  the whole take back.
+
+**Tests** (race world, CPU): a wanderer goes to a crystal 43 cells off,
+roots and grows from 54 members to 76, marks it and goes on; a sapper bit
+its wall 5,157 times, broke 6 cells and went through in 60 s, and with no
+building it hunts; a leech on a pump took 52.8 food in 10 s, none banked,
+the rig not worn, and broken gave it all back; a member does not starve
+where ordinary walkers do; the hunter's lunge (a lunge every 3 s: 4
+lunging and 8 calm seconds of 12).
+
+**Cost**: no new per-step pass. The leech check is a scan of at most four
+mini-bosses for each pump each step; the kind's goal is found once a game
+second; `grow_lump` runs once when a wanderer leaves a crystal. Not yet
+timed on the GTX 1070.
+
+**Next**: Mortar and Pinwheel (they need engine work: a lob, a turn
+bias), each kind's look (the look thread reads `lump_looks`), and the
+origin at each planet's start crystal (the run-progression thread).
+
+### The leech rings its pump (after #391)
+
+The look thread, filming the leech (11:56Z): sat on the pump, its 116
+members lay under the crystal, the rig and the pump box, and almost none
+of it showed; only a cyan haze round the box gave it away. It suggested a
+ring round the rig, which reads as something strangling the pump and can
+be seen and shot.
+
+- **`big::Lump::ring`** (fine cells, 0 none; both engines): a member
+  nearer the lump's aim than `ring` runs straight out from it; one past
+  the band (squared distance over `ring`² + the leash's `leash_k` x
+  members, the area the leash's disc would hold) runs back toward it; and
+  its pull is away from the members' own centre instead of to the aim, so
+  where they bunch they spread round. The run reads directions only (no
+  square root or division), the GPU's spare lump word holds it.
+- **`BossRules::ring`** 1.5 (`set=boss_ring=`): a leech sat on a pump
+  rings it at 1.5 x the crystal's radius, just outside the rig (drawn to
+  1.3).
+
+Planet 3 (`raw/round3-leech-ring.txt`, the leech at 2:30, 116 members):
+
+| Leech | From the pump (10% / median / 90%) | Members in each eighth round it | Most in three eighths |
+|---|---|---|---|
+| Ring off (before) | 1.8 / 4.4 / 7.5 | 8, 9, 9, 19, 24, 28, 10, 9 | 71 |
+| Ring, pulled in to the pump | 13.9 / 15.5 / 20.2 | 12, 11, 3, 1, 11, 20, 25, 33 | 78 |
+| Ring, pulled round (half each way, pull 120) | 13.6 / 15.3 / 20.5 | 10, 4, 4, 2, 4, 4, 37, 51 | 98 |
+| **Ring, pulled from its own centre (kept)** | 14.2 / 15.4 / 17.6 | 8, 18, 4, 4, 20, 10, 23, 29 | 62 |
+
+Off, it sat inside the crystal (radius about 10 here). Pulled in to the
+pump, the ring lay in one arc on the side facing the body it came from.
+Pulled round the ring, its members ran into the rock that crosses the
+ring's north-east and piled up on both sides of it; a harder pull piled
+more. Pulled from their own centre, members lie in every eighth; the
+south-west, where the body's stream leaves the pump, stays thin. What it
+took is unchanged (282.7 food by 2:50).
+
+Race world test: the leech on crystal 14 (radius 6.0) rings at 9.0; its
+members' 10th percentile from the pump is 8.0 and the median 9.6, outside
+the rig (7.8), and they lie in all eight eighths. GPU twin (one tick, a
+ring of 35 and of 56 round the most crowded walker): members inside, in
+and past the band, every member on the same cell on both engines.
+
+**Through the thick body** (`big::LUMP_CROWD` 1 to 3, both engines). On
+main after the squad movement rework (#392), the same staged leech formed
+with 123 members and stopped at the west edge of the thick body round the
+pump, 28 cells from it, from 1:55 to past 2:30: every cell between was
+full, and a member could step only one walker past the crowd limit. Twice
+the pull and pace while it stalled (no cell nearer in 3 s) did not free
+it (rejected, `dead-ends.md`); twice the pull from the start went another
+way and got there. With members stepping three past the limit it went
+straight through the body and sat on the pump at 1:50, ringing it (at
+2:30, 14.1 / 15.5 / 17.3 cells from the pump; eighths 19, 19, 2, 8, 20,
+15, 20, 20). This holds for every kind: a mini-boss shoulders through its
+own slime more easily.
+
+Cost: one more comparison for a ring member's run and its pull; no new
+pass.

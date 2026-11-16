@@ -452,4 +452,28 @@ mod tests {
         let (ta, tb) = (kit.mine_trigger(&a) as f32, kit.mine_trigger(&b) as f32);
         assert!((tb / ta - 4.0).abs() < 0.1, "{ta} then {tb}");
     }
+
+    /// **Thrown fire goes over walls** (owner, 2026-11-16 19:50Z: "lobbed
+    /// fire goes over walls, but regular guns shots do not"): a tool is
+    /// thrown, so only the reach and open ground where it lands count, not
+    /// the line. A soldier boxed in by wall throws a blast out over it.
+    #[test]
+    fn a_thrown_tool_goes_over_a_wall() {
+        let mut g = Game::new(race_world(3, 1, 1_000), Rules { start_bank: 1e6, ..Rules::default() }, 3);
+        let mut kit = Kit::new(KitRules { carry_max: 0, ..KitRules::default() });
+        let at = (0..g.world.h as i32 * g.world.w as i32)
+            .map(|i| ((i % g.world.w as i32) as f32 + 0.5, (i / g.world.w as i32) as f32 + 0.5))
+            .find(|&(x, y)| (-12..=12).all(|d| g.world.open(x + d as f32, y) && g.world.open(x, y + d as f32)))
+            .expect("open ground");
+        for k in 0..g.soldiers.len() {
+            (g.soldiers[k].x, g.soldiers[k].y) = if k == 0 { at } else { (0.5, 0.5) };
+        }
+        let r = 5.0;
+        for (a, b) in [((-r, -r), (r, -r)), ((r, -r), (r, r)), ((r, r), (-r, r)), ((-r, r), (-r, -r))] {
+            World::build_wall(&mut g.world, (at.0 + a.0, at.1 + a.1), (at.0 + b.0, at.1 + b.1), 2.0);
+        }
+        let out = (at.0 + 10.0, at.1);
+        assert!(!g.clear_line(at, out), "the wall is in the way of a shot");
+        assert!(kit.use_tool(&mut g, Tool::Blast(out)), "the blast went over the wall");
+    }
 }

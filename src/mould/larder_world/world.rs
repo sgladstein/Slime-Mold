@@ -79,6 +79,11 @@ pub trait World {
     fn clear(&self, x: f32, y: f32) -> bool {
         self.open(x, y)
     }
+    /// Cell `i` (row by row) is a built wall's, standing or worn to rubble
+    /// (`BigDish::wall`), not rock: what a door's footprint marks
+    /// (`Game::mark_doors`). No default, so a world that wraps another
+    /// can't forget to pass it on and leave its doors shut.
+    fn wall_cell(&self, i: usize) -> bool;
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
     /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
@@ -110,6 +115,9 @@ pub trait World {
     /// cells of `at` (fine cells), or releases it (None). A world with no
     /// lumps ignores it.
     fn form_lump(&mut self, _b: usize, _at: Option<((f32, f32), f32)>) {}
+    /// Lump `b` takes in the slime round (`c`, `r`) in no lump, its own
+    /// members kept as they are (`big::BigDish::grow_lump`).
+    fn grow_lump(&mut self, _b: usize, _at: ((f32, f32), f32)) {}
     /// Lump `b`'s steering (`big::Lump`) from the next step.
     fn set_lump(&mut self, _b: usize, _l: crate::mould::big::Lump) {}
     /// Each lump's centre (fine cells) and members as the last step began
@@ -257,6 +265,10 @@ impl World for BigDish {
         self.cell_at(x, y).is_some_and(|i| self.agar[i])
     }
 
+    fn wall_cell(&self, i: usize) -> bool {
+        self.wall.get(i).copied().unwrap_or(false)
+    }
+
     fn stop_births(&mut self) {
         self.p.birth_energy = f32::INFINITY;
     }
@@ -304,6 +316,11 @@ impl World for BigDish {
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
         let sc = self.p.scale as f32;
         BigDish::form_lump(self, b, at.map(|(c, r)| lump_reach(c, r * sc, (self.w, self.h))));
+    }
+
+    fn grow_lump(&mut self, b: usize, (c, r): ((f32, f32), f32)) {
+        let sc = self.p.scale as f32;
+        BigDish::grow_lump(self, b, lump_reach(c, r * sc, (self.w, self.h)));
     }
 
     fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {

@@ -128,12 +128,12 @@ fn the_window_plays_the_real_game() {
     assert_eq!(m.commands.len(), 10);
     assert!(m.end.is_none());
     // The build page, option 1: what you place along the top, the wall
-    // among them; the lures' switch, the outpost and Back below. (Cancel
-    // a build left it: click the building.)
+    // among them; the lures' switch, the outpost, the door (walls thread,
+    // 11-16) and Back below. (Cancel a build left it: click the building.)
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Wall", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
-    assert!(!m.commands[5].ready, "no lures to switch");
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Wall", "Door", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
+    assert!(!m.commands[6].ready, "no lures to switch");
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take
@@ -1105,7 +1105,7 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     let walls: Vec<usize> = { let d = &app.game.as_ref().unwrap().world.e.dish; (0..d.w * d.h).filter(|&i| d.wall[i]).collect() };
     assert!(walls.len() > 10, "the nest map has walls");
     assert!(app.live.cells.len() > walls.len() && app.live.gather.is_some(), "crystal and wall cells live");
-    let (mut checked, mut worn, mut raised, mut at) = (0, false, false, app.ground_at);
+    let (mut checked, mut worn, mut raised, mut doored, mut at) = (0, false, false, false, app.ground_at);
     let wall_cells = |app: &App| app.codes.iter().filter(|&&c| c & 0xF == look::Ground::Wall as u32).count();
     let walls_before = wall_cells(&app);
     while app.game.as_ref().unwrap().time() < 16.0 {
@@ -1134,6 +1134,20 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
             g.walls += 3;
             raised = true;
         }
+        if !doored && app.game.as_ref().unwrap().time() > 9.0 {
+            // Doors cut into standing walls (walls thread, 11-16): no wall
+            // cell changes, only `Game::doors`; the refresh that a wall
+            // count's change runs draws them as doors.
+            app.settle();
+            let g = app.game.as_mut().unwrap();
+            let n = g.world.e.dish.w * g.world.e.dish.h;
+            g.doors = vec![false; n];
+            for &i in walls.iter().skip(2).take(6) {
+                g.doors[i] = true;
+            }
+            g.walls += 1;
+            doored = true;
+        }
         app.prepare();
         if app.ground_at != at {
             at = app.ground_at;
@@ -1150,6 +1164,7 @@ fn the_sparse_ground_refresh_matches_a_whole_one() {
     assert!(checked >= 6, "{checked} refreshes checked");
     let g = app.game.as_ref().unwrap();
     assert_eq!(app.codes[walls[1]] & 0xF, look::Ground::Rubble as u32, "the broken wall cell drew as rubble");
+    assert!(doored && walls.iter().skip(2).take(6).all(|&i| app.codes[i] & 0xF == look::Ground::Door as u32), "the doors drew as doors");
     assert!(raised && wall_cells(&app) > walls_before + 20, "the raised walls drew: {} wall cells, {walls_before} before", wall_cells(&app));
     let left: f32 = g.world.crystals().iter().map(|c| c.1).sum();
     assert!(left < app.charge0.iter().sum::<f32>(), "crystals were eaten, so charges changed: {left}");

@@ -48,7 +48,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     // Past `SHOTS_MAX` in flight the newest are dropped, so a frame
     // never hands the engines more legs than they take.
     let from = g.soldiers[0];
-    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0 }).collect();
+    let many: Vec<ShotIn> = (0..squad::SHOTS_MAX + 40).map(|_| ShotIn { from: (from.x, from.y), to: (from.x + 10.0 * sc, from.y), r: 1.0, over: false }).collect();
     let by = vec![(Some(0), 0); many.len()];
     let (legs, who) = g.fly(many, &by, &[], 1.0 / 15.0);
     assert_eq!((legs.len(), who.len(), g.bullets.len()), (squad::SHOTS_MAX, squad::SHOTS_MAX, squad::SHOTS_MAX));
@@ -59,7 +59,7 @@ fn bullets_cap_at_the_shot_buffer_and_stop_at_walls() {
     let (w, h) = g.world.size();
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.open(x, y) && g.world.open(x - 3.0, y) && g.world.open(x - 2.0, y) && g.world.open(x - 1.0, y) && x > 4.0).expect("a wall or rock cell with open ground west of it");
     let start = (wall.0 - 3.0, wall.1);
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(None, 0)], &[], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0, over: false }], &[(None, 0)], &[], 1.0);
     assert!((legs[0].to.0 - wall.0).abs() <= 1.0, "leg {:?} wall {:?}", legs[0], wall);
     g.landed(&legs, &[squad::ShotOut { hit: None, killed: 0 }]);
     assert!(g.bullets.is_empty(), "the bullet flew on past the wall");
@@ -105,7 +105,7 @@ fn a_seeker_turns_onto_the_nearest_live_slime_ahead() {
     let p = at_sq(i);
     let from = (1..=12).map(|k| (p.0 - (8.0 + k as f32) * sc, p.1)).find(|&f| f.0 > 0.0 && g.world.clear(f.0, f.1) && g.clear_line(f, p)).expect("open ground west of the mould");
     let off = 0.6f32;
-    let bullet = Bullet { at: from, dir: (off.cos(), off.sin()), left: 30.0 * sc, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: r.seek_after * sc, aim: f32::INFINITY };
+    let bullet = Bullet { at: from, dir: (off.cos(), off.sin()), left: 30.0 * sc, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: r.seek_after * sc, aim: f32::INFINITY, over: false };
     let angle = |d: (f32, f32)| d.1.atan2(d.0);
     // Flies straight with no card, or before `seek_after`.
     g.bullets = vec![Bullet { seek: 0, ..bullet }, Bullet { flown: 0.5 * r.seek_after * sc, ..bullet }];
@@ -169,7 +169,7 @@ fn a_seekers_catch_rides_its_aim_and_last_leg() {
     let dt = r.frame_ticks as f32 / r.tps as f32;
     let leg = r.bullet_speed * sc * dt;
     assert!(r.bullet_speed > 0.0 && leg > 1.0, "bullets fly in legs");
-    let b = Bullet { at: (10.0, 10.0), dir: (1.0, 0.0), left: 10.0 * leg, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: 0.0, aim: f32::INFINITY };
+    let b = Bullet { at: (10.0, 10.0), dir: (1.0, 0.0), left: 10.0 * leg, r: 1.0, by: None, fresh: false, pierce: 0, split: 0, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 1, flown: 0.0, aim: f32::INFINITY, over: false };
     g.bullets = vec![b, Bullet { left: 0.5 * leg, ..b }, Bullet { left: 0.5 * leg, seek: 2, ..b }, Bullet { left: 0.5 * leg, seek: 0, ..b }];
     let one = (r.seek_catch * sc).round() as u16;
     let s = squad::SEEKS;
@@ -188,9 +188,9 @@ fn pierce_flies_on_past_a_hit_and_split_leaves_fanned_pieces() {
     let mut g = small(1);
     let sc = g.s();
     let r = g.rules;
-    let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0 };
+    let leg = |from: (f32, f32)| ShotIn { from, to: (from.0 + 4.0, from.1), r: 2.0, over: false };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
-    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY };
+    let b = Bullet { at: (50.0, 50.0), dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: true, pierce: 1, split: 1, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY, over: false };
     // Pierce: on past the hit by the gap, one pierce fewer, range spent
     // to there; the split waits for the bullet's last hit.
     g.bullets = vec![b];
@@ -241,8 +241,8 @@ fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
     // Open ground with room ahead, and a wall with open ground before it.
     let open = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| (0..12).all(|j| g.world.clear(x + j as f32, y))).expect("open ground");
     let wall = (0..w * h).map(|i| ((i % w) as f32 + 0.5, (i / w) as f32 + 0.5)).find(|&(x, y)| !g.world.clear(x, y) && (1..=3).all(|j| g.world.clear(x - j as f32, y)) && g.world.clear(x - 1.0, y + 1.0) && g.world.clear(x - 1.0, y - 1.0) && !g.world.clear(x, y + 1.0) && !g.world.clear(x, y - 1.0) && x > 4.0).expect("a wall face with open ground west of it");
-    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY };
-    let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0 };
+    let carrier = Bullet { at: open, dir: (1.0, 0.0), left: 30.0, r: 2.0, by: Some(0), fresh: false, pierce: 1, split: 0, cast: 1, speed: 1.0, carry: 2, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY, over: false };
+    let leg = |from: (f32, f32), len: f32| ShotIn { from, to: (from.0 + len, from.1), r: 2.0, over: false };
     let hit = |at: (f32, f32)| squad::ShotOut { hit: Some(at), killed: 1 };
     let miss = squad::ShotOut { hit: None, killed: 0 };
     let h0 = (open.0 + 2.0, open.1);
@@ -273,7 +273,7 @@ fn a_carrier_lets_its_cast_out_where_it_hits_or_stops() {
     // A wall: it heads back out the way it came, from a cell back.
     let start = (wall.0 - 3.0, wall.1);
     g.bullets.clear();
-    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0 }], &[(Some(0), 1)], &[], 1.0);
+    let (legs, _) = g.fly(vec![ShotIn { from: start, to: (start.0 + 20.0, start.1), r: 1.0, over: false }], &[(Some(0), 1)], &[], 1.0);
     assert_eq!((g.bullets[0].carry, g.bullets[0].expire), (2, true), "the fired bullet takes its cast's carry");
     g.landed(&legs, &[miss]);
     assert_eq!((g.releases, g.bullets.len()), (3, 1));
@@ -287,9 +287,9 @@ fn split_pieces_cap_at_the_shot_buffer_in_order() {
     // Pieces go to the end in their parents' order until the buffer
     // is full, the rest are counted, never more than `SHOTS_MAX` fly.
     let mut g = small(1);
-    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY };
+    let b = |i: usize| Bullet { at: (10.0 + i as f32, 40.0), dir: (1.0, 0.0), left: 30.0, r: 1.0, by: Some(i % 4), fresh: false, pierce: 0, split: 2, cast: 0, speed: 1.0, carry: 0, expire: false, seek: 0, flown: 0.0, aim: f32::INFINITY, over: false };
     g.bullets = (0..squad::SHOTS_MAX).map(b).collect();
-    let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0 }).collect();
+    let legs: Vec<ShotIn> = g.bullets.iter().map(|q| ShotIn { from: q.at, to: (q.at.0 + 1.0, q.at.1), r: 1.0, over: false }).collect();
     // Every second one hits; the others fly on and keep their places.
     let outs: Vec<squad::ShotOut> = (0..legs.len()).map(|i| squad::ShotOut { hit: (i % 2 == 0).then_some(legs[i].to), killed: 0 }).collect();
     g.landed(&legs, &outs);
@@ -905,6 +905,9 @@ impl World for Later {
     fn open(&self, x: f32, y: f32) -> bool {
         World::open(&self.d, x, y)
     }
+    fn wall_cell(&self, i: usize) -> bool {
+        World::wall_cell(&self.d, i)
+    }
     fn stop_births(&mut self) {
         World::stop_births(&mut self.d)
     }
@@ -946,6 +949,9 @@ impl World for Later {
     }
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
         World::form_lump(&mut self.d, b, at)
+    }
+    fn grow_lump(&mut self, b: usize, at: ((f32, f32), f32)) {
+        World::grow_lump(&mut self.d, b, at)
     }
     fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
         World::set_lump(&mut self.d, b, l)
@@ -1230,7 +1236,7 @@ fn a_walking_squad_or_a_standing_pump_is_not_stuck() {
     let mut g = small(1);
     hold(&mut g);
     let at = (g.soldiers[0].x, g.soldiers[0].y);
-    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0) });
+    g.buildings.push(Building { kind: Kind::Pump, at, hp: 100.0, max_hp: 100.0, built: 1.0, alive: true, on: true, working: false, crystal: None, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home: (0.0, 0.0), door: false });
     assert_eq!(stuck_for(&mut g), 0, "a standing pump is something");
     // Worn down, it no longer is.
     g.buildings[0].alive = false;
@@ -2705,6 +2711,7 @@ fn soldiers_cross_deep_water_only_by_ford_or_bridge() {
                 from: west,
                 to: east,
                 r: 1.0,
+                over: false,
             }],
             &[(Some(0), 0)],
             &[],
@@ -3471,7 +3478,7 @@ fn squads_shoot_a_mini_boss_first() {
     // Its body's edge within the defend reach: the mini-boss first, slime
     // on the soldier or not.
     let close = at(r + 0.5 * g.rules.defend * sc);
-    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5 };
+    let boss = Boss { lump: 0, born: 0, at: close, cause: BossCause::Staged, phase: BossPhase::Hunt(Some(0)), first: 300, members: 300, centre: close, grade: 0.5, kind: BossKind::Hunter, stolen: 0.0, visited: 0 };
     g.bosses.live.push(boss);
     for touching in [0, 2] {
         set(&mut g, touching);
@@ -3512,9 +3519,12 @@ fn squads_shoot_a_mini_boss_first() {
 
 /// **How a mini-boss ends** (review of the mini-boss PR): one with too few
 /// at its knot fizzles, one under its quorum breaks, one that hunted its
-/// `life` is spent; each lets every member go (no walker carries its lump
-/// or its hits), its lump's rules go back to none, and the world reads no
-/// centre for it.
+/// `life` is spent; each goes unsteered and unarmoured at once (its lump's
+/// rules back to none). A fizzled one lets its members go at once; a
+/// broken or spent one fades first (`BossRules::fade`, the look thread's
+/// ask): its members stay marked, its lump is not reused and the view's
+/// word says how far through, then it lets them go. Then no walker
+/// carries its lump or its hits, and the world reads no centre for it.
 #[test]
 fn a_mini_boss_ends_and_lets_its_walkers_go() {
     let tps = small(0).rules.tps as usize;
@@ -3547,12 +3557,79 @@ fn a_mini_boss_ends_and_lets_its_walkers_go() {
         let (b, how, _) = g.bosses.ended.first().copied().unwrap_or_else(|| panic!("{end:?}: it ended: {:?}", g.bosses.live));
         assert_eq!(how, end, "{b:?}");
         assert!(g.bosses.live.is_empty());
+        assert_eq!(g.world.p.lumps[l], crate::mould::big::Lump::default(), "{end:?}: unsteered and unarmoured at once");
+        let marked = |g: &Game<BigDish>| (0..g.world.walkers.len()).filter(|&k| g.world.dense.get(k).is_some_and(|&d| d & crate::mould::big::LUMP_BITS != 0)).count();
+        if end == BossEnd::Fizzled {
+            assert!(g.bosses.fading.is_empty() && g.lump_looks()[l] == 0, "{end:?}: no fade");
+        } else {
+            assert_eq!(g.bosses.fading.len(), 1, "{end:?}: it fades");
+            assert!(marked(&g) > 0, "{end:?}: its members stay marked while it fades");
+            let look = g.lump_looks()[l];
+            assert!(look & 1 << 8 != 0 && look & 7 == g.bosses.fading[0].0.kind as u16, "{end:?}: the view's word says it fades, and its kind: {look:#x}");
+            // Its lump is not taken while it fades.
+            assert!(g.form_boss(at, 6.0, BossCause::Staged) && g.bosses.live[0].lump != l);
+            let other = g.bosses.live.remove(0).lump;
+            World::form_lump(&mut g.world, other, None);
+            World::set_lump(&mut g.world, other, crate::mould::big::Lump::default());
+            assert!(marked(&g) > 0, "{end:?}: still marked");
+            let mut last = look >> 9;
+            while !g.bosses.fading.is_empty() {
+                g.step();
+                if !g.bosses.fading.is_empty() {
+                    let now = g.lump_looks()[l] >> 9;
+                    assert!(now >= last, "{end:?}: the fade only goes on");
+                    last = now;
+                }
+            }
+            assert_eq!(last, 127, "{end:?}: through the whole fade");
+        }
         // The lumps' sums are the last step's start: one more.
         g.step();
         let w = &g.world;
         assert!((0..w.walkers.len()).all(|k| w.dense.get(k).is_none_or(|&d| d & (crate::mould::big::LUMP_BITS | crate::mould::big::HURT_BITS) == 0)), "{end:?}: no slot keeps the lump or its hits");
         assert_eq!(w.p.lumps[l], crate::mould::big::Lump::default(), "{end:?}: its rules back to none");
         assert!(World::lumps(w)[l].is_none(), "{end:?}: no centre read");
+    }
+}
+
+/// **The hunter lunges** (`BossRules::lunge_every`, the look thread's ask:
+/// the pulse must come from the simulation): while it hunts a soldier,
+/// its lump's pull and pace go up `lunge_pull` and `lunge_haste` times for
+/// `lunge` seconds every `lunge_every`, and back between; off with
+/// `lunge_every` 0.
+#[test]
+fn a_hunting_mini_boss_lunges() {
+    for every in [3.0, 0.0] {
+        let mut g = small(2);
+        // A hunter (`kind` 1): the others go on errands and do not lunge.
+        g.rules.boss = BossRules { least: 1, gather: 1.0, life: 30.0, quorum: 0.0, lunge_every: every, lunge: 1.0, lunge_pull: 2.0, lunge_haste: 3.0, kind: 1.0, ..BossRules::default() };
+        let tps = g.rules.tps as usize;
+        // Round the thickest of the slime.
+        let w = &g.world;
+        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+        let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+        assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+        let (l, grade) = (g.bosses.live[0].lump, g.bosses.live[0].grade);
+        let mut seen = Vec::new();
+        for _ in 0..12 * tps {
+            g.step();
+            if g.world.ticks().is_multiple_of(tps as u64) && g.bosses.live.first().is_some_and(|b| matches!(b.phase, BossPhase::Hunt(Some(_)))) {
+                let p = g.world.p.lumps[l];
+                seen.push((p.pull, p.haste));
+            }
+        }
+        let r = g.rules.boss;
+        assert!(!g.bosses.live.is_empty(), "it still hunts: {:?}", g.bosses.ended);
+        let base = (r.pull, r.haste_at(grade));
+        let up = seen.iter().filter(|s| s.0 == base.0 * 2.0 && (s.1 - base.1 * 3.0).abs() < 1e-5).count();
+        let calm = seen.iter().filter(|s| s.0 == base.0 && (s.1 - base.1).abs() < 1e-5).count();
+        eprintln!("lunge every {every}: {} hunting seconds, {up} lunging, {calm} calm", seen.len());
+        assert_eq!(up + calm, seen.len(), "only the two paces: {seen:?}");
+        if every > 0.0 {
+            assert!(up >= 3 && calm >= 2 * up - 2, "a lunge every 3 s, a second long: {up} of {}", seen.len());
+        } else {
+            assert_eq!(up, 0);
+        }
     }
 }
 
@@ -3659,6 +3736,9 @@ fn a_mini_boss_forms_at_a_crowd_and_hunts() {
     assert_eq!(b0.cause, BossCause::Crowd);
     let b = g.bosses.live.first().copied().or(g.bosses.ended.last().map(|e| e.0)).unwrap();
     assert!(b.first >= 10, "it held walkers: {b:?}, ended {:?}", g.bosses.ended);
+    // Its grade tightens its clench and leash (`BossRules::tight`).
+    let r = g.rules.boss;
+    assert!(r.leash_at(r.leash, 1.0) < r.leash_at(r.leash, 0.0) && r.leash_at(r.leash, 0.0) == r.leash);
     assert!(matches!(b.phase, BossPhase::Hunt(_)), "it hunts after gathering: {b:?}");
     // Its members are marked in the dish and the world reads its centre.
     let l = b.lump;
@@ -3718,3 +3798,182 @@ fn squads_of_25_share_walking_maps_at_6x() {
     assert_eq!(lost, 0, "goal-steps unserved after a place's first map");
 }
 
+
+/// A mini-boss staged round the slime's middle (the race world's slime
+/// sits on crystal 0 at 56,80; the squad on crystal 21 at 236,99), with
+/// these rules and forced to `kind`.
+fn staged_kind(seed: u64, kind: BossKind, rules: BossRules) -> Game<BigDish> {
+    let mut g = small(seed);
+    g.rules.boss = BossRules { least: 1, gather: 1.0, life: 120.0, quorum: 0.0, kind: kind as u8 as f32, ..rules };
+    let w = &g.world;
+    let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+    let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + w.walkers[k].0, a.1 + w.walkers[k].1));
+    assert!(g.form_boss((x / living.len() as f32, y / living.len() as f32), 6.0, BossCause::Staged));
+    assert_eq!(g.bosses.live[0].kind, kind);
+    g
+}
+
+/// **A wanderer goes to a far fresh crystal, roots, and moves on**
+/// (`BossKind::Wanderer`): it sets off for the nearest crystal at least
+/// `far` away, sits on it for `root` seconds, takes in the slime round it
+/// (more members) and marks it visited, then goes for another.
+#[test]
+fn a_wanderer_roots_on_a_far_crystal_and_moves_on() {
+    let mut g = staged_kind(2, BossKind::Wanderer, BossRules { far: 40.0, root: 10.0, ..BossRules::default() });
+    let tps = g.rules.tps as usize;
+    let start = g.bosses.live[0].centre;
+    let mut goals: Vec<(f32, f32)> = Vec::new();
+    let (mut sat, mut grew) = (None, 0);
+    // Walkers round the far crystal (crystal 8, 88,51; 43 cells off), and
+    // its charge, as it sits down and as it leaves.
+    let round = |g: &Game<BigDish>| (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && (g.world.walkers[k].0 - 88.3).hypot(g.world.walkers[k].1 - 50.8) < 12.0).count();
+    let (mut at_sit, mut at_leave) = ((0, 0.0), (0, 0.0));
+    for s in 0..90 {
+        for _ in 0..tps {
+            g.step();
+        }
+        let Some(b) = g.bosses.live.first() else { break };
+        match b.phase {
+            BossPhase::Go(p) | BossPhase::Sit(p, _) if goals.last() != Some(&p) => goals.push(p),
+            _ => {}
+        }
+        if matches!(b.phase, BossPhase::Sit(..)) && sat.is_none() {
+            sat = Some((s, b.members));
+            at_sit = (round(&g), g.world.crystals()[8].1);
+        }
+        if goals.len() >= 2 && b.visited != 0 {
+            break;
+        }
+    }
+    // The members as the next second starts (the sums are the step's).
+    for _ in 0..tps {
+        g.step();
+    }
+    if let (Some((_, m)), Some(b)) = (sat, g.bosses.live.first()) {
+        grew = b.members as i64 - m as i64;
+        at_leave = (round(&g), g.world.crystals()[8].1);
+    }
+    let b = g.bosses.live.first().copied().or(g.bosses.ended.last().map(|e| e.0)).unwrap();
+    eprintln!("goals {goals:?}; sat {sat:?}; grew {grew}; round crystal 8 (walkers, charge) sitting {at_sit:?}, leaving {at_leave:?}, now {:?}; visited {:b}; ended {:?}", (round(&g), g.world.crystals()[8].1), b.visited, g.bosses.ended.iter().map(|e| e.1).collect::<Vec<_>>());
+    let cs = g.world.crystals();
+    let first = goals.first().copied().expect("it set off");
+    let j = cs.iter().position(|c| c.0 == first).expect("for a crystal");
+    assert!((first.0 - start.0).hypot(first.1 - start.1) >= 40.0, "a far one: {first:?} from {start:?}");
+    assert!(sat.is_some(), "it got there and sat");
+    assert!(b.visited & 1 << j != 0, "marked visited");
+    assert!(goals.len() >= 2 && goals[1] != first, "then on to another: {goals:?}");
+    assert!(grew > 0, "it took in the slime there");
+}
+
+/// **A sapper goes for a wall and eats through it** (`BossKind::Sapper`):
+/// it sets off for the nearest point of a standing wall, presses into it
+/// until the wall's cell there is gone, then goes on through and hunts;
+/// with no building at all it hunts.
+#[test]
+fn a_sapper_goes_for_a_wall() {
+    for wall in [true, false] {
+        let mut g = staged_kind(2, BossKind::Sapper, BossRules::default());
+        g.bank = 1e6;
+        let (at, to) = ((95.0, 65.0), (95.0, 95.0));
+        if wall {
+            assert!(g.build(Kind::Wall { to }, at), "{:?}", g.build_blocked(Kind::Wall { to }, at));
+        }
+        let tps = g.rules.tps as usize;
+        let mut phases = Vec::new();
+        for _ in 0..100 {
+            for _ in 0..tps {
+                g.step();
+            }
+            let Some(b) = g.bosses.live.first() else { break };
+            phases.push(b.phase);
+            if b.visited == 2 {
+                break;
+            }
+
+        }
+        eprintln!("wall {wall}: {} s, last {:?}, {} wall bites, {} wall cells broken", phases.len(), phases.last(), g.world.wall_hits, g.world.broken);
+        if wall {
+            let to_wall = phases.iter().find_map(|p| if let BossPhase::Go(p) = p { Some(*p) } else { None }).expect("it set off");
+            assert!((to_wall.0 - 95.0).abs() < 1e-3 && (65.0..=95.0).contains(&to_wall.1), "for the wall's nearest point: {to_wall:?}");
+            assert!(phases.iter().any(|p| matches!(p, BossPhase::Sit(..))), "it reached the wall");
+            assert!(g.world.wall_hits > 0, "and bit into it");
+            // Holed where it sat, it goes through to the far side (the wall
+            // is at x 95, it came from the west), then hunts.
+            let sat = phases.iter().position(|p| matches!(p, BossPhase::Sit(..))).unwrap();
+            let through = phases.iter().rposition(|p| matches!(p, BossPhase::Go(q) if q.0 > 95.0)).expect("through the hole");
+            let b = g.bosses.live[0];
+            eprintln!("sat at {sat} s, going through from {through} s, hunting at {} s from {:.1},{:.1}", phases.len(), b.centre.0, b.centre.1);
+            assert!(through > sat && b.visited == 2 && b.centre.0 > 95.0, "through: {:?} at {:?}", b.phase, b.centre);
+        } else {
+            assert!(phases.iter().all(|p| matches!(p, BossPhase::Hunt(_))), "nothing to sap: it hunts");
+        }
+    }
+}
+
+/// **A leech sits on a pump and takes its pay** (`BossKind::Leech`): the
+/// pump keeps working and stands, but the bank gets nothing from it while
+/// the leech holds on; broken, the leech gives its take back.
+#[test]
+fn a_leech_takes_a_pumps_pay_and_gives_it_back_when_broken() {
+    let mut g = staged_kind(2, BossKind::Leech, BossRules::default());
+    // A pump on crystal 14 (88,80), 31 cells from the slime's middle.
+    g.bank = 1e6;
+    let at = g.world.crystals()[14].0;
+    assert!(g.build(Kind::Pump, at), "{:?}", g.build_blocked(Kind::Pump, at));
+    let pump = g.buildings.len() - 1;
+    // The race world's slime reaches the rig before the leech does and
+    // would eat it: made tough here, so the leech is what's measured.
+    (g.buildings[pump].hp, g.buildings[pump].max_hp) = (1e9, 1e9);
+    let tps = g.rules.tps as usize;
+    let mut sat = None;
+    for s in 0..60 {
+        for _ in 0..tps {
+            g.step();
+        }
+        let b = g.bosses.live[0];
+        if matches!(b.phase, BossPhase::Sit(..)) {
+            sat = Some(s);
+            break;
+        }
+    }
+    let b = g.bosses.live[0];
+    eprintln!("sat {sat:?} at {:?}; pump at {at:?} hp {} of {}", b.phase, g.buildings[pump].hp, g.buildings[pump].max_hp);
+    assert!(sat.is_some(), "it reached the pump");
+    assert_eq!(g.leech_on(pump), Some(0));
+    let (bank, pumped, hp) = (g.bank, g.pumped, g.buildings[pump].hp);
+    for _ in 0..10 * tps {
+        g.step();
+    }
+    let took = g.bosses.live[0].stolen;
+    eprintln!("10 s on: stole {took}, bank {} -> {}, pumped {pumped} -> {}, hp {hp} -> {}", bank, g.bank, g.pumped, g.buildings[pump].hp);
+    assert!(took > 0.5 * 10.0 * g.pump_draw(pump), "it takes the pump's pay: {took}");
+    assert_eq!(g.pumped, pumped, "none of it banked");
+    assert!(g.bank <= bank, "the bank gets nothing from the pump");
+    assert!(g.buildings[pump].alive && g.buildings[pump].hp >= hp, "the rig stands under it");
+    assert_eq!(g.bosses.stolen, took);
+    // It rings the pump (`BossRules::ring`, look thread 11:56Z), outside
+    // the rig (`pump_rig_r`, 1.3 x the crystal's radius) and round it.
+    let (lump, cr) = (g.bosses.live[0].lump, g.world.crystal_r(14));
+    let mut eighths = [0; 8];
+    let mut d: Vec<f32> = Vec::new();
+    for k in (0..g.world.walkers.len()).filter(|&k| g.world.lives(k) && g.world.lump_of(k) == Some(lump)) {
+        let (dx, dy) = (g.world.walkers[k].0 - at.0, g.world.walkers[k].1 - at.1);
+        d.push(dx.hypot(dy));
+        eighths[((dy.atan2(dx) / std::f32::consts::TAU + 1.0) * 8.0) as usize % 8] += 1;
+    }
+    d.sort_by(f32::total_cmp);
+    let (tenth, median) = (d[d.len() / 10], d[d.len() / 2]);
+    eprintln!("ring {:.1} (crystal {cr:.1}): members from the pump {tenth:.1} (10%), {median:.1} (median); by eighths {eighths:?}", cr * g.rules.boss.ring);
+    assert!(tenth > 1.3 * cr && eighths.iter().filter(|&&n| n > 0).count() >= 6, "a ring outside the rig, round it");
+    // Broken (most of its members gone): its take goes back.
+    let bank = g.bank;
+    g.bosses.live[0].first = 100 * g.bosses.live[0].members.max(1);
+    g.rules.boss.quorum = 0.5;
+    for _ in 0..2 * tps {
+        g.step();
+    }
+    let e = g.bosses.ended.last().expect("it broke");
+    assert_eq!(e.1, BossEnd::Broken);
+    assert!(g.bank >= bank + 0.99 * e.0.stolen && e.0.stolen >= took, "given back: bank {bank} -> {}, stolen {}", g.bank, e.0.stolen);
+    assert_eq!(g.bosses.returned, e.0.stolen);
+}

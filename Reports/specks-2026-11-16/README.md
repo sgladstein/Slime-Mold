@@ -126,9 +126,50 @@ them too, for thickening). Times in ms, two runs each:
   (`Engine::ripens`) and the cell counts only with condensing,
   thickening (`Engine::dense_walkers`, engine.wgsl's `dense_on`) or a
   mini-boss lump on (`lumps_on`, whose members' bite the same passes
-  count); the GPU twins pass and the core world is to be timed again.
+  count) (#388, below).
 - Every core-world run had a frame of about 570 ms, A and B alike: the
   head start's growth before the clock, as in #370's timing.
+
+**After the trim** (#388; the PC runner, 2026-11-16 09:17Z, main
+fcc24f66; raw on branch `claude/project-thread-26drse` at 5d00ee74,
+`runner-out/roam-trim-fcc24f66/`). The core world only, the same
+commands, A B A B:
+
+| Run | Frame p50 / p95 | GPU step | `ripen` |
+|---|---|---|---|
+| A (specks) | 11.20 / 15.05 | 6.798 | 0.206 |
+| B (`roam=0`) | 11.18 / 14.60 | 6.494 | |
+| A | 11.30 / 15.22 | 6.861 | 0.209 |
+| B | 11.27 / 14.67 | 6.531 | |
+
+- The specks' step costs 0.30 and 0.33 ms more than B (0.56 before the
+  trim), and the frame's p50 0.02 and 0.03 ms more (0.30 before).
+  `ripen` is 0.21 ms of it; the other 0.1 ms is outside `ripen` (the
+  specks' steering in `walk` among it), not split further.
+- B itself measured 0.2 ms dearer than before the trim (6.49 and 6.53
+  against 6.31), which the trim cannot touch (B runs none of the
+  passes); the card started runs 2-4 down-clocked (835, 999 and 797 MHz
+  against 1987 for run 1) and main had gained #385 and #387 since. The
+  paired gap is the measure.
+
+**The passes come back clean** (the tech lead's review of #388): a
+skipped `dclear`/`dcount` keeps its last count, so the first frame they
+run again must clear first. They do: `dclear` always runs before
+`dcount` and the units read the cells under the same gates.
+`mouldgpu`'s `the_dense_passes_start_clean_when_they_come_back` plays 15
+squad frames of a specks dish on the GPU from one injection (an
+injection clears the cells): a lump forms, is let go and forms again,
+then condensing comes on, goes off with 644 walkers still condensed, and
+comes back. Every frame the passes run exactly while needed and every
+unit's touch matches the CPU's (0 off, 0 walkers off). Planted, the
+frame the lump comes back without its clear is 140 touches off, the
+frame condensing comes back 30. The CPU now counts a condensed walker
+as two only while condensing or thickening is on (`squad::dense_cells`),
+as the GPU does; before, a walker condensed before condensing was
+switched off touched as two on the CPU and one on the GPU (no game
+switches condensing off mid-world); `squad`'s
+`a_condensed_walker_touches_as_two_and_takes_two_shots` now turns
+condensing on for its planted condensed walkers.
 
 ## Tests
 

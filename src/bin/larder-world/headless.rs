@@ -358,7 +358,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     bossed.push(j);
                     let reach = g.rules.boss.reach;
                     if g.form_boss((bx, by), reach, slime_mould::mould::larder_world::BossCause::Staged) {
-                        println!("  boss t {:.2} s: formed round {bx},{by}", g.time());
+                        let b = g.bosses.live.last().unwrap();
+                        println!("  boss t {:.2} s: a {} formed round {bx},{by}, grade {:.2}", g.time(), b.kind.name(), b.grade);
                     }
                 }
             }
@@ -385,7 +386,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             if let Some(g) = app.game.as_ref() {
                 for b in g.bosses.live.iter().filter(|b| !bosses_born.contains(&b.born) && b.cause != slime_mould::mould::larder_world::BossCause::Staged) {
                     let r = &g.rules.boss;
-                    println!("  boss t {:.1} s: {:?} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
+                    println!("  boss t {:.1} s: {:?} {} formed on lump {} at {:.0},{:.0} (crowd top {:.2}); grade {:.2}: {} blows a member, touches as {}, pace x{:.2}", g.time(), b.cause, b.kind.name(), b.lump, b.at.0, b.at.1, g.bosses.crowd_top, b.grade, r.armour_at(b.grade), 1 + r.bite_at(b.grade), r.haste_at(b.grade));
                 }
             }
             // Each mini-boss once a game second, and each one that ends
@@ -402,10 +403,27 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let hurt = (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1 && dw[k] >> slime_mould::mould::big::HURT_SHIFT > 0).count();
                     let packed = 2.0 / 3.0 * (ds.len() as f32 / std::f32::consts::PI).sqrt();
                     let tight = ds.iter().sum::<f32>() / ds.len().max(1) as f32 / packed.max(1.0);
-                    println!("  boss t {:.0} s: lump {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.phase, b.members, b.first, b.centre.0, b.centre.1, g.alive());
+                    println!("  boss t {:.0} s: lump {} {} {:?}, {} members (first {}, {hurt} hurt), at {:.0},{:.0}, spread {tight:.2}, stolen {:.1}; nearest soldier {near:.1}, {} alive", g.time(), b.lump, b.kind.name(), b.phase, b.members, b.first, b.centre.0, b.centre.1, b.stolen, g.alive());
+                    // A ring (`big::Lump::ring`, a leech round its pump):
+                    // its members' distance from what it sits on, and how
+                    // many lie in each eighth round it (from the east, the
+                    // way the angle turns).
+                    if let (slime_mould::mould::larder_world::BossPhase::Sit(p, _), true) = (b.phase, b.kind == slime_mould::mould::larder_world::BossKind::Leech) {
+                        let mut eighths = [0u32; 8];
+                        let mut d: Vec<f32> = Vec::new();
+                        for k in (0..dw.len().min(ws.len() / 4)).filter(|&k| (dw[k] >> slime_mould::mould::big::LUMP_SHIFT) & 7 == b.lump as u32 + 1) {
+                            let (dx, dy) = (ws[4 * k] - p.0, ws[4 * k + 1] - p.1);
+                            d.push(dx.hypot(dy));
+                            eighths[((dy.atan2(dx) / std::f32::consts::TAU + 1.0) * 8.0) as usize % 8] += 1;
+                        }
+                        d.sort_by(f32::total_cmp);
+                        let q = |f: f32| d.get(((d.len() as f32 - 1.0) * f) as usize).copied().unwrap_or(0.0);
+                        let cr = g.buildings.iter().find(|w| w.alive && (w.at.0 - p.0).hypot(w.at.1 - p.1) < 1.0).and_then(|w| w.crystal).map_or(0.0, |c| g.world.crystal_r(c));
+                        println!("    ring: crystal radius {cr:.1}, rig {:.1}, ring {:.1}; from the pump {:.1} / {:.1} / {:.1} (10% / median / 90%); by eighths {eighths:?}", 1.3 * cr, g.rules.boss.ring * cr, q(0.1), q(0.5), q(0.9));
+                    }
                 }
                 for (b, e, _) in &g.bosses.ended[bosses_ended..] {
-                    println!("  boss t {:.0} s: lump {} ended {e:?} ({} members of {})", g.time(), b.lump, b.members, b.first);
+                    println!("  boss t {:.0} s: lump {} {} ended {e:?} ({} members of {}; stole {:.1}, {:.1} given back so far)", g.time(), b.lump, b.kind.name(), b.members, b.first, b.stolen, g.bosses.returned);
                 }
             }
             if let Some((core, n0)) = cut_inside.as_ref() {
@@ -508,7 +526,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             app.age_notes(into * step_s);
         }
         let g = app.game.as_ref().unwrap();
-        let boss = g.bosses.live.first().filter(|_| app.args.follow_boss).map(|b| b.centre);
+        // The oldest, live or still fading, so a film stays on a broken
+        // one while its look drains rather than jumping to a newer one.
+        let boss = g.bosses.live.iter().chain(g.bosses.fading.iter().map(|f| &f.0)).min_by_key(|b| b.born).filter(|_| app.args.follow_boss).map(|b| b.centre);
         let centre = boss.or(fixed.map(|f| (f.0, f.1))).or(squad).unwrap_or(g.larder);
         app.controls.selected = match g.active.filter(|_| g.rules.squads) {
             Some(q) => g.members(q),
@@ -687,6 +707,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
             looks[k].cast = s.cast;
             looks[k].shots = looks[k].shots.wrapping_add(1);
             looks[k].facing = (s.to.1 - s.from.1).atan2(s.to.0 - s.from.0);
+            looks[k].turn_to = looks[k].facing;
         }
     }
     // A harvester taking from a crystal turns to face it and its hands
@@ -698,6 +719,7 @@ pub(super) fn shot_marks(g: &Game<GpuWorld>, tracers: &mut Vec<Tracer>, looks: &
             looks[k].take = TAKE;
             if looks[k].flash <= 0.0 {
                 looks[k].facing = (c.0 .1 - t.at.1).atan2(c.0 .0 - t.at.0);
+                looks[k].turn_to = looks[k].facing;
             }
         }
     }
@@ -829,8 +851,12 @@ fn stand(g: &mut Game<GpuWorld>, kind: Kind, at: (f32, f32), render: bool) -> Re
     if !g.build(kind, at) {
         return Err(format!("{}={},{}: {}", kind.name(), at.0, at.1, g.build_blocked(kind, at).unwrap_or("blocked")));
     }
+    // Raised whole, so a wall lays its cells in the world (setting `built`
+    // by hand left a standing wall with no cells: the sapper film's first
+    // run pressed on open ground).
+    g.raise(n, 1.0);
     let b = &mut g.buildings[n];
-    (b.built, b.hp) = (1.0, b.max_hp);
+    b.hp = b.max_hp;
     if render {
         b.level = 2;
     }

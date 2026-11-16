@@ -1,0 +1,184 @@
+<title>Mini-boss Kinds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: rounds 1-2's identity (same tokens and faces); one reading column, each kind a clip with its counts beside it, then what changed for all of them, next steps last */
+:root{
+  --bg:#f2f1ec; --panel:#e6e4da; --card:#fbfaf6; --fg:#1b1f1a; --muted:#5a6056;
+  --accent:#a8662a; --soft:#f0e2cd; --line:#cfccbf; --cool:#2f7f86;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14130f; --panel:#201e17; --card:#1a1813; --fg:#ebe7dc; --muted:#a29c8d;
+  --accent:#e0a35a; --soft:#32281a; --line:#3a3428; --cool:#6cc4c9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14130f; --panel:#201e17; --card:#1a1813; --fg:#ebe7dc; --muted:#a29c8d;
+  --accent:#e0a35a; --soft:#32281a; --line:#3a3428; --cool:#6cc4c9; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.55 var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+main{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.3rem;font-weight:750}
+h2{font-size:1.45rem;font-weight:750;border-top:2px solid var(--accent);padding-top:14px}
+h3{font-size:1.06rem;font-weight:600}
+p{margin:0}
+ul{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:6px}
+section{display:flex;flex-direction:column;gap:14px}
+.lede{color:var(--muted);font-size:1.02rem;max-width:760px}
+.eyebrow{font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.prose{max-width:760px;display:flex;flex-direction:column;gap:12px}
+code{font:0.86em var(--mono);background:var(--panel);padding:1px 4px;border-radius:3px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.one{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.pair,.one{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+figure video{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line);background:#000}
+figcaption{font-size:.92rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+figcaption b{font-family:var(--display);font-weight:600;color:var(--fg);font-size:1rem}
+.counts{font:13px/1.5 var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+.counts dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px}
+.counts dt{color:var(--muted)}
+.counts dd{margin:0}
+.wrap{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;font-size:.94rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 16px 6px 0;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+th{font-weight:600;color:var(--muted)}
+.note{border-left:3px solid var(--cool);padding:2px 0 2px 12px;max-width:760px}
+.next{background:var(--soft);border-radius:8px;padding:18px 20px;max-width:820px;display:flex;flex-direction:column;gap:10px}
+footer{font-size:.88rem;color:var(--muted);max-width:820px;display:flex;flex-direction:column;gap:6px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+</style>
+
+<main>
+<header class="prose">
+  <span class="eyebrow">Larder World · the run · round 3, 2026-11-16</span>
+  <h1>Four kinds of mini-boss</h1>
+  <p class="lede">The hunter now has company. Each mini-boss draws a kind as it forms, among the kinds that have something to go for from where it is. Two come for you and two go after what you own. Every clip below is the same mini-boss on the same planet, forced to each kind in turn. The look of each kind is being made in its own thread; here they still render as thick slime, with a glossy knot where the body packs tight.</p>
+</header>
+
+<section>
+  <h2>Hunter: comes for your squad, in lunges</h2>
+  <div class="one">
+    <figure>
+      <video src="hunter.mp4" autoplay muted loop playsinline controls aria-label="A hunter mini-boss crossing the map to the squad in lunges"></video>
+      <figcaption>
+        <b>Planet 3, 1:25 to 1:58 at 5x</b>
+        <span>It forms in the top body, leaves at 1:31 and comes down the slime's trail to the squad at the bottom right. Every 5 s it surges for a second.</span>
+      </figcaption>
+    </figure>
+    <div class="counts">
+      <dl>
+        <dt>Members</dt><dd>116, grade 0.38: 8 hits each, touches as 3 walkers</dd>
+        <dt>Lunge</dt><dd>every 5 s: twice the pull at twice the pace for 1 s</dd>
+        <dt>Speed</dt><dd>16.5 world units a second in its 5 lunge seconds, 9.3 in the 16 others</dd>
+        <dt>Crossing</dt><dd>1:31 to 1:51, about 215 world units</dd>
+        <dt>End</dt><dd>killed 3 of 8 soldiers; broke at 1:53 with 7 of 116 left</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Wanderer: takes crystals, and grows on each</h2>
+  <div class="one">
+    <figure>
+      <video src="wanderer.mp4" autoplay muted loop playsinline controls aria-label="A wanderer mini-boss rooting on three crystals in turn"></video>
+      <figcaption>
+        <b>Planet 3, 1:25 to 2:46 at 5x</b>
+        <span>It goes right to the small crystal at the top, sits, then crosses to the crystal in the middle, sits again, and sets off for one at the bottom left. Each time it leaves, it takes in the slime round it.</span>
+      </figcaption>
+    </figure>
+    <div class="counts">
+      <dl>
+        <dt>Goes to</dt><dd>the nearest fresh crystal (half its charge or more) at least 40 dish cells off that it has not sat on</dd>
+        <dt>Crystal 1</dt><dd>sat 1:50 to 2:05; left with 233 members (from 116)</dd>
+        <dt>Crystal 2</dt><dd>sat 2:16 to 2:31; left with 415</dd>
+        <dt>Crystal 3</dt><dd>sat at 2:43</dd>
+        <dt>Squad</dt><dd>never within 118 world units; no member lost</dd>
+      </dl>
+    </div>
+  </div>
+  <p class="prose">Left alone it snowballs: it nearly doubled at each crystal, and the slime it fed there stays behind. It is the one to catch on the move.</p>
+</section>
+
+<section>
+  <h2>Sapper: holes your wall and comes through</h2>
+  <div class="one">
+    <figure>
+      <video src="sapper.mp4" autoplay muted loop playsinline controls aria-label="A sapper mini-boss eating a hole in a wall and squeezing through"></video>
+      <figcaption>
+        <b>Planet 3, 1:25 to 3:20 at 7.5x</b>
+        <span>A wall stands across its way below the top body. It packs against the wall's nearest point, the wall wears through there, and it squeezes out the far side with the slime pouring through behind it.</span>
+      </figcaption>
+    </figure>
+    <div class="counts">
+      <dl>
+        <dt>Members</dt><dd>196</dd>
+        <dt>Goes to</dt><dd>the nearest point of a standing wall, else the nearest building</dd>
+        <dt>On the wall</dt><dd>1:40 to 2:42, 62 s</dd>
+        <dt>Holed</dt><dd>2:42, open ground right across the wall at its spot</dd>
+        <dt>Through</dt><dd>past the wall by 2:54, then hunting</dd>
+        <dt>End</dt><dd>spent at 3:02 (its 90 s of life), all 196 members</dd>
+      </dl>
+    </div>
+  </div>
+  <p class="prose">A sapper that spends a minute on a wall has little life left once through; that is a number to tune when you play it.</p>
+</section>
+
+<section>
+  <h2>Leech: rings your pump and takes its pay</h2>
+  <div class="one">
+    <figure>
+      <video src="leech.mp4" autoplay muted loop playsinline controls aria-label="A leech mini-boss closing round a pump in a ring while the bank stops rising"></video>
+      <figcaption>
+        <b>Planet 3, 1:25 to 2:50 at 5x</b>
+        <span>A pump stands on the crystal near the squad from 1:26. The leech comes down from the top and closes round the rig in a ring just outside it. Watch the bank at the top left: it rises until 1:48, then stops. This clip is from the later build, with each kind's own look: the leech is the dark knot.</span>
+      </figcaption>
+    </figure>
+    <div class="counts">
+      <dl>
+        <dt>Members</dt><dd>123</dd>
+        <dt>Pump before</dt><dd>banked 113 food, 1:26 to 1:48, about 5 a second</dd>
+        <dt>Sat on it</dt><dd>1:50, in a ring 1.5 times the crystal's radius: by 2:30 its members lie 14 to 17 cells from the pump (the rig ends at 13) and in all eight eighths round it, at most 59 of 123 in any three</dd>
+        <dt>Taken</dt><dd>318.7 food by 2:50; the bank stayed at 513</dd>
+        <dt>The rig</dt><dd>not worn while the leech holds it</dd>
+        <dt>Kill it</dt><dd>broken, its whole take goes back to the bank (in the tests); spent, it keeps it</dd>
+      </dl>
+      <p style="margin-top:10px;color:var(--muted);font-family:var(--body);font-size:.9rem">The ring is new since this page first went up: sat right on the pump, the leech lay under the crystal and the rig, and almost none of it showed. So is how it gets there: on the later build this leech stopped at the edge of the thick slime 28 cells from the pump until mini-bosses could push three walkers deeper into a crowded cell than ordinary slime.</p>
+      <p style="margin-top:6px;color:var(--muted);font-family:var(--body);font-size:.9rem">For this clip the pump was given 5,000 health. With the usual 200, the ordinary slime on the trail wore it down in 12 s, before the leech got there. The squad, 70 world units off, never shot at it.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What changed for all of them</h2>
+  <div class="prose">
+    <ul>
+      <li><b>Which kind</b>: drawn as it forms, evenly among the kinds that have a target from there. With no building up yet, only hunters and wanderers come; a piece cut off from food is always a hunter or a wanderer.</li>
+      <li><b>They no longer starve.</b> The first sapper clip's sapper, pressed on its wall away from food, fell from 196 members to 47 in 6 s and broke with no shot fired. A mini-boss now lives on what it carries until it is broken or spent.</li>
+      <li><b>A fade when one ends</b>: for 1.5 s its members stay marked, so the look thread can drain its colour before they go back to the slime.</li>
+      <li><b>Tighter at higher grades</b>: the strongest pack a quarter tighter.</li>
+      <li>Both engines (the CPU and the graphics card) do all of this the same way; the card's version is checked against the CPU's.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Next</h2>
+  <div class="next">
+    <ul>
+      <li><b>Mortar</b>: stays on a crystal and lobs slime past your guns' range. <b>Pinwheel</b>: its members circle and sweep a squad. Both need new engine work.</li>
+      <li><b>Each kind's look</b>: the look thread reads which kind each member belongs to, and whether it is fading.</li>
+      <li><b>The origin</b> at each planet's start crystal, which the run's progression thread holds.</li>
+    </ul>
+    <p>The best way to judge these is to meet them in a run: every kind is on in the run now, rarer and weaker on the first planets.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Clips: <code>larder-world run=1:3 mode=squads hand=hold boss=85,310,85 set=boss_kind=K look=DIR screen=960x600</code> on the CPU's Vulkan (llvmpipe); the sapper adds <code>wall=290,150,350,150</code>, the leech <code>pump=362,256,86 set=pump_hp=5000</code> (its clip centred at 355,235, zoom 3.2). The numbers are from the boss lines the look mode prints each game second. Record: <code>Reports/mini-boss-2026-11-16/README.md</code>, round 3.</p>
+</footer>
+</main>

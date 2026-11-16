@@ -899,6 +899,10 @@ impl World for GpuWorld {
         World::clear(&self.e.dish, x, y)
     }
 
+    fn wall_cell(&self, i: usize) -> bool {
+        World::wall_cell(&self.e.dish, i)
+    }
+
     fn stop_births(&mut self) {
         // In a garden only the enemy's births stop (its cap goes to 0), as
         // the CPU's `Garden::stop_births`; the player's mould keeps growing.
@@ -956,6 +960,14 @@ impl World for GpuWorld {
         let d = &self.e.dish;
         let at = at.map(|(c, r)| crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h)));
         self.e.form_lump(&self.shared, b, at);
+    }
+
+    /// Runs `lumpform`'s grow at once, as `form_lump`.
+    fn grow_lump(&mut self, b: usize, (c, r): ((f32, f32), f32)) {
+        self.flush();
+        let d = &self.e.dish;
+        let at = crate::mould::larder_world::lump_reach(c, r * d.p.scale as f32, (d.w, d.h));
+        self.e.grow_lump(&self.shared, b, at);
     }
 
     /// Written with the next step's params, and kept on the mirror dish.
@@ -1159,6 +1171,9 @@ mod tests {
         fn clear(&self, x: f32, y: f32) -> bool {
             self.g.clear(x, y)
         }
+        fn wall_cell(&self, i: usize) -> bool {
+            self.g.wall_cell(i)
+        }
         fn stop_births(&mut self) {
             self.g.stop_births()
         }
@@ -1200,6 +1215,9 @@ mod tests {
         }
         fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
             self.g.form_lump(b, at)
+        }
+        fn grow_lump(&mut self, b: usize, at: ((f32, f32), f32)) {
+            self.g.grow_lump(b, at)
         }
         fn set_lump(&mut self, b: usize, l: crate::mould::big::Lump) {
             self.g.set_lump(b, l)
@@ -1247,6 +1265,61 @@ mod tests {
             assert!(c.frames > 100 && c.hits > 0 && c.touched > 0, "{name}: the squad fought ({} frames, {} hits, {} touches)", c.frames, c.hits, c.touched);
             assert!(tier.is_none() || c.dead > 0, "{name}: walkers died asleep");
         }
+    }
+
+    /// **A turret sees and fires over a wall on both engines** (owner,
+    /// 2026-11-16 19:50Z: "turrets can fire over walls, lobbed fire goes
+    /// over walls, but regular guns shots do not"): a box of wall round a
+    /// unit on the race world's spread walkers, one unit and shot plain,
+    /// one `over`. The plain unit sees nothing past the box and the plain
+    /// shot, fired from the wall's inner face, stops in it; the `over`
+    /// ones see and hit past it, the GPU as the CPU (the same block, hit
+    /// cell and kills).
+    #[test]
+    fn a_turret_fires_over_a_wall_on_both_engines() {
+        use crate::mould::larder_world::race_world;
+        use crate::mould::squad::{ShotIn, UnitIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 1_000);
+        let mut gpu = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        let mut cpu = race_world(seed, scale, walkers);
+        let (w, h) = World::size(&cpu);
+        let f0 = Frame { slime: 1.0, ..Frame::default() };
+        let _ = (gpu.frame(&f0, 1), cpu.frame(&f0, 1));
+        // A spot with open ground 8 cells round, no walker within 8 cells
+        // and the most from 8 to 24.
+        let occ = cpu.occupancy();
+        let around = |p: (i32, i32), r0: i32, r1: i32| -> usize {
+            (-r1..=r1).flat_map(|dy| (-r1..=r1).map(move |dx| (dx, dy))).filter(|&(dx, dy)| (r0 * r0..=r1 * r1).contains(&(dx * dx + dy * dy))).map(|(dx, dy)| (p.0 + dx, p.1 + dy)).filter(|&(x, y)| x >= 0 && y >= 0 && x < w as i32 && y < h as i32).map(|(x, y)| occ[y as usize * w + x as usize] as usize).sum()
+        };
+        let open = |p: (i32, i32)| (-8..=8).all(|dy| (-8..=8).all(|dx| World::clear(&cpu, (p.0 + dx) as f32 + 0.5, (p.1 + dy) as f32 + 0.5)));
+        let (ux, uy) = (8..h as i32 - 8).step_by(2).flat_map(|y| (8..w as i32 - 8).step_by(2).map(move |x| (x, y))).filter(|&p| around(p, 0, 8) == 0 && open(p)).max_by_key(|&p| around(p, 8, 24)).expect("open ground");
+        let u = (ux as f32 + 0.5, uy as f32 + 0.5);
+        // The box: four walls 5 cells out, 2 thick.
+        let r = 5.0;
+        for (a, b) in [((-r, -r), (r, -r)), ((r, -r), (r, r)), ((r, r), (-r, r)), ((-r, r), (-r, -r))] {
+            let (a, b) = ((u.0 + a.0, u.1 + a.1), (u.0 + b.0, u.1 + b.1));
+            World::build_wall(&mut gpu, a, b, 2.0);
+            World::build_wall(&mut cpu, a, b, 2.0);
+        }
+        let wall = |i: usize| squad::over_wall(&cpu.wall, &cpu.agar, i);
+        let cell = |p: (f32, f32)| p.1 as usize * w + p.0 as usize;
+        // East, from the first wall cell on the way out.
+        let face = (0..8).map(|k| (u.0 + k as f32, u.1)).find(|&p| wall(cell(p))).expect("the box's east wall");
+        let unit = |over: bool| UnitIn { x: u.0, y: u.1, touch: 2.0, sight: 30.0, over, ..UnitIn::default() };
+        let shot = |over: bool| ShotIn { from: face, to: (face.0 + 20.0, face.1), r: 3.0, over };
+        let f = Frame { units: vec![unit(false), unit(true)], shots: vec![shot(false), shot(true)], slime: 0.0, ..Frame::default() };
+        let (g, k) = (gpu.frame(&f, 0), cpu.frame(&f, 0));
+        let past = |p: (f32, f32)| (p.0 - u.0).abs().max((p.1 - u.1).abs()) > r + 1.0;
+        assert_eq!(k.units[0].target.filter(|&p| past(p)), None, "the plain unit sees over the wall");
+        assert!(k.units[1].target.is_some_and(past), "the turret sees past the wall: {:?}", k.units[1].target);
+        assert_eq!(k.shots[0].hit, None, "the plain shot flew through the wall");
+        assert!(k.shots[1].hit.is_some_and(past), "the turret's shot hit past the wall: {:?}", k.shots[1]);
+        for q in 0..2 {
+            assert_eq!(g.units[q].target, k.units[q].target, "unit {q}: GPU and CPU aim apart");
+            assert_eq!((g.shots[q].hit, g.shots[q].killed), (k.shots[q].hit, k.shots[q].killed), "shot {q}: GPU and CPU apart");
+        }
+        eprintln!("turret aims {:?}, its shot hits {:?} and kills {}", k.units[1].target, k.shots[1].hit, k.shots[1].killed);
     }
 
     /// **A wall worn to rubble opens in the mirror** (2026-11-15): a wall
@@ -1772,7 +1845,7 @@ mod tests {
         let _ = gpu.frame(&f0, 15);
         let _ = cpu.frame(&f0, 15);
         assert_eq!(gpu.counts_by_side().0, cpu.counts_by_side().0);
-        let over = Frame { shots: vec![ShotIn { from: l, to: (l.0 + 12.0, l.1), r: 3.0 }], slime: 1.0, ..Frame::default() };
+        let over = Frame { shots: vec![ShotIn { from: l, to: (l.0 + 12.0, l.1), r: 3.0, over: false }], slime: 1.0, ..Frame::default() };
         // The line does cross the player's slime (else this proves nothing).
         let (w, h) = cpu.size();
         let crossed = squad::path(w, h, l, (l.0 + 12.0, l.1)).iter().filter(|&&i| cpu.dish.species_trail[crate::mould::own_mould::OWN as usize][i as usize] >= 1.0).count();
@@ -1785,7 +1858,7 @@ mod tests {
         // (2026-11-15, `start_shape`) a shot from 30 cells out can stop on
         // the start's thin fraying rim, where trail lies but no walker is
         // within its reach (0 killed on both engines, seed 5).
-        let into = Frame { shots: vec![ShotIn { from: (home.0 - 4.0, home.1), to: home, r: 3.0 }], slime: 1.0, ..Frame::default() };
+        let into = Frame { shots: vec![ShotIn { from: (home.0 - 4.0, home.1), to: home, r: 3.0, over: false }], slime: 1.0, ..Frame::default() };
         let (g, c) = (gpu.frame(&into, 0), cpu.frame(&into, 0));
         assert!(g.shots[0].killed > 0 && c.shots[0].killed > 0, "kills: GPU {}, CPU {}", g.shots[0].killed, c.shots[0].killed);
         assert_eq!(g.shots[0].hit, c.shots[0].hit, "the same hit cell");

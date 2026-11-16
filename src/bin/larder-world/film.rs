@@ -1,0 +1,134 @@
+//! **Films of squads moving** (squad movement rework, 2026-11-16): the
+//! window's own game, camera and drawing, stepped at a real frame rate
+//! and every frame saved, so what a player sees between the game's 15
+//! steps a second shows too (the narrow-gap films of 11-15 saved one
+//! frame a step, which hid it). Ignored; run by hand on software Vulkan:
+//!
+//! `FILM=DIR FILM_MAP=planet:1:1 FILM_N=40 FILM_DO=steer cargo test
+//! --release --bin larder-world film_moves -- --ignored --nocapture`
+//!
+//! `FILM_DO`: `steer` (WASD east, north, west, let go, through the
+//! window's own keys), `send:X,Y` (a right click there, dish cells) or
+//! `far` (a right click on the crystal furthest within 120 dish cells).
+//! `FILM_FPS` (60), `FILM_SECS` (12), `FILM_ZOOM` (8), `FILM_SIZE`
+//! (960x540), `FILM_FOLLOW` (1: the camera follows the squad as in play;
+//! 0: it stays on `FILM_CENTRE`, dish cells).
+
+use super::*;
+
+#[test]
+#[ignore]
+fn film_moves() {
+    let env = |k: &str| std::env::var(k).ok();
+    let num = |k: &str, d: f32| env(k).map_or(d, |v| v.parse().unwrap());
+    let pair = |v: &str| {
+        let (a, b) = v.split_once(',').unwrap();
+        (a.parse::<f32>().unwrap(), b.parse::<f32>().unwrap())
+    };
+    let dir = env("FILM").expect("FILM=DIR");
+    std::fs::create_dir_all(&dir).unwrap();
+    let Some((device, queue)) = gpu() else { panic!("no gpu") };
+    let size = env("FILM_SIZE").map_or((960, 540), |v| {
+        let (a, b) = v.split_once('x').unwrap();
+        (a.parse().unwrap(), b.parse().unwrap())
+    });
+    let args = Args { map: Some(env("FILM_MAP").unwrap_or("planet:1:1".into())), seed: num("FILM_SEED", 1.0) as u64, scale: 2, walkers: 5000, squads: true, ..Default::default() };
+    let mut app = offscreen(args, size, &device, &queue).unwrap();
+    let n = num("FILM_N", 40.0) as usize;
+    {
+        let g = app.game.as_mut().unwrap();
+        g.rules.max_squad = g.rules.max_squad.max(n);
+        // `FILM_STEER=0`: the walk before the rework (`Rules::steer`).
+        if env("FILM_STEER").is_some_and(|v| v == "0") {
+            g.rules.steer = false;
+        }
+        g.bank = 1e9;
+        while g.alive() < n && g.apply(Cmd::Buy) {}
+    }
+    let fps = num("FILM_FPS", 60.0);
+    let dt = 1.0 / fps;
+    let zoom = num("FILM_ZOOM", 8.0);
+    let follow = env("FILM_FOLLOW").is_none_or(|v| v != "0");
+    // Two game seconds for the bought soldiers to gather.
+    for _ in 0..(2.0 / dt) as usize {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let what = env("FILM_DO").unwrap_or("steer".into());
+    let sc = app.game.as_ref().unwrap().world.scale();
+    let centre = env("FILM_CENTRE").map(|v| pair(&v)).map(|c| (c.0 * sc, c.1 * sc)).unwrap_or_else(|| app.game.as_ref().unwrap().middle(0).unwrap());
+    app.camera.centre_on(centre);
+    app.camera.zoom_to(zoom, app.camera.to_screen(centre));
+    app.camera.centre_on(centre);
+    if let Some(sq) = app.sq.as_mut() {
+        sq.follow = follow;
+        sq.put = None;
+    }
+    let order = |app: &mut App, p: (f32, f32)| {
+        app.game.as_mut().unwrap().apply(Cmd::SquadOrder(0, Order::Move(p.0, p.1)));
+    };
+    if let Some(p) = what.strip_prefix("send:") {
+        let p = pair(p);
+        order(&mut app, (p.0 * sc, p.1 * sc));
+    } else if what == "far" {
+        let g = app.game.as_ref().unwrap();
+        let at = g.middle(0).unwrap();
+        let d = |c: (f32, f32)| (c.0 - at.0).hypot(c.1 - at.1);
+        let c = g.world.crystals().into_iter().map(|c| c.0).filter(|&c| d(c) <= 120.0 * sc).max_by(|a, b| d(*a).total_cmp(&d(*b))).unwrap();
+        order(&mut app, c);
+    }
+    // `steer`: the window's own keys, W A S D.
+    let keys = |t: f32| -> [bool; 4] {
+        if t < 3.0 {
+            [false, false, false, true]
+        } else if t < 5.5 {
+            [true, false, false, false]
+        } else if t < 8.0 {
+            [false, true, false, false]
+        } else {
+            [false; 4]
+        }
+    };
+    // `FILM_RAW=1`: soldiers drawn where the game's last step put them
+    // (as before the rework), not between steps.
+    if env("FILM_RAW").is_some_and(|v| v == "1") {
+        app.sub = Some(1.0);
+    }
+    // Each frame: where the first members are drawn, on the screen.
+    let mut log = String::from("f,k,wx,wy,sx,sy\n");
+    let secs = num("FILM_SECS", 12.0);
+    for f in 0..(secs / dt) as usize {
+        let t = f as f32 * dt;
+        if what == "steer" {
+            let k = keys(t);
+            if let Some(sq) = app.sq.as_mut() {
+                if sq.keys != k {
+                    sq.keys = k;
+                    app.send_steer();
+                }
+            }
+        }
+        app.squad_frame(dt);
+        if !follow {
+            app.camera.centre_on(centre);
+        }
+        app.step(dt);
+        app.marks();
+        app.prepare();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("film") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        queue.submit([enc.finish()]);
+        view.picture().save(format!("{dir}/f{f:04}.png")).unwrap();
+        let a = app.between();
+        let g = app.game.as_ref().unwrap();
+        for (i, k) in g.members(0).into_iter().take(8).enumerate() {
+            let s = g.soldiers[k];
+            let w = (s.was.0 + (s.x - s.was.0) * a, s.was.1 + (s.y - s.was.1) * a);
+            let p = app.camera.to_screen(w);
+            log += &format!("{f},{i},{:.3},{:.3},{:.2},{:.2}\n", w.0, w.1, p.0, p.1);
+        }
+    }
+    std::fs::write(format!("{dir}/drawn.csv"), log).unwrap();
+}

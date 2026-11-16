@@ -106,8 +106,12 @@ pub const KEPT: u32 = LUMP_BITS | HURT_BITS;
 /// it, the first game film (2026-11-16, planet 3, seed 1) held a lump of
 /// 340 condensed walkers in the middle of its body for 50 s: it moved 2
 /// dish cells, every cell round it full, and its leash held its front back
-/// for a rear that could not move.
-pub const LUMP_CROWD: u8 = 1;
+/// for a rear that could not move. 1 until 2026-11-16 (the leech ring):
+/// at 1, a leech of 123 on planet 3 (after #392) stopped at the edge of
+/// the thick body 28 cells from its pump and stayed there from 1:55 to
+/// 2:30, and twice the pull and pace while it stalled did not free it; at
+/// 3 it went straight through and sat on the pump at 1:50.
+pub const LUMP_CROWD: u8 = 3;
 
 /// One lump's steering (`BigParams::lumps`), set by the game each second.
 /// All 0 is off: its members steer as any condensed walker.
@@ -140,6 +144,19 @@ pub struct Lump {
     /// member touches a soldier as `1 + bite` walkers.
     pub armour: u32,
     pub bite: u32,
+    /// **A ring** (fine cells, 0 none; the look thread's suggestion
+    /// 2026-11-16 11:56Z): its members hold a band round `aim` instead of
+    /// a disc. One nearer `aim` than `ring` runs straight out from it; one
+    /// past the band (squared distance from `aim` over `ring`² + the
+    /// leash's `leash_k` x members, so the band holds the area the leash's
+    /// disc would) runs back toward it. A leech sat on its pump lay under
+    /// the crystal, the rig and the pump box, and almost none of it
+    /// showed; in a ring just outside the rig it reads as something
+    /// strangling the pump, and it can be seen and shot. Directions only
+    /// (no square root, no division), so both engines run the same. Its
+    /// `pull` is away from its members' centre instead of to `aim`, so a
+    /// ring bunched on one side spreads round.
+    pub ring: f32,
 }
 
 impl Lump {
@@ -162,7 +179,7 @@ impl Lump {
     }
 
     pub fn on(&self) -> bool {
-        self.pull != 0.0 || self.leash > 0.0 || self.haste > 0.0 || self.armour > 1 || self.bite > 0
+        self.pull != 0.0 || self.leash > 0.0 || self.haste > 0.0 || self.armour > 1 || self.bite > 0 || self.ring > 0.0
     }
 }
 /// A breakaway lands within this many dish cells of its crystal's centre.
@@ -2810,11 +2827,51 @@ impl BigDish {
         n
     }
 
+    /// Lump `b` takes in the ordinary walkers within `at` (as `form_lump`)
+    /// that are in no lump; its members stay as they are, hits and all, and
+    /// none is let go (2026-11-16: a wanderer rooted on a crystal takes in
+    /// the slime there; re-forming would heal its hits and drop the members
+    /// outside the new circle). The walkers that joined.
+    pub fn grow_lump(&mut self, b: usize, at: (u32, u32)) -> usize {
+        assert!(b < LUMPS, "lump {b} of {LUMPS}");
+        if self.dense.len() != self.walkers.len() {
+            self.dense = vec![0; self.walkers.len()];
+        }
+        let mine = (b as u32 + 1) << LUMP_SHIFT;
+        let (c, r2) = at;
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let w = self.dense[k];
+            let (x, y, _) = self.walkers[k];
+            let (dx, dy) = (x.floor() as i64 - (c & 0xFFFF) as i64, y.floor() as i64 - (c >> 16) as i64);
+            if w & LUMP_BITS == 0 && self.active(k) && dx * dx + dy * dy <= r2 as i64 {
+                self.dense[k] = (w & !(KEPT | ROAM | (63 << ROAM_SHIFT))) | mine;
+                n += 1;
+            }
+        }
+        n
+    }
+
     /// Where lump `b`'s member at (`x`, `y`) runs: back to the lump's
-    /// centre past its leash (`Lump::leash`), else nowhere.
+    /// centre past its leash (`Lump::leash`), else nowhere. A ring's
+    /// member (`Lump::ring`) runs out from `aim` inside the ring (to a
+    /// point as far again the other side of it from `aim`: only the
+    /// direction is read) and back to `aim` past its band.
     fn lump_leash(&self, b: usize, x: f32, y: f32) -> Option<(f32, f32, bool)> {
         let l = &self.p.lumps[b];
         let (cx, cy, n) = self.lump_centre(b)?;
+        if l.ring > 0.0 {
+            let (ax, ay) = ((l.aim & 0xFFFF) as f32 + 0.5, (l.aim >> 16) as f32 + 0.5);
+            let (dx, dy) = (x - ax, y - ay);
+            let (d2, r2) = (dx * dx + dy * dy, l.ring * l.ring);
+            return if d2 < r2 {
+                Some((x + dx, y + dy, false))
+            } else if l.leash > 0.0 && d2 > r2 + l.leash_k() * n as f32 {
+                Some((ax, ay, false))
+            } else {
+                None
+            };
+        }
         let (dx, dy) = (x - cx, y - cy);
         (l.leash > 0.0 && dx * dx + dy * dy > l.leash_k() * n as f32).then_some((cx, cy, false))
     }
@@ -3527,8 +3584,19 @@ impl BigDish {
                     }
                 }
                 // A lump's pull (`Lump::pull`), on top of what it smells.
-                if let Some(l) = lump.map(|b| &p.lumps[b]).filter(|l| l.pull != 0.0) {
-                    let (dx, dy) = ((l.aim & 0xFFFF) as f32 + 0.5 - x, (l.aim >> 16) as f32 + 0.5 - y);
+                // A ring's (`Lump::ring`) pulls away from its members'
+                // centre, so where they bunch they spread round the ring
+                // until that centre sits on its aim. Pressed in to the aim
+                // instead, a leech's ring lay in one arc on the side it came
+                // from; pulled across the way round (half each way), its
+                // members ran round into a rock across the ring and piled
+                // on both sides of it (planet 3, 61 to 75 of 116 members in
+                // the two eighths by the rock, either way).
+                if let Some((b, l)) = lump.map(|b| (b, &p.lumps[b])).filter(|(_, l)| l.pull != 0.0) {
+                    let (mut dx, mut dy) = ((l.aim & 0xFFFF) as f32 + 0.5 - x, (l.aim >> 16) as f32 + 0.5 - y);
+                    if let (true, Some((cx, cy, _))) = (l.ring > 0.0, self.lump_centre(b)) {
+                        (dx, dy) = (x - cx, y - cy);
+                    }
                     let r = (dx * dx + dy * dy).sqrt().max(1.0e-3);
                     let aim = |a: f32| l.pull * (a.cos() * dx + a.sin() * dy) / r;
                     f += aim(h);
@@ -4211,7 +4279,12 @@ impl BigDish {
                 continue;
             }
             self.energy[k] = 0.0;
-            if unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
+            // A held body's member (`Lump`) does not starve: a mini-boss
+            // lives on what it carries until it breaks or is spent
+            // (2026-11-16: a sapper pressed on a wall away from food fell
+            // from 196 members to 47 in 6 s, 48 s after it formed, and
+            // broke with no shot fired). The GPU's `life` is the same.
+            if self.lump_of(k).is_none() && unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
                 // A condensed walker starving breaks instead (`condense`).
                 if self.is_dense(k) {
                     self.dense[k] &= KEPT;
@@ -6214,6 +6287,30 @@ mod tests {
         d.form_lump(0, None);
         assert!(d.lump_of(q).is_none() && d.dense[q] >> HURT_SHIFT == 0);
         assert!(d.hit(q) && !d.lives(q));
+    }
+
+    /// A mini-boss's members do not starve (2026-11-16, the sapper film):
+    /// with every walker at zero energy and a high upkeep, the ordinary ones
+    /// die and the members all live.
+    #[test]
+    fn a_mini_boss_member_does_not_starve() {
+        let mut p = BigParams { upkeep: 1.0, starve: 0.5, capacity: 1200, ..small(1, 1) };
+        p.lumps[0] = Lump { armour: 3, ..Lump::default() };
+        let mut d = BigDish::new(p);
+        d.tick();
+        let living: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
+        let (x, y, _) = d.walkers[living[0]];
+        let c = (x.floor() as u32) | (y.floor() as u32) << 16;
+        assert!(d.form_lump(0, Some((c, 25))) >= 2);
+        let members: Vec<usize> = living.iter().copied().filter(|&k| d.lump_of(k) == Some(0)).collect();
+        let others: Vec<usize> = living.iter().copied().filter(|&k| d.lump_of(k).is_none()).collect();
+        d.energy.iter_mut().for_each(|e| *e = 0.0);
+        for _ in 0..20 {
+            d.tick();
+        }
+        let gone = others.iter().filter(|&&k| !d.lives(k)).count();
+        assert!(gone * 2 > others.len(), "the ordinary starve: {gone} of {}", others.len());
+        assert!(members.iter().all(|&k| d.lives(k)), "every member lives");
     }
 
     /// The body surges (`surge_every`, 2026-11-15): off changes nothing; on,

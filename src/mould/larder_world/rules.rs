@@ -425,6 +425,13 @@ pub struct Rules {
     /// `funnel`, owner 2026-11-15). Off, the formation's places that fall
     /// in rock all go to the anchor, as before.
     pub funnel: bool,
+    /// Soldiers in the squad mode walk with a velocity (on; `steer`,
+    /// squad movement rework 2026-11-16, owner: "It is still clunky
+    /// overall"): they speed up and slow down, walk in step with their
+    /// squad, follow the squad's way past rock and keep their elbow room
+    /// by steering (`Game::steer_all`). Off is the walk before it: full
+    /// speed straight at the place each step, shoved apart after.
+    pub steer: bool,
     /// The larder (on). Off (the squad mode, owner 2026-11-14 04:18Z: "get
     /// rid of the whole larder system"), a crystal is *drained* or
     /// *guarded* (owner's card 04:27Z): a soldier harvesting it banks the
@@ -561,6 +568,11 @@ impl Rules {
             self.raid.last_stand = v > 0.0;
             return true;
         }
+        // `turret_over=0`: turrets stop at walls as soldiers' guns do.
+        if name == "turret_over" {
+            self.build.turret_over = v > 0.0;
+            return true;
+        }
         // Mini-bosses' whole numbers (`BossRules`).
         match name {
             "boss_least" => {
@@ -588,6 +600,17 @@ impl Rules {
         if name == "max_squad" {
             let room = crate::mould::squad::UNITS_MAX - 1 - self.build.max;
             self.max_squad = (v.max(1.0) as usize).min(room);
+            return true;
+        }
+        // The squad movement rework's walk (`steer`, 2026-11-16) and the
+        // narrow places' columns (`funnel`, 11-15): `set=steer=0` films
+        // the walk before it.
+        if name == "steer" {
+            self.steer = v > 0.0;
+            return true;
+        }
+        if name == "funnel" {
+            self.funnel = v > 0.0;
             return true;
         }
         let f = match name {
@@ -625,6 +648,22 @@ impl Rules {
             "boss_bite_hi" => &mut self.boss.bite_hi,
             "boss_size" => &mut self.boss.size,
             "boss_faster" => &mut self.boss.faster,
+            "boss_tight" => &mut self.boss.tight,
+            "boss_lunge_every" => &mut self.boss.lunge_every,
+            "boss_lunge" => &mut self.boss.lunge,
+            "boss_lunge_pull" => &mut self.boss.lunge_pull,
+            "boss_lunge_haste" => &mut self.boss.lunge_haste,
+            "boss_fade" => &mut self.boss.fade,
+            "boss_kind" => &mut self.boss.kind,
+            "boss_hunter" => &mut self.boss.kinds[0],
+            "boss_wanderer" => &mut self.boss.kinds[1],
+            "boss_sapper" => &mut self.boss.kinds[2],
+            "boss_leech" => &mut self.boss.kinds[3],
+            "boss_far" => &mut self.boss.far,
+            "boss_fresh" => &mut self.boss.fresh,
+            "boss_root" => &mut self.boss.root,
+            "boss_grow" => &mut self.boss.grow,
+            "boss_ring" => &mut self.boss.ring,
             "last_stand_at" => &mut self.raid.last_stand_at,
             "seek_after" => &mut self.seek_after,
             "seek_r" => &mut self.seek_r,
@@ -633,6 +672,7 @@ impl Rules {
             "seek_gap" => &mut self.seek_gap,
             "seek_catch" => &mut self.seek_catch,
             "pump_smell" => &mut self.build.pump_smell,
+            "pump_hp" => &mut self.build.pump_hp,
             "lure_smell" => &mut self.build.lure_smell,
             "lure_r" => &mut self.build.lure_r,
             "smell" => &mut self.smell,
@@ -732,6 +772,7 @@ impl Default for Rules {
             lead: super::LeadRules::default(),
             squads: false,
             funnel: true,
+            steer: true,
             larder: true,
             guard: 120.0,
             guard_walkers: 8,

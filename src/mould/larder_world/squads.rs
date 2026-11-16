@@ -60,6 +60,9 @@ pub const STRAY: f32 = 14.0;
 pub const GAP: f32 = 1.6;
 /// A moving squad's anchor goes at this share of a soldier's speed.
 pub const PACE: f32 = 0.75;
+/// Members walking slower than this share of full speed on average have
+/// all but stopped (`steer`): the anchor no longer waits for them.
+pub const STOOD: f32 = 0.12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Formation {
@@ -76,6 +79,9 @@ pub enum Formation {
 
 /// Soldiers in a row of `Formation::Line`.
 pub const LINE_ROW: usize = 8;
+/// Passes of trading places that uncross members' walks (`rank_squad`),
+/// at most: each pass is every pair once (200 soldiers, 19,900 pairs).
+const UNCROSS: usize = 4;
 
 impl Formation {
     pub const ALL: [Formation; 4] = [Formation::Blob, Formation::Line, Formation::Wedge, Formation::Ring];
@@ -199,6 +205,26 @@ pub struct Squad {
     /// the zone (`Game::guard_zone`) on top of their own defence, till it
     /// is steered or given another order.
     pub guard: Option<(f32, f32)>,
+    /// How its anchor moved this step, fine cells a game second: its
+    /// members walk with it and close on their places from there
+    /// (`steer`), so they keep pace instead of dashing and stopping.
+    pub vel: (f32, f32),
+    /// The walking map its anchor went by this step, if it needed one
+    /// (`Paths::maps` key): members out of sight of their places follow the
+    /// squad's way on it instead of asking a map each (`steer`).
+    pub map: Option<usize>,
+    /// Where and facing which way its members were last matched to their
+    /// places (`rank_squad`): with `steer` they are matched again only when
+    /// that changes, not every step, so nobody swaps places on the way
+    /// (and 200 soldiers are not 40,000 pairs sorted a step).
+    pub rank_at: (f32, f32),
+    pub rank_face: (f32, f32),
+    /// The formation and whether it funnelled (`funnel::Column::on`) when
+    /// last matched: a change of either moves every place, so it is
+    /// matched again (review, 2026-11-16: out of a door the blob formed up
+    /// with its members still matched in column order, so the queue fanned
+    /// out across the squad).
+    pub rank_shape: (Formation, bool),
 }
 
 /// Orders a squad holds queued.
@@ -226,6 +252,11 @@ impl Default for Squad {
             deck: None,
             heal: false,
             guard: None,
+            vel: (0.0, 0.0),
+            map: None,
+            rank_at: (f32::NAN, f32::NAN),
+            rank_face: (1.0, 0.0),
+            rank_shape: (Formation::Blob, false),
         }
     }
 }
@@ -354,11 +385,13 @@ impl<W: World> Game<W> {
         }
         let s = self.soldiers[k];
         let q = s.squad as usize;
-        let m = self.members(q);
-        let n = m.len();
+        // Counted, not listed: every soldier asks this several times a
+        // step, and a list each time was most of a 200-soldier step.
+        let mine = |j: &Soldier| j.alive && j.squad as usize == q;
+        let n = self.soldiers.iter().filter(|j| mine(j)).count();
         let r = match self.ranks.get(k) {
             Some(&r) if self.ranked[q] as usize == n && (r as usize) < n => r as usize,
-            _ => m.iter().position(|&j| j == k).unwrap_or(0),
+            _ => self.soldiers[..k].iter().filter(|j| mine(j)).count(),
         };
         if let Some(o) = self.column_place(k, r, n) {
             return o;
@@ -372,7 +405,12 @@ impl<W: World> Game<W> {
     /// free place nearest it: a formation that turns, grows or loses a
     /// member moves each soldier as little as it can, instead of handing
     /// out places by index. Ties go to the lower soldier and place, so it
-    /// is the same on every run.
+    /// is the same on every run. Then (`Rules::steer`) any two whose walks
+    /// would be shorter swapped trade places, so no two walks cross:
+    /// nearest pair first, the last few were left the places across the
+    /// squad and walked through it (a line of 40 formed from a blob had
+    /// members 5 cells off their places 7 s later, queued behind the rank
+    /// standing in front of them).
     pub(super) fn rank_squad(&mut self, q: usize, centre: (f32, f32)) {
         let m = self.members(q);
         let n = m.len();
@@ -418,7 +456,70 @@ impl<W: World> Game<W> {
                 break;
             }
         }
+        if self.rules.steer {
+            // Member i's walk to place r is far[i * n + r].
+            let mut far = Vec::with_capacity(n * n);
+            for &k in &m {
+                let s = self.soldiers[k];
+                far.extend(places.iter().map(|p| (s.x - p.0).hypot(s.y - p.1)));
+            }
+            let mut at: Vec<usize> = m.iter().map(|&k| self.ranks[k] as usize).collect();
+            for _ in 0..UNCROSS {
+                let mut swapped = false;
+                for i in 0..n {
+                    for j in i + 1..n {
+                        let (ri, rj) = (at[i], at[j]);
+                        if far[i * n + rj] + far[j * n + ri] < far[i * n + ri] + far[j * n + rj] - 1e-3 * sc {
+                            at.swap(i, j);
+                            swapped = true;
+                        }
+                    }
+                }
+                if !swapped {
+                    break;
+                }
+            }
+            for (i, &k) in m.iter().enumerate() {
+                self.ranks[k] = at[i] as u16;
+            }
+        }
         self.ranked[q] = n as u16;
+        self.squads[q].rank_at = centre;
+        self.squads[q].rank_face = sq.face;
+        self.squads[q].rank_shape = (sq.formation, self.columns[q].on);
+    }
+
+    /// Whether squad `q`'s members need matching to their places again
+    /// (`steer`): it gained or lost a member, changed formation, started or
+    /// stopped funnelling, or its line or wedge turned more than 30 degrees
+    /// since (a blob and a ring never turn).
+    fn rerank(&self, q: usize) -> bool {
+        let sq = self.squads[q];
+        let n = self.soldiers.iter().filter(|j| j.alive && j.squad as usize == q).count();
+        if self.ranked[q] as usize != n || sq.rank_shape != (sq.formation, self.columns[q].on) {
+            return true;
+        }
+        let turns = matches!(sq.formation, Formation::Line | Formation::Wedge);
+        turns && sq.face.0 * sq.rank_face.0 + sq.face.1 * sq.rank_face.1 < 0.866
+    }
+
+    /// Where squad `q` stops when it is let go (WASD released, or another
+    /// squad taken): round its anchor, where its formation already stands
+    /// (`steer`), so nobody turns round. Round its middle, as before, the
+    /// anchor (up to `LEAD` ahead) went back to it and the front of the
+    /// squad turned and walked back.
+    fn stop_point(&self, q: usize) -> Option<(f32, f32)> {
+        if !self.rules.steer {
+            return self.middle(q);
+        }
+        let Some(a) = self.squads[q].anchor else { return self.middle(q) };
+        // As far on as its members take to stop at their fastest slowing
+        // (`steer::RISE`), so they stop in their places instead of running
+        // past them and walking back (review, 2026-11-16).
+        let v = self.squads[q].vel;
+        let k = v.0.hypot(v.1) * super::steer::RISE / (2.0 * self.rules.speed * self.s()).max(1e-6);
+        let p = (a.0 + v.0 * k, a.1 + v.1 * k);
+        Some(if self.standable(p.0, p.1) && self.walk_line(a, p) { p } else { a })
     }
 
     /// Up to `lead` fine cells from `from` toward `to` along a walkable way:
@@ -437,6 +538,7 @@ impl<W: World> Game<W> {
     /// build a walking map (15 ms at scale 2) each step it is not clear,
     /// and a player steering at a wall expects to walk up to it.
     fn guide(&mut self, from: (f32, f32), to: (f32, f32), lead: f32, sent: bool) -> (f32, f32) {
+        self.guided = None;
         let d = (to.0 - from.0).hypot(to.1 - from.1);
         if d <= lead {
             return self.slide(from, to);
@@ -457,8 +559,10 @@ impl<W: World> Game<W> {
         let near = if sent { MAP_NEAR * self.s() } else { STEER_NEAR * self.s() };
         let Some(key) = self.map_for(gi, to, near) else {
             // Its map is being built (`pump_maps`): the anchor waits.
+            self.map_waits += 1;
             return from;
         };
+        self.guided = Some(key);
         let map = &self.paths.maps[&key].0;
         let mut at = cell(w, h, from);
         if map[at] == u32::MAX {
@@ -474,6 +578,21 @@ impl<W: World> Game<W> {
             // the edge or rock for 25 s on seeds 1-4).
             return self.slide(from, straight);
         }
+        // A step's walk (`steer`): straight at the furthest cell of the way
+        // in a straight walk (`ahead_on_map`), so the anchor goes at any
+        // angle; through the cells' centres, below, it went in 45-degree
+        // legs and its squad zig-zagged after it. Longer looks (the
+        // funnel's) still go cell by cell.
+        if self.rules.steer && lead <= 3.0 * self.s() {
+            if let Some(t) = self.ahead_on_map(key, from) {
+                let e = (t.0 - from.0).hypot(t.1 - from.1);
+                if e > 1e-4 {
+                    let f = (lead / e).min(1.0);
+                    return self.slide(from, (from.0 + (t.0 - from.0) * f, from.1 + (t.1 - from.1) * f));
+                }
+            }
+        }
+        let map = &self.paths.maps[&key].0;
         // `lead` along the way, through the cells' centres: whole cells
         // ran the anchor a cell a step (full pace) whatever its squad's
         // slowest member could do, which only showed once a sent squad took
@@ -522,12 +641,15 @@ impl<W: World> Game<W> {
             let steering = sq.steer != (0.0, 0.0);
             if !steering && sq.dest.is_none() {
                 self.squads[q].anchor = None;
+                self.squads[q].vel = (0.0, 0.0);
+                self.squads[q].map = None;
                 self.funnel_stop(q);
                 // At rest: round the point every member was last sent to.
                 let m = self.members(q);
                 if let Some(&k0) = m.first() {
                     if let o @ (Order::Move(x, y) | Order::Fight(x, y)) = self.soldiers[k0].order {
-                        if m.iter().all(|&k| self.soldiers[k].order == o) {
+                        let moved = (sq.rank_at.0 - x).hypot(sq.rank_at.1 - y) > 0.5 * sc || sq.rank_at.0.is_nan();
+                        if m.iter().all(|&k| self.soldiers[k].order == o) && (!self.rules.steer || moved || self.rerank(q)) {
                             self.rank_squad(q, (x, y));
                         }
                     }
@@ -542,7 +664,7 @@ impl<W: World> Game<W> {
             }
             // A dest in rock or a wall (a right click on one) is the nearest
             // ground, or the anchor would wait at the rock's edge for good.
-            if let Some(d) = self.squads[q].dest.filter(|&d| !self.world.open(d.0, d.1)) {
+            if let Some(d) = self.squads[q].dest.filter(|&d| !self.ground(d.0, d.1)) {
                 self.squads[q].dest = Some(self.nearest_standable(d, GOAL_SEARCH * sc).unwrap_or(mid));
             }
             let sq = self.squads[q];
@@ -550,7 +672,7 @@ impl<W: World> Game<W> {
             let at = if self.solid_at(at).is_some() { self.rim(at, mid) } else { at };
             // An anchor off the ground (an old save, rock grown round it)
             // comes back to the nearest ground, or to the middle.
-            let at = if self.world.open(at.0, at.1) { at } else { self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid) };
+            let at = if self.ground(at.0, at.1) { at } else { self.nearest_standable(at, GOAL_SEARCH * sc).unwrap_or(mid) };
             // Waits for the squad once it is the lead ahead of its middle,
             // but never to come back toward it: a squad pressed against
             // rock and steered away goes (before the bug sweep, 2026-11-14,
@@ -562,7 +684,7 @@ impl<W: World> Game<W> {
             // was "ahead" while it stood in its places and never moved again,
             // and a sent wedge never arrived (bug sweep, 2026-11-14: seed 4's
             // wedge stood 4.1 cells from its middle, the lead 4, for good).
-            let rest = self.shape_off(q, at);
+            let rest = if self.rules.steer && !self.columns[q].on { self.steer_rest(q, at) } else { self.shape_off(q, at) };
             let mid = (mid.0 - rest.0, mid.1 - rest.1);
             let gap = |p: (f32, f32)| (p.0 - mid.0).hypot(p.1 - mid.1);
             // A funnelling squad's head (`funnel`) waits only for the
@@ -578,9 +700,45 @@ impl<W: World> Game<W> {
                 gap(at) > LEAD * sc
             };
             let step = self.rules.speed * sc * dt * PACE * self.pace(q);
+            // Sent (`steer`): it slows into its goal over `EASE` seconds'
+            // walk, down to 0.3 of a soldier's speed, so its members
+            // slow with it; stopping dead, they ran on past their places
+            // and walked back (review, 2026-11-16).
+            let step = match sq.dest.filter(|_| self.rules.steer && !steering) {
+                Some(d) => step.min(((d.0 - at.0).hypot(d.1 - at.1) / super::steer::EASE).max(0.3 * self.rules.speed * sc) * dt),
+                None => step,
+            };
             let target = if steering { (at.0 + sq.steer.0 * 40.0 * sc, at.1 + sq.steer.1 * 40.0 * sc) } else { sq.dest.unwrap_or(at) };
             let a = if step > 0.0 { self.guide(at, target, step, !steering) } else { at };
-            let a = if ahead && gap(a) >= gap(at) - 1e-3 { at } else { a };
+            let map = self.guided;
+            let a = if self.rules.steer {
+                // Eases off as the squad falls behind instead of stopping
+                // dead at `LEAD` (the squad walked, stood, walked: its
+                // members' steps showed it as a beat), full pace up to half
+                // the lead and still at one and a half; never held back
+                // from coming toward its middle. Funnelling, behind is its
+                // nearest member's distance, as `ahead` has it.
+                // Members that have all but stopped (jammed, or held by
+                // rock) are not waited for: it goes on at half pace and
+                // they follow it. Funnelling too: a squad of 8 in a cup of
+                // walls stood in a column for good, its head waiting on
+                // members held up behind ones standing in their places
+                // (`a_squad_sent_past_a_dead_end_goes_round_it`, seed 4).
+                // Not funnelling, the middle's lag or the members' mean
+                // distance from where they head, whichever is more
+                // (`steer_short`): a squad's middle can keep up while its
+                // members are strung out round another squad, and without
+                // it two squads of 200 crossing never arrived (26 s, both
+                // seeds; with it 22 and 24 s).
+                let behind = if self.columns[q].on { self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0).hypot(self.soldiers[k].y - at.1)).fold(f32::MAX, f32::min) } else { gap(at).max(self.steer_short(q, at)) };
+                let f = ((1.5 * LEAD * sc - behind) / (LEAD * sc)).clamp(0.0, 1.0);
+                let f = if self.squad_speed(q) < STOOD { f.max(0.5) } else { f };
+                if gap(a) >= gap(at) - 1e-3 { (at.0 + (a.0 - at.0) * f, at.1 + (a.1 - at.1) * f) } else { a }
+            } else if ahead && gap(a) >= gap(at) - 1e-3 {
+                at
+            } else {
+                a
+            };
             // Narrow ground ahead: a column (`funnel`). Looks a formation's
             // half width and a gap along the way, and starts the column at
             // the squad's front (its furthest member along the way).
@@ -595,7 +753,12 @@ impl<W: World> Game<W> {
                 a
             };
             if let Some(d) = sq.dest.filter(|_| !steering) {
-                if (d.0 - a.0).hypot(d.1 - a.1) < 1e-3 && gap(d) <= 2.0 * sc {
+                // Arrived once its members stand round it, or (`steer`) have
+                // all but stopped: a squad round a crystal's rim, packed
+                // against itself, never stood at its formation's middle
+                // and waited for good (planet 8, 40 soldiers).
+                let stood = self.rules.steer && self.squad_speed(q) < STOOD;
+                if (d.0 - a.0).hypot(d.1 - a.1) < 1e-3 && (gap(d) <= 2.0 * sc || stood) {
                     // Arrived: the members keep their places round it, or
                     // it starts what it has queued.
                     self.squads[q].dest = None;
@@ -604,7 +767,10 @@ impl<W: World> Game<W> {
                     continue;
                 }
             }
+            let started = sq.anchor.is_none();
             self.squads[q].anchor = Some(a);
+            self.squads[q].vel = if started { (0.0, 0.0) } else { ((a.0 - at.0) / dt, (a.1 - at.1) / dt) };
+            self.squads[q].map = map;
             // Facing: the controlled squad faces the cursor (`Cmd::Face`);
             // a steered or sent one faces where it goes unless it is
             // volleying.
@@ -613,7 +779,16 @@ impl<W: World> Game<W> {
                     self.squads[q].face = f;
                 }
             }
-            self.rank_squad(q, a);
+            if !self.rules.steer || started || self.columns[q].on || self.rerank(q) {
+                self.rank_squad(q, a);
+            }
+            // The match moves with the anchor: once there, the squad isn't
+            // matched again round its goal as if it came from where it
+            // set out (a line of 40 swapped places on arriving and walked
+            // back 0.28 cells each, 3.7 s to stand).
+            if self.rules.steer {
+                self.squads[q].rank_at = a;
+            }
             let o = if sq.fight && !steering { Order::Fight(a.0, a.1) } else { Order::Move(a.0, a.1) };
             // Moving as one, nobody works or stands guard.
             self.squads[q].work = None;
@@ -790,7 +965,7 @@ impl<W: World> Game<W> {
                     self.squads[q].guard = None;
                 } else if was != (0.0, 0.0) {
                     // Let go: settle round where it stands.
-                    self.squads[q].dest = self.middle(q);
+                    self.squads[q].dest = self.stop_point(q);
                 }
                 true
             }
@@ -934,7 +1109,7 @@ impl<W: World> Game<W> {
                             self.squads[r].fire = None;
                             if self.squads[r].steer != (0.0, 0.0) {
                                 self.squads[r].steer = (0.0, 0.0);
-                                self.squads[r].dest = self.middle(r);
+                                self.squads[r].dest = self.stop_point(r);
                             }
                         }
                     }
@@ -960,7 +1135,7 @@ impl<W: World> Game<W> {
                         self.squads[old].fire = None;
                         if self.squads[old].steer != (0.0, 0.0) {
                             self.squads[old].steer = (0.0, 0.0);
-                            self.squads[old].dest = self.middle(old);
+                            self.squads[old].dest = self.stop_point(old);
                         }
                     }
                 }

@@ -45,15 +45,29 @@ impl<W: World> Game<W> {
         let mut shooters: Vec<(Option<usize>, u8)> = Vec::new();
         // How far each soldier's shot was aimed (`Bullet::aim`).
         let mut aims: Vec<f32> = Vec::new();
-        // Elbow room first (`Rules::elbow`), so this frame's walk, touch
-        // and shots all see the spread squad.
-        self.elbow_room(dt);
+        // The squad mode's walk (`Rules::steer`): every soldier at once,
+        // velocity, elbow room and queuing together (`steer`).
+        let steer = r.squads && r.steer;
+        if steer {
+            self.steer_all(dt);
+        } else {
+            for s in self.soldiers.iter_mut() {
+                s.was = (s.x, s.y);
+                (s.vx, s.vy) = (0.0, 0.0);
+            }
+            // Elbow room first (`Rules::elbow`), so this frame's walk, touch
+            // and shots all see the spread squad.
+            self.elbow_room(dt);
+        }
         for k in 0..self.soldiers.len() {
             if !self.soldiers[k].alive {
                 continue;
             }
-            let was = (self.soldiers[k].x, self.soldiers[k].y);
-            self.walk(k, dt);
+            // Where its walk began (with `steer` everyone has walked already).
+            let was = self.soldiers[k].was;
+            if !steer {
+                self.walk(k, dt);
+            }
             // A move that has arrived starts the next queued order (with
             // none queued it stays, as before: the window shows where).
             // (Not while its squad is still being sent somewhere: its move
@@ -169,7 +183,7 @@ impl<W: World> Game<W> {
                                     let a = side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
                                     let (sn, cs) = a.sin_cos();
                                     let (px, py) = (ux * cs - uy * sn, ux * sn + uy * cs);
-                                    shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r });
+                                    shots.push(ShotIn { from: (s.x, s.y), to: (s.x + px * reach, s.y + py * reach), r: hit_r, over: false });
                                     shooters.push((Some(k), cast));
                                     aims.push(d);
                                 }
@@ -196,6 +210,7 @@ impl<W: World> Game<W> {
                 take,
                 smell_r: if pulls { r.build.lure_r.max(r.smell_r) * sc } else { r.smell_r * sc },
                 smell: self.world.food_deposit() * r.smell * s.smell * if pulls { pull.max(1.0) } else { 1.0 } * r.frame_ticks as f32,
+                over: false,
             });
             who.push(Who::Soldier(k));
             from.push(at_crystal);
@@ -220,6 +235,7 @@ impl<W: World> Game<W> {
             take: 0.0,
             smell_r: 3.0 * sc,
             smell: self.world.food_deposit() * r.hoard * self.bank.max(0.0) / 10_000.0 * r.frame_ticks as f32,
+            over: false,
         });
         who.push(Who::Larder);
         from.push(None);

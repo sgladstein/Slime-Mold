@@ -34,11 +34,33 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
 <main>
 <header style="display:grid;gap:8px">
   <h1>Walls, doors and thickness</h1>
-  <p class="lede">Larder World, squad mode, planet 1 (seed 7), the default slime. The owner asked how soldiers should get through their own walls, whether walls should come thicker, and that slime never go over a wall but slowly eat through it with the real simulation. What the game does today, filmed, then the choices.</p>
+  <p class="lede">Larder World, squad mode, planet 1 (seed 7), the default slime. The owner asked how soldiers should get through their own walls, whether walls should come thicker, and that slime never go over a wall but slowly eat through it with the real simulation. You picked doors and Thicken, then turrets firing over walls; all three are built and filmed first below, then what the game did before, and the choices as they were put.</p>
 </header>
 
 <section>
-  <h2>What the game does today</h2>
+  <h2>New: turrets fire over walls, rifles don't (19:50Z)</h2>
+  <video src="turrets.mp4" poster="turrets-120.png" controls muted loop playsinline preload="metadata"></video>
+  <p class="cap">The same seed twice: a ring of wall 2 cells thick, three turrets and nine riflemen inside, the default slime outside. Left, today's rule: the turrets see and shoot over the ring; the riflemen do not. Right, the rule off (as before): nothing inside can fire through the wall. By 3:00 the turrets on the left had killed 5,546 walkers and the ring was untouched (646 of 646 cells); on the right they killed none until the slime had eaten through (ring 335 of 646 cells at 3:00, then 564 kills through the breach). The riflemen killed 25 in both, all before the ring went up. Frames every 2 game seconds, shown 12 times faster.</p>
+  <ul>
+    <li><b>Turrets</b> see and shoot over walls, yours or the map's. Rock and water still block them, and their shells still stop at the first slime.</li>
+    <li><b>Soldiers' guns</b> stop at walls and doors, as before, whatever bullet is loaded.</li>
+    <li><b>Lobbed fire</b>: thrown tools (blast, mine, germ, gas, cord) already landed anywhere in reach, over walls; that's kept and now tested. Gun shells (bomb, gas, germ bullets) fly as bullets, so they stop at walls; a lobbed mortar card would be its own job.</li>
+  </ul>
+  <p class="cap">One seed, one run each: what it looks like, not a balance verdict. A ring with turrets now holds against the default slime (no wall cell lost by 3:00), so the turtle question is back for the balance pass.</p>
+</section>
+
+<section>
+  <h2>Built: doors and Thicken</h2>
+  <video src="door.mp4" poster="door-046.png" controls muted loop playsinline preload="metadata"></video>
+  <p class="cap">Ten soldiers in a ring of wall 2 cells thick. At 0:16 a door is cut in the ring (the timber grate); at 0:18 the squad is ordered out and walks through it (6 of 9 outside by 0:20, all 9 by 0:22), at 0:34 back in (all in by 0:38). At 0:43 the door's stretch of ring and two segments each side are thickened twice, 2 to 6 cells, on the inside; the door thickens with its wall. The slime then surrounds the ring and eats at it: by 2:49, 192 of its 1000 wall cells, and no walker inside. Frames every 2 game seconds, shown 8 times faster; counts from the simulation above each frame.</p>
+  <ul>
+    <li><b>Door</b> (build page, G): draw it like a wall. Along a standing wall it snaps on, takes the wall's thickness and is cut at once; across a gap builders raise it. It costs as a wall that long. Soldiers walk through it; to the slime it is wall, bitten at a wall's pace, and shots stop at it.</li>
+    <li><b>Thicken</b> (click a wall, U on its card): one more band of the wall's width on your side, at once, for the wall's first price: 2, 4, 6, then 8 cells. Soldiers standing where it grows step back first. A door in the wall thickens with it.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>What the game did before (06:30Z)</h2>
   <ul>
     <li><b>Slime cannot cross a standing wall.</b> A wall cell is not ground to the slime's walkers, and a walker's longest step (2 fine cells in a lunge) is shorter than the thinnest wall (4 fine cells). In every run below no walker got inside the ring until the ring was eaten through.</li>
     <li><b>It already eats walls in the real simulation.</b> Each time a walker bumps a wall cell it takes 1 from that cell's 400 health; at 0 the cell turns to rubble, which is ground. There is no timer; more slime pressing means faster eating.</li>
@@ -69,7 +91,7 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
   <h2>Choice 1: how soldiers get through their own walls</h2>
   <div class="opts">
     <div class="opt">
-      <span class="tag">Recommended</span>
+      <span class="tag">Picked, built</span>
       <h3>A. Doors</h3>
       <svg viewBox="0 0 200 120" role="img" aria-label="A wall with a door: soldiers walk through it, slime is stopped">
         <rect x="0" y="0" width="200" height="120" style="fill:var(--card)"/>
@@ -114,7 +136,7 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
   <h2>Choice 2: thicker walls</h2>
   <div class="opts">
     <div class="opt">
-      <span class="tag">Recommended</span>
+      <span class="tag">Picked, built</span>
       <h3>Upgrade a standing wall</h3>
       <p>Click a wall, then Thicken on its card (like pump upgrades): 2 to 4 to 6 to 8 cells, each level adding cells on your side and costing the wall's first price. You thicken where the slime is chewing, while it chews.</p>
     </div>
@@ -134,6 +156,6 @@ th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color
   <img src="rubble-fix-356.png" alt="The 2-cell ring at 3:56 with rubble drawn as gravel ground: slime fills the holes on the right and left">
   <p class="cap">Built: the same run at 3:56 with rubble drawn as gravel ground and the slime drawn over it. The holes are where the slime got in.</p>
   <p>Keep the real simulation's bite as it is, and draw rubble as broken ground (gravel, no wall outline, slime drawn over it) so a hole reads as a hole. This part is built and going in now. The wall's cells already dim and sink as they wear. If the eating is too slow or fast after a playtest, it is two numbers (health 400 a cell, bite 1 a bump).</p>
-  <p class="cap">Separate question for later: should soldiers be able to shoot over their own walls? Today a wall blocks shots both ways, so turrets behind walls can't fire either.</p>
+  <p class="cap">Shooting over walls: answered 19:50Z, turrets and lobbed fire go over, soldiers' guns do not (first section).</p>
 </section>
 </main>

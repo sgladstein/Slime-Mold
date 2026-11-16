@@ -75,6 +75,9 @@ impl World for Timed {
     fn clear(&self, x: f32, y: f32) -> bool {
         World::clear(&self.d, x, y)
     }
+    fn wall_cell(&self, i: usize) -> bool {
+        World::wall_cell(&self.d, i)
+    }
     fn stop_births(&mut self) {
         World::stop_births(&mut self.d)
     }

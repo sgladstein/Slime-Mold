@@ -33,6 +33,9 @@ pub(super) fn ground_codes(g: &Game<GpuWorld>, depth: &[u8], charge: Option<&[f3
     for (i, c) in codes.iter_mut().enumerate() {
         if broken(i) {
             *c = look::code(Ground::Rubble, 0.0);
+        } else if wall[i] && g.doors.get(i).copied().unwrap_or(false) {
+            // A door's cell: a wall's code, health and all, of its own kind.
+            *c = (*c & !15) | Ground::Door as u32;
         }
     }
     look::mark_far(d.w, &mut codes);
@@ -83,7 +86,10 @@ pub(super) fn live_code(g: &Game<GpuWorld>, depth: &[u8], i: usize, old: u32, ch
             }
             None => 1.0,
         };
-        look::code(Ground::Wall, share)
+        // A door's cells (`Game::doors`) wear as a wall's; their own kind
+        // draws them as a gate. Re-coded here once a door is cut into a
+        // standing wall too, since the timed pass runs when walls change.
+        look::code(if g.doors.get(i).copied().unwrap_or(false) { Ground::Door } else { Ground::Wall }, share)
     } else {
         let p = d.pile_of.get(i).copied().unwrap_or(0) as usize;
         look::code(Ground::Crystal, charge / d.pile_fill.get(p - 1).copied().unwrap_or(d.p.crystal_charge).max(1e-6))
@@ -1203,6 +1209,14 @@ impl App {
                     about: "A wall the mould has to wear through, slowly. Both ends within a soldier's range; costs by its length.".into(),
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
+                Command {
+                    target: Target::Line { width: r.wall_width * sc },
+                    cost: Some(format!("{:.0}/cell", r.wall_cost)),
+                    ready: g.bank >= r.wall_cost,
+                    why_not: need(r.wall_cost),
+                    about: "A door: a stretch of wall your soldiers walk through. To the slime it is wall, eaten at a wall's pace, and shots stop at it. Draw it along a wall to cut it in (at once, as thick as the wall), or across a gap to build it. Costs as a wall that long.".into(),
+                    ..Command::new(DOOR, (1, 3), Icon::Wall, "Door", KeyCode::KeyG)
+                },
                 place(LURE, (0, 3), Icon::Bait, "Lure", KeyCode::KeyL, b.lure_cost, "Gives off food scent, which the mould follows: pull it into your guns or off a crystal. Free to keep on.".to_string()),
                 place(SIREN, (0, 4), Icon::Alert, "Siren", KeyCode::KeyY, b.siren_cost, format!("Calls every {:.0} s with the alarm the mould's kinds answer: a Sleeper wakes, a Sporer bursts, a Swarmer floods in. The plain mould ignores it.", b.siren_every)),
                 Command { ready: lures > 0, why_not: Some("No lures or sirens".into()), about: "Switch every lure and siren on, or every one off if all are on.".into(), ..Command::new(LURES, (1, 0), Icon::Bait, "Lures, sirens on/off", KeyCode::KeyJ) },
@@ -1302,6 +1316,21 @@ impl App {
                 }
             }
             Some((WALL, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
+            // A door: where it goes (`Game::door_line`), and so its price.
+            Some((DOOR, at, Some(from))) => {
+                let (a, b, host) = g.door_line(from, at);
+                let price = g.wall_price(a, b);
+                if g.bank < price {
+                    (false, Some(format!("{price:.0} food, {:.0} short", price - g.bank)))
+                } else if let Some(why) = g.build_blocked(Kind::Wall { to: b }, a) {
+                    (false, Some(why.into()))
+                } else if host.is_some() {
+                    (true, Some(format!("{price:.0} food, release to cut a door in this wall")))
+                } else {
+                    (true, Some(format!("{price:.0} food, release to build a door")))
+                }
+            }
+            Some((DOOR, at, None)) if !g.rules.build.anywhere && !g.reachable(at) => (false, Some("out of every soldier's range".into())),
             // On a crystal with a pump: the pump's upgrade (owner,
             // 2026-11-15: "you should be able to upgrade them").
             Some((PUMP, at, _)) if g.pump_crystal(at).and_then(|c| g.pump_on(c)).is_some() => {
@@ -1769,7 +1798,7 @@ pub(super) fn run_hidden(id: u32) -> bool {
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {
     Some(match id {
-        WALL => "walls",
+        WALL | DOOR => "walls",
         TURRET => "turret",
         LURE => "lure",
         LURES => return None,
@@ -1842,14 +1871,19 @@ impl App {
                     if bd.on { "on".into() } else { "off".into() }
                 }
                 Kind::Outpost => "standing".into(),
-                Kind::Wall { .. } => "standing; the mould wears it slowly".into(),
+                Kind::Wall { .. } => {
+                    let level = g.buildings[g.wall_of(bk)].level;
+                    let cells = g.rules.wall_width * f32::from(level);
+                    stats.push(("Thickness".into(), format!("{cells:.0} cells, level {level} of {WALL_LEVELS}")));
+                    if bd.door { format!("{cells:.0} cells thick; your soldiers walk through, the mould eats it as wall") } else { format!("{cells:.0} cells thick; the mould wears it slowly") }
+                }
             }
         };
         stats.push(("Mould on it".into(), format!("{}", bd.touching)));
         Info {
             icon: building_icon(bd.kind),
             colour: theme::TEXT,
-            title: building_title(bd.kind),
+            title: if bd.door { "Door".into() } else { building_title(bd.kind) },
             subtitle,
             hp: Some((bd.hp / bd.max_hp.max(1.0), format!("{:.0} / {:.0}", bd.hp, bd.max_hp))),
             stats,
@@ -1912,6 +1946,32 @@ impl App {
                 }),
                 about: format!("Render: every walker killed within {:.0} cells of it, by any shot, pays {:.2} food.", b.turret_range, b.render_food),
                 ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Render", KeyCode::KeyU)
+            });
+        }
+        // Thicken (owner 2026-11-16 14:25Z): a band of a wall's width on
+        // its home side, at the wall's first price; a door cut into a wall
+        // thickens its wall, and itself with it.
+        if matches!(bd.kind, Kind::Wall { .. }) && bd.up() {
+            let w = g.wall_of(bk);
+            let up = g.upgrade_price(w);
+            let need = up.filter(|&p| g.bank < p);
+            let level = g.buildings[w].level;
+            let ww = g.rules.wall_width;
+            cmds.push(Command {
+                cost: up.map(|p| format!("{p:.0}")),
+                ready: up.is_some() && need.is_none(),
+                why_not: Some(match (up, need) {
+                    (_, Some(p)) => format!("Need {:.0} more food", p - g.bank),
+                    _ if level >= WALL_LEVELS => format!("At its thickest, {:.0} cells", ww * f32::from(level)),
+                    _ => "This wall can't be thickened".to_string(),
+                }),
+                about: format!(
+                    "Thicken: {:.0} more cells of wall on your side, from {:.0} to {:.0}, at once, for its first price. The mould eats one face at a time, so each band buys about as long again. {WALL_LEVELS} levels.",
+                    ww,
+                    ww * f32::from(level),
+                    ww * f32::from(level + 1)
+                ),
+                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Thicken", KeyCode::KeyU)
             });
         }
         if matches!(bd.kind, Kind::Lure | Kind::Siren) {

@@ -11,9 +11,9 @@ struct Set {
 // A lump's steering (`BigParams::lumps`, big.rs `Lump`): the fine cell it
 // heads for (x | y << 16), its pull, its leash as `Lump::leash_k` (0 none)
 // and its members' haste (0 is 1).
-// `armour` and `bite` the mini-bosses' strength (`big::Lump`); `_a`, `_b`
-// pad the row to 32 bytes.
-struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, _a: u32, _b: u32 };
+// `armour` and `bite` the mini-bosses' strength (`big::Lump`); `ring` its
+// band round `aim` (`Lump::ring`, 0 none); `_b` pads the row to 32 bytes.
+struct Lump { aim: u32, pull: f32, lk: f32, haste: f32, armour: u32, bite: u32, ring: f32, _b: u32 };
 struct Params {
     w: u32, h: u32, n: u32, crowd: u32,
     s_turn: u32, s_blocked: u32, s_claim: u32, s_jump: u32,
@@ -299,6 +299,10 @@ struct SqUnitOut { touching: u32, aim: u32, took: f32, dense: u32, heat: f32, _s
 // and a seeking shot's catch (`squad::Frame::catch`) in its high 16.
 struct SqShot { start: u32, count: u32, r2: u32, ar2: u32 };
 struct SqShotOut { hit: u32, _a: u32, _b: u32, _c: u32 };
+// The flag in a unit's `sight2` and a shot's `count` (`squad::OVER`): it
+// sees or flies over built walls (a turret, owner 2026-11-16 19:50Z;
+// `over_wall`).
+const OVER: u32 = 0x80000000u;
 struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: array<SqShot, 1024>, sout: array<SqShotOut, 1024>, path: array<u32> };
 @group(0) @binding(42) var<storage, read_write> SQ: Squad;
 @group(0) @binding(43) var<storage, read_write> kills: array<atomic<u32>>;
@@ -468,9 +472,9 @@ fn crowd_for(k: u32, sp: u32) -> u32 {
     return c;
 }
 // A move's crowd limit (the CPU's `move_crowd`): a lump's member steps
-// into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16), so a lump
-// formed in the thick of the body can pass through it.
-const LUMP_CROWD: u32 = 1u;
+// into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16; 3 since the
+// leech ring), so a lump formed in the thick of the body can pass through it.
+const LUMP_CROWD: u32 = 3u;
 fn move_crowd(k: u32, sp: u32) -> u32 {
     let c = crowd_for(k, sp);
     if (c > 0u && lump_of(k) != 0u) { return c + LUMP_CROWD; }
@@ -778,8 +782,20 @@ fn lump_centre(b: u32) -> vec3<f32> {
 fn lump_leash(b: u32, k: u32) -> vec3<f32> {
     let lk = P.lumps[b].lk;
     let c = lump_centre(b);
-    if (lk <= 0.0 || c.z <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    if (c.z <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let wk = walkers[k];
+    // A ring (`Lump::ring`): out from the aim inside it, back past its band.
+    let ring = P.lumps[b].ring;
+    if (ring > 0.0) {
+        let aim = P.lumps[b].aim;
+        let ax = f32(aim & 0xFFFFu) + 0.5; let ay = f32(aim >> 16u) + 0.5;
+        let rx = wk.x - ax; let ry = wk.y - ay;
+        let d2 = rx * rx + ry * ry; let r2 = ring * ring;
+        if (d2 < r2) { return vec3<f32>(wk.x + rx, wk.y + ry, 1.0); }
+        if (lk > 0.0 && d2 > r2 + lk * c.z) { return vec3<f32>(ax, ay, 1.0); }
+        return vec3<f32>(-1.0, -1.0, 0.0);
+    }
+    if (lk <= 0.0) { return vec3<f32>(-1.0, -1.0, 0.0); }
     let dx = wk.x - c.x; let dy = wk.y - c.y;
     if (dx * dx + dy * dy > lk * c.z) { return vec3<f32>(c.x, c.y, 1.0); }
     return vec3<f32>(-1.0, -1.0, 0.0);
@@ -985,8 +1001,12 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         // A lump's pull (`Lump::pull`), on top of what it smells.
         if (lb != 0u && P.lumps[lb - 1u].pull != 0.0) {
             let l = P.lumps[lb - 1u];
-            let dx = f32(l.aim & 0xFFFFu) + 0.5 - wk.x;
-            let dy = f32(l.aim >> 16u) + 0.5 - wk.y;
+            var dx = f32(l.aim & 0xFFFFu) + 0.5 - wk.x;
+            var dy = f32(l.aim >> 16u) + 0.5 - wk.y;
+            // A ring's pulls away from its members' centre (the CPU's), so
+            // where they bunch they spread round it.
+            let lc = lump_centre(lb - 1u);
+            if (l.ring > 0.0 && lc.z > 0.0) { dx = wk.x - lc.x; dy = wk.y - lc.y; }
             let r = max(sqrt(dx * dx + dy * dy), 1.0e-3);
             f += l.pull * (cos(h) * dx + sin(h) * dy) / r;
             fl += l.pull * (cos(h - sa) * dx + sin(h - sa) * dy) / r;
@@ -1201,7 +1221,8 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         return;
     }
-    if (unit(keyed(P.s_starve, S.t, k)) < P.starve) {
+    // A held body's member does not starve (the CPU's `live_and_die`).
+    if (lump_of(k) == 0u && unit(keyed(P.s_starve, S.t, k)) < P.starve) {
         // A condensed walker starving breaks instead (`condense`).
         if (heavy) { set_dense_kept(k, 0u); energy[k] = 0.0; return; }
         atomicSub(&occ[i], 1u);
@@ -2340,19 +2361,25 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
     let seek = s.ar2 >> 16u;
     let walks = (seek & 0x8000u) != 0u;
     let reach = seek & 0x7FFFu;
+    let over = (s.count & OVER) != 0u;
+    let count = s.count & ~OVER;
     // Across the line's longer leg (`squad::catch_side`).
     var sx = 0;
     var sy = 1;
-    if (reach > 0u && s.count > 0u) {
+    if (reach > 0u && count > 0u) {
         let a = SQ.path[s.start];
-        let b = SQ.path[s.start + s.count - 1u];
+        let b = SQ.path[s.start + count - 1u];
         if (abs(i32(b % P.w) - i32(a % P.w)) < abs(i32(b / P.w) - i32(a / P.w))) { sx = 1; sy = 0; }
     }
     var hit = NONE;
     var m = 0u;
-    for (; m < s.count; m++) {
+    for (; m < count; m++) {
         let i = SQ.path[s.start + m];
-        if (agar[i] == 0u) { break; }
+        if (agar[i] == 0u) {
+            // A turret's shell flies on over a wall (`squad::shots`).
+            if (over && over_wall(i)) { continue; }
+            break;
+        }
         if (stops(i) || (walks && enemy_occ(i) > 0u)) { hit = i; break; }
     }
     // A line that misses: a seeking shot with a catch looks beside it, up
@@ -2368,7 +2395,7 @@ fn shots(@builtin(global_invocation_id) gid: vec3<u32>) {
         let hx = i32(hit % P.w);
         let hy = i32(hit / P.w);
         var deep = hit;
-        for (var n = m + 1u; n < s.count; n++) {
+        for (var n = m + 1u; n < count; n++) {
             let c = SQ.path[s.start + n];
             let dx = i32(c % P.w) - hx;
             let dy = i32(c / P.w) - hy;
@@ -2603,16 +2630,25 @@ fn smell(@builtin(local_invocation_index) li: u32) {
 // (`squad::sees`, the same cells). A unit aims only at a block it sees
 // (2026-11-13): through a wall the game held the shot, so a squad beside a
 // wall with thicker slime behind it fired at nothing in front.
-fn sees(cx: i32, cy: i32, tx: i32, ty: i32) -> bool {
+// With `over` (a turret, `OVER`) it looks over built walls (`over_wall`;
+// `squad::sees_over`).
+fn sees(cx: i32, cy: i32, tx: i32, ty: i32, over: bool) -> bool {
     let dx = tx - cx;
     let dy = ty - cy;
     let n = max(max(abs(dx), abs(dy)), 1);
     for (var k = 1; k <= n; k++) {
         let x = cx + dx * k / n;
         let y = cy + dy * k / n;
-        if (agar[u32(y) * P.w + u32(x)] == 0u) { return false; }
+        let i = u32(y) * P.w + u32(x);
+        if (agar[i] == 0u && !(over && over_wall(i))) { return false; }
     }
     return true;
+}
+
+// A built wall standing (`squad::over_wall`): the `walls` pass clears
+// `WALL` when one breaks, and its rubble is agar.
+fn over_wall(i: u32) -> bool {
+    return agar[i] == 0u && (ground[i] & WALL) != 0u;
 }
 
 var<workgroup> rsum: array<u32, 256>;
@@ -2655,7 +2691,9 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
     let b = 4;
     let nbw = (w + b - 1) / b;
     let nbh = (h + b - 1) / b;
-    let rs = isqrt(un.sight2) + 2;
+    let over = (un.sight2 & OVER) != 0u;
+    let sight2 = un.sight2 & ~OVER;
+    let rs = isqrt(sight2) + 2;
     let by0 = max(cy - rs, 0) / b;
     let by1 = min((cy + rs) / b, nbh - 1);
     let bx0 = max(cx - rs, 0) / b;
@@ -2670,14 +2708,14 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
             let by = by0 + i32(j / bw);
             let mx = bx * b + b / 2 - cx;
             let my = by * b + b / 2 - cy;
-            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            if (u32(mx * mx + my * my) > sight2) { continue; }
             var n = 0u;
             for (var y = by * b; y < min((by + 1) * b, h); y++) {
                 for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
                     n += enemy_occ(u32(y * w + x));
                 }
             }
-            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1), over)) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     rsum[li] = touching;
@@ -2826,7 +2864,9 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
     let b = 4;
     let nbw = (w + b - 1) / b;
     let nbh = (h + b - 1) / b;
-    let rs = isqrt(un.sight2) + 2;
+    let over = (un.sight2 & OVER) != 0u;
+    let sight2 = un.sight2 & ~OVER;
+    let rs = isqrt(sight2) + 2;
     let by0 = max(cy - rs, 0) / b;
     let by1 = min((cy + rs) / b, nbh - 1);
     let bx0 = max(cx - rs, 0) / b;
@@ -2837,14 +2877,14 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
         for (var bx = bx0; bx <= bx1; bx++) {
             let mx = bx * b + b / 2 - cx;
             let my = by * b + b / 2 - cy;
-            if (u32(mx * mx + my * my) > un.sight2) { continue; }
+            if (u32(mx * mx + my * my) > sight2) { continue; }
             var n = 0u;
             for (var y = by * b; y < min((by + 1) * b, h); y++) {
                 for (var x = bx * b; x < min((bx + 1) * b, w); x++) {
                     n += atomicLoad(&occ[u32(y * w + x)]);
                 }
             }
-            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1))) { best = n; bi = u32(by * nbw + bx); }
+            if (n > best && sees(cx, cy, min(bx * b + b / 2, w - 1), min(by * b + b / 2, h - 1), over)) { best = n; bi = u32(by * nbw + bx); }
         }
     }
     SQ.uout[u].touching = touching;
@@ -3613,13 +3653,23 @@ fn lumpform(@builtin(global_invocation_id) gid: vec3<u32>) {
     // too, the CPU's the same).
     if (k >= P.n) { return; }
     let wd = dense_word(k);
-    let mine = atomicLoad(&news[dense_base() + 1u]) << LUMP_SHIFT;
+    // Bit 8 of the lump word: grow (the CPU's `grow_lump`), only walkers
+    // in no lump join and every member stays as it is.
+    let word = atomicLoad(&news[dense_base() + 1u]);
+    let mine = (word & 7u) << LUMP_SHIFT;
     let c = atomicLoad(&news[dense_base() + 2u]);
     let r2 = atomicLoad(&news[dense_base() + 3u]);
     let wk = walkers[k];
     let dx = i32(floor(wk.x)) - i32(c & 0xFFFFu);
     let dy = i32(floor(wk.y)) - i32(c >> 16u);
-    if (ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2) {
+    let within = ordinary(k) && c != 0xFFFFFFFFu && u32(dx * dx + dy * dy) <= r2;
+    if ((word & 256u) != 0u) {
+        if (within && (wd & LUMP_BITS) == 0u) {
+            set_dense(k, (wd & ~(HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
+        }
+        return;
+    }
+    if (within) {
         set_dense(k, (wd & ~(LUMP_BITS | HURT_BITS | ROAM_BIT | (63u << ROAM_SHIFT))) | mine);
     } else if ((wd & LUMP_BITS) == mine) {
         set_dense(k, wd & ~(LUMP_BITS | HURT_BITS));

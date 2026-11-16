@@ -90,3 +90,91 @@ fading flag and progress); a lump-tagged wake later.
 - Violet sits near the core planet's purple flora (hue 290-320; the
   hunter's skin is about 265, its core 280): look at it on planet 8.
 - 1070 frame cost.
+
+## Round 2: a look a kind, and the fade (2026-11-16)
+
+The mini-boss engine's round 3 (PR #391, merged 11:14Z) gave lumps four
+kinds and a 1.5 s fade, and `Game::lump_looks()` became a `u16`: bits
+0-2 kind, 3 not gathering, 4-7 grade, 8 fading, 9-15 fade progress
+(0-127). Page: https://claude.ai/artifact/HHYzZqj7Pt8iH1Znd8moVy, source
+[`round2/`](round2/index.html); films by
+[`raw/round2-films.sh`](raw/round2-films.sh) (the round-3 boss staged at
+1:25 on run 1, planet 3, forced to each kind; zoom 12, camera on the
+oldest boss, live or fading). Boss lines: `raw/round2-boss-lines-*.txt`;
+from 85 s to the end of each film they match the mini-boss thread's
+round-3 logs line for line (the view does not touch the walkers).
+
+### What was built
+
+- **A look a kind** (Larder World's `kind_look`; `boss_look=` still
+  overrides every kind): hunter Violet, wanderer `Bone` (new: a pale
+  grey-lilac skin, a faint warm core, rose hits since cold white would
+  not show on it), sapper Ember, leech Ink. Dark, mid and pale, so the
+  kinds part by value as well as hue. On film the wanderer reads as pale
+  pewter, liquid-metal under the sheen.
+- **The fade**: `View::set_lumps` takes a `LumpBody` a lump (centre,
+  look, strength, `remain`, `fill`); Larder World passes the fading
+  bosses too, `remain` = 1 - progress / 127. In `lump_here` the share
+  and dome scale by it and the core light by it twice over, so the light
+  goes out first and the colour and dome sink into the sheet as the
+  members spread; each member's dot carries its lump in bits 4-5 and
+  fades with it. On film the spent sapper (196 members at 182 s) is half
+  drained at 182.5 s and gold by 183.5 s; before, it snapped back in a
+  frame.
+- **A leech's take**: `fill` = take / (take + 150) (`LEECH_HALF`); its
+  glow and its dots turn toward the charge's cyan (92, 224, 232) by it,
+  and it glows wherever its members are, not only where they pack
+  (`LUMP_DRINK` 1.5 over `LUMP_CORE`). On film 0% at 1:55, 38% at 2:13,
+  55% at 2:31, 65% at 2:49 (take 277.6).
+- **Softer core light**: `LUMP_CORE` 0.9 -> 0.4, `LUMP_HOT` (0.55, 1.3)
+  -> (0.65, 1.5). A boss that sits (the sapper at its wall, the wanderer
+  rooted) packs past the old full point all over, and the light swamped
+  the skin: the crimson read salmon, the first pale skin (188, 180, 194)
+  clipped white on its crystal. Bone's skin is now (140, 134, 152).
+- `follow=boss` follows the oldest boss, live or fading, so a film stays
+  on one while it drains.
+
+### Checks
+
+- View tests (llvmpipe, `MOULDGPU_TEST_GPU=1`): 15 pass, the first now
+  also checking half and full fade (half lies between, gone is within 8
+  levels of the plain gold) and that Ink lights lilac, a full leech
+  cyan and Bone stays an unsaturated pale grey.
+- The lunge shows: the hunter's spread goes 1.27 -> 1.57 -> 1.17 over
+  101-103 s and its body flings out in tendrils and pulls back.
+
+### Open
+
+- The leech sits under the pump box, rig and crystal, so little of it
+  shows (a cyan haze round the box). Sent to the mini-boss thread, which
+  took it (11:56Z): the leech will hold its members in a band just
+  outside the crystal round the rig.
+- A hunter shot to pieces fades with about 7 members left, so its fade
+  hardly shows; the mini-boss thread keeps that (the kill working).
+- The owner's round-1 letter for the hunter; if B (Ember), the sapper
+  needs another look.
+- 1070 frame cost (unchanged passes; one more uniform read a lump cell).
+
+## Round 2b: a held body shows by its own members (2026-11-16 evening)
+
+The mini-boss thread's leech ring (PR #396, my suggestion from round 2): a
+sitting leech holds its 123 members in a band 14-18 cells round its pump
+(10th to 90th percentile), about 0.36 a cell, in the thick sheet that
+grows round a pump. By its share of the walkers there it showed only as
+dark flecks in a raised gold collar (a still at 2:30 on #396's build).
+
+- `LumpBody::held` (0-1; Larder World passes 1 when `lump_looks` bit 3,
+  not gathering, is set): in `lump_here` the share becomes
+  max(share by the ratio, smoothstep(0.2, 0.8, cover) x held)
+  (`LUMP_OWN`), so a body out on its errand shows wherever its own
+  members stand at about 0.1 a cell or more, however thick the sheet.
+  Gathering bodies are unchanged (their colour still seeps through by
+  their share); a stray member adds nothing. Uniform 288 bytes.
+- On film the ringed leech reads as dark slate-blue segments round the
+  rig (ink, lit toward cyan by its take), and a leech crossing the sheet
+  on its way as a dark ink body with lilac specks instead of a brown
+  smudge. Clip: `round2/leech-ring.mp4` on the round-2 page.
+- Test `a_held_lump_shows_where_its_members_stand_thin_in_the_sheet`: one
+  walker in four a member, gathering only tints the gold (blue under
+  green), held it is violet (blue 40 over green), a stray member leaves
+  the far body as it was either way. View tests 17/17 on #396's build.

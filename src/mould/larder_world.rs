@@ -62,7 +62,9 @@ mod score;
 mod shapes;
 mod squads;
 mod funnel;
+mod steer;
 mod cover;
+mod doors;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -73,10 +75,11 @@ pub use world::*;
 pub use shapes::shape_keys;
 pub use squads::{Formation, LeadRules, Squad, NO_LINK, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::{Cover, CoverRules, HealRules};
+pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
-pub use bosses::{parts, Boss, BossCause, BossEnd, BossPhase, BossRules, Bosses, Part, PART_BIN};
+pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
 pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_LEVELS, TURRET_MUZZLE};
-use buildings::Who;
+use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
 use super::squad::{self, Frame, FrameOut, ShotIn, UnitIn, UnitOut};
@@ -165,6 +168,15 @@ pub struct Soldier {
     /// (`BulletMods::casts`): each shot fires the next card in turn and the
     /// gun never stops to recharge (owner 18:05Z).
     pub next: u8,
+    /// Its velocity, fine cells a game second (`steer`: a soldier speeds
+    /// up and slows down instead of starting and stopping dead).
+    pub vx: f32,
+    pub vy: f32,
+    /// Where it stood when this step's walk began, fine cells: the window
+    /// draws it between there and `x`, `y` (`Game::drawn_between`), so it
+    /// glides at the screen's frame rate instead of jumping 15 times a
+    /// second.
+    pub was: (f32, f32),
 }
 
 /// One shot as the window draws it: from, where it stopped (None: a wall or
@@ -247,6 +259,10 @@ pub struct Bullet {
     /// cast): a seeker's catch looks beside its line there
     /// (`Game::catches`), as a soldier's bullet flies on to its full range.
     pub aim: f32,
+    /// It flies over walls (`ShotIn::over`): a turret's (owner,
+    /// 2026-11-16 19:50Z: "turrets can fire over walls ... but regular
+    /// guns shots do not"). Rock still ends it.
+    pub over: bool,
 }
 
 /// What every soldier's bullet carries when fired: the rounds' flight
@@ -317,6 +333,10 @@ pub struct Game<W: World> {
     pub missed_range: u32,
     pub missed_wall: u32,
     pub walls: u32,
+    /// The doors' cells (`doors`), row by row over the world's cells:
+    /// ground to soldiers though the world holds them as wall. Empty while
+    /// there is no door.
+    pub doors: Vec<bool>,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
@@ -431,6 +451,11 @@ pub struct Game<W: World> {
     /// changed since ranks its members by index until it is matched again.
     pub(super) ranks: Vec<u16>,
     pub(super) ranked: [u16; SQUADS_MAX],
+    /// The walking map `Game::guide` went by last, if any (`Squad::map`).
+    guided: Option<usize>,
+    /// Walks and anchor steps that waited on a walking map being built,
+    /// in all (`move_tests` counts them; the pathing thread's measure).
+    pub map_waits: u64,
     /// Each squad's column through narrow places (`funnel`).
     pub(super) columns: Vec<funnel::Column>,
     /// Crystals guarded at the last count (`Rules::larder` off), and what
@@ -535,6 +560,7 @@ impl<W: World> Game<W> {
             missed_range: 0,
             missed_wall: 0,
             walls: 0,
+            doors: Vec::new(),
             buildings: Vec::new(),
             pumped: 0.0,
             lost_buildings: 0,
@@ -580,6 +606,8 @@ impl<W: World> Game<W> {
             active: None,
             ranks: Vec::new(),
             ranked: [0; SQUADS_MAX],
+            guided: None,
+            map_waits: 0,
             columns: vec![funnel::Column::default(); SQUADS_MAX],
             guarded: Vec::new(),
             healed: 0.0,
@@ -710,6 +738,9 @@ impl<W: World> Game<W> {
             cover: false,
             rest: 0.0,
             next: 0,
+            vx: 0.0,
+            vy: 0.0,
+            was: (x, y),
         });
     }
 
@@ -752,3 +783,5 @@ mod tests;
 mod narrow_tests;
 #[cfg(test)]
 mod wall_side_tests;
+#[cfg(test)]
+mod move_tests;

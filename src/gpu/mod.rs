@@ -112,7 +112,7 @@ pub const RAID_AT: usize = 976;
 /// The lump rows (`BigParams::lumps`, 2026-11-16, the mini-boss thread;
 /// Params grew from 1008 to 1152, after the raid row): whether any lump is
 /// on and three spare words, then each lump's aim, pull, leash
-/// (`Lump::leash_k`), haste, armour and bite, and two spare words.
+/// (`Lump::leash_k`), haste, armour, bite and ring, and a spare word.
 pub const LUMP_AT: usize = 1008;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
@@ -1428,6 +1428,11 @@ pub struct Engine {
     /// A lump is on (`Settings::lumps`): `lumpclear` and `lumpsum` start
     /// each tick.
     pub lumps_on: bool,
+    /// A planted bug for the twin (`mouldgpu`'s
+    /// `the_dense_passes_start_clean_when_they_come_back`), false in play:
+    /// the next frame that counts the dense cells leaves out their clear
+    /// (`dclear`), so it counts on top of whatever the last count left.
+    pub plant_no_clear: bool,
     pub dense_at: u64,
     /// Plants (`plant_words`): their words sit in `news` from `plant_at`
     /// (bytes); `plants` when the dish has any, `fire_on` once lit (from
@@ -1750,6 +1755,7 @@ impl Engine {
             dense_walkers: false,
             ripens: false,
             lumps_on: false,
+            plant_no_clear: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
             plants: !d.plant.is_empty(),
@@ -2141,7 +2147,7 @@ impl Engine {
         self.lumps_on = s.lumps.iter().any(crate::mould::big::Lump::on);
         b.extend(u32_bytes(&[self.lumps_on as u32, 0, 0, 0]));
         for l in &s.lumps {
-            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, 0, 0]));
+            b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
         }
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
@@ -2310,8 +2316,16 @@ impl Engine {
             // and the lumps' members' bite. Only where some can be (11-16:
             // specks alone make none, and on the core world these passes and
             // the mass cost 0.36 ms a step).
+            // Skipped, the cells keep the last count: `dclear` always runs
+            // before `dcount`, so the first frame they come back on (a lump
+            // formed, condensing switched on) starts from clear cells, and
+            // the units read the cells only under the same gates
+            // (`dense_on`, `P.lump_on`; 11-16, the tech lead's review).
             if self.dense_walkers || self.lumps_on {
-                out.extend([(DCLEAR, self.cells.div_ceil(256), s), (DCOUNT, self.n.div_ceil(256), s)]);
+                if !std::mem::take(&mut self.plant_no_clear) {
+                    out.push((DCLEAR, self.cells.div_ceil(256), s));
+                }
+                out.push((DCOUNT, self.n.div_ceil(256), s));
             }
             // A workgroup a unit (`engine.wgsl`'s `units`, 2026-11-12).
             if self.squad_one {
@@ -2394,7 +2408,10 @@ impl Engine {
             tick.push((LIFE, n));
             // The mass, which only condensing's births read (`ripens`):
             // every living walker adds to one word, so with thickening or
-            // specks alone it was work for nothing (11-16).
+            // specks alone it was work for nothing (11-16). `massclear`
+            // always runs first and `breed` reads the mass only under the
+            // same gate (`ripens()`), so a step after condensing comes back
+            // on reads this step's mass, not a stale one.
             if self.ripens {
                 tick.extend([(MASSCLEAR, 1), (MASSCOUNT, n)]);
             }
@@ -3129,6 +3146,15 @@ impl Engine {
         assert!(b < crate::mould::big::LUMPS, "lump {b}");
         let (c, r2) = at.unwrap_or((u32::MAX, 0));
         self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[b as u32 + 1, c, r2]));
+        self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
+    }
+
+    /// Lump `b` takes in the ordinary walkers within `at` in no lump, its
+    /// members kept (the CPU's `grow_lump`): `lumpform` with bit 8 of the
+    /// lump word set.
+    pub fn grow_lump(&self, shared: &Shared, b: usize, at: (u32, u32)) {
+        assert!(b < crate::mould::big::LUMPS, "lump {b}");
+        self.queue.write_buffer(&self.news, self.dense_at + 4, &u32_bytes(&[(b as u32 + 1) | 1 << 8, at.0, at.1]));
         self.run(shared, &[(LUMPFORM, self.n.div_ceil(256))]);
     }
 

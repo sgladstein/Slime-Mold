@@ -119,6 +119,9 @@ pub struct Building {
     /// playtest, 2026-11-16 01:45Z). Chosen when it is placed
     /// (`Game::wall_home`).
     pub home: (f32, f32),
+    /// A wall that is a door (`Cmd::Door`, `doors`): its cells are wall to
+    /// the slime, which bites them as any wall's, and ground to soldiers.
+    pub door: bool,
 }
 
 impl Building {
@@ -167,6 +170,11 @@ pub struct BuildRules {
     pub turret_hp: f32,
     pub turret_range: f32,
     pub turret_every: f32,
+    /// Turrets see and fire over walls (`UnitIn::over`; owner, 2026-11-16
+    /// 19:50Z: "turrets can fire over walls, lobbed fire goes over walls,
+    /// but regular guns shots do not"). `set=turret_over=0` turns it off
+    /// for films and tries.
+    pub turret_over: bool,
     pub lure_cost: f32,
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
@@ -282,6 +290,7 @@ impl Default for BuildRules {
             turret_hp: 300.0,
             turret_range: 15.0,
             turret_every: 0.5,
+            turret_over: true,
             lure_cost: 300.0,
             lure_hp: 150.0,
             lure_smell: 8.0,
@@ -431,6 +440,9 @@ impl<W: World> Game<W> {
         match bd.kind {
             Kind::Pump if bd.level < PUMP_LEVELS => Some(self.rules.build.pump_up_cost * f32::from(bd.level)),
             Kind::Turret if bd.level < TURRET_LEVELS => Some(self.rules.build.render_cost),
+            // Thicken (`doors`): each band at the wall's first price. A door
+            // cut into a wall thickens with it, so only its wall does.
+            Kind::Wall { to } if bd.level < super::WALL_LEVELS && bd.home != (0.0, 0.0) && !(bd.door && self.door_host(bd.at, to).is_some()) => Some(self.wall_price(bd.at, to)),
             _ => None,
         }
     }
@@ -474,7 +486,11 @@ impl<W: World> Game<W> {
             Some(p) if self.bank >= p => {
                 self.bank -= p;
                 self.spent += p;
-                self.buildings[b].level += 1;
+                if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
+                    self.thicken(b);
+                } else {
+                    self.buildings[b].level += 1;
+                }
                 true
             }
             _ => false,
@@ -505,7 +521,7 @@ impl<W: World> Game<W> {
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
         let home = if let Kind::Wall { to } = kind { self.wall_home(at, to) } else { (0.0, 0.0) };
-        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home });
+        self.buildings.push(Building { kind, at, hp: GHOST_HP * hp, max_hp: hp, built: 0.0, alive: true, on: true, working: false, crystal, ready: 0, touching: 0, aim: None, dense: 0, drew: 0.0, level: 1, home, door: false });
         if b.raise <= 0.0 {
             let k = self.buildings.len() - 1;
             self.raise(k, 1.0);
@@ -530,10 +546,8 @@ impl<W: World> Game<W> {
         let built = (b.built + amount).min(1.0);
         self.buildings[k].built = built;
         self.buildings[k].hp = (b.hp + (1.0 - GHOST_HP) * b.max_hp * (built - b.built)).min(b.max_hp);
-        if built >= 1.0 {
-            if let Kind::Wall { to } = b.kind {
-                self.wall_cells(b.at, to);
-            }
+        if built >= 1.0 && matches!(b.kind, Kind::Wall { .. }) {
+            self.wall_bands(k);
         }
     }
 
@@ -581,9 +595,15 @@ impl<W: World> Game<W> {
 
     fn nearest_building(&self, p: (f32, f32), keep: impl Fn(&Building) -> bool) -> Option<usize> {
         let r = (self.rules.build.touch + 1.0) * self.s();
+        let ww = self.rules.wall_width * self.s();
         let d = |bd: &Building| {
             let q = match bd.kind {
-                Kind::Wall { to } => super::paths::nearest_on(bd.at, to, p),
+                // A thick wall (`doors`) from its line to its last band.
+                Kind::Wall { to } => {
+                    let o = ((p.0 - bd.at.0) * bd.home.0 + (p.1 - bd.at.1) * bd.home.1).clamp(0.0, f32::from(bd.level.max(1) - 1) * ww);
+                    let n = (bd.home.0 * o, bd.home.1 * o);
+                    super::paths::nearest_on((bd.at.0 + n.0, bd.at.1 + n.1), (to.0 + n.0, to.1 + n.1), p)
+                }
                 _ => bd.at,
             };
             (q.0 - p.0).hypot(q.1 - p.1)
@@ -618,6 +638,15 @@ impl<W: World> Game<W> {
         }
     }
 
+    /// Whether a turret's shell clears the line from `a` to `b`: as
+    /// `clear_line`, but over built walls (`World::wall_cell`, standing or
+    /// rubble), so a turret behind its own wall fires over it at the slime
+    /// outside (`squad::over_wall`, the frame's twin). Rock still blocks.
+    pub fn lob_line(&self, a: (f32, f32), b: (f32, f32)) -> bool {
+        let (w, h) = self.world.size();
+        crate::mould::squad::path(w, h, a, b).into_iter().all(|i| self.world.wall_cell(i as usize) || self.world.clear((i as usize % w) as f32 + 0.5, (i as usize / w) as f32 + 0.5))
+    }
+
     /// The buildings' turn before the frame: their units (and a turret's
     /// shot) into the frame, a lure's food out of the bank.
     pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>) {
@@ -644,12 +673,18 @@ impl<W: World> Game<W> {
             match bd.kind {
                 Kind::Turret => {
                     u.sight = b.turret_range * sc;
+                    // A turret sees and fires over walls (`UnitIn::over`,
+                    // `lob_line`); a soldier's gun does not (owner,
+                    // 2026-11-16 19:50Z: "turrets can fire over walls,
+                    // lobbed fire goes over walls, but regular guns shots
+                    // do not"). Its shell still stops at rock.
+                    u.over = b.turret_over;
                     if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
                         if let Some(aim) = bd.aim {
                             let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
                             let d = dx.hypot(dy).max(0.1);
                             let reach = b.turret_range * sc;
-                            if d <= reach + 4.0 && self.clear_line(bd.at, aim) {
+                            if d <= reach + 4.0 && if b.turret_over { self.lob_line(bd.at, aim) } else { self.clear_line(bd.at, aim) } {
                                 // From the barrel tip, not the turret's middle
                                 // (art director, 11-14: the drawn head's barrels
                                 // reach 1.7 touch radii), capped at half the way
@@ -658,7 +693,7 @@ impl<W: World> Game<W> {
                                 // which covers the barrel.
                                 let m = (TURRET_MUZZLE * b.touch * sc).min(0.5 * d);
                                 let from = (bd.at.0 + dx / d * m, bd.at.1 + dy / d * m);
-                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike });
+                                shots.push(ShotIn { from, to: (bd.at.0 + dx / d * reach, bd.at.1 + dy / d * reach), r: strike, over: b.turret_over });
                                 self.buildings[k].ready = t + self.secs(b.turret_every);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -731,9 +766,18 @@ impl<W: World> Game<W> {
                 let bd = &mut self.buildings[k];
                 bd.working = true;
                 bd.drew = food;
-                self.bank += food;
-                self.harvested += food;
-                self.pumped += food;
+                if let Some(i) = self.leech_on(k) {
+                    // A leech mini-boss on the rig (2026-11-16): the pump
+                    // still drains the crystal, but its pay goes into the
+                    // leech, and back to the bank only if it is broken
+                    // (`Game::time_bosses`).
+                    self.bosses.live[i].stolen += food;
+                    self.bosses.stolen += food;
+                } else {
+                    self.bank += food;
+                    self.harvested += food;
+                    self.pumped += food;
+                }
                 // The crystal's working spot still lights under the rig
                 // (`Game::last_takes`), with the charge the food stands for.
                 self.last_takes.push(super::Take { by: None, crystal: c, at: self.buildings[k].at, took: food * r.charge });
@@ -745,8 +789,11 @@ impl<W: World> Game<W> {
             self.bank -= take;
             self.stolen += take;
         }
+        // A leech keeps the rig it feeds on standing: it wants the pay,
+        // so a pump under one is the player's to win back, not lost.
+        let leeched = kind == Kind::Pump && self.leech_on(k).is_some();
         let bd = &mut self.buildings[k];
-        if u.touching > 0 {
+        if u.touching > 0 && !leeched {
             // By mass (`BuildRules::drain` 1 x mass, #174): a building outlasts a thick body for a while; walls go "slowly" (owner, 11-11 15:24Z).
             bd.hp -= r.build.drain * r.mass * u.touching as f32 * dt;
             if bd.hp <= 0.0 {
@@ -770,6 +817,13 @@ impl<W: World> Game<W> {
     pub fn turret_shots(&self) -> impl Iterator<Item = &Shot> {
         self.last_shots.iter().filter(|s| s.by.is_none())
     }
+}
+
+/// Whether the cell at `p` is a built wall's (`World::wall_cell`): what
+/// a turret's bullet flies over (`Bullet::over`).
+pub fn wall_at<W: World>(world: &W, p: (f32, f32)) -> bool {
+    let (w, h) = world.size();
+    p.0 >= 0.0 && p.1 >= 0.0 && (p.0 as usize) < w && (p.1 as usize) < h && world.wall_cell(p.1 as usize * w + p.0 as usize)
 }
 
 #[cfg(test)]
@@ -868,6 +922,59 @@ mod tests {
         assert!(b.hp < b.max_hp || !b.alive, "the mould wore it: {} of {}", b.hp, b.max_hp);
         // Shots cost what a soldier's do.
         assert!((g.spent - g.rules.build.turret_cost - g.shots as f32 * g.rules.price).abs() < 1e-2);
+    }
+
+    /// **A turret fires over its own wall; a rifle does not** (owner,
+    /// 2026-11-16 19:50Z: "turrets can fire over walls, lobbed fire goes
+    /// over walls, but regular guns shots do not"). A box of wall round a
+    /// spot by the core: a turret in it hits slime outside, over the wall;
+    /// a soldier in it fires, but never a shot whose hit is past the wall.
+    #[test]
+    fn a_turret_fires_over_its_own_wall_and_a_rifle_does_not() {
+        let run = |turret: bool| {
+            let mut g = small(3);
+            // Open ground with no mould in the box and the most mould
+            // from 8 to 14 cells out, in the turret's range.
+            let occ = g.world.occupancy().to_vec();
+            let (w, h) = (g.world.w as i32, g.world.h as i32);
+            let around = |p: (i32, i32), r0: i32, r1: i32| -> usize {
+                (-r1..=r1).flat_map(|dy| (-r1..=r1).map(move |dx| (dx, dy))).filter(|&(dx, dy)| (r0 * r0..=r1 * r1).contains(&(dx * dx + dy * dy))).map(|(dx, dy)| (p.0 + dx, p.1 + dy)).filter(|&(x, y)| x >= 0 && y >= 0 && x < w && y < h).map(|(x, y)| occ[(y * w + x) as usize] as usize).sum()
+            };
+            let open = |p: (i32, i32)| (-9..=9).all(|dy| (-9..=9).all(|dx| g.world.open((p.0 + dx) as f32 + 0.5, (p.1 + dy) as f32 + 0.5)));
+            let p = (10..h - 10).step_by(2).flat_map(|y| (10..w - 10).step_by(2).map(move |x| (x, y))).filter(|&p| around(p, 0, 9) == 0 && open(p)).max_by_key(|&p| around(p, 8, 14)).expect("open ground");
+            let at = (p.0 as f32 + 0.5, p.1 as f32 + 0.5);
+            stand(&mut g, at);
+            for k in 0..g.soldiers.len() {
+                g.soldiers[k].stance = if k == 0 && !turret { Stance::Free } else { Stance::HoldFire };
+            }
+            if turret {
+                assert!(g.build(Kind::Turret, at));
+            }
+            let r = 6.0;
+            for (a, b) in [((-r, -r), (r, -r)), ((r, -r), (r, r)), ((r, r), (-r, r)), ((-r, r), (-r, -r))] {
+                World::build_wall(&mut g.world, (at.0 + a.0, at.1 + a.1), (at.0 + b.0, at.1 + b.1), 2.0);
+            }
+            // A hit outside the box went over its wall.
+            let past = |p: (f32, f32)| (p.0 - at.0).abs().max((p.1 - at.1).abs()) > r + 1.0;
+            let (mut over, mut fired, mut killed) = (0, 0, 0);
+            for _ in 0..(g.rules.tps * 10) {
+                g.step();
+                for s in g.last_shots.iter().filter(|s| s.by == if turret { None } else { Some(0) }) {
+                    fired += s.fired as u32;
+                    if s.hit.is_some_and(past) {
+                        over += 1;
+                        killed += s.killed;
+                    }
+                }
+            }
+            (fired, over, killed)
+        };
+        let (fired, over, killed) = run(true);
+        eprintln!("the turret: {fired} shots, {over} over the wall, {killed} killed");
+        assert!(over > 3 && killed > 0, "the turret: {fired} shots, {over} over the wall, {killed} killed");
+        let (fired, over, _) = run(false);
+        eprintln!("the soldier: {fired} shots, {over} over the wall");
+        assert_eq!(over, 0, "the soldier: {fired} shots, {over} over the wall");
     }
 
     #[test]
