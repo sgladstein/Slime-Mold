@@ -379,7 +379,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 52] = [
+const LOADOUTS: [(&str, &str); 56] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -462,6 +462,12 @@ const LOADOUTS: [(&str, &str); 52] = [
     ("seek", "seek+plain"),
     ("seek-buck", "seek+ammo/plain/buckshot/1/100/100/100/100/1"),
     ("seek-split", "seek+split+blast"),
+    // The Mind bullets (2026-11-16, step D): a status where it hits, no
+    // kill; with a plain bullet beside it, one that kills too.
+    ("blind", "blind"),
+    ("sour", "sour"),
+    ("spin", "spin"),
+    ("multi-blind", "multicast+plain+blind"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -1154,7 +1160,7 @@ impl App {
         // Rule keys (`set=NAME=V`, 11-15, W44) last, over everything above.
         for (k, v) in a.keys.iter().filter_map(|(k, v)| k.strip_prefix(RULE_KEY).map(|k| (k, v))) {
             let v: f32 = v.parse().map_err(|e| format!("set={k}={v}: {e}"))?;
-            if !rules.set(k, v) {
+            if !rules.set(k, v) && !RoundRules::default().set(k, v) {
                 return Err(format!("set={k}: no such rule"));
             }
         }
@@ -1188,7 +1194,12 @@ impl App {
             None => rounds::parse(LOADOUTS[self.round].1).unwrap_or_default(),
         };
         let budget = armed.map_or(RoundRules::default().budget, Run::budget);
-        self.rounds = Rounds::new(gun, RoundRules { budget, ..RoundRules::default() });
+        let mut rr = RoundRules { budget, ..RoundRules::default() };
+        // The round rules' `set=` keys (the Mind bullets', 2026-11-16).
+        for (k, v) in a.keys.iter().filter_map(|(k, v)| k.strip_prefix(RULE_KEY).map(|k| (k, v))) {
+            rr.set(k, v.parse().map_err(|e| format!("set={k}={v}: {e}"))?);
+        }
+        self.rounds = Rounds::new(gun, rr);
         if let Some(v) = &a.ammo {
             let cards = match v.parse::<u32>() {
                 Ok(n) => {
@@ -2091,7 +2102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "set" => {
                 let (name, val) = v.split_once('=').ok_or("set=NAME=VALUE (a rule, such as set=pump_smell=2)")?;
                 let x: f32 = val.parse().map_err(|e| format!("set={name}={val}: {e}"))?;
-                if !Rules::default().set(name, x) {
+                if !Rules::default().set(name, x) && !RoundRules::default().set(name, x) {
                     return Err(format!("set={name}: no such rule").into());
                 }
                 args.keys.push((format!("{RULE_KEY}{name}"), val.to_string()));

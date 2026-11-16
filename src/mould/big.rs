@@ -227,6 +227,53 @@ pub const LIFE_SPORE: u8 = 1;
 pub const LIFE_DORMANT: u8 = 2;
 pub const LIFE_DEAD: u8 = 3;
 
+/// **Mind statuses** (`BigDish::mind`, the gun cards' Mind family,
+/// 2026-11-16): a walker's word holds its kind in the top three bits and
+/// the fine step it runs out at in the low 29 (`MIND_T`), as the engine's
+/// gas words hold theirs (`engine.wgsl`'s `mind_of`). 2^29 fine steps is
+/// days of play; a status that would end across the wrap ends at once.
+/// A blind walker's sensors read nothing but walls, so it walks straight
+/// (into water and fire too) and turns only off a wall, by the plain rule;
+/// a sour one turns toward the lowest reading, as an explorer does; a
+/// spinning one curls `BigParams::spin_curl` radians more each fine step,
+/// after its turn (a spun ring that stops advancing; spinning by turning
+/// harder, x 3 its turn, showed nothing on a vein in 5 s: a walker on its
+/// trail seldom turns). A fourth, Lace (sensing reach x 0.15 to 2.5, for
+/// a finer mesh or thicker cords), changed nothing you could see on a vein
+/// in 10 s and was dropped (`Reports/dead-ends.md`). Every walker takes them,
+/// panicking, surging and raiding ones too (the readings change after
+/// whatever made them; the slime-enemy thread's note, 11-16 22:04Z).
+pub const MIND_BLIND: u32 = 1;
+pub const MIND_SOUR: u32 = 2;
+pub const MIND_SPIN: u32 = 3;
+pub const MIND_T: u32 = (1 << 29) - 1;
+
+/// The status a Mind word holds at fine step `t` (0: none, or run out).
+pub fn mind_kind(word: u32, t: u64) -> u32 {
+    if (t as u32 & MIND_T) < (word & MIND_T) {
+        word >> 29
+    } else {
+        0
+    }
+}
+
+/// A Mind status's change to a walker's three readings, after everything
+/// else made them and before it turns: Blind reads 0, Sour the negative;
+/// a wall (-1e5 or less) stays a wall. x 0 and x -1, so the engine's
+/// `mind_reads` gives the same bits.
+pub fn mind_reads(kind: u32, v: [&mut f32; 3]) {
+    let m = match kind {
+        MIND_BLIND => 0.0,
+        MIND_SOUR => -1.0,
+        _ => return,
+    };
+    for x in v {
+        if *x > -1.0e5 {
+            *x *= m;
+        }
+    }
+}
+
 /// One species' settings (`BigParams::species_sets`): each field means
 /// what the `BigParams` field of the same name means, for that species'
 /// walkers (`keep` for its own trail field).
@@ -417,6 +464,14 @@ pub struct BigParams {
     pub sick_reach: f32,
     pub sick_turn: f32,
     pub sick_seed_r: f32,
+    /// **Mind statuses** (the gun cards' Mind family, 2026-11-16, step D of
+    /// the gun-system review): a walker a Mind bullet struck
+    /// (`BigDish::mind`) senses differently until its status runs out. A
+    /// spinning walker (`MIND_SPIN`) turns `spin_curl` radians more each
+    /// fine step, after its turn, so it circles in place (0: no change;
+    /// each Mind burst sets it, `squad::BurstRules`). Blind and Sour take
+    /// no setting.
+    pub spin_curl: f32,
     /// A sick walker's upkeep is x this (1: sickness costs nothing). The
     /// squad toolkit's germ (`mould::kit`, 2026-11-12): contagion that only
     /// changed steering left no mark by 20 s (`Reports/dead-ends.md`, the
@@ -1438,6 +1493,7 @@ impl BigParams {
             germ_resist: 1.0,
             sick_seed_r: 0.0,
             sick_upkeep: 1.0,
+            spin_curl: 0.0,
             sensor_r: 0,
             species: 0,
             species_avoid: 1.0,
@@ -1790,6 +1846,9 @@ pub struct BigDish {
     /// Fine steps of gas left a walker (`gas`), else empty: while over 0 a
     /// dormant walker is not woken by scent, only by alarm.
     pub gassed: Vec<u16>,
+    /// Each walker's Mind word (`mind`, `MIND_T`), else empty until the
+    /// first Mind bullet.
+    pub mind: Vec<u32>,
     /// Whether a spore in flight was flung by an explosion (`fling`), not
     /// fruited; empty until the first fling. Cleared when it lands.
     pub flung: Vec<bool>,
@@ -2083,6 +2142,7 @@ impl BigDish {
             flora_of: None,
             fire_told: 0,
             gassed: Vec::new(),
+            mind: Vec::new(),
             flung: Vec::new(),
             doomed: Vec::new(),
             spray: (0, 0.0),
@@ -3490,6 +3550,9 @@ impl BigDish {
                     ra *= p.sick_turn;
                 }
             }
+            // A Mind status (`mind`): it changes the readings and the turn
+            // below.
+            let mind = if self.mind.is_empty() { 0 } else { mind_kind(self.mind[k], t) };
             // A cut-off walker panics (`panic`): it runs for its target, by
             // how far each sensor points toward it, `panic` times as fast.
             let haste = self.panic_haste(k);
@@ -3547,7 +3610,8 @@ impl BigDish {
                         _ => -1.0e6,
                     }
                 };
-                let (f, fl, fr) = (read(h), read(h - sa), read(h + sa));
+                let (mut f, mut fl, mut fr) = (read(h), read(h - sa), read(h + sa));
+                mind_reads(mind, [&mut f, &mut fl, &mut fr]);
                 if f > fl && f > fr {
                 } else if f < fl && f < fr {
                     h += if keyed(seed, t, DRAW_TURN, k as u32) & 1 == 0 { ra } else { -ra };
@@ -3603,11 +3667,14 @@ impl BigDish {
                     fl += aim(h - sa);
                     fr += aim(h + sa);
                 }
-                if p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
+                // A blind walker turns by the plain rule alone, off walls.
+                mind_reads(mind, [&mut f, &mut fl, &mut fr]);
+                let blind = mind == MIND_BLIND;
+                if !blind && p.wander > 0.0 && unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x8000_0000)) < p.wander {
                     h = unit(keyed(seed, t, DRAW_WANDER, k as u32 | 0x4000_0000)) * TAU;
-                } else if p.sense_floor > 0.0 && f.max(fl).max(fr) < p.sense_floor {
+                } else if !blind && p.sense_floor > 0.0 && f.max(fl).max(fr) < p.sense_floor {
                     h += if keyed(seed, t, DRAW_WANDER, k as u32) & 1 == 0 { ra } else { -ra };
-                } else if p.chance_exp > 0.0 {
+                } else if !blind && p.chance_exp > 0.0 {
                     let left = keyed(seed, t, DRAW_CHANCE, k as u32) & 1 == 0;
                     let (fe, ge) = (f.max(0.0).powf(p.chance_exp), (if left { fl } else { fr }).max(0.0).powf(p.chance_exp));
                     let turn = if fe + ge > 0.0 { ge / (fe + ge) } else { 0.5 };
@@ -3622,6 +3689,10 @@ impl BigDish {
                 } else if fr < fl {
                     h -= ra;
                 }
+            }
+            // A spinning walker curls after its turn, every step.
+            if mind == MIND_SPIN {
+                h += p.spin_curl;
             }
             if p.lone_step > 0.0 && !body.is_empty() && scared.is_none() {
                 let near = body[here].saturating_sub(1) as f32;
@@ -4375,6 +4446,9 @@ impl BigDish {
             }
             if !self.gassed.is_empty() {
                 self.gassed[b] = 0;
+            }
+            if !self.mind.is_empty() {
+                self.mind[b] = 0;
             }
             if !self.flung.is_empty() {
                 self.flung[b] = false;
@@ -5164,6 +5238,38 @@ impl BigDish {
             }
         }
         n
+    }
+
+    /// **A Mind status** (the gun cards' Mind family, 2026-11-16): every
+    /// living ordinary or dormant walker within `r` fine cells of (`x`,
+    /// `y`, fine cells) takes status `kind` (`MIND_BLIND` to `MIND_SPIN`)
+    /// for `steps` fine steps from now, in place of any it had. Squared, as
+    /// the engine's `mindlay` pass. Returns walkers struck.
+    pub fn mind(&mut self, x: f32, y: f32, r: f32, kind: u32, steps: u16) -> usize {
+        if self.mind.is_empty() {
+            self.mind = vec![0; self.walkers.len()];
+        }
+        let word = kind << 29 | ((self.steps as u32).wrapping_add(steps as u32) & MIND_T);
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let (wx, wy, _) = self.walkers[k];
+            let (dx, dy) = (wx - x, wy - y);
+            let state = self.life.is_empty() || matches!(self.life[k], LIFE_WALKER | LIFE_DORMANT);
+            if self.lives(k) && state && dx * dx + dy * dy <= r * r {
+                self.mind[k] = word;
+                n += 1;
+            }
+        }
+        n
+    }
+
+    /// Walker `k`'s Mind status now (`mind_kind`; 0 none).
+    pub fn mind_of(&self, k: usize) -> u32 {
+        if self.mind.is_empty() {
+            0
+        } else {
+            mind_kind(self.mind[k], self.steps)
+        }
     }
 
     /// Throws walker `k`, which a shot killed, out of the hit as a spray

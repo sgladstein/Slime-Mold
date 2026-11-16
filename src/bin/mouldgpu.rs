@@ -3709,7 +3709,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 25] = [
+        let dishes: [(&str, Settings, Build); 26] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -3813,6 +3813,11 @@ mod tests {
             // land in the tick, a sixteenth about to give up) and the rest
             // take their chances on their slots' steps, a fifth a step.
             ("specks: ordinary walkers break away, run and land", Settings { condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, wither: 0.5, wither_every: 1, wither_lag: 4, energy_flow: 0.05, wall_hp: 0.0, ..grow(w(small(0))) }, walls),
+            // Mind statuses (the gun cards' Mind family, 2026-11-16): on the
+            // panic dish, so panicking walkers take them too, every fifth
+            // walker blind, sour, spinning, run out a step ago, or none
+            // (below), with births in the tick (children start with none).
+            ("mind: blind, sour and spinning walkers", Settings { spin_curl: 0.6, panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -3987,6 +3992,26 @@ mod tests {
                 eprintln!("{name}: lumps of {n0} and {n1} walkers, {leashed} past their leash");
                 assert!(n0 > 3 && n1 > 3 && leashed > 0 && leashed + 4 < members.len(), "{name}: two lumps, some members past the leash and some within it");
             }
+            let minded = name.starts_with("mind");
+            if minded {
+                use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_T};
+                let now = cpu.steps as u32;
+                cpu.mind = (0..cpu.walkers.len())
+                    .map(|k| match k % 5 {
+                        0 => MIND_BLIND << 29 | ((now + 30) & MIND_T),
+                        1 => MIND_SOUR << 29 | ((now + 30) & MIND_T),
+                        2 => MIND_SPIN << 29 | ((now + 30) & MIND_T),
+                        3 => MIND_BLIND << 29 | (now & MIND_T),
+                        _ => 0,
+                    })
+                    .collect();
+                // Every walker fed to breed (as the soil dish's).
+                for k in 0..cpu.walkers.len() {
+                    if cpu.lives(k) {
+                        cpu.energy[k] = 2.0;
+                    }
+                }
+            }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             let (absorbed, condensed, thickened) = (cpu.absorbed, cpu.condensed, cpu.thickened);
             // The walkers that panic in the tick, and where the living were.
@@ -3999,6 +4024,17 @@ mod tests {
             let (broken, bitten, eaten, births) = (cpu.broken, cpu.wall_hits, cpu.eaten, cpu.births);
             let starved = cpu.starved;
             let (moved, off, lt, ls) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            // Mind: every slot's word agrees (children cleared), and the
+            // statuses held through the tick on the walkers that had them.
+            if minded {
+                assert!(e.minds, "{name}: sense reads the Mind words");
+                let gw = e.mind_words();
+                let words_off = (0..n).filter(|&k| gw[k] != cpu.mind[k]).count();
+                let held = (0..n).filter(|&k| cpu.lives(k) && cpu.mind_of(k) != 0).count();
+                let born = cpu.births - births;
+                eprintln!("{name}: {held} walkers with a status after the tick, {born} born, {words_off} words off");
+                assert!(held > n / 10 && born > 0 && words_off == 0, "{name}: statuses hold, children are born and the words agree");
+            }
             // Withering: the same slots die, and every living walker carries
             // the same news (whole numbers, so exactly).
             if news {

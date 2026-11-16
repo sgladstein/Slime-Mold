@@ -68,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (288 words).
-pub const PARAMS_BYTES: usize = 1152;
+/// Bytes in `Params` (292 words).
+pub const PARAMS_BYTES: usize = 1168;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -114,6 +114,11 @@ pub const RAID_AT: usize = 976;
 /// on and three spare words, then each lump's aim, pull, leash
 /// (`Lump::leash_k`), haste, armour, bite and ring, and a spare word.
 pub const LUMP_AT: usize = 1008;
+/// The Mind row (the gun cards' Mind family, 2026-11-16; Params grew from
+/// 1152 to 1168, after the lump rows): whether any walker has had a Mind
+/// status (`Engine::minds`; `sense` reads none before), a spinning
+/// walker's curl a step (`BigParams::spin_curl`), and two spare words.
+pub const MIND_AT: usize = 1152;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -290,6 +295,9 @@ pub struct Settings {
     pub sick_trail: f32,
     pub sick_reach: f32,
     pub sick_turn: f32,
+    /// A spinning walker's curl (`BigParams::spin_curl`, radians, 0 none),
+    /// set by each Mind burst.
+    pub spin_curl: f32,
     /// A sick walker pays this times the upkeep (`BigParams::sick_upkeep`;
     /// 1 costs nothing more).
     pub sick_upkeep: f32,
@@ -597,6 +605,7 @@ impl Settings {
             sick_reach: 1.0,
             sick_turn: 1.0,
             sick_upkeep: 1.0,
+            spin_curl: t.spin_curl,
             seed_at: 4.0,
             seed_r: 40.0,
             species: 0,
@@ -868,6 +877,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "sick_trail" => s.sick_trail = f()?,
         "sick_reach" => s.sick_reach = f()?,
         "sick_turn" => s.sick_turn = f()?,
+        "spin_curl" => s.spin_curl = f()?,
         "sick_upkeep" => s.sick_upkeep = f()?,
         "seed_at" => s.seed_at = f()?,
         "seed_r" => s.seed_r = f()?,
@@ -1034,6 +1044,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         sick_reach: s.sick_reach,
         sick_turn: s.sick_turn,
         sick_upkeep: s.sick_upkeep,
+        spin_curl: s.spin_curl,
         sick_seed_r: if s.seed_at <= 0.0 { s.seed_r / scale as f32 } else { 0.0 },
         sensor_r: s.sensor_r,
         species: s.fields() as u8,
@@ -1304,9 +1315,11 @@ pub const IGNITE: usize = 65;
 pub const LUMPCLEAR: usize = 66;
 pub const LUMPSUM: usize = 67;
 pub const LUMPFORM: usize = 68;
+/// A Mind status stamped (2026-11-16, `Engine::mind_pass`).
+pub const MINDLAY: usize = 69;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 69] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform",
+pub const PASSES: [&str; 70] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay",
 ];
 
 impl Shared {
@@ -1405,6 +1418,10 @@ pub struct Engine {
     /// nothing once it has passed.
     pub gas_at: u64,
     pub gas_until: u64,
+    /// Whether any walker has had a Mind status (`mind_pass`, or a dish
+    /// loaded with one): the Mind row's first word, so `sense` reads the
+    /// words (after the gas's in `news`, `gas_words`) only then.
+    pub minds: bool,
     /// The gas cloud (`lay_gas`): on for good once laid (its keep is sent
     /// and `gasp` runs every tick), the step `calm` must look until, and a
     /// bound on the cloud's top at step `cloud_at`. A dish loaded with a
@@ -1745,6 +1762,7 @@ impl Engine {
             news,
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
+            minds: !d.mind.is_empty(),
             clouded: false,
             cloud_until: 0,
             cloud_top: 0.0,
@@ -1932,6 +1950,7 @@ impl Engine {
         }
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
+        self.minds = !d.mind.is_empty();
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
         self.condenses = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0 || d.p.roam > 0);
         self.dense_walkers = self.grows && (d.p.condense > 0 || d.p.thicken > 0.0);
@@ -2149,6 +2168,8 @@ impl Engine {
         for l in &s.lumps {
             b.extend(u32_bytes(&[l.aim, l.pull.to_bits(), l.leash_k().to_bits(), l.haste.to_bits(), l.armour(), l.bite, l.ring.to_bits(), 0]));
         }
+        assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
+        b.extend(u32_bytes(&[self.minds as u32, s.spin_curl.to_bits(), 0, 0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2713,6 +2734,27 @@ impl Engine {
         }
     }
 
+    /// **A Mind status** (the CPU's `BigDish::mind`, dish cells): every
+    /// living ordinary or dormant walker within `r` of (`x`, `y`) takes
+    /// status `kind` for `steps` fine steps from now (`mindlay`), and
+    /// `sense` reads the Mind words from the next tick on (`minds`).
+    #[allow(clippy::too_many_arguments)]
+    pub fn mind_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, kind: u32, steps: u16) {
+        let k = self.dish.p.scale as f32;
+        self.minds = true;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, kind as f32]));
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.run(shared, &[(MINDLAY, self.n.div_ceil(256))]);
+    }
+
+    /// Each slot's Mind word (the CPU's `BigDish::mind`), read back.
+    pub fn mind_words(&self) -> Vec<u32> {
+        let at = self.gas_at + 4 * (GAS_SLOTS as u64 + self.n as u64);
+        let b = read_back_range(&self.device, &self.queue, &self.news, at, 4 * self.n as u64);
+        b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
+    }
+
     /// The engine's three burst counters as they will stand once the GPU
     /// reaches this point (the walkers struck, gassed and flung: `wstat`
     /// word 3 and the `news` gas words 2 and 3), copied on the GPU into
@@ -3082,8 +3124,14 @@ pub const GAS_SLOTS: usize = GAS_HEAD + 5 * squad::UNITS_MAX;
 /// The sleep gas's buffer a CPU dish starts the GPU's with: a header (zero but words 4 and 5, the cloud's linger and sleep level)
 /// and calm block, then each slot's step its gas runs out at (the dish's
 /// step plus its `gassed`; 0, never, where it has none).
+/// Since 2026-11-16 the Mind words follow, one a slot (`BigDish::mind`,
+/// `engine.wgsl`'s `mind_of`), so the block is `GAS_SLOTS` + 2 x slots.
 pub fn gas_words(d: &BigDish) -> Vec<u32> {
-    let mut w = vec![0u32; GAS_SLOTS + d.walkers.len()];
+    let n = d.walkers.len();
+    let mut w = vec![0u32; GAS_SLOTS + 2 * n];
+    if !d.mind.is_empty() {
+        w[GAS_SLOTS + n..].copy_from_slice(&d.mind);
+    }
     w[4] = d.p.gas_linger as u32;
     w[5] = d.p.gas_sleep.to_bits();
     for (k, &g) in d.gassed.iter().enumerate() {

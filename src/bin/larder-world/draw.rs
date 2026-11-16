@@ -1606,6 +1606,10 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Heave => (Icon::Heave, CardKind::Modifier, format!("Its hit shoves slime back, {:.1}x farther a card.", r.heave)),
         C::Corral => (Icon::Corral, CardKind::Modifier, "Its hit shoves slime toward your nearest turret.".into()),
         C::Pull => (Icon::Pull, CardKind::Modifier, "Its hit drags slime toward the gun.".into()),
+        // The Mind bullets (2026-11-16, step D): a status, no kill.
+        C::Blind => (Icon::Blind, CardKind::Payload, format!("Slime within {:.0} cells is blind for {:.0} s: it walks straight on.", r.mind_r, r.mind_secs)),
+        C::Sour => (Icon::Sour, CardKind::Payload, format!("Slime within {:.0} cells turns from its own trail for {:.0} s.", r.mind_r, r.mind_secs)),
+        C::Spin => (Icon::Spin, CardKind::Payload, format!("Slime within {:.0} cells turns in tight rings for {:.0} s.", r.mind_r, r.mind_secs)),
     }
 }
 
@@ -1774,6 +1778,9 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         // redder than the blast's orange (#225), and the two were hard to
         // tell apart at a front.
         Some(rounds::Card::Bomb) => ([90, 200, 255], [222, 246, 255], [130.0, 210.0, 255.0]),
+        // The Mind bullets (2026-11-16): one rose-magenta family, so a
+        // status shot reads apart from a kill.
+        Some(rounds::Card::Blind | rounds::Card::Sour | rounds::Card::Spin) => ([255, 90, 190], [255, 220, 242], [255.0, 130.0, 210.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }
