@@ -1298,7 +1298,7 @@ mod tests {
     /// The gun range (owner, 11-15 02:55Z: "I need a test environment
     /// built where I can play with the guns and cards and bullets"): every
     /// gun kind owned and one of each rolled on the rack, a bullet of every
-    /// payload and set and every other card on a free shelf that never
+    /// payload and set (the Mind bullets standard only) and every other card on a free shelf that never
     /// sells out, no upgrades; its rows roll again, roll deeper and empty
     /// the gun and the bag. A run has none of that.
     #[test]
@@ -1306,10 +1306,13 @@ mod tests {
         let mut r = Run::range(7);
         assert!(r.guns.iter().map(|g| g.kind).eq(GunKind::ALL) && r.gun_offers.len() == GunKind::ALL.len());
         let others = Card::ALL.iter().filter(|c| c.kind() != Kind::Payload).count();
-        assert_eq!(r.offers.len(), Shell::ALL.len() * Set::ALL.len() + others);
+        // The Mind bullets in the standard set only (2026-11-16, `restock`).
+        let minds = Shell::ALL.iter().filter(|s| s.mind()).count();
+        assert_eq!(r.offers.len(), (Shell::ALL.len() - minds) * Set::ALL.len() + minds + others);
         for shell in Shell::ALL {
             for set in Set::ALL {
-                assert!(r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == shell && a.set == set)), "{shell:?} {set:?}");
+                let on = r.offers.iter().any(|c| matches!(c, Card::Ammo(a) if a.shell == shell && a.set == set));
+                assert_eq!(on, !shell.mind() || set == Set::Standard, "{shell:?} {set:?}");
             }
         }
         assert_eq!(r.offers[0], Card::Ammo(Ammo::standard(Shell::Plain)), "the standard set is exact");
