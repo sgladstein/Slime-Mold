@@ -66,6 +66,9 @@ struct V {
     lumps: array<vec4<f32>, 4>,
     lump_fade: vec4<f32>,
     lump_fill: vec4<f32>,
+    // How far each lump's members' own density sets where its look shows
+    // (`LumpBody::held`: 1 out on its errand, 0 gathering).
+    lump_held: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1488,6 +1491,10 @@ const LUMP_DRINK: f32 = 1.5;
 // its own scale; at 0.5 a cell the cover was 0.98 at 2 members a cell, so
 // a denser body read the same.
 const LUMP_N: f32 = 0.35;
+// The cover over which a held lump's own members carry its look whatever
+// the sheet round them (`lump_here`): 0.2 is 0.08 members a cell, 0.8 is
+// 0.56.
+const LUMP_OWN: vec2<f32> = vec2<f32>(0.2, 0.8);
 // Members a cell (wide) where the core light starts and is full ((0.55,
 // 1.3) in round 1, for a loose 0.5-a-cell body; raised with the clench,
 // so a held body glows where it packs and a lunge's clench lights it).
@@ -1527,8 +1534,17 @@ fn lump_here(x: f32, y: f32, share: f32, wide: f32, flags: u32) -> Lump {
     l.fill = P.lump_fill[bk];
     // By the body's wide Gaussian: by the sharp one the skin's edge
     // changed within a fine cell and drew as stairs at zoom 24.
-    l.share = smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0)) * rem;
     l.cover = 1.0 - exp(-wide / LUMP_N);
+    // A held lump (out on its errand) shows wherever its own members
+    // stand thick enough (`LUMP_OWN`, by their cover), however thick the
+    // sheet they stand in: a leech ringing its pump (mini-boss #396) puts
+    // 123 members in a band 14-18 cells round the pump, about 0.36 a cell
+    // in the thick sheet that grows there, and by its share of the walkers
+    // alone it showed only as dark flecks in a raised gold collar. A
+    // gathering one still seeps through by its share. A stray member (0.1
+    // a cell, cover 0.25) adds nothing.
+    let own = smoothstep(LUMP_OWN.x, LUMP_OWN.y, l.cover) * clamp(P.lump_held[bk], 0.0, 1.0);
+    l.share = max(smoothstep(0.05, 0.7, clamp(share, 0.0, 1.0)), own) * rem;
     // A leech's drink lights the whole of it (`LUMP_DRINK`), wherever its
     // members are, not only where they pack: on its pump it sits under the
     // rig and on the crystal, and only a glow round them showed it there.

@@ -154,3 +154,27 @@ round-3 logs line for line (the view does not touch the walkers).
 - The owner's round-1 letter for the hunter; if B (Ember), the sapper
   needs another look.
 - 1070 frame cost (unchanged passes; one more uniform read a lump cell).
+
+## Round 2b: a held body shows by its own members (2026-11-16 evening)
+
+The mini-boss thread's leech ring (PR #396, my suggestion from round 2): a
+sitting leech holds its 123 members in a band 14-18 cells round its pump
+(10th to 90th percentile), about 0.36 a cell, in the thick sheet that
+grows round a pump. By its share of the walkers there it showed only as
+dark flecks in a raised gold collar (a still at 2:30 on #396's build).
+
+- `LumpBody::held` (0-1; Larder World passes 1 when `lump_looks` bit 3,
+  not gathering, is set): in `lump_here` the share becomes
+  max(share by the ratio, smoothstep(0.2, 0.8, cover) x held)
+  (`LUMP_OWN`), so a body out on its errand shows wherever its own
+  members stand at about 0.1 a cell or more, however thick the sheet.
+  Gathering bodies are unchanged (their colour still seeps through by
+  their share); a stray member adds nothing. Uniform 288 bytes.
+- On film the ringed leech reads as dark slate-blue segments round the
+  rig (ink, lit toward cyan by its take), and a leech crossing the sheet
+  on its way as a dark ink body with lilac specks instead of a brown
+  smudge. Clip: `round2/leech-ring.mp4` on the round-2 page.
+- Test `a_held_lump_shows_where_its_members_stand_thin_in_the_sheet`: one
+  walker in four a member, gathering only tints the gold (blue under
+  green), held it is violet (blue 40 over green), a stray member leaves
+  the far body as it was either way. View tests 17/17 on #396's build.
