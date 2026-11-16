@@ -468,8 +468,10 @@ impl<W: World> Game<W> {
 
     /// The kill box pays (`BuildRules::render_food`): each shot's kills
     /// that landed within a rendering turret's range, into the bank, once
-    /// a frame. Returns the food.
-    pub(super) fn render_pay(&mut self, hits: &[(Option<(f32, f32)>, u32)]) -> f32 {
+    /// a frame, and each cast's where its burst went off (`Rounds::flush`,
+    /// 2026-11-16: before, a blasting kill box paid less than a plain
+    /// one). Returns the food.
+    pub(crate) fn render_pay(&mut self, hits: &[(Option<(f32, f32)>, u32)]) -> f32 {
         let b = self.rules.build;
         if b.render_food <= 0.0 {
             return 0.0;
@@ -658,7 +660,7 @@ impl<W: World> Game<W> {
 
     /// The buildings' turn before the frame: their units (and a turret's
     /// shot) into the frame, a lure's food out of the bank.
-    pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, shooters: &mut Vec<(Option<usize>, u8)>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>) {
+    pub(super) fn building_units(&mut self, units: &mut Vec<UnitIn>, shots: &mut Vec<ShotIn>, shooters: &mut Vec<super::Firer>, who: &mut Vec<Who>, from: &mut Vec<Option<usize>>) {
         let r = self.rules;
         let b = r.build;
         let sc = self.s();
@@ -742,7 +744,7 @@ impl<W: World> Game<W> {
                                     for p in 0..pellets {
                                         let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
                                         shots.push(ShotIn { from, to: (bd.at.0 + a.cos() * far, bd.at.1 + a.sin() * far), r: hit_r, over: b.turret_over });
-                                        shooters.push((None, cast));
+                                        shooters.push((None, cast, Some(k)));
                                     }
                                 }
                                 let every = b.turret_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
@@ -1045,6 +1047,8 @@ mod tests {
                 g.soldiers[k].stance = Stance::HoldFire;
             }
             assert!(g.build(Kind::Turret, at));
+            // It renders (`render_pay`), so the kill box's pay is read too.
+            assert!(g.upgrade(0));
             if let Some(d) = deck {
                 assert!(g.apply(Cmd::Load(TURRET_DECK, Some(Deck::new(&parse(d).unwrap())))));
             }
@@ -1056,12 +1060,18 @@ mod tests {
                 soldiers += g.last_shots.iter().filter(|s| s.by.is_some()).count();
                 rd.after_step(&mut g);
             }
-            (g.shots, carried, rd.cast.iter().sum::<u32>(), soldiers, g.killed)
+            (g.shots, carried, rd.cast.iter().sum::<u32>(), soldiers, g.killed, g.turret_killed, g.rendered)
         };
-        let (shots, carried, cast, soldiers, plain) = run(None);
+        let (shots, carried, cast, soldiers, plain, by_turret, plain_paid) = run(None);
+        assert_eq!(by_turret, plain, "plain: every kill is the turret's");
         assert!(shots > 5 && carried == 0 && cast == 0 && soldiers == 0, "plain: {shots} shots, {carried} carrying, {cast} cast");
-        let (shots, carried, cast, soldiers, killed) = run(Some("blast"));
-        eprintln!("blast turret: {shots} shots, {carried} carrying a cast, {cast} cast, killed {killed} against {plain} plain");
+        let (shots, carried, cast, soldiers, killed, by_turret, paid) = run(Some("blast"));
+        eprintln!("blast turret: {shots} shots, {carried} carrying a cast, {cast} cast, killed {killed} against {plain} plain; rendered {paid:.1} against {plain_paid:.1}");
+        // Its blasts' kills are the turret's (`Rounds::flush`), and they
+        // pay in its render reach, so a blasting kill box pays more than a
+        // plain one (the independent review, 2026-11-16).
+        assert_eq!(by_turret, killed, "blast: every kill is the turret's, its casts' too");
+        assert!(paid > plain_paid, "blast rendered {paid} against {plain_paid}");
         assert!(soldiers == 0 && carried > 5 && cast > 0, "blast: {shots} shots, {carried} carrying, {cast} cast");
         assert!(killed > plain, "a blasting turret kills more: {killed} against {plain}");
         // The command round-trips, so replays keep it.

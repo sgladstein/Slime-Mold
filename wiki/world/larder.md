@@ -333,6 +333,9 @@ Rate cards on every turret. In the shove page's kill box over 10 s, sleep gas
 on the turrets doubled the game's kills and corral raised the turrets' own
 kills from 231 to 427, while a bomb deck flung the slime away from the guns
 and lowered kills ([report](../../Reports/turret-growth-2026-11-16/README.md)).
+Each turret shot records the turret that fired it (`Bullet::turret`), so a
+turret cast's kills count as the turret's, Render pays on cast kills, and
+Pull drags slime toward the turret (step 2a).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,

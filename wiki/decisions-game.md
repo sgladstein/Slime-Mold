@@ -52,6 +52,7 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-16 22:10 | The mortar stays among the turret bodies: its point is a longer range than anything else in the game | "mortar still has a point and the point is a longer range that anything else in the game" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:41 | The turret tech tree lives in the run shop between planets, not as research during a mission | "I lean shop" (to: should the tree also run inside a mission, or only in the run shop?) | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:36, card | Turrets grow both ways: a tech tree unlocks turret bodies (each a different way to deliver a shot, such as a mortar over walls, a sprayer, a fan) and gun cards fill each body's barrel (not a tree alone, not cards alone) | "Both: tree bodies, card barrels" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 19:50 | Turrets see and shoot over walls; lobbed fire (thrown tools) goes over walls; soldiers' gun shots do not (rock and water still block turrets) | "What about turrets can fire over walls, lobbed fire goes over walls, but regular guns shots do not?" | [Larder](world/larder.md), [report](../Reports/walls-2026-11-16/README.md) |

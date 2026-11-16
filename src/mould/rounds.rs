@@ -321,7 +321,7 @@ type Leg = ((f32, f32), (f32, f32));
 /// A bullet that hit slime this step and carries a cast: the soldier
 /// (None: a turret, 2026-11-16), the hit (fine cells), the cast (`Bullet::cast`), the bullet's
 /// heading (a unit vector) and its strike radius (fine cells).
-type Hit = (Option<usize>, (f32, f32), u8, (f32, f32), f32);
+type Hit = (Option<usize>, (f32, f32), u8, (f32, f32), f32, Option<usize>);
 
 /// A squad's own cards (`Squad::deck`; owner 11-14 16:46Z, "The squad owns
 /// the gun"): up to `MAX_SLOTS`, held as a value so a squad, a split half
@@ -803,6 +803,8 @@ struct Pending {
     dir: (f32, f32),
     /// Tick it goes off by (Delay) or gives up waiting and goes off (Thick).
     due: u64,
+    /// A turret's: its kills are the turrets' (`Game::turret_killed`).
+    turret: bool,
 }
 
 /// One burst as the window or a page draws it.
@@ -856,6 +858,11 @@ pub struct Rounds {
     /// This step's payload and shove bursts, run as one batch at its end
     /// (`World::bursts`; `Rounds::flush`), with what each counts for.
     queued: Vec<(Burst, BurstRules, Due)>,
+    /// Of `queued`, those a turret's cast laid (`Game::turret_killed`).
+    queued_turret: Vec<bool>,
+    /// The casts going off now are a turret's (`after_step`), so `fire`
+    /// marks their bursts in `queued_turret`.
+    by_turret: bool,
     /// Batches run (`flush`) and the bursts in them.
     pub batches: u32,
     pub batched: u32,
@@ -973,23 +980,24 @@ impl Rounds {
             .filter_map(|s| {
                 let (dx, dy) = (s.to.0 - s.from.0, s.to.1 - s.from.1);
                 let d = dx.hypot(dy).max(1e-3);
-                s.hit.map(|h| (s.by, h, s.cast, (dx / d, dy / d), s.r))
+                s.hit.map(|h| (s.by, h, s.cast, (dx / d, dy / d), s.r, s.turret))
             })
             .collect();
         // A turret's shot (`by` None) casts from the turrets' deck
         // (`Game::turret_deck`, 2026-11-16), in the slot past the squads'.
         by_squad.push(None);
-        for (by, hit, cast, dir, hit_r) in hits {
-            // A bullet flies on when its soldier falls: it still casts.
-            let (q, k) = match by {
+        for (by, hit, cast, dir, hit_r, turret) in hits {
+            // A bullet flies on when its soldier falls: it still casts. Its
+            // gun is where a Pull drags toward: the soldier, or the turret
+            // that fired it (`Shot::turret`).
+            let (q, gun) = match by {
                 Some(k) => match g.soldiers.get(k) {
-                    Some(s) => (s.squad as usize, k),
+                    Some(s) => (s.squad as usize, Some((s.x, s.y))),
                     None => continue,
                 },
-                // No soldier: a Pull on a turret's shot finds no gun to
-                // drag toward and shoves on along its line (`shove`).
-                None => (g.squads.len(), usize::MAX),
+                None => (g.squads.len(), turret.and_then(|t| g.buildings.get(t)).map(|b| b.at)),
             };
+            self.by_turret = by.is_none();
             if q >= by_squad.len() {
                 continue;
             }
@@ -999,7 +1007,7 @@ impl Rounds {
             // any bullet with a shove card.
             let shape = c.ammo.set.shape();
             if shape.shove > 0.0 || c.heave > 0 || c.herd.is_some() {
-                self.shove(g, hit, dir, hit_r, shape, &c, k);
+                self.shove(g, hit, dir, hit_r, shape, &c, gun);
             }
             // A plain bullet's strike was all it had (`Game::step`).
             let Some(sl) = slot(c.payload) else { continue };
@@ -1014,12 +1022,13 @@ impl Rounds {
                             self.dropped += 1;
                         } else {
                             let secs = if tr == Card::Delay { self.rules.delay_secs } else { self.rules.thick_secs };
-                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64 });
+                            self.pending.push(Pending { cast: c, at: hit, dir, due: t + (secs * tps as f32).round() as u64, turret: by.is_none() });
                         }
                     }
                 }
             }
         }
+        self.by_turret = false;
         self.flush(g);
         if self.pending.is_empty() {
             return;
@@ -1038,7 +1047,9 @@ impl Rounds {
             !fire
         });
         for p in go {
+            self.by_turret = p.turret;
             self.fire(g, &p.cast, p.at, Some(p.dir));
+            self.by_turret = false;
         }
         self.flush(g);
     }
@@ -1053,12 +1064,25 @@ impl Rounds {
             return;
         }
         let q = std::mem::take(&mut self.queued);
+        let tur = std::mem::take(&mut self.queued_turret);
         let list: Vec<(Burst, BurstRules)> = q.iter().map(|&(b, k, _)| (b, k)).collect();
         let outs = g.world.bursts(&list);
         self.batches += 1;
         self.batched += q.len() as u32;
-        for ((_, _, due), out) in q.iter().zip(outs) {
+        let sc = g.world.scale();
+        let mut kills = Vec::new();
+        for (j, ((b, _, due), out)) in q.iter().zip(outs).enumerate() {
             let (killed, flung) = (out.killed as usize, out.flung as usize);
+            // A turret's cast kills are the turrets' (they were counted as
+            // the soldiers' until the independent review, 2026-11-16), and
+            // every cast's kills in a rendering turret's reach pay as a
+            // shot's do (`Game::render_pay`, "whoever fired").
+            if tur.get(j).copied().unwrap_or(false) {
+                g.turret_killed += out.killed;
+            }
+            if out.killed > 0 {
+                kills.push((Some((b.at.0 * sc, b.at.1 * sc)), out.killed));
+            }
             self.killed += killed;
             self.flung += flung;
             self.gassed += out.gassed as usize;
@@ -1071,6 +1095,7 @@ impl Rounds {
                 Due::Shove => self.shoved += flung,
             }
         }
+        g.render_pay(&kills);
     }
 
     /// Every cast of the round at once at `at` (fine cells), free and with
@@ -1155,11 +1180,11 @@ impl Rounds {
     /// (`squad::Burst::push`): every walker in the disc of that reach round
     /// the hit flies one heading: straight on along the bullet's line, or
     /// with `Corral` toward the nearest turret within `corral_reach` of the
-    /// hit (none: straight on), with `Pull` toward the shooter `k`. A slug
+    /// hit (none: straight on), with `Pull` toward the gun that fired (`gun`: the soldier, or the turret). A slug
     /// with no `Corral` or `Pull` keeps its own throw out from behind the
     /// hit (step A), farther with each `Heave`.
     #[allow(clippy::too_many_arguments)]
-    fn shove<W: World>(&mut self, g: &mut Game<W>, hit: (f32, f32), dir: (f32, f32), r: f32, shape: super::bullets::Shape, c: &Cast, k: usize) {
+    fn shove<W: World>(&mut self, g: &mut Game<W>, hit: (f32, f32), dir: (f32, f32), r: f32, shape: super::bullets::Shape, c: &Cast, gun: Option<(f32, f32)>) {
         let s = g.world.scale();
         let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
         let kr = BurstRules { fling_speed: self.rules.fling_speed, ..burst_rules(&self.rules.kit, fine) };
@@ -1169,7 +1194,7 @@ impl Rounds {
         let steps = (secs * h * fine).round().clamp(1.0, u16::MAX as f32) as u16;
         let reach = (1.0 + shove * h) * r;
         let toward = match c.herd {
-            Some(Card::Pull) => g.soldiers.get(k).map(|s| (s.x, s.y)),
+            Some(Card::Pull) => gun,
             Some(Card::Corral) => {
                 let far = rr.corral_reach * s;
                 g.buildings.iter().filter(|b| b.up() && b.kind == super::larder_world::Kind::Turret).map(|b| b.at).filter(|t| (t.0 - hit.0).hypot(t.1 - hit.1) <= far).min_by(|a, b| (a.0 - hit.0).hypot(a.1 - hit.1).total_cmp(&(b.0 - hit.0).hypot(b.1 - hit.1)))
@@ -1215,6 +1240,7 @@ impl Rounds {
         }
         self.shoves += 1;
         self.queued.push((b, kr, Due::Shove));
+        self.queued_turret.push(self.by_turret);
     }
 
     /// Casts `c` at `at` (fine cells), from a bullet heading `dir` (None:
@@ -1245,6 +1271,7 @@ impl Rounds {
             let i = self.pops.len();
             for p in std::iter::once(burst).chain(throw) {
                 self.queued.push((p, k, Due::Pop(i)));
+                self.queued_turret.push(self.by_turret);
             }
             self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed: 0, flung: 0 });
         }
@@ -1666,6 +1693,25 @@ mod tests {
     /// A plain bullet of `set` at standard numbers: only its shape differs.
     fn plain(set: Set) -> Card {
         Card::Ammo(Ammo { set, ..Ammo::standard(Shell::Plain) })
+    }
+
+    /// **A Pull on a turret's shot drags toward that turret** (2026-11-16,
+    /// the independent review: with no shooter id it shoved away along the
+    /// shot's line): the push heads from the hit to the gun it is given.
+    #[test]
+    fn a_pull_heads_for_the_gun_that_fired() {
+        let mut g = game(1);
+        let mut rd = Rounds::new(Vec::new(), RoundRules::default());
+        let c = casts(&parse("pull+plain").unwrap())[0];
+        let sc = g.world.scale();
+        let hit = (40.0 * sc, 40.0 * sc);
+        // A turret 30 cells straight "down" from the hit, the shot flying
+        // across: the pull must head for the turret, not along the shot.
+        let gun = (40.0 * sc, 70.0 * sc);
+        rd.shove(&mut g, hit, (1.0, 0.0), 2.0, c.ammo.set.shape(), &c, Some(gun));
+        let a = rd.queued.first().and_then(|q| q.0.push).expect("a push");
+        assert!((a - std::f32::consts::FRAC_PI_2).abs() < 1e-3, "heading {a}");
+        assert_eq!(rd.queued_turret, vec![false]);
     }
 
     fn attacking(seed: u64) -> Game<BigDish> {

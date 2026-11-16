@@ -189,6 +189,8 @@ pub struct Shot {
     pub killed: u32,
     /// The soldier that fired it (None: a turret).
     pub by: Option<usize>,
+    /// The turret that fired it (`Game::buildings` index), if one did.
+    pub turret: Option<usize>,
     /// Fired this frame (a bullet's first leg, or an instant ray): the
     /// muzzle flash and the gunshot's sound; later legs are flight.
     pub fired: bool,
@@ -213,9 +215,17 @@ pub struct Take {
     pub took: f32,
 }
 
-/// A leg's shooter (None: a turret), whether it was fired this frame, and
-/// the cast it carries (`Bullet::cast`).
-type LegBy = (Option<usize>, bool, u8);
+/// A leg's shooter (None: a turret), whether it was fired this frame, the
+/// cast it carries (`Bullet::cast`) and the turret that fired it
+/// (`Bullet::turret`).
+type LegBy = (Option<usize>, bool, u8, Option<usize>);
+
+/// Who fires a shot this frame: the soldier (None: not a soldier), the cast
+/// it carries, and the turret (`Game::buildings` index) when a turret
+/// fired it (the turrets thread, 2026-11-16: the independent review's
+/// shooter id, so a turret's cast kills, its Pull and its Render credit
+/// find the turret that fired).
+pub(super) type Firer = (Option<usize>, u8, Option<usize>);
 
 /// A shot in flight (`Rules::bullet_speed`): where it is, its heading, the
 /// fine cells of its range left, its strike radius, who fired it and the
@@ -227,6 +237,9 @@ pub struct Bullet {
     pub left: f32,
     pub r: f32,
     pub by: Option<usize>,
+    /// The turret that fired it (`Game::buildings` index): its cast, Pull
+    /// and kills go to that turret (`Shot::turret`).
+    pub turret: Option<usize>,
     pub fresh: bool,
     /// Slime hits it flies on through (each one strikes as a shot does).
     pub pierce: u8,

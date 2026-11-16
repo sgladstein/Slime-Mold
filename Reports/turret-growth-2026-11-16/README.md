@@ -131,3 +131,25 @@ once a step; turret aim ignoring ammo spread is now documented. Left for
 step 2: the shared bag, slots and an armory entry; a shooter id in place of
 `by` None, which also fixes cast-kill credit, Render on casts and Pull
 toward the firing turret; and timing Range cards on the 1070.
+
+## Step 2a: each shot knows which turret fired it (2026-11-16)
+
+The review's shooter id, with the gun-card thread's OK (it owns
+`shots.rs` and `rounds.rs` and had nothing in flight after #399).
+
+- `Bullet::turret`, `Shot::turret` and the release carry the firing turret's
+  `Game::buildings` index; the frame's shooters are `Firer` (soldier, cast,
+  turret). `by` still means the soldier.
+- **Cast kills are the turrets'.** `Rounds::flush` adds a turret cast's kills
+  (shots, lodged Delay/Thick casts, shoves) to `Game::turret_killed`, so the
+  `fort` line's soldier kills (killed - turret - fire) no longer book them
+  to the squad.
+- **Render pays on casts.** Every cast's kills in a rendering turret's reach
+  pay as a shot's do ("whoever fired", `Game::render_pay`), soldiers' casts
+  included.
+- **Pull drags toward the gun that fired**: the soldier, or the turret
+  (`Rounds::shove` takes the gun's position).
+
+Tests: `turrets_fire_the_turret_deck` now also has every kill of a blasting
+turret counted as the turret's (687 of 687) and its render paying 171.8 food
+against 76.8 for a plain one in 10 s; `a_pull_heads_for_the_gun_that_fired`.
