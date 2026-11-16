@@ -75,6 +75,9 @@ pub enum Icon {
     Heave,
     Corral,
     Pull,
+    // Multicast (`rounds::Card::Multicast`, 2026-11-16): two bullets side
+    // by side from one shot.
+    Multicast,
 }
 
 impl Icon {
@@ -155,6 +158,8 @@ impl Icon {
             Icon::Corral => &["O12 12 3.5", "FO12 12 1.2", "M1.5 12 L6.5 12", "M4.5 9.5 L7 12 L4.5 14.5", "M22.5 12 L17.5 12", "M19.5 9.5 L17 12 L19.5 14.5", "M12 1.5 L12 6.5", "M12 22.5 L12 17.5"],
             // A hook drawing slime back toward the gun.
             Icon::Pull => &["M21 12 L5 12", "M9 7.5 L4.5 12 L9 16.5", "M21 7 C17 7 15.5 9 15.5 12 C15.5 15 17 17 21 17"],
+            // Two bullets fanning out of one muzzle.
+            Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
     }
@@ -264,7 +269,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull, Multicast] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

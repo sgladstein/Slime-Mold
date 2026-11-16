@@ -1570,6 +1570,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         // The carriers (2026-11-16, step B of the gun-system review).
         C::Trigger => (Icon::Carry, CardKind::Trigger, "It carries the one after it, let out where it hits.".into()),
         C::Expire => (Icon::CarryStop, CardKind::Trigger, "It carries the one after it, let out where it stops.".into()),
+        C::Multicast => (Icon::Multicast, CardKind::Trigger, "It fires the one after it too, in the same shot.".into()),
         // The shove cards (owner 2026-11-16 05:11Z: "corral and push the
         // slime onto areas. Into a kill zone").
         C::Heave => (Icon::Heave, CardKind::Modifier, format!("Its hit shoves slime back, {:.1}x farther a card.", r.heave)),
@@ -1624,10 +1625,20 @@ pub(super) fn gun_cards(round: &[rounds::Card], r: &RoundRules, w: &Rules, next:
         }
     }
     let payload_of = |j: usize| round.iter().filter(|c| c.kind() == rounds::Kind::Payload).nth(j).copied();
-    // The next cast and the casts it carries (`Card::Trigger`, 2026-11-16)
-    // light together: they go out in one shot.
+    // The next cast, the casts it carries (`Card::Trigger`) and those fired
+    // beside it (`Card::Multicast`, 2026-11-16) light together: they go
+    // out in one shot.
     let links = rounds::casts(round);
-    let lit: Vec<usize> = std::iter::successors(next, |&j| links.get(j).and_then(|c| c.child).map(usize::from)).take(rounds::CARRY_DEPTH + 1).collect();
+    let mut lit: Vec<usize> = next.into_iter().collect();
+    let mut k = 0;
+    while k < lit.len() {
+        for j in links.get(lit[k]).into_iter().flat_map(|c| c.child.into_iter().chain(c.with)).map(usize::from) {
+            if !lit.contains(&j) {
+                lit.push(j);
+            }
+        }
+        k += 1;
+    }
     for (i, &c) in round.iter().enumerate() {
         let (icon, kind, mut about) = card_face(c, r, w);
         about = format!("{about} Budget {}.", c.cost());

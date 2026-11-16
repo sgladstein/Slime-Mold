@@ -268,6 +268,9 @@ pub struct BulletMods {
     /// whether it lets it out where it stops without a hit too.
     pub child: [u8; super::rounds::MAX_SLOTS],
     pub expire: [bool; super::rounds::MAX_SLOTS],
+    /// Each cast's cast id fired beside it in the same shot (0 none,
+    /// `rounds::Cast::with`, `Card::Multicast`).
+    pub with: [u8; super::rounds::MAX_SLOTS],
 }
 
 pub struct Game<W: World> {
@@ -286,6 +289,8 @@ pub struct Game<W: World> {
     /// Walkers the turrets' shots killed (shots with no soldier, `Shot::by`
     /// None): the shove cards' kill zone measure (2026-11-16).
     pub turret_killed: u32,
+    /// Casts fired beside another in the same shot (`Card::Multicast`).
+    pub multicast: u32,
     pub walls: u32,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
@@ -498,6 +503,7 @@ impl<W: World> Game<W> {
             killed: 0,
             fire_killed: 0,
             turret_killed: 0,
+            multicast: 0,
             walls: 0,
             buildings: Vec::new(),
             pumped: 0.0,
