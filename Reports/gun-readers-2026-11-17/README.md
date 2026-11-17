@@ -163,6 +163,15 @@ Detonate's kills do.
   reader always pays off another card.
 - **Shatter reads a disc, not "connected to the hit"** as the plan put it:
   a flood along the veins on the GPU is its own pass. The disc is the gas's.
+- **The germ is a dominance check for the next balance pass** (slime-enemy
+  thread's review, 11-17). One germ round took the Fork's one dense body
+  from 24,766 to 7,279 in 10 s: contagion working as built, but too strong
+  for one round sold from planet 4. The levers are the rounds' own germ
+  rules (`Rounds::kit`, so the toolkit's germ dish is untouched), in order:
+  fewer sick seconds past immunity (`sick_secs`, 6, against `immune_secs`,
+  40), a smaller `sick_upkeep` (60, what starves the sick) and a higher
+  `sick_catch` (0.2). Named here, not retuned in the readers' PR; it should
+  not stay the run's default without that retune.
 - The numbers are first guesses: reach 12 and 24, cost 2.
 - Next in step D, per the plan: route, element, force; cut last.
 

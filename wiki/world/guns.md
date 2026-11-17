@@ -218,7 +218,11 @@ card text) and 08:30 (the guns a draw of the game).
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
   gunfire wakes gassed slime before a shatter reads it; the germ alone is a
   plague on one dense body (70% in 10 s), so Detonate mostly makes it
-  sudden.
+  sudden; the germ is a dominance check for the balance pass (levers in
+  the report).
+- **Which card answers which planet**: [gun cards by planet](gun-cards.md)
+  (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
+  and the Trunk; Pull and Thrift answer no planet.
 - Pull stops short but adds no kills where squads on their own fight (the
   slime they shoot is already near). Corral finds turrets only, not a
   marked spot or other buildings.
