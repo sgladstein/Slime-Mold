@@ -386,7 +386,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 60] = [
+const LOADOUTS: [(&str, &str); 62] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -482,6 +482,10 @@ const LOADOUTS: [(&str, &str); 60] = [
     ("detonate", "detonate"),
     ("gas-shatter", "gas+shatter"),
     ("germ-detonate", "germ+detonate"),
+    // The route family (2026-11-17, step D): the flare moves the slime and
+    // kills none; with a blast, every other bullet kills where it went.
+    ("flare", "flare"),
+    ("flare-blast", "flare+blast"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).

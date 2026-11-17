@@ -349,7 +349,8 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
-        // have been the armory's seventh for two rows.
+        // have been the armory's seventh for two rows; so does the flare
+        // (2026-11-17), the route family's payload.
         (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell.special() => "Special bullets",
         (Pick::Offer(_), Face::Card(c)) => match c.kind() {
             rounds::Kind::Payload => "Bullets",

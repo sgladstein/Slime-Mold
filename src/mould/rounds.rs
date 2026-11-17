@@ -175,6 +175,19 @@ pub enum Card {
     /// wider, as the germ's sickness spreads along the veins from its hit;
     /// the germ is this family's mark, so there is no mark card.
     Detonate,
+    /// **The route family** (2026-11-17, step D of the gun-system review,
+    /// its third: "trail, food scent, soldier scent, alarm; the slime
+    /// reroutes"). `Flare` is a payload that kills nothing and lays the
+    /// alarm a strike lays (`squad::Burst::alarm`), wider and stronger,
+    /// and burns: it lays it again every `RoundRules::flare_every` for
+    /// `flare_secs` (`Rounds::burning`). What the slime does with an alarm
+    /// is its tier's own rule: a flinching mould (shape C on planets 1-3,
+    /// `BigParams::flinch`) backs off the flare while it burns, the
+    /// Swarmer floods to it, the Sleeper's crust wakes and rushes it (the
+    /// tiers' decoy, `Reports/mould-tiers-2026-11-11.md`). One shot's
+    /// alarm on a flinching mould is gone in a few fine steps, hence the
+    /// burn.
+    Flare,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -187,11 +200,11 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 31] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate];
+    pub const ALL: [Card; 32] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
@@ -235,6 +248,7 @@ impl Card {
             Card::Spin => "spin",
             Card::Shatter => "shatter",
             Card::Detonate => "detonate",
+            Card::Flare => "flare",
         }
     }
 
@@ -308,6 +322,7 @@ impl Card {
             Card::Spin => "Slime where it hits turns in tight rings.",
             Card::Shatter => "Kills sleeping slime where it hits.",
             Card::Detonate => "Kills sick slime where it hits.",
+            Card::Flare => "Burns where it hits, alarming slime; kills none.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -330,6 +345,8 @@ impl Card {
             Card::Blind | Card::Sour | Card::Spin => 2,
             // Kills only what another card set up, which paid for it.
             Card::Shatter | Card::Detonate => 2,
+            // Kills nothing; moves the slime, as the Mind bullets do.
+            Card::Flare => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -342,7 +359,7 @@ impl Card {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin | Card::Shatter => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare => 2,
             Card::Detonate => 3,
             _ => 1,
         }
@@ -551,6 +568,15 @@ pub struct RoundRules {
     /// sickness that has spread from a germ's hit (5). `set=` keys.
     pub read_r: f32,
     pub detonate_r: f32,
+    /// **The route family** (`Card::Flare`, 2026-11-17): a flare's alarm a
+    /// lay (a blast's is the toolkit's `blast_alarm`, 50, and every shot's
+    /// `squad::SHOT_ALARM`, 50) over `flare_r` dish cells (x the bullet's
+    /// area), laid again every `flare_every` seconds for `flare_secs`.
+    /// `set=` keys.
+    pub flare_alarm: f32,
+    pub flare_r: f32,
+    pub flare_secs: f32,
+    pub flare_every: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -591,6 +617,10 @@ impl Default for RoundRules {
             spin_curl: 35.0,
             read_r: 12.0,
             detonate_r: 24.0,
+            flare_alarm: 100.0,
+            flare_r: 16.0,
+            flare_secs: 3.0,
+            flare_every: 0.2,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -615,6 +645,10 @@ impl RoundRules {
             "spin_curl" => &mut self.spin_curl,
             "read_r" => &mut self.read_r,
             "detonate_r" => &mut self.detonate_r,
+            "flare_alarm" => &mut self.flare_alarm,
+            "flare_r" => &mut self.flare_r,
+            "flare_secs" => &mut self.flare_secs,
+            "flare_every" => &mut self.flare_every,
             _ => return false,
         };
         *r = v;
@@ -694,7 +728,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate => {
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
                 multis.push(multi);
@@ -840,6 +874,8 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Spin => mind(big::MIND_SPIN),
         Card::Shatter => Burst { r: r.read_r * f, read: big::READ_SLEEP, ..none },
         Card::Detonate => Burst { r: r.detonate_r * f, read: big::READ_SICK, ..none },
+        // No kill (`r` 0): the alarm alone, unless Quiet took it.
+        Card::Flare => Burst { alarm: if c.quiet { 0.0 } else { r.flare_alarm }, alarm_r: r.flare_r * f, ..none },
         _ => return Vec::new(),
     };
     if !c.scatter {
@@ -903,6 +939,15 @@ struct Pending {
     turret: bool,
 }
 
+/// A burning flare (`Card::Flare`, 2026-11-17): its alarm burst, the tick
+/// it lays it again and the tick it goes out.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Burn {
+    burst: Burst,
+    next: u64,
+    out: u64,
+}
+
 /// One burst as the window or a page draws it.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Pop {
@@ -927,11 +972,13 @@ pub struct Rounds {
     pub round: Vec<Card>,
     casts: Vec<Cast>,
     pending: Vec<Pending>,
+    /// Flares still burning (`Card::Flare`), at most `PENDING_MAX`.
+    burning: Vec<Burn>,
     /// Casts by payload (blast, gas, germ, bomb, the Mind bullets
-    /// together and the readers together, since 2026-11-16), walkers killed
-    /// by rounds, walkers flung by bombs, and casts dropped at
-    /// `PENDING_MAX`.
-    pub cast: [u32; 6],
+    /// together and the readers together, since 2026-11-16, and the flare,
+    /// 11-17), walkers killed by rounds, walkers flung by bombs, and casts
+    /// dropped at `PENDING_MAX` (lodged casts and burning flares each).
+    pub cast: [u32; 7],
     pub killed: usize,
     pub flung: usize,
     pub dropped: u32,
@@ -972,6 +1019,8 @@ pub struct Rounds {
 enum Due {
     Pop(usize),
     Shove,
+    /// A burning flare's lay again: it kills nothing, so counts nothing.
+    Burn,
 }
 
 /// A payload's place in `Rounds::cast`; plain bullets are not counted.
@@ -983,6 +1032,7 @@ fn slot(p: Card) -> Option<usize> {
         Card::Bomb => Some(3),
         Card::Blind | Card::Sour | Card::Spin => Some(4),
         Card::Shatter | Card::Detonate => Some(5),
+        Card::Flare => Some(6),
         _ => None,
     }
 }
@@ -1005,6 +1055,39 @@ impl Rounds {
     /// join late still flies them from the next shot).
     pub fn arm<W: World>(&self, g: &mut Game<W>) {
         g.bullet_mods = flight(&self.round);
+    }
+
+    /// Flares burning: where (dish cells), their reach (dish cells) and
+    /// the ticks left.
+    pub fn burning(&self, now: u64) -> impl Iterator<Item = ((f32, f32), f32, u64)> + '_ {
+        self.burning.iter().map(move |b| (b.burst.at, b.burst.alarm_r, b.out.saturating_sub(now)))
+    }
+
+    /// Each burning flare lays its alarm again when it is due
+    /// (`RoundRules::flare_every`), into this step's batch, and goes out
+    /// at its end (`flare_secs`).
+    fn burn<W: World>(&mut self, g: &mut Game<W>) {
+        if self.burning.is_empty() {
+            return;
+        }
+        let t = g.world.ticks();
+        let every = ((self.rules.flare_every * g.rules.tps as f32).round() as u64).max(1);
+        let k = self.rules.burst_rules(g.rules.tps as f32 * g.world.fine_steps() as f32);
+        let mut lays = Vec::new();
+        self.burning.retain_mut(|b| {
+            if t >= b.out {
+                return false;
+            }
+            if t >= b.next {
+                lays.push(b.burst);
+                b.next += every;
+            }
+            true
+        });
+        for b in lays {
+            self.queued.push((b, k, Due::Burn));
+            self.queued_turret.push(false);
+        }
     }
 
     /// Lodged casts waiting.
@@ -1129,6 +1212,7 @@ impl Rounds {
             }
         }
         self.by_turret = false;
+        self.burn(g);
         self.flush(g);
         if self.pending.is_empty() {
             return;
@@ -1193,6 +1277,7 @@ impl Rounds {
                     self.pops[i].flung += flung;
                 }
                 Due::Shove => self.shoved += flung,
+                Due::Burn => {}
             }
         }
         g.render_pay(&kills);
@@ -1388,6 +1473,16 @@ impl Rounds {
                 self.queued_turret.push(self.by_turret);
             }
             self.pops.push(Pop { burst, throw, payload: c.payload, tick: t, killed: 0, flung: 0 });
+            // A flare burns on (`burn`), its first lay this one.
+            if c.payload == Card::Flare && burst.alarm > 0.0 {
+                if self.burning.len() >= PENDING_MAX {
+                    self.dropped += 1;
+                } else {
+                    let every = ((self.rules.flare_every * g.rules.tps as f32).round() as u64).max(1);
+                    let out = t + (self.rules.flare_secs * g.rules.tps as f32).round() as u64;
+                    self.burning.push(Burn { burst, next: t + every, out });
+                }
+            }
         }
     }
 }
@@ -1478,6 +1573,97 @@ mod tests {
         assert!(gassed > 50 && killed == gassed && cast[1] == 1 && cast[5] == 1, "the shatter takes the gassed: {gassed}, {killed}");
     }
 
+    /// **The route family** (2026-11-17, step D): a flare is a payload
+    /// that kills nothing and lays the alarm (`flare_alarm` over
+    /// `flare_r`, wide by `Wide`; none when Quiet); it counts in its own
+    /// slot and burns, laying it again every `flare_every` until
+    /// `flare_secs` are out.
+    #[test]
+    fn a_flare_burns_its_alarm_and_kills_nothing() {
+        let r = RoundRules::default();
+        let c = Card::Flare;
+        assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier()), (Kind::Payload, "flare".to_string(), Some(6), 2, 2));
+        let b = bursts(&casts(&parse("wide+flare").unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
+        assert_eq!(b.len(), 1);
+        assert_eq!((b[0].kill, b[0].r, b[0].alarm, b[0].crater, b[0].at), (false, 0.0, r.flare_alarm, 0, (20.0, 10.0)));
+        assert!((b[0].alarm_r - r.flare_r * r.wide).abs() < 1e-4, "{} wide", b[0].alarm_r);
+        let hush = bursts(&casts(&parse("quiet+flare").unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
+        assert_eq!(hush[0].alarm, 0.0, "a quiet flare alarms nothing");
+        let mut tuned = r;
+        assert!(tuned.set("flare_secs", 1.0) && tuned.set("flare_r", 7.0) && (tuned.flare_secs, tuned.flare_r) == (1.0, 7.0));
+        // The burn on the race world: one cast, then a step at a time.
+        use crate::mould::larder_world::race_world;
+        let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+        for _ in 0..10 {
+            g.step();
+        }
+        let mut rd = Rounds::new(parse("flare").unwrap(), r);
+        let at = (100.0, 100.0);
+        rd.cast_at(&mut g, at);
+        assert_eq!((rd.cast[6], rd.killed, rd.burning(g.world.ticks()).count()), (1, 0, 1));
+        let tps = g.rules.tps as f32;
+        let (every, secs) = ((r.flare_every * tps).round() as u32, (r.flare_secs * tps).round() as u32);
+        let mut lays = 0;
+        for _ in 0..secs + 2 {
+            g.step();
+            let before = rd.batched;
+            rd.after_step(&mut g);
+            lays += rd.batched - before;
+        }
+        eprintln!("a flare over {secs} ticks, every {every}: {lays} lays again");
+        assert_eq!(lays, secs / every - 1 + u32::from(secs % every != 0), "it lays again every {every} ticks until it goes out");
+        assert_eq!((rd.burning(g.world.ticks()).count(), rd.killed), (0, 0), "out, and it killed nothing");
+    }
+
+    /// **A flare moves the slime by its own alarm rule** (the route
+    /// family, 2026-11-17): on the race world warmed 20 s, a flare at the
+    /// edge of the body. A flinching mould (`BigParams::flinch` 0.9, shape
+    /// C's) has fewer walkers within 12 dish cells 2 s later than with no
+    /// flare; a mould that walks to alarm (the Swarmer's `alarm_keep` 0.98,
+    /// `alarm_weight` 3) has more.
+    #[test]
+    fn a_flare_pushes_a_flinching_mould_and_draws_a_swarmer() {
+        use crate::mould::larder_world::race_world;
+        let near = |flare: bool, swarm: bool| {
+            let mut d = race_world(1, 2, 5_000);
+            if swarm {
+                (d.p.alarm_keep, d.p.alarm_weight) = (0.98, 3.0);
+            } else {
+                d.p.flinch = 0.9;
+                d.p = d.p.flinched();
+            }
+            let mut g = Game::new(d, Rules::default(), 1);
+            let tps = g.rules.tps;
+            for _ in 0..20 * tps {
+                g.step();
+            }
+            // Thin slime: of every 25th living walker, the one with
+            // nearest 60 others within 12 dish cells (the same spot with
+            // and without the flare, as the game is the same to here).
+            let w = &g.world;
+            let r = 12.0 * w.scale();
+            let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
+            let around = |p: (f32, f32)| living.iter().filter(|&&k| (w.walkers[k].0 - p.0).hypot(w.walkers[k].1 - p.1) <= r).count();
+            let at = living.iter().step_by(25).map(|&k| (w.walkers[k].0, w.walkers[k].1)).min_by_key(|&p| around(p).abs_diff(60)).unwrap();
+            let mut rd = Rounds::new(parse("flare").unwrap(), RoundRules::default());
+            if flare {
+                rd.cast_at(&mut g, at);
+            }
+            for _ in 0..2 * tps {
+                g.step();
+                rd.after_step(&mut g);
+            }
+            let r = 12.0 * g.world.scale();
+            let w = &g.world;
+            (0..w.walkers.len()).filter(|&k| w.lives(k) && (w.walkers[k].0 - at.0).hypot(w.walkers[k].1 - at.1) <= r).count()
+        };
+        let (calm, flinch) = (near(false, false), near(true, false));
+        let (still, swarm) = (near(false, true), near(true, true));
+        eprintln!("within 12 cells 2 s on: flinching {calm} -> {flinch} with a flare, swarmer {still} -> {swarm}");
+        assert!(flinch * 10 < calm * 9, "a flinching mould backs off a flare: {calm} -> {flinch}");
+        assert!(swarm * 10 > still * 11, "a swarmer floods to it: {still} -> {swarm}");
+    }
+
     #[test]
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
         let r = RoundRules::default();
@@ -1516,7 +1702,7 @@ mod tests {
         }
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
-        assert_eq!(rd.cast, [0; 6], "a trail casts nothing");
+        assert_eq!(rd.cast, [0; 7], "a trail casts nothing");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch

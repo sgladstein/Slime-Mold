@@ -68,10 +68,12 @@ pub enum Shell {
     /// The readers (2026-11-16, `Card::Shatter`, `Detonate`).
     Shatter,
     Detonate,
+    /// The route family's payload (2026-11-17, `Card::Flare`).
+    Flare,
 }
 
 impl Shell {
-    pub const ALL: [Shell; 10] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate];
+    pub const ALL: [Shell; 11] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate, Shell::Flare];
 
     /// The fixed card that is this payload's standard bullet.
     pub fn card(self) -> Card {
@@ -86,6 +88,7 @@ impl Shell {
             Shell::Spin => Card::Spin,
             Shell::Shatter => Card::Shatter,
             Shell::Detonate => Card::Detonate,
+            Shell::Flare => Card::Flare,
         }
     }
 
@@ -100,10 +103,11 @@ impl Shell {
     }
 
     /// A bullet whose work is a rule on the slime (a Mind status, a
-    /// reader's), not its set's numbers: the gun range's armory has these
-    /// in the standard set only, on a tab of their own (`Run::restock`).
+    /// reader's, a flare's alarm), not its set's numbers: the gun range's
+    /// armory has these in the standard set only, on a tab of their own
+    /// (`Run::restock`).
     pub fn special(self) -> bool {
-        self.mind() || self.reader()
+        self.mind() || self.reader() || self == Shell::Flare
     }
 
     pub fn of(c: Card) -> Option<Shell> {
