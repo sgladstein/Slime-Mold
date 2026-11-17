@@ -12,7 +12,7 @@ walkers a small heat-avoid weight: read the fire field like a negative
 scent, so fire becomes a herding tool ... Build Torch as planned, then try
 the heat weight as a flag with one A/B film before Tinder."
 
-Page: [Element Bullets](PAGE_URL) (source in `page/`): the clips with their
+Page: [Element Bullets](https://claude.ai/artifact/E4qdaDUe4Z3rZJ6zo8Fyig) (source in `page/`): the clips with their
 counts and the windows.
 
 Status: **the Torch is built; heat in the sensors is built as a flag, off,
@@ -110,7 +110,10 @@ a fire line and count who crosses.
 (planets 4 and 5). Each plays one game to T (25 and 40 s), then every
 squad loads the variant's deck and the window runs 10 s. Plain is plain
 bullets, torch is torch bullets, blast is blast bullets (cost 3, the kill
-the torch is set against).
+the torch is set against). Run first on this branch, then again after
+merging main with dry slime burning (#420, `fire_dry` on): the same
+counts in every window, and the same film counts; `raw/windows.txt` is the
+second run, with the fire's kills.
 
 | Planet (biome, windows) | Kills: plain / torch / blast | Torch's more kills than plain |
 |---|---|---|
@@ -125,9 +128,11 @@ the torch is set against).
   and less slime in 7 of 9 (p = 0.18 each). Only the first survives a
   Bonferroni correction over the four comparisons (p < 0.0125).
 - **The ground decides it**: on the meadow it took half again as many as
-  plain (350 against 230); on the barrens' sparse scrub and the fen's wet
-  ground it is a plain bullet with a little fire (123 against 117, 18
-  against 11). A torch is a meadow and jungle card, as the plants run.
+  plain (350 against 230), 216 of them by fire; on the barrens' sparse
+  scrub and the fen's wet ground it is a plain bullet with a little fire
+  (123 against 117, 6 by fire; 18 against 11, 11 by fire). A torch is a
+  meadow and jungle card, as the plants run. The blast lights a little
+  too (61 of its 258 on the meadow died by fire).
 - The squads' health and numbers did not change (8 soldiers left in every
   window; health 95-100 on average): the squad hands fight at range, out
   of their own fire.
@@ -142,4 +147,9 @@ the torch is set against).
 
 - `raw/windows.sh`, `raw/windows_table.py`, `raw/windows.txt`,
   `raw/windows-45.txt`: the windows.
-- `raw/film.sh`, `raw/make_clips.py`, `raw/counts.json`: the clips.
+- `raw/film.sh`, `raw/make_clips.py`, `raw/counts.json`: the clips
+  (frames from `larder-world look=DIR map=planet:1:2 hand=idle rounds=plain
+  boom=16,122,Y,torch watch=125,175,12 fire_weight=W` on llvmpipe).
+- `page/index.html`, its clips and `armory-special.png` (`larder-world
+  range=4 "menu=shop@Special bullets@Standard torch"` at 1920x1080, the
+  top 350 lines): the Artifact page's source.
