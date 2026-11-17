@@ -1,368 +1,328 @@
 # Plan: a slime that shapes its world
 
-2026-11-17. Draft 2, for review (draft 1 plus the owner's answers, 01:13Z). Thread: *Review how the game uses its
-simulation*. Owner's steer (2026-11-17 00:45Z): replacing scripted behaviour
-with fields "would be ideal, but I don't want to put a bunch of effort into
-making the game worse"; ideas may go outside the run; **E (the slime builds
-terrain) first, then C (fields that react) and B (faking its signals)**;
-"first we write a detailed plan. Have it reviewed then start to implement."
+2026-11-17. **Draft 3**: draft 2 (the owner's answers of 01:13Z) revised
+after three independent reviews ([game designer](reviews/game-designer.md),
+[artificial-life researcher](reviews/alife-researcher.md),
+[readability](reviews/readability.md); briefs in
+[reviews/prompts.md](reviews/prompts.md)). Thread: *Review how the game uses
+its simulation*. Owner's steer (00:45Z): field-driven over scripted "would
+be ideal, but I don't want to put a bunch of effort into making the game
+worse"; ideas may go outside the run; **the slime building terrain first,
+then reacting fields and faking its signals**; plan, review, then build.
 
-Nothing here is built. Every number is a first guess, to be set by looking.
+Nothing here is built. Numbers are first guesses, set by looking.
 
 ## In one paragraph
 
-Today the player changes the world (walls, pumps, craters, fire) and the
-slime only moves across it. This plan lets the slime change the world back,
-out of its own model: where it lives long it leaves **crust**, ground that
-remembers it, carries it faster and burns; where it lives long *and is being
-shot*, the crust hardens into **bulwarks** that stop rifle fire. Then the
-fields start to **react**: fed slime is wet and will not burn, starving slime
-dries and does; burnt ground is barren; the slime flees fire; gas ignites. Then two **signal** tools work on the food news that runs
-through its body: one that makes a part panic on your timing, one that
-calms a charge. Last, the scripted charges and specks are moved onto
-fields where a side-by-side film shows the field version is no worse.
+The player changes the world (walls, pumps, craters, fire) and the slime
+only moves across it. This plan lets the slime change the world back, out of
+its own model. It gets a **memory of where it was hurt** (the Grudge's scar,
+moved to the GPU) and a **memory of where it lived** (crust, which its
+walkers read, so it returns to old ground). Where it remembers being hurt
+and lives on, it **sets**: walkers there stiffen into a living wall that
+soaks fire and blocks soldiers, and the slime flows through it. Then fields
+**react**: slime cut off from food goes dry and burns where there is fuel,
+crust is fuel, char is ground it can't breed on, fire scares it, gas
+ignites. Then two **signal** tools act on its food news. Last, the scripted
+charges move onto a distance field where a film shows that is no worse.
 
-## What this builds on (checked on main d024480d)
+## What the reviews changed
 
-| Part of the model | Where | Used in play today |
+All three reviews agreed the direction is right and found the same holes.
+
+| Draft 2 | Problem the reviews found | Draft 3 |
 |---|---|---|
-| Walls with health; walkers bite a wall they bump; at 0 it is rubble (wet agar) | `engine.wgsl` `walls` (2092), `build_wall` (2203); `big.rs` `build_wall_hp` (2595), `bite_walls` (2698) | player walls, doors, Thicken, sapper mini-boss |
-| Ground word: crystal bits 0-7, wet 8, wall 9, scent-wall 10, rock 11, soil 12-15, **16-23 kept for mould-made ground**, byte 3 kept for height | `engine.wgsl` 558-600; `Reports/larder-maps-2026-11-11.md` row 8 ("crust", planned, never built) | soil kinds on maps |
-| Soil upkeep: barren ground costs `barren_up` x upkeep | `engine.wgsl` `life` (1243) | maps only; the player can't make barren ground |
-| Plants, fire, char, moisture (moisture fixed from the map) | `plants.rs`; `engine.wgsl` `fire` (3812), `firekill` (3864), `ignite` (3888) | scorch rounds and blasts light plants; fire kills walkers on hot cells; trail >= `fire_damp` 3 doesn't burn |
-| Food news through the body: a feeding walker hears now, cells spread the latest | `engine.wgsl` `ngather` (1335), `nspread`, `nhear`; `life` (1212) withers on old news | wither and panic of cut-off parts |
-| Alarm field (laid by shots and strikes) | `Burst::alarm` (`squad.rs` 200) | flinch on planets 1-3, tiers 4-8 |
-| Soldier smell laid into the food scent | `Rules::smell`, `smell_r` (`rules.rs` 231) | the slime reaches for soldiers |
-| Targets written into the model: panic, surge, raid, roam, lump | `engine.wgsl` `panic_to` (743), `surge_to` (835), `raid_to` (869) | all the run's pressure; raids already walk a distance field |
-| Statuses on walkers (Blind, Sour, Spin) | `BigDish::mind` (`big.rs` 5248), `mindlay` (3914); gun thread | Mind bullets from planet 2 |
+| Crust acts on trail keep and step | Walkers never read it, so memory lasts about 3 s (toy: 2.8 s against 1.1 s); trail keep is self-made clay, which trapped the mould on 15 of 16 seeds | Walkers **sense** crust, as the Grudge senses its scar; its trail keep stays as it is |
+| Crust shown as a glaze | The view hides ground under the slime (`view.wgsl:2318`); no free brightness level is left | A crisp satin **gloss** whose coverage is the crust value, seen where the slime has left; settled by a blind "name the ground" quiz |
+| Bulwarks read the live alarm | The alarm halves in a few fine steps; once-a-second samples are mostly zero | Bulwarks read the **scar** (threat memory), ported to the GPU |
+| Rifle craters wipe crust | E2 then can't form where it is shot (toy: kills don't fall) | Only blasts and fire wipe crust |
+| A bulwark is a WALL cell | Walls are off the agar: walkers are evicted, news is cut, fade flickers | A bulwark is **walkers that set** (a living wall), with a ground bit only for soldiers' paths |
+| Fade "with no walker on it" | The slime lives on its bulwarks, so nothing ever fades | Set walkers wake when the scar fades |
+| Join term for ridges | Self-reinforcement with no inhibitor makes a slab | Dropped; the shape comes from where it was hurt |
+| Energy cost | Doesn't bind at the 50,000-walker cap | Cost in bodies: set walkers neither move nor breed |
+| C1 wets by energy over a minute | Energy pools through the body; dries as the part dies anyway; fire needs fuel | Dryness is the **news age** (no new state, dry 5 s after a cut), sheen drawn from it; burns only on fuel |
+| Barren char stops crossings | Nothing reads it; walkers cross and die | Char forbids births; measured by fill, not crossings |
+| B1 provoke is one stamp | `nhear`'s `atomicMax` (`engine.wgsl:1389`) restores fresh news next step | A timed **deaf** status (a Mind kind) |
+| B2 calm stamps fresh news | `surge_to` never reads news; can delete the main threat | A timed Mind status with a cost; renamed **Still** (`calm` is a pass) |
+| S1 surges follow soldier smell | That smell fades by e every 3 cells, under the crystals' | A **units distance field** (the raid's search, many sources) |
+| `crust_wade` slows soldiers | Owner 11-14: slow ground "might be annoying" | Dropped |
+| 4 paired seeds | Can't pass a sign test (smallest p 0.125) | 8 paired seeds for a deciding measure; 2 x 2 with the rule off |
 
-The gun thread's plan ([gun-system review](../gun-system-review-2026-11-16/README.md),
-*The six families*) already has bullets that **write** fields: Route (road,
-false feast, decoy), Element (wet, dry, igniter, seeder), Body (mark, drain).
-This plan is the other half: **rules in the model that make those writes
-matter and that the slime itself acts on**. Bullets stay the gun thread's.
+Owner rulings the reviews said draft 2 pushed against: sustained fire
+carves a growing hole that doesn't refill while under fire (11-12 04:39Z);
+slow ground might be annoying (11-14 17:29Z); fire must not make wiping out
+the slime easy (11-14). Each is designed around below; the first is a
+question for the owner.
+
+## What this builds on (main 85a1bd14)
+
+| Part of the model | Where | Today |
+|---|---|---|
+| The scar: a slow per-cell memory of hurt, read by the sensors | `big.rs` 1192-1212, 3321-3325 (CPU only) | the Grudge tier, kept out of the run's `LADDER` |
+| Armour: a lump member takes several hits | `engine.wgsl` `armoured` 426-434 | mini-bosses |
+| Mind statuses: a timed word a walker | `big.rs` `mind` 5248; `engine.wgsl` `mindlay` 3914 | Blind, Sour, Spin bullets |
+| Food news through the body | `ngather` 1335, `nspread`, `nhear` 1381-1394 | wither, panic, the ash-grey of cut parts (`view.wgsl` 1107) |
+| The raid's distance field | `big.rs` `raid_field_for` 5492; `raid_dist` | raids walk round walls |
+| Fire through fuel; char | `engine.wgsl` `fire` 3812, `firekill` 3864 | plants burn; slime with trail >= 3 doesn't |
+| Barren soil: upkeep x 3 and no births | `big.rs` 1262-1274 | maps only |
+| Ground word bits 16-23 kept for mould-made ground | `engine.wgsl` 558-600 | unused |
+| Walking maps rebuilt every 30 s | `paths.rs` `PATHS_EVERY` | soldiers' paths |
+
+The gun thread's bullet families (Route, Element, Body, Mind) write fields.
+This plan adds the rules that make those writes matter. Cards stay theirs.
 
 ## Rules every step follows
 
-- **A field, not a goal.** Each rule reads and writes cells. Nothing picks a
-  target cell. Where a step can't avoid one, it says so.
-- **The picture is the data.** Each new field is drawn from its own value
-  through one ramp, with no threshold edge. A look choice goes up as a blind
-  A/B.
-- **Both engines.** CPU `BigDish` and GPU `Engine`, with a twin test (one
-  tick to the bit on llvmpipe, card slack only where atomics race). New
-  per-cell state packs into existing buffers (the `news` words, as plants and
-  Mind do), not new bindings.
-- **A key, then a default.** Each rule has a `gpu::set`/`BigParams` key, so
-  `larder-world set=KEY=V` can film it. It goes on by default once its film
-  is on a page and nothing measured says it harms play (the owner's "defaults
-  on"). The steps in Part S are the exception: they replace something that
-  works, so they need a film the owner has seen.
-- **Look first, then one named measure.** Each step names its deciding look
-  and measure before the run, on paired seeds, with counts beside the film.
-  No census unless a step says why, and then under an hour.
-- **Smoke checks:** idle doesn't win, a planet doesn't end in under a minute,
-  nothing soft-locks (every new obstacle can be broken by something the
-  player has from planet 1).
-- **Frame cost** quoted on the GTX 1070 through the PC runner for anything
-  that runs every step.
+- **A field, not a goal.** Rules read and write cells. Where a step keeps a
+  picked target it says so.
+- **The picture is the data,** crisp at 24 px a cell: a field's value sets a
+  coverage or a material, not a soft glow. Each look gets a blind quiz
+  (shuffled clips, key off the page) at zoom 1, 6, 12 and 24, with a grey
+  frame.
+- **Both engines,** twin-tested; new state packs into existing buffers.
+- **A key, then a default,** after a page. Part S needs the owner's film
+  first.
+- **One named measure on 8 paired seeds,** with the rule-off arm, deaths by
+  cause logged (shot, fire, starve, wither, wade).
+- **Smoke:** idle doesn't win; a planet lasts over a minute; nothing
+  soft-locks (every obstacle can be broken by something planet 1 sells).
+- **Frame cost** on the GTX 1070 through the PC runner.
+
+## Step 0. Threat memory on the GPU
+
+Port the Grudge's scar (scar x `scar_keep` + `scar_gain` x alarm each fine
+step, read by sensors at `scar_weight`) to the GPU, inside the alarm pass.
+It is the input E2 needs, and it puts the Grudge back in the run's ladder at
+planet 6 or later. Twin test; frame cost. **See:** the Grudge on planet 6
+converging where it was shot. Size S-M.
 
 ## Part E: the slime builds
 
 ### E1. Crust: ground that remembers the slime
 
-**Rule.** One value a fine cell, `crust` from 0 to 1, updated once a game
-second (`crust_every`):
+**E1a, the field and its look, no effects.** One value a fine cell, 0 to 1,
+on a once-a-second tick: rises where walkers have stood (by occupancy, one
+walker a cell, with trail over `crust_trail`), falls slowly where none stand
+(half-life about two minutes), wiped by blasts and fire, never by rifle
+craters. Drawn as a crisp satin gloss on the ground whose coverage is the
+crust value, seen where the slime has left. Before building, compute crust
+offline from logged walker positions and look at it beside the frame
+(the readability review's first experiment). Then the blind "name the
+ground" quiz: crust, char, rubble, damp bank, barren.
 
-- rises by `crust_rise` x min(walkers on the cell / `crust_occ`, 1) where
-  the trail is at least `crust_trail` (roughly a minute of steady living
-  fills it: `crust_rise` 1/60);
-- falls by x `crust_keep` a second where no walker stands (half-life about
-  two minutes: 0.994);
-- is wiped by a crater, and becomes char where it burns (C2).
+Expect a footprint: shape C's home is a packed sheet (the ALife probe: 53-60%
+of crusted cells full by 1:30), so crust shows the slime's range and its
+roads off the home plate, not a road map inside it. A hand that pushes the
+slime back shows it; an idle hand won't.
 
-**What crust does** (each its own key, so each is filmed alone):
+**E1b, the effects:**
 
-1. **Memory roads** (`crust_mem`): trail fades slower on crust, keep becomes
-   keep + (1 - keep) x `crust_mem` x crust. A route the slime used keeps a
-   faint trail after the slime is shot off it, so it comes back along the
-   same roads instead of re-exploring. The map remembers the fight.
-2. **Fast ground** (`crust_fast`): a walker steps x (1 + `crust_fast` x
-   crust) on crust. Its old roads become its highways.
-3. **Hard going for soldiers** (`Rules::crust_wade`): soldiers walk slower
-   on crust, as they wade in slime but weaker, so ground the slime held
-   stays hostile after it leaves.
-4. **Fuel** (C2): crust burns like a thin plant cover, so fire can run
-   along the slime's old roads.
+1. **Return to old ground** (`crust_weight`): sensors read crust beside the
+   trail. Film +w and -w: + is territorial, it flows back to where it was;
+   - is a nomad that moves on (close to the Wary tier, a dead end on a
+   census gate, which no longer gates). Deciding: at 2:00 blast half the home
+   away; overlap of cells re-held at +60 s with the old crust, paired
+   against weight 0.
+2. **Fast ground** (`crust_fast`), capped so a step never passes 1.5 (the
+   Sprawler's): `walk` tests only the landing cell, so a longer step could
+   hop a 2-cell wall.
+3. **Fuel**: crust burns, so fire runs along abandoned roads (C2).
 
-**What the player sees.** A dull glaze on the ground under and behind the
-slime, brightest on its oldest roads, fading over minutes after it leaves.
-The glaze is the field. Crust and char and rubble must read apart at zoom
-6 and 14 (the art direction page's palette; blind A/B of two glaze ramps).
+`crust_wade` is dropped (slow ground "might be annoying").
 
-**Play.** Clearing ground is no longer the same as killing what's on it.
-Burning a road or blasting it cuts the slime's highway; leaving it lets the
-slime flow back fast. It gives fire and blasts a job beyond kills, and it
-gives the player a map of where the slime has been.
+### E2. Setting: the slime hardens where it was hurt
 
-**Code.** CPU: `BigDish` gets `crust: Vec<f32>` and a `crust_tick` after
-`life`; trail keep and step read it. GPU: a `crust` pass a thread a cell
-every `crust_every` ticks, the value packed as a word in `news` after the
-plant words; `diffuse` and `walk` read it. Squad: `squads.rs` speed reads it.
-View: the slime-look thread draws it (their lines in `view.wgsl`).
+**Rule.** A walker on crust where the scar is above `set_scar` sets: it
+stops moving, stops breeding, and takes `set_armour` hits to kill (the lump's
+armour count). It wakes when the scar under it falls below `set_wake`, with
+a gap between the two (hysteresis), so it doesn't flicker. A cell holding at
+least `set_block` set walkers gets a ground bit soldiers can't walk through.
+Unset walkers flow through set ones at a slow step (the owner's door ruling,
+mirrored). Nothing new is drawn: set walkers are drawn by their own state, a
+material settled by blind A/B (the readability review: not "dark ridges",
+which read as the player's walls; not bronze, which the owner turned down;
+try translucent amber against the body raised and glossy).
 
-**Deciding look and measure.** Planet 3, seed 1, idle hand, 0-5:00, zoom 6:
-is there a readable map of its roads by 3:00? Then a blast kills a road's
-middle at 3:00: seconds until walkers cross it again and walkers on it at
-+30 s, `crust_mem` 0 against 0.6, 4 paired seeds.
+**Blocking** (owner, 01:13Z: "Both"):
 
-**Cost.** One cheap pass a second (guess under 0.02 ms a frame on the 1070,
-averaged), and one read in diffusion and walk every step (guess 0.02 ms).
+- Shots: set walkers soak hits, so a rifle line on a set rim kills slowly.
+  Sight is not blocked, so soldiers keep firing and the rim always wears
+  down: no soft-lock.
+- Soldiers: the ground bit marks walking maps stale; `steer.rs` stops a
+  soldier at a set cell, never inside one. Blocking soldiers is E2b, behind
+  a key, after a check that no nest door (7-9 dish cells on planets 1-2) can
+  be sealed with planet 1's rifles. Setting starts from planet 3 unless that
+  check passes earlier.
+- Turrets and lobbed throws: as today, they kill set walkers like any other.
 
-**Risk.** Memory roads that never fade freeze the network in place (the
-Reid et al. 2012 idea is the opposite, avoiding old slime). If the slime
-stops exploring, flip the sign as an option (`crust_mem` < 0: old ground
-repels, a nomad slime) and film both.
+**Why it plays.** A squad parked on one spot meets a rim that remembers it.
+Flanking, turrets, throws, fire and blasts each have a reason. It costs the
+slime real bodies (set walkers neither move nor breed), so pressing from two
+sides makes it pay. The headline combo (game designer): set walkers count
+as dry (C1), so they burn on the crust they stand on. Fire answers a dug-in
+slime; the slime answers a static gun line.
 
-### E2. Bulwarks: the slime hardens where it is shot
+**Interactions to film** (from the reviews): the flinch moves walkers off
+the cells being shot (setting needs them there); a leech mini-boss shielded
+by a set ring at a pump; Shove, Blind and Sour statuses on a set rim; mines
+on old roads; turrets against a set slime.
 
-**Rule.** A second value, `hard`, from 0 to 1, on the same slow tick:
+**Deciding measure.** Planet 3, 8 paired seeds, 90 s: 2 x 2 (setting on or
+off x squad stands or moves 40 cells at 45 s), shots fired logged. It works
+if the interaction is right: kills a minute fall for the standing squad with
+setting on, and recover when it moves. Watch for the toy's warning: without
+the crater wipe a slab formed in about 20 s and kills fell five-fold, a fast
+turtle. `set_scar`, `set_armour` and `set_wake` are the dials.
 
-- rises by `bulwark_rise` where crust >= `bulwark_crust` (0.6), at least
-  `bulwark_occ` walkers stand, and the alarm is at least `bulwark_alarm`
-  (it is under fire); and rises faster beside cells already hard
-  (x (1 + `bulwark_join` x mean hard of the 8 around), the termite-pillar
-  feedback, so it builds ridges, not a sheet);
-- costs the walkers on the cell `bulwark_cost` energy a second, so a slime
-  that builds is a slime that doesn't grow;
-- at 1 the cell is a **bulwark**: a wall cell owned by the slime;
-- falls back to crust over `bulwark_fade` seconds with no walker on it.
+**The hole ruling.** The owner ruled (11-12 04:39Z) that sustained fire
+carves a growing hole that doesn't refill while under fire. Setting keeps
+the hole open (killed walkers don't refill it) but toughens its rim, so it
+grows slower. Asked of the owner: toughen while under fire, or only after
+fire stops (the slime fortifies where it was hit, so the next attack at the
+same place meets a wall and a fresh angle carves as today).
 
-**What a bulwark does** (owner, 01:13Z: bulwarks block **both** shots and
-soldiers; the slime walks through its own, as soldiers through doors):
+### Later: E3 tunnels, E4 regrowth
 
-- Stops soldiers' rifle shots like a wall, and takes damage from them as a
-  wall does (shots chip `hard`), so it is cover, not a lock.
-- Turret shells and lobbed devices pass over it (the owner's wall ruling,
-  2026-11-16 19:50Z, applies unchanged), so turrets and throws are the
-  answer to a dug-in slime.
-- The slime walks through its own bulwarks at a slow step, as soldiers walk
-  through their own doors (the door ruling, 2026-11-16 14:24Z, mirrored).
-- Fire burns it back to crust (C2), a blast breaks it at once.
-
-- Soldiers can't walk through it. Built in two PRs inside the step: cover
-  first (E2a), then blocking soldiers (E2b), which needs the walking maps
-  to go stale where a bulwark rises or falls (`paths.rs`, the levelgen
-  thread's lock; maps rebuild every `PATHS_EVERY` 30 s today, so a fresh
-  bulwark must mark its cells' maps stale) and the walls thread's door and
-  side rules to know a wall can be the slime's. Until a map catches up,
-  `steer.rs` must stop a soldier at the bulwark, never inside it.
-
-**What the player sees.** Under sustained fire from one place, the slime's
-face toward the squad thickens into dark ridges within about 30-60 s; shots
-start hitting ridges instead of walkers; the kill count falls. Move the squad
-and the new face is soft. Stop shooting and the ridges sag back to glaze.
-
-**Play.** The slime answers a static firing line, out of the model: alarm
-plus crust plus walkers. A squad parked in one place wins less over time;
-flanking, turrets, throws, fire and blasts each have a reason. It is
-pressure that grows with how you play, not with a timer, and it costs the
-slime food, so pressing it from two sides makes it spend. It also makes
-turrets matter more against a slime that has had time to dig in.
-
-**Deciding look and measure.** Planet 3, squads hand standing at one
-crystal's edge for 90 s, then the same hand moving 40 cells round at 45 s:
-bulwark cells and the share of shots stopped by them over time, kills a
-minute in each half, 4 paired seeds. The step works if the standing hand's
-kills fall and the moving hand's recover.
-
-**Smoke.** Idle: no bulwarks (no alarm). No soft-lock: rifles still chip
-them; a planet never has a crystal the slime can wall off from every
-direction the player can reach (check on planets 1-8, seed 1).
-
-**Cost.** The slow tick plus a wall test in `shots` (already reads the
-ground word). Guess under 0.03 ms.
-
-**Risk.** A turtle slime is the run's old stalemate turned round. The fade,
-the energy cost and the chip are the three dials; film with each.
-
-### E3 and E4, later
-
-- **E3 tunnels.** Hungry walkers pressed against soft rock wear it like a
-  wall, so over a long planet the slime opens new ways through the map
-  toward smelled food. Needs the walking maps to follow ground changes
-  (E2b's work), and the level generator's fairness check to allow it.
-- **E4 old ground regrows.** Spores rest in thick crust and wake near food,
-  so a burned-off area refills unless the crust is burned too. The core that
-  grew back was dropped by the owner's no-king ruling (`Reports/dead-ends.md`,
-  `CoreKind::Regrow`); this is no core, but it must not become one.
+- **E3 tunnels:** soft rock lets scent seep (`wall_scent` above 0), so hungry
+  walkers press and wear it toward food they smell. First a CPU look: fingers
+  toward the crystal, or the whole edge worn?
+- **E4 regrowth:** spores rest in thick crust; must not become the dropped
+  core (no-king ruling).
 
 ## Part C: fields that react
 
-Today the fields barely touch each other (wet ground and reeds stop fire,
-and that is about all). Each rule below joins two fields the player already
-writes. Together they make a table the gun thread's Element bullets and the
-devices can play on.
+| | crust | fire | char | gas | alarm |
+|---|---|---|---|---|---|
+| **Fed slime** | lays, returns to it (E1) | doesn't burn (as today) | can't breed on it (C2) | sleeps (today) | flinches (today) |
+| **Cut-off or set slime** | lays | burns where there is fuel (C1) | can't breed on it | sleeps | flinches |
+| **Fire** | burns it to char (C2) | | leaves it | ignites it (C5) | lays it near the front (C4) |
 
-| | crust | moisture | fire | char | plants | gas | alarm |
-|---|---|---|---|---|---|---|---|
-| **fed slime** | lays (E1) | wets (C1) | resists (C1) | pays x3 to cross (C2) | ignores (ruled) | sleeps (today) | flinches (today) |
-| **starving slime** | lays less | dries (C1) | burns (C1) | pays x3 (C2) | ignores | sleeps | flinches |
-| **fire** | burns to char (C2) | dries (C1) | | leaves (today) | eats (today) | ignites (C5) | lays (C4) |
+### C1. Dry slime burns
 
-### C1. Wet slime, dry slime
+**Rule.** Fire's damp test reads the news age: slime is wet if its trail is
+over `fire_damp` *and* it heard of food within the wither lag, and a set
+walker (E2) is always dry. Fire still
+needs fuel under it (plants or crust). No new state.
 
-**Rule.** Moisture becomes a field that changes: each cell's moisture moves
-toward its map value over about a minute, a fed walker on a cell raises it
-by `slime_wet` x its energy share, and fire dries it. Fire's damp test reads
-moisture instead of trail (`fire_damp` becomes a moisture level).
+**See.** The sheen follows the news age, so the player sees which parts are
+cut off, which nothing on screen shows today, beside the ash-grey that
+already marks starving parts. A plant crown is never resized by it (the
+readability review: that would be drawn-only).
 
-**Play.** A fed body is fireproof. A part cut off from food, withering,
-dries and burns. So the cut and the fire become one plan: cut, wait for it to
-dull, then light it. The gun thread's Wet and Dry bullets get a meaning on
-the slime itself, not only on the ground.
+**Guard, the owner's fire ruling:** fire must not make wiping out the slime
+easy. The fed body never burns; only cut-off and set parts do.
 
-**What the player sees.** The slime's sheen (#263) is driven by moisture:
-glossy where fed, dull where starving. That is the cue to burn.
+**Measure.** A cut part on grass, lit at +10 s: fire kills per walker
+present, cut against joined, 8 seeds.
 
-**Measure.** A cut-off part at 20 s, lit: walkers killed by fire with and
-without C1, against the uncut body lit at the same time.
+### C2. Crust burns, char is barren
 
-### C2. Burnt ground is barren, and crust burns
-
-- Char above `char_barren` counts as barren for upkeep (x `barren_up`, 3)
-  while it lasts, so a burnt strip is a firebreak the slime pays to cross.
-  (The 11-15 review's finding 15.)
-- Crust is fuel: fire runs along the slime's old roads, and crust burns to
-  char.
-- A bulwark burns back to crust.
-
-**Play.** Fire becomes a way to shape where the slime can live, and a
-counter to crust and bulwarks. **Measure:** crossings of a scorched line
-between the slime's home and a pump in 2 minutes, with and without.
+Crust is fuel; it burns to char; char above `char_barren` counts as barren
+(no births, x 3 upkeep) while it lasts. The slime crosses char but can't
+fill it. Together with C1 this is the forest-fire front: fire runs along
+abandoned roads into dry parts and stops at the fed body. **Measure:**
+walkers on a scorched strip at +60 s, with and without.
 
 ### C3. Not doing: the slime eating plants
 
-Dropped. The owner ruled on 2026-11-14 17:29Z that the slime does not eat
-plants (the plants thread's rulings), and on 2026-11-17 01:13Z was "not sure
-the benefits [are worth] the cost". Draft 1 misread the 11-14 line as a
-complaint. Plants still matter through fire (C2, C5) and as fuel.
+Dropped (owner 11-14 17:29Z, the slime doesn't eat plants; 11-17 01:13Z, not
+sure it's worth the cost).
 
-### C4. The slime flees fire
+### C4. Fire scares it, a little
 
-Fire's heat lays alarm (a share of the heat), so a fire front pushes the
-slime, and the flinch it already has does the rest. Fire becomes herding.
-Check against `Reports/dead-ends.md`'s flee from gunfire (11-12): that one
-lost a census gate, which no longer gates (build first, balance later).
+Fire lays alarm near its front. At alarm reach (about 3 fine cells) this
+makes the slime step back from flames, not herd it; measure fire kills and
+the body's centre at +30 s. Herding would need a longer-reach smoke field:
+a later step only if the owner wants herding.
 
 ### C5. Gas ignites
 
-A cell whose gas is above `gas_burn` lights when fire or a blast reaches it,
-using its gas up: sleep gas then a scorch round is a flash that kills what it
-put to sleep. Device and bullet combos come from this with no new card rule.
+Gas above `gas_burn` lights when fire or a blast reaches it and is used up:
+sleep gas then a scorch round flashes across the cloud. Check a real cloud's
+values first.
 
-## Part B: faking its signals
+## Part B: its signals
 
-The slime's food news is the one signal that is only this game's. The gun
-thread's Cut and Route bullets cover blocking energy and faking scent; these
-two work on the news itself. Built as engine primitives on `Burst` (as
-`Burst::mind` is), with one test device here; cards are the gun thread's to
-make if they want them.
+Built as engine primitives on `Burst` beside `Burst::mind`, with one test
+device here; the gun thread makes the cards (owner, 01:13Z).
 
-- **B1. Provoke.** Walkers in the area are stamped as having heard no food
-  for the whole wither lag and lean: they panic at once, charging the
-  nearest soldier in reach or running for a crystal. You choose when a part
-  of the slime charges, so you can pull it off a crystal into turrets. One
-  store a walker in the strike pass.
-- **B2. Calm.** Walkers in the area are stamped fresh and ignore surges for
-  `calm_secs`: a charge stops where it is. The answer to a surge you didn't
-  choose. Needs `surge_to` to read the stamp (one test).
-- **B3. Hush, after a count.** A timed band where cells don't pass news on:
-  a cut that kills nothing, so the far side withers and panics. It is only
-  worth building if run planets often have parts worth cutting, which the
-  owner doubts (11-16 03:44Z). First count how often (the gun plan's own
-  check before Cut), then decide.
+- **B1. Provoke:** a timed deaf status (a Mind kind): the walker hears no
+  news for the wither lag plus the lean, so it panics, charging the nearest
+  soldier in reach (on the units field, S1, once it lands) or running for a
+  crystal. It turns ash-grey as it panics (the cut-off look), which is
+  honest: it believes it is cut off. Side effect to film: it may wither.
+- **B2. Still:** a timed Mind status that `surge_to` and `panic_to` read: a
+  surging or panicking walker stops. It costs: Still also stops the walker
+  eating, so a held slime starves where it stands; and it must look apart
+  from sleep gas.
+- **B3. Hush:** only after counting how often a planet has a part worth
+  cutting (the owner doubts cuts, 11-16 03:44Z).
 
-**What the player sees.** Provoke: a part of the slime lurches toward the
-squad 0.5-1.5 s after the hit. Calm: a charging front slows and spreads.
-Both are movement, so they need no new drawing.
+## Part S: scripted pressure onto fields, only where no worse
 
-## Part S: scripted pressure onto fields, only where it is no worse
+Filmed side by side against today on planets 1-3 (seconds to first contact,
+walkers reaching the squad a surge, pump health at 3:00), kept only if no
+lower and the owner can't tell them apart or prefers the new one.
+Mini-boss errands stay.
 
-The owner's guard: no effort spent making the game worse. So each of these
-is filmed side by side against today on planets 1-3, with the pressure
-counts (seconds to first contact, walkers reaching the squad in a surge, pump
-health at 3:00), and kept only if the counts are no lower and the owner
-can't tell them apart or prefers the new one. Mini-boss errands stay as they
-are: they are characters, and the owner shaped them.
+- **S1. A units distance field.** The raid's search (`raid_field_for`) with
+  every soldier as a source, on 2-cell blocks, rebuilt once a game second.
+  Surges and panic descend it instead of steering at a picked unit: walls
+  bend the charge, and a masked soldier (the smother card) is left out of
+  the sources.
+- **S2. A far smell** that only hungry walkers read, for specks and for a
+  hungry body to reach (the 11-15 review's findings 4 and 13).
 
-- **S1. Surges follow the soldiers' smell.** A surging walker's sensors read
-  the scent field the soldiers lay (`Rules::smell`) with its haste, instead
-  of a straight line to the nearest unit. Walls and rock bend the charge
-  naturally, and a soldier who masks their smell isn't charged. Check first
-  whether soldier smell needs its own channel apart from food scent (today
-  it is mixed in).
-- **S2. Specks follow a far smell.** A coarse, slow-fading second scent
-  channel that only hungry walkers read (the 11-15 review's findings 4 and
-  13), so specks find fresh crystals by smell instead of by a picked target,
-  and the main body reaches when hungry. Bigger: a new field.
-- **S3. Panic runs on the same two smells** once S1 and S2 are in.
-
-## Order and what the owner sees
+## Order
 
 | # | Step | Size | The owner sees |
 |---|---|---|---|
-| 1 | E1 crust: field, memory roads, fast ground, look | M | a page: crust building over 5 minutes, a blasted road refilling with and without memory; glaze A/B |
-| 2 | E2 bulwarks: cover (E2a), then blocking soldiers (E2b) | M + M | a page: a standing squad walled off, a moving one not; a playable build |
-| 3 | C1 + C2 wet/dry slime, barren char, crust burns | M | a page: cut, dull, burn; a firebreak holding |
-| 4 | B1 provoke + B2 calm, one device | S | films of a provoked charge into turrets and a calmed surge |
-| 5 | C4 fire lays alarm, C5 gas ignites | S each | a film each |
-| 6 | S1, then S2 | S, M | blind side-by-side films |
-| later | E3 tunnels, E4 regrowth, B3 hush | | after a count or the owner's ask |
+| 0 | Threat memory (the scar) on the GPU; Grudge back in the ladder | S-M | the Grudge on planet 6 |
+| 1 | E1a crust field and look (offline look first) | M | the "name the ground" quiz |
+| 2 | E1b crust effects + C2 crust burns, char barren | M | return to old ground, +w and -w; fire along old roads |
+| 3 | E2a setting (soaks fire), then E2b (blocks soldiers) behind a key | M + M | the 2 x 2 films; a playable build; the material A/B |
+| 4 | C1 dry slime burns, sheen from news age | S | cut, dull, burn |
+| 5 | B1 provoke, B2 still, one device | S | a provoked charge into turrets; a stilled surge |
+| 6 | C4, C5 | S each | a film each |
+| 7 | S1, then S2 | M, M | blind side-by-side films |
+| later | E3, E4, B3 | | after a count or the owner's ask |
 
 Each step is its own PR with tests, a page under
-`Reports/sim-use-2026-11-17/`, the wiki page it changes, and the 1070's
-timing booked through the PC runner.
+`Reports/sim-use-2026-11-17/`, its wiki page and the 1070's timing.
 
 ## Who else it touches
 
-- **Slime-enemy rules** (engine rules): the slime-enemy thread is done; this
-  thread takes these rules unless the coordinator says otherwise.
-- **Walls thread**: bulwarks are walls the slime owns; door and side rules.
-- **Levelgen thread**: walking maps going stale where ground changes (E2b,
-  E3); fairness check.
-- **Plants thread** (done): moisture becomes a field (C1), crust as fuel.
-- **Gun thread**: Element and Route bullets read these rules; B's
-  primitives for their cards; no new cards here.
-- **Slime-look thread**: crust glaze, bulwark ridges, sheen from moisture.
-- **Squad movement**: `crust_wade` on soldier speed.
-
-## Outside the run (Q2: "you can expand outside the run")
-
-Not in this plan's order, each with a first experiment if the owner wants it:
-
-- **A. An evolving slime.** Children inherit sensing, speed and toughness
-  with small changes; what the player kills least survives, drawn as a shift
-  in tint. First: per-walker `size_spread` made heritable on the CPU big
-  dish, one shooting hand, 10 minutes, does the mean shift?
-- **D. The slime as the economy.** Dead walkers spill a little food where
-  they die; the player's pumps can take it, and the slime streams back to
-  eat it. Farming against wiping out. First: the spill into the plant or
-  grass field, film a kill box for 60 s.
-- **F. Rival slimes.** Two species on a deep planet that convert each
-  other; the player baits one into the other. First: `species` 2 on planet 4,
-  one minute, do they meet?
-- **G. The player's own mould** (parked, D12).
-- **A terrarium mode**: no soldiers, the player only writes fields (wet,
-  fire, food, crust) to grow a slime into a shape or keep two in balance; a
-  puzzle mode that shows off E and C and needs no new engine work after them.
-
-## The owner's answers (2026-11-17 01:13Z)
-
-| Question | Answer |
+| Thread | What |
 |---|---|
-| Bulwarks block soldiers too, or only shots? | "Both" |
-| The slime walks through its own bulwarks? | "agreed" |
-| Fed slime fireproof, starving slime burns? | "sure" |
-| The slime eats plants? | "not sure the benefits it cost of this": dropped (C3) |
-| B's tools as devices, gun cards, or both? | "agreed": both, the gun thread makes the cards |
+| Gun cards | Mind kinds for provoke and still; cards for them; Element and Route bullets on these rules |
+| Mini-boss | armour reused by setting; the leech behind a set ring |
+| Walls | set cells as the slime's door-like walls; side rules |
+| Levelgen | walking maps going stale at set cells; nest doors check; E3 |
+| Slime look | gloss for crust, the set material, the news-age sheen |
+| Run | the Grudge in `LADDER`; setting from planet 3 |
+
+The engine rules are this thread's (the slime-enemy thread has finished)
+unless the coordinator says otherwise.
+
+## Outside the run
+
+- **A. An evolving slime, with a control, no code first:** `mix_share` 0.5
+  with a faster kind against all-alike kinds, a shooting hand, 10 minutes;
+  does the kind share move beyond the neutral arm's spread?
+- **D. The slime as the economy:** kills spill food the slime comes back to
+  eat; the game designer's fourth direction.
+- **F. Rival slimes:** two converting species on planet 4.
+- **G. The player's own mould** (parked, D12).
+- **A terrarium:** no soldiers, the player writes fields; three cycling
+  species make spiral waves (the ALife review's look-only film).
+
+## The owner's answers
+
+| When | Question | Answer |
+|---|---|---|
+| 01:13Z | Bulwarks block soldiers too, or only shots? | "Both" |
+| 01:13Z | The slime walks through its own? | "agreed" |
+| 01:13Z | Fed slime fireproof, starving slime burns? | "sure" |
+| 01:13Z | The slime eats plants? | not sure it's worth the cost: dropped |
+| 01:13Z | B's tools as devices, cards, or both? | "agreed": both |
+| open | Setting toughens the rim while under fire, or only after fire stops? | |

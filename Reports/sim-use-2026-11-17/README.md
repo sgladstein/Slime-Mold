@@ -8,10 +8,16 @@ game worse; ideas may go outside the run; the slime building terrain first,
 then reacting fields and faking its signals; "first we write a detailed
 plan. Have it reviewed then start to implement"; independent reviewers yes.
 
-- [plan.md](plan.md): the plan, draft 2 (crust and bulwarks, reacting
+- [plan.md](plan.md): the plan, draft 3 (after the reviews) (crust and bulwarks, reacting
   fields, provoke and calm, scripted pressure onto fields where no worse).
   Doc copy: https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb
-- [reviews/prompts.md](reviews/prompts.md): the three reviewers' briefs.
+- [reviews/prompts.md](reviews/prompts.md): the three reviewers' briefs
+  (shown to the owner and agreed 01:13Z).
+- [reviews/game-designer.md](reviews/game-designer.md),
+  [reviews/alife-researcher.md](reviews/alife-researcher.md) (with an
+  offline crust probe on the CPU engine and two numpy toys; not captures),
+  [reviews/readability.md](reviews/readability.md): the reviews of draft 2.
+  What they changed is the table at the top of the plan.
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
