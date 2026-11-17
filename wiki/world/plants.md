@@ -13,6 +13,7 @@ sources:
   - Reports/review-fixes-2026-11-15/README.md
   - Reports/sim-use-2026-11-17/c1-dry-burns.md
   - Reports/sim-use-2026-11-17/c4-fire-alarm.md
+  - Reports/sim-use-2026-11-17/c5-gas-ignites.md
   - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
 code:
   - BigDish::ignite
@@ -23,6 +24,7 @@ code:
   - BigParams::fire_dry
   - BigParams::fire_fed
   - BigParams::fire_spread
+  - BigParams::gas_burn
   - BigParams::plant_grow
   - BigParams::plant_rot
   - plants::moisture
@@ -68,6 +70,7 @@ holes in the body ringed by slime, and killed 13% and 26% more
 slime's one fire-shyness switch: the other route, heat in the sensors
 (`fire_weight`), was deleted 11-17 after the crossing test below
 ([ROADMAP](../../ROADMAP.md), switches that are off).
+**Gas burns** (C5, 2026-11-17; `BigParams::gas_burn` 0.2, on): gas cloud over it is fuel. A light lights it whatever the plants or the wet, and fire runs across it from cell to cell (half a chance per burning neighbour), using it up and killing what stands there. Sleep gas then a fire lit at its edge burned 58-66% of the sleepers on 7 of 8 seeds, against none without ([report](../../Reports/sim-use-2026-11-17/c5-gas-ignites.md)).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,

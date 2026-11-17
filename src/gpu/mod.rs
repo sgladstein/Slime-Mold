@@ -462,6 +462,9 @@ pub struct Settings {
     /// Fire lays alarm where it burns (`BigParams::fire_alarm`, the plan's
     /// C4; 0 off), carried in the plants' word 44.
     pub fire_alarm: f32,
+    /// Gas ignites (`BigParams::gas_burn`, the plan's C5; 0 off), carried
+    /// in the plants' word 43.
+    pub gas_burn: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -733,6 +736,7 @@ impl Settings {
             fire_dry: t.fire_dry,
             fire_fed: t.fire_fed,
             fire_alarm: t.fire_alarm,
+            gas_burn: t.gas_burn,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1052,6 +1056,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // burning cells add F x their fire to the alarm field (shape C's
         // flinch reads it).
         "fire_alarm" => s.fire_alarm = f()?,
+        // Gas ignites (`gas_burn=G`, the plan's C5): cloud over G lights
+        // from a light or a burning neighbour and is used up.
+        "gas_burn" => s.gas_burn = f()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1250,6 +1257,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         fire_dry: s.fire_dry,
         fire_fed: s.fire_fed,
         fire_alarm: s.fire_alarm,
+        gas_burn: s.gas_burn,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
         germ_upkeep: s.germ_upkeep,
@@ -3507,9 +3515,11 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
     // Word 48: the plants at which a fire can burn at full heat.
     w[48] = p.fire_full.to_bits();
-    // Word 44: the alarm fire lays a step (`fire_alarm`, C4). (Words 32-43
-    // are free; 49-61 hold `Engine::ignite`'s and `lay`'s discs.)
+    // Word 44: the alarm fire lays a step (`fire_alarm`, C4); word 43 the
+    // gas that burns (`gas_burn`, C5). (Words 32-42 are free; 49-61 hold
+    // `Engine::ignite`'s and `lay`'s discs.)
     w[44] = p.fire_alarm.to_bits();
+    w[43] = p.gas_burn.to_bits();
     // Word 62: what plants over a cell's capacity (laid fuel, Tinder) lose
     // a plant step (the CPU's `Rates::rot`).
     w[62] = (p.plant_rot * k).to_bits();

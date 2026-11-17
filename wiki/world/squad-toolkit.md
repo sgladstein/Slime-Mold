@@ -21,6 +21,7 @@ sources:
   - Reports/rounds-look-2026-11-14/index.html
   - Reports/shot-lights-2026-11-14.md
   - Reports/sim-use-2026-11-17/b-provoke-still.md
+  - Reports/sim-use-2026-11-17/c5-gas-ignites.md
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
@@ -36,6 +37,7 @@ code:
   - BigDish::scorch_disc
   - BigParams::fling_deposit
   - BigParams::fling_speed
+  - BigParams::gas_burn
   - BigParams::gas_death
   - BigParams::gas_keep
   - BigParams::germ_resist
@@ -84,7 +86,7 @@ run on the GPU world too (the engine's strike lays the crater), and since
 11-14 the sleep gas ([report](../../Reports/sleep-gas-gpu-2026-11-14.md))
 and the germ (the strike's `kill` pass infects; the `life` pass charges the
 sick `sick_upkeep`: on race seed 5, 77 made sick and 449 of 2,123 left after
-20 s on both engines). A mine's trigger scales with `Game::density`. In
+20 s on both engines). Since 11-17 gas over `gas_burn` (0.2, on) burns: a fire or blast that reaches the cloud flashes across it and kills the sleepers, damp body or not (58-66% of them on 7 of 8 seeds, [C5](../../Reports/sim-use-2026-11-17/c5-gas-ignites.md)). A mine's trigger scales with `Game::density`. In
 the window (`larder-world`) E opens the tools page: blast, det cord and
 mine, germ and sleep gas work; every soldier at the larder takes one tool, a selected one up
 to five. Since 2026-11-16 aiming a tool shows who throws (`Kit::thrower`),

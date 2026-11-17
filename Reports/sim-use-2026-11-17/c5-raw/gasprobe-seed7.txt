@@ -1,0 +1,6 @@
+gasprobe: planet depth 2 under meadow, shape C, scale 2, 25000 walkers; grow 60 s, disc r 10, margin 25, gas r 12, watch 15 s, gas_burn [0.0, 0.2]
+seed gas_burn | centre (x, y) | asleep at the light | fire killed | cloud summed, cells over 0.2: at the light -> at the end | living
+7 0 | (222, 28) | 22 | 0 | 922, 1303 -> 69, 0 | 12625
+7 0.2 | (222, 28) | 22 | 0 | 922, 1303 -> 69, 0 | 12625
+gas_burn 0: fire killed 0 in all
+gas_burn 0.2: fire killed 0 in all; against 0, more 0, less 0, sign p 1.000

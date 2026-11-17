@@ -2260,6 +2260,91 @@ mod tests {
         assert!(l1 > 100.0, "the twin catches a GPU fire that lays no alarm");
     }
 
+    /// **Gas ignites** (the simulation-use plan's C5, `gas_burn`): the kit's
+    /// sleep gas laid over the grown body on the flats map planted whole,
+    /// then a small fire lit at the cloud's edge. On the CPU the flash must
+    /// run through the cloud (damp body or not), burn the sleepers and use
+    /// the cloud up, where with `gas_burn` 0 the body puts the fire out.
+    /// With a GPU, its fire, cloud and living must match the CPU's each
+    /// second; planted, a GPU with `gas_burn` 0 must be caught.
+    #[test]
+    fn gas_ignites_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::kit::KitRules;
+        use crate::mould::plants::pack;
+        use crate::mould::rounds::burst_rules;
+        use std::path::Path;
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+        let kit = KitRules::default();
+        // The CPU alone, or beside a GPU with its own `gas_burn`: (fire
+        // kills in the 3 s after the light, the cloud summed at the light
+        // and 3 s on, the largest fire, cloud and living gaps).
+        let play = |gb: f32, gpu: Option<(&wgpu::Device, &wgpu::Queue, f32)>| -> (u64, f64, f64, f32, f64, usize) {
+            let p = BigParams { gas_burn: gb, ..race_params(seed, scale, walkers) };
+            let mut cpu = BigDish::with_map(p, &m);
+            let mut gw = gpu.map(|(d, q, ggb)| GpuWorld::with_map(d, q, Settings { gas_burn: ggb, ..race_settings(seed, scale, walkers) }, scale, &m));
+            let home = cpu.homes[0];
+            let rules = burst_rules(&kit, 15.0 * World::fine_steps(&cpu) as f32);
+            let gas = squad::Burst { at: home, r: kit.gas_r, gas: (kit.gas_secs * 15.0 * World::fine_steps(&cpu) as f32) as u16, ..squad::Burst::default() };
+            let (mut killed, mut cloud0, mut cloud1) = (0u64, 0.0f64, 0.0f64);
+            let (mut df, mut dc, mut dn) = (0.0f32, 0.0f64, 0usize);
+            for sec in 1..=16 {
+                let f = Frame::default();
+                World::frame(&mut cpu, &f, 15);
+                if let Some(g) = gw.as_mut() {
+                    World::frame(g, &f, 15);
+                }
+                if sec == 12 {
+                    World::burst(&mut cpu, &gas, &rules);
+                    if let Some(g) = gw.as_mut() {
+                        World::burst(g, &gas, &rules);
+                    }
+                }
+                if sec == 13 {
+                    cloud0 = cpu.gas_cloud.iter().map(|&v| v as f64).sum();
+                    killed = cpu.fire_killed;
+                    let at = (home.0 + kit.gas_r - 2.0, home.1);
+                    cpu.ignite(at.0, at.1, 2.0, 1.0);
+                    if let Some(g) = gw.as_mut() {
+                        g.e.ignite(&g.shared, &[(at.0, at.1, 2.0, 1.0)]);
+                    }
+                }
+                if sec == 16 {
+                    killed = cpu.fire_killed - killed;
+                    cloud1 = cpu.gas_cloud.iter().map(|&v| v as f64).sum();
+                }
+                World::burned(&mut cpu);
+                if let Some(g) = gw.as_mut() {
+                    World::burned(g);
+                    let (_, _, fire, _) = g.e.plants_of();
+                    let cfire = if cpu.fire.is_empty() { vec![0.0; fire.len()] } else { cpu.fire.clone() };
+                    df = df.max(fire.iter().zip(&cfire).map(|(a, b)| (a - b).abs()).fold(0.0f32, f32::max));
+                    let gc = g.e.gas_cloud_of();
+                    if !cpu.gas_cloud.is_empty() {
+                        dc = dc.max(gc.iter().zip(&cpu.gas_cloud).map(|(a, b)| (a - b).abs() as f64).sum());
+                    }
+                    dn = dn.max(World::living(&cpu).abs_diff(World::living(g)));
+                }
+            }
+            (killed, cloud0, cloud1, df, dc, dn)
+        };
+        let (k0, c0, c0e, ..) = play(0.0, None);
+        let (k1, c1, c1e, ..) = play(0.2, None);
+        eprintln!("gas ignites (CPU): fire kills in 3 s {k1} against {k0} without; cloud at the light {c1:.0} -> {c1e:.0} (without {c0:.0} -> {c0e:.0})");
+        assert!(k1 > k0 + 50 && k1 > 2 * k0, "the flash burns the sleepers: {k1} against {k0}");
+        assert!(c1e < 0.5 * c0e, "the flash uses the cloud: {c1e:.0} against {c0e:.0}");
+        let Some((device, queue)) = test_gpu() else { return };
+        let (k, _, _, df, dc, dn) = play(0.2, Some((&device, &queue, 0.2)));
+        eprintln!("gas ignites, twin: largest fire gap {df:.2e}, cloud L1 {dc:.2e}, living {dn} (CPU kills {k})");
+        assert!(df <= tol(1e-5, 0.2) && dc <= tol(1e-2, 50.0), "fire {df}, cloud L1 {dc:.3e}");
+        assert!(dn <= tol(0, 5 + walkers / 50), "living off by {dn}");
+        let (_, _, _, df, dc, dn) = play(0.2, Some((&device, &queue, 0.0)));
+        eprintln!("planted, the GPU's gas never burns: fire gap {df:.2e}, cloud L1 {dc:.2e}, living {dn}");
+        assert!(df > 0.5 && dc > 50.0, "the twin catches a GPU whose gas never burns");
+    }
+
     /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU
     /// world (`race_settings`, `Tier::settings`, `Engine::made`) play the
     /// same crowd rule on every map, tier and scale the game ships, and on

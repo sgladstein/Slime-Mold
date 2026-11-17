@@ -254,6 +254,10 @@ pub const MIND_DEAF: u32 = 4;
 /// withers, but does not charge. Unlike sleep gas it keeps moving, pays
 /// its upkeep and wakes for nothing. A lump's member keeps its leash.
 pub const MIND_STILL: u32 = 5;
+
+/// The key on the fire step that rolls a gas flash's catch
+/// (`BigParams::gas_burn`, C5; the shader's `GAS_DICE`).
+const GAS_DICE: u32 = 0x6A5;
 pub const MIND_T: u32 = (1 << 29) - 1;
 
 /// **Readers** (`BigDish::read_strike`, the gun cards' readers, 2026-11-16,
@@ -1390,6 +1394,19 @@ pub struct BigParams {
     /// steps back from flames; it also wakes sleepers and, on a scarring
     /// tier, scars. Not herding: that would need a longer-reach smoke.
     pub fire_alarm: f32,
+    /// **Gas ignites** (the simulation-use plan's C5, 2026-11-17; 0 off,
+    /// on at 0.2, the kit's `gas_sleep`, so the cloud burns where it
+    /// sleeps):
+    /// gas cloud (`gas_cloud`) over `gas_burn` is fuel. A light (`ignite`:
+    /// a burn, a blast, a torch) lights every such cell in its reach,
+    /// whatever the plants, the share or the wet; and each fire step a
+    /// cell over it whose own cell or one of its four neighbours burned
+    /// the step before flashes: fire 1 (which kills what stands there,
+    /// damp body or not), its cloud used up. With no plants under it the
+    /// flash is an ember next step, so the fire runs across the cloud a
+    /// cell a fire step and goes out behind: sleep gas, then a scorch
+    /// round, burns the sleepers in the cloud.
+    pub gas_burn: f32,
     /// Char, burnt ground (`plants::Fire::char_gain` and on).
     pub char_gain: f32,
     pub char_keep: f32,
@@ -1677,6 +1694,7 @@ impl BigParams {
             fire_dry: true,
             fire_fed: false,
             fire_alarm: 0.0,
+            gas_burn: 0.2,
             char_gain: 1.0,
             char_keep: 0.999,
             char_clear: 0.02,
@@ -2335,6 +2353,28 @@ impl BigDish {
         self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &slime, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps, (&mut self.crust, self.p.crust_fuel));
         self.fire_steps = self.fire_steps.wrapping_add(1);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
+        // Gas ignites (`gas_burn`, C5): a cell over it that burned last
+        // step (`fire_next` now) flashes; one beside such cells catches by
+        // chance, half for each of its four neighbours that burned, so the
+        // front runs ragged and round rather than as a diamond (the first
+        // try, every cell beside fire, drew a sharp-edged diamond). Its
+        // cloud is used up. Read from last step's fire only, so the order
+        // of cells does not matter (the GPU's `fire` pass, cell by cell);
+        // the dice are the fire step's before this one's count (`pw(45)`).
+        if self.p.gas_burn > 0.0 && self.p.gas_keep > 0.0 && self.gas_cloud.len() == self.fire.len() {
+            let (w, t) = (self.w, self.fire_steps.wrapping_sub(1) ^ GAS_DICE);
+            for i in 0..self.fire.len() {
+                if !self.gas_hot(i) {
+                    continue;
+                }
+                let (x, y, old) = (i % w, i / w, &self.fire_next);
+                let n = [x > 0 && old[i - 1] > 0.0, x + 1 < w && old[i + 1] > 0.0, y > 0 && old[i - w] > 0.0, y + 1 < self.h && old[i + w] > 0.0].iter().filter(|&&b| b).count();
+                if old[i] > 0.0 || (n > 0 && crate::mould::plants::roll(i as u32, t) < 0.5 * n as f32) {
+                    self.fire[i] = 1.0;
+                    self.gas_cloud[i] = 0.0;
+                }
+            }
+        }
         // Fire lays alarm where it burns (`fire_alarm`, C4), on the field
         // the slime already has: the GPU's `fire` pass adds the same.
         let fa = self.p.fire_alarm;
@@ -2453,7 +2493,8 @@ impl BigDish {
                 }
                 let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
                 let lit_here = crate::mould::plants::roll(i as u32, self.fire_steps ^ 0x1617) < share;
-                if self.agar[i] && self.fuel_at(i) >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) && lit_here {
+                // Gas over `gas_burn` is fuel enough, wet or not (C5).
+                if self.agar[i] && ((self.fuel_at(i) >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) && lit_here) || self.gas_hot(i)) {
                     self.fire[i] = 1.0;
                     lit += 1;
                 }
@@ -2461,6 +2502,12 @@ impl BigDish {
         }
         self.burning += lit;
         lit
+    }
+
+    /// Whether cell `i`'s gas cloud is over `gas_burn` (C5; false while
+    /// either is off).
+    fn gas_hot(&self, i: usize) -> bool {
+        self.p.gas_burn > 0.0 && self.p.gas_keep > 0.0 && !self.gas_cloud.is_empty() && self.gas_cloud[i] > self.p.gas_burn
     }
 
     /// **Lays dry fuel** (the gun cards' Tinder, 2026-11-17) within `r`

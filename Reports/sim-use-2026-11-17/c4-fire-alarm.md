@@ -88,8 +88,30 @@ Off: none (`fire_alarm` 0 skips the loop on the CPU; the shader tests
 `pf(44u) > 0` after its own write). On: one add per burning cell a fire
 step. Not timed on the 1070.
 
+## The crossing test (gun thread, 11-17 12:05Z)
+
+The gun thread filmed the designer's test with `fire_alarm` as a third arm
+([Tinder](../gun-tinder-2026-11-17/README.md), page
+https://claude.ai/artifact/DMHMAsve7qyjLV8JXsK54D): planet 1:3, one seed,
+a lit Tinder line across a stream of walkers going to food, crossings from
+16 to 45 s. No line: 214 crossed. Weight 0: 10 crossed, 119 burned.
+`fire_weight` -5: 57 crossed (4 while it burned), 44 burned. `fire_alarm`
+50: 31 crossed (0 while it burned), 28 burned. Neither is a fence: both
+hold the stream at the edge until the fire dies, then it crosses the char.
+`fire_alarm` held harder and reuses the field the flinch already reads, so
+the two threads agreed it is the one kept (off) and `fire_weight` goes, one
+switch for one mechanism (a reviewer's ask). The technical lead (12:05Z)
+first paired the two for the owner's blind A/B; the gun thread then deleted
+`fire_weight` on 11-17, so `fire_alarm` is the slime's one fire-shyness
+switch (off).
+
 ## Left
 
-- The designer's crossing test (food beyond a lit line, walkers crossing
-  in 30 s), with `fire_alarm` as a third arm beside `fire_weight`.
+- **A fire-shy tier** (the game designer, 12:10Z): with `fire_alarm` the
+  slime waits out a burning line without dying, so fire becomes a fence
+  rather than a weapon. Keep it off globally and give it to one tier where
+  Tinder lines are the counter (the Sprawler, whose counter is already
+  "walls; chasing loses"), as a per-tier key, when the run's tier pass next
+  touches the Sprawler; record it in the card table's Tinder row then.
+
 - 1070 timing with the rest of the plan's passes.
