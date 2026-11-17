@@ -21,7 +21,7 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // window on software Vulkan) 45,237 walkers at 5:00 against 13,956, and
     // mould on 17.1% of the map's screen against 7.0% (1:45 8.9% against
     // 4.6%). Tried first: fed walkers packing two a cell
-    // (`BigParams::fed_crowd` 1): 21,053 walkers but 7.6% of the screen, as
+    // (`fed_crowd` 1, deleted 11-17): 21,053 walkers but 7.6% of the screen, as
     // the look's thickness is full at one walker a cell.
     // A part cut off from every crystal withers (`BigParams::wither` 0.01,
     // 2026-11-13). Why: with the food shared, a cut-off part pooled its

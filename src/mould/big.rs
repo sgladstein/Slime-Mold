@@ -323,7 +323,7 @@ impl SpeciesSet {
     }
 }
 const DRAW_TERRAIN: u32 = 140;
-const DRAW_HOLD: u32 = 150;
+// 150 was tether's holders (`DRAW_HOLD`, deleted 11-17).
 /// The start's outline on a map (`start_shape`).
 const DRAW_SHAPE: u32 = 160;
 /// Soil kinds in `BigDish::soil` (`BigParams::sand_keep`).
@@ -983,36 +983,6 @@ pub struct BigParams {
     pub raid_lean: u32,
     pub raid_len: u32,
     pub raid_haste: f32,
-    /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
-    /// is off, needs growth and a crowd limit). A walker holding `fed_full`
-    /// energy or more may step or be born into a cell holding up to
-    /// `crowd + fed_crowd` walkers, so the mould round the crystals it eats
-    /// grows denser (more walkers to a cell, more trail, more bite) and the
-    /// energy it hoards there becomes walkers. Why: the owner, 22:22Z,
-    /// playing shape C: "I cannot tell if it is getting stronger by holding
-    /// the crystals." It is: with crystals that feed nothing C dies by 2:00
-    /// (1,631 walkers at 5:00 on 4 seeds, against 36,053), and walkers near
-    /// a crystal it eats hold 20 times the energy of the rest (6.0 to 0.3
-    /// at 5:00, seed 1); but at one a cell the cells round a crystal are
-    /// full, so that energy became no walkers and the screen showed none of
-    /// it (`examples/fedprobe.rs`). With 1 (and `fed_full` 2) C holds
-    /// 45,621 walkers at 4:00 against 31,859 (4 of 4 seeds more), most
-    /// of them on the crystals' side of the network. **But it does not
-    /// read, so it is off** (kept as an option): in the window on Fork,
-    /// seed 1, farm hand, 21,053 walkers at 5:00 against 13,956, yet mould
-    /// on 7.6% of the screen against 7.0%, since the look's thickness is
-    /// full at about one walker a cell. Shape C shares its food instead
-    /// (`energy_flow` 0.05: 17.1% of the screen). Re-test when the look
-    /// shows walkers a cell above one.
-    ///
-    /// Tried first and not taken: **a fed walker lays more trail** (1 +
-    /// k x min(energy / full, 1) times). At k 6 the trail round the
-    /// crystals went from 0.7 to 1.2-1.6 times the rest's, but the brighter
-    /// tubes drew the mould onto the crystals and it bred less: 25,545
-    /// walkers at 4:00 against 31,859 (4 of 4 fewer); k 2 changed the
-    /// picture little (0.9-1.1) and still cost walkers (28,960).
-    pub fed_crowd: u8,
-    pub fed_full: f32,
     /// **Hunger** (2026-11-12, the one-body thread; 0 is off, needs growth).
     /// A walker's scent reading is multiplied by 1 + `hunger_scent` x its
     /// hunger, where hunger is 1 - energy / `hunger_at` (0 at or above
@@ -1026,22 +996,15 @@ pub struct BigParams {
     /// the fed mould: walkers smelled past their own crystal and the mould
     /// fell to 0-1,900 walkers at 150 s against H's 6,600-11,900.)
     pub hunger_reach: f32,
-    /// The hunger at which a walker hunts (`hunger_reach`, and `tether`
-    /// when this is over 0); 0: every walker, at any hunger.
+    /// The hunger at which a walker hunts (`hunger_reach`); 0: every
+    /// walker, at any hunger.
     pub hunt_at: f32,
-    /// **Body pull** (2026-11-12, the one-body thread; 0 is off). Owner,
-    /// 04:13-04:18Z: the mould "didn't feel like one cohesive organism"; a
-    /// cut-off part should "feel like a cut off hunk and not a bunch of
-    /// individuals". Each sensor also reads `body_pull` x the walkers in
-    /// the square of radius `body_r` fine cells round its point, counted as
-    /// the step began, scaled by the walker's own loneliness: 1 - n /
-    /// `body_lone`, with n the other walkers in the same square round its
-    /// own cell (1 when `body_lone` is 0). So a walker inside the mass
-    /// follows trail and scent as before, and a straggler is drawn back to
-    /// the crowd: streams of single walkers pull into a mass.
-    pub body_pull: f32,
+    /// The square's radius, fine cells, that `lone_step` counts walkers
+    /// in. Body pull (`body_pull`, `body_lone`: sensors also read the
+    /// walkers there) and tether (`tether`, `tether_hold`: no walker steps
+    /// away from the crowd it touches), both off since 11-12, were deleted
+    /// 11-17 (Reports/dead-ends.md).
     pub body_r: u8,
-    pub body_lone: f32,
     /// **Lone step** (2026-11-12, the one-body thread; 0 is off). A walker
     /// with fewer than `lone_step` other walkers in the square of radius
     /// `body_r` round its cell moves slower: its step is scaled by
@@ -1051,27 +1014,9 @@ pub struct BigParams {
     /// about 2 s, but as a stream (largest part 0.27-0.58 at 20 s on the
     /// designed maps), and pulling stragglers toward the crowd (`body_pull`
     /// 2-5) or aligning headings (dead-ends) did not hold it together.
-    /// Reads the same walker counts as `body_pull`, which the GPU's
-    /// occupancy also holds.
+    /// The GPU reads the same counts from its occupancy.
     pub lone_step: f32,
     pub lone_floor: f32,
-    /// **Tether** (2026-11-12, the one-body thread; 0 is off). A walker may
-    /// step into another cell only if that cell has at least `tether`
-    /// other walkers among its eight neighbours (the mover not counted), or,
-    /// if it has fewer than `tether` others round its own cell, at least as
-    /// many as there: no walker steps away from the crowd it touches, so
-    /// the mould crawls as a connected mass and cannot thin into streams
-    /// of single walkers. A walker touching none moves freely and sticks to
-    /// the first walkers it meets. A walker that cannot step is blocked.
-    /// (A first try let any walker under `tether` move freely: the
-    /// stragglers kept the streams, and the crystals' lumps came apart.)
-    pub tether: u8,
-    /// With `tether`: the chance a walker holds still a step (a keyed draw),
-    /// and then movers count only the holders round a cell, so every
-    /// mover lands touching a walker that stays (0: everyone may move, and
-    /// counts everyone). Without it two touching walkers can step apart in
-    /// the same step, each counting the other where it stood.
-    pub tether_hold: f32,
     /// **Lumps** (held bodies, mini-boss thread 2026-11-16; all off): each
     /// lump's aim, pull, leash and haste (`Lump`), set by the game. Its
     /// members are in the dense words (`LUMP_SHIFT`); they do not panic,
@@ -1640,19 +1585,13 @@ impl BigParams {
             raid_lean: 60,
             raid_len: 450,
             raid_haste: 1.0,
-            fed_crowd: 0,
-            fed_full: 2.0,
             hunger_scent: 0.0,
             hunger_at: 1.0,
             hunger_reach: 0.0,
             hunt_at: 0.0,
-            body_pull: 0.0,
             body_r: 2,
-            body_lone: 0.0,
             lone_step: 0.0,
             lone_floor: 0.25,
-            tether: 0,
-            tether_hold: 0.0,
             lumps: [Lump::default(); LUMPS],
             lone_upkeep: 1.0,
             lone_r: 1,
@@ -1965,8 +1904,6 @@ pub struct BigDish {
     pub wall_hits: u64,
     /// Scent cells inside a wall (`wall_scent` > 0), else empty.
     pub scent_wall: Vec<bool>,
-    /// Holders a cell this step (`tether_hold`), else empty.
-    holds_n: Vec<u16>,
     /// Threads for the field passes. Each cell is computed from the last
     /// field alone, so the result does not depend on it.
     pub threads: usize,
@@ -2249,7 +2186,6 @@ impl BigDish {
             broken: 0,
             wall_hits: 0,
             scent_wall: Vec::new(),
-            holds_n: Vec::new(),
             threads: 1,
             p,
         };
@@ -3418,11 +3354,9 @@ impl BigDish {
 
     /// Trail at `so` and scent at `sso` along heading `a`: off the agar
     /// (by the trail sensor) reads as a wall.
-    /// `sw` weighs the scent (1, or more with `hunger_scent`); `body`, the
-    /// square sums of walkers as the step began (`body_pull`), with `bw`
-    /// their weight.
+    /// `sw` weighs the scent (1, or more with `hunger_scent`).
     #[allow(clippy::too_many_arguments)]
-    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32, body: &[u32], bw: f32) -> f32 {
+    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
@@ -3434,11 +3368,10 @@ impl BigDish {
                 } else {
                     self.p.alarm_weight * self.alarm[i] + self.p.scar_weight * self.scar[i]
                 };
-                let b = if body.is_empty() { 0.0 } else { bw * body[i] as f32 };
                 let sc = self.scent_at(x + c * sso, y + s * sso);
                 // sw 1 keeps the sum's order, so older runs keep their hashes.
                 let sc = if sw == 1.0 { sc } else { sw * sc };
-                let v = self.trail_seen(i, sp) + sc + g + al + b;
+                let v = self.trail_seen(i, sp) + sc + g + al;
                 // The crust (`crust_weight`), last, so a dish without it
                 // keeps its sums.
                 if self.crust.is_empty() || self.p.crust_weight == 0.0 {
@@ -3486,22 +3419,13 @@ impl BigDish {
     }
 
     /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
-    /// Walker k's crowd limit for a move: `fed_crowd`'s, and `LUMP_CROWD`
+    /// Walker k's crowd limit for a move: its species', and `LUMP_CROWD`
     /// more for a lump's member (`BigParams::lumps`; the GPU's `move_crowd`).
+    /// A fed walker packing tighter (`fed_crowd`, off since 11-12) was
+    /// deleted 11-17 (Reports/dead-ends.md).
     fn move_crowd(&self, base: u8, k: usize) -> u8 {
-        let c = self.fed_crowd(base, k);
-        if c > 0 && self.lump_of(k).is_some() {
-            c + LUMP_CROWD
-        } else {
-            c
-        }
-    }
-
-    /// Walker k's crowd limit: `base`, or `base + fed_crowd` while it holds
-    /// `fed_full` energy or more (`BigParams::fed_crowd`).
-    fn fed_crowd(&self, base: u8, k: usize) -> u8 {
-        if base > 0 && self.p.fed_crowd > 0 && !self.energy.is_empty() && self.energy[k] >= self.p.fed_full {
-            base + self.p.fed_crowd
+        if base > 0 && self.lump_of(k).is_some() {
+            base + LUMP_CROWD
         } else {
             base
         }
@@ -3565,22 +3489,8 @@ impl BigDish {
         // cells as the pass began).
         let life_on = !self.life.is_empty();
         let (mut flying, mut sleeping, mut fruit, mut doze) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
-        // Body pull: walkers in each cell's square, as the step began.
-        let body = if (p.body_pull > 0.0 && look) || p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
-        // Tether's holders (`tether_hold`): who stays this step, and how
-        // many stay on each cell.
-        self.holds_n.clear();
-        let hold_on = p.tether > 0 && p.tether_hold > 0.0;
-        if hold_on {
-            self.holds_n.resize(self.w * self.h, 0);
-            for k in 0..self.walkers.len() {
-                if self.active(k) && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
-                    let (x, y, _) = self.walkers[k];
-                    let i = self.cell(x, y).expect("walker inside the dish");
-                    self.holds_n[i] += 1;
-                }
-            }
-        }
+        // Walkers in each cell's square, as the step began (`lone_step`).
+        let body = if p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
         for k in 0..self.walkers.len() {
             if !self.lives(k) {
                 continue;
@@ -3625,9 +3535,6 @@ impl BigDish {
                 }
             }
             if !life_on && self.set_step(k, here) {
-                continue;
-            }
-            if hold_on && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
                 continue;
             }
             // Trail-dependent settings (`sense_scale`), read where it stands.
@@ -3756,18 +3663,10 @@ impl BigDish {
                 } else {
                     1.0
                 };
-                let bw = if body.is_empty() {
-                    0.0
-                } else if p.body_lone > 0.0 {
-                    let near = body[here].saturating_sub(1) as f32;
-                    p.body_pull * (1.0 - near / p.body_lone).max(0.0)
-                } else {
-                    p.body_pull
-                };
                 let (mut f, mut fl, mut fr) = (
-                    self.sense((x, y), h, so, sso, sp, set.graze_weight, sw, &body, bw),
-                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight, sw, &body, bw),
-                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight, sw, &body, bw),
+                    self.sense((x, y), h, so, sso, sp, set.graze_weight, sw),
+                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight, sw),
+                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight, sw),
                 );
                 if explorer {
                     // Toward the lowest reading; a wall stays a wall.
@@ -3830,7 +3729,7 @@ impl BigDish {
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
-                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(k, here, there)) => {
+                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16)) => {
                     if there != here && crowd > 0 {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
@@ -3876,7 +3775,7 @@ impl BigDish {
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
                 match self.cell(nx, ny) {
-                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(k as usize, here, there) => {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 => {
                         let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
                         self.claim[there] = self.claim[there].min(key);
                         tries.push((k, here as u32, there as u32, nx, ny, h, st));
@@ -4086,28 +3985,6 @@ impl BigDish {
         }
     }
 
-    /// Others (`occ`, less the mover on `here`) on the eight cells round
-    /// fine cell `i`, and whether `tether` lets a walker on `here` step to
-    /// `there`: always with `tether` 0, or when it is a straggler (under
-    /// `tether` others round `here`), else when `there` has `tether` or more
-    /// others round it.
-    fn others_round(&self, i: usize, here: usize) -> u32 {
-        let (w, h) = (self.w as i64, self.h as i64);
-        let (x, y) = ((i % self.w) as i64, (i / self.w) as i64);
-        let mut n = 0u32;
-        for dy in -1..=1 {
-            for dx in -1..=1 {
-                let (nx, ny) = (x + dx, y + dy);
-                if (dx, dy) == (0, 0) || nx < 0 || ny < 0 || nx >= w || ny >= h {
-                    continue;
-                }
-                let j = (ny * w + nx) as usize;
-                n += if self.holds_n.is_empty() { self.occ[j] as u32 - (j == here) as u32 } else { self.holds_n[j] as u32 };
-            }
-        }
-        n
-    }
-
     /// Walkers in the square of radius `r` round fine cell `i`, less the
     /// cell itself (`occ`).
     fn occ_round(&self, i: usize, r: i64) -> u32 {
@@ -4134,15 +4011,8 @@ impl BigDish {
         (1.0 - self.energy[k] / self.p.hunger_at).max(0.0)
     }
 
-    fn tethered(&self, k: usize, here: usize, there: usize) -> bool {
-        // With `hunt_at` over 0 only hunting walkers are tethered: a fed
-        // body spreads as today, a starving hunk keeps together.
-        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at { 0 } else { self.p.tether as u32 };
-        t == 0 || self.others_round(there, here) >= t.min(self.others_round(here, here))
-    }
-
     /// Walkers (`occ`) in the square of radius `r` round each fine cell, by
-    /// a summed-area table: the body pull's reading (`body_pull`).
+    /// a summed-area table: the lone step's reading (`lone_step`).
     fn body_counts(&self, r: usize) -> Vec<u32> {
         let (w, h) = (self.w, self.h);
         let mut t = vec![0u32; (w + 1) * (h + 1)];
@@ -4540,7 +4410,7 @@ impl BigDish {
             let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
-            let crowd = self.fed_crowd(crowd_of(self, k), k);
+            let crowd = crowd_of(self, k);
             if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && matches!(self.soil[j], SOIL_BARREN | SOIL_DEEP)) || self.charred(j) {
                 continue;
             }
@@ -7086,7 +6956,7 @@ mod tests {
         assert_eq!(empty, after, "empty slots untouched");
     }
 
-    /// The one-body rules (hunger, body pull, tether, lone upkeep): threads
+    /// The one-body rules (hunger, hunger reach, lone upkeep): threads
     /// change nothing, the crowd limit holds, and each one changes the dish
     /// (so it is wired in), while left at its default it changes nothing.
     #[test]
@@ -7101,11 +6971,8 @@ mod tests {
         };
         for p in [
             BigParams { hunger_scent: 6.0, hunger_at: 1.0, energy_flow: 0.05, ..grow.clone() },
-            BigParams { body_pull: 3.0, body_r: 2, body_lone: 6.0, ..grow.clone() },
-            BigParams { tether: 2, ..grow.clone() },
-            BigParams { tether: 1, tether_hold: 0.3, ..grow.clone() },
             BigParams { lone_upkeep: 5.0, lone_r: 2, ..grow.clone() },
-            BigParams { hunger_reach: 3.0, hunt_at: 0.3, tether: 1, ..grow.clone() },
+            BigParams { hunger_reach: 3.0, hunt_at: 0.3, ..grow.clone() },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();
@@ -7115,42 +6982,11 @@ mod tests {
                 b.tick();
             }
             assert_eq!(a.hash(), b.hash());
-            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.body_pull, a.p.tether, a.p.lone_upkeep));
+            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.hunger_reach, a.p.lone_upkeep));
             for (i, &n) in a.occupancy().iter().enumerate() {
                 assert!(n <= 1, "cell {i} holds {n}");
             }
         }
-    }
-
-    /// Tether with holders: a mover always lands touching a walker that
-    /// stays, so far fewer walkers lose touch with the crowd in a step than
-    /// without it (a holder can still be left alone when all round it move).
-    #[test]
-    fn tether_keeps_contact() {
-        let lost = |tether: u8| {
-            let mut d = BigDish::new(BigParams { tether, tether_hold: 0.5, walkers: 600, ..small(2, 1) });
-            for _ in 0..20 {
-                d.tick();
-            }
-            let mut lost = 0;
-            for _ in 0..20 {
-                let touch = |d: &BigDish| -> Vec<bool> {
-                    (0..d.walkers.len())
-                        .map(|k| {
-                            let (x, y, _) = d.walkers[k];
-                            d.occ_round(y as usize * d.w + x as usize, 1) > 0
-                        })
-                        .collect()
-                };
-                let before = touch(&d);
-                d.tick();
-                let after = touch(&d);
-                lost += before.iter().zip(&after).filter(|(b, a)| **b && !**a).count();
-            }
-            lost
-        };
-        let (on, off) = (lost(1), lost(0));
-        assert!(on * 2 < off, "lost touch: {on} tethered against {off} free");
     }
 
     /// With growth off nothing is kept for it: every slot lives.

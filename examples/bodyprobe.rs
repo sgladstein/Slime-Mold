@@ -57,13 +57,9 @@ const DH: usize = 100;
 fn key(p: &mut BigParams, k: &str, v: &str) {
     let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}"));
     match k {
-        "tether" => p.tether = f() as u8,
-        "tether_hold" => p.tether_hold = f(),
         "lone_step" => p.lone_step = f(),
         "lone_floor" => p.lone_floor = f(),
         "body_r" => p.body_r = f() as u8,
-        "body_pull" => p.body_pull = f(),
-        "body_lone" => p.body_lone = f(),
         "blocked_keep" => p.blocked_keep = f() != 0.0,
         "blocked_reset" => p.blocked_reset = f(),
         "blocked_retry" => p.blocked_retry = f() as u8,

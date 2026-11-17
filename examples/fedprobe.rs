@@ -17,7 +17,8 @@
 //! ringed) as `DIR/s{seed}-eat{e}-crowd{c}.png`.
 //!
 //! The first arm tried was a fed walker laying more trail (`fed_trail`,
-//! removed; `BigParams::fed_crowd` has its numbers).
+//! removed). `BigParams::fed_crowd` was deleted 11-17; its numbers are in
+//! `Reports/dead-ends.md`, and only `crowd=0` runs now.
 //!
 //! **Measures, named before the run:** walkers every 30 s (**deciding:**
 //! at `until`, paired by seed against the first arm: if crystals that feed
@@ -147,8 +148,10 @@ fn run(seed: u64, arm: usize, eat: Option<f32>, crowd: u8, full: f32, flow: f32,
         p.crystal_eat = e;
     }
     p.energy_flow = flow;
-    p.fed_crowd = crowd;
-    p.fed_full = full;
+    // `fed_crowd` was deleted 11-17 (Reports/dead-ends.md): only its
+    // off arm still runs; `git log -S fed_crowd` has the rule.
+    assert!(crowd == 0, "crowd={crowd}: fed_crowd was deleted 11-17");
+    let _ = full;
     let rules = Rules { mass: Rules::mass_for(walkers, 2), ..Rules::default() };
     let mut g = Game::new(BigDish::new(p), rules, seed);
     let start: Vec<f32> = g.world.crystals().iter().map(|c| c.1).collect();

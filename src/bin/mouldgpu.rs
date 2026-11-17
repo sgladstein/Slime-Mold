@@ -4145,7 +4145,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 26] = [
+        let dishes: [(&str, Settings, Build); 25] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -4176,11 +4176,6 @@ mod tests {
             // so some walkers are blocked and crowded.
             ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             ("lone step: a walker with few others round it slows", Settings { lone_step: 3.0, lone_floor: 0.3, lone_r: 2, ..grow(w(small(0))) }, walls),
-            // A fed mould packs tighter (2026-11-12, the slime-enemy
-            // thread): every other walker is fed to 3 before the tick
-            // (below), so fed and unfed ones step and breed side by side,
-            // two a cell for the fed.
-            ("fed crowd: a fed walker packs two to a cell", Settings { fed_crowd: 1, fed_full: 2.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
             // Lossy sharing (2026-11-13, the slime-enemy thread): what a
             // cell takes from a richer neighbour arrives short, so food
             // fades with distance from the crystals. 0.2, four times the
@@ -4278,13 +4273,6 @@ mod tests {
                 for k in 0..cpu.walkers.len() {
                     if cpu.lives(k) {
                         cpu.energy[k] = 2.0;
-                    }
-                }
-            }
-            if name.starts_with("fed crowd") {
-                for k in (0..cpu.walkers.len()).step_by(2) {
-                    if cpu.lives(k) {
-                        cpu.energy[k] = 3.0;
                     }
                 }
             }
@@ -4597,19 +4585,6 @@ mod tests {
                 eprintln!("{name}: living walkers on sand, clay, barren, deep water, plain {kinds:?}; {births} born in the tick");
                 assert!(kinds.iter().all(|&c| c > 0) && births > 0, "{name}: walkers on every kind of soil {kinds:?}, {births} born");
                 assert!(e.ground_world & WORLD_SOIL != 0, "{name}: soil on");
-            }
-            // The fed pack: cells holding two walkers after the tick, on
-            // each side (the CPU's from its walkers, the GPU's from `occ`).
-            if s.fed_crowd > 0 {
-                let mut held = vec![0u16; cpu.w * cpu.h];
-                for k in (0..n).filter(|&k| cpu.lives(k)) {
-                    held[cpu.walkers[k].1 as usize * cpu.w + cpu.walkers[k].0 as usize] += 1;
-                }
-                let occ = read_back(&device, &queue, &e.occ).chunks(4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect::<Vec<_>>();
-                let (two, gpu_two) = (held.iter().filter(|&&c| c == 2).count(), occ.iter().filter(|&&c| c == 2).count());
-                eprintln!("{name}: {two} cells hold two walkers on the CPU, {gpu_two} on the GPU; {births} born in the tick");
-                assert!(two > 0 && held.iter().all(|&c| c <= 2), "{name}: fed walkers pack two to a cell, never three");
-                assert_eq!(two, gpu_two, "{name}: cells holding two");
             }
             assert!(off * 1000 <= n, "{name}: {off} of {n} walkers off");
             assert!(lt <= 1e-4 && ls <= 1e-6, "{name}: trail L1 {lt:.2e}, scent L1 {ls:.2e}");
@@ -6139,7 +6114,7 @@ mod tests {
         // The crust rises 36 times as fast as the window's (1/1800 a fine
         // step) so slime sets within the test's 15 s; the code paths are
         // the same.
-        const KEYS: [(&str, &str); 11] = [
+        const KEYS: [(&str, &str); 10] = [
             ("crust", "1"),
             ("crust_rise", "0.02"),
             ("crust_weight", "0.5"),
@@ -6147,7 +6122,6 @@ mod tests {
             ("setting", "1"),
             ("thicken", "1.5"),
             ("condense", "300"),
-            ("fed_crowd", "1"),
             ("flow_loss", "0.1"),
             ("lone_step", "3"),
             ("crystal_regrow", "0.001"),
@@ -6164,7 +6138,7 @@ mod tests {
         for (k, v) in KEYS {
             slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
         }
-        assert!(s.crust_rise > 0.0 && s.set_scar > 0.0 && s.thicken > 0.0 && s.condense > 0 && s.fed_crowd > 0, "the keys turned their switches on");
+        assert!(s.crust_rise > 0.0 && s.set_scar > 0.0 && s.thicken > 0.0 && s.condense > 0, "the keys turned their switches on");
         let mut rules = Rules { reserve: 5.0, set_block: 3.0, ..Rules::default() };
         rules.raid.last_stand = true;
         fn play<W: World>(mut g: Game<W>, what: &str) {

@@ -303,8 +303,6 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
         "capacity" => p.capacity = v.parse::<usize>().map_err(|e| format!("{key}={v}: {e}"))?,
-        // A fed walker packs `fed_crowd` more to a cell (`BigParams::fed_crowd`).
-        "fed_crowd" => p.fed_crowd = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_at" => p.hunger_at = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
