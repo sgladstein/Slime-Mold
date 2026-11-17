@@ -41,6 +41,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
 - [e2b-look.md](e2b-look.md): set slime's own look, two materials (amber,
   glaze) for a blind A/B, page in `page-e2b-look/`
   (https://claude.ai/artifact/4nbrWEwjSK9vo243aJWWCw).
+- [c1-dry-burns.md](c1-dry-burns.md): C1 built, starving and set slime
+  burn (the trail no longer wets slime with stale food news), on by
+  default; a stronger "fed slime is fireproof" form behind `fire_fed=1`;
+  probe `examples/dryprobe.rs`, raw lines in `c1-raw/`, page in `page-c1/`
+  (https://claude.ai/artifact/6CrHne8QszUbfgVzpcG825).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure

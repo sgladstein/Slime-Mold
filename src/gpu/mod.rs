@@ -122,7 +122,8 @@ pub const MIND_AT: usize = 1152;
 /// The scar row (the Grudge's habituation on the GPU, 2026-11-17, the
 /// simulation-use plan's step 0; Params grew from 1168 to 1184, after the
 /// Mind row): `scar_keep` (0 with the scar off: no alarm field, or the key
-/// 0), `scar_gain`, `scar_weight`, and a spare word. The field itself is
+/// 0), `scar_gain`, `scar_weight`, and `fire_dry` | `fire_fed` << 1 (its
+/// spare word until the plan's C1, 11-17). The field itself is
 /// binding 47's second block, kept for it since 2026-11-12.
 pub const SCAR_AT: usize = 1168;
 /// The crust row (the simulation-use plan's E1a, 2026-11-17; Params grew
@@ -453,6 +454,10 @@ pub struct Settings {
     pub set_wake: f32,
     pub set_crust: f32,
     pub set_armour: u32,
+    /// Dry slime burns (`BigParams::fire_dry`, the plan's C1), and fed
+    /// slime is fireproof (`fire_fed`).
+    pub fire_dry: bool,
+    pub fire_fed: bool,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -732,6 +737,8 @@ impl Settings {
             set_wake: t.set_wake,
             set_crust: t.set_crust,
             set_armour: t.set_armour,
+            fire_dry: t.fire_dry,
+            fire_fed: t.fire_fed,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1044,6 +1051,13 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "set_wake" => s.set_wake = f()?.max(0.0),
         "set_crust" => s.set_crust = f()?,
         "set_armour" => s.set_armour = int()?.clamp(1, 255),
+        // Dry slime burns (`fire_dry=1`, the plan's C1): the trail wets a
+        // cell against fire only where the slime is fed; cut-off and set
+        // slime burn. Needs the wither's news on.
+        "fire_dry" => s.fire_dry = b()?,
+        // Fed slime is fireproof (`fire_fed=1`): a cell by fresh news is wet
+        // against fire whatever its trail.
+        "fire_fed" => s.fire_fed = b()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1243,6 +1257,8 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         set_wake: s.set_wake,
         set_crust: s.set_crust,
         set_armour: s.set_armour,
+        fire_dry: s.fire_dry,
+        fire_fed: s.fire_fed,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
         germ_upkeep: s.germ_upkeep,
@@ -2356,7 +2372,10 @@ impl Engine {
         assert_eq!(b.len(), SCAR_AT, "Params rows before the scar row moved");
         // The CPU makes the scar only with the alarm field (`BigDish::new`).
         let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;
-        b.extend(f32_bytes(&[if scars { s.scar_keep } else { 0.0 }, s.scar_gain, s.scar_weight, 0.0]));
+        b.extend(f32_bytes(&[if scars { s.scar_keep } else { 0.0 }, s.scar_gain, s.scar_weight]));
+        // Its spare word: dry slime burns (`fire_dry`, the plan's C1, bit 0)
+        // and fed slime is fireproof (`fire_fed`, bit 1).
+        b.extend(u32_bytes(&[s.fire_dry as u32 | (s.fire_fed as u32) << 1]));
         assert_eq!(b.len(), CRUST_AT, "Params rows before the crust row moved");
         // The crust runs only on a dish made with it (its block in `news`).
         let rise = if self.crust_at > 0 { s.crust_rise } else { 0.0 };
