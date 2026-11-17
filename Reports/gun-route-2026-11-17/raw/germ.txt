@@ -1,0 +1,12 @@
+c-none exit 0
+sporer-none exit 0
+c-germ exit 0
+sporer-germ exit 0
+c-none: t 20 s: 24323 t 25 s: 24447 t 30 s: 24773 t 40 s: 25772 
+c-germ: t 20 s: 24323 t 25 s: 14965 t 30 s: 7279 t 40 s: 6204 
+sporer-none: t 20 s: 24395 t 25 s: 24954 t 30 s: 25715 t 40 s: 27472 
+sporer-germ: t 20 s: 24395 t 25 s: 16118 t 30 s: 7710 t 40 s: 5482 
+c-none: t 20 s: mould 24323, soldiers 2 t 25 s: mould 24447, soldiers 0 t 30 s: mould 24773, soldiers 0 t 40 s: mould 25772, soldiers 0 
+c-germ: t 20 s: mould 24323, soldiers 2 t 25 s: mould 14965, soldiers 0 t 30 s: mould 7279, soldiers 0 t 40 s: mould 6204, soldiers 0 
+sporer-none: t 20 s: mould 24395, soldiers 0 t 25 s: mould 24954, soldiers 0 t 30 s: mould 25715, soldiers 0 t 40 s: mould 27472, soldiers 0 
+sporer-germ: t 20 s: mould 24395, soldiers 0 t 25 s: mould 16118, soldiers 0 t 30 s: mould 7710, soldiers 0 t 40 s: mould 5482, soldiers 0 

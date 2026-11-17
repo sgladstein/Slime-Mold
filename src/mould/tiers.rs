@@ -120,7 +120,13 @@ impl Tier {
             // squad on 2 of 4 (0 before); strike 0.45 -> 0.33, idle 0.05
             // both. It grows bigger, as the rejected arm said; that is now
             // the point.
-            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "16"), ("hunger_at", "1"), ("sensor_offset", "18")],
+            // Germ resistance 10 (the game designer, 2026-11-17 05:40Z: the
+            // germ is strong against the Sporer and the Drifter, 45-55% of
+            // the slime from one round in 20 s). On the race world, seed 0,
+            // one round took 56.6% of the Drifter at 1, 56.2% at 3, 55.4% at
+            // 6 and 52.4% at 10: its droplet bodies catch it near the hit
+            // whatever the resistance, so it takes less to spare it than C.
+            Tier::Drifter => vec![("sensor_angle", "90"), ("keep", "0.93"), ("blocked_deposit", "1"), ("hunger_scent", "16"), ("hunger_at", "1"), ("sensor_offset", "18"), ("germ_resist", "10")],
             // Explorers alone (keep 0.9, step 1) starved to 250 walkers by
             // 60 s and let go of every crystal; the faster step and longer
             // reach keep a mesh on 14 of 23. Explore 400 steps held about
@@ -140,7 +146,9 @@ impl Tier {
             // fruit at once (spore_burst with spore_alarm).
             Tier::Sporer => {
                 let mut k = SPORE.to_vec();
-                k.extend([("spore_rate", "0.00001"), ("spore_burst", "0.05"), ("spore_alarm", "1"), ("alarm_keep", "0.98")]);
+                // No germ resistance (1; the Drifter's note): one round
+                // took 49% of it on the race world, seed 0 (48.8% at 1.5).
+                k.extend([("spore_rate", "0.00001"), ("spore_burst", "0.05"), ("spore_alarm", "1"), ("alarm_keep", "0.98"), ("germ_resist", "1")]);
                 k
             }
             Tier::Sleeper => vec![
@@ -160,12 +168,19 @@ impl Tier {
                 // *In the Larder world*).
                 ("sleep_death", "0.0001"),
             ],
-            Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3")],
+            // Germ resistance 15 (the designer's 10-20% for the Swarmer,
+            // Sleeper and Grudge): one round took 13% of the Swarmer on the
+            // race world, seed 0 (38% at 12.5), and 16% of the Grudge. The
+            // Sleeper keeps shape C's: its crust pays no upkeep, so the
+            // germ's starving barely touches it at any resistance (0.1 to
+            // 15 all took under 0.1%; 26% at the toolkit's upkeep).
+            Tier::Swarmer => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("germ_resist", "15")],
             // The scar: keep 0.9999 a fine step, gain 0.01 of the alarm, so
             // 16 strikes 2 s apart leave a peak of about 250 that halves in
             // about 40 s; read at +0.5 beside trail and scent
             // (`Reports/mould-tiers-campaign-2026-11-12.md`, *Habituation*).
-            Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5")],
+            // Germ resistance 15, as the Swarmer's.
+            Tier::Grudge => vec![("alarm_keep", "0.98"), ("alarm_weight", "3"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_weight", "0.5"), ("germ_resist", "15")],
         }
     }
 
@@ -303,6 +318,7 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "alarm_keep" => p.alarm_keep = f()?,
         "alarm_weight" => p.alarm_weight = f()?,
         "flinch" => p.flinch = f()?.max(0.0),
+        "germ_resist" => p.germ_resist = f()?.max(0.0),
         "alarm_relay" => p.alarm_relay = f()?,
         "scar_keep" => p.scar_keep = f()?,
         "scar_gain" => p.scar_gain = f()?,

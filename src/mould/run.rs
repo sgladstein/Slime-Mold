@@ -454,7 +454,7 @@ pub const AMMO_OFFER: usize = 2;
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
     if depth >= power_from(2) {
-        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter]);
+        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare]);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
