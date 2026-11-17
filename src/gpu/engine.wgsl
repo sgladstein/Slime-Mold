@@ -3871,12 +3871,45 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         pset(PB_FRESH, i, select(0.0, 1.0, to > 0.0));
     }
     pset(PB_FB, i, to);
-    // Fire lays alarm where it burns (`fire_alarm`, C4; the CPU's
-    // `fire_tick`), on this tick's alarm (the trail pass wrote `germ_out`).
-    if (to > 0.0 && agar[i] != 0u && alarms() && pf(44u) > 0.0) { germ_out[P.w * P.h + i] += pf(44u) * to; }
     let ch = pget(PB_CHAR, i);
     let clear = select(max(pget(PB_B, i) - pf(7u), 0.0) * pf(12u), 0.0, to > 0.0);
     pset(PB_CHAR, i, max(min(ch * pf(11u) + ate * pf(10u), 1.0) - clear, 0.0));
+    // Gas ignites (`gas_burn`, C5; the CPU's `fire_tick`, after the char
+    // as there): cloud over it (this tick's, in `germ_out`'s third block)
+    // that burned last step flashes, and beside last step's fire catches
+    // by chance; its cloud is used up.
+    if (gas_hot(i, false)) {
+        let x = i % P.w; let y = i / P.w;
+        var n = 0u;
+        if (x > 0u && pget(PB_FA, i - 1u) > 0.0) { n += 1u; }
+        if (x + 1u < P.w && pget(PB_FA, i + 1u) > 0.0) { n += 1u; }
+        if (y > 0u && pget(PB_FA, i - P.w) > 0.0) { n += 1u; }
+        if (y + 1u < P.h && pget(PB_FA, i + P.w) > 0.0) { n += 1u; }
+        // Half a chance for each burning neighbour (the CPU's `GAS_DICE`).
+        if (heat > 0.0 || (n > 0u && froll(i, pw(45u) ^ GAS_DICE) < 0.5 * f32(n))) {
+            to = 1.0;
+            pset(PB_FB, i, 1.0);
+            pset(PB_FRESH, i, 1.0);
+            germ_out[2u * P.w * P.h + i] = 0.0;
+        }
+    }
+    // Fire lays alarm where it burns (`fire_alarm`, C4; the CPU's
+    // `fire_tick`), on this tick's alarm (the trail pass wrote `germ_out`).
+    if (to > 0.0 && agar[i] != 0u && alarms() && pf(44u) > 0.0) { germ_out[P.w * P.h + i] += pf(44u) * to; }
+}
+
+// The key on the fire step that rolls a gas flash's catch (the CPU's
+// `big::GAS_DICE`).
+const GAS_DICE: u32 = 0x6A5u;
+
+// Whether cell `i`'s gas cloud is over `gas_burn` (plant word 43; C5, the
+// CPU's `gas_hot`): between ticks (`ignite`) the cloud is `germ_in`'s, in
+// a tick's plant passes `germ_out`'s.
+fn gas_hot(i: u32, between: bool) -> bool {
+    let gb = pf(43u);
+    if (gb <= 0.0 || P.gas_keep <= 0.0) { return false; }
+    let at = 2u * P.w * P.h + i;
+    return select(germ_out[at], germ_in[at], between) > gb;
 }
 
 @compute @workgroup_size(256)
@@ -3913,10 +3946,13 @@ fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
-    if (i >= P.w * P.h || agar[i] == 0u || pwet(i)) { return; }
+    if (i >= P.w * P.h || agar[i] == 0u) { return; }
     var fuel = pget(PB_A, i);
     if (P.crust_fuel > 0.0) { fuel = fuel + P.crust_fuel * crust_of(i); }
-    if (fuel < pf(7u)) { return; }
+    // Gas over `gas_burn` is fuel enough, wet or not, and lights whatever
+    // the share (C5).
+    let gas = gas_hot(i, true);
+    if (!gas && (pwet(i) || fuel < pf(7u))) { return; }
     let x = i32(i % P.w); let y = i32(i / P.w);
     // Lights from word 49: x, y, r and the share of cells lit (by the
     // chance `plants::roll` keyed as `BigDish::ignite` keys it).
@@ -3924,7 +3960,7 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var q = 0u; q < min(pw(49u), 3u); q++) {
         let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
         let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
-        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && dice < pf(53u + 4u * q)) { pset(PB_FA, i, 1.0); pset(PB_FRESH, i, 1.0); return; }
+        if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && (gas || dice < pf(53u + 4u * q))) { pset(PB_FA, i, 1.0); pset(PB_FRESH, i, 1.0); return; }
     }
 }
 

@@ -56,6 +56,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   body ringed by slime when strong, as heat in the sensors; probe
   `examples/fearprobe.rs`, raw lines in `c4-raw/`, page in `page-c4/`
   (https://claude.ai/artifact/Nq2iGDUWQN4SuF5VruRQF6).
+- [c5-gas-ignites.md](c5-gas-ignites.md): C5 built, gas over `gas_burn`
+  (0.2, on) burns when fire or a blast reaches it, so sleep gas then fire
+  burns the sleepers; probe `examples/gasprobe.rs`, raw lines in
+  `c5-raw/`, page in `page-c5/`
+  (https://claude.ai/artifact/LV3H1RgmX6EoBbYSrPtTkX).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
