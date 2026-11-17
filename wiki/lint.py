@@ -11,8 +11,13 @@ Errors (fail): a relative link that does not resolve; a page that
 no longer appears anywhere under `src/`, `examples/` or the scripts kept in
 `Reports/`; a page missing a required frontmatter key; a line under
 "Owner's word" that
-does not start with a date; `index.md` over 150 lines; a dish, tool or
-mechanism page that `HANDOFF.md` does not link.
+does not start with a date; `index.md` over 150 lines; `NOW.md` over 100
+lines; a page's Now over 2 KB (a page that was over on 2026-11-17 fails
+only when its Now grows: `NOW_OVER`).
+
+With `--base`, a change to the game (`src/`, `assets/`, the play scripts)
+that adds no line to `news/whats-new.txt` is an error too, unless a commit
+message says why not in a `Nothing-new:` line (`whats_new`, below).
 
 A top-level report under `Reports/` that no page cites is an error too,
 unless it is listed in `NOT_YET_INGESTED` (reports from before the wiki).
@@ -20,7 +25,7 @@ So is a note (.md) inside a report folder that cannot be reached by links
 from the folder's parent report or a wiki page, and a folder of notes with
 no parent; folders in `PRE_WIKI_FOLDERS` only warn.
 
-Warnings (print only): a page with a Numbers table, a page over 12 KB, a Now over 2 KB, an index line
+Warnings (print only): a page with a Numbers table, a page over 12 KB, an index line
 over 200 characters; a page whose `updated` date (or UTC time, such as
 2026-11-11T15:30Z) is older than the last commit to one of its `sources`; a
 page that links a report its `sources` do not list; a listed pre-wiki report
@@ -60,7 +65,37 @@ INDEX_CAP = 150
 # Numbers row is one line): the owner asked whether 300 lines was right
 # (2026-11-11 15:16Z), and a 255-line page was then 27 KB, about 7k tokens.
 PAGE_CAP = 12_000      # a page past this splits (warning)
-NOW_CAP = 2_000        # a page's Now past this is being appended to (warning)
+NOW_CAP = 2_000        # a page's Now past this is being appended to (error)
+FRONT_CAP = 100        # NOW.md, the repo's front page, in lines (error)
+
+# Pages whose Now was over NOW_CAP when the cap became an error (2026-11-17,
+# the plan's housekeeping: "make the 2 KB cap on a wiki page's Now a
+# failure"), with its size in bytes that day. Twelve pages were over, the
+# worst 8 times, so a plain error would have turned every pull request red
+# until other lanes rewrote their pages. Instead a listed page fails only
+# if its Now grows past the size here, and anything unlisted fails at the
+# cap: no Now can get longer, and each rewrite takes its line out. Lower a
+# number when you shorten a page; delete the line once it is under the cap.
+NOW_OVER = {
+    "wiki/model/growth.md": 4_500,
+    "wiki/model/sensors.md": 3_100,
+    "wiki/world/guns.md": 12_000,
+    "wiki/world/larder.md": 16_900,
+    "wiki/world/maps.md": 3_300,
+    "wiki/world/mould-tiers.md": 3_100,
+    "wiki/world/planets.md": 9_200,
+    "wiki/world/plants.md": 5_000,
+    "wiki/world/player-ai.md": 5_500,
+    "wiki/world/run.md": 8_200,
+    "wiki/world/squad-toolkit.md": 10_000,
+    "wiki/world/world-camera.md": 10_100,
+}
+
+# What counts as the game for the "what is new" rule: a change under one of
+# these can change what the player sees or does. Tests cannot.
+GAME_PATHS = ("src/", "assets/", "play.cmd", "play.ps1", "play-new-slime.cmd")
+NEWS = "news/whats-new.txt"
+NO_NEWS = "Nothing-new:"
 INDEX_LINE_CAP = 200   # one index line is one sentence (warning)
 STATUSES = {"current", "open", "decided", "paused", "retired"}
 
@@ -147,6 +182,65 @@ def code_corpus():
     return "\n".join(text)
 
 
+def git(*args):
+    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=False)
+    return r.stdout if r.returncode == 0 else ""
+
+
+def is_game(path):
+    """A file whose change can change what the player sees or does."""
+    if not path.startswith(GAME_PATHS):
+        return False
+    name = os.path.basename(path)
+    return not (name == "tests.rs" or name.endswith("_tests.rs") or "/tests/" in path)
+
+
+def whats_new(base):
+    """The "what is new" rule (the plan of 2026-11-17, rule 4: "Every change
+    Scott can see or feel adds one line to the game's 'what is new' list").
+
+    A script cannot tell whether a change shows in play, so the rule is: a
+    change to the game's files adds a line to news/whats-new.txt, or one of
+    its commit messages has a line `Nothing-new: <why>` (a refactor, a
+    tool, a fix to a test). That makes saying "nothing changed for the
+    player" a written choice a reviewer can see, not a default.
+
+    Checked one pull request at a time. On a pull request's own CI and on a
+    branch that is the whole of base...HEAD. On the merge queue's candidate
+    (ci.yml passes the main it was built on) it is each "Merge pull request
+    #N" commit the queue made, so a batch cannot hide one request's missing
+    line behind another's.
+    """
+    units = []
+    for line in git("log", "--first-parent", "--format=%H %s", f"{base}..HEAD").splitlines():
+        sha, _, subject = line.partition(" ")
+        if subject.startswith("Merge pull request #"):
+            units.append((subject.split(" from ")[0][len("Merge "):], f"{sha}^1", f"{sha}^2", f"{sha}^1...{sha}"))
+    if not units:
+        units = [("this change", base, "HEAD", f"{base}...HEAD")]
+    errors = []
+    for what, lo, hi, span in units:
+        files = [f for f in git("diff", "--name-only", span).split("\n") if f]
+        game = [f for f in files if is_game(f)]
+        if not game:
+            continue
+        added = [l[1:].strip() for l in git("diff", "-U0", span, "--", NEWS).splitlines()
+                 if l.startswith("+") and not l.startswith("+++")]
+        if any(l and not l.startswith("#") for l in added):
+            continue
+        why = [l.strip() for l in git("log", "--format=%B", f"{lo}..{hi}").splitlines()
+               if l.strip().startswith(NO_NEWS) and len(l.strip()) > len(NO_NEWS) + 8]
+        if why:
+            print(f"note: {what} changes the game and adds no \"what is new\" line: {why[0]}")
+            continue
+        errors.append(f"{what} changes the game ({game[0]}"
+                      + (f" and {len(game) - 1} more" if len(game) > 1 else "")
+                      + f") and adds no line to {NEWS}. Add one line at the bottom saying what "
+                      "the player will see and how to try it. If nothing the player sees or does "
+                      f"changed, say why in a commit message line: `{NO_NEWS} <why>`")
+    return errors
+
+
 def main():
     errors, warnings = [], []
     corpus = code_corpus()
@@ -219,8 +313,9 @@ def main():
                             f"{PAGE_CAP // 1000} KB cap; split it (wiki/README.md, *Growth*)")
         for section, rows in sections(text):
             size = len("\n".join(rows).strip().encode())
-            if section == "Now" and size > NOW_CAP:
-                warnings.append(f"{rel}: Now is {size // 100 / 10} KB, over {NOW_CAP // 1000} KB; "
+            if section == "Now" and size > NOW_OVER.get(rel, NOW_CAP):
+                was = f" (it was over on 2026-11-17 and may not grow past {NOW_OVER[rel]} bytes)" if rel in NOW_OVER else ""
+                errors.append(f"{rel}: Now is {size // 100 / 10} KB, over {NOW_CAP // 1000} KB{was}; "
                                 "rewrite it short and move detail to a section or sub-page")
         updated = fm.get("updated")
         for s in fm.get("sources", []) or []:
@@ -265,16 +360,18 @@ def main():
         errors.append(f"wiki/index.md: {n} lines, over the {INDEX_CAP}-line cap; "
                       "split it per folder (wiki/README.md, *Growth*)")
 
-    # HANDOFF.md is the front page: every dish, tool and mechanism page must
-    # be linked from it, so a new page cannot be missing from the summary.
-    with open(os.path.join(ROOT, "HANDOFF.md"), encoding="utf-8") as h:
-        handoff = h.read()
-    for p in all_pages:
-        with open(p, encoding="utf-8") as h:
-            kind = frontmatter(h.read()).get("kind")
-        rel = os.path.relpath(p, ROOT)
-        if kind in ("dish", "tool", "mechanism") and f"]({rel})" not in handoff:
-            errors.append(f"{rel}: not linked from HANDOFF.md's status section")
+    # NOW.md is the repo's front page since 2026-11-17 (the Direction
+    # lane's): one screen, so it is read. Until that day HANDOFF.md was the
+    # front page and every dish, tool and mechanism page had to be linked
+    # from it; that rule is retired with it (the plan's housekeeping), so
+    # Direction can archive HANDOFF.md. The index still must link every page.
+    front = os.path.join(ROOT, "NOW.md")
+    if os.path.exists(front):
+        with open(front, encoding="utf-8") as h:
+            n = sum(1 for _ in h)
+        if n > FRONT_CAP:
+            errors.append(f"NOW.md: {n} lines, over the {FRONT_CAP}-line cap; it is the front "
+                          "page, so move detail to a lane's handoff or a wiki page")
 
     reports = os.path.join(ROOT, "Reports")
     for f in sorted(os.listdir(reports)):
@@ -361,6 +458,9 @@ def main():
                     errors.append(f"{os.path.relpath(p, ROOT)}: this PR changes {s}, a source "
                                   "of this page, but not the page; ingest it, or bump `updated` "
                                   "if the page is still true")
+
+    if base:
+        errors += whats_new(base)
 
     for w in warnings:
         print("warning:", w)

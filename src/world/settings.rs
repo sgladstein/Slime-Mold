@@ -104,6 +104,18 @@ pub fn get(key: &str) -> Option<String> {
     get_in(&path()?, key)
 }
 
+/// A saved value from the settings file at `p` (what this PC has seen,
+/// `build::news::Memory`, reads and writes a file it is given, so its test
+/// never touches the player's).
+pub fn get_at(p: &std::path::Path, key: &str) -> Option<String> {
+    get_in(p, key)
+}
+
+/// Saves `key=value` in the settings file at `p`, as `set`.
+pub fn set_at(p: &std::path::Path, key: &str, value: &str) -> Result<(), String> {
+    set_in(p, key, value)
+}
+
 fn get_in(p: &std::path::Path, key: &str) -> Option<String> {
     let text = std::fs::read_to_string(p).ok()?;
     text.lines().rev().find_map(|l| l.split_once('=').filter(|(k, _)| k.trim() == key).map(|(_, v)| v.trim().to_string()))

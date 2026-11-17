@@ -208,6 +208,7 @@ fn kind_look(kind: u16) -> LumpLook {
 /// reads as two-thirds cyan, never all of it (that is a crystal's).
 const LEECH_HALF: f32 = 150.0;
 mod args;
+mod experiments;
 mod input;
 mod draw;
 mod events;
@@ -502,7 +503,7 @@ const LOADOUTS: [(&str, &str); 66] = [
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
-const RULE_KEY: &str = "set:";
+use slime_mould::build::switches::{RULE_KEY, WINDOW_KEY};
 
 /// `Default` so a test or a tool names only the fields it sets (`..Default::default()`);
 /// before, each of 18 literals spelled out all 23 fields and every new
@@ -966,11 +967,26 @@ struct App {
     /// The minimap's switch (M) while the armory hides it.
     armory_minimap: bool,
     result: Result<(), String>,
+    /// What this PC has seen of the game's "what is new" list, and the
+    /// last build played here (`build::news`): read from the settings
+    /// file when a window opens (`main`), never saved by the no-window
+    /// films and tests, which must not mark the owner's news as read.
+    memory: slime_mould::build::news::Memory,
+}
+
+/// The play log header's words for a round's keys: the switches off their
+/// default, and every key given over the default game (the shape's own
+/// are the default game; the rest are the command line's and the menu's).
+fn log_keys(keys: &[(String, String)]) -> Vec<(&'static str, String)> {
+    let (_, shape) = shape_keys(DEFAULT_SHAPE).expect("the default shape");
+    let given: Vec<String> = keys.iter().filter(|(k, v)| !shape.iter().any(|(n, x)| n == k && x == v)).map(|(k, v)| format!("{k}={v}")).collect();
+    vec![("switches", slime_mould::build::switches::log_word(keys)), ("keys", if given.is_empty() { "none".into() } else { given.join(",") })]
 }
 
 impl App {
     fn new(args: Args) -> Self {
         App {
+            memory: slime_mould::build::news::Memory::unsaved(),
             name: args.map.clone().unwrap_or_else(|| "noise".into()),
             round: args.round,
             planet_depth: 1,
@@ -1127,7 +1143,7 @@ impl App {
         };
         // Engine keys last, over the race world's and the mission's tier
         // (`set:` keys are the game's rules, set below).
-        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY)) {
+        for (k, v) in a.keys.iter().filter(|(k, _)| !k.starts_with(RULE_KEY) && !k.starts_with(WINDOW_KEY)) {
             slime_mould::gpu::set(&mut s, k, v)?;
             if k == "tier" {
                 core_tier = Tier::from_name(v);
@@ -1341,7 +1357,10 @@ impl App {
             // the same buffer, when the world has one (`crust=1`).
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
-            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, self.args.set_look.unwrap_or(1));
+            // The look: `setlook=`, else a switch's pick (`win:setlook`,
+            // the Experiments tab's "Set slime's look"), else amber.
+            let look = self.args.set_look.or_else(|| experiments::window_key(&self.args.keys, "setlook").and_then(|v| v.parse().ok())).unwrap_or(1);
+            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, look.min(2));
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -1411,7 +1430,9 @@ impl App {
             self.name = tr.mission.map.clone();
         }
         if let Some(w) = &self.window {
-            w.set_title(&format!("Larder World: {} (seed {})", map_title(&self.name, self.args.seed), self.args.seed));
+            // The build at the end (11-17: "the build tells Scott what
+            // it holds"), so a screenshot or a note names the code played.
+            w.set_title(&format!("Larder World: {} (seed {}) - {}", map_title(&self.name, self.args.seed), self.args.seed, slime_mould::build::build().short()));
         }
         self.open_log();
         match &self.mission {
@@ -1431,7 +1452,15 @@ impl App {
     }
 
     /// A new round's play log (`log_path`), its header written: the map,
-    /// seed, mode, and the mission's name and tier when there is one.
+    /// seed, mode, and the mission's name and tier when there is one;
+    /// since 11-17 the build (`build=NUMBER:COMMIT:DATE`), the switches
+    /// off their default (`switches=crust:on,...` or `none`; the keys
+    /// behind them and any other given are in `keys=`), and on a planet
+    /// its number and, in a run, its slime.
+    ///
+    /// A round played out of the menu also marks this build as played on
+    /// this PC (`build::news::Memory::played`): the menu's own dish behind
+    /// it is not play.
     fn open_log(&mut self) {
         self.log_path = None;
         self.playlog = Default::default();
@@ -1441,11 +1470,24 @@ impl App {
             return;
         }
         let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
-        let mut extra = vec![("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        if self.menu.is_none() {
+            self.memory.played();
+        }
+        let mut extra = vec![("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
         if let Some(tr) = &self.mission {
             extra.push(("mission", tr.mission.name.clone()));
             extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
         }
+        if let Some(r) = self.args.run.as_ref().filter(|r| !r.range) {
+            extra.push(("planet", r.depth.to_string()));
+            extra.push(("run", r.seed.to_string()));
+            if self.mission.is_none() {
+                extra.push(("tier", r.level().tier.name().to_string()));
+            }
+        } else if self.name.starts_with("planet") {
+            extra.push(("planet", self.planet_depth.to_string()));
+        }
+        extra.extend(log_keys(&self.args.keys));
         let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
         match std::fs::write(&path, head) {
             Ok(()) => self.log_path = Some(path),
@@ -2267,6 +2309,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 args.load_at = Some((t.parse::<f32>()?, cards.to_string()));
             }
+            // `try=NAME` or `try=NAME:CHOICE`: a declared switch by its
+            // name (`build::switches`, the Experiments tab's rows), its
+            // keys set as if typed.
+            "try" => {
+                let (_, choice) = slime_mould::build::switches::parse_try(v)?;
+                args.keys.extend(slime_mould::build::switches::keys_of(choice));
+            }
             "crustlook" => args.crust_look = Some(v.parse()?),
             "setlook" => args.set_look = Some(v.parse::<u32>()?.min(2)),
             "watch" => {
@@ -2373,6 +2422,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = App::new(args);
+    app.memory = slime_mould::build::news::Memory::load();
     app.spread = spread;
     if menu_flag.as_deref() != Some("0") {
         if bare || menu_flag.is_some() {

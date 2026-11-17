@@ -1,0 +1,5 @@
+# Things to try: at most five lines, shown in the game beside "What is new",
+# each with a tick the game remembers on that PC. The Direction lane owns
+# this file; other lanes ask Direction for a line. One thing a line, in
+# plain words. Lines starting with # are notes.
+Turn on "A far smell" and "Charges go round walls" on the Experiments tab and play planet 3: is the slime more of a threat, or just more of it?

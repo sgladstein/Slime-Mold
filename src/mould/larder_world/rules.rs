@@ -684,6 +684,10 @@ impl Rules {
             // Walls (the walls thread, 11-16): thickness films and tries.
             "wall_width" => &mut self.wall_width,
             "wall_cost" => &mut self.wall_cost,
+            // Reserve recruit (11-17): its switch (`build::switches`,
+            // "Free recruits") needs a key; until then only a campaign
+            // mission's own rules could set it.
+            "reserve" => &mut self.reserve,
             "set_block" => &mut self.set_block,
             "set_hold" => &mut self.set_hold,
             _ => return false,

@@ -105,6 +105,14 @@ report only when the page does not answer.
 source report the PR changed while the page did not change (ingest it, or
 bump `updated` once you have checked it is still true). It also fails on broken links, pages missing from the index,
 code symbols that no longer exist, required frontmatter missing, and an owner quote with no date.
+A page's Now over 2 KB fails (a page that was over on 2026-11-17 fails only
+when it grows, `NOW_OVER` in the script), and so does `NOW.md` over 100 lines.
+
+**What is new** (2026-11-17): with `--base` the lint also fails a change to
+the game (`src/`, `assets/`, the play scripts; tests don't count) that adds
+no line to [`news/whats-new.txt`](../news/whats-new.txt), the list the game
+shows the owner. If nothing the player sees or does changed (a refactor, a
+tool), say so in a commit message line, `Nothing-new: <why>`, and it passes.
 
 **Frontmatter that merges** (2026-11-12, after green PRs waited a CI cycle
 each on frontmatter conflicts): `updated:` is a date, `YYYY-MM-DD`, never a
@@ -123,6 +131,6 @@ remove it from `HANDOFF.md`'s open list, update the pages it changes.
 
 **Hand-off**: `HANDOFF.md` is the hand-written front page: one linked line
 per subject, the open decisions, the next steps in order. Update a line when
-its page's Now changes; lint fails when a dish, tool or mechanism page is not
-linked from it. At a hand-off, run lint, then re-read each line against its
+its page's Now changes. (Until 2026-11-17 lint failed a dish, tool or mechanism
+page it did not link; retired so it can be archived for `NOW.md`.) At a hand-off, run lint, then re-read each line against its
 page.
