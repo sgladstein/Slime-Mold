@@ -1656,7 +1656,7 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Spin => (Icon::Spin, CardKind::Payload, format!("Slime within {:.0} cells turns in tight rings for {:.0} s.", r.mind_r, r.mind_secs)),
         // The readers (2026-11-16, step D): a kill of one state only.
         C::Shatter => (Icon::Shatter, CardKind::Payload, format!("Kills the slime gas put to sleep within {:.0} cells.", r.read_r)),
-        C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells.", r.detonate_r)),
+        C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
         // The route family (2026-11-17, step D): moves the slime, kills none.
         C::Flare => (Icon::Flare, CardKind::Payload, format!("Burns {:.0} s, alarming slime within {:.0} cells; kills none.", r.flare_secs, r.flare_r)),
     }

@@ -208,8 +208,20 @@ Bonferroni correction: Detonate's less slime does (p = 0.002); its kills
   on the game designer's ask (08:05Z), so no page shows the planted
   spread.
 - When to detonate: an early detonate (2 s after the germ) cuts the wave
-  short; the game designer's call whether that is the card's lesson
-  (detonate late, when the wave has spread) or a tuning note.
+  short. The game designer (08:22Z): "Keep it as built: 'detonate late,
+  once the wave has spread' is the lesson ... The one condition is that
+  the player can see when to fire", and "the tooltip can hint 'let it
+  spread'". The card's words now end "let it spread first".
+  **Can the player see it?** The red on screen is the germ field the sick
+  walkers lay (`engine.wgsl`), so it is the simulation, not a paint. On
+  the two 40 s clips (`raw/red_vs_sick.py`, `raw/red-vs-sick.txt`) the
+  share of the 24-cell disc drawn red follows the sick walkers within 24
+  cells (r = 0.91 on the germ alone, 0.76 with the detonate's hole): it
+  peaks with them (68% red at 1,065 sick) and fades 1 to 2 s behind them
+  at the end (39% red with 11 sick at 29 s, 19% at 0, 1% by 32 s). So
+  the wave reads and "now" is a judgement; a detonate fired on the last
+  fading red finds little. If playtests show that tail misleading, a tint
+  from the sick state itself is the slime look thread's.
 - The numbers are first guesses: reach 12 and 24, cost 2.
 - Next in step D, per the plan: route, element, force; cut last.
 
@@ -217,6 +229,8 @@ Bonferroni correction: Detonate's less slime does (p = 0.002); its kills
 
 - `raw/film.sh`: one clip; `raw/make_clips.py`: MP4s and counts;
   `raw/counts.json`: the counts.
+- `raw/red_vs_sick.py`, `raw/red-vs-sick.txt`: the red on screen against
+  the sick count.
 - `raw/windows.sh`, `raw/windows_table.py`, `raw/windows.txt`: the paired
   windows; `raw/windows-germ.txt`: the germ pair on the fixed build
   (`windows_table.py OUT germ-plain,germ-detonate`).

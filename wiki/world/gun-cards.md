@@ -69,7 +69,7 @@ this thread's judgement.
 | Shatter | 2 | Swarmer, after gas | J | the gassed charge dies at once | the grey patch is gone and the hole stays |
 | Bomb | 4 | Swarmer | J | throws a rushing swarm back off the squad | the slime flung out in a ring |
 | Germ | 4 | strong vs Sporer and Drifter, weak vs Swarmer and Grudge; useless on a sleeping Sleeper, after a Flare strong | M | each planet's slime resists it (`germ_resist`) or is frail to it (`germ_upkeep`); a sleeping crust neither catches it nor starves | red runs along the veins, then the body thins to a net |
-| Detonate | 4 | Sporer, after the germ | M | less slime at the window's end in 13 of 15 paired windows; cast early it cuts the germ's wave short (one clip) | every sick walker in reach dies at once |
+| Detonate | 4 | Sporer, after the germ | M | less slime at the window's end in 13 of 15 paired windows; fire it late, once the wave has spread (cast early it cuts the wave short; its words say "let it spread first") | every sick walker in reach dies at once; the red wave is the germ the sick lay, fading 1-2 s behind them |
 | Bait | 1 | Sporer | J | draws it off its crystals without a hit (its counter: starve it, don't hit it) | a scent line the slime follows |
 | Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | an alarm haze; the slime comes to it or backs away |
 | Quiet | 1 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
@@ -105,9 +105,10 @@ with the owner).
   ([route](../../Reports/gun-route-2026-11-17/README.md)). The first pass
   was measured with a GPU-world bug (the first germ also infected the
   map's middle) and redone; the Drifter's 43.5% the designer counts in band
-  (08:05Z). Whether an early Detonate cutting the germ short is the card's
-  lesson or a tuning note is the designer's call
-  ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
+  (08:05Z). An early Detonate cutting the germ short is the card's lesson
+  (designer, 08:22Z: "detonate late, once the wave has spread"), closed:
+  the red on screen follows the sick count, r = 0.91, 1-2 s behind at the
+  end ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 - The Road (bullets lay trail) was dropped: the squad's own shots stopped
   on it ([dead ends](../../Reports/dead-ends.md)).
 - Whether the run shop weights offers toward the next planet's answers is

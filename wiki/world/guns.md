@@ -170,7 +170,9 @@ a shatter alone took none. On the fixed build (re-filmed 11-17) a germ
 kills nothing for 12 s, then the lobe thins to a net (the body 17,628 at
 40 s against 25,772); a detonate 2 s after it popped 780 at once but cut
 the wave short (19,590). In paired 10 s windows germ+detonate left less
-slime in 13 of 15 (p = 0.002)
+slime in 13 of 15 (p = 0.002). Fire it late, once the wave has spread
+(the game designer, 11-17; its words end "let it spread first"): the red
+wave on screen follows the sick count, r = 0.91, 1-2 s behind at its end
 ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 
 **Route** (2026-11-17, step D's third family): the Flare kills nothing and

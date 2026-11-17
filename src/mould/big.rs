@@ -1339,6 +1339,26 @@ pub struct BigParams {
     pub fire_fuel: f32,
     pub fire_damp: f32,
     pub fire_kill: f32,
+    /// **Dry slime burns** (the simulation-use plan's C1, 2026-11-17; on by
+    /// default, the owner's ruling): the trail wets a cell against fire (`fire_damp`) only
+    /// while the slime there is fed. A cell whose 3 x 3 holds walkers that
+    /// last heard of food over `wither_lag` steps ago and none that heard
+    /// within it, or holds a set walker (`set_scar`), is dry whatever its
+    /// trail (`slime_fire`). The owner's ruling (11-17 01:13Z): fed slime is
+    /// fireproof, starving slime burns. It reads the food news the wither
+    /// already spreads (`heard`), so it needs `wither` (or `panic`) on, and
+    /// the set count (`set_cells`) for set walkers; no new state. Fire still
+    /// needs fuel under it (plants or crust).
+    pub fire_dry: bool,
+    /// **Fed slime is fireproof** (C1's stronger form, 2026-11-17; off by
+    /// default): a cell whose 3 x 3 holds a walker with fresh food news is
+    /// wet against fire whatever its trail (`slime_fire`), so fire takes
+    /// only bare ground and dry slime. With the trail alone (`fire_damp`
+    /// 3), fire on full meadow killed 65% of a fed disc's walkers in 20 s
+    /// (`examples/dryprobe.rs`, seed 1): the thin trail between tubes
+    /// burns. The owner's words were "fed slime is fireproof" (11-17
+    /// 01:13Z).
+    pub fire_fed: bool,
     /// Char, burnt ground (`plants::Fire::char_gain` and on).
     pub char_gain: f32,
     pub char_keep: f32,
@@ -1622,6 +1642,8 @@ impl BigParams {
             fire_fuel: 0.05,
             fire_damp: 3.0,
             fire_kill: 0.5,
+            fire_dry: true,
+            fire_fed: false,
             char_gain: 1.0,
             char_keep: 0.999,
             char_clear: 0.02,
@@ -2276,7 +2298,8 @@ impl BigDish {
     fn fire_tick(&mut self) {
         let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let (r, f) = (self.plant_rates(), self.fire_rates());
-        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps, (&mut self.crust, self.p.crust_fuel));
+        let slime = self.slime_fire();
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &slime, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps, (&mut self.crust, self.p.crust_fuel));
         self.fire_steps = self.fire_steps.wrapping_add(1);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
         let kill = self.p.fire_kill;
@@ -2307,6 +2330,60 @@ impl BigDish {
                 self.alive[k] = false;
             }
         }
+    }
+
+    /// What the slime does to fire a cell (`BigParams::fire_dry`,
+    /// `fire_fed`): `SLIME_DRY` (the trail doesn't wet it), `SLIME_WET`
+    /// (wet whatever its trail), else 0 (the trail decides, as before);
+    /// empty while both are off or before the news has run. Read as fire
+    /// steps, after the tick's last step: `heard` is that step's spread (0
+    /// where no walker stood) and `set_cells` the last tick's count, as the
+    /// GPU's `fire` pass reads its news blocks. A fresh walker in the 3 x 3
+    /// keeps a cell from drying beside a stale one (the fed body never burns
+    /// at a junction); a set one dries it all the same.
+    pub fn slime_fire(&self) -> Vec<u8> {
+        let (w, h) = (self.w, self.h);
+        let (dry_on, fed_on) = (self.p.fire_dry, self.p.fire_fed);
+        if !(dry_on || fed_on) || self.heard.len() != w * h {
+            return Vec::new();
+        }
+        // `steps` is the news's "now" of the tick's last step plus one, as
+        // the GPU's `S.t` after its last step: stale as `wither` counts it.
+        let (now, lag) = (self.steps, self.p.wither_lag as u64);
+        let set = dry_on && self.sets() && self.set_cells.len() == w * h;
+        let mut out = vec![0u8; w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let i = y * w + x;
+                // Only `fire_fed` reads a cell the trail leaves dry anyway.
+                if !fed_on && self.trail[i] < self.p.fire_damp {
+                    continue;
+                }
+                let (mut fresh, mut stale, mut held) = (false, false, false);
+                for ny in y.saturating_sub(1)..(y + 2).min(h) {
+                    for nx in x.saturating_sub(1)..(x + 2).min(w) {
+                        let j = ny * w + nx;
+                        let v = self.heard[j];
+                        if v > 0 {
+                            if v + lag < now {
+                                stale = true;
+                            } else {
+                                fresh = true;
+                            }
+                        }
+                        held |= set && self.set_cells[j] > 0;
+                    }
+                }
+                out[i] = if held || (dry_on && stale && !fresh) {
+                    crate::mould::plants::SLIME_DRY
+                } else if fed_on && fresh {
+                    crate::mould::plants::SLIME_WET
+                } else {
+                    0
+                };
+            }
+        }
+        out
     }
 
     /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells):
@@ -5743,6 +5820,56 @@ mod tests {
         assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
         let (plain, grudge) = (near(false, 0.0, 0.0), near(false, 0.9999, 2.0));
         assert!(grudge > plain + 20, "grudge {grudge} against {plain} at the centre");
+    }
+
+    /// **Dry slime burns, fed slime is fireproof** (the plan's C1,
+    /// `fire_dry`, `fire_fed`): the rule on a dish with every cell's trail
+    /// over `fire_damp`. A cell whose 3 x 3 news is stale is dry; one by
+    /// fresh news isn't, also beside stale news (a junction keeps the fed
+    /// side fireproof); one by a set walker is dry beside fresh news; a cell
+    /// under `fire_damp` isn't marked (the old rule burns it anyway). With
+    /// `fire_fed` too, fresh news marks a cell wet, thin trail or not, and
+    /// stale or set still marks it dry. Off, nothing is marked.
+    #[test]
+    fn stale_and_set_slime_is_dry_and_fed_slime_wet() {
+        use crate::mould::plants::{SLIME_DRY, SLIME_WET};
+        let p = BigParams { alarm_keep: 0.95, scar_keep: 0.99, scar_gain: 0.05, crust_rise: 0.02, crust_keep: 0.999, crust_trail: 1.0, set_scar: 0.1, fire_dry: true, wither: 0.1, wither_lag: 10, ..small(1, 1) };
+        let mut d = BigDish::new(p);
+        let (w, h) = (d.w, d.h);
+        assert!(d.sets(), "the dish sets");
+        d.steps = 100;
+        d.heard = vec![0; w * h];
+        d.trail = vec![5.0; w * h];
+        d.set_cells = vec![0; w * h];
+        let at = |x: usize, y: usize| y * w + x;
+        // Stale news alone at (10, 10); fresh at (30, 10); stale beside
+        // fresh at (50, 10) and (51, 10); a set walker beside fresh at
+        // (70, 10) and (71, 10); stale news on thin trail at (90, 10);
+        // fresh news on thin trail at (110, 10).
+        d.heard[at(10, 10)] = 50;
+        d.heard[at(30, 10)] = 95;
+        (d.heard[at(50, 10)], d.heard[at(51, 10)]) = (50, 95);
+        (d.heard[at(70, 10)], d.set_cells[at(71, 10)]) = (95, 1);
+        d.heard[at(90, 10)] = 50;
+        d.trail[at(89, 10)] = 1.0;
+        d.heard[at(110, 10)] = 95;
+        d.trail[at(110, 10)] = 1.0;
+        let m = d.slime_fire();
+        let dry = |i: usize| m[i] == SLIME_DRY;
+        assert!(dry(at(10, 10)) && dry(at(11, 11)) && !dry(at(12, 10)), "stale news dries its 3 x 3");
+        assert!(m[at(30, 10)] == 0 && m[at(31, 11)] == 0, "fresh news leaves it to the trail");
+        assert!(dry(at(49, 10)) && !dry(at(50, 10)) && !dry(at(51, 10)), "fresh news beside stale keeps the junction from drying");
+        assert!(dry(at(70, 10)) && dry(at(72, 10)), "a set walker dries its 3 x 3, fresh news or not");
+        assert!(m[at(89, 10)] == 0 && dry(at(90, 10)), "thin trail isn't marked");
+        assert_eq!(m[at(110, 10)], 0, "fed thin trail is left to the trail (it burns)");
+        d.p.fire_fed = true;
+        let m = d.slime_fire();
+        assert!(m[at(110, 10)] == SLIME_WET && m[at(30, 10)] == SLIME_WET && m[at(50, 10)] == SLIME_WET, "fed slime is wet, thin trail or not");
+        assert!(m[at(10, 10)] == SLIME_DRY && m[at(70, 10)] == SLIME_DRY && m[at(12, 10)] == 0, "stale and set still dry, bare ground unmarked");
+        d.heard[at(10, 10)] = 90;
+        assert_eq!(d.slime_fire()[at(10, 10)], SLIME_WET, "news 10 steps old is fresh at a lag of 10");
+        (d.p.fire_dry, d.p.fire_fed) = (false, false);
+        assert!(d.slime_fire().is_empty(), "off, nothing is marked");
     }
 
     /// Setting (E2a): struck again and again at its home pile, a walker on

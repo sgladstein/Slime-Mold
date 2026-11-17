@@ -321,7 +321,11 @@ impl Card {
             Card::Sour => "Slime where it hits turns from its own trail.",
             Card::Spin => "Slime where it hits turns in tight rings.",
             Card::Shatter => "Kills sleeping slime where it hits.",
-            Card::Detonate => "Kills sick slime where it hits.",
+            // "Let it spread": the game designer, 11-17 08:22Z: detonate
+            // late, once the germ's wave has spread, is the card's lesson (2 s
+            // after the germ it cut the wave short: the body 19,590 at 40 s
+            // against 17,628, `Reports/gun-readers-2026-11-17/`).
+            Card::Detonate => "Kills sick slime where it hits; let it spread first.",
             Card::Flare => "Burns where it hits, alarming slime; kills none.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",

@@ -209,8 +209,10 @@ struct Params {
     // The scar row (the Grudge's habituation, 2026-11-17, the
     // simulation-use plan's step 0; Params grew from 1168 to 1184; mod.rs's
     // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
-    // weight in the sensors, and a spare word.
-    scar_keep: f32, scar_gain: f32, scar_w: f32, _sc0: u32,
+    // weight in the sensors, and (its spare word until the plan's C1,
+    // 11-17) whether dry slime burns (`fire_dry`, bit 0) and fed slime is
+    // fireproof (`fire_fed`, bit 1; `slime_fire`).
+    scar_keep: f32, scar_gain: f32, scar_w: f32, fire_dry: u32,
     // The crust row (`CRUST_AT`, the simulation-use plan's E1a, 2026-11-17):
     // the rise a fine step (0 off), the keep, the trail it needs, and the
     // word in `news` its block starts at.
@@ -3771,11 +3773,48 @@ fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     pset(PB_B, i, clamp(p + (pf(0u) * p + pf(1u) * (n * 0.25)) * room * pace, 0.0, c));
 }
 
+// **Dry slime burns** and **fed slime is fireproof** (`BigParams::
+// fire_dry`, `fire_fed`, the plan's C1; the CPU's `slime_fire`): 1 where
+// the trail doesn't wet cell i against fire (its 3 x 3 holds walkers whose
+// food news is stale and none whose news is fresh, or holds a set walker),
+// 2 where it is wet whatever its trail (fresh news, with `fire_fed`), else
+// 0. The news is the spread's last block, as the step left it (`nhear`
+// reads it; 0 where no walker stood), the set count last tick's
+// `setcount`; `S.t` is the tick's last step plus one here, the CPU's
+// `steps`. No new state.
+fn slime_fire(i: u32) -> u32 {
+    let dry_on = (P.fire_dry & 1u) != 0u;
+    let fed_on = (P.fire_dry & 2u) != 0u;
+    if (!(dry_on || fed_on) || (!fed_on && trail_out[i] < pf(8u))) { return 0u; }
+    let c = P.w * P.h;
+    let last = select(1u, 2u, ((P.wclock >> 24u) & 1u) == 1u);
+    let lag = P.wclock & 0xFFFFu;
+    let sets = dry_on && P.set_scar > 0.0;
+    let x = i32(i % P.w); let y = i32(i / P.w);
+    var fresh = false; var stale = false; var held = false;
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let nx = x + dx; let ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+            let j = u32(ny) * P.w + u32(nx);
+            let v = atomicLoad(&news[P.n + last * c + j]);
+            if (v > 0u) {
+                if (v + lag < S.t) { stale = true; } else { fresh = true; }
+            }
+            if (sets && atomicLoad(&news[setc_at() + j]) > 0u) { held = true; }
+        }
+    }
+    if (held || (dry_on && stale && !fresh)) { return 1u; }
+    if (fed_on && fresh) { return 2u; }
+    return 0u;
+}
+
 @compute @workgroup_size(256)
 fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
-    let wet = pwet(i) || trail_out[i] >= pf(8u) || agar[i] == 0u;
+    let sf = slime_fire(i);
+    let wet = pwet(i) || sf == 2u || (trail_out[i] >= pf(8u) && sf != 1u) || agar[i] == 0u;
     let heat = pget(PB_FA, i);
     // The fuel: plants, and the crust at `crust_fuel` (C2), eaten after.
     let pl = pget(PB_B, i);
