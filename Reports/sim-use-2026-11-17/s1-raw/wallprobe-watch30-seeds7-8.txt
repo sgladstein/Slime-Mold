@@ -1,0 +1,5 @@
+wallprobe: race world, shape C, scale 2, 25000 walkers; grow 63 s, unit 8 clear of the slime, wall 8 each way, watch 30 s
+seed | unit (x, y), wall cells | came within 3: no wall, straight, field | piled at the wall: straight, field
+7 | (116, 212), 207 | 319, 120, 113 | 61, 46
+8 | (140, 236), 213 | 220, 20, 79 | 57, 0
+came in all: no wall 539, straight 140, field 192; field against straight: more 1, less 1, sign p 1.000

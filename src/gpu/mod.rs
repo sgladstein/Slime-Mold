@@ -2113,6 +2113,7 @@ impl Engine {
         // The raid's way round walls goes with it (`raid_row` reads
         // whether the mirror holds one).
         self.dish.raid_field = d.raid_field.clone();
+        self.dish.units_field = d.units_field.clone();
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
             self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
@@ -3429,6 +3430,10 @@ pub const DENSE_HEAD: usize = 16;
 pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     let mut w = vec![0u32; DENSE_HEAD];
     w.extend((0..d.walkers.len()).map(|k| d.dense.get(k).copied().unwrap_or(0)));
+    // The units' walking distance in the cells' word (free since 11-17;
+    // `BigDish::units_field`, S1; engine.wgsl's `units_dist`): each block
+    // its distance + 1, 0 where none reaches or with no field.
+    w.extend(d.units_field.iter().take(cells).map(|&v| v.wrapping_add(1)));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
     // A raid's walking distance after the dense cells (`BigDish::
     // raid_field`, 11-15; engine.wgsl's `raid_dist`), zeros with none.
@@ -3448,6 +3453,17 @@ impl Engine {
         let cells = self.cells as usize;
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + cells) as u64;
         let mut w: Vec<u32> = self.dish.raid_field.iter().copied().take(cells).collect();
+        w.resize(cells, 0);
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
+    }
+
+    /// Writes the mirror dish's units' walking distance (`BigDish::
+    /// units_field`, S1) after the slot words, each block's distance + 1
+    /// (0 where none reaches); zeros with none.
+    pub fn write_units_field(&self) {
+        let cells = self.cells as usize;
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize) as u64;
+        let mut w: Vec<u32> = self.dish.units_field.iter().take(cells).map(|&v| v.wrapping_add(1)).collect();
         w.resize(cells, 0);
         self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
     }

@@ -805,7 +805,11 @@ fn pow0(v: f32, e: f32) -> f32 {
 // pace (the CPU clamps it above 0), then `panic` times as fast; a charge
 // at a unit bolts only for `panic_dash` steps (0 always), then creeps again. (x, y, haste); (-1, -1, 0) when calm.
 const PANIC_LEFT: f32 = 0.02;
+// Whether `panic_to`'s goal is a unit (a panic charge or a surge), so the
+// walker may go down the units' walking distance (S1).
+var<private> goal_unit: bool;
 fn panic_to(k: u32, here: u32) -> vec3<f32> {
+    goal_unit = false;
     // A lump's member neither panics, raids, surges nor breaks away: past
     // its leash it runs back to the lump's centre (the CPU's `lump_leash`).
     let lb = lump_of(k);
@@ -842,6 +846,7 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
         let d2 = dx * dx + dy * dy;
         if (u32(d2) <= P.panic_r2 && (best < 0 || d2 < best)) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
     }
+    goal_unit = best >= 0;
     // The charge gives up (`BigParams::panic_dash`): past the lean and the
     // dash, a walker charging a unit creeps on.
     if (best >= 0 && P.panic_dash > 0u && age > lag + lean + P.panic_dash) { haste = P.panic_creep; }
@@ -926,6 +931,7 @@ fn surge_to(here: u32) -> vec3<f32> {
         if (u32(d2) <= P.panic_r2 && (best < 0 || d2 < best)) { best = d2; bx = i32(SQ.units[u].x); by = i32(SQ.units[u].y); }
     }
     if (best < 0) { return vec3<f32>(-1.0, -1.0, 0.0); }
+    goal_unit = true;
     return vec3<f32>(f32(bx) + 0.5, f32(by) + 0.5, haste);
 }
 
@@ -958,6 +964,21 @@ fn raid_dist(i: u32) -> u32 {
     let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
     let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
     return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + P.w * P.h + q]);
+}
+// The units' walking distance at cell `i` (`BigDish::units_field`, S1),
+// in the word a cell after the slot words: each block's distance + 1, 0
+// (none reaches, or no field) read as none.
+fn units_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+fn units_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return -f32(units_dist(i));
 }
 // A raider's sensor down that distance (the CPU's `by_field`): the least
 // distance reads highest; a wall is still a wall.
@@ -1085,6 +1106,12 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         f = raid_at_sensor(wk.x, wk.y, h, so);
         fl = raid_at_sensor(wk.x, wk.y, h - sa, so);
         fr = raid_at_sensor(wk.x, wk.y, h + sa, so);
+    } else if (scared && goal_unit && units_dist(here) != 0xFFFFFFFFu) {
+        // Charging a unit down the units' walking distance (S1; the CPU's
+        // `by_units`).
+        f = units_at_sensor(wk.x, wk.y, h, so);
+        fl = units_at_sensor(wk.x, wk.y, h - sa, so);
+        fr = units_at_sensor(wk.x, wk.y, h + sa, so);
     } else if (scared) {
         f = panic_at(wk.x, wk.y, h, so, goal);
         fl = panic_at(wk.x, wk.y, h - sa, so, goal);

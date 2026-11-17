@@ -837,6 +837,9 @@ impl World for Later {
     fn set_surge_at(&mut self, at: u32) {
         World::set_surge_at(&mut self.d, at)
     }
+    fn set_units_field(&mut self, field: Vec<u32>) {
+        World::set_units_field(&mut self.d, field)
+    }
     fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32, field: Vec<u32>) {
         World::set_raid(&mut self.d, at, to, r, share, field)
     }
@@ -3887,4 +3890,44 @@ fn a_leech_takes_a_pumps_pay_and_gives_it_back_when_broken() {
     assert_eq!(e.1, BossEnd::Broken);
     assert!(g.bank >= bank + 0.99 * e.0.stolen && e.0.stolen >= took, "given back: bank {bank} -> {}, stolen {}", g.bank, e.0.stolen);
     assert_eq!(g.bosses.returned, e.0.stolen);
+}
+
+/// **Charges round walls** (`Rules::unit_paths`, the simulation-use plan's
+/// S1, 2026-11-17): once a game second the game builds the units' walking
+/// distance from where the last frame's units stood and sets it a second
+/// later, so after two seconds the world holds one, zero at a soldier's
+/// block and rising away from it; off (the default), none; a masked
+/// soldier is no source.
+#[test]
+fn the_game_sets_the_units_walking_distance_once_a_second() {
+    use crate::mould::big::RAID_BLOCK;
+    let play = |on: bool, mask: bool| {
+        let mut g = small(2);
+        g.rules.unit_paths = on;
+        if mask {
+            for s in &mut g.soldiers {
+                s.smell = 0.0;
+            }
+        }
+        let secs = (2.5 * g.rules.tps as f32 / g.rules.frame_ticks as f32).ceil() as usize;
+        for _ in 0..secs {
+            g.step();
+        }
+        g
+    };
+    let g = play(true, false);
+    let f = &g.world.units_field;
+    let bw = g.world.w.div_ceil(RAID_BLOCK);
+    let s = g.soldiers[0];
+    let at = |x: f32, y: f32| f[(y as usize / RAID_BLOCK) * bw + x as usize / RAID_BLOCK];
+    let reach = f.iter().filter(|&&v| v < u32::MAX).count();
+    eprintln!("units field: {reach} of {} blocks reached; {} at the first soldier, {} 20 cells east", f.len(), at(s.x, s.y), at(s.x + 20.0, s.y));
+    assert!(!f.is_empty() && reach * 2 > f.len(), "the field is set and reaches most of the world");
+    assert!(at(s.x, s.y) <= 3 && at(s.x + 20.0, s.y) > at(s.x, s.y), "zero by a soldier, rising away");
+    assert!(play(false, false).world.units_field.is_empty(), "off: none");
+    // Masked (the toolkit's mask, smell 0), no soldier is a source.
+    let m = play(true, true);
+    let fm = &m.world.units_field;
+    eprintln!("every soldier masked: {} at the first soldier", fm[(s.y as usize / RAID_BLOCK) * bw + s.x as usize / RAID_BLOCK]);
+    assert!(fm.len() == f.len() && fm[(s.y as usize / RAID_BLOCK) * bw + s.x as usize / RAID_BLOCK] > 3, "a masked soldier is no source");
 }

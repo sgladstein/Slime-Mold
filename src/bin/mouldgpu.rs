@@ -4587,6 +4587,64 @@ mod tests {
         assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
     }
 
+    /// **Charges round walls** (the simulation-use plan's S1, 2026-11-17;
+    /// `BigDish::units_field`): on a grown dish with crystals and a long
+    /// wall, every walker's news made stale so it panics at the units in
+    /// reach, three units past the wall's middle, and the units' walking
+    /// distance (`big::units_field_for`) set on both engines. One frame of
+    /// one tick: every walker as the CPU's. The same tick with no field
+    /// moves many walkers elsewhere, so a GPU that ignored it fails.
+    #[test]
+    fn charges_go_down_the_units_walking_distance_on_the_gpu() {
+        use slime_mould::mould::big::units_field_for;
+        use slime_mould::mould::squad::{self, Frame, UnitIn};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, panic: 2.0, panic_lean: 2, panic_creep: 0.5, panic_r: 200.0, wither_lag: 4, energy_flow: 0.05, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        cpu.p.wither_lag = 100_000;
+        for t in 0..60 {
+            if t == 20 {
+                cpu.build_wall(70.0, 20.0, 70.0, 140.0, 2.0);
+            }
+            cpu.tick();
+        }
+        cpu.p.wither_lag = s.wither_lag;
+        // Every walker's news stale past the lag and the lean: all panic.
+        for k in 0..cpu.walkers.len() {
+            if cpu.lives(k) {
+                cpu.news[k] = 1;
+            }
+        }
+        let k = SCALE as f32;
+        let units: Vec<UnitIn> = [(100.0f32, 70.0f32), (100.0, 80.0), (100.0, 90.0)]
+            .iter()
+            .map(|&(x, y)| UnitIn { x: x * k, y: y * k, touch: 3.0, sight: 0.0, take_r: 0.0, take: 0.0, smell_r: 0.0, smell: 0.0, over: false })
+            .collect();
+        let cells: Vec<u32> = units.iter().map(|u| u.x as u32 | (u.y as u32) << 16).collect();
+        let field = units_field_for(&cpu.agar, cpu.w, cpu.h, &cells);
+        let reach = field.iter().filter(|&&v| v < u32::MAX).count();
+        assert!(reach * 2 > field.len(), "the field reaches most of the dish ({reach} of {} blocks)", field.len());
+        let f = Frame { units, shots: Vec::new(), slime: squad::slime_trail(s.knee), crater: 0, sink: 0.0, ..Frame::default() };
+        let mut bare = cpu.clone();
+        cpu.units_field = field;
+        e.inject(&cpu);
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        squad::frame(&mut cpu, &f, 1);
+        squad::frame(&mut bare, &f, 1);
+        let gpu = walkers_of(&e);
+        let n = cpu.walkers.len();
+        let off = (0..n).filter(|&q| cpu.lives(q) && { let (g, c) = (gpu[q], cpu.walkers[q]); (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3 }).count();
+        let apart = (0..n).filter(|&q| cpu.lives(q) && bare.lives(q) && cpu.walkers[q] != bare.walkers[q]).count();
+        let scared = (0..n).filter(|&q| cpu.lives(q) && cpu.panics(q)).count();
+        eprintln!("units field: {scared} panicking, {off} walkers off the CPU's; without the field {apart} move elsewhere");
+        assert!(scared > 1000, "most walkers panic ({scared})");
+        assert_eq!(off, 0, "every walker as the CPU's");
+        assert!(apart > 100, "the field moves the charge ({apart})");
+    }
+
     /// **Every shot of a full frame** (soldier-cap thread, 2026-11-16, the
     /// technical lead's ask after #377 raised `SHOTS_MAX` 256 -> 1024): a
     /// frame of `SHOTS_MAX` shots, each from 6 cells off one of the
@@ -6018,7 +6076,7 @@ mod tests {
             slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
         }
         assert!(s.crust_rise > 0.0 && s.set_scar > 0.0, "the keys turned their switches on");
-        let mut rules = Rules { reserve: 5.0, set_block: 3.0, ..Rules::default() };
+        let mut rules = Rules { reserve: 5.0, set_block: 3.0, unit_paths: true, ..Rules::default() };
         rules.raid.last_stand = true;
         fn play<W: World>(mut g: Game<W>, what: &str) {
             for k in 0..g.soldiers.len() {
