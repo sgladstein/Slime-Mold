@@ -520,11 +520,13 @@ impl App {
                         }
                     }
                 }
-                HudEvent::Point { id: id @ (T_BLAST | T_MINE | T_GERM | T_GAS), at } => {
+                HudEvent::Point { id: id @ (T_BLAST | T_MINE | T_GERM | T_GAS | T_PROVOKE | T_STILL), at } => {
                     let tool = match id {
                         T_BLAST => Tool::Blast(at),
                         T_MINE => Tool::Mine(at),
                         T_GERM => Tool::Germ(at),
+                        T_PROVOKE => Tool::Provoke(at),
+                        T_STILL => Tool::Still(at),
                         _ => Tool::Gas(at),
                     };
                     self.use_tool(tool);
@@ -571,7 +573,7 @@ impl App {
         let Some(g) = self.game.as_mut() else { return };
         let k = &self.kit;
         let at = match t {
-            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => p,
+            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,
             Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
             Tool::Smell(..) => return,
         };

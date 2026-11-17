@@ -144,7 +144,8 @@ fn the_window_plays_the_real_game() {
 /// tools at the larder between steps, the page lists the five, the germ
 /// is ready on the GPU world, as is the sleep gas (both since 11-14), a
 /// blast thrown near a soldier is paid, spends a held tool and leaves a
-/// crater, and a det cord and a sleep gas cloud do too.
+/// crater, and a det cord and a sleep gas cloud do too; Provoke stamps
+/// its status on the engine.
 #[test]
 fn the_window_uses_the_tools() {
     let Some((device, queue)) = gpu() else { return };
@@ -156,7 +157,7 @@ fn the_window_uses_the_tools() {
     assert!(held > 0, "soldiers took tools at the larder");
     app.tools_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Back"]);
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Blast", "Det cord", "Mine", "Germ", "Sleep gas", "Provoke", "Still", "Back"]);
     assert!(m.commands[0].ready && m.commands[3].ready && m.commands[4].ready, "blast, germ and gas ready on the GPU");
     let g = app.game.as_mut().unwrap();
     g.bank = 10_000.0;
@@ -165,12 +166,15 @@ fn the_window_uses_the_tools() {
     app.use_tool(Tool::Blast((s.x + 10.0 * k, s.y)));
     app.use_tool(Tool::Cord((s.x - 10.0 * k, s.y + 8.0 * k), (s.x + 10.0 * k, s.y + 8.0 * k)));
     app.use_tool(Tool::Gas((s.x, s.y - 10.0 * k)));
+    // Provoke (2026-11-17): a Mind status on the engine.
+    app.use_tool(Tool::Provoke((s.x, s.y + 10.0 * k)));
     let g = app.game.as_ref().unwrap();
-    assert_eq!((app.kit.uses[0], app.kit.uses[2], app.kit.uses[4]), (1, 1, 1), "the blast, the cord and the gas were used");
+    assert_eq!((app.kit.uses[0], app.kit.uses[2], app.kit.uses[4], app.kit.uses[6]), (1, 1, 1, 1), "the blast, the cord, the gas and provoke were used");
+    assert!(g.world.e.minds, "provoke stamped a Mind status on the GPU");
     assert!(g.bank < 10_000.0, "and paid");
     let cratered = g.world.e.crater_of().iter().filter(|&&c| c > 0.0).count();
     assert!(cratered > 0, "the blast left a crater");
-    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 3, "three held tools spent");
+    assert_eq!((0..g.soldiers.len()).map(|k| app.kit.held(k)).sum::<u32>(), held - 4, "four held tools spent");
 }
 
 /// Aiming a tool (owner 2026-11-16: a better visual "for aiming and

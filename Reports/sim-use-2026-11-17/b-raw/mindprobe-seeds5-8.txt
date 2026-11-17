@@ -1,0 +1,16 @@
+mindprobe: race world, shape C, scale 2, 25000 walkers; grow 63 s, disc r 12, unit 8 beyond it, provoke 12 s, still 10 s, watch 15 s, hold 30 s
+5 provoke | spot (204, 183), unit (204, 196), 863 in the disc, 863 stamped | came within 3: plain 0 (0 from the disc), provoked 145 (145) | the disc's walkers dead after 15 s: plain 0, provoked 112
+5 still | disc (209, 181), 980 stamped, surge from 1 s | came within 3: surge 253 (104 from the disc), still 232 (1)
+5 hold | the disc's 863 after 30 s: alive plain 863, still 863; stale plain 0, still 0; walkers in the disc now plain 1001, still 960
+6 provoke | spot (127, 211), unit (128, 212), 244 in the disc, 244 stamped | came within 3: plain 0 (0 from the disc), provoked 106 (92) | the disc's walkers dead after 15 s: plain 0, provoked 39
+6 still | disc (129, 196), 920 stamped, surge from 1 s | came within 3: surge 96 (36 from the disc), still 91 (0)
+6 hold | the disc's 244 after 30 s: alive plain 244, still 244; stale plain 0, still 0; walkers in the disc now plain 213, still 213
+7 provoke | spot (118, 199), unit (116, 212), 756 in the disc, 756 stamped | came within 3: plain 0 (0 from the disc), provoked 151 (151) | the disc's walkers dead after 15 s: plain 0, provoked 83
+7 still | disc (106, 198), 800 stamped, surge from 1 s | came within 3: surge 261 (123 from the disc), still 257 (6)
+7 hold | the disc's 756 after 30 s: alive plain 756, still 756; stale plain 0, still 0; walkers in the disc now plain 773, still 773
+8 provoke | spot (44, 99), unit (24, 92), 1134 in the disc, 1134 stamped | came within 3: plain 0 (0 from the disc), provoked 137 (135) | the disc's walkers dead after 15 s: plain 0, provoked 161
+8 still | disc (35, 106), 912 stamped, surge from 1 s | came within 3: surge 177 (86 from the disc), still 144 (2)
+8 hold | the disc's 1134 after 30 s: alive plain 1134, still 1134; stale plain 0, still 0; walkers in the disc now plain 1285, still 1235
+provoke: came within 3, mean plain 0, provoked 135; provoked more 4, less 0, sign p 0.125
+still: came within 3 in a surge, mean plain 197, still 181; still more 0, less 4, sign p 0.125
+hold: the disc's walkers alive, mean plain 749, still 749; still more 0, less 0, sign p 1.000

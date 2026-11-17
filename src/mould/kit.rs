@@ -40,6 +40,14 @@
 //!   sleeping walker neither eats nor bites (`World::calm`).
 //! - **Mask and reek** (`Tool::Smell`): a soldier's smell x 0 (the mould
 //!   can't smell it) or x `reek` (a decoy).
+//! - **Provoke** (`Tool::Provoke`, the simulation-use plan's B1,
+//!   2026-11-17): the walkers within `mind_r` go deaf to food news for
+//!   `provoke_secs` (`big::MIND_DEAF`): once their news is older than the
+//!   wither lag they believe they are cut off, grey and panic, charging the
+//!   nearest soldier in reach or running for a crystal.
+//! - **Still** (`Tool::Still`, B2): the walkers within `mind_r` neither
+//!   panic, surge nor raid for `still_secs`, and take no crystal
+//!   (`big::MIND_STILL`): a charge stops, and a held body starves.
 //!
 //! Every tool is paid from the bank and must be used within `reach` of a
 //! living soldier, so tools are part of the squad's play, not a cursor's.
@@ -112,6 +120,14 @@ pub struct KitRules {
     /// over seeds 1-36 at scale 2 and 5,000 walkers (so the
     /// trigger is 38 to 42 by seed there, where it was 40 on every seed).
     pub mine_density: f32,
+    /// Provoke and Still (2026-11-17): their reach (dish cells), how long
+    /// each lasts and its price. Provoke must outlast the wither lag and
+    /// the lean (5 s and 1.5 s for the default slime) to make a panic.
+    pub mind_r: f32,
+    pub provoke_secs: f32,
+    pub provoke_price: f32,
+    pub still_secs: f32,
+    pub still_price: f32,
 }
 
 impl KitRules {
@@ -172,6 +188,12 @@ impl Default for KitRules {
             restock_r: 6.0,
             alarm_keep: 0.95,
             mine_density: MINE_DENSITY,
+            // A first guess, untuned: the gas's reach, a little cheaper.
+            mind_r: 12.0,
+            provoke_secs: 12.0,
+            provoke_price: 100.0,
+            still_secs: 10.0,
+            still_price: 100.0,
         }
     }
 }
@@ -190,9 +212,11 @@ pub enum Tool {
     Gas((f32, f32)),
     /// Soldier k's smell multiplier (0 mask, 1 plain, `reek`).
     Smell(usize, f32),
+    Provoke((f32, f32)),
+    Still((f32, f32)),
 }
 
-pub const TOOLS: [&str; 6] = ["blast", "mine", "cord", "germ", "gas", "smell"];
+pub const TOOLS: [&str; 8] = ["blast", "mine", "cord", "germ", "gas", "smell", "provoke", "still"];
 
 impl Tool {
     pub fn index(self) -> usize {
@@ -203,6 +227,8 @@ impl Tool {
             Tool::Germ(_) => 3,
             Tool::Gas(_) => 4,
             Tool::Smell(..) => 5,
+            Tool::Provoke(_) => 6,
+            Tool::Still(_) => 7,
         }
     }
 }
@@ -223,9 +249,9 @@ pub struct Kit {
     pub mines: Vec<(f32, f32)>,
     pub bangs: Vec<Bang>,
     /// Per tool (`TOOLS` order): uses, bank spent, walkers killed.
-    pub uses: [u32; 6],
-    pub spent: [f32; 6],
-    pub killed: [usize; 6],
+    pub uses: [u32; 8],
+    pub spent: [f32; 8],
+    pub killed: [usize; 8],
     pub gassed: usize,
     /// Tools each soldier holds (the carry rule), by soldier index.
     pub held: Vec<u32>,
@@ -245,6 +271,8 @@ impl Kit {
             Tool::Germ(_) => r.germ_price,
             Tool::Gas(_) => r.gas_price,
             Tool::Smell(..) => 0.0,
+            Tool::Provoke(_) => r.provoke_price,
+            Tool::Still(_) => r.still_price,
         }
     }
 
@@ -316,7 +344,7 @@ impl Kit {
         let ok = match t {
             Tool::Germ(_) if !g.world.has_germ() => false,
             Tool::Gas(_) if !g.world.has_gas() => false,
-            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => self.in_reach(g, p) && g.world.open(p.0, p.1),
+            Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => self.in_reach(g, p) && g.world.open(p.0, p.1),
             Tool::Cord(a, b) => (a.0 - b.0).hypot(a.1 - b.1) <= self.rules.cord_max * s && self.in_reach(g, ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
             Tool::Smell(k, _) => g.soldiers.get(k).is_some_and(|x| x.alive),
         };
@@ -325,7 +353,7 @@ impl Kit {
         }
         if self.rules.carry_max > 0 && !matches!(t, Tool::Smell(..)) {
             let mid = match t {
-                Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) => p,
+                Tool::Blast(p) | Tool::Mine(p) | Tool::Germ(p) | Tool::Gas(p) | Tool::Provoke(p) | Tool::Still(p) => p,
                 Tool::Cord(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
                 Tool::Smell(..) => unreachable!(),
             };
@@ -362,6 +390,11 @@ impl Kit {
                 self.gassed += g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.gas_r, gas: steps, ..Burst::default() }, &br).gassed as usize;
             }
             Tool::Smell(k, m) => g.soldiers[k].smell = m,
+            Tool::Provoke(p) | Tool::Still(p) => {
+                let (kind, secs) = if matches!(t, Tool::Provoke(_)) { (super::big::MIND_DEAF, r.provoke_secs) } else { (super::big::MIND_STILL, r.still_secs) };
+                let mind_steps = (secs * self.fine_tps(g)).round().clamp(1.0, u16::MAX as f32) as u16;
+                g.world.burst(&Burst { at: (p.0 / s, p.1 / s), r: r.mind_r, mind: kind as u8, ..Burst::default() }, &BurstRules { mind_steps, ..br });
+            }
         }
         true
     }
@@ -478,5 +511,34 @@ mod tests {
         let out = (at.0 + 10.0, at.1);
         assert!(!g.clear_line(at, out), "the wall is in the way of a shot");
         assert!(kit.use_tool(&mut g, Tool::Blast(out)), "the blast went over the wall");
+    }
+
+    /// **Provoke and Still** (the simulation-use plan's B1 and B2,
+    /// 2026-11-17): each, used where a soldier stands on the mould, stamps
+    /// its Mind status on the walkers within `mind_r` for its seconds, is
+    /// paid, and kills nothing.
+    #[test]
+    fn provoke_and_still_stamp_their_status_for_their_seconds() {
+        use crate::mould::big::{MIND_DEAF, MIND_STILL, MIND_T};
+        for (tool, kind, secs) in [(Tool::Provoke as fn((f32, f32)) -> Tool, MIND_DEAF, KitRules::default().provoke_secs), (Tool::Still, MIND_STILL, KitRules::default().still_secs)] {
+            let mut g = Game::new(race_world(3, 2, 5_000), Rules { start_bank: 1e6, ..Rules::default() }, 3);
+            let mut kit = Kit::new(KitRules { carry_max: 0, ..KitRules::default() });
+            for _ in 0..20 {
+                g.step();
+            }
+            let k = (0..g.world.walkers.len()).find(|&k| g.world.lives(k)).expect("a walker");
+            let (x, y, _) = g.world.walkers[k];
+            (g.soldiers[0].x, g.soldiers[0].y) = (x, y);
+            let (bank, living) = (g.bank, World::living(&g.world));
+            assert!(kit.use_tool(&mut g, tool((x, y))), "used");
+            let d = &g.world;
+            let rr = kit.rules.mind_r * d.p.scale as f32;
+            let near: Vec<usize> = (0..d.walkers.len()).filter(|&j| d.lives(j) && (d.walkers[j].0 - x).hypot(d.walkers[j].1 - y) <= rr - 0.01).collect();
+            let fine = g.rules.tps as f32 * d.p.substeps as f32;
+            let end = (d.steps as u32 + (secs * fine).round() as u32) & MIND_T;
+            assert!(near.len() > 10 && near.iter().all(|&j| d.mind_of(j) == kind && d.mind[j] & MIND_T == end), "{kind}: {} walkers near, each stamped to step {end}", near.len());
+            assert_eq!(World::living(d), living, "nothing killed");
+            assert!(g.bank < bank, "paid");
+        }
     }
 }

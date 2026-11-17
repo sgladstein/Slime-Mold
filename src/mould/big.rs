@@ -246,6 +246,22 @@ pub const LIFE_DEAD: u8 = 3;
 pub const MIND_BLIND: u32 = 1;
 pub const MIND_SOUR: u32 = 2;
 pub const MIND_SPIN: u32 = 3;
+/// **Provoke** (the simulation-use plan's B1, 2026-11-17): a deaf walker
+/// hears no food news while the status lasts (`hear_food`; not even its own
+/// eating), so once its news is older than the wither lag it believes it
+/// is cut off: it panics (`BigParams::panic`), charging a soldier in reach
+/// or running for a crystal, turns the cut-off grey, may wither, and burns
+/// (`fire_dry`). It still passes on what it last heard.
+pub const MIND_DEAF: u32 = 4;
+/// **Still** (the simulation-use plan's B2, 2026-11-17): a still walker
+/// neither panics, surges, raids nor breaks away (it walks the network as
+/// a calm one), and takes no crystal while the status lasts: its share of
+/// the cell is spilled (the crystal still loses it, as for any walker on
+/// the cell) and it does not count as having eaten (`hear_food`). So a
+/// held slime starves where it stands: its news goes stale, it greys and
+/// withers, but does not charge. Unlike sleep gas it keeps moving, pays
+/// its upkeep and wakes for nothing. A lump's member keeps its leash.
+pub const MIND_STILL: u32 = 5;
 pub const MIND_T: u32 = (1 << 29) - 1;
 
 /// **Readers** (`BigDish::read_strike`, the gun cards' readers, 2026-11-16,
@@ -3218,7 +3234,8 @@ impl BigDish {
     /// than `wither_lag` steps old); `panic` once its news is more than
     /// `wither_lag` + `panic_lean` old.
     pub fn panic_haste(&self, k: usize) -> f32 {
-        if self.p.panic <= 0.0 || self.news.is_empty() || self.roam_of(k).is_some() || self.raid_of(k).is_some() || self.lump_of(k).is_some() {
+        // A still walker (`MIND_STILL`) does not panic.
+        if self.p.panic <= 0.0 || self.news.is_empty() || self.roam_of(k).is_some() || self.raid_of(k).is_some() || self.lump_of(k).is_some() || self.mind_of(k) == MIND_STILL {
             return 0.0;
         }
         let (age, lag) = ((self.steps + 1).saturating_sub(self.news[k]), self.p.wither_lag as u64);
@@ -3762,11 +3779,14 @@ impl BigDish {
             let mind = if self.mind.is_empty() { 0 } else { mind_kind(self.mind[k], t) };
             // A cut-off walker panics (`panic`): it runs for its target, by
             // how far each sensor points toward it, `panic` times as fast.
+            // A still walker (`MIND_STILL`, B2) does none of this, nor
+            // raids or surges below; a lump's member keeps its leash.
+            let still = mind == MIND_STILL;
             let haste = self.panic_haste(k);
             let mut scared = if haste > 0.0 { self.panic_target(x.floor() as i64, y.floor() as i64) } else { None };
             // A breakaway (`roam`) runs for its crystal the same way, at
             // its own pace.
-            if let Some(j) = self.roam_of(k) {
+            if let Some(j) = self.roam_of(k).filter(|_| !still) {
                 let c = self.pile_centre(j);
                 scared = Some(((c & 0xFFFF) as f32 + 0.5, (c >> 16) as f32 + 0.5, false));
             }
@@ -3789,7 +3809,7 @@ impl BigDish {
             // walking distance (`raid_field`) where there is one, else
             // straight at it.
             let mut by_field = false;
-            if scared.is_none() {
+            if scared.is_none() && !still {
                 if let Some((tx, ty)) = self.raid_of(k) {
                     scared = Some((tx, ty, true));
                     st *= raid;
@@ -3802,7 +3822,7 @@ impl BigDish {
             // The body surges (`surge_every`): a walker joined to it (not
             // panicking, not breaking away) within reach of a unit runs for
             // the nearest, creeping and then lunging on the shared clock.
-            if surge > 0.0 && haste <= 0.0 && scared.is_none() && lump.is_none() {
+            if surge > 0.0 && haste <= 0.0 && scared.is_none() && lump.is_none() && !still {
                 if let Some((_, ux, uy)) = self.nearest_threat(x.floor() as i64, y.floor() as i64) {
                     scared = Some((ux as f32 + 0.5, uy as f32 + 0.5, true));
                     st *= surge;
@@ -4270,7 +4290,11 @@ impl BigDish {
             if !self.active(k) {
                 continue;
             }
-            if !self.took.is_empty() && self.took[k] > 0.0 {
+            // A provoked walker (`MIND_DEAF`, B1) hears nothing, not even
+            // its own eating: its news ages until the status runs out.
+            // A still one (`MIND_STILL`, B2) took no crystal.
+            let mind = self.mind_of(k);
+            if mind != MIND_DEAF && mind != MIND_STILL && !self.took.is_empty() && self.took[k] > 0.0 {
                 self.news[k] = now;
             }
             let (x, y, _) = self.walkers[k];
@@ -4299,7 +4323,7 @@ impl BigDish {
             }
         }
         for k in 0..self.walkers.len() {
-            if self.active(k) {
+            if self.active(k) && self.mind_of(k) != MIND_DEAF {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 self.news[k] = self.news[k].max(self.heard[i]);
@@ -4526,7 +4550,8 @@ impl BigDish {
             }
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
-            let took = if self.took.is_empty() { 0.0 } else { self.took[k] };
+            // A still walker (`MIND_STILL`) spills it.
+            let took = if self.took.is_empty() || self.mind_of(k) == MIND_STILL { 0.0 } else { self.took[k] };
             let mut up = if self.soil.is_empty() && !self.chars() {
                 p.upkeep
             } else {
@@ -6054,6 +6079,75 @@ mod tests {
             assert_eq!(on, if t < 5 { n } else { 0 }, "step {t}: the status lasts 5 steps");
             short.tick();
         }
+    }
+
+    /// **Provoke and Still** (the simulation-use plan's B1 and B2,
+    /// 2026-11-17), on a fed dish with crystals, the wither and panic on.
+    /// A deaf walker's news does not move while the status lasts, so past
+    /// the lag and the lean nearly the whole body panics where the plain
+    /// dish has few; when it runs out the fed body hears again and calms.
+    /// A still walker on a stale body panics not at all where the plain
+    /// one nearly all does; on a fed one it takes no crystal (its share is
+    /// spilled: the crystal loses as much as the plain dish's), so the body
+    /// holds less energy and its news goes stale.
+    #[test]
+    fn provoked_walkers_hear_nothing_and_panic_and_still_ones_neither_panic_nor_eat() {
+        let grow = BigParams { upkeep: 0.01, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, panic_r: 4.0, panic: 2.0, panic_lean: 3, wither: 0.05, wither_lag: 5, ..small(2, 1) };
+        let mut base = BigDish::new(grow);
+        for _ in 0..40 {
+            base.tick();
+        }
+        let (w, h) = (base.w as f32, base.h as f32);
+        let all = |d: &mut BigDish, kind: u32, steps: u16| d.mind(w / 2.0, h / 2.0, w + h, kind, steps);
+        let scared = |d: &BigDish| {
+            let live: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k)).collect();
+            live.iter().filter(|&&k| d.panics(k)).count() as f32 / live.len().max(1) as f32
+        };
+        // Provoke: no walker's news moves; then the body panics.
+        let mut deaf = base.clone();
+        assert!(all(&mut deaf, MIND_DEAF, 12) > 500);
+        let news = deaf.news.clone();
+        let mut plain = base.clone();
+        for _ in 0..10 {
+            deaf.tick();
+            plain.tick();
+            let moved = (0..news.len().min(deaf.news.len())).filter(|&k| deaf.news[k] != news[k]).count();
+            assert_eq!(moved, 0, "a deaf walker hears nothing");
+        }
+        eprintln!("panicking 10 steps after the stamp: provoked {:.2}, plain {:.2}", scared(&deaf), scared(&plain));
+        assert!(scared(&deaf) > 0.95 && scared(&plain) < 0.5, "a provoked body panics");
+        for _ in 0..12 {
+            deaf.tick();
+        }
+        eprintln!("panicking once it ran out 10 steps ago: {:.2}", scared(&deaf));
+        assert!(scared(&deaf) < 0.5, "the status runs out and the fed body hears again");
+        // Still on a stale body: none panics.
+        let mut stale = base.clone();
+        for k in 0..stale.news.len() {
+            stale.news[k] = 1;
+        }
+        let mut still = stale.clone();
+        all(&mut still, MIND_STILL, 20);
+        eprintln!("a stale body panicking: plain {:.2}, still {:.2}", scared(&stale), scared(&still));
+        assert!(scared(&stale) > 0.8 && scared(&still) == 0.0, "a still walker does not panic");
+        // Still on a fed body: the crystals lose the same, the body gains
+        // nothing from them and hears no news of food.
+        let mut fed = base.clone();
+        let at = fed.steps;
+        all(&mut fed, MIND_STILL, 20);
+        let mut plain = base.clone();
+        fed.tick();
+        plain.tick();
+        let energy = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k)).map(|k| d.energy[k] as f64).sum::<f64>();
+        let took = plain.took.iter().filter(|&&t| t > 0.0).count();
+        eprintln!("one step still: energy {:.1} against plain {:.1}; {took} plain walkers ate", energy(&fed), energy(&plain));
+        assert!(took > 20, "the plain body eats");
+        assert_eq!(fed.charge, plain.charge, "a still walker's share is spilled");
+        assert!(energy(&fed) < energy(&plain) - 0.01 * took as f64, "a still walker gains nothing");
+        for _ in 0..5 {
+            fed.tick();
+        }
+        assert!(fed.news.iter().all(|&v| v <= at + 1), "a still body hears no news of food");
     }
 
     /// **Readers** (the gun cards' readers, 2026-11-16): from one warmed

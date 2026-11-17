@@ -46,6 +46,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   default; a stronger "fed slime is fireproof" form behind `fire_fed=1`;
   probe `examples/dryprobe.rs`, raw lines in `c1-raw/`, page in `page-c1/`
   (https://claude.ai/artifact/6CrHne8QszUbfgVzpcG825).
+- [b-provoke-still.md](b-provoke-still.md): B1 and B2 built, Provoke (deaf
+  to food news) and Still (no charge, no crystal) as Mind statuses on both
+  engines and test devices on the tools page; probe `examples/mindprobe.rs`,
+  raw lines in `b-raw/`, page in `page-b/`
+  (https://claude.ai/artifact/6PUddP5ThBHR6AQnEZmwip).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure

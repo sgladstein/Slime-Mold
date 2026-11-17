@@ -1223,6 +1223,11 @@ impl App {
                 tool(T_MINE, (0, 2), Icon::Target, "Mine", KeyCode::KeyD, Target::Point { radius: kr.mine_r * sc }, kr.mine_price, true, format!("Goes off as a blast when {} walkers stand within {:.0} cells of it.", k.mine_trigger(g), kr.mine_r)),
                 tool(T_GERM, (0, 3), Icon::Spore, "Germ", KeyCode::KeyG, Target::Point { radius: kr.germ_r * sc }, kr.germ_price, g.world.has_germ(), format!("Makes the mould within {:.0} cells sick; sickness travels along its tubes and starves what it passes.", kr.germ_r)),
                 tool(T_GAS, (0, 4), Icon::Pause, "Sleep gas", KeyCode::KeyS, Target::Point { radius: kr.gas_r * sc }, kr.gas_price, g.world.has_gas(), format!("Puts the mould within {:.0} cells to sleep for {:.0} s: it doesn't eat or bite. A blast or gunfire nearby wakes it.", kr.gas_r, kr.gas_secs)),
+                // Provoke and Still (the simulation-use plan's B1 and B2,
+                // 2026-11-17): test devices for the Mind statuses the gun
+                // cards will cast; runs leave them out (`run_hidden`).
+                tool(T_PROVOKE, (1, 2), Icon::Alert, "Provoke", KeyCode::KeyX, Target::Point { radius: kr.mind_r * sc }, kr.provoke_price, true, format!("The mould within {:.0} cells hears no news of food for {:.0} s: after 5 s it believes it is cut off, greys and charges the nearest soldier, or runs for a crystal.", kr.mind_r, kr.provoke_secs)),
+                tool(T_STILL, (1, 3), Icon::Hold, "Still", KeyCode::KeyZ, Target::Point { radius: kr.mind_r * sc }, kr.still_price, true, format!("The mould within {:.0} cells stops charging for {:.0} s: no surge, panic or raid. It eats nothing meanwhile, so held long it starves and greys.", kr.mind_r, kr.still_secs)),
                 Command { about: "Back to the soldiers' commands.".into(), ..Command::new(T_BACK, (1, 4), Icon::Close, "Back", KeyCode::KeyE) },
             ];
             cmds.extend(road);
@@ -1547,7 +1552,7 @@ impl App {
     /// spends), reach, colour and rings, whether it can go (so a click out
     /// of reach is refused with the reason, as a building's red ghost is,
     /// where it was taken and then alerted "Too far"), and the note by the
-    /// cursor. None for anything but the five tools, or with no soldier
+    /// cursor. None for anything but the thrown tools, or with no soldier
     /// able to throw at all.
     pub(super) fn throw_ghost(&self, g: &Game<GpuWorld>, id: u32, at: (f32, f32), from: Option<(f32, f32)>) -> Option<(Throw, bool, String)> {
         let kr = self.kit.rules;
@@ -1560,6 +1565,10 @@ impl App {
             T_MINE => ([240, 204, 96, 255], vec![(kr.blast_r * sc, 150)], kr.mine_price),
             T_GERM => ([176, 226, 96, 255], Vec::new(), kr.germ_price),
             T_GAS => ([176, 156, 255, 255], Vec::new(), kr.gas_price),
+            // Provoke an alarm red, Still a cool blue apart from the gas's
+            // lavender.
+            T_PROVOKE => ([255, 120, 96, 255], Vec::new(), kr.provoke_price),
+            T_STILL => ([120, 200, 230, 255], Vec::new(), kr.still_price),
             _ => return None,
         };
         let land = match (id, from) {
@@ -1860,7 +1869,8 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 /// out until they visibly draw the slime. The shop doesn't sell them
 /// (`run::ITEMS`).
 pub(super) fn run_hidden(id: u32) -> bool {
-    matches!(id, LURE | LURES | SIREN | OUTPOST)
+    // Provoke and Still are test devices until the gun thread's cards.
+    matches!(id, LURE | LURES | SIREN | OUTPOST | T_PROVOKE | T_STILL)
 }
 
 pub(super) fn run_lock(id: u32) -> Option<&'static str> {

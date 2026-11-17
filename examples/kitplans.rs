@@ -58,8 +58,8 @@ struct Row {
     alive: usize,
     mould: usize,
     harvested: f32,
-    uses: [u32; 6],
-    killed: [usize; 6],
+    uses: [u32; 8],
+    killed: [usize; 8],
     shots: u32,
     ms_tick: f64,
 }
