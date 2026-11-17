@@ -65,7 +65,13 @@ field the flinch reads, on both engines. At 5 nothing changed (8 seeds); at
 50 and 200 the slime drew back from the flames, the fire, undoused, ate
 holes in the body ringed by slime, and killed 13% and 26% more. The same
 behaviour as `fire_weight`, so off with it until the designer's crossing
-test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)). In the gun thread's crossing film it held a stream at a burning line harder than `fire_weight` (31 crossed against 57, none while it burned), so it stays and `fire_weight` goes; the designer would give it to one fire-shy tier.
+test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)). The two routes are one decision (technical lead, 11-17 12:05Z): one blind
+A/B film of each alone, the owner keeps one and the other goes to
+`Reports/dead-ends.md`; if they look alike the alarm route wins, as it adds
+no sensor read ([ROADMAP](../../ROADMAP.md), switches that are off). In the
+gun thread's crossing film the alarm held a stream at a burning line harder
+(31 crossed against 57, none while it burned); the designer would give it
+to one fire-shy tier rather than turn it on everywhere.
 **Gas burns** (C5, 2026-11-17; `BigParams::gas_burn` 0.2, on): gas cloud over it is fuel. A light lights it whatever the plants or the wet, and fire runs across it from cell to cell (half a chance per burning neighbour), using it up and killing what stands there. Sleep gas then a fire lit at its edge burned 58-66% of the sleepers on 7 of 8 seeds, against none without ([report](../../Reports/sim-use-2026-11-17/c5-gas-ignites.md)).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
