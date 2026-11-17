@@ -38,6 +38,9 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   `set=set_block=N`; films and page in `page-e2b/`
   (https://claude.ai/artifact/AKuE9RVmPtcNqsK1nW93Dx), raw lines in
   `e2b-raw/`.
+- [e2b-look.md](e2b-look.md): set slime's own look, two materials (amber,
+  glaze) for a blind A/B, page in `page-e2b-look/`
+  (https://claude.ai/artifact/4nbrWEwjSK9vo243aJWWCw).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure

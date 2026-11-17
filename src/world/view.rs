@@ -261,6 +261,10 @@ pub struct View {
     /// The crust (`set_crust`, 2026-11-17): the word in `news` where the
     /// engine's crust block starts (`gpu::Engine::crust_at` / 4), 0 off.
     crust_at: u32,
+    /// Set slime (`set_setting`, E2b): the set walkers a cell's first word
+    /// in `news` and the look (0 off, 1 amber, 2 glaze).
+    setc_at: u32,
+    set_look: u32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -403,6 +407,8 @@ impl View {
             lump_held: [0.0; MAX_LUMPS],
             plant_at: 0,
             crust_at: 0,
+            setc_at: 0,
+            set_look: 0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -729,6 +735,7 @@ impl View {
             self.dense_at = 0;
             self.plant_at = 0;
             self.crust_at = 0;
+            (self.setc_at, self.set_look) = (0, 0);
         }
     }
 
@@ -770,6 +777,14 @@ impl View {
             _ => self.crust_at = 0,
         }
         self.rebind();
+    }
+
+    /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
+    /// from the engine's `news` word `at` (`gpu::Engine::crust_at` / 4 +
+    /// cells + walkers), bound with the crust (`set_crust` first): `look` 1
+    /// amber, 2 glaze, 0 hides it. Off while the crust is.
+    pub fn set_setting(&mut self, at: u32, look: u32) {
+        (self.setc_at, self.set_look) = if self.crust_at > 0 { (at, look) } else { (0, 0) };
     }
 
     /// The world's living walkers a cell (living walkers over its cells),
@@ -946,7 +961,7 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.crust_at, 0, 0, 0] {
+        for v in [self.crust_at, self.setc_at, self.set_look, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);

@@ -70,8 +70,9 @@ struct V {
     // (`LumpBody::held`: 1 out on its errand, 0 gathering).
     lump_held: vec4<f32>,
     // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
-    // the engine's crust block starts (0 off), and three spare words.
-    crust_at: u32, _cr0: u32, _cr1: u32, _cr2: u32,
+    // the engine's crust block starts (0 off); the set walkers a cell's
+    // block and set slime's look (`View::set_setting`, E2b; 0 off); a spare.
+    crust_at: u32, setc_at: u32, set_look: u32, _cr2: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -1636,6 +1637,50 @@ fn lump_mat(m0: Mat, l: Lump, th: f32) -> Mat {
     return m;
 }
 
+// **Set slime** (the simulation-use plan's E2b, 2026-11-17;
+// `BigDish::set_cells`): walkers that stopped where they were hurt are drawn
+// by their own state, a material over the body where they stand, settled
+// by a blind A/B (`P.set_look`): 1 amber, a deep resin with a low warm glow
+// inside (set slime as hardened, dried sap); 2 glaze, a pale, glass-glossy
+// skin. Not dark ridges (they read as the player's walls), not bronze (the
+// owner turned it down). Only colour, gloss and glow: the body's opacity
+// and height stay the sheet's (the graphics thread, 11-17), so its edge is
+// the set walkers' own, smoothed over the 4 x 4 cells round (a lone set
+// walker is a fleck, a set rim a band).
+fn set_c(ix: i32, iy: i32) -> f32 { return f32(news[P.setc_at + cidx(ix, iy)]); }
+fn set_share(x: f32, y: f32) -> f32 {
+    if (P.setc_at == 0u || P.set_look == 0u) { return 0.0; }
+    let ix = i32(floor(x - 0.5)) - 1; let iy = i32(floor(y - 0.5)) - 1;
+    var c = 0.0;
+    var ws = 0.0;
+    for (var dy = 0; dy < 4; dy++) {
+        for (var dx = 0; dx < 4; dx++) {
+            let d = vec2<f32>(f32(ix + dx) + 0.5 - x, f32(iy + dy) + 0.5 - y);
+            let w = exp(-dot(d, d) / (2.0 * 0.7 * 0.7));
+            c += w * set_c(ix + dx, iy + dy);
+            ws += w;
+        }
+    }
+    return smoothstep(0.2, 0.6, c / ws);
+}
+const SET_AMBER: vec3<f32> = vec3<f32>(112.0, 46.0, 14.0);
+const SET_AMBER_GLOW: vec3<f32> = vec3<f32>(255.0, 110.0, 30.0);
+const SET_GLAZE: vec3<f32> = vec3<f32>(255.0, 238.0, 196.0);
+fn set_mat(m0: Mat, share: f32, th: f32) -> Mat {
+    if (share <= 0.0) { return m0; }
+    var m = m0;
+    let s = share * smoothstep(0.02, 0.2, th);
+    if (P.set_look == 1u) {
+        m.albedo = mix(m.albedo, SET_AMBER, s);
+        m.gloss = mix(m.gloss, 0.5, s);
+        m.glow = m.glow + SET_AMBER_GLOW * 0.14 * s;
+    } else {
+        m.albedo = mix(m.albedo, SET_GLAZE, 0.55 * s);
+        m.gloss = mix(m.gloss, 1.0, s);
+    }
+    return m;
+}
+
 // How far beyond the map's edge `prep` works the ground out, in cells.
 const OFF_MAP: f32 = 8.0;
 
@@ -1819,6 +1864,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1.body = wide;
         m1.glow += ABSORB_RGB * 0.45 * flash;
         m1 = lump_mat(m1, lump, tm);
+        m1 = set_mat(m1, set_share(wx, wy), tm);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -1845,6 +1891,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     }
     mt.glow += ABSORB_RGB * 0.45 * flash;
     mt = lump_mat(mt, lump, tm);
+    mt = set_mat(mt, set_share(wx, wy), tm);
     hcell[i] = h.x;
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
