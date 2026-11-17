@@ -1,0 +1,20 @@
+---
+name: scott-desktop
+description: Owner's GPU PC "Scott-Desktop": repo clone path, toolchain, and the Remote Control safety check that needs the owner's OK before running new code
+metadata:
+  type: reference
+  modified: 2026-11-12T06:30:00.000Z
+---
+
+Scott-Desktop (Windows, GeForce GTX 1070, driver 582.66, cargo/rustc 1.97.1, git 2.39) is the owner's GPU machine. The project folder `C:\Users\Scott\Code\Slime Mold` was empty until 2026-11-10 23:55Z, when the GPU plan thread cloned github.com/sgladstein/Slime-Mold into it over Remote Control (no sign-in needed). A release build of `examples/gputime.rs` takes about 4 minutes there.
+
+The device's auto-mode safety check blocks running freshly downloaded code ("Code from External") until the owner approves in the thread; the owner approved the GPU tests at 2026-11-11 00:02Z ("I give you approval to run these tests on my local pc"), then gave a standing OK at 00:06Z: "you can use my local PC for as many tests as you want". First timing run there 2026-11-11: 100k walkers 1.37 ms per two-tick frame (results in Reports/gpu-plan-2026-11-10.md).
+
+**How to apply:** before a run there, `git pull --ff-only` in that folder (don't discard local changes). The GPU sandbox thread leaves the checkout detached at the commit it timed (2026-11-11 03:20Z: b1f0383, the looks build), so first `git status`, then `git checkout main` if no tracked file is modified, then pull; tests need no further OK (standing, 00:06Z); if the safety check still blocks, quote that ruling. GPU work waits until the owner is at that PC with the Claude app open. See [[gpu-plan]], [[software-gpu]].
+
+**2026-11-11 16:15Z:** the PC has only 4 logical cores, the same as a cloud container, so it adds nothing for CPU runs; use it for the GPU. Its C: drive was full (232/232 GB, ~350 MB free), and a release build failed with os error 112. The owner was told. Before a build there, check the free space (a release build needs over 350 MB; ask for 2-3 GB).
+**Drives (survey 2026-11-11 17:00Z):** C: is a 232 GB SSD, full. D: "Hard Drive 2" (931 GB, 389 GB free) and E: "My Passport" (3.7 TB, 1.3 TB free) are other options. Put builds on D with `CARGO_TARGET_DIR=D:\cargo-target`. About 57 GB of C: is rebuildable Rust `target` folders, 40 GB of them in old Claude worktrees under `Pixel Physics\.claude\worktrees`. Owner 17:14Z: "clear build folders and stay on C". Keep builds on C (no CARGO_TARGET_DIR move); the target folders were cleared.
+
+**Booking (2026-11-12 15:55Z, integration thread, at the tech lead's request):** before running anything on this PC, book it in `/mnt/project-files/scott-desktop/booking.md`. A timing run gets the PC to itself, censuses go only when no timing is booked, each timing output starts with the bench's machine line (e516f4f), and every thread uses its own worktree (never switch HEAD in another thread's checkout).
+GPU thread's worktree: `C:\Users\Scott\Code\Slime Mold GPU` (own target folder). Runs go through the one standing 1070 runner via the coordinator (integration, 16:08Z): no thread starts its own Remote Control session there. The campaign thread will use its own worktree `C:\Users\Scott\Code\Slime Mold Campaign` from now on (its 15:23Z run in the main checkout was stopped at ~16:02Z; mission 1-2 census output sits in that checkout's `target\census-m1.txt`/`-m2.txt`, possibly renamed with a date). Why the rule: on 2026-11-12 at 15:23Z a campaign run overlapped a timing round. Only 0.5 GB of 8 GB was free, every frame ran 3-5x slower, and one run died of memory. The owner closed Chrome at 15:28Z. Today's earlier 1070 timings count only as "before memory was freed". The queued 1070 runs of 2026-11-12 morning are done (Reports/gpu-readout-2026-11-12.md).
+**PC runner (owner OK 16:07Z):** one long-lived runner thread, *Run jobs on Scott's desktop PC* (cmsg_01PcwPdssrGxiXYvyCG8WaUXSwyPUwNtHT7L2TgFCr59ga), holds the PC's Remote Control session. Other threads book in booking.md and send exact commands + a worktree through the coordinator (the runner takes no thread messages); they don't start their own session there.
