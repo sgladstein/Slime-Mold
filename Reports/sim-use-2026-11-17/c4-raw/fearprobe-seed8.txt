@@ -1,0 +1,10 @@
+fearprobe: planet depth 2 under meadow, shape C, scale 2, 25000 walkers; grow 60 s, disc r 10, margin 25, watch 30 s, fire_alarm [0.0, 5.0, 50.0, 200.0]
+seed fire_alarm | disc (x, y), walkers at the light | fire killed, per walker | within 2r: walkers, mean's offset at the light -> at the end | living
+8 0 | (190, 87), 530 | 301, 0.568 | 64, 2.69 -> 13.36 | 10776
+8 5 | (190, 87), 530 | 287, 0.542 | 0, 2.69 -> 0.00 | 10787
+8 50 | (190, 87), 530 | 262, 0.494 | 5, 2.69 -> 18.86 | 10836
+8 200 | (190, 87), 530 | 300, 0.566 | 12, 2.69 -> 17.95 | 10901
+fire_alarm 0: kills a walker 0.568
+fire_alarm 5: kills a walker 0.542; against 0, more 0, less 1, sign p 1.000
+fire_alarm 50: kills a walker 0.494; against 0, more 0, less 1, sign p 1.000
+fire_alarm 200: kills a walker 0.566; against 0, more 0, less 1, sign p 1.000

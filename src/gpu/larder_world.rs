@@ -2102,6 +2102,74 @@ mod tests {
         assert!(df > 0.2, "the twin catches a GPU that ignores fire_fed");
     }
 
+    /// **Fire scares it** (the simulation-use plan's C4, `fire_alarm`), on
+    /// the C1 twin's dish with the flinch on (keep 0.9, as shape C): every
+    /// plant within 20 dish cells of home lit at 12 s. The alarm field,
+    /// plants, fire and char agree at every second; fire lays alarm (the
+    /// alarm over the dish rises against `fire_alarm` 0). Planted: a GPU
+    /// with `fire_alarm` 0 must be caught by the alarm.
+    #[test]
+    fn fire_lays_alarm_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+        // (largest alarm L1 over the run, the CPU's alarm summed 1 s after the light)
+        let play = |fa: f32, gpu_fa: f32| -> (f64, f64) {
+            let p = BigParams { flinch: 0.9, fire_alarm: fa, ..race_params(seed, scale, walkers) };
+            let s = Settings { flinch: 0.9, fire_alarm: gpu_fa, ..race_settings(seed, scale, walkers) };
+            let mut cpu = BigDish::with_map(p, &m);
+            let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
+            assert!(!cpu.plant.is_empty() && gpu.e.plants && !cpu.alarm.is_empty());
+            let home = cpu.homes[0];
+            let (mut worst, mut after) = (0.0f64, 0.0f64);
+            for sec in 1..=16 {
+                let f = Frame::default();
+                for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                    w.frame(&f, 15);
+                }
+                if sec == 12 {
+                    cpu.ignite(home.0, home.1, 20.0, 1.0);
+                    gpu.e.ignite(&gpu.shared, &[(home.0, home.1, 20.0, 1.0)]);
+                    for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                        w.frame(&f, 30);
+                    }
+                }
+                World::burned(&mut cpu);
+                World::burned(&mut gpu);
+                let ga = gpu.e.alarm_of();
+                let l1: f64 = ga.iter().zip(&cpu.alarm).map(|(a, b)| (a - b).abs() as f64).sum();
+                if sec == 13 {
+                    after = cpu.alarm.iter().map(|&v| v as f64).sum();
+                }
+                let (pl, _, fire, _) = gpu.e.plants_of();
+                let diff = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+                let cfire = if cpu.fire.is_empty() { vec![0.0; pl.len()] } else { cpu.fire.clone() };
+                if fa == gpu_fa {
+                    let (nc, ng) = (World::living(&cpu), World::living(&gpu));
+                    let (dp, df) = (diff(&pl, &cpu.plant), diff(&fire, &cfire));
+                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df}, alarm L1 {l1:.3e}");
+                    assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
+                    assert!(l1 <= tol(1e-2, 50.0), "{sec} s: alarm L1 {l1:.3e}");
+                }
+                worst = worst.max(l1);
+            }
+            (worst, after)
+        };
+        let (l0, off) = play(0.0, 0.0);
+        eprintln!("without fire alarm: largest alarm L1 {l0:.2e}");
+        let (l1, on) = play(5.0, 5.0);
+        eprintln!("fire lays alarm: largest alarm L1 {l1:.2e}; alarm summed 1 s after the light {on:.1} against {off:.1} without");
+        assert!(on > off + 100.0, "fire lays alarm: {on:.1} against {off:.1}");
+        let (l1, _) = play(5.0, 0.0);
+        eprintln!("planted, the GPU lays none: largest alarm L1 {l1:.2e}");
+        assert!(l1 > 100.0, "the twin catches a GPU fire that lays no alarm");
+    }
+
     /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU
     /// world (`race_settings`, `Tier::settings`, `Engine::made`) play the
     /// same crowd rule on every map, tier and scale the game ships, and on

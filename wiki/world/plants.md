@@ -11,10 +11,12 @@ sources:
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
   - Reports/sim-use-2026-11-17/c1-dry-burns.md
+  - Reports/sim-use-2026-11-17/c4-fire-alarm.md
   - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
 code:
   - BigDish::ignite
   - BigParams::crust_fuel
+  - BigParams::fire_alarm
   - BigParams::fire_damp
   - BigParams::fire_dry
   - BigParams::fire_fed
@@ -55,6 +57,13 @@ wholly fireproof: fire through its thin trail took 24-65% of a fed disc in
 20 s; `BigParams::fire_fed` (off, the owner's card) makes fed slime wet
 whatever its trail, and took that to 0
 ([report](../../Reports/sim-use-2026-11-17/c1-dry-burns.md)).
+**Fire lays alarm** (C4, 2026-11-17; `BigParams::fire_alarm`, off): each
+fire step a burning agar cell adds `fire_alarm` x its fire to the alarm
+field the flinch reads, on both engines. At 5 nothing changed (8 seeds); at
+50 and 200 the slime drew back from the flames, the fire, undoused, ate
+holes in the body ringed by slime, and killed 13% and 26% more. The same
+behaviour as `fire_weight`, so off with it until the designer's crossing
+test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,
