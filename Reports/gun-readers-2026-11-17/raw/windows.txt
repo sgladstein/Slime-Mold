@@ -1,0 +1,24 @@
+window     gas-plain kill/rounds/reads mould sold gas-shatter kill/rounds/reads mould sold germ-plain kill/rounds/reads mould sold germ-detonate kill/rounds/reads mould sold
+greedy-5           10/0    /0   m24765  s9           10/0    /1   m24765  s9           31/0    /0   m21039  s9           96/68   /13  m21119  s9  
+greedy-11          24/0    /0   m24901  s9           47/30   /3   m24901  s9           73/0    /0   m21349  s9           93/31   /19  m21329  s9  
+hold-10           106/0    /0   m24600  s8          193/136  /9   m24509  s8           67/0    /0   m21169  s8          145/91   /12  m21191  s8  
+hold-30           858/0    /0   m24507  s7         1746/1442 /16  m23672  s7          342/0    /0   m15248  s7         2385/2237 /16  m14885  s7  
+p1g2-25             3/0    /0   m24878  s8            3/0    /0   m24878  s8           24/0    /0   m7726   s8           27/3    /8   m7724   s8  
+p1g2-40             3/0    /0   m24829  s8            3/0    /0   m24829  s8           16/0    /0   m7828   s8           18/3    /5   m7832   s8  
+p1g3-10             7/0    /0   m25035  s8            7/0    /0   m25035  s8           42/0    /0   m22882  s8           32/6    /9   m22884  s8  
+p1g3-25             2/0    /0   m25430  s8            2/0    /0   m25430  s8           24/0    /0   m8633   s8           40/10   /10  m8645   s8  
+p1g3-40             3/0    /0   m25988  s8            3/0    /0   m25988  s8           40/0    /0   m10062  s8           44/8    /11  m10070  s8  
+p1s1-25             1/0    /0   m25830  s8            1/0    /0   m25830  s8           31/0    /0   m11674  s8           67/48   /7   m11667  s8  
+p1s1-40            59/0    /0   m26716  s8           98/54   /2   m26674  s8           75/0    /0   m11074  s8          148/88   /9   m11038  s8  
+p2s1-10             3/0    /0   m25348  s8            3/0    /0   m25348  s8           16/0    /0   m24008  s8           16/0    /10  m24008  s8  
+p2s1-25             9/0    /0   m24763  s8            9/0    /0   m24763  s8           50/0    /0   m11274  s8           56/12   /16  m11272  s8  
+p2s1-40             5/0    /0   m25023  s8            5/0    /0   m25023  s8           69/0    /0   m18521  s8           76/25   /14  m18516  s8  
+p3g4-40             5/0    /0   m26162  s8            5/0    /0   m26162  s8           11/0    /0   m26156  s8           12/2    /2   m26155  s8  
+
+gas-plain      killed 1098, slime at the ends 378775, reader casts 0
+gas-shatter    killed 2135, slime at the ends 377807, reader casts 31
+germ-plain     killed 911, slime at the ends 238643, reader casts 0
+germ-detonate  killed 3255, slime at the ends 238335, reader casts 161
+
+gas-shatter against gas-plain: more kills 4, fewer 0 (sign p=0.125); less slime at the end 3, more 0 (sign p=0.250)
+germ-detonate against germ-plain: more kills 13, fewer 1 (sign p=0.002); less slime at the end 8, more 6 (sign p=0.791)
