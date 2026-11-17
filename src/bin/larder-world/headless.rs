@@ -12,7 +12,7 @@ use super::*;
 // Two more than clippy's seven: the look's options are plain values from
 // the command line, and a struct for them would only rename them.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32)], bosses: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
+pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u32, u32), wav: Option<&str>, time_holes: bool, fixed: Option<(f32, f32, f32)>, cut: Option<Cut>, bank: Option<f32>, booms: &[(f32, f32, f32, Option<Vec<rounds::Card>>)], bosses: &[(f32, f32, f32)], turrets: &[(Kind, (f32, f32), f32)], renders: &[usize], menu_page: Option<(slime_mould::world::start::Page, &str)>, hover: Option<(f32, f32)>, hover_to: Option<(f32, f32)>, select: bool, drags: &[(String, String)], scroll: i32) -> Result<(), String> {
     std::fs::create_dir_all(dir).map_err(|e| format!("{dir}: {e}"))?;
     let (device, queue) = gpu().ok_or("no GPU adapter")?;
     let mut load_at = args.load_at.clone();
@@ -359,13 +359,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 }
             }
             // `boom=T,X,Y`: the round set off there once T has come.
-            for (j, &(bt, bx, by)) in booms.iter().enumerate() {
+            for (j, (bt, bx, by, cards)) in booms.iter().enumerate() {
+                let (bt, bx, by) = (*bt, *bx, *by);
                 let g = app.game.as_mut().unwrap();
                 if g.time() >= bt && !boomed.contains(&j) {
                     boomed.push(j);
-                    let (k0, f0) = (app.rounds.killed, app.rounds.flung);
-                    app.rounds.cast_at(g, (bx, by));
-                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
+                    let (k0, f0, s0) = (app.rounds.killed, app.rounds.flung, app.rounds.gassed);
+                    match cards {
+                        Some(c) => app.rounds.cast_cards_at(g, (bx, by), c),
+                        None => app.rounds.cast_at(g, (bx, by)),
+                    }
+                    println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung, {} gassed", g.time(), app.rounds.killed - k0, app.rounds.flung - f0, app.rounds.gassed - s0);
                 }
             }
             // `boss=T,X,Y`: a mini-boss forms there once T has come, on
@@ -473,7 +477,22 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                             ring += c[1] as u32;
                         }
                     }
-                    println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}", 2.0 * wr);
+                    // With contagion on (a germ cast), the sick walkers
+                    // (living, past the immune count) within 2R too, for
+                    // the readers' films (2026-11-17). Appended, so the
+                    // Mind films' parser still matches.
+                    let e = &g.world.e;
+                    let sick = (g.world.s.sick > 0).then(|| {
+                        let n = e.n as usize;
+                        let ill: Vec<u32> = read_back(&device, &queue, &e.sick).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+                        let spec: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+                        let wk: Vec<f32> = read_back(&device, &queue, &e.walkers).chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+                        // A freed slot (growth) has energy below 0.
+                        let en: Vec<f32> = read_back(&device, &queue, &e.energy).chunks_exact(4).take(n).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+                        (0..n).filter(|&j| ill[j] > g.world.s.immune && (spec[j] >> 9) & 3 != 3 && en[j] >= 0.0 && (wk[4 * j] - wx).hypot(wk[4 * j + 1] - wy) <= 2.0 * wr).count()
+                    });
+                    let sick = sick.map_or(String::new(), |c| format!(", {c} sick within {}", 2.0 * wr));
+                    println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}{sick}", 2.0 * wr);
                 }
             }
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
@@ -540,7 +559,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match.
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4]);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts, {} reader casts", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4], rd.cast[5]);
         }
         if g.shells_fired > 0 {
             let next = g.shells.last().map_or(String::new(), |s| format!(", the newest coming down at {:.0},{:.0}", s.to.0, s.to.1));

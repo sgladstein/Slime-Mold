@@ -1339,9 +1339,11 @@ pub const LUMPSUM: usize = 67;
 pub const LUMPFORM: usize = 68;
 /// A Mind status stamped (2026-11-16, `Engine::mind_pass`).
 pub const MINDLAY: usize = 69;
+/// A reader's kill (2026-11-16, `Engine::read_pass`).
+pub const READKILL: usize = 70;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 70] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay",
+pub const PASSES: [&str; 71] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill",
 ];
 
 impl Shared {
@@ -2785,6 +2787,18 @@ impl Engine {
         self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, steps as f32, kind as f32]));
         self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
         self.run(shared, &[(MINDLAY, self.n.div_ceil(256))]);
+    }
+
+    /// **A reader's kill** (the CPU's `BigDish::read_strike`, dish cells):
+    /// every living ordinary or dormant walker within `r` of (`x`, `y`) in
+    /// the state `kind` reads (`big::READ_SLEEP`, `READ_SICK`) takes a
+    /// blow (`readkill`); the kills count on the strike's counter.
+    pub fn read_pass(&mut self, shared: &Shared, s: &Settings, x: f32, y: f32, r: f32, kind: u8) {
+        let k = self.dish.p.scale as f32;
+        self.write_params(s, Hand::default(), 0);
+        self.queue.write_buffer(&self.params, STRIKE_AT as u64, &f32_bytes(&[x * k, y * k, r * k, 0.0, 0.0, 0.0, 0.0, kind as f32]));
+        self.queue.write_buffer(&self.news, self.gas_at, &u32_bytes(&[self.done as u32]));
+        self.run(shared, &[(READKILL, self.n.div_ceil(256))]);
     }
 
     /// Whether `sense` reads the Mind words this tick: once any walker has

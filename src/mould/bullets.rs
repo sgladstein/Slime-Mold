@@ -65,10 +65,13 @@ pub enum Shell {
     Blind,
     Sour,
     Spin,
+    /// The readers (2026-11-16, `Card::Shatter`, `Detonate`).
+    Shatter,
+    Detonate,
 }
 
 impl Shell {
-    pub const ALL: [Shell; 8] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin];
+    pub const ALL: [Shell; 10] = [Shell::Plain, Shell::Blast, Shell::Bomb, Shell::Gas, Shell::Germ, Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Detonate];
 
     /// The fixed card that is this payload's standard bullet.
     pub fn card(self) -> Card {
@@ -81,12 +84,26 @@ impl Shell {
             Shell::Blind => Card::Blind,
             Shell::Sour => Card::Sour,
             Shell::Spin => Card::Spin,
+            Shell::Shatter => Card::Shatter,
+            Shell::Detonate => Card::Detonate,
         }
     }
 
     /// One of the Mind bullets (Blind, Sour, Spin).
     pub fn mind(self) -> bool {
         matches!(self, Shell::Blind | Shell::Sour | Shell::Spin)
+    }
+
+    /// One of the readers (Shatter, Detonate).
+    pub fn reader(self) -> bool {
+        matches!(self, Shell::Shatter | Shell::Detonate)
+    }
+
+    /// A bullet whose work is a rule on the slime (a Mind status, a
+    /// reader's), not its set's numbers: the gun range's armory has these
+    /// in the standard set only, on a tab of their own (`Run::restock`).
+    pub fn special(self) -> bool {
+        self.mind() || self.reader()
     }
 
     pub fn of(c: Card) -> Option<Shell> {

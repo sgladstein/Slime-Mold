@@ -265,6 +265,11 @@ pub struct Burst {
     /// `MIND_SPIN`) for `BurstRules::mind_steps` fine steps
     /// (`BigDish::mind`). 0: none.
     pub mind: u8,
+    /// **A reader** (the gun cards' readers, 2026-11-16): the walkers
+    /// within `r` in the state it reads (`big::READ_SLEEP`, gassed asleep;
+    /// `READ_SICK`, sick) take a blow, counted with the kills
+    /// (`BigDish::read_strike`), after the strike and crater. 0: none.
+    pub read: u8,
 }
 
 impl Burst {
@@ -315,7 +320,8 @@ pub struct BurstOut {
 
 /// A burst on the CPU, in the order a kit blast always ran (`Kit::bang`
 /// before 2026-11-12): the alarm field on, the strike (kill, clear,
-/// alarm), the crater; then the fling (11-14), gas, then germ.
+/// alarm), the crater, a reader (11-16); then the fling (11-14), gas, then
+/// germ.
 pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     let s = d.p.scale as f32;
     let mut out = BurstOut::default();
@@ -327,6 +333,9 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     }
     if b.crater > 0 {
         d.scorch_disc(b.at.0 * s, b.at.1 * s, b.crater_r * s, b.crater);
+    }
+    if b.read > 0 {
+        out.killed += d.read_strike(b.at.0 * s, b.at.1 * s, b.r * s, b.read) as u32;
     }
     // Fire in the plants (`BigDish::ignite`, 2026-11-14): a burn (the
     // scorch round's line) lights a share of what it touches; a blast a

@@ -248,6 +248,19 @@ pub const MIND_SOUR: u32 = 2;
 pub const MIND_SPIN: u32 = 3;
 pub const MIND_T: u32 = (1 << 29) - 1;
 
+/// **Readers** (`BigDish::read_strike`, the gun cards' readers, 2026-11-16,
+/// step D of the gun-system review): a bullet that cashes in a state
+/// already on the slime and uses it up. `READ_SLEEP` (Shatter) kills the
+/// sleeping walkers within its reach: dormant with gas left (`gassed`, as
+/// `gassed_near` counts them). `READ_SICK` (Detonate) kills the sick ones
+/// (`sick` past the immune count): the germ's contagion is the mark the
+/// plan named, a state that spreads along the veins and shows, so no new
+/// mark was built. Each kill clears the trail on its cell, so the shape of
+/// what was read goes dark at once. With none of the state there it kills
+/// nothing (the bullet's own strike is all it does).
+pub const READ_SLEEP: u8 = 1;
+pub const READ_SICK: u8 = 2;
+
 /// The status a Mind word holds at fine step `t` (0: none, or run out).
 pub fn mind_kind(word: u32, t: u64) -> u32 {
     if (t as u32 & MIND_T) < (word & MIND_T) {
@@ -5263,6 +5276,45 @@ impl BigDish {
         n
     }
 
+    /// **A reader's kill** (`READ_SLEEP`, `READ_SICK`; the engine's
+    /// `readkill` pass): every living ordinary or dormant walker within `r`
+    /// fine cells of (`x`, `y`, fine cells), squared as the engine tests it,
+    /// in the state `kind` reads, takes a blow as a strike's (`strike`: a
+    /// lump's armoured member is hurt and not counted, a condensed one
+    /// breaks and is counted) and, if it dies, clears the trail on its
+    /// cell. Returns the walkers it took.
+    pub fn read_strike(&mut self, x: f32, y: f32, r: f32, kind: u8) -> usize {
+        let mut n = 0;
+        for k in 0..self.walkers.len() {
+            let (wx, wy, _) = self.walkers[k];
+            let (dx, dy) = (wx - x, wy - y);
+            let life = self.life.get(k).copied().unwrap_or(LIFE_WALKER);
+            if !self.lives(k) || !matches!(life, LIFE_WALKER | LIFE_DORMANT) || dx * dx + dy * dy > r * r {
+                continue;
+            }
+            let read = match kind {
+                READ_SLEEP => life == LIFE_DORMANT && self.gassed.get(k).is_some_and(|&g| g > 0),
+                READ_SICK => self.sick.get(k).is_some_and(|&c| c > self.p.immune_steps),
+                _ => false,
+            };
+            if !read || self.armoured(k) {
+                continue;
+            }
+            n += 1;
+            if self.is_dense(k) {
+                self.dense[k] &= KEPT;
+                continue;
+            }
+            let i = self.cell(wx, wy).expect("walker inside the dish");
+            self.trail[i] = 0.0;
+            for f in self.species_trail.iter_mut() {
+                f[i] = 0.0;
+            }
+            self.kill(k);
+        }
+        n
+    }
+
     /// Walker `k`'s Mind status now (`mind_kind`; 0 none).
     pub fn mind_of(&self, k: usize) -> u32 {
         if self.mind.is_empty() {
@@ -5719,6 +5771,55 @@ mod tests {
             assert_eq!(on, if t < 5 { n } else { 0 }, "step {t}: the status lasts 5 steps");
             short.tick();
         }
+    }
+
+    /// **Readers** (the gun cards' readers, 2026-11-16): from one warmed
+    /// dish, a disc gassed asleep and a disc made sick. Shatter
+    /// (`READ_SLEEP`) takes every sleeper in its reach and no one else, and
+    /// clears the trail on their cells; Detonate (`READ_SICK`) every sick
+    /// walker and not the immune; each finds nothing where its state is
+    /// not.
+    #[test]
+    fn readers_kill_the_state_they_read_and_nothing_else() {
+        let mut base = BigDish::new(small(1, 1));
+        for _ in 0..60 {
+            base.tick();
+        }
+        // Centred on the walker with the most others within 10 cells.
+        let near = |x: f32, y: f32, r: f32| base.walkers.iter().filter(|w| (w.0 - x).powi(2) + (w.1 - y).powi(2) <= r * r).count();
+        let (cx, cy, _) = *base.walkers.iter().max_by_key(|w| near(w.0, w.1, 10.0)).unwrap();
+        // Without growth a killed walker keeps its slot, dead (`kill`).
+        let up = |d: &BigDish, k: usize| d.lives(k) && d.life.get(k) != Some(&LIFE_DEAD);
+        let living = |d: &BigDish| (0..d.walkers.len()).filter(|&k| up(d, k)).count();
+        // Sleep: a disc of 10 gassed, read with a reach of 20.
+        let mut d = base.clone();
+        let gassed = d.gas(cx, cy, 10.0, 100);
+        let asleep = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.life[k] == LIFE_DORMANT && d.gassed[k] > 0).collect::<Vec<_>>();
+        let sleepers = asleep(&d);
+        let cells: Vec<usize> = sleepers.iter().map(|&k| d.cell(d.walkers[k].0, d.walkers[k].1).unwrap()).collect();
+        assert_eq!(d.clone().read_strike(cx, cy, 20.0, READ_SICK), 0, "no sickness here to read");
+        let n0 = living(&d);
+        let took = d.read_strike(cx, cy, 20.0, READ_SLEEP);
+        eprintln!("shatter: {gassed} gassed, {} asleep, {took} taken, {} living before, {} after", sleepers.len(), n0, living(&d));
+        assert!(took > 50 && took == sleepers.len() && living(&d) == n0 - took, "shatter takes every sleeper and no one else");
+        assert!(asleep(&d).is_empty() && cells.iter().all(|&i| d.trail[i] == 0.0), "none sleeps on, and their cells' trail is gone");
+        assert_eq!(base.clone().read_strike(cx, cy, 20.0, READ_SLEEP), 0, "no sleep to read on a dish never gassed");
+        // Sickness: a disc of 8 infected; a quarter of them set immune.
+        let mut d = base.clone();
+        (d.p.sick_steps, d.p.immune_steps) = (30, 200);
+        d.enable_contagion();
+        d.infect(cx, cy, 8.0);
+        let sick: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.sick[k] > 0).collect();
+        for &k in sick.iter().step_by(4) {
+            d.sick[k] = d.p.immune_steps;
+        }
+        let ill = sick.iter().filter(|&&k| d.sick[k] > d.p.immune_steps).count();
+        assert_eq!(d.clone().read_strike(cx, cy, 20.0, READ_SLEEP), 0, "no sleep here to read");
+        let n0 = living(&d);
+        let took = d.read_strike(cx, cy, 20.0, READ_SICK);
+        eprintln!("detonate: {} infected, {ill} sick, {took} taken", sick.len());
+        assert!(took > 30 && took == ill && living(&d) == n0 - took, "detonate takes the sick and spares the immune");
+        assert!(sick.iter().step_by(4).all(|&k| up(&d, k)), "the immune live on");
     }
 
     /// The scar (habituation): struck again and again at one spot, a mould

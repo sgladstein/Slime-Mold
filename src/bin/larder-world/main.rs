@@ -386,7 +386,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 56] = [
+const LOADOUTS: [(&str, &str); 60] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -475,6 +475,13 @@ const LOADOUTS: [(&str, &str); 56] = [
     ("sour", "sour"),
     ("spin", "spin"),
     ("multi-blind", "multicast+plain+blind"),
+    // The readers (2026-11-16, step D): each kills only what another card
+    // set up, so alone it kills nothing; in turn with its setter, the
+    // setter's sleepers or sick die at the next hit.
+    ("shatter", "shatter"),
+    ("detonate", "detonate"),
+    ("gas-shatter", "gas+shatter"),
+    ("germ-detonate", "germ+detonate"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -1959,7 +1966,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut drags: Vec<(String, String)> = Vec::new();
     let mut select = true;
     let mut cut = None;
-    let mut booms: Vec<(f32, f32, f32)> = Vec::new();
+    let mut booms: Vec<(f32, f32, f32, Option<Vec<rounds::Card>>)> = Vec::new();
     let mut bosses: Vec<(f32, f32, f32)> = Vec::new();
     let mut turrets: Vec<(Kind, (f32, f32), f32)> = Vec::new();
     let mut renders: Vec<usize> = Vec::new();
@@ -2215,9 +2222,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // `boom=T,X,Y` (11-14, the explosion films): at game second
                 // T the squad's round goes off at (X, Y), world units as
                 // `centre=`, free (`Rounds::cast_at`); repeat for more.
-                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
-                let [t, x, y] = w.as_slice() else { return Err("boom=T,X,Y".into()) };
-                booms.push((*t, *x, *y));
+                // `boom=T,X,Y,CARDS` (2026-11-16, the readers' films) casts
+                // those cards instead (`Rounds::cast_cards_at`), so one
+                // film can gas at 20 s and shatter at 23.
+                let (w, cards) = match v.splitn(4, ',').collect::<Vec<_>>().as_slice() {
+                    [t, x, y] => ([*t, *x, *y], None),
+                    [t, x, y, c] => ([*t, *x, *y], Some(rounds::parse(c).ok_or("boom=T,X,Y,CARDS: a card list")?)),
+                    _ => return Err("boom=T,X,Y[,CARDS]".into()),
+                };
+                let [t, x, y] = w.map(|s| s.parse::<f32>());
+                booms.push((t?, x?, y?, cards));
             }
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)
