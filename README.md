@@ -27,10 +27,11 @@ cargo run --release --bin larder-edit      # the Larder World map editor: paint 
 cargo run --release --bin organ            # side prototype: the network plays a rhythm
 ```
 
-**Picking this up? Start at [HANDOFF.md](HANDOFF.md):** where the game
-stands (one line per subject, linked to its [wiki](wiki/index.md) page), the
-owner's open decisions, and the next steps. [ROADMAP.md](ROADMAP.md) puts
-every active plan (game fixes, GPU, RTS, Pixel_Physics ports) in one order.
+**Picking this up? Start at [NOW.md](NOW.md):** the milestone being built
+and its exit tests, each lane's jobs, and what waits on the owner; the
+[wiki](wiki/index.md) has one page per subject. [HANDOFF.md](HANDOFF.md) and
+[ROADMAP.md](ROADMAP.md) are the front pages from before 2026-11-17, kept as
+history.
 
 Keys are on screen. F2-F6 cycle the looks, T opens the tuning panel (saved
 to `mould-tune.txt`), M the dish picker, H the briefing card.

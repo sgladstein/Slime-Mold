@@ -1,4 +1,11 @@
-# Roadmap: every active plan in one order
+# Roadmap: every active plan in one order (history since 2026-11-17)
+
+> **History since 2026-11-17.** [NOW.md](NOW.md) is the front page and names
+> the one milestone being built; lanes own files
+> ([`CLAUDE.md`](CLAUDE.md), *Lanes*), not the thread rows below. Read this
+> page as what others were doing, not as orders. *Switches that are off* is
+> still the starting list for the switch list in code, until that lands. This
+> file moves under `Reports/` with `HANDOFF.md`.
 
 Written 2026-11-10 18:15Z against `main` at `865c802`. It puts the four
 plans that are running at once into one sequence, shows what each step

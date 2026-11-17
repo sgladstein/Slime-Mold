@@ -28,7 +28,8 @@ Start at [index.md](index.md). Copy [_template.md](_template.md) for a new page.
    restate code; `code:` in the frontmatter lists them, and lint fails when
    one disappears from `src/` or `examples/`.
 5. **The owner's words are quoted, with the date and time.** Never firmer
-   than he said. Open decisions live only in `HANDOFF.md`; decided ones move
+   than he said. Open decisions live only in `NOW.md` (*What waits on the
+   owner*; `HANDOFF.md` before 2026-11-17); decided ones move
    to [decisions.md](decisions.md) (standing rulings) or
    [decisions-game.md](decisions-game.md) (choices about a game) with the quote.
 6. **Extend, don't create.** Check the index first. Write a page only when
@@ -97,7 +98,7 @@ note is one hop from the wiki; lint fails on a note no parent or page
 reaches, and on a folder of notes with no parent (owner's question,
 2026-11-10 18:48Z: "Do the agents full notes get ingested into the wiki?").
 
-**Query**: `HANDOFF.md`, then [index.md](index.md), then the page; open a
+**Query**: `NOW.md`, then [index.md](index.md), then the page; open a
 report only when the page does not answer.
 
 **Lint** (CI runs it on every PR, with `--base`; run `python3 wiki/lint.py
@@ -127,10 +128,13 @@ a page whose Now a newer report overturned, or two pages that disagree.
 
 **Owner decision**: quote it with its time in [decisions.md](decisions.md)
 or [decisions-game.md](decisions-game.md),
-remove it from `HANDOFF.md`'s open list, update the pages it changes.
+remove it from `NOW.md`'s list of what waits on him, update the pages it
+changes. The Direction lane keeps both decisions pages; another lane that
+hears a ruling sends it the quote and time.
 
-**Hand-off**: `HANDOFF.md` is the hand-written front page: one linked line
-per subject, the open decisions, the next steps in order. Update a line when
-its page's Now changes. (Until 2026-11-17 lint failed a dish, tool or mechanism
-page it did not link; retired so it can be archived for `NOW.md`.) At a hand-off, run lint, then re-read each line against its
-page.
+**Front page**: `NOW.md` (since 2026-11-17, the Direction lane's): the
+milestone, each lane's jobs, what waits on the owner; at most 100 lines
+(lint fails over that). `HANDOFF.md` was the front page before and is
+history now; the lint rule that a dish, tool or mechanism page must be
+linked from it is retired (2026-11-17), so the file can move under
+`Reports/`.
