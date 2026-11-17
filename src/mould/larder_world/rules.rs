@@ -279,6 +279,11 @@ pub struct Rules {
     /// Food a dish cell of wall costs, and its width in dish cells.
     pub wall_cost: f32,
     pub wall_width: f32,
+    /// Set slime blocks soldiers (E2b, the owner's 01:13Z "Both"): a fine
+    /// cell with this many set walkers or more in its 3 x 3 is no ground to
+    /// soldiers' feet until the count falls under half of it
+    /// (`Game::bulwark`). 0 off.
+    pub set_block: f32,
     /// The larder smells of the bank, `hoard` times a full pile per 10,000
     /// food (M2), and walkers touching it take `steal` food a game second.
     pub hoard: f32,
@@ -689,6 +694,7 @@ impl Rules {
             // Walls (the walls thread, 11-16): thickness films and tries.
             "wall_width" => &mut self.wall_width,
             "wall_cost" => &mut self.wall_cost,
+            "set_block" => &mut self.set_block,
             _ => return false,
         };
         *f = v;
@@ -757,6 +763,7 @@ impl Default for Rules {
             max_squad: 200,
             wall_cost: 20.0,
             wall_width: 2.0,
+            set_block: 0.0,
             hoard: 1.0,
             steal: 1.0,
             home_dry: true,

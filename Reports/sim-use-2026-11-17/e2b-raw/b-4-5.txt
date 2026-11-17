@@ -1,0 +1,47 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  engine crust t 30 s: 37052 cells over 0.05, 30282 over 0.3, 0 over 0.95; walkers' cells on crust over 0.3 27655, under 0.05 534
+  scar t 30 s: under walkers p50 0.000, p90 0.000, p99 2.374, max 43.046; 758 walkers set, bulwark 782 cells
+  fire t 30 s: 0 cells burning, 0 char over 0.3
+  crust t 30 s: 37190 cells over 0.05, 30456 over 0.3 (27821 of those under walkers now, 91%), 0 over 0.95; walkers on 30242 cells
+  CPU: ground field 6.08 ms (once a game second), model and HUD 0.264 ms a frame
+  t 30 s: mould 30245, soldiers 4, bank 2000, harvested 0, rendered 0, shots 84, killed 175, took 0%, crystals left 0.996; squad at 263.5,143.4
+  surge: the slime ate 82 food (2.7/s); meter 81.8 of 172, 0 surges
+  dense: 0 condensed or thick walkers, mass 30245 (readout 30245); 1625 breaking away
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  engine crust t 45 s: 38918 cells over 0.05, 32418 over 0.3, 0 over 0.95; walkers' cells on crust over 0.3 28620, under 0.05 461
+  scar t 45 s: under walkers p50 0.000, p90 0.000, p99 6.187, max 23.024; 952 walkers set, bulwark 927 cells
+  fire t 45 s: 0 cells burning, 0 char over 0.3
+  crust t 45 s: 39020 cells over 0.05, 32496 over 0.3 (28682 of those under walkers now, 88%), 0 over 0.95; walkers on 30517 cells
+  CPU: ground field 10.48 ms (once a game second), model and HUD 0.119 ms a frame
+  t 45 s: mould 30517, soldiers 4, bank 1999, harvested 0, rendered 0, shots 148, killed 292, took 0%, crystals left 0.993; squad at 271.2,145.4
+  surge: the slime ate 131 food (2.9/s); meter 131.1 of 172, 0 surges
+  dense: 0 condensed or thick walkers, mass 30517 (readout 30517); 2000 breaking away
+  squad: touching 0.0 mean, 0 most; health 98 mean
+  surge 1 starts at t 55.7 s (the slime has eaten 172 food)
+  engine crust t 60 s: 40396 cells over 0.05, 33464 over 0.3, 14989 over 0.95; walkers' cells on crust over 0.3 28742, under 0.05 878
+  scar t 60 s: under walkers p50 0.000, p90 0.000, p99 13.079, max 74.332; 1171 walkers set, bulwark 1038 cells
+  fire t 60 s: 0 cells burning, 0 char over 0.3
+  crust t 60 s: 40597 cells over 0.05, 33532 over 0.3 (28784 of those under walkers now, 86%), 16301 over 0.95; walkers on 30991 cells
+  CPU: ground field 6.83 ms (once a game second), model and HUD 0.211 ms a frame
+  t 60 s: mould 30991, soldiers 4, bank 1989, harvested 0, rendered 0, shots 212, killed 544, took 0%, crystals left 0.990; squad at 271.4,145.7
+  surge: the slime ate 191 food (3.2/s); meter 18.2 of 172, 1 surges
+  dense: 0 condensed or thick walkers, mass 30991 (readout 30991); 1890 breaking away
+  squad: touching 0.5 mean, 2 most; health 86 mean
+  raid 1 at t 63.0 s: Soldiers(0) at 274,143, reach 56 cells holding 5521 walkers, share 0.60, size 11% of the slime
+  engine crust t 75 s: 42774 cells over 0.05, 34360 over 0.3, 24560 over 0.95; walkers' cells on crust over 0.3 28960, under 0.05 833
+  scar t 75 s: under walkers p50 0.000, p90 0.000, p99 9.438, max 217.601; 1197 walkers set, bulwark 1080 cells
+  fire t 75 s: 0 cells burning, 0 char over 0.3
+  crust t 75 s: 43118 cells over 0.05, 34422 over 0.3 (29005 of those under walkers now, 84%), 25211 over 0.95; walkers on 31404 cells
+  CPU: ground field 3.53 ms (once a game second), model and HUD 0.198 ms a frame
+  t 75 s: mould 31424, soldiers 2, bank 1989, harvested 0, rendered 0, shots 275, killed 1145, took 0%, crystals left 0.986; squad at 269.8,144.4
+  surge: the slime ate 264 food (3.5/s); meter 91.2 of 172, 1 surges
+  dense: 0 condensed or thick walkers, mass 31424 (readout 31424); 1620 breaking away
+  squad: touching 2.0 mean, 4 most; health 33 mean
+  engine crust t 90 s: 45808 cells over 0.05, 35272 over 0.3, 26763 over 0.95; walkers' cells on crust over 0.3 19235, under 0.05 486
+  scar t 90 s: under walkers p50 0.000, p90 0.000, p99 8.246, max 156.258; 1263 walkers set, bulwark 129 cells
+  fire t 90 s: 0 cells burning, 0 char over 0.3
+  crust t 90 s: 46138 cells over 0.05, 35293 over 0.3 (19256 of those under walkers now, 55%), 27126 over 0.95; walkers on 21591 cells
+  CPU: ground field 2.47 ms (once a game second), model and HUD 0.081 ms a frame
+  t 90 s: mould 21591, soldiers 0, bank 1988, harvested 0, rendered 0, shots 283, killed 1274, took 0%, crystals left 0.981
+  surge: the slime ate 342 food (3.8/s); meter 170.0 of 172, 1 surges
+  dense: 0 condensed or thick walkers, mass 21591 (readout 21591); 1263 breaking away

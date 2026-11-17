@@ -65,6 +65,7 @@ mod funnel;
 mod steer;
 mod cover;
 mod doors;
+mod bulwark;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
 pub use cmd::*;
@@ -350,6 +351,13 @@ pub struct Game<W: World> {
     /// ground to soldiers though the world holds them as wall. Empty while
     /// there is no door.
     pub doors: Vec<bool>,
+    /// The bulwark (`Rules::set_block`): fine cells set slime holds,
+    /// no ground to soldiers' feet. Empty while there is none.
+    pub bulwark: Vec<bool>,
+    /// The bulwark as the walking maps were last made stale for it, and the
+    /// tick that was (`Game::mark_bulwark`).
+    pub bulwark_maps: Vec<bool>,
+    pub bulwark_staled: u64,
     /// Turrets, lures, pumps and walls placed (`buildings`); a wall's
     /// health lives in the world's cells, not here.
     pub buildings: Vec<Building>,
@@ -588,6 +596,9 @@ impl<W: World> Game<W> {
             missed_wall: 0,
             walls: 0,
             doors: Vec::new(),
+            bulwark: Vec::new(),
+            bulwark_maps: Vec::new(),
+            bulwark_staled: 0,
             buildings: Vec::new(),
             pumped: 0.0,
             lost_buildings: 0,

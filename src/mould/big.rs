@@ -1829,6 +1829,10 @@ pub struct BigDish {
     /// crust: 0 not set, else set with this - 1 blows taken. A dead slot's
     /// word is stale until a birth clears it.
     pub set: Vec<u32>,
+    /// Set walkers a fine cell (E2b), counted at the end of each tick while
+    /// setting runs, made with the crust: what the bulwark mask and the set
+    /// look read. All 0 while setting is off.
+    pub set_cells: Vec<u32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -2182,6 +2186,7 @@ impl BigDish {
             scar: Vec::new(),
             crust: Vec::new(),
             set: Vec::new(),
+            set_cells: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             pile_rs: Vec::new(),
@@ -2293,6 +2298,7 @@ impl BigDish {
         if d.p.crust_rise > 0.0 {
             d.crust = vec![0.0; w * h];
             d.set = vec![0; d.walkers.len()];
+            d.set_cells = vec![0; w * h];
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
@@ -5076,8 +5082,25 @@ impl BigDish {
             self.scent_step();
         }
         self.plant_tick();
+        self.count_set();
         self.update_reached();
         self.ticks += 1;
+    }
+
+    /// The set walkers a cell (`set_cells`), after the tick's deaths (the
+    /// GPU's `setclear` and `setcount` after the plants' passes).
+    fn count_set(&mut self) {
+        if !self.sets() {
+            return;
+        }
+        self.set_cells.iter_mut().for_each(|c| *c = 0);
+        for k in 0..self.walkers.len() {
+            if self.active(k) && self.set[k] > 0 && self.lump_of(k).is_none() {
+                if let Some(c) = self.cell(self.walkers[k].0, self.walkers[k].1) {
+                    self.set_cells[c] += 1;
+                }
+            }
+        }
     }
 
     /// Whether setting runs (`BigParams::set_scar`): its word, the crust

@@ -1446,9 +1446,12 @@ pub const LUMPFORM: usize = 68;
 pub const MINDLAY: usize = 69;
 /// A reader's kill (2026-11-16, `Engine::read_pass`).
 pub const READKILL: usize = 70;
+/// The set walkers a cell (E2b, `BigDish::set_cells`): cleared, then counted.
+pub const SETCLEAR: usize = 71;
+pub const SETCOUNT: usize = 72;
 /// Every entry point, in pipeline order.
-pub const PASSES: [&str; 71] = [
-    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill",
+pub const PASSES: [&str; 73] = [
+    "sense", "walk", "trail", "scent", "histogram", "top", "draw", "jump", "land", "convert", "life", "breed", "born", "eat", "pilesum", "flow", "walls", "build", "evict", "settle", "unclaim", "shots", "strike", "cut", "smell", "units", "harvest", "rows", "fate", "fly", "alight", "hit", "kill", "shout", "esum", "egain", "count", "smell1", "units1", "harvest1", "tend", "ownclear", "owncount", "ngather", "nspread", "nab", "nba", "nhear", "capclear", "capcount", "gas", "calm", "gaslay", "gasp", "fling", "ripen", "massclear", "masscount", "dclear", "dcount", "baitlay", "plant", "fire", "pcopy", "firekill", "ignite", "lumpclear", "lumpsum", "lumpform", "mindlay", "readkill", "setclear", "setcount",
 ];
 
 impl Shared {
@@ -1596,6 +1599,9 @@ pub struct Engine {
     pub crust_at: u64,
     pub plants: bool,
     pub fire_on: bool,
+    /// Setting runs (`set_scar` over 0 with the crust and the scar), so the
+    /// set walkers are counted a cell each game tick (`set_passes`).
+    pub setting: bool,
     pub plant_every: u64,
     pub plant_sub: u64,
     /// The damage memory (binding 47, the squad toolkit's layout): the
@@ -1861,7 +1867,7 @@ impl Engine {
         // The crust's block (`BigDish::crust`) after the plants', when the
         // dish has one.
         // Each slot's set word (`BigDish::set`) right after it.
-        let crust_words: Vec<u32> = d.crust.iter().map(|v| v.to_bits()).chain(d.set.iter().copied()).collect();
+        let crust_words: Vec<u32> = d.crust.iter().map(|v| v.to_bits()).chain(d.set.iter().copied()).chain(d.set_cells.iter().copied()).collect();
         let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d), crust_words].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
@@ -1923,6 +1929,7 @@ impl Engine {
             crust_at: if d.crust.is_empty() { 0 } else { 4 * (news_len + gas_len + dense_len + plant_len) as u64 },
             plants: !d.plant.is_empty(),
             fire_on: !d.fire.is_empty(),
+            setting: false,
             plant_every: d.p.plant_every.max(1) as u64,
             plant_sub: d.p.substeps.max(1) as u64,
             crater,
@@ -2101,6 +2108,7 @@ impl Engine {
         if self.crust_at > 0 {
             self.queue.write_buffer(&self.news, self.crust_at, &f32_bytes(&d.crust));
             self.queue.write_buffer(&self.news, self.crust_at + 4 * self.cells as u64, &u32_bytes(&d.set));
+            self.queue.write_buffer(&self.news, self.crust_at + 4 * (self.cells + self.n) as u64, &u32_bytes(&d.set_cells));
         }
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
@@ -2344,6 +2352,7 @@ impl Engine {
         // Setting needs the crust and the scar, as the CPU's `sets`.
         b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
         b.extend(u32_bytes(&[s.set_armour]));
+        self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2499,6 +2508,7 @@ impl Engine {
             let s = side(self.done);
             out.extend(tick.iter().map(|&(p, g)| (p, g, s)));
             out.extend(self.plant_passes(self.done).into_iter().map(|(p, g)| (p, g, s)));
+            out.extend(self.set_passes(self.done).into_iter().map(|(p, g)| (p, g, s)));
             self.done += 1;
         }
         let ticked = start..out.len();
@@ -2658,6 +2668,28 @@ impl Engine {
             v.push((FIREKILL, self.n.div_ceil(256)));
         }
         v
+    }
+
+    /// The set walkers a cell after engine tick `done`, as the CPU's
+    /// `count_set` at the end of a game tick (after the plants' passes):
+    /// none while setting is off, so the cells keep their last count (all 0
+    /// if it never ran).
+    pub fn set_passes(&self, done: u64) -> Vec<(usize, u32)> {
+        let sub = self.plant_sub.max(1);
+        if !self.setting || done % sub != sub - 1 {
+            return Vec::new();
+        }
+        vec![(SETCLEAR, self.cells.div_ceil(256)), (SETCOUNT, self.n.div_ceil(256))]
+    }
+
+    /// The set walkers a fine cell (`BigDish::set_cells`), read back; empty
+    /// on a dish without the crust.
+    pub fn set_cells_of(&self) -> Vec<u32> {
+        if self.crust_at == 0 {
+            return Vec::new();
+        }
+        let at = self.crust_at + 4 * (self.cells + self.n) as u64;
+        read_back_range(&self.device, &self.queue, &self.news, at, 4 * self.cells as u64).chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect()
     }
 
     /// Lights the plants within `r` dish cells of (`x`, `y`) (dish cells),

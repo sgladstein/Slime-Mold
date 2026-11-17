@@ -400,6 +400,7 @@ impl<W: World> Game<W> {
         let now = self.world.ticks();
         if now / r.tps as u64 != t / r.tps as u64 {
             self.mould = self.world.living();
+            self.mark_bulwark();
             self.guard_pay();
             self.cover_turn();
             self.count_stuck();

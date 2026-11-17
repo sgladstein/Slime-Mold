@@ -143,6 +143,11 @@ pub trait World {
         1.0
     }
     fn hash(&self) -> u64;
+    /// Set walkers a fine cell (`BigDish::set_cells`, E2b), row by row;
+    /// None while setting is off.
+    fn set_cells(&self) -> Option<Vec<u32>> {
+        None
+    }
     /// Walkers on each `bin` x `bin` square of fine cells, row by row (the
     /// tube a player sees on screen, coarsened), for the player AI's eyes
     /// (`larder_world_ai::View`). None where the world can't give it
@@ -341,6 +346,10 @@ impl World for BigDish {
 
     fn walker_step(&self) -> f32 {
         self.p.step
+    }
+
+    fn set_cells(&self) -> Option<Vec<u32>> {
+        (self.p.set_scar > 0.0 && !self.set_cells.is_empty() && !self.scar.is_empty()).then(|| self.set_cells.clone())
     }
 
     fn hash(&self) -> u64 {

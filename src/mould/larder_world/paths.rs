@@ -321,6 +321,11 @@ impl<W: World> Game<W> {
         for (o, &d) in ok.iter_mut().zip(&self.doors) {
             *o |= d;
         }
+        // Set slime's bulwark (E2b) is no ground: maps route round it as
+        // of their build (`Game::mark_bulwark` stales them when it moved).
+        for (o, &b) in ok.iter_mut().zip(&self.bulwark) {
+            *o &= !b;
+        }
         for &(c, r) in &self.solid {
             let span = |m: f32, n: usize| ((m - r - 1.0).floor().max(0.0) as usize, ((m + r + 1.0).ceil().max(0.0) as usize).min(n));
             let ((x0, x1), (y0, y1)) = (span(c.0, w), span(c.1, h));

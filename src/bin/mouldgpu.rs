@@ -3165,8 +3165,9 @@ mod tests {
         let mut s = small(0);
         Tier::Grudge.settings(&mut s).unwrap();
         let s = Settings { crust_rise: 0.02, crust_keep: 0.995, crust_trail: 1.0, set_wake: 0.0, set_crust: 0.3, set_armour: 3, ..s };
-        // (set walkers on the CPU, set words off, walkers off, living CPU and GPU after the strike)
-        let play = |plant: &dyn Fn(&mut Settings)| -> (usize, usize, usize, usize, usize) {
+        // (set walkers on the CPU, set words off, walkers off, living CPU and
+        // GPU after the strike, cells whose set count is off)
+        let play = |plant: &dyn Fn(&mut Settings)| -> (usize, usize, usize, usize, usize, usize) {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
             assert!(!cpu.scar.is_empty() && !cpu.crust.is_empty() && !cpu.set.is_empty(), "the dish has the scar, the crust and the set words");
@@ -3204,23 +3205,29 @@ mod tests {
             let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, TICKS);
             let held = (0..cpu.walkers.len()).filter(|&j| cpu.is_set(j)).count();
             let words = e.set_of().iter().zip(&cpu.set).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
+            // The set walkers a cell (E2b) after the last tick.
+            let gc = e.set_cells_of();
+            assert_eq!(gc.len(), cpu.set_cells.len());
+            let counted: u32 = cpu.set_cells.iter().sum();
+            assert_eq!(counted as usize, (0..cpu.walkers.len()).filter(|&j| cpu.is_set(j) && cpu.lives(j) && cpu.life.get(j).is_none_or(|&l| l == slime_mould::mould::big::LIFE_WALKER)).count(), "the CPU counts its set walkers");
+            let cells_off = gc.iter().zip(&cpu.set_cells).filter(|(a, b)| a != b).count();
             let (x, y) = centre(&cpu);
             cpu.strike(x, y, 8.0, 0.0, 0.0);
             e.strike(&shared, &g, x, y, 8.0, 0.0, 0.0);
             // The living as `Engine::alive` counts them: the struck dead
             // are marked dead in the life states.
             let living = (0..cpu.walkers.len()).filter(|&j| cpu.lives(j) && cpu.life.get(j) != Some(&slime_mould::mould::big::LIFE_DEAD)).count();
-            (held, words, off, living, e.alive())
+            (held, words, off, living, e.alive(), cells_off)
         };
         let n = s.walkers;
-        let (held, words, off, lc, lg) = play(&|_| {});
-        eprintln!("setting: {held} walkers set, {words} set words off, {off} of {n} walkers off after {TICKS} ticks; living after a strike CPU {lc} GPU {lg}");
+        let (held, words, off, lc, lg, cells) = play(&|_| {});
+        eprintln!("setting: {held} walkers set, {words} set words off, {off} of {n} walkers off after {TICKS} ticks; living after a strike CPU {lc} GPU {lg}; {cells} cells' set counts off");
         assert!(held > 100, "walkers set: {held}");
-        assert!(words == 0 && off * 1000 <= n && lc == lg, "{words} words off, {off} walkers off, living {lc} / {lg}");
-        let (_, words, off, _, _) = play(&|g| g.set_scar = 0.0);
-        eprintln!("planted, the GPU never sets: {words} set words off, {off} walkers off");
-        assert!(words > 0 && off * 1000 > n, "the twin catches a GPU that never sets");
-        let (_, _, _, lc, lg) = play(&|g| g.set_armour = 1);
+        assert!(words == 0 && off * 1000 <= n && lc == lg && cells == 0, "{words} words off, {off} walkers off, living {lc} / {lg}, {cells} cells off");
+        let (_, words, off, _, _, cells) = play(&|g| g.set_scar = 0.0);
+        eprintln!("planted, the GPU never sets: {words} set words off, {off} walkers off, {cells} cells off");
+        assert!(words > 0 && off * 1000 > n && cells > 0, "the twin catches a GPU that never sets");
+        let (_, _, _, lc, lg, _) = play(&|g| g.set_armour = 1);
         eprintln!("planted, set walkers die at one blow on the GPU: living CPU {lc} GPU {lg}");
         assert!(lc != lg, "the twin catches armour the GPU drops");
     }

@@ -4066,3 +4066,24 @@ fn readkill(@builtin(global_invocation_id) gid: vec3<u32>) {
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
 }
+
+// **Set walkers a cell** (E2b, `BigDish::set_cells`): the block after the
+// set words in `news`, cleared and counted at the end of a game tick (after
+// the plants' passes, as the CPU's `count_set`), only while setting runs.
+// The bulwark mask and the set look read it.
+fn setc_at() -> u32 { return P.crust_at + P.w * P.h + P.n; }
+@compute @workgroup_size(256)
+fn setclear(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if (gid.x < P.w * P.h) { atomicStore(&news[setc_at() + gid.x], 0u); }
+}
+@compute @workgroup_size(256)
+fn setcount(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !ordinary(k) || !is_set(k) || lump_of(k) != 0u) { return; }
+    let wk = walkers[k];
+    if (wk.x < 0.0 || wk.y < 0.0) { return; }
+    let cx = u32(wk.x);
+    let cy = u32(wk.y);
+    if (cx >= P.w || cy >= P.h) { return; }
+    atomicAdd(&news[setc_at() + cy * P.w + cx], 1u);
+}
