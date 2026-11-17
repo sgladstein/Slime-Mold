@@ -44,8 +44,23 @@ A second slime species that fights the first; the player's own mould
 
 ## State (kept current by the lab thread)
 
-- 2026-11-17 19:20Z: thread started on the steering prototype. Branch
-  `claude/project-thread-4tc75h`. The prototype's code stays on that branch
-  and is not merged; only this file, the report and the page come to main.
-- Next step: describe what walkers and fields respond to, try each as a
-  way to move a body, film the best into a kill zone on planet 1 to 3.
+- 2026-11-17 22:30Z: **the steering prototype is delivered.** Report
+  [`Reports/lab-steering-2026-11-17/`](../Reports/lab-steering-2026-11-17/README.md),
+  page "Steering the Slime" (in `Reports/pages.md`). Recommendation: build
+  it into the game, changed (its own field slot and a per-tier weight, the
+  Lure back in the run shop, pull 10 not 30). Whether and when is
+  Direction's to place; nothing of it is in the main game.
+- Open branch: `claude/project-thread-4tc75h` holds the prototype's code
+  (commits "LAB: steering field prototype" and "LAB: the lure's core
+  glow"; module `src/mould/larder_world/lab.rs`). It changes
+  `engine.wgsl` and `view.wgsl` in place and borrows the far smell's slot
+  (`far_smell=-W` is the pull), so it must not merge. The rig and every
+  scene's places are in the report.
+- The lab session can push only that branch, so the lab's docs (this file,
+  reports, pages) reach main through Direction: the files go in the
+  project's shared folder under `lab-docs/` and Direction merges them
+  docs-only.
+- Next step: wait for the ruling on the recommendation. If steering is
+  taken up, the lab's follow-ups are in the report's *Not tried* (a gun
+  that lays the pull along its shots is the closest to the owner's words).
+  Otherwise start the next brief below.
