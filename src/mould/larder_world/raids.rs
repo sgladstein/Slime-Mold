@@ -26,10 +26,13 @@
 //! target (`BigParams::raid_at`, both engines): the game finds the reach
 //! round the target that holds enough of them in the mould grid.
 //!
-//! **The last stand** (`RaidRules::last_stand`, off: the owner was "not
-//! sure if this is a good idea or not"): once, when the slime's mass falls
-//! under `last_stand_at` of its peak, every walker it has rushes the
-//! thickest knot of soldiers.
+//! **The last stand** (`RaidRules::last_stand`): once, when the slime's
+//! mass falls under `last_stand_at` of its peak, every walker it has rushes
+//! the thickest knot of soldiers. Built 11-15 for every slime and left off
+//! (the owner was "not sure if this is a good idea or not"); since
+//! 2026-11-17 it is the Swarmer's trait in a run (`run::does_to_you`, the
+//! Enemy lane: the charging slime's way to lose) and off for every other
+//! slime.
 
 use super::{Game, Kind, Rng, World};
 
@@ -66,8 +69,8 @@ pub struct RaidRules {
     pub share: f32,
     /// A lure that is on within this of the raid's target takes the raid.
     pub lure_r: f32,
-    /// The last stand (off), and the share of its peak mass the slime
-    /// falls under to make it.
+    /// The last stand (off here; on for the Swarmer in a run), and the
+    /// share of its peak mass the slime falls under to make it.
     pub last_stand: bool,
     pub last_stand_at: f32,
 }

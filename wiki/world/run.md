@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-17
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
+  - Reports/enemy-switches-2026-11-17/README.md
   - Reports/flinch-2026-11-15/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
@@ -16,6 +17,8 @@ sources:
   - Reports/run-progression-2026-11-15/does-to-you.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md
+  - Reports/sim-use-2026-11-17/s1-unit-paths.md
+  - Reports/sim-use-2026-11-17/s2-far-smell.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/surge-2026-11-15/README.md
@@ -128,15 +131,21 @@ Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/READM
 Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 [report](../../Reports/run-progression-2026-11-15/does-to-you.md)), each
 rung of `LADDER` does one thing to you (`does_to_you`), named on the planet
-card and in the landing alert: the Drifter and the Trunk smell your pumps
-(`pump_smell` 20 over `lure_r` 15 cells) and come to eat their crystals; the
+card and in the landing alert: the Drifter smells your pumps
+(`pump_smell` 20 over `lure_r` 15 cells) and comes to eat their crystals; the
+Trunk sets into amber walls where you shoot it (below; until 11-17 it had the
+Drifter's pump smell, so planets 1 and 3 did the same thing); the
 Sprawler smells your soldiers from far off (`smell` 4 over 4 cells) but
 shies from fire (`fire_alarm` 50, since 11-17: the designer's fire-shy
 tier, as a switch for every slime it fenced every fire;
 [report](../../Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md); on
 run seed 1's planet 2 a plain light found nothing to burn); the
 Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
-3x (`surge_haste`); the Sporer bursts into spores at an alarm of 0.3; the
+3x (`surge_haste`), and since 11-17 it makes a last stand (`last_stand`: cut
+under a quarter of its peak, all of it rushes the thickest knot of soldiers,
+once; the owner's 11-15 21:15Z idea, "a slime that is losing might rush you
+will everything it has", given to the one tier whose card is already the
+charge); the Sporer bursts into spores at an alarm of 0.3; the
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
 its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
 reads the scar where it was hit at twice the campaign tier's weight
@@ -145,6 +154,32 @@ four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
 them on the command card), and the 40-soldier rush is left as it is (D7).
+
+**The Trunk's walls** (planet 3, 11-17; `TRUNK_KEYS` and `TRUNK_RULES` in
+`run.rs`; [report](../../Reports/enemy-switches-2026-11-17/README.md)).
+Where the Trunk is shot it sets: the hurt walkers stop where they stand,
+take three blows instead of one (`setting`, `set_armour` 3) and are drawn as
+amber resin. Five of them round a cell make it no ground to soldiers
+(`set_block` 5), and the walking maps route round it. Its fed body does not
+burn (`fire_fed`); its set walls and its starved parts do, with the crust
+under them as fuel (`crust_fuel` 3). It keeps to ground it has held
+(`crust_weight` +8, `crust_fast` 1). These were the simulation-use plan's
+four open picks; the plan the owner approved on 11-17 had the Enemy lane
+pick one configuration for one tier, and planet 3 was chosen because it is
+inside Milestone 1 and its old card repeated planet 1's. One film each, run
+seed 1: eight rifles holding a front had set 1,143 walkers into 1,130 wall
+cells by 1:15, and two Torch shots on that wall cut it to 679 cells in two
+seconds while it grew to 1,284 with no fire; the scripted rush killed 3,205
+by 1:00 against 7,992 before and still fell to the first raid.
+
+**Every run planet's slime** (11-17; `enemy_keys` and `ENEMY_RULES`) smells
+crystals it has not reached from across the map (`far_smell`;
+[report](../../Reports/sim-use-2026-11-17/s2-far-smell.md)) and its charges
+go round walls instead of piling against them (`unit_paths`;
+[report](../../Reports/sim-use-2026-11-17/s1-unit-paths.md)). Both were
+switches until then. With both on, the scripted rush on run seed 1 still had
+42 soldiers at 2:00 on planet 1 and had 7 on planet 2 against 18, one film
+each ([report](../../Reports/enemy-switches-2026-11-17/README.md), *Films*).
 
 A planet whose tier asks for a card (`bring`; the Sprawler, which shies
 from fire, asks for Tinder) gets that card in one of its shop's card slots

@@ -1,3 +1,78 @@
+# Enemy lane
+
+State first, kept current after every merged batch; the brief the lane was
+given on 2026-11-17 is below it, unchanged.
+
+## State (2026-11-17, after the switch settlement)
+
+**Open branch:** `claude/project-thread-s5k9cw`, one pull request (the
+switch settlement, job 1). Nothing else is open.
+
+**Job 1, the switches: done.** What became of each of the fourteen is in
+ROADMAP, *Switches that are off*. In short:
+
+- On on every run planet: the far smell (`far_smell`, in `run::enemy_keys`)
+  and charges round walls (`unit_paths`, in `run::ENEMY_RULES`).
+  `play-new-slime.cmd` is deleted.
+- The Trunk's trait (planet 3; `TRUNK_KEYS`, `TRUNK_RULES` in `run.rs`):
+  crust, its pull at +8 with fast ground, setting, the wall (`set_block` 5)
+  and `fire_fed`. Its card: "Where you shoot it, it sets into amber walls".
+  Planet 3 was picked over a deeper tier because it is inside Milestone 1
+  and its old card was the Drifter's.
+- The Swarmer's trait (planet 4; `SWARMER_RULES`): the last stand.
+- Deleted, with dead-end lines: the trap (`set_hold`), and the GPU game's
+  half of lossy flow and the lone step (Params words 844, 880, 884, 888 are
+  free). `src/mould/big.rs` still has `flow_loss` and `lone_step`: it is
+  frozen until Milestone 2 (the owner's 19:21Z answer).
+- Not deleted, against the brief: the reserve recruit. `Rules::reserve` has
+  no `set=` name and the run never turns it on; it is the frozen campaign's
+  mission rule (a free soldier 20 s after the last one dies, the owner's
+  11-12 no-soft-lock pick). It is not a switch, so it stays with the
+  campaign. Direction was told.
+- Still off: crystals that refill (`crystal_regrow`), which is D7's. It is
+  the only off switch in this lane's files.
+- Handed over: `setlook` and the haze to Look and interface (amber is what
+  the game draws). The flinch stays at 0.9 (`shape_keys`), and the 11-15
+  blind page for it is closed: it is this lane's number, changed if the
+  owner says the slime backs off too much or too little.
+- The crust "name the ground" quiz is dropped (Direction's sort, 11-17).
+
+**Numbers, all first numbers from one film each on the software GPU**
+(run seed 1, `mode=squads hand=greedy`, at 2:00; before, after):
+planet 1, 42 soldiers and 42 (health 97, 90); planet 2, 18 and 7; planet 3,
+1 and 0, with 9,831 of the Trunk's 18,984 walkers set and the squad's kills
+by 1:00 down from 7,992 to 3,205. Nothing here was timed on the GTX 1070;
+the frame costs quoted in the pull request are the simulation-use
+reports' llvmpipe ones, and the 1070 run goes in Engine and tools'
+Milestone 1 batch.
+
+**Not done, and known:**
+
+- The last stand has no film on planet 4 (a scripted hand does not cut a
+  Swarmer to a quarter in a short film). It is covered by
+  `all_off_switches_on_together_play_on_both_engines` and the raid tests.
+- The bulwark's map wait and the nest-door check from
+  `Reports/sim-use-2026-11-17/e2b-bulwark.md` were never measured.
+- `tiers::set_key` (the CPU setter) does not know the Trunk's composite
+  keys (`crust`, `setting`, `fire_fed`); the run sets them on the GPU
+  engine only, and `every_ladder_tier_does_something_to_you` lets the CPU
+  refuse them for the Trunk alone.
+
+**Next step: job 2**, planets 1 to 3 each do one nameable thing by minute
+2, one still or clip a planet. Where it stands: planet 3 now has its thing
+(the walls). Planet 1 does nothing to a squad that drains by hand and
+builds no pump (the Drifter only smells pumps), and planet 2's hunt is the
+Sprawler's own. Start with planet 1. No rush brake (D7). Then job 3, the
+origin, as a design page to Direction before any code.
+
+**Filming notes** beyond `Reports/whole-game-review-2026-11-15/kit.md`:
+`light=T,X,Y,R` takes dish cells, which are half the world units the log's
+`squad at` prints on a run planet (scale 2); `centre=`, `hold@` and `boom=`
+take world units. `crustlook=1` adds the set-walker and wall-cell counts to
+the log.
+
+---
+
 # Lane brief: Enemy
 
 Model and effort: Fable, extra high. Read `00-all-lanes.md` in this folder

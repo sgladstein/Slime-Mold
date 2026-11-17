@@ -4145,7 +4145,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 22] = [
+        let dishes: [(&str, Settings, Build); 20] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -4175,12 +4175,9 @@ mod tests {
             // harder, at the one-body thread's lead (0.05, 8), over walls
             // so some walkers are blocked and crowded.
             ("one body: food shared, hunger", Settings { energy_flow: 0.05, hunger_scent: 8.0, hunger_at: 1.0, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
-            ("lone step: a walker with few others round it slows", Settings { lone_step: 3.0, lone_floor: 0.3, lone_r: 2, ..grow(w(small(0))) }, walls),
-            // Lossy sharing (2026-11-13, the slime-enemy thread): what a
-            // cell takes from a richer neighbour arrives short, so food
-            // fades with distance from the crystals. 0.2, four times the
-            // value on trial, so a sign or clamp slip shows in the L1.
-            ("lossy flow: shared food fades as it travels", Settings { energy_flow: 0.05, flow_loss: 0.2, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // The lone step and lossy sharing (`lone_step`, `flow_loss`)
+            // had a case each here until 2026-11-17, when the GPU's half
+            // of both was deleted (Reports/dead-ends.md).
             // A part cut off from its food withers (2026-11-13, the
             // slime-enemy thread): news of food spread twice a step (the
             // spread ends in its second turn's block) and three times (it
@@ -6089,12 +6086,18 @@ mod tests {
     /// default (ROADMAP, *Switches that are off*) each double a code path
     /// that the twins and the census rarely play. This plays them all
     /// together, on shape C with planet 1's keys, a squad attacking for 15
-    /// game seconds, once with set slime blocking and once trapping (they
-    /// are the two sides of one A/B), on the CPU and, when there is one, on
-    /// the GPU, so that they at least don't break each other: no panic, a
-    /// living mould, a squad that fired. Not a twin: the engines aren't
-    /// compared. A new off switch joins `KEYS` or `rules` here in the same PR
-    /// as its ROADMAP row.
+    /// game seconds, on the CPU and, when there is one, on the GPU, so that
+    /// they at least don't break each other: no panic, a living mould, a
+    /// squad that fired. Not a twin: the engines aren't compared. A new off
+    /// switch joins `KEYS` or `rules` here in the same PR as its ROADMAP
+    /// row.
+    ///
+    /// Since the Enemy lane settled the switches (2026-11-17) only refilling
+    /// crystals is still off in the default game. The rest of what this
+    /// plays is now one tier's trait, played here together and off its own
+    /// planet: the Trunk's crust, pull, setting and wall, the Swarmer's
+    /// last stand, the campaign's reserve recruit. The lone step, lossy
+    /// flow and the trap (`set_hold`) went from the GPU game that day.
     #[test]
     fn all_off_switches_on_together_play_on_both_engines() {
         use slime_mould::gpu::larder_world::{engine_params, race_settings, GpuWorld};
@@ -6102,16 +6105,15 @@ mod tests {
         // The crust rises 36 times as fast as the window's (1/1800 a fine
         // step) so slime sets within the test's 15 s; the code paths are
         // the same.
-        const KEYS: [(&str, &str); 9] = [
+        const KEYS: [(&str, &str); 8] = [
             ("crust", "1"),
             ("crust_rise", "0.02"),
             ("crust_weight", "0.5"),
             ("crust_fast", "0.5"),
             ("setting", "1"),
+            ("fire_fed", "1"),
             // A far smell (S2): the game builds its field (`time_food_paths`).
             ("far_smell", "1"),
-            ("flow_loss", "0.1"),
-            ("lone_step", "3"),
             ("crystal_regrow", "0.001"),
         ];
         let (seed, scale, walkers) = (1, 2, 5_000);
@@ -6148,14 +6150,9 @@ mod tests {
             // shots at 15 s (CPU / GPU); 14 s of test on llvmpipe.
             assert!(living > 0 && g.shots > 0 && set > 0, "{what}: {living} walkers, {set} set, {} shots", g.shots);
         }
-        let gpu = test_gpu();
-        for hold in [0.0, 0.5] {
-            let rules = Rules { set_hold: hold, ..rules };
-            let what = if hold > 0.0 { "trapping" } else { "blocking" };
-            play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), &format!("CPU, set slime {what}"));
-            if let Some((device, queue)) = &gpu {
-                play(Game::new(GpuWorld::new(device, queue, s.clone(), scale), rules, seed), &format!("GPU, set slime {what}"));
-            }
+        play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), "CPU");
+        if let Some((device, queue)) = test_gpu() {
+            play(Game::new(GpuWorld::new(&device, &queue, s.clone(), scale), rules, seed), "GPU");
         }
     }
 

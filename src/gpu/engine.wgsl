@@ -128,10 +128,10 @@ struct Params {
     // Soil (WM3, 2026-11-12; `BigParams::sand_keep` and on), read with
     // `world(SOIL)`: the trail on sand and on clay is x these after the
     // spread, and on barren ground upkeep is x `barren_up`. The row's last
-    // word is one body's `eloss` (2026-11-13, `BigParams::flow_loss`; the
-    // row had a spare word, so Params keeps its size): in `egain` what a
-    // cell takes from a richer neighbour arrives x 1 - `eloss`.
-    sand_keep: f32, clay_keep: f32, barren_up: f32, eloss: f32,
+    // word is free (written 0): it was one body's `eloss` (lossy sharing,
+    // `BigParams::flow_loss`) from 2026-11-13 until this engine's half of
+    // that rule was deleted on 11-17 (Reports/dead-ends.md).
+    sand_keep: f32, clay_keep: f32, barren_up: f32, eloss_free: f32,
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
@@ -147,11 +147,11 @@ struct Params {
     // shot's hit sets the countdown on its struck agar cells to at least
     // `crater`, or with the cone (bit 1) fewer steps toward the rim.
     scorch_keep: f32, scorch_full: f32, crater: f32, scorched: u32,
-    // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
-    // walkers in the square of radius `lone_r` round its cell, as the step
-    // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    // Its last word is free (`fed_crowd`'s until 11-17).
-    lone: f32, lfloor: f32, lone_r: u32, lone_free: u32,
+    // Four free words (written 0). The first three were the lone step
+    // (2026-11-12, `BigParams::lone_step`: a walker with few others round
+    // it stepped shorter), whose half in this engine was deleted on 11-17
+    // (Reports/dead-ends.md); the last was `fed_crowd`'s until 11-17.
+    lone_free0: f32, lone_free1: f32, lone_free2: u32, lone_free: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words were dense slime's condensing (11-14, the
@@ -1218,17 +1218,6 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     // A spinning walker curls after its turn, every step (the CPU's).
     if (mk == MIND_SPIN) { h += P.spin_curl; }
-    if (P.lone > 0.0 && !scared) {
-        // `occ` is as the step began here: `walk` moves walkers after.
-        let cx = i32(here % P.w); let cy = i32(here / P.w); let r = i32(P.lone_r);
-        var n = 0u;
-        for (var y = max(cy - r, 0); y <= min(cy + r, i32(P.h) - 1); y++) {
-            for (var x = max(cx - r, 0); x <= min(cx + r, i32(P.w) - 1); x++) {
-                n += atomicLoad(&occ[u32(y) * P.w + u32(x)]);
-            }
-        }
-        st *= clamp(f32(max(n, 1u) - 1u) / P.lone, min(P.lfloor, 1.0), 1.0);
-    }
     let nx = wk.x + cos(h) * st;
     let ny = wk.y + sin(h) * st;
     let there = cell(nx, ny);
@@ -1393,12 +1382,12 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
 // its cell; `egain` moves each walker's energy by `eflow` x the sum over
 // the eight cells round its own that hold walkers of (their mean - its
 // cell's mean), over its cell's count, floored at 0. Pairs give and take
-// alike, so energy is kept (to the fixed point's rounding), unless
-// `eloss` (the CPU's `flow_loss`, 2026-11-13): then what a cell takes from
-// a richer neighbour arrives x 1 - `eloss` while the giver pays in full, so
-// food has a reach and a part cut off from every crystal holds little in
-// reserve (Reports/fed-mould-2026-11-13/README.md, *Cutting it off*). Only
-// dispatched with growth and `energy_flow` on.
+// alike, so energy is kept (to the fixed point's rounding). Lossy sharing
+// (`eloss`, the CPU's `flow_loss`, 2026-11-13: what a cell took arrived
+// x 1 - `eloss`, so food had a reach) was deleted from this engine on
+// 11-17: it shortened a cut part's wait but the part still died at once,
+// and it cost shape C 30% of its size; withering took the job
+// (Reports/dead-ends.md). Only dispatched with growth and `energy_flow` on.
 @compute @workgroup_size(256)
 fn esum(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
@@ -1430,7 +1419,7 @@ fn egain(@builtin(global_invocation_id) gid: vec3<u32>) {
         let j = u32(ny) * P.w + u32(nx);
         if (atomicLoad(&body[c + j]) > 0u) {
             let df = emean(j) - m;
-            f += select(df, df * (1.0 - clamp(P.eloss, 0.0, 1.0)), df > 0.0);
+            f += df;
         }
     }
     energy[k] = max(energy[k] + P.eflow * f / f32(atomicLoad(&body[c + i])), 0.0);

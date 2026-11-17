@@ -497,62 +497,40 @@ for `fire_alarm`), named `body_free` once more; next small keys take 860,
 892, 900 or `ccrowd`'s bits 24-31. In binding 48 the dense block's header word 0 (the mass) and its
 first block of cells (condensed walkers a cell) are free too, and passes
 56-57 went (`massclear`, `masscount`; the passes after moved down two).
+Also free since 11-17 (the Enemy lane's switch settlement): **844**
+`eloss_free` (f32, the soil row's last word, `flow_loss`'s) and the whole
+lone-step row, **880** `lone_free0` (f32), **884** `lone_free1` (f32) and
+**888** `lone_free2` (u32), beside 892. All are written 0.
 
 ### Switches that are off
 
-The technical lead asked for this table on 2026-11-17. It lists every game feature that is built but off in the default game, where the default game is shape C on the race world or a run planet with its `enemy_keys`. Each switch doubles a code path that the twins and the census rarely play. CLAUDE.md says defaults go on unless there is a measured harm or a stated uncertainty. So every row names its owner, the reason it is off, and what decides it. If a row has no reason left, its switch gets turned on or deleted.
+Settled 2026-11-17 by the Enemy lane, as the plan the owner approved that day asks ([brief](handoff/enemy.md), job 1). One switch is left off in the slime's rules. Every other row of the old table is on, one tier's trait, or deleted, and the table below says which. A new switch is named in its pull request and goes into the switch list Engine and tools is building; this section is that list's starting point.
 
-`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) turns on every switch marked ✓ in the "Test" column at the same time. It plays 15 game seconds of a squad fighting on the CPU, and on the GPU when one is available, so that none of the switches breaks another. A new switch gets its row here and goes into that test in the same PR.
+| Switch (key) | Why it is off | What decides it |
+|---|---|---|
+| Crystals that refill: `crystal_regrow` | Run-out crystals suit the race start (owner, 11-11 14:54Z, "to be settled by playtests"), and refilling changes what the rush pays | It belongs to the owner's D7 answer (the rush brake), which he is holding |
 
-| Switch (key) | Owner | Why it is off | What decides it | Test |
-|---|---|---|---|---|
-| Crust: `crust=1` (`crust_rise`, `crust_keep`, `crust_trail`; it also turns on `crust_fuel` 3 and `char_barren` 0.3, fire on crust) | Simulation-use plan (E1a, C2) | 11-17, new. Nothing in the game reads it on its own yet. | The E1b and E2 films and the owner's pick | ✓ |
-| Crust pull and fast ground: `crust_weight`, `crust_fast` | Simulation-use plan (E1b) | No sign has been chosen ("stay 0 until the owner picks a sign") | The owner's A/B (pull back against move on) | ✓ |
-| Setting: `setting=1` (`set_scar`, `set_wake`, `set_crust`, `set_armour`) | Simulation-use plan (E2a) | 11-17, new. Set slime takes three blows and doesn't move. | The owner's film pick | ✓ |
-| Set slime blocks soldiers: `set=set_block=N` | Simulation-use plan (E2b) | 11-17, new. It is in an A/B against `set_hold`. | The owner picks block or trap ("Both", 01:13Z), then a playtest | ✓ |
-| Set slime traps: `set=set_hold=F` | Simulation-use plan (E2b, the designer's A/B) | 11-17, new. It is the other side of that A/B, and over 0 it replaces block. | Same A/B | ✓ |
-| Set slime's look: `setlook=N` (window only) | Simulation-use plan (E2b) | It applies only when setting is on | The owner's look pick, together with setting | (draw only) |
-| Last stand: `RaidRules::last_stand` | Defenses (raids) | The owner was "not sure if this is a good idea or not" | A playtest with it on | ✓ |
-| Reserve recruit: `set=reserve=S` | Larder rules | It is the owner's pick of free recruits, and the default is off | A playtest. If nobody asks for it by the next playtest, delete it. | ✓ |
-| Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
-| Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
-| Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
-| Charges round walls: `unit_paths` (`Rules`; `BigDish::units_field`) | Simulation-use plan (S1) | 11-17, new. Behind a cup of walls, half as many walkers piled at the wall but as many reached the soldier (4 more, 4 fewer; [report](Reports/sim-use-2026-11-17/s1-unit-paths.md)), so it changes the charge's shape, not its reach | The owner's blind film ([page](https://claude.ai/artifact/5aGbKQjUbXnULqYqGnY7tB)); then films on planets 1-3 | ✓ |
-| A far smell: `far_smell` (`BigParams`; one body's Params word, `food_field`) | Simulation-use plan (S2) | 11-17, new. On planet 3 with no squad the slime reached more crystals in 2:30 (59 against 47, 7 of 8 seeds, none fewer) and ended bigger on 8 of 8, up to 45% ([report](Reports/sim-use-2026-11-17/s2-far-smell.md)): a harder planet, so the owner sees it first | The owner's blind film ([page](https://claude.ai/artifact/NgZ29e1vfagrbnuuJ1AZST)); then planets 1-2 with a squad | ✓ |
-| Fed slime fireproof: `fire_fed=1` (`BigParams::fire_fed`, bit 1) | Simulation-use plan (C1) | 11-17, the owner's card. Fire through a fed disc's thin trail took 24-65% of it in 20 s; with it, nothing on 7 of 8 ([report](Reports/sim-use-2026-11-17/c1-dry-burns.md)) | The playtest pack's picks (below) | — (needs plants; its twin is `dry_slime_burns_on_the_gpu_as_on_the_cpu`) |
-| Squad mode: `mode=squads` | Squads | Not a switch: it is the owner's "separate mode", and runs play it | — | — |
+What became of the other thirteen:
 
-**Playtest pack 11-17** (integration thread, at the game designer's ask,
-14:33Z: nine separate cards is the "remember a list of flags" problem). The
-switches above are settled in three groups, so they don't pile up again:
+| Was | Now |
+|---|---|
+| A far smell: `far_smell` | **On on every run planet** (`run::enemy_keys`). Plain shape C and the campaign keep it off. |
+| Charges round walls: `unit_paths` | **On on every run planet** (`run::ENEMY_RULES`, applied in `Run::rules`). |
+| Crust: `crust=1` | **The Trunk's trait** (planet 3; `TRUNK_KEYS` in `run.rs`). Setting needs it, and it is what fire burns. |
+| Crust pull and fast ground: `crust_weight`, `crust_fast` | **The Trunk's trait** at +8 and 1: the Trunk keeps to ground it has held, which is where its walls stand. |
+| Setting: `setting=1` | **The Trunk's trait.** Where it is shot it sets into slime that takes three blows and doesn't move. |
+| Set slime blocks soldiers: `set_block` | **The Trunk's trait** at 5 (`TRUNK_RULES`): a cell with five set walkers round it is no ground to soldiers, and the set walkers' armour soaks the shots. |
+| Set slime traps: `set_hold` | **Deleted** ([dead end](Reports/dead-ends.md)). The owner ruled "Both" (block shots and soldiers, 01:13Z); a wall is in the walking maps, so a squad routes round it, and a trap was not. |
+| Set slime's look: `setlook=N` | Not a rule switch: the amber set look is what the game draws. The key and the choice of look go to Look and interface. |
+| Fed slime fireproof: `fire_fed` | **The Trunk's trait.** Its fed body does not burn; its set walls and its starved parts do. |
+| Last stand: `RaidRules::last_stand` | **The Swarmer's trait** (planet 4; `SWARMER_RULES`): cut under a quarter of its peak, all of it rushes the squad once. |
+| Reserve recruit: `Rules::reserve` | **Not a switch.** It never had a `set=` name; it is the frozen campaign's own mission rule (a free soldier 20 s after the last one dies, the owner's 11-12 04:44Z no-soft-lock pick) and stays with the campaign. The run does not use it. |
+| Lossy flow: `flow_loss` | **Deleted from the game** ([dead end](Reports/dead-ends.md)): the GPU setting, its key and its shader line are gone, and Params word 844 is free. The CPU engine keeps the field, since `src/mould/big.rs` is frozen as it is until Milestone 2. |
+| Lone step: `lone_step` | **Deleted from the game** the same way ([dead end](Reports/dead-ends.md)); Params words 880, 884 and 888 are free. |
 
-1. **Play them: the "new slime".** Double-click `play-new-slime.cmd`. It is
-   `play.cmd` with the two switches that have no measured harm, both on:
-   `far_smell=1` and `set=unit_paths=1`. Command-line keys go on top of
-   each run planet's own. Checked headless on planet 3 with the squad
-   (30 s, no error). If the owner plays it and doesn't object, both become
-   defaults in one PR. `fire_alarm` is left out: the designer (14:38Z)
-   calls it a per-tier trait (a fire-shy Sprawler), never global, since
-   globally every fire becomes a fence and the Torch and Tinder stop
-   killing (0 burned while lit, against 119 without). It is now the
-   Sprawler's own trait (`fire_alarm` 50 in `run::does_to_you`, 11-17,
-   [report](Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md)), not a
-   switch.
-2. **Pick them: one blind page**, one film per decision, with the key kept
-   off the page. The decisions are: setting on or off (with its look,
-   `setlook`), block or trap (`set_block` against `set_hold`), crust's pull
-   sign (`crust_weight`, `crust_fast`), and `fire_fed`. Crust goes with
-   setting, since nothing reads crust on its own. The simulation-use thread
-   made this page from its rigs, as films: [New Slime Picks](https://claude.ai/artifact/QNErAVSGJgoLWhSHY9MJDF)
-   (11-17, [report](Reports/sim-use-2026-11-17/pack-films.md), key there),
-   with a line for the gun thread's shove-card pick.
-3. **Not switches yet:** Provoke and Still wait for the gun thread's cards.
-   Last stand, reserve, crystal refill, lossy flow and lone step keep the
-   playtests their rows name.
+`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) still turns the Trunk's keys, the far smell, the charge paths, the last stand, the campaign's reserve and the crystal refill on together and plays 15 game seconds on each engine, so that none of them breaks another.
 
-After the owner has played and picked, every row in groups 1 and 2 gets
-a default or a delete in the same week. Each delete gets its dead-ends
-line.
+The flinch's strength stays the Enemy lane's number; the haze over it is Look and interface's to redraw.
 
 **Deleted 11-17** (integration thread, at the technical lead's ask; each has its
 `Reports/dead-ends.md` line): the homing turn (`seek_turn` and its

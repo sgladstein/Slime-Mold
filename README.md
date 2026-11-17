@@ -16,8 +16,7 @@ Third-party crates and the bundled font keep their own licences
 folder. It switches to main and pulls (skipped, with a note, if you have
 local changes or no network), builds the game and the map editor with
 cargo's progress bar, and opens the start menu. Extra arguments go to the
-game: `play.cmd map=nest mode=squads`. `play-new-slime.cmd` is the same with the
-new-slime switches on (ROADMAP, "Playtest pack 11-17").
+game: `play.cmd map=nest mode=squads`.
 
 ```
 cargo run --release --bin mould            # the game: lesson, challenge dishes, free dishes, the endless dish
