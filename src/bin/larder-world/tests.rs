@@ -1452,8 +1452,8 @@ fn the_menus_real_lists_fit_one_screen() {
                 m.show(Page::Shop);
                 let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
                 // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets,
-                // the Mind bullets, the two shelves of modifiers and the
-                // shove cards'.)
+                // the special bullets, the two shelves of modifiers, and
+                // the trails' and shove cards'.)
                 for tab in 0..if name == "armory" { 6 } else { 5 } {
                     draw(&mut m);
                     let most = if name == "armory" && tab == 0 { 2 } else { 1 };

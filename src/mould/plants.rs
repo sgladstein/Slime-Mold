@@ -24,6 +24,14 @@
 //! and `/` (no platform maths), so a run is the same on Windows and Linux,
 //! and the GPU pass does the same sums (FMA aside).
 //!
+//! **Laid fuel** (the gun cards' Tinder, 2026-11-17, `BigDish::lay_fuel`)
+//! can stand over a cell's capacity, even on ground where nothing grows
+//! (barren soil); it does not grow or spread there but withers by `rot` a
+//! step back to the capacity (to 0 where nothing grows), so a laid line
+//! lasts long enough to light and leaves at most what the ground can hold.
+//! Without laid fuel no cell is over its capacity, so the rule is the old
+//! one (it clamped to the capacity and zeroed ground with none).
+//!
 //! A cell that is not open ground (rock, rim, a built wall) or holds a
 //! crystal has capacity 0 and loses its plants at once; a scorched cell
 //! (`BigDish::scorch`, a crater or a burn) loses `plant_scorch` of them a
@@ -116,6 +124,9 @@ pub struct Rates {
     pub spread: f32,
     pub wet: f32,
     pub scorch: f32,
+    /// What plants over a cell's capacity (laid fuel, `BigDish::lay_fuel`)
+    /// lose a step, down to the capacity.
+    pub rot: f32,
     pub kinds: [Kind; KINDS],
 }
 
@@ -133,13 +144,19 @@ pub fn step(g: &Ground, r: Rates, from: &[f32], to: &mut [f32], kind: &mut [u8])
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;
-            if g.cap[i] <= 0.0 || !g.agar[i] || (!g.pile_of.is_empty() && g.pile_of[i] != 0) {
+            if !g.agar[i] || (!g.pile_of.is_empty() && g.pile_of[i] != 0) {
                 to[i] = 0.0;
                 continue;
             }
             let p = from[i];
             if !g.scorch.is_empty() && g.scorch[i] > 0 {
                 to[i] = p * (1.0 - r.scorch);
+                continue;
+            }
+            // Ground where nothing grows: only laid fuel stands here, and
+            // it withers (0 before Tinder, as the old rule zeroed it).
+            if g.cap[i] <= 0.0 {
+                to[i] = (p - r.rot).max(0.0);
                 continue;
             }
             let mut n = 0.0;
@@ -169,6 +186,12 @@ pub fn step(g: &Ground, r: Rates, from: &[f32], to: &mut [f32], kind: &mut [u8])
             let c = cap_of(g, &r, i, k);
             if c <= 0.0 {
                 to[i] = 0.0;
+                continue;
+            }
+            // Laid fuel over the capacity withers back to it, and grows
+            // nothing meanwhile.
+            if p > c {
+                to[i] = (p - r.rot).max(c);
                 continue;
             }
             let wet = !g.wet.is_empty() && g.wet[i];
@@ -528,6 +551,7 @@ mod tests {
         spread: 0.004,
         wet: 2.0,
         scorch: 0.05,
+        rot: 0.0,
         kinds: [Kind {
             cap: 1.0,
             pace: 1.0,
@@ -585,6 +609,45 @@ mod tests {
             row(30)
         );
         assert!(row(40) == 0.0 && row(45) == 0.0, "the rock stops it");
+    }
+
+    /// **Laid fuel withers back** (the gun cards' Tinder, 2026-11-17):
+    /// plants laid over a cell's capacity lose `rot` a step down to it and
+    /// grow nothing meanwhile; on ground where nothing grows (capacity 0)
+    /// they wither to 0 instead of vanishing; rock and crystals still lose
+    /// theirs at once; and with nothing laid the rule is the old one.
+    #[test]
+    fn laid_fuel_withers_back_to_the_ground() {
+        let (w, h) = (8, 1);
+        // Cells 0-3 grow half a plant, 4-5 nothing (barren), 6 is rock, 7 a
+        // crystal.
+        let cap = [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.5];
+        let agar = [true, true, true, true, true, true, false, true];
+        let pile = [0u16, 0, 0, 0, 0, 0, 0, 1];
+        let g = Ground {
+            w,
+            h,
+            cap: &cap,
+            agar: &agar,
+            pile_of: &pile,
+            wet: &[],
+            scorch: &[],
+        };
+        let r = Rates { rot: 0.01, ..R };
+        let mut p = vec![1.0, 0.4, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+        let mut q = vec![0.0; w];
+        let mut k = vec![0u8; w];
+        step(&g, r, &p, &mut q, &mut k);
+        assert!((q[0] - 0.99).abs() < 1e-6, "over capacity withers by rot: {}", q[0]);
+        assert!(q[1] > 0.4 && q[1] <= 0.5, "under capacity grows as before: {}", q[1]);
+        assert!((q[4] - 0.99).abs() < 1e-6 && q[5] == 0.0, "barren: laid fuel withers, bare stays bare");
+        assert!(q[6] == 0.0 && q[7] == 0.0, "rock and crystal lose theirs at once");
+        for _ in 0..200 {
+            step(&g, r, &p, &mut q, &mut k);
+            std::mem::swap(&mut p, &mut q);
+        }
+        assert!((p[0] - 0.5).abs() < 1e-6, "down to the capacity and no lower: {}", p[0]);
+        assert!(p[4] == 0.0, "to 0 where nothing grows: {}", p[4]);
     }
 
     /// Wet ground greens faster; scorch strips plants and holds them off.

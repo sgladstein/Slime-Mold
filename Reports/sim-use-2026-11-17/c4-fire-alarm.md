@@ -101,8 +101,9 @@ hold the stream at the edge until the fire dies, then it crosses the char.
 `fire_alarm` held harder and reuses the field the flinch already reads, so
 the two threads agreed it is the one kept (off) and `fire_weight` goes, one
 switch for one mechanism (a reviewer's ask). The technical lead (12:05Z)
-pairs the two in ROADMAP's switches-off table for the owner's blind A/B
-before the delete; if they look alike, the alarm route wins.
+first paired the two for the owner's blind A/B; the gun thread then deleted
+`fire_weight` on 11-17, so `fire_alarm` is the slime's one fire-shyness
+switch (off).
 
 ## Left
 

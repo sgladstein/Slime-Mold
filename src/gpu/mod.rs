@@ -71,9 +71,8 @@ pub const DRAW_SLEEP_DIE: u32 = 118;
 /// Bytes in `Params` (308 words).
 pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
-/// `energy_flow`, `hunger_scent`, `hunger_at`; then `fire_weight`, heat in
-/// the sensors (the gun cards' element family, 11-17), in the word
-/// `fed_full` held until 11-17, so Params did not grow).
+/// `energy_flow`, `hunger_scent`, `hunger_at`; then a spare word, which
+/// held `fed_full` and then `fire_weight`, both deleted 11-17).
 pub const BODY_AT: usize = 848;
 /// Where the crater's row sits in `Params` (2026-11-12, after one body's:
 /// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
@@ -460,9 +459,6 @@ pub struct Settings {
     /// slime is fireproof (`fire_fed`).
     pub fire_dry: bool,
     pub fire_fed: bool,
-    /// Heat in the sensors (`BigParams::fire_weight`, the element family,
-    /// 2026-11-17; 0 off, and 0 on a dish without plants).
-    pub fire_weight: f32,
     /// Fire lays alarm where it burns (`BigParams::fire_alarm`, the plan's
     /// C4; 0 off), carried in the plants' word 44.
     pub fire_alarm: f32,
@@ -739,7 +735,6 @@ impl Settings {
             set_armour: t.set_armour,
             fire_dry: t.fire_dry,
             fire_fed: t.fire_fed,
-            fire_weight: t.fire_weight,
             fire_alarm: t.fire_alarm,
             gas_burn: t.gas_burn,
             flinch: t.flinch,
@@ -1057,9 +1052,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Fed slime is fireproof (`fire_fed=1`): a cell by fresh news is wet
         // against fire whatever its trail.
         "fire_fed" => s.fire_fed = b()?,
-        // Heat in the sensors (the element family, 11-17): under 0 the
-        // slime turns from fire.
-        "fire_weight" => s.fire_weight = f()?,
         // Fire scares the slime a little (`fire_alarm=F`, the plan's C4):
         // burning cells add F x their fire to the alarm field (shape C's
         // flinch reads it).
@@ -1264,7 +1256,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         set_armour: s.set_armour,
         fire_dry: s.fire_dry,
         fire_fed: s.fire_fed,
-        fire_weight: s.fire_weight,
         fire_alarm: s.fire_alarm,
         gas_burn: s.gas_burn,
         flinch: s.flinch,
@@ -2304,10 +2295,9 @@ impl Engine {
         // word, spare until 11-13, is one body's lossy sharing (`eloss`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
-        // The row's last word is heat in the sensors (`fire_weight`, freed
-        // by `fed_full` 11-17): 0 without plants, whose fire field (in the
-        // plants' block) is absent.
-        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, if self.plants { s.fire_weight } else { 0.0 }]));
+        // The row's last word is spare (it held `fed_full`, then heat in
+        // the sensors, `fire_weight`; both deleted 11-17).
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
@@ -2703,19 +2693,36 @@ impl Engine {
         if !self.plants || lights.is_empty() {
             return;
         }
+        self.discs(shared, lights, 0);
+        // Kills mark the dead as the CPU's do (its kill makes `life`).
+        self.cycles = true;
+        self.fire_on = true;
+    }
+
+    /// Lays dry fuel within `r` dish cells of (`x`, `y`) (dish cells), each
+    /// `(x, y, r, fuel)`, as the CPU's `BigDish::lay_fuel` (the gun cards'
+    /// Tinder, 2026-11-17); nothing without plants. Runs on its own,
+    /// between ticks: the IGNITE pass with word 49's mode byte 1.
+    pub fn lay(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)]) {
+        if !self.plants || discs.is_empty() {
+            return;
+        }
+        self.discs(shared, discs, 1);
+    }
+
+    /// The IGNITE pass over `discs`, three a run: word 49 the count, with
+    /// `mode` in its second byte (0 light, 1 lay fuel), then x, y, r and the
+    /// fourth word from 50.
+    fn discs(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)], mode: u32) {
         let k = self.dish.p.scale as f32;
-        for chunk in lights.chunks(3) {
-            // The count in word 49, then x, y, r and the share lit from 50.
-            let mut w = vec![chunk.len() as u32];
+        for chunk in discs.chunks(3) {
+            let mut w = vec![chunk.len() as u32 | mode << 8];
             for &(x, y, r, share) in chunk {
                 w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits(), share.to_bits()]);
             }
             self.queue.write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
             self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
         }
-        // Kills mark the dead as the CPU's do (its kill makes `life`).
-        self.cycles = true;
-        self.fire_on = true;
     }
 
     /// The plants now (density, kind, fire's heat, char), read back: the
@@ -3509,10 +3516,13 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     // Word 48: the plants at which a fire can burn at full heat.
     w[48] = p.fire_full.to_bits();
     // Word 44: the alarm fire lays a step (`fire_alarm`, C4); word 43 the
-    // gas that burns (`gas_burn`, C5). (Words 32-42 are free; 49 on holds
-    // `Engine::ignite`'s lights.)
+    // gas that burns (`gas_burn`, C5). (Words 32-42 are free; 49-61 hold
+    // `Engine::ignite`'s and `lay`'s discs.)
     w[44] = p.fire_alarm.to_bits();
     w[43] = p.gas_burn.to_bits();
+    // Word 62: what plants over a cell's capacity (laid fuel, Tinder) lose
+    // a plant step (the CPU's `Rates::rot`).
+    w[62] = (p.plant_rot * k).to_bits();
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));

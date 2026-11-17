@@ -202,6 +202,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut squad_set: Option<Vec<usize>> = None;
     let mut boomed: Vec<usize> = Vec::new();
     let mut lit: Vec<usize> = Vec::new();
+    // `trail=`: the lines laid; `cross=`: each slot's side of the line
+    // (0 unknown or dead, 1 this side, 2 crossed) and the crossings.
+    let mut trailed: Vec<usize> = Vec::new();
+    let mut cross_sec = u64::MAX;
+    let mut sides: Vec<u8> = Vec::new();
+    let mut crossed = 0usize;
+    let mut picked = false;
     let mut bossed: Vec<usize> = Vec::new();
     // `turret=X,Y,T`: the buildings still to stand, at their seconds.
     let mut late: Vec<usize> = (0..turrets.len()).filter(|&i| turrets[i].2 > 0.0).collect();
@@ -386,6 +393,104 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let b = slime_mould::mould::squad::Burst { at: (lx, ly), r, burn: true, ..Default::default() };
                     g.world.burst(&b, &slime_mould::mould::squad::BurstRules::default());
                     println!("  fire t {:.2} s lit at {lx},{ly} over {r}", g.time());
+                }
+            }
+            // `trail=T,X1,Y1,X2,Y2,CARDS[,lit]`: a bullet's trail laid along
+            // the line once T has come (the element family's fence test).
+            for (j, (tt, [x1, y1, x2, y2], cards, on_fire)) in app.args.trails.iter().enumerate() {
+                let g = app.game.as_mut().unwrap();
+                if g.time() >= *tt && !trailed.contains(&j) {
+                    trailed.push(j);
+                    // The line as given, whole (no brush gap: that is
+                    // `rounds::keep_clear`, round the soldiers, in play).
+                    let r = &app.rounds.rules;
+                    let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
+                    let k = rounds::burst_rules(&r.kit, fine);
+                    let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
+                    let discs = rounds::trail_bursts(rounds::trails(cards), (*x1, *y1), (*x2, *y2), r, g.world.scale(), fine, smell);
+                    for mut b in discs.iter().copied() {
+                        if *on_fire {
+                            b.light = 1.0;
+                        }
+                        g.world.burst(&b, &k);
+                    }
+                    println!("  trail t {:.2} s: {} discs of {} from {x1},{y1} to {x2},{y2}{}", g.time(), discs.len(), rounds::name(cards), if *on_fire { ", lit" } else { "" });
+                }
+            }
+            // `fencepick=T`: the crystals and the slime round them, once.
+            if let Some(ft) = app.args.fence_pick {
+                let g = app.game.as_ref().unwrap();
+                if g.time() >= ft && !picked {
+                    picked = true;
+                    let d = &g.world.e.dish;
+                    let s = d.p.scale as f32;
+                    let lk = read_back(&device, &queue, &g.world.e.look);
+                    for (pi, &(px, py)) in d.piles.iter().enumerate() {
+                        let (cx, cy) = (px * s, py * s);
+                        let (mut near, mut by) = (f32::MAX, 0u32);
+                        for (i, c) in lk.chunks_exact(4).enumerate() {
+                            if c[1] > 0 {
+                                let r = ((i % d.w) as f32 + 0.5 - cx).hypot((i / d.w) as f32 + 0.5 - cy);
+                                near = near.min(r);
+                                if r <= 20.0 {
+                                    by += c[1] as u32;
+                                }
+                            }
+                        }
+                        println!("  fencepick t {ft:.0} s: crystal {pi} at {cx:.0},{cy:.0}: nearest walker {near:.0}, {by} walkers within 20");
+                    }
+                }
+            }
+            // `cross=X1,Y1,X2,Y2,D`: walkers beyond the line, and the
+            // crossings since the first second, each game second.
+            if let Some([x1, y1, x2, y2, depth]) = app.args.cross {
+                let g = app.game.as_ref().unwrap();
+                let sec = g.time().floor() as u64;
+                if sec != cross_sec {
+                    cross_sec = sec;
+                    let e = &g.world.e;
+                    let n = e.n as usize;
+                    let wk: Vec<f32> = read_back(&device, &queue, &e.walkers).chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+                    let spec: Vec<u32> = read_back(&device, &queue, &e.spec).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect();
+                    let en: Vec<f32> = read_back(&device, &queue, &e.energy).chunks_exact(4).take(n).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+                    let (ux, uy) = (x2 - x1, y2 - y1);
+                    let len = ux.hypot(uy).max(1e-3);
+                    // Beyond: left of the line on the screen (y down).
+                    let place = |x: f32, y: f32| -> (f32, f32) { (((x - x1) * ux + (y - y1) * uy) / (len * len), ((x - x1) * uy - (y - y1) * ux) / len) };
+                    sides.resize(n, 0);
+                    let (mut beyond, mut on_line) = (0usize, 0usize);
+                    for j in 0..n {
+                        if (spec[j] >> 9) & 3 == 3 || en[j] < 0.0 {
+                            sides[j] = 0;
+                            continue;
+                        }
+                        let (t, off) = place(wk[4 * j], wk[4 * j + 1]);
+                        let span = (-0.1..=1.1).contains(&t);
+                        let far = span && off > 1.0 && off <= depth;
+                        if far {
+                            beyond += 1;
+                        }
+                        if span && off.abs() <= 3.0 {
+                            on_line += 1;
+                        }
+                        match sides[j] {
+                            0 => sides[j] = if far { 2 } else { 1 },
+                            1 if far => {
+                                sides[j] = 2;
+                                crossed += 1;
+                            }
+                            _ => {}
+                        }
+                    }
+                    let fire = if e.plants {
+                        let (_, _, f, _) = e.plants_of();
+                        let w = e.dish.w;
+                        let hot = f.iter().enumerate().filter(|&(i, &v)| v > 0.0 && { let (t, off) = place((i % w) as f32 + 0.5, (i / w) as f32 + 0.5); (-0.1..=1.1).contains(&t) && off.abs() <= 6.0 }).count();
+                        format!(", {hot} cells burning on the line, {} killed by fire", g.fire_killed)
+                    } else {
+                        String::new()
+                    };
+                    println!("  cross t {sec} s: {beyond} walkers beyond, {crossed} crossed, {on_line} within 3 of the line{fire}");
                 }
             }
             // `boss=T,X,Y`: a mini-boss forms there once T has come, on

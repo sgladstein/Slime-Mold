@@ -136,10 +136,9 @@ struct Params {
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
     // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
-    // word is the fire's weight in the sensors (`fire_weight`, the gun
-    // cards' element family, 2026-11-17; 0 off, and 0 without plants), in
-    // the word `fed_full` held until 11-17.
-    eflow: f32, hscent: f32, hat: f32, fire_w: f32,
+    // word is spare (it held `fed_full`, then heat in the sensors,
+    // `fire_weight`; both deleted 11-17).
+    eflow: f32, hscent: f32, hat: f32, body_free: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -753,8 +752,6 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     if (scars()) { v += P.alarm_w * alarm_at(i) + P.scar_w * scar_at(i); } else if (alarms()) { v += P.alarm_w * alarm_at(i); }
     // The crust (`crust_weight`), last as on the CPU.
     if (P.crust_w != 0.0) { v += P.crust_w * crust_of(i); }
-    // Heat (`fire_weight`), after the crust as on the CPU.
-    if (P.fire_w != 0.0) { v += P.fire_w * pget(PB_FA, i); }
     return v;
 }
 
@@ -3759,9 +3756,14 @@ fn pcap_of(i: u32, k: u32) -> f32 {
 fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
-    if (pget(PB_CAP, i) <= 0.0 || agar[i] == 0u) { pset(PB_B, i, 0.0); return; }
+    // Off open ground or on a crystal (the capacity block is 0 on both,
+    // and on ground where nothing grows: the ground word tells them apart).
+    if (agar[i] == 0u || (ground[i] & PILE_BITS) != 0u) { pset(PB_B, i, 0.0); return; }
     let p = pget(PB_A, i);
     if (crater_at(i) > 0.0) { pset(PB_B, i, p * (1.0 - pf(3u))); return; }
+    // Ground where nothing grows: only laid fuel (Tinder, `lay`) stands
+    // here, and it withers by word 62 a step (the CPU's `Rates::rot`).
+    if (pget(PB_CAP, i) <= 0.0) { pset(PB_B, i, max(p - pf(62u), 0.0)); return; }
     let x = i % P.w; let y = i / P.w;
     var n = 0.0;
     var best = 0.0;
@@ -3786,6 +3788,8 @@ fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = atomicLoad(&news[pblk(PB_KIND, i)]) & 3u;
     let c = pcap_of(i, k);
     if (c <= 0.0) { pset(PB_B, i, 0.0); return; }
+    // Laid fuel over the capacity withers back to it, growing nothing.
+    if (p > c) { pset(PB_B, i, max(p - pf(62u), c)); return; }
     let pace = pf(20u + k) * select(1.0, pf(2u), pwet(i));
     let room = 1.0 - p / c;
     pset(PB_B, i, clamp(p + (pf(0u) * p + pf(1u) * (n * 0.25)) * room * pace, 0.0, c));
@@ -3940,13 +3944,33 @@ fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
 }
 
 // Lights (`Engine::ignite`, the CPU's `BigDish::ignite`): the header's
-// word 32 lights, each (x, y, r) in fine cells from word 33; a cell lights
-// when its offset from the light's floored centre is within r (the CPU's
-// loop over whole offsets) and it has fuel off the wet.
+// word 49 lights (its low byte), each (x, y, r, share) in fine cells from
+// word 50; a cell lights when its offset from the light's floored centre
+// is within r (the CPU's loop over whole offsets) and it has fuel off the
+// wet. With word 49's second byte 1 the same discs lay fuel instead
+// (`Engine::lay`, the CPU's `BigDish::lay_fuel`, the gun cards' Tinder,
+// 2026-11-17): the fourth word is the fuel, laid on every open cell off
+// the wet and off a crystal with fewer plants, a bare one turning scrub.
 @compute @workgroup_size(256)
 fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h || agar[i] == 0u) { return; }
+    if ((pw(49u) >> 8u) == 1u) {
+        if (pwet(i) || (ground[i] & PILE_BITS) != 0u) { return; }
+        let lx = i32(i % P.w); let ly = i32(i / P.w);
+        let had = pget(PB_A, i);
+        for (var q = 0u; q < min(pw(49u) & 0xFFu, 3u); q++) {
+            let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q); let f = pf(53u + 4u * q);
+            let dx = f32(lx - i32(floor(cx))); let dy = f32(ly - i32(floor(cy)));
+            // The CPU lays its discs one at a time, so a cell under two
+            // takes the most fuel of those over its plants.
+            if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && pget(PB_A, i) < f) {
+                if (had <= 0.0) { atomicStore(&news[pblk(PB_KIND, i)], 3u); }
+                pset(PB_A, i, f);
+            }
+        }
+        return;
+    }
     var fuel = pget(PB_A, i);
     if (P.crust_fuel > 0.0) { fuel = fuel + P.crust_fuel * crust_of(i); }
     // Gas over `gas_burn` is fuel enough, wet or not, and lights whatever
@@ -3957,7 +3981,7 @@ fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Lights from word 49: x, y, r and the share of cells lit (by the
     // chance `plants::roll` keyed as `BigDish::ignite` keys it).
     let dice = froll(i, pw(45u) ^ 0x1617u);
-    for (var q = 0u; q < min(pw(49u), 3u); q++) {
+    for (var q = 0u; q < min(pw(49u) & 0xFFu, 3u); q++) {
         let cx = pf(50u + 4u * q); let cy = pf(51u + 4u * q); let r = pf(52u + 4u * q);
         let dx = f32(x - i32(floor(cx))); let dy = f32(y - i32(floor(cy)));
         if (abs(dx) <= ceil(r) && abs(dy) <= ceil(r) && dx * dx + dy * dy <= r * r && (gas || dice < pf(53u + 4u * q))) { pset(PB_FA, i, 1.0); pset(PB_FRESH, i, 1.0); return; }
