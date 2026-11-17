@@ -479,6 +479,34 @@ the body's surge, `BigParams::surge_every`; booked with the technical lead
 last surge began on), so no new row. The ground row's `_g1`-`_g3` stay the
 ground thread's.
 
+### Switches that are off
+
+The technical lead asked for this table on 2026-11-17. It lists every game feature that is built but off in the default game, where the default game is shape C on the race world or a run planet with its `enemy_keys`. Each switch doubles a code path that the twins and the census rarely play. CLAUDE.md says defaults go on unless there is a measured harm or a stated uncertainty. So every row names its owner, the reason it is off, and what decides it. If a row has no reason left, its switch gets turned on or deleted.
+
+`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) turns on every switch marked ✓ in the "Test" column at the same time. It plays a few seconds of a squad fighting on the CPU, and on the GPU when one is available, so that none of the switches breaks another. A new switch gets its row here and goes into that test in the same PR.
+
+| Switch (key) | Owner | Why it is off | What decides it | Test |
+|---|---|---|---|---|
+| Crust: `crust=1` (`crust_rise`, `crust_keep`, `crust_trail`; it also turns on `crust_fuel` 3 and `char_barren` 0.3, fire on crust) | Simulation-use plan (E1a, C2) | 11-17, new. Nothing in the game reads it on its own yet. | The E1b and E2 films and the owner's pick | ✓ |
+| Crust pull and fast ground: `crust_weight`, `crust_fast` | Simulation-use plan (E1b) | No sign has been chosen ("stay 0 until the owner picks a sign") | The owner's A/B (pull back against move on) | ✓ |
+| Setting: `setting=1` (`set_scar`, `set_wake`, `set_crust`, `set_armour`) | Simulation-use plan (E2a) | 11-17, new. Set slime takes three blows and doesn't move. | The owner's film pick | ✓ |
+| Set slime blocks soldiers: `set=set_block=N` | Simulation-use plan (E2b) | 11-17, new. It is in an A/B against `set_hold`. | The owner picks block or trap ("Both", 01:13Z), then a playtest | ✓ |
+| Set slime traps: `set=set_hold=F` | Simulation-use plan (E2b, the designer's A/B) | 11-17, new. It is the other side of that A/B, and over 0 it replaces block. | Same A/B | ✓ |
+| Set slime's look: `setlook=N` (window only) | Simulation-use plan (E2b) | It applies only when setting is on | The owner's look pick, together with setting | (draw only) |
+| Homing turn: `set=seek_turn=0.45` | Gun rounds and turrets | Measured as no gain: 89.4% hits against 89.1% with the catch alone (`Reports/gun-seek-2026-11-16`) | **Delete candidate**. Nothing is left to decide. | ✓ |
+| Last stand: `RaidRules::last_stand` | Defenses (raids) | The owner was "not sure if this is a good idea or not" | A playtest with it on | ✓ |
+| Reserve recruit: `set=reserve=S` | Larder rules | It is the owner's pick of free recruits, and the default is off | A playtest. If nobody asks for it by the next playtest, delete it. | ✓ |
+| Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
+| Thickening, the bronze: `thicken` | Slime enemy | The owner removed it, 11-16 04:58Z: "Remove the bronze, keep the specks" | **Delete candidate** (it also frees `ccrowd`'s top byte) | ✓ |
+| Condensing: `condense` | Condense, then slime enemy | No planet uses it since #370 (11-16). Specks break away without it. It is still on the menu. | **Delete candidate**, unless a mini-boss wants it | ✓ |
+| Fed packing: `fed_crowd` | Slime enemy | `energy_flow` replaced it on 11-13: 21,053 walkers but 7.6% of the screen | **Delete candidate** | ✓ |
+| Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
+| Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
+| One-body CPU knobs: `body_pull`, `tether` | One body | CPU only, never ported, and the dead ends hold them | **Delete candidates** | — (CPU only) |
+| Squad mode: `mode=squads` | Squads | Not a switch: it is the owner's "separate mode", and runs play it | — | — |
+
+These are not switches: tier and mould-type features (alarm, scar, flinch, spores, sleep, hunger and the bosses) are on in their tiers and off in plain C. Ruled values such as `price` 0 are settled. The 11-11 model research knobs (species conversion and zones, MCPM `chance_exp`, grazing, explorers, size spread, contagion and the rest of `BigParams::today`'s zeros) are not game features. They stay as the sandbox's knobs until a cleanup PR removes them.
+
 ## Keeping this page true
 
 - A thread that passes a gate, opens or merges a PR for a step, or changes
