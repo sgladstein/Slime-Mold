@@ -10,11 +10,14 @@ sources:
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
+  - Reports/sim-use-2026-11-17/c1-dry-burns.md
   - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
 code:
   - BigDish::ignite
   - BigParams::crust_fuel
   - BigParams::fire_damp
+  - BigParams::fire_dry
+  - BigParams::fire_fed
   - BigParams::fire_spread
   - BigParams::fire_weight
   - BigParams::plant_grow
@@ -43,6 +46,15 @@ plants a unit (`crust_fuel`), and char of 0.3 or more is barren
 left ran across the whole clearing in a minute (4,382 cells burning) and
 stopped at the living body, where at fuel 0 it went out in 20 s
 ([report](../../Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md)).
+**Starving slime burns** (C1, 2026-11-17, the owner's 01:13Z ruling;
+`BigParams::fire_dry`, on): the trail no longer wets slime whose food news
+is older than the wither lag, nor set slime, on both engines. A cut part
+that went stale burnt whole in 20 s on full meadow (6 of 6 seeds; 0-6%
+before), and a fed disc burnt exactly as before. But fed slime was never
+wholly fireproof: fire through its thin trail took 24-65% of a fed disc in
+20 s; `BigParams::fire_fed` (off, the owner's card) makes fed slime wet
+whatever its trail, and took that to 0
+([report](../../Reports/sim-use-2026-11-17/c1-dry-burns.md)).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,

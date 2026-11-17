@@ -687,7 +687,12 @@ impl View {
     /// is two walkers' worth) and the mould round it takes the condensed
     /// colour by the share of its walkers condensed; a ripening walker warms
     /// toward it by its ripeness over `ripe_at` (the `condense` steps), and
-    /// a fresh one's speck flares. Call after `set_news`.
+    /// a fresh one's speck flares. Call after `set_news`. **Since 11-17
+    /// nothing condenses** (`condense` and `thicken` were deleted): the
+    /// game passes `ripe_at` 0 and no word sets bit 16 (`DENSE_BIT`) or 17
+    /// (`ABSORB_BIT`), so the bronze and the absorbed streaks never draw;
+    /// the word is kept for the lumps. Their shader code is the slime
+    /// look's to remove; don't reuse bits 16-17 before it goes.
     pub fn set_dense(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32, ripe_at: u32) {
         match news {
             Some((n, s)) => {

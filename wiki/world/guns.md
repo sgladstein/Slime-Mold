@@ -134,8 +134,8 @@ live slime (`squad::trace`, `Game::catches`); it also stops at live walkers
 on its line. In paired 10 s windows on thin slime it hit 89.1% of shots
 against 80.3% (13 of 13 windows) and killed 554 against 538; the thick
 front was unchanged. The hit is the thin edge, so kills rise far less than
-hits. Version 3's grid steering (`Game::steer`, `seek_turn`) is off: on top
-it added nothing. Dropped on the way: catching beside the line at every cell
+hits. Version 3's grid steering (`Game::steer`, `seek_turn`) added nothing
+on top and was deleted 11-17 (dead ends). Dropped on the way: catching beside the line at every cell
 (it struck the thin fringe, not the body: thick-front kills 471 to 266),
 catching only on the last leg (a soldier's bullet flies to full range, so
 that is far past its target), turning only a bullet with no walker on its

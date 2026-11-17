@@ -277,15 +277,14 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "panic_lean" => p.panic_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(127),
         "panic_creep" => p.panic_creep = f()?,
         "panic_dash" => p.panic_dash = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
-        // Dense slime condenses (`BigParams::condense`, both engines since 11-14).
-        "condense" => p.condense = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
+        // A speck's ripeness (condensing's names; `condense` and `thicken`
+        // were deleted 11-17).
         "condense_crowd" => p.condense_crowd = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         "condense_r" => p.condense_r = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?.clamp(1, 8),
-        // Condensed slime breaks away (`BigParams::roam`, both engines since 11-14).
+        // Slime breaks away (`BigParams::roam`, both engines since 11-14).
         "roam" => p.roam = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::RIPE),
         "roam_far" => p.roam_far = f()?,
         "roam_share" => p.roam_share = f()?,
-        "thicken" => p.thicken = f()?,
         // The body surges (`BigParams::surge_every`, both engines since 11-15).
         "surge" => p.surge_every = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?,
         "surge_lean" => p.surge_lean = v.parse::<u32>().map_err(|e| format!("{key}={v}: {e}"))?.min(super::big::SURGE_MAX),
@@ -303,8 +302,6 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         // Walker slots (a census plays the window's dense shapes on the CPU:
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
         "capacity" => p.capacity = v.parse::<usize>().map_err(|e| format!("{key}={v}: {e}"))?,
-        // A fed walker packs `fed_crowd` more to a cell (`BigParams::fed_crowd`).
-        "fed_crowd" => p.fed_crowd = v.parse::<u8>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_at" => p.hunger_at = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,

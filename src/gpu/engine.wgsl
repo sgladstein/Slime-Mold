@@ -135,10 +135,9 @@ struct Params {
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
-    // hungry walker weighs the scent 1 + `hscent` x its hunger. A walker
-    // with `fed_full` energy or more steps and breeds under the crowd limit
-    // + `fed_crowd` (`BigParams::fed_crowd`, the lone row's last; `crowd_for`).
-    eflow: f32, hscent: f32, hat: f32, fed_full: f32,
+    // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
+    // word is free (`fed_full`'s until 11-17).
+    eflow: f32, hscent: f32, hat: f32, body_free: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -150,15 +149,18 @@ struct Params {
     // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
     // walkers in the square of radius `lone_r` round its cell, as the step
     // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    lone: f32, lfloor: f32, lone_r: u32, fed_crowd: u32,
+    // Its last word is free (`fed_crowd`'s until 11-17).
+    lone: f32, lfloor: f32, lone_r: u32, lone_free: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
-    // Its three spare words are dense slime's condensing (11-14, the
-    // condense thread, `BigParams::condense`): the steps a walker must be
-    // ripe (0 off, and off without growth), the crowd that makes it ripe
-    // (low 16 bits) and its square's radius (high 16), and the stream of
-    // the draw that splits the ripe (big.rs `DRAW_CONDENSE`).
-    fling_dep: f32, condense: u32, ccrowd: u32, s_condense: u32,
+    // Its three spare words were dense slime's condensing (11-14, the
+    // condense thread). The first is free since 11-17 (`condense`, the
+    // steps a walker had to be ripe, deleted); the specks keep the crowd
+    // that makes a walker ripe (`ccrowd` low 16 bits, `condense_crowd`) and
+    // its square's radius (bits 16-23, `condense_r`; bits 24-31 were
+    // `thicken`'s, free since 11-17), and the stream of their draw (big.rs
+    // `DRAW_ROAM`).
+    fling_dep: f32, fling_free: u32, ccrowd: u32, s_condense: u32,
     // Condensed slime breaks away (`BigParams::roam`, 11-14; Params grew
     // from 912 to 928 for this row): steps between chances to leave (0
     // off), how far its crystal must be and how near it lands, in whole
@@ -207,8 +209,10 @@ struct Params {
     // The scar row (the Grudge's habituation, 2026-11-17, the
     // simulation-use plan's step 0; Params grew from 1168 to 1184; mod.rs's
     // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
-    // weight in the sensors, and a spare word.
-    scar_keep: f32, scar_gain: f32, scar_w: f32, _sc0: u32,
+    // weight in the sensors, and (its spare word until the plan's C1,
+    // 11-17) whether dry slime burns (`fire_dry`, bit 0) and fed slime is
+    // fireproof (`fire_fed`, bit 1; `slime_fire`).
+    scar_keep: f32, scar_gain: f32, scar_w: f32, fire_dry: u32,
     // The crust row (`CRUST_AT`, the simulation-use plan's E1a, 2026-11-17):
     // the rise a fine step (0 off), the keep, the trail it needs, and the
     // word in `news` its block starts at.
@@ -384,24 +388,20 @@ const GAS_CALM: u32 = 1032u;
 const GAS_SLOTS: u32 = 1288u;
 fn gas_base() -> u32 { return P.n + 3u * P.w * P.h; }
 fn gas_word(i: u32) -> u32 { return atomicLoad(&news[gas_base() + i]); }
-// Dense slime condenses (`BigParams::condense`, 11-14, the condense
-// thread), in `news` after the sleep gas's slots, as the gas borrowed the
-// buffer: a header of `DENSE_HEAD` words (word 0 the mould's mass as
-// `life` leaves it, `masscount`, a condensed walker counting twice), each
-// slot's word (its ripeness in steps in `RIPE_BITS`, and `DENSE_BIT` once it
-// has condensed: the CPU's `BigDish::dense`), then a word a cell: the
-// condensed walkers holding it at the frame's reads (`dcount`, for
-// `units`). A dead slot's word is stale until `born` clears it. Header
-// words 1-3 hold a lump's forming (`lumpform`: the lump + 1, its centre
-// cell, its reach squared) and 4-15 each lump's sums (`lumpsum`: x, y,
-// members; 2026-11-16, the header grew from 4 words).
+// The dense block (condensing's, 11-14, the condense thread; it keeps the
+// name), in `news` after the sleep gas's slots, as the gas borrowed the
+// buffer: a header of `DENSE_HEAD` words, each slot's word (a speck's trip
+// in `RIPE_BITS`, its mark and crystal, a lump's member and hits: the
+// CPU's `BigDish::dense`), then a block of cells (free since 11-17: the
+// condensed walkers on each cell), the raid's field and the lumps' bite
+// cells. A dead slot's word is stale until `born` clears it. Header word 0
+// is free (the mass `masscount` kept until 11-17); words 1-3 hold a lump's
+// forming (`lumpform`: the lump + 1, its centre cell, its reach squared)
+// and 4-15 each lump's sums (`lumpsum`: x, y, members; 2026-11-16, the
+// header grew from 4 words). Bits 16 and 17 of a slot's word (condensing's
+// `DENSE_BIT` and `ABSORB_BIT`) are free.
 const DENSE_HEAD: u32 = 16u;
 const RIPE_BITS: u32 = 0xFFFFu;
-const DENSE_BIT: u32 = 0x10000u;
-// An absorbed walker's slot keeps this and the steps since for
-// `ABSORB_STEPS` (the CPU's `ABSORBED`): only the view reads it.
-const ABSORB_BIT: u32 = 0x20000u;
-const ABSORB_STEPS: u32 = 15u;
 // A breakaway's mark and the crystal (pile) it runs for, bits 19-24 (the
 // CPU's `ROAM`, `ROAM_SHIFT`); it goes for crystals with `ROAM_FRESH` left.
 const ROAM_BIT: u32 = 0x40000u;
@@ -410,7 +410,7 @@ const ROAM_FRESH: f32 = 0.8;
 // An ordinary breakaway gives up after this many steps on its way (the
 // CPU's `SPECK_TRIP`, 11-16).
 const SPECK_TRIP: u32 = 600u;
-fn roaming(k: u32) -> bool { return condenses() && P.roam > 0u && (dense_word(k) & ROAM_BIT) != 0u; }
+fn roaming(k: u32) -> bool { return specks_on() && (dense_word(k) & ROAM_BIT) != 0u; }
 // A lump's member (`BigParams::lumps`, the CPU's `lump_of`): its lump + 1
 // in bits 25-27 of its word (0 none, or no lump on).
 const LUMP_SHIFT: u32 = 25u;
@@ -422,19 +422,10 @@ fn lump_of(k: u32) -> u32 {
     if (P.lump_on == 0u) { return 0u; }
     return (dense_word(k) & LUMP_BITS) >> LUMP_SHIFT;
 }
-// The dense state is on for condensing or thickening (`BigParams::thicken`,
-// 11-15, the slime-enemy thread: a fed walker that cannot divide turns
-// condensed in place), or for breakaway alone (`roam`, 11-16: ordinary
-// walkers ripen and break away, the owner's "Remove the bronze, keep the
-// specks"); only condensing ripens toward condensing, absorbs and stops
-// births at the slots (`ripens`).
-fn condenses() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0 || P.roam > 0u); }
-// Condensed or thick walkers can exist (the per-cell counts `dclear` and
-// `dcount` run; mod.rs's `dense_walkers`): not with specks alone.
-fn dense_on() -> bool { return growth() && (P.condense > 0u || thick_at() > 0.0); }
-fn ripens() -> bool { return growth() && P.condense > 0u; }
-// `thicken` in tenths of `birth_at`, in `ccrowd`'s top byte (bits 24-31).
-fn thick_at() -> f32 { return f32((P.ccrowd >> 24u) & 0xFFu) / 10.0; }
+// Specks are on (`roam`, 11-16, the owner's "Remove the bronze, keep the
+// specks"; with growth). Until 11-17 this was `condenses()`, also on for
+// condensing and thickening, both deleted.
+fn specks_on() -> bool { return growth() && P.roam > 0u; }
 // After the gas's words, a slot's Mind word each (`mind_of`, 2026-11-16).
 fn dense_base() -> u32 { return gas_base() + GAS_SLOTS + 2u * P.n; }
 fn dense_word(k: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + k]); }
@@ -465,8 +456,6 @@ fn armoured(k: u32) -> bool {
 // Each cell's lump members' bite (`squad::bite_cells`), after the raid's
 // field in the dense block.
 fn bite_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + i]); }
-fn is_dense(k: u32) -> bool { return condenses() && (dense_word(k) & DENSE_BIT) != 0u; }
-fn dense_cell(i: u32) -> u32 { return atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + i]); }
 fn gassed_at(k: u32, t: u32) -> bool { return t < gas_word(GAS_SLOTS + k); }
 fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
 
@@ -561,15 +550,9 @@ fn conv_r() -> u32 { if (OUTSIDE) { return P.conv_r; } return 0u; }
 // With `per` the globals `explore`, `bshare` and `graze_w` are switches
 // only (on if any species has one).
 fn crowd_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].crowd; } return P.crowd; }
-// Walker k's crowd limit where it steps or breeds: its species' (`sp`), or
-// that + `fed_crowd` while it holds `fed_full` energy or more (the CPU's
-// `fed_crowd`; a species with no limit keeps none). Claims still follow the
-// species' own limit (`walk`, `born`), as on the CPU.
-fn crowd_for(k: u32, sp: u32) -> u32 {
-    let c = crowd_of(sp);
-    if (c > 0u && P.fed_crowd > 0u && growth() && energy[k] >= P.fed_full) { return c + P.fed_crowd; }
-    return c;
-}
+// Walker k's crowd limit where it steps or breeds: its species' (`sp`).
+// A fed walker's `fed_crowd` more was deleted 11-17 (Reports/dead-ends.md).
+fn crowd_for(k: u32, sp: u32) -> u32 { return crowd_of(sp); }
 // A move's crowd limit (the CPU's `move_crowd`): a lump's member steps
 // into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16; 3 since the
 // leech ring), so a lump formed in the thick of the body can pass through it.
@@ -1298,35 +1281,13 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A part cut off from its food withers (`wither`, before the upkeep as
     // on the CPU): at each check a walker that has heard of no food for
     // its lag may die, whatever it still holds.
-    // A condensed walker breaks instead, keeping half its energy (`condense`).
-    let dense = is_dense(k);
     if (P.wither > 0.0 && S.t % max((P.wclock >> 16u) & 0xFFu, 1u) == 0u && S.t + 1u > atomicLoad(&news[k]) + (P.wclock & 0xFFFFu) && !roaming(k) && raid_to(k, i).z <= 0.0 && lump_of(k) == 0u) {
         if (unit(keyed(P.s_wither, S.t, k)) < P.wither) {
-            if (dense) {
-                set_dense_kept(k, 0u);
-                energy[k] = energy[k] * 0.5;
-            } else {
-                atomicSub(&occ[i], 1u);
-                atomicStore(&claim[i], NONE);
-                energy[k] = -1.0;
-                return;
-            }
-        }
-    }
-    // Ripe long enough (`ripen`), it condenses: half the ripe are
-    // absorbed, half hold the mass, twice the energy (`condense`).
-    var heavy = dense && is_dense(k);
-    if (ripens() && !dense && (dense_word(k) & RIPE_BITS) >= min(P.condense, RIPE_BITS)) {
-        if (unit(keyed(P.s_condense, S.t, k)) < 0.5) {
             atomicSub(&occ[i], 1u);
             atomicStore(&claim[i], NONE);
             energy[k] = -1.0;
-            set_dense(k, ABSORB_BIT);
             return;
         }
-        set_dense_kept(k, DENSE_BIT);
-        energy[k] = energy[k] * 2.0;
-        heavy = true;
     }
     let n = f32(atomicLoad(&occ[i]));
     var g = 0.0;
@@ -1337,24 +1298,13 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
-    // A condensed walker is two walkers' worth and pays for both.
-    if (heavy) { up *= 2.0; }
     let e = (energy[k] + g + share[i]) - up;
     if (e > 0.0) {
         energy[k] = e;
-        // Fed past what a birth needs and still undivided, it thickens
-        // (`thicken`, the CPU's order: after the upkeep).
-        let th = thick_at();
-        if (growth() && th > 0.0 && !heavy && e >= th * P.birth_at) {
-            set_dense_kept(k, DENSE_BIT);
-            energy[k] = e - P.birth_cost;
-        }
         return;
     }
     // A held body's member does not starve (the CPU's `live_and_die`).
     if (lump_of(k) == 0u && unit(keyed(P.s_starve, S.t, k)) < P.starve) {
-        // A condensed walker starving breaks instead (`condense`).
-        if (heavy) { set_dense_kept(k, 0u); energy[k] = 0.0; return; }
         atomicSub(&occ[i], 1u);
         atomicStore(&claim[i], NONE);
         energy[k] = -1.0;
@@ -1509,9 +1459,6 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     let t = S.t;
     let b = child_of(k, t);
     if (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
-    // Condensing (`condense`): no births while the mould's mass fills the
-    // slots (`masscount`, as the pass began; the CPU's `mass`).
-    if (ripens() && atomicLoad(&news[dense_base()]) >= P.n) { return; }
     // A garden's birth caps (`species_cap`): a parent divides only while
     // its side held fewer than its cap as the pass began (`capcount`), as
     // the CPU's `held`; the enemy in word 6, the player's mould in 7.
@@ -1526,8 +1473,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
-    // The parent's species' crowd limit, + `fed_crowd` if it is fed
-    // (`crowd_for`).
+    // The parent's species' crowd limit (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }
@@ -1560,7 +1506,7 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (nsp() > 0u || mixes() || cycles()) { spec[b] = spec[k] & 0x1FFu; }
     // A child knows what its parent heard (`wither`).
     if (P.wither > 0.0 || P.panic > 0.0) { atomicStore(&news[b], atomicLoad(&news[k])); }
-    // A child is an ordinary walker, not ripe (`condense`), and in no lump
+    // A child is an ordinary walker, not a speck (`roam`), and in no lump
     // (the word is cleared whatever is on: a lump's member may have held
     // the slot; the CPU clears it whenever it keeps the words).
     set_dense(b, 0u);
@@ -2587,14 +2533,8 @@ fn strike(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var q = 0u; q < P.nshots; q++) {
         if (struck(c, q)) {
             // A lump's armoured member is hurt (`armoured`), not counted (it
-            // lost no mass), and a condensed walker breaks into an ordinary
-            // one (`BigDish::hit`), counted as a kill.
+            // lost no mass).
             if (armoured(k)) { return; }
-            if (is_dense(k)) {
-                set_dense_kept(k, 0u);
-                atomicAdd(&kills[q], 1u);
-                return;
-            }
             atomicSub(&occ[c], 1u);
             atomicStore(&claim[c], NONE);
             atomicAdd(&kills[q], 1u);
@@ -2823,9 +2763,7 @@ fn units(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index)
         let y = cy + dy;
         if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
         touching += enemy_occ(u32(y * w + x));
-        // A condensed walker touches as two (`condense`; `dcount`), a lump's
-        // member as 1 + its bite.
-        if (dense_on()) { touching += dense_cell(u32(y * w + x)); }
+        // A lump's member touches as 1 + its bite (`dcount`).
         if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
     }
     let b = 4;
@@ -2997,7 +2935,6 @@ fn units1(@builtin(global_invocation_id) gid: vec3<u32>) {
             let y = cy + dy;
             if (x < 0 || y < 0 || x >= w || y >= h || u32(dx * dx + dy * dy) > un.touch2) { continue; }
             touching += atomicLoad(&occ[u32(y * w + x)]);
-            if (dense_on()) { touching += dense_cell(u32(y * w + x)); }
             if (P.lump_on != 0u) { touching += bite_cell(u32(y * w + x)); }
         }
     }
@@ -3351,11 +3288,9 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
     // not, a spore too, as the CPU's `infect` takes every living slot.
     if (P.kir > 0.0 && P.sick_steps > 0u && d <= P.kir) { sick[k] = P.sick_steps + P.immune; }
     if (st == L_SPORE || P.kr <= 0.0 || d > P.kr) { return; }
-    // A lump's armoured member is hurt, not counted, and a condensed
-    // walker breaks instead (`BigDish::strike`), a kill's worth.
+    // A lump's armoured member is hurt, not counted (`BigDish::strike`).
     if (armoured(k)) { return; }
     atomicAdd(&wstat[3], 1u);
-    if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     atomicSub(&occ[cell(wk.x, wk.y)], 1u);
     spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
     if (P.upkeep > 0.0) { energy[k] = -1.0; }
@@ -3380,9 +3315,6 @@ fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
         // The player's own mould's share of them, in a garden.
         let own = garden() && species_of(k) == OWN_SP;
         if (own) { atomicAdd(&wstat[5], 1u); }
-        // The enemy's condensed walkers (11-15), so the game's mass is
-        // living + these, as the CPU's `BigDish::mass` counts them twice.
-        if (!own && is_dense(k)) { atomicAdd(&wstat[8], 1u); }
     }
     let g = P.grid;
     if (g > 0u && k < P.w * P.h) {
@@ -3597,8 +3529,8 @@ fn fling(@builtin(global_invocation_id) gid: vec3<u32>) {
     atomicAdd(&news[gas_base() + 3u], 1u);
 }
 
-// ---- Dense slime condenses (`BigParams::condense`, 11-14, the condense thread) ----
-// The ripe test (the CPU's): cell `i` took crystal (`share`, as the news
+// ---- Slime breaks away, the specks (`BigParams::roam`; condensing's pass until 11-17) ----
+// The ripe test (the CPU's, a speck's chance): cell `i` took crystal (`share`, as the news
 // hears it), or the square of radius `ccrowd >> 16` round it, its own cell
 // left out, holds at least `ccrowd & 0xFFFF` walkers (`occ_round`).
 fn ripe_at(i: u32) -> bool {
@@ -3629,60 +3561,26 @@ fn roam_pick(cx: i32, cy: i32) -> u32 {
     }
     return bj;
 }
-// `ripen`, before `life`: each ordinary walker not yet condensed is ripe
-// this tick if its cell took crystal (`share`, as the news hears it) or
-// the square of radius `ccrowd >> 16` round its cell, its own cell left
-// out, holds at least `ccrowd & 0xFFFF` walkers (the CPU's `occ_round`);
-// its ripeness counts up while ripe and down while not. Nobody dies in
-// this pass, so every walker reads the cells as the CPU's first loop in
-// `live_and_die` does. `life` then condenses the ripe.
+// `ripen`, before `life`: a speck lands, gives up or runs on, and an
+// ordinary walker takes its chance to leave. Nobody dies in this pass, so
+// every walker reads the cells as the CPU's first loop in `live_and_die`
+// does. Until 11-17 it also ripened walkers toward condensing
+// (`condense`), aged the absorbed's words and sent condensed walkers off;
+// condensing and thickening were deleted (Reports/dead-ends.md).
 @compute @workgroup_size(256)
 fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n) { return; }
+    if (P.roam == 0u) { return; }
     let wd = dense_word(k);
-    // An absorbed walker's word ages out (`ABSORB_BIT`).
-    if ((wd & ABSORB_BIT) != 0u) {
-        let age = (wd & RIPE_BITS) + 1u;
-        set_dense(k, select(ABSORB_BIT | age, 0u, age >= ABSORB_STEPS));
-        return;
-    }
     if (!ordinary(k)) { return; }
-    // A condensed walker's low bits count the steps since it condensed
-    // (the look's fresh glow).
-    if ((wd & DENSE_BIT) != 0u) {
-        let age = min((wd & RIPE_BITS) + 1u, RIPE_BITS);
-        var nw = (wd & ~RIPE_BITS) | age;
-        // Breaking away (`roam`, the CPU's order): a breakaway lands near
-        // its crystal or when it runs dry; every `roam` steps a settled
-        // one may leave for the nearest fresh crystal far enough away.
-        if (P.roam > 0u) {
-            let wk = walkers[k];
-            let cx = i32(floor(wk.x)); let cy = i32(floor(wk.y));
-            if ((wd & ROAM_BIT) != 0u) {
-                let j = (wd >> ROAM_SHIFT) & 63u;
-                let c = piles[j].centre;
-                let dx = i32(c & 0xFFFFu) - cx; let dy = i32(c >> 16u) - cy;
-                let land = i32(P.roam_land);
-                if (dx * dx + dy * dy <= land * land || piles[j].left <= PANIC_LEFT) { nw = DENSE_BIT | age; }
-            } else if (age % P.roam == 0u && age < RIPE_BITS && world(CRYSTALS) && lump_of(k) == 0u) {
-                let bj = roam_pick(cx, cy);
-                if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
-                    nw = DENSE_BIT | ROAM_BIT | (bj << ROAM_SHIFT) | age;
-                }
-            }
-        }
-        set_dense(k, nw);
-        return;
-    }
-    // Breakaway from ordinary slime (`roam` with `condense` 0, 11-16, the
-    // CPU's `specks`): an ordinary breakaway lands as a condensed one does,
-    // or gives up after `SPECK_TRIP` steps on its way (its low bits count
-    // them), and is ordinary slime again.
-    let specks = P.roam > 0u && !ripens();
+    // A breakaway (`roam`, 11-16, the CPU's specks) lands within
+    // `roam_land` of its crystal or when it runs dry, or gives up after
+    // `SPECK_TRIP` steps on its way (its low bits count them), and is
+    // ordinary slime again.
     let wk = walkers[k];
     let cx = i32(floor(wk.x)); let cy = i32(floor(wk.y));
-    if (specks && (wd & ROAM_BIT) != 0u) {
+    if ((wd & ROAM_BIT) != 0u) {
         let j = (wd >> ROAM_SHIFT) & 63u;
         let trip = (wd & RIPE_BITS) + 1u;
         let c = piles[j].centre;
@@ -3693,52 +3591,25 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         return;
     }
     // Specks take their chance on their slot's step, one in `roam`, crowded
-    // or feeding then (the CPU's order and draw); no ripeness is kept.
-    if (specks) {
-        // A lump's member never leaves as a speck (the CPU's the same).
-        if (lump_of(k) != 0u || (S.t + k) % P.roam != 0u || !world(CRYSTALS) || !ripe_at(cell(wk.x, wk.y))) { return; }
-        let bj = roam_pick(cx, cy);
-        if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
-            set_dense(k, ROAM_BIT | (bj << ROAM_SHIFT));
-        }
-        return;
+    // or feeding then (the CPU's order and draw); no ripeness is kept. A
+    // lump's member never leaves as a speck (the CPU's the same).
+    if (lump_of(k) != 0u || (S.t + k) % P.roam != 0u || !world(CRYSTALS) || !ripe_at(cell(wk.x, wk.y))) { return; }
+    let bj = roam_pick(cx, cy);
+    if (bj < 64u && unit(keyed(P.s_condense, S.t, 0x80000000u | bj)) < P.roam_share) {
+        set_dense(k, ROAM_BIT | (bj << ROAM_SHIFT));
     }
-    // Thickening alone (`thicken`, `condense` 0) only ages its words.
-    if (!ripens()) { return; }
-    // A lump's member does not ripen (the CPU's the same), and keeps its
-    // lump and hits (`set_dense_kept`).
-    let was = wd & RIPE_BITS;
-    var age = was;
-    if (lump_of(k) == 0u && ripe_at(cell(wk.x, wk.y))) { age = min(was + 1u, RIPE_BITS); } else if (was > 0u) { age = was - 1u; }
-    if (age != was) { set_dense_kept(k, age); }
 }
 
-// The mould's mass before the births (the CPU's `mass`): `massclear`
-// clears the header's word 0 and `masscount` adds each living walker, a
-// condensed one twice, after `life`; `breed` reads it.
-@compute @workgroup_size(1)
-fn massclear() {
-    atomicStore(&news[dense_base()], 0u);
-}
-
-@compute @workgroup_size(256)
-fn masscount(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let k = gid.x;
-    if (k >= P.n || !lives(k)) { return; }
-    atomicAdd(&news[dense_base()], select(1u, 2u, is_dense(k)));
-}
-
-// The condensed walkers on each cell for the frame's reads (the CPU's
-// `squad::dense_cells`): `dclear` a thread a cell, then `dcount` a thread
-// a slot, every living condensed walker that holds a cell (not a spore
-// or the dead), before `units`.
-// With a lump on they also count each cell's members' bite (`bite_cell`,
-// the CPU's `squad::bite_cells`).
+// Each cell's lump members' bite for the frame's reads (`bite_cell`, the
+// CPU's `squad::bite_cells`), with a lump on: `dclear` a thread a cell,
+// then `dcount` a thread a slot, every living member that holds a cell
+// (not a spore or the dead), before `units`. Until 11-17 they also counted
+// each cell's condensed walkers in the block's first cell words, which are
+// free now (`condense`, deleted).
 @compute @workgroup_size(256)
 fn dclear(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gid.x < P.w * P.h) {
-        atomicStore(&news[dense_base() + DENSE_HEAD + P.n + gid.x], 0u);
-        if (P.lump_on != 0u) { atomicStore(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + gid.x], 0u); }
+        atomicStore(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + gid.x], 0u);
     }
 }
 
@@ -3746,15 +3617,13 @@ fn dclear(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn dcount(@builtin(global_invocation_id) gid: vec3<u32>) {
     let k = gid.x;
     if (k >= P.n || !lives(k)) { return; }
-    let dense = is_dense(k);
     let lb = lump_of(k);
-    if (!dense && lb == 0u) { return; }
+    if (lb == 0u) { return; }
     let st = state(k);
     if (st == L_SPORE || st == L_DEAD) { return; }
     let wk = walkers[k];
     let c = cell(wk.x, wk.y);
-    if (dense) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + c], 1u); }
-    if (lb != 0u && P.lumps[lb - 1u].bite > 0u) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], P.lumps[lb - 1u].bite); }
+    if (P.lumps[lb - 1u].bite > 0u) { atomicAdd(&news[dense_base() + DENSE_HEAD + P.n + 2u * P.w * P.h + c], P.lumps[lb - 1u].bite); }
 }
 
 // **Lumps** (held bodies, `BigParams::lumps`, 2026-11-16, the mini-boss
@@ -3910,11 +3779,48 @@ fn plant(@builtin(global_invocation_id) gid: vec3<u32>) {
     pset(PB_B, i, clamp(p + (pf(0u) * p + pf(1u) * (n * 0.25)) * room * pace, 0.0, c));
 }
 
+// **Dry slime burns** and **fed slime is fireproof** (`BigParams::
+// fire_dry`, `fire_fed`, the plan's C1; the CPU's `slime_fire`): 1 where
+// the trail doesn't wet cell i against fire (its 3 x 3 holds walkers whose
+// food news is stale and none whose news is fresh, or holds a set walker),
+// 2 where it is wet whatever its trail (fresh news, with `fire_fed`), else
+// 0. The news is the spread's last block, as the step left it (`nhear`
+// reads it; 0 where no walker stood), the set count last tick's
+// `setcount`; `S.t` is the tick's last step plus one here, the CPU's
+// `steps`. No new state.
+fn slime_fire(i: u32) -> u32 {
+    let dry_on = (P.fire_dry & 1u) != 0u;
+    let fed_on = (P.fire_dry & 2u) != 0u;
+    if (!(dry_on || fed_on) || (!fed_on && trail_out[i] < pf(8u))) { return 0u; }
+    let c = P.w * P.h;
+    let last = select(1u, 2u, ((P.wclock >> 24u) & 1u) == 1u);
+    let lag = P.wclock & 0xFFFFu;
+    let sets = dry_on && P.set_scar > 0.0;
+    let x = i32(i % P.w); let y = i32(i / P.w);
+    var fresh = false; var stale = false; var held = false;
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let nx = x + dx; let ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+            let j = u32(ny) * P.w + u32(nx);
+            let v = atomicLoad(&news[P.n + last * c + j]);
+            if (v > 0u) {
+                if (v + lag < S.t) { stale = true; } else { fresh = true; }
+            }
+            if (sets && atomicLoad(&news[setc_at() + j]) > 0u) { held = true; }
+        }
+    }
+    if (held || (dry_on && stale && !fresh)) { return 1u; }
+    if (fed_on && fresh) { return 2u; }
+    return 0u;
+}
+
 @compute @workgroup_size(256)
 fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
     if (i >= P.w * P.h) { return; }
-    let wet = pwet(i) || trail_out[i] >= pf(8u) || agar[i] == 0u;
+    let sf = slime_fire(i);
+    let wet = pwet(i) || sf == 2u || (trail_out[i] >= pf(8u) && sf != 1u) || agar[i] == 0u;
     let heat = pget(PB_FA, i);
     // The fuel: plants, and the crust at `crust_fuel` (C2), eaten after.
     let pl = pget(PB_B, i);
@@ -3979,7 +3885,6 @@ fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (c == NONE || pget(PB_FA, c) < pf(9u)) { return; }
     if (armoured(k)) { return; }
     atomicAdd(&wstat[3], 1u);
-    if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     atomicSub(&occ[c], 1u);
     atomicStore(&claim[c], NONE);
     energy[k] = -1.0;
@@ -4038,7 +3943,7 @@ fn mindlay(@builtin(global_invocation_id) gid: vec3<u32>) {
 // `ky`), squared as on the CPU, in the state kind `kir` reads (1, Shatter:
 // dormant and gassed at the step in gas word 0; 2, Detonate: sick past the
 // immune count) takes a blow as `kill`'s (a lump's armoured member is hurt
-// and not counted, a condensed one breaks and is counted) and, if it dies,
+// and not counted) and, if it dies,
 // clears the trail on its cell (each species' too). Kills count on
 // `wstat[3]` as a strike's.
 const READ_SLEEP: u32 = 1u;
@@ -4060,7 +3965,6 @@ fn readkill(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (!sleeps && !ill) { return; }
     if (armoured(k)) { return; }
     atomicAdd(&wstat[3], 1u);
-    if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     let i = cell(wk.x, wk.y);
     atomicSub(&occ[i], 1u);
     // As `strike` and `firekill`: a dead walker's cell holds no claim

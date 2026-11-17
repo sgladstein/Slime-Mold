@@ -43,7 +43,7 @@
 use std::collections::VecDeque;
 use std::sync::mpsc;
 
-use slime_mould::mould::big::{BigDish, BigParams, DENSE, LUMP_SHIFT};
+use slime_mould::mould::big::{BigDish, BigParams, LUMP_SHIFT};
 use slime_mould::mould::larder_world::race_params;
 use slime_mould::mould::map::{Crystal, Map};
 use slime_mould::mould::tiers::set_key;
@@ -57,13 +57,9 @@ const DH: usize = 100;
 fn key(p: &mut BigParams, k: &str, v: &str) {
     let f = || v.parse::<f32>().unwrap_or_else(|_| panic!("{k}={v}"));
     match k {
-        "tether" => p.tether = f() as u8,
-        "tether_hold" => p.tether_hold = f(),
         "lone_step" => p.lone_step = f(),
         "lone_floor" => p.lone_floor = f(),
         "body_r" => p.body_r = f() as u8,
-        "body_pull" => p.body_pull = f(),
-        "body_lone" => p.body_lone = f(),
         "blocked_keep" => p.blocked_keep = f() != 0.0,
         "blocked_reset" => p.blocked_reset = f(),
         "blocked_retry" => p.blocked_retry = f() as u8,
@@ -116,9 +112,9 @@ fn world(seed: u64, n: usize, dist: f32, arm: &Arm) -> (BigDish, (f32, f32), f32
         key(&mut p, k, v);
     }
     let mut d = BigDish::with_map(p, &m);
-    // Every walker is condensed and in lump 0 (`big::LUMP_SHIFT`), so the
-    // whole dish is the body.
-    d.dense = vec![DENSE | 1 << LUMP_SHIFT; d.walkers.len()];
+    // Every walker is in lump 0 (`big::LUMP_SHIFT`), so the whole dish is
+    // the body. (Condensed too until condensing was deleted, 11-17.)
+    d.dense = vec![1 << LUMP_SHIFT; d.walkers.len()];
     (d, (tx * s, ty * s), tr * s)
 }
 

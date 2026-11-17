@@ -49,9 +49,6 @@ impl<W: World> Game<W> {
             let (carry, expire) = if cast > 0 { (m.child[cast as usize - 1], m.expire[cast as usize - 1]) } else { (0, false) };
             self.bullets.push(Bullet { at: s.from, dir: (dx / d, dy / d), left: d, r: s.r, by: b, turret, fresh: true, pierce, split: m.split, cast, speed, carry, expire, seek: m.seek, flown: 0.0, aim: aims.get(q).copied().unwrap_or(f32::INFINITY), over: s.over });
         }
-        if r.seek_turn > 0.0 && self.bullets.iter().any(|b| b.seek > 0) {
-            self.steer();
-        }
         let leg = r.bullet_speed * self.s() * dt;
         let mut legs = Vec::with_capacity(self.bullets.len());
         let mut who = Vec::with_capacity(self.bullets.len());
@@ -174,7 +171,7 @@ impl<W: World> Game<W> {
                         let a = a0 + if n > 1 { (j as f32 / (n - 1) as f32 * 2.0 - 1.0) * r.split_fan } else { 0.0 };
                         let dir = (a.cos(), a.sin());
                         let at = (h.0 + dir.0 * (rr + 1.0), h.1 + dir.1 * (rr + 1.0));
-                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, turret: b.turret, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: r.seek_after * sc, aim: f32::INFINITY, over: b.over });
+                        pieces.push(Bullet { at, dir, left: r.split_range * sc, r: rr, by: b.by, turret: b.turret, fresh: false, pierce: 0, split: b.split - 1, cast: 0, speed: b.speed, carry: 0, expire: false, seek: b.seek, flown: 0.0, aim: f32::INFINITY, over: b.over });
                     }
                 }
                 return false;
@@ -266,149 +263,9 @@ impl<W: World> Game<W> {
                 let (sn, cs) = a.sin_cos();
                 let d = (dir.0 * cs - dir.1 * sn, dir.0 * sn + dir.1 * cs);
                 let pierce = m.pierce.saturating_add(shape.pierce);
-                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, turret: o.turret, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: self.rules.seek_after * self.s(), aim: f32::INFINITY, over });
+                self.bullets.push(Bullet { at, dir: d, left: reach, r, by: o.by, turret: o.turret, fresh: false, pierce, split: m.split, cast, speed: ammo.speed(), carry: m.child[i], expire: m.expire[i], seek: m.seek, flown: 0.0, aim: f32::INFINITY, over });
             }
         }
-    }
-}
-
-impl<W: World> Game<W> {
-    /// **Seeking bullets turn onto the nearest live slime ahead**
-    /// (`rounds::Card::Seek`, step C of the gun-system review, 2026-11-16),
-    /// before this frame's legs. Each seeker that has flown
-    /// `Rules::seek_after` turns, by at most `Rules::seek_turn` a seek card,
-    /// toward a live mini-boss ahead in reach and in sight, else the
-    /// cheapest square of the mould grid (`World::mould_grid` at a dish
-    /// cell a square; distance, times one plus twice the turn) holding
-    /// `Rules::seek_min` walkers within `Rules::seek_r` (and what it has
-    /// left to fly) and `Rules::seek_cone` of its heading, in sight, and
-    /// more than `Rules::seek_gap` from where a bullet struck last frame and
-    /// from what the seekers before it took this frame. The bullets' order
-    /// is the same on every world and run, so the picks are.
-    ///
-    /// What it was meant to fix: misses (the owner's 14:24Z question, "how
-    /// often do soldiers you're not controlling miss their target"):
-    /// squads on their own strike nothing with one shot in five against
-    /// thin slime, one in ten on a thick front. In paired 10 s windows it
-    /// left misses where they were (88 of 446 shots against 81 of 438) and
-    /// added about 6% kills (`Reports/gun-seek-2026-11-16/`): the grid it
-    /// steers by counts walkers a second old, while a bullet stops on trail.
-    /// The nearest square first, weighted to straight ahead, so a seeker
-    /// never passes the walkers coming at the squad for denser slime
-    /// behind them (the owner's worry). The gap is freshness: where a
-    /// bullet struck, the slime was killed, but the grid (a game second old
-    /// on the GPU) still holds it, and two seekers do not chase one walker.
-    ///
-    /// Tried and dropped: turning only a bullet with no walker on its line
-    /// (as the owner was told): the grid cannot say what a bullet will
-    /// strike (a second old, and bullets fly through the faint trail of a
-    /// lone walker), so the misses stayed (thin slime 87 of 635 against 75
-    /// of 656). Before that, seekers flying over the slime to a mark (a
-    /// mini-boss, or the slime feeding on a crystal): they helped buckshot
-    /// on a mini-boss but cost the squad a soldier, and the owner found
-    /// feeders pointless ("the rest of the slime will just immediately
-    /// surge back") and a mini-boss-only card too narrow.
-    pub(super) fn steer(&mut self) {
-        let r = self.rules;
-        let sc = self.s();
-        let bin = (sc as usize).max(1);
-        let Some(grid) = self.world.mould_grid(bin) else { return };
-        let (w, h) = self.world.size();
-        let (gw, gh) = (w.div_ceil(bin), h.div_ceil(bin));
-        if grid.len() < gw * gh {
-            return;
-        }
-        let b = bin as f32;
-        let after = r.seek_after * sc;
-        let cos_cone = r.seek_cone.cos();
-        let gap = r.seek_gap * sc;
-        // Last frame's hits, then each pick as it is made.
-        let mut taken: Vec<(f32, f32)> = self.last_shots.iter().filter_map(|s| s.hit).collect();
-        let mut turned = 0u32;
-        for i in 0..self.bullets.len() {
-            let bl = self.bullets[i];
-            if bl.seek == 0 || bl.flown + 1e-3 < after {
-                continue;
-            }
-            let reach = (r.seek_r * sc).min(bl.left);
-            // A mini-boss ahead in reach and in sight first (`Game::boss_aim`'s
-            // rule for soldiers).
-            let boss = self
-                .bosses
-                .live
-                .iter()
-                .filter(|o| o.members > 0)
-                .map(|o| {
-                    let (dx, dy) = (o.centre.0 - bl.at.0, o.centre.1 - bl.at.1);
-                    let d = dx.hypot(dy).max(1e-3);
-                    (o.centre, d, (dx * bl.dir.0 + dy * bl.dir.1) / d, (o.members as f32 / std::f32::consts::PI).sqrt())
-                })
-                .filter(|&(c, d, cos, r)| d - r <= reach && cos >= cos_cone && self.clear_line(bl.at, c))
-                .min_by(|a, b| a.1.total_cmp(&b.1))
-                .map(|(c, ..)| c);
-            if let Some(p) = boss {
-                turned += self.turn_to(i, p) as u32;
-                continue;
-            }
-            let (cx, cy) = ((bl.at.0 / b) as i64, (bl.at.1 / b) as i64);
-            let n = (reach / b).ceil() as i64 + 1;
-            let mut best: Vec<(f32, (f32, f32))> = Vec::new();
-            for gy in (cy - n).max(0)..=(cy + n).min(gh as i64 - 1) {
-                for gx in (cx - n).max(0)..=(cx + n).min(gw as i64 - 1) {
-                    if grid[gy as usize * gw + gx as usize] < r.seek_min.max(1) {
-                        continue;
-                    }
-                    let p = ((gx as f32 + 0.5) * b, (gy as f32 + 0.5) * b);
-                    let (dx, dy) = (p.0 - bl.at.0, p.1 - bl.at.1);
-                    let d = dx.hypot(dy);
-                    if d > reach || d < 0.5 {
-                        continue;
-                    }
-                    let cos = (dx * bl.dir.0 + dy * bl.dir.1) / d;
-                    if cos < cos_cone {
-                        continue;
-                    }
-                    if taken.iter().any(|t| (t.0 - p.0).hypot(t.1 - p.1) <= gap) {
-                        continue;
-                    }
-                    best.push((d * (1.0 + 2.0 * cos.clamp(-1.0, 1.0).acos()), p));
-                }
-            }
-            best.sort_by(|a, b| a.0.total_cmp(&b.0));
-            // In sight: the first few cheapest, so a wall ahead costs a few
-            // line tests, not one a square.
-            let Some(&(_, p)) = best.iter().take(4).find(|(_, p)| self.clear_line(bl.at, *p)) else { continue };
-            taken.push(p);
-            turned += self.turn_to(i, p) as u32;
-        }
-        self.seek_turns += turned;
-    }
-
-    /// Bullet `i` turns toward `p`, at most `Rules::seek_turn` a seek card,
-    /// if its new heading is clear of walls for as far as `p` (or what it
-    /// has left); false, and straight on, if not. The line to `p` is clear,
-    /// but a capped turn points short of it: in a first paired run seekers
-    /// bent into walls (7 of a guard squad's 49 shots in 10 s against none).
-    fn turn_to(&mut self, i: usize, p: (f32, f32)) -> bool {
-        let bl = self.bullets[i];
-        let want = (p.1 - bl.at.1).atan2(p.0 - bl.at.0);
-        let now = bl.dir.1.atan2(bl.dir.0);
-        let mut da = want - now;
-        while da > std::f32::consts::PI {
-            da -= std::f32::consts::TAU;
-        }
-        while da < -std::f32::consts::PI {
-            da += std::f32::consts::TAU;
-        }
-        let max = self.rules.seek_turn * bl.seek as f32;
-        let a = now + da.clamp(-max, max);
-        let dir = (a.cos(), a.sin());
-        let l = (p.0 - bl.at.0).hypot(p.1 - bl.at.1).min(bl.left);
-        if !self.clear_line(bl.at, (bl.at.0 + dir.0 * l, bl.at.1 + dir.1 * l)) {
-            return false;
-        }
-        self.bullets[i].dir = dir;
-        true
     }
 }
 

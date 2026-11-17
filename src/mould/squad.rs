@@ -728,7 +728,6 @@ pub fn shots_seeking(d: &mut BigDish, shots: &[ShotIn], catch: &[u16], slime: f3
         let (x, y, _) = d.walkers[k];
         let c = y as usize * w + x as usize;
         // Whole walkers: a blast kills every living one in its disc, and the kills are counted whole.
-        // A condensed one breaks instead (`BigDish::hit`), a kill's worth.
         if let Some(q) = (0..shots.len()).find(|&q| inside(c, q)) {
             // A lump's armoured member is hurt (`BigDish::armoured`, a
             // mini-boss, 2026-11-16), not counted: it lost no mass (counted,
@@ -737,10 +736,10 @@ pub fn shots_seeking(d: &mut BigDish, shots: &[ShotIn], catch: &[u16], slime: f3
                 continue;
             }
             killed[q] += 1;
-            // A condensed walker breaks (`BigDish::hit`); any other, with the
-            // spray, flies out of the hit as a droplet (`BigDish::spray_one`)
-            // if its draw picks it (`Frame::spray_share`).
-            if !sprays || d.is_dense(k) || !spray_picked(k as u32, share) {
+            // With the spray, a walker flies out of the hit as a droplet
+            // (`BigDish::spray_one`) if its draw picks it
+            // (`Frame::spray_share`).
+            if !sprays || !spray_picked(k as u32, share) {
                 d.hit(k);
                 continue;
             }
@@ -855,7 +854,6 @@ pub fn block_cell(w: usize, h: usize, bx: i64, by: i64) -> (i64, i64) {
 pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
     let (w, h) = (d.w, d.h);
     let occ = d.occupancy();
-    let dense = dense_cells(d);
     let bite = bite_cells(d);
     let (nbw, nbh) = (w.div_ceil(BIN) as i64, h.div_ceil(BIN) as i64);
     units[..units.len().min(UNITS_MAX)]
@@ -863,9 +861,10 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
         .map(|u| {
             let (cx, cy) = cell_of(w, h, u.x, u.y);
             // Whole walkers; the game weighs them per rule (`larder_world::Rules::mass`).
-            // A condensed walker (`BigParams::condense`) touches as two, a
-            // lump's member as 1 + its bite (`Lump::bite`).
-            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + dense.get(i).map_or(0, |&n| n as u32) + bite.get(i).map_or(0, |&n| n)).sum();
+            // A lump's member touches as 1 + its bite (`Lump::bite`). A
+            // condensed walker touched as two until 11-17 (`dense_cells`,
+            // deleted with condensing).
+            let touching = disc(w, h, cx, cy, r2(u.touch)).map(|i| occ[i] as u32 + bite.get(i).map_or(0, |&n| n)).sum();
             let s2 = r2(u.sight) as i64;
             let r = isqrt(r2(u.sight)) + 2;
             let (by0, by1) = ((cy - r).max(0) / BIN as i64, ((cy + r) / BIN as i64).min(nbh - 1));
@@ -892,27 +891,6 @@ pub fn read(d: &BigDish, units: &[UnitIn]) -> Vec<(u32, Option<usize>, u32)> {
             (touching, best.1, best.0)
         })
         .collect()
-}
-
-/// The condensed walkers holding each cell (`BigParams::condense`; the
-/// GPU's `dcount` pass), empty while none can be: dormant ones count, as
-/// in `occ`; spores and the dead hold no cell. Only while condensing or
-/// thickening is on, as the GPU counts them (`Engine::dense_walkers`,
-/// 11-16): a walker condensed before condensing was switched off touches
-/// as one, where the CPU had counted it twice and the GPU, which skips
-/// the count then, once.
-pub fn dense_cells(d: &BigDish) -> Vec<u16> {
-    if d.dense.is_empty() || (d.p.condense == 0 && d.p.thicken <= 0.0) {
-        return Vec::new();
-    }
-    let mut n = vec![0u16; d.w * d.h];
-    for k in 0..d.walkers.len() {
-        if d.lives(k) && d.is_dense(k) && (d.life.is_empty() || !matches!(d.life[k], LIFE_SPORE | LIFE_DEAD)) {
-            let (x, y, _) = d.walkers[k];
-            n[y as usize * d.w + x as usize] += 1;
-        }
-    }
-    n
 }
 
 /// Each cell's lump members' bite (`Lump::bite`, the mini-bosses'
@@ -1209,37 +1187,6 @@ mod tests {
         }
         d.agar[mid] = true;
         assert_eq!(aim(&d, at).1, Some(first), "open again, the first aim");
-    }
-
-    /// Dense slime condenses (`BigParams::condense`): a condensed walker
-    /// touches a unit as two, and a shot into it breaks it (counted as a
-    /// kill) where it would kill an ordinary one.
-    #[test]
-    fn a_condensed_walker_touches_as_two_and_takes_two_shots() {
-        let mut d = world();
-        let (w, h) = (d.w, d.h);
-        let at = |i: usize| UnitIn { x: (i % w) as f32 + 0.5, y: (i / w) as f32 + 0.5, touch: 3.0, sight: 30.0, take_r: 0.0, take: 0.0, smell_r: 0.0, smell: 0.0, over: false };
-        // The unit where the most walkers touch it.
-        let thick = (0..w * h).step_by(3).max_by_key(|&i| (read(&d, &[at(i)])[0].0, usize::MAX - i)).unwrap();
-        let (tx, ty) = ((thick % w) as f32 + 0.5, (thick / w) as f32 + 0.5);
-        let u = at(thick);
-        let plain = read(&d, &[u])[0].0;
-        assert!(plain > 2, "walkers touch the unit: {plain}");
-        // Condensing on: only then does a condensed walker touch as two
-        // (`dense_cells`, 11-16, as the GPU counts them).
-        d.p.condense = 30;
-        d.dense = vec![0; d.walkers.len()];
-        let near: Vec<usize> = (0..d.walkers.len()).filter(|&k| d.lives(k) && (d.walkers[k].0.floor() + 0.5 - tx).hypot(d.walkers[k].1.floor() + 0.5 - ty) <= 3.0).collect();
-        for &k in &near {
-            d.dense[k] = super::super::big::DENSE;
-        }
-        let heavy = read(&d, &[u])[0].0;
-        assert!(heavy > plain && heavy <= 2 * plain, "condensed walkers touch as two: {heavy} against {plain}");
-        let living = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k)).count();
-        let before = living(&d);
-        let out = shots(&mut d, &[ShotIn { from: (tx, ty), to: (tx + 1.0, ty), r: 3.0, over: false }], 0.0, 0, 0.0, (0, 0.0, 1.0));
-        assert!(out[0].killed > 0, "the shot struck");
-        assert_eq!(living(&d), before - (out[0].killed as usize - near.iter().filter(|&&k| d.lives(k) && !d.is_dense(k)).count()), "condensed walkers break, the rest die");
     }
 
     #[test]

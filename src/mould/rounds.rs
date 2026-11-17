@@ -145,7 +145,7 @@ pub enum Card {
     /// or walkers within `Rules::seek_catch` cells a card of its line
     /// (`Game::catches`, `squad::trace`), in both engines. The first tries
     /// turned the bullet toward slime ahead no bullet had picked
-    /// (`Game::steer`, now off: `Rules::seek_turn` 0): it read slime a
+    /// (`Game::steer`, `Rules::seek_turn`; deleted 11-17): it read slime a
     /// second old and missed as often (Reports/gun-seek-2026-11-16/).
     Seek,
     /// **The Mind bullets** (2026-11-16, step D of the gun-system review,

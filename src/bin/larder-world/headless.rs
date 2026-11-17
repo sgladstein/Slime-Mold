@@ -598,9 +598,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         let g = app.game.as_ref().unwrap();
         let rd = &app.rounds;
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
-        // goes last, so the reports' parsers (`raw/make_clips.py`) still match.
+        // goes last, so the reports' parsers (`raw/make_clips.py`) still match;
+        // seeker turns stay printed as 0 since steering was deleted (11-17).
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts, {} reader casts, {} flares, {} torches, {} walkers killed by fire", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4], rd.cast[5], rd.cast[6], rd.cast[7], g.fire_killed);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, 0 seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts, {} reader casts, {} flares, {} torches, {} walkers killed by fire", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4], rd.cast[5], rd.cast[6], rd.cast[7], g.fire_killed);
         }
         if g.shells_fired > 0 {
             let next = g.shells.last().map_or(String::new(), |s| format!(", the newest coming down at {:.0},{:.0}", s.to.0, s.to.1));
@@ -769,17 +770,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // What the slime has eaten, and the surges it built (11-15,
         // food-driven surges).
         println!("  surge: the slime ate {:.0} food ({:.1}/s); meter {:.1} of {:.0}, {} surges", g.slime_ate, g.slime_ate / g.time().max(1e-3), g.surge_meter, g.rules.surge_food, g.surges);
-        // Condensed or thickened walkers (11-15, the thickening films):
-        // how many, and the mould's mass (a condensed walker twice).
-        if g.world.e.condenses {
+        // Breakaways on their way (`roam`; specks of ordinary slime since
+        // 11-16). The line counted condensed or thickened walkers too until
+        // both were deleted (11-17); they print as 0 so the films'
+        // parsers still match.
+        if g.world.e.specks {
             let e = &g.world.e;
             let words = e.dense_of();
             let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
-            let thick = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::DENSE != 0).count();
-            // Breakaways on their way (`roam`; specks of ordinary slime
-            // since 11-16).
             let roaming = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::ROAM != 0).count();
-            println!("  dense: {thick} condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould + thick, g.world.mass());
+            println!("  dense: 0 condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould, g.world.mass());
         }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.

@@ -87,7 +87,7 @@ pub struct BossRules {
     /// boss"): each one's grade is drawn evenly from `grade_lo` to
     /// `grade_hi` (0 to 1) as it forms, and sets, from the low end to the
     /// high: the blows each member takes to kill (`armour_lo` to
-    /// `armour_hi`; ordinary slime takes 1, condensed 2), the walkers it
+    /// `armour_hi`; ordinary slime takes 1), the walkers it
     /// touches a soldier as beyond itself (`bite_lo` to `bite_hi`), its
     /// size (`reach` x 1 -/+ `size`/2) and its pace (`haste` x 1 to
     /// 1 + `faster`).

@@ -1,0 +1,78 @@
+<title>Starving Slime Burns</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root { --bg:#f6f3ec; --fg:#1d1b17; --muted:#6b655a; --card:#fffdf8; --line:#e2dccf; --accent:#c4520f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 Inter, system-ui, sans-serif; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:24px 48px }
+main { max-width:1100px; margin:0 auto }
+h1, h2 { font-family:"Space Grotesk", Inter, sans-serif; text-wrap:balance; line-height:1.2 }
+h1 { font-size:1.9rem; margin:0 0 .3rem }
+h2 { font-size:1.25rem; margin:2rem 0 .5rem }
+p, ul { max-width:72ch }
+.sub { color:var(--muted); margin:0 0 1.2rem }
+figure { margin:1rem 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px }
+figure img { display:block; width:100%; border-radius:6px }
+.labels { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; font-size:.85rem; margin-top:.5rem }
+.labels b { display:block; font-family:"Space Grotesk", Inter, sans-serif; font-size:1rem }
+.labels span { color:var(--muted) }
+figcaption { color:var(--muted); font-size:.9rem; margin-top:.6rem }
+.wrap { overflow-x:auto }
+table { border-collapse:collapse; font-size:.9rem; min-width:720px; width:100% }
+th, td { text-align:right; padding:6px 9px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums }
+th:first-child, td:first-child { text-align:left }
+th { font-weight:600; color:var(--muted) }
+b.k { color:var(--accent) }
+.key { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--muted); margin:.4rem 0 0 }
+.key i { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:5px }
+</style>
+<main>
+<h1>Starving slime burns</h1>
+<p class="sub">Simulation-use plan step C1, 2026-11-17. Your ruling: "fed slime is fireproof; starving slime burns". Fire now reads the slime's food news: where the slime has not heard of food for the wither lag (5 s), or has set, its trail no longer puts fire out. CPU probe, planet 2 under full meadow, the default slime (shape C), a disc 10 dish cells across picked on the body far from crystals, every plant in it lit. One frame every third of a game second, 20 s.</p>
+<div class="key"><span><i style="background:#f0d75a"></i>slime (by its trail)</span><span><i style="background:#968c8c"></i>walkers with stale food news</span><span><i style="background:#ff6414"></i>fire</span><span><i style="background:#5a9638"></i>meadow</span></div>
+
+<h2>A part cut off from food, lit once it is starving</h2>
+<figure>
+<img src="cut.gif" alt="Three panels of the same cut-off part lit on fire: with the trail alone it barely burns; with the new rule the whole part burns away in about two seconds; with fed slime fireproof too it burns the same">
+<div class="labels">
+<div><b>Before: trail alone</b><span>killed 57 of 937 (6%)</span></div>
+<div><b>Starving burns (now on)</b><span>killed all 937, and 46 born while it burnt</span></div>
+<div><b>Fed fireproof too</b><span>the same: 983</span></div>
+</div>
+<figcaption>Seed 1. The ring round the part was cut, the rest of the slime taken away so it can't rejoin; lit at 4.1 s after the cut, when every walker in it had gone 5 s without news of food.</figcaption>
+</figure>
+
+<h2>The same disc, joined to the fed body</h2>
+<figure>
+<img src="joined.gif" alt="Three panels of the same fed disc lit on fire: with the trail alone and with the new rule a patch burns through the thin slime between tubes; with fed slime fireproof nothing burns">
+<div class="labels">
+<div><b>Before: trail alone</b><span>killed 777 of 1,203 (65%)</span></div>
+<div><b>Starving burns (now on)</b><span>the same: 777</span></div>
+<div><b>Fed fireproof too</b><span>killed 0</span></div>
+</div>
+<figcaption>Seed 1, lit at the same tick. The new rule changes nothing on fed slime. But fed slime was never fireproof: fire runs through the thin trail between its tubes, which is under the wetness bar. Making it wholly fireproof is the third panel, off for now; the card in the thread asks you.</figcaption>
+</figure>
+
+<h2>Eight seeds</h2>
+<p>Fire kills a walker in the disc at the light, over the next 20 s. Six of the eight cut parts went stale; on seed 2 the part found food first, and on seed 7 the disc emptied before the light.</p>
+<div class="wrap"><table>
+<tr><th>Seed</th><th>Cut, before</th><th>Cut, now</th><th>Cut, fed-proof</th><th>Joined, before</th><th>Joined, now</th><th>Joined, fed-proof</th></tr>
+<tr><td>1</td><td>0.06</td><td><b class="k">1.05</b></td><td>1.05</td><td>0.65</td><td>0.65</td><td><b class="k">0</b></td></tr>
+<tr><td>2 (found food)</td><td>0.46</td><td>0.46</td><td>0</td><td>0.24</td><td>0.24</td><td><b class="k">0</b></td></tr>
+<tr><td>3</td><td>0.04</td><td><b class="k">1.14</b></td><td>1.04</td><td>0.37</td><td>0.37</td><td><b class="k">0</b></td></tr>
+<tr><td>4</td><td>0</td><td><b class="k">1.00</b></td><td>1.00</td><td>0.57</td><td>0.57</td><td><b class="k">0</b></td></tr>
+<tr><td>5</td><td>0.003</td><td><b class="k">1.01</b></td><td>1.01</td><td>0.33</td><td>0.33</td><td><b class="k">0</b></td></tr>
+<tr><td>6</td><td>0.02</td><td><b class="k">1.09</b></td><td>1.06</td><td>0.34</td><td>0.34</td><td><b class="k">0</b></td></tr>
+<tr><td>7 (emptied)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>8</td><td>0.04</td><td><b class="k">1.13</b></td><td>1.02</td><td>0.58</td><td>0.58</td><td><b class="k">0</b></td></tr>
+</table></div>
+<ul>
+<li>A starving part burns whole where before it barely burnt: 6 of 6 seeds.</li>
+<li>Fed slime burns exactly as before with the new rule: 8 of 8.</li>
+<li>Fed fireproof too: the fed disc lost nothing on 7 of 7, the starving parts still burnt whole.</li>
+</ul>
+
+<h2>Where it will matter</h2>
+<p>In the game a part cut by a gap in the slime closes it or finds food within seconds, before its news goes stale (every first try at this measure left nothing starving to burn). The rule bites where a part stays cut: behind walls or water, specks and breakaways far from food, a part whose crystal ran out, and slime that has set under fire.</p>
+</main>

@@ -141,8 +141,6 @@ struct Read {
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
     own: u32,
-    /// The enemy's condensed walkers (`wstat[8]`), for `World::mass`.
-    dense: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
     /// The engine's kill counter at the frame's end (`Engine::struck`,
@@ -166,8 +164,6 @@ pub struct GpuWorld {
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
     own: usize,
-    /// The enemy's condensed walkers at the last readout (`World::mass`).
-    dense: usize,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
@@ -372,7 +368,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -502,7 +498,7 @@ impl GpuWorld {
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3], lumps }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -512,7 +508,6 @@ impl GpuWorld {
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
         self.own = r.own as usize;
-        self.dense = r.dense as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
@@ -855,10 +850,10 @@ impl World for GpuWorld {
         self.own
     }
 
-    /// The living plus the enemy's condensed walkers, from the same
-    /// readout (`count` adds them to `wstat[8]`), so no read-back.
+    /// The enemy's living, from the same readout, so no read-back (until
+    /// 11-17 plus its condensed walkers, `wstat[8]`).
     fn mass(&self) -> usize {
-        self.living - self.own + self.dense
+        self.living - self.own
     }
 
     fn set_task(&mut self, k: usize, t: Task) {
@@ -2017,6 +2012,91 @@ mod tests {
             (burning, barren_cells) = (cpu.burning, barren);
         }
         assert!(burning > 50 && barren_cells > 50, "the crust carried the fire: {burning} burning, {barren_cells} barren at 24 s");
+    }
+
+    /// **Dry slime burns, and fed slime is fireproof, on the GPU as on the
+    /// CPU** (the simulation-use plan's C1, 2026-11-17; `BigParams::
+    /// fire_dry`, `fire_fed`): the plant twin's map
+    /// in full plants, the food news on (a wither too rare to kill anyone)
+    /// with a short lag, so the body away from its crystal is stale, and
+    /// every plant within 20 dish cells of home lit at 12 s. Plants, fire and char match at every
+    /// check, and the walkers' count, with `fire_dry` on and with both.
+    /// Planted: a GPU that ignores either must fail it. And the fire burns
+    /// into stale slime (more fire kills with `fire_dry` than without) and
+    /// spares the fed (fewer with `fire_fed` too).
+    #[test]
+    fn dry_slime_burns_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+        let (wither, lag) = (1e-12, 2);
+        // (largest fire difference over the run, CPU fire kills, stale
+        // walkers on the CPU at the burn)
+        // Each engine's (fire_dry, fire_fed).
+        let play = |(dry, fed): (bool, bool), (gpu_dry, gpu_fed): (bool, bool)| -> (f32, u64, usize) {
+            let p = BigParams { wither, wither_lag: lag, fire_dry: dry, fire_fed: fed, ..race_params(seed, scale, walkers) };
+            let s = Settings { wither, wither_lag: lag, fire_dry: gpu_dry, fire_fed: gpu_fed, ..race_settings(seed, scale, walkers) };
+            let mut cpu = BigDish::with_map(p, &m);
+            let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
+            assert!(!cpu.plant.is_empty() && gpu.e.plants && gpu.e.withers);
+            let home = cpu.homes[0];
+            let (mut worst, mut stale) = (0.0f32, 0);
+            for sec in 1..=24 {
+                let f = Frame::default();
+                for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                    w.frame(&f, 15);
+                }
+                if sec == 12 {
+                    let now = cpu.steps;
+                    stale = cpu.heard.iter().filter(|&&v| v > 0 && v + (lag as u64) < now).count();
+                    let wet = cpu.trail.iter().filter(|&&t| t >= cpu.p.fire_damp).count();
+                    let dried = cpu.slime_fire().iter().filter(|&&d| d == crate::mould::plants::SLIME_DRY).count();
+                    let fuel = (0..cpu.plant.len()).filter(|&i| cpu.plant[i] >= cpu.p.fire_fuel && cpu.trail[i] >= cpu.p.fire_damp).count();
+                    eprintln!("12 s: {wet} cells wet by trail, {dried} marked dry, {fuel} wet with fuel; living {}", World::living(&cpu));
+                    // Every cell with fuel within 20 dish cells of home
+                    // lit, wet or not: the fire step puts out what is wet.
+                    cpu.ignite(home.0, home.1, 20.0, 1.0);
+                    gpu.e.ignite(&gpu.shared, &[(home.0, home.1, 20.0, 1.0)]);
+                    for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                        w.frame(&f, 30);
+                    }
+                }
+                World::burned(&mut cpu);
+                World::burned(&mut gpu);
+                let (pl, _, fire, ch) = gpu.e.plants_of();
+                let diff = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+                let cfire = if cpu.fire.is_empty() { vec![0.0; pl.len()] } else { cpu.fire.clone() };
+                let cchar = if cpu.char.is_empty() { vec![0.0; pl.len()] } else { cpu.char.clone() };
+                let (dp, df, dc) = (diff(&pl, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar));
+                let (nc, ng) = (World::living(&cpu), World::living(&gpu));
+                if (dry, fed) == (gpu_dry, gpu_fed) {
+                    assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2), "{sec} s: plants {dp} fire {df} char {dc}");
+                    assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
+                }
+                worst = worst.max(df);
+            }
+            (worst, cpu.fire_killed, stale)
+        };
+        let (df, dry_kills, stale) = play((true, false), (true, false));
+        eprintln!("dry slime burns: largest fire difference {df:.2e}; {stale} cells of stale news at the burn; fire killed {dry_kills}");
+        assert!(stale > 100, "the news went stale: {stale} cells");
+        let (_, wet_kills, _) = play((false, false), (false, false));
+        eprintln!("fed and stale alike wet: fire killed {wet_kills}");
+        assert!(dry_kills > wet_kills, "fire burns into stale slime: {dry_kills} against {wet_kills}");
+        let (df, _, _) = play((true, false), (false, false));
+        eprintln!("planted, the GPU ignores fire_dry: largest fire difference {df:.2e}");
+        assert!(df > 0.2, "the twin catches a GPU that ignores fire_dry");
+        let (df, fed_kills, _) = play((true, true), (true, true));
+        eprintln!("fed slime fireproof too: largest fire difference {df:.2e}; fire killed {fed_kills}");
+        assert!(fed_kills < dry_kills, "fed slime is fireproof: {fed_kills} against {dry_kills}");
+        let (df, _, _) = play((true, true), (true, false));
+        eprintln!("planted, the GPU ignores fire_fed: largest fire difference {df:.2e}");
+        assert!(df > 0.2, "the twin catches a GPU that ignores fire_fed");
     }
 
     /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU
