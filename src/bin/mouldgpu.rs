@@ -5995,10 +5995,7 @@ mod tests {
         // The crust rises 36 times as fast as the window's (1/1800 a fine
         // step) so slime sets within the test's 15 s; the code paths are
         // the same.
-        // Heat in the sensors (`fire_weight`) reads the plants' fire, which
-        // the race world has none of; its twin with the fire burning is
-        // `a_torch_lights_the_plants_on_the_gpu_as_on_the_cpu`.
-        const KEYS: [(&str, &str); 9] = [
+        const KEYS: [(&str, &str); 8] = [
             ("crust", "1"),
             ("crust_rise", "0.02"),
             ("crust_weight", "0.5"),
@@ -6007,7 +6004,6 @@ mod tests {
             ("flow_loss", "0.1"),
             ("lone_step", "3"),
             ("crystal_regrow", "0.001"),
-            ("fire_weight", "-5"),
         ];
         let (seed, scale, walkers) = (1, 2, 5_000);
         let mut s = race_settings(seed, scale, walkers);

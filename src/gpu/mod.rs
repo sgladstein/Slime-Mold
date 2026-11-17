@@ -71,9 +71,8 @@ pub const DRAW_SLEEP_DIE: u32 = 118;
 /// Bytes in `Params` (308 words).
 pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
-/// `energy_flow`, `hunger_scent`, `hunger_at`; then `fire_weight`, heat in
-/// the sensors (the gun cards' element family, 11-17), in the word
-/// `fed_full` held until 11-17, so Params did not grow).
+/// `energy_flow`, `hunger_scent`, `hunger_at`; then a spare word, which
+/// held `fed_full` and then `fire_weight`, both deleted 11-17).
 pub const BODY_AT: usize = 848;
 /// Where the crater's row sits in `Params` (2026-11-12, after one body's:
 /// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
@@ -460,9 +459,6 @@ pub struct Settings {
     /// slime is fireproof (`fire_fed`).
     pub fire_dry: bool,
     pub fire_fed: bool,
-    /// Heat in the sensors (`BigParams::fire_weight`, the element family,
-    /// 2026-11-17; 0 off, and 0 on a dish without plants).
-    pub fire_weight: f32,
     /// Fire lays alarm where it burns (`BigParams::fire_alarm`, the plan's
     /// C4; 0 off), carried in the plants' word 44.
     pub fire_alarm: f32,
@@ -736,7 +732,6 @@ impl Settings {
             set_armour: t.set_armour,
             fire_dry: t.fire_dry,
             fire_fed: t.fire_fed,
-            fire_weight: t.fire_weight,
             fire_alarm: t.fire_alarm,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
@@ -1053,9 +1048,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Fed slime is fireproof (`fire_fed=1`): a cell by fresh news is wet
         // against fire whatever its trail.
         "fire_fed" => s.fire_fed = b()?,
-        // Heat in the sensors (the element family, 11-17): under 0 the
-        // slime turns from fire.
-        "fire_weight" => s.fire_weight = f()?,
         // Fire scares the slime a little (`fire_alarm=F`, the plan's C4):
         // burning cells add F x their fire to the alarm field (shape C's
         // flinch reads it).
@@ -1257,7 +1249,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         set_armour: s.set_armour,
         fire_dry: s.fire_dry,
         fire_fed: s.fire_fed,
-        fire_weight: s.fire_weight,
         fire_alarm: s.fire_alarm,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
@@ -2296,10 +2287,9 @@ impl Engine {
         // word, spare until 11-13, is one body's lossy sharing (`eloss`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
-        // The row's last word is heat in the sensors (`fire_weight`, freed
-        // by `fed_full` 11-17): 0 without plants, whose fire field (in the
-        // plants' block) is absent.
-        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, if self.plants { s.fire_weight } else { 0.0 }]));
+        // The row's last word is spare (it held `fed_full`, then heat in
+        // the sensors, `fire_weight`; both deleted 11-17).
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));

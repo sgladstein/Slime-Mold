@@ -198,9 +198,10 @@ blast (cost 3) 7 of 9, not significant. It depends on the ground: strong on
 the meadow (350 kills against plain's 230 over six windows), little on
 the barrens and the fen. Sold from planet 2 on the
 Special bullets tab. Heat in the sensors (`fire_weight`, the designer's
-herding idea) is a flag, off: in its one A/B film the slime ringed the fire
-instead of crossing it, but more of it burned
-([element](../../Reports/gun-element-2026-11-17/README.md)). **Tinder**,
+herding idea) was a flag, off: in its one A/B film the slime ringed the
+fire instead of crossing it, but more of it burned
+([element](../../Reports/gun-element-2026-11-17/README.md)); it was
+deleted 11-17 (below). **Tinder**,
 the second card (cost 2, sold from planet 2, a trail): every bullet lays
 a strip of dry brush along its flight, never within 6 dish cells of a
 soldier, that withers in under a minute; it kills nothing, and a fire
@@ -209,10 +210,12 @@ runs along it. With the torch it killed more than the torch alone in 9 of
 against 123), and lost no soldier; laid up to the muzzle, every fire ran
 back to the squad (23 of 80 soldiers lost). It adds nothing to a scorch
 trail. The designer's crossing test (a lit tinder line across a stream of
-walkers going to food, one seed, 30 s) kept `fire_weight` off: 214
-crossed with no line, 10 at weight 0, 57 at -5; with the weight the
-slime waited at the edge and crossed the char when the fire died, and
-did not flow round the line
+walkers going to food, one seed, 16-45 s): 214 crossed with no line, 10
+with the line, 57 with `fire_weight` -5 and 31 with the simulation-use
+thread's `fire_alarm` 50; with either the slime waited at the edge and
+crossed the char when the fire died, and did not flow round the line.
+The alarm held harder and adds no sensor read, so `fire_weight` was
+deleted and `fire_alarm` is the one fire-shyness switch, off
 ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the

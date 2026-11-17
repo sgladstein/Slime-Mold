@@ -1882,17 +1882,11 @@ mod tests {
     /// plant twin's map, the torch's burst from its card at 10 s on the
     /// slime in the thickest grass by the home; the cells it lights, the
     /// fire field after, the fire's kills and the living walkers match
-    /// (exact on llvmpipe, a little slack on a card), with heat out of the
-    /// sensors and in them (`BigParams::fire_weight` -20, the designer's
-    /// heat-avoid trial).
+    /// (exact on llvmpipe, a little slack on a card). It ran with heat in
+    /// the sensors too (`fire_weight` -20) until that was deleted 11-17
+    /// for `fire_alarm` (Reports/dead-ends.md).
     #[test]
     fn a_torch_lights_the_plants_on_the_gpu_as_on_the_cpu() {
-        for weight in [0.0, -20.0] {
-            a_torch_twin(weight);
-        }
-    }
-
-    fn a_torch_twin(weight: f32) {
         use crate::mould::big::BigDish;
         use crate::mould::plants::pack;
         use crate::mould::rounds;
@@ -1902,8 +1896,8 @@ mod tests {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
         let mut m = Map::load(&dir, "flats").unwrap();
         m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
-        let mut cpu = BigDish::with_map(BigParams { fire_weight: weight, ..race_params(seed, scale, walkers) }, &m);
-        let mut gpu = GpuWorld::with_map(&device, &queue, Settings { fire_weight: weight, ..race_settings(seed, scale, walkers) }, scale, &m);
+        let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
         let k = squad::BurstRules::default();
         let f = Frame::default();
         for _ in 0..10 {
@@ -1940,7 +1934,7 @@ mod tests {
         let lit = cpu.burning - lit0;
         let (_, _, fire, _) = gpu.e.plants_of();
         let gpu_lit = fire.iter().filter(|&&v| v >= 1.0).count();
-        eprintln!("heat weight {weight}: the torch lit {lit} cells on the CPU, {gpu_lit} at full heat on the GPU");
+        eprintln!("the torch lit {lit} cells on the CPU, {gpu_lit} at full heat on the GPU");
         assert!(lit > 50, "it lit the grass: {lit}");
         assert!(lit.abs_diff(gpu_lit) <= tol(0, 2 + lit / 20), "lit: CPU {lit} GPU {gpu_lit}");
         let mut killed = (0, 0);
