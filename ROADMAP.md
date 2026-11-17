@@ -483,7 +483,7 @@ ground thread's.
 
 The technical lead asked for this table on 2026-11-17. It lists every game feature that is built but off in the default game, where the default game is shape C on the race world or a run planet with its `enemy_keys`. Each switch doubles a code path that the twins and the census rarely play. CLAUDE.md says defaults go on unless there is a measured harm or a stated uncertainty. So every row names its owner, the reason it is off, and what decides it. If a row has no reason left, its switch gets turned on or deleted.
 
-`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) turns on every switch marked ✓ in the "Test" column at the same time. It plays a few seconds of a squad fighting on the CPU, and on the GPU when one is available, so that none of the switches breaks another. A new switch gets its row here and goes into that test in the same PR.
+`all_off_switches_on_together_play_on_both_engines` (in `src/bin/mouldgpu.rs`) turns on every switch marked ✓ in the "Test" column at the same time. It plays 15 game seconds of a squad fighting on the CPU, and on the GPU when one is available, so that none of the switches breaks another. A new switch gets its row here and goes into that test in the same PR.
 
 | Switch (key) | Owner | Why it is off | What decides it | Test |
 |---|---|---|---|---|

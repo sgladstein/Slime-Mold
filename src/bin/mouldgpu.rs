@@ -6125,8 +6125,8 @@ mod tests {
     /// technical lead, 2026-11-17): the features built and left off by
     /// default (ROADMAP, *Switches that are off*) each double a code path
     /// that the twins and the census rarely play. This plays them all
-    /// together, on shape C with planet 1's keys, a squad attacking for a
-    /// game minute, once with set slime blocking and once trapping (they
+    /// together, on shape C with planet 1's keys, a squad attacking for 15
+    /// game seconds, once with set slime blocking and once trapping (they
     /// are the two sides of one A/B), on the CPU and, when there is one, on
     /// the GPU, so that they at least don't break each other: no panic, a
     /// living mould, a squad that fired. Not a twin: the engines aren't
@@ -6136,8 +6136,12 @@ mod tests {
     fn all_off_switches_on_together_play_on_both_engines() {
         use slime_mould::gpu::larder_world::{engine_params, race_settings, GpuWorld};
         use slime_mould::mould::larder_world::{shape_keys, Cmd, Game, Order, Rules, World};
-        const KEYS: [(&str, &str); 10] = [
+        // The crust rises 36 times as fast as the window's (1/1800 a fine
+        // step) so slime sets within the test's 15 s; the code paths are
+        // the same.
+        const KEYS: [(&str, &str); 11] = [
             ("crust", "1"),
+            ("crust_rise", "0.02"),
             ("crust_weight", "0.5"),
             ("crust_fast", "0.5"),
             ("setting", "1"),
@@ -6167,9 +6171,10 @@ mod tests {
             for k in 0..g.soldiers.len() {
                 assert!(g.apply(Cmd::Order(k, Order::Attack)), "{what}: soldier {k} takes the order");
             }
-            // Long enough for the squad to reach the slime and the crust
-            // and setting to build under its fire.
-            for _ in 0..900 {
+            // Long enough for the squad to reach the slime and set it under
+            // its fire (15 s; a minute at the window's crust rise, 11-17,
+            // was 60 s of CI for the technical lead's taste).
+            for _ in 0..225 {
                 g.step();
                 if g.end.is_some() {
                     break;
@@ -6177,8 +6182,8 @@ mod tests {
             }
             let (living, set) = (g.world.living(), g.world.set_cells().map_or(0, |c| c.iter().map(|&n| n as u64).sum::<u64>()));
             eprintln!("{what}: at {:.0} s {living} walkers, {set} set, {} soldiers, shots {}, killed {}", g.time(), g.alive(), g.shots, g.killed);
-            // llvmpipe, 11-17: about 3,100-3,800 walkers, 1,850-2,250 set,
-            // 52-158 shots at 60 s.
+            // llvmpipe, 11-17: 5,018 / 4,720 walkers, 131 / 149 set, 4 / 5
+            // shots at 15 s (CPU / GPU); 14 s of test on llvmpipe.
             assert!(living > 0 && g.shots > 0 && set > 0, "{what}: {living} walkers, {set} set, {} shots", g.shots);
         }
         let gpu = test_gpu();
