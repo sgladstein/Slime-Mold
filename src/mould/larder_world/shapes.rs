@@ -64,9 +64,9 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // bite and upkeep, drawn bronze. Holding every crystal, C's mass is
     // 90,739 at 7:00 and still rising (50,000 without); held to its 4
     // nearest crystals, 30,338 (Reports/thicken-2026-11-15/README.md).
-    // `thicken=0` turns it off. **Off since 2026-11-16**: the owner,
-    // 04:58Z, "Remove the bronze, keep the specks"; the thickened bronze
-    // is gone from C (and the run), `thicken=K` still sets it for a film.
+    // **Off since 2026-11-16**: the owner, 04:58Z, "Remove the bronze,
+    // keep the specks"; the thickened bronze went from C and the run, and
+    // the rule was deleted 11-17 (Reports/dead-ends.md).
     // The body surges (`BigParams::surge_every` 900, 2026-11-15). The
     // owner, 11-15 08:30Z: some slimes "just hang at their home crystal
     // ... So their is no rush ... no need to defend", and the enemy needs
