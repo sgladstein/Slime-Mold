@@ -1,0 +1,55 @@
+run                 t  walkers  no food cryst  neck2 cut     % largest 500+  neck4 cut     % largest 500+
+p1-idle            60    15207      441     7          0   0.0       0    0          0   0.0       0    0
+p1-idle           120    17720      198     7        120   0.7     120    0          0   0.0       0    0
+p1-idle          ended at 136 s: squad wiped
+p1-squadwork       60    15194      427     7          0   0.0       0    0          0   0.0       0    0
+p1-squadwork      120    16607      172     7        152   0.9     104    0          0   0.0       0    0
+p1-squadwork     ended at 167 s: squad wiped
+p2-idle            60    24653      788    14        197   0.8      54    0        457   1.9     218    0
+p2-idle           120    32960      948    14        608   1.8     110    0          0   0.0       0    0
+p2-idle          ended at 169 s: squad wiped
+p2-squadwork       60    24613      796    14        527   2.1     123    0        159   0.6     159    0
+p2-squadwork     ended at 86 s: squad wiped
+p3-idle            60    44083      417    10       1229   2.8     794    1        928   2.1     568    1
+p3-idle           120    27257      474    10       1271   4.7     273    0        397   1.5     397    0
+p3-idle           180    30166      526    10        793   2.6     168    0       1050   3.5     344    0
+p3-squadwork       60    44127      363    10       1071   2.4     794    1        776   1.8     568    1
+p3-squadwork      120    26726      512    10       1009   3.8     225    0          0   0.0       0    0
+p3-squadwork     ended at 149 s: squad wiped
+p4-idle            60    56274      531    14      10213  18.1    5028    3      10544  18.7    5055    3
+p4-idle           120    36457      765    14        866   2.4     508    1          0   0.0       0    0
+p4-idle           180    44730      600    14        757   1.7     198    0        258   0.6     197    0
+p4-idle          ended at 300 s: squad wiped
+p4-squadwork       60    56271      468    14      10028  17.8    5063    4      10694  19.0    5071    4
+p4-squadwork      120    36294     1491    14         91   0.3      57    0          0   0.0       0    0
+p4-squadwork     ended at 135 s: squad wiped
+p5-idle            60    82804     1766    32       3510   4.2    1036    2      10741  13.0    1094   10
+p5-idle           120    67398     1156    32        610   0.9     106    0       1022   1.5     484    0
+p5-idle           180    87834      984    32       1552   1.8     144    0        704   0.8     471    0
+p5-squadwork       60    83429     1609    32       2698   3.2     961    1       8325  10.0    1640    6
+p5-squadwork      120    68245     1281    32        529   0.8      73    0        413   0.6     413    0
+p5-squadwork      180    83595     1569    32       1438   1.7     479    0       1377   1.6     660    1
+p5-squadwork     ended at 198 s: squad wiped
+p6-idle            60   121980     3432    20       2760   2.3     434    0       6866   5.6     870    2
+p6-idle           120   107260     3091    20       4256   4.0     538    1      31794  29.6    5084   10
+p6-idle           180    94836     2614    20      11738  12.4     704    2      52845  55.7    3408   11
+p6-squadwork       60   121889     3548    20       2754   2.3     434    0       6866   5.6     870    2
+p6-squadwork      120   106965     3072    20       5320   5.0     956    2      31772  29.7    5084   10
+p6-squadwork      180    94097     2626    20      11886  12.6     704    2      52791  56.1    3408   11
+p7-idle            60    86134     1358    56        663   0.8     126    0        622   0.7     163    0
+p7-idle           120   106127     3447    56       1999   1.9     186    0       1118   1.1     488    0
+p7-idle           180   136743     3262    56       2189   1.6     167    0        805   0.6     237    0
+p7-squadwork       60    85997     1504    56        504   0.6      83    0        725   0.8     186    0
+p7-squadwork     ended at 94 s: squad wiped
+p8-idle            60   145612     3785    43       4409   3.0     234    0       1153   0.8     420    0
+p8-idle           120   164845     3919    43      10133   6.1     730    4       6388   3.9    1075    6
+p8-idle           180   188109     4686    43       7153   3.8     964    2       3503   1.9     993    3
+p8-squadwork       60   146112     3508    43       4585   3.1     372    0       1226   0.8     413    0
+p8-squadwork      120   166836     3884    43       8376   5.0     820    2       7071   4.2     867    3
+p8-squadwork     ended at 143 s: squad wiped
+
+38 counts
+necks 2: a part of 500+ in 14 of 38; cuttable share median 2.4%, largest 18.1%; largest part 5063 walkers
+necks 4: a part of 500+ in 16 of 38; cuttable share median 1.5%, largest 56.1%; largest part 5084 walkers
+  idle: necks 4 part of 500+ in 8 of 22; share median 1.5%
+  squadwork: necks 4 part of 500+ in 8 of 16; share median 1.6%

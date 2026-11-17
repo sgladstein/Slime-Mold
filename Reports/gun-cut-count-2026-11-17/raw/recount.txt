@@ -1,0 +1,54 @@
+run                 t  walkers  no food cryst  neck2 cut     % largest 500+  neck4 cut     % largest 500+
+p1-idle            60    15207      432     7         33   0.2      33    0          0   0.0       0    0
+  pinholes open                                        0   0.0       0    0          0   0.0       0    0
+p1-idle           120    17720      130     7         62   0.3      53    0        110   0.6     110    0
+  pinholes open                                      120   0.7     120    0          0   0.0       0    0
+p1-idle          ended at 136 s: squad wiped
+p2-idle            60    24653      737    14        110   0.4      59    0        338   1.4     229    0
+  pinholes open                                      197   0.8      54    0        457   1.9     218    0
+p2-idle           120    32960      877    14        340   1.0     201    0        450   1.4     198    0
+  pinholes open                                      608   1.8     110    0          0   0.0       0    0
+p2-idle          ended at 169 s: squad wiped
+p3-idle            60    44083      322    10       1053   2.4     794    1        952   2.2     568    1
+  pinholes open                                     1229   2.8     794    1        928   2.1     568    1
+p3-idle           120    27257      420    10         37   0.1      37    0       1292   4.7     318    0
+  pinholes open                                     1271   4.7     273    0        397   1.5     397    0
+p3-idle           180    30166      510    10        372   1.2     206    0        698   2.3     309    0
+  pinholes open                                      793   2.6     168    0       1050   3.5     344    0
+p4-idle            60    56274      356    14       9987  17.7    5031    4      10715  19.0    5051    3
+  pinholes open                                    10213  18.1    5028    3      10544  18.7    5055    3
+p4-idle           120    36457      701    14        857   2.4     383    0        558   1.5     558    1
+  pinholes open                                      866   2.4     508    1          0   0.0       0    0
+p4-idle           180    44730      578    14        912   2.0      92    0        385   0.9     213    0
+  pinholes open                                      757   1.7     198    0        258   0.6     197    0
+p5-idle            60    82804     1736    32       2172   2.6     987    1       4774   5.8    1367    3
+  pinholes open                                     3510   4.2    1036    2      10741  13.0    1094   10
+p5-idle           120    67398     1036    32        586   0.9      70    0        420   0.6     259    0
+  pinholes open                                      610   0.9     106    0       1022   1.5     484    0
+p5-idle           180    87834      903    32       1684   1.9     150    0        995   1.1     465    0
+  pinholes open                                     1552   1.8     144    0        704   0.8     471    0
+p6-idle            60   121980     3255    20        234   0.2      86    0       1109   0.9     260    0
+  pinholes open                                     2760   2.3     434    0       6866   5.6     870    2
+p6-idle           120   107260     2968    20        498   0.5     150    0       1017   0.9     200    0
+  pinholes open                                     4256   4.0     538    1      31794  29.6    5084   10
+p6-idle           180    94836     2518    20        480   0.5     134    0       1032   1.1     162    0
+  pinholes open                                    11738  12.4     704    2      52845  55.7    3408   11
+p7-idle            60    86134     1273    56        495   0.6      66    0        508   0.6     345    0
+  pinholes open                                      663   0.8     126    0        622   0.7     163    0
+p7-idle           120   106127     3099    56       2113   2.0     238    0       1128   1.1     347    0
+  pinholes open                                     1999   1.9     186    0       1118   1.1     488    0
+p7-idle           180   136743     3082    56       2188   1.6     166    0       1036   0.8     238    0
+  pinholes open                                     2189   1.6     167    0        805   0.6     237    0
+p8-idle            60   145612     3530    43       4261   2.9     318    0       1531   1.1     429    0
+  pinholes open                                     4409   3.0     234    0       1153   0.8     420    0
+p8-idle           120   164845     3651    43       8556   5.2     686    3       7874   4.8     829    6
+  pinholes open                                    10133   6.1     730    4       6388   3.9    1075    6
+p8-idle           180   188109     4183    43       5662   3.0     515    1       5935   3.2    1012    5
+  pinholes open                                     7153   3.8     964    2       3503   1.9     993    3
+
+22 counts
+necks 2: a part of 500+ in 5 of 22; cuttable share median 1.6%, largest 17.7%; largest part 5031 walkers
+necks 4: a part of 500+ in 6 of 22; cuttable share median 1.1%, largest 19.0%; largest part 5051 walkers
+necks 2: largest part 2%+ of the slime in 1 of 22, 5%+ in 1; largest 8.9%
+necks 4: largest part 2%+ of the slime in 1 of 22, 5%+ in 1; largest 9.0%
+  idle: necks 4 part of 500+ in 6 of 22; share median 1.1%

@@ -6,6 +6,7 @@ updated: 2026-11-17
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-cut-count-2026-11-17/README.md
   - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-feel-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
@@ -262,7 +263,14 @@ card text) and 08:30 (the guns a draw of the game).
   aim card changes only which nearby slime they pick). Step D's first
   family, Mind (blind, sour, spin), is built and its blind quiz is with the
   owner; the readers (shatter, detonate), the route's Flare and the
-  element's Torch and Tinder are built; next force; cut last. Douse (water) is held: the view's wet ground is
+  element's Torch and Tinder are built; force counts as built (the shove
+  cards; the game designer, 11-17 12:23Z: no new card). The cut count
+  (11-17) found no Cut card worth building: the largest part one thin cut
+  could leave without food is under 2% of the slime in most counts, the
+  Swarmer's first minute the one exception, and a wall or a squad in a gap
+  already makes that cut ([cut count](../../Reports/gun-cut-count-2026-11-17/README.md));
+  thinnest-vein aim waits on the same shapes. Next, step E (one device
+  slot a squad). Douse (water) is held: the view's wet ground is
   refreshed only with walls and crystals.
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
@@ -288,4 +296,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md), [route](../../Reports/gun-route-2026-11-17/README.md), [element](../../Reports/gun-element-2026-11-17/README.md), [tinder](../../Reports/gun-tinder-2026-11-17/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md), [route](../../Reports/gun-route-2026-11-17/README.md), [element](../../Reports/gun-element-2026-11-17/README.md), [tinder](../../Reports/gun-tinder-2026-11-17/README.md), [cut count](../../Reports/gun-cut-count-2026-11-17/README.md).
