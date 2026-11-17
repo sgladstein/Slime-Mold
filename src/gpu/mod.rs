@@ -69,7 +69,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (296 words).
-pub const PARAMS_BYTES: usize = 1184;
+pub const PARAMS_BYTES: usize = 1200;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -125,6 +125,12 @@ pub const MIND_AT: usize = 1152;
 /// 0), `scar_gain`, `scar_weight`, and a spare word. The field itself is
 /// binding 47's second block, kept for it since 2026-11-12.
 pub const SCAR_AT: usize = 1168;
+/// The crust row (the simulation-use plan's E1a, 2026-11-17; Params grew
+/// from 1184 to 1200): `crust_rise` (0 with the crust off), `crust_keep`,
+/// `crust_trail`, and the word in `news` where the crust's block starts
+/// (`Engine::crust_at` / 4; the field rides in `news` because every
+/// binding a stage has is taken).
+pub const CRUST_AT: usize = 1184;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -420,6 +426,12 @@ pub struct Settings {
     pub scar_keep: f32,
     pub scar_gain: f32,
     pub scar_weight: f32,
+    /// The crust (`BigParams::crust_rise`, `crust_keep`, `crust_trail`; the
+    /// simulation-use plan's E1a, 2026-11-17): ground that remembers where
+    /// the slime has lived. Off with `crust_rise` 0.
+    pub crust_rise: f32,
+    pub crust_keep: f32,
+    pub crust_trail: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -679,6 +691,9 @@ impl Settings {
             scar_keep: t.scar_keep,
             scar_gain: t.scar_gain,
             scar_weight: t.scar_weight,
+            crust_rise: t.crust_rise,
+            crust_keep: t.crust_keep,
+            crust_trail: t.crust_trail,
             flinch: t.flinch,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
@@ -958,6 +973,15 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "scar_keep" => s.scar_keep = f()?,
         "scar_gain" => s.scar_gain = f()?,
         "scar_weight" => s.scar_weight = f()?,
+        // The window's crust at once (`crust=1`; 0 turns it off): a cell
+        // fills in a minute of steady living and halves in two minutes
+        // with none, at the window's 30 fine steps a second (scale 2).
+        "crust" => {
+            (s.crust_rise, s.crust_keep, s.crust_trail) = if b()? { (1.0 / 1800.0, 0.5f32.powf(1.0 / 3600.0), 1.0) } else { (0.0, 1.0, 1.0) };
+        }
+        "crust_rise" => s.crust_rise = f()?.max(0.0),
+        "crust_keep" => s.crust_keep = f()?.clamp(0.0, 1.0),
+        "crust_trail" => s.crust_trail = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
         "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
@@ -1125,6 +1149,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         scar_keep: s.scar_keep,
         scar_gain: s.scar_gain,
         scar_weight: s.scar_weight,
+        crust_rise: s.crust_rise,
+        crust_keep: s.crust_keep,
+        crust_trail: s.crust_trail,
         flinch: s.flinch,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
@@ -1484,6 +1511,9 @@ pub struct Engine {
     /// plant step every `plant_every` game ticks of `plant_sub` engine
     /// ticks each (the GPU world's `scale` fine steps a game tick).
     pub plant_at: u64,
+    /// The crust (`BigDish::crust`): its block of cells sits in `news` from
+    /// `crust_at` (bytes), 0 when the dish has none.
+    pub crust_at: u64,
     pub plants: bool,
     pub fire_on: bool,
     pub plant_every: u64,
@@ -1747,7 +1777,11 @@ impl Engine {
         let news_len = news_words(&d, cells as usize).len();
         let gas_len = gas_words(&d).len();
         let dense_len = dense_words(&d, cells as usize).len();
-        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d)].concat()), storage);
+        let plant_len = plant_words(&d).len();
+        // The crust's block (`BigDish::crust`) after the plants', when the
+        // dish has one.
+        let crust_words: Vec<u32> = d.crust.iter().map(|v| v.to_bits()).collect();
+        let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d), crust_words].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
             let bufs: [&wgpu::Buffer; BINDINGS as usize] = [
@@ -1805,6 +1839,7 @@ impl Engine {
             plant_no_clear: false,
             dense_at: 4 * (news_len + gas_len) as u64,
             plant_at: 4 * (news_len + gas_len + dense_len) as u64,
+            crust_at: if d.crust.is_empty() { 0 } else { 4 * (news_len + gas_len + dense_len + plant_len) as u64 },
             plants: !d.plant.is_empty(),
             fire_on: !d.fire.is_empty(),
             plant_every: d.p.plant_every.max(1) as u64,
@@ -1980,6 +2015,10 @@ impl Engine {
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
             self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
+        }
+        assert_eq!(d.crust.is_empty(), self.crust_at == 0, "a dish with this engine's crust");
+        if self.crust_at > 0 {
+            self.queue.write_buffer(&self.news, self.crust_at, &f32_bytes(&d.crust));
         }
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
@@ -2208,6 +2247,11 @@ impl Engine {
         // The CPU makes the scar only with the alarm field (`BigDish::new`).
         let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;
         b.extend(f32_bytes(&[if scars { s.scar_keep } else { 0.0 }, s.scar_gain, s.scar_weight, 0.0]));
+        assert_eq!(b.len(), CRUST_AT, "Params rows before the crust row moved");
+        // The crust runs only on a dish made with it (its block in `news`).
+        let rise = if self.crust_at > 0 { s.crust_rise } else { 0.0 };
+        b.extend(f32_bytes(&[rise, s.crust_keep, s.crust_trail]));
+        b.extend(u32_bytes(&[(self.crust_at / 4) as u32]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2999,6 +3043,15 @@ impl Engine {
     pub fn scar_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.crater));
         g[self.cells as usize..2 * self.cells as usize].to_vec()
+    }
+
+    /// The crust a cell, read back (the CPU's `BigDish::crust`; empty
+    /// without one).
+    pub fn crust_of(&self) -> Vec<f32> {
+        if self.crust_at == 0 {
+            return Vec::new();
+        }
+        floats(&read_back_range(&self.device, &self.queue, &self.news, self.crust_at, 4 * self.cells as u64))
     }
 
     /// Species `sp`'s trail a cell now, read back (the CPU's

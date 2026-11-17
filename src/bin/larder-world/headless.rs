@@ -189,6 +189,11 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     let mut cut_inside: Option<(Vec<usize>, u32)> = None;
     let mut cut_sec = u64::MAX;
     let mut watch_sec = u64::MAX;
+    // `crustlook=T` (2026-11-17): the offline crust a cell, and the second
+    // it was last stepped.
+    let mut crust: Vec<f32> = Vec::new();
+    let mut crust_walk: Vec<u8> = Vec::new();
+    let mut crust_sec = u64::MAX;
     // With HOLD (`cut=T,X,Y,R,HOLD`), the ring's agar cells go back on the
     // agar HOLD game seconds after the cut, so a piece that has gone stale
     // inside can leave (does a cut-off part panic?).
@@ -476,6 +481,21 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}", 2.0 * wr);
                 }
             }
+            // `crustlook=T`: crust from the look once a game second (no
+            // engine rule; see `Args::crust_look`).
+            if let Some(tmin) = app.args.crust_look {
+                let g = app.game.as_ref().unwrap();
+                let sec = g.time().floor() as u64;
+                if sec != crust_sec {
+                    crust_sec = sec;
+                    let lk = read_back(&device, &queue, &g.world.e.look);
+                    crust.resize(lk.len() / 4, 0.0);
+                    crust_walk = lk.chunks_exact(4).map(|c| c[1]).collect();
+                    for (v, c) in crust.iter_mut().zip(lk.chunks_exact(4)) {
+                        *v = if c[1] > 0 && c[0] >= tmin.max(1) { (*v + 1.0 / 60.0).min(1.0) } else { *v * 0.9942 };
+                    }
+                }
+            }
             // `holes=1`: how long a hit's hole stays open (owner, 04:38Z:
             // "maybe part of the issue is the slime/walkers move to fast").
             // The drawn body (the view's `body`: trail x living walkers in
@@ -636,6 +656,30 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let path = if t.fract() == 0.0 { format!("{dir}/{}-{hand}-{:03}s-{tag}.png", file_part(&app.name), t as u32) } else { format!("{dir}/{}-{hand}-{:05}ms-{tag}.png", file_part(&app.name), (t * 1000.0) as u32) };
             view.picture().save(&path).map_err(|e| format!("{path}: {e}"))?;
             println!("{path}");
+        }
+        if app.args.crust_look.is_some() && !crust.is_empty() {
+            // The crust a cell, as the world map (a pixel a cell): black to
+            // white by crust; a cell with a walker on it now tinted orange,
+            // so the share of crust under the body shows.
+            let w = app.game.as_ref().unwrap().world.e.dish.w;
+            let h = crust.len() / w;
+            let img = image::RgbImage::from_fn(w as u32, h as u32, |x, y| {
+                let i = y as usize * w + x as usize;
+                let v = (crust[i].clamp(0.0, 1.0) * 255.0) as u8;
+                if crust_walk[i] > 0 { image::Rgb([v.max(90), v / 2 + 40, 0]) } else { image::Rgb([v, v, v]) }
+            });
+            let path = format!("{dir}/{}-{hand}-{:05}ms-crust.png", file_part(&app.name), (t * 1000.0) as u32);
+            img.save(&path).map_err(|e| format!("{path}: {e}"))?;
+            let held = |lo: f32| crust.iter().filter(|&&v| v > lo).count();
+            let under = crust.iter().zip(&crust_walk).filter(|(v, n)| **v > 0.3 && **n > 0).count();
+            let (c05, c30, c95) = (held(0.05), held(0.3), held(0.95));
+            // The engine's own crust (`crust=1`), beside the offline one.
+            let ec = app.game.as_ref().unwrap().world.e.crust_of();
+            if !ec.is_empty() {
+                let eh = |lo: f32| ec.iter().filter(|&&v| v > lo).count();
+                println!("  engine crust t {t:.0} s: {} cells over 0.05, {} over 0.3, {} over 0.95", eh(0.05), eh(0.3), eh(0.95));
+            }
+            println!("  crust t {t:.0} s: {c05} cells over 0.05, {c30} over 0.3 ({under} of those under walkers now, {:.0}%), {c95} over 0.95; walkers on {} cells", 100.0 * under as f32 / c30.max(1) as f32, crust_walk.iter().filter(|&&n| n > 0).count());
         }
         if !app.args.real {
             (app.looks, app.tracers) = notes;

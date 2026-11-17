@@ -1210,6 +1210,21 @@ pub struct BigParams {
     pub scar_keep: f32,
     pub scar_gain: f32,
     pub scar_weight: f32,
+    /// **Crust** (off when `crust_rise` is 0; the simulation-use plan's
+    /// E1a, 2026-11-17, `Reports/sim-use-2026-11-17/plan.md`): ground that
+    /// remembers the slime. Each fine step, after the trail spreads (and its
+    /// crater), an agar cell with a walker on it and trail of `crust_trail`
+    /// or more gains `crust_rise` up to 1; every other cell keeps
+    /// `crust_keep` of its crust. A shot pauses the rise on the cells it
+    /// cuts (their trail is 0) but does not wipe it. Nothing reads it yet:
+    /// the view draws it where the slime has left (E1b's sensors next). The
+    /// window's numbers fill a cell in a minute and halve it in two at 30
+    /// fine steps a second. Looked at offline first (`larder-world
+    /// crustlook=`, `Reports/sim-use-2026-11-17/crust-look/`): it covers
+    /// the slime's whole range, a plate under the home body, not roads.
+    pub crust_rise: f32,
+    pub crust_keep: f32,
+    pub crust_trail: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -1613,6 +1628,9 @@ impl BigParams {
             scar_keep: 0.0,
             scar_gain: 0.0,
             scar_weight: 0.0,
+            crust_rise: 0.0,
+            crust_keep: 1.0,
+            crust_trail: 1.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -1749,6 +1767,8 @@ pub struct BigDish {
     pub alarm: Vec<f32>,
     /// The scar field (`scar_keep` > 0 with the alarm on), else empty.
     pub scar: Vec<f32>,
+    /// The crust a fine cell, 0 to 1 (`crust_rise` > 0), else empty.
+    pub crust: Vec<f32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -2100,6 +2120,7 @@ impl BigDish {
             life_t: Vec::new(),
             alarm: Vec::new(),
             scar: Vec::new(),
+            crust: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             pile_rs: Vec::new(),
@@ -2207,6 +2228,9 @@ impl BigDish {
             if d.p.scar_keep > 0.0 {
                 d.scar = vec![0.0; w * h];
             }
+        }
+        if d.p.crust_rise > 0.0 {
+            d.crust = vec![0.0; w * h];
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
@@ -4924,6 +4948,9 @@ impl BigDish {
                     *c = c.saturating_sub(1);
                 }
             }
+            if !self.crust.is_empty() {
+                self.crust_step();
+            }
             if !self.germ.is_empty() {
                 spread(&self.agar, &self.germ, &mut self.scratch, self.w, self.h, self.p.sick_keep, self.threads);
                 std::mem::swap(&mut self.germ, &mut self.scratch);
@@ -4956,6 +4983,15 @@ impl BigDish {
         self.plant_tick();
         self.update_reached();
         self.ticks += 1;
+    }
+
+    /// One fine step of the crust (`BigParams::crust_rise`), after the
+    /// trail's spread, soil and crater, from the walkers on each cell now.
+    fn crust_step(&mut self) {
+        let (rise, keep, th) = (self.p.crust_rise, self.p.crust_keep, self.p.crust_trail);
+        for (i, c) in self.crust.iter_mut().enumerate() {
+            *c = if self.agar[i] && self.occ[i] > 0 && self.trail[i] >= th { (*c + rise).min(1.0) } else { *c * keep };
+        }
     }
 
     pub fn seconds(&self) -> f32 {

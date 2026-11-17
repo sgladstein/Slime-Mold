@@ -21,6 +21,9 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
 - [step0-scar-on-gpu.md](step0-scar-on-gpu.md): step 0 built, the Grudge's
   scar (threat memory) on the GPU, twin-exact on llvmpipe, and the Grudge
   back in the run as planet 7.
+- [e1a-crust.md](e1a-crust.md): E1a built, the crust field in both engines
+  and its satin look, behind `crust=1`; offline look in `crust-look/`, page
+  in `page-e1a/` (https://claude.ai/artifact/7S91NqGRDSopYhhje3giS6).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
