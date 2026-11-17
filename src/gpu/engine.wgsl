@@ -217,6 +217,10 @@ struct Params {
     // in the sensors, fast ground, its worth as fuel (each 0 without the
     // crust) and the char that makes ground barren (0 off).
     crust_w: f32, crust_fast: f32, crust_fuel: f32, char_barren: f32,
+    // The setting row (`SET_AT`, the plan's E2a): the scar a walker on
+    // crust sets at (0 off, and 0 without the crust or the scar), the scar
+    // it wakes under, the crust it needs, and its armour in blows.
+    set_scar: f32, set_wake: f32, set_crust: f32, set_armour: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -439,6 +443,14 @@ fn set_dense_kept(k: u32, v: u32) { set_dense(k, (dense_word(k) & (LUMP_BITS | H
 // it took the blow so. One thread a walker writes its word.
 fn armoured(k: u32) -> bool {
     let lb = lump_of(k);
+    // A set walker (`set_scar`) takes `set_armour` blows, counted in its
+    // set word, as the CPU's `armoured`.
+    if (lb == 0u && is_set(k)) {
+        let w = set_word(k);
+        if (w >= P.set_armour) { return false; }
+        set_put(k, w + 1u);
+        return true;
+    }
     if (lb == 0u) { return false; }
     let wd = dense_word(k);
     let hurt = wd >> HURT_SHIFT;
@@ -490,6 +502,26 @@ fn crust_step(i: u32, t: f32) {
     atomicStore(&news[k], bitcast<u32>(v));
 }
 fn crust_of(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[P.crust_at + i])); }
+// **Setting** (`BigParams::set_scar`, the plan's E2a): each slot's word in
+// `news` after the crust's block (0 not set, else set with word - 1 blows
+// taken). Only the walker's own thread writes it.
+fn set_word(k: u32) -> u32 { return atomicLoad(&news[P.crust_at + P.w * P.h + k]); }
+fn set_put(k: u32, v: u32) { atomicStore(&news[P.crust_at + P.w * P.h + k], v); }
+fn is_set(k: u32) -> bool { return P.set_scar > 0.0 && set_word(k) > 0u; }
+// Walker k's setting this step on cell `here` (the CPU's `set_step`): a set
+// walker wakes under `set_wake` of scar; an unset one sets on crust of
+// `set_crust` or more with scar of `set_scar` or more. True if it stays
+// set. A lump's member never sets.
+fn set_step(k: u32, here: u32) -> bool {
+    if (P.set_scar <= 0.0 || lump_of(k) != 0u) { return false; }
+    let s = scar_at(here);
+    if (set_word(k) > 0u) {
+        if (s < P.set_wake) { set_put(k, 0u); return false; }
+        return true;
+    }
+    if (s >= P.set_scar && crust_of(here) >= P.set_crust) { set_put(k, 1u); return true; }
+    return false;
+}
 fn crust_put(i: u32, v: f32) { atomicStore(&news[P.crust_at + i], bitcast<u32>(v)); }
 fn scar_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[P.w * P.h + i])); }
 // A cell's scar after this step's alarm `a` (the CPU's loop after the
@@ -976,6 +1008,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (cycles()) {
         let w = spec[k];
         if (((w >> 9u) & 3u) != L_WALKER) { icell[k] = NONE; return; }
+        // Setting, before fruiting or dozing (the CPU's `set_step`).
+        if (set_step(k, here)) { icell[k] = NONE; return; }
         if ((w >> 16u) == 0u) {
             let al = alarm_at(here);
             let sc = scent_at(wk.x, wk.y);
@@ -994,6 +1028,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             }
         }
     }
+    else if (set_step(k, here)) { icell[k] = NONE; return; }
     // The CPU's `move_walkers` order: the walker's size, trail-set settings
     // from the trail where it stands, then catching and the sick walker's
     // changes.
@@ -1167,6 +1202,9 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
             return;
         }
     }
+    // A set walker (`set_scar`) neither moves, lays nor grazes; its
+    // counters count as a dozing one's.
+    if (is_set(k)) { tally(k); return; }
     let t = S.t;
     let aim = icell[k];
     let wk = walkers[k];
@@ -1464,7 +1502,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     icell[k] = NONE;
     let t = S.t;
     let b = child_of(k, t);
-    if (!ordinary(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
+    if (!ordinary(k) || is_set(k) || energy[k] < P.birth_at || b >= P.n || lives(b)) { return; }
     // Condensing (`condense`): no births while the mould's mass fills the
     // slots (`masscount`, as the pass began; the CPU's `mass`).
     if (ripens() && atomicLoad(&news[dense_base()]) >= P.n) { return; }
@@ -1520,6 +1558,8 @@ fn born(@builtin(global_invocation_id) gid: vec3<u32>) {
     // (the word is cleared whatever is on: a lump's member may have held
     // the slot; the CPU clears it whenever it keeps the words).
     set_dense(b, 0u);
+    // Nor set (`set_scar`): the word is there whenever the crust is.
+    if (P.crust_at > 0u) { set_put(b, 0u); }
 }
 
 // Conversion (PR #56), after the move and its deposit, before any jump: a

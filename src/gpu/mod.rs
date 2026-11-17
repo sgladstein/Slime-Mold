@@ -69,7 +69,7 @@ pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
 /// Bytes in `Params` (296 words).
-pub const PARAMS_BYTES: usize = 1216;
+pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -135,6 +135,11 @@ pub const CRUST_AT: usize = 1184;
 /// from 1200 to 1216): `crust_weight`, `crust_fast` and `crust_fuel` (each 0
 /// on a dish without the crust), and `char_barren` (0 without plants).
 pub const CRUST_FX_AT: usize = 1200;
+/// The setting row (the plan's E2a, 2026-11-17; Params grew from 1216 to
+/// 1232): `set_scar` (0 off, and 0 on a dish without the crust or the
+/// scar), `set_wake`, `set_crust` and `set_armour`. Each slot's set word is
+/// a block of `news` right after the crust's (`Engine::set_of`).
+pub const SET_AT: usize = 1216;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -442,6 +447,12 @@ pub struct Settings {
     pub crust_fast: f32,
     pub crust_fuel: f32,
     pub char_barren: f32,
+    /// Setting (`BigParams::set_scar`, `set_wake`, `set_crust`,
+    /// `set_armour`; the plan's E2a).
+    pub set_scar: f32,
+    pub set_wake: f32,
+    pub set_crust: f32,
+    pub set_armour: u32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -708,6 +719,10 @@ impl Settings {
             crust_fast: t.crust_fast,
             crust_fuel: t.crust_fuel,
             char_barren: t.char_barren,
+            set_scar: t.set_scar,
+            set_wake: t.set_wake,
+            set_crust: t.set_crust,
+            set_armour: t.set_armour,
             flinch: t.flinch,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
@@ -1010,6 +1025,33 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "crust_fast" => s.crust_fast = f()?.max(0.0),
         "crust_fuel" => s.crust_fuel = f()?.max(0.0),
         "char_barren" => s.char_barren = f()?.max(0.0),
+        // Setting (E2a): the scar a walker on crust sets at (0 off), the
+        // scar it wakes under, the crust it needs, its armour in blows.
+        "set_scar" => s.set_scar = f()?.max(0.0),
+        "set_wake" => s.set_wake = f()?.max(0.0),
+        "set_crust" => s.set_crust = f()?,
+        "set_armour" => s.set_armour = int()?.clamp(1, 255),
+        // Setting at once (`setting=1`; 0 turns it off): the crust if it is
+        // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
+        // if it is off, and a walker on crust of 0.2 sets where its cell's
+        // scar is 0.05, wakes under 0.01 and dies to its third blow. Planet 3,
+        // seed 1, a standing rifle squad: 217 walkers set at 60 s, the squad
+        // killed 265 of the slime in the first minute against 366 without;
+        // a set_scar of 0.2 set 150 and 1 set none (the scar is over 1 only
+        // on the cells shot most, which the walkers flinch off).
+        "setting" => {
+            if b()? {
+                if s.crust_rise == 0.0 {
+                    set(s, "crust", "1")?;
+                }
+                if s.scar_keep == 0.0 {
+                    (s.scar_keep, s.scar_gain) = (0.999, 0.01);
+                }
+                (s.set_scar, s.set_wake, s.set_crust, s.set_armour) = (0.05, 0.01, 0.2, 3);
+            } else {
+                s.set_scar = 0.0;
+            }
+        }
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
         "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
@@ -1184,6 +1226,10 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         crust_fast: s.crust_fast,
         crust_fuel: s.crust_fuel,
         char_barren: s.char_barren,
+        set_scar: s.set_scar,
+        set_wake: s.set_wake,
+        set_crust: s.set_crust,
+        set_armour: s.set_armour,
         flinch: s.flinch,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
@@ -1814,7 +1860,8 @@ impl Engine {
         let plant_len = plant_words(&d).len();
         // The crust's block (`BigDish::crust`) after the plants', when the
         // dish has one.
-        let crust_words: Vec<u32> = d.crust.iter().map(|v| v.to_bits()).collect();
+        // Each slot's set word (`BigDish::set`) right after it.
+        let crust_words: Vec<u32> = d.crust.iter().map(|v| v.to_bits()).chain(d.set.iter().copied()).collect();
         let news = buf("news", &u32_bytes(&[news_words(&d, cells as usize), gas_words(&d), dense_words(&d, cells as usize), plant_words(&d), crust_words].concat()), storage);
         let group = |even: bool| {
             let (a, b) = if even { (0, 1) } else { (1, 0) };
@@ -2053,6 +2100,7 @@ impl Engine {
         assert_eq!(d.crust.is_empty(), self.crust_at == 0, "a dish with this engine's crust");
         if self.crust_at > 0 {
             self.queue.write_buffer(&self.news, self.crust_at, &f32_bytes(&d.crust));
+            self.queue.write_buffer(&self.news, self.crust_at + 4 * self.cells as u64, &u32_bytes(&d.set));
         }
         self.fire_on = !d.fire.is_empty();
         self.gas_until = gas_until(d);
@@ -2292,6 +2340,10 @@ impl Engine {
         let crusts = self.crust_at > 0;
         let fx = |v: f32| if crusts { v } else { 0.0 };
         b.extend(f32_bytes(&[fx(s.crust_weight), fx(s.crust_fast), fx(s.crust_fuel), if self.plants { s.char_barren } else { 0.0 }]));
+        assert_eq!(b.len(), SET_AT, "Params rows before the setting row moved");
+        // Setting needs the crust and the scar, as the CPU's `sets`.
+        b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
+        b.extend(u32_bytes(&[s.set_armour]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -3104,6 +3156,16 @@ impl Engine {
             return Vec::new();
         }
         floats(&read_back_range(&self.device, &self.queue, &self.news, self.crust_at, 4 * self.cells as u64))
+    }
+
+    /// Each slot's set word, read back (the CPU's `BigDish::set`; empty
+    /// without the crust).
+    pub fn set_of(&self) -> Vec<u32> {
+        if self.crust_at == 0 {
+            return Vec::new();
+        }
+        let b = read_back_range(&self.device, &self.queue, &self.news, self.crust_at + 4 * self.cells as u64, 4 * self.n as u64);
+        b.chunks_exact(4).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect()
     }
 
     /// Species `sp`'s trail a cell now, read back (the CPU's

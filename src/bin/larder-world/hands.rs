@@ -263,7 +263,16 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     // food kept back (once for rations, removed 11-14), either stand at the larder on free fire as
     // the mould comes up the stem, or walk into the body from 3 s.
     // `hold@X,Y` stands them at (X, Y) instead, world units as `centre=`.
-    let post = hand.strip_prefix("hold@").and_then(|p| p.split_once(',')).and_then(|(x, y)| Some((x.parse::<f32>().ok()?, y.parse::<f32>().ok()?)));
+    // `hold@X,Y,T,X2,Y2` (2026-11-17, the setting films): from game second
+    // T the post is (X2, Y2), so the squad moves on.
+    let nums: Option<Vec<f32>> = hand.strip_prefix("hold@").and_then(|p| p.split(',').map(|v| v.parse::<f32>().ok()).collect());
+    // A soldier that reached its post keeps its Move order, so the new
+    // post is ordered for half a second from T whatever the order.
+    let (post, moving) = match nums.as_deref() {
+        Some(&[x, y]) => (Some((x, y)), false),
+        Some(&[x, y, t, x2, y2]) => (Some(if g.time() >= t { (x2, y2) } else { (x, y) }), (t..t + 0.5).contains(&g.time())),
+        _ => (None, false),
+    };
     let hand = if post.is_some() { "hold" } else { hand };
     if hand == "hold" || hand == "push" {
         while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
@@ -276,7 +285,7 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
             if hand == "hold" && g.soldiers[k].stance != Stance::Free {
                 g.apply(Cmd::Stance(k, Stance::Free));
             }
-            if let (Some(p), true) = (post, g.time() >= 1.0 && g.soldiers[k].order == Order::Hold) {
+            if let (Some(p), true) = (post, g.time() >= 1.0 && (moving || g.soldiers[k].order == Order::Hold)) {
                 g.apply(Cmd::Order(k, Order::Move(p.0, p.1)));
             }
             if hand == "push" && g.time() >= 3.0 && g.soldiers[k].order == Order::Hold {

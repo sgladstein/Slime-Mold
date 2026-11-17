@@ -1,0 +1,73 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  engine crust t 30 s: 40897 cells over 0.05, 33444 over 0.3, 0 over 0.95; walkers' cells on crust over 0.3 31610, under 0.05 601
+  scar t 30 s: under walkers p50 0.000, p90 0.000, p99 0.000, max 55.462; 0 walkers set
+  fire t 30 s: 0 cells burning, 0 char over 0.3
+  crust t 30 s: 40944 cells over 0.05, 33668 over 0.3 (31777 of those under walkers now, 94%), 0 over 0.95; walkers on 34689 cells
+  CPU: ground field 2.78 ms (once a game second), model and HUD 0.075 ms a frame
+  t 30 s: mould 34689, soldiers 4, bank 2000, harvested 0, rendered 0, shots 97, killed 39, took 0%, crystals left 0.995; squad at 277.8,131.7
+  surge: the slime ate 140 food (4.7/s); meter 140.2 of 205, 0 surges
+  dense: 0 condensed or thick walkers, mass 34689 (readout 34689); 1955 breaking away
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  surge 1 starts at t 42.3 s (the slime has eaten 206 food)
+  engine crust t 45 s: 43225 cells over 0.05, 35728 over 0.3, 0 over 0.95; walkers' cells on crust over 0.3 32509, under 0.05 880
+  scar t 45 s: under walkers p50 0.000, p90 0.000, p99 0.170, max 134.376; 14 walkers set
+  fire t 45 s: 0 cells burning, 0 char over 0.3
+  crust t 45 s: 43355 cells over 0.05, 35789 over 0.3 (32560 of those under walkers now, 91%), 0 over 0.95; walkers on 35237 cells
+  CPU: ground field 3.95 ms (once a game second), model and HUD 0.169 ms a frame
+  t 45 s: mould 35237, soldiers 4, bank 2000, harvested 0, rendered 0, shots 161, killed 154, took 0%, crystals left 0.992; squad at 277.6,131.4
+  surge: the slime ate 220 food (4.9/s); meter 14.6 of 205, 1 surges
+  dense: 0 condensed or thick walkers, mass 35237 (readout 35237); 2041 breaking away
+  squad: touching 7.0 mean, 13 most; health 70 mean
+  engine crust t 60 s: 45964 cells over 0.05, 37118 over 0.3, 24734 over 0.95; walkers' cells on crust over 0.3 33068, under 0.05 808
+  scar t 60 s: under walkers p50 0.000, p90 0.000, p99 0.034, max 209.816; 15 walkers set
+  fire t 60 s: 0 cells burning, 0 char over 0.3
+  crust t 60 s: 46089 cells over 0.05, 37151 over 0.3 (33112 of those under walkers now, 89%), 25142 over 0.95; walkers on 36200 cells
+  CPU: ground field 6.47 ms (once a game second), model and HUD 0.411 ms a frame
+  t 60 s: mould 36207, soldiers 4, bank 2000, harvested 0, rendered 0, shots 226, killed 309, took 0%, crystals left 0.989; squad at 277.3,131.4
+  surge: the slime ate 309 food (5.1/s); meter 102.9 of 205, 1 surges
+  dense: 0 condensed or thick walkers, mass 36207 (readout 36207); 2334 breaking away
+  squad: touching 1.0 mean, 2 most; health 54 mean
+  boss t 67.0 s: Crowd hunter formed on lump 0 at 183,185 (crowd top 1.00); grade 0.52: 10 blows a member, touches as 4, pace x1.21
+  boss t 67 s: lump 0 hunter Gather, 0 members (first 0, 0 hurt), at 183,185, spread 1.00, stolen 0.0; nearest soldier 101.7, 4 alive
+  boss t 68 s: lump 0 hunter Gather, 465 members (first 465, 0 hurt), at 188,188, spread 0.73, stolen 0.0; nearest soldier 99.5, 4 alive
+  boss t 69 s: lump 0 hunter Gather, 465 members (first 465, 0 hurt), at 190,190, spread 0.73, stolen 0.0; nearest soldier 98.3, 4 alive
+  boss t 70 s: lump 0 hunter Gather, 465 members (first 465, 0 hurt), at 190,190, spread 0.69, stolen 0.0; nearest soldier 98.3, 4 alive
+  boss t 71 s: lump 0 hunter Gather, 465 members (first 465, 0 hurt), at 190,190, spread 0.68, stolen 0.0; nearest soldier 98.3, 4 alive
+  boss t 72 s: lump 0 hunter Gather, 465 members (first 465, 0 hurt), at 190,190, spread 0.66, stolen 0.0; nearest soldier 98.8, 4 alive
+  boss t 73 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 190,190, spread 0.66, stolen 0.0; nearest soldier 98.8, 4 alive
+  boss t 74 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 202,188, spread 0.94, stolen 0.0; nearest soldier 87.7, 3 alive
+  boss t 75 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 202,188, spread 0.88, stolen 0.0; nearest soldier 87.1, 3 alive
+  engine crust t 75 s: 49036 cells over 0.05, 38855 over 0.3, 29909 over 0.95; walkers' cells on crust over 0.3 33978, under 0.05 698
+  scar t 75 s: under walkers p50 0.000, p90 0.000, p99 0.203, max 242.380; 107 walkers set
+  fire t 75 s: 0 cells burning, 0 char over 0.3
+  crust t 75 s: 49026 cells over 0.05, 38906 over 0.3 (34037 of those under walkers now, 87%), 29984 over 0.95; walkers on 37241 cells
+  CPU: ground field 2.75 ms (once a game second), model and HUD 0.078 ms a frame
+  t 75 s: mould 37685, soldiers 3, bank 2000, harvested 0, rendered 0, shots 289, killed 484, took 0%, crystals left 0.986; squad at 275.3,128.4
+  surge: the slime ate 404 food (5.4/s); meter 198.2 of 205, 1 surges
+  dense: 0 condensed or thick walkers, mass 37685 (readout 37685); 1983 breaking away
+  squad: touching 0.0 mean, 0 most; health 45 mean
+  boss t 76 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 200,188, spread 0.85, stolen 0.0; nearest soldier 88.0, 3 alive
+  surge 2 starts at t 76.1 s (the slime has eaten 411 food)
+  boss t 77 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 200,188, spread 0.82, stolen 0.0; nearest soldier 88.0, 3 alive
+  boss t 78 s: lump 0 hunter Hunt(Some(2)), 465 members (first 465, 0 hurt), at 200,188, spread 0.80, stolen 0.0; nearest soldier 88.0, 3 alive
+  boss t 79 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 206,186, spread 0.91, stolen 0.0; nearest soldier 101.7, 1 alive
+  boss t 80 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 206,186, spread 0.86, stolen 0.0; nearest soldier 101.7, 1 alive
+  boss t 81 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 206,186, spread 0.85, stolen 0.0; nearest soldier 101.7, 1 alive
+  boss t 82 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 206,186, spread 0.82, stolen 0.0; nearest soldier 101.7, 1 alive
+  boss t 83 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 208,186, spread 0.80, stolen 0.0; nearest soldier 101.0, 1 alive
+  boss t 84 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 212,184, spread 0.97, stolen 0.0; nearest soldier 95.3, 1 alive
+  boss t 85 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 212,184, spread 0.87, stolen 0.0; nearest soldier 96.1, 1 alive
+  raid 1 at t 86.0 s: Soldiers(3) at 278,115, reach 94 cells holding 20351 walkers, share 0.60, size 33% of the slime
+  boss t 86 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 212,184, spread 0.85, stolen 0.0; nearest soldier 96.1, 1 alive
+  boss t 87 s: lump 0 hunter Hunt(Some(3)), 465 members (first 465, 0 hurt), at 212,184, spread 0.80, stolen 0.0; nearest soldier 96.1, 1 alive
+  boss t 88 s: lump 0 hunter Hunt(None), 465 members (first 465, 0 hurt), at 212,184, spread 0.80, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 89 s: lump 0 hunter Hunt(None), 465 members (first 465, 0 hurt), at 212,186, spread 0.77, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 90 s: lump 0 hunter Hunt(None), 465 members (first 465, 0 hurt), at 212,186, spread 0.76, stolen 0.0; nearest soldier inf, 0 alive
+  engine crust t 90 s: 51837 cells over 0.05, 40810 over 0.3, 31430 over 0.95; walkers' cells on crust over 0.3 30349, under 0.05 1340
+  scar t 90 s: under walkers p50 0.000, p90 0.000, p99 45.866, max 193.948; 396 walkers set
+  fire t 90 s: 0 cells burning, 0 char over 0.3
+  crust t 90 s: 52056 cells over 0.05, 40893 over 0.3 (30422 of those under walkers now, 74%), 31357 over 0.95; walkers on 34261 cells
+  CPU: ground field 2.71 ms (once a game second), model and HUD 0.100 ms a frame
+  t 90 s: mould 34712, soldiers 0, bank 1992, harvested 0, rendered 0, shots 310, killed 665, took 0%, crystals left 0.982
+  surge: the slime ate 506 food (5.6/s); meter 94.6 of 205, 2 surges
+  dense: 0 condensed or thick walkers, mass 34712 (readout 34712); 2104 breaking away
