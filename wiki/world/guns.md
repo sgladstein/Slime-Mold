@@ -11,8 +11,8 @@ sources:
   - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
-  - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
