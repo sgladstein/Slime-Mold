@@ -1,8 +1,8 @@
 ---
 title: The player's own mould (gardeners)
 kind: design
-status: open
-updated: 2026-11-14
+status: paused
+updated: 2026-11-17
 sources:
   - Reports/larder-campaign-2026-11-12.md
   - Reports/player-mould-2026-11-12.md
@@ -29,6 +29,11 @@ code:
 # The player's own mould (gardeners)
 
 ## Now
+
+**Parked** (owner, 2026-11-17 19:07Z, "4) Sure" to keeping it parked, the
+whole-game review's D12; [decisions](../decisions-game.md)): nothing here is
+built during Milestone 1, and it is on the lab thread's later list. What
+follows is where it stood.
 
 The owner chose **gardeners** (2026-11-12 04:45Z): the player owns a second
 species in the Larder world, which the soldiers grow (feed, roads, cut), and

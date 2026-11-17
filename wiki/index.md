@@ -1,7 +1,7 @@
 # Wiki index
 
 What is true now about the mould game, one page per subject. Read
-[HANDOFF.md](../HANDOFF.md) first for where the game stands, then the page
+[NOW.md](../NOW.md) first for what is being built, then the page
 for what you are about to touch. How the wiki works: [README.md](README.md).
 Keep this file under 150 lines; lint checks it.
 

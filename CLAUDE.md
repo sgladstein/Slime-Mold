@@ -1,20 +1,32 @@
 # Working in this repo
 
-**Read only what your task needs**; this file is the
-only thing every thread reads. A runner thread reads nothing else.
+**Read only what your task needs**; this file is the only thing every thread
+reads. A runner thread reads nothing else.
 
-- Game or simulation work: `HANDOFF.md`, then `wiki/index.md` and the page
-  for the dish, tool or mechanism you touch.
-- Planning, or changing a step's state: `ROADMAP.md`.
+- Every lane: `NOW.md` (the milestone and its exit tests, each lane's top
+  jobs, what waits on the owner), then `handoff/<your-lane>.md`.
+- Game or simulation work: `wiki/index.md` and the page for the mechanism
+  you touch.
 - Before trying an idea: grep `Reports/dead-ends.md` and `Reports/README.md`
   for it; don't read them whole.
 - File layout and tools: `README.md`, when you need them.
+- `HANDOFF.md`, `ROADMAP.md` and the area handoffs in `handoff/` (every file
+  there that is not a lane's) describe the work before 2026-11-17. Read them
+  as what others were doing, not as orders: where they differ from this file
+  or `NOW.md`, these two hold. The reasons are in
+  `Reports/continuation-plan-2026-11-17.md`.
 
 **The wiki** (`wiki/`): a change that adds a report, changes a default
 or records an owner decision updates those pages in the same commit; rules
 in `wiki/README.md`. Run `python3 wiki/lint.py --base=origin/main` before committing (CI runs it).
 
-## What the owner has ruled for this game
+## What we are building
+
+The game is the roguelike run in squad mode. Work goes one milestone at a
+time, and `NOW.md` names it and its exit tests. Nothing outside the milestone
+is built, except by the lab thread in its own example program or branch.
+
+## What the owner has ruled
 
 All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 `wiki/decisions-game.md` (per game).
@@ -27,18 +39,67 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
   edge or fed/unfed colour line; the picture *is* the data.
 - **An outcome is a spread, not a yes/no; every tool must deliver something
   you can see.**
-- **Defaults on** unless there is a measured harm or a stated uncertainty.
 - **Build first, balance later** (2026-11-12 17:26Z; [rule](Reports/testing-practice-2026-11-12.md)).
-  A feature or look lands when it works and can be seen (tests plus a GIF or
-  a playable build); a census is not its gate. **Balance never blocks looks
-  or features**: retune the numbers instead, and never hold one area's work
-  for balance in another. A census only answers a strategy question (player
-  AI, a shared default every thread measures against, dominance before a
-  milestone or playtest, mission difficulty, an owner question); name it and
-  its runner time first, under about an hour without the owner's OK.
+  A feature or look lands when it works and can be seen; a census is not its
+  gate. **Balance never blocks looks or features**: retune the numbers
+  instead. A census only answers a named strategy question; name it and its
+  runner time first, under about an hour without the owner's OK.
 - **Brainstorms start from the model**, not from the demo's tools (lamp,
   oats, salt, knife, water), which were built for the herding puzzle
   (2026-11-10). Describe the simulation neutrally in a brainstorm brief.
+- **Nobody asks the owner to playtest** (2026-11-17 17:25Z: "I have
+  playtested many times ... I often cannot playtest when a specific thread
+  asks. But the game is not unplayed."). He plays often, on his own time.
+  Never end work on "awaits the owner's playtest": land it on, say what he
+  will see, and move on. His play notes are in `wiki/decisions-game.md`.
+- **Everything lands on by default** (2026-11-17). Off is allowed only for a
+  measured harm or for one side of a real either-or, at most three at once
+  across all lanes, and each ends at his next play: on, one tier's trait, or
+  deleted with its `Reports/dead-ends.md` line. A switch that exists only as
+  a command-line key is not allowed: it is declared in the switch list Engine
+  and tools is building, which the game's Experiments tab shows. Until that
+  list lands, name any switch in your pull request.
+- **Every change he can see or feel adds one line** to the game's "what is
+  new" list: what he will see and how to try it. Until Engine and tools lands
+  the file for it, put that line in the pull request body under "What you
+  will see".
+- **Decide what can be undone; ask only what cannot** (2026-11-17, card:
+  "Threads decide small, ask big"). Look, tuning and implementation choices
+  are yours: make them, state them in the "what is new" line, reverse them if
+  he objects in play. A question that changes the game's direction goes to
+  the Direction lane, not straight to the owner.
+- **The look is everyone's job and one lane's call.** He called the visuals
+  "an important factor" (2026-11-17). Check a visible change against
+  `wiki/looks/art-direction.md` and include a short clip at zoom 6 and 12;
+  Look and interface reviews it. His order for look work (2026-11-17): A the
+  fight round the squad, B the slime itself, C planets and terrain, D menus,
+  shop and screens. An effect is never bigger than its damage (2026-11-14).
+
+## Lanes
+
+Five standing lanes and a lab, each one long-lived thread (2026-11-17).
+
+| Lane | Owns |
+|---|---|
+| Direction | `NOW.md`, the content of the game's "what is new" and "things to try" lists, the record of the owner's play sessions, `wiki/decisions*.md`, the tuning numbers (prices, clocks, rewards, slime sizes) |
+| Enemy | the slime's rules (`src/mould/big.rs`, `src/gpu/engine.wgsl`), `tiers.rs`, `larder_world/{bosses,raids,shapes,bulwark}.rs`, the ladder in `run.rs` |
+| Squad and arsenal | `larder_world/{squads,steer,paths,funnel,cover,cmd,shots,buildings,doors,raising}.rs`, the window's `input.rs` and `squadmode.rs`, `rounds.rs`, `guns.rs`, `bullets.rs`, `kit.rs`, the gun sound |
+| Look and interface | `src/world/view.wgsl`, `marks.rs`, `sprites/`, `ui.rs`, `start.rs`, `start/`, the window's `menu.rs` and `draw.rs`, `wiki/looks/` |
+| Engine and tools | `src/gpu/mod.rs`, `larder_world/{turn,world,score,rules}.rs`, the window's `main.rs`, `headless.rs`, `hands.rs`, `playlog.rs`, CI, `scripts/`, `play.ps1`, `wiki/lint.py` |
+| Lab | its own example program or branch; nothing in the main game |
+
+- **One owner per file.** Need a change in another lane's file? Send a small
+  pull request and tell the owner through the coordinator. In the two shared
+  shaders (`engine.wgsl`: Enemy; `view.wgsl`: Look and interface), other
+  lanes change only their own passes and say so in the pull request title. A
+  file no lane lists is changed by the lane whose work needs it.
+- **Keep `handoff/<your-lane>.md` current** after every merged batch: state,
+  open branch, next step. It is what lets a thread be replaced without loss.
+- **New slime rules are built on the GPU engine only** and tested on the
+  software GPU: no new CPU twin and no new twin test (owner's card,
+  2026-11-17 19:21Z). Today's CPU engine (`src/mould/big.rs`) stays as it is
+  for the tests and the census that stand on it; whether to remove it is
+  decided at Milestone 2.
 
 ## How threads work
 
@@ -55,18 +116,29 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
   it and label it again. Merging by hand still works but makes the queue
   rebuild. Docs-only changes (`Reports/`, `handoff/`, `research/`, `wiki/`,
   `*.md`) skip the build jobs; the wiki lint still runs.
+- **Never assign the owner to a pull request or request his review**
+  (2026-11-14, kept 2026-11-17). Delete your branch when its PR merges.
+- **Models** (2026-11-17): Fable for the main threads, Opus or Sonnet for
+  simpler tasks, Haiku for pure runners, at medium to extra high effort by
+  the task's complexity and importance.
 - **Long runs may use up to 4 Haiku runner threads** (2026-11-10), asked for
   through the coordinator. Runners make no decisions: they run exactly the
   commands given and send the raw output back.
-- **GPU work targets a GTX 1070** on the owner's home desktop, which is often
-  not the machine they are at. GPU runs go through Remote Control when that
-  PC is on with the Claude app open; the owner gave a standing OK for tests
-  there (2026-11-11).
+- **Cloud sessions have no GPU**, but the game runs headless on software
+  Vulkan (for checking and filming, never for timing):
+  `apt-get update && apt-get install -y mesa-vulkan-drivers`, then
+  `export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json`. The filming
+  kit is in `Reports/whole-game-review-2026-11-15/kit.md`.
+- **GPU timing targets a GTX 1070** on the owner's home desktop, through
+  Remote Control when that PC is on with the Claude app open (standing OK
+  for tests, 2026-11-11). Timings go in one batch per milestone; ask Engine
+  and tools.
 
 ## Method
 
-1. Look before you measure: render the dish (`mouldprobe -- look=DIR`,
-   `mouldlooks`) and look at it.
+1. Look before you measure: film the planet
+   (`larder-world look=DIR run=1:PLANET mode=squads hand=greedy at=20,60,120`)
+   and look at it.
 2. Name the deciding measure before a run. Compare paired seeds, quote
    differences as paired counts with a sign-test p, and say which survive a
    multiple-comparison correction.
@@ -79,20 +151,24 @@ All rulings, quoted and timed: `wiki/decisions.md` (standing) and
 
 ## Showing the owner
 
-Pictures and GIFs go on an Artifact page linked in the thread, with the
-counts beside each picture, never as chat attachments. A visual choice goes
-up as a blind A/B with the key kept off the page. Save each page's HTML and
-images under `Reports/<report-folder>/` and list it in `Reports/pages.md`
-in the same change, so the page outlives claude.ai.
+Pictures and clips go on an Artifact page linked in the thread, with the
+counts beside each picture, never as chat attachments. A look is judged in
+motion, never from stills alone. Small visual choices are the lane's; a
+blind A/B with the key kept off the page is only for a choice that sets the
+whole art direction. Save each page's HTML and images under
+`Reports/<report-folder>/` and list it in `Reports/pages.md` in the same
+change, so the page outlives claude.ai.
 
 ## Records
 
-- A new report gets its line in `Reports/README.md` in the same commit.
+- Write a report only for a measurement others will cite, a dead end, or a
+  page for the owner; it gets its line in `Reports/README.md` in the same
+  commit. Otherwise the commit message carries the numbers: before, after,
+  what was rejected.
 - A tried-and-reverted mechanism gets a `Reports/dead-ends.md` entry with the
   condition its rejection depends on.
 - Research, harnesses, raw census output and page sources live in this repo,
   not in the project's shared folder (owner, 2026-11-10).
-- Commit messages carry the measurement: before, after, what was rejected.
 - Source comments record *why*, including approaches tried and reverted.
   Keep them.
 
@@ -105,6 +181,7 @@ rather than at cargo commands.
 ```
 cargo test --release --locked
 cargo clippy --all-targets --release --locked -- -D warnings
+cargo build --release --locked --bin larder-world   # about 2 min 15 s from clean in the cloud
 cargo build --release --example mouldprobe   # examples are not rebuilt by `cargo build`; build the one you run
 python3 wiki/lint.py --base=origin/main
 ```
