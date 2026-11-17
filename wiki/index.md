@@ -50,6 +50,7 @@ work; a thread working on one directly may change it.
 - [Squad mode](world/squad-mode.md): steer one squad, the rest run AUTO; split, join, link, guards, queues, narrow gaps; soldiers walk with a velocity of their own (11-16); default; heal is an order.
 - [The squad economy](world/economy.md): one bank, pumps are the main income, hand draining a fifth, guarding pays, no upkeep.
 - [Guns, bullets and gun cards](world/guns.md): the squad owns a rolled gun with a budget and slots; rolled bullets, stacking cards, no recharge; the gun range.
+- [Gun cards by planet](world/gun-cards.md): one row a card, the run planet it best answers and what you see; the gaps and the merge candidates.
 - [The squad toolkit](world/squad-toolkit.md): six tools from the mould's model (blast and crater, mine, det cord, germ, sleep gas, smell); with tools carried, the best plan changes by tier.
 - [The roguelike run](world/run.md): eight planets toward the slime's home world, a shop between them (upgrades, unlocks, gun cards), harder slime deeper; beside the campaign.
 

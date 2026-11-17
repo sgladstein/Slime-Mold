@@ -4017,6 +4017,9 @@ fn readkill(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (is_dense(k)) { set_dense_kept(k, 0u); return; }
     let i = cell(wk.x, wk.y);
     atomicSub(&occ[i], 1u);
+    // As `strike` and `firekill`: a dead walker's cell holds no claim
+    // (slime-enemy thread's review of #408, 11-17).
+    atomicStore(&claim[i], NONE);
     let c = P.w * P.h;
     trail_in[i] = 0.0;
     for (var s = 0u; s < P.nsp; s++) { sp_in[s * c + i] = 0.0; }
