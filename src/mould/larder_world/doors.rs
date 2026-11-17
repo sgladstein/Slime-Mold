@@ -42,9 +42,10 @@ impl<W: World> Game<W> {
     /// `World::open` (squad-movement thread, 2026-11-16: "the one place is
     /// `Game::standable` plus `standable_cells`", and squad_turn's two
     /// checks).
-    /// Not a bulwark cell (`Game::bulwark`, E2b): set slime is no ground.
+    /// Not a bulwark cell (`Game::bulwark`, E2b): set slime is no ground,
+    /// unless it holds instead (`Rules::set_hold`).
     pub fn ground(&self, x: f32, y: f32) -> bool {
-        (self.world.open(x, y) || self.door_at(x, y)) && !self.bulwark_at(x, y)
+        (self.world.open(x, y) || self.door_at(x, y)) && (self.rules.set_hold > 0.0 || !self.bulwark_at(x, y))
     }
 
     /// Wall `b`'s band `l` (1 the wall as placed): its line, fine cells,
