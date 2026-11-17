@@ -23,7 +23,6 @@ code:
   - BigParams::fire_dry
   - BigParams::fire_fed
   - BigParams::fire_spread
-  - BigParams::fire_weight
   - BigParams::plant_grow
   - BigParams::plant_rot
   - plants::moisture
@@ -64,12 +63,11 @@ whatever its trail, and took that to 0
 fire step a burning agar cell adds `fire_alarm` x its fire to the alarm
 field the flinch reads, on both engines. At 5 nothing changed (8 seeds); at
 50 and 200 the slime drew back from the flames, the fire, undoused, ate
-holes in the body ringed by slime, and killed 13% and 26% more. The same
-behaviour as `fire_weight`, so off with it until the designer's crossing
-test ([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)). The two routes are one decision (technical lead, 11-17 12:05Z): one blind
-A/B film of each alone, the owner keeps one and the other goes to
-`Reports/dead-ends.md`; if they look alike the alarm route wins, as it adds
-no sensor read ([ROADMAP](../../ROADMAP.md), switches that are off).
+holes in the body ringed by slime, and killed 13% and 26% more
+([report](../../Reports/sim-use-2026-11-17/c4-fire-alarm.md)). It is the
+slime's one fire-shyness switch: the other route, heat in the sensors
+(`fire_weight`), was deleted 11-17 after the crossing test below
+([ROADMAP](../../ROADMAP.md), switches that are off).
 
 Fire round two (owner 19:18Z, 19:26Z): fire catches by chance, about a
 cell a second on dry ground (was 5), goes out and smoulders where damp,
@@ -88,19 +86,20 @@ line on ground that would not carry one: on the barrens a torch and tinder
 gun killed 159 in its windows against the torch's 123
 ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 
-Walkers do not sense fire. A flag puts heat in their sensors
-(`fire_weight`, under 0 they turn from it; 0 off, both engines): in its one
-A/B film the slime ringed a fire instead of walking into it, and more of
-it burned, since its damp trail no longer put the fire out
-([element](../../Reports/gun-element-2026-11-17/README.md)). The game
+Walkers do not sense fire in their sensors. Heat in the sensors
+(`fire_weight`, 11-17) was built as a flag and deleted the same day: in
+its A/B film the slime ringed a fire instead of walking into it, and more
+of it burned, since its damp trail no longer put the fire out
+([element](../../Reports/gun-element-2026-11-17/README.md)). In the game
 designer's crossing test (a lit tinder line across a stream of walkers
-going to food, planet 1:3, one seed, 30 s) kept it off: with no line 214
-walkers crossed, with the line 10 at weight 0 and 57 at -5. The weight
-held the stream at the fire's edge (4 crossed while it burned, against
-10) and fewer burned (44 killed against 119), but the stream crossed the
-char as soon as the fire died, and it did not flow round the line; the
-simulation-use thread's `fire_alarm` at 50 did the same (31 crossed, none
-while it burned) ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
+going to food, planet 1:3, one seed, 16-45 s) 214 crossed with no line,
+10 with the line, 57 with the weight at -5 (4 while it burned) and 31
+with `fire_alarm` at 50 (none while it burned). Both held the stream at
+the fire's edge and fewer burned (44 and 28 against 119), but the stream
+crossed the char as soon as the fire died and never flowed round the
+line: neither is a fence. The alarm held harder and adds no sensor read,
+so it stayed ([tinder](../../Reports/gun-tinder-2026-11-17/README.md);
+[dead ends](../../Reports/dead-ends.md)).
 
 ## Look
 

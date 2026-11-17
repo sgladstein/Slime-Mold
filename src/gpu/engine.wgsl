@@ -136,10 +136,9 @@ struct Params {
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
     // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
-    // word is the fire's weight in the sensors (`fire_weight`, the gun
-    // cards' element family, 2026-11-17; 0 off, and 0 without plants), in
-    // the word `fed_full` held until 11-17.
-    eflow: f32, hscent: f32, hat: f32, fire_w: f32,
+    // word is spare (it held `fed_full`, then heat in the sensors,
+    // `fire_weight`; both deleted 11-17).
+    eflow: f32, hscent: f32, hat: f32, body_free: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -753,8 +752,6 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     if (scars()) { v += P.alarm_w * alarm_at(i) + P.scar_w * scar_at(i); } else if (alarms()) { v += P.alarm_w * alarm_at(i); }
     // The crust (`crust_weight`), last as on the CPU.
     if (P.crust_w != 0.0) { v += P.crust_w * crust_of(i); }
-    // Heat (`fire_weight`), after the crust as on the CPU.
-    if (P.fire_w != 0.0) { v += P.fire_w * pget(PB_FA, i); }
     return v;
 }
 
