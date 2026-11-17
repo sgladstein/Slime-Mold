@@ -8,15 +8,15 @@ sources:
   - Reports/mould-probe-2026-11-07.md
   - Reports/mould-review-2026-11-10.md
   - Reports/mould-wild-one-2026-11-10.md
+  - Reports/sim-use-2026-11-17/b-provoke-still.md
   - Reports/slime-enemy-review-2026-11-12.md
   - Reports/slime-questions-2026-11-12/README.md
-  - Reports/sim-use-2026-11-17/b-provoke-still.md
   - handoff/project-memory/mould-depth-2026-11-09.md
 code:
   - BigDish::mind
+  - Dish::sensor_angle_now
   - MIND_DEAF
   - MIND_STILL
-  - Dish::sensor_angle_now
   - Params::explore_angle
   - Params::rotate_angle
   - Params::sensor_angle
