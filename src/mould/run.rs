@@ -69,10 +69,12 @@ impl Ground {
 }
 
 /// The slime by depth: the campaign's ladder, gentlest first. Past its
-/// end the hardest three take turns. The Grudge joins once the GPU engine
-/// takes its scar keys (`Tier::settings` refuses it today; the test below
-/// keeps every rung playable).
-pub const LADDER: [Tier; 6] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper];
+/// end the hardest three take turns. The Grudge joined at planet 7 on
+/// 2026-11-17, once the GPU engine took its scar keys (the simulation-use
+/// plan's step 0, `Reports/sim-use-2026-11-17/plan.md`), so planet 8 mixes
+/// the Sporer, Sleeper and Grudge; the test below keeps every rung
+/// playable.
+pub const LADDER: [Tier; 7] = [Tier::Drifter, Tier::Sprawler, Tier::Trunk, Tier::Swarmer, Tier::Sporer, Tier::Sleeper, Tier::Grudge];
 
 /// One level: what the window needs to start it.
 #[derive(Clone, Debug, PartialEq)]
@@ -284,9 +286,9 @@ pub struct DoesToYou {
     pub keys: &'static [(&'static str, &'static str)],
 }
 
-/// `DoesToYou` by tier (the plain mould and the Grudge do nothing extra).
+/// `DoesToYou` by tier: every tier does one thing (the plain mould is no
+/// tier; the Grudge's row since 2026-11-17).
 pub fn does_to_you(tier: Tier) -> DoesToYou {
-    let none = DoesToYou { says: "", rules: &[], keys: &[] };
     match tier {
         // A pump smells of food 20 times a soldier's scent over 15 dish
         // cells (`BuildRules::pump_smell`, `lure_r`, which only pumps use in
@@ -303,7 +305,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         Tier::Swarmer => DoesToYou { says: "Its surges charge your squad from far off, and fast", rules: SWARMER_RULES, keys: SWARMER_KEYS },
         Tier::Sporer => DoesToYou { says: "Struck, it scatters spores that start new slime", rules: &[], keys: SPORER_KEYS },
         Tier::Sleeper => DoesToYou { says: "It wakes at your first shots, and all of it comes", rules: &[], keys: SLEEPER_KEYS },
-        _ => none,
+        Tier::Grudge => DoesToYou { says: "It remembers where you hurt it, and comes back there", rules: &[], keys: GRUDGE_KEYS },
     }
 }
 
@@ -329,6 +331,12 @@ const SPORER_KEYS: &[(&str, &str)] = &[("spore_burst", "0.2"), ("spore_alarm", "
 // soldier at 14 health -> the squad gone by 1:30. Tried and backfired:
 // wake_alarm 3 (a higher bar is a deeper sleep: 4 soldiers at 99).
 const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
+// Grudge, planet 7 (joined 2026-11-17, when the GPU took its scar): its
+// memory of where it was hit pulls it back at twice the campaign tier's
+// weight (scar_weight 1, not 0.5), so a firing line it was hurt from draws
+// it back after the alarm has faded. A first number, not yet filmed on a
+// planet (`Reports/sim-use-2026-11-17/step0-scar-on-gpu.md`).
+const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
 
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {

@@ -204,6 +204,11 @@ struct Params {
     // any walker has had a Mind status (`Engine::minds`), a spinning
     // walker's curl a step (radians), and two spare words.
     mind_on: u32, spin_curl: f32, _m1: u32, _m2: u32,
+    // The scar row (the Grudge's habituation, 2026-11-17, the
+    // simulation-use plan's step 0; Params grew from 1168 to 1184; mod.rs's
+    // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
+    // weight in the sensors, and a spare word.
+    scar_keep: f32, scar_gain: f32, scar_w: f32, _sc0: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -325,8 +330,9 @@ struct Squad { units: array<SqUnit, 256>, uout: array<SqUnitOut, 256>, shots: ar
 @group(0) @binding(46) var<storage, read_write> body: array<atomic<u32>>;
 // The damage memory (the squad toolkit's layout, 2026-11-12): the crater
 // countdown a cell in fine steps, whole numbers in f32 (the CPU's u16
-// `BigDish::scorch`), in the first block; the tiers thread's scar in the
-// second, unused so far. Held as the f32's bits in atomics (`crater_at`,
+// `BigDish::scorch`), in the first block; the scar in the second (the
+// Grudge's threat memory, `BigDish::scar`; on the GPU since 2026-11-17:
+// `scar_step` in the trail pass, `scar_at` in `sense_at`). Held as the f32's bits in atomics (`crater_at`,
 // `crater_set`), so `cut` can take the larger of two overlapping cones'
 // steps with `atomicMax` (2026-11-12, the technical lead): a non-negative
 // float's bits sort as the float does. Before, `cut` wrote
@@ -459,6 +465,18 @@ fn mind_of(k: u32, t: u32) -> u32 {
 
 fn crater_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[i])); }
 fn crater_set(i: u32, v: f32) { atomicStore(&crater[i], bitcast<u32>(v)); }
+// The scar (binding 47's second block, the CPU's `BigDish::scar`): where
+// the mould was hurt and how often. Only the trail pass writes it, a
+// thread a cell, so plain stores (the atomics are the crater's).
+fn scars() -> bool { return alarms() && P.scar_keep > 0.0; }
+fn scar_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[P.w * P.h + i])); }
+// A cell's scar after this step's alarm `a` (the CPU's loop after the
+// alarm's spread in `tick`): agar cells only.
+fn scar_step(i: u32, a: f32) {
+    if (scars() && agar[i] != 0u) {
+        atomicStore(&crater[P.w * P.h + i], bitcast<u32>(scar_at(i) * P.scar_keep + P.scar_gain * a));
+    }
+}
 const ESCALE: f32 = 65536.0;
 
 const NONE: u32 = 0xFFFFFFFFu;
@@ -686,7 +704,9 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     if (gw != 0.0) { v += gw * grass[i]; }
     // The alarm (`alarm_weight`): over 0 the mould swarms to a wound,
     // under 0 it flees one.
-    if (alarms()) { v += P.alarm_w * alarm_at(i); }
+    // The scar beside it (`scar_weight`), summed with the alarm first as
+    // the CPU's `sense` sums them.
+    if (scars()) { v += P.alarm_w * alarm_at(i) + P.scar_w * scar_at(i); } else if (alarms()) { v += P.alarm_w * alarm_at(i); }
     return v;
 }
 
@@ -1794,7 +1814,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (gone) {
         trail_out[i] = 0.0;
         if (germs) { germ_out[i] = 0.0; }
-        if (al) { germ_out[c + i] = 0.0; }
+        if (al) { germ_out[c + i] = 0.0; scar_step(i, 0.0); }
         for (var s = 0u; s < nsp(); s++) { sp_out[s * c + i] = 0.0; }
         if ((P.scorched & 1u) != 0u) {
             let left = crater_at(i);
@@ -1849,7 +1869,11 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         trail_out[i] = total * f;
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
-    if (al) { germ_out[c + i] = asum / n * P.alarm_keep; }
+    if (al) {
+        let na = asum / n * P.alarm_keep;
+        germ_out[c + i] = na;
+        scar_step(i, na);
+    }
     // The crater, after the soil, on the trail and each species' field.
     if ((P.scorched & 1u) != 0u) {
         let left = crater_at(i);

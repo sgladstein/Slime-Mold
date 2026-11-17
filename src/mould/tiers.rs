@@ -316,13 +316,6 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
 mod tests {
     use super::*;
 
-    /// Whether the GPU engine runs the tier yet: every tier but the two
-    /// habituation tiers, whose scar field waits for its GPU port (a new
-    /// binding, through the integration thread's Params queue).
-    fn on_gpu(t: Tier) -> bool {
-        !t.keys().iter().any(|(k, _)| k.starts_with("scar_"))
-    }
-
     #[test]
     fn names_round_trip_and_every_key_sets() {
         for t in Tier::ALL {
@@ -396,19 +389,14 @@ mod tests {
     /// dish parameters as `Tier::apply` on the CPU's (each key reaches its
     /// `BigParams` field through `gpu::big_params`). Before the GPU port this
     /// test checked that the GPU refused each tier, naming it, and left its
-    /// settings alone.
+    /// settings alone; the Grudge's scar keys were refused until
+    /// 2026-11-17.
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn the_gpu_takes_every_tier_as_the_cpu_does() {
         for t in Tier::ALL {
             let mut s = crate::gpu::Settings::big_dish();
             let before = format!("{s:?}");
-            if !on_gpu(t) {
-                let e = t.settings(&mut s).unwrap_err();
-                assert!(e.contains("scar_keep"), "{e}");
-                assert_eq!(format!("{s:?}"), before, "a refusal leaves the settings alone");
-                continue;
-            }
             t.settings(&mut s).unwrap_or_else(|e| panic!("{e}"));
             assert_ne!(format!("{s:?}"), before, "{} changed nothing", t.name());
             let mut want = crate::gpu::big_params(&crate::gpu::Settings::big_dish(), 1, false);
@@ -429,7 +417,7 @@ mod tests {
     #[test]
     fn each_tier_on_the_gpu_race_world_is_the_cpus() {
         use crate::gpu::larder_world::{engine_params, race_settings};
-        for t in Tier::ALL.into_iter().filter(|&t| on_gpu(t)) {
+        for t in Tier::ALL {
             for (seed, scale, walkers) in [(1, 2, 5_000), (3, 4, 20_000)] {
                 let mut cpu = crate::mould::larder_world::race_params(seed, scale, walkers);
                 t.apply(&mut cpu);
