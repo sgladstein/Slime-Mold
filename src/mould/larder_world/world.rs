@@ -34,11 +34,10 @@ pub trait World {
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32);
     /// Walkers alive (not counting the dead).
     fn living(&self) -> usize;
-    /// The mould's mass: `living`, a condensed or thickened walker counted
-    /// twice (`BigDish::mass`; the run's whole-game review, 11-15 W30: with
-    /// thickening on, the shrink goal counted a walker of two walkers'
-    /// mass once, so a body that thickened read as shrinking). Worlds
-    /// without condensing have no difference.
+    /// The mould's mass for the goals (the run's whole-game review, 11-15
+    /// W30): `living` here, the enemy's living on the GPU world. Until
+    /// 11-17 a condensed or thickened walker counted twice (`BigDish::mass`,
+    /// deleted with condensing).
     fn mass(&self) -> usize {
         self.living()
     }
@@ -238,10 +237,6 @@ impl World for BigDish {
     fn living(&self) -> usize {
         let c = self.life_counts();
         c.iter().sum::<usize>() - c[LIFE_DEAD as usize]
-    }
-
-    fn mass(&self) -> usize {
-        self.living() + (0..self.walkers.len()).filter(|&k| self.lives(k) && self.is_dense(k)).count()
     }
 
     fn crystals(&self) -> Vec<((f32, f32), f32)> {

@@ -481,8 +481,12 @@ ground thread's.
 
 **Freed 11-17** (the off-switch cleanup, integration thread): **860**
 `body_free` (f32, the one body row's last word, `fed_full`'s) and **892**
-`lone_free` (u32, the lone step row's last word, `fed_crowd`'s). Both are
-written 0 in `Engine::write_params`; claim one here as above.
+`lone_free` (u32, the lone step row's last word, `fed_crowd`'s), and
+**900** `fling_free` (u32, `condense`'s) with `ccrowd`'s bits 24-31
+(`thicken`'s). All are written 0 in `Engine::write_params`; claim one here
+as above. In binding 48 the dense block's header word 0 (the mass) and its
+first block of cells (condensed walkers a cell) are free too, and passes
+56-57 went (`massclear`, `masscount`; the passes after moved down two).
 
 ### Switches that are off
 
@@ -501,8 +505,6 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 | Last stand: `RaidRules::last_stand` | Defenses (raids) | The owner was "not sure if this is a good idea or not" | A playtest with it on | ✓ |
 | Reserve recruit: `set=reserve=S` | Larder rules | It is the owner's pick of free recruits, and the default is off | A playtest. If nobody asks for it by the next playtest, delete it. | ✓ |
 | Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
-| Thickening, the bronze: `thicken` | Slime enemy | The owner removed it, 11-16 04:58Z: "Remove the bronze, keep the specks" | **Delete candidate** (it also frees `ccrowd`'s top byte) | ✓ |
-| Condensing: `condense` | Condense, then slime enemy | No planet uses it since #370 (11-16). Specks break away without it. It is still on the menu. | **Delete candidate**, unless a mini-boss wants it | ✓ |
 | Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
 | Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
 | Squad mode: `mode=squads` | Squads | Not a switch: it is the owner's "separate mode", and runs play it | — | — |
@@ -512,8 +514,9 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 `seek_after`, `seek_r`, `seek_cone`, `seek_min`, `seek_gap`), fed packing
 (`fed_crowd`, `fed_full`; their two `Params` words are free, above) and the
 one-body CPU knobs (`body_pull`, `body_lone`, `tether`, `tether_hold`).
-Thickening and condensing go next, in one PR, since they share the dense
-state the specks and the mini-boss lumps keep.
+Then thickening and condensing (`thicken`, `condense`) in one PR, since they
+shared the dense state the specks and the mini-boss lumps keep; the dense
+word stays for those.
 
 These are not switches: tier and mould-type features (alarm, scar, flinch, spores, sleep, hunger and the bosses) are on in their tiers and off in plain C. Ruled values such as `price` 0 are settled. The 11-11 model research knobs (species conversion and zones, MCPM `chance_exp`, grazing, explorers, size spread, contagion and the rest of `BigParams::today`'s zeros) are not game features. They stay as the sandbox's knobs until a cleanup PR removes them.
 

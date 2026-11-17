@@ -1238,7 +1238,6 @@ mod tests {
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
             assert!(p.surge_every > 0 && p.surge_dash > 0 && p.roam > 0 && p.roam_share > 0.0);
-            assert!(p.condense == 0 && p.thicken == 0.0, "planet {d}: no condensing or thickening");
             assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
         }
         let c_food = crate::mould::larder_world::SURGE_FOOD;
@@ -1249,8 +1248,6 @@ mod tests {
         assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash"));
         // Specks clearly more often on planet 1 than on the core world.
         assert!(get(1, "roam_share") / get(1, "roam") > 2.0 * get(PLANETS, "roam_share") / get(PLANETS, "roam"));
-        // Shape C has no bronze either.
-        assert!(c.iter().all(|(k, _)| *k != "thicken" && *k != "condense"));
     }
 
     #[test]

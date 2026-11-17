@@ -1290,14 +1290,13 @@ impl App {
             // (news is kept then).
             let ws = &game.world.s;
             v.set_news(e.withers.then_some((&e.news, &e.state)), ws.wither_lag, ws.panic_lean);
-            // Condensed and thickened walkers (11-14 `condense`, 11-15
-            // `thicken`): the body's copper and
-            // their double count, from the same buffer.
-            // Since the mini-bosses (2026-11-16) always where the world
-            // grows: a lump's members are marked in the same words (bits
-            // 25-27), which the engine keeps with condensing off too.
+            // The dense words, always where the world grows: a lump's
+            // members are marked in them (bits 25-27, the mini-bosses,
+            // 2026-11-16). The ripening's warmth (`ripe_at`) is 0 since
+            // condensing was deleted (11-17); the view's bronze reads bit
+            // 16, which nothing sets now.
             let dense = e.grows;
-            v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
+            v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, 0);
             // Plants, their fire and the char (11-14), from the same buffer.
             v.set_plants(e.plants.then_some((&e.news, &e.state)), (e.plant_at / 4) as u32 + slime_mould::gpu::PLANT_HEAD as u32, e.dish.flora_of.unwrap_or(0) as u32);
             // The crust (2026-11-17, the simulation-use plan's E1a), from

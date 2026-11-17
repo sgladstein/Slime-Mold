@@ -760,17 +760,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // What the slime has eaten, and the surges it built (11-15,
         // food-driven surges).
         println!("  surge: the slime ate {:.0} food ({:.1}/s); meter {:.1} of {:.0}, {} surges", g.slime_ate, g.slime_ate / g.time().max(1e-3), g.surge_meter, g.rules.surge_food, g.surges);
-        // Condensed or thickened walkers (11-15, the thickening films):
-        // how many, and the mould's mass (a condensed walker twice).
-        if g.world.e.condenses {
+        // Breakaways on their way (`roam`; specks of ordinary slime since
+        // 11-16). The line counted condensed or thickened walkers too until
+        // both were deleted (11-17); they print as 0 so the films'
+        // parsers still match.
+        if g.world.e.specks {
             let e = &g.world.e;
             let words = e.dense_of();
             let energy = slime_mould::gpu::floats(&slime_mould::gpu::read_back(&e.device, &e.queue, &e.energy));
-            let thick = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::DENSE != 0).count();
-            // Breakaways on their way (`roam`; specks of ordinary slime
-            // since 11-16).
             let roaming = words.iter().zip(&energy).filter(|&(&w, &v)| v >= 0.0 && w & slime_mould::mould::big::ROAM != 0).count();
-            println!("  dense: {thick} condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould + thick, g.world.mass());
+            println!("  dense: 0 condensed or thick walkers, mass {} (readout {}); {roaming} breaking away", g.mould, g.world.mass());
         }
         // What holds the live soldiers (2026-11-13, for the wading and
         // arming clips): walkers touching them, and their health.

@@ -110,9 +110,9 @@ and shots cost food or every crystal is dry (in squad mode shots are free,
 so a planet with charge left never ends stuck); from `STUCK_WARN` (10 s) the goal line warns
 that the planet ends at `STUCK_END` (30 s); before, a run ended at 1:37 with
 four healthy soldiers and both pumps standing. The shrink goal counts the
-slime's mass (`World::mass`: a thickened walker twice; the GPU's `count`
-pass adds the enemy's condensed walkers to the readout), so a body that
-thickens no longer reads as shrinking. The window writes a play log
+slime's mass (`World::mass`, the enemy's living walkers; until 11-17 a
+thickened walker counted twice, so a body that thickened did not read as
+shrinking; thickening was deleted). The window writes a play log
 (`Playlog`) beside the replay, `larder-world-log-MAP-SEED.txt`, a line a
 game second (walkers, mass, soldiers, squads, bank, income, shots, kills,
 buildings, frame p50/p95) with each command; `cargo run --release --example

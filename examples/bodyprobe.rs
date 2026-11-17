@@ -43,7 +43,7 @@
 use std::collections::VecDeque;
 use std::sync::mpsc;
 
-use slime_mould::mould::big::{BigDish, BigParams, DENSE, LUMP_SHIFT};
+use slime_mould::mould::big::{BigDish, BigParams, LUMP_SHIFT};
 use slime_mould::mould::larder_world::race_params;
 use slime_mould::mould::map::{Crystal, Map};
 use slime_mould::mould::tiers::set_key;
@@ -112,9 +112,9 @@ fn world(seed: u64, n: usize, dist: f32, arm: &Arm) -> (BigDish, (f32, f32), f32
         key(&mut p, k, v);
     }
     let mut d = BigDish::with_map(p, &m);
-    // Every walker is condensed and in lump 0 (`big::LUMP_SHIFT`), so the
-    // whole dish is the body.
-    d.dense = vec![DENSE | 1 << LUMP_SHIFT; d.walkers.len()];
+    // Every walker is in lump 0 (`big::LUMP_SHIFT`), so the whole dish is
+    // the body. (Condensed too until condensing was deleted, 11-17.)
+    d.dense = vec![1 << LUMP_SHIFT; d.walkers.len()];
     (d, (tx * s, ty * s), tr * s)
 }
 

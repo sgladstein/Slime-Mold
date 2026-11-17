@@ -83,8 +83,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         ("wither", "Wither", &["0", "0.005", "0.01", "0.02"][..], "How fast a part cut off from food thins; 0 is off"),
         ("energy_flow", "Shared food", &["0", "0.025", "0.05", "0.1"][..], "How much food the body shares from its crystals; 0 is off"),
         // Condense (11-14) and Thicken (11-15) left the menu on 11-16: the
-        // owner, 04:58Z, "Remove the bronze, keep the specks". Their keys
-        // (`condense=`, `thicken=`) still work for films and tests.
+        // owner, 04:58Z, "Remove the bronze, keep the specks"; both rules
+        // were deleted 11-17.
         // Slime breaks away (11-14, `BigParams::roam`; from ordinary slime
         // since 11-16): how often (steps) a ripe walker may leave for an
         // untouched crystal far off. Off in the sandbox; the run sets it

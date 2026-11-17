@@ -141,8 +141,6 @@ struct Read {
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
     own: u32,
-    /// The enemy's condensed walkers (`wstat[8]`), for `World::mass`.
-    dense: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
     /// The engine's kill counter at the frame's end (`Engine::struck`,
@@ -166,8 +164,6 @@ pub struct GpuWorld {
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
     own: usize,
-    /// The enemy's condensed walkers at the last readout (`World::mass`).
-    dense: usize,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
@@ -359,7 +355,7 @@ impl GpuWorld {
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -489,7 +485,7 @@ impl GpuWorld {
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3], lumps }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -499,7 +495,6 @@ impl GpuWorld {
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
         self.own = r.own as usize;
-        self.dense = r.dense as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
@@ -843,10 +838,10 @@ impl World for GpuWorld {
         self.own
     }
 
-    /// The living plus the enemy's condensed walkers, from the same
-    /// readout (`count` adds them to `wstat[8]`), so no read-back.
+    /// The enemy's living, from the same readout, so no read-back (until
+    /// 11-17 plus its condensed walkers, `wstat[8]`).
     fn mass(&self) -> usize {
-        self.living - self.own + self.dense
+        self.living - self.own
     }
 
     fn set_task(&mut self, k: usize, t: Task) {

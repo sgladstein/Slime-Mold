@@ -22,7 +22,6 @@ code:
   - BigParams::birth_cost
   - BigParams::birth_energy
   - BigParams::capacity
-  - BigParams::condense
   - BigParams::condense_crowd
   - BigParams::condense_r
   - BigParams::energy_flow
@@ -35,7 +34,6 @@ code:
   - BigParams::roam_share
   - BigParams::start_energy
   - BigParams::starve
-  - BigParams::thicken
   - BigParams::upkeep
   - CLAIM_BIRTH
   - DRAW_BIRTH
@@ -73,79 +71,47 @@ growth explores, then joins crystals with tubes: a median 19 of 22 on its
 main body at 60 s against 2 for the food-reach droplets, 16 of 16 seeds
 ([food tubes](../../Reports/food-tubes-2026-11-11.md)).
 
-**Condensing** (11-14, `BigParams::condense`, off by default; the
-`condense=` key, and the start menu's Condense option until 11-16, when the
-owner took the bronze out of play: "Remove the bronze, keep the specks"): a walker is ripe on
-a step when it took crystal or the 5 x 5 square round it holds at least
-`condense_crowd` (20) walkers; after `condense` steps ripe (300 on the
-menu, 10 s) half the ripe walkers are absorbed and half condense
-(`BigDish::dense`), taking the absorbed one's energy. A condensed walker
-pays twice the upkeep, bites and holds a leg as two, and has two lives (a
-shot, blast, withering or starving breaks it first); births stop while the
-mass (a condensed walker counting two) fills the slots, so the freed
-ground does not refill. Both engines, twins exact. In the window (Fork,
-seed 1, farm) C has 26,904 walkers at 5:00 against 44,806 off and holds
-its crystals in bronze lobes instead of covering the map; at a crowd of 16
-the tubes between crystals broke into beads
-([condense](../../Reports/condense-2026-11-14/README.md)). The settled
-bronze keeps its veins under the sheen (luma 99; keep it at or under the
-bolt red's 105). **Breakaway** (`BigParams::roam`, off by default; owner
-11-14 15:06Z): every `roam` steps a condensed piece may
-leave together for the nearest untouched crystal at least `roam_far` cells
-away, running like a panicking walker, and lands and feeds there. From
-11-15 it ran in the run from planet 2 with `condense` (both 300; the
-whole-game review's D2, owner 11-15 21:41Z): breakaway alone over shape C's
-thickening moved nothing on planet 2 (19,093 walkers at 2:00 against
-19,103), while both made the slime a fifth to two fifths heavier at 3:00,
-at no frame cost on the GTX 1070
-([breakaway in the run](../../Reports/breakaway-run-2026-11-15/README.md)).
-**Since 11-16 ordinary slime breaks away: the specks** (`roam` with
-`condense` 0, both engines, twin dish "specks"; the owner, 04:58Z, "Remove
-the bronze, keep the specks ... Specks more often early game"): an ordinary
-walker gets a chance every `roam`
-steps (each slot at its own phase, so the body never leaves at once),
-leaves at `roam_share` if it then stands ripe as condensing reckons it,
-runs as a breakaway runs and stays ordinary; it
-lands, or gives up where it stands after `SPECK_TRIP` (600 steps, 20 s).
-Only the walkers whose chance it is count their crowd, a `roam`th a step
-(a first build kept every walker's ripeness, as condensing does, a 5 x 5
-count each a step). `roam_share`'s default is 0.05 since then (0.5
-before), so the start menu's Breakaway, which sets `roam` alone, sends a
-twentieth. The run sends specks on every planet
-(`run::enemy_keys`: `roam` 300, `roam_share` 0.05 on planets 1-2 down to
-0.02 on the core world): on planet 2 of run 2 about 1,000 walkers are on
-their way at once over the first two minutes (6%; 12,300 of 17,406 at the
-first try's 0.5 with no give-up), and at 5:00 the slime is 7% heavier than
-with none (27,428 against 25,716; planet 1 of run 1, 10%, 26,239 against
-23,900), one seed each.
-On planet 1's sheet the specks cross open ground as a visible stream; in
-planet 2's mesh they blend into the slime's own exploring streams
+**Breakaway, the specks** (`BigParams::roam`, both engines, twin dish
+"specks"; ordinary slime since 11-16, the owner, 04:58Z, "Remove the
+bronze, keep the specks ... Specks more often early game"): an ordinary
+walker gets a chance every `roam` steps (each slot at its own phase, so the
+body never leaves at once), and leaves at `roam_share` for the nearest
+untouched crystal at least `roam_far` cells away if it then stands ripe: it
+took crystal, or the 5 x 5 square round it holds at least `condense_crowd`
+(20) walkers. It runs as a panicking walker runs, stays ordinary, and lands,
+or gives up where it stands after `SPECK_TRIP` (600 steps, 20 s). Only the
+walkers whose chance it is count their crowd, a `roam`th a step (a first
+build kept every walker's ripeness, a 5 x 5 count each a step).
+`roam_share`'s default is 0.05 since then (0.5 before), so the start menu's
+Breakaway, which sets `roam` alone, sends a twentieth. The run sends specks
+on every planet (`run::enemy_keys`: `roam` 300, `roam_share` 0.05 on
+planets 1-2 down to 0.02 on the core world): on planet 2 of run 2 about
+1,000 walkers are on their way at once over the first two minutes (6%;
+12,300 of 17,406 at the first try's 0.5 with no give-up), and at 5:00 the
+slime is 7% heavier than with none (27,428 against 25,716; planet 1 of run
+1, 10%, 26,239 against 23,900), one seed each. On planet 1's sheet the
+specks cross open ground as a visible stream; in planet 2's mesh they blend
+into the slime's own exploring streams
 ([specks](../../Reports/specks-2026-11-16/README.md)). On the GTX 1070,
 against no dense passes at all (`roam=0`), the step costs 0.05 ms more on
-planet 1, 0.07 on planet 2 and, on the core world, 0.56 until the mass
-and the condensed walkers a cell ran only with condensing
-(`Engine::ripens`) or with condensing, thickening
-(`Engine::dense_walkers`) or a lump (`lumps_on`; #388), 0.30-0.33 since,
-`ripen` 0.21 of it. A twin switches those passes back on mid-game and
-checks they start clean. A condensed walker touches as two only while
-condensing or thickening is on, on both engines.
+planet 1, 0.07 on planet 2 and 0.30-0.33 on the core world, `ripen` 0.21 of
+it (measured with condensing's mass and cell passes already gated off,
+#388).
 
-**Thickening** (11-15, `BigParams::thicken`, both engines; on in shape C
-at 2 until 11-16, **off since**: the owner, 04:58Z, "Remove the bronze";
-`thicken=K` still sets it): a walker that banks `thicken` times a birth's energy without
-dividing (no free slot or cell) turns condensed in place, paying a
-birth's cost; nothing is absorbed and births go on, so mass grows past
-the slots, up to twice. Before it, C filled its 50,000 slots at 3:00 on the
-CPU race world eating three times its upkeep and got no stronger; with it,
-mass 90,739 and 90,226 at 7:00 (seeds 1-2) holding every crystal and
-30,338 and 32,577 held to 4
-([thicken](../../Reports/thicken-2026-11-15/README.md)). Thick slime
-breaks away too, thick walkers one by one, as a trickle (twin dish
-"thicken roam"). The owner's word,
-11-15 08:34Z: the slime should "keep getting stronger by holding onto its
-crystals and getting more of them"; with thickening out of play, C stops
-growing at its slots again, and the mini-boss thread's bosses are the
-strength that grows instead ([dead end](../../Reports/dead-ends.md)).
+**Condensing and thickening, deleted 11-17.** Condensing (11-14,
+`condense`): ripe walkers were half absorbed and half condensed, with two
+lives, twice the bite and upkeep, and births stopped at the mass, so C held
+its crystals in bronze lobes (26,904 walkers at 5:00 against 44,806 off;
+[condense](../../Reports/condense-2026-11-14/README.md)); breakaway began as
+condensed pieces leaving together, and ran in the run from planet 2 from
+11-15 ([breakaway in the run](../../Reports/breakaway-run-2026-11-15/README.md)).
+Thickening (11-15, `thicken`, shape C's 2 until 11-16): a walker that banked
+twice a birth's energy without dividing turned condensed in place, so mass
+grew past the slots (90,739 at 7:00 holding every crystal;
+[thicken](../../Reports/thicken-2026-11-15/README.md)). The owner took the
+bronze out of play on 11-16; both were deleted with their twin dishes on
+11-17 ([dead ends](../../Reports/dead-ends.md)). The mini-boss lumps are
+the strength that grows instead, and keep the dense word for their members.
 
 ## Owner's word
 
@@ -165,9 +131,9 @@ strength that grows instead ([dead end](../../Reports/dead-ends.md)).
 
 ## Tried and rejected
 
-- Thickening and condensing in play (shape C's `thicken` 2, the run's
-  `condense` 300 from planet 2), 11-15 to 11-16: out by the owner's word
-  above; the keys stay for films
+- Thickening and condensing (shape C's `thicken` 2, the run's `condense`
+  300 from planet 2), 11-15 to 11-16: out of play by the owner's word
+  above, deleted from the code 11-17
   ([`dead-ends.md`](../../Reports/dead-ends.md)).
 
 - Pairing slots by cycling single bits: a small mould bred about one step
