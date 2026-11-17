@@ -5,6 +5,7 @@ status: open
 updated: 2026-11-17
 sources:
   - Reports/first-reach-2026-11-11.md
+  - Reports/gun-route-2026-11-17/README.md
   - Reports/larder-world-roadmap-2026-11-11.md
   - Reports/life-gpu-2026-11-11.md
   - Reports/mould-tiers-2026-11-11.md
@@ -18,6 +19,7 @@ code:
   - BigDish::scar
   - BigParams::alarm_weight
   - BigParams::explore_spread
+  - BigParams::germ_resist
   - BigParams::graze_weight
   - BigParams::scar_keep
   - BigParams::scar_weight
@@ -62,6 +64,11 @@ planet 7 (`run::LADDER`; [report](../../Reports/sim-use-2026-11-17/step0-scar-on
 Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
 Sporer's edge is not significant
 ([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).
+
+Each slime resists the germ round by its own `germ_resist` (2026-11-17,
+the game designer's retune): shape C 13.5, kept by the Sprawler, Trunk and
+Sleeper; the Sporer 1; the Drifter 10; the Swarmer and Grudge 15
+([route](../../Reports/gun-route-2026-11-17/README.md)).
 
 `Tier::core` (2026-11-12) gives the Sprawler no pull and the Grudge
 twice the plain pull (16); every other tier keeps the game's core, which

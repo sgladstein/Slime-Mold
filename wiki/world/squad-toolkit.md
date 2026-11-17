@@ -2,7 +2,7 @@
 title: The squad toolkit
 kind: tool
 status: open
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - Reports/burning-trails-2026-11-14.md
   - Reports/card-text-2026-11-15.md
@@ -10,6 +10,7 @@ sources:
   - Reports/flashes-of-chaos-guns-2026-11-12.md
   - Reports/gas-cloud-2026-11-14.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/larder-world-roadmap-2026-11-11.md
@@ -203,7 +204,7 @@ named all four sets in the blind film quiz (11-16 05:09Z).
 - Random play wipes the Drifter and the Trunk at 945e080 (gate 1 fails): re-run on main with the core pull (#126) and the new Drifter (#133).
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
-- `germ_resist` as a tier key, if a campaign mould needs the germ answered.
+- `germ_resist` is a tier key since 11-17 (shape C 13.5): the toolkit's thrown germ, at its own upkeep of 60, took 44% of C in 20 s against 76% before ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0).
 - The germ's and the gas's 1070 twins are pending.
 - The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).

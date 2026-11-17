@@ -622,7 +622,18 @@ impl Default for RoundRules {
             flare_secs: 3.0,
             flare_every: 0.2,
             budget: 10,
-            kit: KitRules::default(),
+            // The germ round's sick pay a sixth of the toolkit's upkeep
+            // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
+            // "retune it now. It's numbers, so it doesn't wait for the
+            // balance pass"). At 60 one germ round took 76% of plain C's
+            // walkers in 20 s and 80% of the Sporer's (race world, seed 0,
+            // one cast on the Fork lobe at 20 s, walkers at 40 s). The
+            // upkeep is a cliff: 8 or less did nothing, 9 took 39%, 10 54%,
+            // 20 65%; fewer sick seconds (3 or 4.5) at 10 did nothing. The
+            // spread between planets comes from each tier's
+            // `BigParams::germ_resist` (`tiers.rs`, shape C's in
+            // `larder_world::shapes`); `Reports/gun-route-2026-11-17/`.
+            kit: KitRules { sick_upkeep: 10.0, ..KitRules::default() },
         }
     }
 }
@@ -649,6 +660,12 @@ impl RoundRules {
             "flare_r" => &mut self.flare_r,
             "flare_secs" => &mut self.flare_secs,
             "flare_every" => &mut self.flare_every,
+            // The germ round's own contagion (2026-11-17), in its kit so
+            // the toolkit's germ dish keeps `KitRules::default`'s
+            // (the rounds' upkeep is 10, the toolkit's 60).
+            "sick_secs" => &mut self.kit.sick_secs,
+            "sick_upkeep" => &mut self.kit.sick_upkeep,
+            "sick_catch" => &mut self.kit.sick_catch,
             _ => return false,
         };
         *r = v;

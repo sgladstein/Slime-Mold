@@ -13,6 +13,7 @@ sources:
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
   - Reports/gun-readers-2026-11-17/README.md
+  - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
@@ -35,6 +36,7 @@ code:
   - Game::steer
   - Gun::roll
   - RoundRules::burst_rules
+  - Rounds::burning
   - Rounds::cast_cards_at
   - Rounds::flush
   - Run::range
@@ -169,6 +171,17 @@ a shatter alone took none. A single germ already took the whole body from
 the body ended at 6,910
 ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 
+**Route** (2026-11-17, step D's third family): the Flare kills nothing and
+burns an alarm (100 over 16 dish cells, again every 0.2 s for 3 s); the
+slime's own rule decides the rest. Shape C (planets 1-3) flinches, so it
+backs off (within 12 cells 293 to 186); the Swarmer and the Sleeper walk to
+alarm and pour onto empty ground toward it (0 to 439 and 412). On shape C in
+play it costs kills (fewer in 13 of 15 paired windows): it is the Swarmer's
+and Sleeper's decoy. Sold from planet 2 on the Special bullets tab. The Road
+(bullets lay trail) stopped the squad's own shots and was dropped. With it
+the germ was retuned per planet (Open)
+([route](../../Reports/gun-route-2026-11-17/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -212,14 +225,17 @@ card text) and 08:30 (the guns a draw of the game).
   +3%); aim cards wait (squads on their own hold the defend stance, so an
   aim card changes only which nearby slime they pick). Step D's first
   family, Mind (blind, sour, spin), is built and its blind quiz is with the
-  owner; the readers (shatter, detonate) are built; next route, element,
-  force; cut last.
+  owner; the readers (shatter, detonate) and the route's Flare are built;
+  next element, force; cut last.
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
-  gunfire wakes gassed slime before a shatter reads it; the germ alone is a
-  plague on one dense body (70% in 10 s), so Detonate mostly makes it
-  sudden; the germ is a dominance check for the balance pass (levers in
-  the report).
+  gunfire wakes gassed slime before a shatter reads it.
+- The germ was a plague (one round took 76% of shape C in 20 s). Retuned
+  11-17 on the game designer's call: the round's sick pay a sixth of the
+  toolkit's upkeep, and each planet's slime resists it (`germ_resist`), so
+  it is strong on the Sporer and Drifter and weak on the Swarmer, Grudge and
+  Sleeper ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0
+  only).
 - **Which card answers which planet**: [gun cards by planet](gun-cards.md)
   (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
   and the Trunk; Pull and Thrift answer no planet.
@@ -231,4 +247,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md), [route](../../Reports/gun-route-2026-11-17/README.md).

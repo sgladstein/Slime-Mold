@@ -96,7 +96,15 @@ pub fn shape_keys(name: &str) -> Option<(usize, &'static [(&'static str, &'stati
     // on 3 of 5, so no steady change in who wins; the old flee (keep
     // 0.98) failed the census gate in 2026-11-12's rules
     // (`Reports/flinch-2026-11-15/README.md`).
-    const C: [(&str, &str); 7] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("surge", "1800"), ("flinch", "0.9")];
+    // C resists the germ (`BigParams::germ_resist` 13.5, 2026-11-17, the
+    // game designer's call, 05:40Z: the plain mould, the Sprawler and the
+    // Trunk should lose 25-35% to one germ round in 20 s). With the
+    // rounds' upkeep of 10 one round on the Fork lobe (race world, seed 0)
+    // took 54% of C at 1, 47% at 11, 40% at 12.5, 32.5% at 13.5 and 28% at
+    // 14; a tier that sets its own (the Sporer 1, the Drifter 10, the
+    // Swarmer and Grudge 15) wins, as every tier key does. It also weakens the
+    // toolkit's thrown germ on C (`Reports/gun-route-2026-11-17/`).
+    const C: [(&str, &str); 8] = [DENSE[0], DENSE[1], ("energy_flow", "0.05"), ("wither", "0.01"), ("panic", "2"), ("surge", "1800"), ("flinch", "0.9"), ("germ_resist", "13.5")];
     Some(match name {
         "a" => (5_000, &[]),
         "b" => (25_000, &[("start", "spread"), ("food", "0"), ("upkeep", "0.00001"), ("capacity", "50000")]),

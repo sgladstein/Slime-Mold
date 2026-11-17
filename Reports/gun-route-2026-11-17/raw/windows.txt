@@ -1,0 +1,23 @@
+window        plain kill/flares/trails mould sold    flare kill/flares/trails mould sold     road kill/flares/trails mould sold
+greedy-5           49/0   /0     m24736  s9           10/6   /0     m24682  s9           52/0   /112   m24732  s9  
+greedy-11          73/0   /0     m24847  s9           26/20  /0     m24903  s9           52/0   /187   m24878  s9  
+hold-10            86/0   /0     m24648  s8           56/14  /0     m24656  s8            2/0   /130   m24705  s8  
+hold-30           471/0   /0     m24928  s7          912/64  /0     m24348  s5          112/0   /165   m25282  s7  
+p1g2-25            25/0   /0     m24858  s8           13/10  /0     m24868  s8           16/0   /58    m24864  s8  
+p1g2-40            16/0   /0     m24815  s8            5/10  /0     m24826  s8           13/0   /62    m24819  s8  
+p1g3-10            42/0   /0     m25002  s8            8/5   /0     m25031  s8           21/0   /69    m25023  s8  
+p1g3-25            23/0   /0     m25408  s8            8/10  /0     m25426  s8           20/0   /98    m25417  s8  
+p1g3-40            46/0   /0     m25946  s8           17/12  /0     m25980  s8           48/0   /108   m25940  s8  
+p1s1-25            29/0   /0     m25812  s8            9/7   /0     m25825  s8           20/0   /39    m25814  s8  
+p1s1-40            91/0   /0     m26696  s8           29/14  /0     m26743  s8          103/0   /62    m26681  s8  
+p2s1-10            16/0   /0     m25335  s8            4/5   /0     m25347  s8           13/0   /81    m25338  s8  
+p2s1-25            46/0   /0     m24724  s8           14/10  /0     m24751  s8           40/0   /107   m24731  s8  
+p2s1-40            71/0   /0     m24958  s8           43/19  /0     m24986  s8           61/0   /76    m24968  s8  
+p3g4-40            11/0   /0     m26156  s8           11/8   /0     m26156  s8            6/0   /22    m26161  s8  
+
+plain  killed 1095, slime at the ends 378869, soldiers at the ends 121, flares 0
+flare  killed 1165, slime at the ends 378528, soldiers at the ends 119, flares 214
+road   killed 579, slime at the ends 379353, soldiers at the ends 121, flares 0
+
+flare against plain: more kills 1, fewer 13 (p=0.002); less slime 2, more 12 (p=0.013); more soldiers left 0, fewer 1 (p=1.000)
+road against plain: more kills 3, fewer 12 (p=0.035); less slime 3, more 12 (p=0.035); more soldiers left 0, fewer 0 (p=1.000)

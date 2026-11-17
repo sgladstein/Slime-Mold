@@ -2381,7 +2381,15 @@ mod tests {
             ("contagion", sick.clone()),
             ("contagion, square-root deposit, respawn", Settings { cap: 100, respawn: 0.01, ..sick.clone() }),
             ("contagion, one a cell", Settings { start: Start::Spread, seed_r: 60.0, ..Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, sick_speed: 1.5, sick_reach: 0.5, sick_turn: 2.0, seed_at: 0.0, ..small(0) } }),
+            // A tier's germ resistance (2026-11-17, `germ_resist`): the
+            // catch level times it on both engines. High, so that hardly
+            // anyone past the seeded disc catches it in the warm-up and a
+            // GPU that ignored it would infect a ring in the one tick: a
+            // planted bug (the GPU sent `catch_at` alone) put 983 of
+            // 250,000 walkers and counters off (llvmpipe, 2026-11-17).
+            ("contagion, resisted", Settings { germ_resist: 50.0, ..sick.clone() }),
         ];
+        let mut ills = Vec::new();
         for (name, s) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
             let mut cpu = e.dish.clone();
@@ -2408,7 +2416,12 @@ mod tests {
                 assert!(ill > 0, "{name}: someone is sick");
                 assert!(sick_off * 1000 <= n && lg <= 1e-4, "{name}: {sick_off} counters off, germ L1 {lg:.2e}");
             }
+            ills.push((name, ill));
         }
+        // The resistance bites: fewer catch it in the warm-up than on the
+        // same dish without it.
+        let ill = |want: &str| ills.iter().find(|(n, _)| *n == want).map(|&(_, i)| i).unwrap();
+        assert!(ill("contagion, resisted") < ill("contagion"), "resisted {} against {}", ill("contagion, resisted"), ill("contagion"));
     }
 
     /// The twin test for the outside rules (PRs #55, #56, #58, 2026-11-11): one

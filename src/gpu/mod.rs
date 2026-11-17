@@ -445,6 +445,11 @@ pub struct Settings {
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
+    /// A tier's resistance to the germ (`BigParams::germ_resist`, 1 none;
+    /// 2026-11-17): a healthy walker catches it only over `catch_at` x
+    /// this (`write_params` sends the product, so the passes are the
+    /// CPU's).
+    pub germ_resist: f32,
     /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
     /// walker pays a tick, what it starts with, what it divides at, what a
     /// division costs, the chance a tick that a walker at zero dies, and
@@ -709,6 +714,7 @@ impl Settings {
             crust_fuel: t.crust_fuel,
             char_barren: t.char_barren,
             flinch: t.flinch,
+            germ_resist: t.germ_resist,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
             birth_energy: t.birth_energy,
@@ -983,6 +989,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_keep" => s.alarm_keep = f()?,
         "alarm_weight" => s.alarm_weight = f()?,
         "flinch" => s.flinch = f()?.max(0.0),
+        "germ_resist" => s.germ_resist = f()?.max(0.0),
         "alarm_relay" => s.alarm_relay = f()?,
         "scar_keep" => s.scar_keep = f()?,
         "scar_gain" => s.scar_gain = f()?,
@@ -1185,6 +1192,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         crust_fuel: s.crust_fuel,
         char_barren: s.char_barren,
         flinch: s.flinch,
+        germ_resist: s.germ_resist,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
         birth_energy: s.birth_energy,
@@ -2091,7 +2099,10 @@ impl Engine {
         b.extend(u32_bytes(&[s.cap as u32, stream(seed, DRAW_WANDER)]));
         // The looks: angles in radians, as `BigParams`.
         let (am, tm) = ([s.angle_by[0].to_radians(), s.angle_by[1]], [s.turn_by[0].to_radians(), s.turn_by[1]]);
-        b.extend(f32_bytes(&[s.trail_scale, s.reach_by[0], s.reach_by[1], am[0], am[1], tm[0], tm[1], s.step_by[0], s.step_by[1], s.floor, s.wander, s.catch_at]));
+        // The catch level times the tier's germ resistance (2026-11-17),
+        // the CPU's `sick_catch * germ_resist`; the dish's own draw then
+        // shows the germ in red against that mould's level.
+        b.extend(f32_bytes(&[s.trail_scale, s.reach_by[0], s.reach_by[1], am[0], am[1], tm[0], tm[1], s.step_by[0], s.step_by[1], s.floor, s.wander, s.catch_at * s.germ_resist]));
         // Infect: the mouse's disc, or the middle once `seed_at` has come.
         let (mut infect, mut ix, mut iy, mut ir) = (0u32, 0.0f32, 0.0f32, 0.0f32);
         if let (true, Some((x, y))) = (hand.infect, hand.at) {

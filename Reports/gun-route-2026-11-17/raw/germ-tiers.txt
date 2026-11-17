@@ -1,0 +1,18 @@
+# germ-tiers.sh on the build with the retune (rounds' sick_upkeep 10; germ_resist C 13.5, Drifter and Sporer 1, Swarmer and Grudge 15), no keys
+c: none 25772, germ 17403, down 32.5%
+drifter: none 24440, germ 10615, down 56.6%
+sprawler: none 25773, germ 18680, down 27.5%
+trunk: none 25052, germ 17013, down 32.1%
+swarmer: none 23491, germ 20494, down 12.8%
+sporer: none 27472, germ 14008, down 49.0%
+sleeper: none 21705, germ 21705, down 0.0%
+grudge: none 23789, germ 20059, down 15.7%
+
+# Then the Drifter alone, `germ-tiers.sh BIN OUT germ_resist=R` (the key goes after tier=drifter's):
+drifter at 1: germ 10615, down 56.6%
+drifter at 2: germ 10664, down 56.4%
+drifter at 3: germ 10694, down 56.2%
+drifter at 6: germ 10890, down 55.4%
+drifter at 10: germ 11632, down 52.4%   <- the Drifter's default since (tiers.rs)
+# The Sporer at 1.5: germ 14063, down 48.8%. Shape C at the toolkit's upkeep
+# (set=sick_upkeep=60, resistance 13.5): germ 14504, down 43.7% (76.0% before).
