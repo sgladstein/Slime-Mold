@@ -1282,6 +1282,17 @@ pub struct BigParams {
     pub set_wake: f32,
     pub set_crust: f32,
     pub set_armour: u32,
+    /// **Heat in the sensors** (the gun cards' element family, the game
+    /// designer, 2026-11-17 08:43Z: "read the fire field like a negative
+    /// scent", so fire is a herding tool; 0 off): a sensor adds
+    /// `fire_weight` x the fire's heat at its cell (0-1), after the crust,
+    /// so under 0 the slime turns from a burning cell as it turns from a
+    /// wall it can see, and walks into fire only when nothing better is in
+    /// sight. Heat is ground the player lights (a torch, a blast, a scorch
+    /// line), not the soldiers: the flee from gunfire, which kept the
+    /// mould off the squad and made its fire a free win, is a dead end
+    /// (`Reports/dead-ends.md`), and this is not that rule.
+    pub fire_weight: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -1697,6 +1708,7 @@ impl BigParams {
             set_wake: 0.0,
             set_crust: 0.5,
             set_armour: 3,
+            fire_weight: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -3441,10 +3453,17 @@ impl BigDish {
                 let v = self.trail_seen(i, sp) + sc + g + al + b;
                 // The crust (`crust_weight`), last, so a dish without it
                 // keeps its sums.
-                if self.crust.is_empty() || self.p.crust_weight == 0.0 {
+                let v = if self.crust.is_empty() || self.p.crust_weight == 0.0 {
                     v
                 } else {
                     v + self.p.crust_weight * self.crust[i]
+                };
+                // Heat (`fire_weight`), after the crust, so a dish without
+                // it keeps its sums.
+                if self.fire.is_empty() || self.p.fire_weight == 0.0 {
+                    v
+                } else {
+                    v + self.p.fire_weight * self.fire[i]
                 }
             }
             _ => -1.0e6,

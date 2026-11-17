@@ -93,6 +93,10 @@ pub enum Icon {
     // The route family (`rounds::Card::Flare`, 2026-11-17): a flare
     // burning on its stick.
     Flare,
+    // The element family (`rounds::Card::Torch`, 2026-11-17): a flame
+    // rising out of the grass, which is what it lights (the burn order's
+    // icon is a flame alone).
+    Torch,
 }
 
 impl Icon {
@@ -186,6 +190,7 @@ impl Icon {
             // The germ's two spots inside a blast.
             Icon::Detonate => &["M12 2 L14 8.5 L20.5 6 L16.5 11.5 L22 15 L15 15.5 L14.5 22 L11 16.5 L5.5 20.5 L7.5 14 L2 11.5 L8.5 9.5 L6.5 3.5 Z", "FO10.7 11.2 1.3", "FO13.6 13.8 1.1"],
             Icon::Flare => &["M12 3 C14.5 6 16 8.2 16 10.6 C16 13 14.2 14.6 12 14.6 C9.8 14.6 8 13 8 10.6 C8 8.6 9.2 7 10.4 5.8 C10.6 7.4 11.2 8.4 12.2 8.8 C12.4 6.8 12.2 4.8 12 3 Z", "M12 14.6 L12 21", "M4 7 L6 8", "M20 7 L18 8", "M3.5 13 L5.7 12.6", "M20.5 13 L18.3 12.6"],
+            Icon::Torch => &["M12 2.5 C15 6 16.5 8.6 16.5 11 C16.5 13.6 14.5 15.5 12 15.5 C9.5 15.5 7.5 13.6 7.5 11 C7.5 9 8.8 7.3 10 6.1 C10.3 7.7 11 8.7 12 9.1 C12.3 6.9 12.2 4.7 12 2.5 Z", "M3 21 L21 21", "M4.5 21 C4.8 18.4 5.8 16.4 7.4 15", "M8 21 C8 19.2 8.6 17.9 9.6 17", "M19.5 21 C19.2 18.4 18.2 16.4 16.6 15", "M16 21 C16 19.2 15.4 17.9 14.4 17"],
             Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }
@@ -296,7 +301,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull, Multicast, Seek] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull, Multicast, Seek, Flare, Torch] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");

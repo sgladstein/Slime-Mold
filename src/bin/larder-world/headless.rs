@@ -508,7 +508,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                         (0..n).filter(|&j| ill[j] > g.world.s.immune && (spec[j] >> 9) & 3 != 3 && en[j] >= 0.0 && (wk[4 * j] - wx).hypot(wk[4 * j + 1] - wy) <= 2.0 * wr).count()
                     });
                     let sick = sick.map_or(String::new(), |c| format!(", {c} sick within {}", 2.0 * wr));
-                    println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}{sick}", 2.0 * wr);
+                    // On a world with plants, the cells burning within 2R
+                    // and the fire's kills so far, for the element
+                    // family's films (2026-11-17). Appended, as the sick.
+                    let fire = if e.plants {
+                        let (_, _, f, _) = e.plants_of();
+                        let hot = f.iter().enumerate().filter(|&(i, &v)| v > 0.0 && ((i % w) as f32 + 0.5 - wx).hypot((i / w) as f32 + 0.5 - wy) <= 2.0 * wr).count();
+                        format!(", {hot} cells burning within {}, {} killed by fire", 2.0 * wr, g.fire_killed)
+                    } else {
+                        String::new()
+                    };
+                    println!("  watch t {sec} s: {disc} walkers within {wr} of {wx},{wy}, {ring} from {wr} to {}{sick}{fire}", 2.0 * wr);
                 }
             }
             // `crustlook=T`: crust from the look once a game second (no
@@ -590,7 +600,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         // Squads with their own cards (`load=`) and loaded turrets (`tload=`) count here too. A new count
         // goes last, so the reports' parsers (`raw/make_clips.py`) still match.
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
-            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts, {} reader casts, {} flares", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4], rd.cast[5], rd.cast[6]);
+            println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts, {} reader casts, {} flares, {} torches, {} walkers killed by fire", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4], rd.cast[5], rd.cast[6], rd.cast[7], g.fire_killed);
         }
         if g.shells_fired > 0 {
             let next = g.shells.last().map_or(String::new(), |s| format!(", the newest coming down at {:.0},{:.0}", s.to.0, s.to.1));

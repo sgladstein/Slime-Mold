@@ -221,6 +221,10 @@ struct Params {
     // crust sets at (0 off, and 0 without the crust or the scar), the scar
     // it wakes under, the crust it needs, and its armour in blows.
     set_scar: f32, set_wake: f32, set_crust: f32, set_armour: u32,
+    // The heat row (`FIRE_AT`, the gun cards' element family, 2026-11-17):
+    // the fire's weight in the sensors (0 off, and 0 without plants) and
+    // three spare words.
+    fire_w: f32, _fw0: u32, _fw1: u32, _fw2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -763,6 +767,8 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     if (scars()) { v += P.alarm_w * alarm_at(i) + P.scar_w * scar_at(i); } else if (alarms()) { v += P.alarm_w * alarm_at(i); }
     // The crust (`crust_weight`), last as on the CPU.
     if (P.crust_w != 0.0) { v += P.crust_w * crust_of(i); }
+    // Heat (`fire_weight`), after the crust as on the CPU.
+    if (P.fire_w != 0.0) { v += P.fire_w * pget(PB_FA, i); }
     return v;
 }
 

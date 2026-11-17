@@ -68,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (296 words).
-pub const PARAMS_BYTES: usize = 1232;
+/// Bytes in `Params` (312 words).
+pub const PARAMS_BYTES: usize = 1248;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -140,6 +140,10 @@ pub const CRUST_FX_AT: usize = 1200;
 /// scar), `set_wake`, `set_crust` and `set_armour`. Each slot's set word is
 /// a block of `news` right after the crust's (`Engine::set_of`).
 pub const SET_AT: usize = 1216;
+/// The heat row (the gun cards' element family, 2026-11-17; Params grew
+/// from 1232 to 1248): `fire_weight` (0 on a dish without plants, whose
+/// fire field is absent) and three spare words.
+pub const FIRE_AT: usize = 1232;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -453,6 +457,9 @@ pub struct Settings {
     pub set_wake: f32,
     pub set_crust: f32,
     pub set_armour: u32,
+    /// Heat in the sensors (`BigParams::fire_weight`, the element family,
+    /// 2026-11-17; 0 off, and 0 on a dish without plants).
+    pub fire_weight: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -732,6 +739,7 @@ impl Settings {
             set_wake: t.set_wake,
             set_crust: t.set_crust,
             set_armour: t.set_armour,
+            fire_weight: t.fire_weight,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1044,6 +1052,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "set_wake" => s.set_wake = f()?.max(0.0),
         "set_crust" => s.set_crust = f()?,
         "set_armour" => s.set_armour = int()?.clamp(1, 255),
+        // Heat in the sensors (the element family, 11-17): under 0 the
+        // slime turns from fire.
+        "fire_weight" => s.fire_weight = f()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1243,6 +1254,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         set_wake: s.set_wake,
         set_crust: s.set_crust,
         set_armour: s.set_armour,
+        fire_weight: s.fire_weight,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
         germ_upkeep: s.germ_upkeep,
@@ -2372,6 +2384,9 @@ impl Engine {
         // Setting needs the crust and the scar, as the CPU's `sets`.
         b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
         b.extend(u32_bytes(&[s.set_armour]));
+        assert_eq!(b.len(), FIRE_AT, "Params rows before the heat row moved");
+        // The fire field is in the plants' block, absent without plants.
+        b.extend(f32_bytes(&[if self.plants { s.fire_weight } else { 0.0 }, 0.0, 0.0, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;

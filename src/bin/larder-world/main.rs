@@ -386,7 +386,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 62] = [
+const LOADOUTS: [(&str, &str); 64] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -486,6 +486,10 @@ const LOADOUTS: [(&str, &str); 62] = [
     // kills none; with a blast, every other bullet kills where it went.
     ("flare", "flare"),
     ("flare-blast", "flare+blast"),
+    // The element family (2026-11-17, step D): the torch lights the plants
+    // and the fire kills; with a blast, every other bullet kills at once.
+    ("torch", "torch"),
+    ("torch-blast", "torch+blast"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).

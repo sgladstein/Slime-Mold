@@ -6,6 +6,7 @@ updated: 2026-11-17
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
+  - Reports/gun-element-2026-11-17/README.md
   - Reports/gun-feel-2026-11-15/README.md
   - Reports/gun-look-2026-11-15/README.md
   - Reports/gun-mind-2026-11-16/README.md
@@ -27,6 +28,7 @@ code:
   - Ammo::roll
   - BigDish::mind
   - BigDish::read_strike
+  - Burst::light
   - Burst::push
   - Engine::mind_pass
   - Engine::read_pass
@@ -186,6 +188,19 @@ and Sleeper's decoy. Sold from planet 2 on the Special bullets tab. The Road
 the germ was retuned per planet (Open)
 ([route](../../Reports/gun-route-2026-11-17/README.md)).
 
+**Element** (2026-11-17, step D's fourth family): the Torch kills nothing
+itself and lights every plant within 6 dish cells; the fire kills thin
+slime standing in it or caught by its spread, and spares a body damp with
+trail. On planets 1-3 in play it killed more than plain bullets in 9 of 9
+paired windows (p = 0.004) and left less slime in 8 of 9; against the
+blast (cost 3) 7 of 9, not significant. It depends on the ground: strong on
+the meadow (350 kills against plain's 230 over six windows), little on
+the barrens and the fen. Sold from planet 2 on the
+Special bullets tab. Heat in the sensors (`fire_weight`, the designer's
+herding idea) is a flag, off: in its one A/B film the slime ringed the fire
+instead of crossing it, but more of it burned
+([element](../../Reports/gun-element-2026-11-17/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -229,8 +244,10 @@ card text) and 08:30 (the guns a draw of the game).
   +3%); aim cards wait (squads on their own hold the defend stance, so an
   aim card changes only which nearby slime they pick). Step D's first
   family, Mind (blind, sour, spin), is built and its blind quiz is with the
-  owner; the readers (shatter, detonate) and the route's Flare are built;
-  next element, force; cut last.
+  owner; the readers (shatter, detonate), the route's Flare and the
+  element's Torch are built; next Tinder (a fuel line along the flight),
+  then force; cut last. Douse (water) is held: the view's wet ground is
+  refreshed only with walls and crystals.
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
   gunfire wakes gassed slime before a shatter reads it.
@@ -239,7 +256,9 @@ card text) and 08:30 (the guns a draw of the game).
   has a resistance (`germ_resist`) and a frailty (`germ_upkeep`): strong
   on the Sporer and Drifter, weak on the Swarmer and Grudge, useless on a
   sleeping Sleeper and strong on one a Flare woke. The GPU world's first
-  germ had also infected the map's middle (fixed 11-17), so the earlier
+  germ had also infected the map's middle (fixed 11-17; a twin with the
+  first germ in a planet's corner now fails on the old code,
+  [element](../../Reports/gun-element-2026-11-17/README.md)), so the earlier
   "plague" figures were inflated: one round took 48% of shape C, not 76%
   ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0 only).
 - **Which card answers which planet**: [gun cards by planet](gun-cards.md)

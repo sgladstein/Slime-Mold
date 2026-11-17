@@ -270,6 +270,13 @@ pub struct Burst {
     /// `READ_SICK`, sick) take a blow, counted with the kills
     /// (`BigDish::read_strike`), after the strike and crater. 0: none.
     pub read: u8,
+    /// **A light** (the gun cards' element family, `rounds::Card::Torch`,
+    /// 2026-11-17): this share of the cells with fuel within `r` catch
+    /// fire at full heat (`BigDish::ignite`), with no kill of its own: the
+    /// fire kills what stands in it and spreads through the plants, and
+    /// living slime thick enough to be damp (`BigParams::fire_damp`) does
+    /// not burn. 0: none.
+    pub light: f32,
 }
 
 impl Burst {
@@ -349,6 +356,9 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     }
     if b.crater > 0 {
         d.ignite(b.at.0, b.at.1, b.crater_r + 1.0, d.p.fire_light_blast);
+    }
+    if b.light > 0.0 {
+        d.ignite(b.at.0, b.at.1, b.r, b.light);
     }
     if let Some((r, rr, inv)) = b.fling_ring(s) {
         d.p.fling_speed = k.fling_speed;

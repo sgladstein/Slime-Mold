@@ -450,11 +450,13 @@ pub const AMMO_OFFER: usize = 2;
 /// (`GpuWorld::has_germ`; the gun-system review's step A). The Mind
 /// bullets (blind, sour, spin; step D, 2026-11-16) from planet 2, their
 /// cards' rarity, and the readers with what they read: shatter with the
-/// Mind bullets (gas is sold from the start), detonate with the germ.
+/// Mind bullets (gas is sold from the start), detonate with the germ. The
+/// flare and the torch (step D's route and element families, 11-17) from
+/// planet 2, their cards' rarity.
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
     if depth >= power_from(2) {
-        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare]);
+        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare, Shell::Torch]);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
