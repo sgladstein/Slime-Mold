@@ -83,8 +83,8 @@ pub(super) fn options(base: &Args) -> Vec<Opt> {
         ("wither", "Wither", &["0", "0.005", "0.01", "0.02"][..], "How fast a part cut off from food thins; 0 is off"),
         ("energy_flow", "Shared food", &["0", "0.025", "0.05", "0.1"][..], "How much food the body shares from its crystals; 0 is off"),
         // Condense (11-14) and Thicken (11-15) left the menu on 11-16: the
-        // owner, 04:58Z, "Remove the bronze, keep the specks". Their keys
-        // (`condense=`, `thicken=`) still work for films and tests.
+        // owner, 04:58Z, "Remove the bronze, keep the specks"; both rules
+        // were deleted 11-17.
         // Slime breaks away (11-14, `BigParams::roam`; from ordinary slime
         // since 11-16): how often (steps) a ripe walker may leave for an
         // untouched crystal far off. Off in the sandbox; the run sets it
@@ -349,8 +349,8 @@ fn range_shelf(row: &run::Row) -> &'static str {
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
-        // have been the armory's seventh for two rows; so does the flare
-        // (2026-11-17), the route family's payload.
+        // have been the armory's seventh for two rows; so do the flare and
+        // the torch (2026-11-17), the route and element families' payloads.
         (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell.special() => "Special bullets",
         (Pick::Offer(_), Face::Card(c)) => match c.kind() {
             rounds::Kind::Payload => "Bullets",

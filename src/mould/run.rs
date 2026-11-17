@@ -450,11 +450,13 @@ pub const AMMO_OFFER: usize = 2;
 /// (`GpuWorld::has_germ`; the gun-system review's step A). The Mind
 /// bullets (blind, sour, spin; step D, 2026-11-16) from planet 2, their
 /// cards' rarity, and the readers with what they read: shatter with the
-/// Mind bullets (gas is sold from the start), detonate with the germ.
+/// Mind bullets (gas is sold from the start), detonate with the germ. The
+/// flare and the torch (step D's route and element families, 11-17) from
+/// planet 2, their cards' rarity.
 pub fn shells_at(depth: u32) -> Vec<Shell> {
     let mut v = vec![Shell::Plain, Shell::Blast, Shell::Gas];
     if depth >= power_from(2) {
-        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare]);
+        v.extend([Shell::Blind, Shell::Sour, Shell::Spin, Shell::Shatter, Shell::Flare, Shell::Torch]);
     }
     if depth >= power_from(3) {
         v.extend([Shell::Bomb, Shell::Germ, Shell::Detonate]);
@@ -1238,7 +1240,6 @@ mod tests {
             }
             // No bronze (owner 11-16: "Remove the bronze"), specks on.
             assert!(p.surge_every > 0 && p.surge_dash > 0 && p.roam > 0 && p.roam_share > 0.0);
-            assert!(p.condense == 0 && p.thicken == 0.0, "planet {d}: no condensing or thickening");
             assert!(surge_food(d + 1, 1.0) <= surge_food(d, 1.0) && surge_food(d, 2.0) == 2.0 * surge_food(d, 1.0), "planet {d}");
         }
         let c_food = crate::mould::larder_world::SURGE_FOOD;
@@ -1249,8 +1250,6 @@ mod tests {
         assert!(get(PLANETS, "surge") < get(1, "surge") && get(PLANETS, "surge_dash") > get(1, "surge_dash"));
         // Specks clearly more often on planet 1 than on the core world.
         assert!(get(1, "roam_share") / get(1, "roam") > 2.0 * get(PLANETS, "roam_share") / get(PLANETS, "roam"));
-        // Shape C has no bronze either.
-        assert!(c.iter().all(|(k, _)| *k != "thicken" && *k != "condense"));
     }
 
     #[test]

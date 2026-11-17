@@ -1668,6 +1668,8 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
         // The route family (2026-11-17, step D): moves the slime, kills none.
         C::Flare => (Icon::Flare, CardKind::Payload, format!("Burns {:.0} s, alarming slime within {:.0} cells; kills none.", r.flare_secs, r.flare_r)),
+        // The element family (2026-11-17, step D): the fire kills, not the hit.
+        C::Torch => (Icon::Torch, CardKind::Payload, format!("Sets plants within {:.0} cells on fire; the fire kills slime.", r.torch_r)),
     }
 }
 
@@ -1850,6 +1852,9 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         // The flare (2026-11-17): a signal flare's hot red, apart from
         // the blast's orange.
         Some(rounds::Card::Flare) => ([255, 60, 70], [255, 226, 220], [255.0, 90.0, 90.0]),
+        // The torch (2026-11-17): a flame's yellow, more saturated than a
+        // plain shot's pale gold and apart from the blast's orange.
+        Some(rounds::Card::Torch) => ([255, 225, 0], [255, 252, 210], [255.0, 235.0, 70.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }

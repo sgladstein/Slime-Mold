@@ -145,7 +145,7 @@ pub enum Card {
     /// or walkers within `Rules::seek_catch` cells a card of its line
     /// (`Game::catches`, `squad::trace`), in both engines. The first tries
     /// turned the bullet toward slime ahead no bullet had picked
-    /// (`Game::steer`, now off: `Rules::seek_turn` 0): it read slime a
+    /// (`Game::steer`, `Rules::seek_turn`; deleted 11-17): it read slime a
     /// second old and missed as often (Reports/gun-seek-2026-11-16/).
     Seek,
     /// **The Mind bullets** (2026-11-16, step D of the gun-system review,
@@ -188,6 +188,18 @@ pub enum Card {
     /// alarm on a flinching mould is gone in a few fine steps, hence the
     /// burn.
     Flare,
+    /// **The element family** (2026-11-17, step D of the gun-system
+    /// review, its fourth: "fire, water, plants; the ground the slime
+    /// stands on"). `Torch` is a payload that kills nothing itself and
+    /// lights every plant within `RoundRules::torch_r` (`squad::Burst::
+    /// light`, `BigDish::ignite`): the fire does the killing, on whatever
+    /// thin slime stands in it or walks into it, and spreads through the
+    /// plants by the ground's moisture, so a planet's biome sets what one
+    /// torch does (a meadow or a jungle burns; barrens, fens and caves
+    /// hardly). Living slime thick enough to be damp does not burn, so the
+    /// torch eats an edge, not a body, and fire hurts soldiers who stand in
+    /// it (`Rules::fire_hurt`).
+    Torch,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -200,11 +212,11 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 32] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare];
+    pub const ALL: [Card; 33] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
@@ -249,6 +261,7 @@ impl Card {
             Card::Shatter => "shatter",
             Card::Detonate => "detonate",
             Card::Flare => "flare",
+            Card::Torch => "torch",
         }
     }
 
@@ -327,6 +340,7 @@ impl Card {
             // against 17,628, `Reports/gun-readers-2026-11-17/`).
             Card::Detonate => "Kills sick slime where it hits; let it spread first.",
             Card::Flare => "Burns where it hits, alarming slime; kills none.",
+            Card::Torch => "Sets the plants where it hits on fire.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -351,6 +365,9 @@ impl Card {
             Card::Shatter | Card::Detonate => 2,
             // Kills nothing; moves the slime, as the Mind bullets do.
             Card::Flare => 2,
+            // Kills only by the fire, which needs plants and spares a damp
+            // body: below the blast (3), with the flare.
+            Card::Torch => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -363,7 +380,7 @@ impl Card {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare | Card::Torch => 2,
             Card::Detonate => 3,
             _ => 1,
         }
@@ -581,6 +598,13 @@ pub struct RoundRules {
     pub flare_r: f32,
     pub flare_secs: f32,
     pub flare_every: f32,
+    /// **The element family** (`Card::Torch`, 2026-11-17): a torch lights
+    /// this share (`torch_light`, 1: all) of the cells with fuel within
+    /// `torch_r` dish cells (x the bullet's area): a blast's crater (7)
+    /// lights 0.12 out to a cell past it, a scorch line 0.4 of its disc.
+    /// `set=` keys.
+    pub torch_r: f32,
+    pub torch_light: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -625,6 +649,8 @@ impl Default for RoundRules {
             flare_r: 16.0,
             flare_secs: 3.0,
             flare_every: 0.2,
+            torch_r: 6.0,
+            torch_light: 1.0,
             budget: 10,
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
@@ -664,6 +690,8 @@ impl RoundRules {
             "flare_r" => &mut self.flare_r,
             "flare_secs" => &mut self.flare_secs,
             "flare_every" => &mut self.flare_every,
+            "torch_r" => &mut self.torch_r,
+            "torch_light" => &mut self.torch_light,
             // The germ round's own contagion (2026-11-17), in its kit so
             // the toolkit's germ dish keeps `KitRules::default`'s
             // (the rounds' upkeep is 10, the toolkit's 60).
@@ -749,7 +777,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare => {
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
                 multis.push(multi);
@@ -880,7 +908,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0 };
     let mind = |m: u32| Burst { r: r.mind_r * f, mind: m as u8, ..none };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
@@ -897,6 +925,8 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Detonate => Burst { r: r.detonate_r * f, read: big::READ_SICK, ..none },
         // No kill (`r` 0): the alarm alone, unless Quiet took it.
         Card::Flare => Burst { alarm: if c.quiet { 0.0 } else { r.flare_alarm }, alarm_r: r.flare_r * f, ..none },
+        // No kill and no alarm: the fire alone.
+        Card::Torch => Burst { r: r.torch_r * f, light: r.torch_light, ..none },
         _ => return Vec::new(),
     };
     if !c.scatter {
@@ -996,10 +1026,11 @@ pub struct Rounds {
     /// Flares still burning (`Card::Flare`), at most `PENDING_MAX`.
     burning: Vec<Burn>,
     /// Casts by payload (blast, gas, germ, bomb, the Mind bullets
-    /// together and the readers together, since 2026-11-16, and the flare,
-    /// 11-17), walkers killed by rounds, walkers flung by bombs, and casts
-    /// dropped at `PENDING_MAX` (lodged casts and burning flares each).
-    pub cast: [u32; 7],
+    /// together and the readers together, since 2026-11-16, the flare and
+    /// the torch, 11-17), walkers killed by rounds, walkers flung by bombs,
+    /// and casts dropped at `PENDING_MAX` (lodged casts and burning flares
+    /// each).
+    pub cast: [u32; 8],
     pub killed: usize,
     pub flung: usize,
     pub dropped: u32,
@@ -1054,6 +1085,7 @@ fn slot(p: Card) -> Option<usize> {
         Card::Blind | Card::Sour | Card::Spin => Some(4),
         Card::Shatter | Card::Detonate => Some(5),
         Card::Flare => Some(6),
+        Card::Torch => Some(7),
         _ => None,
     }
 }
@@ -1636,6 +1668,87 @@ mod tests {
         assert_eq!((rd.burning(g.world.ticks()).count(), rd.killed), (0, 0), "out, and it killed nothing");
     }
 
+    /// **The element family** (2026-11-17, step D): a torch is a payload
+    /// with no kill, alarm or crater of its own that lights the plants
+    /// within `torch_r` (wide by `Wide`), all of them at `torch_light` 1,
+    /// counted in its own slot. On the flats map fully planted, one torch
+    /// on the slime in the thickest grass near the home lights the plants
+    /// there and kills nothing at its cast; the fire it starts kills
+    /// walkers in the seconds after (102 cells lit, 68 burned in 4 s, out
+    /// within a second: the grass under a body is damp, `plants::
+    /// moisture`). On the same world with no plants it lights nothing and
+    /// nothing dies of fire.
+    #[test]
+    fn a_torch_lights_the_plants_and_the_fire_kills() {
+        let r = RoundRules::default();
+        let c = Card::Torch;
+        assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier()), (Kind::Payload, "torch".to_string(), Some(7), 2, 2));
+        assert_eq!(Shell::of(c).map(|s| s.special()), Some(true));
+        let b = bursts(&casts(&parse("wide+torch").unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
+        assert_eq!(b.len(), 1);
+        assert_eq!((b[0].kill, b[0].burn, b[0].alarm, b[0].crater, b[0].light, b[0].at), (false, false, 0.0, 0, r.torch_light, (20.0, 10.0)));
+        assert!((b[0].r - r.torch_r * r.wide).abs() < 1e-4, "{} wide", b[0].r);
+        let mut tuned = r;
+        assert!(tuned.set("torch_r", 9.0) && tuned.set("torch_light", 0.5) && (tuned.torch_r, tuned.torch_light) == (9.0, 0.5));
+        use crate::mould::larder_world::race_params;
+        use crate::mould::map::Map;
+        use crate::mould::plants::pack;
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let play = |planted: bool| {
+            let mut m = Map::load(&dir, "flats").unwrap();
+            if planted {
+                // Meadow, scrub and jungle in bands (the plants' twin test's
+                // cover, with no reeds, which never catch).
+                m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+            }
+            let mut g = Game::new(BigDish::with_map(race_params(3, 1, 2_000), &m), Rules::default(), 3);
+            for _ in 0..10 * g.rules.tps {
+                g.step();
+            }
+            // In thick grass: of the living walkers within 40 dish cells
+            // of the home, the one with the most plants within 3 cells
+            // (fire kills at `fire_kill` heat, which thin grass, or grass
+            // the slime has worn, never reaches: its heat is capped by its
+            // fuel, `plants::fire_step`).
+            let home = g.world.homes[0];
+            let s = g.world.scale();
+            let w = &g.world;
+            let fuel = |p: (f32, f32)| {
+                let (cx, cy) = (p.0 as i64, p.1 as i64);
+                let mut f = 0.0f32;
+                for y in (cy - 3 * s as i64).max(0)..=(cy + 3 * s as i64).min(w.h as i64 - 1) {
+                    for x in (cx - 3 * s as i64).max(0)..=(cx + 3 * s as i64).min(w.w as i64 - 1) {
+                        f += w.plant.get(y as usize * w.w + x as usize).copied().unwrap_or(0.0);
+                    }
+                }
+                f
+            };
+            let edge = (0..w.walkers.len())
+                .filter(|&k| w.lives(k))
+                .map(|k| (w.walkers[k].0, w.walkers[k].1))
+                .filter(|p| (p.0 / s - home.0).hypot(p.1 / s - home.1) <= 40.0)
+                .max_by(|a, b| fuel(*a).total_cmp(&fuel(*b)))
+                .unwrap();
+            let mut rd = Rounds::new(parse("torch").unwrap(), r);
+            let lit0 = g.world.burning;
+            rd.cast_at(&mut g, edge);
+            let lit = g.world.burning - lit0;
+            let killed_at_cast = rd.killed;
+            let fire0 = g.world.fire_killed;
+            for _ in 0..4 * g.rules.tps {
+                g.step();
+            }
+            (rd.cast[7], lit, killed_at_cast, g.world.fire_killed - fire0)
+        };
+        let (cast, lit, at_cast, burned) = play(true);
+        eprintln!("a torch on the planted flats: {lit} cells lit, {at_cast} killed at the cast, {burned} burned in 4 s");
+        assert_eq!((cast, at_cast), (1, 0), "one torch, and no kill of its own");
+        assert!(lit > 50, "it lit the plants: {lit}");
+        assert!(burned > 0, "its fire killed walkers");
+        let (cast, lit, _, burned) = play(false);
+        assert_eq!((cast, lit, burned), (1, 0, 0), "no plants: nothing lit, nothing burned");
+    }
+
     /// **A flare moves the slime by its own alarm rule** (the route
     /// family, 2026-11-17): on the race world warmed 20 s, a flare at the
     /// edge of the body. A flinching mould (`BigParams::flinch` 0.9, shape
@@ -1723,7 +1836,7 @@ mod tests {
         }
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
-        assert_eq!(rd.cast, [0; 7], "a trail casts nothing");
+        assert_eq!(rd.cast, [0; 8], "a trail casts nothing");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch

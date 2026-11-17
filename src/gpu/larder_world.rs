@@ -141,8 +141,6 @@ struct Read {
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
     own: u32,
-    /// The enemy's condensed walkers (`wstat[8]`), for `World::mass`.
-    dense: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
     /// The engine's kill counter at the frame's end (`Engine::struck`,
@@ -166,8 +164,6 @@ pub struct GpuWorld {
     pub garden: Option<GpuGarden>,
     /// The player's own mould's living walkers at the last readout.
     own: usize,
-    /// The enemy's condensed walkers at the last readout (`World::mass`).
-    dense: usize,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
@@ -356,10 +352,23 @@ impl GpuWorld {
         // A game tick is `scale` engine ticks (the module's head), so the
         // plants step at the same game ticks as the CPU's.
         e.plant_sub = scale as u64;
+        // No timed seeding of the germ, ever: the dish's `seed_at` (4 s)
+        // would infect a `seed_r` (40-cell) disc at the map's middle once
+        // contagion is on, a germ the CPU world never has (it seeds only
+        // with `seed_at` 0, `BigParams::sick_seed_r`). Found 2026-11-17: a
+        // germ deep in the Sleeper's sleeping crust killed none there yet
+        // the body lost 22% (16,998 against 21,705 at 40 s); with the
+        // seeding off, 0%. Every GPU germ from 11-14 to then carried it, so
+        // one round "took 76% of shape C" where it took 48%
+        // (`Reports/gun-route-2026-11-17/`). It was first turned off at the
+        // first germ (`burst_passes`); here since the technical lead's
+        // review of #416, so no other way of turning contagion on (a
+        // `sick=` key) can set it off either.
+        e.seeded = true;
         let size = RO_GRID + 4 * e.grid_max() as u64;
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, dense: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, garden: None, own: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -489,7 +498,7 @@ impl GpuWorld {
         let st = &words[at(RO_WSTAT)..];
         let (gw, gh) = self.e.grid_size();
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
-        Read { out, sums, broken: st[1], living: st[4], own: st[5], dense: st[8], grid, struck: st[3], lumps }
+        Read { out, sums, broken: st[1], living: st[4], own: st[5], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -499,7 +508,6 @@ impl GpuWorld {
         self.crystals = self.e.dish.piles.iter().zip(&r.sums).map(|(&(x, y), &(sum, _))| ((x * k, y * k), sum)).collect();
         self.living = r.living as usize;
         self.own = r.own as usize;
-        self.dense = r.dense as usize;
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
@@ -576,6 +584,11 @@ impl GpuWorld {
         if b.crater > 0 {
             lights.push((b.at.0, b.at.1, b.crater_r + 1.0, p.fire_light_blast));
         }
+        // A torch (`rounds::Card::Torch`, 11-17), after the blast's as on
+        // the CPU.
+        if b.light > 0.0 {
+            lights.push((b.at.0, b.at.1, b.r, b.light));
+        }
         self.e.ignite(&self.shared, &lights);
         // An explosion's fling (`Engine::fling`, 11-14), after the kill as
         // on the CPU.
@@ -605,15 +618,12 @@ impl GpuWorld {
         if b.germ {
             if self.s.sick == 0 {
                 assert!(k.sick_steps > 0, "the germ needs sick_steps");
-                // No timed seeding: the dish's `seed_at` (4 s) would infect
-                // a `seed_r` (40-cell) disc at the map's middle on the next
-                // tick, a second germ the CPU world never had. Found
-                // 2026-11-17: a germ deep in the Sleeper's sleeping crust
-                // killed none there yet the body lost 22% (16,998 against
-                // 21,705 at 40 s); with the seeding off, 0%. Every GPU germ
-                // from 11-14 to here carried it, so one round "took 76% of
-                // shape C" where it took 48% (`Reports/gun-route-2026-11-17/`).
-                self.e.seeded = true;
+                // The dish's timed seeding is off from the start
+                // (`GpuWorld::of`). A plain assert, not a debug one (the
+                // technical lead's review of #423): CI and every census
+                // run in release. One check a burst, as #94's Params
+                // lengths.
+                assert!(self.e.seeded, "the GPU dish's timed seeding is on in a Larder world: the first germ would infect the map's middle too");
                 self.s.sick = k.sick_steps as u32;
                 self.s.immune = k.immune_steps as u32;
                 self.s.sick_upkeep = k.sick_upkeep;
@@ -843,10 +853,10 @@ impl World for GpuWorld {
         self.own
     }
 
-    /// The living plus the enemy's condensed walkers, from the same
-    /// readout (`count` adds them to `wstat[8]`), so no read-back.
+    /// The enemy's living, from the same readout, so no read-back (until
+    /// 11-17 plus its condensed walkers, `wstat[8]`).
     fn mass(&self) -> usize {
-        self.living - self.own + self.dense
+        self.living - self.own
     }
 
     fn set_task(&mut self, k: usize, t: Task) {
@@ -1659,6 +1669,88 @@ mod tests {
         assert_eq!((sg, sc), (0, 0), "a germ on empty ground makes no one sick");
     }
 
+    /// **The first germ off the middle of a planet infects as on the CPU**
+    /// (the technical lead's review of #416, 2026-11-17: the race world's
+    /// twins cast near its middle or on empty ground, so the GPU-only germ
+    /// at the map's middle went unseen). Planet 1:2, which is not square,
+    /// warmed 12 s; the first germ round (`rounds::bursts`, the round's
+    /// rules) cast on the living walker farthest from the map's middle,
+    /// with slime at the middle; then on to past the dish's old timed
+    /// seeding (`Settings::seed_at`, 4 s of fine steps, 480 engine ticks:
+    /// 32 s of the game's at scale 1). The sick walkers
+    /// match the CPU's slot for slot, each game second (a little slack on
+    /// a card): 25 at the cast, 108 a second on, none 7 s on. With the old
+    /// code (no `seeded` set) it failed 21 s on: 2,973 sick on the GPU
+    /// (2,008 within 40 cells of the middle), none on the CPU. The other
+    /// burst and round paths take their place from the cast; only the
+    /// timed seeding used the middle.
+    #[test]
+    fn the_first_germ_off_a_planets_middle_infects_as_on_the_cpu() {
+        use crate::mould::big::BigDish;
+        use crate::mould::rounds;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (2, 1, 8_000);
+        let (_, m) = crate::mould::levelgen::spec("planet:1:2", seed).unwrap().unwrap();
+        let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        assert!(cpu.w != cpu.h, "a planet that is not square: {} x {}", cpu.w, cpu.h);
+        let f = Frame::default();
+        let second = |cpu: &mut BigDish, gpu: &mut GpuWorld| {
+            for w in [cpu as &mut dyn World, gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+        };
+        for _ in 0..12 {
+            second(&mut cpu, &mut gpu);
+        }
+        let mid = (cpu.w as f32 / 2.0, cpu.h as f32 / 2.0);
+        let living: Vec<usize> = (0..cpu.walkers.len()).filter(|&k| cpu.lives(k)).collect();
+        let off = |k: usize| (cpu.walkers[k].0 - mid.0).hypot(cpu.walkers[k].1 - mid.1);
+        let near_mid = living.iter().filter(|&&k| off(k) <= 20.0).count();
+        let far = *living.iter().max_by(|&&a, &&b| off(a).total_cmp(&off(b))).unwrap();
+        let at = (cpu.walkers[far].0, cpu.walkers[far].1);
+        eprintln!("planet 1:2 {} x {} fine cells: the germ at {at:?}, {:.0} cells off the middle; {near_mid} walkers within 20 of the middle", cpu.w, cpu.h, off(far));
+        assert!(near_mid > 20, "slime at the middle, for the old seeding to infect");
+        assert!(off(far) > 0.3 * mid.0.min(mid.1), "the germ well off the middle");
+        let rr = rounds::RoundRules::default();
+        let fine = 15.0 * World::fine_steps(&cpu) as f32;
+        let b = rounds::bursts(&rounds::casts(&rounds::parse("germ").unwrap())[0], at, &rr, scale as f32, fine)[0];
+        let k = rr.burst_rules(fine);
+        World::burst(&mut cpu, &b, &k);
+        World::burst(&mut gpu, &b, &k);
+        let sick_sets = |cpu: &BigDish, gpu: &GpuWorld| {
+            let immune = gpu.s.immune;
+            let n = gpu.e.n as usize;
+            // Living walkers only, as the readers' films count them: a
+            // dead walker keeps its count on the GPU (its slot free, its
+            // energy below 0, or its state dead).
+            let words = |b: &wgpu::Buffer| -> Vec<u32> { read_back(&gpu.e.device, &gpu.e.queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
+            let (ill, spec) = (words(&gpu.e.sick), words(&gpu.e.spec));
+            let en: Vec<f32> = words(&gpu.e.energy).into_iter().map(f32::from_bits).collect();
+            let g: Vec<usize> = (0..n).filter(|&j| ill[j] > immune && (spec[j] >> 9) & 3 != 3 && en[j] >= 0.0).collect();
+            let c: Vec<usize> = cpu.sick.iter().enumerate().filter(|&(j, &v)| v as u32 > cpu.p.immune_steps as u32 && cpu.lives(j)).map(|(j, _)| j).collect();
+            (c, g)
+        };
+        let (c, g) = sick_sets(&cpu, &gpu);
+        eprintln!("at the cast: {} sick on the CPU, {} on the GPU", c.len(), g.len());
+        assert!(!c.is_empty() && c == g, "the cast's sick, slot for slot");
+        let to = gpu.s.seed_at * crate::mould::STEPS_PER_SECOND as f32;
+        let mut sec = 0;
+        while (gpu.e.done as f32) < to + crate::mould::STEPS_PER_SECOND as f32 || sec < 4 {
+            second(&mut cpu, &mut gpu);
+            sec += 1;
+            let (c, g) = sick_sets(&cpu, &gpu);
+            let near = |v: &[usize], x: &dyn Fn(usize) -> (f32, f32)| v.iter().filter(|&&j| { let p = x(j); (p.0 - mid.0).hypot(p.1 - mid.1) <= 40.0 }).count();
+            let wk: Vec<f32> = read_back(&gpu.e.device, &gpu.e.queue, &gpu.e.walkers).chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect();
+            let (cm, gm) = (near(&c, &|j| (cpu.walkers[j].0, cpu.walkers[j].1)), near(&g, &|j| (wk[4 * j], wk[4 * j + 1])));
+            eprintln!("{sec} s on: {} sick on the CPU ({cm} within 40 of the middle), {} on the GPU ({gm})", c.len(), g.len());
+            let diff = c.iter().filter(|j| g.binary_search(j).is_err()).count() + g.iter().filter(|j| c.binary_search(j).is_err()).count();
+            assert!(diff <= tol(0, 10 + c.len() / 20), "{sec} s on: the sick differ in {diff} slots (CPU {}, GPU {}; within 40 of the middle CPU {cm}, GPU {gm})", c.len(), g.len());
+            assert!(sec < 40, "the old seeding's time never came");
+        }
+        assert!(gpu.e.done as f32 >= to, "past the old seeding's time");
+    }
+
     /// **A frail mould dies of the germ on both engines** (2026-11-17,
     /// `germ_upkeep`, the Sleeper's): the same kit germ at the race
     /// world's home, at the germ round's upkeep of 10, with the mould's
@@ -1777,6 +1869,91 @@ mod tests {
         }
         assert!(fired > 0, "the burn lit the plants");
         assert!(hot > 0.0, "the soldier at the burn stood in fire");
+        assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
+    }
+
+    /// **A torch lights the plants on the GPU as on the CPU** (the gun
+    /// cards' element family, `rounds::Card::Torch`, 2026-11-17): the
+    /// plant twin's map, the torch's burst from its card at 10 s on the
+    /// slime in the thickest grass by the home; the cells it lights, the
+    /// fire field after, the fire's kills and the living walkers match
+    /// (exact on llvmpipe, a little slack on a card), with heat out of the
+    /// sensors and in them (`BigParams::fire_weight` -20, the designer's
+    /// heat-avoid trial).
+    #[test]
+    fn a_torch_lights_the_plants_on_the_gpu_as_on_the_cpu() {
+        for weight in [0.0, -20.0] {
+            a_torch_twin(weight);
+        }
+    }
+
+    fn a_torch_twin(weight: f32) {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use crate::mould::rounds;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 1.0)).collect();
+        let mut cpu = BigDish::with_map(BigParams { fire_weight: weight, ..race_params(seed, scale, walkers) }, &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, Settings { fire_weight: weight, ..race_settings(seed, scale, walkers) }, scale, &m);
+        let k = squad::BurstRules::default();
+        let f = Frame::default();
+        for _ in 0..10 {
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+        }
+        // The CPU's walker in the thickest grass within 40 dish cells of
+        // the home (the rounds' own torch test's pick).
+        let home = cpu.homes[0];
+        let s = cpu.p.scale as f32;
+        let fuel = |p: (f32, f32)| {
+            let (cx, cy) = (p.0 as i64, p.1 as i64);
+            let mut f = 0.0f32;
+            for y in (cy - 3).max(0)..=(cy + 3).min(cpu.h as i64 - 1) {
+                for x in (cx - 3).max(0)..=(cx + 3).min(cpu.w as i64 - 1) {
+                    f += cpu.plant[y as usize * cpu.w + x as usize];
+                }
+            }
+            f
+        };
+        let at = (0..cpu.walkers.len())
+            .filter(|&k| cpu.lives(k))
+            .map(|k| (cpu.walkers[k].0, cpu.walkers[k].1))
+            .filter(|p| (p.0 / s - home.0).hypot(p.1 / s - home.1) <= 40.0)
+            .max_by(|a, b| fuel(*a).total_cmp(&fuel(*b)))
+            .unwrap();
+        let cast = rounds::casts(&rounds::parse("torch").unwrap())[0];
+        let b = rounds::bursts(&cast, at, &rounds::RoundRules::default(), s, 15.0)[0];
+        assert!(b.light > 0.0 && !b.kill && !b.burn);
+        let lit0 = cpu.burning;
+        World::burst(&mut cpu, &b, &k);
+        World::burst(&mut gpu, &b, &k);
+        let lit = cpu.burning - lit0;
+        let (_, _, fire, _) = gpu.e.plants_of();
+        let gpu_lit = fire.iter().filter(|&&v| v >= 1.0).count();
+        eprintln!("heat weight {weight}: the torch lit {lit} cells on the CPU, {gpu_lit} at full heat on the GPU");
+        assert!(lit > 50, "it lit the grass: {lit}");
+        assert!(lit.abs_diff(gpu_lit) <= tol(0, 2 + lit / 20), "lit: CPU {lit} GPU {gpu_lit}");
+        let mut killed = (0, 0);
+        for sec in 1..=4 {
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+            killed.0 += World::burned(&mut cpu);
+            killed.1 += World::burned(&mut gpu);
+            let (_, _, fire, _) = gpu.e.plants_of();
+            let cfire = if cpu.fire.is_empty() { vec![0.0; fire.len()] } else { cpu.fire.clone() };
+            let df = fire.iter().zip(&cfire).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+            let living = (World::living(&cpu), World::living(&gpu));
+            eprintln!("torch {sec} s: burning {}; max diff fire {df:.2e}; killed {killed:?}; living {living:?}", cpu.burning);
+            assert!(df <= tol(1e-5, 0.2), "{sec} s: fire {df}");
+            assert!(living.0.abs_diff(living.1) <= tol(0, 10 + living.0 / 50), "{sec} s: living CPU {} GPU {}", living.0, living.1);
+        }
+        assert!(killed.0 > 0, "the fire killed walkers");
         assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
     }
 

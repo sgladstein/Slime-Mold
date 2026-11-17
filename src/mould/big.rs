@@ -54,29 +54,22 @@ const DRAW_STARVE: u32 = 401;
 const DRAW_BIRTH: u32 = 402;
 /// A part cut off from its food withers (`BigParams::wither`).
 const DRAW_WITHER: u32 = 404;
-/// Dense slime condenses (`BigParams::condense`): which ripe walkers are
-/// absorbed and which hold the mass.
-const DRAW_CONDENSE: u32 = 405;
+/// Which crystals' specks leave a step (`BigParams::roam`). It was
+/// condensing's draw (`DRAW_ROAM`, deleted 11-17), so the number stays
+/// and the GPU's `s_condense` stream is the same.
+const DRAW_ROAM: u32 = 405;
 /// Which walkers in a raid's reach raid (`BigParams::raid_share`), keyed
 /// on the raid's first step.
 pub const DRAW_RAID: u32 = 406;
 /// A raid's walking distance is kept on blocks of this many fine cells a
 /// side (`BigDish::raid_paths`).
 pub const RAID_BLOCK: usize = 2;
-/// A slot's condensing word (`BigDish::dense`): its ripeness, steps, in
-/// the low 16 bits, and `DENSE` once it has condensed (then the low bits
-/// count the steps since, for the look). The GPU's
-/// `dense_word` is the same.
+/// A slot's word (`BigDish::dense`): a speck's steps on its way in the
+/// low 16 bits (`SPECK_TRIP`). The GPU's `dense_word` is the same. Bits
+/// 16 and 17 were condensing's `DENSE` (two lives) and `ABSORBED` (the
+/// absorbed's look) until 11-17 and are free.
 pub const RIPE: u32 = 0xFFFF;
-pub const DENSE: u32 = 0x1_0000;
-/// An absorbed walker's slot (`BigParams::condense`, the art director's
-/// review 11-14): dead, it keeps `ABSORBED` and the steps since in its
-/// word for `ABSORB_STEPS` steps, so the view can draw it streaming into
-/// the condensed walkers round it. Nothing in the simulation reads it; a
-/// birth into the slot clears it.
-pub const ABSORBED: u32 = 0x2_0000;
-pub const ABSORB_STEPS: u32 = 15;
-/// A condensed walker breaking away (`BigParams::roam`): its word holds
+/// A walker breaking away, a speck (`BigParams::roam`): its word holds
 /// `ROAM` and the crystal it runs for (its pile, bits `ROAM_SHIFT` up, 6
 /// bits, below `PANIC_PILES`) until it lands.
 pub const ROAM: u32 = 0x4_0000;
@@ -85,11 +78,11 @@ pub const ROAM_SHIFT: u32 = 19;
 /// left, so it goes for ground the mould has not eaten yet.
 pub const ROAM_FRESH: f32 = 0.8;
 /// **Lumps** (held bodies, the mini-boss thread 2026-11-16,
-/// `Reports/mini-boss-2026-11-16/`): up to `LUMPS` pieces of condensed
-/// slime that travel as one body. A member's dense word holds its lump + 1
+/// `Reports/mini-boss-2026-11-16/`): up to `LUMPS` pieces of slime that
+/// travel as one body. A member's dense word holds its lump + 1
 /// in bits `LUMP_SHIFT` up (3 bits; 0 none), above the breakaway's crystal.
 /// Any ordinary walker joins (`BigDish::form_lump`; condensed only until
-/// the owner's 04:58Z answer); it stays a member as it condenses or breaks.
+/// the owner's 04:58Z answer).
 pub const LUMPS: usize = 4;
 pub const LUMP_SHIFT: u32 = 25;
 pub const LUMP_BITS: u32 = 7 << LUMP_SHIFT;
@@ -97,8 +90,7 @@ pub const LUMP_BITS: u32 = 7 << LUMP_SHIFT;
 /// as it joins or leaves.
 pub const HURT_SHIFT: u32 = 28;
 pub const HURT_BITS: u32 = 0xF << HURT_SHIFT;
-/// What a member keeps through condensing, breaking and ripening: its lump
-/// and its hits.
+/// What a member keeps when its word changes: its lump and its hits.
 pub const KEPT: u32 = LUMP_BITS | HURT_BITS;
 /// A lump's member steps into a cell holding this many more walkers than
 /// the crowd limit lets others (its moves only; a birth keeps the limit),
@@ -114,7 +106,7 @@ pub const KEPT: u32 = LUMP_BITS | HURT_BITS;
 pub const LUMP_CROWD: u8 = 3;
 
 /// One lump's steering (`BigParams::lumps`), set by the game each second.
-/// All 0 is off: its members steer as any condensed walker.
+/// All 0 is off: its members steer as any walker.
 ///
 /// Why these two rules (the body probe, `examples/bodyprobe.rs`, 6 of 6
 /// seeds): panic, breakaway and raids replace a walker's sensors with its
@@ -184,7 +176,7 @@ impl Lump {
 }
 /// A breakaway lands within this many dish cells of its crystal's centre.
 pub const ROAM_LAND: f32 = 3.0;
-/// An ordinary breakaway (`BigParams::roam` with `condense` 0, a speck)
+/// A breakaway (`BigParams::roam`, a speck)
 /// gives up and is ordinary slime again after this many steps on its way
 /// (20 game seconds), where it stands: its word counts them. Without it,
 /// on planet 2 of run 2 (11-16) most specks never landed (12,300 of 17,406
@@ -339,7 +331,7 @@ impl SpeciesSet {
     }
 }
 const DRAW_TERRAIN: u32 = 140;
-const DRAW_HOLD: u32 = 150;
+// 150 was tether's holders (`DRAW_HOLD`, deleted 11-17).
 /// The start's outline on a map (`start_shape`).
 const DRAW_SHAPE: u32 = 160;
 /// Soil kinds in `BigDish::soil` (`BigParams::sand_keep`).
@@ -845,58 +837,35 @@ pub struct BigParams {
     /// is still reached (lean and dash cover more than `panic_r`) and one
     /// that pulls back in time outwalks the creep.
     pub panic_dash: u32,
-    /// **Dense slime condenses** (2026-11-14, the condense thread; 0 is
-    /// off, needs growth). The owner, 11-14 08:07Z: "if the slime gets to a
-    /// high enough density, concentration in an area or it stays near an
-    /// energy crystal long enough, it reabsorbs itself and reduces its
-    /// density/coverage by half but gets twice as strong and healthy. This
-    /// makes it more difficult and stops the slime from just filling the
-    /// map." An ordinary walker is *ripe* on a step when it took crystal
-    /// this step or the square of radius `condense_r` round its cell (its
-    /// own cell left out, `occ_round`) holds at least `condense_crowd`
-    /// walkers; its ripeness counts up a step while ripe and down while
-    /// not. At `condense` steps a keyed draw splits the ripe: half are
-    /// absorbed (they die where they stand, their slot freed) and half
-    /// condense, taking the absorbed one's place: a condensed walker is
-    /// two walkers' worth in every count that weighs the mould (`mass`).
-    /// It pays twice the upkeep and starts with twice its energy; births
-    /// stop while the mould's mass (living walkers plus the condensed)
-    /// reaches `capacity`, so the freed slots don't refill and the body
-    /// stays at half its cover; it has two lives, so whatever would kill
-    /// it (a shot, a blast, withering, starving) breaks it back into an
-    /// ordinary walker instead, which counts as a kill; and its bite and
-    /// its hold on a soldier's legs count twice (`squad::read`'s
-    /// touching). A child is an ordinary walker. So condensing makes no
-    /// mass: the body holds what it held on half the ground, and a shot
-    /// into it takes half as much.
-    pub condense: u32,
+    /// A speck's ripeness (`roam`): it may leave when it took crystal this
+    /// step or the square of radius `condense_r` round its cell (its own
+    /// cell left out, `occ_round`) holds at least `condense_crowd` walkers.
+    /// The names are condensing's, which ripened walkers the same way.
+    /// **Condensing** (`condense`, 2026-11-14 to 11-17: ripe walkers half
+    /// absorbed and half condensed, two lives and twice the bite, so the
+    /// body held its mass on half the ground) was deleted 11-17: no planet
+    /// used it after #370 and the owner removed the bronze it shared
+    /// (Reports/dead-ends.md).
     pub condense_crowd: u32,
     pub condense_r: u8,
-    /// **Condensed slime breaks away** (2026-11-14, the condense thread; 0
-    /// is off, needs `condense` or, since 11-15, `thicken`: a thickened
-    /// walker is dense slime too, so breakaway works in shape C). The owner, 15:06Z: "When slime condensed
-    /// it can become a separate entity that behaves different exploring
-    /// further, eating crystals." Every `roam` steps after it condensed, a
-    /// condensed walker picks the nearest crystal with at least
-    /// `ROAM_FRESH` of its charge left that is at least `roam_far` dish
-    /// cells away, and a keyed draw per crystal and step sends a
-    /// `roam_share` of those choices on their way: all the walkers that
-    /// condensed together and chose the same crystal go or stay together,
-    /// so a piece leaves as one body, not a spray. A breakaway runs for its
-    /// crystal as a panicking walker runs (its sensors read only the way
-    /// there, at its own pace, not slowed for being alone), neither
-    /// withers nor panics on the way, stays condensed (two lives, twice the
-    /// bite), and lands within `ROAM_LAND` cells of the crystal's centre,
-    /// or when the crystal runs dry; there it eats and the mould grows
-    /// from it as from any fed walker. Why this shape: condensing already
-    /// stops the slime filling the map, so the breakaway is what spreads
-    /// it, in dense, tough pieces that go for food the mould has not
-    /// reached, rather than a creeping film.
+    /// **Slime breaks away** (2026-11-14, the condense thread; 0 is off).
+    /// The owner, 15:06Z: "When slime condensed it can become a separate
+    /// entity that behaves different exploring further, eating crystals."
+    /// A breakaway picks the nearest crystal with at least `ROAM_FRESH` of
+    /// its charge left that is at least `roam_far` dish cells away, and a
+    /// keyed draw per crystal and step sends a `roam_share` of those
+    /// choices on their way, so walkers that chose the same crystal go or
+    /// stay together. It runs for its crystal as a panicking walker runs
+    /// (its sensors read only the way there, at its own pace, not slowed
+    /// for being alone), neither withers nor panics on the way, and lands
+    /// within `ROAM_LAND` cells of the crystal's centre, or when the crystal
+    /// runs dry; there it eats and the mould grows from it as from any fed
+    /// walker. Until 11-17 condensed walkers broke away (`condense`, deleted).
     ///
     /// **From ordinary slime** (2026-11-16, the slime-enemy thread; the
     /// owner, 04:58Z: "Remove the bronze, keep the specks (specks and
     /// mini-boss are separate but both happen. Specks more often early
-    /// game)"). With `condense` 0 an ordinary walker gets a chance every
+    /// game)"). An ordinary walker gets a chance every
     /// `roam` steps, on the steps where (step + slot) is a multiple of
     /// `roam`, so the body's chances come a few a step rather than all at
     /// once, and takes it at `roam_share` if it then stands ripe as a
@@ -907,33 +876,16 @@ pub struct BigParams {
     /// build ripened every walker each step as condensing does and sent
     /// half the ripe body at 10 s with one draw, so it phased each slot's
     /// chances by its ripeness; the chance step does both, and only a
-    /// `roam`th of the walkers count their crowd a step. Breakaway alone over thickening moved
-    /// nothing in the run (thick walkers sit boxed in the body,
-    /// `Reports/breakaway-run-2026-11-15/README.md`); ordinary walkers on
-    /// the body's edge and on its crystal step out. With `condense` on, the
-    /// condensed walkers break away as before and ordinary ones do not.
+    /// `roam`th of the walkers count their crowd a step. Breakaway alone over
+    /// thickening moved nothing in the run (thick walkers sit boxed in the
+    /// body, `Reports/breakaway-run-2026-11-15/README.md`); ordinary walkers
+    /// on the body's edge and on its crystal step out.
     pub roam: u32,
     pub roam_far: f32,
     pub roam_share: f32,
-    /// **A fed walker that cannot divide thickens** (2026-11-15, the
-    /// slime-enemy thread; 0 is off, needs growth). An ordinary walker
-    /// whose energy after its upkeep reaches `thicken` times
-    /// `birth_energy` turns condensed where it stands (`DENSE`: two lives,
-    /// twice the bite, hold and upkeep, two walkers' worth in `mass`) and
-    /// pays a birth's cost (`birth_cost`). Nothing is absorbed and births
-    /// go on, so the mould's mass can grow past its slots, up to twice.
-    /// Why: the owner, 11-15 08:34Z, on whether a slime left alone should
-    /// keep getting stronger: "keep getting stronger by holding onto its
-    /// crystals and getting more of them (which increases how fast it
-    /// multiplies)". Shape C on the CPU race world (seed 1) fills its
-    /// 50,000 slots by 3:00 while eating three times its upkeep, and after
-    /// that its surplus only piled up as energy (mean 1.58 at 3:00, rising)
-    /// and made it no stronger. Above 1 a walker divides first whenever it
-    /// has a free slot and cell, so only energy the mould cannot spend on
-    /// births becomes thickness, and the more crystals it eats from the
-    /// sooner it does. Reuses condensing's state and look; `condense`
-    /// (the ripening and absorbing) stays its own switch.
-    pub thicken: f32,
+    // Thickening (`thicken`, 11-15: a fed walker that cannot divide turns
+    // condensed, the bronze) was deleted 11-17 after the owner's 11-16
+    // 04:58Z "Remove the bronze, keep the specks" (Reports/dead-ends.md).
     /// **The body surges** (2026-11-15, the slime-enemy thread; 0 is off).
     /// Every `surge_every` steps, the first a whole period after the start,
     /// the walkers joined to the body (not panicking, not breaking away)
@@ -999,36 +951,6 @@ pub struct BigParams {
     pub raid_lean: u32,
     pub raid_len: u32,
     pub raid_haste: f32,
-    /// **A fed mould packs tighter** (2026-11-12, the slime-enemy thread; 0
-    /// is off, needs growth and a crowd limit). A walker holding `fed_full`
-    /// energy or more may step or be born into a cell holding up to
-    /// `crowd + fed_crowd` walkers, so the mould round the crystals it eats
-    /// grows denser (more walkers to a cell, more trail, more bite) and the
-    /// energy it hoards there becomes walkers. Why: the owner, 22:22Z,
-    /// playing shape C: "I cannot tell if it is getting stronger by holding
-    /// the crystals." It is: with crystals that feed nothing C dies by 2:00
-    /// (1,631 walkers at 5:00 on 4 seeds, against 36,053), and walkers near
-    /// a crystal it eats hold 20 times the energy of the rest (6.0 to 0.3
-    /// at 5:00, seed 1); but at one a cell the cells round a crystal are
-    /// full, so that energy became no walkers and the screen showed none of
-    /// it (`examples/fedprobe.rs`). With 1 (and `fed_full` 2) C holds
-    /// 45,621 walkers at 4:00 against 31,859 (4 of 4 seeds more), most
-    /// of them on the crystals' side of the network. **But it does not
-    /// read, so it is off** (kept as an option): in the window on Fork,
-    /// seed 1, farm hand, 21,053 walkers at 5:00 against 13,956, yet mould
-    /// on 7.6% of the screen against 7.0%, since the look's thickness is
-    /// full at about one walker a cell. Shape C shares its food instead
-    /// (`energy_flow` 0.05: 17.1% of the screen). Re-test when the look
-    /// shows walkers a cell above one.
-    ///
-    /// Tried first and not taken: **a fed walker lays more trail** (1 +
-    /// k x min(energy / full, 1) times). At k 6 the trail round the
-    /// crystals went from 0.7 to 1.2-1.6 times the rest's, but the brighter
-    /// tubes drew the mould onto the crystals and it bred less: 25,545
-    /// walkers at 4:00 against 31,859 (4 of 4 fewer); k 2 changed the
-    /// picture little (0.9-1.1) and still cost walkers (28,960).
-    pub fed_crowd: u8,
-    pub fed_full: f32,
     /// **Hunger** (2026-11-12, the one-body thread; 0 is off, needs growth).
     /// A walker's scent reading is multiplied by 1 + `hunger_scent` x its
     /// hunger, where hunger is 1 - energy / `hunger_at` (0 at or above
@@ -1042,22 +964,15 @@ pub struct BigParams {
     /// the fed mould: walkers smelled past their own crystal and the mould
     /// fell to 0-1,900 walkers at 150 s against H's 6,600-11,900.)
     pub hunger_reach: f32,
-    /// The hunger at which a walker hunts (`hunger_reach`, and `tether`
-    /// when this is over 0); 0: every walker, at any hunger.
+    /// The hunger at which a walker hunts (`hunger_reach`); 0: every
+    /// walker, at any hunger.
     pub hunt_at: f32,
-    /// **Body pull** (2026-11-12, the one-body thread; 0 is off). Owner,
-    /// 04:13-04:18Z: the mould "didn't feel like one cohesive organism"; a
-    /// cut-off part should "feel like a cut off hunk and not a bunch of
-    /// individuals". Each sensor also reads `body_pull` x the walkers in
-    /// the square of radius `body_r` fine cells round its point, counted as
-    /// the step began, scaled by the walker's own loneliness: 1 - n /
-    /// `body_lone`, with n the other walkers in the same square round its
-    /// own cell (1 when `body_lone` is 0). So a walker inside the mass
-    /// follows trail and scent as before, and a straggler is drawn back to
-    /// the crowd: streams of single walkers pull into a mass.
-    pub body_pull: f32,
+    /// The square's radius, fine cells, that `lone_step` counts walkers
+    /// in. Body pull (`body_pull`, `body_lone`: sensors also read the
+    /// walkers there) and tether (`tether`, `tether_hold`: no walker steps
+    /// away from the crowd it touches), both off since 11-12, were deleted
+    /// 11-17 (Reports/dead-ends.md).
     pub body_r: u8,
-    pub body_lone: f32,
     /// **Lone step** (2026-11-12, the one-body thread; 0 is off). A walker
     /// with fewer than `lone_step` other walkers in the square of radius
     /// `body_r` round its cell moves slower: its step is scaled by
@@ -1067,27 +982,9 @@ pub struct BigParams {
     /// about 2 s, but as a stream (largest part 0.27-0.58 at 20 s on the
     /// designed maps), and pulling stragglers toward the crowd (`body_pull`
     /// 2-5) or aligning headings (dead-ends) did not hold it together.
-    /// Reads the same walker counts as `body_pull`, which the GPU's
-    /// occupancy also holds.
+    /// The GPU reads the same counts from its occupancy.
     pub lone_step: f32,
     pub lone_floor: f32,
-    /// **Tether** (2026-11-12, the one-body thread; 0 is off). A walker may
-    /// step into another cell only if that cell has at least `tether`
-    /// other walkers among its eight neighbours (the mover not counted), or,
-    /// if it has fewer than `tether` others round its own cell, at least as
-    /// many as there: no walker steps away from the crowd it touches, so
-    /// the mould crawls as a connected mass and cannot thin into streams
-    /// of single walkers. A walker touching none moves freely and sticks to
-    /// the first walkers it meets. A walker that cannot step is blocked.
-    /// (A first try let any walker under `tether` move freely: the
-    /// stragglers kept the streams, and the crystals' lumps came apart.)
-    pub tether: u8,
-    /// With `tether`: the chance a walker holds still a step (a keyed draw),
-    /// and then movers count only the holders round a cell, so every
-    /// mover lands touching a walker that stays (0: everyone may move, and
-    /// counts everyone). Without it two touching walkers can step apart in
-    /// the same step, each counting the other where it stood.
-    pub tether_hold: f32,
     /// **Lumps** (held bodies, mini-boss thread 2026-11-16; all off): each
     /// lump's aim, pull, leash and haste (`Lump`), set by the game. Its
     /// members are in the dense words (`LUMP_SHIFT`); they do not panic,
@@ -1298,6 +1195,17 @@ pub struct BigParams {
     pub set_wake: f32,
     pub set_crust: f32,
     pub set_armour: u32,
+    /// **Heat in the sensors** (the gun cards' element family, the game
+    /// designer, 2026-11-17 08:43Z: "read the fire field like a negative
+    /// scent", so fire is a herding tool; 0 off): a sensor adds
+    /// `fire_weight` x the fire's heat at its cell (0-1), after the crust,
+    /// so under 0 the slime turns from a burning cell as it turns from a
+    /// wall it can see, and walks into fire only when nothing better is in
+    /// sight. Heat is ground the player lights (a torch, a blast, a scorch
+    /// line), not the soldiers: the flee from gunfire, which kept the
+    /// mould off the squad and made its fire a free win, is a dead end
+    /// (`Reports/dead-ends.md`), and this is not that rule.
+    pub fire_weight: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -1653,7 +1561,6 @@ impl BigParams {
             panic_lean: 45,
             panic_creep: 0.5,
             panic_dash: 15,
-            condense: 0,
             condense_crowd: 20,
             condense_r: 2,
             roam: 0,
@@ -1663,7 +1570,6 @@ impl BigParams {
             // (Reports/specks-2026-11-16/README.md), and the start menu's
             // Breakaway sets `roam` alone.
             roam_share: 0.05,
-            thicken: 0.0,
             surge_every: 0,
             surge_lean: 45,
             surge_dash: 30,
@@ -1676,19 +1582,13 @@ impl BigParams {
             raid_lean: 60,
             raid_len: 450,
             raid_haste: 1.0,
-            fed_crowd: 0,
-            fed_full: 2.0,
             hunger_scent: 0.0,
             hunger_at: 1.0,
             hunger_reach: 0.0,
             hunt_at: 0.0,
-            body_pull: 0.0,
             body_r: 2,
-            body_lone: 0.0,
             lone_step: 0.0,
             lone_floor: 0.25,
-            tether: 0,
-            tether_hold: 0.0,
             lumps: [Lump::default(); LUMPS],
             lone_upkeep: 1.0,
             lone_r: 1,
@@ -1733,6 +1633,7 @@ impl BigParams {
             set_wake: 0.0,
             set_crust: 0.5,
             set_armour: 3,
+            fire_weight: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -1910,9 +1811,10 @@ pub struct BigDish {
     /// (`BigParams::wither`), and each walker's own; empty while off.
     pub heard: Vec<u64>,
     pub news: Vec<u64>,
-    /// Condensing (`BigParams::condense`): each slot's word (`RIPE`,
-    /// `DENSE`), made with the first growth step it is on; empty while
-    /// off. A dead slot's word is stale until a birth clears it.
+    /// Each slot's word: a speck's trip and crystal (`RIPE`, `ROAM`) and a
+    /// lump's member and hits (`KEPT`), made with the first step specks or
+    /// lumps are on; empty while off. A dead slot's word is stale until a
+    /// birth clears it.
     pub dense: Vec<u32>,
     /// **A raid's way round walls** (`BigParams::raid_at`, 2026-11-15):
     /// each `RAID_BLOCK` block's walking distance to the raid's target
@@ -1924,11 +1826,6 @@ pub struct BigDish {
     /// after the dense cells (`dense_words`), and a raider standing
     /// where no way reaches steers straight.
     pub raid_field: Vec<u32>,
-    /// Walkers absorbed by condensing so far, and walkers that condensed.
-    pub absorbed: u64,
-    pub condensed: u64,
-    /// Walkers that thickened (`BigParams::thicken`).
-    pub thickened: u64,
     /// The squad's units this frame (`squad::frame` sets them), fine cells
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
@@ -2003,8 +1900,6 @@ pub struct BigDish {
     pub wall_hits: u64,
     /// Scent cells inside a wall (`wall_scent` > 0), else empty.
     pub scent_wall: Vec<bool>,
-    /// Holders a cell this step (`tether_hold`), else empty.
-    holds_n: Vec<u16>,
     /// Threads for the field passes. Each cell is computed from the last
     /// field alone, so the result does not depend on it.
     pub threads: usize,
@@ -2251,9 +2146,6 @@ impl BigDish {
             news: Vec::new(),
             dense: Vec::new(),
             raid_field: Vec::new(),
-            absorbed: 0,
-            condensed: 0,
-            thickened: 0,
             threats: Vec::new(),
             lump_sums: [(0, 0, 0); LUMPS],
             heard_cells: Vec::new(),
@@ -2287,7 +2179,6 @@ impl BigDish {
             broken: 0,
             wall_hits: 0,
             scent_wall: Vec::new(),
-            holds_n: Vec::new(),
             threads: 1,
             p,
         };
@@ -2452,16 +2343,11 @@ impl BigDish {
             // A lump's armoured member is only hurt (`armoured`), which
             // takes no mass, so it is not counted (review of the mini-boss
             // PR: counted, a grade-1 boss's 15 blows a member paid 15 kills'
-            // render food each); a condensed walker's break is (a walker's
-            // mass).
+            // render food each).
             if self.armoured(k) {
                 continue;
             }
             self.fire_killed += 1;
-            if self.is_dense(k) {
-                self.dense[k] &= KEPT;
-                continue;
-            }
             if self.life.is_empty() {
                 self.life = vec![LIFE_WALKER; self.walkers.len()];
                 self.life_t = vec![0; self.walkers.len()];
@@ -2609,21 +2495,12 @@ impl BigDish {
         }
     }
 
-    /// Whether slot `k` holds a condensed walker (`BigParams::condense`).
-    /// A dead slot's word is stale, so ask only of the living.
-    pub fn is_dense(&self, k: usize) -> bool {
-        self.dense.get(k).is_some_and(|&w| w & DENSE != 0)
-    }
-
-    /// A blow that would kill walker `k` (a shot or a blast): a condensed
-    /// walker breaks back into an ordinary one (`BigParams::condense`: it
-    /// has two lives), any other dies as `kill` kills it. True if it died.
+    /// A blow that would kill walker `k` (a shot or a blast): an armoured
+    /// one is only hurt (`armoured`), any other dies as `kill` kills it.
+    /// True if it died. (A condensed walker's second life went with
+    /// condensing, 11-17.)
     pub fn hit(&mut self, k: usize) -> bool {
         if self.armoured(k) {
-            return false;
-        }
-        if self.is_dense(k) {
-            self.dense[k] &= KEPT;
             return false;
         }
         self.kill(k);
@@ -2651,12 +2528,6 @@ impl BigDish {
         }
         self.dense[k] = (w & !HURT_BITS) | (hurt + 1) << HURT_SHIFT;
         true
-    }
-
-    /// The mould's mass for births (`BigParams::condense`): living walkers,
-    /// a condensed one counting twice.
-    pub fn mass(&self) -> usize {
-        (0..self.walkers.len()).filter(|&k| self.lives(k)).map(|k| 1 + self.is_dense(k) as usize).sum()
     }
 
     fn cell(&self, x: f32, y: f32) -> Option<usize> {
@@ -3006,9 +2877,8 @@ impl BigDish {
 
     /// The crystal (pile) breakaway walker `k` runs for (`BigParams::roam`).
     pub fn roam_of(&self, k: usize) -> Option<usize> {
-        // Any slime may break away since 11-16 (ordinary walkers with
-        // `condense` 0; condensed or thickened ones as before); the GPU's
-        // `roaming` and `write_params` the same.
+        // Any slime may break away since 11-16; the GPU's `roaming` and
+        // `write_params` the same.
         if self.p.roam == 0 {
             return None;
         }
@@ -3140,7 +3010,7 @@ impl BigDish {
         (l.leash > 0.0 && dx * dx + dy * dy > l.leash_k() * n as f32).then_some((cx, cy, false))
     }
 
-    /// The crystal a condensed walker on fine cell (`cx`, `cy`) would
+    /// The crystal a breakaway on fine cell (`cx`, `cy`) would
     /// break away for: the nearest with at least `ROAM_FRESH` left and at
     /// least `roam_far` dish cells away (ties to the first); whole cells,
     /// so the GPU picks the same.
@@ -3512,11 +3382,9 @@ impl BigDish {
 
     /// Trail at `so` and scent at `sso` along heading `a`: off the agar
     /// (by the trail sensor) reads as a wall.
-    /// `sw` weighs the scent (1, or more with `hunger_scent`); `body`, the
-    /// square sums of walkers as the step began (`body_pull`), with `bw`
-    /// their weight.
+    /// `sw` weighs the scent (1, or more with `hunger_scent`).
     #[allow(clippy::too_many_arguments)]
-    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32, body: &[u32], bw: f32) -> f32 {
+    fn sense(&self, (x, y): (f32, f32), a: f32, so: f32, sso: f32, sp: usize, gw: f32, sw: f32) -> f32 {
         let (c, s) = (a.cos(), a.sin());
         match self.cell(x + c * so, y + s * so) {
             Some(i) if self.agar[i] => {
@@ -3528,17 +3396,23 @@ impl BigDish {
                 } else {
                     self.p.alarm_weight * self.alarm[i] + self.p.scar_weight * self.scar[i]
                 };
-                let b = if body.is_empty() { 0.0 } else { bw * body[i] as f32 };
                 let sc = self.scent_at(x + c * sso, y + s * sso);
                 // sw 1 keeps the sum's order, so older runs keep their hashes.
                 let sc = if sw == 1.0 { sc } else { sw * sc };
-                let v = self.trail_seen(i, sp) + sc + g + al + b;
+                let v = self.trail_seen(i, sp) + sc + g + al;
                 // The crust (`crust_weight`), last, so a dish without it
                 // keeps its sums.
-                if self.crust.is_empty() || self.p.crust_weight == 0.0 {
+                let v = if self.crust.is_empty() || self.p.crust_weight == 0.0 {
                     v
                 } else {
                     v + self.p.crust_weight * self.crust[i]
+                };
+                // Heat (`fire_weight`), after the crust, so a dish without
+                // it keeps its sums.
+                if self.fire.is_empty() || self.p.fire_weight == 0.0 {
+                    v
+                } else {
+                    v + self.p.fire_weight * self.fire[i]
                 }
             }
             _ => -1.0e6,
@@ -3580,22 +3454,13 @@ impl BigDish {
     }
 
     /// Lay `amount` of trail on cell `j` for walker `k` (and its species).
-    /// Walker k's crowd limit for a move: `fed_crowd`'s, and `LUMP_CROWD`
+    /// Walker k's crowd limit for a move: its species', and `LUMP_CROWD`
     /// more for a lump's member (`BigParams::lumps`; the GPU's `move_crowd`).
+    /// A fed walker packing tighter (`fed_crowd`, off since 11-12) was
+    /// deleted 11-17 (Reports/dead-ends.md).
     fn move_crowd(&self, base: u8, k: usize) -> u8 {
-        let c = self.fed_crowd(base, k);
-        if c > 0 && self.lump_of(k).is_some() {
-            c + LUMP_CROWD
-        } else {
-            c
-        }
-    }
-
-    /// Walker k's crowd limit: `base`, or `base + fed_crowd` while it holds
-    /// `fed_full` energy or more (`BigParams::fed_crowd`).
-    fn fed_crowd(&self, base: u8, k: usize) -> u8 {
-        if base > 0 && self.p.fed_crowd > 0 && !self.energy.is_empty() && self.energy[k] >= self.p.fed_full {
-            base + self.p.fed_crowd
+        if base > 0 && self.lump_of(k).is_some() {
+            base + LUMP_CROWD
         } else {
             base
         }
@@ -3659,22 +3524,8 @@ impl BigDish {
         // cells as the pass began).
         let life_on = !self.life.is_empty();
         let (mut flying, mut sleeping, mut fruit, mut doze) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
-        // Body pull: walkers in each cell's square, as the step began.
-        let body = if (p.body_pull > 0.0 && look) || p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
-        // Tether's holders (`tether_hold`): who stays this step, and how
-        // many stay on each cell.
-        self.holds_n.clear();
-        let hold_on = p.tether > 0 && p.tether_hold > 0.0;
-        if hold_on {
-            self.holds_n.resize(self.w * self.h, 0);
-            for k in 0..self.walkers.len() {
-                if self.active(k) && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
-                    let (x, y, _) = self.walkers[k];
-                    let i = self.cell(x, y).expect("walker inside the dish");
-                    self.holds_n[i] += 1;
-                }
-            }
-        }
+        // Walkers in each cell's square, as the step began (`lone_step`).
+        let body = if p.lone_step > 0.0 { self.body_counts(p.body_r as usize) } else { Vec::new() };
         for k in 0..self.walkers.len() {
             if !self.lives(k) {
                 continue;
@@ -3719,9 +3570,6 @@ impl BigDish {
                 }
             }
             if !life_on && self.set_step(k, here) {
-                continue;
-            }
-            if hold_on && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
                 continue;
             }
             // Trail-dependent settings (`sense_scale`), read where it stands.
@@ -3853,18 +3701,10 @@ impl BigDish {
                 } else {
                     1.0
                 };
-                let bw = if body.is_empty() {
-                    0.0
-                } else if p.body_lone > 0.0 {
-                    let near = body[here].saturating_sub(1) as f32;
-                    p.body_pull * (1.0 - near / p.body_lone).max(0.0)
-                } else {
-                    p.body_pull
-                };
                 let (mut f, mut fl, mut fr) = (
-                    self.sense((x, y), h, so, sso, sp, set.graze_weight, sw, &body, bw),
-                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight, sw, &body, bw),
-                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight, sw, &body, bw),
+                    self.sense((x, y), h, so, sso, sp, set.graze_weight, sw),
+                    self.sense((x, y), h - sa, so, sso, sp, set.graze_weight, sw),
+                    self.sense((x, y), h + sa, so, sso, sp, set.graze_weight, sw),
                 );
                 if explorer {
                     // Toward the lowest reading; a wall stays a wall.
@@ -3927,7 +3767,7 @@ impl BigDish {
             }
             let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
             match self.cell(nx, ny) {
-                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16) && self.tethered(k, here, there)) => {
+                Some(there) if there == here || (self.agar[there] && (crowd == 0 || self.occ[there] < crowd as u16)) => {
                     if there != here && crowd > 0 {
                         let key = keyed(seed, t, CLAIM_MOVE, k as u32);
                         self.claim[there] = self.claim[there].min(key);
@@ -3973,7 +3813,7 @@ impl BigDish {
                 let here = self.cell(x, y).expect("walker inside the dish");
                 let (nx, ny) = (x + h.cos() * st, y + h.sin() * st);
                 match self.cell(nx, ny) {
-                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 && self.tethered(k as usize, here, there) => {
+                    Some(there) if there != here && self.agar[there] && self.occ[there] < crowd as u16 => {
                         let key = keyed(seed, t, CLAIM_RETRY + r as u32, k);
                         self.claim[there] = self.claim[there].min(key);
                         tries.push((k, here as u32, there as u32, nx, ny, h, st));
@@ -4183,28 +4023,6 @@ impl BigDish {
         }
     }
 
-    /// Others (`occ`, less the mover on `here`) on the eight cells round
-    /// fine cell `i`, and whether `tether` lets a walker on `here` step to
-    /// `there`: always with `tether` 0, or when it is a straggler (under
-    /// `tether` others round `here`), else when `there` has `tether` or more
-    /// others round it.
-    fn others_round(&self, i: usize, here: usize) -> u32 {
-        let (w, h) = (self.w as i64, self.h as i64);
-        let (x, y) = ((i % self.w) as i64, (i / self.w) as i64);
-        let mut n = 0u32;
-        for dy in -1..=1 {
-            for dx in -1..=1 {
-                let (nx, ny) = (x + dx, y + dy);
-                if (dx, dy) == (0, 0) || nx < 0 || ny < 0 || nx >= w || ny >= h {
-                    continue;
-                }
-                let j = (ny * w + nx) as usize;
-                n += if self.holds_n.is_empty() { self.occ[j] as u32 - (j == here) as u32 } else { self.holds_n[j] as u32 };
-            }
-        }
-        n
-    }
-
     /// Walkers in the square of radius `r` round fine cell `i`, less the
     /// cell itself (`occ`).
     fn occ_round(&self, i: usize, r: i64) -> u32 {
@@ -4231,15 +4049,8 @@ impl BigDish {
         (1.0 - self.energy[k] / self.p.hunger_at).max(0.0)
     }
 
-    fn tethered(&self, k: usize, here: usize, there: usize) -> bool {
-        // With `hunt_at` over 0 only hunting walkers are tethered: a fed
-        // body spreads as today, a starving hunk keeps together.
-        let t = if self.p.hunt_at > 0.0 && self.hunger(k) < self.p.hunt_at { 0 } else { self.p.tether as u32 };
-        t == 0 || self.others_round(there, here) >= t.min(self.others_round(here, here))
-    }
-
     /// Walkers (`occ`) in the square of radius `r` round each fine cell, by
-    /// a summed-area table: the body pull's reading (`body_pull`).
+    /// a summed-area table: the lone step's reading (`lone_step`).
     fn body_counts(&self, r: usize) -> Vec<u32> {
         let (w, h) = (self.w, self.h);
         let mut t = vec![0u32; (w + 1) * (h + 1)];
@@ -4402,69 +4213,29 @@ impl BigDish {
         let crowd_of = |d: &Self, k: usize| if p.species_sets.is_empty() { p.crowd } else { p.species_sets[d.sp_of(k)].crowd };
         let n = self.walkers.len();
         let check = p.wither > 0.0 && !self.news.is_empty() && self.steps.is_multiple_of(p.wither_every.max(1) as u64);
-        // Dense slime condenses (`condense`): every ordinary walker's
-        // ripeness first, from the cells as the step's deaths find them,
-        // so no walker's death changes another's count (the GPU's `ripen`
-        // pass runs before `life`).
-        let condense = p.condense > 0;
-        // Thickening (`thicken`) keeps the same dense state; only
-        // `condense` ripens and absorbs.
-        let thicken = p.thicken > 0.0;
-        // Breakaway from ordinary slime (`roam` with `condense` 0, 11-16):
-        // ordinary walkers ripen and take their chances to leave here.
-        let specks = p.roam > 0 && !condense;
-        if condense || thicken || p.roam > 0 {
+        // Breakaway from ordinary slime, the specks (`roam`, 11-16): every
+        // walker's chance to leave, from the cells as the step's deaths find
+        // them, so no walker's death changes another's count (the GPU's
+        // `ripen` pass runs before `life`). Condensing (`condense`: ripe
+        // walkers half absorbed, half condensed with two lives) and
+        // thickening (`thicken`: a fed walker that cannot divide turns
+        // condensed), which shared this pass, were deleted 11-17
+        // (Reports/dead-ends.md).
+        if p.roam > 0 {
             if self.dense.len() != n {
                 self.dense = vec![0; n];
             }
             let r = p.condense_r.max(1) as i64;
             for k in 0..n {
-                // An absorbed walker's word ages out (`ABSORBED`).
-                if self.dense[k] & ABSORBED != 0 {
-                    let age = (self.dense[k] & RIPE) + 1;
-                    self.dense[k] = if age >= ABSORB_STEPS { 0 } else { ABSORBED | age };
-                    continue;
-                }
                 if !self.active(k) {
-                    continue;
-                }
-                // A condensed walker's low bits count the steps since it
-                // condensed (the look's fresh glow), up to `RIPE`.
-                if self.dense[k] & DENSE != 0 {
-                    let age = ((self.dense[k] & RIPE) + 1).min(RIPE);
-                    self.dense[k] = (self.dense[k] & !RIPE) | age;
-                    // Breaking away (`roam`): a breakaway lands near its
-                    // crystal or when it runs dry; every `roam` steps a
-                    // settled one may leave.
-                    if p.roam > 0 {
-                        let (x, y, _) = self.walkers[k];
-                        let (cx, cy) = (x.floor() as i64, y.floor() as i64);
-                        if let Some(j) = self.roam_of(k) {
-                            let c = self.pile_centre(j);
-                            let (dx, dy) = ((c & 0xFFFF) as i64 - cx, (c >> 16) as i64 - cy);
-                            let land = (ROAM_LAND * p.scale as f32).floor() as i64;
-                            if dx * dx + dy * dy <= land * land || self.crystal_left(j) <= PANIC_LEFT {
-                                self.dense[k] = DENSE | age;
-                            }
-                        } else if age.is_multiple_of(p.roam) && age < RIPE && self.lump_of(k).is_none() {
-                            if let Some(j) = self.roam_pick(cx, cy) {
-                                if unit(keyed(seed, t, DRAW_CONDENSE, 0x8000_0000 | j as u32)) < p.roam_share {
-                                    self.dense[k] = DENSE | ROAM | (j as u32) << ROAM_SHIFT | age;
-                                }
-                            }
-                        }
-                    }
-                    continue;
-                }
-                if !condense && !specks {
                     continue;
                 }
                 let (x, y, _) = self.walkers[k];
                 let (cx, cy) = (x.floor() as i64, y.floor() as i64);
-                // An ordinary breakaway lands as a condensed one does, or
-                // gives up after `SPECK_TRIP` steps on its way (its low bits
-                // count them), and is ordinary slime again.
-                if specks && self.dense[k] & ROAM != 0 {
+                // A breakaway lands within `ROAM_LAND` of its crystal or when
+                // it runs dry, or gives up after `SPECK_TRIP` steps on its
+                // way (its low bits count them), and is ordinary slime again.
+                if self.dense[k] & ROAM != 0 {
                     let j = ((self.dense[k] >> ROAM_SHIFT) & 63) as usize;
                     let trip = (self.dense[k] & RIPE) + 1;
                     let c = self.pile_centre(j);
@@ -4478,32 +4249,22 @@ impl BigDish {
                 let ripe = |d: &Self| (!d.took.is_empty() && d.took[k] > 0.0) || d.occ_round(i, r) >= p.condense_crowd;
                 // A speck's chance comes on its slot's step, one in `roam`
                 // (`BigParams::roam`), and it may leave if it stands crowded
-                // or feeding then; no ripeness is kept. Why: the first
-                // build kept every walker's ripeness, a 5 x 5 count each a
-                // step, as condensing does; the GPU's `ripen` cost 0.405 ms a
-                // step that way on the core world (D2, 94,367 walkers;
+                // ("ripe": `condense_crowd` walkers within `condense_r`) or
+                // feeding then; no ripeness is kept. Why: the first build
+                // kept every walker's ripeness, a 5 x 5 count each a step,
+                // as condensing did; the GPU's `ripen` cost 0.405 ms a step
+                // that way on the core world (D2, 94,367 walkers;
                 // Reports/breakaway-run-2026-11-15/README.md), and specks
-                // need only a `roam`th of the counts.
-                // A lump's member neither leaves as a speck nor ripens
-                // (review of the mini-boss PR: packed past the crowd limit,
-                // members ripened and half were absorbed, so a boss lost
-                // about half its walkers to condensing with no shot fired
-                // and broke at its quorum).
+                // need only a `roam`th of the counts. A lump's member does
+                // not leave as a speck.
                 let member = self.lump_of(k).is_some();
-                if specks {
-                    if !member && (t as u32).wrapping_add(k as u32).is_multiple_of(p.roam) && ripe(self) {
-                        if let Some(j) = self.roam_pick(cx, cy) {
-                            if unit(keyed(seed, t, DRAW_CONDENSE, 0x8000_0000 | j as u32)) < p.roam_share {
-                                self.dense[k] = ROAM | (j as u32) << ROAM_SHIFT;
-                            }
+                if !member && (t as u32).wrapping_add(k as u32).is_multiple_of(p.roam) && ripe(self) {
+                    if let Some(j) = self.roam_pick(cx, cy) {
+                        if unit(keyed(seed, t, DRAW_ROAM, 0x8000_0000 | j as u32)) < p.roam_share {
+                            self.dense[k] = ROAM | (j as u32) << ROAM_SHIFT;
                         }
                     }
-                    continue;
                 }
-                let was = self.dense[k] & RIPE;
-                // A member stays one (`KEPT`) as it ripens, condenses or
-                // breaks (the GPU's `ripen` and `life`).
-                self.dense[k] = (self.dense[k] & KEPT) | if !member && ripe(self) { (was + 1).min(RIPE) } else { was.saturating_sub(1) };
             }
         }
         for k in 0..n {
@@ -4512,41 +4273,17 @@ impl BigDish {
             }
             // A part cut off from its food withers (`wither`): at each
             // check, a walker that has not heard of food for `wither_lag`
-            // steps may die, whatever it still holds; a condensed one
-            // breaks instead, keeping half its energy.
+            // steps may die, whatever it still holds.
             if check && self.steps + 1 > self.news[k] + p.wither_lag as u64 && self.roam_of(k).is_none() && self.raid_of(k).is_none() && self.lump_of(k).is_none() {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 if unit(keyed(seed, t, DRAW_WITHER, k as u32)) < p.wither {
-                    if self.is_dense(k) {
-                        self.dense[k] &= KEPT;
-                        self.energy[k] *= 0.5;
-                    } else {
-                        self.occ[i] -= 1;
-                        self.alive[k] = false;
-                        self.energy[k] = 0.0;
-                        self.starved += 1;
-                        continue;
-                    }
-                }
-            }
-            // Ripe long enough, it condenses: half the ripe are absorbed,
-            // half hold the mass (`condense`).
-            if condense && self.dense[k] & DENSE == 0 && self.dense[k] & RIPE >= p.condense.min(RIPE) {
-                let lump = self.dense[k] & KEPT;
-                if unit(keyed(seed, t, DRAW_CONDENSE, k as u32)) < 0.5 {
-                    let (x, y, _) = self.walkers[k];
-                    let i = self.cell(x, y).expect("walker inside the dish");
                     self.occ[i] -= 1;
                     self.alive[k] = false;
                     self.energy[k] = 0.0;
-                    self.dense[k] = ABSORBED;
-                    self.absorbed += 1;
+                    self.starved += 1;
                     continue;
                 }
-                self.dense[k] = DENSE | lump;
-                self.energy[k] *= 2.0;
-                self.condensed += 1;
             }
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
@@ -4568,18 +4305,9 @@ impl BigDish {
                 }
             }
             let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep * p.germ_upkeep } else { up };
-            // A condensed walker is two walkers' worth and pays for both.
-            let up = if self.is_dense(k) { up * 2.0 } else { up };
             let e = self.energy[k] + took - up;
             if e > 0.0 {
                 self.energy[k] = e;
-                // Fed past what a birth needs and still undivided, it
-                // thickens (`thicken`).
-                if thicken && self.dense[k] & DENSE == 0 && e >= p.thicken * p.birth_energy {
-                    self.dense[k] = DENSE | (self.dense[k] & KEPT);
-                    self.energy[k] = e - p.birth_cost;
-                    self.thickened += 1;
-                }
                 continue;
             }
             self.energy[k] = 0.0;
@@ -4589,11 +4317,6 @@ impl BigDish {
             // from 196 members to 47 in 6 s, 48 s after it formed, and
             // broke with no shot fired). The GPU's `life` is the same.
             if self.lump_of(k).is_none() && unit(keyed(seed, t, DRAW_STARVE, k as u32)) < p.starve {
-                // A condensed walker starving breaks instead (`condense`).
-                if self.is_dense(k) {
-                    self.dense[k] &= KEPT;
-                    continue;
-                }
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
                 self.occ[i] -= 1;
@@ -4623,14 +4346,9 @@ impl BigDish {
             }
             h
         };
-        // Condensing (`condense`): no births while the mould's mass, a
-        // condensed walker counting twice, fills the slots, so the slots
-        // the absorbed left stay empty (a step's births can pass it by at
-        // most that step's parents, as with `species_cap`).
-        let full = condense && self.mass() >= n;
         for k in 0..n {
             let b = k ^ m;
-            if full || !self.active(k) || self.is_set(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
+            if !self.active(k) || self.is_set(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
                 continue;
             }
             if let Some(&c) = held.get(self.spec.get(k).copied().unwrap_or(0) as usize) {
@@ -4642,7 +4360,7 @@ impl BigDish {
             let (dx, dy) = NEXT[(keyed(seed, t, DRAW_BIRTH, k as u32) % 8) as usize];
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
-            let crowd = self.fed_crowd(crowd_of(self, k), k);
+            let crowd = crowd_of(self, k);
             if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && matches!(self.soil[j], SOIL_BARREN | SOIL_DEEP)) || self.charred(j) {
                 continue;
             }
@@ -4664,7 +4382,7 @@ impl BigDish {
             if !self.news.is_empty() {
                 self.news[b] = self.news[k];
             }
-            // A child is an ordinary walker, not ripe (`condense`).
+            // A child is an ordinary walker, not a speck (`roam`).
             if !self.dense.is_empty() {
                 self.dense[b] = 0;
             }
@@ -4906,17 +4624,11 @@ impl BigDish {
                 continue;
             }
             // A lump's armoured member is hurt instead (`armoured`), not
-            // counted: it lost no mass. A condensed walker breaks into an
-            // ordinary one (`BigParams::condense`), counted as a kill: the
-            // blast took a walker's worth.
+            // counted: it lost no mass.
             if self.armoured(k) {
                 continue;
             }
             killed += 1;
-            if self.is_dense(k) {
-                self.dense[k] &= KEPT;
-                continue;
-            }
             let i = self.cell(wx, wy).expect("walker inside the dish");
             self.occ[i] -= 1;
             self.life[k] = LIFE_DEAD;
@@ -5588,8 +5300,8 @@ impl BigDish {
     /// `readkill` pass): every living ordinary or dormant walker within `r`
     /// fine cells of (`x`, `y`, fine cells), squared as the engine tests it,
     /// in the state `kind` reads, takes a blow as a strike's (`strike`: a
-    /// lump's armoured member is hurt and not counted, a condensed one
-    /// breaks and is counted) and, if it dies, clears the trail on its
+    /// lump's armoured member is hurt and not counted) and, if it dies,
+    /// clears the trail on its
     /// cell. Returns the walkers it took.
     pub fn read_strike(&mut self, x: f32, y: f32, r: f32, kind: u8) -> usize {
         let mut n = 0;
@@ -5609,10 +5321,6 @@ impl BigDish {
                 continue;
             }
             n += 1;
-            if self.is_dense(k) {
-                self.dense[k] &= KEPT;
-                continue;
-            }
             let i = self.cell(wx, wy).expect("walker inside the dish");
             self.trail[i] = 0.0;
             for f in self.species_trail.iter_mut() {
@@ -6800,86 +6508,7 @@ mod tests {
         assert!(stale.1 * 3 < fresh.1 * 2, "a mould whose news is stale withers: {} walkers left against {}", stale.1, fresh.1);
     }
 
-    /// Dense slime condenses (`condense`, 2026-11-14): off it changes
-    /// nothing; on, a fed mould on its crystals ripens, about half the ripe
-    /// are absorbed and half condense, and the body ends with fewer walkers
-    /// than the same mould off while its mass (a condensed walker twice)
-    /// stays within the slots.
-    #[test]
-    fn dense_slime_condenses_to_half_its_walkers_at_its_mass() {
-        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, ..small(2, 1) };
-        let run = |p: BigParams| {
-            let mut d = BigDish::new(p);
-            let mut peak = 0;
-            for _ in 0..400 {
-                d.tick();
-                peak = peak.max(d.mass());
-            }
-            let living = (0..d.walkers.len()).filter(|&k| d.lives(k)).count();
-            let dense = (0..d.walkers.len()).filter(|&k| d.lives(k) && d.is_dense(k)).count();
-            (living, dense, d.mass(), peak, d.absorbed, d.condensed, d.hash(), d.walkers.len())
-        };
-        let base = run(grow.clone());
-        let off = run(BigParams { condense: 0, condense_crowd: 3, condense_r: 1, ..grow.clone() });
-        assert_eq!(base.6, off.6, "condense 0 changes nothing");
-        let on = run(BigParams { condense: 30, condense_crowd: 10, condense_r: 2, ..grow.clone() });
-        eprintln!("off: {} walkers; on: {} walkers, {} condensed, mass {} (peak {}), {} absorbed, {} condensed in all", base.0, on.0, on.1, on.2, on.3, on.4, on.5);
-        assert!(on.5 > 50 && on.4 > 50, "walkers ripen and condense");
-        // A fair split: absorbed and condensed within a quarter of each other.
-        assert!(on.4 * 4 > on.5 * 3 && on.5 * 4 > on.4 * 3, "half absorbed, half condensed: {} and {}", on.4, on.5);
-        assert!(on.1 > 0 && on.0 < base.0, "fewer walkers, some condensed: {} against {}", on.0, base.0);
-        // Births stop at the slots' mass: past it by at most a step's births.
-        assert!(on.3 <= on.7 + on.7 / 20, "mass within the {} slots: peak {}", on.7, on.3);
-    }
-
-    /// Condensed slime breaks away (`roam`, 2026-11-14): off (0) changes
-    /// nothing; on, condensed walkers leave together for a fresh crystal
-    /// far enough away, stay condensed on the way, and land at it.
-    #[test]
-    fn condensed_slime_breaks_away_for_a_far_crystal() {
-        let grow = BigParams { upkeep: 0.002, capacity: 1200, crystal_charge: 64.0, crystal_eat: 0.02, condense: 30, condense_crowd: 10, condense_r: 2, ..small(2, 1) };
-        let run = |p: BigParams| {
-            let mut d = BigDish::new(p);
-            let (mut left, mut landed, mut most) = (0usize, 0usize, 0usize);
-            let mut was: Vec<Option<usize>> = vec![None; d.walkers.len()];
-            for _ in 0..600 {
-                d.tick();
-                let mut now = 0;
-                for (k, w) in was.iter_mut().enumerate() {
-                    let r = if d.lives(k) { d.roam_of(k) } else { None };
-                    if r.is_some() {
-                        now += 1;
-                        assert!(d.is_dense(k), "a breakaway stays condensed");
-                    }
-                    match (*w, r) {
-                        (None, Some(_)) => left += 1,
-                        (Some(j), None) if d.lives(k) && d.is_dense(k) => {
-                            let c = d.pile_centre(j);
-                            let (x, y, _) = d.walkers[k];
-                            let (dx, dy) = ((c & 0xFFFF) as f32 - x, (c >> 16) as f32 - y);
-                            if (dx * dx + dy * dy).sqrt() < 2.0 * ROAM_LAND * d.p.scale as f32 + 2.0 {
-                                landed += 1;
-                            }
-                        }
-                        _ => {}
-                    }
-                    *w = r;
-                }
-                most = most.max(now);
-            }
-            (left, landed, most, d.hash(), d.piles.len())
-        };
-        let base = run(grow.clone());
-        let off = run(BigParams { roam: 0, roam_far: 5.0, roam_share: 1.0, ..grow.clone() });
-        assert_eq!(base.3, off.3, "roam 0 changes nothing");
-        let on = run(BigParams { roam: 60, roam_far: 10.0, roam_share: 1.0, ..grow.clone() });
-        eprintln!("breakaway: {} left, {} landed, at most {} on the way at once, {} crystals", on.0, on.1, on.2, on.4);
-        assert!(on.0 > 20, "condensed walkers break away: {}", on.0);
-        assert!(on.2 > 10, "they leave together: at most {} at once", on.2);
-        assert!(on.1 > 0, "breakaways land at their crystal");
-    }
-
-    /// Ordinary slime breaks away (`roam` with `condense` 0, 2026-11-16, the
+    /// Ordinary slime breaks away (`roam`, 2026-11-16, the
     /// owner's "Remove the bronze, keep the specks"): with breakaway off
     /// nothing changes; on, walkers crowded or feeding at a crystal leave
     /// for a fresh crystal far enough away, a few at a time rather than
@@ -6898,7 +6527,6 @@ mod tests {
                 let mut now = 0;
                 for (k, w) in was.iter_mut().enumerate() {
                     let r = if d.lives(k) { d.roam_of(k) } else { None };
-                    assert!(!d.is_dense(k), "no walker condenses or thickens");
                     if r.is_some() {
                         now += 1;
                     }
@@ -6955,51 +6583,14 @@ mod tests {
         assert_eq!(d.roam_of(k), None, "after SPECK_TRIP steps on its way it is ordinary slime again");
     }
 
-    /// A condensed walker has two lives: a shot (`hit`), a blast
-    /// (`strike`), withering and starving each break it back into an
-    /// ordinary walker, and only the next one kills it; a child is ordinary.
-    #[test]
-    fn a_condensed_walker_has_two_lives() {
-        let p = BigParams { upkeep: 0.01, capacity: 1200, condense: 30, ..small(1, 1) };
-        let mut d = BigDish::new(p);
-        d.tick();
-        assert_eq!(d.dense.len(), d.walkers.len(), "condensing made its words");
-        let k = (0..d.walkers.len()).find(|&k| d.lives(k)).unwrap();
-        d.dense[k] = DENSE;
-        assert_eq!(d.mass(), (0..d.walkers.len()).filter(|&q| d.lives(q)).count() + 1, "a condensed walker is two walkers' mass");
-        assert!(!d.hit(k) && d.lives(k) && !d.is_dense(k), "a shot breaks it");
-        assert!(d.hit(k) && !d.lives(k), "the second kills it");
-        // A blast: counted as a kill, and it lives on, ordinary.
-        let q = (0..d.walkers.len()).find(|&q| d.lives(q)).unwrap();
-        d.dense[q] = DENSE;
-        let (x, y, _) = d.walkers[q];
-        let killed = d.strike(x, y, 0.4, 0.0, 0.0);
-        assert!(killed >= 1 && d.lives(q) && !d.is_dense(q), "a blast breaks it: {killed} killed");
-        // Withering: news stale, chance 1, every step.
-        let mut w = BigDish::new(BigParams { upkeep: 0.01, capacity: 1200, condense: 30, wither: 1.0, wither_every: 1, wither_lag: 1, ..small(1, 1) });
-        for _ in 0..10 {
-            w.tick();
-        }
-        w.news.iter_mut().for_each(|t| *t = 1);
-        let living: Vec<usize> = (0..w.walkers.len()).filter(|&k| w.lives(k)).collect();
-        for &k in &living {
-            w.dense[k] = DENSE;
-        }
-        w.tick();
-        let (kept, broke) = (living.iter().filter(|&&k| w.lives(k)).count(), living.iter().filter(|&&k| w.lives(k) && !w.is_dense(k)).count());
-        assert!(kept == living.len() && broke == kept, "withering breaks every condensed walker first: {kept} of {} live, {broke} broken", living.len());
-        w.tick();
-        assert!(living.iter().all(|&k| !w.lives(k)), "and then kills them");
-    }
-
     /// A mini-boss's member (`Lump::armour`, 2026-11-16) takes `armour`
     /// blows: a shot or a blast hurts it until the last, which kills it; it
-    /// keeps its hits as it condenses and breaks, a fresh member starts
+    /// keeps its hits, a fresh member starts
     /// unhurt, and a walker that leaves its lump loses them. Its bite counts
     /// on its cell (`squad::bite_cells`).
     #[test]
     fn a_mini_boss_member_takes_its_armour_in_blows() {
-        let mut p = BigParams { upkeep: 0.01, capacity: 1200, condense: 30, ..small(1, 1) };
+        let mut p = BigParams { upkeep: 0.01, capacity: 1200, ..small(1, 1) };
         p.lumps[0] = Lump { armour: 3, bite: 2, ..Lump::default() };
         let mut d = BigDish::new(p);
         d.tick();
@@ -7008,11 +6599,7 @@ mod tests {
         let c = (x.floor() as u32) | (y.floor() as u32) << 16;
         assert!(d.form_lump(0, Some((c, 0))) >= 1 && d.lump_of(k) == Some(0));
         assert!(!d.hit(k) && d.lives(k) && d.dense[k] >> HURT_SHIFT == 1, "the first blow hurts");
-        // Condensed and broken, it keeps its hit.
-        d.dense[k] |= DENSE;
         assert!(!d.hit(k) && d.lives(k) && d.dense[k] >> HURT_SHIFT == 2, "the second hurts: {:#x}", d.dense[k]);
-        assert!(d.is_dense(k), "armour before condensing");
-        assert!(!d.hit(k) && d.lives(k) && !d.is_dense(k) && d.dense[k] >> HURT_SHIFT == 2, "then the condensed life breaks");
         assert!(d.hit(k) && !d.lives(k), "the last kills it");
         // A blast hurts a member and counts no kill (it lost no mass): the
         // count is the walkers that died.
@@ -7023,10 +6610,10 @@ mod tests {
         let bites: u32 = crate::mould::squad::bite_cells(&d).iter().sum();
         assert_eq!(bites, 2 * (0..d.walkers.len()).filter(|&m| d.lives(m) && d.lump_of(m) == Some(0)).count() as u32, "each member bites 2");
         let living = |d: &BigDish| (0..d.walkers.len()).filter(|&m| d.lives(m)).count();
-        let (before, dense) = (living(&d), (0..d.walkers.len()).filter(|&m| d.lives(m) && d.is_dense(m)).count());
+        let before = living(&d);
         let killed = d.strike(x, y, 0.4, 0.0, 0.0);
         assert!(d.lives(q) && d.dense[q] >> HURT_SHIFT == 1, "a blast hurts it");
-        assert!(dense == 0 && killed == before - living(&d), "{killed} counted, {} died", before - living(&d));
+        assert!(killed == before - living(&d), "{killed} counted, {} died", before - living(&d));
         // Released, it is ordinary and unhurt; one blow kills it.
         d.form_lump(0, None);
         assert!(d.lump_of(q).is_none() && d.dense[q] >> HURT_SHIFT == 0);
@@ -7307,7 +6894,7 @@ mod tests {
         assert_eq!(empty, after, "empty slots untouched");
     }
 
-    /// The one-body rules (hunger, body pull, tether, lone upkeep): threads
+    /// The one-body rules (hunger, hunger reach, lone upkeep): threads
     /// change nothing, the crowd limit holds, and each one changes the dish
     /// (so it is wired in), while left at its default it changes nothing.
     #[test]
@@ -7322,11 +6909,8 @@ mod tests {
         };
         for p in [
             BigParams { hunger_scent: 6.0, hunger_at: 1.0, energy_flow: 0.05, ..grow.clone() },
-            BigParams { body_pull: 3.0, body_r: 2, body_lone: 6.0, ..grow.clone() },
-            BigParams { tether: 2, ..grow.clone() },
-            BigParams { tether: 1, tether_hold: 0.3, ..grow.clone() },
             BigParams { lone_upkeep: 5.0, lone_r: 2, ..grow.clone() },
-            BigParams { hunger_reach: 3.0, hunt_at: 0.3, tether: 1, ..grow.clone() },
+            BigParams { hunger_reach: 3.0, hunt_at: 0.3, ..grow.clone() },
         ] {
             let mut a = BigDish::new(p);
             let mut b = a.clone();
@@ -7336,42 +6920,11 @@ mod tests {
                 b.tick();
             }
             assert_eq!(a.hash(), b.hash());
-            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.body_pull, a.p.tether, a.p.lone_upkeep));
+            assert_ne!(a.hash(), base_hash, "the rule changes the dish: {:?}", (a.p.hunger_scent, a.p.hunger_reach, a.p.lone_upkeep));
             for (i, &n) in a.occupancy().iter().enumerate() {
                 assert!(n <= 1, "cell {i} holds {n}");
             }
         }
-    }
-
-    /// Tether with holders: a mover always lands touching a walker that
-    /// stays, so far fewer walkers lose touch with the crowd in a step than
-    /// without it (a holder can still be left alone when all round it move).
-    #[test]
-    fn tether_keeps_contact() {
-        let lost = |tether: u8| {
-            let mut d = BigDish::new(BigParams { tether, tether_hold: 0.5, walkers: 600, ..small(2, 1) });
-            for _ in 0..20 {
-                d.tick();
-            }
-            let mut lost = 0;
-            for _ in 0..20 {
-                let touch = |d: &BigDish| -> Vec<bool> {
-                    (0..d.walkers.len())
-                        .map(|k| {
-                            let (x, y, _) = d.walkers[k];
-                            d.occ_round(y as usize * d.w + x as usize, 1) > 0
-                        })
-                        .collect()
-                };
-                let before = touch(&d);
-                d.tick();
-                let after = touch(&d);
-                lost += before.iter().zip(&after).filter(|(b, a)| **b && !**a).count();
-            }
-            lost
-        };
-        let (on, off) = (lost(1), lost(0));
-        assert!(on * 2 < off, "lost touch: {on} tethered against {off} free");
     }
 
     /// With growth off nothing is kept for it: every slot lives.
