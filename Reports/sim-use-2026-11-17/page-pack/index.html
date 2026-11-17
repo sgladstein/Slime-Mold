@@ -1,0 +1,88 @@
+<title>New Slime Picks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root { --bg:#f6f3ec; --fg:#1d1b17; --muted:#6b655a; --card:#fffdf8; --line:#e2dccf; --accent:#c4520f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 Inter, system-ui, sans-serif; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:24px 48px }
+main { max-width:1100px; margin:0 auto }
+h1, h2 { font-family:"Space Grotesk", Inter, sans-serif; text-wrap:balance; line-height:1.2 }
+h1 { font-size:1.9rem; margin:0 0 .3rem }
+h2 { font-size:1.25rem; margin:2rem 0 .5rem }
+p, ul { max-width:72ch }
+.sub { color:var(--muted); margin:0 0 1.2rem }
+figure { margin:1rem 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px }
+figure img { display:block; width:100%; border-radius:6px }
+.labels { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; font-size:.85rem; margin-top:.5rem }
+.labels b { display:block; font-family:"Space Grotesk", Inter, sans-serif; font-size:1rem }
+.labels span { color:var(--muted) }
+video { display:block; width:100%; border-radius:6px }
+.q { font-weight:600 }
+.n { color:var(--muted); font-size:.9rem }
+figcaption { color:var(--muted); font-size:.9rem; margin-top:.6rem }
+.wrap { overflow-x:auto }
+table { border-collapse:collapse; font-size:.9rem; min-width:640px; width:100% }
+th, td { text-align:right; padding:6px 9px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums }
+th:first-child, td:first-child { text-align:left }
+th { font-weight:600; color:var(--muted) }
+b.k { color:var(--accent) }
+.key { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--muted); margin:.4rem 0 0 }
+.key i { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:5px }
+</style>
+<main>
+<h1>New slime picks</h1>
+<p class="sub">Playtest pack, 2026-11-17, group 2. Each film is the same run twice, side by side, with one rule changed between the panels. Which panel has the rule is kept off this page. Pick by what you would rather play against. Films 1 to 3 are planet 3 in the game itself (headless, the same picture you play); film 4 is the fire probe. Counts under each panel are from the same runs.</p>
+
+<h2>1. Setting: slime that is shot at hardens</h2>
+<p>Four rifles stand at the first slime and keep shooting (seed 4). With setting on, walkers that are shot at for long enough set: they stop moving and hold their ground, drawn in amber, and wake once the shooting stops. Without it, the slime under fire behaves as today.</p>
+<figure>
+<video src="setting.mp4" autoplay muted loop playsinline controls></video>
+<div class="labels">
+<div><b>A</b><span>killed 771 from 0:45 to 1:15, 1,403 by 1:29; 3 soldiers left at 1:15</span></div>
+<div><b>B</b><span>killed 934 from 0:45 to 1:15, 1,609 by 1:29; 2 soldiers left at 1:15</span></div>
+</div>
+<figcaption>0:30 to 1:29, played at 6 times real speed. The big surge at about 1:20 ends most of these runs.</figcaption>
+</figure>
+<p class="q">Do you want setting on or off?</p>
+
+<h2>2. Set slime: wall or trap</h2>
+<p>Setting on in both. Eight rifles rush straight into the body (seed 1). In one panel set slime is a wall: soldiers can't step on it and walk round it. In the other it is a trap: soldiers can walk in, but wade at 5% of their speed while it keeps biting.</p>
+<figure>
+<video src="hold.mp4" autoplay muted loop playsinline controls></video>
+<div class="labels">
+<div><b>A</b><span>squad lost at 0:28; killed 1,365</span></div>
+<div><b>B</b><span>squad lost at 0:20; killed 840</span></div>
+</div>
+<figcaption>0:03 to 0:32, played at 4 times real speed. The end screen shows once a squad is lost.</figcaption>
+</figure>
+<p class="q">Should set slime stop soldiers, or hold them?</p>
+
+<h2>3. Old ground: does the slime keep to it, or move on?</h2>
+<p>No squad in play (seed 1). The ground the slime has held keeps a crust. In one panel the slime is drawn back onto its old ground; in the other it is pushed off it toward ground it has never held.</p>
+<figure>
+<video src="pull.mp4" autoplay muted loop playsinline controls></video>
+<div class="labels">
+<div><b>A</b><span>43,366 walkers at 5:00; 73,244 cells ever held</span></div>
+<div><b>B</b><span>50,869 walkers at 5:00; 98,284 cells ever held</span></div>
+</div>
+<figcaption>The whole map, a frame every 5 game seconds from 0:05 to 5:00 (30 times real speed).</figcaption>
+</figure>
+<p class="q">Which slime do you want: one that keeps to its ground, or one that moves on?</p>
+
+<h2>4. Is fed slime fireproof?</h2>
+<p>Hungry slime already burns (your 01:13Z ruling). Here a well-fed part of the body on a meadow (1,203 walkers, all still fed) has every plant under it lit at once. In one panel fed slime is fireproof too. In the other, only thick trail protects it, so the thin slime between its tubes can still burn.</p>
+<div class="key"><span><i style="background:#f0d75a"></i>slime (by its trail)</span><span><i style="background:#ff6414"></i>fire</span><span><i style="background:#5a9638"></i>meadow</span><span><i style="background:#28282c"></i>rock</span></div>
+<figure>
+<video src="fed.mp4" autoplay muted loop playsinline controls></video>
+<div class="labels">
+<div><b>A</b><span>fire killed 777 of the 1,203 in 20 s</span></div>
+<div><b>B</b><span>fire killed 0</span></div>
+</div>
+<figcaption>CPU probe, 10 s from the light, a frame every third of a second (played at 4 frames a second). Where the meadow burns away, the slime shows bright on the bare ground. Over 8 seeds: in one rule the fed part lost 24 to 65% of itself, in the other nothing (7 of 7 seeds that burned).</figcaption>
+</figure>
+<p class="q">Should fed slime be fireproof?</p>
+
+<h2>5. Heave and Corral as one shove card</h2>
+<p>From the gun thread: should the Heave and Corral cards merge into one shove card? The films are on their own page, <a href="https://claude.ai/artifact/2xhG8dfegCSryLGDPexpdE">Shove Cards</a>.</p>
+</main>
