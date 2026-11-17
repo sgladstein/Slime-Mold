@@ -18,7 +18,7 @@ itself: at 50 the slime rings a fire and the fire eats holes in its edge.
   (`SPRAWLER_KEYS`), set on the GPU engine where a run lands on the
   Sprawler's planet, as every tier's keys are. The planet card and landing
   alert now say "Its fast threads smell your soldiers from far off, but it
-  shies from fire".
+  shies from fire. Bring Tinder" (the designer, 15:26Z).
 - `tiers::set_key` takes `fire_alarm`, so the CPU world and the probes can
   set it too.
 - An off switch on the command line, as for every engine key:
@@ -42,10 +42,14 @@ the trait shows only with fire that brings its own fuel (the gun thread's
 Torch and the coming Tinder), not a plain light. Not checked on other run
 seeds.
 
+**The designer (15:26Z): keep it on the Sprawler.** A planet with nothing
+to burn is the point: plain fire isn't the answer there, Tinder (which
+brings its own fuel) is, so the choice is to buy Tinder before the
+Sprawler's planet, the shop as strategy.
+
 ## Left
 
-- Whether the Sprawler is the right tier: its planet may have little to
-  burn. That is the designer's call. The key moves to any rung by moving
-  `SPRAWLER_KEYS`' line.
+- The run shop should offer Tinder at least once before the Sprawler's
+  planet (the designer, 15:26Z; the run or gun card thread's).
 - A film on a Sprawler planet with fuel from the fire cards, once Tinder is
   in.

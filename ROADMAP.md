@@ -510,7 +510,6 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 | Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
 | Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
 | Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
-| Fire lays alarm: `fire_alarm` (plants' header word 44), the slime's fire shyness | Simulation-use plan (C4); the gun cards' element family | 11-17, new. At 5 nothing changed (8 seeds); at 50 and 200 the slime drew back and the undoused fire killed 13% and 26% more ([report](Reports/sim-use-2026-11-17/c4-fire-alarm.md)). It also wakes sleepers and scars, through the alarm. The designer's crossing test (planet 1:3, one seed, a lit tinder line across a stream to food, crossings 16-45 s): 10 with it off, 31 at 50 (0 while the fire burned), 57 with heat in the sensors (`fire_weight` -5, 4 while it burned); the slime waited at the edge and crossed the char when the fire died ([report](Reports/gun-tinder-2026-11-17/README.md)). The other route, `fire_weight`, was deleted 11-17: this one held harder and adds no sensor read (Reports/dead-ends.md) | A fire that lasts, or ground that stays scorched, where waiting at the edge would hold; then a playtest | — (needs plants; its twin is `fire_lays_alarm_on_the_gpu_as_on_the_cpu`) |
 | Charges round walls: `unit_paths` (`Rules`; `BigDish::units_field`) | Simulation-use plan (S1) | 11-17, new. Behind a cup of walls, half as many walkers piled at the wall but as many reached the soldier (4 more, 4 fewer; [report](Reports/sim-use-2026-11-17/s1-unit-paths.md)), so it changes the charge's shape, not its reach | The owner's blind film ([page](https://claude.ai/artifact/5aGbKQjUbXnULqYqGnY7tB)); then films on planets 1-3 | ✓ |
 | A far smell: `far_smell` (`BigParams`; one body's Params word, `food_field`) | Simulation-use plan (S2) | 11-17, new. On planet 3 with no squad the slime reached more crystals in 2:30 (59 against 47, 7 of 8 seeds, none fewer) and ended bigger on 8 of 8, up to 45% ([report](Reports/sim-use-2026-11-17/s2-far-smell.md)): a harder planet, so the owner sees it first | The owner's blind film ([page](https://claude.ai/artifact/NgZ29e1vfagrbnuuJ1AZST)); then planets 1-2 with a squad | ✓ |
 | Fed slime fireproof: `fire_fed=1` (`BigParams::fire_fed`, bit 1) | Simulation-use plan (C1) | 11-17, the owner's card. Fire through a fed disc's thin trail took 24-65% of it in 20 s; with it, nothing on 7 of 8 ([report](Reports/sim-use-2026-11-17/c1-dry-burns.md)) | The playtest pack's picks (below) | — (needs plants; its twin is `dry_slime_burns_on_the_gpu_as_on_the_cpu`) |
@@ -528,15 +527,18 @@ switches above are settled in three groups, so they don't pile up again:
    defaults in one PR. `fire_alarm` is left out: the designer (14:38Z)
    calls it a per-tier trait (a fire-shy Sprawler), never global, since
    globally every fire becomes a fence and the Torch and Tinder stop
-   killing (0 burned while lit, against 119 without). It waits for a
-   per-tier key.
+   killing (0 burned while lit, against 119 without). It is now the
+   Sprawler's own trait (`fire_alarm` 50 in `run::does_to_you`, 11-17,
+   [report](Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md)), not a
+   switch.
 2. **Pick them: one blind page**, one film per decision, with the key kept
    off the page. The decisions are: setting on or off (with its look,
    `setlook`), block or trap (`set_block` against `set_hold`), crust's pull
    sign (`crust_weight`, `crust_fast`), and `fire_fed`. Crust goes with
    setting, since nothing reads crust on its own. The simulation-use thread
-   makes this page from its rigs. Today the E1b, E2a and E2b pages are
-   stills, and the owner wants films.
+   made this page from its rigs, as films: [New Slime Picks](https://claude.ai/artifact/QNErAVSGJgoLWhSHY9MJDF)
+   (11-17, [report](Reports/sim-use-2026-11-17/pack-films.md), key there),
+   with a line for the gun thread's shove-card pick.
 3. **Not switches yet:** Provoke and Still wait for the gun thread's cards.
    Last stand, reserve, crystal refill, lossy flow and lone step keep the
    playtests their rows name.
@@ -556,7 +558,7 @@ word stays for those. Then heat in the sensors (`fire_weight`, the gun-card thre
 decision with `fire_alarm`: the crossing test kept the alarm route, which
 held harder and adds no sensor read; its Params word 860 is free again).
 
-These are not switches: tier and mould-type features (alarm, scar, flinch, spores, sleep, hunger and the bosses) are on in their tiers and off in plain C. Ruled values such as `price` 0 are settled. The 11-11 model research knobs (species conversion and zones, MCPM `chance_exp`, grazing, explorers, size spread, contagion and the rest of `BigParams::today`'s zeros) are not game features. They stay as the sandbox's knobs until a cleanup PR removes them.
+These are not switches: tier and mould-type features (alarm, scar, flinch, spores, sleep, hunger, the bosses, and fire shyness, `fire_alarm` 50, the Sprawler's trait since 11-17: [C4](Reports/sim-use-2026-11-17/c4-fire-alarm.md), [C4b](Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md)) are on in their tiers and off in plain C. Ruled values such as `price` 0 are settled. The 11-11 model research knobs (species conversion and zones, MCPM `chance_exp`, grazing, explorers, size spread, contagion and the rest of `BigParams::today`'s zeros) are not game features. They stay as the sandbox's knobs until a cleanup PR removes them.
 
 ## Keeping this page true
 
