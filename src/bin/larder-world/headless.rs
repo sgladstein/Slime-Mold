@@ -711,6 +711,16 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // 0.3) or new (under 0.05), the E1b films' measure.
                 let on = |f: &dyn Fn(f32) -> bool| ec.iter().zip(&crust_walk).filter(|(v, n)| f(**v) && **n > 0).count();
                 println!("  engine crust t {t:.0} s: {} cells over 0.05, {} over 0.3, {} over 0.95; walkers' cells on crust over 0.3 {}, under 0.05 {}", eh(0.05), eh(0.3), eh(0.95), on(&|v| v > 0.3), on(&|v| v < 0.05));
+                // The scar under walkers and the set walkers (E2a's films).
+                let gw = &app.game.as_ref().unwrap().world;
+                if gw.s.scar_keep > 0.0 && gw.s.alarm_keep > 0.0 {
+                    let sc = gw.e.scar_of();
+                    let mut under: Vec<f32> = sc.iter().zip(&crust_walk).filter(|(_, n)| **n > 0).map(|(v, _)| *v).collect();
+                    under.sort_by(f32::total_cmp);
+                    let q = |f: f32| under.get(((under.len() as f32 - 1.0) * f) as usize).copied().unwrap_or(0.0);
+                    let set = gw.e.set_of().iter().filter(|&&w| w > 0).count();
+                    println!("  scar t {t:.0} s: under walkers p50 {:.3}, p90 {:.3}, p99 {:.3}, max {:.3}; {set} walkers set", q(0.5), q(0.9), q(0.99), q(1.0));
+                }
                 // Fire and char (C2's films): cells burning, and char over
                 // 0.3 (barren at `char_barren=0.3`).
                 let e = &app.game.as_ref().unwrap().world.e;

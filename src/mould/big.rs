@@ -1257,6 +1257,22 @@ pub struct BigParams {
     pub crust_fast: f32,
     pub crust_fuel: f32,
     pub char_barren: f32,
+    /// **Setting** (the simulation-use plan's E2a, 2026-11-17; off while
+    /// `set_scar` is 0, and only with the crust and the scar fields): an
+    /// ordinary walker, not a lump's member, standing on crust of
+    /// `set_crust` or more where the scar is `set_scar` or more sets. A set
+    /// walker neither senses, moves, lays nor breeds (as a dormant one,
+    /// without being dormant), and takes `set_armour` blows to kill (its
+    /// hits in `BigDish::set`, as a lump member's armour). It wakes at its
+    /// next step once the scar under it is under `set_wake` (below
+    /// `set_scar`, so it doesn't flicker). The scar grows from the alarm
+    /// gunfire raises, so a rim being shot sets while it is shot (owner,
+    /// 02:30Z card: toughen while under fire). A set walker lays no trail,
+    /// so its cell dries and fire takes it (fed slime only is fireproof).
+    pub set_scar: f32,
+    pub set_wake: f32,
+    pub set_crust: f32,
+    pub set_armour: u32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -1667,6 +1683,10 @@ impl BigParams {
             crust_fast: 0.0,
             crust_fuel: 0.0,
             char_barren: 0.0,
+            set_scar: 0.0,
+            set_wake: 0.0,
+            set_crust: 0.5,
+            set_armour: 3,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -1805,6 +1825,10 @@ pub struct BigDish {
     pub scar: Vec<f32>,
     /// The crust a fine cell, 0 to 1 (`crust_rise` > 0), else empty.
     pub crust: Vec<f32>,
+    /// Setting (`BigParams::set_scar`): each slot's word, made with the
+    /// crust: 0 not set, else set with this - 1 blows taken. A dead slot's
+    /// word is stale until a birth clears it.
+    pub set: Vec<u32>,
     /// Pile centres in dish cells, and whether the tube has reached each.
     pub piles: Vec<(f32, f32)>,
     pub reached: Vec<bool>,
@@ -2157,6 +2181,7 @@ impl BigDish {
             alarm: Vec::new(),
             scar: Vec::new(),
             crust: Vec::new(),
+            set: Vec::new(),
             piles: Vec::new(),
             reached: Vec::new(),
             pile_rs: Vec::new(),
@@ -2267,6 +2292,7 @@ impl BigDish {
         }
         if d.p.crust_rise > 0.0 {
             d.crust = vec![0.0; w * h];
+            d.set = vec![0; d.walkers.len()];
         }
         if d.p.species > 1 {
             d.species_trail = vec![vec![0.0; w * h]; d.p.species as usize];
@@ -2499,6 +2525,15 @@ impl BigDish {
     /// member of a lump with `Lump::armour` above the hits it has taken + 1
     /// (counted in `HURT_BITS`); true if it took the blow so.
     pub fn armoured(&mut self, k: usize) -> bool {
+        // A set walker (`set_scar`) takes `set_armour` blows the same way,
+        // counted in its `set` word.
+        if self.is_set(k) && self.lump_of(k).is_none() {
+            if self.set[k] >= self.p.set_armour {
+                return false;
+            }
+            self.set[k] += 1;
+            return true;
+        }
         let Some(b) = self.lump_of(k) else { return false };
         let w = self.dense[k];
         let hurt = w >> HURT_SHIFT;
@@ -3552,6 +3587,11 @@ impl BigDish {
                     LIFE_DEAD => continue,
                     _ => {}
                 }
+                // Setting (`set_scar`), before fruiting or dozing: a set
+                // walker does neither.
+                if self.set_step(k, here) {
+                    continue;
+                }
                 if self.life_t[k] == 0 {
                     let alarm = if self.alarm.is_empty() { 0.0 } else { self.alarm[here] };
                     let mut c = if self.scent_at(x, y) > p.spore_scent { p.spore_rate } else { 0.0 };
@@ -3567,6 +3607,9 @@ impl BigDish {
                         continue;
                     }
                 }
+            }
+            if !life_on && self.set_step(k, here) {
+                continue;
             }
             if hold_on && unit(keyed(seed, t, DRAW_HOLD, k as u32)) < p.tether_hold {
                 continue;
@@ -4469,7 +4512,7 @@ impl BigDish {
         let full = condense && self.mass() >= n;
         for k in 0..n {
             let b = k ^ m;
-            if full || !self.active(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
+            if full || !self.active(k) || self.is_set(k) || self.energy[k] < p.birth_energy || b >= n || self.alive[b] {
                 continue;
             }
             if let Some(&c) = held.get(self.spec.get(k).copied().unwrap_or(0) as usize) {
@@ -4506,6 +4549,10 @@ impl BigDish {
             // A child is an ordinary walker, not ripe (`condense`).
             if !self.dense.is_empty() {
                 self.dense[b] = 0;
+            }
+            // Nor set (`set_scar`).
+            if !self.set.is_empty() {
+                self.set[b] = 0;
             }
             self.alive[b] = true;
             self.occ[j] += 1;
@@ -5031,6 +5078,41 @@ impl BigDish {
         self.plant_tick();
         self.update_reached();
         self.ticks += 1;
+    }
+
+    /// Whether setting runs (`BigParams::set_scar`): its word, the crust
+    /// and the scar.
+    fn sets(&self) -> bool {
+        self.p.set_scar > 0.0 && !self.set.is_empty() && !self.scar.is_empty()
+    }
+
+    /// Whether walker `k` is set (`set_scar`).
+    pub fn is_set(&self, k: usize) -> bool {
+        self.sets() && self.set[k] > 0
+    }
+
+    /// Walker `k`'s setting this step, on cell `here` (`set_scar`), from
+    /// the fields as the step began: a set walker wakes once the scar is
+    /// under `set_wake`, an unset one sets on crust of `set_crust` or more
+    /// with scar of `set_scar` or more. True if it stays set (it then does
+    /// nothing else this step). A lump's member never sets.
+    fn set_step(&mut self, k: usize, here: usize) -> bool {
+        if !self.sets() || self.lump_of(k).is_some() {
+            return false;
+        }
+        let s = self.scar[here];
+        if self.set[k] > 0 {
+            if s < self.p.set_wake {
+                self.set[k] = 0;
+                return false;
+            }
+            return true;
+        }
+        if s >= self.p.set_scar && self.crust[here] >= self.p.set_crust {
+            self.set[k] = 1;
+            return true;
+        }
+        false
     }
 
     /// Cell `i`'s fuel for fire: its plants, plus its crust at
@@ -5939,6 +6021,49 @@ mod tests {
         assert!(wary * 2 < plain, "wary {wary} against {plain} at home");
         let (plain, grudge) = (near(false, 0.0, 0.0), near(false, 0.9999, 2.0));
         assert!(grudge > plain + 20, "grudge {grudge} against {plain} at the centre");
+    }
+
+    /// Setting (E2a): struck again and again at its home pile, a walker on
+    /// crust under a scar over `set_scar` stops where it is, takes
+    /// `set_armour` blows before it can die, and wakes once the scar has
+    /// faded under `set_wake`; with `set_scar` 0 nothing sets and the dish
+    /// plays as before.
+    #[test]
+    fn walkers_on_crust_set_under_fire_and_wake_after() {
+        let run = |set_scar: f32| {
+            let p = BigParams { alarm_keep: 0.95, scar_keep: 0.99, scar_gain: 0.05, crust_rise: 0.02, crust_keep: 0.999, crust_trail: 1.0, set_scar, set_wake: 0.01, set_crust: 0.2, set_armour: 3, piles: 1, ..small(1, 1) };
+            let mut d = BigDish::new(p);
+            let (cx, cy) = d.piles[0];
+            for _ in 0..200 {
+                d.tick();
+            }
+            let sets = |d: &BigDish| (0..d.walkers.len()).filter(|&k| d.lives(k) && d.is_set(k)).collect::<Vec<_>>();
+            let (mut killed, mut peak, mut still) = (0, 0, true);
+            for t in 0..200 {
+                if t % 10 == 0 {
+                    killed += d.strike(cx, cy, 4.0, 50.0, 8.0);
+                }
+                let before: Vec<_> = sets(&d).into_iter().map(|k| (k, d.walkers[k].0, d.walkers[k].1)).collect();
+                d.tick();
+                still &= before.iter().all(|&(k, x, y)| !d.lives(k) || !d.is_set(k) || (d.walkers[k].0, d.walkers[k].1) == (x, y));
+                peak = peak.max(sets(&d).len());
+            }
+            // The scar under the struck pile runs to the hundreds: at keep
+            // 0.99 most of it is under 0.01 1,500 ticks after the last blow.
+            for _ in 0..1500 {
+                d.tick();
+            }
+            (killed, peak, still, sets(&d).len())
+        };
+        let (k_off, p_off, _, _) = run(0.0);
+        let (k_on, p_on, still, after) = run(0.1);
+        eprintln!("setting: killed {k_on} against {k_off}, {p_on} set at most, {after} set 1,500 ticks after");
+        assert_eq!(p_off, 0, "nothing sets with set_scar 0");
+        assert!(p_on > 20, "walkers set under fire ({p_on})");
+        assert!(still, "a set walker does not move");
+        assert!(k_on < k_off, "set walkers shrug off blows: {k_on} killed against {k_off}");
+        // 8 of 537 were still set: the scar is highest where they stand.
+        assert!(after * 20 < p_on, "they wake as the scar fades ({after} of {p_on} still set)");
     }
 
     /// The flinch (W19, 2026-11-15): folded in when the dish is made, it

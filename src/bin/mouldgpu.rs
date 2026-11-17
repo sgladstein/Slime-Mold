@@ -3149,6 +3149,82 @@ mod tests {
         assert!(lc > 1e-2, "the twin catches a crust that never rises");
     }
 
+    /// **Setting on the engine** (the simulation-use plan's E2a, 2026-11-17;
+    /// the CPU's `set_scar`): the Grudge with the crust, warmed 40 ticks on
+    /// the CPU with a strike every 10 (so the scar is high on crust), then
+    /// setting switched on at the 60th percentile of the scar over 0 under
+    /// walkers on crust, four ticks on both, and a strike on the body on both. The set
+    /// words equal on every slot, the walkers as in the one-tick twin, the
+    /// same living after the strike. Planted: a GPU that never sets, and a
+    /// GPU whose set walkers die at one blow, must each fail it.
+    #[test]
+    fn setting_matches_the_cpu() {
+        const TICKS: u32 = 4;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let mut s = small(0);
+        Tier::Grudge.settings(&mut s).unwrap();
+        let s = Settings { crust_rise: 0.02, crust_keep: 0.995, crust_trail: 1.0, set_wake: 0.0, set_crust: 0.3, set_armour: 3, ..s };
+        // (set walkers on the CPU, set words off, walkers off, living CPU and GPU after the strike)
+        let play = |plant: &dyn Fn(&mut Settings)| -> (usize, usize, usize, usize, usize) {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            assert!(!cpu.scar.is_empty() && !cpu.crust.is_empty() && !cpu.set.is_empty(), "the dish has the scar, the crust and the set words");
+            let k = cpu.p.scale as f32;
+            let centre = |cpu: &BigDish| {
+                let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+                for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                    if cpu.lives(j) {
+                        (x, y, m) = (x + wx, y + wy, m + 1.0);
+                    }
+                }
+                (x / m / k, y / m / k)
+            };
+            for t in 0..40 {
+                if t % 10 == 9 {
+                    let (x, y) = centre(&cpu);
+                    cpu.strike(x + t as f32 / 5.0, y, 3.0, 50.0, 20.0);
+                }
+                cpu.tick();
+            }
+            // The scar under walkers on crust, its 60th percentile.
+            let mut under: Vec<f32> = (0..cpu.walkers.len())
+                .filter(|&j| cpu.lives(j))
+                .map(|j| cpu.walkers[j].1.floor() as usize * cpu.w + cpu.walkers[j].0.floor() as usize)
+                .filter(|&i| cpu.crust[i] >= 0.3)
+                .map(|i| cpu.scar[i])
+                .filter(|&v| v > 0.0)
+                .collect();
+            under.sort_by(f32::total_cmp);
+            let at = under[under.len() * 6 / 10];
+            cpu.p.set_scar = at;
+            cpu.p.set_wake = 0.5 * at;
+            let mut g = Settings { set_scar: at, set_wake: 0.5 * at, ..s.clone() };
+            plant(&mut g);
+            let (_, off, _, _) = twin(&mut e, &shared, &g, &mut cpu, TICKS);
+            let held = (0..cpu.walkers.len()).filter(|&j| cpu.is_set(j)).count();
+            let words = e.set_of().iter().zip(&cpu.set).enumerate().filter(|&(j, (a, b))| cpu.lives(j) && a != b).count();
+            let (x, y) = centre(&cpu);
+            cpu.strike(x, y, 8.0, 0.0, 0.0);
+            e.strike(&shared, &g, x, y, 8.0, 0.0, 0.0);
+            // The living as `Engine::alive` counts them: the struck dead
+            // are marked dead in the life states.
+            let living = (0..cpu.walkers.len()).filter(|&j| cpu.lives(j) && cpu.life.get(j) != Some(&slime_mould::mould::big::LIFE_DEAD)).count();
+            (held, words, off, living, e.alive())
+        };
+        let n = s.walkers;
+        let (held, words, off, lc, lg) = play(&|_| {});
+        eprintln!("setting: {held} walkers set, {words} set words off, {off} of {n} walkers off after {TICKS} ticks; living after a strike CPU {lc} GPU {lg}");
+        assert!(held > 100, "walkers set: {held}");
+        assert!(words == 0 && off * 1000 <= n && lc == lg, "{words} words off, {off} walkers off, living {lc} / {lg}");
+        let (_, words, off, _, _) = play(&|g| g.set_scar = 0.0);
+        eprintln!("planted, the GPU never sets: {words} set words off, {off} walkers off");
+        assert!(words > 0 && off * 1000 > n, "the twin catches a GPU that never sets");
+        let (_, _, _, lc, lg) = play(&|g| g.set_armour = 1);
+        eprintln!("planted, set walkers die at one blow on the GPU: living CPU {lc} GPU {lg}");
+        assert!(lc != lg, "the twin catches armour the GPU drops");
+    }
+
     /// **The crust's pull and fast ground on the engine** (the plan's E1b,
     /// 2026-11-17; the CPU's `crust_weight`, `crust_fast`): the crust twin's
     /// dish warmed 40 ticks with a strike at 30, then four ticks on both.

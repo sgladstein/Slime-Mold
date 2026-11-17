@@ -28,6 +28,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   crust's pull and fast ground, crust as fuel and barren char; films and page
   in `page-e1b/` (https://claude.ai/artifact/6Qpdh7rTKKpGEgMhD9btAR), raw
   lines in `e1b-raw/`.
+- [e2a-setting.md](e2a-setting.md): E2a built, walkers on crust set where
+  the scar says they were hurt (stop, no births, three blows to kill, wake
+  as the scar fades), behind `setting=1`; films and page in `page-e2a/`
+  (https://claude.ai/artifact/Vx8Qz8v3VAqvZaUL95FMK2), raw lines in
+  `e2a-raw/`.
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
