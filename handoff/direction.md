@@ -45,7 +45,8 @@ ask big". None of these is asked of him; he vetoes in play.
 | Far smell (`far_smell`) and charges round walls (`unit_paths`); `play-new-slime.cmd` | On by default on the run's planets; delete the second script | Enemy |
 | Setting, block or trap (`set_block`, `set_hold`), crust and its pull, fed slime fireproof (`fire_fed`): four blind films | Pick one configuration and give it to one deeper tier as its trait; the films exist if wanted | Enemy |
 | The set slime's look (`setlook`: glaze or amber) | Decide | Look and interface |
-| Haze strength and flinch strength | Redraw the haze (look A); set the flinch | Look and interface; Enemy |
+| Haze strength | Settled by Look and interface, 11-17: there is no haze any more. The lime wash was the engine's alarm paint; the alarm now shows only on slime, as a warm orange flush in the slime's own colour, and bare ground shows nothing | closed when its PR merges |
+| Flinch strength | Set it | Enemy |
 | Mini-boss colour (Violet, Ember, Ink) | Decide | Look and interface |
 | Fen moat or rock rims | Delete the moat: he saw no difference | Look and interface |
 | Heave and Corral as one card | Decide; the plan would merge them | Squad and arsenal |
