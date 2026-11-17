@@ -6165,7 +6165,7 @@ mod tests {
             slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
         }
         assert!(s.crust_rise > 0.0 && s.set_scar > 0.0 && s.thicken > 0.0 && s.condense > 0 && s.fed_crowd > 0, "the keys turned their switches on");
-        let mut rules = Rules { seek_turn: 0.45, reserve: 5.0, set_block: 3.0, ..Rules::default() };
+        let mut rules = Rules { reserve: 5.0, set_block: 3.0, ..Rules::default() };
         rules.raid.last_stand = true;
         fn play<W: World>(mut g: Game<W>, what: &str) {
             for k in 0..g.soldiers.len() {
