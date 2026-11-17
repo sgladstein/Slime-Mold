@@ -74,6 +74,38 @@ he picks "retire it now", that becomes your first job after job 1.
 
 ## State (kept current by the lane)
 
-2026-11-17: the lane started. Branch `claude/project-thread-9y1l65`. Job 1
-is in work (the switch list, the build number, the "what is new" file);
-nothing merged yet. Next: job 2, the play record.
+**2026-11-17.** Branch `claude/project-thread-9y1l65`. Job 1 is built and in
+its pull request; nothing of the lane is merged yet.
+
+What job 1 put where:
+
+- **The switch list**: `src/build/switches.rs`, `SWITCHES`. A row is a name,
+  its choices (each a set of the game's own keys), the default, the lane,
+  the date, what the player sees and why it is off. `try=NAME[:CHOICE]` on
+  the command line and the Options page's Experiments tab turn the same
+  rows (`src/bin/larder-world/experiments.rs`). Tests in
+  `src/build/switches/tests.rs`: `no_switch_is_undeclared` fails on an
+  engine or rule key that the default game leaves at 0 on every planet and
+  tier and that no row declares; `mouldgpu`'s all-switches test plays
+  `switches::all_on()`. The count rule (at most three) is held off by
+  `SETTLING = true` until Enemy has settled the 11-17 rows: set it false in
+  the change that gets the list down to three.
+- **The build number**: `build.rs` stamps the commit count, hash and date;
+  `slime_mould::build::build()` reads them. 0 on a shallow clone (cloud
+  sessions), where the commit shows instead. In the window's title and the
+  play log's header (`build=`, with `switches=`, `keys=`, `planet=`).
+- **What is new**: `news/whats-new.txt` and `news/things-to-try.txt`,
+  compiled in (`src/build/news.rs`). `Memory` keeps the last build played
+  and the lines seen in the settings file. `wiki/lint.py --base` fails a
+  change to the game that adds no line, unless a commit message says
+  `Nothing-new: <why>`.
+- **Housekeeping already done** (from job 5): the lint's `HANDOFF.md` link
+  rule is retired, `NOW.md` is capped at 100 lines, a page's Now over 2 KB
+  fails (the 12 pages over on 11-17 fail only if they grow: `NOW_OVER`).
+
+Not done from job 1: the menu's corner does not show the build yet and the
+"what is new" and "things to try" pages are not drawn. Those are Look and
+interface's, from the data above.
+
+**Next:** job 2, the play record (a note key in play; `play.cmd` pushes
+the logs to a branch), then job 3, a Windows build from CI.

@@ -273,9 +273,6 @@ fn the_list_is_sound() {
     }
     assert!(parse_try("no_such").unwrap_err().contains("far_smell"));
     assert!(parse_try("crust:sideways").unwrap_err().contains("off, on"));
-    // The plan's rule 3: at most three off at once. The 11-17 rows are
-    // ROADMAP's table carried over, which the Enemy lane is settling.
-    assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "{} switches are declared and the plan allows {MOST_OFF}: settle one (on, a tier's trait, or deleted) before adding another", SWITCHES.len());
 }
 
 #[test]

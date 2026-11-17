@@ -28,8 +28,8 @@
 //! across all lanes, and each ends at the owner's next play: on, one
 //! tier's trait, or deleted with its `Reports/dead-ends.md` line. The
 //! rows of 11-17 are over that count: they are ROADMAP's table as it
-//! stood, which the Enemy lane is settling; `MOST_OFF` is checked by
-//! `the_list_is_sound` once they are down to it (`SETTLING`).
+//! stood, which the Enemy lane is settling; `MOST_OFF` is held by the
+//! compiler once they are down to it (`SETTLING`).
 
 /// The lanes of the 11-17 plan, as a row's owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -124,9 +124,13 @@ pub const MOST_OFF: usize = 3;
 
 /// True while the 11-17 rows (ROADMAP's table, carried over) are being
 /// settled by the Enemy lane and the list is over `MOST_OFF`. Set it false
-/// in the change that brings the list down to `MOST_OFF`, and the count
-/// becomes a test failure from then on.
+/// in the change that brings the list down to `MOST_OFF`, and a row over
+/// the count stops the build from then on.
 pub const SETTLING: bool = true;
+
+// The count, held by the compiler: with `SETTLING` false, a fourth row
+// does not build.
+const _: () = assert!(SETTLING || SWITCHES.len() <= MOST_OFF, "more switches are declared than the plan allows (MOST_OFF): settle one (on, a tier's trait, or deleted) before adding another");
 
 /// **The list.** The rows of 2026-11-17 are ROADMAP's "Switches that are
 /// off" table as it stood that day (14 rows; the two crust rows and the
@@ -201,6 +205,16 @@ pub const SWITCHES: &[Switch] = &[
         since: "2026-11-15",
         sees: "Once, when the slime is down to a quarter of its biggest, all of it rushes your soldiers at once, with an alert",
         why_off: "The owner was not sure it is a good idea; a play with it on decides",
+    },
+    Switch {
+        key: "feel",
+        label: "Shake and hit-stop",
+        choices: &[OFF, on(&[("win:shake", "1"), ("win:hitstop", "1")])],
+        default: "off",
+        lane: Lane::Squad,
+        since: "2026-11-15",
+        sees: "The camera shakes on blasts, and the game holds still for a moment when a big blast lands",
+        why_off: "The owner asked to see it before it goes on (11-15, D6); his play with it on decides",
     },
     Switch {
         key: "reserve",
@@ -391,6 +405,13 @@ pub fn keys_of(choice: &Choice) -> Vec<(String, String)> {
 /// one key, the later row's value stands, as in a round.
 pub fn all_on() -> Vec<(String, String)> {
     SWITCHES.iter().flat_map(|s| keys_of(s.tried())).collect()
+}
+
+/// The same with every switch at its last choice: the other side of each
+/// either-or (set slime as a trap, the crust pushing on), which the
+/// all-switches test plays as its second round.
+pub fn all_last() -> Vec<(String, String)> {
+    SWITCHES.iter().flat_map(|s| keys_of(s.choices.iter().rev().find(|c| c.name != s.default).expect("a choice off the default"))).collect()
 }
 
 /// **Sets one key** of a choice on the library's own parts: an engine

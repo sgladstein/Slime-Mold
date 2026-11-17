@@ -431,7 +431,7 @@ pub(super) fn page_named(name: &str) -> Option<Page> {
     Some(match name {
         "1" | "main" => Page::Main,
         "campaign" | "missions" => Page::Missions,
-        "options" | "options-planet" | "options-mould" => Page::Options,
+        "options" | "options-planet" | "options-mould" | "options-experiments" => Page::Options,
         "keys" => Page::Keys,
         "shop" | "shop-mid" | "shop-build" | "shop-tools" | "shop-turrets" => Page::Shop,
         _ => return None,

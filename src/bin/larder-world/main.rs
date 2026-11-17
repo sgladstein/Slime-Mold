@@ -1085,6 +1085,15 @@ impl App {
     /// A new round on the map named in `args` (or the noise world).
     fn start(&mut self) -> Result<(), String> {
         self.save_replay();
+        // A switch's window keys (`win:NAME`, the Experiments tab's picks
+        // and `try=`) over the command line's own, each round: the round's
+        // args are built afresh from the command line (`round_args`), so a
+        // pick turned back leaves nothing behind.
+        for (k, v) in self.args.keys.clone() {
+            if let Some(name) = k.strip_prefix(WINDOW_KEY) {
+                experiments::set_window_key(&mut self.args, name, &v)?;
+            }
+        }
         let Some((device, queue)) = &self.gpu else { return Ok(()) };
         let a = &self.args;
         // own=1 on the noise world is the gardeners' race world; on a map,
@@ -1357,10 +1366,7 @@ impl App {
             // the same buffer, when the world has one (`crust=1`).
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
-            // The look: `setlook=`, else a switch's pick (`win:setlook`,
-            // the Experiments tab's "Set slime's look"), else amber.
-            let look = self.args.set_look.or_else(|| experiments::window_key(&self.args.keys, "setlook").and_then(|v| v.parse().ok())).unwrap_or(1);
-            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, look.min(2));
+            v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, self.args.set_look.unwrap_or(1));
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -2177,7 +2183,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "ui" => ui = Some(settings::parse_size(v).ok_or("ui=PERCENT% (25% to 400%) or a factor such as 1.5")?),
             "menu" => {
                 if v != "0" && page_named(v).is_none() {
-                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop-turrets: its gun slots on the turrets' deck; shop@TAB@NAME: that tab, that row picked)".into());
+                    return Err("menu=0|1|main|campaign|options|keys|shop (options-planet, options-mould, options-experiments: that tab; shop-mid, shop-build, shop-tools: a run three planets in, a tab open; shop-turrets: its gun slots on the turrets' deck; shop@TAB@NAME: that tab, that row picked)".into());
                 }
                 menu_flag = Some(v.to_string());
             }

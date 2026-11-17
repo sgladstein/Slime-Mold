@@ -5,8 +5,8 @@
 //! be matched to the code that was played.
 //!
 //! - `LARDER_BUILD_NUMBER`: the commits on this checkout's history
-//!   (`git rev-list --count HEAD`), so a newer main always has a bigger
-//!   number. 0 when it cannot be counted: no git, no `.git` (a source
+//!   (`git rev-list --count HEAD`) when the game was last rebuilt, so a
+//!   newer build always has a bigger number. 0 when it cannot be counted: no git, no `.git` (a source
 //!   archive), or a shallow clone, where the count would be the clone's
 //!   depth and not the build (cloud sessions clone shallow, so their films
 //!   say "build d08583d" with no number).
@@ -34,11 +34,17 @@ fn git(args: &[&str]) -> Option<String> {
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=LARDER_BUILD");
-    // Run again when the checkout moves (a pull, a commit, a switch of
-    // branch all append to `.git/logs/HEAD`). Only paths that exist are
-    // named: cargo treats a missing one as changed every time, which would
-    // rebuild the game on every `cargo build`.
-    for p in [".git/HEAD", ".git/logs/HEAD"] {
+    // Run again when the game's own files change, which is when cargo
+    // rebuilds the game anyway. Not when the checkout merely moves
+    // (`.git/logs/HEAD`, the first cut on 11-17): cargo rebuilds the game
+    // whenever this script reruns, even when it prints the same stamp
+    // (measured that day: a rerun with an unchanged stamp recompiled the
+    // library and the window, 1 min 21 s in a cloud session), and most pulls of main bring only reports and notes, so the
+    // owner's `play.cmd` would have rebuilt for minutes with no code
+    // changed. The cost of this way: after a docs-only pull the game still
+    // names the commit it was last built at, an older commit with the same
+    // code, which is what a play log needs to name.
+    for p in ["src", "assets", "news", "Cargo.toml", "Cargo.lock"] {
         if Path::new(p).exists() {
             println!("cargo:rerun-if-changed={p}");
         }
