@@ -1663,6 +1663,66 @@ mod tests {
         assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
     }
 
+    /// **Crust burns, and its char is barren, on the GPU as on the CPU**
+    /// (the simulation-use plan's C2, 2026-11-17; `BigParams::crust_fuel`,
+    /// `char_barren`): the plant twin's map with the crust on and worth a
+    /// plant a unit, char over 0.3 barren, the crust's pull and fast ground
+    /// on too; a burn lit at 12 s. Plants, fire, char and crust match at
+    /// every check, and the walkers' count. The plants are under the fire's
+    /// fuel, so a fire still burning at 24 s, with barren char, ran on the
+    /// crust.
+    #[test]
+    fn crust_burns_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::big::BigDish;
+        use crate::mould::plants::pack;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        // Thin plants (0.04 a cell, under the fire's fuel of 0.05), so only
+        // the crust carries a fire.
+        m.plants = (0..m.ground.len()).map(|i| pack([0, 1, 3, 0][(i / m.w / 160).min(3)], 0.04)).collect();
+        let (rise, keep, weight, fast, fuel, barren) = (0.02, 0.999, 0.5, 0.5, 1.0, 0.3);
+        let p = BigParams { crust_rise: rise, crust_keep: keep, crust_trail: 1.0, crust_weight: weight, crust_fast: fast, crust_fuel: fuel, char_barren: barren, ..race_params(seed, scale, walkers) };
+        let s = Settings { crust_rise: rise, crust_keep: keep, crust_trail: 1.0, crust_weight: weight, crust_fast: fast, crust_fuel: fuel, char_barren: barren, ..race_settings(seed, scale, walkers) };
+        let mut cpu = BigDish::with_map(p, &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, s, scale, &m);
+        assert!(!cpu.plant.is_empty() && gpu.e.plants && !cpu.crust.is_empty() && gpu.e.crust_at > 0);
+        let home = cpu.homes[0];
+        let burn = squad::Burst { at: (home.0 + 25.0, home.1), r: 10.0, burn: true, ..Default::default() };
+        let k = squad::BurstRules::default();
+        let (mut burning, mut barren_cells) = (0, 0);
+        for sec in 1..=24 {
+            let f = Frame::default();
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+            if sec == 12 {
+                World::burst(&mut cpu, &burn, &k);
+                World::burst(&mut gpu, &burn, &k);
+                for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                    w.frame(&f, 30);
+                }
+            }
+            World::burned(&mut cpu);
+            World::burned(&mut gpu);
+            let (p, _, fire, ch) = gpu.e.plants_of();
+            let crust = gpu.e.crust_of();
+            let diff = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+            let cfire = if cpu.fire.is_empty() { vec![0.0; p.len()] } else { cpu.fire.clone() };
+            let cchar = if cpu.char.is_empty() { vec![0.0; p.len()] } else { cpu.char.clone() };
+            let (dp, df, dc, dk) = (diff(&p, &cpu.plant), diff(&fire, &cfire), diff(&ch, &cchar), diff(&crust, &cpu.crust));
+            let (nc, ng) = (World::living(&cpu), World::living(&gpu));
+            let barren = cchar.iter().filter(|&&c| c >= barren).count();
+            eprintln!("crust fire {sec} s: max diff plants {dp:.2e} fire {df:.2e} char {dc:.2e} crust {dk:.2e}; burning {}; {barren} barren cells; walkers CPU {nc} GPU {ng}", cpu.burning);
+            assert!(dp <= tol(1e-5, 0.05) && df <= tol(1e-5, 0.2) && dc <= tol(1e-5, 0.2) && dk <= tol(1e-5, 0.05), "{sec} s: plants {dp} fire {df} char {dc} crust {dk}");
+            assert!(nc.abs_diff(ng) <= tol(0, 5 + nc / 50), "{sec} s: walkers CPU {nc} GPU {ng}");
+            (burning, barren_cells) = (cpu.burning, barren);
+        }
+        assert!(burning > 50 && barren_cells > 50, "the crust carried the fire: {burning} burning, {barren_cells} barren at 24 s");
+    }
+
     /// The CPU census's world (`race_params`, a tier's `apply`) and the GPU
     /// world (`race_settings`, `Tier::settings`, `Engine::made`) play the
     /// same crowd rule on every map, tier and scale the game ships, and on

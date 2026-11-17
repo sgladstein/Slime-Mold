@@ -317,6 +317,9 @@ const DRAW_SHAPE: u32 = 160;
 pub const SOIL_SAND: u8 = 1;
 pub const SOIL_CLAY: u8 = 2;
 pub const SOIL_BARREN: u8 = 3;
+/// The longest step fast ground (`BigParams::crust_fast`) makes: the
+/// Sprawler's 1.5 cells, since `walk` tests only the landing cell.
+pub const CRUST_STEP_CAP: f32 = 1.5;
 /// Deep water (new ground kinds, 2026-11-14; owner 17:02Z "deep water stops
 /// soldiers, slime crawls slowly"): a map writes it with the wet bit, so a
 /// build from before it plays it as wet. The walker's step there is x
@@ -1225,6 +1228,22 @@ pub struct BigParams {
     pub crust_rise: f32,
     pub crust_keep: f32,
     pub crust_trail: f32,
+    /// **The crust's effects** (the plan's E1b and C2, 2026-11-17; all off
+    /// at 0). `crust_weight`: sensors read `crust_weight` x crust beside the
+    /// trail, after the scar (over 0 the slime flows back to ground it held,
+    /// under 0 it moves on). `crust_fast`: a walker's step on crust is x (1 +
+    /// `crust_fast` x crust), but crust never takes it past 1.5 cells (the
+    /// Sprawler's step), because `walk` tests only the landing cell and a
+    /// longer step could hop a two-cell wall. `crust_fuel`: crust burns, as
+    /// `crust_fuel` plants a unit (`plants::fire_step`), after the plants,
+    /// and leaves char like them, so fire runs along ground the slime left
+    /// (the fed slime's trail is still wet to fire). `char_barren`: char of
+    /// this much or more is barren ground while it lasts (no child born on
+    /// it, `barren_upkeep` on it), so a burnt road stays empty.
+    pub crust_weight: f32,
+    pub crust_fast: f32,
+    pub crust_fuel: f32,
+    pub char_barren: f32,
     /// Trail above this counts as tube in the measures (today's `tube`).
     pub tube: f32,
     /// Larder World crystals (W1 of `Reports/larder-world-roadmap-2026-11-11.md`;
@@ -1631,6 +1650,10 @@ impl BigParams {
             crust_rise: 0.0,
             crust_keep: 1.0,
             crust_trail: 1.0,
+            crust_weight: 0.0,
+            crust_fast: 0.0,
+            crust_fuel: 0.0,
+            char_barren: 0.0,
             tube: 1.0,
             crystal_charge: 0.0,
             crystal_eat: 0.05,
@@ -2319,7 +2342,7 @@ impl BigDish {
     fn fire_tick(&mut self) {
         let g = crate::mould::plants::Ground { w: self.w, h: self.h, cap: &self.plant_cap, agar: &self.agar, pile_of: &self.pile_of, wet: &self.wet, scorch: &self.scorch };
         let (r, f) = (self.plant_rates(), self.fire_rates());
-        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps);
+        self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps, (&mut self.crust, self.p.crust_fuel));
         self.fire_steps = self.fire_steps.wrapping_add(1);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
         let kill = self.p.fire_kill;
@@ -2381,7 +2404,7 @@ impl BigDish {
                 }
                 let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
                 let lit_here = crate::mould::plants::roll(i as u32, self.fire_steps ^ 0x1617) < share;
-                if self.agar[i] && self.plant[i] >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) && lit_here {
+                if self.agar[i] && self.fuel_at(i) >= self.p.fire_fuel && (self.wet.is_empty() || !self.wet[i]) && lit_here {
                     self.fire[i] = 1.0;
                     lit += 1;
                 }
@@ -3351,7 +3374,14 @@ impl BigDish {
                 let sc = self.scent_at(x + c * sso, y + s * sso);
                 // sw 1 keeps the sum's order, so older runs keep their hashes.
                 let sc = if sw == 1.0 { sc } else { sw * sc };
-                self.trail_seen(i, sp) + sc + g + al + b
+                let v = self.trail_seen(i, sp) + sc + g + al + b;
+                // The crust (`crust_weight`), last, so a dish without it
+                // keeps its sums.
+                if self.crust.is_empty() || self.p.crust_weight == 0.0 {
+                    v
+                } else {
+                    v + self.p.crust_weight * self.crust[i]
+                }
             }
             _ => -1.0e6,
         }
@@ -3555,6 +3585,10 @@ impl BigDish {
             }
             if !self.soil.is_empty() && self.soil[here] == SOIL_DEEP {
                 st *= p.deep_step;
+            }
+            // Fast ground (`crust_fast`): never past 1.5 cells by the crust.
+            if !self.crust.is_empty() && p.crust_fast > 0.0 {
+                st = (st * (1.0 + p.crust_fast * self.crust[here])).min(st.max(CRUST_STEP_CAP));
             }
             if ss > 0.0 {
                 let v = (self.trail[here] * ss).min(1.0);
@@ -4344,12 +4378,13 @@ impl BigDish {
             // Its crystal take this step (`took`, Larder World) counts as
             // food like its grass share.
             let took = if self.took.is_empty() { 0.0 } else { self.took[k] };
-            let mut up = if self.soil.is_empty() {
+            let mut up = if self.soil.is_empty() && !self.chars() {
                 p.upkeep
             } else {
                 let (x, y, _) = self.walkers[k];
                 let i = self.cell(x, y).expect("walker inside the dish");
-                if self.soil[i] == SOIL_BARREN { p.upkeep * p.barren_upkeep } else { p.upkeep }
+                let barren = (!self.soil.is_empty() && self.soil[i] == SOIL_BARREN) || self.charred(i);
+                if barren { p.upkeep * p.barren_upkeep } else { p.upkeep }
             };
             if p.lone_upkeep != 1.0 {
                 let (x, y, _) = self.walkers[k];
@@ -4434,7 +4469,7 @@ impl BigDish {
             let (nx, ny) = (x + dx, y + dy);
             let Some(j) = self.cell(nx, ny) else { continue };
             let crowd = self.fed_crowd(crowd_of(self, k), k);
-            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && matches!(self.soil[j], SOIL_BARREN | SOIL_DEEP)) {
+            if !self.agar[j] || (crowd > 0 && self.occ[j] >= crowd as u16) || (!self.soil.is_empty() && matches!(self.soil[j], SOIL_BARREN | SOIL_DEEP)) || self.charred(j) {
                 continue;
             }
             if crowd > 0 {
@@ -4983,6 +5018,26 @@ impl BigDish {
         self.plant_tick();
         self.update_reached();
         self.ticks += 1;
+    }
+
+    /// Cell `i`'s fuel for fire: its plants, plus its crust at
+    /// `crust_fuel` (`plants::fire_step`).
+    fn fuel_at(&self, i: usize) -> f32 {
+        if self.p.crust_fuel > 0.0 && !self.crust.is_empty() {
+            self.plant[i] + self.p.crust_fuel * self.crust[i]
+        } else {
+            self.plant[i]
+        }
+    }
+
+    /// Whether char can make ground barren here (`BigParams::char_barren`).
+    fn chars(&self) -> bool {
+        self.p.char_barren > 0.0 && !self.char.is_empty()
+    }
+
+    /// Whether cell `i`'s char makes it barren (`char_barren`).
+    fn charred(&self, i: usize) -> bool {
+        self.chars() && self.char[i] >= self.p.char_barren
     }
 
     /// One fine step of the crust (`BigParams::crust_rise`), after the
@@ -7060,6 +7115,20 @@ mod tests {
             d.tick();
         }
         assert_eq!(d.hash(), plain.2);
+        // Char over `char_barren` (the simulation-use plan's C2) is barren
+        // ground: a dish all char plays as the barren dish, and with
+        // `char_barren` 0 as the plain one.
+        let charred = |barren: f32| {
+            let mut d = BigDish::new(BigParams { char_barren: barren, ..p.clone() });
+            d.char = vec![1.0; d.w * d.h];
+            for _ in 0..30 {
+                d.tick();
+            }
+            // The hash reads the char field too, so the trail and the living.
+            (d.trail.iter().sum::<f32>().to_bits(), d.alive.iter().filter(|&&a| a).count())
+        };
+        assert_eq!(charred(0.5), (barren.0.to_bits(), barren.1), "char over char_barren plays as barren soil");
+        assert_eq!(charred(0.0), (plain.0.to_bits(), plain.1), "char_barren 0 changes nothing");
     }
 
     /// Deep water (2026-11-14): the walker's step is x `deep_step` on top

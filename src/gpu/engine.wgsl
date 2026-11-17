@@ -213,6 +213,10 @@ struct Params {
     // the rise a fine step (0 off), the keep, the trail it needs, and the
     // word in `news` its block starts at.
     crust_rise: f32, crust_keep: f32, crust_trail: f32, crust_at: u32,
+    // The crust's effects (`CRUST_FX_AT`, the plan's E1b and C2): its weight
+    // in the sensors, fast ground, its worth as fuel (each 0 without the
+    // crust) and the char that makes ground barren (0 off).
+    crust_w: f32, crust_fast: f32, crust_fuel: f32, char_barren: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -485,6 +489,8 @@ fn crust_step(i: u32, t: f32) {
     if (agar[i] != 0u && atomicLoad(&occ[i]) > 0u && t >= P.crust_trail) { v = min(c + P.crust_rise, 1.0); }
     atomicStore(&news[k], bitcast<u32>(v));
 }
+fn crust_of(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[P.crust_at + i])); }
+fn crust_put(i: u32, v: f32) { atomicStore(&news[P.crust_at + i], bitcast<u32>(v)); }
 fn scar_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[P.w * P.h + i])); }
 // A cell's scar after this step's alarm `a` (the CPU's loop after the
 // alarm's spread in `tick`): agar cells only.
@@ -723,6 +729,8 @@ fn sense_at(x: f32, y: f32, a: f32, so: f32, sso: f32, sp: u32, gw: f32, sw: f32
     // The scar beside it (`scar_weight`), summed with the alarm first as
     // the CPU's `sense` sums them.
     if (scars()) { v += P.alarm_w * alarm_at(i) + P.scar_w * scar_at(i); } else if (alarms()) { v += P.alarm_w * alarm_at(i); }
+    // The crust (`crust_weight`), last as on the CPU.
+    if (P.crust_w != 0.0) { v += P.crust_w * crust_of(i); }
     return v;
 }
 
@@ -1009,6 +1017,9 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (world(WETS) && (ground[here] & WET) != 0u) { st *= P.wet_step; }
     // Deep water: x `deep_step` more, after the wet step as on the CPU.
     if (soil(here) == SOIL_DEEP) { st *= P.deep_step; }
+    // Fast ground (`crust_fast`): never past 1.5 cells by the crust
+    // (`CRUST_STEP_CAP`).
+    if (P.crust_fast > 0.0) { st = min(st * (1.0 + P.crust_fast * crust_of(here)), max(st, 1.5)); }
     if (P.ss > 0.0) {
         let v = min(trail_in[here] * P.ss, 1.0);
         so = so + P.om_a * pow0(v, P.om_e);
@@ -1278,7 +1289,7 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (eats(k)) { g = min(grass[i] / n, P.graze_eat); }
     // Barren ground costs `barren_up` times the upkeep (WM3).
     var up = P.upkeep;
-    if (soil(i) == SOIL_BARREN) { up = P.upkeep * P.barren_up; }
+    if (soil(i) == SOIL_BARREN || charred(i)) { up = P.upkeep * P.barren_up; }
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
@@ -1475,7 +1486,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     // (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
-    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP) { return; }
+    if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }
     if (cr > 0u) { atomicMin(&claim[j], keyed(P.s_bclaim, t, k)); }
     icell[k] = j;
 }
@@ -3781,6 +3792,9 @@ fn pw(o: u32) -> u32 { return atomicLoad(&news[plant_base() + o]); }
 fn pf(o: u32) -> f32 { return bitcast<f32>(pw(o)); }
 fn pblk(b: u32, i: u32) -> u32 { return plant_base() + PLANT_HEAD + b * P.w * P.h + i; }
 fn pget(b: u32, i: u32) -> f32 { return bitcast<f32>(atomicLoad(&news[pblk(b, i)])); }
+// Char that makes ground barren (`char_barren`, C2; the CPU's `charred`):
+// no child is born on it and upkeep there is `barren_up` times.
+fn charred(i: u32) -> bool { return P.char_barren > 0.0 && pget(PB_CHAR, i) >= P.char_barren; }
 fn pset(b: u32, i: u32, v: f32) { atomicStore(&news[pblk(b, i)], bitcast<u32>(v)); }
 const PB_CAP: u32 = 0u;
 const PB_KIND: u32 = 1u;
@@ -3856,7 +3870,10 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i >= P.w * P.h) { return; }
     let wet = pwet(i) || trail_out[i] >= pf(8u) || agar[i] == 0u;
     let heat = pget(PB_FA, i);
-    let p = pget(PB_B, i);
+    // The fuel: plants, and the crust at `crust_fuel` (C2), eaten after.
+    let pl = pget(PB_B, i);
+    var p = pl;
+    if (P.crust_fuel > 0.0) { p = pl + P.crust_fuel * crust_of(i); }
     // Moisture and the chance (owner 11-14 19:18Z; `plants::fire_step`).
     let m = pget(PB_MOIST, i);
     let dice = froll(i, pw(45u));
@@ -3868,7 +3885,8 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
     } else if (heat > 0.0) {
         let slow = 1.0 - pf(14u) * m;
         let eat = min(pf(5u) * heat * slow, p);
-        pset(PB_B, i, p - eat);
+        if (eat <= pl) { pset(PB_B, i, pl - eat); }
+        else { pset(PB_B, i, 0.0); crust_put(i, max(crust_of(i) - (eat - pl) / P.crust_fuel, 0.0)); }
         ate = eat;
         let top = (1.0 - pf(15u) * m) * min(p / pf(48u), 1.0);
         if (p - eat < pf(7u)) { to = heat * pf(47u); }
@@ -3929,7 +3947,10 @@ fn firekill(@builtin(global_invocation_id) gid: vec3<u32>) {
 @compute @workgroup_size(256)
 fn ignite(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
-    if (i >= P.w * P.h || agar[i] == 0u || pwet(i) || pget(PB_A, i) < pf(7u)) { return; }
+    if (i >= P.w * P.h || agar[i] == 0u || pwet(i)) { return; }
+    var fuel = pget(PB_A, i);
+    if (P.crust_fuel > 0.0) { fuel = fuel + P.crust_fuel * crust_of(i); }
+    if (fuel < pf(7u)) { return; }
     let x = i32(i % P.w); let y = i32(i / P.w);
     // Lights from word 49: x, y, r and the share of cells lit (by the
     // chance `plants::roll` keyed as `BigDish::ignite` keys it).

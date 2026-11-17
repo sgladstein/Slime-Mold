@@ -508,6 +508,9 @@ struct Args {
     /// line, to see whether crust shows roads or one plate under the body
     /// (the reviews' question).
     crust_look: Option<u8>,
+    /// `boom=T,X,Y,R`: the booms (by index) that light a plain fire of
+    /// radius R instead of setting off the round.
+    boom_fires: Vec<(usize, f32)>,
     /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
@@ -2229,8 +2232,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // T the squad's round goes off at (X, Y), world units as
                 // `centre=`, free (`Rounds::cast_at`); repeat for more.
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
-                let [t, x, y] = w.as_slice() else { return Err("boom=T,X,Y".into()) };
-                booms.push((*t, *x, *y));
+                // `boom=T,X,Y,R` (2026-11-17, the crust fire films): a plain
+                // fire lit over R instead of the round (a burn burst, no
+                // kill), as `boom_fires` holds.
+                match w.as_slice() {
+                    [t, x, y] => booms.push((*t, *x, *y)),
+                    [t, x, y, r] => {
+                        booms.push((*t, *x, *y));
+                        args.boom_fires.push((booms.len() - 1, *r));
+                    }
+                    _ => return Err("boom=T,X,Y[,R]".into()),
+                }
             }
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)

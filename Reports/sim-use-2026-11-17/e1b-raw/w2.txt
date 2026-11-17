@@ -1,0 +1,221 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 58.9 s (the slime has eaten 259 food)
+w2/planet-3-1-idle-060s-all.png
+w2/planet-3-1-idle-060s-near.png
+  engine crust t 60 s: 51675 cells over 0.05, 45496 over 0.3, 28734 over 0.95; walkers' cells on crust over 0.3 42459, under 0.05 638
+  crust t 60 s: 52007 cells over 0.05, 45530 over 0.3 (42489 of those under walkers now, 93%), 31194 over 0.95; walkers on 44126 cells
+  CPU: ground field 2.61 ms (once a game second), model and HUD 0.078 ms a frame
+  t 60 s: mould 44126, soldiers 4, bank 2000, harvested 0, rendered 0, shots 84, killed 65, took 0%, crystals left 0.983; squad at 435.3,262.4
+  surge: the slime ate 264 food (4.4/s); meter 5.1 of 259, 1 surges
+  dense: 0 condensed or thick walkers, mass 44126 (readout 44126); 2232 breaking away
+  squad: touching 0.0 mean, 0 most; health 99 mean
+  raid 1 at t 72.0 s: Soldiers(0) at 441,262, reach 146 cells holding 11209 walkers, share 0.60, size 15% of the slime
+  boss t 91.0 s: Crowd wanderer formed on lump 0 at 295,63 (crowd top 1.00); grade 0.32: 8 blows a member, touches as 3, pace x1.13
+  boss t 91 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 295,63, spread 1.03, stolen 0.0; nearest soldier 240.4, 2 alive
+  boss t 92 s: lump 0 wanderer Gather, 326 members (first 326, 0 hurt), at 294,62, spread 0.97, stolen 0.0; nearest soldier 241.6, 2 alive
+  boss t 93 s: lump 0 wanderer Gather, 326 members (first 326, 0 hurt), at 294,60, spread 0.93, stolen 0.0; nearest soldier 243.3, 2 alive
+  boss t 94 s: lump 0 wanderer Gather, 326 members (first 326, 0 hurt), at 294,60, spread 0.93, stolen 0.0; nearest soldier 243.3, 2 alive
+  boss t 95 s: lump 0 wanderer Gather, 326 members (first 326, 0 hurt), at 294,60, spread 0.91, stolen 0.0; nearest soldier 242.7, 2 alive
+  boss t 96 s: lump 0 wanderer Gather, 326 members (first 326, 0 hurt), at 296,58, spread 0.92, stolen 0.0; nearest soldier 243.9, 2 alive
+  boss t 97 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 296,56, spread 0.93, stolen 0.0; nearest soldier 245.5, 2 alive
+  boss t 98 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 302,60, spread 1.15, stolen 0.0; nearest soldier 239.2, 2 alive
+  boss t 99 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 310,62, spread 1.16, stolen 0.0; nearest soldier 233.9, 2 alive
+  boss t 100 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 316,64, spread 1.14, stolen 0.0; nearest soldier 227.8, 2 alive
+  boss t 101 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 322,70, spread 1.01, stolen 0.0; nearest soldier 220.5, 2 alive
+  boss t 102 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 328,74, spread 0.90, stolen 0.0; nearest soldier 213.2, 2 alive
+  boss t 103 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 334,78, spread 1.01, stolen 0.0; nearest soldier 207.3, 2 alive
+  boss t 104 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 338,82, spread 1.03, stolen 0.0; nearest soldier 202.4, 2 alive
+  boss t 105 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 344,86, spread 1.01, stolen 0.0; nearest soldier 196.6, 2 alive
+  boss t 106 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 348,88, spread 1.08, stolen 0.0; nearest soldier 191.7, 2 alive
+  boss t 107 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 354,92, spread 1.05, stolen 0.0; nearest soldier 186.0, 2 alive
+  boss t 108 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 358,96, spread 1.08, stolen 0.0; nearest soldier 180.4, 2 alive
+  boss t 109 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 364,100, spread 1.14, stolen 0.0; nearest soldier 174.4, 2 alive
+  boss t 110 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 370,106, spread 1.09, stolen 0.0; nearest soldier 167.5, 2 alive
+  boss t 111 s: lump 0 wanderer Go((393.5, 126.0)), 326 members (first 326, 0 hurt), at 376,112, spread 1.05, stolen 0.0; nearest soldier 167.9, 1 alive
+  boss t 112 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 380,116, spread 1.00, stolen 0.0; nearest soldier 161.5, 1 alive
+  boss t 113 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 382,120, spread 0.83, stolen 0.0; nearest soldier 158.0, 1 alive
+  boss t 114 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 384,122, spread 0.78, stolen 0.0; nearest soldier 155.8, 1 alive
+  boss t 115 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 386,124, spread 0.76, stolen 0.0; nearest soldier 153.2, 1 alive
+  surge 2 starts at t 115.5 s (the slime has eaten 519 food)
+  boss t 116 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 388,124, spread 0.70, stolen 0.0; nearest soldier 151.6, 1 alive
+  boss t 117 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 388,124, spread 0.73, stolen 0.0; nearest soldier 151.6, 1 alive
+  boss t 118 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 388,124, spread 0.66, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 119 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 120 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.68, stolen 0.0; nearest soldier inf, 0 alive
+w2/planet-3-1-idle-120s-all.png
+w2/planet-3-1-idle-120s-near.png
+  engine crust t 120 s: 61433 cells over 0.05, 46735 over 0.3, 25804 over 0.95; walkers' cells on crust over 0.3 24280, under 0.05 385
+  crust t 120 s: 61843 cells over 0.05, 46826 over 0.3 (24337 of those under walkers now, 52%), 25525 over 0.95; walkers on 26680 cells
+  CPU: ground field 2.58 ms (once a game second), model and HUD 0.093 ms a frame
+  t 120 s: mould 26865, soldiers 0, bank 1923, harvested 0, rendered 0, shots 199, killed 1015, took 0%, crystals left 0.965
+  surge: the slime ate 543 food (4.5/s); meter 24.1 of 259, 2 surges
+  dense: 0 condensed or thick walkers, mass 26865 (readout 26865); 1698 breaking away
+  boss t 121 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.66, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 122 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 123 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.68, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 124 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 125 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.71, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 126 s: lump 0 wanderer Sit((393.5, 126.0), 1680), 326 members (first 326, 0 hurt), at 390,124, spread 0.68, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 127 s: lump 0 wanderer Go((324.0, 210.0)), 326 members (first 326, 0 hurt), at 390,126, spread 0.86, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 128 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 382,130, spread 0.89, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 129 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 376,134, spread 0.91, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 130 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 370,138, spread 0.97, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 131 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 364,142, spread 1.00, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 132 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 360,148, spread 1.04, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 133 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 356,152, spread 1.09, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 134 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 350,156, spread 1.06, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 135 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 346,162, spread 1.01, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 136 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 342,168, spread 0.99, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 137 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 338,176, spread 1.01, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 138 s: lump 0 wanderer Go((324.0, 210.0)), 611 members (first 326, 0 hurt), at 334,182, spread 0.99, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 139 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 332,190, spread 0.98, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 140 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 330,194, spread 0.84, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 141 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 328,198, spread 0.80, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 142 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 326,202, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 143 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,204, spread 0.67, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 144 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,206, spread 0.62, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 145 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,208, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 146 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,208, spread 0.60, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 147 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,208, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 148 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,208, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 149 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,210, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 150 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,210, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 151 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,210, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 152 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,210, spread 0.62, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 153 s: lump 0 wanderer Sit((324.0, 210.0), 2085), 611 members (first 326, 0 hurt), at 324,210, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 154 s: lump 0 wanderer Go((272.5, 275.5)), 611 members (first 326, 0 hurt), at 324,210, spread 0.73, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 155 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 320,218, spread 0.87, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 156 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 316,224, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 157 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 312,228, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 158 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 310,232, spread 0.89, stolen 0.0; nearest soldier inf, 0 alive
+  surge 3 starts at t 158.7 s (the slime has eaten 778 food)
+  boss t 159 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 306,236, spread 0.91, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 160 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 304,238, spread 0.94, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 161 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 300,242, spread 0.94, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 162 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 296,246, spread 0.94, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 163 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 294,250, spread 0.91, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 164 s: lump 0 wanderer Go((272.5, 275.5)), 1340 members (first 326, 0 hurt), at 290,254, spread 0.89, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 165 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 288,256, spread 0.87, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 166 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 286,258, spread 0.81, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 167 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 286,260, spread 0.77, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 168 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 284,260, spread 0.76, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 169 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 284,262, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 170 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 282,264, spread 0.72, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 171 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 282,264, spread 0.70, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 172 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 280,266, spread 0.68, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 173 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 280,266, spread 0.67, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 174 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 280,266, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 175 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 280,266, spread 0.66, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 176 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 278,268, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 177 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 278,268, spread 0.64, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 178 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 278,268, spread 0.63, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 179 s: lump 0 wanderer Sit((272.5, 275.5), 2475), 1340 members (first 326, 0 hurt), at 278,268, spread 0.63, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 180 s: lump 0 wanderer Go((360.5, 255.5)), 1340 members (first 326, 0 hurt), at 278,270, spread 0.60, stolen 0.0; nearest soldier inf, 0 alive
+w2/planet-3-1-idle-180s-all.png
+w2/planet-3-1-idle-180s-near.png
+  engine crust t 180 s: 65906 cells over 0.05, 51768 over 0.3, 25841 over 0.95; walkers' cells on crust over 0.3 28350, under 0.05 362
+  crust t 180 s: 66300 cells over 0.05, 51849 over 0.3 (28400 of those under walkers now, 55%), 25691 over 0.95; walkers on 30558 cells
+  CPU: ground field 9.25 ms (once a game second), model and HUD 0.138 ms a frame
+  t 180 s: mould 31807, soldiers 0, bank 1777, harvested 0, rendered 0, shots 199, killed 1015, took 0%, crystals left 0.940
+  surge: the slime ate 933 food (5.2/s); meter 155.1 of 259, 3 surges
+  dense: 0 condensed or thick walkers, mass 31807 (readout 31807); 1646 breaking away
+  boss t 181 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 282,266, spread 0.66, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 182 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 284,266, spread 0.69, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 183 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 288,264, spread 0.71, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 184 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 292,262, spread 0.75, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 185 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 294,262, spread 0.78, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 186 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 296,260, spread 0.82, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 187 s: lump 0 wanderer Go((360.5, 255.5)), 2359 members (first 326, 0 hurt), at 300,260, spread 0.87, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 188 s: lump 0 wanderer ended Spent (2359 members of 326; stole 0.0, 0.0 given back so far)
+  surge 4 starts at t 194.7 s (the slime has eaten 1038 food)
+  boss t 223.0 s: Crowd wanderer formed on lump 0 at 307,245 (crowd top 2.47); grade 0.47: 9 blows a member, touches as 3, pace x1.19
+  boss t 223 s: lump 0 wanderer Gather, 0 members (first 0, 0 hurt), at 307,245, spread 0.86, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 224 s: lump 0 wanderer Gather, 701 members (first 701, 0 hurt), at 308,248, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 225 s: lump 0 wanderer Gather, 701 members (first 701, 0 hurt), at 308,246, spread 0.72, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 226 s: lump 0 wanderer Gather, 701 members (first 701, 0 hurt), at 308,246, spread 0.72, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 227 s: lump 0 wanderer Gather, 701 members (first 701, 0 hurt), at 308,246, spread 0.75, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 228 s: lump 0 wanderer Gather, 701 members (first 701, 0 hurt), at 308,246, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 229 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 308,246, spread 0.73, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 230 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 312,246, spread 0.84, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 231 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 316,248, spread 0.80, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 232 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 320,248, spread 0.88, stolen 0.0; nearest soldier inf, 0 alive
+  surge 5 starts at t 232.3 s (the slime has eaten 1297 food)
+  boss t 233 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 324,248, spread 1.00, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 234 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 328,250, spread 1.07, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 235 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 332,252, spread 1.09, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 236 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 336,254, spread 1.09, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 237 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 340,256, spread 1.08, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 238 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 344,260, spread 1.10, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 239 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 348,264, spread 1.08, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 240 s: lump 0 wanderer Go((377.0, 291.5)), 701 members (first 701, 0 hurt), at 354,270, spread 0.96, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 241 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 360,274, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 242 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 362,276, spread 0.77, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 243 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 366,278, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 244 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 368,278, spread 0.72, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 245 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 370,280, spread 0.69, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 246 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 372,282, spread 0.67, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 247 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 372,282, spread 0.67, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 248 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 372,282, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 249 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,282, spread 0.63, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 250 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,282, spread 0.64, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 251 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,284, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 252 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,284, spread 0.62, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 253 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,284, spread 0.60, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 254 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,284, spread 0.60, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 255 s: lump 0 wanderer Sit((377.0, 291.5), 3615), 701 members (first 701, 0 hurt), at 374,284, spread 0.60, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 256 s: lump 0 wanderer Go((309.0, 232.5)), 701 members (first 701, 0 hurt), at 374,284, spread 0.72, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 257 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 370,276, spread 0.71, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 258 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 366,274, spread 0.73, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 259 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 362,272, spread 0.75, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 260 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 360,270, spread 0.79, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 261 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 356,266, spread 0.83, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 262 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 354,264, spread 0.84, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 263 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 352,262, spread 0.85, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 264 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 348,260, spread 0.86, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 265 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 346,258, spread 0.87, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 266 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 344,256, spread 0.88, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 267 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 340,254, spread 0.89, stolen 0.0; nearest soldier inf, 0 alive
+  surge 6 starts at t 267.1 s (the slime has eaten 1557 food)
+  boss t 268 s: lump 0 wanderer Go((309.0, 232.5)), 1782 members (first 701, 0 hurt), at 338,252, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 269 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 336,250, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 270 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 334,250, spread 0.86, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 271 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 334,248, spread 0.84, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 272 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 332,248, spread 0.82, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 273 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 332,246, spread 0.81, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 274 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 330,246, spread 0.80, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 275 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 328,244, spread 0.79, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 276 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 328,244, spread 0.79, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 277 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 326,244, spread 0.78, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 278 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 326,242, spread 0.78, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 279 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 326,242, spread 0.76, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 280 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 324,242, spread 0.75, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 281 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 324,240, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 282 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 322,240, spread 0.73, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 283 s: lump 0 wanderer Sit((309.0, 232.5), 4035), 1782 members (first 701, 0 hurt), at 322,240, spread 0.71, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 284 s: lump 0 wanderer Go((393.5, 126.0)), 1782 members (first 701, 0 hurt), at 322,240, spread 0.56, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 285 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 324,238, spread 0.61, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 286 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 324,236, spread 0.64, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 287 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 326,232, spread 0.65, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 288 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 326,230, spread 0.67, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 289 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 328,228, spread 0.69, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 290 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 328,226, spread 0.71, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 291 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 330,224, spread 0.73, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 292 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 330,222, spread 0.74, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 293 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 332,220, spread 0.76, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 294 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 334,216, spread 0.78, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 295 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 334,214, spread 0.80, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 296 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 336,212, spread 0.83, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 297 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 336,210, spread 0.84, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 298 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 338,208, spread 0.87, stolen 0.0; nearest soldier inf, 0 alive
+  boss t 299 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 340,206, spread 0.89, stolen 0.0; nearest soldier inf, 0 alive
+  surge 7 starts at t 299.6 s (the slime has eaten 1816 food)
+  boss t 300 s: lump 0 wanderer Go((393.5, 126.0)), 4083 members (first 701, 0 hurt), at 340,204, spread 0.90, stolen 0.0; nearest soldier inf, 0 alive
+w2/planet-3-1-idle-300s-all.png
+w2/planet-3-1-idle-300s-near.png
+  engine crust t 300 s: 71720 cells over 0.05, 53954 over 0.3, 37393 over 0.95; walkers' cells on crust over 0.3 39047, under 0.05 389
+  crust t 300 s: 71914 cells over 0.05, 52059 over 0.3 (39088 of those under walkers now, 75%), 37355 over 0.95; walkers on 41189 cells
+  CPU: ground field 2.69 ms (once a game second), model and HUD 0.097 ms a frame
+  t 300 s: mould 45595, soldiers 0, bank 1566, harvested 0, rendered 0, shots 199, killed 1015, took 0%, crystals left 0.882
+  surge: the slime ate 1819 food (6.1/s); meter 3.1 of 259, 7 surges
+  dense: 0 condensed or thick walkers, mass 45595 (readout 45595); 2354 breaking away
+exit 0

@@ -3030,6 +3030,51 @@ mod tests {
         assert!(lc > 1e-2, "the twin catches a crust that never rises");
     }
 
+    /// **The crust's pull and fast ground on the engine** (the plan's E1b,
+    /// 2026-11-17; the CPU's `crust_weight`, `crust_fast`): the crust twin's
+    /// dish warmed 40 ticks with a strike at 30, then four ticks on both.
+    /// The walkers as in the one-tick twin and the crust within 1e-6.
+    /// Planted: GPU sensors that ignore the crust, and a GPU step that
+    /// ignores it, must each fail it. Both are planted at the CPU's numbers
+    /// (weight 2, fast 1): a crust mostly full under the body turns enough
+    /// walkers at those.
+    #[test]
+    fn the_crust_pull_and_fast_ground_match_the_cpu() {
+        const TICKS: u32 = 4;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { crust_rise: 0.02, crust_keep: 0.995, crust_trail: 1.0, crust_weight: 2.0, crust_fast: 1.0, ..small(0) };
+        // (crust L1, walkers off)
+        let play = |g: &Settings| -> (f64, usize) {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            assert!(cpu.p.crust_weight == 2.0 && cpu.p.crust_fast == 1.0, "the dish has the crust's effects");
+            let k = cpu.p.scale as f32;
+            for t in 0..40 {
+                if t == 30 {
+                    let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+                    for &(wx, wy, _) in &cpu.walkers {
+                        (x, y, m) = (x + wx, y + wy, m + 1.0);
+                    }
+                    cpu.strike(x / m / k, y / m / k, 6.0, 0.0, 0.0);
+                }
+                cpu.tick();
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, g, &mut cpu, TICKS);
+            (l1(&e.crust_of(), &cpu.crust), off)
+        };
+        let n = s.walkers;
+        let (lc, off) = play(&s);
+        eprintln!("the crust's pull and fast ground: crust L1 {lc:.1e}, {off} of {n} walkers off after {TICKS} ticks");
+        assert!(lc <= 1e-6 && off * 1000 <= n, "crust L1 {lc:.1e}, {off} walkers off");
+        let (_, off) = play(&Settings { crust_weight: 0.0, ..s.clone() });
+        eprintln!("planted, the GPU's sensors blind to the crust: {off} walkers off");
+        assert!(off * 1000 > n, "the twin catches sensors that don't read the crust");
+        let (_, off) = play(&Settings { crust_fast: 0.0, ..s.clone() });
+        eprintln!("planted, the GPU's step blind to the crust: {off} walkers off");
+        assert!(off * 1000 > n, "the twin catches a step that doesn't read the crust");
+    }
+
     /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
     /// rounds thread, after Noita's mists): from the same state a cloud
     /// laid on both, then 40 ticks each with no re-inject. The cloud field

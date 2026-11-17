@@ -369,6 +369,12 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 if g.time() >= bt && !boomed.contains(&j) {
                     boomed.push(j);
                     let (k0, f0) = (app.rounds.killed, app.rounds.flung);
+                    if let Some(&(_, r)) = app.args.boom_fires.iter().find(|f| f.0 == j) {
+                        let b = slime_mould::mould::squad::Burst { at: (bx, by), r, burn: true, ..Default::default() };
+                        g.world.burst(&b, &slime_mould::mould::squad::BurstRules::default());
+                        println!("  fire t {:.2} s lit at {bx},{by} over {r}", g.time());
+                        continue;
+                    }
                     app.rounds.cast_at(g, (bx, by));
                     println!("  boom t {:.2} s at {bx},{by}: {} killed, {} flung", g.time(), app.rounds.killed - k0, app.rounds.flung - f0);
                 }
@@ -677,7 +683,17 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             let ec = app.game.as_ref().unwrap().world.e.crust_of();
             if !ec.is_empty() {
                 let eh = |lo: f32| ec.iter().filter(|&&v| v > lo).count();
-                println!("  engine crust t {t:.0} s: {} cells over 0.05, {} over 0.3, {} over 0.95", eh(0.05), eh(0.3), eh(0.95));
+                // Where the walkers stand now: on old ground (crust over
+                // 0.3) or new (under 0.05), the E1b films' measure.
+                let on = |f: &dyn Fn(f32) -> bool| ec.iter().zip(&crust_walk).filter(|(v, n)| f(**v) && **n > 0).count();
+                println!("  engine crust t {t:.0} s: {} cells over 0.05, {} over 0.3, {} over 0.95; walkers' cells on crust over 0.3 {}, under 0.05 {}", eh(0.05), eh(0.3), eh(0.95), on(&|v| v > 0.3), on(&|v| v < 0.05));
+                // Fire and char (C2's films): cells burning, and char over
+                // 0.3 (barren at `char_barren=0.3`).
+                let e = &app.game.as_ref().unwrap().world.e;
+                if e.plants {
+                    let (_, _, fire, ch) = e.plants_of();
+                    println!("  fire t {t:.0} s: {} cells burning, {} char over 0.3", fire.iter().filter(|&&v| v > 0.0).count(), ch.iter().filter(|&&v| v >= 0.3).count());
+                }
             }
             println!("  crust t {t:.0} s: {c05} cells over 0.05, {c30} over 0.3 ({under} of those under walkers now, {:.0}%), {c95} over 0.95; walkers on {} cells", 100.0 * under as f32 / c30.max(1) as f32, crust_walk.iter().filter(|&&n| n > 0).count());
         }
