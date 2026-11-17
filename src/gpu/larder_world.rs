@@ -641,7 +641,7 @@ impl GpuWorld {
         // A Mind status last, as on the CPU (2026-11-16).
         if b.mind > 0 {
             self.s.spin_curl = k.spin_curl;
-            self.e.mind_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.mind as u32, k.mind_steps);
+            self.e.mind_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.mind as u32, k.mind_steps_for(b.mind as u32));
         }
     }
 }

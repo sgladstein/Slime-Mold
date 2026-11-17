@@ -390,7 +390,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 66] = [
+const LOADOUTS: [(&str, &str); 69] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -479,6 +479,11 @@ const LOADOUTS: [(&str, &str); 66] = [
     ("sour", "sour"),
     ("spin", "spin"),
     ("multi-blind", "multicast+plain+blind"),
+    // Provoke and Still (2026-11-17): the devices' statuses as cards; a
+    // provoked part charges the squad into its own plain fire.
+    ("provoke", "provoke"),
+    ("still", "still"),
+    ("provoke-plain", "provoke+plain"),
     // The readers (2026-11-16, step D): each kills only what another card
     // set up, so alone it kills nothing; in turn with its setter, the
     // setter's sleepers or sick die at the next hit.

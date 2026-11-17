@@ -1,0 +1,29 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  surge 1 starts at t 33.6 s (the slime has eaten 103 food)
+  load t 50.00 s: 16 squads load provoke-plain (asked for 50 s)
+  rounds t   50 s: 0 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 0 batches of 0 bursts, 0 seeker turns, 74 soldier hits in 72 cells, 8 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 0 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-50033ms-all.png
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-50033ms-near.png
+  CPU: ground field 2.10 ms (once a game second), model and HUD 0.141 ms a frame
+  t 50 s: mould 14690, soldiers 8, bank 398, harvested 0, rendered 0, shots 82, killed 107, took 0%, crystals left 0.992; squad at 341.0,70.4
+  surge: the slime ate 186 food (3.7/s); meter 82.8 of 103, 1 surges
+  dense: 0 condensed or thick walkers, mass 14690 (readout 14694); 1519 breaking away
+  squad: touching 0.0 mean, 0 most; health 97 mean
+  surge 2 starts at t 54.0 s (the slime has eaten 206 food)
+  raid 1 at t 59.0 s: Soldiers(0) at 346,67, reach 78 cells holding 2151 walkers, share 0.60, size 9% of the slime
+  rounds t   60 s: 18 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 17 batches of 18 bursts, 0 seeker turns, 109 soldier hits in 107 cells, 12 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 18 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-060s-all.png
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-060s-near.png
+  CPU: ground field 2.04 ms (once a game second), model and HUD 0.101 ms a frame
+  t 60 s: mould 15192, soldiers 8, bank 397, harvested 0, rendered 0, shots 121, killed 182, took 0%, crystals left 0.989; squad at 341.0,70.4
+  surge: the slime ate 236 food (3.9/s); meter 30.6 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 15192 (readout 15192); 1282 breaking away
+  squad: touching 0.0 mean, 0 most; health 94 mean
+  rounds t   70 s: 55 casts (blast, gas, germ, bomb [0, 0, 0, 0]), 0 walkers killed, 0 flung, 0 not on this world, 0 lodged, 0 trail bursts, 0 carried casts let out, 0 walkers gassed, 0 shoves, 0 killed by turrets, 0 casts beside another, 49 batches of 55 bursts, 0 seeker turns, 181 soldier hits in 179 cells, 13 ran out of range and 0 hit a wall with no slime struck, 0 pulls too near to pull, 55 Mind casts, 0 reader casts, 0 flares, 0 torches, 0 walkers killed by fire
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-070s-all.png
+/tmp/claude-0/-home-user/36509183-356d-59d9-9d42-55b7ab998d42/scratchpad/pw/p1-50-provoke/planet-1-1-squadwork-070s-near.png
+  CPU: ground field 1.55 ms (once a game second), model and HUD 0.063 ms a frame
+  t 70 s: mould 15482, soldiers 8, bank 372, harvested 0, rendered 0, shots 194, killed 659, took 0%, crystals left 0.987; squad at 341.0,70.4
+  surge: the slime ate 288 food (4.1/s); meter 81.7 of 103, 2 surges
+  dense: 0 condensed or thick walkers, mass 15482 (readout 15482); 1366 breaking away
+  squad: touching 1.0 mean, 4 most; health 68 mean
