@@ -140,7 +140,7 @@ over walls, but regular guns shots do not?" Built as asked:
   word, which the `walls` pass clears on the break, so both engines skip
   the same cells. `set=turret_over=0` (`BuildRules::turret_over`, default
   on) is the old rule, for films.
-- **Soldiers' guns** are unchanged: every shell stops at walls and doors.
+- **Soldiers' guns** are unchanged: every shell stops at walls and doors. Owner, 2026-11-17 03:08Z, asked whether bullets should pass door grates: "No".
 - **Lobbed fire**: thrown tools already land anywhere in reach and on open
   ground, line or no line (`Kit::use_tool`); now tested
   (`a_thrown_tool_goes_over_a_wall`). Gun shells (bomb, gas, germ) fly as
