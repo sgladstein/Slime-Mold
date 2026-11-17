@@ -49,6 +49,24 @@ b.k { color:var(--accent) }
 <figcaption>Seed 1, 20 s (the first build, feet only).</figcaption>
 </figure>
 
+<h2>Block or trap? (the game designer's A/B)</h2>
+<p>Blocking shelters a reckless rush, against the ruling that walking into thick slime is very deadly. The other way: set slime <b>holds</b> instead (<code>set=set_hold=0.05</code>). It stays walkable and the maps lead through it, but a soldier in it walks at a twentieth of its speed while the slime keeps biting. The same rush, both ways:</p>
+<figure>
+<img src="block-trap-seed1-20s.jpg" alt="Seed 1 at 20 seconds: the rush blocked at the rim against the rush trapped in set slime">
+<div class="labels"><span>Blocked: five held in a line at the rim</span><span>Trapped: one left, the rest eaten in it</span></div>
+<figcaption>Seed 1, 20 s.</figcaption>
+</figure>
+<div class="wrap"><table>
+<tr><th>Seed</th><th>Set slime</th><th>Wiped at</th><th>Killed</th></tr>
+<tr><td>1</td><td>off</td><td>19 s</td><td>806</td></tr>
+<tr><td>1</td><td>blocks</td><td>28 s</td><td>1,365</td></tr>
+<tr><td>1</td><td>traps</td><td><b class="k">20 s</b></td><td>840</td></tr>
+<tr><td>4</td><td>off</td><td>30 s</td><td>670</td></tr>
+<tr><td>4</td><td>blocks</td><td>39 s</td><td>776</td></tr>
+<tr><td>4</td><td>traps</td><td><b class="k">30 s</b></td><td>750</td></tr>
+</table></div>
+<p>Trapping keeps a rush as deadly as it is without setting. Blocking buys it about 9 s. Which one plays better is your call (the card in the thread).</p>
+
 <h2>Why the maps had to know</h2>
 <p>A point check alone (feet only, what the map-cache owner first advised) let a soldier ordered past a band of set slime walk its map into the band and stand there. A test now orders a soldier past a 3 x 21-cell band: with the maps routing round, it gets past in 3.1 s; with them blind, it never does in 30 s.</p>
 

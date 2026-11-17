@@ -74,6 +74,28 @@ body (shelter for the player) or sends it round. Whether the shelter is
 wanted is a playtest question; the plan's intent was ground denied (a nest
 door, a crystal ring), which the next films should show.
 
+**Block or trap** (the game designer's review of #413, 11-17: blocking
+shelters a reckless rush, against the owner's ruling that walking into
+thick slime is very deadly; set slime should hold soldiers, not stop them).
+`set=set_hold=F` (over 0): bulwark cells stay ground and in the walking
+maps, and a soldier in one walks at F of its speed (`Game::wade`) while the
+slime keeps biting. The same rush at `set_hold=0.05`:
+
+| Seed | Set slime | Wiped at | Killed |
+|---|---|---|---|
+| 1 | off | 19 s | 806 |
+| 1 | blocks | 28 s | 1,365 |
+| 1 | traps | 20 s | 840 |
+| 4 | off | 30 s | 670 |
+| 4 | blocks | 39 s | 776 |
+| 4 | traps | 30 s | 750 |
+
+Trapping keeps a rush as deadly as without setting (seed 1 at 20 s: one
+soldier left in it, against five held in a line at the rim when blocked).
+The owner picks (card in the thread); both stay behind their keys until
+then. Test: `set_slime_that_holds_slows_a_soldier_in_it` (still ground,
+the maps unchanged, a twentieth of the speed).
+
 **A squad that stands** (`hand=stand`, four rifles): the bulwark formed
 (209 cells on seed 1 at 45 s, 927-1,080 on seed 4) but a squad that doesn't
 walk never meets it. Seed 1 played exactly as without; seed 4 nearly so
