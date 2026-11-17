@@ -4,8 +4,8 @@ kind: design
 status: open
 updated: 2026-11-17
 sources:
-  - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-element-2026-11-17/README.md
+  - Reports/gun-mind-2026-11-16/README.md
   - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
