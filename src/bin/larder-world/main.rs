@@ -302,6 +302,9 @@ commands! {
     // The build page's door (walls thread, owner 2026-11-16 14:24Z): a
     // two-click line, as WALL.
     DOOR = 36,
+    // The build page's mortar (the turrets thread, owner 2026-11-17
+    // 00:47Z: the first turret body from the run shop's tree).
+    MORTAR = 37,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool
@@ -323,6 +326,7 @@ fn kit_between(kit: &mut Kit, g: &mut Game<GpuWorld>, selected: &[usize]) {
 fn build_kind(id: u32) -> Option<Kind> {
     match id {
         TURRET => Some(Kind::Turret),
+        MORTAR => Some(Kind::Mortar),
         LURE => Some(Kind::Lure),
         PUMP => Some(Kind::Pump),
         OUTPOST => Some(Kind::Outpost),
@@ -346,6 +350,9 @@ fn sprite_kind(k: Kind) -> Option<u32> {
         // Its own sprite (#161): the horns, and the lens and sound arcs lit
         // as it calls.
         Kind::Siren => Some(4),
+        // The turret's base under a mortar's tube, drawn in the view's
+        // shader (5 is the larder's, 6 a pump's rig).
+        Kind::Mortar => Some(7),
         // Drawn as a line, not a sprite.
         Kind::Wall { .. } => None,
     }
@@ -2141,7 +2148,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             // `turret2=X,Y` (11-15, the kill box films): a turret that
             // renders (level 2) from the start.
-            "turret" | "turret2" | "lure" | "pump" | "outpost" | "siren" => {
+            // `mortar=X,Y[,T]` (2026-11-17, the mortar films): a mortar so.
+            "turret" | "turret2" | "mortar" | "lure" | "pump" | "outpost" | "siren" => {
                 // `turret=X,Y` (11-14, the turret films; the other kinds for
                 // the building looks): one standing whole at (X, Y) from the
                 // start, world units as `centre=` (paid for, not raised);
@@ -2154,7 +2162,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     [x, y, t] => (*x, *y, *t),
                     _ => return Err(format!("{k}=X,Y[,T]").into()),
                 };
-                let kind = match k { "turret" | "turret2" => Kind::Turret, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
+                let kind = match k { "turret" | "turret2" => Kind::Turret, "mortar" => Kind::Mortar, "lure" => Kind::Lure, "pump" => Kind::Pump, "outpost" => Kind::Outpost, _ => Kind::Siren };
                 turrets.push((kind, (x, y), t));
                 if k == "turret2" {
                     renders.push(turrets.len() - 1);

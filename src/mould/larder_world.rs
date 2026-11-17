@@ -78,7 +78,7 @@ pub use cover::{Cover, CoverRules, HealRules};
 pub use doors::WALL_LEVELS;
 pub use raids::{Raid, RaidAim, RaidRules, Raids};
 pub use bosses::{parts, Boss, BossCause, BossEnd, BossKind, BossPhase, BossRules, Bosses, Part, PART_BIN};
-pub use buildings::{BuildRules, Building, Kind, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
+pub use buildings::{BuildRules, Building, Kind, Shell, PUMP_LEVELS, TURRET_DECK, TURRET_LEVELS, TURRET_MUZZLE};
 use buildings::{wall_at, Who};
 
 use super::big::{BigDish, BigParams, LIFE_DEAD, SURGE_WAIT};
@@ -407,6 +407,14 @@ pub struct Game<W: World> {
     /// `squad::SHOTS_MAX`, and a shot fired past that is dropped (the
     /// newest go: the old ones are about to land).
     pub bullets: Vec<Bullet>,
+    /// Mortar shells in the air (`buildings::Shell`), oldest first.
+    pub shells: Vec<Shell>,
+    /// Shells fired, and those that have come down.
+    pub shells_fired: u32,
+    pub shells_landed: u32,
+    /// Walkers mortar shells' strikes killed (in `turret_killed` too; a
+    /// shell's cast's kills go only there, as a turret's do).
+    pub mortar_killed: u32,
     /// The bullets as they flew the last step's legs, one each in the order
     /// of `last_shots` (empty while shots are rays): what the window draws
     /// gliding along each leg between steps (gun look, 2026-11-15). No
@@ -602,6 +610,10 @@ impl<W: World> Game<W> {
             last_shots: Vec::new(),
             last_takes: Vec::new(),
             bullets: Vec::new(),
+            shells: Vec::new(),
+            shells_fired: 0,
+            shells_landed: 0,
+            mortar_killed: 0,
             flown: Vec::new(),
             bullet_mods: BulletMods::default(),
             turret_deck: None,

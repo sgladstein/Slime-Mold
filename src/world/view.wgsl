@@ -3442,13 +3442,37 @@ fn turret_frame(q: vec2<f32>, ca: f32, sa: f32, recoil: f32) -> vec2<f32> {
     return vec2<f32>(q.x * ca + q.y * sa + recoil, -q.x * sa + q.y * ca);
 }
 
+// A mortar's tube (kind 7, the turrets thread 2026-11-17) at `h`, the
+// head's frame (+x its facing, radii): a dark cradle, a short wide steel
+// tube with its round mouth at the far end, the bore dark inside it, so
+// from above it reads as a barrel tipped up at the sky. As shapes, crisp
+// at any zoom. `recoil` slides the tube back into its cradle.
+fn mortar_head(h: vec2<f32>, recoil: f32) -> vec4<f32> {
+    let aa = 0.05;
+    let cc = cover(length(h) - 0.44, aa);
+    var out = vec4<f32>(STEEL_DARK * cc, cc);
+    let c = vec2<f32>(0.22 - recoil, 0.0);
+    let bx = abs(h - c) - vec2<f32>(0.46, 0.22);
+    let dt = length(max(bx, vec2<f32>(0.0))) + min(max(bx.x, bx.y), 0.0) - 0.06;
+    let ct = cover(dt, aa);
+    let round = mix(STEEL, STEEL_DARK, clamp(abs(h.y) / 0.3, 0.0, 1.0) * 0.7);
+    out = pm_over(out, vec4<f32>(round * ct, ct));
+    let dm = length(h - vec2<f32>(0.66 - recoil, 0.0));
+    let ring = cover(dm - 0.27, aa);
+    out = pm_over(out, vec4<f32>(STEEL * 1.08 * ring, ring));
+    let bore = cover(dm - 0.17, aa);
+    out = pm_over(out, vec4<f32>(vec3<f32>(14.0, 13.0, 12.0) * bore, bore));
+    return out;
+}
+
 // The building's own texels at `q` (radii): its tile, and a turret's head
-// over its base.
-fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool) -> vec4<f32> {
+// over its base (a mortar's tube over the turret's base).
+fn building_body(k: u32, q: vec2<f32>, small: bool, turret: bool, ca: f32, sa: f32, recoil: f32, dry: bool, mortar: bool) -> vec4<f32> {
     // A pump (tile 8) turns whole, its hose into its crystal (11-14).
     var body = sprite(k, select(q, turret_frame(q, ca, sa, 0.0), k == 8u), small);
     if (turret) {
         var head = sprite(16u, turret_frame(q, ca, sa, recoil), small);
+        if (mortar) { head = mortar_head(turret_frame(q, ca, sa, 0.0), recoil); }
         if (dry) {
             let g = dot(head.xyz, vec3<f32>(0.3, 0.59, 0.11));
             head = vec4<f32>(mix(head.xyz, vec3<f32>(g), 0.75) * 0.8, head.w);
@@ -3578,12 +3602,13 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     let l = normalize(LIGHT);
     let p = d / r;
     let small = r < 12.0;
-    let k = 4u + 2u * min(kind, 5u);
-    let turret = kind == 0u;
+    let mortar = kind == 7u;
+    let k = select(4u + 2u * min(kind, 5u), 4u, mortar);
+    let turret = kind == 0u || mortar;
     let ca = cos(facing); let sa = sin(facing);
     let recoil = select(0.0, pulse * 0.22, turret);
     let dry = turret && state == 2u && built >= 1.0;
-    var body = building_body(k, p, small, turret, ca, sa, recoil, dry);
+    var body = building_body(k, p, small, turret, ca, sa, recoil, dry, mortar);
     // The silhouette's edge, OUTLINE pixels out (eight taps): a dark
     // outline round a standing building, as round a soldier, so it parts
     // from the slime (art review 2026-11-14), and the cream line of a
@@ -3592,7 +3617,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
     var grown = 0.0;
     for (var i = 0u; i < 8u; i++) {
         let a = f32(i) * 0.785398;
-        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false).w);
+        grown = max(grown, building_body(k, p + vec2<f32>(cos(a), sin(a)) * o, small, turret, ca, sa, recoil, false, mortar).w);
     }
     let edge = clamp(grown - body.w, 0.0, 1.0);
     // Built from the foot (screen down) up (owner's playtest 2026-11-12:
@@ -3630,7 +3655,7 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
         // The rim: inside the silhouette, where a pixel toward the light
         // is outside it (the soldier's, #227).
         let lp = vec2<f32>(l.x, l.y) / r * 1.2;
-        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false).w, 0.0, 1.0) * 0.6;
+        let rim = clamp(body.w - building_body(k, p + lp, small, turret, ca, sa, recoil, false, mortar).w, 0.0, 1.0) * 0.6;
         out = vec4<f32>(mix(out.xyz, RIM * out.w, rim), out.w);
     }
     if (built < 1.0) {
@@ -3649,8 +3674,14 @@ fn building(d: vec2<f32>, r: f32, kind: u32, built: f32, health: f32, working: b
                 let g = exp(-dl * dl / 0.02) * 0.5;
                 out = vec4<f32>(out.xyz + lc * g * out.w, out.w);
             }
-            if (pulse > 0.0) {
+            if (pulse > 0.0 && !mortar) {
                 out = pm_over(out, sprite(k + 1u, ph, small) * clamp(pulse * 1.5, 0.0, 1.0));
+            }
+            if (pulse > 0.0 && mortar) {
+                // A shell leaving: the bore flares, then smokes.
+                let dm = length(turret_frame(p, ca, sa, 0.0) - vec2<f32>(0.66 - recoil, 0.0));
+                let g = pulse * exp(-dm * dm / 0.03);
+                out = vec4<f32>(out.xyz + vec3<f32>(255.0, 214.0, 150.0) * g * out.w, out.w);
             }
         }
     } else {

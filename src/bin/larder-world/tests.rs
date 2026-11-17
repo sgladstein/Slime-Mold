@@ -10,7 +10,7 @@ fn command_ids_are_one_registry() {
     // Every building the build page places has exactly one command (the
     // wall is drawn with WALL, a two-click line, not a build_kind).
     use Kind as K;
-    let placed = [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren];
+    let placed = [K::Turret, K::Lure, K::Pump, K::Outpost, K::Siren, K::Mortar];
     for kind in placed {
         let ids: Vec<&str> = COMMANDS.iter().filter(|&&(_, id)| build_kind(id) == Some(kind)).map(|&(n, _)| n).collect();
         assert_eq!(ids.len(), 1, "{} has commands {ids:?}", kind.name());
@@ -18,7 +18,11 @@ fn command_ids_are_one_registry() {
     // ... and exactly one sprite, the sprites running 0, 1, 2, ... (#161).
     let mut sprites: Vec<u32> = placed.iter().map(|&k| sprite_kind(k).unwrap_or_else(|| panic!("{} has no sprite", k.name()))).collect();
     sprites.sort();
-    assert_eq!(sprites, (0..placed.len() as u32).collect::<Vec<_>>(), "building sprite kinds clash or skip");
+    // 5 is the larder's (`LARDER_SPRITE`) and 6 a pump's rig, the mortar 7.
+    let mut want: Vec<u32> = (0..placed.len() as u32 - 1).collect();
+    want.push(7);
+    assert_eq!(sprites, want, "building sprite kinds clash or skip");
+    assert_eq!(LARDER_SPRITE, 5);
 }
 
 use super::*;
@@ -132,8 +136,8 @@ fn the_window_plays_the_real_game() {
     // 11-16) and Back below. (Cancel a build left it: click the building.)
     app.build_page = true;
     let m = app.model(None, None);
-    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Wall", "Door", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
-    assert!(!m.commands[6].ready, "no lures to switch");
+    assert_eq!(m.commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["Turret", "Pump", "Mortar", "Wall", "Door", "Lure", "Siren", "Lures, sirens on/off", "Outpost", "Back"]);
+    assert!(!m.commands[7].ready, "no lures to switch");
 }
 
 /// **The tools page works in the window** (2026-11-12): soldiers take

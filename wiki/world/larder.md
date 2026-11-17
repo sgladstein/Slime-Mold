@@ -341,6 +341,15 @@ Pull drags slime toward the turret (step 2a). In a run the turrets' cards
 come out of the squad's bag: the shop's **Edit the turrets' cards** button
 switches the gun slots to a turret rack of 2 slots and budget 4 (more with
 Turret power), and a card there is one the squad doesn't fire (step 2b).
+The first turret body is the **mortar** (owner's card, 2026-11-17 00:47Z,
+"Mortar anyway"), unlocked in the run shop after Turrets: a building that
+lobs a shell every 4 s at the thickest slime it sees within 80 dish cells,
+the longest reach in the game, over walls. The shell is in the air for
+0.6 s plus its distance over 35 cells a second (`Game::shells`, drawn on
+its arc over its shadow) and comes down as a strike 3 cells wide carrying
+the turrets' deck's next cast; it can't hit slime within 8 cells of
+itself. On the Fork, 60 cells behind the squad, its 5 shells in 20 s
+killed 390 walkers ([report](../../Reports/turret-growth-2026-11-16/README.md)).
 For films (11-15, the whole-game review's W44), `larder-world
 set=NAME=V` sets one `Rules` number by name (`Rules::set`: pump_smell,
 lure_smell, lure_r, smell, smell_r, hoard, panic_margin, range, drain,
