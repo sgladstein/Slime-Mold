@@ -1030,6 +1030,14 @@ impl World for GpuWorld {
         }
     }
 
+    /// Read back once a game second while a rule wants it (`Game::mark_bulwark`).
+    fn set_cells(&self) -> Option<Vec<u32>> {
+        self.e.setting.then(|| {
+            self.flush();
+            self.e.set_cells_of()
+        })
+    }
+
     /// The walkers, trail and energy read back, hashed (a replay's check;
     /// it waits for the GPU, so the game calls it only at the end).
     fn hash(&self) -> u64 {
@@ -1221,6 +1229,9 @@ mod tests {
         }
         fn hash(&self) -> u64 {
             self.g.hash()
+        }
+        fn set_cells(&self) -> Option<Vec<u32>> {
+            self.g.set_cells()
         }
         fn mould_grid(&self, bin: usize) -> Option<Vec<u32>> {
             self.g.mould_grid(bin)

@@ -719,7 +719,8 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     under.sort_by(f32::total_cmp);
                     let q = |f: f32| under.get(((under.len() as f32 - 1.0) * f) as usize).copied().unwrap_or(0.0);
                     let set = gw.e.set_of().iter().filter(|&&w| w > 0).count();
-                    println!("  scar t {t:.0} s: under walkers p50 {:.3}, p90 {:.3}, p99 {:.3}, max {:.3}; {set} walkers set", q(0.5), q(0.9), q(0.99), q(1.0));
+                    let bw = app.game.as_ref().unwrap().bulwark.iter().filter(|&&b| b).count();
+                    println!("  scar t {t:.0} s: under walkers p50 {:.3}, p90 {:.3}, p99 {:.3}, max {:.3}; {set} walkers set, bulwark {bw} cells", q(0.5), q(0.9), q(0.99), q(1.0));
                 }
                 // Fire and char (C2's films): cells burning, and char over
                 // 0.3 (barren at `char_barren=0.3`).

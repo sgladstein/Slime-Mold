@@ -33,6 +33,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   as the scar fades), behind `setting=1`; films and page in `page-e2a/`
   (https://claude.ai/artifact/Vx8Qz8v3VAqvZaUL95FMK2), raw lines in
   `e2a-raw/`.
+- [e2b-bulwark.md](e2b-bulwark.md): E2b's first part built, set slime is no
+  ground to soldiers' feet and their walking maps route round it, behind
+  `set=set_block=N`; films and page in `page-e2b/`
+  (https://claude.ai/artifact/AKuE9RVmPtcNqsK1nW93Dx), raw lines in
+  `e2b-raw/`.
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
