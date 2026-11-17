@@ -4,7 +4,6 @@ kind: method
 status: current
 updated: 2026-11-17
 sources:
-  - Reports/sim-use-2026-11-17/README.md
   - CLAUDE.md
   - HANDOFF.md
   - Reports/bug-check-2026-11-15/README.md
@@ -35,6 +34,7 @@ sources:
   - Reports/rts-design-2026-11-10.md
   - Reports/shop-b-2026-11-15/README.md
   - Reports/shot-damage-2026-11-12.md
+  - Reports/sim-use-2026-11-17/README.md
   - Reports/soldier-cap-2026-11-16/README.md
   - Reports/ui-review-2026-11-15/README.md
   - Reports/ui-scale-2026-11-15/README.md
