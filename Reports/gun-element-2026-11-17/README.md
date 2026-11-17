@@ -45,8 +45,9 @@ walls and crystals, so a runtime Douse needs view plumbing first).
 
 ## Heat in the sensors (a flag, off)
 
-`BigParams::fire_weight` (key `fire_weight=`, 0 off; GPU Params row
-`FIRE_AT` 1232, Params 1232 to 1248 bytes): a sensor adds `fire_weight` x
+`BigParams::fire_weight` (key `fire_weight=`, 0 off; on the GPU Params
+word 860, the one body row's last, freed by `fed_full` 11-17, so Params
+keeps its 1232 bytes): a sensor adds `fire_weight` x
 the fire's heat at its cell, after the crust, on both engines. It reads
 ground the player lights, not the soldiers, so it is not the flee from
 gunfire ([dead ends](../dead-ends.md), whose entry now says so). Frame
@@ -76,7 +77,13 @@ One scene, one seed: the weight changes what the slime does at a fire (it
 outlines it instead of crossing it, and the fire lives longer), but it did
 not keep the slime away; here it held the slime by the fire. It stays a
 flag, off, for the designer to call; a herding test would put food beyond
-a fire line and count who crosses.
+a fire line and count who crosses. The designer (10:14Z): "Keep
+fire_weight off for now ... Build Tinder next, then run that test on one
+seed: food beyond a lit Tinder line, counting walkers that cross in 30 s,
+weight 0 against -5. If the weight cuts crossings clearly and the body
+flows around the line, turn it on ... If it only holds the slime in the
+flames, leave it off and note it. Leave the Torch's cost alone until the
+balance pass."
 
 ## Tests
 

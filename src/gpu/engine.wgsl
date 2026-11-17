@@ -136,8 +136,10 @@ struct Params {
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
     // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
-    // word is free (`fed_full`'s until 11-17).
-    eflow: f32, hscent: f32, hat: f32, body_free: f32,
+    // word is the fire's weight in the sensors (`fire_weight`, the gun
+    // cards' element family, 2026-11-17; 0 off, and 0 without plants), in
+    // the word `fed_full` held until 11-17.
+    eflow: f32, hscent: f32, hat: f32, fire_w: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -225,10 +227,6 @@ struct Params {
     // crust sets at (0 off, and 0 without the crust or the scar), the scar
     // it wakes under, the crust it needs, and its armour in blows.
     set_scar: f32, set_wake: f32, set_crust: f32, set_armour: u32,
-    // The heat row (`FIRE_AT`, the gun cards' element family, 2026-11-17):
-    // the fire's weight in the sensors (0 off, and 0 without plants) and
-    // three spare words.
-    fire_w: f32, _fw0: u32, _fw1: u32, _fw2: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the

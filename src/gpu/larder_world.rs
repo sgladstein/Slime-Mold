@@ -619,8 +619,11 @@ impl GpuWorld {
             if self.s.sick == 0 {
                 assert!(k.sick_steps > 0, "the germ needs sick_steps");
                 // The dish's timed seeding is off from the start
-                // (`GpuWorld::of`).
-                debug_assert!(self.e.seeded);
+                // (`GpuWorld::of`). A plain assert, not a debug one (the
+                // technical lead's review of #423): CI and every census
+                // run in release. One check a burst, as #94's Params
+                // lengths.
+                assert!(self.e.seeded, "the GPU dish's timed seeding is on in a Larder world: the first germ would infect the map's middle too");
                 self.s.sick = k.sick_steps as u32;
                 self.s.immune = k.immune_steps as u32;
                 self.s.sick_upkeep = k.sick_upkeep;
