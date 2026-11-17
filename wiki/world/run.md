@@ -134,7 +134,7 @@ Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
 its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
 reads the scar where it was hit at twice the campaign tier's weight
-(`scar_weight` 1, a first number, not yet filmed). Run seed 1 at 2:00, each ends or wears the
+(`scar_weight` 1, a first number; one film, seed 1 with four soldiers standing: gone at 0:40 against 0:48 with it off, a small effect). Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
