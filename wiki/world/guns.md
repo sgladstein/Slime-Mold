@@ -199,7 +199,10 @@ the barrens and the fen. Sold from planet 2 on the
 Special bullets tab. Heat in the sensors (`fire_weight`, the designer's
 herding idea) is a flag, off: in its one A/B film the slime ringed the fire
 instead of crossing it, but more of it burned
-([element](../../Reports/gun-element-2026-11-17/README.md)).
+([element](../../Reports/gun-element-2026-11-17/README.md)). The game
+designer (11-17 10:14Z) keeps it off until a crossing test after Tinder:
+food beyond a lit Tinder line, walkers that cross in 30 s, weight 0
+against -5; on if it cuts crossings and the body flows round the line.
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are

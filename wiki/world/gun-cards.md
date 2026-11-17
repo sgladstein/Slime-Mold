@@ -111,6 +111,8 @@ with the owner).
   (designer, 08:22Z: "detonate late, once the wave has spread"), closed:
   the red on screen follows the sick count, r = 0.91, 1-2 s behind at the
   end ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
+- The Torch's cost stays 2 until the balance pass (the game designer,
+  11-17 10:14Z), though on meadows it matches or passes the blast.
 - The Torch's own planet, the Sporer's jungle (5), has no window: in the
   planet 4 and 5 scenes the squads had not met the slime by 50 s
   ([element](../../Reports/gun-element-2026-11-17/README.md)).

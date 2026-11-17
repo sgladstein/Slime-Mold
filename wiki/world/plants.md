@@ -67,7 +67,9 @@ Walkers do not sense fire. A flag puts heat in their sensors
 (`fire_weight`, under 0 they turn from it; 0 off, both engines): in its one
 A/B film the slime ringed a fire instead of walking into it, and more of
 it burned, since its damp trail no longer put the fire out
-([element](../../Reports/gun-element-2026-11-17/README.md)).
+([element](../../Reports/gun-element-2026-11-17/README.md)). It stays off
+until the game designer's crossing test after Tinder (a fire line with
+food beyond it).
 
 ## Look
 
