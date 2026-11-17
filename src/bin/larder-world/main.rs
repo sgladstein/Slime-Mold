@@ -909,10 +909,12 @@ struct App {
     seen: u64,
     report_at: Instant,
     saved: bool,
-    /// The play log (`mould::playlog`, whole-game review W13, 11-15):
-    /// `larder-world-log-MAP-SEED.txt` beside the replay, a line a game
-    /// second, in the window only (not the headless films). The path, the
-    /// writer, the last second written, and whether the end is written.
+    /// The play log (`mould::playlog`, whole-game review W13, 11-15): a
+    /// file a round in `play-logs/` beside the game, a line a game second,
+    /// in the window only (not the headless films) and not for the dish
+    /// behind the start menu. The path, the writer, the last second
+    /// written, whether the end is written, and the notes dropped (F9).
+    log_notes: u32,
     log_path: Option<String>,
     playlog: slime_mould::mould::playlog::Playlog,
     log_sec: u64,
@@ -1058,6 +1060,7 @@ impl App {
             playlog: Default::default(),
             log_sec: 0,
             log_ended: false,
+            log_notes: 0,
             build_page: false,
             kit: Kit::new(KitRules::default()),
             rounds: Rounds::new(Vec::new(), RoundRules::default()),
@@ -1472,14 +1475,18 @@ impl App {
         self.playlog = Default::default();
         self.log_sec = 0;
         self.log_ended = false;
-        if self.window.is_none() {
+        self.log_notes = 0;
+        // The dish behind the start menu is not play: no log of it (until
+        // 11-17 it wrote one, which the round picked from the menu then
+        // wrote over; with a file a round it would fill the folder).
+        if self.window.is_none() || self.menu.is_some() {
             return;
         }
-        let path = format!("larder-world-log-{}-{}.txt", file_part(&self.name), self.args.seed);
-        if self.menu.is_none() {
-            self.memory.played();
-        }
-        let mut extra = vec![("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
+        use slime_mould::mould::playlog;
+        let when = playlog::stamp(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs()));
+        let path = format!("{}/{}", playlog::DIR, playlog::file_name(&when, &self.name, self.args.seed));
+        self.memory.played();
+        let mut extra = vec![("when", when), ("build", slime_mould::build::build().word()), ("mode", if self.args.squads { "squads" } else { "rts" }.to_string())];
         if let Some(tr) = &self.mission {
             extra.push(("mission", tr.mission.name.clone()));
             extra.push(("tier", tr.mission.tier.clone().unwrap_or_default()));
@@ -1494,11 +1501,24 @@ impl App {
             extra.push(("planet", self.planet_depth.to_string()));
         }
         extra.extend(log_keys(&self.args.keys));
-        let head = slime_mould::mould::playlog::Playlog::head(&self.name, self.args.seed, &extra);
-        match std::fs::write(&path, head) {
+        let head = playlog::Playlog::head(&self.name, self.args.seed, &extra);
+        match std::fs::create_dir_all(playlog::DIR).and_then(|()| std::fs::write(&path, head)) {
             Ok(()) => self.log_path = Some(path),
             Err(e) => eprintln!("larder-world: {path}: {e}"),
         }
+    }
+
+    /// **Drops a note in the play log** (F9; the plan's play record,
+    /// 11-17): the game second and where the camera is looking, numbered
+    /// from 1 each round, with a word on the HUD so the player knows which
+    /// number to name afterwards.
+    fn drop_note(&mut self) {
+        let Some(g) = self.game.as_ref().filter(|_| self.log_path.is_some()) else { return };
+        self.log_notes += 1;
+        let t = g.time();
+        let line = slime_mould::mould::playlog::Playlog::note(self.log_notes, t, self.camera.centre(), self.camera.zoom);
+        Self::log_write(&self.log_path, &line);
+        self.hud.alert(&format!("Note {} dropped at {}:{:02} (it is in the play log)", self.log_notes, t as u32 / 60, t as u32 % 60), None, theme::ACCENT);
     }
 
     /// Appends `text` to the play log (nothing without one).

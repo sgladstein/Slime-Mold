@@ -116,11 +116,14 @@ four healthy soldiers and both pumps standing. The shrink goal counts the
 slime's mass (`World::mass`, the enemy's living walkers; until 11-17 a
 thickened walker counted twice, so a body that thickened did not read as
 shrinking; thickening was deleted). The window writes a play log
-(`Playlog`) beside the replay, `larder-world-log-MAP-SEED.txt`, a line a
+(`Playlog`), a file a round in `play-logs/` beside the game (since 11-17;
+before, `larder-world-log-MAP-SEED.txt`, which the next round wrote over),
+headed by the build, the switches on and the planet, a line a
 game second (walkers, mass, soldiers, squads, bank, income, shots, kills,
 buildings, frame p50/p95) with each command; `cargo run --release --example
 playlog -- FILE` prints time to 10-40 soldiers, splits, pumps, kills a
-minute against the slime's mass, and frame times.
+minute against the slime's mass, and frame times. F9 in play drops a
+numbered note (the second and where the camera looked).
 
 Run seed 1, planets 1-6 ([report](../../Reports/run-progression-2026-11-15/README.md), *Measured*): idle is clearly losing by 5:00 on planets 1-3, and a four-soldier squad with the depth's average rifle kills 7-40 walkers a second while the slime's own swing is ten times that, so its kills don't show in the mass at 2:00; mass at landing grows 11x from planet 1 to 6 and the kill rate 2.5x. What rises by planet: see below.
 

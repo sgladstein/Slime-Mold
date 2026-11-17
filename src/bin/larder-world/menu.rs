@@ -171,6 +171,7 @@ pub(super) fn key_card(squads: bool) -> Vec<(String, String)> {
         ("N", "Next map"),
         ("M", "Minimap"),
         ("F2", "Scent view: what the mould smells"),
+        ("F9", "Drop a note in the play log: marks this moment and place"),
         ("O / K", "Sound; the mould's voice"),
         ("Space", "Look at the newest alert"),
         ("Esc", "Cancel placing, or the menu"),
