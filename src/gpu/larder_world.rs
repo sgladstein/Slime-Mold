@@ -575,7 +575,12 @@ impl GpuWorld {
         }
         // Fire in the plants, after the strike and crater as on the CPU
         // (`squad::burst`): a share of a burn's disc, a smaller share of a
-        // blast's out to a dish cell past its crater.
+        // blast's out to a dish cell past its crater. Laid fuel first
+        // (Tinder, 11-17), as on the CPU, so a burn on the same disc
+        // lights it.
+        if b.fuel > 0.0 {
+            self.e.lay(&self.shared, &[(b.at.0, b.at.1, b.r, b.fuel)]);
+        }
         let mut lights = Vec::new();
         let p = &self.e.dish.p;
         if b.burn {
@@ -1954,6 +1959,97 @@ mod tests {
             assert!(living.0.abs_diff(living.1) <= tol(0, 10 + living.0 / 50), "{sec} s: living CPU {} GPU {}", living.0, living.1);
         }
         assert!(killed.0 > 0, "the fire killed walkers");
+        assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
+    }
+
+    /// **Tinder lays and burns on the GPU as on the CPU** (the gun cards'
+    /// element family, 2026-11-17; `squad::Burst::fuel`, `Engine::lay`): the
+    /// flats map planted in its top band only, its bottom 30 rows barren
+    /// soil (where nothing grows, so laid fuel withers by `plant_rot` to 0);
+    /// three tinder lines, one across bare ground from 15 dish cells out to
+    /// the slime's edge (scrub over its capacity), one through the meadow
+    /// (over a meadow's), one on the barren rows; a torch at the first
+    /// line's outer end. The
+    /// plants and kinds match exactly after the laying, and plants, fire,
+    /// the fire's kills and the living match every second for 10 s.
+    #[test]
+    fn tinder_lays_and_burns_on_the_gpu_as_on_the_cpu() {
+        use crate::mould::big::{BigDish, SOIL_BARREN};
+        use crate::mould::plants::pack;
+        use crate::mould::rounds;
+        use std::path::Path;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 1, 2_000);
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let mut m = Map::load(&dir, "flats").unwrap();
+        m.plants = (0..m.ground.len()).map(|i| if i / m.w < 40 { pack(0, 1.0) } else { 0 }).collect();
+        let rows = m.ground.len() / m.w;
+        for i in 0..m.ground.len() {
+            if i / m.w >= rows - 30 {
+                m.ground[i] = (m.ground[i] & 0x0F) | (SOIL_BARREN << 4);
+            }
+        }
+        let mut cpu = BigDish::with_map(race_params(seed, scale, walkers), &m);
+        let mut gpu = GpuWorld::with_map(&device, &queue, race_settings(seed, scale, walkers), scale, &m);
+        let k = squad::BurstRules::default();
+        let f = Frame::default();
+        for _ in 0..10 {
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+        }
+        let home = cpu.homes[0];
+        let s = cpu.p.scale as f32;
+        let far = |p: &(f32, f32)| (p.0 / s - home.0).hypot(p.1 / s - home.1);
+        let edge = (0..cpu.walkers.len())
+            .filter(|&k| cpu.lives(k))
+            .map(|k| (cpu.walkers[k].0, cpu.walkers[k].1))
+            .filter(|p| far(p) <= 40.0)
+            .max_by(|a, b| far(a).total_cmp(&far(b)))
+            .unwrap();
+        let (dx, dy) = (edge.0 / s - home.0, edge.1 / s - home.1);
+        let d = dx.hypot(dy).max(1e-3);
+        let out = (edge.0 + 15.0 * s * dx / d, edge.1 + 15.0 * s * dy / d);
+        // Whole lines (`trail_bursts` lays no gap; play's is `keep_clear`).
+        let r = rounds::RoundRules::default();
+        let n = rounds::trails(&[rounds::Card::Tinder]);
+        let mut discs = rounds::trail_bursts(n, out, edge, &r, s, 15.0, 1.0);
+        discs.extend(rounds::trail_bursts(n, (20.0 * s, 20.0 * s), (60.0 * s, 20.0 * s), &r, s, 15.0, 1.0));
+        let low = (rows - 15) as f32 * s;
+        discs.extend(rounds::trail_bursts(n, (20.0 * s, low), (60.0 * s, low), &r, s, 15.0, 1.0));
+        for b in &discs {
+            World::burst(&mut cpu, b, &k);
+            World::burst(&mut gpu, b, &k);
+        }
+        let (plants, kinds, _, _) = gpu.e.plants_of();
+        let laid = cpu.plant.iter().filter(|&&p| p >= r.trail_fuel).count();
+        let dp = plants.iter().zip(&cpu.plant).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+        let dk = kinds.iter().zip(&cpu.plant_kind).filter(|(a, b)| a != b).count();
+        eprintln!("tinder: {} discs, {laid} cells laid on the CPU; max diff plants {dp:.2e}, kinds differing {dk}", discs.len());
+        assert!(laid > 100, "both lines laid: {laid}");
+        assert!(dp == 0.0 && dk == 0, "laid: plants {dp}, kinds {dk}");
+        let cast = rounds::casts(&rounds::parse("torch").unwrap())[0];
+        let b = rounds::bursts(&cast, out, &r, s, 15.0)[0];
+        World::burst(&mut cpu, &b, &k);
+        World::burst(&mut gpu, &b, &k);
+        let mut killed = (0, 0);
+        for sec in 1..=10 {
+            for w in [&mut cpu as &mut dyn World, &mut gpu as &mut dyn World] {
+                w.frame(&f, 15);
+            }
+            killed.0 += World::burned(&mut cpu);
+            killed.1 += World::burned(&mut gpu);
+            let (plants, _, fire, _) = gpu.e.plants_of();
+            let cfire = if cpu.fire.is_empty() { vec![0.0; fire.len()] } else { cpu.fire.clone() };
+            let df = fire.iter().zip(&cfire).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+            let dp = plants.iter().zip(&cpu.plant).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+            let living = (World::living(&cpu), World::living(&gpu));
+            let laid = cpu.plant.iter().filter(|&&p| p > 0.8).count();
+            eprintln!("tinder {sec} s: burning {}, over 0.8 {laid}; max diff plants {dp:.2e} fire {df:.2e}; killed {killed:?}; living {living:?}", cpu.burning);
+            assert!(dp <= tol(1e-5, 0.2) && df <= tol(1e-5, 0.2), "{sec} s: plants {dp}, fire {df}");
+            assert!(living.0.abs_diff(living.1) <= tol(0, 10 + living.0 / 50), "{sec} s: living CPU {} GPU {}", living.0, living.1);
+        }
+        assert!(killed.0 > 0, "the fire down the line killed walkers");
         assert!(killed.0.abs_diff(killed.1) <= tol(0, 5 + killed.0 / 10), "fire's kills: CPU {} GPU {}", killed.0, killed.1);
     }
 

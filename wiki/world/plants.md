@@ -7,6 +7,7 @@ sources:
   - Reports/bug-check-leftovers-2026-11-15/README.md
   - Reports/fire-2026-11-14/README.md
   - Reports/gun-element-2026-11-17/README.md
+  - Reports/gun-tinder-2026-11-17/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
@@ -15,6 +16,7 @@ sources:
   - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
 code:
   - BigDish::ignite
+  - BigDish::lay_fuel
   - BigParams::crust_fuel
   - BigParams::fire_alarm
   - BigParams::fire_damp
@@ -23,6 +25,7 @@ code:
   - BigParams::fire_spread
   - BigParams::fire_weight
   - BigParams::plant_grow
+  - BigParams::plant_rot
   - plants::moisture
 ---
 
@@ -72,13 +75,29 @@ map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
 cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 25 hp/s at full
 heat) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
 
+**Laid fuel** (2026-11-17, the Tinder gun card): `BigDish::lay_fuel`
+(GPU: the IGNITE pass in lay mode) plants open, dry ground up to a level,
+even where nothing grows; bare ground turns scrub. Plants over their
+ground's capacity wither back to it by `plant_rot` (0.0002 a tick, about
+40 s from full on barren ground), so a laid line is gone in under a
+minute; with nothing laid the rule is the old one. A fire runs along the
+line on ground that would not carry one: on the barrens a torch and tinder
+gun killed 159 in its windows against the torch's 123
+([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
+
 Walkers do not sense fire. A flag puts heat in their sensors
 (`fire_weight`, under 0 they turn from it; 0 off, both engines): in its one
 A/B film the slime ringed a fire instead of walking into it, and more of
 it burned, since its damp trail no longer put the fire out
-([element](../../Reports/gun-element-2026-11-17/README.md)). It stays off
-until the game designer's crossing test after Tinder (a fire line with
-food beyond it).
+([element](../../Reports/gun-element-2026-11-17/README.md)). The game
+designer's crossing test (a lit tinder line across a stream of walkers
+going to food, planet 1:3, one seed, 30 s) kept it off: with no line 214
+walkers crossed, with the line 10 at weight 0 and 57 at -5. The weight
+held the stream at the fire's edge (4 crossed while it burned, against
+10) and fewer burned (44 killed against 119), but the stream crossed the
+char as soon as the fire died, and it did not flow round the line; the
+simulation-use thread's `fire_alarm` at 50 did the same (31 crossed, none
+while it burned) ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 
 ## Look
 
@@ -130,5 +149,6 @@ Gaussian per cell, soft blobs ([page](https://claude.ai/artifact/5pChXx8qdHxa3qw
 
 - [plants report](../../Reports/plants-2026-11-14/README.md), *brainstorm*.
 - [plants look](../../Reports/plants-look-2026-11-14/README.md), *crowns sized by the field, fire per crown*.
+- [tinder](../../Reports/gun-tinder-2026-11-17/README.md), *laid fuel, the crossing test*.
 - [rivers under reeds](../../Reports/river-reeds-2026-11-15/README.md), *plants thinner over water, none over deep water*.
 - [review fixes](../../Reports/review-fixes-2026-11-15/README.md), *plants under the slime, white-hot fire front*.

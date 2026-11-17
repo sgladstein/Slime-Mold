@@ -10,6 +10,7 @@ sources:
   - Reports/gun-route-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
+  - Reports/gun-tinder-2026-11-17/README.md
   - Reports/mould-tiers-2026-11-11.md
   - Reports/rounds-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
@@ -34,7 +35,7 @@ Drifter and the germ against the Sporer, each 30 of 32 paired seeds after a
 Holm correction ([toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md),
 *Confirmed at 32 seeds*); the germ was retuned per planet since (11-17,
 seed 0), still strongest on the Sporer and Drifter. Five more rest on a
-narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch); the rest of the
+narrower measure (Corral, Pull, Seek, Detonate, Flare, Torch, Tinder); the rest of the
 table is this thread's judgement of each card against
 [the tier's counter](mould-tiers.md). The gaps are the Grudge and the
 Trunk; Pull and Thrift answer no planet.
@@ -73,6 +74,7 @@ this thread's judgement.
 | Detonate | 4 | Sporer, after the germ | M | less slime at the window's end in 13 of 15 paired windows; fire it late, once the wave has spread (cast early it cuts the wave short; its words say "let it spread first") | every sick walker in reach dies at once; the red wave is the germ the sick lay, fading 1-2 s behind them |
 | Bait | 1 | Sporer | J | draws it off its crystals without a hit (its counter: starve it, don't hit it) | a scent line the slime follows |
 | Torch | 2 | Sporer (its jungle), by the ground; measured on the meadow | M | its fire kills thin slime in plants: on planets 1-3 more kills than plain in 9 of 9 windows, on the meadow 350 against 230 (216 by fire), on the barrens and fen barely more; the jungle (planet 5) not measured | the plants round the hit catch fire; thin slime in the flames burns, a damp body stops it |
+| Tinder | 2 | Sprawler (its barrens), with a torch | M | a fire runs along its brush where plants are thin: with the torch, more kills than the torch alone in 9 of 9 windows, on the barrens 159 against 123; nothing added to a scorch trail | a strip of dry brush along each flight, kept 6 cells clear of the squad; a fire runs along it |
 | Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | an alarm haze; the slime comes to it or backs away |
 | Quiet | 1 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
 | Delay | 1 | Grudge | J | goes off when the slime comes back to where it was shot | the hit lodges, then goes off |
@@ -113,6 +115,9 @@ with the owner).
   end ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 - The Torch's cost stays 2 until the balance pass (the game designer,
   11-17 10:14Z), though on meadows it matches or passes the blast.
+- Tinder's costs (2, so 4 with the torch, past the blast's 3 and ahead
+  of it in 9 of 9 windows) wait for the balance pass too
+  ([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 - The Torch's own planet, the Sporer's jungle (5), has no window: in the
   planet 4 and 5 scenes the squads had not met the slime by 50 s
   ([element](../../Reports/gun-element-2026-11-17/README.md)).
@@ -127,4 +132,4 @@ with the owner).
 - [toolkit round 2](../../Reports/squad-toolkit-round2-2026-11-12.md), *Confirmed at 32 seeds*: Blast, Plain, Germ.
 - [mould tiers](../../Reports/mould-tiers-2026-11-11.md): each tier's counter.
 - [rounds](../../Reports/rounds-2026-11-12.md): the Sleeper ignores every round.
-- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch.
+- [shove cards](../../Reports/gun-shove-2026-11-16/README.md): Corral, Pull. [seek](../../Reports/gun-seek-2026-11-16/README.md): Seek. [readers](../../Reports/gun-readers-2026-11-17/README.md): Detonate, Shatter. [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md): Blind, Sour, Spin. [route](../../Reports/gun-route-2026-11-17/README.md): Flare, the germ by planet. [element](../../Reports/gun-element-2026-11-17/README.md): Torch. [tinder](../../Reports/gun-tinder-2026-11-17/README.md): Tinder.

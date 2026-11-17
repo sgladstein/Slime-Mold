@@ -217,6 +217,7 @@ fn main() -> Result<(), String> {
                     spread: d.p.plant_spread,
                     wet: d.p.plant_wet,
                     scorch: d.p.plant_scorch,
+                    rot: d.p.plant_rot,
                     kinds: d.p.plant_kinds,
                 };
                 // (One step's cost; the world runs it every `plant_every` ticks.)

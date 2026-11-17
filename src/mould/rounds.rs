@@ -200,6 +200,18 @@ pub enum Card {
     /// torch eats an edge, not a body, and fire hurts soldiers who stand in
     /// it (`Rules::fire_hurt`).
     Torch,
+    /// **Tinder** (2026-11-17, the element family's second card, the game
+    /// designer's order 08:43Z: "Torch, then Tinder, with Douse held"; the
+    /// plan's "Seeder (a dry fuel line)"): a flight card, a trail. Every
+    /// bullet's leg lays dry brush along its flight (`RoundRules::trail_fuel`
+    /// plants a cell in discs of `trail_r`, `BigDish::lay_fuel`; bare ground
+    /// turns scrub, which burns best), even on ground where nothing grows,
+    /// and it withers back in under a minute (`BigParams::plant_rot`). It
+    /// kills nothing: a later fire (a torch, a blast, a scorch trail on the
+    /// same gun, which lights what it lays) runs along the line, so a squad
+    /// can draw where a fire goes on the barrens and fens, where the plants
+    /// alone hardly burn.
+    Tinder,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -212,14 +224,14 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 33] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch];
+    pub const ALL: [Card; 34] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch, Card::Tinder];
 
     pub fn kind(self) -> Kind {
         match self {
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek | Card::Tinder => Kind::Flight,
             Card::Thrift => Kind::Modifier,
         }
     }
@@ -262,6 +274,7 @@ impl Card {
             Card::Detonate => "detonate",
             Card::Flare => "flare",
             Card::Torch => "torch",
+            Card::Tinder => "tinder",
         }
     }
 
@@ -341,6 +354,7 @@ impl Card {
             Card::Detonate => "Kills sick slime where it hits; let it spread first.",
             Card::Flare => "Burns where it hits, alarming slime; kills none.",
             Card::Torch => "Sets the plants where it hits on fire.",
+            Card::Tinder => "Bullets lay a line of dry brush that fire runs along.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -368,6 +382,8 @@ impl Card {
             // Kills only by the fire, which needs plants and spares a damp
             // body: below the blast (3), with the flare.
             Card::Torch => 2,
+            // Kills nothing by itself, as the bait (2) doesn't.
+            Card::Tinder => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -380,7 +396,7 @@ impl Card {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare | Card::Torch => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
             Card::Detonate => 3,
             _ => 1,
         }
@@ -555,6 +571,21 @@ pub struct RoundRules {
     pub trail_crater_secs: f32,
     pub trail_bait: f32,
     pub trail_cloud: f32,
+    /// `Tinder`'s fuel (2026-11-17): a disc of its trail plants every open
+    /// cell under this many to this many (`BigDish::lay_fuel`); 1, a full
+    /// jungle's, at which a fire burns at full heat (`fire_full` 0.8). One
+    /// copy or several: the copies widen the disc, as the other trails'.
+    pub trail_fuel: f32,
+    /// ... laid only where no living soldier is within `trail_fuel_gap`
+    /// dish cells of the disc (6; `keep_clear`): laid from the muzzle, the
+    /// brush led every fire back to the squad (torch+tinder on planets 1-3,
+    /// 2026-11-17: as few as 2 of 8 soldiers left after a 10 s window,
+    /// against 8 of 8 with the torch alone; `Reports/gun-tinder-2026-11-17/`).
+    /// Not along the leg: a bullet flies over several frames and each
+    /// frame's leg starts where the last ended, shorter than the gap, so a
+    /// gap along the leg (the first try) laid nothing in play. The other
+    /// trails start at the muzzle as before.
+    pub trail_fuel_gap: f32,
     /// `Scorch` also burns: kills the walkers within its crater radius
     /// along the flight (owner, 2026-11-14 08:41Z, after "how are scorch
     /// and alarm different. It just makes a virtual wall for the slime?").
@@ -634,6 +665,8 @@ impl Default for RoundRules {
             trail_crater_secs: 4.0,
             trail_bait: 40.0,
             trail_cloud: 0.4,
+            trail_fuel: 1.0,
+            trail_fuel_gap: 6.0,
             trail_burn: true,
             shove: 2.0,
             shove_secs: 0.25,
@@ -692,6 +725,8 @@ impl RoundRules {
             "flare_every" => &mut self.flare_every,
             "torch_r" => &mut self.torch_r,
             "torch_light" => &mut self.torch_light,
+            "trail_fuel" => &mut self.trail_fuel,
+            "trail_fuel_gap" => &mut self.trail_fuel_gap,
             // The germ round's own contagion (2026-11-17), in its kit so
             // the toolkit's germ dish keeps `KitRules::default`'s
             // (the rounds' upkeep is 10, the toolkit's 60).
@@ -776,7 +811,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Corral | Card::Pull => herd = Some(c),
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
-            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
+            Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek | Card::Tinder => {}
             Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
@@ -862,19 +897,23 @@ pub fn flight(round: &[Card]) -> BulletMods {
 }
 
 /// The round's trail cards as every soldier bullet lays them: copies of
-/// `Scorch`, `Bait`, `Mist` and `Smother`.
-pub fn trails(round: &[Card]) -> [u8; 4] {
+/// `Scorch`, `Bait`, `Mist`, `Smother` and `Tinder`.
+pub fn trails(round: &[Card]) -> [u8; TRAILS] {
     let n = |k: Card| round.iter().take(MAX_SLOTS).filter(|&&c| c == k).count() as u8;
-    [n(Card::Scorch), n(Card::Bait), n(Card::Mist), n(Card::Smother)]
+    [n(Card::Scorch), n(Card::Bait), n(Card::Mist), n(Card::Smother), n(Card::Tinder)]
 }
+
+/// The trail cards (`trails`).
+pub const TRAILS: usize = 5;
 
 /// The bursts a trail lays along one bullet leg from `from` to `to` (fine
 /// cells): a disc every `trail_r` from the leg's start, each with every
 /// trail the round has. None without trail cards. `smell` is a soldier's
 /// frame of food scent (`Rules::smell` x the world's `food_deposit` x
-/// `frame_ticks`), the bait's unit.
-pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules, scale: f32, fine: f32, smell: f32) -> Vec<Burst> {
-    if n == [0; 4] {
+/// `frame_ticks`), the bait's unit. Tinder's fuel is laid before a
+/// scorch's burn on the same disc lights it (`squad::burst`).
+pub fn trail_bursts(n: [u8; TRAILS], from: (f32, f32), to: (f32, f32), r: &RoundRules, scale: f32, fine: f32, smell: f32) -> Vec<Burst> {
+    if n == [0; TRAILS] {
         return Vec::new();
     }
     let (a, b) = ((from.0 / scale, from.1 / scale), (to.0 / scale, to.1 / scale));
@@ -886,13 +925,26 @@ pub fn trail_bursts(n: [u8; 4], from: (f32, f32), to: (f32, f32), r: &RoundRules
     let crater = if n[0] > 0 { (r.trail_crater_secs * fine).round().clamp(0.0, u16::MAX as f32) as u16 } else { 0 };
     let bait = r.trail_bait * smell * n[1] as f32;
     let cloud = r.trail_cloud * n[2] as f32;
+    let fuel = if n[4] > 0 { r.trail_fuel } else { 0.0 };
     (1..=discs)
         .map(|j| {
-            let t = (j as f32 * gap).min(len) / len.max(1e-6);
+            let t = (j as f32 * gap / len.max(1e-6)).min(1.0);
             let at = (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
-            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, smother: n[3] > 0, cloud, ..Burst::default() }
+            Burst { at, r: rr, burn: n[0] > 0 && r.trail_burn, crater, crater_r: if crater > 0 { r.trail_r * f(n[0]) } else { 0.0 }, bait, smother: n[3] > 0, cloud, fuel, ..Burst::default() }
         })
         .collect()
+}
+
+/// Tinder's brush kept clear of the squad (`RoundRules::trail_fuel_gap`):
+/// a disc within `gap` dish cells of any of `soldiers` (dish cells) lays no
+/// fuel, and a disc left with nothing to do is dropped.
+pub fn keep_clear(discs: &mut Vec<Burst>, soldiers: &[(f32, f32)], gap: f32) {
+    for b in discs.iter_mut() {
+        if b.fuel > 0.0 && soldiers.iter().any(|&(x, y)| (x - b.at.0).hypot(y - b.at.1) < gap) {
+            b.fuel = 0.0;
+        }
+    }
+    discs.retain(|b| b.burn || b.crater > 0 || b.bait > 0.0 || b.smother || b.cloud > 0.0 || b.fuel > 0.0);
 }
 
 /// The bursts one cast makes at `at` (fine cells); `scale` fine cells a
@@ -908,7 +960,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0, light: 0.0, fuel: 0.0 };
     let mind = |m: u32| Burst { r: r.mind_r * f, mind: m as u8, ..none };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
@@ -1371,9 +1423,9 @@ impl Rounds {
         // The turrets' trails (`Game::turret_deck`) in the slot past the
         // squads'; with no deck they lay none, as before.
         let tq = g.squads.len();
-        let mut of: Vec<Option<[u8; 4]>> = vec![None; tq + 1];
-        let mut any = [0u8; 4];
-        let legs: Vec<(Leg, [u8; 4])> = g
+        let mut of: Vec<Option<[u8; TRAILS]>> = vec![None; tq + 1];
+        let mut any = [0u8; TRAILS];
+        let legs: Vec<(Leg, [u8; TRAILS])> = g
             .last_shots
             .iter()
             .map(|s| (s, s.by.map_or(tq, |k| g.soldiers.get(k).map_or(0, |x| x.squad as usize))))
@@ -1391,7 +1443,7 @@ impl Rounds {
                 ((s.from, s.hit.unwrap_or(s.to)), n)
             })
             .collect();
-        if any == [0; 4] {
+        if any == [0; TRAILS] {
             return;
         }
         let s = g.world.scale();
@@ -1400,11 +1452,17 @@ impl Rounds {
         let smell = g.world.food_deposit() * g.rules.smell * g.rules.frame_ticks as f32;
         let mut burned = 0;
         let n = any;
+        // Where the living soldiers stand (dish cells), for Tinder's gap.
+        let near: Vec<(f32, f32)> = if n[4] > 0 { g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x / s, x.y / s)).collect() } else { Vec::new() };
         for ((from, to), legn) in legs {
-            if legn == [0; 4] {
+            if legn == [0; TRAILS] {
                 continue;
             }
-            for b in trail_bursts(legn, from, to, &self.rules, s, fine, smell) {
+            let mut discs = trail_bursts(legn, from, to, &self.rules, s, fine, smell);
+            if legn[4] > 0 {
+                keep_clear(&mut discs, &near, self.rules.trail_fuel_gap);
+            }
+            for b in discs {
                 burned += g.world.burst(&b, &k).killed as usize;
                 self.trailed += 1;
             }
@@ -1749,6 +1807,107 @@ mod tests {
         assert_eq!((cast, lit, burned), (1, 0, 0), "no plants: nothing lit, nothing burned");
     }
 
+    /// **Tinder lays a fuel line a fire runs along** (the element family's
+    /// second card, 2026-11-17): a flight card that lays `trail_fuel`
+    /// along every bullet's leg (`trails`, `trail_bursts`). On the flats
+    /// map planted only in its top band, a tinder line laid across bare
+    /// ground from 15 dish cells out to the slime's edge, then a torch at
+    /// its outer end: the fire runs down the line to the slime and kills
+    /// some of its edge (59 cells laid at scale 1, 21 lit, the fire within
+    /// half a cell of the edge, 44 burned in 10 s). With no tinder the same
+    /// torch lights nothing there.
+    #[test]
+    fn tinder_lays_a_line_that_a_fire_runs_along() {
+        let r = RoundRules::default();
+        let c = Card::Tinder;
+        assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier(), Shell::of(c)), (Kind::Flight, "tinder".to_string(), None, 2, 2, None));
+        assert_eq!(trails(&parse("tinder+tinder+torch").unwrap()), [0, 0, 0, 0, 2]);
+        let mut line = trail_bursts([0, 0, 0, 0, 1], (0.0, 0.0), (40.0, 0.0), &r, 2.0, 120.0, 1.0);
+        assert!(line.len() == 10 && line.iter().all(|b| b.fuel == r.trail_fuel && !b.kill && !b.burn && b.crater == 0 && b.r == r.trail_r), "a plain fuel disc every 2 to the leg's end");
+        keep_clear(&mut line, &[(0.0, 0.0)], r.trail_fuel_gap);
+        assert_eq!((line.len(), line[0].at), (8, (6.0, 0.0)), "none within `trail_fuel_gap` 6 of the soldier at the muzzle");
+        let mut scorched = trail_bursts([1, 0, 0, 0, 1], (0.0, 0.0), (40.0, 0.0), &r, 2.0, 120.0, 1.0);
+        keep_clear(&mut scorched, &[(0.0, 0.0)], r.trail_fuel_gap);
+        assert!(scorched.len() == 10 && scorched[0].fuel == 0.0 && scorched[2].fuel == r.trail_fuel, "the scorch from the muzzle, the brush from the gap");
+        // A bullet's later leg, past the gap along its flight but with a
+        // soldier beside it: no brush there either.
+        let mut flight = trail_bursts([0, 0, 0, 0, 1], (20.0, 0.0), (30.0, 0.0), &r, 2.0, 120.0, 1.0);
+        keep_clear(&mut flight, &[(0.0, 0.0), (12.0, 1.0)], r.trail_fuel_gap);
+        assert_eq!(flight.iter().map(|b| b.at.0).collect::<Vec<_>>(), vec![], "every disc of 10-15 within 6 of the soldier at 12,1");
+        let mut flight = trail_bursts([0, 0, 0, 0, 1], (20.0, 0.0), (40.0, 0.0), &r, 2.0, 120.0, 1.0);
+        keep_clear(&mut flight, &[(0.0, 0.0)], r.trail_fuel_gap);
+        assert_eq!(flight.len(), 5, "a later leg 10-20 with the squad back at the muzzle: all laid");
+        let mut tuned = r;
+        assert!(tuned.set("trail_fuel", 0.6) && tuned.trail_fuel == 0.6 && tuned.set("trail_fuel_gap", 0.0) && tuned.trail_fuel_gap == 0.0);
+        use crate::mould::larder_world::race_params;
+        use crate::mould::map::Map;
+        use crate::mould::plants::{pack, SCRUB};
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Reports/larder-maps-2026-11-11/maps");
+        let play = |tinder: bool| {
+            let mut m = Map::load(&dir, "flats").unwrap();
+            // Plants in the top 40 rows only, so the dish has a plant field
+            // and the rest is bare.
+            m.plants = (0..m.ground.len()).map(|i| if i / m.w < 40 { pack(0, 1.0) } else { 0 }).collect();
+            let mut g = Game::new(BigDish::with_map(race_params(3, 1, 2_000), &m), Rules::default(), 3);
+            for _ in 0..10 * g.rules.tps {
+                g.step();
+            }
+            let home = g.world.homes[0];
+            let s = g.world.scale();
+            let w = &g.world;
+            // The living walker farthest from the home within 40 dish cells:
+            // the slime's edge, on bare ground.
+            let edge = (0..w.walkers.len())
+                .filter(|&k| w.lives(k))
+                .map(|k| (w.walkers[k].0, w.walkers[k].1))
+                .filter(|p| (p.0 / s - home.0).hypot(p.1 / s - home.1) <= 40.0)
+                .max_by(|a, b| (a.0 / s - home.0).hypot(a.1 / s - home.1).total_cmp(&(b.0 / s - home.0).hypot(b.1 / s - home.1)))
+                .unwrap();
+            let (dx, dy) = (edge.0 / s - home.0, edge.1 / s - home.1);
+            let d = dx.hypot(dy).max(1e-3);
+            let out = (edge.0 + 15.0 * s * dx / d, edge.1 + 15.0 * s * dy / d);
+            let k = burst_rules(&r.kit, g.rules.tps as f32 * g.world.fine_steps() as f32);
+            let mut laid = 0;
+            if tinder {
+                let fine = g.rules.tps as f32 * g.world.fine_steps() as f32;
+                // The whole line: `trail_bursts` lays no gap (that is `keep_clear`, in play).
+                for b in trail_bursts(trails(&[Card::Tinder]), out, edge, &r, s, fine, 1.0) {
+                    g.world.burst(&b, &k);
+                }
+                laid = g.world.plant.iter().zip(&g.world.plant_kind).filter(|&(&p, &kd)| p >= r.trail_fuel && kd == SCRUB).count();
+            }
+            let mut rd = Rounds::new(parse("torch").unwrap(), r);
+            let lit0 = g.world.burning;
+            rd.cast_at(&mut g, out);
+            let lit = g.world.burning - lit0;
+            let fire0 = g.world.fire_killed;
+            // How far down the line from the torch the fire got: the
+            // nearest charred cell to the edge, in dish cells.
+            let mut reach = f32::MAX;
+            for _ in 0..10 {
+                for _ in 0..g.rules.tps {
+                    g.step();
+                }
+                let w = &g.world;
+                for (i, &c) in w.char.iter().enumerate() {
+                    if c > 0.0 {
+                        let (x, y) = ((i % w.w) as f32 / s, (i / w.w) as f32 / s);
+                        reach = reach.min((x - edge.0 / s).hypot(y - edge.1 / s));
+                    }
+                }
+            }
+            let left = g.world.plant.iter().zip(&g.world.plant_kind).filter(|&(&p, &kd)| p >= 0.5 * r.trail_fuel && kd == SCRUB).count();
+            (laid, lit, reach, g.world.fire_killed - fire0, left)
+        };
+        let (laid, lit, reach, burned, left) = play(true);
+        eprintln!("tinder on the bare flats: {laid} cells laid, the torch lit {lit}, the fire got within {reach:.1} dish cells of the edge, {burned} burned in 10 s; {left} cells still half laid");
+        assert!(laid > 40, "the line was laid: {laid} cells");
+        assert!(lit > 20, "the torch lit the laid brush: {lit}");
+        assert!(reach < 6.0, "the fire ran down the line toward the edge: {reach:.1} dish cells short");
+        let (_, lit, _, burned, _) = play(false);
+        assert_eq!((lit, burned), (0, 0), "no tinder on bare ground: nothing lit, nothing burned");
+    }
+
     /// **A flare moves the slime by its own alarm rule** (the route
     /// family, 2026-11-17): on the race world warmed 20 s, a flare at the
     /// edge of the body. A flinching mould (`BigParams::flinch` 0.9, shape
@@ -1803,7 +1962,7 @@ mod tests {
         let r = RoundRules::default();
         let round = parse("scorch+bait+bait+mist").unwrap();
         assert!(casts(&round).is_empty());
-        assert_eq!(trails(&round), [1, 2, 1, 0]);
+        assert_eq!(trails(&round), [1, 2, 1, 0, 0]);
         // A 9-dish-cell leg at scale 2: a disc every 2 cells, the last on the end.
         let b = trail_bursts(trails(&round), (2.0, 4.0), (20.0, 4.0), &r, 2.0, 30.0, 1.0);
         assert_eq!(b.len(), 5);
@@ -1811,12 +1970,12 @@ mod tests {
         let one = b[0];
         assert!(!one.kill && one.burn && one.gas == 0 && one.fling == 0.0, "scorch burns, counted later");
         let cold = RoundRules { trail_burn: false, ..r };
-        assert!(!trail_bursts([1, 0, 0, 0], (0.0, 0.0), (9.0, 0.0), &cold, 1.0, 30.0, 1.0)[0].burn);
-        assert!(!trail_bursts([0, 1, 1, 0], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0)[0].burn, "only scorch burns");
+        assert!(!trail_bursts([1, 0, 0, 0, 0], (0.0, 0.0), (9.0, 0.0), &cold, 1.0, 30.0, 1.0)[0].burn);
+        assert!(!trail_bursts([0, 1, 1, 0, 0], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0)[0].burn, "only scorch burns");
         assert_eq!(one.crater, (r.trail_crater_secs * 30.0) as u16);
         assert!((one.bait - 2.0 * r.trail_bait).abs() < 1e-4 && one.alarm == 0.0 && (one.r - r.trail_r * 2f32.sqrt()).abs() < 1e-5, "two baits: twice the scent, over the wider disc");
         assert!((one.cloud - r.trail_cloud).abs() < 1e-6 && one.crater_r == r.trail_r);
-        assert!(trail_bursts([0; 4], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0).is_empty());
+        assert!(trail_bursts([0; TRAILS], (0.0, 0.0), (9.0, 0.0), &r, 1.0, 30.0, 1.0).is_empty());
     }
 
     /// A mist round on the CPU world: the bullets' flight lays a real cloud

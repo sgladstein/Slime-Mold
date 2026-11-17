@@ -390,7 +390,7 @@ const GROUND_EVERY: f32 = 1.0;
 /// The loadouts H cycles (Y was taken by the road and siren commands, 11-13) through (`mould::rounds`): a name and its cards,
 /// left to right. The census's hand-written rounds
 /// (`Reports/rounds-2026-11-12.md`) plus one card at a time.
-const LOADOUTS: [(&str, &str); 64] = [
+const LOADOUTS: [(&str, &str); 66] = [
     ("plain", "none"),
     // The flight cards (11-13): plain bullets that fly on, or break up.
     ("pierce", "pierce+pierce"),
@@ -494,6 +494,11 @@ const LOADOUTS: [(&str, &str); 64] = [
     // and the fire kills; with a blast, every other bullet kills at once.
     ("torch", "torch"),
     ("torch-blast", "torch+blast"),
+    // Tinder (2026-11-17): every bullet lays dry brush along its flight;
+    // with torches the line burns where they hit, with scorch as it is
+    // laid.
+    ("tinder-torch", "tinder+torch"),
+    ("tinder-scorch", "tinder+scorch"),
 ];
 
 /// The prefix of a rule key among `Args::keys` (`set=NAME=V`).
@@ -535,6 +540,25 @@ struct Args {
     /// lit over R world units at (X, Y) at game second T (a burn burst,
     /// no kill); repeat for more.
     lights: Vec<(f32, f32, f32, f32)>,
+    /// `trail=T,X1,Y1,X2,Y2,CARDS[,lit]` (2026-11-17, the element family's
+    /// fence test): at game second T, the trails of CARDS (scorch, bait,
+    /// mist, smother, tinder) laid along the line from (X1, Y1) to (X2, Y2),
+    /// world units, as one bullet's leg (`rounds::trail_bursts`, Tinder's
+    /// brush the whole line, as no soldier stands there: no `keep_clear`); `lit`
+    /// also lights every disc (`squad::Burst::light` 1), so a tinder line
+    /// burns along its length at once. Repeat for more.
+    trails: Vec<(f32, [f32; 4], Vec<rounds::Card>, bool)>,
+    /// `cross=X1,Y1,X2,Y2,D` (look= only, 2026-11-17, the game designer's
+    /// crossing test): each game second, the living walkers beyond the
+    /// line (left of X1,Y1 to X2,Y2 on the screen, within its span and D
+    /// world units past it) and how many walkers have crossed to there
+    /// from this side since the first second counted (by slot; a slot
+    /// that died counts again only from where it next lives).
+    cross: Option<[f32; 5]>,
+    /// `fencepick=T` (look= only, 2026-11-17): at game second T, each
+    /// crystal's centre (world units), its nearest walker and the walkers
+    /// within 20 of it, to pick a crystal the slime is heading for.
+    fence_pick: Option<f32>,
     /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
@@ -2273,6 +2297,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let [t, x, y, r] = w.as_slice() else { return Err("light=T,X,Y,R".into()) };
                 args.lights.push((*t, *x, *y, *r));
             }
+            "trail" => {
+                let p: Vec<&str> = v.split(',').collect();
+                let (nums, rest) = p.split_at(5.min(p.len()));
+                let n = nums.iter().map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let ([t, x1, y1, x2, y2], [cards, more @ ..]) = (n.as_slice(), rest) else { return Err("trail=T,X1,Y1,X2,Y2,CARDS[,lit]".into()) };
+                let cards = rounds::parse(cards).ok_or("trail=: a card list")?;
+                args.trails.push((*t, [*x1, *y1, *x2, *y2], cards, more.first() == Some(&"lit")));
+            }
+            "cross" => {
+                let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
+                let [x1, y1, x2, y2, d] = w.as_slice() else { return Err("cross=X1,Y1,X2,Y2,D".into()) };
+                args.cross = Some([*x1, *y1, *x2, *y2, *d]);
+            }
+            "fencepick" => args.fence_pick = Some(v.parse()?),
             "cutsquad" => {
                 // `cutsquad=X,Y[,T[,N]]` (after `cut=`): N soldiers (all)
                 // are set down there at T (the cut's time) and stay.
