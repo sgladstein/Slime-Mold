@@ -322,6 +322,26 @@ pub struct BurstRules {
     /// (`BigParams::spin_curl`, radians), set with each Mind burst.
     pub mind_steps: u16,
     pub spin_curl: f32,
+    /// Provoke's and Still's own fine steps (`big::MIND_DEAF`,
+    /// `MIND_STILL`; the gun cards, 2026-11-17), 0 for `mind_steps`. A
+    /// provoked walker panics only once its news is older than the wither
+    /// lag (5 s for shape C) and has leant for 1.5 s, so it needs longer
+    /// than the 6 s the other Mind statuses last (`mind_steps_for`).
+    pub deaf_steps: u16,
+    pub still_steps: u16,
+}
+
+impl BurstRules {
+    /// The fine steps a Mind status of `kind` lasts: Provoke's and Still's
+    /// own where set, else `mind_steps`. Both engines' bursts take it from
+    /// here, so they cannot differ.
+    pub fn mind_steps_for(&self, kind: u32) -> u16 {
+        match kind {
+            super::big::MIND_DEAF if self.deaf_steps > 0 => self.deaf_steps,
+            super::big::MIND_STILL if self.still_steps > 0 => self.still_steps,
+            _ => self.mind_steps,
+        }
+    }
 }
 
 /// What a burst did.
@@ -406,7 +426,7 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     // A Mind status last (2026-11-16), on the engine too.
     if b.mind > 0 {
         d.p.spin_curl = k.spin_curl;
-        d.mind(b.at.0 * s, b.at.1 * s, b.r * s, b.mind as u32, k.mind_steps);
+        d.mind(b.at.0 * s, b.at.1 * s, b.r * s, b.mind as u32, k.mind_steps_for(b.mind as u32));
     }
     out
 }

@@ -94,7 +94,8 @@ its reach ring, a lobbed arc to the landing point and the area in the tool's
 colour, all red with the click refused out of reach (`Model::throw`, `Throw`;
 [report](../../Reports/throw-aim-2026-11-16/README.md)). Since 11-17 the page
 has two test devices for the simulation-use plan's signals, left out of runs
-until the gun thread's cards: Provoke (X) makes the mould within
+(their gun cards are in runs since 11-17, [guns](guns.md); a carried device
+waits on the device slot, parked): Provoke (X) makes the mould within
 `KitRules::mind_r` deaf to food news, so it panics and charges, and Still
 (Z) stops its charges and its eating (`Tool::Provoke`, `Tool::Still`;
 [report](../../Reports/sim-use-2026-11-17/b-provoke-still.md)). The crater a blast, cord

@@ -212,6 +212,24 @@ pub enum Card {
     /// can draw where a fire goes on the barrens and fens, where the plants
     /// alone hardly burn.
     Tinder,
+    /// **Provoke and Still** (2026-11-17, the Mind family's last two; the
+    /// owner, 01:13Z, on the simulation-use thread's signals: both carried
+    /// devices and gun cards, this thread making the cards). Payloads that
+    /// kill nothing and lay a Mind status on the walkers within
+    /// `RoundRules::mind_r`, for the devices' seconds (`KitRules::
+    /// provoke_secs`, `still_secs`; `BurstRules::mind_steps_for`).
+    /// `Provoke` (`big::MIND_DEAF`): deaf to food news, so once its news is
+    /// older than the wither lag the part believes it is cut off: it turns
+    /// the cut-off grey, panics (charges a soldier within `panic_r`, or runs
+    /// for a crystal) and withers, as a part a wall cut off does. It is the
+    /// cut family's answer where the slime's shape leaves nothing to cut
+    /// (the cut count, `Reports/gun-cut-count-2026-11-17/`): it fakes the
+    /// cut. A charge needs open ground to a soldier.
+    Provoke,
+    /// `Still` (`big::MIND_STILL`): no panic, surge, raid or breakaway, and
+    /// no crystal taken (its share spilled); it keeps walking the network.
+    /// It stops the charge and the bite of what it hits.
+    Still,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -224,11 +242,11 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 34] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch, Card::Tinder];
+    pub const ALL: [Card; 36] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate, Card::Flare, Card::Torch, Card::Tinder, Card::Provoke, Card::Still];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek | Card::Tinder => Kind::Flight,
@@ -270,6 +288,8 @@ impl Card {
             Card::Blind => "blind",
             Card::Sour => "sour",
             Card::Spin => "spin",
+            Card::Provoke => "provoke",
+            Card::Still => "still",
             Card::Shatter => "shatter",
             Card::Detonate => "detonate",
             Card::Flare => "flare",
@@ -346,6 +366,8 @@ impl Card {
             Card::Blind => "Blinds slime where it hits: it walks straight on.",
             Card::Sour => "Slime where it hits turns from its own trail.",
             Card::Spin => "Slime where it hits turns in tight rings.",
+            Card::Provoke => "Slime where it hits feels cut off: it panics and charges.",
+            Card::Still => "Slime where it hits stays calm: no charge, no eating.",
             Card::Shatter => "Kills sleeping slime where it hits.",
             // "Let it spread": the game designer, 11-17 08:22Z: detonate
             // late, once the germ's wave has spread, is the card's lesson (2 s
@@ -374,7 +396,7 @@ impl Card {
             Card::Blast | Card::Gas | Card::Scorch | Card::Mist | Card::Multicast => 3,
             Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Seek => 2,
             // Kills nothing, as the gas (3) doesn't; a few seconds' status.
-            Card::Blind | Card::Sour | Card::Spin => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still => 2,
             // Kills only what another card set up, which paid for it.
             Card::Shatter | Card::Detonate => 2,
             // Kills nothing; moves the slime, as the Mind bullets do.
@@ -396,7 +418,7 @@ impl Card {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Flare | Card::Torch | Card::Tinder => 2,
             Card::Detonate => 3,
             _ => 1,
         }
@@ -704,10 +726,19 @@ impl Default for RoundRules {
 impl RoundRules {
     /// The bursts' shared settings (`burst_rules`, the toolkit's) with
     /// the rounds' own: the bomb's fling speed, and the Mind bullets'
-    /// length and settings (2026-11-16).
+    /// length and settings (2026-11-16). Provoke and Still last as long
+    /// as the devices' (`KitRules::provoke_secs` 12, `still_secs` 10;
+    /// 2026-11-17).
     pub fn burst_rules(&self, fine: f32) -> BurstRules {
-        let mind_steps = (self.mind_secs * fine).round().clamp(1.0, u16::MAX as f32) as u16;
-        BurstRules { fling_speed: self.fling_speed, mind_steps, spin_curl: self.spin_curl.to_radians(), ..burst_rules(&self.kit, fine) }
+        let steps = |secs: f32| (secs * fine).round().clamp(1.0, u16::MAX as f32) as u16;
+        BurstRules {
+            fling_speed: self.fling_speed,
+            mind_steps: steps(self.mind_secs),
+            deaf_steps: steps(self.kit.provoke_secs),
+            still_steps: steps(self.kit.still_secs),
+            spin_curl: self.spin_curl.to_radians(),
+            ..burst_rules(&self.kit, fine)
+        }
     }
 
     /// A rule by name (`larder-world set=NAME=V`, as `Rules::set`), false
@@ -717,6 +748,8 @@ impl RoundRules {
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "spin_curl" => &mut self.spin_curl,
+            "provoke_secs" => &mut self.kit.provoke_secs,
+            "still_secs" => &mut self.kit.still_secs,
             "read_r" => &mut self.read_r,
             "detonate_r" => &mut self.detonate_r,
             "flare_alarm" => &mut self.flare_alarm,
@@ -812,7 +845,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek | Card::Tinder => {}
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => {
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still | Card::Shatter | Card::Detonate | Card::Flare | Card::Torch => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
                 multis.push(multi);
@@ -973,6 +1006,8 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Blind => mind(big::MIND_BLIND),
         Card::Sour => mind(big::MIND_SOUR),
         Card::Spin => mind(big::MIND_SPIN),
+        Card::Provoke => mind(big::MIND_DEAF),
+        Card::Still => mind(big::MIND_STILL),
         Card::Shatter => Burst { r: r.read_r * f, read: big::READ_SLEEP, ..none },
         Card::Detonate => Burst { r: r.detonate_r * f, read: big::READ_SICK, ..none },
         // No kill (`r` 0): the alarm alone, unless Quiet took it.
@@ -1017,6 +1052,8 @@ pub fn burst_rules(k: &KitRules, fine: f32) -> BurstRules {
         fling_speed: 0.0,
         mind_steps: 0,
         spin_curl: 0.0,
+        deaf_steps: 0,
+        still_steps: 0,
     }
 }
 
@@ -1134,7 +1171,7 @@ fn slot(p: Card) -> Option<usize> {
         Card::Gas => Some(1),
         Card::Germ => Some(2),
         Card::Bomb => Some(3),
-        Card::Blind | Card::Sour | Card::Spin => Some(4),
+        Card::Blind | Card::Sour | Card::Spin | Card::Provoke | Card::Still => Some(4),
         Card::Shatter | Card::Detonate => Some(5),
         Card::Flare => Some(6),
         Card::Torch => Some(7),
@@ -1644,6 +1681,47 @@ mod tests {
         assert!((k.spin_curl - r.spin_curl.to_radians()).abs() < 1e-6);
         let mut tuned = r;
         assert!(tuned.set("spin_curl", 50.0) && tuned.spin_curl == 50.0 && !tuned.set("no_such", 1.0));
+        // Provoke and Still (2026-11-17): the same, for the devices'
+        // seconds; Blind, Sour and Spin keep `mind_secs`.
+        for (name, kind, secs) in [("provoke", big::MIND_DEAF, r.kit.provoke_secs), ("still", big::MIND_STILL, r.kit.still_secs)] {
+            let c = Card::from_name(name).unwrap();
+            assert_eq!((c.kind(), c.word(), slot(c), c.cost(), c.tier()), (Kind::Payload, name.to_string(), Some(4), 2, 2));
+            assert_eq!(Shell::of(c).map(|s| (s.mind(), s.special())), Some((true, true)));
+            let b = bursts(&casts(&parse(name).unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
+            assert_eq!((b.len(), b[0].mind as u32, b[0].kill, b[0].alarm, b[0].r), (1, kind, false, 0.0, r.mind_r));
+            assert_eq!(k.mind_steps_for(kind), (secs * 120.0) as u16, "{name}");
+        }
+        assert_eq!(k.mind_steps_for(big::MIND_SPIN), k.mind_steps);
+        assert!(tuned.set("provoke_secs", 20.0) && tuned.burst_rules(120.0).mind_steps_for(big::MIND_DEAF) == 2400);
+    }
+
+    /// **Provoke and Still as cards** (2026-11-17): a round's hit on the
+    /// CPU race world stamps the status on every walker within `mind_r`
+    /// to the end of its seconds (12 and 10, not the 6 the other Mind
+    /// bullets last), counts in the Mind slot and kills nothing.
+    #[test]
+    fn provoke_and_still_rounds_stamp_the_devices_seconds() {
+        use crate::mould::big::MIND_T;
+        use crate::mould::larder_world::race_world;
+        let r = RoundRules::default();
+        for (name, kind, secs) in [("provoke", big::MIND_DEAF, r.kit.provoke_secs), ("still", big::MIND_STILL, r.kit.still_secs)] {
+            let mut g = Game::new(race_world(3, 2, 5_000), Rules::default(), 3);
+            for _ in 0..20 {
+                g.step();
+            }
+            let k = (0..g.world.walkers.len()).find(|&k| g.world.lives(k)).expect("a walker");
+            let (x, y, _) = g.world.walkers[k];
+            let living = World::living(&g.world);
+            let mut rd = Rounds::new(parse(name).unwrap(), r);
+            rd.cast_at(&mut g, (x, y));
+            let d = &g.world;
+            let rr = r.mind_r * d.p.scale as f32;
+            let near: Vec<usize> = (0..d.walkers.len()).filter(|&j| d.lives(j) && (d.walkers[j].0 - x).hypot(d.walkers[j].1 - y) <= rr - 0.01).collect();
+            let fine = g.rules.tps as f32 * d.p.substeps as f32;
+            let end = (d.steps as u32 + (secs * fine).round() as u32) & MIND_T;
+            assert!(near.len() > 10 && near.iter().all(|&j| d.mind_of(j) == kind && d.mind[j] & MIND_T == end), "{name}: {} walkers near, each to step {end}", near.len());
+            assert_eq!((rd.cast[4], World::living(d)), (1, living), "{name}: one Mind cast, nothing killed");
+        }
     }
 
     /// The readers (2026-11-16, step D): each is a payload that casts one

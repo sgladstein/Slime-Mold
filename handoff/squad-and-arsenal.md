@@ -45,3 +45,22 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
   the window program today, outside the game's rules. Engine and tools is
   moving them into the library. Expect that change in your files and
   agree its timing with that lane through the coordinator.
+
+## State (kept current; newest first)
+
+**2026-11-17, batch 1.**
+
+- Done: Provoke and Still are finished and on
+  (`Reports/gun-provoke-still-2026-11-17/`, clips at zoom 6 and 12). No
+  card family follows until Milestone 1 passes.
+- Open branch: `claude/project-thread-e2ip9o` (this lane's).
+- Next, in the brief's order: control that gets in the way (job 2); the
+  rifle's feel and shake and hit-stop as one Experiments toggle (job 3);
+  shop offers for planets 1 to 3 (job 4); Heave and Corral as one card
+  and the Mind quiz dropped from the records (job 5).
+- Notes for whoever films next: `hand=squadwork` without `mode=squads`
+  keeps the eight together as one group (the RTS round's control); with
+  `mode=squads` it splits round a crystal. The commanded squad only
+  defends itself on its own (`Game::target`), so a scripted hand that
+  never volleys lets slime grow on a crystal beside it; that is the
+  player's trigger, not a bug.

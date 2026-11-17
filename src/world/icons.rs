@@ -100,6 +100,11 @@ pub enum Icon {
     // The element family's Tinder (2026-11-17): dry brush laid along a
     // bullet's line, the bullet at its head.
     Tinder,
+    // The Mind family's last two (`rounds::Card::Provoke`, `Still`,
+    // 2026-11-17). Provoke: a body, its vein broken, and the charge it
+    // makes when it believes it is cut off. Still: a rough sea gone flat.
+    Provoke,
+    Still,
 }
 
 impl Icon {
@@ -194,6 +199,8 @@ impl Icon {
             Icon::Detonate => &["M12 2 L14 8.5 L20.5 6 L16.5 11.5 L22 15 L15 15.5 L14.5 22 L11 16.5 L5.5 20.5 L7.5 14 L2 11.5 L8.5 9.5 L6.5 3.5 Z", "FO10.7 11.2 1.3", "FO13.6 13.8 1.1"],
             Icon::Flare => &["M12 3 C14.5 6 16 8.2 16 10.6 C16 13 14.2 14.6 12 14.6 C9.8 14.6 8 13 8 10.6 C8 8.6 9.2 7 10.4 5.8 C10.6 7.4 11.2 8.4 12.2 8.8 C12.4 6.8 12.2 4.8 12 3 Z", "M12 14.6 L12 21", "M4 7 L6 8", "M20 7 L18 8", "M3.5 13 L5.7 12.6", "M20.5 13 L18.3 12.6"],
             Icon::Torch => &["M12 2.5 C15 6 16.5 8.6 16.5 11 C16.5 13.6 14.5 15.5 12 15.5 C9.5 15.5 7.5 13.6 7.5 11 C7.5 9 8.8 7.3 10 6.1 C10.3 7.7 11 8.7 12 9.1 C12.3 6.9 12.2 4.7 12 2.5 Z", "M3 21 L21 21", "M4.5 21 C4.8 18.4 5.8 16.4 7.4 15", "M8 21 C8 19.2 8.6 17.9 9.6 17", "M19.5 21 C19.2 18.4 18.2 16.4 16.6 15", "M16 21 C16 19.2 15.4 17.9 14.4 17"],
+            Icon::Provoke => &["O5.5 12 3", "M8.5 12 L10 12", "M12.5 12 L21 12", "M17.5 8.5 L21 12 L17.5 15.5", "M10.6 9 L11.9 15"],
+            Icon::Still => &["M3 7.5 C5.8 4.5 8.2 10.5 12 7.5 C15.8 4.5 18.2 10.5 21 7.5", "M3 13 L21 13", "M3 18 L21 18"],
             Icon::Tinder => &["M2 20 L19 20", "M3.5 20 L5.5 14", "M6.5 20 L7 15", "M9 20 L11 13.5", "M12 20 L12.5 15.5", "M14.5 20 L16.5 14", "M3 20 L1.8 16.5", "M8 20 L7.2 16.8", "M13.5 20 L13 17", "FO20.5 8 2", "M18.5 10 L16.5 12"],
             Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
@@ -305,7 +312,7 @@ mod tests {
     #[test]
     fn every_icon_draws_something() {
         use Icon::*;
-        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull, Multicast, Seek, Flare, Torch, Tinder] {
+        for i in [Move, Stop, Hold, Attack, Burn, Wall, Turret, Bait, Recruit, Upgrade, Rifle, Flamer, Grenade, Idle, Menu, Pause, Fast, Crystal, Soldier, Mould, Alert, Heart, Clock, Shield, Eye, Close, Check, Target, Spore, Group, Blast, Gas, Germ, Bomb, Wide, Scatter, Quiet, Delay, Thick, Pierce, Split, Carbine, LongGun, Scattergun, Bullet, Slug, Needle, Buckshot, Carry, CarryStop, Heave, Corral, Pull, Multicast, Seek, Flare, Torch, Tinder, Provoke, Still] {
             let c = rasterize(i, 24);
             let on = c.iter().filter(|&&a| a > 128).count();
             assert!(on > 15 && on < 24 * 24 / 2 + 150, "{i:?}: {on} pixels on");
