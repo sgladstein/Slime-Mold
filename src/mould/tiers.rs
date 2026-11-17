@@ -304,6 +304,9 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         "capacity" => p.capacity = v.parse::<usize>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_at" => p.hunger_at = f()?,
         "far_smell" => p.far_smell = f()?,
+        // Fire scares it (the plan's C4; a tier's own trait since 11-17,
+        // the fire-shy Sprawler: `run::does_to_you`).
+        "fire_alarm" => p.fire_alarm = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
         // The life cycle.

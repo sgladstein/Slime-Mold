@@ -15,6 +15,7 @@ sources:
   - Reports/run-progression-2026-11-15/README.md
   - Reports/run-progression-2026-11-15/does-to-you.md
   - Reports/shop-b-2026-11-15/README.md
+  - Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md
   - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/surge-2026-11-15/README.md
@@ -128,7 +129,11 @@ Since 11-15 (the owner's D3, 21:41Z: "Agreed. We can test it out";
 rung of `LADDER` does one thing to you (`does_to_you`), named on the planet
 card and in the landing alert: the Drifter and the Trunk smell your pumps
 (`pump_smell` 20 over `lure_r` 15 cells) and come to eat their crystals; the
-Sprawler smells your soldiers from far off (`smell` 4 over 4 cells); the
+Sprawler smells your soldiers from far off (`smell` 4 over 4 cells) but
+shies from fire (`fire_alarm` 50, since 11-17: the designer's fire-shy
+tier, as a switch for every slime it fenced every fire;
+[report](../../Reports/sim-use-2026-11-17/c4b-fire-shy-sprawler.md); on
+run seed 1's planet 2 a plain light found nothing to burn); the
 Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
 3x (`surge_haste`); the Sporer bursts into spores at an alarm of 0.3; the
 Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when

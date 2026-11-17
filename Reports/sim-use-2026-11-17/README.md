@@ -61,6 +61,19 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   burns the sleepers; probe `examples/gasprobe.rs`, raw lines in
   `c5-raw/`, page in `page-c5/`
   (https://claude.ai/artifact/LV3H1RgmX6EoBbYSrPtTkX).
+- [c4b-fire-shy-sprawler.md](c4b-fire-shy-sprawler.md): `fire_alarm` 50
+  as the Sprawler's own trait (`run::does_to_you`), off for every other
+  slime; on run seed 1's planet 2 a plain light found nothing to burn.
+- [s1-unit-paths.md](s1-unit-paths.md): S1 built, charges walk the
+  soldiers' walking distance round walls (`unit_paths`, off); page in
+  `page-s1/` (https://claude.ai/artifact/5aGbKQjUbXnULqYqGnY7tB).
+- [s2-far-smell.md](s2-far-smell.md): S2 built, a far smell of untouched
+  crystals for hungry walkers and specks (`far_smell`, off); page in
+  `page-s2/` (https://claude.ai/artifact/NgZ29e1vfagrbnuuJ1AZST).
+- [pack-films.md](pack-films.md): the playtest pack's blind film page
+  (11-17 group 2: setting, wall or trap, old ground, fed fireproof; key in
+  the report), page in `page-pack/`
+  (https://claude.ai/artifact/QNErAVSGJgoLWhSHY9MJDF).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
