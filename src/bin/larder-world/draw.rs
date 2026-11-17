@@ -1667,8 +1667,8 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Spin => (Icon::Spin, CardKind::Payload, format!("Slime within {:.0} cells turns in tight rings for {:.0} s.", r.mind_r, r.mind_secs)),
         // Provoke and Still (2026-11-17): the devices' statuses as cards,
         // for the devices' seconds.
-        C::Provoke => (Icon::Provoke, CardKind::Payload, format!("Slime within {:.0} cells hears no food for {:.0} s: it feels cut off, panics and charges.", r.mind_r, r.kit.provoke_secs)),
-        C::Still => (Icon::Still, CardKind::Payload, format!("Slime within {:.0} cells stays calm for {:.0} s: no charge, no surge, no eating.", r.mind_r, r.kit.still_secs)),
+        C::Provoke => (Icon::Provoke, CardKind::Payload, format!("Slime within {:.0} cells feels cut off for {:.0} s and charges.", r.mind_r, r.kit.provoke_secs)),
+        C::Still => (Icon::Still, CardKind::Payload, format!("Slime within {:.0} cells is calm for {:.0} s: no charge, no eating.", r.mind_r, r.kit.still_secs)),
         // The readers (2026-11-16, step D): a kill of one state only.
         C::Shatter => (Icon::Shatter, CardKind::Payload, format!("Kills the slime gas put to sleep within {:.0} cells.", r.read_r)),
         C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells; let it spread first.", r.detonate_r)),
