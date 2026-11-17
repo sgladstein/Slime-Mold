@@ -61,6 +61,9 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   burns the sleepers; probe `examples/gasprobe.rs`, raw lines in
   `c5-raw/`, page in `page-c5/`
   (https://claude.ai/artifact/LV3H1RgmX6EoBbYSrPtTkX).
+- [c4b-fire-shy-sprawler.md](c4b-fire-shy-sprawler.md): `fire_alarm` 50
+  as the Sprawler's own trait (`run::does_to_you`), off for every other
+  slime; on run seed 1's planet 2 a plain light found nothing to burn.
 - [s1-unit-paths.md](s1-unit-paths.md): S1 built, charges walk the
   soldiers' walking distance round walls (`unit_paths`, off); page in
   `page-s1/` (https://claude.ai/artifact/5aGbKQjUbXnULqYqGnY7tB).
