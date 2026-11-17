@@ -1,0 +1,12 @@
+window     plain kill/fire/torches mould sold torch kill/fire/torches mould sold blast kill/fire/torches mould sold
+p4s1-25             0/0    /0   m24831  s8            0/0    /0   m24831  s8            0/0    /0   m24831  s8  
+p4s1-40             0/0    /0   m25075  s8            0/0    /0   m25075  s8            0/0    /0   m25075  s8  
+p5s1-25             0/0    /0   m25103  s8            0/0    /0   m25103  s8            0/0    /0   m25103  s8  
+p5s1-40             0/0    /0   m25869  s8            0/0    /0   m25869  s8            0/0    /0   m25869  s8  
+
+plain    killed 0, slime at the ends 100878, torches 0
+torch    killed 0, slime at the ends 100878, torches 0
+blast    killed 0, slime at the ends 100878, torches 0
+
+torch against plain: more kills 0, fewer 0 (sign p=1.000); less slime at the end 0, more 0 (sign p=1.000)
+torch against blast: more kills 0, fewer 0 (sign p=1.000); less slime at the end 0, more 0 (sign p=1.000)

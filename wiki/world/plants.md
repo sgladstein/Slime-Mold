@@ -6,6 +6,7 @@ updated: 2026-11-17
 sources:
   - Reports/bug-check-leftovers-2026-11-15/README.md
   - Reports/fire-2026-11-14/README.md
+  - Reports/gun-element-2026-11-17/README.md
   - Reports/plants-2026-11-14/README.md
   - Reports/plants-look-2026-11-14/README.md
   - Reports/review-fixes-2026-11-15/README.md
@@ -18,6 +19,7 @@ code:
   - BigParams::fire_dry
   - BigParams::fire_fed
   - BigParams::fire_spread
+  - BigParams::fire_weight
   - BigParams::plant_grow
   - plants::moisture
 ---
@@ -30,8 +32,9 @@ A per-cell plant field in four kinds (meadow, jungle, reeds, scrub;
 `mould::plants`), separate from the old grazing grass. It grows toward a
 capacity set by soil, kind and wet and spreads from its edges, 15 plant
 steps a game second, on the CPU world and the GPU engine (bit-exact twin
-on llvmpipe). Fire (`BigDish::ignite`, lit by scorch rounds and blasts)
-spreads through plants, eats them and leaves char; wet ground, reeds and
+on llvmpipe). Fire (`BigDish::ignite`, lit by scorch rounds, blasts and
+the Torch, a gun card that lights every plant within 6 cells) spreads
+through plants, eats them and leaves char; wet ground, reeds and
 slime with trail >= `fire_damp` 3 don't burn, so fire takes the slime's
 edge, not its body (probe: 501 killed in 80 s while it grew 5,405 to
 7,669). Char comes from the plants that burnt (`char_gain` 1), so a
@@ -59,6 +62,12 @@ flickers and leaves embers; moisture (`plants::moisture`) comes from the
 map's `moisture BASE SPREAD` line (levelgen, by biome), water within 8
 cells and noise. Fire hurts soldiers (`Rules::fire_hurt` 25 hp/s at full
 heat) ([page](https://claude.ai/artifact/7VV82Fp79TSyGViYef4SaV)).
+
+Walkers do not sense fire. A flag puts heat in their sensors
+(`fire_weight`, under 0 they turn from it; 0 off, both engines): in its one
+A/B film the slime ringed a fire instead of walking into it, and more of
+it burned, since its damp trail no longer put the fire out
+([element](../../Reports/gun-element-2026-11-17/README.md)).
 
 ## Look
 
