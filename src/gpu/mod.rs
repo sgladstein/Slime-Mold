@@ -71,7 +71,8 @@ pub const DRAW_SLEEP_DIE: u32 = 118;
 /// Bytes in `Params` (296 words).
 pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
-/// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
+/// `energy_flow`, `hunger_scent`, `hunger_at`; then a free word, `fed_full`'s
+/// until 11-17).
 pub const BODY_AT: usize = 848;
 /// Where the crater's row sits in `Params` (2026-11-12, after one body's:
 /// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
@@ -80,7 +81,7 @@ pub const BODY_AT: usize = 848;
 pub const CRATER_AT: usize = 864;
 /// Where the lone step's row sits in `Params` (2026-11-12, after the
 /// crater's: `lone_step`, `lone_floor`, `lone_r`; `BigParams::lone_step`;
-/// then `fed_crowd`).
+/// then a free word, `fed_crowd`'s until 11-17).
 pub const LONE_AT: usize = 880;
 /// Where the fling row sits in `Params` (11-14, after the lone step's:
 /// `fling_deposit`, then three spare words).
@@ -595,11 +596,6 @@ pub struct Settings {
     pub lone_step: f32,
     pub lone_floor: f32,
     pub lone_r: u8,
-    /// A fed mould packs tighter (`BigParams::fed_crowd`, `fed_full`): a
-    /// walker holding `fed_full` energy or more steps and breeds under the
-    /// crowd limit + `fed_crowd`. 0 off; needs growth and a crowd limit.
-    pub fed_crowd: u8,
-    pub fed_full: f32,
     /// The crater's cut, length of full bite and cone (`BigParams::
     /// scorch_keep`, `scorch_full`, `scorch_cone`), for the look A/B of a
     /// shot's hole (`larder-world scorch_cone=1 ...`).
@@ -800,8 +796,6 @@ impl Settings {
             lone_step: t.lone_step,
             lone_floor: t.lone_floor,
             lone_r: t.body_r,
-            fed_crowd: t.fed_crowd,
-            fed_full: t.fed_full,
             scorch_keep: t.scorch_keep,
             scorch_full: t.scorch_full,
             scorch_cone: t.scorch_cone,
@@ -1134,8 +1128,6 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "lone_step" => s.lone_step = f()?,
         "lone_floor" => s.lone_floor = f()?,
         "lone_r" | "body_r" => s.lone_r = f()? as u8,
-        "fed_crowd" => s.fed_crowd = int()?.min(u8::MAX as u32) as u8,
-        "fed_full" => s.fed_full = f()?,
         "scorch_keep" => s.scorch_keep = f()?,
         "scorch_full" => s.scorch_full = int()?.clamp(1, 65535) as u16,
         "scorch_cone" => s.scorch_cone = b()?,
@@ -1320,8 +1312,6 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         lone_step: s.lone_step,
         lone_floor: s.lone_floor,
         body_r: s.lone_r,
-        fed_crowd: s.fed_crowd,
-        fed_full: s.fed_full,
         scorch_keep: s.scorch_keep,
         scorch_full: s.scorch_full,
         scorch_cone: s.scorch_cone,
@@ -1564,11 +1554,6 @@ pub struct Engine {
     /// `energy_flow` on).
     pub body: wgpu::Buffer,
     pub energy_flows: bool,
-    /// A fed mould packs tighter (`Settings::fed_crowd`, with growth and a
-    /// crowd limit): the move's claims are cleared after the walk, as the
-    /// CPU clears them, since a cell its winner holds may still take a fed
-    /// walker's child.
-    pub fed_packs: bool,
     /// Food's news (binding 48, `Settings::wither`): the step each slot
     /// last heard of food, then three blocks of cells (gathered, and the
     /// spread's two turns). `withers` while its passes run (growth and
@@ -1938,7 +1923,6 @@ impl Engine {
             share,
             body,
             energy_flows: false,
-            fed_packs: false,
             news,
             gas_at: 4 * news_len as u64,
             gas_until: gas_until(&d),
@@ -2315,13 +2299,13 @@ impl Engine {
         // word, spare until 11-13, is one body's lossy sharing (`eloss`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
-        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, s.fed_full]));
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
         assert_eq!(b.len(), LONE_AT, "Params rows before the lone step row moved");
         b.extend(f32_bytes(&[s.lone_step, s.lone_floor]));
-        b.extend(u32_bytes(&[s.lone_r as u32, s.fed_crowd as u32]));
+        b.extend(u32_bytes(&[s.lone_r as u32, 0]));
         assert_eq!(b.len(), FLING_AT, "Params rows before the fling row moved");
         // The fling row's spare words: dense slime condensing (11-14, the
         // condense thread; off without growth). `ccrowd`'s top byte is
@@ -2393,7 +2377,6 @@ impl Engine {
         b.extend(u32_bytes(&[s.set_armour]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
-        self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
         // now, as the CPU's first `hear_food` does: a mould is not cut off
         // at its first step.
@@ -2596,14 +2579,6 @@ impl Engine {
             tick.extend([(LUMPCLEAR, 1), (LUMPSUM, n)]);
         }
         tick.extend([(SENSE, n), (WALK, n)]);
-        // A fed mould packs tighter (`fed_crowd`): a cell the move's winner
-        // holds can still take a fed parent's child, so the move's claims
-        // are cleared first, as the CPU clears them after its moves (a
-        // stale move claim below a birth's key cost 75 of 15,000 walkers
-        // their place in the twin tick without this).
-        if self.fed_packs && self.crowd {
-            tick.push((UNCLAIM, cells));
-        }
         // The Larder World, in the CPU's order: bites on walls (in the
         // move), then eating; both before growth, which eats what they give.
         if self.walled {
@@ -2613,8 +2588,8 @@ impl Engine {
         // wall bites, before eating. The move's claims are still in
         // `claim`; a spore's landing claim never meets one, since every
         // claimed cell now holds its winner and the engine's crowd limit is
-        // at most 1 (with a limit of 2 they would need clearing first, as
-        // with `fed_crowd`, which clears them after the walk).
+        // at most 1 (with a limit of 2 they would need clearing first with
+        // `unclaim`, as the deleted `fed_crowd` did after the walk).
         if self.cycles {
             tick.extend([(FATE, n), (FLY, n), (ALIGHT, n)]);
         }

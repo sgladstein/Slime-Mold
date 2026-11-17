@@ -2,7 +2,7 @@
 title: Growth and starving on the big dish
 kind: mechanism
 status: open
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/condense-2026-11-14/README.md
@@ -26,7 +26,6 @@ code:
   - BigParams::condense_crowd
   - BigParams::condense_r
   - BigParams::energy_flow
-  - BigParams::fed_crowd
   - BigParams::flow_loss
   - BigParams::hunger_scent
   - BigParams::lone_step
@@ -36,7 +35,6 @@ code:
   - BigParams::roam_share
   - BigParams::start_energy
   - BigParams::starve
-  - BigParams::tether
   - BigParams::thicken
   - BigParams::upkeep
   - CLAIM_BIRTH
@@ -198,8 +196,8 @@ strength that grows instead ([dead end](../../Reports/dead-ends.md)).
   1, 5:00: 17.1% of the screen against 7.0%;
   [fed mould](../../Reports/fed-mould-2026-11-13/README.md)). The owner
   picked it in the blind A/B (11-13 02:39Z: "Definitely film 1").
-  `BigParams::fed_crowd` (a fed walker packs more to a cell; both engines,
-  off) added walkers but not picture. At the peak its 50,000 slots fill
+  Fed packing (`fed_crowd`, a fed walker packs more to a cell) added
+  walkers but not picture and was deleted 11-17 (dead ends). At the peak its 50,000 slots fill
   at most 34.8% of a map's open cells at scale 2 (a test holds it to
   half); inside the body 66-83% of walkers are boxed in (59-66% before).
   **Cut off from every crystal** (11-13), a part of it stays whole for

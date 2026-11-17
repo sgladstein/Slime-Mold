@@ -135,10 +135,9 @@ struct Params {
     // One body (2026-11-12, `BigParams::energy_flow`, `hunger_scent`,
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
-    // hungry walker weighs the scent 1 + `hscent` x its hunger. A walker
-    // with `fed_full` energy or more steps and breeds under the crowd limit
-    // + `fed_crowd` (`BigParams::fed_crowd`, the lone row's last; `crowd_for`).
-    eflow: f32, hscent: f32, hat: f32, fed_full: f32,
+    // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
+    // word is free (`fed_full`'s until 11-17).
+    eflow: f32, hscent: f32, hat: f32, body_free: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -150,7 +149,8 @@ struct Params {
     // Lone step (2026-11-12, `BigParams::lone_step`): a walker with n other
     // walkers in the square of radius `lone_r` round its cell, as the step
     // began, steps x clamp(n / `lone`, `lfloor`, 1). 0 off.
-    lone: f32, lfloor: f32, lone_r: u32, fed_crowd: u32,
+    // Its last word is free (`fed_crowd`'s until 11-17).
+    lone: f32, lfloor: f32, lone_r: u32, lone_free: u32,
     // The fling row (11-14, `FLING_AT`): a flung walker's trail deposit
     // (`BigParams::fling_deposit`); it had word 231 until the germ took it.
     // Its three spare words are dense slime's condensing (11-14, the
@@ -559,15 +559,9 @@ fn conv_r() -> u32 { if (OUTSIDE) { return P.conv_r; } return 0u; }
 // With `per` the globals `explore`, `bshare` and `graze_w` are switches
 // only (on if any species has one).
 fn crowd_of(sp: u32) -> u32 { if (per()) { return P.sets[sp].crowd; } return P.crowd; }
-// Walker k's crowd limit where it steps or breeds: its species' (`sp`), or
-// that + `fed_crowd` while it holds `fed_full` energy or more (the CPU's
-// `fed_crowd`; a species with no limit keeps none). Claims still follow the
-// species' own limit (`walk`, `born`), as on the CPU.
-fn crowd_for(k: u32, sp: u32) -> u32 {
-    let c = crowd_of(sp);
-    if (c > 0u && P.fed_crowd > 0u && growth() && energy[k] >= P.fed_full) { return c + P.fed_crowd; }
-    return c;
-}
+// Walker k's crowd limit where it steps or breeds: its species' (`sp`).
+// A fed walker's `fed_crowd` more was deleted 11-17 (Reports/dead-ends.md).
+fn crowd_for(k: u32, sp: u32) -> u32 { return crowd_of(sp); }
 // A move's crowd limit (the CPU's `move_crowd`): a lump's member steps
 // into a cell holding `LUMP_CROWD` more (big.rs, 2026-11-16; 3 since the
 // leech ring), so a lump formed in the thick of the body can pass through it.
@@ -1522,8 +1516,7 @@ fn breed(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     let at = birth_spot(k, t);
     let j = cell(at.x, at.y);
-    // The parent's species' crowd limit, + `fed_crowd` if it is fed
-    // (`crowd_for`).
+    // The parent's species' crowd limit (`crowd_for`).
     let cr = crowd_for(k, species_of(k));
     // No child lands on barren ground (WM3) or in deep water.
     if (j == NONE || agar[j] == 0u || (cr > 0u && atomicLoad(&occ[j]) >= cr) || soil(j) == SOIL_BARREN || soil(j) == SOIL_DEEP || charred(j)) { return; }

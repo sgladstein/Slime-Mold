@@ -479,6 +479,11 @@ the body's surge, `BigParams::surge_every`; booked with the technical lead
 last surge began on), so no new row. The ground row's `_g1`-`_g3` stay the
 ground thread's.
 
+**Freed 11-17** (the off-switch cleanup, integration thread): **860**
+`body_free` (f32, the one body row's last word, `fed_full`'s) and **892**
+`lone_free` (u32, the lone step row's last word, `fed_crowd`'s). Both are
+written 0 in `Engine::write_params`; claim one here as above.
+
 ### Switches that are off
 
 The technical lead asked for this table on 2026-11-17. It lists every game feature that is built but off in the default game, where the default game is shape C on the race world or a run planet with its `enemy_keys`. Each switch doubles a code path that the twins and the census rarely play. CLAUDE.md says defaults go on unless there is a measured harm or a stated uncertainty. So every row names its owner, the reason it is off, and what decides it. If a row has no reason left, its switch gets turned on or deleted.
@@ -493,17 +498,22 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 | Set slime blocks soldiers: `set=set_block=N` | Simulation-use plan (E2b) | 11-17, new. It is in an A/B against `set_hold`. | The owner picks block or trap ("Both", 01:13Z), then a playtest | ✓ |
 | Set slime traps: `set=set_hold=F` | Simulation-use plan (E2b, the designer's A/B) | 11-17, new. It is the other side of that A/B, and over 0 it replaces block. | Same A/B | ✓ |
 | Set slime's look: `setlook=N` (window only) | Simulation-use plan (E2b) | It applies only when setting is on | The owner's look pick, together with setting | (draw only) |
-| Homing turn: `set=seek_turn=0.45` | Gun rounds and turrets | Measured as no gain: 89.4% hits against 89.1% with the catch alone (`Reports/gun-seek-2026-11-16`) | **Delete candidate**. Nothing is left to decide. | ✓ |
 | Last stand: `RaidRules::last_stand` | Defenses (raids) | The owner was "not sure if this is a good idea or not" | A playtest with it on | ✓ |
 | Reserve recruit: `set=reserve=S` | Larder rules | It is the owner's pick of free recruits, and the default is off | A playtest. If nobody asks for it by the next playtest, delete it. | ✓ |
 | Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
 | Thickening, the bronze: `thicken` | Slime enemy | The owner removed it, 11-16 04:58Z: "Remove the bronze, keep the specks" | **Delete candidate** (it also frees `ccrowd`'s top byte) | ✓ |
 | Condensing: `condense` | Condense, then slime enemy | No planet uses it since #370 (11-16). Specks break away without it. It is still on the menu. | **Delete candidate**, unless a mini-boss wants it | ✓ |
-| Fed packing: `fed_crowd` | Slime enemy | `energy_flow` replaced it on 11-13: 21,053 walkers but 7.6% of the screen | **Delete candidate** | ✓ |
 | Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
 | Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
-| One-body CPU knobs: `body_pull`, `tether` | One body | CPU only, never ported, and the dead ends hold them | **Delete candidates** | — (CPU only) |
 | Squad mode: `mode=squads` | Squads | Not a switch: it is the owner's "separate mode", and runs play it | — | — |
+
+**Deleted 11-17** (integration thread, at the technical lead's ask; each has its
+`Reports/dead-ends.md` line): the homing turn (`seek_turn` and its
+`seek_after`, `seek_r`, `seek_cone`, `seek_min`, `seek_gap`), fed packing
+(`fed_crowd`, `fed_full`; their two `Params` words are free, above) and the
+one-body CPU knobs (`body_pull`, `body_lone`, `tether`, `tether_hold`).
+Thickening and condensing go next, in one PR, since they share the dense
+state the specks and the mini-boss lumps keep.
 
 These are not switches: tier and mould-type features (alarm, scar, flinch, spores, sleep, hunger and the bosses) are on in their tiers and off in plain C. Ruled values such as `price` 0 are settled. The 11-11 model research knobs (species conversion and zones, MCPM `chance_exp`, grazing, explorers, size spread, contagion and the rest of `BigParams::today`'s zeros) are not game features. They stay as the sandbox's knobs until a cleanup PR removes them.
 
