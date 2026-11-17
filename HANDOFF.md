@@ -14,6 +14,153 @@ order), then [`CLAUDE.md`](CLAUDE.md) (how to work here),
 then the [wiki page](wiki/index.md) for whatever you touch, then its
 reports ([`Reports/README.md`](Reports/README.md) indexes them all).
 
+## Account move, 2026-11-17: read this first
+
+On 2026-11-17 the owner moved to a new claude.ai account that sees **only
+this repository**: no project memory, no project threads, no shared project
+folder, and old `claude.ai/artifact/...` links and thread ids (`cmsg_...`)
+will not open. Everything that lived only there is now copied in:
+
+- [`handoff/project-memory-2026-11-17/`](handoff/project-memory-2026-11-17/MEMORY.md):
+  every project memory note as it stood at the move (start at `MEMORY.md`,
+  the index). The older 11-10 copy is [`handoff/project-memory/`](handoff/project-memory/README.md).
+- [`handoff/project-files/`](handoff/project-files/): the shared folder's text
+  files (the Scott-Desktop booking sheet, review briefs and prompts, a scratch
+  run). Large media (crater A/B stills, sound WAVs) were not copied.
+- `handoff/<area>.md`: per-area handoffs written by each working thread at
+  the move, where they got to it before usage ran out.
+
+### Project goal and direction
+
+- **Fun over fidelity** (owner, 11-10): interesting simulations that become a
+  game, not a realistic slime mould. Biology and Jones's papers are
+  inspiration; judge every change by play.
+- **Direction: RTS-type games** where the mould is integral to play and
+  several strategies counter each other (11-10). The live game is the
+  **roguelike run in squad mode** in Larder World (11-15): 8 generated
+  planets, one slime per planet, shop between levels, pumps as income, rolled
+  guns and gun cards. The campaign stays but is FROZEN with the RTS controls
+  (D4, 11-15). The old dish game is paused.
+- **Platform**: the real game is a native GPU app (wgpu); browser builds only
+  for quick feel checks. Play is assumed ZOOMED IN (24 px/cell), so every
+  graphic must be crisp at close zoom.
+
+### How the owner wants work done (not obvious from code)
+
+- **Merging**: each thread merges its own PRs by adding the label `queue`
+  (`gh api repos/sgladstein/Slime-Mold/issues/N/labels -f 'labels[]=queue'`;
+  the MCP `issue_write` labels call replaces other labels). Don't merge main
+  in by hand to re-run CI. Details in `CLAUDE.md`.
+- **Never assign sgladstein to a PR or request their review** (they get an
+  email per PR; 11-14). Keep the attribution lines in PR bodies.
+- **The repo is public** (made public 11-12 to fix Actions billing). Keep the
+  owner's email and personal details out of anything pushed. A CI job that
+  fails in 2-3 s with no log is billing: read the check-run annotation.
+- **Build first, balance later** (11-12): a feature lands when it works and
+  can be seen (tests plus a GIF or playable build). Censuses only answer a
+  named strategy question, under about an hour without the owner's OK.
+- **Defaults on** unless there is a measured harm or stated uncertainty.
+- **Show, don't tell**: pictures and GIFs on an Artifact page (stills are not
+  enough for look picks; give GIFs/video or a playable build); visual choices
+  as blind A/B with the key off the page; page sources saved under
+  `Reports/` and listed in `Reports/pages.md`.
+- **Lean reading**: `CLAUDE.md` is the only file every thread reads; read
+  only what the task needs.
+- **Brainstorms start from the model**, never anchored on the old demo tools
+  (lamp, oats, salt, knife, water).
+- **Reviews** lead with the big picture (missed tests, approach, other
+  directions), not only numbers. Two standing reviewers (game designer,
+  technical lead) reviewed merges and milestones; their advice went straight
+  to threads. When the owner was away, reviewers plus an integration thread
+  decided and recorded it.
+- **New threads** suggested by agents were pre-approved (11-12).
+- **The owner plays by double-clicking `play.cmd`** (pulls main, builds
+  `larder-world` and `larder-edit`, opens the menu). `play-new-slime.cmd`
+  plays the new-slime rules. Point them at these, not at cargo.
+- **Never `cargo fmt` the whole tree** (it reflows other threads' files).
+- **Command ids** for `larder-world` live in one `commands!` table in
+  `src/bin/larder-world.rs`; new ids append at its end.
+- **Ownership locks** that held at the move: `paths.rs` distance map / map
+  cache belonged to the levelgen thread; soldier movement over it (walk,
+  elbow_room, squad_turn, guide, funnel) to the squad movement thread.
+
+### Machines
+
+- **Cloud sessions have no GPU.** `apt install mesa-vulkan-drivers` gives
+  llvmpipe Vulkan for checking wgpu code (never for timing).
+- **Scott-Desktop**: the owner's Windows PC with a GTX 1070, repo clone at
+  `C:\Users\Scott\Code\Slime Mold`. GPU timing runs go through Remote Control
+  when the PC is on with the Claude app open; standing OK for tests (11-11),
+  fully available including timing (11-14). Booking and run rules:
+  [`handoff/project-files/scott-desktop/booking.md`](handoff/project-files/scott-desktop/booking.md).
+  Timing runs alone; warm the card first; close Edge before timing; GPU-idle
+  check under 10%. Disk: "clear build folders and stay on C"; check free
+  space first; never delete the owner's files. Every frame was under 2.6 ms
+  p95 on the 1070 (11-14 batch).
+- **Windows vs Linux**: f32 `sin`/`cos`/`exp` come from the platform libm, so
+  CPU replays and seed results differ across OSes (the skirmish
+  `eating_fills_the_bank` test failed on Windows; fix 1a681d7). The GPU
+  differs again (FMA, atomics order). Use the `libm` crate if lockstep ever
+  matters.
+- **Runner threads**: long runs could use up to 4 Haiku runner threads that
+  only run given commands and send raw output back.
+
+### Owner rulings for Larder World and the run (condensed; full list in `wiki/decisions*.md` and the memory copy)
+
+- Soldiers must NOT need feeding; no upkeep or maintenance costs at all
+  (upkeep code removed, #298). Pumps are the main income.
+- Squad mode is the default mode; healing is a specific order (costs the same
+  energy as building), not automatic. New soldiers join the active squad;
+  tight blob is the default formation; linked squads keep their own guns.
+- Larder system removed in squad mode: a taken crystal is immediately yours.
+  Crystals pay by drain or guard; guarding is worth more long-run. The owner
+  wants complexity.
+- Walking into thick slime is VERY deadly; soldiers stand and shoot into
+  slime, are heavily slowed in thick slime, can't stand on crystals. Shots
+  stop at the first slime. Crater = 2 s default.
+- Shape C is the default slime. Difficulty comes from mould types (a
+  progression ladder), not from balance cuts; don't make the slime easier for
+  the player AI. Slime aims to control crystals and grow; cut-off parts
+  wither (and panic). Slime can damage and overgrow walls slowly.
+- Bronze (thicken/condense) is removed from play (keys stay); breakaway
+  specks come from ordinary slime, more often early, on from planet 2.
+- Mini-bosses: all kinds, no bronze, spawn at crowding or cut-off, chance
+  rises through the run, much stronger and varied.
+- One new threat per slime per planet (D3, tested). No starting payload card
+  (D5). Shake/hit-stop: show video first (D6). No rush brake yet (D7). Drop
+  outpost from the run shop, hold lure/siren (D10).
+- Raids are the #1 defense payoff; a kill box pays only through an upgrade.
+- Refunds: demolish refunds half; cancelling a partial build refunds 100%.
+  One click resumes a half-built building.
+- Turrets fire over walls, rifles don't.
+- UI: the HUD is ONE row (gun cards included); NO scrolling; UI scale
+  applies to every screen; the home-crystal hover overlay must not block
+  shooting.
+- Graphics: shaders for slime and effects; crisp hexagon crystals; sharp
+  slime; visuals follow the simulation (no drawn-only effects). Designed maps
+  are part of the plan; ground is drawn from the simulation's fields.
+- Guns: squad owns rolled guns and rolled bullets; cards cost, guns have a
+  budget, bullets plus stacking modifiers; simple card text.
+- The roguelike run is SEPARATE from the campaign (don't erase the
+  campaign); maps grow bigger and harder through the run.
+
+### Loose ends at the move (2026-11-17)
+
+- **PR #436** must be labelled `queue` after **#434** merges.
+- **Provoke and Still cards**: built on branch
+  `claude/project-thread-vx9t3p-wip`, tests pass, not filmed, no PR yet.
+  Next: film them, open a PR, then gun-system step E.
+- **Owner picks still open** (the "New Slime Picks" page; its source should
+  be under `Reports/` via `Reports/pages.md`): 4 blind A/B films, Heave/Corral
+  merge yes/no, set slime block-vs-trap, fireproof fed slime; the door-grate
+  bullets question; Mind-bullet clip guesses; the crust "name the ground"
+  quiz; a `play-new-slime.cmd` playtest. Also older: haze and flinch A/B,
+  mini-boss look Violet/Ember/Ink, fen moat A/B, plants and condense
+  playtests, sound levels.
+- **Three GTX 1070 timing runs queued**: homing, Mind bullets, Grudge memory.
+  Plants also still lack a 1070 timing.
+- The decisions list below (Decisions the owner has not made) still holds.
+
 ## Where the game stands
 
 One line per subject; the page holds the detail. The owner's rulings:

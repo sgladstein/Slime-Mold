@@ -1,0 +1,107 @@
+- [rts-direction](rts-direction.md) — RTS (Bloomfront) 2026-11-10: design findings, owner rulings; now in the build phase (playable demos)
+- [rts-skirmish](rts-skirmish.md) — budget skirmish opens on Strike and Fortify (PR #50); brace wins every pairing; next: Fortify price, exploiter search
+- [web-build](web-build.md) — the mould library builds to wasm32; web/ crate + Artifact page make browser-playable demos
+- [ci-parts](ci-parts.md) — CI tests are 4 parallel jobs (lib, window, window smoke, rest) since #346 (11-15); replays untracked; Args: Default
+- [pr-merging](pr-merging.md) — threads merge their own PRs by labelling them `queue` (own Actions merge queue, live 2026-11-14); don't re-merge main by hand
+- [brainstorm-briefs](brainstorm-briefs.md) — brainstorm briefs must not anchor on the demo tools; describe the model neutrally
+- [roadmap](roadmap.md) — ROADMAP.md sequences all plans (game, GPU, RTS, Pixel_Physics ports); threads update their rows
+- Project goal (Scotttt, 2026-11-10; refined 11-11): not a realistic slime mould; the aim is interesting simulations that can be turned into a game. Biology is inspiration.
+- Reviews (Scotttt, 11-11): independent reviews big picture first (missed tests, approach, other directions, improvements), not only numbers.
+- Standing reviewers (Scotttt, 11-12): game designer (cmsg_01PcwPdssrGxiXYvyCG8WaUX2dsdkBBhuYywD19AnT6kXG) and technical lead (cmsg_01PcwPdssrGxiXYvyCG8WaUX7L1qrgkAvCdykPj6C5Q5yB) keep reviewing; coordinator messages both when a thread merges a PR or finishes a milestone.
+- Reviewer advice (Scotttt, 11-12): reviewers send notes straight to the threads, no owner approval needed.
+- Owner unavailable (Scotttt, 11-12, overnight): questions go to the reviewers plus the integration thread (cmsg_01PcwPdssrGxiXYvyCG8WaUXVvB9idhrH7XKQHoSEmCnSB, tie-breaker); they decide, record it, and the thread proceeds.
+- New threads (Scotttt, 11-12): "I give approval for any new threads the agents suggest". Coordinator starts suggested threads without asking.
+- Focus (Scotttt, 11-10): priority is building playable demos rather than more harness testing.
+- Testing rule (Scotttt 11-12, in CLAUDE.md/ROADMAP): long balance censuses are a scheduled balance pass, not a gate on features. Build, show, retune. Censuses only for strategy/AI/shared-default questions, kept small. Coordinator holds long reruns.
+- Current dishes (Scotttt, 11-10): existing demos aren't the real games; engine/GPU work measures general properties. Direction is RTS-type games.
+- Demo bar (Scotttt, 11-10): mould must be integral to play; several strategies that counter each other.
+- Brainstorm rule (Scotttt, 11-10): don't anchor on old demo tools (lamp, oats, salt, knife, water).
+- GPU target: GTX 1070 on the home PC "Scott-Desktop". GPU timing runs there via Remote Control.
+- Haiku runners (Scotttt, 11-10): threads with long runs may request up to 4 Haiku runner threads via the coordinator; runners only run given commands, commit raw output to their branch, send branch+sha.
+- [game-sound](game-sound.md) — dish sound (PR #23) and Larder World sound; levels await the owner's ears; new sounds PR #217 (11-14)
+- [lean-reading](lean-reading.md) — owner: threads read only what the task needs; CLAUDE.md is the only always-read file
+- [software-gpu](software-gpu.md) — cloud has no GPU; apt install mesa-vulkan-drivers gives llvmpipe Vulkan for checking wgpu code (not for timing)
+- [scott-desktop](scott-desktop.md) — owner's GTX 1070 PC: repo clone at C:\Users\Scott\Code\Slime Mold; book runs in /mnt/project-files/scott-desktop/booking.md (timing runs alone)
+- PC runner (Scotttt, 11-12): one long-lived PC runner thread (cmsg_01PcwPdssrGxiXYvyCG8WaUXSwyPUwNtHT7L2TgFCr59ga) holds Remote Control on Scott-Desktop. Threads send it exact commands and a worktree; it follows booking.md, reports to the coordinator, who forwards results and asks integration to update booking.md.
+- PC (Scotttt, 2026-11-14 08:35Z): PC fully available, timing included. 11-14 batch done (#251 script fixes, #261 tolerances; Reports/pc-batch-1070-2026-11-14.md): every frame <2.6 ms p95 on 1070. Owner may turn the TV off; close Edge before timing (GPU-idle check). Owner OK'd idle check <10% (11-14 19:09Z). Levelgen timing PR #284 done 19:14Z (branch claude/project-thread-26drse cdcf2132); PR #302 done 21:21Z (f67ebee4). Runner: warm card first; worktrees sm-levelgen, sm-levelgen2 left.
+- Pathing lock: levelgen thread (cmsg_01PcwPdssrGxiXYvyCG8WaUXHpvAsm955EuZKKdhjnHSNE) owns distance_map / map cache (MapBuild, map_for, pump_maps) in larder_world/paths.rs. Soldier movement over it (walk, elbow_room, squad_turn, guide, funnel) is the squad movement thread's since 11-16 (cmsg_01PcwPdssrGxiXYvyCG8WaUX4uE2KRVhL3PF2znGuNZZ1c).
+- Windows-only: skirmish eating_fills_the_bank test fails on Windows (f32 libm drift); fix 1a681d7; CPU replays don't reproduce across OSes.
+- Scott-Desktop disk (owner 11-11): "clear build folders and stay on C". Check free space first. Never delete the owner's files.
+- [mould-shooter](mould-shooter.md) — Larder, mould-as-enemy shooter brainstorm (PR #38); M3 merged and playable
+- [larder-world-merge-order](larder-world-merge-order.md) — engine PRs through #89 merged 11-12
+- Larder direction (Scotttt, 11-11): Larder on the big GPU dish as a world; energy crystals; longer persistent world, maybe a campaign; several mould species. Graphics thread cmsg_01PcwPdssrGxiXYvyCG8WaUXKJA1ExyXnFzv5sgkHbtaFn. Two soldier teams vs multiple moulds is a future idea.
+- Maps (Scotttt, 11-11): designed maps are part of the plan; graphics draws ground/terrain from the simulation's fields.
+- Larder rulings (Scotttt, 11-11): balance worries aren't a reason to scale back; difficulty from mould types (progression ladder). Run-out vs non-depleting crystals both tested. Walls first, Sporer/Sleeper tiers, player's own mould. Slime can damage/overgrow walls slowly.
+- Graphics (Scotttt, 11-11): shaders for slime and effects; soldiers SVG sprite A. Shots stop at the first slime. Crystals are hexagons. Visuals follow the simulation.
+- Playtest 2026-11-14 01:49Z (Scotttt): soldiers must NOT need feeding; graphics need big improvement (crisp crystals, sharp slime); bullets: research Noita wand animations; show gun cards in UI.
+- Zoom (Scotttt, 11-12): deeper zoom-in, 24 px/cell. Owner 11-14 20:21Z: assume play is ZOOMED IN; all graphics (ground edges, fire, plants) must be crisp at close zoom.
+- PRs (Scotttt, 11-14 19:35Z): don't assign the owner or request their review (email spam); in project instructions.
+- Look picks (Scotttt, 11-12): stills aren't enough; give GIFs/videos or a playable build.
+- Craters and slime movement (Scotttt, 11-12): soldiers stand and shoot into slime, heavily slowed in thick slime, can't stand on crystals.
+- Platform (Scotttt, 11-11): real game is a native GPU app; browser builds only for quick feel checks.
+- Simulation research (Scotttt, 11-11): use published knowledge of parameters; aim looks at a gameplay creature.
+- [mould-behaviours](mould-behaviours.md) — Sporer, Sleeper, Swarmer (PR #70); in game via #85
+- [independent-reviews](independent-reviews.md) — review prompts lead with big picture; biology is inspiration; show prompt first
+- [larder-maps](larder-maps.md) — five paper maps (#76), loader (#77); map editor larder-edit #209
+- [map-editor](map-editor.md) — `larder-edit` binary merged #209 11-14, Enter plays the map
+- [world-ui](world-ui.md) — game UI over the Larder world (PR #80); 0.1 ms on the 1070
+- [player-ai](player-ai.md) — Larder player AI; #242 (11-14): take + 16 turrets wipes default slime 6/8 seeds; censuses paused until owner playtest. Slime not to be made easier for the AI.
+- [ci-billing](ci-billing.md) — CI billing stop 11-12; re-run and merge once fixed
+- [larder-world-playtest](larder-world-playtest.md) — owner playtests and fixes; playtest pack artifact TwAqFC2yHJAVT2MHzf9TRv
+- [larder-aim-and-mass](larder-aim-and-mass.md) — #197 wading, #198 aims, #199 audit, #218 craters 2 s, #221 far burn
+- [soldier-controls](soldier-controls.md) — RTS controls thread 11-12: queue, attack-move, auto-harvest, builders
+- [squad-toolkit](squad-toolkit.md) — six CPU tools (#104), GPU bursts #159, gas #211, germ #216
+- [tech-lead-review](tech-lead-review.md) — ongoing technical-lead review
+- [player-mould](player-mould.md) — player's own mould species; #208 per-side GPU birth cap
+- [one-body](one-body.md) — one body CPU #103, GPU #108
+- [larder-buildings](larder-buildings.md) — turret, lure, pump, outpost, wall, siren (#112, #160, #161); building looks #258 turret, #271, #272 siren haze
+- Merge log: through 11-14 #208-#272 reviewers told up to #259; 11-15 reviewers told #310-#321, #363, #364. Still awaiting, tell reviewers: #133 Drifter, #144, #149, #150, #156.
+- Crater pick (Scotttt, 11-14): crater=2 (2 s) default.
+- Command ids (#186): larder-world command ids live in one `commands!` table in src/bin/larder-world.rs; new ids append at its end.
+- Playtest rulings 11-12 (Scotttt): shape C is the default slime. Walking into thick slime VERY deadly. Craters shorter. Remote build orders (#169).
+- Playtest rulings 11-15 07:4xZ (Scotttt): squad mode is the default mode. Healing must be a specific order, not automatic. HUD must be ONE row (gun cards too). UI scale must apply to every screen (menus, shop, gun range). Home-crystal hover overlay must not block shooting. One click resumes a half-built building.
+- Refunds (Scotttt, 11-15 21:37Z): demolish refunds half; cancelling a partial build refunds 100%.
+- Whole-game review rulings (Scotttt, 11-15 21:41Z): D3 one new threat per slime per planet (test it); D5 no starting payload card; D6 shake/hit-stop: show video first; D7 play first, no rush brake yet; D4 FREEZE campaign + RTS controls (no new features routed to them); D10 drop outpost from run shop, hold lure/siren; D2 breakaway on from planet 2.
+- [bomb-rounds](bomb-rounds.md) — bomb, cluster, blowout merged #225
+- [gun-rounds](gun-rounds.md) — gun cards: bullets #191, trails #244, scorch burns + bait #273, budget #275, rate/thrift/smother #278; owner 16:46Z: squad owns rolled guns, rolled bullets; simple card text #318, gun range #325 (11-15)
+- [gun-look](gun-look.md) — gun look pass 11-15: muzzle flash by gun kind, recoil, gliding tracers, the hit's spray of killed slime (kills unchanged)
+- [testing-proportion](testing-proportion.md) — build first, balance later; censuses >1h need OK
+- [slime-enemy](slime-enemy.md) — C default; shares food, withers when cut off, panic, creep, charge (reach range+5, #264/#267)
+- [slime-enemy-review](slime-enemy-review.md) — slime-enemy thread: surges, depth, haze, flinch merged (haze + flinch A/B picks await owner); 11-16 owner: bronze removed (thicken, condense), specks from ordinary slime, more often early
+- [cloud-plan](cloud-plan.md) — 11-14 cloud items C1-C10, D1-D6
+- [squad-control](squad-control.md) — squad mode (mode=squads): #240, tiles #254, guards/heal/queues/links #276 merged 11-14; deselect/AUTO #321, chokepoint column #326 (11-15); heal order + squads default #330 merged 11-15
+- Squad + larder rulings (Scotttt, 11-14, squad thread cmsg_01PcwPdssrGxiXYvyCG8WaUXRjKGDpWRiGwPp1xy9E2dBJ): larder system removed; taken crystal immediately yours. Tight blob default formation. New soldiers join the active squad. Slime aims to control crystals and grow. Crystals pay by drain or guard; guarding worth more long-run. Owner wants complexity.
+- No maintenance costs in this game (Scotttt, 11-14). Owner still saw upkeep 20:10Z -> thread cmsg_01PcwPdssrGxiXYvyCG8WaUXVxNVjTwdN1znDPmdYUuTzP.
+- Owner notes 2026-11-14 15:06Z (answers 15:21Z), routed: (1) Roguelike run mode, SEPARATE from the campaign (don't erase campaign; may become main game); one level = one generated map + one slime; shop between levels; maps grow bigger and harder; upgrades soldiers/turrets/walls/bombs/mortar, new cards/guns -> roguelike thread cmsg_01PcwPdssrGxiXYvyCG8WaUXTX9SyKMGKZP4ciXzGUAHZu. Procedural levels are their own thread (owner: huge task) cmsg_01PcwPdssrGxiXYvyCG8WaUXHpvAsm955EuZKKdhjnHSNE. (2) Gun budget: cards cost, guns have a budget, bullets + stacking modifiers; H loadouts stay as test presets for now -> gun thread. (3-4) guards while working, squad order queues, merge only when overlapping, Join (linked squads keep own guns/settings), healing costs same energy as building -> squad thread. (5) condensed slime breaks off as its own crystal-eating creature; type undecided, build and playtest -> condense thread.
+- Condensing slime (Scotttt, 11-14): dense/long-fed slime reabsorbs to half coverage, twice as strong; transformation must look cool.
+- [units-read](units-read.md) — soldiers/buildings read at zoom 6 (#227)
+- [larder-playtest-fixes](larder-playtest-fixes.md) — #237: tool_weight 0, wall builders unstuck, lure_burn 0
+- [gun-card-hud](gun-card-hud.md) — gun-card strip merged #233
+- [slime-look](slime-look.md) — slime rendering 11-14: #230, #241, black spots #259, sheen #263, opacity #265; organic start #319 (11-15); who owns which view.wgsl lines
+- [crisp-crystals](crisp-crystals.md) — crystals/terrain look: #228, #247, #253/#260 (all merged 11-14); view bindings 21-24 ours
+- [play-script](play-script.md) — owner plays by double-clicking play.cmd (#245); point them at it, not cargo commands. Replay files blocked updates; #293 gitignores them.
+- UI scale (#250 merged): Ctrl +/− 75-300%, saved. Menu/HUD review thread cmsg_01PcwPdssrGxiXYvyCG8WaUXDJ58rTuLEuNfxu3qt3aNLi (#324) owns HUD layout, text size, UI scale everywhere, hover overlays. [[ui-review]]: #324-#362 merged; owner 17:31Z: NO scrolling; Shop B + Menu A merged #363 (11-15 20:42Z); Card 2 merged #364 (21:10Z, command card thread cmsg_01PcwPdssrGxiXYvyCG8WaUXSKhb5KyUn5oDvjXdvVLiGR).
+- [build-flow](build-flow.md) — builders raise from reach 6 on their side, Shift queues builds (#255); cancel/refund + range ring #268; resume-by-click thread cmsg_01PcwPdssrGxiXYvyCG8WaUXRViQPtZqHHVBWpY5t2hM6Z (11-15)
+- [larder-campaign](larder-campaign.md) — campaign thread: missions 1-8 built (PR #256 11-14); tools, plans, tuning notes
+- [bug-sweep](bug-sweep.md) — 11-14 squad-mode bug sweep: #252, #262, #270 merged; bug patterns for new window/squad code
+- [bug-check-11-15](bug-check-11-15.md) — 11-15 deep bug check of 11-14 merges: fixes #311 (merged) + #309; open items (bullet spread, fire kills, map plants in CPU tools)
+- [condense](condense.md) — slime condensing (11-14): #266, texture #269, breakaway #274 merged; owner 11-16: bronze removed from play (keys stay), breakaway from ordinary slime
+- [levelgen](levelgen.md) — procedural planets (11-14/15): level(seed, depth) -> Map; map fixes #323 and front doors + back roads #327 merged 11-15 (111/112); fen lakes #329 merged, moat off pending owner's blind A/B; caves #337 merged; per-biome openings #345 merged; rivers off nests #352 merged; cave gates off pools #355 merged (11-15)
+- [roguelike-run](roguelike-run.md) — roguelike run mode: 8 planets, shop, dev mode (PR #280, 11-14); pacing #314, shop steady #316, win at 2% #320 (11-15)
+- [plants](plants.md) — plants+fire thread: fire round 2 #295 and per-pixel plants look #304 merged 11-14 22:14Z; awaits owner playtest; 1070 timing to do
+- [no-upkeep](no-upkeep.md) — upkeep code removed 11-14 (PR #298 merged): rations, hunger, lure burn gone; healing/mould-eating kept
+- [steady-hud](steady-hud.md) — bottom bar steady at every zoom, minimap always in the row, BAR 92%; start menu follows UI size (PR #300, 11-14)
+- [view-cost](view-cost.md) — perf thread 11-15: viewpasses= and view-cost.ps1 time each view pass/part on the 1070; zoom 1 view 5.1 -> 1.9 ms; plants are the biggest cost
+- [pump-economy](pump-economy.md) — pumps are the main income (11-15, PR #322 merged): hand drain x0.2, pump by crystal size, 3 levels, rig look, income-only readout
+- [run-progression](run-progression.md) — run/enemy progression thread 11-15: stuck rule, mass goal, play log, 1% goal; D3 does_to_you test + D10 shop (PR #372 merged)
+- [defense-payoff](defense-payoff.md) — 11-15 thread: turtle stalemate fix; owner 21:15Z: raids #1 (consider losing-slime all-out rush), kill box pays only via an upgrade; #368 raids + render + last stand (off) merged 11-15 23:15Z, raids route round walls
+- [scent-view](scent-view.md) — F2 scent view in Larder World (food scent blue + contours, trail pink), PR #365 merged 11-15; never cargo fmt the whole tree
+- [wall-sides](wall-sides.md) — walls leave the squad on its own side (PR #374, 11-16): home side, builders/guards behind it, 4 s footprint wait
+- [mini-boss](mini-boss.md) — mini-boss thread 11-16: owner 04:58Z (all kinds, NO bronze, spawn at crowding/cut-off, chance rises through run) + 05:23Z (much stronger, varied); hunter built on lumps; look thread w9vv1m owns the view
+- [gun-system-review](gun-system-review.md) — gun/card rethink 11-16/17: A-D merged (Mind, readers, route, Torch, Tinder; force = shove cards); cut count says no Cut card (PR #435); next Provoke/Still cards, then E
+- [throw-aim](throw-aim.md) — throw aiming ghost for tools (thrower, reach ring, arc, area, red out of reach); PR #379 merged 11-16; page YRsCKRrkXTesoCEyC782LC
+- [walls](walls.md) — walls thread 11-16: rubble as ground #384; doors + Thicken merged #395; turrets fire over walls, rifles don't (owner 19:50Z, merged #398)
+- [mini-boss-look](mini-boss-look.md) — mini-boss look thread 11-16: lump drawn from its members; blind A/B Violet/Ember/Ink awaits owner; PR #386 merged 11-16
+- [squad-movement](squad-movement.md) — squad movement rework 11-16: steer.rs velocity walk (Rules::steer on), drawn between steps; PR #392 merged 11-16; numbers and open items
+- [turret-growth](turret-growth.md) — turret tech tree vs cards thread 11-16: recommend both (tree = bodies, cards = barrel); first step shared turret deck
+- [sim-use-review](sim-use-review.md) — 11-16/17 simulation-use review: plan draft 3 all built and merged; owner picks on one blind page QNErAVSGJgoLWhSHY9MJDF (PR #434); next per-tier fire-shy key
