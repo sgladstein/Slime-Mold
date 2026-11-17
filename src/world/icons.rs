@@ -86,6 +86,10 @@ pub enum Icon {
     Blind,
     Sour,
     Spin,
+    // The readers (`rounds::Card::Shatter`, `Detonate`, 2026-11-16): what
+    // they read, broken.
+    Shatter,
+    Detonate,
 }
 
 impl Icon {
@@ -174,6 +178,10 @@ impl Icon {
             Icon::Sour => &["M17 21 L17 10 C17 6.5 14.8 4 12 4 C9.2 4 7 6.5 7 10 L7 15", "M3.8 11.8 L7 15 L10.2 11.8"],
             // A circling arrow round a knot: it turns in tight rings.
             Icon::Spin => &["M12 4 C16.4 4 20 7.6 20 12 C20 16.4 16.4 20 12 20 C7.6 20 4 16.4 4 12 C4 9.6 5 7.5 6.7 6", "M6.6 2.6 L6.7 6 L10 6.7", "FO12 12 2.2"],
+            // A sleeper's crescent moon split by a crack.
+            Icon::Shatter => &["M15 3 C9.8 3.6 6 7.9 6 13 C6 18 10 22 15 22 C17.6 22 20 20.8 21.4 18.6 C16 18.8 11.8 14.8 11.8 9.6 C11.8 7.2 13 4.7 15 3 Z", "M4 3.5 L9 9 L6.5 12 L11.5 17 L9.5 21"],
+            // The germ's two spots inside a blast.
+            Icon::Detonate => &["M12 2 L14 8.5 L20.5 6 L16.5 11.5 L22 15 L15 15.5 L14.5 22 L11 16.5 L5.5 20.5 L7.5 14 L2 11.5 L8.5 9.5 L6.5 3.5 Z", "FO10.7 11.2 1.3", "FO13.6 13.8 1.1"],
             Icon::Multicast => &["M2 12 L6 12", "M6 12 L13 7.5", "M6 12 L13 16.5", "M13 5 L19 5 C21 5 22 6 22 7.5 C22 9 21 10 19 10 L13 10 Z", "M13 14 L19 14 C21 14 22 15 22 16.5 C22 18 21 19 19 19 L13 19 Z"],
             Icon::Scattergun => &["M2 14 L4 10.5 L13 10.5 L14.5 9.5 L14.5 15 L13 14 L11 14", "M4 10.5 L4 14 L8 14 L9 17.5 L11 17.5 L11 14", "FO18.5 7.5 1.3", "FO21 12.2 1.3", "FO18.5 17 1.3"],
         }

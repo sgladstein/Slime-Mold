@@ -1654,6 +1654,9 @@ pub(super) fn card_face(c: rounds::Card, r: &RoundRules, w: &Rules) -> (Icon, Ca
         C::Blind => (Icon::Blind, CardKind::Payload, format!("Slime within {:.0} cells is blind for {:.0} s: it walks straight on.", r.mind_r, r.mind_secs)),
         C::Sour => (Icon::Sour, CardKind::Payload, format!("Slime within {:.0} cells turns from its own trail for {:.0} s.", r.mind_r, r.mind_secs)),
         C::Spin => (Icon::Spin, CardKind::Payload, format!("Slime within {:.0} cells turns in tight rings for {:.0} s.", r.mind_r, r.mind_secs)),
+        // The readers (2026-11-16, step D): a kill of one state only.
+        C::Shatter => (Icon::Shatter, CardKind::Payload, format!("Kills the slime gas put to sleep within {:.0} cells.", r.read_r)),
+        C::Detonate => (Icon::Detonate, CardKind::Payload, format!("Kills the sick slime within {:.0} cells.", r.detonate_r)),
     }
 }
 
@@ -1829,6 +1832,10 @@ pub(super) fn card_look(payload: Option<rounds::Card>) -> CardLook {
         // The Mind bullets (2026-11-16): one rose-magenta family, so a
         // status shot reads apart from a kill.
         Some(rounds::Card::Blind | rounds::Card::Sour | rounds::Card::Spin) => ([255, 90, 190], [255, 220, 242], [255.0, 130.0, 210.0]),
+        // The readers (2026-11-16): a paler flash of what each reads, the
+        // gas's violet and the germ's green gone toward white.
+        Some(rounds::Card::Shatter) => ([205, 170, 255], [248, 244, 255], [215.0, 190.0, 255.0]),
+        Some(rounds::Card::Detonate) => ([215, 255, 60], [250, 255, 220], [225.0, 255.0, 110.0]),
         _ => ([255, 200, 110], [255, 248, 222], [255.0, 214.0, 150.0]),
     };
     CardLook { glow, core: [core[0], core[1], core[2], 255], light }

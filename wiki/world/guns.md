@@ -2,7 +2,7 @@
 title: Guns, bullets and gun cards
 kind: design
 status: open
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - Reports/card-text-2026-11-15.md
   - Reports/gun-budget-2026-11-14.md
@@ -12,6 +12,7 @@ sources:
   - Reports/gun-multicast-2026-11-16/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/gun-readers-2026-11-17/README.md
   - Reports/gun-seek-2026-11-16/README.md
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
@@ -24,14 +25,17 @@ sources:
 code:
   - Ammo::roll
   - BigDish::mind
+  - BigDish::read_strike
   - Burst::push
   - Engine::mind_pass
+  - Engine::read_pass
   - Engine::snap
   - Game::catches
   - Game::release
   - Game::steer
   - Gun::roll
   - RoundRules::burst_rules
+  - Rounds::cast_cards_at
   - Rounds::flush
   - Run::range
   - Set::shape
@@ -149,6 +153,22 @@ too. The owner has the four clips as a blind quiz. Spin as a harder turn
 and Lace (sensing reach x 0.15 or 2.5) showed nothing and were dropped
 ([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
 
+**Readers** (2026-11-17, step D's second family): Shatter and Detonate
+kill only the walkers in the state another card put there, within their
+reach, on both engines (`BigDish::read_strike`, `Engine::read_pass`):
+Shatter the walkers asleep from gas (`read_r`, 12 dish cells, a gas hit's
+own), Detonate the sick ones (`detonate_r`, 24, for the sickness that has
+spread from the germ's hit; the germ is the family's mark). Each kill
+clears the trail on its cell; with no state there it kills nothing beyond
+the bullet's own hit. They cost 2; Shatter is sold from planet 2,
+Detonate with the germ from planet 4; the armory's Mind tab became
+"Special bullets" for both families. On the Fork's thick lobe a gas then a
+shatter 3 s later took all 1,062 sleepers and left a hole that stayed open;
+a shatter alone took none. A single germ already took the whole body from
+24,766 to 7,279 in 10 s; a detonate 2 s after it popped 3,918 at once and
+the body ended at 6,910
+([readers](../../Reports/gun-readers-2026-11-17/README.md)).
+
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
 the gun kind's (rifle three prongs, carbine short and wide, long gun a
@@ -192,7 +212,13 @@ card text) and 08:30 (the guns a draw of the game).
   +3%); aim cards wait (squads on their own hold the defend stance, so an
   aim card changes only which nearby slime they pick). Step D's first
   family, Mind (blind, sour, spin), is built and its blind quiz is with the
-  owner; next readers and marks, then route, element, force; cut last.
+  owner; the readers (shatter, detonate) are built; next route, element,
+  force; cut last.
+- Readers: multicast gas and shatter in one shot is a kill as wide as the
+  gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
+  gunfire wakes gassed slime before a shatter reads it; the germ alone is a
+  plague on one dense body (70% in 10 s), so Detonate mostly makes it
+  sudden.
 - Pull stops short but adds no kills where squads on their own fight (the
   slime they shoot is already near). Corral finds turrets only, not a
   marked spot or other buildings.
@@ -201,4 +227,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md).

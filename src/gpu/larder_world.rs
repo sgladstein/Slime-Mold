@@ -561,6 +561,10 @@ impl GpuWorld {
             let r = if b.kill || b.burn { b.r } else { 0.0 };
             self.e.burst(&self.shared, &self.s, b.at.0, b.at.1, r, b.alarm, b.alarm_r, b.crater_r, b.crater, 0.0);
         }
+        // A reader after the strike and crater, as on the CPU (11-16).
+        if b.read > 0 {
+            self.e.read_pass(&self.shared, &self.s, b.at.0, b.at.1, b.r, b.read);
+        }
         // Fire in the plants, after the strike and crater as on the CPU
         // (`squad::burst`): a share of a burn's disc, a smaller share of a
         // blast's out to a dish cell past its crater.
@@ -737,8 +741,9 @@ impl World for GpuWorld {
     fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
         // A shock or a crater alone (the rounds' trails, a burst a bullet
         // a frame) and a burn count nothing now: no read-back. A burn's
-        // kills wait for `burned`, once a frame.
-        if !b.kill && b.fling_ring(self.e.dish.p.scale as f32).is_none() && b.gas == 0 {
+        // kills wait for `burned`, once a frame. A reader's kills are its
+        // own (2026-11-16), so it reads back as a kill does.
+        if !b.kill && b.read == 0 && b.fling_ring(self.e.dish.p.scale as f32).is_none() && b.gas == 0 {
             self.flush();
             self.burst_passes(b, k);
             self.burn_dirty |= b.burn;
@@ -781,10 +786,12 @@ impl World for GpuWorld {
             .zip(w.windows(2))
             .map(|((b, _), d)| {
                 let [struck, gassed, flung] = [0, 1, 2].map(|i| d[1][i].wrapping_sub(d[0][i]));
-                if !b.kill {
+                // A reader's kills are its own, as a strike's.
+                let own = b.kill || b.read > 0;
+                if !own {
                     self.fire_new += struck;
                 }
-                squad::BurstOut { killed: if b.kill { struck } else { 0 }, flung, gassed }
+                squad::BurstOut { killed: if own { struck } else { 0 }, flung, gassed }
             })
             .collect();
         self.struck = w[list.len()][0];

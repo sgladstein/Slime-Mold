@@ -348,7 +348,9 @@ fn range_shelf(row: &run::Row) -> &'static str {
         (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Cards that shove",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
-        (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell.mind() => "Bullets for the mind",
+        // The readers (Shatter, Detonate) share it: their own tab would
+        // have been the armory's seventh for two rows.
+        (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell.special() => "Special bullets",
         (Pick::Offer(_), Face::Card(c)) => match c.kind() {
             rounds::Kind::Payload => "Bullets",
             rounds::Kind::Flight => "Cards for every bullet",
