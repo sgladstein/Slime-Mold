@@ -40,6 +40,7 @@ code:
   - WIN_SHARE
   - ammo_price
   - area_of
+  - bring
   - clock
   - does_to_you
   - enemy_keys
@@ -144,6 +145,11 @@ four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides
 them on the command card), and the 40-soldier rush is left as it is (D7).
+
+A planet whose tier asks for a card (`bring`; the Sprawler, which shies
+from fire, asks for Tinder) gets that card in one of its shop's card slots
+when you don't own it, on every reroll (the game designer, 11-17 15:26Z);
+drawn by chance it was in 23 of 200 planet-2 shops.
 
 ## The gun range
 

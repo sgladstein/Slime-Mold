@@ -348,6 +348,20 @@ const SLEEPER_KEYS: &[(&str, &str)] = &[("wake_alarm", "0.3")];
 // planet (`Reports/sim-use-2026-11-17/step0-scar-on-gpu.md`).
 const GRUDGE_KEYS: &[(&str, &str)] = &[("scar_weight", "1")];
 
+/// The card a tier's planet asks you to bring, if any: the card that
+/// answers its trait (the game designer, 2026-11-17 15:26Z, with the guns
+/// thread's rule). The Sprawler shies from fire (`fire_alarm`, #434), but
+/// run seed 1's planet 2 has nothing a plain light burns, so its trait only
+/// shows against fire that brings its own fuel: Tinder. When the next
+/// planet names a card and you don't own it, it takes one of the shop's
+/// card slots (`Run::restock`), so the planet card's advice can be taken.
+pub fn bring(tier: Tier) -> Option<Card> {
+    match tier {
+        Tier::Sprawler => Some(Card::Tinder),
+        _ => None,
+    }
+}
+
 /// Points a won level pays: more the deeper it was and the more stars.
 pub fn reward(depth: u32, stars: u8) -> u32 {
     150 + 50 * depth + 50 * u32::from(stars.saturating_sub(1))
@@ -982,6 +996,15 @@ impl Run {
         let mut from = if fresh.is_empty() { pool } else { fresh };
         let mut z = mix(mix(mix(self.seed ^ 0xC0FF_EE00) ^ u64::from(self.depth)) ^ self.rerolls);
         self.offers.clear();
+        // The card the planet ahead asks for (`bring`), when not owned,
+        // takes the first card slot on every reroll, whatever its tier's
+        // depth; the draw fills the rest. Drawn by chance, as before, Tinder
+        // was in 23 of 200 planet-2 shops (run seeds 1-20, rerolls 0-9) and
+        // not in seed 1's first.
+        let wanted = bring(self.level().tier).filter(|c| !self.cards.iter().any(|o| o.0 == *c));
+        if let Some(c) = wanted {
+            from.retain(|&f| f != c);
+        }
         // Rolled bullets first, each its own seed.
         let shells = shells_at(self.depth);
         for _ in 0..AMMO_OFFER {
@@ -990,6 +1013,7 @@ impl Run {
             let set = Set::ALL[((z >> 20) % Set::ALL.len() as u64) as usize];
             self.offers.push(Card::Ammo(Ammo::roll_of(shell, set, mix(z ^ 0xA330), self.depth)));
         }
+        self.offers.extend(wanted);
         while self.offers.len() < n + AMMO_OFFER && !from.is_empty() {
             z = mix(z);
             self.offers.push(from.remove((z % from.len() as u64) as usize));
@@ -1321,6 +1345,28 @@ mod tests {
         let l = Run::new(1).level();
         let text = format!("name {}\nsays {}\nmap {}\ntier {}\ngoal shrink {}\nbonus lose 2\nrule drain {}\nrule cap {}\n", l.mission.name, l.mission.says, l.mission.map, l.tier.name(), shrink_goal(1), Rules::default().drain, clock(0.6));
         assert_eq!(Mission::parse(&text).unwrap(), l.mission);
+    }
+
+    #[test]
+    fn the_shop_before_the_sprawler_offers_tinder() {
+        // Run seed 1's planet 2 is the Sprawler, which shies from fire that
+        // brings its own fuel: its shop offers Tinder on every reroll.
+        let mut r = Run::new(1);
+        r.won(1);
+        assert_eq!(r.level().tier, Tier::Sprawler);
+        assert_eq!(bring(Tier::Sprawler), Some(Card::Tinder));
+        for _ in 0..8 {
+            assert!(r.offers.contains(&Card::Tinder), "{:?}", r.offers);
+            assert_eq!(r.offers.len(), OFFER + AMMO_OFFER + r.level_of("draw") as usize, "it takes a slot, not an extra one");
+            r.rerolls += 1;
+            r.restock();
+        }
+        // Owned, it is no longer pushed.
+        r.cards.push((Card::Tinder, false));
+        r.restock();
+        assert!(!r.offers.contains(&Card::Tinder));
+        // No other rung asks for a card yet.
+        assert!(LADDER.iter().all(|&t| t == Tier::Sprawler || bring(t).is_none()));
     }
 
     #[test]
