@@ -6121,6 +6121,77 @@ mod tests {
         assert!(off.killed != cpu.killed || sizes.iter().any(|&(_, a, _, c)| a != c), "the pull changed the CPU's game");
     }
 
+    /// **Every switch that is off, on at once, on both engines** (the
+    /// technical lead, 2026-11-17): the features built and left off by
+    /// default (ROADMAP, *Switches that are off*) each double a code path
+    /// that the twins and the census rarely play. This plays them all
+    /// together, on shape C with planet 1's keys, a squad attacking for a
+    /// game minute, once with set slime blocking and once trapping (they
+    /// are the two sides of one A/B), on the CPU and, when there is one, on
+    /// the GPU, so that they at least don't break each other: no panic, a
+    /// living mould, a squad that fired. Not a twin: the engines aren't
+    /// compared. A new off switch joins `KEYS` or `rules` here in the same PR
+    /// as its ROADMAP row.
+    #[test]
+    fn all_off_switches_on_together_play_on_both_engines() {
+        use slime_mould::gpu::larder_world::{engine_params, race_settings, GpuWorld};
+        use slime_mould::mould::larder_world::{shape_keys, Cmd, Game, Order, Rules, World};
+        const KEYS: [(&str, &str); 10] = [
+            ("crust", "1"),
+            ("crust_weight", "0.5"),
+            ("crust_fast", "0.5"),
+            ("setting", "1"),
+            ("thicken", "1.5"),
+            ("condense", "300"),
+            ("fed_crowd", "1"),
+            ("flow_loss", "0.1"),
+            ("lone_step", "3"),
+            ("crystal_regrow", "0.001"),
+        ];
+        let (seed, scale, walkers) = (1, 2, 5_000);
+        let mut s = race_settings(seed, scale, walkers);
+        let (_, c) = shape_keys("c").unwrap();
+        for (k, v) in c {
+            slime_mould::gpu::set(&mut s, k, v).unwrap();
+        }
+        for (k, v) in slime_mould::mould::run::enemy_keys(1) {
+            slime_mould::gpu::set(&mut s, k, &v).unwrap();
+        }
+        for (k, v) in KEYS {
+            slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
+        }
+        assert!(s.crust_rise > 0.0 && s.set_scar > 0.0 && s.thicken > 0.0 && s.condense > 0 && s.fed_crowd > 0, "the keys turned their switches on");
+        let mut rules = Rules { seek_turn: 0.45, reserve: 5.0, set_block: 3.0, ..Rules::default() };
+        rules.raid.last_stand = true;
+        fn play<W: World>(mut g: Game<W>, what: &str) {
+            for k in 0..g.soldiers.len() {
+                assert!(g.apply(Cmd::Order(k, Order::Attack)), "{what}: soldier {k} takes the order");
+            }
+            // Long enough for the squad to reach the slime and the crust
+            // and setting to build under its fire.
+            for _ in 0..900 {
+                g.step();
+                if g.end.is_some() {
+                    break;
+                }
+            }
+            let (living, set) = (g.world.living(), g.world.set_cells().map_or(0, |c| c.iter().map(|&n| n as u64).sum::<u64>()));
+            eprintln!("{what}: at {:.0} s {living} walkers, {set} set, {} soldiers, shots {}, killed {}", g.time(), g.alive(), g.shots, g.killed);
+            // llvmpipe, 11-17: about 3,100-3,800 walkers, 1,850-2,250 set,
+            // 52-158 shots at 60 s.
+            assert!(living > 0 && g.shots > 0 && set > 0, "{what}: {living} walkers, {set} set, {} shots", g.shots);
+        }
+        let gpu = test_gpu();
+        for hold in [0.0, 0.5] {
+            let rules = Rules { set_hold: hold, ..rules };
+            let what = if hold > 0.0 { "trapping" } else { "blocking" };
+            play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), &format!("CPU, set slime {what}"));
+            if let Some((device, queue)) = &gpu {
+                play(Game::new(GpuWorld::new(device, queue, s.clone(), scale), rules, seed), &format!("GPU, set slime {what}"));
+            }
+        }
+    }
+
     /// **A siren on the engine as on the CPU** (2026-11-12): its calls go
     /// through `World::burst`, so the GPU world turns its alarm field on and
     /// lays the call as the CPU does. Same calls on both over 20 s, no
