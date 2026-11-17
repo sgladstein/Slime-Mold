@@ -1,0 +1,23 @@
+# windows.sh's germ pair re-run 2026-11-17 on main after #416 (the GPU germ fix and the per-planet retune),
+# llvmpipe: B=<that build> bash windows.sh (gas lines removed) OUT; python3 windows_table.py OUT germ-plain,germ-detonate
+window     germ-plain kill/rounds/reads mould sold germ-detonate kill/rounds/reads mould sold
+greedy-5           49/0    /0   m24736  s9           58/10   /12  m24718  s9  
+greedy-11          74/0    /0   m24846  s9           84/7    /22  m24838  s9  
+hold-10            86/0    /0   m24648  s8          104/29   /12  m24601  s8  
+hold-30           472/0    /0   m24607  s7          961/579  /34  m24463  s7  
+p1g2-25            25/0    /0   m24858  s8           27/3    /8   m24856  s8  
+p1g2-40            16/0    /0   m24815  s8           18/3    /5   m24814  s8  
+p1g3-10            42/0    /0   m25002  s8           31/3    /9   m25013  s8  
+p1g3-25            23/0    /0   m25408  s8           36/5    /11  m25396  s8  
+p1g3-40            46/0    /0   m25946  s8           44/7    /11  m25944  s8  
+p1s1-25            25/0    /0   m25815  s8           32/4    /6   m25802  s8  
+p1s1-40            74/0    /0   m26705  s8          119/46   /15  m26662  s8  
+p2s1-10            16/0    /0   m25335  s8           16/0    /10  m25335  s8  
+p2s1-25            46/0    /0   m24724  s8           75/17   /14  m24696  s8  
+p2s1-40            71/0    /0   m24958  s8           72/21   /15  m24955  s8  
+p3g4-40            11/0    /0   m26156  s8           12/2    /2   m26155  s8  
+
+germ-plain     killed 1076, slime at the ends 378559, reader casts 0
+germ-detonate  killed 1689, slime at the ends 378248, reader casts 186
+
+germ-detonate against germ-plain: more kills 12, fewer 2 (sign p=0.013); less slime at the end 13, more 1 (sign p=0.002)
