@@ -51,6 +51,11 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   engines and test devices on the tools page; probe `examples/mindprobe.rs`,
   raw lines in `b-raw/`, page in `page-b/`
   (https://claude.ai/artifact/6PUddP5ThBHR6AQnEZmwip).
+- [c4-fire-alarm.md](c4-fire-alarm.md): C4 built, burning ground lays
+  alarm (`fire_alarm`, off): nothing at the planned strength, holes in the
+  body ringed by slime when strong, as heat in the sensors; probe
+  `examples/fearprobe.rs`, raw lines in `c4-raw/`, page in `page-c4/`
+  (https://claude.ai/artifact/Nq2iGDUWQN4SuF5VruRQF6).
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure

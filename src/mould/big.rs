@@ -1386,6 +1386,14 @@ pub struct BigParams {
     /// burns. The owner's words were "fed slime is fireproof" (11-17
     /// 01:13Z).
     pub fire_fed: bool,
+    /// **Fire scares it, a little** (the simulation-use plan's C4,
+    /// 2026-11-17; 0 off): each fire step every burning agar cell adds
+    /// `fire_alarm` x its fire to the alarm field, where the slime has one
+    /// (`alarm`; shape C's flinch). The alarm spreads about three fine
+    /// cells and the flinch reads it as ground to back off, so the slime
+    /// steps back from flames; it also wakes sleepers and, on a scarring
+    /// tier, scars. Not herding: that would need a longer-reach smoke.
+    pub fire_alarm: f32,
     /// Char, burnt ground (`plants::Fire::char_gain` and on).
     pub char_gain: f32,
     pub char_keep: f32,
@@ -1672,6 +1680,7 @@ impl BigParams {
             fire_kill: 0.5,
             fire_dry: true,
             fire_fed: false,
+            fire_alarm: 0.0,
             char_gain: 1.0,
             char_keep: 0.999,
             char_clear: 0.02,
@@ -2330,6 +2339,16 @@ impl BigDish {
         self.burning = crate::mould::plants::fire_step(&g, &r, &f, &self.trail, &slime, &self.plant_kind, &mut self.plant, &mut self.char, &self.fire, &mut self.fire_next, &self.moist, self.fire_steps, (&mut self.crust, self.p.crust_fuel));
         self.fire_steps = self.fire_steps.wrapping_add(1);
         std::mem::swap(&mut self.fire, &mut self.fire_next);
+        // Fire lays alarm where it burns (`fire_alarm`, C4), on the field
+        // the slime already has: the GPU's `fire` pass adds the same.
+        let fa = self.p.fire_alarm;
+        if fa > 0.0 && self.alarm.len() == self.fire.len() {
+            for i in 0..self.fire.len() {
+                if self.fire[i] > 0.0 && self.agar[i] {
+                    self.alarm[i] += fa * self.fire[i];
+                }
+            }
+        }
         let kill = self.p.fire_kill;
         for k in 0..self.walkers.len() {
             if !self.lives(k) || matches!(self.life.get(k), Some(&(LIFE_SPORE | LIFE_DEAD))) {

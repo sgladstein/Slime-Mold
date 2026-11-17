@@ -463,6 +463,9 @@ pub struct Settings {
     /// Heat in the sensors (`BigParams::fire_weight`, the element family,
     /// 2026-11-17; 0 off, and 0 on a dish without plants).
     pub fire_weight: f32,
+    /// Fire lays alarm where it burns (`BigParams::fire_alarm`, the plan's
+    /// C4; 0 off), carried in the plants' word 44.
+    pub fire_alarm: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -734,6 +737,7 @@ impl Settings {
             fire_dry: t.fire_dry,
             fire_fed: t.fire_fed,
             fire_weight: t.fire_weight,
+            fire_alarm: t.fire_alarm,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1052,6 +1056,10 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Heat in the sensors (the element family, 11-17): under 0 the
         // slime turns from fire.
         "fire_weight" => s.fire_weight = f()?,
+        // Fire scares the slime a little (`fire_alarm=F`, the plan's C4):
+        // burning cells add F x their fire to the alarm field (shape C's
+        // flinch reads it).
+        "fire_alarm" => s.fire_alarm = f()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1250,6 +1258,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         fire_dry: s.fire_dry,
         fire_fed: s.fire_fed,
         fire_weight: s.fire_weight,
+        fire_alarm: s.fire_alarm,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
         germ_upkeep: s.germ_upkeep,
@@ -3491,6 +3500,9 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
     // Word 48: the plants at which a fire can burn at full heat.
     w[48] = p.fire_full.to_bits();
+    // Word 44: the alarm fire lays a step (`fire_alarm`, C4). (Words 32-44
+    // are free; 49 on holds `Engine::ignite`'s lights.)
+    w[44] = p.fire_alarm.to_bits();
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));

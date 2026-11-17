@@ -3871,6 +3871,9 @@ fn fire(@builtin(global_invocation_id) gid: vec3<u32>) {
         pset(PB_FRESH, i, select(0.0, 1.0, to > 0.0));
     }
     pset(PB_FB, i, to);
+    // Fire lays alarm where it burns (`fire_alarm`, C4; the CPU's
+    // `fire_tick`), on this tick's alarm (the trail pass wrote `germ_out`).
+    if (to > 0.0 && agar[i] != 0u && alarms() && pf(44u) > 0.0) { germ_out[P.w * P.h + i] += pf(44u) * to; }
     let ch = pget(PB_CHAR, i);
     let clear = select(max(pget(PB_B, i) - pf(7u), 0.0) * pf(12u), 0.0, to > 0.0);
     pset(PB_CHAR, i, max(min(ch * pf(11u) + ate * pf(10u), 1.0) - clear, 0.0));
