@@ -77,7 +77,13 @@ One scene, one seed: the weight changes what the slime does at a fire (it
 outlines it instead of crossing it, and the fire lives longer), but it did
 not keep the slime away; here it held the slime by the fire. It stays a
 flag, off, for the designer to call; a herding test would put food beyond
-a fire line and count who crosses.
+a fire line and count who crosses. The designer (10:14Z): "Keep
+fire_weight off for now ... Build Tinder next, then run that test on one
+seed: food beyond a lit Tinder line, counting walkers that cross in 30 s,
+weight 0 against -5. If the weight cuts crossings clearly and the body
+flows around the line, turn it on ... If it only holds the slime in the
+flames, leave it off and note it. Leave the Torch's cost alone until the
+balance pass."
 
 ## Tests
 
