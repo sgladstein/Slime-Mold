@@ -76,6 +76,10 @@ impl<W: World> Game<W> {
     /// The walking maps made stale for the bulwark (`BULWARK_STALE`,
     /// `BULWARK_MOVED`).
     fn stale_for_bulwark(&mut self) {
+        // Set slime that holds is ground: the maps walk through it.
+        if self.rules.set_hold > 0.0 {
+            return;
+        }
         let now = self.world.ticks();
         if now < self.bulwark_staled + BULWARK_STALE * self.rules.tps as u64 && !self.bulwark_maps.is_empty() {
             return;
@@ -179,5 +183,30 @@ mod tests {
         }
         let took = took.expect("the soldier got past the band");
         eprintln!("round the band in {took:.1} s");
+    }
+
+    /// Set slime that holds (`set_hold`): the bulwark stays ground and in
+    /// the maps, and a soldier in it walks at that share.
+    #[test]
+    fn set_slime_that_holds_slows_a_soldier_in_it() {
+        let mut g = Game::new(race_world(1, 1, 1_000), Rules { set_block: 5.0, set_hold: 0.05, ..Rules::default() }, 1);
+        let (w, h) = g.world.size();
+        g.world.p.set_scar = 0.1;
+        if g.world.scar.is_empty() {
+            g.world.scar = vec![0.0; w * h];
+        }
+        g.world.set_cells = vec![0; w * h];
+        let (x, y) = (g.soldiers[0].x, g.soldiers[0].y);
+        let free = g.wade(0);
+        let maps = g.standable_cells();
+        for dy in 0..3 {
+            for dx in 0..3 {
+                g.world.set_cells[(y as usize - 1 + dy) * w + x as usize - 1 + dx] = 1;
+            }
+        }
+        g.mark_bulwark();
+        assert!(g.bulwark_at(x, y) && g.ground(x, y), "in the bulwark, still ground");
+        assert_eq!(g.standable_cells(), maps, "the maps walk through it");
+        assert!((g.wade(0) - 0.05 * free).abs() < 1e-6, "held to a twentieth: {} against {free}", g.wade(0));
     }
 }
