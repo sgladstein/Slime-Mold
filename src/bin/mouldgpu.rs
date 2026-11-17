@@ -6093,43 +6093,15 @@ mod tests {
     /// are the two sides of one A/B), on the CPU and, when there is one, on
     /// the GPU, so that they at least don't break each other: no panic, a
     /// living mould, a squad that fired. Not a twin: the engines aren't
-    /// compared. A new off switch joins `KEYS` or `rules` here in the same PR
-    /// as its ROADMAP row.
+    /// compared. Since 11-17 the switches are `build::switches::SWITCHES`,
+    /// the one list: a new row is played here without editing this test.
     #[test]
     fn all_off_switches_on_together_play_on_both_engines() {
+        use slime_mould::build::switches;
         use slime_mould::gpu::larder_world::{engine_params, race_settings, GpuWorld};
         use slime_mould::mould::larder_world::{shape_keys, Cmd, Game, Order, Rules, World};
-        // The crust rises 36 times as fast as the window's (1/1800 a fine
-        // step) so slime sets within the test's 15 s; the code paths are
-        // the same.
-        const KEYS: [(&str, &str); 9] = [
-            ("crust", "1"),
-            ("crust_rise", "0.02"),
-            ("crust_weight", "0.5"),
-            ("crust_fast", "0.5"),
-            ("setting", "1"),
-            // A far smell (S2): the game builds its field (`time_food_paths`).
-            ("far_smell", "1"),
-            ("flow_loss", "0.1"),
-            ("lone_step", "3"),
-            ("crystal_regrow", "0.001"),
-        ];
-        let (seed, scale, walkers) = (1, 2, 5_000);
-        let mut s = race_settings(seed, scale, walkers);
-        let (_, c) = shape_keys("c").unwrap();
-        for (k, v) in c {
-            slime_mould::gpu::set(&mut s, k, v).unwrap();
-        }
-        for (k, v) in slime_mould::mould::run::enemy_keys(1) {
-            slime_mould::gpu::set(&mut s, k, &v).unwrap();
-        }
-        for (k, v) in KEYS {
-            slime_mould::gpu::set(&mut s, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
-        }
-        assert!(s.crust_rise > 0.0 && s.set_scar > 0.0, "the keys turned their switches on");
-        let mut rules = Rules { reserve: 5.0, set_block: 3.0, unit_paths: true, ..Rules::default() };
-        rules.raid.last_stand = true;
-        fn play<W: World>(mut g: Game<W>, what: &str) {
+        use slime_mould::mould::rounds::RoundRules;
+        fn play<W: World>(mut g: Game<W>, what: &str, sets: bool) {
             for k in 0..g.soldiers.len() {
                 assert!(g.apply(Cmd::Order(k, Order::Attack)), "{what}: soldier {k} takes the order");
             }
@@ -6144,17 +6116,50 @@ mod tests {
             }
             let (living, set) = (g.world.living(), g.world.set_cells().map_or(0, |c| c.iter().map(|&n| n as u64).sum::<u64>()));
             eprintln!("{what}: at {:.0} s {living} walkers, {set} set, {} soldiers, shots {}, killed {}", g.time(), g.alive(), g.shots, g.killed);
-            // llvmpipe, 11-17: 5,018 / 4,720 walkers, 131 / 149 set, 4 / 5
-            // shots at 15 s (CPU / GPU); 14 s of test on llvmpipe.
-            assert!(living > 0 && g.shots > 0 && set > 0, "{what}: {living} walkers, {set} set, {} shots", g.shots);
+            // llvmpipe, 11-17, the 14 rows of that day: 5,010 / 5,073
+            // walkers, 110 / 214 set, 5 / 5 shots at 15 s (CPU / GPU);
+            // 21 s of test on llvmpipe for the four rounds.
+            assert!(living > 0 && g.shots > 0 && (set > 0 || !sets), "{what}: {living} walkers, {set} set, {} shots", g.shots);
         }
+        let (seed, scale, walkers) = (1, 2, 5_000);
         let gpu = test_gpu();
-        for hold in [0.0, 0.5] {
-            let rules = Rules { set_hold: hold, ..rules };
-            let what = if hold > 0.0 { "trapping" } else { "blocking" };
-            play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), &format!("CPU, set slime {what}"));
+        // Every declared switch at its first choice off the default, then
+        // at its last: the two sides of each either-or (set slime blocking
+        // and trapping, the crust pulling back and pushing on). Until 11-17
+        // the switches were a list kept here by hand, which a new one had
+        // to remember to join; now a row in `switches::SWITCHES` is played
+        // here with no edit, and a settled row drops out.
+        for (which, keys) in [("first choices", switches::all_on()), ("last choices", switches::all_last())] {
+            let mut s = race_settings(seed, scale, walkers);
+            let (_, c) = shape_keys("c").unwrap();
+            for (k, v) in c {
+                slime_mould::gpu::set(&mut s, k, v).unwrap();
+            }
+            for (k, v) in slime_mould::mould::run::enemy_keys(1) {
+                slime_mould::gpu::set(&mut s, k, &v).unwrap();
+            }
+            let mut rules = Rules::default();
+            let mut rounds = RoundRules::default();
+            for (k, v) in &keys {
+                switches::set_key(&mut s, &mut rules, &mut rounds, k, v).unwrap_or_else(|e| panic!("{k}={v}: {e}"));
+            }
+            // The test's own, where a row turned the crust on: it rises 36
+            // times as fast as the window's (1/1800 a fine step) so slime
+            // sets within the 15 s, and its pull is a sixteenth of the
+            // row's (0.5 for 8, the number this test has always played):
+            // at the row's the slime keeps to its crust or leaves it, and
+            // little of it meets the squad in 15 s. The code paths are the
+            // same.
+            if s.crust_rise > 0.0 {
+                s.crust_rise = 0.02;
+                s.crust_weight /= 16.0;
+            }
+            // Whether slime sets in this round: while a row turns setting
+            // on.
+            let sets = s.set_scar > 0.0;
+            play(Game::new(slime_mould::mould::big::BigDish::new(engine_params(&s, scale)), rules, seed), &format!("CPU, {which}"), sets);
             if let Some((device, queue)) = &gpu {
-                play(Game::new(GpuWorld::new(device, queue, s.clone(), scale), rules, seed), &format!("GPU, set slime {what}"));
+                play(Game::new(GpuWorld::new(device, queue, s.clone(), scale), rules, seed), &format!("GPU, {which}"), sets);
             }
         }
     }
