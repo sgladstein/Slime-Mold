@@ -999,6 +999,10 @@ impl World for GpuWorld {
         self.s.far_smell > 0.0
     }
 
+    fn lab_steer(&self) -> bool {
+        self.s.far_smell < 0.0
+    }
+
     /// From the last readout's crystal sums against the mirror's full
     /// charges (the CPU's `crystal_left`).
     fn fresh_crystals(&self) -> Vec<u32> {
@@ -1274,6 +1278,9 @@ mod tests {
         }
         fn far_smell(&self) -> bool {
             self.g.far_smell()
+        }
+        fn lab_steer(&self) -> bool {
+            self.g.lab_steer()
         }
         fn fresh_crystals(&self) -> Vec<u32> {
             self.g.fresh_crystals()

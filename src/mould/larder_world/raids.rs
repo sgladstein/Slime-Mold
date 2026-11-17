@@ -146,7 +146,7 @@ pub struct Raids {
     /// it was started (`time_unit_paths`).
     unit_way: Option<Way>,
     /// The far smell's field being built (S2, `time_food_paths`).
-    food_way: Option<Way>,
+    pub(super) food_way: Option<Way>,
 }
 
 impl Raids {
@@ -185,7 +185,7 @@ fn way_delay() {
 }
 
 #[derive(Debug)]
-enum Way {
+pub(super) enum Way {
     Ready(Vec<u32>),
     #[cfg(not(target_arch = "wasm32"))]
     Building(std::thread::JoinHandle<Vec<u32>>),
@@ -226,7 +226,22 @@ impl Way {
         }
     }
 
-    fn finish(self) -> Vec<u32> {
+    /// LAB: any field built by `build` off the frame, as `start`'s.
+    pub(super) fn start_with(build: impl FnOnce() -> Vec<u32> + Send + 'static) -> Way {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Way::Building(std::thread::spawn(move || {
+                way_delay();
+                build()
+            }))
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Way::Ready(build())
+        }
+    }
+
+    pub(super) fn finish(self) -> Vec<u32> {
         match self {
             Way::Ready(f) => f,
             #[cfg(not(target_arch = "wasm32"))]
@@ -260,6 +275,10 @@ impl<W: World> Game<W> {
     /// started from the untouched crystals, off the frame and always one
     /// period late, joining the worker if it is slow, as the units' way.
     pub(super) fn time_food_paths(&mut self) {
+        // LAB: the steering field takes the far smell's slot.
+        if self.world.lab_steer() {
+            return self.steer_turn();
+        }
         if !self.world.far_smell() {
             return;
         }

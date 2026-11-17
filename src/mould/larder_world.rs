@@ -51,6 +51,7 @@
 mod buildings;
 mod world;
 mod raids;
+mod lab;
 mod bosses;
 mod rules;
 mod paths;

@@ -72,7 +72,10 @@ struct V {
     // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
     // the engine's crust block starts (0 off); the set walkers a cell's
     // block and set slime's look (`View::set_setting`, E2b; 0 off); a spare.
-    crust_at: u32, setc_at: u32, set_look: u32, _cr2: u32,
+    crust_at: u32, setc_at: u32, set_look: u32,
+    // LAB (steering prototype, the lab branch only): the word in `news`
+    // where the steering field's blocks start (`View::set_steer`), 0 off.
+    steer_at: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -2402,6 +2405,34 @@ fn soil_detail(x: f32, y: f32, bare: f32) -> vec4<f32> {
     return vec4<f32>(mul, add);
 }
 
+// LAB: the steering field (`larder_world/lab.rs`) as the engine holds it,
+// a word a 2 x 2 block: the height + 1 that walkers lean down, 0 where the
+// field does not reach.
+fn steer_w(bx: i32, by: i32) -> u32 {
+    let bw = (P.ww + 1u) / 2u; let bh = (P.wh + 1u) / 2u;
+    let x = u32(clamp(bx, 0, i32(bw) - 1)); let y = u32(clamp(by, 0, i32(bh) - 1));
+    return news[P.steer_at + y * bw + x];
+}
+// (height, cover) at a pixel: bilinear over the blocks the field reaches.
+fn steer_px(x: f32, y: f32) -> vec2<f32> {
+    let fx = x / 2.0 - 0.5; let fy = y / 2.0 - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - floor(fx); let ty = fy - floor(fy);
+    var sum = 0.0; var ws = 0.0;
+    for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < 2; i++) {
+            let v = steer_w(ix + i, iy + j);
+            if (v == 0u) { continue; }
+            let w = select(1.0 - tx, tx, i == 1) * select(1.0 - ty, ty, j == 1);
+            sum += w * f32(v - 1u); ws += w;
+        }
+    }
+    if (ws <= 0.0) { return vec2<f32>(0.0, 0.0); }
+    return vec2<f32>(sum / ws, ws);
+}
+const STEER_RGB: vec3<f32> = vec3<f32>(255.0, 110.0, 215.0);
+const STEER_RING: f32 = 20.0;
+
 fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     var m = mat_at(x, y);
     under_body = m.body;
@@ -2611,6 +2642,20 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let fill = 1.0 - exp(-a / (0.5 * P.alarm_full));
         let front = 1.0 - exp(-length(vec2<f32>(gx, gy)) / (0.12 * P.alarm_full));
         c += ALARM_RGB * (0.10 * fill + 0.45 * front) * a2.y * ak;
+    }
+    // LAB: the steering field drawn as it is: lines of equal height every
+    // `STEER_RING` fine cells of walking (they bend round rock and walls
+    // as the field does), brighter the lower the ground, so a lure sits in
+    // the brightest, tightest rings and what it reaches is what is lit.
+    if (P.steer_at != 0u) {
+        let sp = steer_px(x, y);
+        if (sp.y > 0.0) {
+            let d = sp.x;
+            let dr = abs(d - STEER_RING * round(d / STEER_RING));
+            let line = 1.0 - smoothstep(0.6 / P.zoom, 1.6 / P.zoom, dr);
+            let near = exp(-d / 110.0);
+            c += STEER_RGB * (0.07 * near + 0.42 * line * (0.25 + 0.75 * near)) * sp.y * (0.3 + 0.7 * under);
+        }
     }
     let k1 = gem_near(x, y);
     if (k1 > 0u) {

@@ -1342,6 +1342,11 @@ impl App {
             v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // Set slime (E2b), from the block after the crust's set words.
             v.set_setting((e.crust_at / 4) as u32 + e.cells + e.n, self.args.set_look.unwrap_or(1));
+            // LAB: the steering field, after the units' walking distance
+            // in the dense region (`gpu::dense_words`), when the slime
+            // reads it (a negative `far_smell`).
+            let nb = (e.dish.w.div_ceil(2) * e.dish.h.div_ceil(2)) as u32;
+            v.set_steer(if ws.far_smell < 0.0 && dense { (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32 + e.n + nb } else { 0 });
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();

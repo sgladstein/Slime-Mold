@@ -261,6 +261,8 @@ pub struct View {
     /// The crust (`set_crust`, 2026-11-17): the word in `news` where the
     /// engine's crust block starts (`gpu::Engine::crust_at` / 4), 0 off.
     crust_at: u32,
+    /// LAB: where the steering field's blocks start in `news` (`set_steer`).
+    steer_at: u32,
     /// Set slime (`set_setting`, E2b): the set walkers a cell's first word
     /// in `news` and the look (0 off, 1 amber, 2 glaze).
     setc_at: u32,
@@ -407,6 +409,7 @@ impl View {
             lump_held: [0.0; MAX_LUMPS],
             plant_at: 0,
             crust_at: 0,
+            steer_at: 0,
             setc_at: 0,
             set_look: 0,
             flora: 0,
@@ -740,6 +743,7 @@ impl View {
             self.dense_at = 0;
             self.plant_at = 0;
             self.crust_at = 0;
+            self.steer_at = 0;
             (self.setc_at, self.set_look) = (0, 0);
         }
     }
@@ -782,6 +786,13 @@ impl View {
             _ => self.crust_at = 0,
         }
         self.rebind();
+    }
+
+    /// LAB (steering prototype, the lab branch only): draws the steering
+    /// field from the engine's `news` word `at` (0 hides it). Needs the
+    /// news bound (`set_dense`).
+    pub fn set_steer(&mut self, at: u32) {
+        self.steer_at = if self.news_on || self.dense_at > 0 { at } else { 0 };
     }
 
     /// Draws set slime (the simulation-use plan's E2b, `BigDish::set_cells`)
@@ -966,7 +977,7 @@ impl View {
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
             b.extend(v.to_le_bytes());
         }
-        for v in [self.crust_at, self.setc_at, self.set_look, 0] {
+        for v in [self.crust_at, self.setc_at, self.set_look, self.steer_at] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);

@@ -1000,6 +1000,16 @@ fn far_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
     if (i == NONE) { return 0.0; }
     return f32(dh) - f32(min(food_dist(i), dh + FAR_WALL));
 }
+// LAB: the steering field at a sensor, as `far_near`, but a block the
+// field does not reach reads level with the walker's own (the far smell
+// reads it 16 farther, which would pen walkers inside a pusher's rim).
+fn lab_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    let d = food_dist(i);
+    if (d == 0xFFFFFFFFu) { return 0.0; }
+    return f32(dh) - f32(d);
+}
 fn units_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
@@ -1180,6 +1190,22 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
                 if (f > -1.0e5) { f += w * far_near(wk.x, wk.y, h, so, dh); }
                 if (fl > -1.0e5) { fl += w * far_near(wk.x, wk.y, h - sa, so, dh); }
                 if (fr > -1.0e5) { fr += w * far_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
+        // LAB (steering prototype, 2026-11-17; the lab branch only, GPU
+        // only): a NEGATIVE `far` is the steering field. Every walker,
+        // fed or hungry, leans down the field in the far smell's slot at
+        // weight -far, where the field reaches it. The game writes that
+        // field from the player's lures, fences and trails
+        // (`larder_world/lab.rs`), so the far smell proper is off while
+        // it is used.
+        if (lb == 0u && P.far < 0.0) {
+            let dh = food_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                let w = -P.far;
+                if (f > -1.0e5) { f += w * lab_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += w * lab_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += w * lab_near(wk.x, wk.y, h + sa, so, dh); }
             }
         }
     }

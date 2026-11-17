@@ -125,6 +125,12 @@ pub trait World {
     fn fresh_crystals(&self) -> Vec<u32> {
         Vec::new()
     }
+    /// LAB (steering prototype, lab branch only): whether the slime reads
+    /// the steering field in the far smell's slot (a negative `far_smell`
+    /// on the GPU world), so the game builds it (`lab::steer_turn`).
+    fn lab_steer(&self) -> bool {
+        false
+    }
     /// Sets the far smell's field (`BigDish::food_field`): each block's
     /// walking distance to the nearest untouched crystal.
     fn set_food_field(&mut self, _field: Vec<u32>) {}
