@@ -3,10 +3,12 @@
 # kills, reader casts, the slime's mass at the end, soldiers at the end.
 # Then each reader against its plain pair: the paired counts of windows with
 # more kills and with less slime at the end, with a two-sided sign-test p.
+# An optional second argument names the variants (comma-separated), for a
+# re-run of only some (the germ pair's, 11-17, after the GPU germ fix).
 import re, sys, os
 from math import comb
 S = sys.argv[1]
-V = ['gas-plain', 'gas-shatter', 'germ-plain', 'germ-detonate']
+V = sys.argv[2].split(',') if len(sys.argv) > 2 else ['gas-plain', 'gas-shatter', 'germ-plain', 'germ-detonate']
 def window(d):
     p = os.path.join(S, d, 'log.txt')
     if not os.path.exists(p): return None
@@ -21,7 +23,7 @@ names = sorted({d.rsplit('-', 2)[0] for d in os.listdir(S) if os.path.isdir(os.p
 def sign(a, b):
     n = a + b; k = min(a, b)
     return min(1, 2 * sum(comb(n, i) for i in range(k + 1)) / 2 ** n) if n else 1
-pairs = {('gas-shatter', 'gas-plain'): [0, 0, 0, 0], ('germ-detonate', 'germ-plain'): [0, 0, 0, 0]}
+pairs = {k: [0, 0, 0, 0] for k in [('gas-shatter', 'gas-plain'), ('germ-detonate', 'germ-plain')] if set(k) <= set(V)}
 tot = {v: [0, 0, 0] for v in V}
 print(f"{'window':10} " + " ".join(f"{v + ' kill/rounds/reads mould sold':>36}" for v in V))
 for n in names:

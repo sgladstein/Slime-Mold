@@ -13,8 +13,12 @@ Page: [Reader Bullets](https://claude.ai/artifact/UR2xBjHKmd7mVHdookdxsQ) (sourc
 `page/`): the paired clips with their counts, the paired windows in play,
 and the armory's tab.
 
-Status: **built, for merge; the 1070 timing is booked.** Two readers,
-Shatter and Detonate, in both engines, exact twins.
+Status: **built and merged (#408); the 1070 timing is booked.** Two
+readers, Shatter and Detonate, in both engines, exact twins. **Re-run
+2026-11-17 after the GPU germ fix** (`../gun-route-2026-11-17/`): the
+germ's clips and paired windows below are the fixed build's; the first
+ones carried a second germ the bug planted at the map's middle, which made
+the germ look like a plague.
 
 ## What was built
 
@@ -87,29 +91,42 @@ each second.
 | gas | gas at 20 s (1,055 asleep) | 0 | 293, 293, 293, 293 | 755, 759, 759, 762 | 24,766 |
 | gas then shatter | gas at 20, shatter at 23 | 1,062 | 293, 293, 0, 0 | 755, 759, 3, 3 | 23,710 |
 | shatter alone | shatter at 23 | 0 | 293, 291, 289, 301 | 755, 767, 773, 750 | 24,773 |
-| germ | germ at 20 | 0 | 293, 159, 99, 0 | 755, 527, 399, 16 | 7,279 |
-| germ then detonate | germ at 20, detonate at 22 (849 sick within 24) | 3,918 | 293, 0, 12, 2 | 755, 7, 9, 15 | 6,910 |
+| germ | germ at 20 | 0 | see below | | |
+| germ then detonate | germ at 20, detonate at 22 | see below | | | |
 | detonate alone | detonate at 22 | 0 | 293, 291, 289, 301 | 755, 767, 773, 750 | 24,773 |
 
 What the clips show: the gassed lobe goes grey and still; the shatter
 takes it all at once, leaving a round hole whose rim of fresh sleepers (the
 cloud still lingers) holds it open to the end. Alone, a shatter changes
-nothing. The germ turns the lobe red and the plague eats the whole body
-(24,766 to 7,279 in 10 s); a detonate two seconds in pops every sick walker
-within 24 cells at once, so the lobe is gone at 23 s instead of 26, and the
-body ends a little lower (6,910). Alone it changes nothing.
+nothing.
 
-**The germ alone is already a plague.** On the Fork's one dense body a
-single germ took 70% of the slime in 10 s; detonate made that sudden more
-than larger. This is the germ as the toolkit built it (its wave crosses a
-body in a few seconds: `../dead-ends.md`, germ amputation) and as step A
-put it in the run shop from planet 4; the windows below are where Detonate
-has to earn its place.
+**The germ clips, re-filmed on the fixed build** (2026-11-17, main after
+#416: shape C's resistance 10, the rounds' sick upkeep 10), 19.9 to 40 s,
+because the germ starves its sick 12 to 18 s after the cast, after a 10 s
+clip ends:
+
+| Clip | Casts | Kills | Within 12: 20, 24, 30, 34, 36, 40 s | From 12 to 24: same | Sick within 24: 22, 24, 30 s | Slime at 30 s, 40 s |
+|---|---|---|---|---|---|---|
+| none (to 40 s) | none | 0 | 293, 289, 301, 284, 290, 286 | 755, 773, 750, 760, 752, 750 | none | 24,773, 25,772 |
+| germ | germ at 20 | 0 | 293, 289, 301, 156, 30, 0 | 755, 773, 750, 387, 244, 62 | 780, 1,067, 0 | 24,772, 17,628 |
+| germ then detonate | germ at 20, detonate at 22 | 780 | 293, 23, 68, 42, 0, 0 | 755, 321, 535, 474, 238, 0 | 780, 79, 526 | 23,996, 19,590 |
+
+The germ turns the lobe red and the red runs on through the body; nothing
+dies for 12 s, then the lobe thins to a net and is gone by 38 s, and the
+body is 31.6% smaller at 40 s. A detonate 2 s in pops the 780 sick within
+24 cells at once and opens a hole, but the wave goes on from its rim; by
+40 s the body is 19,590 against the germ alone's 17,628. **An early
+detonate cuts the germ short**: it kills its carriers before they pass
+it on. One clip, seed 0.
+
+The first germ clips (with the bug) had the whole body eaten in 10 s,
+24,766 to 7,279, and a detonate popping 3,918; neither was the germ.
 
 ## The paired windows in play
 
-`raw/windows.sh`, table by `raw/windows_table.py` in `raw/windows.txt`.
-The seek report's 14 scenes (greedy on the Fork at 5 and 11 s, the Fork's
+`raw/windows.sh`, table by `raw/windows_table.py` in `raw/windows.txt`;
+the germ pair re-run on the fixed build in `raw/windows-germ.txt`.
+The seek report's 15 windows (14 in the first count, a miscount) (greedy on the Fork at 5 and 11 s, the Fork's
 thick front held at 10 and 30 s, and five planet maps with guarding or
 squad-mode hands at 10, 25 and 40 s): each plays one game to T, then every
 squad loads the variant's deck and the window runs 10 s. In each pair the
@@ -119,7 +136,8 @@ or the reader. Built on main after #407 (crust), llvmpipe.
 | Pair | Windows where the reader was cast | Kills in the window (all 14) | Paired: more kills | Slime at the windows' ends | Paired: less slime |
 |---|---|---|---|---|---|
 | gas+plain / gas+shatter | 4 of 14 (31 casts) | 1,098 / 2,135 | 4 of 4, 0 fewer (p = 0.125) | 378,775 / 377,807 | 3, 0 more (p = 0.25) |
-| germ+plain / germ+detonate | 14 of 14 (161 casts) | 911 / 3,255 | 13, 1 fewer (p = 0.002) | 238,643 / 238,335 | 8, 6 more (p = 0.79) |
+| germ+plain / germ+detonate, fixed build | 15 of 15 (186 casts) | 1,076 / 1,689 | 12, 2 fewer (p = 0.013) | 378,559 / 378,248 | 13, 1 more (p = 0.002) |
+| (with the bug, withdrawn) | 15 of 15 (161 casts) | 911 / 3,255 | 13, 1 fewer (p = 0.002) | 238,643 / 238,335 | 8, 6 more (p = 0.79) |
 
 - **Shatter pays when it is cast, and it seldom is in 10 s.** Squads that
   guard fire few rounds, so in 10 of 14 windows the gun never reached its
@@ -127,15 +145,21 @@ or the reader. Built on main after #407 (crust), llvmpipe.
   thick front at 30 s 858 to 1,746 (slime at the end 24,507 to 23,672), at
   10 s 106 to 193; greedy at 11 s 24 to 47. On greedy at 5 s its one cast
   read nothing: the squad's own shots had woken the gassed slime.
-- **Detonate kills more in 13 of 14 windows (p = 0.002, the one decided
-  result here), but the slime at the end is no lower** (8 of 14, p = 0.79):
-  the plague kills the sick anyway, and Detonate takes them sooner. The
-  germ is the strong card: in 8 of the 11 planet windows the germ+plain
-  gun left 7,700-18,500 walkers at the end, where gas+plain on the same
-  scenes left 24,800-26,700.
+- **On the fixed build Detonate leaves less slime at the window's end in
+  13 of 15 windows (1 more; p = 0.002) and kills more in 12 (2 fewer;
+  p = 0.013)**; one window (p2s1 at 10 s) tied on both. In a 10 s window the germ's own starving has
+  not landed yet (it comes 12 to 18 s after a cast), so the detonate's
+  kills are most of what the germ shows there: germ+plain left 378,559
+  walkers over the 15 windows, gas+plain 378,775. The 40 s clip above says
+  the other half: over 20 s an early detonate leaves more slime than the
+  germ alone.
+- **With the bug** the windows read the planted germ: germ+plain left
+  7,700-18,500 walkers in 8 of the 11 planet windows, Detonate more kills
+  but no less slime. Withdrawn.
 
-Two comparisons, so p below 0.025 survives a Bonferroni correction: only
-Detonate's kills do.
+Four tests (two pairs, kills and slime), so p below 0.0125 survives a
+Bonferroni correction: Detonate's less slime does (p = 0.002); its kills
+(p = 0.013) just miss.
 
 ## Cost
 
@@ -163,8 +187,9 @@ Detonate's kills do.
   reader always pays off another card.
 - **Shatter reads a disc, not "connected to the hit"** as the plan put it:
   a flood along the veins on the GPU is its own pass. The disc is the gas's.
-- **The germ is a dominance check for the next balance pass** (slime-enemy
-  thread's review, 11-17). One germ round took the Fork's one dense body
+- **The germ was named a dominance check** (slime-enemy thread's review,
+  11-17; it was the bug, below, and is retuned per planet in the route
+  report). One germ round took the Fork's one dense body
   from 24,766 to 7,279 in 10 s: contagion working as built, but too strong
   for one round sold from planet 4. The levers are the rounds' own germ
   rules (`Rounds::kit`, so the toolkit's germ dish is untouched), in order:
@@ -178,8 +203,13 @@ Detonate's kills do.
   CPU never had. Every germ clip and window here from 16 s on carried it,
   so the plague was partly that: without it one round on the Fork lobe
   took 48% of shape C in 20 s, not 76%. Fixed in `GpuWorld`'s burst
-  ([route](../gun-route-2026-11-17/README.md), *The germ*); the germ
-  clips and windows above are not re-run.
+  ([route](../gun-route-2026-11-17/README.md), *The germ*). The germ
+  clips and windows above were re-run on the fixed build the same day,
+  on the game designer's ask (08:05Z), so no page shows the planted
+  spread.
+- When to detonate: an early detonate (2 s after the germ) cuts the wave
+  short; the game designer's call whether that is the card's lesson
+  (detonate late, when the wave has spread) or a tuning note.
 - The numbers are first guesses: reach 12 and 24, cost 2.
 - Next in step D, per the plan: route, element, force; cut last.
 
@@ -188,6 +218,7 @@ Detonate's kills do.
 - `raw/film.sh`: one clip; `raw/make_clips.py`: MP4s and counts;
   `raw/counts.json`: the counts.
 - `raw/windows.sh`, `raw/windows_table.py`, `raw/windows.txt`: the paired
-  windows.
+  windows; `raw/windows-germ.txt`: the germ pair on the fixed build
+  (`windows_table.py OUT germ-plain,germ-detonate`).
 - `page/index.html`, its clips and `armory-special.png`: the Artifact
   page's source.

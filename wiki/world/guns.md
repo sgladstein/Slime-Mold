@@ -166,9 +166,11 @@ the bullet's own hit. They cost 2; Shatter is sold from planet 2,
 Detonate with the germ from planet 4; the armory's Mind tab became
 "Special bullets" for both families. On the Fork's thick lobe a gas then a
 shatter 3 s later took all 1,062 sleepers and left a hole that stayed open;
-a shatter alone took none. A single germ already took the whole body from
-24,766 to 7,279 in 10 s; a detonate 2 s after it popped 3,918 at once and
-the body ended at 6,910
+a shatter alone took none. On the fixed build (re-filmed 11-17) a germ
+kills nothing for 12 s, then the lobe thins to a net (the body 17,628 at
+40 s against 25,772); a detonate 2 s after it popped 780 at once but cut
+the wave short (19,590). In paired 10 s windows germ+detonate left less
+slime in 13 of 15 (p = 0.002)
 ([readers](../../Reports/gun-readers-2026-11-17/README.md)).
 
 **Route** (2026-11-17, step D's third family): the Flare kills nothing and

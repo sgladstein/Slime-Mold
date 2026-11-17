@@ -64,7 +64,7 @@ footer{font-size:.85rem;color:var(--muted)}
 
 <div class="bar">
   <button id="slow" type="button" aria-pressed="false">Slow motion ×½</button>
-  <span class="hint">Each clip loops, 10 s of game time from 19.9 s. All six are the same game on the Fork up to the first cast, on the same spot of a thick lobe.</span>
+  <span class="hint">Each clip loops, 10 s of game time from 19.9 s (the two germ clips 20 s, to 40 s). All six are the same game on the Fork up to the first cast, on the same spot of a thick lobe.</span>
 </div>
 
 <section class="sleep">
@@ -102,23 +102,27 @@ slime at 30 s 24,773</div></figure>
 <section class="sick">
   <h2><span class="k">Detonate</span>: kills the sick slime</h2>
   <p>A germ at 20 s infects the lobe (red), and the sickness spreads through the body. A detonate at 22 s takes every sick walker within 24 cells at once. Alone, with no one sick, it takes none.</p>
+  <p class="hint">Re-filmed on 11-17 after a bug fix: the first germ clips carried a second germ that a GPU bug planted at the map's middle, so the germ looked like a plague. These two run to 40 s, because the germ starves its sick 12 to 18 s after the cast.</p>
   <div class="trio">
     <figure><span class="tag">Germ alone</span><video src="germ.mp4" autoplay muted loop playsinline></video>
       <div class="counts">germ at 20 s
 walkers within 12 cells
-  293 at 20 s · 99 at 24 s · 0 at 30 s
+  293 at 20 s · 301 at 30 s
+  156 at 34 s · 0 at 40 s
 sick within 24 cells
-  849 at 22 s · 501 at 24 s · 0 at 30 s
-killed by the casts 0 (the plague kills)
-slime at 30 s 7,279</div></figure>
+  780 at 22 s · 1,067 at 24 s · 0 at 30 s
+killed by the cast 0 (the sick starve)
+slime at 30 s 24,772 · at 40 s 17,628
+(none cast: 25,772 at 40 s)</div></figure>
     <figure><span class="tag">Germ, then detonate</span><video src="germ-detonate.mp4" autoplay muted loop playsinline></video>
       <div class="counts">germ at 20 s, detonate at 22 s
 walkers within 12 cells
-  293 at 20 s · 12 at 24 s · 2 at 30 s
+  293 at 20 s · 23 at 24 s
+  68 at 30 s · 0 at 36 s
 sick within 24 cells
-  849 at 22 s · 21 at 24 s · 0 at 30 s
-killed by the detonate 3,918
-slime at 30 s 6,910</div></figure>
+  780 at 22 s · 79 at 24 s · 526 at 30 s
+killed by the detonate 780
+slime at 30 s 23,996 · at 40 s 19,590</div></figure>
     <figure><span class="tag">Detonate alone</span><video src="detonate.mp4" autoplay muted loop playsinline></video>
       <div class="counts">detonate at 22 s
 walkers within 12 cells
@@ -128,23 +132,23 @@ from 12 to 24 cells
 killed by the detonate 0
 slime at 30 s 24,773</div></figure>
   </div>
-  <p class="note">The germ alone is already a plague here: one cast took the Fork's whole body from 24,766 to 7,279 in 10 s. On top of it, a detonate makes the kill sudden more than larger (6,910 at 30 s). The windows below are where it has to earn its place.</p>
+  <p class="note">The germ alone kills nothing for 12 s; then the lobe thins to a net and is gone by 38 s, and the body is 31.6% smaller at 40 s. A detonate 2 s in pops the 780 sick at once and opens a hole, but the wave carries on from its rim, and by 40 s the body is larger than with the germ alone (19,590 against 17,628): an early detonate kills the germ's carriers before they pass it on. One clip, seed 0.</p>
 </section>
 
 <section>
   <h2>In play: paired 10 s windows</h2>
-  <p>Fourteen scenes from the seek report (greedy squads, the Fork's thick front held, five planet maps with guarding or squad-mode hands). Each plays one game to a time T; then every squad loads a deck and fights for 10 s. In each pair the setter fires on the same beat and only the second card differs: a plain bullet, or the reader.</p>
+  <p>Fifteen windows from the seek report's scenes (greedy squads, the Fork's thick front held, five planet maps with guarding or squad-mode hands). Each plays one game to a time T; then every squad loads a deck and fights for 10 s. In each pair the setter fires on the same beat and only the second card differs: a plain bullet, or the reader.</p>
   <div class="wrap"><table>
-    <thead><tr><th>Pair</th><th>Windows with a reader cast</th><th>Kills, all 14</th><th>Paired: more kills</th><th>Slime at the ends</th><th>Paired: less slime</th></tr></thead>
+    <thead><tr><th>Pair</th><th>Windows with a reader cast</th><th>Kills, all 15</th><th>Paired: more kills</th><th>Slime at the ends</th><th>Paired: less slime</th></tr></thead>
     <tbody>
-      <tr><td>gas+plain / gas+shatter</td><td>4 of 14 (31 casts)</td><td>1,098 / 2,135</td><td>4 of 4 (p 0.125)</td><td>378,775 / 377,807</td><td>3, 0 more (p 0.25)</td></tr>
-      <tr><td>germ+plain / germ+detonate</td><td>14 of 14 (161 casts)</td><td>911 / 3,255</td><td>13, 1 fewer (p 0.002)</td><td>238,643 / 238,335</td><td>8, 6 more (p 0.79)</td></tr>
+      <tr><td>gas+plain / gas+shatter</td><td>4 of 15 (31 casts)</td><td>1,098 / 2,135</td><td>4 of 4 (p 0.125)</td><td>378,775 / 377,807</td><td>3, 0 more (p 0.25)</td></tr>
+      <tr><td>germ+plain / germ+detonate, re-run 11-17 on the fixed build</td><td>15 of 15 (186 casts)</td><td>1,076 / 1,689</td><td>12, 2 fewer (p 0.013)</td><td>378,559 / 378,248</td><td>13, 1 more (p 0.002)</td></tr>
     </tbody>
   </table></div>
   <ul>
     <li><b>Shatter pays when it is cast, and it seldom is in 10 s.</b> Squads that guard fire few rounds, so in 10 of 14 windows the gun never reached its second card. Where it did, kills rose every time: the held thick front at 30 s went from 858 to 1,746 kills, its slime from 24,507 to 23,672. In one window its cast read nothing, because the squad's own shots had woken the gassed slime.</li>
-    <li><b>Detonate kills more in 13 of 14 windows</b> (p 0.002, the only result that survives correcting for the two comparisons), <b>but the slime at the end is no lower.</b> The plague kills the sick anyway; Detonate takes them sooner.</li>
-    <li><b>The germ is the strong card.</b> In 8 of the 11 planet windows the germ+plain gun left 7,700 to 18,500 walkers, where gas+plain on the same scenes left 24,800 to 26,700.</li>
+    <li><b>Detonate leaves less slime at the window's end in 13 of 15 windows</b> (1 more, 1 tied; p 0.002, which survives correcting for the four tests) and kills more in 12 (p 0.013, just short). In 10 s the germ's own starving has not landed yet, so the detonate's kills are most of what shows: germ+plain left about what gas+plain did (378,559 against 378,775).</li>
+    <li><b>The first run, with the bug, is withdrawn.</b> Its planted germ made germ+plain leave 7,700 to 18,500 walkers on 8 planet windows, and Detonate no less slime.</li>
   </ul>
 </section>
 
@@ -160,13 +164,13 @@ slime at 30 s 24,773</div></figure>
   <ul>
     <li><b>Two in one shot.</b> Multicast with gas and shatter gasses and shatters in the same shot: a kill as wide as the gas for 8 of a gun's 10 budget, where a blast is 6 cells for 3. A shatter that reads only sleep older than a second would close it.</li>
     <li><b>Gunfire wakes the gassed,</b> so the squad's own shots between a gas and a shatter can wake what the shatter would read. <code>Quiet</code> keeps them asleep.</li>
-    <li><b>The germ is very strong on one dense body.</b> That is the germ as it was built, sold from planet 4 since step A.</li>
+    <li><b>When to detonate.</b> Two seconds after the germ it cuts the wave short over 20 s; whether "detonate late" is the card's lesson or a tuning note is the game designer's call. The germ is retuned per planet on the route page.</li>
     <li><b>The 1070's frame cost is booked.</b> Nothing runs each step; each reader hit is one pass over the walkers and its kill count rides the frame's one read-back.</li>
     <li>The numbers are first guesses: reach 12 and 24 cells, cost 2. <code>set=read_r=…</code> and <code>detonate_r</code> change them.</li>
   </ul>
 </section>
 
-<footer>Source, clips and counts: <code>Reports/gun-readers-2026-11-17/</code> in the repo. Clips by <code>raw/film.sh</code> and <code>raw/make_clips.py</code>, windows by <code>raw/windows.sh</code>.</footer>
+<footer>Source, clips and counts: <code>Reports/gun-readers-2026-11-17/</code> in the repo. Clips by <code>raw/film.sh</code> and <code>raw/make_clips.py</code>, windows by <code>raw/windows.sh</code> (the germ pair's re-run in <code>raw/windows-germ.txt</code>).</footer>
 </main>
 <script>
 (function(){
