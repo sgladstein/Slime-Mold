@@ -2,18 +2,21 @@
 title: Sensor angle and reach
 kind: mechanism
 status: current
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - Reports/gun-mind-2026-11-16/README.md
   - Reports/mould-probe-2026-11-07.md
   - Reports/mould-review-2026-11-10.md
   - Reports/mould-wild-one-2026-11-10.md
+  - Reports/sim-use-2026-11-17/b-provoke-still.md
   - Reports/slime-enemy-review-2026-11-12.md
   - Reports/slime-questions-2026-11-12/README.md
   - handoff/project-memory/mould-depth-2026-11-09.md
 code:
   - BigDish::mind
   - Dish::sensor_angle_now
+  - MIND_DEAF
+  - MIND_STILL
   - Params::explore_angle
   - Params::rotate_angle
   - Params::sensor_angle
@@ -69,6 +72,11 @@ the change comes last it works on every walker: a sour explorer flips twice
 and so follows the trail, and a sour raider, speck or surging walker reads
 its goal backwards and runs from the pump, crystal or squad it was heading
 for ([Mind bullets](../../Reports/gun-mind-2026-11-16/README.md)).
+Two kinds since 11-17 change what a walker hears and wants rather than what
+it reads: deaf (`MIND_DEAF`, Provoke) hears no food news, so after the
+wither lag it believes it is cut off, greys and panics; still
+(`MIND_STILL`) neither panics, surges, raids nor breaks away and takes no
+crystal ([Provoke and Still](../../Reports/sim-use-2026-11-17/b-provoke-still.md)).
 
 
 ## Owner's word

@@ -4145,7 +4145,7 @@ mod tests {
         };
         let none: Build = |_, _| {};
         let grow = |s: Settings| Settings { upkeep: 0.01, walkers: 5_000, capacity: 15_000, crystal_eat: 0.02, ..s };
-        let dishes: [(&str, Settings, Build); 21] = [
+        let dishes: [(&str, Settings, Build); 22] = [
             ("crystals", w(small(0)), none),
             // Many walkers to a cell share it, and charge 1 is eaten to the
             // floor, so the share left goes to 0 and the regrowing shows.
@@ -4223,6 +4223,13 @@ mod tests {
             // walker blind, sour, spinning, run out a step ago, or none
             // (below), with births in the tick (children start with none).
             ("mind: blind, sour and spinning walkers", Settings { spin_curl: 0.6, panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
+            // Provoke and Still (the simulation-use plan's B1 and B2,
+            // 2026-11-17), on the same dish with the surge on too: every
+            // fifth walker deaf, still, still, deaf run out a step ago, or
+            // none. The news (deaf walkers keep theirs), the energy (still
+            // ones spill their crystal) and the moves (still ones neither
+            // panic nor surge) are each checked exactly below.
+            ("mind: deaf and still walkers", Settings { panic: 2.0, panic_lean: 2, panic_creep: 0.5, wither_lag: 4, surge_every: 40, surge_lean: 2, surge_dash: 30, surge_haste: 2.0, energy_flow: 0.05, wall_hp: 3.0, ..grow(w(small(0))) }, walls),
         ];
         for (name, mut s, build) in dishes {
             let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
@@ -4341,15 +4348,16 @@ mod tests {
                 assert!(n0 > 3 && n1 > 3 && leashed > 0 && leashed + 4 < members.len(), "{name}: two lumps, some members past the leash and some within it");
             }
             let minded = name.starts_with("mind");
+            // (A CPU copy with the statuses cleared, for how much they move.)
+            let mut bare = None;
             if minded {
-                use slime_mould::mould::big::{MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_T};
+                use slime_mould::mould::big::{MIND_BLIND, MIND_DEAF, MIND_SOUR, MIND_SPIN, MIND_STILL, MIND_T};
                 let now = cpu.steps as u32;
+                let kinds = if name.contains("deaf") { [MIND_DEAF, MIND_STILL, MIND_STILL, MIND_DEAF] } else { [MIND_BLIND, MIND_SOUR, MIND_SPIN, MIND_BLIND] };
                 cpu.mind = (0..cpu.walkers.len())
                     .map(|k| match k % 5 {
-                        0 => MIND_BLIND << 29 | ((now + 30) & MIND_T),
-                        1 => MIND_SOUR << 29 | ((now + 30) & MIND_T),
-                        2 => MIND_SPIN << 29 | ((now + 30) & MIND_T),
-                        3 => MIND_BLIND << 29 | (now & MIND_T),
+                        q @ 0..=2 => kinds[q] << 29 | ((now + 30) & MIND_T),
+                        3 => kinds[3] << 29 | (now & MIND_T),
                         _ => 0,
                     })
                     .collect();
@@ -4359,6 +4367,11 @@ mod tests {
                         cpu.energy[k] = 2.0;
                     }
                 }
+            }
+            if name.contains("deaf") {
+                let mut b = cpu.clone();
+                b.mind.clear();
+                bare = Some(b);
             }
             let roamed: Vec<bool> = (0..cpu.walkers.len()).map(|k| cpu.lives(k) && cpu.roam_of(k).is_some()).collect();
             // The walkers that panic in the tick, and where the living were.
@@ -4381,6 +4394,18 @@ mod tests {
                 let born = cpu.births - births;
                 eprintln!("{name}: {held} walkers with a status after the tick, {born} born, {words_off} words off");
                 assert!(held > n / 10 && born > 0 && words_off == 0, "{name}: statuses hold, children are born and the words agree");
+            }
+            // Deaf and still: the same tick without them leaves many
+            // walkers' news, energy or moves apart, so a GPU that ignored
+            // either would fail the exact checks below.
+            if let Some(mut b) = bare.take() {
+                b.tick();
+                let alive = |k: usize| cpu.lives(k) && b.lives(k);
+                let news = (0..n).filter(|&k| alive(k) && k % 5 == 0 && b.news[k] != cpu.news[k]).count();
+                let fed = (0..n).filter(|&k| alive(k) && k % 5 != 0 && k % 5 < 3 && (b.energy[k] - cpu.energy[k]).abs() > 1e-6).count();
+                let moves = (0..n).filter(|&k| alive(k) && k % 5 != 0 && k % 5 < 3 && b.walkers[k] != cpu.walkers[k]).count();
+                eprintln!("{name}: without the statuses {news} deaf walkers' news, {fed} still walkers' energy and {moves} their moves differ");
+                assert!(news > 20 && fed > 20 && moves > 20, "{name}: the statuses change the news ({news}), the energy ({fed}) and the moves ({moves})");
             }
             // Withering: the same slots die, and every living walker carries
             // the same news (whole numbers, so exactly).

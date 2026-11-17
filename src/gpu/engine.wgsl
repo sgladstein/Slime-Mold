@@ -465,6 +465,11 @@ fn gas_sleep() -> f32 { return bitcast<f32>(gas_word(5u)); }
 const MIND_BLIND: u32 = 1u;
 const MIND_SOUR: u32 = 2u;
 const MIND_SPIN: u32 = 3u;
+// Provoke (`big::MIND_DEAF`, the plan's B1): hears no food news.
+const MIND_DEAF: u32 = 4u;
+// Still (`big::MIND_STILL`, B2): no panic, surge, raid or breakaway, and
+// no crystal (its share spilled).
+const MIND_STILL: u32 = 5u;
 const MIND_T: u32 = 0x1FFFFFFFu;
 fn mind_at() -> u32 { return gas_base() + GAS_SLOTS + P.n; }
 fn mind_of(k: u32, t: u32) -> u32 {
@@ -808,6 +813,9 @@ fn panic_to(k: u32, here: u32) -> vec3<f32> {
     // its leash it runs back to the lump's centre (the CPU's `lump_leash`).
     let lb = lump_of(k);
     if (lb != 0u) { return lump_leash(lb - 1u, k); }
+    // A still walker (`MIND_STILL`) neither breaks away, raids, panics nor
+    // surges.
+    if (mind_of(k, S.t) == MIND_STILL) { return vec3<f32>(-1.0, -1.0, 0.0); }
     // A breakaway (`roam`) runs for its crystal at its own pace, and
     // does not panic.
     if (roaming(k)) {
@@ -1296,7 +1304,10 @@ fn life(@builtin(global_invocation_id) gid: vec3<u32>) {
     // A sick walker pays more (the CPU's `sick_upkeep`, after the barren
     // ground's factor as there): the toolkit's germ kills by hunger.
     if (P.sick_steps > 0u && sick[k] > P.immune) { up *= P.sick_up; }
-    let e = (energy[k] + g + share[i]) - up;
+    // A still walker spills its crystal share (`MIND_STILL`).
+    var sh = share[i];
+    if (mind_of(k, S.t) == MIND_STILL) { sh = 0.0; }
+    let e = (energy[k] + g + sh) - up;
     if (e > 0.0) {
         energy[k] = e;
         return;
@@ -1376,7 +1387,10 @@ fn ngather(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (k >= P.n || !ordinary(k)) { return; }
     let wk = walkers[k];
     let i = cell(wk.x, wk.y);
-    if (share[i] > 0.0) { atomicStore(&news[k], S.t + 1u); }
+    // A provoked walker hears nothing, not even its own eating (`MIND_DEAF`).
+    // Nor does a still one, which took none (`MIND_STILL`).
+    let mk = mind_of(k, S.t);
+    if (share[i] > 0.0 && mk != MIND_DEAF && mk != MIND_STILL) { atomicStore(&news[k], S.t + 1u); }
     atomicMax(&news[P.n + i], atomicLoad(&news[k]));
 }
 
@@ -1425,7 +1439,7 @@ fn nhear(@builtin(global_invocation_id) gid: vec3<u32>) {
     let c = P.w * P.h;
     // The spread ends in its second turn's block with an even reach.
     let last = select(1u, 2u, ((P.wclock >> 24u) & 1u) == 1u);
-    atomicMax(&news[k], atomicLoad(&news[P.n + last * c + i]));
+    if (mind_of(k, S.t) != MIND_DEAF) { atomicMax(&news[k], atomicLoad(&news[P.n + last * c + i])); }
     // The gathered block was read by `nspread` only; every cell with news
     // in it holds a walker that runs here, so it is clear for next step.
     atomicStore(&news[P.n + i], 0u);

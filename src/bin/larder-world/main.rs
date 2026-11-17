@@ -305,6 +305,10 @@ commands! {
     // The build page's mortar (the turrets thread, owner 2026-11-17
     // 00:47Z: the first turret body from the run shop's tree).
     MORTAR = 37,
+    // The tools page's Provoke and Still (the simulation-use plan's B1 and
+    // B2, 2026-11-17): Mind statuses as test devices; runs leave them out.
+    T_PROVOKE = 38,
+    T_STILL = 39,
 }
 
 /// Between two steps: every living soldier at the larder takes one tool

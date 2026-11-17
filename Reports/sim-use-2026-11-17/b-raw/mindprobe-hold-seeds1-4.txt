@@ -1,0 +1,9 @@
+mindprobe: race world, shape C, scale 2, 25000 walkers; grow 63 s, disc r 12, unit 8 beyond it, provoke 12 s, still 10 s, watch 15 s, hold 30 s
+1 hold | crystal disc (90, 248), 1505 walkers; after 30 s: the disc's alive plain 1505, still 1505, all still 1505; stale walkers anywhere plain 0, still 0, all still 172; living 31383 -> plain 35896, still 35531, all still 32224; eaten plain 17007, still 16993, all still 15343
+2 hold | crystal disc (112, 160), 1755 walkers; after 30 s: the disc's alive plain 1755, still 1755, all still 1755; stale walkers anywhere plain 0, still 0, all still 169; living 32687 -> plain 38996, still 38937, all still 34199; eaten plain 19435, still 19446, all still 18419
+3 hold | crystal disc (168, 156), 1775 walkers; after 30 s: the disc's alive plain 1775, still 1775, all still 1775; stale walkers anywhere plain 0, still 0, all still 145; living 29697 -> plain 35125, still 35101, all still 30489; eaten plain 18841, still 18869, all still 16532
+4 hold | crystal disc (116, 250), 1491 walkers; after 30 s: the disc's alive plain 1491, still 1491, all still 1491; stale walkers anywhere plain 0, still 0, all still 293; living 32371 -> plain 37462, still 37146, all still 33558; eaten plain 17490, still 17529, all still 16143
+provoke: came within 3, mean plain 0, provoked 0; provoked more 0, less 0, sign p 1.000
+still: came within 3 in a surge, mean plain 0, still 0; still more 0, less 0, sign p 1.000
+hold: the crystal disc's walkers alive, mean plain 1632, still 1632; still more 0, less 0, sign p 1.000
+hold: living walkers, mean plain 36870, all still 32618; all still more 0, less 4, sign p 0.125

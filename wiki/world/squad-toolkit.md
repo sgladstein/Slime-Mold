@@ -20,6 +20,7 @@ sources:
   - Reports/rounds-2026-11-12.md
   - Reports/rounds-look-2026-11-14/index.html
   - Reports/shot-lights-2026-11-14.md
+  - Reports/sim-use-2026-11-17/b-provoke-still.md
   - Reports/sleep-gas-gpu-2026-11-14.md
   - Reports/squad-toolkit-2026-11-12.md
   - Reports/squad-toolkit-round2-2026-11-12.md
@@ -61,6 +62,7 @@ code:
   - KitRules
   - KitRules::carry_max
   - KitRules::gas_cloud
+  - KitRules::mind_r
   - Soldier::load
   - Soldier::smell
   - Throw
@@ -88,7 +90,12 @@ mine, germ and sleep gas work; every soldier at the larder takes one tool, a sel
 to five. Since 2026-11-16 aiming a tool shows who throws (`Kit::thrower`),
 its reach ring, a lobbed arc to the landing point and the area in the tool's
 colour, all red with the click refused out of reach (`Model::throw`, `Throw`;
-[report](../../Reports/throw-aim-2026-11-16/README.md)). The crater a blast, cord
+[report](../../Reports/throw-aim-2026-11-16/README.md)). Since 11-17 the page
+has two test devices for the simulation-use plan's signals, left out of runs
+until the gun thread's cards: Provoke (X) makes the mould within
+`KitRules::mind_r` deaf to food news, so it panics and charges, and Still
+(Z) stops its charges and its eating (`Tool::Provoke`, `Tool::Still`;
+[report](../../Reports/sim-use-2026-11-17/b-provoke-still.md)). The crater a blast, cord
 or shot leaves (`BigDish::scorch_disc`; GPU binding 47 since #113, shared
 `scorch_keep` and `scorch_full`: 0 and 150 in the race world since PR 3b's
 cone, were 0.1 and 30, which earlier `kitplans` tables used) is the one
