@@ -1,0 +1,11 @@
+farprobe: shape C + the run's enemy keys, scale 2, 25000 walkers, no squad; 150 s, field every 2 s; far_smell [0.0, 1.0]
+seed depth far_smell | crystals | reached | living | specks sent, landed, gave up | hungry at 30 s
+5 3 0 | 17 | 7 | 38092 | 13296, 5406, 5440 | 18533
+5 3 1 | 17 | 8 | 38487 | 13900, 5868, 5540 | 17886
+6 3 0 | 14 | 2 | 15256 | 9456, 4400, 3552 | 21354
+6 3 1 | 14 | 3 | 15922 | 9681, 4462, 3597 | 21125
+7 3 0 | 17 | 10 | 32336 | 11286, 5040, 4082 | 21242
+7 3 1 | 17 | 14 | 46842 | 14926, 6411, 5452 | 19680
+8 3 0 | 13 | 8 | 35792 | 15052, 5918, 6308 | 20917
+8 3 1 | 13 | 8 | 36495 | 15020, 6202, 6297 | 20092
+far_smell 1 against 0: crystals reached 33 against 27, more 3, fewer 0, sign p 0.250

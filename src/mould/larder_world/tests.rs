@@ -840,6 +840,15 @@ impl World for Later {
     fn set_units_field(&mut self, field: Vec<u32>) {
         World::set_units_field(&mut self.d, field)
     }
+    fn far_smell(&self) -> bool {
+        World::far_smell(&self.d)
+    }
+    fn fresh_crystals(&self) -> Vec<u32> {
+        World::fresh_crystals(&self.d)
+    }
+    fn set_food_field(&mut self, field: Vec<u32>) {
+        World::set_food_field(&mut self.d, field)
+    }
     fn set_raid(&mut self, at: u32, to: (f32, f32), r: f32, share: f32, field: Vec<u32>) {
         World::set_raid(&mut self.d, at, to, r, share, field)
     }
@@ -3930,4 +3939,68 @@ fn the_game_sets_the_units_walking_distance_once_a_second() {
     let fm = &m.world.units_field;
     eprintln!("every soldier masked: {} at the first soldier", fm[(s.y as usize / RAID_BLOCK) * bw + s.x as usize / RAID_BLOCK]);
     assert!(fm.len() == f.len() && fm[(s.y as usize / RAID_BLOCK) * bw + s.x as usize / RAID_BLOCK] > 3, "a masked soldier is no source");
+}
+
+/// **The walking distances don't depend on the thread's speed** (the
+/// technical lead, 2026-11-17 13:50Z): the units' walking distance
+/// (`unit_paths`) is set a game second after it is started and the far
+/// smell's (`far_smell`, S2) two seconds after, each joining the worker if
+/// it is late, so a game whose workers each sleep 300 ms (more than a
+/// frame's worth of game time here) plays the same, its fields and its
+/// hash, every game second.
+#[test]
+fn walking_distances_are_set_at_a_fixed_step_however_slow_the_thread() {
+    use std::sync::atomic::Ordering;
+    let play = |delay: u64| {
+        super::raids::WAY_DELAY_MS.store(delay, Ordering::Relaxed);
+        let mut g = small(2);
+        g.rules.unit_paths = true;
+        g.world.p.far_smell = 1.0;
+        let per_sec = (g.rules.tps as f32 / g.rules.frame_ticks as f32).ceil() as usize;
+        let mut seen = Vec::new();
+        for f in 0..6 * per_sec {
+            g.step();
+            if f % per_sec == per_sec - 1 {
+                seen.push((g.world.hash(), g.world.units_field.clone(), g.world.food_field.clone()));
+            }
+        }
+        super::raids::WAY_DELAY_MS.store(0, Ordering::Relaxed);
+        seen
+    };
+    let (fast, slow) = (play(0), play(300));
+    assert!(fast.iter().any(|(_, f, g)| !f.is_empty() && !g.is_empty()), "the fields were set");
+    for (s, (a, b)) in fast.iter().zip(&slow).enumerate() {
+        assert_eq!(a.1, b.1, "second {}: the same field", s + 1);
+        assert_eq!(a.2, b.2, "second {}: the same far smell", s + 1);
+        assert_eq!(a.0, b.0, "second {}: the same dish", s + 1);
+    }
+}
+
+/// **The far smell's field** (`BigParams::far_smell`, the simulation-use
+/// plan's S2, 2026-11-17): with the slime reading it, the game builds the
+/// walking distance to the untouched crystals every
+/// `raids::FOOD_PATHS_EVERY` game seconds and sets it the next time round:
+/// zero by an untouched crystal, rising away; off, none.
+#[test]
+fn the_game_sets_the_far_smell_every_two_seconds() {
+    use crate::mould::big::RAID_BLOCK;
+    let play = |on: bool| {
+        let mut g = small(2);
+        g.world.p.far_smell = if on { 1.0 } else { 0.0 };
+        let secs = (4.5 * g.rules.tps as f32 / g.rules.frame_ticks as f32).ceil() as usize;
+        for _ in 0..secs {
+            g.step();
+        }
+        g
+    };
+    let g = play(true);
+    let f = &g.world.food_field;
+    let fresh = g.world.fresh_crystals();
+    let bw = g.world.w.div_ceil(RAID_BLOCK);
+    let at = |c: u32| f[((c >> 16) as usize / RAID_BLOCK) * bw + (c & 0xFFFF) as usize / RAID_BLOCK];
+    let reach = f.iter().filter(|&&v| v < u32::MAX).count();
+    eprintln!("far smell: {reach} of {} blocks reached, {} untouched crystals, {:?} at the first", f.len(), fresh.len(), fresh.first().map(|&c| at(c)));
+    assert!(!fresh.is_empty() && reach * 2 > f.len(), "the field is set and reaches most of the world");
+    assert!(fresh.iter().all(|&c| at(c) <= 8), "near zero at each untouched crystal");
+    assert!(play(false).world.food_field.is_empty(), "off: none");
 }

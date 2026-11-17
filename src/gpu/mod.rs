@@ -71,8 +71,9 @@ pub const DRAW_SLEEP_DIE: u32 = 118;
 /// Bytes in `Params` (308 words).
 pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
-/// `energy_flow`, `hunger_scent`, `hunger_at`; then a spare word, which
-/// held `fed_full` and then `fire_weight`, both deleted 11-17).
+/// `energy_flow`, `hunger_scent`, `hunger_at`; then the far smell,
+/// `far_smell`, S2, in the word that held `fed_full` and then
+/// `fire_weight`, both deleted 11-17).
 pub const BODY_AT: usize = 848;
 /// Where the crater's row sits in `Params` (2026-11-12, after one body's:
 /// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
@@ -465,6 +466,9 @@ pub struct Settings {
     /// Gas ignites (`BigParams::gas_burn`, the plan's C5; 0 off), carried
     /// in the plants' word 43.
     pub gas_burn: f32,
+    /// A far smell (`BigParams::far_smell`, the plan's S2; 0 off), in one
+    /// body's row's last word (`Params::far`).
+    pub far_smell: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -737,6 +741,7 @@ impl Settings {
             fire_fed: t.fire_fed,
             fire_alarm: t.fire_alarm,
             gas_burn: t.gas_burn,
+            far_smell: t.far_smell,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
             germ_upkeep: t.germ_upkeep,
@@ -1059,6 +1064,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // Gas ignites (`gas_burn=G`, the plan's C5): cloud over G lights
         // from a light or a burning neighbour and is used up.
         "gas_burn" => s.gas_burn = f()?,
+        // A far smell (`far_smell=W`, the plan's S2): hungry walkers lean
+        // down the walking distance to untouched crystals; specks walk it.
+        "far_smell" => s.far_smell = f()?,
         // Setting at once (`setting=1`; 0 turns it off): the crust if it is
         // off, the scar as a plain memory (keep 0.999, gain 0.01, no pull)
         // if it is off, and a walker on crust of 0.2 sets where its cell's
@@ -1258,6 +1266,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         fire_fed: s.fire_fed,
         fire_alarm: s.fire_alarm,
         gas_burn: s.gas_burn,
+        far_smell: s.far_smell,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
         germ_upkeep: s.germ_upkeep,
@@ -2114,6 +2123,7 @@ impl Engine {
         // whether the mirror holds one).
         self.dish.raid_field = d.raid_field.clone();
         self.dish.units_field = d.units_field.clone();
+        self.dish.food_field = d.food_field.clone();
         assert_eq!(d.plant.is_empty(), !self.plants, "a dish with this engine's plants");
         if self.plants {
             self.queue.write_buffer(&self.news, self.plant_at, &u32_bytes(&plant_words(d)));
@@ -2296,9 +2306,10 @@ impl Engine {
         // word, spare until 11-13, is one body's lossy sharing (`eloss`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
-        // The row's last word is spare (it held `fed_full`, then heat in
-        // the sensors, `fire_weight`; both deleted 11-17).
-        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
+        // The row's last word is the far smell (`far_smell`, S2, 11-17; it
+        // held `fed_full`, then heat in the sensors, `fire_weight`, both
+        // deleted 11-17).
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, s.far_smell]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
@@ -3433,7 +3444,11 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // The units' walking distance in the cells' word (free since 11-17;
     // `BigDish::units_field`, S1; engine.wgsl's `units_dist`): each block
     // its distance + 1, 0 where none reaches or with no field.
-    w.extend(d.units_field.iter().take(cells).map(|&v| v.wrapping_add(1)));
+    // The far smell's (`BigDish::food_field`, S2; `food_dist`) follows in
+    // the same region, a block's words on: blocks are a quarter of the
+    // cells, so both fit.
+    w.extend(block_words(&d.units_field, d.w, d.h));
+    w.extend(block_words(&d.food_field, d.w, d.h));
     w.resize(DENSE_HEAD + d.walkers.len() + cells, 0);
     // A raid's walking distance after the dense cells (`BigDish::
     // raid_field`, 11-15; engine.wgsl's `raid_dist`), zeros with none.
@@ -3443,6 +3458,17 @@ pub fn dense_words(d: &BigDish, cells: usize) -> Vec<u32> {
     // Each cell's lump members' bite (`squad::bite_cells`; `dcount`).
     w.resize(DENSE_HEAD + d.walkers.len() + 3 * cells, 0);
     w
+}
+
+/// A walking-distance field (`BigDish::units_field`, `food_field`) as the
+/// GPU holds it: one word a `RAID_BLOCK` block, the distance + 1, 0 where
+/// none reaches or with no field.
+fn block_words(field: &[u32], w: usize, h: usize) -> Vec<u32> {
+    let b = crate::mould::big::RAID_BLOCK;
+    let nb = w.div_ceil(b) * h.div_ceil(b);
+    let mut v: Vec<u32> = field.iter().take(nb).map(|&d| d.wrapping_add(1)).collect();
+    v.resize(nb, 0);
+    v
 }
 
 /// Each slot's condensing word as the GPU holds it (`BigDish::dense`).
@@ -3459,13 +3485,21 @@ impl Engine {
 
     /// Writes the mirror dish's units' walking distance (`BigDish::
     /// units_field`, S1) after the slot words, each block's distance + 1
-    /// (0 where none reaches); zeros with none.
+    /// (0 where none reaches); zeros with none. One word a block (a
+    /// quarter of the region): the first build wrote the whole region,
+    /// a word a fine cell, 4x the bytes once a second.
     pub fn write_units_field(&self) {
-        let cells = self.cells as usize;
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize) as u64;
-        let mut w: Vec<u32> = self.dish.units_field.iter().take(cells).map(|&v| v.wrapping_add(1)).collect();
-        w.resize(cells, 0);
-        self.queue.write_buffer(&self.news, at, &u32_bytes(&w));
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(&self.dish.units_field, self.dish.w, self.dish.h)));
+    }
+
+    /// Writes the mirror dish's far smell (`BigDish::food_field`, S2)
+    /// after the units' walking distance, one word a block as that.
+    pub fn write_food_field(&self) {
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(&self.dish.food_field, self.dish.w, self.dish.h)));
     }
 
     /// Forms lump `b` (the CPU's `BigDish::form_lump`, `lumpform`): the

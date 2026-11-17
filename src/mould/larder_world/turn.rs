@@ -417,6 +417,7 @@ impl<W: World> Game<W> {
             self.keep_panic_reach();
             self.time_raids();
             self.time_unit_paths();
+            self.time_food_paths();
             self.time_bosses();
         }
         self.campaign_rules(now - t);

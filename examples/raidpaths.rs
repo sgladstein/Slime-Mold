@@ -40,4 +40,17 @@ fn main() {
     let f = slime_mould::mould::big::units_field_for(&d.agar, d.w, d.h, &units);
     let reach = f.iter().filter(|&&v| v < u32::MAX).count();
     println!("  units' walking distance from {} sources: {:.1} ms, {reach} of {} blocks reached", units.len(), t.elapsed().as_secs_f64() * 1e3, f.len());
+    // The worst case the technical lead named (11-17 13:36Z): 200 soldiers
+    // spread over the open ground, worst of 5 builds; and what the GPU
+    // takes once a second (a word a block).
+    let open: Vec<u32> = (0..d.w * d.h).filter(|&i| d.agar[i]).map(|i| (i % d.w) as u32 | ((i / d.w) as u32) << 16).collect();
+    let many: Vec<u32> = (0..200).map(|q| open[(q * 7919 + 13) % open.len()]).collect();
+    let mut worst = 0.0f64;
+    for _ in 0..5 {
+        let t = Instant::now();
+        let f = slime_mould::mould::big::units_field_for(&d.agar, d.w, d.h, &many);
+        worst = worst.max(t.elapsed().as_secs_f64() * 1e3);
+        std::hint::black_box(f);
+    }
+    println!("  from 200 sources: worst of 5 {worst:.1} ms (a worker thread); the GPU's upload {} KB a second", f.len() * 4 / 1024);
 }
