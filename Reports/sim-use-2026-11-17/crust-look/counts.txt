@@ -1,0 +1,26 @@
+idle.txt:  crust t 30 s: 48272 cells over 0.05, 43230 over 0.3 (41398 of those under walkers now, 96%), 0 over 0.95; walkers on 43698 cells
+idle.txt:  t 30 s: mould 43698, soldiers 4, bank 2000, harvested 0, rendered 0, shots 23, killed 20, took 0%, crystals left 0.992; squad at 435.3,262.4
+idle.txt:  crust t 60 s: 52178 cells over 0.05, 45532 over 0.3 (42308 of those under walkers now, 93%), 31845 over 0.95; walkers on 44083 cells
+idle.txt:  t 60 s: mould 44083, soldiers 4, bank 2000, harvested 0, rendered 0, shots 79, killed 73, took 0%, crystals left 0.983; squad at 435.3,262.4
+idle.txt:  crust t 120 s: 62701 cells over 0.05, 47074 over 0.3 (24683 of those under walkers now, 52%), 25571 over 0.95; walkers on 26900 cells
+idle.txt:  t 120 s: mould 27257, soldiers 0, bank 1913, harvested 0, rendered 0, shots 181, killed 1018, took 0%, crystals left 0.965
+idle.txt:  crust t 180 s: 66082 cells over 0.05, 51670 over 0.3 (28383 of those under walkers now, 55%), 25735 over 0.95; walkers on 29809 cells
+idle.txt:  t 180 s: mould 30166, soldiers 0, bank 1835, harvested 0, rendered 0, shots 181, killed 1018, took 0%, crystals left 0.943
+idle.txt:  crust t 300 s: 72398 cells over 0.05, 51213 over 0.3 (37807 of those under walkers now, 74%), 35312 over 0.95; walkers on 39376 cells
+idle.txt:  t 300 s: mould 39999, soldiers 0, bank 1608, harvested 0, rendered 0, shots 181, killed 1018, took 0%, crystals left 0.893
+idle.txt:  crust t 480 s: 79712 cells over 0.05, 57108 over 0.3 (50541 of those under walkers now, 89%), 48520 over 0.95; walkers on 51705 cells
+idle.txt:  t 480 s: mould 52963, soldiers 0, bank 1103, harvested 0, rendered 0, shots 181, killed 1018, took 0%, crystals left 0.811
+idle.txt:wall 496 s exit 0
+squads.txt:  crust t 30 s: 48309 cells over 0.05, 43221 over 0.3 (41442 of those under walkers now, 96%), 0 over 0.95; walkers on 43700 cells
+squads.txt:  t 30 s: mould 43700, soldiers 8, bank 400, harvested 0, rendered 0, shots 38, killed 22, took 0%, crystals left 0.992; squad at 435.9,262.1
+squads.txt:  crust t 60 s: 51728 cells over 0.05, 45748 over 0.3 (42470 of those under walkers now, 93%), 31744 over 0.95; walkers on 44127 cells
+squads.txt:  t 60 s: mould 44127, soldiers 8, bank 400, harvested 0, rendered 0, shots 111, killed 66, took 0%, crystals left 0.983; squad at 435.9,262.1
+squads.txt:  crust t 120 s: 61072 cells over 0.05, 47198 over 0.3 (24556 of those under walkers now, 52%), 25474 over 0.95; walkers on 26516 cells
+squads.txt:  t 120 s: mould 26733, soldiers 5, bank 387, harvested 0, rendered 0, shots 337, killed 1334, took 0%, crystals left 0.965; squad at 434.3,264.7
+squads.txt:  crust t 180 s: 65380 cells over 0.05, 48449 over 0.3 (23422 of those under walkers now, 48%), 24656 over 0.95; walkers on 26617 cells
+squads.txt:  t 149 s: mould 27064, soldiers 0, bank 343, harvested 0, rendered 0, shots 419, killed 2255, took 0%, crystals left 0.955, ended: squad wiped
+squads.txt:  crust t 300 s: 65380 cells over 0.05, 48449 over 0.3 (23422 of those under walkers now, 48%), 24656 over 0.95; walkers on 26617 cells
+squads.txt:  t 149 s: mould 27064, soldiers 0, bank 343, harvested 0, rendered 0, shots 419, killed 2255, took 0%, crystals left 0.955, ended: squad wiped
+squads.txt:  crust t 480 s: 65380 cells over 0.05, 48449 over 0.3 (23422 of those under walkers now, 48%), 24656 over 0.95; walkers on 26617 cells
+squads.txt:  t 149 s: mould 27064, soldiers 0, bank 343, harvested 0, rendered 0, shots 419, killed 2255, took 0%, crystals left 0.955, ended: squad wiped
+squads.txt:wall 136 s exit 0

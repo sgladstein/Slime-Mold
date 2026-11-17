@@ -1,0 +1,113 @@
+<title>Slime Memory First Look</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column of figures, each picture with its counts beside or under it. */
+:root {
+  --bg: #f3f4f2; --panel: #ffffff; --fg: #1c2124; --muted: #5d676c; --line: #d9ddd9;
+  --slime: #c98a12; --crust: #4f6f86;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161a; --panel: #1a2026; --fg: #e4e8ea; --muted: #97a2a8; --line: #2b343b;
+  --slime: #e3a23a; --crust: #8fb2cc; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161a; --panel: #1a2026; --fg: #e4e8ea; --muted: #97a2a8; --line: #2b343b;
+  --slime: #e3a23a; --crust: #8fb2cc; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 21px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+figure img { width: 100%; height: auto; display: block; border-radius: 4px; border: 1px solid var(--line); background: #000; }
+.map img { image-rendering: pixelated; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+.tag { font-family: var(--mono); font-size: 12px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--line); background: var(--panel); }
+.on { color: var(--crust); border-color: var(--crust); }
+table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 520px; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+.scroll { overflow-x: auto; }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+.note { border-left: 3px solid var(--crust); padding: 8px 0 8px 14px; background: var(--panel); border-radius: 0 4px 4px 0; }
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <div class="eyebrow">Simulation-use plan · step 0 and E1a · 2026-11-17</div>
+    <h1>The slime remembers: hurt, and home</h1>
+    <p>Two memories are now in the engine. The Grudge's memory of where it was hurt runs on the GPU, and the Grudge is planet 7 of the run (merged, PR #405). The second is new: a crust that builds up where the slime has lived and fades slowly once it leaves. Nothing reads the crust yet; this page is its first look, behind the key <span class="tag">crust=1</span>.</p>
+  </header>
+
+  <section>
+    <h2>The Grudge on planet 7, memory off and on</h2>
+    <p>Run seed 1, planet 7, four soldiers standing their ground with the rifle. Left: <span class="tag">scar_weight=0</span>. Right: the run's setting, <span class="tag">scar_weight=1</span>. One seed, so this is a look, not a census.</p>
+    <div class="pair">
+      <figure><img src="grudge-024s-w0.jpg" alt="Planet 7 at 24 seconds, memory off"><figcaption><b>0:24, memory off.</b> 3 soldiers, 604 walkers killed.</figcaption></figure>
+      <figure><img src="grudge-024s-w1.jpg" alt="Planet 7 at 24 seconds, memory on"><figcaption><b>0:24, memory on.</b> 2 soldiers, 613 killed.</figcaption></figure>
+      <figure><img src="grudge-036s-w0.jpg" alt="Planet 7 at 36 seconds, memory off"><figcaption><b>0:36, memory off.</b> 1 soldier, 720 killed.</figcaption></figure>
+      <figure><img src="grudge-036s-w1.jpg" alt="Planet 7 at 36 seconds, memory on"><figcaption><b>0:36, memory on.</b> Squad gone at 0:40 (0:48 with it off), 751 killed.</figcaption></figure>
+    </div>
+    <p class="note">The squad goes 8 seconds sooner with the memory on. That is a small difference: on planet 7 a four-soldier squad that stands still is overrun either way. The memory should matter more in a longer fight from one place, and its number is a first guess to retune in play.</p>
+  </section>
+
+  <section>
+    <h2>Where the crust lies</h2>
+    <p>Planet 3, run seed 1, the squad idle. Left: the game. Right: the crust the engine kept, white where it is full and black where there is none, with the cells holding walkers right now painted orange. A cell fills in a minute of steady living and halves in two minutes once the slime leaves.</p>
+    <div class="pair map">
+      <figure><img src="map-180s-frame.jpg" alt="Planet 3 at 3:00"><figcaption><b>3:00.</b> The slime pulled back from its first spread after 1:00.</figcaption></figure>
+      <figure><img src="map-180s-crust.png" alt="Crust map at 3:00"><figcaption><b>Crust at 3:00.</b> 51,700 cells over 0.3; 45% of them now bare, showing where it used to be.</figcaption></figure>
+      <figure><img src="map-480s-frame.jpg" alt="Planet 3 at 8:00"><figcaption><b>8:00.</b> The slime has regrown over most of it.</figcaption></figure>
+      <figure><img src="map-480s-crust.png" alt="Crust map at 8:00"><figcaption><b>Crust at 8:00.</b> 57,100 cells over 0.3; only 11% of them bare.</figcaption></figure>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Time</th><th>Crust over 0.05</th><th>Over 0.3</th><th>Of those, bare now</th><th>Full (over 0.95)</th><th>Walkers' cells</th></tr></thead>
+        <tbody>
+          <tr><td>1:00</td><td>52,200</td><td>45,500</td><td>7%</td><td>31,800</td><td>44,100</td></tr>
+          <tr><td>2:00</td><td>62,700</td><td>47,100</td><td>48%</td><td>25,600</td><td>26,900</td></tr>
+          <tr><td>3:00</td><td>66,100</td><td>51,700</td><td>45%</td><td>25,700</td><td>29,800</td></tr>
+          <tr><td>5:00</td><td>72,400</td><td>51,200</td><td>26%</td><td>35,300</td><td>39,400</td></tr>
+          <tr><td>8:00</td><td>79,700</td><td>57,100</td><td>11%</td><td>48,500</td><td>51,700</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>As the reviewers predicted, the crust is one plate over the slime's whole range, not a map of its roads. It shows best after the slime pulls back, as a record of the ground it used to hold. The engine's crust matches a copy worked out on the CPU from the same game within 1% at 1:00 and 3:00.</p>
+  </section>
+
+  <section>
+    <h2>The crust's look, off and on</h2>
+    <p>The same moment (planet 3, 3:00) at three zooms, near the home body's south shore, where the slime had spread over the shallows and pulled back. The crust is drawn as satin patches on bare ground: the more crust, the more of the ground is glazed. Each patch's edge toward the light catches a thin highlight. It hides under the slime, as the soil's own detail does.</p>
+    <div class="pair">
+      <figure><img src="crust-z24-off.jpg" alt="Zoom 24, crust off"><figcaption><span class="tag">off</span> Zoom 24.</figcaption></figure>
+      <figure><img src="crust-z24-on.jpg" alt="Zoom 24, crust on"><figcaption><span class="tag on">on</span> Zoom 24: the glazed patches over the shallows (right).</figcaption></figure>
+      <figure><img src="crust-z12-off.jpg" alt="Zoom 12, crust off"><figcaption><span class="tag">off</span> Zoom 12.</figcaption></figure>
+      <figure><img src="crust-z12-on.jpg" alt="Zoom 12, crust on"><figcaption><span class="tag on">on</span> Zoom 12.</figcaption></figure>
+      <figure><img src="crust-z6-off.jpg" alt="Zoom 6, crust off"><figcaption><span class="tag">off</span> Zoom 6.</figcaption></figure>
+      <figure><img src="crust-z6-on.jpg" alt="Zoom 6, crust on"><figcaption><span class="tag on">on</span> Zoom 6: a fine glaze over the ground the slime left.</figcaption></figure>
+    </div>
+    <p class="note">This is the first look, labelled so you can see what changed. Before the crust is on by default, it goes through the plan's blind "name the ground" quiz beside char, rubble, barren ground and damp bank.</p>
+  </section>
+
+  <section>
+    <h2>What comes next</h2>
+    <ul>
+      <li><b>E1b:</b> walkers sense the crust, so the slime flows back to old ground after it is pushed off. It will be filmed both ways: drawn back to old ground, and avoiding it.</li>
+      <li><b>C2:</b> the crust becomes fuel, so fire runs along ground the slime abandoned, and burnt crust leaves char where nothing breeds.</li>
+      <li><b>E2:</b> where the crust and the memory of being hurt are both high, walkers set into a living wall. The rim toughens while you are still shooting it (your 02:30Z answer).</li>
+    </ul>
+  </section>
+</div>

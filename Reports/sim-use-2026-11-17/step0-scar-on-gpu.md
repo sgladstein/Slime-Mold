@@ -63,6 +63,15 @@ atomic load and store a cell a fine step in the trail pass, and one more load
 a sensor read. Timing on the GTX 1070 is booked through the PC runner; the
 result goes here.
 
+## Film (planet 7, llvmpipe)
+
+Run seed 1, planet 7, `hand=stand gun=rifle`, `scar_weight=0` against the
+run's 1 (page https://claude.ai/artifact/7S91NqGRDSopYhhje3giS6, `page-e1a/`).
+One seed, a look: with the memory on the four-soldier squad was gone at 0:40
+(0:48 off), 751 walkers killed (764 off). A standing squad of four is overrun
+on planet 7 either way; the memory should tell more in a longer fight from one
+place. The number is a first guess, to retune in play.
+
 ## Rejected or left
 
 - A new binding for the scar: binding 47's second block was reserved for it.

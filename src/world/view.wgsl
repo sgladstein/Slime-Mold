@@ -69,6 +69,9 @@ struct V {
     // How far each lump's members' own density sets where its look shows
     // (`LumpBody::held`: 1 out on its errand, 0 gathering).
     lump_held: vec4<f32>,
+    // The crust (`View::set_crust`, 2026-11-17): the word in `news` where
+    // the engine's crust block starts (0 off), and three spare words.
+    crust_at: u32, _cr0: u32, _cr1: u32, _cr2: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: V;
@@ -345,6 +348,67 @@ fn plant_px(x: f32, y: f32) -> PlantPx {
         }
     }
     return o;
+}
+
+// **Crust** (the simulation-use plan's E1a, 2026-11-17; `BigDish::crust`):
+// ground that remembers the slime, 0 to 1 a cell. Drawn as satin patches
+// on the bare ground (the readability review's pick: value, hue and the
+// gold are all taken, gloss is free): a two-octave value noise about a
+// cell across, and a pixel is in a patch where the noise is under the
+// crust's level, so the crust sets the share of ground glazed, each patch
+// edge is a pixel wide at any zoom, and no line is drawn at any crust
+// level. Inside, the ground lifts a little and cools; the patch's rim
+// toward the light catches a thin highlight and the far rim a shadow, as
+// a varnish would. Zoomed out past the patches' size it fades to their
+// mean, a faint cool lift by the crust.
+const CRUST_FREQ: f32 = 0.8;
+fn crust_c(ix: i32, iy: i32) -> f32 { return bitcast<f32>(news[P.crust_at + cidx(ix, iy)]); }
+fn crust_lin(x: f32, y: f32) -> f32 {
+    let fx = x - 0.5; let fy = y - 0.5;
+    let ix = i32(floor(fx)); let iy = i32(floor(fy));
+    let tx = fx - floor(fx); let ty = fy - floor(fy);
+    return mix(mix(crust_c(ix, iy), crust_c(ix + 1, iy), tx), mix(crust_c(ix, iy + 1), crust_c(ix + 1, iy + 1), tx), ty);
+}
+fn crust_noise(p: vec2<f32>) -> f32 { return 0.65 * vnoise(p) + 0.35 * vnoise(p * 2.7 + vec2<f32>(17.0, 5.0)); }
+// The ground's albedo `a` with the crust at (x, y) laid over it, `gv` how
+// much of the bare ground shows (1 bare, 0 under the slime).
+fn crust_over(a: vec3<f32>, x: f32, y: f32, gv: f32) -> vec3<f32> {
+    if (P.crust_at == 0u || gv <= 0.0) { return a; }
+    let cv = crust_lin(x, y);
+    if (cv <= 0.01) { return a; }
+    let satin = a * 1.12 + vec3<f32>(3.0, 5.0, 8.0);
+    // Cells a pixel, against the patches' size: past about half a patch
+    // a pixel, the mean cover only.
+    let px = 1.0 / P.zoom;
+    let far = smoothstep(0.25, 0.6, px * CRUST_FREQ);
+    // The noise's spread is about 0.2-0.8 (mean 0.5): the crust maps onto
+    // it, so a full crust glazes nearly all the ground and a thin one a few
+    // flecks (from 0.15 up, the first try's floor, a crust under 0.2 drew
+    // nothing).
+    let t = 0.3 + 0.5 * cv;
+    var o = a;
+    if (far < 1.0) {
+        let p = vec2<f32>(x, y) * CRUST_FREQ;
+        let nz = crust_noise(p);
+        let w = max(px * CRUST_FREQ * 0.6, 0.004);
+        let inside = smoothstep(-w, w, t - nz);
+        if (inside > 0.0) {
+            // The rim: the band inside the edge some 3 pixels deep (at
+            // most a fifth of a cell), lit where the patch's outward normal
+            // (up the noise) faces the light.
+            let d = 0.35;
+            let g = vec2<f32>(crust_noise(p + vec2<f32>(d, 0.0)) - crust_noise(p - vec2<f32>(d, 0.0)), crust_noise(p + vec2<f32>(0.0, d)) - crust_noise(p - vec2<f32>(0.0, d)));
+            let gn = g / max(length(g), 1e-5);
+            let band = 1.0 - smoothstep(w, w + min(3.0 * px, 0.2) * CRUST_FREQ * 0.6, t - nz);
+            let lit = dot(gn, normalize(LIGHT.xy));
+            var c = satin;
+            c += vec3<f32>(34.0, 34.0, 36.0) * band * max(lit, 0.0);
+            c *= 1.0 - 0.18 * band * max(-lit, 0.0);
+            o = mix(a, c, inside);
+        }
+    }
+    let mean = mix(a, satin, clamp(1.1 * cv, 0.0, 1.0));
+    return mix(mix(o, mean, far), a, 1.0 - gv);
 }
 
 // One kind's plants at (x, y) as round crowns on a jittered grid `s`
@@ -2357,6 +2421,8 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
         let ash = CHAR_RGB * (0.9 + 0.2 * vnoise(vec2<f32>(x, y) * 2.3));
         m.albedo = mix(m.albedo, ash * (0.8 + 0.4 * (pl.rgb / max(pl.cover, 0.01)).g / 60.0 * pv), ch * gv);
     }
+    // The crust over the bare ground and its plants, under the slime.
+    m.albedo = crust_over(m.albedo, x, y, m.vis * under);
     let h = max(hc0, gem_height(x, y));
     // Forward differences: three B-spline samples, not five.
     let dx = cells_height(x + e, y) - hc0;
