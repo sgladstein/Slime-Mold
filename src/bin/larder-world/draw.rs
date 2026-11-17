@@ -191,7 +191,11 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
     if jf > 0.0 {
         marks.muzzle_flash(m, half * 0.9, look.facing, 0, k as u32 * 13, jf, flame(&card_look(None)), MUZZLE_CORE);
     }
-    marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
+    if b.kind == Kind::Mortar {
+        marks.mortar(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
+    } else {
+        marks.turret(b.at, half, built, b.hp / b.max_hp.max(1.0), look.facing, fl, turret_state(g, b));
+    }
     if fl > 0.0 {
         let sc = g.world.scale();
         lights.push(Light { at: m, reach: MUZZLE_LIGHT * sc, lift: 3.0, colour: [255.0, 220.0, 170.0], strength: 0.6 * fl });
@@ -202,6 +206,7 @@ fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook
 pub(super) fn building_colour(k: Kind) -> Option<[u8; 4]> {
     match k {
         Kind::Turret => Some([150, 200, 255, 255]),
+        Kind::Mortar => Some([190, 175, 255, 255]),
         Kind::Lure => Some([255, 196, 90, 255]),
         Kind::Pump => Some([90, 220, 230, 255]),
         Kind::Outpost => Some([214, 196, 150, 255]),
@@ -469,13 +474,19 @@ impl App {
         // dashed ring of lines claims only its own pixels (one big ring
         // mark walks its whole box: 0.7 ms at 480 pixels).
         let cursor = self.controls.cursor.filter(|&p| !self.hud.over(p));
-        let placing = self.hud.targeting().filter(|t| t.0 == TURRET).and(cursor).and_then(|p| self.hud.aim(p, &self.camera));
+        // A mortar's two rings: its reach and its blind ring inside.
+        let bld = g.rules.build;
+        let rings = |k: Kind| match k {
+            Kind::Mortar => vec![bld.mortar_range, bld.mortar_min],
+            _ => vec![bld.turret_range],
+        };
+        let placing = self.hud.targeting().and_then(|t| build_kind(t.0).filter(|k| matches!(k, Kind::Turret | Kind::Mortar))).zip(cursor.and_then(|p| self.hud.aim(p, &self.camera))).map(|(k, at)| (at, k));
         let over = cursor.and_then(|p| self.camera.world_at(p)).and_then(|w| {
-            g.buildings.iter().find(|b| b.alive && b.kind == Kind::Turret && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| b.at)
+            g.buildings.iter().find(|b| b.alive && matches!(b.kind, Kind::Turret | Kind::Mortar) && (b.at.0 - w.0).hypot(b.at.1 - w.1) < g.rules.build.touch * sc * 1.3).map(|b| (b.at, b.kind))
         });
-        for at in placing.into_iter().chain(over) {
-            let reach = g.rules.build.turret_range * sc;
-            let n = 72;
+        for (at, reach) in placing.into_iter().chain(over).flat_map(|(at, k)| rings(k).into_iter().map(move |r| (at, r))) {
+            let reach = reach * sc;
+            let n = if reach > 60.0 { 180 } else { 72 };
             for i in 0..n {
                 let (a0, a1) = (i as f32 / n as f32 * std::f32::consts::TAU, (i as f32 + 0.5) / n as f32 * std::f32::consts::TAU);
                 self.marks.line((at.0 + reach * a0.cos(), at.1 + reach * a0.sin()), (at.0 + reach * a1.cos(), at.1 + reach * a1.sin()), 0.0, [240, 232, 200, 110]);
@@ -533,7 +544,7 @@ impl App {
             // A lure switched off is not working.
             let working = b.working && (!matches!(b.kind, Kind::Lure | Kind::Siren) || b.on);
             let built = if b.up() { 1.0 } else { b.built };
-            if b.kind == Kind::Turret {
+            if matches!(b.kind, Kind::Turret | Kind::Mortar) {
                 // A gun that reads at zoom 6 as clearly as a soldier (owner's
                 // playtest 11-14 08:15Z: "turrets need to look better"; it
                 // was drawn 0.7 touch radii, smaller than a soldier's 1.15):
@@ -783,6 +794,30 @@ impl App {
             let seed = l.shots.wrapping_mul(7).wrapping_add(k as u32 * 37);
             self.marks.muzzle_flash(tip, len, l.facing, id, seed, l.flash / FLASH, flame(&look), MUZZLE_CORE);
         }
+        // Mortar shells in the air (`Game::shells`), each where its flight
+        // puts it this frame: the game holds where it was fired, where it
+        // comes down and when, and the shell rides an arc between them,
+        // lifted toward the top of the screen, over its shadow on the
+        // ground, which darkens and shrinks as it drops.
+        let now = g.settled_ticks() as f32 + between * g.rules.frame_ticks as f32;
+        let plain = card_look(None);
+        for sh in &g.shells {
+            let span = sh.lands.saturating_sub(sh.fired).max(1) as f32;
+            let at = |f: f32| {
+                let d = (sh.to.0 - sh.from.0).hypot(sh.to.1 - sh.from.1);
+                let lift = 4.0 * MORTAR_ARC * d * f * (1.0 - f);
+                ((sh.from.0 + (sh.to.0 - sh.from.0) * f, sh.from.1 + (sh.to.1 - sh.from.1) * f), lift)
+            };
+            let f = ((now - sh.fired as f32) / span).clamp(0.0, 1.0);
+            let (ground, lift) = at(f);
+            let (back, back_lift) = at((f - 0.05).max(0.0));
+            let shade = (70.0 + 110.0 * f) as u8;
+            self.marks.disc(ground, (0.5 + 0.4 * (1.0 - f)) * sc, [8, 8, 6, shade], false);
+            let head = (ground.0, ground.1 - lift);
+            let tail = (back.0, back.1 - back_lift);
+            let core = (0.3 * sc * zoom).clamp(2.0, 6.0);
+            self.marks.streak(head, tail, core, [plain.glow[0], plain.glow[1], plain.glow[2], 235], plain.core);
+        }
         // Turrets over the bullets, so a shot leaving the barrel tip
         // (`TURRET_MUZZLE`; mould at its foot is shot from nearer) comes
         // out of the barrels rather than lying over them (turret look,
@@ -977,6 +1012,7 @@ impl App {
                 Order::Build(b) => match g.buildings.get(b) {
                     Some(bd) => match bd.kind {
                         Kind::Turret => "building a turret",
+                        Kind::Mortar => "building a mortar",
                         Kind::Lure => "building a lure",
                         Kind::Pump => "building a pump",
                         Kind::Outpost => "building an outpost",
@@ -1201,6 +1237,7 @@ impl App {
             cmds = vec![
                 place(TURRET, (0, 0), Icon::Turret, "Turret", KeyCode::KeyT, b.turret_cost, format!("A gun that does not move: fires at the thickest mould within {:.0} cells every {:.1} s. Its hits call a Swarmer. Mould touching it wears it down. Select a turret to make it render: {:.0} food, then slime killed in its range pays {:.2} food a walker.", b.turret_range, b.turret_every, b.render_cost, b.render_food)),
                 pump((0, 1)),
+                place(MORTAR, (1, 2), Icon::Bomb, "Mortar", KeyCode::KeyB, b.mortar_cost, format!("Lobs a shell over walls at the thickest mould it sees within {:.0} cells, the longest reach there is, every {:.1} s; the shell lands a second or two later as a wide strike. It can't hit mould within {:.0} cells of itself. Fires the turrets' cards.", b.mortar_range, b.mortar_every, b.mortar_min)),
                 Command {
                     target: Target::Line { width: r.wall_width * sc },
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
@@ -1228,6 +1265,13 @@ impl App {
             // letting the mould eat from it (bug sweep's review, 11-14).
             if !g.rules.larder {
                 cmds.retain(|c| c.id != OUTPOST);
+            }
+            // The rally point comes here only in the RTS round with the
+            // player's own mould (sowing has its main-page slot): then every
+            // slot is taken, and the mortar, the newest, gives up its own
+            // (1, 2). Runs, and the squad mode, have no rally point.
+            if rally.is_some() {
+                cmds.retain(|c| c.id != MORTAR);
             }
             cmds.extend(rally.take());
         }
@@ -1734,6 +1778,10 @@ fn flame(look: &CardLook) -> [u8; 4] {
 }
 /// Seconds of a bullet's flight its tracer shows.
 const TRACE_SECS: f32 = 0.08;
+/// A mortar shell's arc: its peak lifts it this share of its flight's
+/// length toward the top of the screen (the view is from above, so the
+/// lift and the shadow under it are what read as height).
+const MORTAR_ARC: f32 = 0.25;
 
 /// A soldier's drawn radius, world cells: its touch 1.15 times over, and
 /// at least 10 pixels, so it reads at any zoom (see `marks`).
@@ -1807,6 +1855,7 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
     Some(match id {
         WALL | DOOR => "walls",
         TURRET => "turret",
+        MORTAR => "mortar",
         LURE => "lure",
         LURES => return None,
         // Pumps are the main income: never locked (owner, 2026-11-15).
@@ -1827,6 +1876,7 @@ pub(super) fn run_lock(id: u32) -> Option<&'static str> {
 fn building_icon(k: Kind) -> Icon {
     match k {
         Kind::Turret => Icon::Turret,
+        Kind::Mortar => Icon::Bomb,
         Kind::Lure => Icon::Bait,
         Kind::Pump => Icon::Crystal,
         Kind::Outpost => Icon::Hold,
@@ -1873,6 +1923,13 @@ impl App {
                 Kind::Turret => {
                     stats.push(("Range".into(), format!("{:.0} cells", g.rules.build.turret_range)));
                     if bd.working { "firing".into() } else { "watching".into() }
+                }
+                Kind::Mortar => {
+                    let b = &g.rules.build;
+                    stats.push(("Range".into(), format!("{:.0} to {:.0} cells", b.mortar_min, b.mortar_range)));
+                    let up = g.shells.iter().filter(|s| s.mortar == bk).count();
+                    stats.push(("Shells in the air".into(), format!("{up}")));
+                    if up > 0 { "shelling".into() } else { "watching".into() }
                 }
                 Kind::Lure | Kind::Siren => {
                     if bd.on { "on".into() } else { "off".into() }

@@ -2,7 +2,7 @@
 title: The owner's decided choices about the games
 kind: method
 status: current
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - CLAUDE.md
   - HANDOFF.md
@@ -52,6 +52,8 @@ live only in [HANDOFF.md](../HANDOFF.md).
 
 | When | Decision | Owner's words | Pages |
 |---|---|---|---|
+| 2026-11-17 00:47, card | The first turret body is the mortar (over a placement mine, a picky-targeting turret or a sprayer): a building unlocked in the run shop after Turrets that lobs shells over walls from the longest reach in the game, firing the turrets' cards | "Mortar anyway" (to: which turret body should come first, now that every turret fires over walls?) | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
+| 2026-11-16 22:11 | No hard cap on the turrets' Range cards below the mortar's reach: the mortar only starts with the longest reach, retuned if play shows a problem | "not sure this is absolutely necessary 'so I'll cap them below the mortar's reach.'" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 22:10 | The mortar stays among the turret bodies: its point is a longer range than anything else in the game | "mortar still has a point and the point is a longer range that anything else in the game" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:41 | The turret tech tree lives in the run shop between planets, not as research during a mission | "I lean shop" (to: should the tree also run inside a mission, or only in the run shop?) | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |
 | 2026-11-16 21:36, card | Turrets grow both ways: a tech tree unlocks turret bodies (each a different way to deliver a shot, such as a mortar over walls, a sprayer, a fan) and gun cards fill each body's barrel (not a tree alone, not cards alone) | "Both: tree bodies, card barrels" | [Larder World](world/larder.md), [report](../Reports/turret-growth-2026-11-16/README.md) |

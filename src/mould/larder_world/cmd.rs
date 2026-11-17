@@ -157,6 +157,7 @@ impl Cmd {
             "build" => {
                 let kind = match *w.get(1)? {
                     "turret" => Kind::Turret,
+                    "mortar" => Kind::Mortar,
                     "lure" => Kind::Lure,
                     "pump" => Kind::Pump,
                     "outpost" => Kind::Outpost,

@@ -1,0 +1,89 @@
+larder-world: llvmpipe (LLVM 20.1.2, 256 bits) (Vulkan)
+  mortar t 20.00 s: standing at 70,196
+  mortar t   30 s: 3 shells fired, 2 landed, 1 in the air, 180 walkers killed by their strikes, the newest coming down at 186,266
+  t 30 s: mould 24030, soldiers 7, bank 5895, harvested 0, rendered 0, shots 194, killed 1418, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5894, harvested 0, rendered 0, shots 194, killed 1418, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5892, harvested 0, rendered 0, shots 194, killed 1434, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5891, harvested 0, rendered 0, shots 194, killed 1434, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5889, harvested 0, rendered 0, shots 194, killed 1434, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5888, harvested 0, rendered 0, shots 195, killed 1434, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5887, harvested 0, rendered 0, shots 196, killed 1447, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 30 s: mould 24030, soldiers 7, bank 5885, harvested 0, rendered 0, shots 197, killed 1447, took 0%, crystals left 0.997; squad at 149.5,262.6
+  mortar t   31 s: 3 shells fired, 2 landed, 1 in the air, 180 walkers killed by their strikes, the newest coming down at 186,266
+  t 31 s: mould 24030, soldiers 7, bank 5884, harvested 0, rendered 0, shots 198, killed 1458, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 24030, soldiers 7, bank 5882, harvested 0, rendered 0, shots 198, killed 1458, took 0%, crystals left 0.997; squad at 149.5,262.6
+  mortar t   31 s: 3 shells fired, 3 landed, 0 in the air, 249 walkers killed by their strikes
+  t 31 s: mould 24030, soldiers 7, bank 5881, harvested 0, rendered 0, shots 199, killed 1527, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 24030, soldiers 7, bank 5879, harvested 0, rendered 0, shots 201, killed 1531, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 24030, soldiers 7, bank 5878, harvested 0, rendered 0, shots 201, killed 1531, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 24030, soldiers 7, bank 5876, harvested 0, rendered 0, shots 201, killed 1531, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 24030, soldiers 7, bank 5875, harvested 0, rendered 0, shots 202, killed 1538, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5873, harvested 0, rendered 0, shots 202, killed 1538, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5872, harvested 0, rendered 0, shots 202, killed 1538, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5871, harvested 0, rendered 0, shots 202, killed 1538, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5869, harvested 0, rendered 0, shots 202, killed 1568, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5868, harvested 0, rendered 0, shots 202, killed 1568, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5866, harvested 0, rendered 0, shots 203, killed 1569, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5865, harvested 0, rendered 0, shots 204, killed 1583, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 31 s: mould 23910, soldiers 7, bank 5863, harvested 0, rendered 0, shots 205, killed 1606, took 0%, crystals left 0.997; squad at 149.5,262.6
+  mortar t   32 s: 3 shells fired, 3 landed, 0 in the air, 249 walkers killed by their strikes
+  t 32 s: mould 23910, soldiers 7, bank 5862, harvested 0, rendered 0, shots 206, killed 1608, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5860, harvested 0, rendered 0, shots 206, killed 1608, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5859, harvested 0, rendered 0, shots 206, killed 1608, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5857, harvested 0, rendered 0, shots 208, killed 1631, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5856, harvested 0, rendered 0, shots 208, killed 1631, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5855, harvested 0, rendered 0, shots 208, killed 1631, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23910, soldiers 7, bank 5853, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5852, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5850, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  mortar t   32 s: 4 shells fired, 3 landed, 1 in the air, 249 walkers killed by their strikes, the newest coming down at 66,234
+  t 32 s: mould 23852, soldiers 7, bank 5849, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5847, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5846, harvested 0, rendered 0, shots 209, killed 1632, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5844, harvested 0, rendered 0, shots 210, killed 1645, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5843, harvested 0, rendered 0, shots 211, killed 1674, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 32 s: mould 23852, soldiers 7, bank 5842, harvested 0, rendered 0, shots 212, killed 1722, took 0%, crystals left 0.997; squad at 149.5,262.6
+  mortar t   33 s: 4 shells fired, 3 landed, 1 in the air, 249 walkers killed by their strikes, the newest coming down at 66,234
+  t 33 s: mould 23852, soldiers 7, bank 5840, harvested 0, rendered 0, shots 213, killed 1722, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 33 s: mould 23852, soldiers 7, bank 5839, harvested 0, rendered 0, shots 213, killed 1728, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 33 s: mould 23852, soldiers 7, bank 5837, harvested 0, rendered 0, shots 213, killed 1728, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 33 s: mould 23852, soldiers 7, bank 5836, harvested 0, rendered 0, shots 215, killed 1745, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 33 s: mould 23852, soldiers 7, bank 5834, harvested 0, rendered 0, shots 215, killed 1745, took 0%, crystals left 0.997; squad at 149.5,262.6
+  t 33 s: mould 23852, soldiers 6, bank 5833, harvested 0, rendered 0, shots 215, killed 1745, took 0%, crystals left 0.997; squad at 147.8,263.2
+  t 33 s: mould 23852, soldiers 5, bank 5832, harvested 0, rendered 0, shots 216, killed 1768, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5830, harvested 0, rendered 0, shots 216, killed 1768, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5829, harvested 0, rendered 0, shots 216, killed 1768, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5827, harvested 0, rendered 0, shots 216, killed 1768, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5826, harvested 0, rendered 0, shots 216, killed 1768, took 0%, crystals left 0.997; squad at 146.3,261.5
+  mortar t   33 s: 4 shells fired, 4 landed, 0 in the air, 319 walkers killed by their strikes
+  t 33 s: mould 23784, soldiers 5, bank 5824, harvested 0, rendered 0, shots 217, killed 1838, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5823, harvested 0, rendered 0, shots 218, killed 1861, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5821, harvested 0, rendered 0, shots 218, killed 1861, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 33 s: mould 23784, soldiers 5, bank 5820, harvested 0, rendered 0, shots 218, killed 1861, took 0%, crystals left 0.997; squad at 146.3,261.5
+  mortar t   34 s: 4 shells fired, 4 landed, 0 in the air, 319 walkers killed by their strikes
+  t 34 s: mould 23784, soldiers 5, bank 5819, harvested 0, rendered 0, shots 219, killed 1866, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5817, harvested 0, rendered 0, shots 219, killed 1866, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5816, harvested 0, rendered 0, shots 219, killed 1866, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5814, harvested 0, rendered 0, shots 221, killed 1870, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5813, harvested 0, rendered 0, shots 221, killed 1870, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5811, harvested 0, rendered 0, shots 221, killed 1870, took 0%, crystals left 0.997; squad at 146.3,261.5
+  t 34 s: mould 23784, soldiers 5, bank 5810, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5808, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5807, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5805, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5804, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5802, harvested 0, rendered 0, shots 222, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5801, harvested 0, rendered 0, shots 223, killed 1878, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5800, harvested 0, rendered 0, shots 223, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 34 s: mould 23724, soldiers 5, bank 5798, harvested 0, rendered 0, shots 223, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  mortar t   35 s: 4 shells fired, 4 landed, 0 in the air, 319 walkers killed by their strikes
+  t 35 s: mould 23724, soldiers 5, bank 5797, harvested 0, rendered 0, shots 224, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5795, harvested 0, rendered 0, shots 224, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5794, harvested 0, rendered 0, shots 224, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5792, harvested 0, rendered 0, shots 226, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5791, harvested 0, rendered 0, shots 226, killed 1886, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5789, harvested 0, rendered 0, shots 226, killed 1933, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23724, soldiers 5, bank 5788, harvested 0, rendered 0, shots 227, killed 1933, took 0%, crystals left 0.996; squad at 146.3,261.5
+  t 35 s: mould 23775, soldiers 5, bank 5786, harvested 0, rendered 0, shots 227, killed 1966, took 0%, crystals left 0.996; squad at 146.3,261.5
+  mortar t   40 s: 5 shells fired, 5 landed, 0 in the air, 390 walkers killed by their strikes
+  t 40 s: mould 23904, soldiers 5, bank 5675, harvested 0, rendered 0, shots 253, killed 2202, took 0%, crystals left 0.996; squad at 146.3,261.5

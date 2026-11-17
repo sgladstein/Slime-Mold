@@ -542,6 +542,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         if !rd.round.is_empty() || g.squads.iter().any(|s| s.deck.is_some()) || g.turret_deck.is_some() {
             println!("  rounds t {:>4.0} s: {} casts (blast, gas, germ, bomb {:?}), {} walkers killed, {} flung, {} not on this world, {} lodged, {} trail bursts, {} carried casts let out, {} walkers gassed, {} shoves, {} killed by turrets, {} casts beside another, {} batches of {} bursts, {} seeker turns, {} soldier hits in {} cells, {} ran out of range and {} hit a wall with no slime struck, {} pulls too near to pull, {} Mind casts", g.time(), rd.cast.iter().sum::<u32>(), &rd.cast[..4], rd.killed, rd.flung, rd.unsupported, rd.waiting(), rd.trailed, g.releases, rd.gassed, rd.pushes, g.turret_killed, g.multicast, rd.batches, rd.batched, g.seek_turns, g.hits, g.hit_cells, g.missed_range, g.missed_wall, rd.short, rd.cast[4]);
         }
+        if g.shells_fired > 0 {
+            let next = g.shells.last().map_or(String::new(), |s| format!(", the newest coming down at {:.0},{:.0}", s.to.0, s.to.1));
+            println!("  mortar t {:>4.0} s: {} shells fired, {} landed, {} in the air, {} walkers killed by their strikes{next}", g.time(), g.shells_fired, g.shells_landed, g.shells.len(), g.mortar_killed);
+        }
         // The view on the fight: the squad's middle, or the larder; or,
         // with `centre=X,Y`, one place for every frame, so a run of frames
         // plays as a clip from a still camera (the crater looks in motion,
@@ -790,6 +794,14 @@ pub(super) fn turret_fired(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>) 
             (turrets[k].facing, turrets[k].shot) = ((s.to.1 - s.from.1).atan2(s.to.0 - s.from.0), TURRET_SHOT);
         }
     }
+    // A mortar that fired this step faces its newest shell's landing
+    // point and sinks back (`Game::shells`, fired on the step's tick).
+    let t = g.settled_ticks();
+    for sh in g.shells.iter().filter(|sh| sh.fired + u64::from(g.rules.frame_ticks) > t) {
+        if let Some(l) = turrets.get_mut(sh.mortar) {
+            (l.facing, l.shot) = ((sh.to.1 - sh.from.1).atan2(sh.to.0 - sh.from.0), TURRET_SHOT);
+        }
+    }
 }
 
 /// Between shots a turret's head turns toward its aim (`Building::aim`,
@@ -798,7 +810,7 @@ pub(super) fn turn_turrets(g: &Game<GpuWorld>, turrets: &mut Vec<BuildingLook>, 
     join_turrets(g, turrets);
     for (t, b) in turrets.iter_mut().zip(&g.buildings) {
         t.shot = (t.shot - dt).max(0.0);
-        if let (Kind::Turret, Some(aim)) = (b.kind, b.aim) {
+        if let (Kind::Turret | Kind::Mortar, Some(aim)) = (b.kind, b.aim) {
             let want = (aim.1 - b.at.1).atan2(aim.0 - b.at.0);
             let mut d = want - t.facing;
             d = (d + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;

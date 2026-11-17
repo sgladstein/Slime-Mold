@@ -181,3 +181,62 @@ and wide).
 Not yet measured: whether giving cards to the turrets is a fair trade
 against the squad's gun. That's the paired raid-on-base census the review
 suggested, and it waits for the balance pass ("build first, balance later").
+
+## Step 3: the mortar, the first turret body (2026-11-17)
+
+The owner's card (2026-11-17 00:47Z): "Mortar anyway", over a placement
+mine, a picky-targeting turret and a sprayer. Every turret already fires over
+walls (#398), so the mortar's point is the one the owner gave it on 11-16
+at 22:10Z: "a longer range than anything else in the game".
+
+**What it is** (`Kind::Mortar`, `BuildRules::mortar_*`):
+- A building on the build page (B, 600 food, 200 health). In a run it's
+  locked until the run shop's **Mortars** item (250 points), which needs
+  Turrets first. That's the tree's first node. Turret power levels apply
+  to mortars too. On the build page it takes slot (1, 2). That page is full only in the
+  RTS round with the player's own mould, where the rally point moves there,
+  so the mortar is left off in that one case.
+- Every 4 s it lobs a shell at the thickest slime it sees within **80 dish
+  cells**, over walls. The long gun averages 40 on the first planet and 56
+  at its deepest, so the mortar starts longest. Its reach isn't capped
+  (owner, 22:11Z), and Range cards stretch it.
+- It can't hit slime within **8 cells** of itself, its blind ring. Slime
+  at its foot is for turrets and soldiers.
+- **The shell is in the air** for 0.6 s plus its distance over 35 cells a
+  second (`Game::shells`, `buildings::Shell`), so 1.3 to 2.9 s. Nothing on
+  its way is hit. It comes down as a short leg into its landing point, a
+  strike 3 cells wide (6 fine at scale 2; a turret's is 2.5), fired by the
+  mortar (`Firer`). That means the turrets' deck's next cast goes off
+  there, and its kills, Render and Pull go to it as a turret's do. Pellets
+  and multicast fan shells round the aim.
+- The window draws each shell from those numbers: along its arc, lifted
+  toward the top of the screen, over a shadow that darkens as it drops. The
+  mortar is the turret's base with a short wide tube turned to its last
+  shell, drawn as shapes in the view's shader (building kind 7). It sinks
+  back and its bore flares as a shell leaves. Placing or hovering one shows
+  its reach and blind rings.
+- Frame cost: it looks only on the frame before it may fire (sight 0
+  otherwise). Its sight then reads about 5,000 four-cell blocks at reach 160
+  fine cells, about 80,000 cell reads once every 4 s (an estimate, not
+  timed). The 1070 timing is still to do, as for Range cards.
+
+**Seen** (`raw/mortar_film.sh`, `page/mortar.mp4`, counts in
+`raw/counts/mortar.txt`): on the Fork the squad held at 150,265 on plain
+rounds, with a mortar standing from 20 s at 70,196, about 60 cells behind
+it. Its shells came down on the trunk beside the squad and on the arm by
+the left crystal: 5 shells in 20 s killed 390 walkers, about 78 a shell.
+That's about 20 a second; one plain turret in the kill box killed about 8 a
+second. One film is a look, not a balance result. If play shows it's too
+strong, the knobs are `mortar_every` and `mortar_blast`. In the first try
+(every 2 s, 3.5 cells) 10 shells killed 731 in 20 s.
+
+Tests: `a_mortar_lobs_shells_that_strike_where_they_land`. Three shells in
+12 s on the race world landed 19 ticks after firing, 23 cells out, and
+killed 76. Every kill was the mortar's and counted as the turrets'. With
+its blind ring past everything it fires nothing, and `Cmd::Build(Mortar)`
+round-trips. `command_ids_are_one_registry` now takes MORTAR (37) and
+sprite 7.
+
+Next bodies, as the owner picks: the sprayer, the fan, the picky turret,
+the mine. A deck for each body (the proposal's option A) is still open; for
+now the mortar fires the one turret deck.
