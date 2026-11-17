@@ -380,6 +380,7 @@ fn item_icon(key: &str) -> Icon {
         "harvest" => Icon::Upgrade,
         "walls" => Icon::Wall,
         "turret" => Icon::Turret,
+        "mortar" => Icon::Bomb,
         "lure" => Icon::Bait,
         "pump+" => Icon::Crystal,
         "outpost" => Icon::Hold,

@@ -347,10 +347,24 @@ impl Marks {
     /// use.
     #[allow(clippy::too_many_arguments)]
     pub fn turret(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
+        self.gun_building(at, r, 0.0, built, health, facing, shot, state);
+    }
+
+    /// A turret or a mortar, building kind `kind`.
+    #[allow(clippy::too_many_arguments)]
+    fn gun_building(&mut self, at: (f32, f32), r: f32, kind: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
         let b = (built.clamp(0.0, 1.0) * 255.0).round() as u32;
         let h = (health.clamp(0.0, 1.0) * 255.0).round() as u32;
         let extra = b | h << 8 | ((shot.clamp(0.0, 1.0) * 255.0).round() as u32) << 17 | (state.min(3)) << 25;
-        self.push(Mark { flags: WORLD | MINIMAP, fill: 0.0, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
+        self.push(Mark { flags: WORLD | MINIMAP, fill: kind, extra, colour2: facing.to_bits().to_le_bytes(), ..Mark::new(Shape::Building, at, (r, r), [200, 200, 200, 255]) });
+    }
+
+    /// A mortar (building kind 7, the turrets thread 2026-11-17) as
+    /// `turret`: the turret's base under a short wide tube turned to
+    /// `facing`, sinking back by `shot` as a shell leaves.
+    #[allow(clippy::too_many_arguments)]
+    pub fn mortar(&mut self, at: (f32, f32), r: f32, built: f32, health: f32, facing: f32, shot: f32, state: u32) {
+        self.gun_building(at, r, 7.0, built, health, facing, shot, state);
     }
 
     /// The words the view pass reads, `MARK_WORDS` a mark.

@@ -65,6 +65,15 @@ pub enum Kind {
     /// Sleeper on the player's own clock.
     Siren,
     Wall { to: (f32, f32) },
+    /// The turrets' first new body from the run shop's tree (owner,
+    /// 2026-11-17 00:47Z, "Mortar anyway"; 2026-11-16 22:10Z: "the point is
+    /// a longer range than anything else in the game"). It lobs a shell at
+    /// the thickest slime it sees within `mortar_range`, over walls, and
+    /// the shell lands `mortar_flight` + its distance over `mortar_speed`
+    /// seconds later (`Game::shells`) as a wide strike there, carrying the
+    /// turrets' deck's next cast. It can't hit slime within `mortar_min`
+    /// of itself: that is what turrets and soldiers are for.
+    Mortar,
 }
 
 impl Kind {
@@ -76,6 +85,7 @@ impl Kind {
             Kind::Outpost => "outpost",
             Kind::Siren => "siren",
             Kind::Wall { .. } => "wall",
+            Kind::Mortar => "mortar",
         }
     }
 }
@@ -125,6 +135,22 @@ pub struct Building {
     /// A turret's next cast in the turrets' deck's turn
     /// (`Game::turret_deck`), as `Soldier::next` is a soldier's.
     pub next: u8,
+}
+
+/// A mortar's shell in the air (`Kind::Mortar`, `Game::shells`): fired
+/// from `from` at tick `fired`, it comes down on `to` at tick `lands` as a
+/// strike `r` fine cells wide carrying cast `cast` (0 plain) of the
+/// turrets' deck. The window draws it along its arc from these numbers.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Shell {
+    pub from: (f32, f32),
+    pub to: (f32, f32),
+    pub fired: u64,
+    pub lands: u64,
+    pub r: f32,
+    pub cast: u8,
+    /// The mortar that fired it (`Game::buildings`).
+    pub mortar: usize,
 }
 
 impl Building {
@@ -182,6 +208,25 @@ pub struct BuildRules {
     /// but regular guns shots do not"). `set=turret_over=0` turns it off
     /// for films and tries.
     pub turret_over: bool,
+    /// The mortar (`Kind::Mortar`): its price, health, reach and shells.
+    /// Reach 80 dish cells, the longest in the game: the long gun averages
+    /// 40 on the first planet and 56 at its deepest (`guns::GunKind::Long`,
+    /// `DEPTH_STAT_MAX`), and the owner ruled no cap on Range cards
+    /// (2026-11-16 22:11Z), so it only starts longest.
+    pub mortar_cost: f32,
+    pub mortar_hp: f32,
+    pub mortar_range: f32,
+    /// Its blind ring: slime nearer than this it can't hit (dish cells).
+    pub mortar_min: f32,
+    /// Seconds between shells.
+    pub mortar_every: f32,
+    /// A shell's strike radius (dish cells; the frame caps every strike
+    /// at `squad::R_MAX` fine cells).
+    pub mortar_blast: f32,
+    /// A shell's flight: `mortar_flight` seconds plus its distance over
+    /// `mortar_speed` dish cells a second.
+    pub mortar_flight: f32,
+    pub mortar_speed: f32,
     pub lure_cost: f32,
     pub lure_hp: f32,
     /// The lure's scent, as a multiple of a soldier's (`Rules::smell`, a
@@ -298,6 +343,14 @@ impl Default for BuildRules {
             turret_range: 15.0,
             turret_every: 0.5,
             turret_over: true,
+            mortar_cost: 600.0,
+            mortar_hp: 200.0,
+            mortar_range: 80.0,
+            mortar_min: 8.0,
+            mortar_every: 4.0,
+            mortar_blast: 3.0,
+            mortar_flight: 0.6,
+            mortar_speed: 35.0,
             lure_cost: 300.0,
             lure_hp: 150.0,
             lure_smell: 8.0,
@@ -347,6 +400,7 @@ impl<W: World> Game<W> {
         let b = self.rules.build;
         match kind {
             Kind::Turret => b.turret_cost,
+            Kind::Mortar => b.mortar_cost,
             Kind::Lure => b.lure_cost,
             Kind::Pump => b.pump_cost,
             Kind::Outpost => b.outpost_cost,
@@ -523,6 +577,7 @@ impl<W: World> Game<W> {
         let b = self.rules.build;
         let hp = match kind {
             Kind::Turret => b.turret_hp,
+            Kind::Mortar => b.mortar_hp,
             Kind::Lure => b.lure_hp,
             Kind::Pump => b.pump_hp,
             Kind::Outpost => b.outpost_hp,
@@ -668,6 +723,25 @@ impl<W: World> Game<W> {
         let strike = (r.strike * sc).min(crate::mould::squad::R_MAX);
         // The turrets' cards, read once a step (`Game::turret_deck`).
         let tm = self.turret_mods();
+        // Mortar shells that come down this frame: a short leg into their
+        // landing point, as wide as the shell's strike, fired by their
+        // mortar (`Firer`), so its cast, kills and Render go to it. The
+        // shell was in the air until now: nothing on its way was hit.
+        let mut i = 0;
+        while i < self.shells.len() {
+            let sh = self.shells[i];
+            if sh.lands > t {
+                i += 1;
+                continue;
+            }
+            self.shells.remove(i);
+            let (dx, dy) = (sh.to.0 - sh.from.0, sh.to.1 - sh.from.1);
+            let d = dx.hypot(dy).max(1e-3);
+            let (ux, uy) = (dx / d, dy / d);
+            shots.push(ShotIn { from: (sh.to.0 - ux, sh.to.1 - uy), to: (sh.to.0 + 0.5 * ux, sh.to.1 + 0.5 * uy), r: sh.r, over: true });
+            shooters.push((None, sh.cast, Some(sh.mortar)));
+            self.shells_landed += 1;
+        }
         for k in 0..self.buildings.len() {
             let bd = self.buildings[k];
             self.buildings[k].working = false;
@@ -748,6 +822,63 @@ impl<W: World> Game<W> {
                                     }
                                 }
                                 let every = b.turret_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
+                                self.buildings[k].ready = t + self.secs(every).max(1);
+                                self.buildings[k].working = true;
+                                self.bank -= r.price;
+                                self.spent += r.price;
+                            }
+                        }
+                    }
+                }
+                Kind::Mortar => {
+                    // The turrets' deck as a turret fires it: Range cards
+                    // stretch its reach, Rate cards its rate, each shell
+                    // carries the next cast (multicast and pellets fan
+                    // shells round the aim).
+                    let m = tm;
+                    let reach = b.mortar_range * sc * (1.0 + r.range_card * m.reach as f32);
+                    // It looks only the frame before it may fire: its sight
+                    // reads (reach / BIN)^2 blocks, about 6,000 at reach
+                    // 160 fine cells, so the other frames cost nothing.
+                    u.sight = if bd.ready <= t + 2 * u64::from(r.frame_ticks) { reach } else { 0.0 };
+                    // Lobbed: over walls always (owner, 2026-11-16 19:50Z:
+                    // "lobbed fire goes over walls").
+                    u.over = true;
+                    if bd.ready <= t && self.bank >= r.price && bd.dense >= r.aim_min {
+                        if let Some(aim) = bd.aim {
+                            let (dx, dy) = (aim.0 - bd.at.0, aim.1 - bd.at.1);
+                            let d = dx.hypot(dy).max(0.1);
+                            if d >= b.mortar_min * sc && d <= reach + 4.0 && self.lob_line(bd.at, aim) {
+                                let n = m.casts;
+                                let cast = if n > 0 {
+                                    let c = bd.next % n;
+                                    self.buildings[k].next = (c + 1) % n;
+                                    m.cycle[c as usize]
+                                } else {
+                                    0
+                                };
+                                let mut volley = vec![cast];
+                                while let Some(&w) = volley.last().filter(|&&c| c > 0).map(|&c| &m.with[c as usize - 1]).filter(|&&w| w > 0 && !volley.contains(&w)) {
+                                    volley.push(w);
+                                }
+                                self.multicast += volley.len() as u32 - 1;
+                                let nv = volley.len();
+                                let a0 = dy.atan2(dx);
+                                for (v, &cast) in volley.iter().enumerate() {
+                                    let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
+                                    let shape = ammo.set.shape();
+                                    let blast = (b.mortar_blast * sc * ammo.reach()).min(crate::mould::squad::R_MAX) * shape.r;
+                                    let side = if nv > 1 { (v as f32 / (nv - 1) as f32 * 2.0 - 1.0) * crate::mould::rounds::VOLLEY_FAN } else { 0.0 };
+                                    let pellets = shape.pellets.max(1);
+                                    for p in 0..pellets {
+                                        let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
+                                        let to = (bd.at.0 + a.cos() * d, bd.at.1 + a.sin() * d);
+                                        let flight = b.mortar_flight + d / sc / b.mortar_speed.max(0.1);
+                                        self.shells_fired += 1;
+                                        self.shells.push(Shell { from: bd.at, to, fired: t, lands: t + self.secs(flight).max(1), r: blast, cast, mortar: k });
+                                    }
+                                }
+                                let every = b.mortar_every / (1.0 + r.rate_card * m.rate as f32).max(0.01);
                                 self.buildings[k].ready = t + self.secs(every).max(1);
                                 self.buildings[k].working = true;
                                 self.bank -= r.price;
@@ -1076,6 +1207,50 @@ mod tests {
         assert!(killed > plain, "a blasting turret kills more: {killed} against {plain}");
         // The command round-trips, so replays keep it.
         let c = Cmd::Load(TURRET_DECK, Some(Deck::new(&parse("blast").unwrap())));
+        assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+    }
+
+    /// **A mortar lobs shells far, and they strike only where they land**
+    /// (the turrets thread, owner 2026-11-17 00:47Z, "Mortar anyway"):
+    /// built 30 cells from the core, past a turret's reach, it fires
+    /// shells that stay in the air for their flight and come down as
+    /// strikes at least `mortar_min` from it; their kills are the
+    /// turrets' (`turret_killed`) and counted as its own
+    /// (`mortar_killed`). With its blind ring past everything it fires
+    /// nothing.
+    #[test]
+    fn a_mortar_lobs_shells_that_strike_where_they_land() {
+        let run = |blind: f32| {
+            let mut g = small(3);
+            g.rules.build.mortar_min = blind;
+            let at = open_near(&g, (g.core.0 + 30.0, g.core.1));
+            for k in 0..g.soldiers.len() {
+                g.soldiers[k].stance = Stance::HoldFire;
+            }
+            assert!(g.apply(Cmd::Build(Kind::Mortar, at)));
+            let sc = g.s();
+            let (mut strikes, mut nearest, mut flight) = (0, f32::INFINITY, u64::MAX);
+            for _ in 0..(g.rules.tps * 12) {
+                g.step();
+                for sh in &g.shells {
+                    flight = flight.min(sh.lands - sh.fired);
+                }
+                for s in g.last_shots.iter().filter(|s| s.turret == Some(0)) {
+                    strikes += 1;
+                    nearest = nearest.min((s.from.0 - at.0).hypot(s.from.1 - at.1));
+                }
+            }
+            (g.shells_fired, g.shells_landed, strikes, nearest / sc, flight, g.mortar_killed, g.turret_killed, g.killed)
+        };
+        let (fired, landed, strikes, nearest, flight, by_mortar, by_turrets, killed) = run(BuildRules::default().mortar_min);
+        eprintln!("mortar: {fired} shells, {landed} landed, {strikes} strikes, nearest {nearest:.1} cells out, flight {flight} ticks, {by_mortar} killed by them ({by_turrets} by turrets, {killed} in all)");
+        assert!(fired >= 2 && landed >= 1 && strikes == landed as usize, "{fired} fired, {landed} landed, {strikes} strikes");
+        assert!(nearest >= BuildRules::default().mortar_min - 1.0, "a strike only where a shell lands, {nearest} cells out");
+        assert!(flight as f32 >= BuildRules::default().mortar_flight * 15.0, "in the air {flight} ticks");
+        assert!(by_mortar > 0 && by_turrets >= by_mortar && killed == by_turrets, "{by_mortar} by its shells, {by_turrets} by turrets, {killed} in all");
+        let (fired, ..) = run(1e4);
+        assert_eq!(fired, 0, "nothing outside its blind ring, nothing fired");
+        let c = Cmd::Build(Kind::Mortar, (10.5, 20.25));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
     }
 

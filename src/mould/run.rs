@@ -382,7 +382,7 @@ pub struct Item {
 /// 21:41Z, the whole-game review's D10): the outpost is out of the run,
 /// and the lure and siren stay out until they visibly draw the slime. The
 /// window hides them from a run's build card (`run_hidden`).
-pub const ITEMS: [Item; 17] = [
+pub const ITEMS: [Item; 18] = [
     Item { key: "hp", name: "Armour", group: Group::Squad, about: "Soldiers take a quarter more biting before they fall", max: 4, cost: 120, needs: None },
     Item { key: "strike", name: "Heavier shots", group: Group::Squad, about: "Each shot kills a fifth more slime", max: 4, cost: 120, needs: None },
     Item { key: "rate", name: "Faster trigger", group: Group::Squad, about: "Soldiers fire 15% sooner", max: 4, cost: 120, needs: None },
@@ -392,7 +392,10 @@ pub const ITEMS: [Item; 17] = [
     Item { key: "harvest", name: "Quick hands", group: Group::Squad, about: "Soldiers take a quarter more from a crystal each second", max: 3, cost: 100, needs: None },
     Item { key: "walls", name: "Walls", group: Group::Build, about: "Unlocks laying walls", max: 1, cost: 100, needs: None },
     Item { key: "turret", name: "Turrets", group: Group::Build, about: "Unlocks the turret, a gun that does not move", max: 1, cost: 200, needs: None },
-    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
+    // The tree's first body (the turrets thread, owner 2026-11-17 00:47Z):
+    // after turrets, as each next body will be after the one before.
+    Item { key: "mortar", name: "Mortars", group: Group::Build, about: "Unlocks the mortar: the longest reach there is, lobbed over walls", max: 1, cost: 250, needs: Some("turret") },
+    Item { key: "turret+", name: "Turret power", group: Group::Build, about: "Turrets and mortars: 30% tougher, 3 cells more reach, fire 15% sooner", max: 3, cost: 150, needs: Some("turret") },
     // Pumps are the main income and never locked (owner, 2026-11-15:
     // "pumps do not start locked"); the shop sells their power instead.
     Item { key: "pump+", name: "Pump power", group: Group::Build, about: "Pumps draw a quarter more from their crystals each second", max: 3, cost: 150, needs: None },
@@ -713,6 +716,10 @@ impl Run {
         b.turret_hp *= 1.0 + 0.3 * t;
         b.turret_range += 3.0 * t;
         b.turret_every *= 0.85f32.powf(t);
+        // Mortars are turrets' bodies: the same power (the turrets thread).
+        b.mortar_hp *= 1.0 + 0.3 * t;
+        b.mortar_range += 3.0 * t;
+        b.mortar_every *= 0.85f32.powf(t);
     }
 
     /// The tools' prices with `tools+`.
