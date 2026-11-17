@@ -2930,6 +2930,125 @@ mod tests {
         assert!(off > 50, "the twin catches a spin that doesn't curl");
     }
 
+    /// **The readers on the engine** (`Engine::read_pass`, the gun cards'
+    /// readers, 2026-11-16; the CPU's `BigDish::read_strike`): a
+    /// contagion dish warmed 70 ticks on the CPU (sick and immune walkers
+    /// both), a disc gassed on both, then Shatter and Detonate on both from
+    /// the same state. The kill counts, every slot's life state, every
+    /// cell's walker count and the trail exactly; then a tick on from the
+    /// CPU's state as the one-tick twin. Planted: a GPU reach 0.6 of the
+    /// CPU's (Shatter's 8.4 inside the gassed disc of 10) and a GPU
+    /// Detonate that reads sleep must each fail it.
+    #[test]
+    fn readers_match_the_cpu() {
+        use slime_mould::mould::big::{READ_SICK, READ_SLEEP};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { start: Start::Spread, seed_r: 60.0, ..Settings { sick: 60, immune: 60, catch_at: 0.2, sick_trail: 3.0, seed_at: 0.0, ..small(0) } };
+        // (CPU kills, GPU kills, states off, cell counts off, trail L1) for
+        // each reader, then walkers off a tick on.
+        type Read = (usize, u32, usize, usize, f64);
+        let play = |gpu_reach: f32, gpu_sick: u8| -> ([Read; 2], usize) {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            for _ in 0..70 {
+                cpu.tick();
+            }
+            e.inject(&cpu);
+            let k = cpu.p.scale as f32;
+            let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.lives(j) {
+                    (x, y, m) = (x + wx, y + wy, m + 1.0);
+                }
+            }
+            let (x, y) = (x / m / k, y / m / k);
+            let ill = (0..cpu.walkers.len()).filter(|&j| cpu.sick[j] > cpu.p.immune_steps).count();
+            let immune = (0..cpu.walkers.len()).filter(|&j| cpu.sick[j] > 0 && cpu.sick[j] <= cpu.p.immune_steps).count();
+            assert!(ill > 50 && immune > 50, "{ill} sick and {immune} immune after the warm-up");
+            let n_gas = cpu.gas(x * k, y * k, 10.0 * k, 100);
+            assert_eq!(e.gas(&shared, &s, x, y, 10.0, 100) as usize, n_gas);
+            // Detonate where the sick are (the gassed middle is shattered).
+            let (mut sx, mut sy, mut sm) = (0.0, 0.0, 0.0);
+            for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+                if cpu.sick[j] > cpu.p.immune_steps {
+                    (sx, sy, sm) = (sx + wx, sy + wy, sm + 1.0);
+                }
+            }
+            let mut out = [(0, 0, 0, 0, 0.0); 2];
+            for (i, (kind, (x, y), r, gk)) in [(READ_SLEEP, (x, y), 14.0, READ_SLEEP), (READ_SICK, (sx / sm / k, sy / sm / k), 40.0, gpu_sick)].into_iter().enumerate() {
+                let before = e.struck();
+                let n_cpu = cpu.read_strike(x * k, y * k, r * k, kind);
+                e.read_pass(&shared, &s, x, y, r * gpu_reach, gk);
+                let n_gpu = e.struck() - before;
+                let (life, _) = e.life_of();
+                let life_off = life.iter().zip(&cpu.life).filter(|(a, b)| a != b).count();
+                let occ_off = read_back(&device, &queue, &e.occ).chunks_exact(4).zip(cpu.occupancy()).filter(|(a, b)| u32::from_le_bytes((*a).try_into().unwrap()) != **b as u32).count();
+                let trail = floats(&read_back(&device, &queue, &e.trail[(e.done % 2) as usize]));
+                out[i] = (n_cpu, n_gpu, life_off, occ_off, l1(&trail, &cpu.trail));
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, &s, &mut cpu, 1);
+            (out, off)
+        };
+        let (reads, off) = play(1.0, READ_SICK);
+        for (name, (n_cpu, n_gpu, life_off, occ_off, lt)) in ["shatter", "detonate"].iter().zip(reads) {
+            eprintln!("{name}: killed {n_cpu} on the CPU, {n_gpu} on the GPU; {life_off} states and {occ_off} cell counts off, trail L1 {lt:.1e}");
+            assert!(n_cpu > 50 && n_gpu as usize == n_cpu && life_off == 0 && occ_off == 0 && lt == 0.0, "{name}: {n_cpu} and {n_gpu} killed, {life_off} states, {occ_off} counts off, trail L1 {lt:.2e}");
+        }
+        eprintln!("a tick on: {off} walkers off");
+        assert!(off * 1000 <= s.walkers, "{off} walkers off a tick on");
+        let (short, _) = play(0.6, READ_SICK);
+        eprintln!("planted, reach x 0.6: shatter {} of {}, detonate {} of {}", short[0].1, short[0].0, short[1].1, short[1].0);
+        assert!(short.iter().all(|r| r.1 as usize != r.0 && r.2 > 0), "the twin catches a reader short of its reach");
+        let (crossed, _) = play(1.0, READ_SLEEP);
+        eprintln!("planted, detonate reads sleep: {} of {} killed, {} states off", crossed[1].1, crossed[1].0, crossed[1].2);
+        assert!(crossed[1].1 as usize != crossed[1].0 && crossed[1].2 > 50, "the twin catches a detonate that reads the wrong state");
+    }
+
+    /// **The readers in the game's bursts** (`squad::Burst::read`, the
+    /// gun cards' readers, 2026-11-16): the race world warmed on the CPU,
+    /// loaded into the engine's world, then the same bursts on both: a
+    /// Shatter alone (`World::burst`; nothing asleep, so none killed), then
+    /// one batch (`World::bursts`) of a
+    /// gas, a Shatter on it, a second Shatter (none left) and a Detonate
+    /// on a world with no sickness. Each burst's count on both, the
+    /// Shatter's kills its own and not fire's.
+    #[test]
+    fn readers_count_their_kills_in_the_games_bursts_on_the_engine() {
+        use slime_mould::gpu::larder_world::{race_settings, GpuWorld};
+        use slime_mould::mould::big::{READ_SICK, READ_SLEEP};
+        use slime_mould::mould::larder_world::{race_world, Rules, World};
+        use slime_mould::mould::rounds::RoundRules;
+        use slime_mould::mould::squad::Burst;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (3, 2, 5_000);
+        let mut cpu = race_world(seed, scale, walkers);
+        let mut gpu = GpuWorld::new(&device, &queue, race_settings(seed, scale, walkers), scale);
+        for _ in 0..40 {
+            cpu.tick();
+        }
+        gpu.e.inject(&cpu);
+        let k = scale as f32;
+        let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+        for (j, &(wx, wy, _)) in cpu.walkers.iter().enumerate() {
+            if cpu.lives(j) {
+                (x, y, m) = (x + wx, y + wy, m + 1.0);
+            }
+        }
+        let at = (x / m / k, y / m / k);
+        let r = RoundRules::default();
+        let br = r.burst_rules(Rules::default().tps as f32 * cpu.fine_steps() as f32);
+        let shatter = Burst { at, r: r.read_r, read: READ_SLEEP, ..Burst::default() };
+        let (c, g) = (cpu.burst(&shatter, &br), gpu.burst(&shatter, &br));
+        assert_eq!((c, g), Default::default(), "nothing asleep to shatter");
+        let list = [Burst { at, r: 10.0, gas: 600, ..Burst::default() }, shatter, shatter, Burst { at, r: r.detonate_r, read: READ_SICK, ..Burst::default() }].map(|b| (b, br));
+        let (c, g) = (cpu.bursts(&list), gpu.bursts(&list));
+        eprintln!("gas, shatter, shatter, detonate: CPU {:?}, engine {:?}", c.iter().map(|o| (o.gassed, o.killed)).collect::<Vec<_>>(), g.iter().map(|o| (o.gassed, o.killed)).collect::<Vec<_>>());
+        assert_eq!(c, g, "each burst's count on both");
+        assert!(c[0].gassed > 50 && c[1].killed == c[0].gassed && c[2].killed == 0 && c[3].killed == 0, "the shatter takes the gassed: {c:?}");
+        assert_eq!(gpu.burned(), 0, "the shatter's kills are its own, not fire's");
+    }
+
     /// **The scar on the engine** (the Grudge's threat memory, 2026-11-17,
     /// the simulation-use plan's step 0; the CPU's `BigDish::scar`): the
     /// Grudge warmed 40 ticks on the CPU with three strikes on the body, so

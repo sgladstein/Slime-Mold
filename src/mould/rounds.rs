@@ -164,6 +164,17 @@ pub enum Card {
     /// (`big::MIND_SPIN`): it circles in place and stops advancing, so a
     /// vein breaks into a chain of knots.
     Spin,
+    /// **The readers** (2026-11-16, step D of the gun-system review, its
+    /// second family, "readers and marks": a bullet that cashes in a state
+    /// another put on the slime). Each is a payload that kills only the
+    /// walkers in the state it reads (`squad::Burst::read`,
+    /// `BigDish::read_strike`), so it pays only after another card's work.
+    /// `Shatter`: the walkers asleep from gas within `RoundRules::read_r`.
+    Shatter,
+    /// The sick walkers (`big::READ_SICK`) within `RoundRules::detonate_r`,
+    /// wider, as the germ's sickness spreads along the veins from its hit;
+    /// the germ is this family's mark, so there is no mark card.
+    Detonate,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -176,11 +187,11 @@ pub enum Kind {
 
 impl Card {
     /// The fixed cards (not `Ammo`, which is rolled).
-    pub const ALL: [Card; 29] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin];
+    pub const ALL: [Card; 31] = [Card::Plain, Card::Blast, Card::Bomb, Card::Gas, Card::Germ, Card::Wide, Card::Scatter, Card::Quiet, Card::Delay, Card::Thick, Card::Pierce, Card::Split, Card::Scorch, Card::Bait, Card::Mist, Card::Range, Card::Rate, Card::Thrift, Card::Smother, Card::Trigger, Card::Expire, Card::Heave, Card::Corral, Card::Pull, Card::Multicast, Card::Seek, Card::Blind, Card::Sour, Card::Spin, Card::Shatter, Card::Detonate];
 
     pub fn kind(self) -> Kind {
         match self {
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin => Kind::Payload,
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate => Kind::Payload,
             Card::Wide | Card::Scatter | Card::Quiet | Card::Heave | Card::Corral | Card::Pull => Kind::Modifier,
             Card::Delay | Card::Thick | Card::Trigger | Card::Expire | Card::Multicast => Kind::Trigger,
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Seek => Kind::Flight,
@@ -222,6 +233,8 @@ impl Card {
             Card::Blind => "blind",
             Card::Sour => "sour",
             Card::Spin => "spin",
+            Card::Shatter => "shatter",
+            Card::Detonate => "detonate",
         }
     }
 
@@ -293,6 +306,8 @@ impl Card {
             Card::Blind => "Blinds slime where it hits: it walks straight on.",
             Card::Sour => "Slime where it hits turns from its own trail.",
             Card::Spin => "Slime where it hits turns in tight rings.",
+            Card::Shatter => "Kills sleeping slime where it hits.",
+            Card::Detonate => "Kills sick slime where it hits.",
             Card::Heave => "Its hit shoves the slime, farther with each heave.",
             Card::Corral => "Its hit shoves the slime toward your nearest turret.",
             Card::Pull => "Its hit drags the slime toward the gun.",
@@ -313,6 +328,8 @@ impl Card {
             Card::Wide | Card::Scatter | Card::Pierce | Card::Split | Card::Bait | Card::Range | Card::Rate | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Seek => 2,
             // Kills nothing, as the gas (3) doesn't; a few seconds' status.
             Card::Blind | Card::Sour | Card::Spin => 2,
+            // Kills only what another card set up, which paid for it.
+            Card::Shatter | Card::Detonate => 2,
             Card::Thrift => 0,
             Card::Quiet | Card::Delay | Card::Thick | Card::Pull => 1,
         }
@@ -325,7 +342,8 @@ impl Card {
             Card::Ammo(a) => a.shell.card().tier(),
             Card::Bomb | Card::Germ | Card::Multicast => 3,
             Card::Scatter | Card::Thick | Card::Split | Card::Scorch | Card::Mist | Card::Thrift | Card::Smother | Card::Trigger | Card::Expire | Card::Heave | Card::Corral | Card::Pull | Card::Seek => 2,
-            Card::Blind | Card::Sour | Card::Spin => 2,
+            Card::Blind | Card::Sour | Card::Spin | Card::Shatter => 2,
+            Card::Detonate => 3,
             _ => 1,
         }
     }
@@ -527,6 +545,12 @@ pub struct RoundRules {
     pub mind_r: f32,
     pub mind_secs: f32,
     pub spin_curl: f32,
+    /// **The readers** (`Card::Shatter`, `Detonate`, 2026-11-16): their
+    /// reach in dish cells (x the bullet's area). Shatter's covers a gas
+    /// hit's (`KitRules::gas_r`, 12); Detonate's is twice that, for the
+    /// sickness that has spread from a germ's hit (5). `set=` keys.
+    pub read_r: f32,
+    pub detonate_r: f32,
     /// A gun's budget (`Card::cost`, `fit`, `Rounds::build`): 10 fits
     /// every test loadout the window's H cycles (the dearest, shock, is
     /// 10). A run may grow it (the roguelike thread).
@@ -565,6 +589,8 @@ impl Default for RoundRules {
             mind_r: 8.0,
             mind_secs: 6.0,
             spin_curl: 35.0,
+            read_r: 12.0,
+            detonate_r: 24.0,
             budget: 10,
             kit: KitRules::default(),
         }
@@ -581,12 +607,14 @@ impl RoundRules {
     }
 
     /// A rule by name (`larder-world set=NAME=V`, as `Rules::set`), false
-    /// for none: the Mind bullets' numbers, to tune by eye.
+    /// for none: the Mind bullets' and the readers' numbers, to tune by eye.
     pub fn set(&mut self, name: &str, v: f32) -> bool {
         let r = match name {
             "mind_r" => &mut self.mind_r,
             "mind_secs" => &mut self.mind_secs,
             "spin_curl" => &mut self.spin_curl,
+            "read_r" => &mut self.read_r,
+            "detonate_r" => &mut self.detonate_r,
             _ => return false,
         };
         *r = v;
@@ -666,7 +694,7 @@ pub fn casts(round: &[Card]) -> Vec<Cast> {
             Card::Multicast => multi += 1,
             // Flight cards ride on every bullet, not on a cast (`flight`).
             Card::Pierce | Card::Split | Card::Scorch | Card::Bait | Card::Mist | Card::Range | Card::Rate | Card::Smother | Card::Thrift | Card::Seek => {}
-            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin => {
+            Card::Plain | Card::Ammo(_) | Card::Blast | Card::Bomb | Card::Gas | Card::Germ | Card::Blind | Card::Sour | Card::Spin | Card::Shatter | Card::Detonate => {
                 let ammo = c.ammo().unwrap_or_default();
                 out.push(Cast { payload: ammo.shell.card(), ammo, wide, scatter, quiet, trigger, child: None, expire: carry == Some(true), heave, herd, with: None });
                 multis.push(multi);
@@ -797,7 +825,7 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
     let steps = |secs: f32| (secs * fine).round().clamp(0.0, u16::MAX as f32) as u16;
     let at = (at.0 / scale, at.1 / scale);
     let alarm = if c.quiet { 0.0 } else { k.blast_alarm };
-    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0 };
+    let none = Burst { at, r: 0.0, kill: false, burn: false, alarm: 0.0, alarm_r: 0.0, crater: 0, crater_r: 0.0, gas: 0, germ: false, bait: 0.0, smother: false, fling: 0.0, fling_steps: 0, push: None, cloud: 0.0, mind: 0, read: 0 };
     let mind = |m: u32| Burst { r: r.mind_r * f, mind: m as u8, ..none };
     let one = match c.payload {
         Card::Blast => Burst { r: k.blast_r * f, kill: true, alarm, alarm_r: 2.0 * k.blast_r * f, crater: steps(k.crater_secs), crater_r: k.crater_r * f, ..none },
@@ -810,6 +838,8 @@ pub fn bursts(c: &Cast, at: (f32, f32), r: &RoundRules, scale: f32, fine: f32) -
         Card::Blind => mind(big::MIND_BLIND),
         Card::Sour => mind(big::MIND_SOUR),
         Card::Spin => mind(big::MIND_SPIN),
+        Card::Shatter => Burst { r: r.read_r * f, read: big::READ_SLEEP, ..none },
+        Card::Detonate => Burst { r: r.detonate_r * f, read: big::READ_SICK, ..none },
         _ => return Vec::new(),
     };
     if !c.scatter {
@@ -897,10 +927,11 @@ pub struct Rounds {
     pub round: Vec<Card>,
     casts: Vec<Cast>,
     pending: Vec<Pending>,
-    /// Casts by payload (blast, gas, germ, bomb, and the Mind bullets
-    /// together since 2026-11-16), walkers killed by
-    /// rounds, walkers flung by bombs, and casts dropped at `PENDING_MAX`.
-    pub cast: [u32; 5],
+    /// Casts by payload (blast, gas, germ, bomb, the Mind bullets
+    /// together and the readers together, since 2026-11-16), walkers killed
+    /// by rounds, walkers flung by bombs, and casts dropped at
+    /// `PENDING_MAX`.
+    pub cast: [u32; 6],
     pub killed: usize,
     pub flung: usize,
     pub dropped: u32,
@@ -951,6 +982,7 @@ fn slot(p: Card) -> Option<usize> {
         Card::Germ => Some(2),
         Card::Bomb => Some(3),
         Card::Blind | Card::Sour | Card::Spin => Some(4),
+        Card::Shatter | Card::Detonate => Some(5),
         _ => None,
     }
 }
@@ -1172,10 +1204,22 @@ impl Rounds {
     pub fn cast_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32)) {
         // The first squad's deck when it has one (`load=`, so a paired
         // film can boom the cards it loads; 2026-11-16), else the round.
-        for c in self.casts_of(g, 0) {
+        let cs = self.casts_of(g, 0);
+        self.cast_all(g, &cs, at);
+    }
+
+    /// Every cast of `cards` at once at `at`, as `cast_at` the round's:
+    /// `boom=T,X,Y,CARDS`, so a film can set a state off with one card and
+    /// read it with another seconds later (the readers, 2026-11-16).
+    pub fn cast_cards_at<W: World>(&mut self, g: &mut Game<W>, at: (f32, f32), cards: &[Card]) {
+        self.cast_all(g, &casts(cards), at);
+    }
+
+    fn cast_all<W: World>(&mut self, g: &mut Game<W>, cs: &[Cast], at: (f32, f32)) {
+        for c in cs {
             if let Some(sl) = slot(c.payload) {
                 self.cast[sl] += 1;
-                self.fire(g, &c, at, None);
+                self.fire(g, c, at, None);
             }
         }
         self.flush(g);
@@ -1396,6 +1440,44 @@ mod tests {
         assert!(tuned.set("spin_curl", 50.0) && tuned.spin_curl == 50.0 && !tuned.set("no_such", 1.0));
     }
 
+    /// The readers (2026-11-16, step D): each is a payload that casts one
+    /// read burst at its hit (no kill, alarm or crater), wide by `Wide`,
+    /// Shatter over `read_r` and Detonate over `detonate_r`, counted in the
+    /// readers' slot. On the CPU world a shatter alone kills nothing, and
+    /// gas then shatter at one point kills what the gas put to sleep.
+    #[test]
+    fn a_reader_casts_its_read_and_kills_only_that_state() {
+        let r = RoundRules::default();
+        for (name, kind, reach) in [("shatter", big::READ_SLEEP, r.read_r), ("detonate", big::READ_SICK, r.detonate_r)] {
+            let c = Card::from_name(name).unwrap();
+            assert_eq!((c.kind(), c.word(), slot(c)), (Kind::Payload, name.to_string(), Some(5)));
+            let b = bursts(&casts(&parse(&format!("wide+{name}")).unwrap())[0], (40.0, 20.0), &r, 2.0, 120.0);
+            assert_eq!(b.len(), 1);
+            assert_eq!((b[0].read, b[0].kill, b[0].alarm, b[0].crater, b[0].mind, b[0].at), (kind, false, 0.0, 0, 0, (20.0, 10.0)));
+            assert!((b[0].r - reach * r.wide).abs() < 1e-4, "{name}: {} wide", b[0].r);
+        }
+        let mut tuned = r;
+        assert!(tuned.set("read_r", 5.0) && tuned.set("detonate_r", 9.0) && (tuned.read_r, tuned.detonate_r) == (5.0, 9.0));
+        use crate::mould::larder_world::race_world;
+        let play = |round: &str| {
+            let mut g = Game::new(race_world(1, 2, 5_000), Rules::default(), 1);
+            for _ in 0..30 {
+                g.step();
+            }
+            let living: Vec<usize> = (0..g.world.walkers.len()).filter(|&k| g.world.lives(k)).collect();
+            let (x, y) = living.iter().fold((0.0, 0.0), |a, &k| (a.0 + g.world.walkers[k].0, a.1 + g.world.walkers[k].1));
+            let at = (x / living.len() as f32, y / living.len() as f32);
+            let mut rd = Rounds::new(parse(round).unwrap(), RoundRules::default());
+            rd.cast_at(&mut g, at);
+            (rd.gassed, rd.killed, rd.cast)
+        };
+        let (_, alone, cast) = play("shatter");
+        assert_eq!((alone, cast[5]), (0, 1), "a shatter alone kills nothing");
+        let (gassed, killed, cast) = play("gas+shatter");
+        eprintln!("gas then shatter: {gassed} gassed, {killed} killed");
+        assert!(gassed > 50 && killed == gassed && cast[1] == 1 && cast[5] == 1, "the shatter takes the gassed: {gassed}, {killed}");
+    }
+
     #[test]
     fn trail_cards_lay_discs_along_the_leg_and_cast_nothing() {
         let r = RoundRules::default();
@@ -1434,7 +1516,7 @@ mod tests {
         }
         assert!(rd.trailed > 0, "the squad's bullets laid a trail");
         assert!(g.world.gas_cloud.iter().any(|&v| v > 0.0), "the trail is a real cloud");
-        assert_eq!(rd.cast, [0; 5], "a trail casts nothing");
+        assert_eq!(rd.cast, [0; 6], "a trail casts nothing");
     }
 
     /// Scorch burns (owner, 2026-11-14 08:41Z): the slime on a scorch

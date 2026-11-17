@@ -74,7 +74,9 @@ Both signs grew the mould at 5:00 over 0 on this seed (one seed: not a
 finding).
 
 **The fire** (`crust=1 crust_fuel=F char_barren=0.3`, a plain fire lit over 4
-cells at 2:30 on the clearing the slime left after 1:00, `boom=150,120,50,4`):
+cells at 2:30 on the clearing the slime left after 1:00, `light=150,120,50,4`;
+the films ran it as `boom=150,120,50,4`, renamed when main's `boom=T,X,Y,CARDS`
+landed):
 
 | Fuel | 2:32 | 2:40 | 2:50 | 3:00 | 3:30 | 4:00 | Mould at 4:00 |
 |---|---|---|---|---|---|---|---|

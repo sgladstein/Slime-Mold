@@ -3985,3 +3985,41 @@ fn mindlay(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (dx * dx + dy * dy > P.kr * P.kr) { return; }
     atomicStore(&news[mind_at() + k], (u32(P.kir) << 29u) | ((gas_word(0u) + u32(P.kcs)) & MIND_T));
 }
+
+// **A reader's kill** (`Engine::read_pass`, the CPU's
+// `BigDish::read_strike`, the gun cards' readers, 2026-11-16): every
+// living ordinary or dormant walker within the strike row's `kr` of (`kx`,
+// `ky`), squared as on the CPU, in the state kind `kir` reads (1, Shatter:
+// dormant and gassed at the step in gas word 0; 2, Detonate: sick past the
+// immune count) takes a blow as `kill`'s (a lump's armoured member is hurt
+// and not counted, a condensed one breaks and is counted) and, if it dies,
+// clears the trail on its cell (each species' too). Kills count on
+// `wstat[3]` as a strike's.
+const READ_SLEEP: u32 = 1u;
+const READ_SICK: u32 = 2u;
+@compute @workgroup_size(256)
+fn readkill(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let k = gid.x;
+    if (k >= P.n || !lives(k)) { return; }
+    let w = spec[k];
+    let st = (w >> 9u) & 3u;
+    if (st != L_WALKER && st != L_DORMANT) { return; }
+    let wk = walkers[k];
+    let dx = wk.x - P.kx;
+    let dy = wk.y - P.ky;
+    if (dx * dx + dy * dy > P.kr * P.kr) { return; }
+    let kind = u32(P.kir);
+    let sleeps = kind == READ_SLEEP && st == L_DORMANT && gassed_at(k, gas_word(0u));
+    let ill = kind == READ_SICK && ill_of(k);
+    if (!sleeps && !ill) { return; }
+    if (armoured(k)) { return; }
+    atomicAdd(&wstat[3], 1u);
+    if (is_dense(k)) { set_dense_kept(k, 0u); return; }
+    let i = cell(wk.x, wk.y);
+    atomicSub(&occ[i], 1u);
+    let c = P.w * P.h;
+    trail_in[i] = 0.0;
+    for (var s = 0u; s < P.nsp; s++) { sp_in[s * c + i] = 0.0; }
+    spec[k] = (w & 0xFFFF01FFu) | (L_DEAD << 9u);
+    if (P.upkeep > 0.0) { energy[k] = -1.0; }
+}
