@@ -209,6 +209,10 @@ struct Params {
     // `SCAR_AT`): its keep a fine step (0 off), its gain on the alarm, its
     // weight in the sensors, and a spare word.
     scar_keep: f32, scar_gain: f32, scar_w: f32, _sc0: u32,
+    // The crust row (`CRUST_AT`, the simulation-use plan's E1a, 2026-11-17):
+    // the rise a fine step (0 off), the keep, the trail it needs, and the
+    // word in `news` its block starts at.
+    crust_rise: f32, crust_keep: f32, crust_trail: f32, crust_at: u32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -469,6 +473,18 @@ fn crater_set(i: u32, v: f32) { atomicStore(&crater[i], bitcast<u32>(v)); }
 // the mould was hurt and how often. Only the trail pass writes it, a
 // thread a cell, so plain stores (the atomics are the crater's).
 fn scars() -> bool { return alarms() && P.scar_keep > 0.0; }
+// The crust (`BigDish::crust`): each fine step after the trail, an agar
+// cell with a walker on it and trail of `crust_trail` or more gains
+// `crust_rise` up to 1, every other cell keeps `crust_keep`. `t` is the
+// cell's trail this step (0 on a cell a shot or the wipe cut).
+fn crust_step(i: u32, t: f32) {
+    if (P.crust_rise <= 0.0) { return; }
+    let k = P.crust_at + i;
+    let c = bitcast<f32>(atomicLoad(&news[k]));
+    var v = c * P.crust_keep;
+    if (agar[i] != 0u && atomicLoad(&occ[i]) > 0u && t >= P.crust_trail) { v = min(c + P.crust_rise, 1.0); }
+    atomicStore(&news[k], bitcast<u32>(v));
+}
 fn scar_at(i: u32) -> f32 { return bitcast<f32>(atomicLoad(&crater[P.w * P.h + i])); }
 // A cell's scar after this step's alarm `a` (the CPU's loop after the
 // alarm's spread in `tick`): agar cells only.
@@ -1820,6 +1836,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
             let left = crater_at(i);
             if (left > 0.0) { crater_set(i, left - 1.0); }
         }
+        crust_step(i, 0.0);
         return;
     }
     let capped = P.cap > 0u;
@@ -1884,6 +1901,7 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
             crater_set(i, left - 1.0);
         }
     }
+    crust_step(i, trail_out[i]);
 }
 
 @compute @workgroup_size(256)

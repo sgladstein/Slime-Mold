@@ -506,6 +506,15 @@ struct Args {
     /// film's page can say how a hit's status scattered or held the
     /// slime there without the picture.
     watch: Option<(f32, f32, f32)>,
+    /// `crustlook=T` (look= only, 2026-11-17, the simulation-use plan's
+    /// E1a, before any engine rule): crust worked out offline from the
+    /// look's read-back once a game second. A cell with a walker on it and
+    /// trail thickness of T or more (the look's byte, 0-255) gains 1/60
+    /// up to 1, else keeps 0.9942 (half in 2 minutes); no wipe by blasts
+    /// or fire. Each picture gets a `-crust.png` beside it and a count
+    /// line, to see whether crust shows roads or one plate under the body
+    /// (the reviews' question).
+    crust_look: Option<u8>,
     /// `tload=T,NAME` (look= only, the turrets thread, 2026-11-16): at game
     /// second T every turret loads NAME (`Cmd::Load(TURRET_DECK, ..)`,
     /// `Game::turret_deck`), a preset or a card list as `load=`.
@@ -1279,6 +1288,9 @@ impl App {
             v.set_dense(dense.then_some((&e.news, &e.state)), (e.dense_at / 4) as u32 + slime_mould::gpu::DENSE_HEAD as u32, ws.condense);
             // Plants, their fire and the char (11-14), from the same buffer.
             v.set_plants(e.plants.then_some((&e.news, &e.state)), (e.plant_at / 4) as u32 + slime_mould::gpu::PLANT_HEAD as u32, e.dish.flora_of.unwrap_or(0) as u32);
+            // The crust (2026-11-17, the simulation-use plan's E1a), from
+            // the same buffer, when the world has one (`crust=1`).
+            v.set_crust((e.crust_at > 0).then_some((&e.news, &e.state)), (e.crust_at / 4) as u32);
             // The crystals as hexagons at screen resolution (the owner's
             // playtest, 2026-11-14: "The crystals are pixelated").
             let gems: Vec<((f32, f32), f32)> = game.world.crystals().iter().enumerate().map(|(i, c)| (c.0, game.world.crystal_r(i))).collect();
@@ -2204,6 +2216,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 args.load_at = Some((t.parse::<f32>()?, cards.to_string()));
             }
+            "crustlook" => args.crust_look = Some(v.parse()?),
             "watch" => {
                 let w = v.split(',').map(|s| s.parse::<f32>()).collect::<Result<Vec<_>, _>>()?;
                 let [x, y, r] = w.as_slice() else { return Err("watch=X,Y,R".into()) };

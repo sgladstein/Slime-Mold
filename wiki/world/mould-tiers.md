@@ -58,7 +58,7 @@ avoiding twin, Wary, kept away from it but lost to random fire and was
 removed ([report](../../Reports/mould-tiers-campaign-2026-11-12.md)). The
 scar runs on the GPU since 2026-11-17, in the toolkit's damage buffer's
 second block, twin-tested to 1e-6 a cell, and the Grudge is the run's
-planet 7 (`run::LADDER`; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md)). In the
+planet 7 (`run::LADDER`; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md); one film there, a standing squad gone 8 s sooner with it on). In the
 Larder world's race the Swarmer and the Sleeper's bait hold on 8 of 8, the
 Sporer's edge is not significant
 ([report](../../Reports/mould-tiers-2026-11-11.md), *In the Larder world*).

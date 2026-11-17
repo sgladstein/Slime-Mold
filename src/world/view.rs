@@ -28,7 +28,7 @@ pub const SPRITES: &[u8] = include_bytes!("sprites/sprites.png");
 
 /// Bytes in the uniform (44 words, then the four lumps' vec4s since the
 /// mini-bosses, 2026-11-16, and their fade, fill and held vec4s).
-const PARAMS_BYTES: usize = 288;
+const PARAMS_BYTES: usize = 304;
 /// Cells round the shown ones that the look's samples reach: the slope
 /// (1.5), the cast shadow (up to 1.8 toward the light) and the bilinear
 /// blend (1) all fit in 4.
@@ -258,6 +258,9 @@ pub struct View {
     /// The plants' first cell block in `news` (words; 0 off,
     /// `set_plants`).
     plant_at: u32,
+    /// The crust (`set_crust`, 2026-11-17): the word in `news` where the
+    /// engine's crust block starts (`gpu::Engine::crust_at` / 4), 0 off.
+    crust_at: u32,
     flora: u32,
     ripe_at: u32,
     lag: u32,
@@ -399,6 +402,7 @@ impl View {
             lump_fill: [0.0; MAX_LUMPS],
             lump_held: [0.0; MAX_LUMPS],
             plant_at: 0,
+            crust_at: 0,
             flora: 0,
             ripe_at: 0,
             lag: 0,
@@ -719,11 +723,12 @@ impl View {
     }
 
     fn clear_news(&mut self) {
-        if self.news_on || self.dense_at > 0 || self.plant_at > 0 {
+        if self.news_on || self.dense_at > 0 || self.plant_at > 0 || self.crust_at > 0 {
             (self.news, self.state) = (storage(&self.device, "news", 16), storage(&self.device, "state", 16));
             self.news_on = false;
             self.dense_at = 0;
             self.plant_at = 0;
+            self.crust_at = 0;
         }
     }
 
@@ -745,6 +750,24 @@ impl View {
                 self.plant_at = at;
             }
             None => self.plant_at = 0,
+        }
+        self.rebind();
+    }
+
+    /// Draws the crust (`BigDish::crust`, the simulation-use plan's E1a,
+    /// 2026-11-17) from the engine's `news` (`state` with it) from word `at`
+    /// (`gpu::Engine::crust_at` / 4): satin patches on bare ground whose
+    /// share of the ground is the crust, crisp at any zoom, under the
+    /// slime as the soil's detail is. `None` hides it.
+    pub fn set_crust(&mut self, news: Option<(&wgpu::Buffer, &wgpu::Buffer)>, at: u32) {
+        match news {
+            Some((n, s)) if at > 0 => {
+                if !self.news_on && self.dense_at == 0 && self.plant_at == 0 {
+                    (self.news, self.state) = (n.clone(), s.clone());
+                }
+                self.crust_at = at;
+            }
+            _ => self.crust_at = 0,
         }
         self.rebind();
     }
@@ -921,6 +944,9 @@ impl View {
             }
         }
         for v in self.lump_fade.into_iter().chain(self.lump_fill).chain(self.lump_held) {
+            b.extend(v.to_le_bytes());
+        }
+        for v in [self.crust_at, 0, 0, 0] {
             b.extend(v.to_le_bytes());
         }
         debug_assert_eq!(b.len(), PARAMS_BYTES);

@@ -179,7 +179,8 @@ carves a growing hole that doesn't refill while under fire. Setting keeps
 the hole open (killed walkers don't refill it) but toughens its rim, so it
 grows slower. Asked of the owner: toughen while under fire, or only after
 fire stops (the slime fortifies where it was hit, so the next attack at the
-same place meets a wall and a fresh angle carves as today).
+same place meets a wall and a fresh angle carves as today). The owner chose
+**toughen while under fire** (2026-11-17 02:30Z, card).
 
 ### Later: E3 tunnels, E4 regrowth
 
@@ -325,4 +326,4 @@ unless the coordinator says otherwise.
 | 01:13Z | Fed slime fireproof, starving slime burns? | "sure" |
 | 01:13Z | The slime eats plants? | not sure it's worth the cost: dropped |
 | 01:13Z | B's tools as devices, cards, or both? | "agreed": both |
-| open | Setting toughens the rim while under fire, or only after fire stops? | |
+| 02:30Z | Setting toughens the rim while under fire, or only after fire stops? | "Toughen while under fire" (card) |

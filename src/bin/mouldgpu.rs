@@ -3103,6 +3103,52 @@ mod tests {
         assert!(off * 1000 > n, "the twin catches sensors that don't read the scar");
     }
 
+    /// **The crust on the engine** (the simulation-use plan's E1a,
+    /// 2026-11-17; the CPU's `BigDish::crust`): a dish with the crust on,
+    /// warmed 40 ticks on the CPU with a strike at 30 (so some cells were
+    /// cut), then four ticks on both from the same state. The crust within
+    /// 1e-6 on every cell, the walkers as in the one-tick twin. Planted: a
+    /// GPU crust that keeps 1% less a step, and one whose trail bar is out
+    /// of reach (no cell rises), must each fail it.
+    #[test]
+    fn the_crust_matches_the_cpu() {
+        const TICKS: u32 = 4;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { crust_rise: 0.02, crust_keep: 0.995, crust_trail: 1.0, ..small(0) };
+        // (cells over 0.05, the crust's L1, walkers off)
+        let play = |g: &Settings| -> (usize, f64, usize) {
+            let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+            let mut cpu = e.dish.clone();
+            assert!(!cpu.crust.is_empty() && e.crust_at > 0, "the dish has a crust");
+            let k = cpu.p.scale as f32;
+            for t in 0..40 {
+                if t == 30 {
+                    let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+                    for &(wx, wy, _) in &cpu.walkers {
+                        (x, y, m) = (x + wx, y + wy, m + 1.0);
+                    }
+                    cpu.strike(x / m / k, y / m / k, 6.0, 0.0, 0.0);
+                }
+                cpu.tick();
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, g, &mut cpu, TICKS);
+            let held = cpu.crust.iter().filter(|&&v| v > 0.05).count();
+            (held, l1(&e.crust_of(), &cpu.crust), off)
+        };
+        let n = s.walkers;
+        let (held, lc, off) = play(&s);
+        eprintln!("the crust: {held} cells over 0.05, crust L1 {lc:.1e}, {off} of {n} walkers off after {TICKS} ticks");
+        assert!(held > 1000, "the walkers laid a crust: {held} cells");
+        assert!(lc <= 1e-6 && off * 1000 <= n, "crust L1 {lc:.1e}, {off} walkers off");
+        let (_, lc, _) = play(&Settings { crust_keep: 0.985, ..s.clone() });
+        eprintln!("planted, keep 1% less on the GPU: crust L1 {lc:.1e}");
+        assert!(lc > 1e-2, "the twin catches a crust that fades too fast");
+        let (_, lc, _) = play(&Settings { crust_trail: 1e9, ..s.clone() });
+        eprintln!("planted, the GPU's trail bar out of reach: crust L1 {lc:.1e}");
+        assert!(lc > 1e-2, "the twin catches a crust that never rises");
+    }
+
     /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
     /// rounds thread, after Noita's mists): from the same state a cloud
     /// laid on both, then 40 ticks each with no re-inject. The cloud field
@@ -3478,6 +3524,7 @@ mod tests {
             ("the Sleeper, growth on crystals", tier(Tier::Sleeper, hungry(crystals.clone()))),
             ("the Swarmer", tier(Tier::Swarmer, small(0))),
             ("the Grudge, growth on crystals", tier(Tier::Grudge, hungry(crystals.clone()))),
+            ("both, crust, growth on crystals", with(hungry(Settings { crust_rise: 0.02, crust_keep: 0.995, ..crystals.clone() }), &both)),
         ];
         let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
         for (name, s) in dishes {
@@ -3556,6 +3603,7 @@ mod tests {
             let lc = if cpu.charge.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.charge)), &cpu.charge) };
             let lg = if cpu.grass.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.grass)), &cpu.grass) };
             let lgerm = if cpu.germ.is_empty() { 0.0 } else { l1(&floats(&read_back(&device, &queue, &e.germ[side]))[..cpu.germ.len()], &cpu.germ) };
+            let lcrust = if cpu.crust.is_empty() { 0.0 } else { l1(&e.crust_of(), &cpu.crust) };
             let ages_off = if cpu.age.is_empty() { 0 } else { u32s(&e.age, n).iter().zip(&cpu.age).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
             let sick_off = if cpu.sick.is_empty() { 0 } else { u32s(&e.sick, n).iter().zip(&cpu.sick).enumerate().filter(|&(j, (g, c))| cpu.lives(j) && *g != *c as u32).count() };
             let after = cpu.life_counts();
@@ -3566,7 +3614,7 @@ mod tests {
             assert!(lt <= 1e-6 && ls <= 1e-6 && lsp <= 1e-6 && la <= 1e-6, "{name}: trail {lt:.1e}, scent {ls:.1e}, species {lsp:.1e}, alarm {la:.1e}");
             assert!(life_off * 1000 <= n && timer_off * 1000 <= n && occ_off * 1000 <= n, "{name}: {life_off} states, {timer_off} timers, {occ_off} counts off");
             assert!(le <= 1e-3 && lives_off * 1000 <= n && lc <= 1e-6, "{name}: energy {le:.1e}, {lives_off} lives, charge {lc:.1e}");
-            assert!(lg <= 1e-6 && lgerm <= 1e-6, "{name}: grass {lg:.1e}, germ {lgerm:.1e}");
+            assert!(lg <= 1e-6 && lgerm <= 1e-6 && lcrust <= 1e-6, "{name}: grass {lg:.1e}, germ {lgerm:.1e}, crust {lcrust:.1e}");
             assert!(ages_off * 1000 <= n && sick_off * 1000 <= n, "{name}: {ages_off} ages, {sick_off} sick counters off");
             if s.sleep_death >= 0.01 && s.upkeep == 0.0 {
                 assert!(after[3] > before[3], "{name}: dormant walkers die asleep: dead {} then {}", before[3], after[3]);
