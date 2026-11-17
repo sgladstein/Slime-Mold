@@ -33,6 +33,7 @@ sources:
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-research-2026-11-10.md
   - Reports/sim-use-2026-11-17/README.md
+  - Reports/sim-use-2026-11-17/c1-dry-burns.md
   - Reports/sim-use-2026-11-17/e1a-crust.md
   - Reports/sim-use-2026-11-17/e1b-c2-crust-effects.md
   - Reports/sim-use-2026-11-17/e2a-setting.md

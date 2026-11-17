@@ -1,0 +1,32 @@
+dryprobe: planet depth 2, shape C, scale 2, 25000 walkers; grow 60 s, disc r 10, margin 25, gap 8, alone true, grass true, lit 15 s after the cut, counted 20 s after
+seed arm | disc (x, y) | at the light (s after the cut): walkers, stale | fire killed, per walker | living
+5 cut | (21, 127) | 2.7 s: 1035, 1035 | 1049, 1.014 | 98
+5 joined | (21, 127) | 2.7 s: 1177, 0 | 389, 0.331 | 25163
+5 cut-old | (21, 127) | 2.7 s: 1035, 1035 | 3, 0.003 | 803
+5 joined-old | (21, 127) | 2.7 s: 1177, 0 | 389, 0.331 | 25163
+5 cut-fed | (21, 127) | 2.7 s: 1035, 1035 | 1049, 1.014 | 98
+5 joined-fed | (21, 127) | 2.7 s: 1177, 0 | 0, 0.000 | 25641
+6 cut | (26, 27) | 4.3 s: 887, 887 | 971, 1.095 | 258
+6 joined | (26, 27) | 4.3 s: 1166, 0 | 395, 0.339 | 25302
+6 cut-old | (26, 27) | 4.3 s: 887, 887 | 19, 0.021 | 1053
+6 joined-old | (26, 27) | 4.3 s: 1166, 0 | 395, 0.339 | 25302
+6 cut-fed | (26, 27) | 4.3 s: 887, 887 | 942, 1.062 | 286
+6 joined-fed | (26, 27) | 4.3 s: 1166, 0 | 0, 0.000 | 25538
+7 cut | (222, 28) | 15.0 s: 0, 0 | 0, 0.000 | 2
+7 joined | (222, 28) | 15.0 s: 14, 0 | 0, 0.000 | 13773
+7 cut-old | (222, 28) | 15.0 s: 0, 0 | 0, 0.000 | 2
+7 joined-old | (222, 28) | 15.0 s: 14, 0 | 0, 0.000 | 13773
+7 cut-fed | (222, 28) | 15.0 s: 0, 0 | 0, 0.000 | 2
+7 joined-fed | (222, 28) | 15.0 s: 14, 0 | 0, 0.000 | 13773
+8 cut | (190, 87) | 4.2 s: 334, 334 | 377, 1.129 | 89
+8 joined | (190, 87) | 4.2 s: 472, 0 | 274, 0.581 | 10639
+8 cut-old | (190, 87) | 4.2 s: 334, 334 | 15, 0.045 | 226
+8 joined-old | (190, 87) | 4.2 s: 472, 0 | 274, 0.581 | 10639
+8 cut-fed | (190, 87) | 4.2 s: 334, 334 | 339, 1.015 | 132
+8 joined-fed | (190, 87) | 4.2 s: 472, 0 | 0, 0.000 | 10707
+mean kills a walker: cut 0.809, joined 0.312; with the old rule cut 0.017, joined 0.312; fed fireproof too cut 0.773, joined 0.000
+cut over joined: 3 more, 0 less, sign p 0.250
+cut, dry rule over old rule: 3 more, 0 less, sign p 0.250
+joined, dry rule over old rule (the guard): 0 more, 0 less, sign p 1.000
+fed fireproof too, cut over joined: 3 more, 0 less, sign p 0.250
+joined, fed fireproof over dry rule alone: 0 more, 3 less, sign p 0.250
