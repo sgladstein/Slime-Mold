@@ -172,6 +172,14 @@ Detonate's kills do.
   40), a smaller `sick_upkeep` (60, what starves the sick) and a higher
   `sick_catch` (0.2). Named here, not retuned in the readers' PR; it should
   not stay the run's default without that retune.
+  **Correction (2026-11-17, the route report):** the GPU world's first germ
+  also infected a 40-cell disc at the map's middle once its tick count
+  passed the dish's timed seeding (16 s of game time), a second germ the
+  CPU never had. Every germ clip and window here from 16 s on carried it,
+  so the plague was partly that: without it one round on the Fork lobe
+  took 48% of shape C in 20 s, not 76%. Fixed in `GpuWorld`'s burst
+  ([route](../gun-route-2026-11-17/README.md), *The germ*); the germ
+  clips and windows above are not re-run.
 - The numbers are first guesses: reach 12 and 24, cost 2.
 - Next in step D, per the plan: route, element, force; cut last.
 

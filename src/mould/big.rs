@@ -506,6 +506,15 @@ pub struct BigParams {
     /// because the wave crosses the body in a few seconds, faster than a
     /// walker turns away (`Reports/dead-ends.md`).
     pub germ_resist: f32,
+    /// A mould trait: a sick walker pays `sick_upkeep` x this (1: today's).
+    /// Why (2026-11-17, the game designer): the Sleeper's woken walkers are
+    /// full (a dormant walker pays no upkeep), so at the germ round's
+    /// upkeep of 10 a flare-woken wave caught the germ (1,232 sick within
+    /// 24 cells) and recovered (the body 21,514 at 46 s against the flare
+    /// alone's 21,526); at 6 times that the same combo took 28% of it. A tier sets it with its `germ_resist`,
+    /// so the germ is useless on a sleeping Sleeper and strong after a
+    /// flare (`Reports/gun-route-2026-11-17/`).
+    pub germ_upkeep: f32,
     /// Area sensors (Lague's Slime-Simulation): a sensor reads the sum over
     /// the (2r+1) x (2r+1) square of agar cells centred where it points,
     /// not one cell. 0 is one cell (today's). The square's centre cell
@@ -1554,6 +1563,7 @@ impl BigParams {
             sick_reach: 1.0,
             sick_turn: 1.0,
             germ_resist: 1.0,
+            germ_upkeep: 1.0,
             sick_seed_r: 0.0,
             sick_upkeep: 1.0,
             spin_curl: 0.0,
@@ -4455,7 +4465,7 @@ impl BigDish {
                     up *= p.lone_upkeep;
                 }
             }
-            let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep } else { up };
+            let up = if !self.sick.is_empty() && self.sick[k] > p.immune_steps { up * p.sick_upkeep * p.germ_upkeep } else { up };
             // A condensed walker is two walkers' worth and pays for both.
             let up = if self.is_dense(k) { up * 2.0 } else { up };
             let e = self.energy[k] + took - up;

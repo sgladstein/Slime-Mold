@@ -605,6 +605,15 @@ impl GpuWorld {
         if b.germ {
             if self.s.sick == 0 {
                 assert!(k.sick_steps > 0, "the germ needs sick_steps");
+                // No timed seeding: the dish's `seed_at` (4 s) would infect
+                // a `seed_r` (40-cell) disc at the map's middle on the next
+                // tick, a second germ the CPU world never had. Found
+                // 2026-11-17: a germ deep in the Sleeper's sleeping crust
+                // killed none there yet the body lost 22% (16,998 against
+                // 21,705 at 40 s); with the seeding off, 0%. Every GPU germ
+                // from 11-14 to here carried it, so one round "took 76% of
+                // shape C" where it took 48% (`Reports/gun-route-2026-11-17/`).
+                self.e.seeded = true;
                 self.s.sick = k.sick_steps as u32;
                 self.s.immune = k.immune_steps as u32;
                 self.s.sick_upkeep = k.sick_upkeep;
@@ -1601,6 +1610,96 @@ mod tests {
         eprintln!("germ after {secs} s: GPU {lg} living against {lgn} with none (most sick {}), CPU {lc} against {lcn} (most sick {})", most.0, most.1);
         assert!(most.0 > sg && most.1 > sc, "the sickness spread (most sick {most:?}, from {sg} and {sc})");
         assert!(lg * 10 < lgn * 9 && lc * 10 < lcn * 9, "the germ thinned the mould: GPU {lg} against {lgn}, CPU {lc} against {lcn}");
+    }
+
+    /// **A germ infects only where it lands on the GPU world** (2026-11-17):
+    /// a kit germ cast at 15 s into the race world's empty corner (scale
+    /// 2, 25,000 walkers) makes no one sick 2 s later, on the GPU as on the
+    /// CPU. Before the fix the GPU's first germ also seeded a 40-cell disc
+    /// at the map's middle once the engine's tick count passed the dish's
+    /// `Settings::seed_at` (4 s of fine steps: 16 s of the game's, as the
+    /// world counts its ticks); the test sets that disc over the whole map,
+    /// so a planted copy of the old code made 26,443 sick here.
+    #[test]
+    fn a_germ_infects_only_where_it_lands() {
+        use crate::mould::kit::{Kit, KitRules, Tool};
+        use crate::mould::big::BigDish;
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (0, 2, 25_000);
+        let rules = Rules { cap: 60.0, ..Rules::default() };
+        // The dish's timed seeding over the whole map, so a germ that set
+        // it off would make everyone sick.
+        let s = Settings { seed_r: 1.0e4, ..race_settings(seed, scale, walkers) };
+        let mut gpu = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        let mut cpu = Game::new(race_world(seed, scale, walkers), rules, seed);
+        let run = |gpu: &mut Game<GpuWorld>, cpu: &mut Game<BigDish>, to: f32| {
+            while gpu.time() < to {
+                gpu.world.mould_grid(scale);
+                gpu.step();
+            }
+            while cpu.time() < to {
+                cpu.step();
+            }
+        };
+        run(&mut gpu, &mut cpu, 15.0);
+        let corner = (6.0, 6.0);
+        let kit = KitRules { carry_max: 0, reach: 1_000.0, ..KitRules::default() };
+        let (mut kg, mut kc) = (Kit::new(kit), Kit::new(kit));
+        gpu.bank = 10_000.0;
+        cpu.bank = 10_000.0;
+        assert!(kg.use_tool(&mut gpu, Tool::Germ(corner)) && kc.use_tool(&mut cpu, Tool::Germ(corner)));
+        assert!(gpu.world.s.sick > 0, "the germ turned contagion on");
+        run(&mut gpu, &mut cpu, 17.0);
+        assert!(gpu.world.e.done as f32 >= gpu.world.s.seed_at * crate::mould::STEPS_PER_SECOND as f32, "past the old seeding's time");
+        let immune = gpu.world.s.immune;
+        let sg = read_back(&gpu.world.e.device, &gpu.world.e.queue, &gpu.world.e.sick).chunks_exact(4).take(gpu.world.e.n as usize).filter(|c| u32::from_le_bytes((*c).try_into().unwrap()) > immune).count();
+        let sc = cpu.world.sick.iter().filter(|&&c| c as u32 > cpu.world.p.immune_steps as u32).count();
+        eprintln!("germ in the corner at 15 s, 2 s on: {sg} sick on the GPU, {sc} on the CPU");
+        assert_eq!((sg, sc), (0, 0), "a germ on empty ground makes no one sick");
+    }
+
+    /// **A frail mould dies of the germ on both engines** (2026-11-17,
+    /// `germ_upkeep`, the Sleeper's): the same kit germ at the race
+    /// world's home, at the germ round's upkeep of 10, with the mould's
+    /// frailty 1 and 6. The frail mould pays 60 and thins; at 1 the sick
+    /// mostly live; on both engines.
+    #[test]
+    fn a_frail_mould_dies_of_the_germ_on_both_engines() {
+        use crate::mould::kit::{Kit, KitRules, Tool};
+        use crate::mould::larder_world::race_world;
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 2_000);
+        let rules = Rules { cap: 60.0, ..Rules::default() };
+        let kit = KitRules { carry_max: 0, reach: 1_000.0, sick_upkeep: 10.0, ..KitRules::default() };
+        let mut living = Vec::new();
+        for frail in [1.0, 6.0] {
+            let mut gpu = Game::new(GpuWorld::new(&device, &queue, Settings { germ_upkeep: frail, ..race_settings(seed, scale, walkers) }, scale), rules, seed);
+            let mut dish = race_world(seed, scale, walkers);
+            dish.p.germ_upkeep = frail;
+            let mut cpu = Game::new(dish, rules, seed);
+            let home = gpu.world.crystals()[0].0;
+            let (mut kg, mut kc) = (Kit::new(kit), Kit::new(kit));
+            gpu.bank = 10_000.0;
+            cpu.bank = 10_000.0;
+            assert!(kg.use_tool(&mut gpu, Tool::Germ(home)) && kc.use_tool(&mut cpu, Tool::Germ(home)));
+            assert_eq!((gpu.world.s.sick_upkeep, gpu.world.s.germ_upkeep), (cpu.world.p.sick_upkeep, cpu.world.p.germ_upkeep), "the same contagion settings");
+            while gpu.time() < 20.0 {
+                gpu.world.mould_grid(scale);
+                gpu.step();
+            }
+            while cpu.time() < 20.0 {
+                cpu.step();
+            }
+            living.push((gpu.world.living(), cpu.world.living()));
+        }
+        let [(g1, c1), (g6, c6)] = [living[0], living[1]];
+        eprintln!("frailty 1: GPU {g1} living, CPU {c1}; frailty 6: GPU {g6}, CPU {c6}");
+        assert!(g6 * 10 < g1 * 9 && c6 * 10 < c1 * 9, "the frail mould thinned: GPU {g6} against {g1}, CPU {c6} against {c1}");
+        // On software Vulkan both agreed to the walker (666 and 479); a
+        // planted bug, the GPU sending `sick_upkeep` alone, left the frail
+        // GPU mould at 666.
+        assert!(g6.abs_diff(c6) * 50 <= c6 && g1.abs_diff(c1) * 50 <= c1, "the engines agree: GPU {g1} and {g6}, CPU {c1} and {c6}");
     }
 
     /// The engine runs the CPU race world's mould: the same params, bar

@@ -1,0 +1,34 @@
+# flare-germ.sh on the first pass's build (Sleeper: germ_resist 13.5, rounds' sick_upkeep 10, no frailty;
+# the GPU's timed middle seeding still live)
+none: t 20 s: 23333 t 44 s: 21458 t 46 s: 21373 t 48 s: 21305 
+flare: t 20 s: 23333 t 44 s: 21606 t 46 s: 21526 t 48 s: 21464 
+germ26: t 20 s: 23333 t 44 s: 21458 t 46 s: 21373 t 48 s: 21305 
+flare-germ24: t 20 s: 23333 t 44 s: 21597 t 46 s: 21512 t 48 s: 21453 
+flare-germ26: t 20 s: 23333 t 44 s: 21599 t 46 s: 21514 t 48 s: 21455 
+flare-germ28: t 20 s: 23333 t 44 s: 21598 t 46 s: 21513 t 48 s: 21456 
+
+# The same flare at 20 s and germ at 26 s with watch=392,222,12 and keys after the tier's
+fg26w (defaults): t 20 s: 23333 t 44 s: 21599 t 46 s: 21514 t 48 s: 21455 
+  watch t 27 s: 350 walkers within 12 of 392,222, 793 from 12 to 24, 339 sick within 24
+  watch t 30 s: 412 walkers within 12 of 392,222, 894 from 12 to 24, 1232 sick within 24
+  watch t 34 s: 399 walkers within 12 of 392,222, 840 from 12 to 24, 668 sick within 24
+  watch t 38 s: 372 walkers within 12 of 392,222, 845 from 12 to 24, 0 sick within 24
+  watch t 46 s: 368 walkers within 12 of 392,222, 804 from 12 to 24, 0 sick within 24
+fg26-r1 germ_resist=1: t 20 s: 23333 t 44 s: 21550 t 46 s: 21457 t 48 s: 21393 
+  watch t 27 s: 350 walkers within 12 of 392,222, 793 from 12 to 24, 1149 sick within 24
+  watch t 30 s: 412 walkers within 12 of 392,222, 894 from 12 to 24, 1322 sick within 24
+  watch t 34 s: 395 walkers within 12 of 392,222, 842 from 12 to 24, 5 sick within 24
+  watch t 38 s: 380 walkers within 12 of 392,222, 827 from 12 to 24, 0 sick within 24
+  watch t 46 s: 367 walkers within 12 of 392,222, 788 from 12 to 24, 0 sick within 24
+fg26-up60 set=sick_upkeep=60: t 20 s: 23333 t 44 s: 19508 t 46 s: 19439 t 48 s: 19383 
+  watch t 27 s: 350 walkers within 12 of 392,222, 793 from 12 to 24, 339 sick within 24
+  watch t 30 s: 322 walkers within 12 of 392,222, 771 from 12 to 24, 906 sick within 24
+  watch t 34 s: 158 walkers within 12 of 392,222, 504 from 12 to 24, 559 sick within 24
+  watch t 38 s: 81 walkers within 12 of 392,222, 377 from 12 to 24, 73 sick within 24
+  watch t 46 s: 79 walkers within 12 of 392,222, 349 from 12 to 24, 0 sick within 24
+fg26-r1-up60 germ_resist=1 set=sick_upkeep=60: t 20 s: 23333 t 44 s: 10424 t 46 s: 10450 t 48 s: 10485 
+  watch t 27 s: 350 walkers within 12 of 392,222, 793 from 12 to 24, 1149 sick within 24
+  watch t 30 s: 290 walkers within 12 of 392,222, 638 from 12 to 24, 935 sick within 24
+  watch t 34 s: 125 walkers within 12 of 392,222, 287 from 12 to 24, 73 sick within 24
+  watch t 38 s: 75 walkers within 12 of 392,222, 196 from 12 to 24, 1 sick within 24
+  watch t 46 s: 68 walkers within 12 of 392,222, 180 from 12 to 24, 0 sick within 24

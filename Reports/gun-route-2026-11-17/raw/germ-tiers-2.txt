@@ -1,0 +1,10 @@
+# germ-tiers.sh on the second pass's final build (the GPU seeding fix; rounds' sick_upkeep 10;
+# resistance / frailty: C 10/1, Sprawler and Trunk C's, Drifter 1/6, Sporer 1/6, Sleeper 1/6, Swarmer and Grudge 15/1)
+c: none 25772, germ 17628, down 31.6%
+drifter: none 24440, germ 13806, down 43.5%
+sprawler: none 25773, germ 18953, down 26.5%
+trunk: none 25052, germ 17137, down 31.6%
+swarmer: none 23491, germ 20603, down 12.3%
+sporer: none 27472, germ 14656, down 46.7%
+sleeper: none 21705, germ 21705, down 0.0%
+grudge: none 23789, germ 20932, down 12.0%

@@ -1,0 +1,7 @@
+# flare-germ.sh on the second pass's final build (Sleeper resistance 1, frailty 6; the seeding fix)
+none: t 20 s: 23333 t 44 s: 21458 t 46 s: 21373 t 48 s: 21305 
+flare: t 20 s: 23333 t 44 s: 21606 t 46 s: 21526 t 48 s: 21464 
+germ26: t 20 s: 23333 t 44 s: 21458 t 46 s: 21373 t 48 s: 21305 
+flare-germ24: t 20 s: 23333 t 44 s: 14711 t 46 s: 14688 t 48 s: 14675 
+flare-germ26: t 20 s: 23333 t 44 s: 15483 t 46 s: 15445 t 48 s: 15424 
+flare-germ28: t 20 s: 23333 t 44 s: 16415 t 46 s: 16364 t 48 s: 16337 
