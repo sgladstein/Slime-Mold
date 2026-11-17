@@ -1,0 +1,59 @@
+<title>Slime Reaching Out</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root { --bg:#f6f3ec; --fg:#1d1b17; --muted:#6b655a; --card:#fffdf8; --line:#e2dccf; --accent:#c4520f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark } }
+:root[data-theme="dark"] { --bg:#16140f; --fg:#ece6d8; --muted:#a39b8a; --card:#201d16; --line:#37322a; --accent:#f08a47; color-scheme:dark }
+body { background:var(--bg); color:var(--fg); font:15px/1.55 Inter, system-ui, sans-serif; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:24px 48px }
+main { max-width:1100px; margin:0 auto }
+h1, h2 { font-family:"Space Grotesk", Inter, sans-serif; text-wrap:balance; line-height:1.2 }
+h1 { font-size:1.9rem; margin:0 0 .3rem }
+h2 { font-size:1.25rem; margin:2rem 0 .5rem }
+p, ul { max-width:72ch }
+.sub { color:var(--muted); margin:0 0 1.2rem }
+figure { margin:1rem 0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px }
+figure img { display:block; width:100%; border-radius:6px }
+.labels { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; font-size:.85rem; margin-top:.5rem }
+.labels b { display:block; font-family:"Space Grotesk", Inter, sans-serif; font-size:1rem }
+.labels span { color:var(--muted) }
+figcaption { color:var(--muted); font-size:.9rem; margin-top:.6rem }
+.wrap { overflow-x:auto }
+table { border-collapse:collapse; font-size:.9rem; min-width:640px; width:100% }
+th, td { text-align:right; padding:6px 9px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums }
+th:first-child, td:first-child { text-align:left }
+th { font-weight:600; color:var(--muted) }
+b.k { color:var(--accent) }
+.key { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--muted); margin:.4rem 0 0 }
+.key i { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:5px }
+</style>
+<main>
+<h1>The slime reaching out</h1>
+<p class="sub">Simulation-use plan step S2, 2026-11-17. The same slime on the same planet, side by side; in one panel a hungry body also smells, from across the map, the way to food it has not touched yet. Which is which is kept off this page. CPU probe: planet 3 (seed 1), the default slime with the run's planet-3 keys (surges, specks), no squad, 2:30 from the start; one frame a game second, played at 10 times real speed.</p>
+<div class="key"><span><i style="background:#d8cc5a"></i>slime (by its trail)</span><span><i style="background:#ffffff;border:1px solid var(--line)"></i>specks on their way</span><span><i style="background:#78d6e6"></i>crystal the slime hasn't touched</span><span><i style="background:#28468c"></i>crystal it has eaten from</span><span><i style="background:#26252b"></i>rock</span></div>
+
+<h2>Planet 3, seed 1</h2>
+<figure>
+<video src="reach.mp4" autoplay muted loop playsinline controls style="display:block;width:100%;border-radius:6px"></video>
+<div class="labels">
+<div><b>A</b><span>7 of 10 crystals reached at 2:30; 24,428 walkers</span></div>
+<div><b>B</b><span>6 of 10 crystals reached at 2:30; 23,280 walkers</span></div>
+</div>
+<figcaption>Same planet, same start. A crystal turns dark blue once the slime has eaten any of it.</figcaption>
+</figure>
+
+<h2>Eight seeds, planet 3</h2>
+<p>Crystals the slime had eaten from by 2:30, and the walkers alive then.</p>
+<div class="wrap"><table>
+<tr><th>Seed</th><th>Crystals</th><th>Reached, A</th><th>Reached, B</th><th>Walkers, A</th><th>Walkers, B</th></tr>
+<tr><td>1</td><td>10</td><td>7</td><td>6</td><td>24,428</td><td>23,280</td></tr><tr><td>2</td><td>9</td><td>7</td><td>5</td><td>25,977</td><td>22,839</td></tr><tr><td>3</td><td>17</td><td>7</td><td>6</td><td>36,598</td><td>30,850</td></tr><tr><td>4</td><td>9</td><td>5</td><td>3</td><td>24,011</td><td>18,542</td></tr><tr><td>5</td><td>17</td><td>8</td><td>7</td><td>38,487</td><td>38,092</td></tr><tr><td>6</td><td>14</td><td>3</td><td>2</td><td>15,922</td><td>15,256</td></tr><tr><td>7</td><td>17</td><td>14</td><td>10</td><td>46,842</td><td>32,336</td></tr><tr><td>8</td><td>13</td><td>8</td><td>8</td><td>36,495</td><td>35,792</td></tr><tr><td>Sum</td><td></td><td>59</td><td>47</td><td>248,760</td><td>216,987</td></tr>
+</table></div>
+<ul>
+<li>A reached more crystals on 7 of 8 seeds and fewer on none (sign p 0.016).</li>
+<li>A ended bigger on all 8 seeds, by up to 45% (seed 7), since more crystals feed it.</li>
+<li>With no squad on the planet, this is the slime alone. A bigger, wider slime is a harder planet.</li>
+</ul>
+
+<h2>The question</h2>
+<p>Which slime, A or B, do you want on your planets?</p>
+</main>

@@ -77,6 +77,17 @@ pub const ROAM_SHIFT: u32 = 19;
 /// A crystal a breakaway runs for has at least this share of its charge
 /// left, so it goes for ground the mould has not eaten yet.
 pub const ROAM_FRESH: f32 = 0.8;
+/// The hunger at which a walker reads the far smell (`far_smell`, S2).
+pub const FAR_HUNGER: f32 = 0.5;
+/// A crystal the far smell leads to has at least this share of its charge
+/// left: untouched, so food the mould has not reached. Why: with
+/// `ROAM_FRESH` (0.8) the home crystal and the next one stayed sources for
+/// minutes (the mould eats slowly), and the body pooled round the nearest
+/// and stopped reaching out (farprobe, planet 3 seed 1).
+pub const FAR_FRESH: f32 = 0.99;
+/// A far smell's sensor over a block the field never reached reads as
+/// this much farther than the walker's own block (a wall, a closed pocket).
+pub const FAR_WALL: u32 = 16;
 /// **Lumps** (held bodies, the mini-boss thread 2026-11-16,
 /// `Reports/mini-boss-2026-11-16/`): up to `LUMPS` pieces of slime that
 /// travel as one body. A member's dense word holds its lump + 1
@@ -971,6 +982,18 @@ pub struct BigParams {
     /// The hunger at which a walker hunts (`hunger_reach`); 0: every
     /// walker, at any hunger.
     pub hunt_at: f32,
+    /// **A far smell** (the simulation-use plan's S2, 2026-11-17; 0 off):
+    /// the walking distance to the nearest fresh crystal
+    /// (`BigDish::food_field`) as a smell that reaches across the map. A
+    /// walker at least `FAR_HUNGER` hungry adds `far_smell` x its hunger x
+    /// how much nearer each sensor's block is than its own to that
+    /// sensor's reading, so a starving body leans toward food it cannot
+    /// smell; and a speck (`roam`) walks down it instead of steering
+    /// straight at its crystal, landing at the first fresh crystal it
+    /// reaches. Why: scent fades by e every 3 cells under the crystals'
+    /// (the 11-15 review's W4 and W7: surplus walkers starve at home, specks
+    /// steer straight into rock and lakes).
+    pub far_smell: f32,
     /// The square's radius, fine cells, that `lone_step` counts walkers
     /// in. Body pull (`body_pull`, `body_lone`: sensors also read the
     /// walkers there) and tether (`tether`, `tether_hold`: no walker steps
@@ -1607,6 +1630,7 @@ impl BigParams {
             hunger_at: 1.0,
             hunger_reach: 0.0,
             hunt_at: 0.0,
+            far_smell: 0.0,
             body_r: 2,
             lone_step: 0.0,
             lone_floor: 0.25,
@@ -1861,6 +1885,13 @@ pub struct BigDish {
     /// as before. The GPU holds it after the slot words (`dense_words`),
     /// each word the distance + 1, 0 for none.
     pub units_field: Vec<u32>,
+    /// **The far smell's field** (S2, `BigParams::far_smell`): each
+    /// `RAID_BLOCK` block's walking distance to the nearest untouched
+    /// crystal (`FAR_FRESH` of its charge left), by `food_field_for`; `u32::MAX`
+    /// where none reaches; empty with none. The game rebuilds it every few
+    /// seconds off the frame (`Game::time_food_paths`); probes set it. The
+    /// GPU holds it after the units' field in the same region.
+    pub food_field: Vec<u32>,
     /// The squad's units this frame (`squad::frame` sets them), fine cells
     /// as `squad::cell_of` gives them: what a panicking walker may charge
     /// (`BigParams::panic`).
@@ -2182,6 +2213,7 @@ impl BigDish {
             dense: Vec::new(),
             raid_field: Vec::new(),
             units_field: Vec::new(),
+            food_field: Vec::new(),
             threats: Vec::new(),
             lump_sums: [(0, 0, 0); LUMPS],
             heard_cells: Vec::new(),
@@ -3166,6 +3198,28 @@ impl BigDish {
 
     /// The units' walking distance at fine cell `i` (`units_field`'s
     /// block), `u32::MAX` where none reaches or with no field.
+    /// The far smell's walking distance at fine cell `i` (`food_field`,
+    /// S2); `u32::MAX` where none reaches or with none.
+    pub fn food_dist(&self, i: usize) -> u32 {
+        let b = RAID_BLOCK;
+        let bw = self.w.div_ceil(b);
+        self.food_field.get(((i / self.w) / b) * bw + (i % self.w) / b).copied().unwrap_or(u32::MAX)
+    }
+
+    /// The untouched crystals' centres (`FAR_FRESH` of their charge left;
+    /// fine cells, x | y << 16): the far smell's sources (`food_field_for`).
+    pub fn fresh_crystals(&self) -> Vec<u32> {
+        if self.charge.is_empty() {
+            return Vec::new();
+        }
+        (0..self.piles.len().min(PANIC_PILES)).filter(|&j| self.crystal_left(j) >= FAR_FRESH).map(|j| self.pile_centre(j)).collect()
+    }
+
+    /// Whether the far smell is on and has a field (`far_smell`, S2).
+    fn far_on(&self) -> bool {
+        self.p.far_smell > 0.0 && !self.food_field.is_empty()
+    }
+
     pub fn units_dist(&self, i: usize) -> u32 {
         let b = RAID_BLOCK;
         let bw = self.w.div_ceil(b);
@@ -3798,12 +3852,16 @@ impl BigDish {
             // Down the units' walking distance (S1), unless the walker
             // stands where none reaches: then straight.
             let by_units = at_unit && !by_field && !self.units_field.is_empty() && self.units_dist(here) < u32::MAX;
+            // A speck down the far smell (S2), unless it stands where none
+            // reaches: then straight at its crystal.
+            let by_food = !by_field && !at_unit && lump.is_none() && self.roam_of(k).is_some() && !still && self.far_on() && self.food_dist(here) < u32::MAX;
             if let (true, Some((tx, ty, _))) = (look, scared) {
                 let read = |a: f32| {
                     let (c, s) = (a.cos(), a.sin());
                     match self.cell(x + c * so, y + s * so) {
                         Some(i) if self.agar[i] && by_field => -(self.raid_dist(i) as f32),
                         Some(i) if self.agar[i] && by_units => -(self.units_dist(i) as f32),
+                        Some(i) if self.agar[i] && by_food => -(self.food_dist(i) as f32),
                         Some(i) if self.agar[i] => c * (tx - x) + s * (ty - y),
                         _ => -1.0e6,
                     }
@@ -3856,6 +3914,24 @@ impl BigDish {
                     f += aim(h);
                     fl += aim(h - sa);
                     fr += aim(h + sa);
+                }
+                // The far smell (S2): a hungry walker leans down the walking
+                // distance to fresh crystals, by how much nearer each
+                // sensor's block is than its own, x its hunger.
+                if lump.is_none() && self.far_on() {
+                    let (g, dh) = (self.hunger(k), self.food_dist(here));
+                    if g >= FAR_HUNGER && dh < u32::MAX {
+                        let w = p.far_smell * g;
+                        let near = |a: f32| match self.cell(x + a.cos() * so, y + a.sin() * so) {
+                            Some(i) => w * (dh as f32 - self.food_dist(i).min(dh.saturating_add(FAR_WALL)) as f32),
+                            None => 0.0,
+                        };
+                        for (v, a) in [(&mut f, h), (&mut fl, h - sa), (&mut fr, h + sa)] {
+                            if *v > -1.0e5 {
+                                *v += near(a);
+                            }
+                        }
+                    }
                 }
                 // A blind walker turns by the plain rule alone, off walls.
                 mind_reads(mind, [&mut f, &mut fl, &mut fr]);
@@ -4364,7 +4440,10 @@ impl BigDish {
                     let c = self.pile_centre(j);
                     let (dx, dy) = ((c & 0xFFFF) as i64 - cx, (c >> 16) as i64 - cy);
                     let land = (ROAM_LAND * p.scale as f32).floor() as i64;
-                    let done = dx * dx + dy * dy <= land * land || self.crystal_left(j) <= PANIC_LEFT || trip >= SPECK_TRIP;
+                    // Down the far smell (S2) it lands at the first fresh
+                    // crystal it reaches, whichever.
+                    let fresh = self.far_on() && (self.food_dist(self.cell(x, y).expect("walker inside the dish")) as i64) <= land;
+                    let done = dx * dx + dy * dy <= land * land || fresh || self.crystal_left(j) <= PANIC_LEFT || trip >= SPECK_TRIP;
                     self.dense[k] = if done { 0 } else { (self.dense[k] & !RIPE) | trip };
                     continue;
                 }
@@ -5726,6 +5805,15 @@ pub fn units_field_for(agar: &[bool], w: usize, h: usize, units: &[u32]) -> Vec<
     starts.sort_unstable();
     starts.dedup();
     walk_field(&open, bw, bh, &starts)
+}
+
+/// **The far smell's field** (`BigDish::food_field`, S2): the walking
+/// distance to the nearest of `crystals` (fine cells, x | y << 16; the
+/// fresh crystals' centres, `BigDish::fresh_crystals`), by the units'
+/// search (`units_field_for`), so a centre in a closed block starts from
+/// the open block nearest it.
+pub fn food_field_for(agar: &[bool], w: usize, h: usize, crystals: &[u32]) -> Vec<u32> {
+    units_field_for(agar, w, h, crystals)
 }
 
 /// How far (blocks) `units_field_for` looks for an open block beside a

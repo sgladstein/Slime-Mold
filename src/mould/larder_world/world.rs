@@ -114,6 +114,20 @@ pub trait World {
     /// descend from the next step; empty to steer straight. A world with
     /// no slime of this kind ignores it.
     fn set_units_field(&mut self, _field: Vec<u32>) {}
+    /// **The far smell** (`BigParams::far_smell`, the simulation-use
+    /// plan's S2, 2026-11-17): whether the slime reads one, so the game
+    /// builds its field (`Game::time_food_paths`).
+    fn far_smell(&self) -> bool {
+        false
+    }
+    /// The far smell's sources: the untouched crystals' centres (fine
+    /// cells, x | y << 16; `BigDish::fresh_crystals`).
+    fn fresh_crystals(&self) -> Vec<u32> {
+        Vec::new()
+    }
+    /// Sets the far smell's field (`BigDish::food_field`): each block's
+    /// walking distance to the nearest untouched crystal.
+    fn set_food_field(&mut self, _field: Vec<u32>) {}
     /// **Lumps** (held bodies, `BigParams::lumps`, the mini-boss thread
     /// 2026-11-16): forms lump `b` of the ordinary walkers within `r` dish
     /// cells of `at` (fine cells), or releases it (None). A world with no
@@ -320,6 +334,18 @@ impl World for BigDish {
 
     fn set_units_field(&mut self, field: Vec<u32>) {
         self.units_field = field;
+    }
+
+    fn far_smell(&self) -> bool {
+        self.p.far_smell > 0.0
+    }
+
+    fn fresh_crystals(&self) -> Vec<u32> {
+        BigDish::fresh_crystals(self)
+    }
+
+    fn set_food_field(&mut self, field: Vec<u32>) {
+        self.food_field = field;
     }
 
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {

@@ -112,6 +112,17 @@ of 20 on planet 8), and once a second uploads the field, one word a cell.
 A charging walker reads three field words instead of the unit's bearing.
 Not timed on the 1070.
 
+**The technical lead's check** (11-17 13:36Z: quote the worst size, the
+6x core world with 200 soldiers; over about 1 ms, slice it or coarsen).
+Planet 8 is the 6x core world (1,256 x 784 fine cells, 246,176 blocks):
+from 200 sources spread over the open ground, 8.2-10.2 ms worst of 5, on
+the worker thread and set a second later, so no hitch; the frame 0.24-0.29
+ms. The upload wrote a word a fine cell, about 3.8 MB a second at 6x; it
+writes a word a block since S2 ([s2-far-smell.md](s2-far-smell.md)), 961 KB.
+The lead (13:50Z): the worker thread and 2-cell blocks answer the cost;
+asked for a test that a slow worker changes nothing, which S2 adds
+(`walking_distances_are_set_at_a_fixed_step_however_slow_the_thread`).
+
 ## Left
 
 - The owner's blind film decides `unit_paths`; then the plan's films on

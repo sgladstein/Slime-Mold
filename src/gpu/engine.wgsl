@@ -136,9 +136,9 @@ struct Params {
     // `hunger_at`; Reports/one-body-2026-11-12.md), read with growth on:
     // energy evens out between neighbouring cells (`esum`, `egain`), and a
     // hungry walker weighs the scent 1 + `hscent` x its hunger. The last
-    // word is spare (it held `fed_full`, then heat in the sensors,
-    // `fire_weight`; both deleted 11-17).
-    eflow: f32, hscent: f32, hat: f32, body_free: f32,
+    // word is the far smell (`far_smell`, S2, 11-17; it held `fed_full`,
+    // then heat in the sensors, `fire_weight`, both deleted 11-17).
+    eflow: f32, hscent: f32, hat: f32, far: f32,
     // The crater (2026-11-12, `BigParams::scorch_keep`, `scorch_full`;
     // `squad::Frame::crater`): while a cell's countdown runs, its trail is
     // x 1 - (1 - `scorch_keep`) x min(1, steps left / `scorch_full`) after
@@ -975,6 +975,31 @@ fn units_dist(i: u32) -> u32 {
     if (v == 0u) { return 0xFFFFFFFFu; }
     return v - 1u;
 }
+// The far smell's walking distance at cell `i` (`BigDish::food_field`,
+// S2): after the units' blocks in the same region, the same words.
+fn food_dist(i: u32) -> u32 {
+    let bw = (P.w + RAID_BLOCK - 1u) / RAID_BLOCK;
+    let nb = bw * ((P.h + RAID_BLOCK - 1u) / RAID_BLOCK);
+    let q = ((i / P.w) / RAID_BLOCK) * bw + (i % P.w) / RAID_BLOCK;
+    let v = atomicLoad(&news[dense_base() + DENSE_HEAD + P.n + nb + q]);
+    if (v == 0u) { return 0xFFFFFFFFu; }
+    return v - 1u;
+}
+fn food_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE || agar[i] == 0u) { return -1.0e6; }
+    return -f32(food_dist(i));
+}
+// A hungry walker's far smell at a sensor (the CPU's `near`): how much
+// nearer its block is than the walker's own (`dh`), a block none reaches
+// read as `FAR_WALL` farther.
+const FAR_HUNGER: f32 = 0.5;
+const FAR_WALL: u32 = 16u;
+fn far_near(x: f32, y: f32, a: f32, so: f32, dh: u32) -> f32 {
+    let i = cell(x + cos(a) * so, y + sin(a) * so);
+    if (i == NONE) { return 0.0; }
+    return f32(dh) - f32(min(food_dist(i), dh + FAR_WALL));
+}
 fn units_at_sensor(x: f32, y: f32, a: f32, so: f32) -> f32 {
     let i = cell(x + cos(a) * so, y + sin(a) * so);
     if (i == NONE || agar[i] == 0u) { return -1.0e6; }
@@ -1112,6 +1137,11 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         f = units_at_sensor(wk.x, wk.y, h, so);
         fl = units_at_sensor(wk.x, wk.y, h - sa, so);
         fr = units_at_sensor(wk.x, wk.y, h + sa, so);
+    } else if (scared && P.far > 0.0 && lb == 0u && roaming(k) && mk != MIND_STILL && food_dist(here) != 0xFFFFFFFFu) {
+        // A speck down the far smell (S2; the CPU's `by_food`).
+        f = food_at_sensor(wk.x, wk.y, h, so);
+        fl = food_at_sensor(wk.x, wk.y, h - sa, so);
+        fr = food_at_sensor(wk.x, wk.y, h + sa, so);
     } else if (scared) {
         f = panic_at(wk.x, wk.y, h, so, goal);
         fl = panic_at(wk.x, wk.y, h - sa, so, goal);
@@ -1139,6 +1169,18 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             f += l.pull * (cos(h) * dx + sin(h) * dy) / r;
             fl += l.pull * (cos(h - sa) * dx + sin(h - sa) * dy) / r;
             fr += l.pull * (cos(h + sa) * dx + sin(h + sa) * dy) / r;
+        }
+        // The far smell (S2; the CPU's): a hungry walker leans down the
+        // walking distance to untouched crystals, x its hunger.
+        if (lb == 0u && P.far > 0.0 && growth() && P.hat > 0.0) {
+            let g = max(1.0 - energy[k] / P.hat, 0.0);
+            let dh = food_dist(here);
+            if (g >= FAR_HUNGER && dh != 0xFFFFFFFFu) {
+                let w = P.far * g;
+                if (f > -1.0e5) { f += w * far_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += w * far_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += w * far_near(wk.x, wk.y, h + sa, so, dh); }
+            }
         }
     }
     // Blind reads 0 and Sour the negative, after whatever made the
@@ -3622,7 +3664,11 @@ fn ripen(@builtin(global_invocation_id) gid: vec3<u32>) {
         let c = piles[j].centre;
         let dx = i32(c & 0xFFFFu) - cx; let dy = i32(c >> 16u) - cy;
         let land = i32(P.roam_land);
-        let done = dx * dx + dy * dy <= land * land || piles[j].left <= PANIC_LEFT || trip >= SPECK_TRIP;
+        // Down the far smell (S2) it lands at the first untouched crystal
+        // it reaches, whichever (the CPU's `fresh`).
+        let fd = food_dist(cell(wk.x, wk.y));
+        let fresh = P.far > 0.0 && fd != 0xFFFFFFFFu && i32(min(fd, 0x7FFFFFFFu)) <= land;
+        let done = dx * dx + dy * dy <= land * land || fresh || piles[j].left <= PANIC_LEFT || trip >= SPECK_TRIP;
         set_dense(k, select((wd & ~RIPE_BITS) | trip, 0u, done));
         return;
     }

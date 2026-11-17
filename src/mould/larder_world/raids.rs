@@ -145,11 +145,13 @@ pub struct Raids {
     /// The units' walking distance being built, set a game second after
     /// it was started (`time_unit_paths`).
     unit_way: Option<Way>,
+    /// The far smell's field being built (S2, `time_food_paths`).
+    food_way: Option<Way>,
 }
 
 impl Raids {
     pub fn new(seed: u64) -> Raids {
-        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None }
+        Raids { sent: Vec::new(), next: None, rng: Rng::new(seed ^ 0x7a1d_5eed), last_stand_done: false, pending: None, unit_cells: Vec::new(), unit_way: None, food_way: None }
     }
 
     /// A normal draw (Box-Muller) with mean `m` and spread `sd`.
@@ -167,6 +169,21 @@ impl Default for Raids {
 }
 
 /// A raid's way round walls being built.
+/// How often (game seconds) the far smell's field is rebuilt
+/// (`time_food_paths`): untouched crystals change slowly.
+pub(super) const FOOD_PATHS_EVERY: u64 = 2;
+
+/// A test's delay (ms) on every way's thread, to show that the game is
+/// the same however slow the thread (the technical lead, 11-17 13:50Z).
+#[cfg(test)]
+pub(super) static WAY_DELAY_MS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+#[cfg(not(target_arch = "wasm32"))]
+fn way_delay() {
+    #[cfg(test)]
+    std::thread::sleep(std::time::Duration::from_millis(WAY_DELAY_MS.load(std::sync::atomic::Ordering::Relaxed)));
+}
+
 #[derive(Debug)]
 enum Way {
     Ready(Vec<u32>),
@@ -181,7 +198,10 @@ impl Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
         #[cfg(not(target_arch = "wasm32"))]
         {
-            Way::Building(std::thread::spawn(move || crate::mould::big::raid_field_for(&agar, w, h, to)))
+            Way::Building(std::thread::spawn(move || {
+                way_delay();
+                crate::mould::big::raid_field_for(&agar, w, h, to)
+            }))
         }
         #[cfg(target_arch = "wasm32")]
         {
@@ -195,7 +215,10 @@ impl Way {
         let Some((agar, w, h)) = ground else { return Way::Ready(Vec::new()) };
         #[cfg(not(target_arch = "wasm32"))]
         {
-            Way::Building(std::thread::spawn(move || crate::mould::big::units_field_for(&agar, w, h, &units)))
+            Way::Building(std::thread::spawn(move || {
+                way_delay();
+                crate::mould::big::units_field_for(&agar, w, h, &units)
+            }))
         }
         #[cfg(target_arch = "wasm32")]
         {
@@ -229,6 +252,26 @@ impl<W: World> Game<W> {
         }
         let units = std::mem::take(&mut self.raids.unit_cells);
         self.raids.unit_way = Some(Way::start_units(self.world.raid_ground(), units));
+    }
+
+    /// **The far smell** (`BigParams::far_smell`, the simulation-use plan's
+    /// S2, 2026-11-17): every `FOOD_PATHS_EVERY` game seconds, the field
+    /// started last time is set (`World::set_food_field`) and a new one is
+    /// started from the untouched crystals, off the frame and always one
+    /// period late, joining the worker if it is slow, as the units' way.
+    pub(super) fn time_food_paths(&mut self) {
+        if !self.world.far_smell() {
+            return;
+        }
+        let secs = (self.world.ticks() as f32 / self.rules.tps as f32).round() as u64;
+        if !secs.is_multiple_of(FOOD_PATHS_EVERY) {
+            return;
+        }
+        if let Some(way) = self.raids.food_way.take() {
+            self.world.set_food_field(way.finish());
+        }
+        let fresh = self.world.fresh_crystals();
+        self.raids.food_way = Some(Way::start_units(self.world.raid_ground(), fresh));
     }
 
     /// Once a game second: start a raid when its drawn time comes, or the

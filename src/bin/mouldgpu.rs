@@ -4587,6 +4587,55 @@ mod tests {
         assert!(past.iter().filter(|u| u.target.is_some()).count() >= 20, "most past 64 aim");
     }
 
+    /// **A far smell** (the simulation-use plan's S2, 2026-11-17;
+    /// `BigParams::far_smell`): on a grown dish with crystals, one body's
+    /// shared food and specks, a quarter of the walkers set on their way as
+    /// specks and the far smell's field (`big::food_field_for` from the
+    /// untouched crystals) set on both engines. One tick: every walker and
+    /// every speck's word as the CPU's. The same tick with no field moves
+    /// many walkers elsewhere, so a GPU that ignored it fails.
+    #[test]
+    fn the_far_smell_runs_on_the_gpu_as_on_the_cpu() {
+        use slime_mould::mould::big::{food_field_for, ROAM, ROAM_SHIFT};
+        use slime_mould::mould::squad::{self, Frame};
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let s = Settings { piles: 23, rect: true, crystal: 512.0, crystal_eat: 0.02, upkeep: 0.01, walkers: 5_000, capacity: 15_000, energy_flow: 0.05, hunger_at: 1.0, condense_crowd: 4, condense_r: 2, roam: 5, roam_far: 3.0, roam_share: 1.0, far_smell: 1.0, ..small(0) };
+        let mut e = Engine::new(&device, &queue, &shared, &s, SCALE);
+        let mut cpu = e.dish.clone();
+        for _ in 0..60 {
+            cpu.tick();
+        }
+        let piles = cpu.piles.len().min(64) as u32;
+        for k in (0..cpu.walkers.len()).step_by(4) {
+            if cpu.lives(k) && cpu.roam_of(k).is_none() {
+                cpu.dense[k] = ROAM | ((k as u32 % piles) << ROAM_SHIFT) | 7;
+            }
+        }
+        let fresh = cpu.fresh_crystals();
+        assert!(!fresh.is_empty(), "untouched crystals to smell");
+        let mut bare = cpu.clone();
+        cpu.food_field = food_field_for(&cpu.agar, cpu.w, cpu.h, &fresh);
+        e.inject(&cpu);
+        let f = Frame { slime: squad::slime_trail(s.knee), ..Frame::default() };
+        e.set_squad(&f);
+        run(&mut e, &shared, &s, 1, Hand::default());
+        squad::frame(&mut cpu, &f, 1);
+        squad::frame(&mut bare, &f, 1);
+        let gpu = walkers_of(&e);
+        let n = cpu.walkers.len();
+        let off = (0..n).filter(|&q| cpu.lives(q) && { let (g, c) = (gpu[q], cpu.walkers[q]); (g.0 - c.0).abs() > 1e-3 || (g.1 - c.1).abs() > 1e-3 || (g.2 - c.2).abs() > 1e-3 }).count();
+        let dense = e.dense_of();
+        let words = (0..n).filter(|&q| cpu.lives(q) && dense.get(q).copied().unwrap_or(0) != cpu.dense[q]).count();
+        let apart = (0..n).filter(|&q| cpu.lives(q) && bare.lives(q) && cpu.walkers[q] != bare.walkers[q]).count();
+        let specks = (0..n).filter(|&q| cpu.lives(q) && cpu.roam_of(q).is_some()).count();
+        let landed = (0..n).filter(|&q| cpu.lives(q) && cpu.roam_of(q).is_none() && bare.roam_of(q).is_some()).count();
+        eprintln!("far smell: {} untouched crystals, {specks} specks on their way, {landed} landed by it; {off} walkers and {words} words off the CPU's; without the field {apart} move elsewhere", fresh.len());
+        assert_eq!(off, 0, "every walker as the CPU's");
+        assert_eq!(words, 0, "every speck's word as the CPU's");
+        assert!(apart > 100, "the far smell moves walkers ({apart})");
+    }
+
     /// **Charges round walls** (the simulation-use plan's S1, 2026-11-17;
     /// `BigDish::units_field`): on a grown dish with crystals and a long
     /// wall, every walker's news made stale so it panics at the units in
@@ -6053,12 +6102,14 @@ mod tests {
         // The crust rises 36 times as fast as the window's (1/1800 a fine
         // step) so slime sets within the test's 15 s; the code paths are
         // the same.
-        const KEYS: [(&str, &str); 8] = [
+        const KEYS: [(&str, &str); 9] = [
             ("crust", "1"),
             ("crust_rise", "0.02"),
             ("crust_weight", "0.5"),
             ("crust_fast", "0.5"),
             ("setting", "1"),
+            // A far smell (S2): the game builds its field (`time_food_paths`).
+            ("far_smell", "1"),
             ("flow_loss", "0.1"),
             ("lone_step", "3"),
             ("crystal_regrow", "0.001"),

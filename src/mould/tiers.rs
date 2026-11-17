@@ -303,6 +303,7 @@ pub fn set_key(p: &mut BigParams, key: &str, v: &str) -> Result<(), String> {
         // `keys=capacity:50000`, slime-enemy thread 2026-11-13).
         "capacity" => p.capacity = v.parse::<usize>().map_err(|e| format!("{key}={v}: {e}"))?,
         "hunger_at" => p.hunger_at = f()?,
+        "far_smell" => p.far_smell = f()?,
         "explore_spread" => p.explore_spread = f()?,
         "explore_deposit" => p.explore_deposit = f()?,
         // The life cycle.

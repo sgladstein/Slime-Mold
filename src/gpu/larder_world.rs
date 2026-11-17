@@ -995,6 +995,30 @@ impl World for GpuWorld {
         self.e.write_units_field();
     }
 
+    fn far_smell(&self) -> bool {
+        self.s.far_smell > 0.0
+    }
+
+    /// From the last readout's crystal sums against the mirror's full
+    /// charges (the CPU's `crystal_left`).
+    fn fresh_crystals(&self) -> Vec<u32> {
+        let d = &self.e.dish;
+        self.crystals
+            .iter()
+            .enumerate()
+            .take(crate::mould::big::PANIC_PILES)
+            .filter(|&(j, c)| d.pile_full.get(j).is_none_or(|&f| f <= 0.0 || c.1 / f >= crate::mould::big::FAR_FRESH))
+            .map(|(j, _)| d.pile_centre(j))
+            .collect()
+    }
+
+    /// The far smell's field (S2), written after the units' walking
+    /// distance.
+    fn set_food_field(&mut self, field: Vec<u32>) {
+        self.e.dish.food_field = field;
+        self.e.write_food_field();
+    }
+
     /// Runs `lumpform` at once, after the running step's shares (the CPU's
     /// `form_lump`; the mirror's dense words are not kept).
     fn form_lump(&mut self, b: usize, at: Option<((f32, f32), f32)>) {
@@ -1247,6 +1271,15 @@ mod tests {
         }
         fn set_units_field(&mut self, field: Vec<u32>) {
             self.g.set_units_field(field)
+        }
+        fn far_smell(&self) -> bool {
+            self.g.far_smell()
+        }
+        fn fresh_crystals(&self) -> Vec<u32> {
+            self.g.fresh_crystals()
+        }
+        fn set_food_field(&mut self, field: Vec<u32>) {
+            self.g.set_food_field(field)
         }
         fn raid_ground(&self) -> Option<(Vec<bool>, usize, usize)> {
             self.g.raid_ground()
