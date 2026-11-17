@@ -297,7 +297,7 @@ pub fn does_to_you(tier: Tier) -> DoesToYou {
         // to 23 at 2:00 and down by 2:21 with it; pump_smell 2 to 8 was too
         // weak to see.
         Tier::Drifter => DoesToYou { says: "It smells your pumps and comes to eat their crystals", rules: &[("pump_smell", 20.0), ("lure_r", 15.0)], keys: &[] },
-        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
+        Tier::Sprawler => DoesToYou { says: "Its fast threads smell your soldiers from far off, but it shies from fire. Bring Tinder", rules: SPRAWLER_RULES, keys: SPRAWLER_KEYS },
         // The same smell on planet 3 (pumps hand): the first two pumps at
         // 185 and 167 hp at 2:30 without it, 160 and 160 with it (modest:
         // the Trunk's cords are slow to turn).
@@ -321,6 +321,9 @@ const SPRAWLER_RULES: &[(&str, f32)] = &[("smell", 4.0), ("smell_r", 4.0)];
 // tier's trait, a weakness the player can use on the Sprawler's planet).
 // At 50 the slime rings a fire and the fire eats holes in its edge (C4:
 // 13% more kills on fearprobe, Reports/sim-use-2026-11-17/c4-fire-alarm.md).
+// Run seed 1's planet 2 has nothing a plain light burns; the designer
+// (15:26Z) keeps it here for that: Tinder, which brings its own fuel, is the
+// answer, so the card says to bring it.
 const SPRAWLER_KEYS: &[(&str, &str)] = &[("fire_alarm", "50")];
 // Swarmer, planet 4, attack-move: a surge reaches 25 cells past the gun's
 // range (`Rules::panic_margin` 5) and lunges at 3x (`surge_haste` 2):
