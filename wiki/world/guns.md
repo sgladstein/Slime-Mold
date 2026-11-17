@@ -230,12 +230,14 @@ card text) and 08:30 (the guns a draw of the game).
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
   gunfire wakes gassed slime before a shatter reads it.
-- The germ was a plague (one round took 76% of shape C in 20 s). Retuned
-  11-17 on the game designer's call: the round's sick pay a sixth of the
-  toolkit's upkeep, and each planet's slime resists it (`germ_resist`), so
-  it is strong on the Sporer and Drifter and weak on the Swarmer, Grudge and
-  Sleeper ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0
-  only).
+- The germ, retuned per planet on the game designer's call (11-17): the
+  round's sick pay a sixth of the toolkit's upkeep, and each planet's slime
+  has a resistance (`germ_resist`) and a frailty (`germ_upkeep`): strong
+  on the Sporer and Drifter, weak on the Swarmer and Grudge, useless on a
+  sleeping Sleeper and strong on one a Flare woke. The GPU world's first
+  germ had also infected the map's middle (fixed 11-17), so the earlier
+  "plague" figures were inflated: one round took 48% of shape C, not 76%
+  ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0 only).
 - **Which card answers which planet**: [gun cards by planet](gun-cards.md)
   (the game designer's note, 11-17). The gaps are the Sleeper, the Grudge
   and the Trunk; Pull and Thrift answer no planet.

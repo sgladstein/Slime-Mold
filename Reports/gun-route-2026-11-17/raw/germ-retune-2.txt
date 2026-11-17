@@ -1,0 +1,103 @@
+# The germ retune's second pass (11-17), raw. Every run: larder-world look=DIR hand=idle rounds=plain
+# at=20,40 screen=160x100 (seed 0, the race world) plus the keys shown; the slime's mass at 40 s
+# (and 46 s for the Sleeper's flare-then-germ). G = boom=20,363,244,germ (the Fork lobe); the deep
+# crust spot is 166,283; the combo is boom=20,392,222,flare boom=26,392,222,germ.
+
+## 1. The bug. Build lw-frail: germ_upkeep added, GPU timed seeding still live (the first germ also
+## infected (w/2, h/2, seed_r 40) 16 game seconds in). Sleeper (tier=sleeper), germ deep in its crust:
+## the crust sleeps and cannot catch it, yet the body lost 22-24%.
+deep-none: t 20 s: mould 23333 t 40 s: mould 21705 
+deep-r4: t 20 s: mould 23333 t 40 s: mould 16491 
+deep-r6: t 20 s: mould 23333 t 40 s: mould 16998 
+deep-r8: t 20 s: mould 23333 t 40 s: mould 18201 
+#   deep-rN = watch=166,283,12 boom=20,166,283,germ germ_upkeep=6 germ_resist=N
+
+## 2. The same build with the timed seeding off (seed_r=0): the deep germ does nothing; shape C
+## (no tier) at the old resistance 13.5 loses 20% not 32.5%; at resistance 1 36%; at the toolkit's
+## upkeep 60 and resistance 1 (the plain germ with no retune) 48% not 76%.
+deep-r6-s0: t 20 s: mould 23333 t 40 s: mould 21704 
+c-germ-s0: t 20 s: mould 24323 t 40 s: mould 20621 
+c-germ-s0-r1: t 20 s: mould 24323 t 40 s: mould 16568 
+c-germ-s0-r1-up60: t 20 s: mould 24323 t 40 s: mould 13512 
+#   deep-r6-s0 = tier=sleeper boom=20,166,283,germ germ_upkeep=6 germ_resist=6 seed_r=0 (none 21705)
+#   c-germ-s0 = G seed_r=0; -r1 adds germ_resist=1; -r1-up60 adds set=sick_upkeep=60 (C none 25772)
+
+## 3. On the bug build (tier=sleeper on every run), the Sleeper's combo against the germ alone on the Fork lobe (frailty 6, 12, 24):
+## the 'alone' losses are the planted middle, not the germ.
+#   combo-r4|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=4
+#   alone-r4|boom=20,363,244,germ germ_upkeep=6 germ_resist=4
+#   combo-r6|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=6
+#   alone-r6|boom=20,363,244,germ germ_upkeep=6 germ_resist=6
+#   combo-r8|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=8
+#   alone-r8|boom=20,363,244,germ germ_upkeep=6 germ_resist=8
+#   combo-r13.5|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=13.5
+#   alone-r13.5|boom=20,363,244,germ germ_upkeep=6 germ_resist=13.5
+combo-r4: t 20 s: mould 23333 t 40 s: mould 12922 t 46 s: mould 12859 
+alone-r6: t 20 s: mould 23333 t 40 s: mould 16999 t 46 s: mould 16963 
+alone-r4: t 20 s: mould 23333 t 40 s: mould 16492 t 46 s: mould 16466 
+combo-r6: t 20 s: mould 23333 t 40 s: mould 14942 t 46 s: mould 14763 
+alone-r8: t 20 s: mould 23333 t 40 s: mould 18202 t 46 s: mould 17954 
+combo-r8: t 20 s: mould 23333 t 40 s: mould 16504 t 46 s: mould 16272 
+combo-r13.5: t 20 s: mould 23333 t 40 s: mould 19682 t 46 s: mould 19439 
+alone-r13.5: t 20 s: mould 23333 t 40 s: mould 21214 t 46 s: mould 20945 
+#   combo-f12-r13.5|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=12 germ_resist=13.5
+#   alone-f12-r13.5|boom=20,363,244,germ germ_upkeep=12 germ_resist=13.5
+#   combo-f12-r20|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=12 germ_resist=20
+#   alone-f12-r20|boom=20,363,244,germ germ_upkeep=12 germ_resist=20
+#   combo-f24-r20|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=24 germ_resist=20
+#   alone-f24-r20|boom=20,363,244,germ germ_upkeep=24 germ_resist=20
+#   combo-f24-r30|boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=24 germ_resist=30
+#   alone-f24-r30|boom=20,363,244,germ germ_upkeep=24 germ_resist=30
+alone-f12-r13.5: t 20 s: mould 23333 t 40 s: mould 21104 t 46 s: mould 20836 
+alone-f12-r20: t 20 s: mould 23333 t 40 s: mould 21080 t 46 s: mould 20835 
+combo-f12-r20: t 20 s: mould 23333 t 40 s: mould 20816 t 46 s: mould 20517 
+combo-f12-r13.5: t 20 s: mould 23333 t 40 s: mould 19694 t 46 s: mould 19460 
+alone-f24-r20: t 20 s: mould 23333 t 40 s: mould 21069 t 46 s: mould 20829 
+combo-f24-r20: t 20 s: mould 23333 t 40 s: mould 20814 t 46 s: mould 20521 
+combo-f24-r30: t 20 s: mould 23333 t 40 s: mould 21037 t 46 s: mould 20767 
+alone-f24-r30: t 20 s: mould 23333 t 40 s: mould 21047 t 46 s: mould 20799 
+
+## 4. Build lw-fix (the GPU world marks the timed seeding done when a germ turns contagion on).
+## Rounds' sick_upkeep 10. C none 25772; Drifter 24440; Sprawler 25773; Trunk 25052; Swarmer 23491;
+## Sporer 27472; Sleeper 21705 (21373 at 46 s, flare alone 21526 at 46 s); Grudge 23789.
+#   c-rN = G germ_resist=N; sporer-def = G tier=sporer (resist 1, frailty 1); sporer-fN adds germ_upkeep=N;
+#   drifter-r1 = G tier=drifter germ_resist=1; drifter-r1-fN adds germ_upkeep=N; swarmer-def,
+#   grudge-def = G tier=X (resist 15); swarmer-r6 adds germ_resist=6; sprawler-r10, trunk-r10 = G tier=X germ_resist=10
+c-r6: t 40 s: mould 16949
+c-r3: t 40 s: mould 16683
+drifter-r1: t 40 s: mould 15418
+sporer-def: t 40 s: mould 18284
+swarmer-def: t 40 s: mould 20603
+swarmer-r6: t 40 s: mould 14688
+grudge-def: t 40 s: mould 20932
+sporer-f2: t 40 s: mould 16867
+c-r8: t 40 s: mould 17180
+c-r10: t 40 s: mould 17628
+sporer-f12: t 40 s: mould 12975
+sporer-f6: t 40 s: mould 14656
+drifter-r1-f6: t 40 s: mould 13806
+drifter-r1-f12: t 40 s: mould 13806
+trunk-r10: t 40 s: mould 17137
+sprawler-r10: t 40 s: mould 18953
+#   d-r0.5|boom=20,363,244,germ tier=drifter germ_resist=0.5 germ_upkeep=6
+#   d-r0.25|boom=20,363,244,germ tier=drifter germ_resist=0.25 germ_upkeep=6
+#   combo-r10|tier=sleeper boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=10
+#   combo-r6|tier=sleeper boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=6
+#   combo-r4|tier=sleeper boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=4
+#   lobe-r6|tier=sleeper boom=20,363,244,germ germ_upkeep=6 germ_resist=6
+#   lobe-r4|tier=sleeper boom=20,363,244,germ germ_upkeep=6 germ_resist=4
+#   deep-r4|tier=sleeper boom=20,166,283,germ germ_upkeep=6 germ_resist=4
+combo-r6: t 20 s: mould 23333 t 40 s: mould 18809 t 46 s: mould 18517 
+combo-r10: t 20 s: mould 23333 t 40 s: mould 19507 t 46 s: mould 19199 
+d-r0.25: t 20 s: mould 23802 t 40 s: mould 13842 t 46 s: mould 14025 
+d-r0.5: t 20 s: mould 23802 t 40 s: mould 13849 t 46 s: mould 14034 
+lobe-r6: t 20 s: mould 23333 t 40 s: mould 21705 t 46 s: mould 21373 
+combo-r4: t 20 s: mould 23333 t 40 s: mould 17606 t 46 s: mould 17201 
+lobe-r4: t 20 s: mould 23333 t 40 s: mould 21705 t 46 s: mould 21373 
+deep-r4: t 20 s: mould 23333 t 40 s: mould 21704 t 46 s: mould 21372 
+#   combo-r2|tier=sleeper boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=2
+#   combo-r1|tier=sleeper boom=20,392,222,flare boom=26,392,222,germ germ_upkeep=6 germ_resist=1
+#   lobe-r1|tier=sleeper boom=20,363,244,germ germ_upkeep=6 germ_resist=1
+combo-r2: t 20 s: mould 23333 t 40 s: mould 16555 t 46 s: mould 16234 
+combo-r1: t 20 s: mould 23333 t 40 s: mould 15703 t 46 s: mould 15445 
+lobe-r1: t 20 s: mould 23333 t 40 s: mould 21705 t 46 s: mould 21373 

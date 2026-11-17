@@ -625,14 +625,14 @@ impl Default for RoundRules {
             // The germ round's sick pay a sixth of the toolkit's upkeep
             // (10 against 60; 2026-11-17, the game designer's call, 05:40Z:
             // "retune it now. It's numbers, so it doesn't wait for the
-            // balance pass"). At 60 one germ round took 76% of plain C's
-            // walkers in 20 s and 80% of the Sporer's (race world, seed 0,
-            // one cast on the Fork lobe at 20 s, walkers at 40 s). The
-            // upkeep is a cliff: 8 or less did nothing, 9 took 39%, 10 54%,
-            // 20 65%; fewer sick seconds (3 or 4.5) at 10 did nothing. The
-            // spread between planets comes from each tier's
-            // `BigParams::germ_resist` (`tiers.rs`, shape C's in
-            // `larder_world::shapes`); `Reports/gun-route-2026-11-17/`.
+            // balance pass"). At 60 one germ round took 48% of plain C's
+            // walkers in 20 s (race world, seed 0, one cast on the Fork lobe
+            // at 20 s, walkers at 40 s; 76% in runs that carried the GPU
+            // world's middle-seeding bug, fixed in `GpuWorld`'s burst). The
+            // planets' spread comes from each tier's `germ_resist` and
+            // `germ_upkeep` (the strong planets' sick pay 6 times this, the
+            // toolkit's 60): `tiers.rs`, shape C's in `larder_world::shapes`,
+            // `Reports/gun-route-2026-11-17/`.
             kit: KitRules { sick_upkeep: 10.0, ..KitRules::default() },
         }
     }

@@ -461,6 +461,10 @@ pub struct Settings {
     /// this (`write_params` sends the product, so the passes are the
     /// CPU's).
     pub germ_resist: f32,
+    /// A tier's frailty to the germ (`BigParams::germ_upkeep`, 1 none;
+    /// 2026-11-17): a sick walker pays `sick_upkeep` x this
+    /// (`write_params` sends the product).
+    pub germ_upkeep: f32,
     /// Growth (Larder World W0, `BigParams::upkeep`; 0 off): energy a
     /// walker pays a tick, what it starts with, what it divides at, what a
     /// division costs, the chance a tick that a walker at zero dies, and
@@ -730,6 +734,7 @@ impl Settings {
             set_armour: t.set_armour,
             flinch: t.flinch,
             germ_resist: t.germ_resist,
+            germ_upkeep: t.germ_upkeep,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
             birth_energy: t.birth_energy,
@@ -1005,6 +1010,7 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_weight" => s.alarm_weight = f()?,
         "flinch" => s.flinch = f()?.max(0.0),
         "germ_resist" => s.germ_resist = f()?.max(0.0),
+        "germ_upkeep" => s.germ_upkeep = f()?.max(0.0),
         "alarm_relay" => s.alarm_relay = f()?,
         "scar_keep" => s.scar_keep = f()?,
         "scar_gain" => s.scar_gain = f()?,
@@ -1239,6 +1245,7 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         set_armour: s.set_armour,
         flinch: s.flinch,
         germ_resist: s.germ_resist,
+        germ_upkeep: s.germ_upkeep,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
         birth_energy: s.birth_energy,
@@ -2171,7 +2178,9 @@ impl Engine {
         // no tick spreads an empty one.
         let cloud_keep = if self.clouded { s.gas_keep } else { 0.0 };
         b.extend(u32_bytes(&[s.sick, s.immune, infect, cloud_keep.to_bits()]));
-        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep, s.gas_death, s.step * s.fling_speed]));
+        // What the sick pay times the tier's frailty (2026-11-17), the
+        // CPU's `sick_upkeep * germ_upkeep`.
+        b.extend(f32_bytes(&[s.germ, s.germ_keep, s.sick_speed, s.sick_trail, s.sick_reach, s.sick_turn, ix, iy, ir, s.sick_upkeep * s.germ_upkeep, s.gas_death, s.step * s.fling_speed]));
         // The outside rules. Switching explorers on starts every walker's
         // stage again, so the switch shows (ages are only counted while on).
         if s.explores() && !self.exploring {

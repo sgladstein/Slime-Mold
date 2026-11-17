@@ -68,10 +68,10 @@ this thread's judgement.
 | Corral | 2 | Swarmer | M | herded into turrets it dies faster (the swarm's counter is a kill zone) | the slime shoved toward a turret |
 | Shatter | 2 | Swarmer, after gas | J | the gassed charge dies at once | the grey patch is gone and the hole stays |
 | Bomb | 4 | Swarmer | J | throws a rushing swarm back off the squad | the slime flung out in a ring |
-| Germ | 4 | strong vs Sporer and Drifter, weak vs Swarmer and Grudge | M | each planet's slime resists it (`germ_resist`, 11-17 retune); the Sleeper's sleeping crust barely catches it | red runs along the veins, then the body thins to a net |
+| Germ | 4 | strong vs Sporer and Drifter, weak vs Swarmer and Grudge; useless on a sleeping Sleeper, after a Flare strong | M | each planet's slime resists it (`germ_resist`) or is frail to it (`germ_upkeep`); a sleeping crust neither catches it nor starves | red runs along the veins, then the body thins to a net |
 | Detonate | 4 | Sporer, after the germ | M | more kills in nearly every paired window, but no less slime at the end | every sick walker in reach dies at once |
 | Bait | 1 | Sporer | J | draws it off its crystals without a hit (its counter: starve it, don't hit it) | a scent line the slime follows |
-| Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); shape C backs off from it and in play loses kills | an alarm haze; the slime comes to it or backs away |
+| Flare | 2 | Swarmer, Sleeper | M | a decoy: they walk to its alarm (clips); it wakes the Sleeper for a germ; shape C backs off from it and in play loses kills | an alarm haze; the slime comes to it or backs away |
 | Quiet | 1 | Sleeper; Swarmer | J | no alarm to wake the crust or draw the swarm; keeps gas asleep for Shatter | nothing: the slime does not stir |
 | Delay | 1 | Grudge | J | goes off when the slime comes back to where it was shot | the hit lodges, then goes off |
 | Range | 1 | Grudge | J | fire from new spots, out of a scar's reach | longer shots |
@@ -99,12 +99,12 @@ with the owner).
 
 - A J row becomes M when a run pits the card against its planet, paired
   windows as for seek and the readers.
-- The germ took 76% of shape C in 20 s and 80% of the Sporer; retuned on
-  the game designer's call (11-17 05:40Z) to the round's sick paying a
-  sixth of the upkeep and a resistance per planet, seed 0 only
-  ([route](../../Reports/gun-route-2026-11-17/README.md)). The Drifter
-  sits just over its band and the Sleeper well under: a tier's own sick
-  upkeep would be a new rule.
+- The germ, retuned per planet on the game designer's call (11-17 05:40Z
+  and 06:41Z): the round's sick pay a sixth of the toolkit's upkeep, each
+  planet's slime has a resistance and a frailty, seed 0 only
+  ([route](../../Reports/gun-route-2026-11-17/README.md)). The first pass
+  was measured with a GPU-world bug (the first germ also infected the
+  map's middle) and redone; the Drifter sits just under its band.
 - The Road (bullets lay trail) was dropped: the squad's own shots stopped
   on it ([dead ends](../../Reports/dead-ends.md)).
 - Whether the run shop weights offers toward the next planet's answers is

@@ -1,0 +1,10 @@
+# The toolkit's thrown germ on the final build: one germ at 20 s on the Fork lobe at the toolkit's upkeep
+# (set=sick_upkeep=60), the slime's mass at 40 s (gt.sh; C none 25772, Sporer none 27472, Sleeper none 21705).
+#   c-tool = boom=20,363,244,germ set=sick_upkeep=60 (C, resistance 10)
+#   sporer-tool = the same with tier=sporer (resistance 1, frailty 6: the sick pay 360)
+#   sleeper-deep = tier=sleeper boom=20,166,283,germ (the round, deep in the sleeping crust)
+#   c-old = the same as c-tool with germ_resist=1 (the untuned germ, no bug)
+sleeper-deep: t 40 s: mould 21704
+c-old: t 40 s: mould 13512
+sporer-tool: t 40 s: mould 12627
+c-tool: t 40 s: mould 15811

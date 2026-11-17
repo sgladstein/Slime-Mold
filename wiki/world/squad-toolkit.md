@@ -38,6 +38,7 @@ code:
   - BigParams::gas_death
   - BigParams::gas_keep
   - BigParams::germ_resist
+  - BigParams::germ_upkeep
   - BigParams::scorch_full
   - BigParams::scorch_keep
   - BigParams::sick_upkeep
@@ -204,7 +205,7 @@ named all four sets in the blind film quiz (11-16 05:09Z).
 - Random play wipes the Drifter and the Trunk at 945e080 (gate 1 fails): re-run on main with the core pull (#126) and the new Drifter (#133).
 - Round 2 on a second map, and as `larderworld census` hands.
 - A tier where gas or the det cord is the best plan.
-- `germ_resist` is a tier key since 11-17 (shape C 13.5): the toolkit's thrown germ, at its own upkeep of 60, took 44% of C in 20 s against 76% before ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0).
+- `germ_resist` and `germ_upkeep` (a frailty: the sick pay times it) are tier keys since 11-17 (shape C resists 10; the Sporer, Drifter and Sleeper are frail 6): the toolkit's thrown germ, at its own upkeep of 60, took 38.6% of C in 20 s and 54% of the Sporer. The 76% of C quoted before came with a GPU bug that planted a second germ at the map's middle (fixed 11-17); the untuned germ without it took 48% ([route](../../Reports/gun-route-2026-11-17/README.md), seed 0).
 - The germ's and the gas's 1070 twins are pending.
 - The tools in the game's replay (the kit sits outside `Game`).
 - The det cord once food flows (the one-body thread's `energy_flow`).
