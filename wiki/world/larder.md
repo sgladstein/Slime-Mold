@@ -33,6 +33,7 @@ sources:
   - Reports/resume-build-2026-11-15/README.md
   - Reports/rts-research-2026-11-10.md
   - Reports/sim-use-2026-11-17/README.md
+  - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/soldier-controls-2026-11-12.md
   - Reports/species-gpu-2026-11-11.md
   - Reports/squad-mode-2026-11-14/README.md
@@ -439,7 +440,7 @@ owner's playtest.
 - The build plan, reviewed by three independent agents and revised ([larder-build-plan-2026-11-11.md](../../Reports/larder-build-plan-2026-11-11.md); Claude Doc https://claude.ai/artifact/5ricncRubPz7WTBGJZFnHs): M1-M3 built, M4-M6 replaced by the world phases (11-11 14:06Z). M1 ([report](../../Reports/larder-m1-2026-11-11.md)): fortress and farmer beat idle and random 16/16 held-out; four soldiers attacking die in about 45 s.
 - Re-run smell on a dish the mould takes 30 s or more to cross.
 - Versus (two squads, one mould) is set aside for now (owner, 00:30Z: solo first).
-- **The slime shapes its world** (owner, 2026-11-17 00:45Z: the slime building terrain first, then reacting fields and faking its signals; plan first, reviewed, then built): the Grudge's scar on the GPU as a threat memory, crust its walkers return to, walkers that set into a living wall where it was hurt (soaking shots, blocking soldiers, the slime flowing through; owner 01:13Z), cut-off and set slime dry and burning on fuel, crust burning to barren char, provoke and still on its food news ([plan, draft 3](../../Reports/sim-use-2026-11-17/README.md); doc https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb). Nothing built yet.
+- **The slime shapes its world** (owner, 2026-11-17 00:45Z: the slime building terrain first, then reacting fields and faking its signals; plan first, reviewed, then built): the Grudge's scar on the GPU as a threat memory, crust its walkers return to, walkers that set into a living wall where it was hurt (soaking shots, blocking soldiers, the slime flowing through; owner 01:13Z), cut-off and set slime dry and burning on fuel, crust burning to barren char, provoke and still on its food news ([plan, draft 3](../../Reports/sim-use-2026-11-17/README.md); doc https://claude.ai/artifact/9dMLbiVKoK58zVMAqSCCxb). Step 0 built 11-17: the scar on the GPU, the Grudge the run's planet 7 ([report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md)).
 
 ## Sources
 

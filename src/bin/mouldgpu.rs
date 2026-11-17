@@ -2930,6 +2930,60 @@ mod tests {
         assert!(off > 50, "the twin catches a spin that doesn't curl");
     }
 
+    /// **The scar on the engine** (the Grudge's threat memory, 2026-11-17,
+    /// the simulation-use plan's step 0; the CPU's `BigDish::scar`): the
+    /// Grudge warmed 40 ticks on the CPU with three strikes on the body, so
+    /// it holds a scar and a fresh alarm, then four ticks on both from the
+    /// same state. The scar within 1e-6 on every cell, the walkers as in the
+    /// one-tick twin. Planted: a GPU scar that gains twice as fast must
+    /// fail on the scar, and one the sensors don't read (weight 0) on the
+    /// walkers. At the tier's weight 0.5 a scar four ticks old turns only 6
+    /// of 25,000 walkers (llvmpipe, 2026-11-17), under the twin's 1 in 1000,
+    /// so that plant reads it at weight 20 on the CPU.
+    #[test]
+    fn the_scar_matches_the_cpu() {
+        const TICKS: u32 = 4;
+        let Some((device, queue)) = test_gpu() else { return };
+        let shared = Shared::new(&device);
+        let mut s = small(0);
+        Tier::Grudge.settings(&mut s).unwrap();
+        // (scar cells, the scar's L1, walkers off, alarm L1)
+        let play = |s: &Settings, g: &Settings| -> (usize, f64, usize, f64) {
+            let mut e = Engine::new(&device, &queue, &shared, s, SCALE);
+            let mut cpu = e.dish.clone();
+            assert!(!cpu.scar.is_empty(), "the Grudge's dish has a scar");
+            let k = cpu.p.scale as f32;
+            for t in 0..40 {
+                if t % 10 == 9 {
+                    let (mut x, mut y, mut m) = (0.0, 0.0, 0.0);
+                    for &(wx, wy, _) in &cpu.walkers {
+                        (x, y, m) = (x + wx, y + wy, m + 1.0);
+                    }
+                    cpu.strike(x / m / k + t as f32 / 5.0, y / m / k, 6.0, 50.0, 20.0);
+                }
+                cpu.tick();
+            }
+            let (_, off, _, _) = twin(&mut e, &shared, g, &mut cpu, TICKS);
+            let scarred = cpu.scar.iter().filter(|&&v| v > 1e-3).count();
+            (scarred, l1(&e.scar_of(), &cpu.scar), off, l1(&e.alarm_of(), &cpu.alarm))
+        };
+        let n = s.walkers;
+        let (scarred, ls, off, la) = play(&s, &s);
+        eprintln!("the Grudge: {scarred} cells scarred over 1e-3, scar L1 {ls:.1e}, alarm L1 {la:.1e}, {off} of {n} walkers off after {TICKS} ticks");
+        assert!(scarred > 50, "the strikes left a scar: {scarred} cells");
+        assert!(ls <= 1e-6 && la <= 1e-6 && off * 1000 <= n, "scar L1 {ls:.1e}, alarm L1 {la:.1e}, {off} walkers off");
+        let (_, ls, _, _) = play(&s, &Settings { scar_gain: 2.0 * s.scar_gain, ..s.clone() });
+        eprintln!("planted, gain doubled on the GPU: scar L1 {ls:.1e}");
+        assert!(ls > 1e-2, "the twin catches a scar that gains too fast");
+        let strong = Settings { scar_weight: 20.0, ..s.clone() };
+        let (_, _, held, _) = play(&strong, &strong);
+        let (_, _, off, _) = play(&strong, &Settings { scar_weight: 0.0, ..s.clone() });
+        eprintln!("at weight 20 on both: {held} walkers off");
+        assert!(held * 1000 <= n, "{held} walkers off at weight 20");
+        eprintln!("planted, the sensors blind to it on the GPU: {off} walkers off");
+        assert!(off * 1000 > n, "the twin catches sensors that don't read the scar");
+    }
+
     /// **The gas cloud on the engine** (`Engine::lay_gas`, 11-14; the gun
     /// rounds thread, after Noita's mists): from the same state a cloud
     /// laid on both, then 40 ticks each with no re-inject. The cloud field
@@ -3304,6 +3358,7 @@ mod tests {
             ("the Sleeper", tier(Tier::Sleeper, small(0))),
             ("the Sleeper, growth on crystals", tier(Tier::Sleeper, hungry(crystals.clone()))),
             ("the Swarmer", tier(Tier::Swarmer, small(0))),
+            ("the Grudge, growth on crystals", tier(Tier::Grudge, hungry(crystals.clone()))),
         ];
         let u32s = |b: &wgpu::Buffer, n: usize| -> Vec<u32> { read_back(&device, &queue, b).chunks_exact(4).take(n).map(|c| u32::from_le_bytes(c.try_into().unwrap())).collect() };
         for (name, s) in dishes {

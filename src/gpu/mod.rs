@@ -68,8 +68,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (292 words).
-pub const PARAMS_BYTES: usize = 1168;
+/// Bytes in `Params` (296 words).
+pub const PARAMS_BYTES: usize = 1184;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then `fed_full`).
 pub const BODY_AT: usize = 848;
@@ -119,6 +119,12 @@ pub const LUMP_AT: usize = 1008;
 /// status (`Engine::minds`; `sense` reads none before), a spinning
 /// walker's curl a step (`BigParams::spin_curl`), and two spare words.
 pub const MIND_AT: usize = 1152;
+/// The scar row (the Grudge's habituation on the GPU, 2026-11-17, the
+/// simulation-use plan's step 0; Params grew from 1168 to 1184, after the
+/// Mind row): `scar_keep` (0 with the scar off: no alarm field, or the key
+/// 0), `scar_gain`, `scar_weight`, and a spare word. The field itself is
+/// binding 47's second block, kept for it since 2026-11-12.
+pub const SCAR_AT: usize = 1168;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -407,6 +413,13 @@ pub struct Settings {
     pub alarm_keep: f32,
     pub alarm_weight: f32,
     pub alarm_relay: f32,
+    /// The scar (`BigParams::scar_keep`, `scar_gain`, `scar_weight`; the
+    /// Grudge's habituation, on the GPU since 2026-11-17, the
+    /// simulation-use plan's step 0): a slow per-cell memory of the alarm,
+    /// read by the sensors beside it. Off with `scar_keep` 0.
+    pub scar_keep: f32,
+    pub scar_gain: f32,
+    pub scar_weight: f32,
     /// The flinch (`BigParams::flinch`): folded into `alarm_keep` and
     /// `alarm_weight` when the world is made (`Settings::flinched`).
     pub flinch: f32,
@@ -663,6 +676,9 @@ impl Settings {
             alarm_keep: t.alarm_keep,
             alarm_weight: t.alarm_weight,
             alarm_relay: t.alarm_relay,
+            scar_keep: t.scar_keep,
+            scar_gain: t.scar_gain,
+            scar_weight: t.scar_weight,
             flinch: t.flinch,
             upkeep: t.upkeep,
             start_energy: t.start_energy,
@@ -939,6 +955,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         "alarm_weight" => s.alarm_weight = f()?,
         "flinch" => s.flinch = f()?.max(0.0),
         "alarm_relay" => s.alarm_relay = f()?,
+        "scar_keep" => s.scar_keep = f()?,
+        "scar_gain" => s.scar_gain = f()?,
+        "scar_weight" => s.scar_weight = f()?,
         // A mould tier's keys at once (`mould::tiers::Tier`, as
         // `examples/bigdish.rs`'s `tier=`): `tier=sleeper`.
         "tier" => crate::mould::tiers::Tier::from_name(v).ok_or_else(|| format!("tier={v}: one of {}", crate::mould::tiers::Tier::ALL.map(|t| t.name()).join(", ")))?.settings(s)?,
@@ -1103,6 +1122,9 @@ pub fn big_params(s: &Settings, scale: usize, crowd: bool) -> BigParams {
         alarm_keep: s.alarm_keep,
         alarm_weight: s.alarm_weight,
         alarm_relay: s.alarm_relay,
+        scar_keep: s.scar_keep,
+        scar_gain: s.scar_gain,
+        scar_weight: s.scar_weight,
         flinch: s.flinch,
         upkeep: s.upkeep,
         start_energy: s.start_energy,
@@ -1468,8 +1490,9 @@ pub struct Engine {
     pub plant_sub: u64,
     /// The damage memory (binding 47, the squad toolkit's layout): the
     /// crater countdown a cell in fine steps (whole numbers in f32; the
-    /// CPU's `BigDish::scorch`), then the tiers thread's scar, unused so
-    /// far. `scorched` once any crater was laid: from then on the trail
+    /// CPU's `BigDish::scorch`), then the scar a cell (the Grudge's threat
+    /// memory, `BigDish::scar`; on the GPU since 2026-11-17, the trail pass
+    /// keeps it and the sensors read it). `scorched` once any crater was laid: from then on the trail
     /// pass counts it down and cuts the trail under it, as the CPU's
     /// `tick` does once `scorch` is made. `crater` is the steps a shot's
     /// crater lasts this frame (`squad::Frame::crater`).
@@ -1910,6 +1933,10 @@ impl Engine {
         germ.extend(if d.alarm.is_empty() { vec![0.0; self.cells as usize] } else { d.alarm.clone() });
         germ.extend(if d.gas_cloud.is_empty() { vec![0.0; self.cells as usize] } else { d.gas_cloud.clone() });
         self.queue.write_buffer(&self.germ[side], 0, &f32_bytes(&germ));
+        // The scar (the damage memory's second block), so a twin tick
+        // starts from the CPU's (2026-11-17: the Grudge on the GPU).
+        let scar = if d.scar.is_empty() { vec![0.0; self.cells as usize] } else { d.scar.clone() };
+        self.queue.write_buffer(&self.crater, self.cells as u64 * 4, &f32_bytes(&scar));
         // The life states come with the spec words below; a dish that has
         // them switches them on here.
         self.cycles |= !d.life.is_empty();
@@ -2177,6 +2204,10 @@ impl Engine {
         }
         assert_eq!(b.len(), MIND_AT, "Params rows before the Mind row moved");
         b.extend(u32_bytes(&[self.minds_on() as u32, s.spin_curl.to_bits(), 0, 0]));
+        assert_eq!(b.len(), SCAR_AT, "Params rows before the scar row moved");
+        // The CPU makes the scar only with the alarm field (`BigDish::new`).
+        let scars = s.alarm_keep > 0.0 && s.scar_keep > 0.0;
+        b.extend(f32_bytes(&[if scars { s.scar_keep } else { 0.0 }, s.scar_gain, s.scar_weight, 0.0]));
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         self.fed_packs = self.grows && s.fed_crowd > 0;
         // Switching withering on starts every walker as if it heard of food
@@ -2961,6 +2992,13 @@ impl Engine {
     pub fn crater_of(&self) -> Vec<f32> {
         let g = floats(&read_back(&self.device, &self.queue, &self.crater));
         g[..self.cells as usize].to_vec()
+    }
+
+    /// The scar a cell (the damage memory's second block), read back: the
+    /// CPU's `BigDish::scar`.
+    pub fn scar_of(&self) -> Vec<f32> {
+        let g = floats(&read_back(&self.device, &self.queue, &self.crater));
+        g[self.cells as usize..2 * self.cells as usize].to_vec()
     }
 
     /// Species `sp`'s trail a cell now, read back (the CPU's

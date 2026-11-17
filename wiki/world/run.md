@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-16
+updated: 2026-11-17
 sources:
   - Reports/breakaway-run-2026-11-15/README.md
   - Reports/flinch-2026-11-15/README.md
@@ -15,6 +15,7 @@ sources:
   - Reports/run-progression-2026-11-15/README.md
   - Reports/run-progression-2026-11-15/does-to-you.md
   - Reports/shop-b-2026-11-15/README.md
+  - Reports/sim-use-2026-11-17/step0-scar-on-gpu.md
   - Reports/specks-2026-11-16/README.md
   - Reports/surge-2026-11-15/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -130,7 +131,10 @@ card and in the landing alert: the Drifter and the Trunk smell your pumps
 Sprawler smells your soldiers from far off (`smell` 4 over 4 cells); the
 Swarmer's surges reach 25 cells past your range (`panic_margin`) and lunge
 3x (`surge_haste`); the Sporer bursts into spores at an alarm of 0.3; the
-Sleeper wakes at an alarm of 0.3. Run seed 1 at 2:00, each ends or wears the
+Sleeper wakes at an alarm of 0.3; the Grudge (planet 7 since 11-17, when
+its scar reached the GPU; [report](../../Reports/sim-use-2026-11-17/step0-scar-on-gpu.md))
+reads the scar where it was hit at twice the campaign tier's weight
+(`scar_weight` 1, a first number, not yet filmed). Run seed 1 at 2:00, each ends or wears the
 four-soldier test squad (or the pumps) sooner than before: three planets that
 squad survived now end it. A test: the owner's play sets the size. The run
 shop no longer sells the outpost, lure or siren (D10; `run_hidden` hides

@@ -18,6 +18,9 @@ plan. Have it reviewed then start to implement"; independent reviewers yes.
   offline crust probe on the CPU engine and two numpy toys; not captures),
   [reviews/readability.md](reviews/readability.md): the reviews of draft 2.
   What they changed is the table at the top of the plan.
+- [step0-scar-on-gpu.md](step0-scar-on-gpu.md): step 0 built, the Grudge's
+  scar (threat memory) on the GPU, twin-exact on llvmpipe, and the Grudge
+  back in the run as planet 7.
 
 Round 1 (11-16, posted in the thread, not a page): since the 11-15 review
 the run uses the body well (shape C, flinch, pump smell), but new pressure
