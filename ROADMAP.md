@@ -521,11 +521,15 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 switches above are settled in three groups, so they don't pile up again:
 
 1. **Play them: the "new slime".** Double-click `play-new-slime.cmd`. It is
-   `play.cmd` with the three switches that have no measured harm, all on:
-   `far_smell=1`, `fire_alarm=50` and `set=unit_paths=1`. Command-line keys
-   go on top of each run planet's own. Checked headless on planet 3 with
-   the squad (30 s, no error). If the owner plays it and doesn't object,
-   all three become defaults in one PR.
+   `play.cmd` with the two switches that have no measured harm, both on:
+   `far_smell=1` and `set=unit_paths=1`. Command-line keys go on top of
+   each run planet's own. Checked headless on planet 3 with the squad
+   (30 s, no error). If the owner plays it and doesn't object, both become
+   defaults in one PR. `fire_alarm` is left out: the designer (14:38Z)
+   calls it a per-tier trait (a fire-shy Sprawler), never global, since
+   globally every fire becomes a fence and the Torch and Tinder stop
+   killing (0 burned while lit, against 119 without). It waits for a
+   per-tier key.
 2. **Pick them: one blind page**, one film per decision, with the key kept
    off the page. The decisions are: setting on or off (with its look,
    `setlook`), block or trap (`set_block` against `set_hold`), crust's pull
