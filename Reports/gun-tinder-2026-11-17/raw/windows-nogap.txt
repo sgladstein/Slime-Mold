@@ -1,0 +1,34 @@
+check p1g2-25 plain: here (25, 24858), element (25, 24858): same
+check p1g2-40 plain: here (16, 24815), element (16, 24815): same
+check p1g2-25 torch: here (29, 24852), element (29, 24852): same
+check p1g2-40 torch: here (30, 24801), element (30, 24801): same
+
+window        plain kill/fire m sold      torch kill/fire m sold      blast kill/fire m sold     scorch kill/fire m sold tinder-scorch kill/fire m sold tinder-torch kill/fire m sold
+p1g2-25         25/0    m24858  s8          29/20   m24852  s8          20/7    m24861  s8          36/16   m24845  s8          32/17   m24849  s8          31/24   m24850  s7  
+p1g2-40         16/0    m24815  s8          30/21   m24801  s8          24/4    m24808  s8          32/13   m24800  s8          35/13   m24797  s8          30/22   m24801  s7  
+p1g3-25         23/0    m25408  s8          45/19   m25388  s8          25/8    m25407  s8          65/2    m25364  s8          52/19   m25382  s6          52/40   m25379  s2  
+p1g3-40         46/0    m25946  s8          56/21   m25937  s8          64/19   m25927  s8          62/6    m25929  s8          69/29   m25924  s7          69/44   m25920  s2  
+p1s1-25         29/0    m25812  s8          78/72   m25753  s8          35/10   m25799  s8          78/45   m25756  s8          57/34   m25775  s8          79/74   m25752  s8  
+p1s1-40         91/0    m26696  s8         112/63   m26666  s8          90/13   m26676  s8         108/21   m26661  s8         111/47   m26667  s8         137/106  m26639  s5  
+p2s1-25         46/0    m24724  s8          49/3    m24721  s8          44/0    m24726  s8          73/1    m24697  s8          80/17   m24696  s7          77/57   m24695  s4  
+p2s1-40         71/0    m24958  s8          74/3    m24959  s8          75/0    m24957  s8          89/2    m24937  s8          80/37   m24947  s8          86/64   m24941  s6  
+p3g4-25          0/0    m25442  s8           0/0    m25442  s8           0/0    m25442  s8           0/0    m25442  s8           0/0    m25442  s8           0/0    m25442  s8  
+p3g4-40         11/0    m26156  s8          18/11   m26149  s8          12/0    m26156  s8          20/8    m26147  s8          19/10   m26148  s8          18/14   m26149  s8  
+
+plain          killed 358 (0 by fire), slime at the ends 254815
+torch          killed 491 (233 by fire), slime at the ends 254668
+blast          killed 389 (61 by fire), slime at the ends 254759
+scorch         killed 563 (114 by fire), slime at the ends 254578
+tinder-scorch  killed 535 (223 by fire), slime at the ends 254627
+tinder-torch   killed 579 (445 by fire), slime at the ends 254568
+
+p1: plain 230, torch 350, blast 258, scorch 381, tinder-scorch 356, tinder-torch 398
+p2: plain 117, torch 123, blast 119, scorch 162, tinder-scorch 160, tinder-torch 163
+p3: plain 11, torch 18, blast 12, scorch 20, tinder-scorch 19, tinder-torch 18
+
+tinder-torch against torch: more kills 7, fewer 0 (sign p=0.016); less slime at the end 7, more 0 (sign p=0.016)
+tinder-scorch against scorch: more kills 4, fewer 5 (sign p=1.000); less slime at the end 3, more 6 (sign p=0.508)
+tinder-torch against plain: more kills 9, fewer 0 (sign p=0.004); less slime at the end 9, more 0 (sign p=0.004)
+tinder-scorch against plain: more kills 9, fewer 0 (sign p=0.004); less slime at the end 9, more 0 (sign p=0.004)
+scorch against plain: more kills 9, fewer 0 (sign p=0.004); less slime at the end 9, more 0 (sign p=0.004)
+tinder-torch against blast: more kills 9, fewer 0 (sign p=0.004); less slime at the end 9, more 0 (sign p=0.004)

@@ -1323,6 +1323,13 @@ pub struct BigParams {
     pub plant_spread: f32,
     pub plant_wet: f32,
     pub plant_scorch: f32,
+    /// What plants over a cell's capacity lose a tick (`plants::Rates::rot`):
+    /// laid fuel (`lay_fuel`, the gun cards' Tinder, 2026-11-17) withers
+    /// back to what the ground holds. 0.0002: a line laid at 1 on ground
+    /// where nothing grows is gone in about 40 s and too thin to kill (heat
+    /// under `fire_kill` on dry ground, plants under 0.4) in about 25 s, so a
+    /// squad has time to light it but the map is not left paved with it.
+    pub plant_rot: f32,
     pub plant_fill: f32,
     /// Ticks between plant steps (each step's rates times this): the rule
     /// on 512 x 320 cells costs about 0.9 ms of CPU, so once a tick would be
@@ -1662,6 +1669,7 @@ impl BigParams {
             plant_spread: 0.0015,
             plant_wet: 2.0,
             plant_scorch: 0.05,
+            plant_rot: 0.0002,
             plant_fill: 0.0,
             plant_every: 8,
             fire_heat: 0.15,
@@ -2307,7 +2315,7 @@ impl BigDish {
 
     fn plant_rates(&self) -> crate::mould::plants::Rates {
         let k = self.p.plant_every.max(1) as f32;
-        crate::mould::plants::Rates { grow: self.p.plant_grow * k, spread: self.p.plant_spread * k, wet: self.p.plant_wet, scorch: (self.p.plant_scorch * k).min(1.0), kinds: self.p.plant_kinds }
+        crate::mould::plants::Rates { grow: self.p.plant_grow * k, spread: self.p.plant_spread * k, wet: self.p.plant_wet, scorch: (self.p.plant_scorch * k).min(1.0), rot: self.p.plant_rot * k, kinds: self.p.plant_kinds }
     }
 
     /// One tick of the plants (`plants::step`), where they are on.
@@ -2465,6 +2473,41 @@ impl BigDish {
         }
         self.burning += lit;
         lit
+    }
+
+    /// **Lays dry fuel** (the gun cards' Tinder, 2026-11-17) within `r`
+    /// dish cells of (`x`, `y`) (dish cells), over the same cells `ignite`
+    /// would light: every open cell off the wet and off a crystal with
+    /// fewer plants than `fuel` gets `fuel`, and a bare one turns scrub
+    /// (`plants::SCRUB`, the kind that burns best); a planted one keeps its
+    /// kind. Laid fuel can stand over the ground's capacity, even where
+    /// nothing grows, and withers back (`plant_rot`). Returns cells laid; 0
+    /// on a world without plants. Nothing burns until a fire reaches it.
+    pub fn lay_fuel(&mut self, x: f32, y: f32, r: f32, fuel: f32) -> usize {
+        if self.plant.is_empty() || fuel <= 0.0 {
+            return 0;
+        }
+        let s = self.p.scale as f32;
+        let (cx, cy, rr) = (x * s, y * s, r * s);
+        let n = rr.ceil() as i64;
+        let mut laid = 0;
+        for dy in -n..=n {
+            for dx in -n..=n {
+                if (dx * dx + dy * dy) as f32 > rr * rr {
+                    continue;
+                }
+                let Some(i) = self.cell(cx + dx as f32, cy + dy as f32) else { continue };
+                let open = self.agar[i] && (self.wet.is_empty() || !self.wet[i]) && (self.pile_of.is_empty() || self.pile_of[i] == 0);
+                if open && self.plant[i] < fuel {
+                    if self.plant[i] <= 0.0 {
+                        self.plant_kind[i] = crate::mould::plants::SCRUB;
+                    }
+                    self.plant[i] = fuel;
+                    laid += 1;
+                }
+            }
+        }
+        laid
     }
 
     /// Contagion: every walker within `r` dish cells of (`x`, `y`, dish

@@ -277,6 +277,13 @@ pub struct Burst {
     /// living slime thick enough to be damp (`BigParams::fire_damp`) does
     /// not burn. 0: none.
     pub light: f32,
+    /// **Laid fuel** (the gun cards' Tinder trail, `rounds::Card::Tinder`,
+    /// 2026-11-17): open cells within `r` off the wet with fewer plants get
+    /// this many, a bare one turning scrub (`BigDish::lay_fuel`), before
+    /// any fire this burst lights, so a burn (Scorch) on the same disc
+    /// lights the fuel it laid. It kills nothing; a later fire does. 0:
+    /// none.
+    pub fuel: f32,
 }
 
 impl Burst {
@@ -351,6 +358,10 @@ pub fn burst(d: &mut BigDish, b: &Burst, k: &BurstRules) -> BurstOut {
     // past every crater kept a squad's front on fire (gun thread, 11-14
     // 20:14Z; the owner: "each bullet that hit has a huge wave that goes
     // out"); a few sparks catch or don't by the ground's moisture.
+    // Laid fuel first (Tinder, 11-17), so a burn on the same disc lights it.
+    if b.fuel > 0.0 {
+        d.lay_fuel(b.at.0, b.at.1, b.r, b.fuel);
+    }
     if b.burn {
         d.ignite(b.at.0, b.at.1, b.r, d.p.fire_light_burn);
     }

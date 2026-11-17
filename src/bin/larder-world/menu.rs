@@ -345,13 +345,19 @@ fn range_shelf(row: &run::Row) -> &'static str {
     match (row.pick, &row.face) {
         // The shove cards their own shelf (2026-11-16): with them on the
         // next bullet's, that tab took two pages at 200% on 1080 lines.
-        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Cards that shove",
+        // With the trails since 11-17 (below).
+        (Pick::Offer(_), Face::Card(rounds::Card::Heave | rounds::Card::Corral | rounds::Card::Pull)) => "Trails and shoves",
         // The Mind bullets too (2026-11-16): three more rows of the
         // bullets' grid put that tab on three pages at 200% on 1080 lines.
         // The readers (Shatter, Detonate) share it: their own tab would
         // have been the armory's seventh for two rows; so do the flare and
         // the torch (2026-11-17), the route and element families' payloads.
         (Pick::Offer(_), Face::Card(rounds::Card::Ammo(a))) if a.shell.special() => "Special bullets",
+        // The trails off every bullet's shelf (2026-11-17): with Tinder,
+        // the fifth trail, it took two pages at 200% on 1080 lines. They
+        // share the shove cards' tab (eight rows): a seventh tab ran the
+        // tab row under the card's panel at 200% on 1920 x 1080.
+        (Pick::Offer(_), Face::Card(c)) if rounds::trails(&[*c]) != [0; rounds::TRAILS] => "Trails and shoves",
         (Pick::Offer(_), Face::Card(c)) => match c.kind() {
             rounds::Kind::Payload => "Bullets",
             rounds::Kind::Flight => "Cards for every bullet",

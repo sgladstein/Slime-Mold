@@ -19,6 +19,7 @@ sources:
   - Reports/gun-shapes-2026-11-16/README.md
   - Reports/gun-shove-2026-11-16/README.md
   - Reports/gun-system-review-2026-11-16/README.md
+  - Reports/gun-tinder-2026-11-17/README.md
   - Reports/gun-triggers-2026-11-16/README.md
   - Reports/guns-2026-11-14.md
   - Reports/no-recharge-2026-11-14.md
@@ -199,10 +200,20 @@ the barrens and the fen. Sold from planet 2 on the
 Special bullets tab. Heat in the sensors (`fire_weight`, the designer's
 herding idea) is a flag, off: in its one A/B film the slime ringed the fire
 instead of crossing it, but more of it burned
-([element](../../Reports/gun-element-2026-11-17/README.md)). The game
-designer (11-17 10:14Z) keeps it off until a crossing test after Tinder:
-food beyond a lit Tinder line, walkers that cross in 30 s, weight 0
-against -5; on if it cuts crossings and the body flows round the line.
+([element](../../Reports/gun-element-2026-11-17/README.md)). **Tinder**,
+the second card (cost 2, sold from planet 2, a trail): every bullet lays
+a strip of dry brush along its flight, never within 6 dish cells of a
+soldier, that withers in under a minute; it kills nothing, and a fire
+runs along it. With the torch it killed more than the torch alone in 9 of
+9 paired windows (p = 0.004), most where plants are thin (barrens 159
+against 123), and lost no soldier; laid up to the muzzle, every fire ran
+back to the squad (23 of 80 soldiers lost). It adds nothing to a scorch
+trail. The designer's crossing test (a lit tinder line across a stream of
+walkers going to food, one seed, 30 s) kept `fire_weight` off: 214
+crossed with no line, 10 at weight 0, 57 at -5; with the weight the
+slime waited at the edge and crossed the char when the fire died, and
+did not flow round the line
+([tinder](../../Reports/gun-tinder-2026-11-17/README.md)).
 
 **The look** (owner 11-15 08:30Z: the guns "should really be one of the
 draws of the game"): a muzzle flash at the barrel's mouth whose jets are
@@ -248,8 +259,7 @@ card text) and 08:30 (the guns a draw of the game).
   aim card changes only which nearby slime they pick). Step D's first
   family, Mind (blind, sour, spin), is built and its blind quiz is with the
   owner; the readers (shatter, detonate), the route's Flare and the
-  element's Torch are built; next Tinder (a fuel line along the flight),
-  then force; cut last. Douse (water) is held: the view's wet ground is
+  element's Torch and Tinder are built; next force; cut last. Douse (water) is held: the view's wet ground is
   refreshed only with walls and crystals.
 - Readers: multicast gas and shatter in one shot is a kill as wide as the
   gas for 8 of a gun's 10 (a blast's is 6 cells for 3); the squad's own
@@ -275,4 +285,4 @@ card text) and 08:30 (the guns a draw of the game).
 
 ## Sources
 
-- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md), [route](../../Reports/gun-route-2026-11-17/README.md).
+- [guns](../../Reports/guns-2026-11-14.md), [rolled bullets](../../Reports/rolled-bullets-2026-11-14.md), [no recharge](../../Reports/no-recharge-2026-11-14.md), [gun budget](../../Reports/gun-budget-2026-11-14.md), [gun order](../../Reports/gun-order-2026-11-14.md), [card text](../../Reports/card-text-2026-11-15.md), [gun range](../../Reports/gun-range-2026-11-15.md), [gun look](../../Reports/gun-look-2026-11-15/README.md), [gun-system review](../../Reports/gun-system-review-2026-11-16/README.md), [bullet shapes](../../Reports/gun-shapes-2026-11-16/README.md), [trigger cards](../../Reports/gun-triggers-2026-11-16/README.md), [shove cards](../../Reports/gun-shove-2026-11-16/README.md), [multicast](../../Reports/gun-multicast-2026-11-16/README.md), [seek](../../Reports/gun-seek-2026-11-16/README.md), [Mind bullets](../../Reports/gun-mind-2026-11-16/README.md), [readers](../../Reports/gun-readers-2026-11-17/README.md), [route](../../Reports/gun-route-2026-11-17/README.md), [element](../../Reports/gun-element-2026-11-17/README.md), [tinder](../../Reports/gun-tinder-2026-11-17/README.md).

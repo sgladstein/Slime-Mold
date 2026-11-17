@@ -2695,19 +2695,36 @@ impl Engine {
         if !self.plants || lights.is_empty() {
             return;
         }
+        self.discs(shared, lights, 0);
+        // Kills mark the dead as the CPU's do (its kill makes `life`).
+        self.cycles = true;
+        self.fire_on = true;
+    }
+
+    /// Lays dry fuel within `r` dish cells of (`x`, `y`) (dish cells), each
+    /// `(x, y, r, fuel)`, as the CPU's `BigDish::lay_fuel` (the gun cards'
+    /// Tinder, 2026-11-17); nothing without plants. Runs on its own,
+    /// between ticks: the IGNITE pass with word 49's mode byte 1.
+    pub fn lay(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)]) {
+        if !self.plants || discs.is_empty() {
+            return;
+        }
+        self.discs(shared, discs, 1);
+    }
+
+    /// The IGNITE pass over `discs`, three a run: word 49 the count, with
+    /// `mode` in its second byte (0 light, 1 lay fuel), then x, y, r and the
+    /// fourth word from 50.
+    fn discs(&mut self, shared: &Shared, discs: &[(f32, f32, f32, f32)], mode: u32) {
         let k = self.dish.p.scale as f32;
-        for chunk in lights.chunks(3) {
-            // The count in word 49, then x, y, r and the share lit from 50.
-            let mut w = vec![chunk.len() as u32];
+        for chunk in discs.chunks(3) {
+            let mut w = vec![chunk.len() as u32 | mode << 8];
             for &(x, y, r, share) in chunk {
                 w.extend([(x * k).to_bits(), (y * k).to_bits(), (r * k).to_bits(), share.to_bits()]);
             }
             self.queue.write_buffer(&self.news, self.plant_at + 4 * 49, &u32_bytes(&w));
             self.run(shared, &[(IGNITE, self.cells.div_ceil(256))]);
         }
-        // Kills mark the dead as the CPU's do (its kill makes `life`).
-        self.cycles = true;
-        self.fire_on = true;
     }
 
     /// The plants now (density, kind, fire's heat, char), read back: the
@@ -3500,9 +3517,12 @@ pub fn plant_words(d: &BigDish) -> Vec<u32> {
     (w[46], w[47]) = (p.fire_flicker.to_bits(), p.fire_ember.to_bits());
     // Word 48: the plants at which a fire can burn at full heat.
     w[48] = p.fire_full.to_bits();
-    // Word 44: the alarm fire lays a step (`fire_alarm`, C4). (Words 32-44
-    // are free; 49 on holds `Engine::ignite`'s lights.)
+    // Word 44: the alarm fire lays a step (`fire_alarm`, C4). (Words 32-43
+    // are free; 49-61 hold `Engine::ignite`'s and `lay`'s discs.)
     w[44] = p.fire_alarm.to_bits();
+    // Word 62: what plants over a cell's capacity (laid fuel, Tinder) lose
+    // a plant step (the CPU's `Rates::rot`).
+    w[62] = (p.plant_rot * k).to_bits();
     let c = d.w * d.h;
     let crystal = |i: usize| !d.pile_of.is_empty() && d.pile_of[i] != 0;
     w.extend((0..c).map(|i| if crystal(i) { 0.0f32 } else { d.plant_cap[i] }.to_bits()));
