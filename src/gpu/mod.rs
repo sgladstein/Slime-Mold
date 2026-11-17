@@ -68,11 +68,12 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (312 words).
-pub const PARAMS_BYTES: usize = 1248;
+/// Bytes in `Params` (308 words).
+pub const PARAMS_BYTES: usize = 1232;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
-/// `energy_flow`, `hunger_scent`, `hunger_at`; then a free word, `fed_full`'s
-/// until 11-17).
+/// `energy_flow`, `hunger_scent`, `hunger_at`; then `fire_weight`, heat in
+/// the sensors (the gun cards' element family, 11-17), in the word
+/// `fed_full` held until 11-17, so Params did not grow).
 pub const BODY_AT: usize = 848;
 /// Where the crater's row sits in `Params` (2026-11-12, after one body's:
 /// `scorch_keep`, `scorch_full`, the steps a shot's crater lasts, and
@@ -142,10 +143,6 @@ pub const CRUST_FX_AT: usize = 1200;
 /// scar), `set_wake`, `set_crust` and `set_armour`. Each slot's set word is
 /// a block of `news` right after the crust's (`Engine::set_of`).
 pub const SET_AT: usize = 1216;
-/// The heat row (the gun cards' element family, 2026-11-17; Params grew
-/// from 1232 to 1248): `fire_weight` (0 on a dish without plants, whose
-/// fire field is absent) and three spare words.
-pub const FIRE_AT: usize = 1232;
 
 /// The raid row's words (`RAID_AT`) from the settings: the reach squared
 /// in whole fine cells, as the CPU's `raid_of` counts it.
@@ -2290,7 +2287,10 @@ impl Engine {
         // word, spare until 11-13, is one body's lossy sharing (`eloss`).
         b.extend(f32_bytes(&[t.sand_keep, t.clay_keep, t.barren_upkeep, s.flow_loss]));
         assert_eq!(b.len(), BODY_AT, "Params rows before the one body row moved");
-        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, 0.0]));
+        // The row's last word is heat in the sensors (`fire_weight`, freed
+        // by `fed_full` 11-17): 0 without plants, whose fire field (in the
+        // plants' block) is absent.
+        b.extend(f32_bytes(&[s.energy_flow, s.hunger_scent, s.hunger_at, if self.plants { s.fire_weight } else { 0.0 }]));
         assert_eq!(b.len(), CRATER_AT, "Params rows before the crater row moved");
         b.extend(f32_bytes(&[t.scorch_keep, t.scorch_full.max(1) as f32, self.crater_steps as f32]));
         b.extend(u32_bytes(&[self.crater_flags()]));
@@ -2360,9 +2360,6 @@ impl Engine {
         // Setting needs the crust and the scar, as the CPU's `sets`.
         b.extend(f32_bytes(&[if crusts && scars { s.set_scar } else { 0.0 }, s.set_wake, s.set_crust]));
         b.extend(u32_bytes(&[s.set_armour]));
-        assert_eq!(b.len(), FIRE_AT, "Params rows before the heat row moved");
-        // The fire field is in the plants' block, absent without plants.
-        b.extend(f32_bytes(&[if self.plants { s.fire_weight } else { 0.0 }, 0.0, 0.0, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

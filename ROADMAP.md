@@ -484,7 +484,10 @@ ground thread's.
 `lone_free` (u32, the lone step row's last word, `fed_crowd`'s), and
 **900** `fling_free` (u32, `condense`'s) with `ccrowd`'s bits 24-31
 (`thicken`'s). All are written 0 in `Engine::write_params`; claim one here
-as above. In binding 48 the dense block's header word 0 (the mass) and its
+as above. Claimed: 860 as `fire_w` (f32, `BigParams::fire_weight`, heat in
+the sensors), the gun-card thread's element PR #423 (11-17), so Params
+stays 1232 bytes; next small keys take 892, 900 or `ccrowd`'s bits 24-31
+first. In binding 48 the dense block's header word 0 (the mass) and its
 first block of cells (condensed walkers a cell) are free too, and passes
 56-57 went (`massclear`, `masscount`; the passes after moved down two).
 
@@ -507,6 +510,7 @@ The technical lead asked for this table on 2026-11-17. It lists every game featu
 | Crystals that refill: `crystal_regrow` | Larder (owner, 11-11 14:54Z) | Run-out crystals suit the race start, so they are "to be settled by playtests" | A landing on a world that is mostly mould | ✓ |
 | Lossy flow: `flow_loss` | One body | The one-body lead stopped at `energy_flow` 0.05 without it | A cut-the-network playtest (parked); otherwise delete | ✓ |
 | Lone step: `lone_step` | One body | It held hunks together on the designed maps but was never made a default | The same as lossy flow | ✓ |
+| Heat in the sensors: `fire_weight` (Params word 860) | Gun cards (element, the game designer's herding idea) | 11-17, new. In its one A/B film the slime ringed the fire instead of keeping away, and more of it burned ([report](Reports/gun-element-2026-11-17/README.md)) | The designer's crossing test after Tinder: food beyond a lit Tinder line, walkers that cross in 30 s, weight 0 against -5; on if it cuts crossings and the body flows round the line | ✓ (no plants there; its fire twin is the torch's) |
 | Squad mode: `mode=squads` | Squads | Not a switch: it is the owner's "separate mode", and runs play it | — | — |
 
 **Deleted 11-17** (integration thread, at the technical lead's ask; each has its

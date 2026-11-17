@@ -45,8 +45,9 @@ walls and crystals, so a runtime Douse needs view plumbing first).
 
 ## Heat in the sensors (a flag, off)
 
-`BigParams::fire_weight` (key `fire_weight=`, 0 off; GPU Params row
-`FIRE_AT` 1232, Params 1232 to 1248 bytes): a sensor adds `fire_weight` x
+`BigParams::fire_weight` (key `fire_weight=`, 0 off; on the GPU Params
+word 860, the one body row's last, freed by `fed_full` 11-17, so Params
+keeps its 1232 bytes): a sensor adds `fire_weight` x
 the fire's heat at its cell, after the crust, on both engines. It reads
 ground the player lights, not the soldiers, so it is not the flee from
 gunfire ([dead ends](../dead-ends.md), whose entry now says so). Frame
